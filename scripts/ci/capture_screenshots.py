@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Drives an installed Vola build on a running emulator and saves screenshots of key screens.
+
+Usage: capture_screenshots.py <package> <output-dir>
+
+Navigation uses visible text and accessibility descriptions (English and Russian), so the script
+keeps working when layouts change. Every step is best effort: a failed step is logged and the
+tour continues, so one broken screen never hides the rest.
+"""
+
+import re
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ElementTree
+from pathlib import Path
+
+PACKAGE = sys.argv[1]
+OUT = Path(sys.argv[2])
+OUT.mkdir(parents=True, exist_ok=True)
+LOG = []
+_counter = 0
+
+
+def adb(*args, check=True, capture=False, timeout=60):
+    result = subprocess.run(
+        ["adb", *args],
+        check=check,
+        stdout=subprocess.PIPE if capture else None,
+        stderr=subprocess.PIPE if capture else None,
+        timeout=timeout,
+    )
+    return result.stdout if capture else None
+
+
+def log(message):
+    print(message, flush=True)
+    LOG.append(message)
+
+
+def shot(name):
+    global _counter
+    _counter += 1
+    target = OUT / f"{_counter:02d}-{name}.png"
+    with target.open("wb") as file:
+        subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True, timeout=60)
+    log(f"screenshot {target.name}")
+
+
+def nodes():
+    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
+    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
+    try:
+        root = ElementTree.fromstring(raw.decode("utf-8", "replace"))
+    except ElementTree.ParseError:
+        return []
+    found = []
+    for node in root.iter("node"):
+        bounds = re.findall(r"\d+", node.get("bounds", ""))
+        if len(bounds) != 4:
+            continue
+        left, top, right, bottom = map(int, bounds)
+        found.append({
+            "text": node.get("text", ""),
+            "desc": node.get("content-desc", ""),
+            "center": ((left + right) // 2, (top + bottom) // 2),
+        })
+    return found
+
+
+def find(*labels, contains=False):
+    for node in nodes():
+        for value in (node["text"], node["desc"]):
+            for label in labels:
+                if (contains and label.lower() in value.lower()) or value == label:
+                    return node
+    return None
+
+
+def tap(*labels, contains=False):
+    node = find(*labels, contains=contains)
+    if node is None:
+        log(f"not found: {labels}")
+        return False
+    x, y = node["center"]
+    adb("shell", "input", "tap", str(x), str(y))
+    log(f"tap {labels[0]!r} at {x},{y}")
+    return True
+
+
+def screen_size():
+    output = (adb("shell", "wm", "size", capture=True) or b"").decode()
+    match = re.search(r"(\d+)x(\d+)", output)
+    return (int(match.group(1)), int(match.group(2))) if match else (1080, 2400)
+
+
+def launch():
+    adb("shell", "monkey", "-p", PACKAGE, "-c", "android.intent.category.LAUNCHER", "1",
+        check=False, capture=True)
+
+
+def open_url(url):
+    adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", url, PACKAGE,
+        check=False, capture=True)
+
+
+def step(name, action):
+    try:
+        action()
+    except Exception as error:  # noqa: BLE001 - keep the tour going
+        log(f"step {name} failed: {error}")
+
+
+def dismiss_first_run():
+    for _ in range(6):
+        if find("Skip", "Пропустить"):
+            shot("onboarding")
+            tap("Skip", "Пропустить")
+        elif find("Explore Vola", "К браузеру"):
+            shot("whats-new")
+            tap("Explore Vola", "К браузеру")
+        else:
+            return
+        time.sleep(3)
+
+
+def tour(suffix):
+    width, height = screen_size()
+    step("new-tab", lambda: shot(f"new-tab-{suffix}"))
+
+    def page():
+        open_url("https://en.wikipedia.org/wiki/Zen")
+        time.sleep(15)
+        shot(f"page-{suffix}")
+    step("page", page)
+
+    def overview():
+        address = find("wikipedia.org", contains=True)
+        x, y = address["center"] if address else (width // 2, height - 120)
+        adb("shell", "input", "swipe", str(x), str(y), str(x), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        shot(f"tab-overview-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("overview", overview)
+
+    def menu_and_settings():
+        if tap("More options", "Другие действия"):
+            time.sleep(2)
+            shot(f"menu-{suffix}")
+            if tap("Settings", "Настройки"):
+                time.sleep(3)
+                shot(f"settings-{suffix}")
+                if tap("Appearance", "Внешний вид"):
+                    time.sleep(2)
+                    shot(f"appearance-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+    step("settings", menu_and_settings)
+
+
+def main():
+    adb("shell", "cmd", "uimode", "night", "no", check=False)
+    launch()
+    time.sleep(15)
+    shot("launch")
+    dismiss_first_run()
+    tour("light")
+
+    adb("shell", "cmd", "uimode", "night", "yes", check=False)
+    time.sleep(5)
+    step("dark-new-tab", lambda: shot("current-dark"))
+    tour("dark")
+
+    adb("shell", "cmd", "uimode", "night", "no", check=False)
+    adb("shell", "cmd", "locale", "set-app-locales", PACKAGE, "--locales", "ru-RU", check=False)
+    adb("shell", "am", "force-stop", PACKAGE, check=False)
+    launch()
+    time.sleep(12)
+    dismiss_first_run()
+    tour("ru")
+
+    crashes = (adb("logcat", "-d", "-b", "crash", check=False, capture=True) or b"").decode(
+        "utf-8", "replace"
+    )
+    (OUT / "crash-log.txt").write_text(crashes or "No crashes recorded.\n")
+    (OUT / "tour-log.txt").write_text("\n".join(LOG) + "\n")
+
+
+if __name__ == "__main__":
+    main()
