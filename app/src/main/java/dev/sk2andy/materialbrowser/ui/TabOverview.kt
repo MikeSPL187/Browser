@@ -2141,6 +2141,16 @@ internal fun TabOverview(
                 }
             },
             onDismiss = { profileActionsProfileId = null },
+            onRename = { name ->
+                val target = actionProfile ?: return@ProfileActionsSheet
+                controller.updateProfileName(target.id, name)
+            },
+            onAccentChange = { accent ->
+                val target = actionProfile ?: return@ProfileActionsSheet
+                if (controller.updateProfileAccent(target.id, accent)) {
+                    rootView.performConfirmHaptic()
+                }
+            },
         )
 
         val protectionProfile = profileProtectionTargetId?.let { profileId ->
@@ -2204,7 +2214,12 @@ internal fun TabOverview(
                 ?.emoji,
             onCreate = { emoji, isolationEnabled, options ->
                 if (emojiPickerTarget != NEW_PROFILE_TARGET) return@EmojiPickerSheet
-                val profileId = controller.createProfile(emoji, isolationEnabled)
+                val profileId = controller.createProfile(
+                    emoji = emoji,
+                    isolationEnabled = isolationEnabled,
+                    name = options.name,
+                    accent = options.accent,
+                )
                 if (profileId != null) {
                     emojiPickerTargetId = null
                     rootView.performConfirmHaptic()

@@ -18,6 +18,8 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsProvider
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
 import dev.sk2andy.materialbrowser.browser.DomainMuteRules
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
@@ -232,6 +234,10 @@ class BrowserSessionStore internal constructor(
                                     BrowserProfile(
                                         id = id,
                                         emoji = emoji,
+                                        name = WorkspaceNameRules.normalize(item.optString("name")),
+                                        accent = WorkspaceAccent.fromWireValue(
+                                            item.optString("accent").takeIf(String::isNotBlank),
+                                        ),
                                         selectedTabId = item.optString("selectedTabId")
                                             .takeIf(String::isNotBlank),
                                         isolationEnabled = item.optBoolean("isolationEnabled", false),
@@ -272,6 +278,8 @@ class BrowserSessionStore internal constructor(
                 JSONObject()
                     .put("id", profile.id)
                     .put("emoji", profile.emoji)
+                    .put("name", profile.name)
+                    .put("accent", profile.accent.wireValue)
                     .put("selectedTabId", profile.selectedTabId)
                     .put("isolationEnabled", profile.isolationEnabled)
                     .put("protection", profile.protection.toJson())

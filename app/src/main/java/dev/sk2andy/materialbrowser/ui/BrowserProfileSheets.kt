@@ -16,9 +16,11 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +35,7 @@ import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.ProfileProtectionRules
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.isSyncLinked
 import dev.sk2andy.materialbrowser.shared.ui.BrowserProfileSheetCopy
 import dev.sk2andy.materialbrowser.shared.ui.BrowserViewportProfile
@@ -44,6 +47,8 @@ import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 internal data class ProfileCreationOptions(
     val protection: ProfileProtection? = null,
     val wallpaperTargets: Set<ProfileWallpaperTarget> = emptySet(),
+    val name: String = "",
+    val accent: WorkspaceAccent = WorkspaceAccent.Default,
 )
 
 @Composable
@@ -59,8 +64,17 @@ internal fun ProfileActionsSheet(
     onConfigureProtection: () -> Unit,
     onDisableProtection: () -> Unit,
     onDismiss: () -> Unit,
+    onRename: (String) -> Unit = {},
+    onAccentChange: (WorkspaceAccent) -> Unit = {},
 ) {
     val resolvedProfile = profile ?: return
+    var draftName by remember(resolvedProfile.id) { mutableStateOf(resolvedProfile.name) }
+    val latestDraftName by rememberUpdatedState(draftName)
+    val latestOnRename by rememberUpdatedState(onRename)
+    DisposableEffect(resolvedProfile.id) {
+        // The name is saved when the sheet closes, not on every keystroke.
+        onDispose { latestOnRename(latestDraftName) }
+    }
     SharedProfileActionsSheet(
         profile = resolvedProfile.let {
             BrowserViewportProfile(
@@ -80,6 +94,20 @@ internal fun ProfileActionsSheet(
         onCustomizeWallpaper = onCustomizeWallpaper,
         onDelete = onDelete,
         onIsolationChange = onIsolationChange,
+        headerContent = if (resolvedProfile.isSyncLinked) {
+            null
+        } else {
+            {
+                WorkspaceIdentityEditor(
+                    name = draftName,
+                    namePlaceholder = resolvedProfile.copy(name = "").workspaceDisplayName(),
+                    accent = resolvedProfile.accent,
+                    onNameChange = { draftName = it },
+                    onAccentChange = onAccentChange,
+                    onNameDone = { onRename(draftName) },
+                )
+            }
+        },
         additionalContent = {
             val protection = resolvedProfile.protection
             SettingsSwitch(
@@ -132,6 +160,8 @@ internal fun EmojiPickerSheet(
     var draftWallpaperTargets by remember(creatingProfile) {
         mutableStateOf(emptySet<ProfileWallpaperTarget>())
     }
+    var draftName by remember(creatingProfile) { mutableStateOf("") }
+    var draftAccent by remember(creatingProfile) { mutableStateOf(WorkspaceAccent.Default) }
     SharedProfileEmojiPickerSheet(
         visible = visible,
         creatingProfile = creatingProfile,
@@ -143,7 +173,12 @@ internal fun EmojiPickerSheet(
             onCreate(
                 emoji,
                 isolationEnabled,
-                ProfileCreationOptions(draftProtection, draftWallpaperTargets),
+                ProfileCreationOptions(
+                    protection = draftProtection,
+                    wallpaperTargets = draftWallpaperTargets,
+                    name = draftName,
+                    accent = draftAccent,
+                ),
             )
         },
         onSelect = onSelect,
@@ -195,6 +230,19 @@ internal fun EmojiPickerSheet(
             null
         },
         containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerLow),
+        creationHeader = if (creatingProfile) {
+            {
+                WorkspaceIdentityEditor(
+                    name = draftName,
+                    namePlaceholder = stringResource(R.string.workspace_untitled),
+                    accent = draftAccent,
+                    onNameChange = { draftName = it },
+                    onAccentChange = { draftAccent = it },
+                )
+            }
+        } else {
+            null
+        },
     )
     if (configureDraftProtection) {
         ProfileProtectionDialog(

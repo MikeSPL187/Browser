@@ -40,7 +40,7 @@ internal fun ProfileSwitcher(
             BrowserViewportProfile(
                 id = profile.id,
                 emoji = profile.emoji,
-                displayName = profile.syncedDisplayName,
+                displayName = profile.syncedDisplayName ?: profile.workspaceDisplayName(),
                 syncedIconEmoji = profile.syncedIconEmoji,
                 syncedIconAccentHue = profile.syncedIconAccentHue,
                 isSyncLinked = profile.isSyncLinked,

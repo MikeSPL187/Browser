@@ -130,4 +130,55 @@ class BrowserProfileRulesTest {
             ),
         )
     }
+
+    @Test
+    fun `create keeps a normalized workspace name and the chosen accent`() {
+        val profile = BrowserProfileRules.create(
+            draft = BrowserProfileDraft(
+                emoji = "💼",
+                isolationRequested = false,
+                name = "  Work \n  projects  ",
+                accent = WorkspaceAccent.Coral,
+            ),
+            profileId = "work",
+            isolationSupported = true,
+        )
+
+        assertEquals("Work projects", profile?.name)
+        assertEquals(WorkspaceAccent.Coral, profile?.accent)
+    }
+
+    @Test
+    fun `workspace names are capped and blank means the default name`() {
+        assertEquals(
+            WorkspaceNameRules.MAX_LENGTH,
+            WorkspaceNameRules.normalize("x".repeat(100)).length,
+        )
+        assertEquals("", WorkspaceNameRules.normalize("   "))
+    }
+
+    @Test
+    fun `rename and recolor change only local workspaces`() {
+        val local = BrowserProfile(id = "home", emoji = "🏠")
+        val synced = local.copy(syncedDeviceId = "device")
+
+        assertEquals("Home", BrowserProfileRules.updateName(local, " Home ")?.name)
+        assertNull(BrowserProfileRules.updateName(local, ""))
+        assertEquals(
+            WorkspaceAccent.Green,
+            BrowserProfileRules.updateAccent(local, WorkspaceAccent.Green)?.accent,
+        )
+        assertNull(BrowserProfileRules.updateAccent(local, WorkspaceAccent.Default))
+        assertNull(BrowserProfileRules.updateName(synced, "Home"))
+        assertNull(BrowserProfileRules.updateAccent(synced, WorkspaceAccent.Green))
+    }
+
+    @Test
+    fun `accent wire values round trip and unknown values use the default`() {
+        WorkspaceAccent.entries.forEach { accent ->
+            assertEquals(accent, WorkspaceAccent.fromWireValue(accent.wireValue))
+        }
+        assertEquals(WorkspaceAccent.Default, WorkspaceAccent.fromWireValue("neon"))
+        assertEquals(WorkspaceAccent.Default, WorkspaceAccent.fromWireValue(null))
+    }
 }

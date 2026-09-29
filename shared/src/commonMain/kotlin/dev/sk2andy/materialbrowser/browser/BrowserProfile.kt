@@ -1,8 +1,15 @@
 package dev.sk2andy.materialbrowser.browser
 
+/**
+ * A workspace: its own set of tabs with a name, an emoji and an accent color. Storage isolation
+ * turns a workspace into a container with separate cookies and sign-ins. The type keeps its
+ * historical name inside the code; the UI calls it a workspace.
+ */
 data class BrowserProfile(
     val id: String,
     val emoji: String,
+    val name: String = "",
+    val accent: WorkspaceAccent = WorkspaceAccent.Default,
     val selectedTabId: String? = null,
     val isolationEnabled: Boolean = false,
     val protection: ProfileProtection? = null,
@@ -69,8 +76,38 @@ val BrowserProfile.isSynced: Boolean
 val BrowserProfile.isSyncLinked: Boolean
     get() = syncedDeviceId != null || linkedSyncDeviceId != null
 
+/** Accent colors a workspace can tint the browser chrome with. */
+enum class WorkspaceAccent(val wireValue: String) {
+    Violet("violet"),
+    Blue("blue"),
+    Teal("teal"),
+    Green("green"),
+    Amber("amber"),
+    Coral("coral"),
+    Rose("rose"),
+    Graphite("graphite"),
+    ;
+
+    companion object {
+        val Default = Violet
+
+        fun fromWireValue(value: String?): WorkspaceAccent =
+            entries.firstOrNull { it.wireValue == value } ?: Default
+    }
+}
+
+object WorkspaceNameRules {
+    const val MAX_LENGTH = 32
+
+    /** Trims, collapses inner whitespace and caps the length; blank means "use the default". */
+    fun normalize(value: String): String =
+        value.trim().replace(WHITESPACE, " ").take(MAX_LENGTH).trim()
+
+    private val WHITESPACE = Regex("\\s+")
+}
+
 const val DEFAULT_PROFILE_ID = "candy"
-const val DEFAULT_PROFILE_EMOJI = "🍬"
+const val DEFAULT_PROFILE_EMOJI = "🏠"
 const val MAX_PROFILES = 12
 
 val DEFAULT_BROWSER_PROFILE = BrowserProfile(
