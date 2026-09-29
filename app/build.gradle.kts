@@ -637,7 +637,7 @@ tasks.matching { it.name == "preFossReleaseBuild" }.configureEach {
     dependsOn(verifyFossReleaseDependencies)
 }
 
-val geckoViewDependency = "org.mozilla.geckoview:geckoview:155.0.20260903215306"
+val geckoViewDependency = "org.mozilla.geckoview:geckoview:156.0.20260921121718"
 
 dependencies {
     implementation(project(":shared"))
