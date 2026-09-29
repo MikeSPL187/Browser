@@ -155,10 +155,19 @@ def tour(suffix):
         shot(f"page-{suffix}")
     step("page", page)
 
+    def https_upgrade():
+        # example.com serves HTTPS, so HTTPS-only mode must upgrade this link (lock in the bar).
+        open_url("http://example.com/")
+        time.sleep(12)
+        shot(f"https-upgrade-{suffix}")
+    step("https-upgrade", https_upgrade)
+
     def https_only_warning():
-        # neverssl.com deliberately serves no HTTPS, so HTTPS-only mode shows its warning page.
+        # neverssl.com deliberately avoids HTTPS, so HTTPS-only mode ends on its warning page.
         open_url("http://neverssl.com/")
-        time.sleep(15)
+        time.sleep(10)
+        shot(f"https-only-early-{suffix}")
+        time.sleep(30)
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
@@ -214,6 +223,12 @@ def main():
         "utf-8", "replace"
     )
     (OUT / "crash-log.txt").write_text(crashes or "No crashes recorded.\n")
+    gecko = (adb("logcat", "-d", check=False, capture=True) or b"").decode("utf-8", "replace")
+    https_lines = [
+        line for line in gecko.splitlines()
+        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl", line, re.I)
+    ]
+    (OUT / "https-only-log.txt").write_text("\n".join(https_lines[-400:]) + "\n")
     (OUT / "tour-log.txt").write_text("\n".join(LOG) + "\n")
 
 
