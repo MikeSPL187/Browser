@@ -12,6 +12,7 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
@@ -50,6 +51,7 @@ internal fun SettingsScreen(
     destination: SettingsDestination,
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
     isDnsOverHttpsSupported: Boolean = browserEngineKind == AndroidBrowserEngineKind.GeckoView,
+    isHttpsOnlySupported: Boolean = browserEngineKind == AndroidBrowserEngineKind.GeckoView,
     appearanceSettings: AppearanceSettings,
     downloadSettings: BrowserDownloadSettings,
     externalDownloadManagers: List<ExternalDownloadManagerApp>,
@@ -58,6 +60,7 @@ internal fun SettingsScreen(
     privacySignalSettings: PrivacySignalSettings = PrivacySignalSettings.Default,
     isAutoDeAmpEnabled: Boolean = true,
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
+    httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
     inactiveTabLifetime: InactiveTabLifetime,
     residentTabLimit: Int,
     searchEngine: SearchEngine,
@@ -120,6 +123,7 @@ internal fun SettingsScreen(
     onPrivacySignalSettingsChanged: (PrivacySignalSettings) -> Unit = {},
     onAutoDeAmpEnabledChanged: (Boolean) -> Unit = {},
     onDnsOverHttpsSettingsChanged: (DnsOverHttpsSettings) -> Unit = {},
+    onHttpsOnlyModeChanged: (HttpsOnlyMode) -> Unit = {},
     onInactiveTabLifetimeChanged: (InactiveTabLifetime) -> Unit,
     onResidentTabLimitChanged: (Int) -> Unit,
     onSearchEngineChanged: (SearchEngine) -> Unit,
@@ -434,10 +438,12 @@ internal fun SettingsScreen(
                     blockedCount = blockedCount,
                     browserEngineKind = browserEngineKind,
                     isDnsOverHttpsSupported = isDnsOverHttpsSupported,
+                    isHttpsOnlySupported = isHttpsOnlySupported,
                     webRtcProtectionMode = webRtcProtectionMode,
                     privacySignalSettings = privacySignalSettings,
                     isAutoDeAmpEnabled = isAutoDeAmpEnabled,
                     dnsOverHttpsSettings = dnsOverHttpsSettings,
+                    httpsOnlyMode = httpsOnlyMode,
                     isRecallEnabled = isRecallEnabled,
                     historyRecordingMode = historyRecordingMode,
                     trustsUserCertificates = trustsUserCertificates,
@@ -446,6 +452,7 @@ internal fun SettingsScreen(
                     onPrivacySignalSettingsChanged = onPrivacySignalSettingsChanged,
                     onAutoDeAmpEnabledChanged = onAutoDeAmpEnabledChanged,
                     onDnsOverHttpsSettingsChanged = onDnsOverHttpsSettingsChanged,
+                    onHttpsOnlyModeChanged = onHttpsOnlyModeChanged,
                     onRecallEnabledChanged = onRecallEnabledChanged,
                     onHistoryRecordingModeChanged = onHistoryRecordingModeChanged,
                     onPrivacyXRay = onPrivacyXRay,

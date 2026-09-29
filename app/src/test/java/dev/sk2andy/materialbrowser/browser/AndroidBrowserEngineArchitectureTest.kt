@@ -48,11 +48,9 @@ class AndroidBrowserEngineArchitectureTest {
         assertTrue(settings.contains(".enterpriseRootsEnabled(trustUserCertificates)"))
         assertTrue(runtime.contains("GeckoRuntimeSettingsFactory.create("))
         assertTrue(runtime.contains("contentBlocking = contentBlocking"))
-        assertTrue(
-            runtime.contains(
-                "BrowserSessionStore(appContext).loadDnsOverHttpsSettings()",
-            ),
-        )
+        assertTrue(runtime.contains("val store = BrowserSessionStore(appContext)"))
+        assertTrue(runtime.contains("dnsOverHttpsSettings = store.loadDnsOverHttpsSettings()"))
+        assertTrue(runtime.contains("httpsOnlyMode = store.loadHttpsOnlyMode()"))
     }
 
     private fun source(relativePath: String): String {

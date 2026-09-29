@@ -49,6 +49,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.WebContentTopInsetTransitionRules
@@ -109,6 +110,7 @@ internal class GeckoViewRuntimeHandle private constructor(
     override val toppings: GeckoToppingHostRuntime,
     private val privacyHost: GeckoViewPrivacyHostRuntime,
     private val downloadTransfers: GeckoDownloadTransferManager,
+    private val httpsOnlyErrorPages: GeckoHttpsOnlyErrorPages,
 ) : GeckoRuntimeHandle {
     private val cookieBehavior = GeckoCookieBehaviorCoordinator(
         runtime.settings.contentBlocking,
@@ -135,6 +137,7 @@ internal class GeckoViewRuntimeHandle private constructor(
             toppingHost = toppings,
             privacyHost = privacyHost,
             downloadTransfers = downloadTransfers,
+            httpsOnlyErrorPages = httpsOnlyErrorPages,
             cookieBehavior = cookieBehavior,
             trackingPermissions = trackingPermissions,
             initialPrivacyPolicy = privacyPolicy,
@@ -165,6 +168,7 @@ internal class GeckoViewRuntimeHandle private constructor(
             toppingHost = toppings,
             privacyHost = privacyHost,
             downloadTransfers = downloadTransfers,
+            httpsOnlyErrorPages = httpsOnlyErrorPages,
             cookieBehavior = cookieBehavior,
             trackingPermissions = trackingPermissions,
             initialPrivacyPolicy = privacyPolicy,
@@ -211,6 +215,11 @@ internal class GeckoViewRuntimeHandle private constructor(
     @UiThread
     override fun setDnsOverHttpsSettings(settings: DnsOverHttpsSettings) {
         runtime.settings.applyDnsOverHttpsSettings(settings)
+    }
+
+    @UiThread
+    override fun setHttpsOnlyMode(mode: HttpsOnlyMode) {
+        runtime.settings.applyHttpsOnlyMode(mode)
     }
 
     @UiThread
@@ -286,9 +295,11 @@ internal class GeckoViewRuntimeHandle private constructor(
                     ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY,
                 )
                 .build()
+            val store = BrowserSessionStore(appContext)
             val runtimeSettings = GeckoRuntimeSettingsFactory.create(
                 contentBlocking = contentBlocking,
-                dnsOverHttpsSettings = BrowserSessionStore(appContext).loadDnsOverHttpsSettings(),
+                dnsOverHttpsSettings = store.loadDnsOverHttpsSettings(),
+                httpsOnlyMode = store.loadHttpsOnlyMode(),
             )
             val runtime = GeckoRuntime.create(appContext, runtimeSettings)
             runtime.webNotificationDelegate = GeckoWebNotificationPresenter(appContext)
@@ -331,6 +342,7 @@ internal class GeckoViewRuntimeHandle private constructor(
                 toppings = toppingHost,
                 privacyHost = privacyHost,
                 downloadTransfers = downloadTransfers,
+                httpsOnlyErrorPages = GeckoHttpsOnlyErrorPages(appContext),
             )
         }
     }
@@ -859,6 +871,7 @@ private class GeckoViewBrowserSession(
     private val toppingHost: GeckoToppingHostRuntime,
     private val privacyHost: GeckoViewPrivacyHostRuntime,
     private val downloadTransfers: GeckoDownloadTransferManager,
+    private val httpsOnlyErrorPages: GeckoHttpsOnlyErrorPages,
     private val cookieBehavior: GeckoCookieBehaviorCoordinator,
     private val trackingPermissions: GeckoTrackingPermissionCoordinator,
     initialPrivacyPolicy: GeckoPrivacyPolicy,
@@ -1108,6 +1121,11 @@ private class GeckoViewBrowserSession(
             ): GeckoResult<String>? {
                 invalidateDomProbe()
                 uri?.let(::finishFailedNavigation)
+                if (error.code == WebRequestError.ERROR_HTTPS_ONLY) {
+                    // Gecko shows this page in place of the site and lets it reload the request
+                    // over HTTP; it is not a failed load for the native error overlay.
+                    return GeckoResult.fromValue(httpsOnlyErrorPages.dataUri(uri))
+                }
                 updateState { current ->
                     current.copy(
                         failureDescription = GECKO_NAVIGATION_FAILURE,

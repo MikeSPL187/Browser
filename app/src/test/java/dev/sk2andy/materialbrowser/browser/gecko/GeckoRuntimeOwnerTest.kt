@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import android.content.res.Configuration
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsProvider
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
@@ -73,6 +74,16 @@ class GeckoRuntimeOwnerTest {
     }
 
     @Test
+    fun `session factory forwards HTTPS-only mode`() {
+        val runtime = FakeRuntimeHandle()
+        val factory = GeckoBrowserEngineSessionFactory(runtime)
+
+        factory.setHttpsOnlyMode(HttpsOnlyMode.PrivateTabs)
+
+        assertEquals(HttpsOnlyMode.PrivateTabs, runtime.recordedHttpsOnlyMode)
+    }
+
+    @Test
     fun `session factory forwards web content color scheme`() {
         val runtime = FakeRuntimeHandle()
         val factory = GeckoBrowserEngineSessionFactory(runtime)
@@ -98,6 +109,7 @@ class GeckoRuntimeOwnerTest {
         override val toppings = FakeToppingHostRuntime()
         var thirdPartyCookiesBlocked = true
         var recordedDnsOverHttpsSettings = DnsOverHttpsSettings()
+        var recordedHttpsOnlyMode: HttpsOnlyMode? = null
         var recordedWebContentFontSizeFactor = 1f
         var recordedWebContentColorScheme = BrowserWebContentColorScheme.System
         var recordedConfiguration: Configuration? = null
@@ -125,6 +137,10 @@ class GeckoRuntimeOwnerTest {
 
         override fun setDnsOverHttpsSettings(settings: DnsOverHttpsSettings) {
             recordedDnsOverHttpsSettings = settings
+        }
+
+        override fun setHttpsOnlyMode(mode: HttpsOnlyMode) {
+            recordedHttpsOnlyMode = mode
         }
 
         override fun setWebContentFontSizeFactor(factor: Float) {

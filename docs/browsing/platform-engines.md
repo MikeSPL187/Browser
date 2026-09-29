@@ -133,6 +133,22 @@ call-site cutover are not complete.
 - DNT is advisory and sites may ignore it. GPC is a separate opt-out signal intended for legal
   sale/share requests; Candy does not claim that either signal alone blocks tracking.
 
+### HTTPS-only mode
+
+- Protection settings expose one process-wide HTTPS-only choice for GeckoView: **In all tabs**
+  (default and fallback for unknown stored values), **In private tabs only**, or **Off**. It maps to
+  `GeckoRuntimeSettings.setAllowInsecureConnections` (`HTTPS_ONLY`, `HTTPS_ONLY_PRIVATE`,
+  `ALLOW_ALL`); the stored mode is installed while Vola creates its single Gecko runtime, before the
+  first session can navigate, and live changes apply to later navigations.
+- Gecko upgrades every `http://` navigation to `https://`. When a site has no working HTTPS, Gecko
+  reports `WebRequestError.ERROR_HTTPS_ONLY` and Vola returns a local warning page from
+  `onLoadError` instead of the native error overlay. The page names the ASCII host, explains the
+  risk and offers **Go back** (primary, hidden without history) and **Continue to HTTP site**, which
+  calls `document.reloadWithHttpsOnlyException()` to load that page over HTTP. Everything shown on
+  the page is HTML-escaped; the reload is its only privileged action.
+- Android System WebView exposes no HTTPS-only API. The control stays visible but disabled in that
+  engine until Vola ships its own upgrade path for it.
+
 ### Encrypted DNS
 
 - Protection settings expose process-wide DNS-over-HTTPS choices for GeckoView: Android system DNS,

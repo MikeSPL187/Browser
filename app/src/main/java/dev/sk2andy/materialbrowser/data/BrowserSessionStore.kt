@@ -17,6 +17,7 @@ import dev.sk2andy.materialbrowser.browser.DesktopSiteRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsProvider
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.DomainMuteRules
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
@@ -1265,6 +1266,14 @@ class BrowserSessionStore internal constructor(
             .apply()
     }
 
+    fun loadHttpsOnlyMode(): HttpsOnlyMode = HttpsOnlyMode.fromStableId(
+        preferences.getString(KEY_HTTPS_ONLY_MODE, null),
+    )
+
+    fun saveHttpsOnlyMode(mode: HttpsOnlyMode) {
+        preferences.edit().putString(KEY_HTTPS_ONLY_MODE, mode.stableId).apply()
+    }
+
     fun loadAndroidBrowserEngineKind(): AndroidBrowserEngineKind =
         AndroidBrowserEngineRules.persistedKind(
             stableId = preferences.getString(KEY_ANDROID_BROWSER_ENGINE, null),
@@ -1567,6 +1576,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_AUTO_DE_AMP_ENABLED = "auto_de_amp_enabled"
         const val KEY_DNS_OVER_HTTPS_PROVIDER = "dns_over_https_provider"
         const val KEY_DNS_OVER_HTTPS_CUSTOM_ENDPOINT = "dns_over_https_custom_endpoint"
+        const val KEY_HTTPS_ONLY_MODE = "https_only_mode"
         const val KEY_ANDROID_BROWSER_ENGINE = "android_browser_engine"
         const val KEY_APPEARANCE_MODE = "appearance_mode"
         const val KEY_ANIMATIONS_ENABLED = "appearance_animations_enabled"

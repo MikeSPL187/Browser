@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
@@ -35,9 +36,11 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsProvider
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object ProtectionSettingsTestTags {
@@ -52,6 +55,7 @@ internal object ProtectionSettingsTestTags {
     const val AutoDeAmp = "protection_settings_auto_de_amp"
     const val WebRtcProtection = "protection_settings_webrtc_protection"
     const val DnsOverHttps = "protection_settings_dns_over_https"
+    const val HttpsOnly = "protection_settings_https_only"
     const val CustomDnsEndpoint = "protection_settings_custom_dns_endpoint"
 }
 
@@ -61,10 +65,12 @@ internal fun ProtectionAndDataSettingsPage(
     blockedCount: Int,
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
     isDnsOverHttpsSupported: Boolean = browserEngineKind == AndroidBrowserEngineKind.GeckoView,
+    isHttpsOnlySupported: Boolean = browserEngineKind == AndroidBrowserEngineKind.GeckoView,
     webRtcProtectionMode: WebRtcProtectionMode = WebRtcProtectionMode.Default,
     privacySignalSettings: PrivacySignalSettings = PrivacySignalSettings.Default,
     isAutoDeAmpEnabled: Boolean = true,
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
+    httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
     isRecallEnabled: Boolean = false,
     historyRecordingMode: HistoryRecordingMode = HistoryRecordingMode.Enabled,
     trustsUserCertificates: Boolean,
@@ -73,6 +79,7 @@ internal fun ProtectionAndDataSettingsPage(
     onPrivacySignalSettingsChanged: (PrivacySignalSettings) -> Unit = {},
     onAutoDeAmpEnabledChanged: (Boolean) -> Unit = {},
     onDnsOverHttpsSettingsChanged: (DnsOverHttpsSettings) -> Unit = {},
+    onHttpsOnlyModeChanged: (HttpsOnlyMode) -> Unit = {},
     onRecallEnabledChanged: (Boolean) -> Unit = {},
     onHistoryRecordingModeChanged: (HistoryRecordingMode) -> Unit = {},
     onPrivacyXRay: () -> Unit,
@@ -85,6 +92,7 @@ internal fun ProtectionAndDataSettingsPage(
 ) {
     var webRtcMenuExpanded by remember { mutableStateOf(false) }
     var dnsMenuExpanded by remember { mutableStateOf(false) }
+    var httpsOnlyMenuExpanded by remember { mutableStateOf(false) }
     var customDnsDialogVisible by rememberSaveable { mutableStateOf(false) }
     if (customDnsDialogVisible) {
         CustomDnsEndpointDialog(
@@ -172,6 +180,49 @@ internal fun ProtectionAndDataSettingsPage(
         Spacer(Modifier.height(18.dp))
         SettingsSectionTitle(stringResource(R.string.settings_section_protection))
         Spacer(Modifier.height(8.dp))
+        Box {
+            SettingsChoice(
+                title = stringResource(R.string.settings_https_only_title),
+                value = if (isHttpsOnlySupported) {
+                    httpsOnlyMode.displayName()
+                } else {
+                    stringResource(R.string.settings_https_only_unavailable)
+                },
+                expanded = httpsOnlyMenuExpanded,
+                onClick = { httpsOnlyMenuExpanded = true },
+                modifier = Modifier.testTag(ProtectionSettingsTestTags.HttpsOnly),
+                enabled = isHttpsOnlySupported,
+            )
+            SettingsDropdown(
+                expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
+                onDismissRequest = { httpsOnlyMenuExpanded = false },
+            ) {
+                HttpsOnlyMode.entries.forEach { mode ->
+                    SettingsDropdownItem(
+                        label = mode.displayName(),
+                        selected = mode == httpsOnlyMode,
+                        onClick = {
+                            httpsOnlyMenuExpanded = false
+                            if (mode != httpsOnlyMode) onHttpsOnlyModeChanged(mode)
+                        },
+                    )
+                }
+            }
+        }
+        Text(
+            text = stringResource(
+                if (isHttpsOnlySupported) {
+                    R.string.settings_https_only_summary
+                } else {
+                    R.string.settings_https_only_system_webview_summary
+                },
+            ),
+            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp, bottom = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                alpha = if (isHttpsOnlySupported) 1f else 0.6f,
+            ),
+        )
         SettingsSwitch(
             title = stringResource(R.string.settings_block_ads_title),
             subtitle = stringResource(R.string.settings_block_ads_subtitle),
@@ -482,6 +533,15 @@ private fun WebRtcProtectionMode.displayName(): String = stringResource(
 )
 
 @Composable
+private fun HttpsOnlyMode.displayName(): String = stringResource(
+    when (this) {
+        HttpsOnlyMode.Always -> R.string.settings_https_only_mode_always
+        HttpsOnlyMode.PrivateTabs -> R.string.settings_https_only_mode_private_tabs
+        HttpsOnlyMode.Off -> R.string.settings_https_only_mode_off
+    },
+)
+
+@Composable
 private fun DnsOverHttpsProvider.displayName(): String = stringResource(
     when (this) {
         DnsOverHttpsProvider.System -> R.string.settings_dns_over_https_provider_system
@@ -545,5 +605,24 @@ private fun UserCaTrustWarning(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
+    }
+}
+
+@Preview(name = "Protection · HTTPS-only", widthDp = 360, heightDp = 900)
+@Composable
+private fun ProtectionSettingsPagePreview() {
+    MaterialBrowserTheme {
+        ProtectionAndDataSettingsPage(
+            blockerSettings = BlockerSettings(),
+            blockedCount = 128,
+            httpsOnlyMode = HttpsOnlyMode.Always,
+            trustsUserCertificates = false,
+            onBlockerSettingsChanged = {},
+            onPrivacyXRay = {},
+            onPermissionRadar = {},
+            onFilterStudio = {},
+            onClearData = {},
+            onBack = {},
+        )
     }
 }
