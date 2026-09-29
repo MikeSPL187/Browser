@@ -163,30 +163,42 @@ jobs:
       - name: Collect APKs
         run: |
           short_sha="${GITHUB_SHA::7}"
-          mkdir -p dist
+          mkdir -p dist/gecko dist/systemwebview
           cp app/build/outputs/apk/full/debug/app-full-debug.apk \
-            "dist/Vola-${short_sha}-gecko-${RELEASE_ABI}-debug.apk"
+            "dist/gecko/Vola-${short_sha}-gecko-${RELEASE_ABI}-debug.apk"
           cp app/build/outputs/apk/systemwebview/debug/app-systemwebview-debug.apk \
-            "dist/Vola-${short_sha}-systemwebview-debug.apk"
+            "dist/systemwebview/Vola-${short_sha}-systemwebview-debug.apk"
+          aapt2="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name aapt2 | sort -V | tail -n 1)"
           {
             echo "### Debug APKs"
             echo
-            echo "| APK | Size | SHA-256 |"
-            echo "| --- | ---: | --- |"
-            for apk in dist/*.apk; do
+            echo "| APK | Size | Package | Native code | SHA-256 |"
+            echo "| --- | ---: | --- | --- | --- |"
+            for apk in dist/*/*.apk; do
+              badging="$("$aapt2" dump badging "$apk")"
+              package="$(sed -nE "s/^package: name='([^']+)'.*/\1/p" <<< "$badging")"
+              abis="$(sed -nE 's/^native-code: (.*)$/\1/p' <<< "$badging" | tr -d "'")"
               size="$(du -h "$apk" | cut -f1)"
               digest="$(sha256sum "$apk" | cut -d ' ' -f1)"
-              echo "| $(basename "$apk") | ${size} | \`${digest}\` |"
+              echo "| $(basename "$apk") | ${size} | \`${package}\` | ${abis:-none} | \`${digest::16}…\` |"
             done
             echo
             echo "Download them from the **Artifacts** section of this run."
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload APKs
+      - name: Upload GeckoView APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: Vola-debug-${{ github.run_number }}
-          path: dist/*.apk
+          name: Vola-gecko-debug-${{ github.run_number }}
+          path: dist/gecko/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload System WebView APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Vola-webview-debug-${{ github.run_number }}
+          path: dist/systemwebview/*.apk
           if-no-files-found: error
           retention-days: 14
 
