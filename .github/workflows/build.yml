@@ -1,0 +1,354 @@
+# Vola CI: the single source of truth for builds.
+#
+# - Every pull request and push to main: script tests, unit tests (GeckoView and
+#   System WebView flavors), Android lint, and installable arm64 debug APKs.
+# - Tags v*, or a manual run on main with "release" enabled: the same checks, then signed
+#   release APKs published as a GitHub Release (the manual run also creates the tag).
+#
+# Secrets (Settings -> Secrets and variables -> Actions):
+#   VOLA_PREVIEW_KEYSTORE_BASE64   optional, stable key for debug APKs so they install over each other
+#   VOLA_RELEASE_KEYSTORE_BASE64   required for tags
+#   VOLA_RELEASE_STORE_PASSWORD    required for tags
+#   VOLA_RELEASE_KEY_ALIAS         required for tags
+#   VOLA_RELEASE_KEY_PASSWORD      required for tags
+# Variables:
+#   VOLA_RELEASE_CERTIFICATE_SHA256  recommended, pins the release certificate fingerprint
+
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Publish a signed release for the version in gradle.properties (main only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ANDROID_PLATFORM: "platforms;android-37.1"
+  RELEASE_ABI: arm64-v8a
+
+jobs:
+  checks:
+    name: Tests and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "22"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK platform
+        run: sdkmanager "$ANDROID_PLATFORM"
+
+      - name: Script tests
+        run: |
+          for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py; do
+            echo "::group::${test}"
+            python3 "$test"
+            echo "::endgroup::"
+          done
+          python3 scripts/generate_gecko_default_extensions.py verify
+          node --test scripts/*.test.mjs
+
+      - name: Unit tests
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          testFullDebugUnitTest
+          testSystemwebviewDebugUnitTest
+          :shared:testDebugUnitTest
+
+      - name: Android lint
+        run: ./gradlew --no-daemon --stacktrace lintFullDebug
+
+      - name: Upload test and lint reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: reports-${{ github.run_number }}
+          path: |
+            app/build/reports/
+            app/build/test-results/
+            shared/build/reports/
+            shared/build/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  debug-apk:
+    name: Debug APKs (arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK platform
+        run: sdkmanager "$ANDROID_PLATFORM"
+
+      # AGP signs debug builds with $ANDROID_USER_HOME/debug.keystore (alias androiddebugkey,
+      # passwords "android"). Restoring a stable one lets each new APK update the previous
+      # install instead of requiring an uninstall that wipes browser data.
+      - name: Restore preview signing key
+        env:
+          VOLA_PREVIEW_KEYSTORE_BASE64: ${{ secrets.VOLA_PREVIEW_KEYSTORE_BASE64 }}
+        run: |
+          if [[ -z "${VOLA_PREVIEW_KEYSTORE_BASE64:-}" ]]; then
+            echo "::notice title=Preview signing::VOLA_PREVIEW_KEYSTORE_BASE64 is not set. Debug APKs use a throwaway key and cannot be installed over each other."
+            exit 0
+          fi
+          android_user_home="${ANDROID_USER_HOME:-$HOME/.android}"
+          mkdir -p "$android_user_home"
+          keystore="$android_user_home/debug.keystore"
+          printf '%s' "$VOLA_PREVIEW_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          keytool -list -keystore "$keystore" -storepass android -alias androiddebugkey > /dev/null
+
+      - name: Build debug APKs
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          -Pcandy.releaseAbi="$RELEASE_ABI"
+          assembleFullDebug
+          assembleSystemwebviewDebug
+
+      - name: Collect APKs
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          mkdir -p dist
+          cp app/build/outputs/apk/full/debug/app-full-debug.apk \
+            "dist/Vola-${short_sha}-gecko-${RELEASE_ABI}-debug.apk"
+          cp app/build/outputs/apk/systemwebview/debug/app-systemwebview-debug.apk \
+            "dist/Vola-${short_sha}-systemwebview-debug.apk"
+          {
+            echo "### Debug APKs"
+            echo
+            echo "| APK | Size | SHA-256 |"
+            echo "| --- | ---: | --- |"
+            for apk in dist/*.apk; do
+              size="$(du -h "$apk" | cut -f1)"
+              digest="$(sha256sum "$apk" | cut -d ' ' -f1)"
+              echo "| $(basename "$apk") | ${size} | \`${digest}\` |"
+            done
+            echo
+            echo "Download them from the **Artifacts** section of this run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Vola-debug-${{ github.run_number }}
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Signed release
+    if: >-
+      ${{ startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.release && github.ref == 'refs/heads/main') }}
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          project_version="$(sed -n 's/^candy\.versionName=//p' gradle.properties)"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v${project_version}"
+            if gh release view "$tag" > /dev/null 2>&1; then
+              echo "Release ${tag} already exists. Bump candy.versionName in gradle.properties." >&2
+              exit 1
+            fi
+          fi
+          version="${tag#v}"
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+){1,2}(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag ${tag} must look like v0.2, v1.0.0 or v1.0.0-rc.1." >&2
+            exit 1
+          fi
+          if [[ "$version" != "$project_version" ]]; then
+            echo "Tag ${tag} does not match versionName ${project_version} in gradle.properties." >&2
+            exit 1
+          fi
+          notes="release-notes/${version}.md"
+          if [[ ! -f "$notes" ]]; then
+            echo "Release notes ${notes} are missing." >&2
+            exit 1
+          fi
+          {
+            echo "RELEASE_TAG=${tag}"
+            echo "RELEASE_VERSION=${version}"
+            echo "RELEASE_NOTES=${notes}"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK platform
+        run: sdkmanager "$ANDROID_PLATFORM"
+
+      - name: Restore release keystore
+        env:
+          VOLA_RELEASE_KEYSTORE_BASE64: ${{ secrets.VOLA_RELEASE_KEYSTORE_BASE64 }}
+          VOLA_RELEASE_STORE_PASSWORD: ${{ secrets.VOLA_RELEASE_STORE_PASSWORD }}
+          VOLA_RELEASE_KEY_ALIAS: ${{ secrets.VOLA_RELEASE_KEY_ALIAS }}
+          VOLA_RELEASE_KEY_PASSWORD: ${{ secrets.VOLA_RELEASE_KEY_PASSWORD }}
+          VOLA_RELEASE_CERTIFICATE_SHA256: ${{ vars.VOLA_RELEASE_CERTIFICATE_SHA256 }}
+        run: |
+          for variable in VOLA_RELEASE_KEYSTORE_BASE64 VOLA_RELEASE_STORE_PASSWORD \
+            VOLA_RELEASE_KEY_ALIAS VOLA_RELEASE_KEY_PASSWORD; do
+            if [[ -z "${!variable:-}" ]]; then
+              echo "Missing release secret: ${variable}" >&2
+              exit 1
+            fi
+          done
+
+          keystore="$RUNNER_TEMP/vola-release.jks"
+          printf '%s' "$VOLA_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          keytool -list -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD \
+            -alias "$VOLA_RELEASE_KEY_ALIAS" > /dev/null
+
+          actual_certificate="$(
+            keytool -exportcert -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD \
+              -alias "$VOLA_RELEASE_KEY_ALIAS" | sha256sum | cut -d ' ' -f1
+          )"
+          if [[ -n "${VOLA_RELEASE_CERTIFICATE_SHA256:-}" ]]; then
+            expected_certificate="${VOLA_RELEASE_CERTIFICATE_SHA256//:/}"
+            expected_certificate="${expected_certificate,,}"
+            if [[ "$actual_certificate" != "$expected_certificate" ]]; then
+              echo "Release keystore certificate does not match VOLA_RELEASE_CERTIFICATE_SHA256." >&2
+              exit 1
+            fi
+          else
+            echo "::warning title=Release signing::Set the repository variable VOLA_RELEASE_CERTIFICATE_SHA256=${actual_certificate} to pin the release certificate."
+          fi
+
+          # app/build.gradle.kts reads these names.
+          {
+            echo "CANDY_RELEASE_KEYSTORE_PATH=${keystore}"
+            echo "EXPECTED_CERTIFICATE=${actual_certificate}"
+          } >> "$GITHUB_ENV"
+
+      - name: Build signed release APKs
+        env:
+          CANDY_RELEASE_STORE_PASSWORD: ${{ secrets.VOLA_RELEASE_STORE_PASSWORD }}
+          CANDY_RELEASE_KEY_ALIAS: ${{ secrets.VOLA_RELEASE_KEY_ALIAS }}
+          CANDY_RELEASE_KEY_PASSWORD: ${{ secrets.VOLA_RELEASE_KEY_PASSWORD }}
+        run: >-
+          ./gradlew --no-daemon --stacktrace --max-workers=1
+          -Pcandy.releaseAbi="$RELEASE_ABI"
+          -Pcandy.compressNativeLibs=true
+          assembleFullRelease
+          assembleSystemwebviewRelease
+
+      - name: Verify and checksum APKs
+        run: |
+          mkdir -p dist
+          gecko_apk="dist/Vola-${RELEASE_TAG}-${RELEASE_ABI}.apk"
+          webview_apk="dist/Vola-${RELEASE_TAG}-systemwebview.apk"
+          cp app/build/outputs/apk/full/release/app-full-release.apk "$gecko_apk"
+          cp app/build/outputs/apk/systemwebview/release/app-systemwebview-release.apk "$webview_apk"
+
+          apksigner="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name apksigner | sort -V | tail -n 1)"
+          zipalign="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name zipalign | sort -V | tail -n 1)"
+          for apk in "$gecko_apk" "$webview_apk"; do
+            verification="$("$apksigner" verify --verbose --print-certs "$apk")"
+            actual_certificate="$(
+              printf '%s\n' "$verification" \
+                | sed -nE 's/^.*certificate SHA-256 digest: ([[:xdigit:]:]+)$/\1/p' \
+                | tr '[:upper:]' '[:lower:]' | tr -d ':' | sort -u
+            )"
+            if [[ "$actual_certificate" != "$EXPECTED_CERTIFICATE" ]]; then
+              echo "${apk} is not signed with the release certificate." >&2
+              exit 1
+            fi
+            "$zipalign" -c -P 16 4 "$apk"
+            (cd dist && sha256sum "$(basename "$apk")" > "$(basename "$apk").sha256")
+          done
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=(--title "Vola ${RELEASE_TAG}" --notes-file "$RELEASE_NOTES")
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            flags+=(--verify-tag)
+          else
+            flags+=(--target "$GITHUB_SHA")
+          fi
+          if [[ "$RELEASE_VERSION" == *-* ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$RELEASE_TAG" dist/* "${flags[@]}"
+
+      - name: Remove release keystore
+        if: ${{ always() }}
+        run: rm -f -- "$RUNNER_TEMP/vola-release.jks"
