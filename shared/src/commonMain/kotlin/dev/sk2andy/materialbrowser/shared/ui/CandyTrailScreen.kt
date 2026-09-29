@@ -96,6 +96,8 @@ import dev.sk2andy.materialbrowser.ui.CandyTrailPathSegment
 import dev.sk2andy.materialbrowser.ui.CandyTrailViewportRules
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Refresh
 
 data class CandyTrailStrings(
     val empty: String,
@@ -1132,13 +1134,13 @@ private fun CandyTrailZoomControls(
                     contentDescription = strings.zoomOut
                 },
             ) {
-                Text("−", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Remove, contentDescription = null)
             }
             FilledIconButton(
                 onClick = onReset,
                 modifier = Modifier.semantics { contentDescription = strings.resetZoom },
             ) {
-                Text("◎", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Refresh, contentDescription = null)
             }
             IconButton(onClick = onZoomIn) {
                 Icon(Icons.Default.Add, strings.zoomIn)

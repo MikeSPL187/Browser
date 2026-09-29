@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.shared.ui
 import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -14,6 +15,21 @@ class WorkspaceIconsTest {
             val emoji = assertNotNull(WorkspaceIcons.emojiFor(id), id)
             assertEquals(id, WorkspaceIcons.idFor(emoji))
         }
+    }
+
+    @Test
+    fun workspacesOnlyOfferSyncableIconsWhileLocalPickersOfferAll() {
+        assertEquals(54, WorkspaceIcons.workspaceKeys.size)
+        assertFalse("🧩" in WorkspaceIcons.workspaceKeys)
+        assertTrue("🧩" in WorkspaceIcons.keys)
+        assertTrue(WorkspaceIcons.keys.containsAll(WorkspaceIcons.workspaceKeys))
+        assertEquals("puzzle", WorkspaceIcons.idFor("🧩"))
+    }
+
+    @Test
+    fun pathDataFallsBackToTheStarIcon() {
+        assertEquals(WorkspaceIcons.pathData("⭐"), WorkspaceIcons.pathData("🦄"))
+        assertTrue(WorkspaceIcons.pathData("💼").startsWith("M"))
     }
 
     @Test

@@ -71,7 +71,7 @@ class ProfileCreationSheetInstrumentedTest {
         )
         createButton.assertIsNotEnabled()
 
-        composeRule.onNodeWithContentDescription("💼").performClick()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_work)).performClick()
         composeRule.onNodeWithText(
             context.getString(R.string.settings_profile_isolation_title),
         ).performClick()
@@ -166,7 +166,7 @@ class ProfileCreationSheetInstrumentedTest {
         assertTrue(titleBounds.bottom <= iconScrollBounds.bottom)
         assertTrue(iconScrollBounds.bottom <= buttonBoundsBeforeScroll.top)
 
-        composeRule.onNodeWithContentDescription("📅").performScrollTo()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_calendar)).performScrollTo()
         composeRule.waitForIdle()
 
         val iconScrollBoundsAfterScroll = composeRule

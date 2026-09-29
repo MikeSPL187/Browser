@@ -104,6 +104,8 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 internal object NewTabFavoritesTestTags {
     const val Container = "new_tab_favorites_container"
@@ -766,7 +768,7 @@ private fun NewTabFolderIcon(
         Box(contentAlignment = Alignment.Center) {
             when (val icon = folder.icon) {
                 is FavoriteFolderIcon.Emoji ->
-                    Text(icon.value, style = MaterialTheme.typography.titleMedium)
+                    PlatformProfileEmoji(emoji = icon.value, fontSize = 22.sp)
                 FavoriteFolderIcon.Custom -> {
                     val customIcon = folderIcons[folder.id]
                     if (customIcon != null && !customIcon.isRecycled) {

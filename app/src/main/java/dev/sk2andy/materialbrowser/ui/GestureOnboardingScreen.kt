@@ -672,13 +672,11 @@ private fun GestureOnboardingCelebration(
                 shadowElevation = 18.dp,
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "✓",
-                        modifier = Modifier.offset(y = (-3).dp),
-                        color = Color.White,
-                        fontSize = 64.sp,
-                        lineHeight = 64.sp,
-                        fontWeight = FontWeight.Bold,
+                    Icon(
+                        painter = painterResource(R.drawable.ic_symbol_check),
+                        contentDescription = null,
+                        modifier = Modifier.size(72.dp),
+                        tint = Color.White,
                     )
                 }
             }

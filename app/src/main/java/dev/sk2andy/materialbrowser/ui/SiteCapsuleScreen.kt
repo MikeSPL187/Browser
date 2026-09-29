@@ -93,6 +93,7 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorSubmission
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleRules
 import kotlinx.coroutines.flow.collect
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 
 object SiteCapsuleTestTags {
     const val Screen = "site_capsule_screen"
@@ -100,13 +101,13 @@ object SiteCapsuleTestTags {
     const val Editor = "site_capsule_editor"
     const val Save = "site_capsule_save"
     const val Chrome = "site_capsule_chrome"
-    const val IconEmoji = "site_capsule_icon_emoji"
+    const val PreviewFallback = "site_capsule_preview_fallback"
     const val CustomIcon = "site_capsule_custom_icon"
     const val EditCustomIcon = "site_capsule_edit_custom_icon"
 
     fun iconColor(color: CapsuleIconColor): String = "site_capsule_icon_color:${color.wireValue}"
 
-    fun iconEmojiQuickPick(emoji: String): String = "site_capsule_icon_emoji_quick_pick:$emoji"
+    fun icon(key: String): String = "site_capsule_icon:$key"
 }
 
 @Composable
@@ -500,24 +501,10 @@ fun SiteCapsuleEditorScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    stringResource(R.string.capsule_icon_emoji),
+                    stringResource(R.string.capsule_icon_symbol),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                OutlinedTextField(
-                    value = iconEmoji,
-                    onValueChange = {
-                        iconEmoji = it.take(SiteCapsuleRules.MAX_ICON_EMOJI_LENGTH)
-                        if (request.previewIconIsRendered) {
-                            iconMode = CapsuleIconMode.ProfileFallback
-                        }
-                    },
-                    label = { Text(stringResource(R.string.capsule_icon_emoji_input)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(SiteCapsuleTestTags.IconEmoji),
-                )
-                EmojiChoices(
+                IconKeyChoices(
                     selected = iconEmoji,
                     onSelect = {
                         iconEmoji = it
@@ -525,7 +512,7 @@ fun SiteCapsuleEditorScreen(
                             iconMode = CapsuleIconMode.ProfileFallback
                         }
                     },
-                    testTagForEmoji = SiteCapsuleTestTags::iconEmojiQuickPick,
+                    testTagForKey = SiteCapsuleTestTags::icon,
                 )
                 Text(
                     stringResource(R.string.capsule_icon_background),
@@ -593,7 +580,11 @@ fun SiteCapsuleEditorScreen(
                         onSelect = { selectedProfileId = it },
                     )
                 } else {
-                    EmojiChoices(selected = dedicatedEmoji, onSelect = { dedicatedEmoji = it })
+                    IconKeyChoices(
+                        selected = dedicatedEmoji,
+                        onSelect = { dedicatedEmoji = it },
+                        keys = WorkspaceIcons.workspaceKeys,
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -736,7 +727,11 @@ private fun CapsuleIconPreview(bitmap: Bitmap?) {
             )
         } else {
             Box(contentAlignment = Alignment.Center) {
-                Text(SiteCapsuleRules.DEFAULT_ICON_EMOJI, fontSize = 30.sp)
+                PlatformProfileEmoji(
+                    emoji = SiteCapsuleRules.DEFAULT_ICON_EMOJI,
+                    fontSize = 30.sp,
+                    modifier = Modifier.testTag(SiteCapsuleTestTags.PreviewFallback),
+                )
             }
         }
     }
@@ -827,49 +822,6 @@ private fun ProfileChoices(
                 Box(contentAlignment = Alignment.Center) {
                     PlatformProfileEmoji(emoji = profile.emoji, fontSize = 24.sp)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmojiChoices(
-    selected: String,
-    onSelect: (String) -> Unit,
-    testTagForEmoji: ((String) -> String)? = null,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        listOf("🧩", "🍬", "💼", "🛒", "🎵", "📚", "🌍", "⭐").forEach { emoji ->
-            val optionDescription = stringResource(R.string.capsule_icon_emoji_option, emoji)
-            Surface(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .selectable(
-                        selected = emoji == selected,
-                        role = Role.RadioButton,
-                        onClick = { onSelect(emoji) },
-                    )
-                    .semantics { contentDescription = optionDescription }
-                    .then(
-                        testTagForEmoji?.let { tagForEmoji ->
-                            Modifier.testTag(tagForEmoji(emoji))
-                        } ?: Modifier,
-                    ),
-                shape = CircleShape,
-                color = if (emoji == selected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-                },
-            ) {
-                Box(contentAlignment = Alignment.Center) { Text(emoji, fontSize = 24.sp) }
             }
         }
     }

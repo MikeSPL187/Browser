@@ -53,6 +53,7 @@ import dev.sk2andy.materialbrowser.sync.SyncRepositoryState
 import dev.sk2andy.materialbrowser.sync.SyncStatus
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import androidx.compose.ui.unit.sp
+import dev.sk2andy.materialbrowser.WorkspaceIconResources
 
 private val SYNC_ACCENT_HUES = listOf(0, 36, 72, 108, 144, 180, 216, 252, 288, 312)
 private const val SYNC_ACCENT_COLORS_PER_ROW = 5
@@ -264,7 +265,7 @@ internal fun SyncSettingsPage(
                     Column(Modifier.padding(start = 14.dp).weight(1f)) {
                         Text(stringResource(R.string.sync_device_icon_label))
                         Text(
-                            selectedIcon.label,
+                            stringResource(WorkspaceIconResources.nameFor(selectedIcon.emoji)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -277,7 +278,7 @@ internal fun SyncSettingsPage(
             ) {
                 iconCatalog.icons.forEach { icon ->
                     DropdownMenuItem(
-                        text = { Text(icon.label) },
+                        text = { Text(stringResource(WorkspaceIconResources.nameFor(icon.emoji))) },
                         leadingIcon = {
                             PlatformProfileEmoji(emoji = icon.emoji, fontSize = 20.sp)
                         },

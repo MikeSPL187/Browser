@@ -163,6 +163,7 @@ fun SharedProfileEmojiPickerSheet(
     creationOptions: (@Composable () -> Unit)? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     creationHeader: (@Composable () -> Unit)? = null,
+    iconDescription: @Composable (String) -> String = { it },
 ) {
     if (!visible) return
     var draftEmoji by remember(creatingProfile, selectedEmoji) { mutableStateOf(selectedEmoji) }
@@ -233,6 +234,7 @@ fun SharedProfileEmojiPickerSheet(
                         emojis = emojis,
                         selectedEmoji = draftEmoji,
                         onSelect = { draftEmoji = it },
+                        iconDescription = iconDescription,
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -264,6 +266,7 @@ fun SharedProfileEmojiPickerSheet(
                         emojis = emojis,
                         selectedEmoji = draftEmoji,
                         onSelect = onSelect,
+                        iconDescription = iconDescription,
                     )
                 }
             }
@@ -276,6 +279,7 @@ private fun ProfileEmojiGrid(
     emojis: List<String>,
     selectedEmoji: String?,
     onSelect: (String) -> Unit,
+    iconDescription: @Composable (String) -> String,
 ) {
     emojis.chunked(PROFILE_ICON_COLUMNS).forEach { rowEmojis ->
         Row(
@@ -284,11 +288,12 @@ private fun ProfileEmojiGrid(
         ) {
             rowEmojis.forEach { emoji ->
                 val isSelected = emoji == selectedEmoji
+                val description = iconDescription(emoji)
                 Surface(
                     modifier = Modifier
                         .padding(vertical = 4.dp)
                         .size(48.dp)
-                        .semantics { contentDescription = emoji }
+                        .semantics { contentDescription = description }
                         .clickable(
                             role = Role.Button,
                             onClick = { onSelect(emoji) },

@@ -65,7 +65,7 @@ data class SyncSettingsUiState(
     val pendingCount: Int = 0,
     val lastSuccessAt: String? = null,
     val icons: List<SyncDeviceIconDefinition> = listOf(
-        SyncDeviceIconDefinition("candy", "🍬", "Candy"),
+        SyncDeviceIconDefinition("candy", "🍬", "Sparkles"),
     ),
     val localProfiles: List<SyncLocalProfileOption> = listOf(
         SyncLocalProfileOption("default", "🍬", true),

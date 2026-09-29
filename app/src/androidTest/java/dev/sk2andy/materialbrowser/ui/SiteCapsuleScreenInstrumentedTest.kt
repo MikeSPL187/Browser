@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
@@ -15,7 +14,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
@@ -125,17 +123,18 @@ class SiteCapsuleScreenInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(SiteCapsuleTestTags.Editor).assertIsDisplayed()
-        composeRule.onNodeWithTag(SiteCapsuleTestTags.iconEmojiQuickPick("⭐"))
+        composeRule.onNodeWithTag(SiteCapsuleTestTags.icon("⭐"))
             .performScrollTo()
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton))
             .assertContentDescriptionEquals(
-                composeRule.activity.getString(R.string.capsule_icon_emoji_option, "⭐"),
+                composeRule.activity.getString(R.string.workspace_icon_star),
             )
             .performClick()
             .assertIsSelected()
-        composeRule.onNodeWithTag(SiteCapsuleTestTags.IconEmoji)
+        composeRule.onNodeWithTag(SiteCapsuleTestTags.icon("🧪"))
             .performScrollTo()
-            .performTextReplacement("🚀")
+            .performClick()
+            .assertIsSelected()
         composeRule.onNodeWithTag(SiteCapsuleTestTags.iconColor(CapsuleIconColor.Sky))
             .performScrollTo()
             .performClick()
@@ -148,7 +147,7 @@ class SiteCapsuleScreenInstrumentedTest {
         assertEquals("source-tab", submission.get()?.sourceTabId)
         assertEquals("Example Capsule", submission.get()?.name)
         assertEquals("https://example.com", submission.get()?.startUrl)
-        assertEquals("🚀", submission.get()?.iconEmoji)
+        assertEquals("🧪", submission.get()?.iconEmoji)
         assertEquals(CapsuleIconColor.Sky, submission.get()?.iconColor)
     }
 
@@ -211,7 +210,7 @@ class SiteCapsuleScreenInstrumentedTest {
                             name = "Mail",
                             startUrl = "https://mail.example",
                             profileId = "candy",
-                            iconEmoji = "📬",
+                            iconEmoji = "📚",
                             iconColor = CapsuleIconColor.Charcoal,
                             createdAtMillis = 1L,
                             updatedAtMillis = 2L,
@@ -233,14 +232,9 @@ class SiteCapsuleScreenInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(SiteCapsuleTestTags.IconEmoji)
+        composeRule.onNodeWithTag(SiteCapsuleTestTags.icon("📚"))
             .performScrollTo()
-            .assert(
-                SemanticsMatcher.expectValue(
-                    SemanticsProperties.EditableText,
-                    AnnotatedString("📬"),
-                ),
-            )
+            .assertIsSelected()
         composeRule.onNodeWithTag(SiteCapsuleTestTags.iconColor(CapsuleIconColor.Charcoal))
             .performScrollTo()
             .assertIsSelected()

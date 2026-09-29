@@ -340,7 +340,7 @@
     <string name="favorites_parent">Parent folder</string>
     <string name="favorites_folder_empty">This folder is empty</string>
     <string name="favorites_folder_icon">Folder icon</string>
-    <string name="favorites_folder_emoji">Emoji (optional)</string>
+    <string name="favorites_folder_symbol">Icon</string>
     <string name="favorites_upload_icon">Choose image</string>
     <string name="favorites_reset_icon">Use favicon preview</string>
     <string name="favorites_icon_failed">This image couldn’t be loaded</string>
@@ -804,11 +804,9 @@
     <string name="capsule_icon_custom">Custom image</string>
     <string name="capsule_icon_custom_summary">Imports an image that you can crop for this Capsule</string>
     <string name="capsule_icon_custom_edit">Edit crop</string>
-    <string name="capsule_icon_fallback">Capsule emoji</string>
-    <string name="capsule_icon_fallback_summary">Uses this Capsule’s own emoji or symbol</string>
-    <string name="capsule_icon_emoji">Capsule emoji</string>
-    <string name="capsule_icon_emoji_input">Emoji or symbol</string>
-    <string name="capsule_icon_emoji_option">Emoji option %1$s</string>
+    <string name="capsule_icon_fallback">Capsule icon</string>
+    <string name="capsule_icon_fallback_summary">Uses the icon chosen below</string>
+    <string name="capsule_icon_symbol">Icon</string>
     <string name="capsule_icon_background">Icon background</string>
     <string name="capsule_icon_background_option">%1$s icon background</string>
     <string name="capsule_icon_color_light">Light</string>

@@ -30,9 +30,13 @@ gets its own dedicated workspace names it after the capsule.
 
 `scripts/workspace-icons/icons.txt` maps each catalog id (`sync/protocol/device-icons-v1.json`) to a
 Material Symbols name. `scripts/workspace-icons/generate.py` downloads the symbols and writes
-`WorkspaceIcons.kt` (Compose vectors), `WidgetWorkspaceIcons.kt` and the `ic_widget_workspace_*`
+`WorkspaceIcons.kt` (Compose vectors), `WorkspaceIconResources.kt` (localized names from
+`labels.tsv`, widget drawables) and the `ic_widget_workspace_*`
 drawables for the home screen widget. Unknown keys, such as an emoji from older data, fall back to
-the star icon. Everywhere a workspace used to be shown as a bare emoji (history and filter chips,
+the star icon. Lines with a third column add icons outside the sync catalog (puzzle, folder,
+bookmark, globe): site capsules and favorite folders can use every icon, workspaces only the catalog
+ones so they stay syncable. `IconKeyChoices` is the shared picker, with localized names for
+TalkBack. Everywhere a workspace used to be shown as a bare emoji (history and filter chips,
 command palette, external link bar, launcher shortcuts, widget) it now shows the icon and the
 workspace name.
 
