@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -46,9 +47,11 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 
 internal sealed interface PageErrorFeedbackState {
     data object Hidden : PageErrorFeedbackState
@@ -61,7 +64,6 @@ internal sealed interface PageErrorFeedbackState {
 
     data class Offline(
         val isOnlineReady: Boolean = false,
-        val game: CandyCircuitGameState = CandyCircuitGameState(),
     ) : PageErrorFeedbackState
 }
 
@@ -90,15 +92,9 @@ internal object PageErrorFeedbackRules {
         !isOnline && current is PageErrorFeedbackState.Offline -> PageErrorObservation(
             state = current.copy(isOnlineReady = false),
         )
-        !isOnline && error != null -> {
-            val offline = current as? PageErrorFeedbackState.Offline
-            PageErrorObservation(
-                state = PageErrorFeedbackState.Offline(
-                    game = offline?.game ?: CandyCircuitGameState(),
-                    isOnlineReady = false,
-                ),
-            )
-        }
+        !isOnline && error != null -> PageErrorObservation(
+            state = PageErrorFeedbackState.Offline(isOnlineReady = false),
+        )
         isOnline && current is PageErrorFeedbackState.Offline ->
             PageErrorObservation(state = current.copy(isOnlineReady = true))
         failureKind == BrowserEngineFailureKind.Offline && error != null -> PageErrorObservation(
@@ -139,22 +135,14 @@ internal object PageErrorFeedbackTestTags {
     const val Page = "page_error_page"
     const val Retry = "page_error_retry"
     const val RetryProgress = "page_error_retry_progress"
-    const val Game = "page_error_candy_game"
-    const val OnlineBanner = "page_error_online_banner"
-    const val Score = "page_error_game_score"
-    const val BestScore = "page_error_game_best_score"
-    const val Moves = "page_error_game_moves"
-    const val Combo = "page_error_game_combo"
-    const val Celebration = "page_error_game_celebration"
-    const val Restart = "page_error_game_restart"
-    const val TilePrefix = "page_error_game_tile_"
+    const val Offline = "page_error_offline"
+    const val OfflinePill = "page_error_offline_pill"
 }
 
 @Composable
 internal fun PageErrorFeedback(
     state: PageErrorFeedbackState,
     onRetry: () -> Unit,
-    onGameChange: (CandyCircuitGameState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -182,7 +170,6 @@ internal fun PageErrorFeedback(
                     is PageErrorFeedbackState.Offline -> OfflinePage(
                         state = current,
                         onRetry = onRetry,
-                        onGameChange = onGameChange,
                     )
                     PageErrorFeedbackState.Retrying -> RetryingPage()
                     PageErrorFeedbackState.Hidden -> Unit
@@ -353,14 +340,74 @@ private fun UnreachablePage(onRetry: () -> Unit) {
 private fun OfflinePage(
     state: PageErrorFeedbackState.Offline,
     onRetry: () -> Unit,
-    onGameChange: (CandyCircuitGameState) -> Unit,
 ) {
-    CandyCircuitGame(
-        isOnlineReady = state.isOnlineReady,
-        game = state.game,
-        onReload = onRetry,
-        onGameChange = onGameChange,
-    )
+    val online = state.isOnlineReady
+    ProblemPageLayout(modifier = Modifier.testTag(PageErrorFeedbackTestTags.Offline)) {
+        OfflineArtwork(isOnline = online)
+        Spacer(Modifier.height(30.dp))
+        Text(
+            text = stringResource(
+                if (online) R.string.page_error_back_online else R.string.page_error_offline_title,
+            ),
+            modifier = Modifier.semantics {
+                heading()
+                liveRegion = LiveRegionMode.Polite
+            },
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(
+                if (online) R.string.page_error_back_online_body else R.string.page_error_offline_body,
+            ),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(30.dp))
+        if (online) {
+            Button(
+                onClick = onRetry,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .testTag(PageErrorFeedbackTestTags.Retry),
+                shape = CircleShape,
+            ) {
+                Text(
+                    text = stringResource(R.string.page_error_load_page),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        } else {
+            OfflinePill(modifier = Modifier.testTag(PageErrorFeedbackTestTags.OfflinePill))
+        }
+    }
+}
+
+@Composable
+private fun OfflineArtwork(isOnline: Boolean) {
+    Surface(
+        modifier = Modifier.size(width = 204.dp, height = 144.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.82f),
+        tonalElevation = 6.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            ConnectivityGlyph(
+                isOnline = isOnline,
+                color = if (isOnline) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.tertiary
+                },
+                modifier = Modifier.size(84.dp),
+            )
+        }
+    }
 }
 
 @Composable
@@ -495,6 +542,25 @@ private fun RetryingPage() {
                 .testTag(PageErrorFeedbackTestTags.RetryProgress)
                 .semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.titleLarge,
+        )
+    }
+}
+
+@Preview(name = "Offline", widthDp = 360, heightDp = 640)
+@Composable
+private fun OfflinePagePreview() {
+    MaterialBrowserTheme {
+        PageErrorFeedback(state = PageErrorFeedbackState.Offline(), onRetry = {})
+    }
+}
+
+@Preview(name = "Back online · dark", widthDp = 360, heightDp = 640, uiMode = UI_MODE_NIGHT_YES)
+@Composable
+private fun BackOnlinePagePreview() {
+    MaterialBrowserTheme {
+        PageErrorFeedback(
+            state = PageErrorFeedbackState.Offline(isOnlineReady = true),
+            onRetry = {},
         )
     }
 }

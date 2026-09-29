@@ -557,10 +557,6 @@ internal fun BrowserViewport(
                         ).state
                     }
                 },
-                onGameChange = { game ->
-                    val offline = pageErrorFeedback as? PageErrorFeedbackState.Offline
-                    if (offline != null) pageErrorFeedback = offline.copy(game = game)
-                },
                 modifier = Modifier
                     .fillMaxSize()
                     .statusBarsPadding()

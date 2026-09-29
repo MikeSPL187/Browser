@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
  * Vola brand colors, taken from the launcher mark (drawable/ic_launcher_foreground_art.xml).
  *
  * They are for brand moments that must look the same in every palette, such as the mark itself
- * or the offline game. Regular UI takes its colors from MaterialTheme.colorScheme, so it follows
+ * or the onboarding. Regular UI takes its colors from MaterialTheme.colorScheme, so it follows
  * the selected palette, dark mode and the AMOLED theme.
  */
 internal object VolaBrand {
@@ -18,8 +18,8 @@ internal object VolaBrand {
 
     /** Cyan dark enough for text, icons and fills under white content (5.3:1 on white). */
     val CyanDeep = Color(0xFF0E7490)
-    val VioletSoft = Color(0xFFEDE7FF)
-    val CyanSoft = Color(0xFFD5F6FC)
+
+    /** Near-black violet for surfaces that carry the mark. */
     val Ink = Color(0xFF16122B)
 
     /** The two strokes of the mark as one sweep: violet into blue into cyan. */

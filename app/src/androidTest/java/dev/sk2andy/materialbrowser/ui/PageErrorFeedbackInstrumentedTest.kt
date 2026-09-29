@@ -5,15 +5,11 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertContentDescriptionContains
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicInteger
@@ -35,7 +31,6 @@ class PageErrorFeedbackInstrumentedTest {
                 PageErrorFeedback(
                     state = PageErrorFeedbackState.NotFound,
                     onRetry = reloads::incrementAndGet,
-                    onGameChange = {},
                 )
             }
         }
@@ -54,7 +49,6 @@ class PageErrorFeedbackInstrumentedTest {
                 PageErrorFeedback(
                     state = PageErrorFeedbackState.Error("unknown host"),
                     onRetry = {},
-                    onGameChange = {},
                 )
             }
         }
@@ -66,147 +60,50 @@ class PageErrorFeedbackInstrumentedTest {
     }
 
     @Test
-    fun offlineStateImmediatelyShowsAccessibleCandyCircuitGame() {
+    fun offlinePageWaitsForTheConnectionWithoutReloadButton() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                PageErrorFeedback(
+                    state = PageErrorFeedbackState.Offline(),
+                    onRetry = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Offline).assertExists()
+        composeRule.onNodeWithText("No connection").assertExists()
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OfflinePill).assertExists()
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).assertDoesNotExist()
+    }
+
+    @Test
+    fun reconnectAnnouncesItselfAndLoadsOnlyAfterButtonClick() {
+        val reloads = AtomicInteger()
         val state = mutableStateOf<PageErrorFeedbackState>(PageErrorFeedbackState.Offline())
         composeRule.setContent {
             MaterialBrowserTheme {
                 PageErrorFeedback(
                     state = state.value,
-                    onRetry = {},
-                    onGameChange = { game ->
-                        val offline = state.value as PageErrorFeedbackState.Offline
-                        state.value = offline.copy(game = game)
-                    },
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Game).assertExists()
-        composeRule.onNodeWithText("Play Candy Circuit").assertDoesNotExist()
-        composeRule.onNodeWithText("Candy Circuit").assertExists()
-        composeRule.onNodeWithText("12").assertExists()
-        val scoreHeight = composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Score)
-            .fetchSemanticsNode().boundsInRoot.height
-        val bestHeight = composeRule.onNodeWithTag(PageErrorFeedbackTestTags.BestScore)
-            .fetchSemanticsNode().boundsInRoot.height
-        val movesHeight = composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Moves)
-            .fetchSemanticsNode().boundsInRoot.height
-        assertEquals(scoreHeight, bestHeight, 0.5f)
-        assertEquals(scoreHeight, movesHeight, 0.5f)
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 5).performClick()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Score).assertTextContains("400")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Moves).assertTextContains("13")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 5)
-            .assertContentDescriptionContains("Row 2, column 2", substring = true)
-    }
-
-    @Test
-    fun reconnectBannerKeepsGameAndLoadsOnlyAfterButtonClick() {
-        val reloads = AtomicInteger()
-        val state = mutableStateOf<PageErrorFeedbackState>(
-            PageErrorFeedbackState.Offline(),
-        )
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                PageErrorFeedback(
-                    state = state.value,
                     onRetry = reloads::incrementAndGet,
-                    onGameChange = { game ->
-                        val offline = state.value as PageErrorFeedbackState.Offline
-                        state.value = offline.copy(game = game)
-                    },
                 )
             }
         }
 
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OnlineBanner).assertDoesNotExist()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 5).performClick()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Score).assertTextContains("400")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Moves).assertTextContains("13")
         composeRule.runOnIdle {
-            val offline = state.value as PageErrorFeedbackState.Offline
-            state.value = offline.copy(isOnlineReady = true)
+            state.value = PageErrorFeedbackState.Offline(isOnlineReady = true)
         }
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Game).assertExists()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Score).assertTextContains("400")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Moves).assertTextContains("13")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OnlineBanner)
+        composeRule.onNodeWithText("Back online")
             .assert(
                 SemanticsMatcher.expectValue(
                     SemanticsProperties.LiveRegion,
                     LiveRegionMode.Polite,
                 ),
             )
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OfflinePill).assertDoesNotExist()
         assertEquals(0, reloads.get())
 
-        composeRule.mainClock.autoAdvance = false
         composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).assertIsNotEnabled()
-        assertEquals(0, reloads.get())
-        composeRule.mainClock.advanceTimeBy(
-            CandyCircuitMotionRules.PAGE_EXIT_DURATION_MILLIS.toLong() + 100L,
-        )
-        composeRule.waitForIdle()
+
         assertEquals(1, reloads.get())
-        composeRule.mainClock.autoAdvance = true
-    }
-
-    @Test
-    fun closedLoopCelebratesBeforeRefillTilesUnlock() {
-        val state = mutableStateOf<PageErrorFeedbackState>(PageErrorFeedbackState.Offline())
-        composeRule.mainClock.autoAdvance = false
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                PageErrorFeedback(
-                    state = state.value,
-                    onRetry = {},
-                    onGameChange = { game ->
-                        val offline = state.value as PageErrorFeedbackState.Offline
-                        state.value = offline.copy(game = game)
-                    },
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 5).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Celebration).assertExists()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 0).assertIsNotEnabled()
-
-        composeRule.mainClock.advanceTimeBy(
-            CandyCircuitMotionRules.RESOLUTION_DURATION_MILLIS.toLong() + 100L,
-        )
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Celebration).assertDoesNotExist()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 0).assertIsEnabled()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Score).assertTextContains("400")
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Moves).assertTextContains("13")
-        composeRule.mainClock.autoAdvance = true
-    }
-
-    @Test
-    fun finishedRoundDisablesTilesAndOffersRestart() {
-        val state = mutableStateOf<PageErrorFeedbackState>(
-            PageErrorFeedbackState.Offline(
-                game = CandyCircuitGameState(movesRemaining = 0, bestScore = 1_600),
-            ),
-        )
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                PageErrorFeedback(
-                    state = state.value,
-                    onRetry = {},
-                    onGameChange = { game ->
-                        val offline = state.value as PageErrorFeedbackState.Offline
-                        state.value = offline.copy(game = game)
-                    },
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.TilePrefix + 5).assertIsNotEnabled()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Restart).performClick()
-        composeRule.onNodeWithText("12").assertExists()
     }
 }
