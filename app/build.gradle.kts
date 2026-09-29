@@ -629,57 +629,57 @@ tasks.matching { task ->
     dependsOn(verifyNoPlayServicesDependencies)
 }
 
-val geckoViewDependency = "org.mozilla.geckoview:geckoview:156.0.20260921121718"
-
 dependencies {
     implementation(project(":shared"))
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("androidx.biometric:biometric:1.1.0")
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.core.ktx)
     // Gecko uses Android's framework Credential Manager for WebAuthn on API 34+. AndroidX keeps
     // password save/select available through the system and installed credential providers.
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.5")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
-    // GeckoView resolves Media3 core at 1.11.0; keep the system-session API on that same version.
-    implementation("androidx.media3:media3-session:1.11.0")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
-    implementation("androidx.webkit:webkit:1.16.0")
-    implementation("androidx.work:work-runtime-ktx:2.11.2")
-    implementation("com.google.guava:guava:33.2.1-android")
-    implementation("com.github.Dimezis:BlurView:version-3.2.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.lambdapioneer.argon2kt:argon2kt:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.webkit)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.guava)
+    implementation(libs.blurview)
+    implementation(libs.okhttp)
+    implementation(libs.argon2kt)
+    implementation(libs.kotlinx.serialization.json)
     // Vola ships without Google Play services. GeckoView uses the framework Credential Manager for
     // WebAuthn on API 34+, so its optional Play services FIDO provider is excluded.
-    "fullImplementation"(geckoViewDependency) {
+    addProvider<MinimalExternalModuleDependency, ExternalModuleDependency>(
+        "fullImplementation",
+        libs.geckoview,
+    ) {
         exclude(group = "com.google.android.gms", module = "play-services-fido")
     }
-    "systemwebviewCompileOnly"(geckoViewDependency)
-    implementation(platform("androidx.compose:compose-bom:2025.05.01"))
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material3:material3:1.4.0-alpha08")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    addProvider("systemwebviewCompileOnly", libs.geckoview)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
 
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
-    testImplementation(geckoViewDependency)
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
+    testImplementation(libs.geckoview)
 
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test:runner:1.7.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-    androidTestImplementation(geckoViewDependency)
-    androidTestImplementation(platform("androidx.compose:compose-bom:2025.05.01"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.geckoview)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    add("userCaDebugImplementation", "androidx.compose.ui:ui-tooling")
-    add("userCaDebugImplementation", "androidx.compose.ui:ui-test-manifest")
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    addProvider("userCaDebugImplementation", libs.androidx.compose.ui.tooling.asProvider())
+    addProvider("userCaDebugImplementation", libs.androidx.compose.ui.test.manifest)
 }
