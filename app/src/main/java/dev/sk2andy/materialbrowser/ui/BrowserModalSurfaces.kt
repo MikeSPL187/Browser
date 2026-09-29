@@ -68,9 +68,9 @@ internal fun BoxScope.BrowserModalSurfaces(
         val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
         if (xRayTab != null) {
             val permissionSnapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
-            val profileEmoji = controller.profiles
+            val workspaceName = controller.profiles
                 .firstOrNull { it.id == xRayTab.profileId }
-                ?.emoji
+                ?.workspaceDisplayName()
                 .orEmpty()
             PrivacyXRaySheet(
                 pageUrl = xRayTab.url,
@@ -83,7 +83,7 @@ internal fun BoxScope.BrowserModalSurfaces(
                 blockerSettings = controller.blockerSettings,
                 siteState = controller.siteProtectionState(tabId),
                 permissionSnapshot = permissionSnapshot,
-                profileEmoji = profileEmoji,
+                workspaceName = workspaceName,
                 websiteNotificationsSupported =
                     controller.browserEngineKind == AndroidBrowserEngineKind.GeckoView,
                 backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
@@ -131,13 +131,13 @@ internal fun BoxScope.BrowserModalSurfaces(
         val radarTab = controller.tabs.firstOrNull { it.id == tabId }
         if (radarTab != null) {
             val snapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
-            val profileEmoji = controller.profiles
+            val workspaceName = controller.profiles
                 .firstOrNull { it.id == radarTab.profileId }
-                ?.emoji
+                ?.workspaceDisplayName()
                 .orEmpty()
             PermissionRadarSheet(
                 snapshot = snapshot,
-                profileEmoji = profileEmoji,
+                workspaceName = workspaceName,
                 websiteNotificationsSupported =
                     controller.browserEngineKind == AndroidBrowserEngineKind.GeckoView,
                 onOriginSelected = onPermissionOriginSelected,

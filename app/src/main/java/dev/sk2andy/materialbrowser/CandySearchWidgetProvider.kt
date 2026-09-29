@@ -15,6 +15,7 @@ import dev.sk2andy.materialbrowser.browser.integration.CandySearchWidgetState
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutPublisher
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutTarget
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_ID
 
 class CandySearchWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -135,10 +136,19 @@ class CandySearchWidgetProvider : AppWidgetProvider() {
         ) {
             views.setViewVisibility(viewId, if (profile == null) View.GONE else View.VISIBLE)
             if (profile == null) return
-            views.setTextViewText(viewId, profile.emoji)
+            views.setImageViewResource(viewId, WidgetWorkspaceIcons.forEmoji(profile.emoji))
+            val name = profile.name.ifBlank {
+                context.getString(
+                    if (profile.profileId == DEFAULT_PROFILE_ID) {
+                        R.string.workspace_default_name
+                    } else {
+                        R.string.workspace_untitled
+                    },
+                )
+            }
             views.setContentDescription(
                 viewId,
-                context.getString(R.string.widget_open_profile_tab, profile.emoji),
+                context.getString(R.string.widget_open_profile_tab, name),
             )
             views.setOnClickPendingIntent(
                 viewId,

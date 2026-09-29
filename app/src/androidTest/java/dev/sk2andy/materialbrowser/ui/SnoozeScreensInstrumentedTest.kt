@@ -396,7 +396,7 @@ class SnoozeScreensInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(SnoozeTestTags.card("saved")).assertIsDisplayed()
-        composeRule.onNodeWithText("💼").assertIsDisplayed()
+        composeRule.onNodeWithTag(SnoozeTestTags.workspaceIcon("saved")).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.action_open_now)).performClick()
         composeRule.onNodeWithText(context.getString(R.string.action_delete)).performClick()
 

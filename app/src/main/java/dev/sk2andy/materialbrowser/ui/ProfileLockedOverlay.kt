@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 
 @Composable
 internal fun ProfileLockedOverlay(
@@ -41,7 +42,7 @@ internal fun ProfileLockedOverlay(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(profileEmoji, fontSize = 52.sp)
+            PlatformProfileEmoji(emoji = profileEmoji, fontSize = 52.sp)
             Text(
                 text = stringResource(R.string.profile_locked_title),
                 modifier = Modifier.padding(top = 20.dp),

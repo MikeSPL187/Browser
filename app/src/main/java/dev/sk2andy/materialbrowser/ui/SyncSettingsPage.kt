@@ -51,6 +51,8 @@ import dev.sk2andy.materialbrowser.sync.SyncDeviceIconCatalog
 import dev.sk2andy.materialbrowser.sync.SyncEnrollmentOutcome
 import dev.sk2andy.materialbrowser.sync.SyncRepositoryState
 import dev.sk2andy.materialbrowser.sync.SyncStatus
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 private val SYNC_ACCENT_HUES = listOf(0, 36, 72, 108, 144, 180, 216, 252, 288, 312)
 private const val SYNC_ACCENT_COLORS_PER_ROW = 5
@@ -192,14 +194,15 @@ internal fun SyncSettingsPage(
                     modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(selectedProfile.emoji, style = MaterialTheme.typography.headlineSmall)
+                    PlatformProfileEmoji(emoji = selectedProfile.emoji, fontSize = 28.sp)
                     Column(Modifier.padding(start = 14.dp).weight(1f)) {
                         Text(stringResource(R.string.sync_local_profile_label))
                         Text(
                             if (selectedProfile.id == activeProfileId) {
-                                stringResource(R.string.sync_local_profile_current)
+                                "${selectedProfile.workspaceDisplayName()} · " +
+                                    stringResource(R.string.sync_local_profile_current)
                             } else {
-                                stringResource(R.string.sync_local_profile_existing)
+                                selectedProfile.workspaceDisplayName()
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -216,11 +219,14 @@ internal fun SyncSettingsPage(
                         text = {
                             Text(
                                 if (profile.id == activeProfileId) {
-                                    "${profile.emoji}  ${stringResource(R.string.sync_local_profile_current)}"
+                                    "${profile.workspaceDisplayName()} · ${stringResource(R.string.sync_local_profile_current)}"
                                 } else {
-                                    "${profile.emoji}  ${stringResource(R.string.sync_local_profile_existing)}"
+                                    profile.workspaceDisplayName()
                                 },
                             )
+                        },
+                        leadingIcon = {
+                            PlatformProfileEmoji(emoji = profile.emoji, fontSize = 20.sp)
                         },
                         onClick = {
                             localProfileId = profile.id
@@ -254,7 +260,7 @@ internal fun SyncSettingsPage(
                     modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(selectedIcon.emoji, style = MaterialTheme.typography.headlineSmall)
+                    PlatformProfileEmoji(emoji = selectedIcon.emoji, fontSize = 28.sp)
                     Column(Modifier.padding(start = 14.dp).weight(1f)) {
                         Text(stringResource(R.string.sync_device_icon_label))
                         Text(
@@ -271,7 +277,10 @@ internal fun SyncSettingsPage(
             ) {
                 iconCatalog.icons.forEach { icon ->
                     DropdownMenuItem(
-                        text = { Text("${icon.emoji}  ${icon.label}") },
+                        text = { Text(icon.label) },
+                        leadingIcon = {
+                            PlatformProfileEmoji(emoji = icon.emoji, fontSize = 20.sp)
+                        },
                         onClick = {
                             iconCatalogId = icon.id
                             iconMenuExpanded = false
@@ -399,7 +408,11 @@ internal fun SyncSettingsPage(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(icon?.emoji ?: "🍬", modifier = Modifier.size(32.dp))
+                        PlatformProfileEmoji(
+                            emoji = icon?.emoji.orEmpty(),
+                            fontSize = 28.sp,
+                            modifier = Modifier.size(32.dp),
+                        )
                         Column(Modifier.padding(start = 12.dp).weight(1f)) {
                             Text(profile.displayName, fontWeight = FontWeight.SemiBold)
                             Text(

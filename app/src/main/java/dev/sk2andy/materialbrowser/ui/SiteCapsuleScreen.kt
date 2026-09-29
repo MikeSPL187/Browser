@@ -92,6 +92,7 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorRequest
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorSubmission
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleRules
 import kotlinx.coroutines.flow.collect
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 
 object SiteCapsuleTestTags {
     const val Screen = "site_capsule_screen"
@@ -823,7 +824,9 @@ private fun ProfileChoices(
                 },
                 tonalElevation = if (profile.id == selectedProfileId) 5.dp else 0.dp,
             ) {
-                Box(contentAlignment = Alignment.Center) { Text(profile.emoji, fontSize = 24.sp) }
+                Box(contentAlignment = Alignment.Center) {
+                    PlatformProfileEmoji(emoji = profile.emoji, fontSize = 24.sp)
+                }
             }
         }
     }

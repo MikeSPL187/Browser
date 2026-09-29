@@ -5902,7 +5902,12 @@ class BrowserController(
             )
         }
 
-    fun createProfile(emoji: String, isolationEnabled: Boolean = false): String? {
+    fun createProfile(
+        emoji: String,
+        isolationEnabled: Boolean = false,
+        name: String = "",
+        accent: WorkspaceAccent = WorkspaceAccent.Default,
+    ): String? {
         if (!profilesEnabled) return null
         if (localProfiles.size >= MAX_PROFILES) {
             Toast.makeText(
@@ -5928,6 +5933,8 @@ class BrowserController(
             draft = BrowserProfileDraft(
                 emoji = emoji,
                 isolationRequested = isolationEnabled,
+                name = name,
+                accent = accent,
             ),
             profileId = UUID.randomUUID().toString(),
             isolationSupported = isProfileIsolationSupported,
@@ -6156,6 +6163,26 @@ class BrowserController(
             emoji = emoji,
         ) ?: return false
         profiles[index] = updatedProfile
+        persist()
+        return true
+    }
+
+    fun updateProfileName(profileId: String, name: String): Boolean =
+        updateLocalProfile(profileId) { profile -> BrowserProfileRules.updateName(profile, name) }
+
+    fun updateProfileAccent(profileId: String, accent: WorkspaceAccent): Boolean =
+        updateLocalProfile(profileId) { profile ->
+            BrowserProfileRules.updateAccent(profile, accent)
+        }
+
+    private fun updateLocalProfile(
+        profileId: String,
+        update: (BrowserProfile) -> BrowserProfile?,
+    ): Boolean {
+        if (profileId in lockedProfileIds) return false
+        val index = profiles.indexOfFirst { it.id == profileId }
+        if (index < 0) return false
+        profiles[index] = update(profiles[index]) ?: return false
         persist()
         return true
     }

@@ -433,6 +433,7 @@ internal fun BrowserScreen(
             profileId = controller.createProfile(
                 emoji = submission.dedicatedEmoji,
                 isolationEnabled = submission.isolatedStorageRequested,
+                name = submission.name,
             ) ?: return@rememberLauncherForActivityResult
             ownsDedicated = true
         }

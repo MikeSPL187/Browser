@@ -177,6 +177,16 @@ def tour(suffix):
         adb("shell", "input", "swipe", str(x), str(y), str(x), str(int(height * 0.35)), "350")
         time.sleep(3)
         shot(f"tab-overview-{suffix}")
+        workspace = find("Personal", "Личное", contains=True)
+        if workspace:
+            wx, wy = workspace["center"]
+            adb("shell", "input", "swipe", str(wx), str(wy), str(wx), str(wy), "900")
+            time.sleep(2)
+            shot(f"workspace-options-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        else:
+            log("not found: workspace switcher entry")
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("overview", overview)

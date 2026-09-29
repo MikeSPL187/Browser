@@ -73,6 +73,7 @@ fun SharedProfileActionsSheet(
     additionalContent: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    headerContent: (@Composable () -> Unit)? = null,
 ) {
     if (profile == null) return
     ModalBottomSheet(
@@ -100,6 +101,10 @@ fun SharedProfileActionsSheet(
                 )
             }
             Spacer(Modifier.height(12.dp))
+            headerContent?.let { content ->
+                content()
+                Spacer(Modifier.height(8.dp))
+            }
             TextButton(
                 onClick = onChangeEmoji,
                 modifier = Modifier.fillMaxWidth(),
@@ -157,6 +162,7 @@ fun SharedProfileEmojiPickerSheet(
     onDismiss: () -> Unit,
     creationOptions: (@Composable () -> Unit)? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    creationHeader: (@Composable () -> Unit)? = null,
 ) {
     if (!visible) return
     var draftEmoji by remember(creatingProfile, selectedEmoji) { mutableStateOf(selectedEmoji) }
@@ -198,6 +204,10 @@ fun SharedProfileEmojiPickerSheet(
                         .verticalScroll(rememberScrollState())
                         .testTag(ProfileCreationTestTags.IconScroll),
                 ) {
+                    creationHeader?.let { header ->
+                        header()
+                        Spacer(Modifier.height(12.dp))
+                    }
                     Box(modifier = Modifier.testTag(ProfileCreationTestTags.Isolation)) {
                         SettingsSwitch(
                             title = copy.isolationTitle,

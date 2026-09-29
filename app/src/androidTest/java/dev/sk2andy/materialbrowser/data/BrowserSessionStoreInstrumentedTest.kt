@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.data
 
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayoutRules
@@ -239,6 +240,8 @@ class BrowserSessionStoreInstrumentedTest {
             BrowserProfile(
                 id = "work",
                 emoji = "💼",
+                name = "Работа",
+                accent = WorkspaceAccent.Teal,
                 selectedTabId = "work-tab",
                 isolationEnabled = true,
                 protection = ProfileProtection(
@@ -775,6 +778,8 @@ class BrowserSessionStoreInstrumentedTest {
         assertFalse(profile.isolationEnabled)
         assertNull(profile.newTabWallpaper)
         assertNull(profile.tabSwitcherWallpaper)
+        assertEquals("", profile.name)
+        assertEquals(WorkspaceAccent.Default, profile.accent)
     }
 
     @Test

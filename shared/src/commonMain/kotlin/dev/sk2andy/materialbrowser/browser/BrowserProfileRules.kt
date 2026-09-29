@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.browser
 data class BrowserProfileDraft(
     val emoji: String,
     val isolationRequested: Boolean,
+    val name: String = "",
+    val accent: WorkspaceAccent = WorkspaceAccent.Default,
 )
 
 object BrowserProfileRules {
@@ -16,8 +18,26 @@ object BrowserProfileRules {
         return BrowserProfile(
             id = safeProfileId,
             emoji = safeEmoji,
+            name = WorkspaceNameRules.normalize(draft.name),
+            accent = draft.accent,
             isolationEnabled = draft.isolationRequested && isolationSupported,
         )
+    }
+
+    fun updateName(
+        profile: BrowserProfile,
+        name: String,
+    ): BrowserProfile? {
+        if (profile.isSynced) return null
+        return profile.copy(name = WorkspaceNameRules.normalize(name)).takeIf { it != profile }
+    }
+
+    fun updateAccent(
+        profile: BrowserProfile,
+        accent: WorkspaceAccent,
+    ): BrowserProfile? {
+        if (profile.isSynced) return null
+        return profile.copy(accent = accent).takeIf { it != profile }
     }
 
     fun updateEmoji(

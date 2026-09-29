@@ -15,6 +15,11 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.isSynced
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun MoveTabToProfileDialog(
@@ -42,10 +47,10 @@ internal fun MoveTabToProfileDialog(
                         onClick = { onMove(profile.id) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(
-                            listOfNotNull(profile.emoji, profile.syncedDisplayName)
-                                .joinToString("  "),
-                        )
+                        PlatformProfileEmoji(emoji = profile.emoji, fontSize = 20.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Text(profile.syncedDisplayName ?: profile.workspaceDisplayName())
+                        Spacer(Modifier.weight(1f))
                     }
                 }
             }

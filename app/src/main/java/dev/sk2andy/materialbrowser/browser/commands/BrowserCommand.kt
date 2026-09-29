@@ -112,7 +112,10 @@ object BrowserCommandRegistry {
                 .mapIndexed { index, profile -> index to profile }
                 .filter { (_, profile) -> profile.id != context.activeProfileId }
                 .forEach { (index, profile) ->
-                    val targetLabel = "${index + 1} · ${profile.emoji}"
+                    val targetLabel = listOfNotNull(
+                        "${index + 1}",
+                        profile.name.takeIf(String::isNotBlank),
+                    ).joinToString(" · ")
                     if (context.canMoveSelectedTab) {
                         add(
                             BrowserCommand(
