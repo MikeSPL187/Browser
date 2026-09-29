@@ -376,7 +376,7 @@
     <string name="settings_web_content_font_size">Размер шрифта на сайтах</string>
     <string name="settings_color_palette">Цветовая палитра</string>
     <string name="color_palette_dynamic">Material You</string>
-    <string name="color_palette_candy">Vola</string>
+    <string name="color_palette_vola">Vola</string>
     <string name="color_palette_neutral">Нейтральная</string>
     <string name="settings_address_bar_color">Цвет адресной строки</string>
     <string name="address_bar_color_theme">Как в теме</string>

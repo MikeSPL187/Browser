@@ -5,7 +5,7 @@ data class AppearanceSettings(
     val animationsEnabled: Boolean = true,
     val forceDarkWebsites: Boolean = false,
     val webContentFontSizePercent: Int = DEFAULT_WEB_CONTENT_FONT_SIZE_PERCENT,
-    val colorPalette: BrowserColorPalette = BrowserColorPalette.Dynamic,
+    val colorPalette: BrowserColorPalette = BrowserColorPalette.Vola,
     val surfaceStyle: BrowserSurfaceStyle = BrowserSurfaceStyle.Clear,
     val shapeStyle: BrowserShapeStyle = BrowserShapeStyle.Rounded,
     val addressBarStyle: BrowserAddressBarStyle = BrowserAddressBarStyle.Classic,
@@ -93,13 +93,13 @@ enum class BrowserAppearanceMode(val stableId: String) {
 }
 
 enum class BrowserColorPalette(val stableId: String) {
+    Vola("vola"),
     Dynamic("dynamic"),
-    Candy("candy"),
     Neutral("neutral");
 
     companion object {
         fun fromStableId(value: String?): BrowserColorPalette =
-            entries.firstOrNull { it.stableId == value } ?: Dynamic
+            entries.firstOrNull { it.stableId == value } ?: Vola
     }
 }
 

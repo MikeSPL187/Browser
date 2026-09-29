@@ -382,7 +382,7 @@
     <string name="settings_web_content_font_size">Website font size</string>
     <string name="settings_color_palette">Color palette</string>
     <string name="color_palette_dynamic">Material You</string>
-    <string name="color_palette_candy">Vola</string>
+    <string name="color_palette_vola">Vola</string>
     <string name="color_palette_neutral">Neutral</string>
     <string name="settings_address_bar_color">Address bar color</string>
     <string name="address_bar_color_theme">Theme</string>

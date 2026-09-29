@@ -24,8 +24,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.ui.theme.CandyPink
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurple
+import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -58,9 +57,9 @@ internal fun CandySplashScreen(modifier: Modifier = Modifier) {
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                CandyPink.copy(alpha = 0.30f),
+                                VolaBrand.Cyan.copy(alpha = 0.30f),
                                 MaterialTheme.colorScheme.surface,
-                                CandyPurple.copy(alpha = 0.24f),
+                                VolaBrand.Violet.copy(alpha = 0.24f),
                             ),
                             radius = 1_100f,
                         ),
@@ -83,7 +82,7 @@ internal fun CandySplashScreen(modifier: Modifier = Modifier) {
                             scaleY = scaleX
                         }
                         .clip(RoundedCornerShape(18.dp))
-                        .background(CandyPink),
+                        .background(VolaBrand.Cyan),
                 )
                 Box(
                     modifier = Modifier
@@ -98,7 +97,7 @@ internal fun CandySplashScreen(modifier: Modifier = Modifier) {
                             scaleY = scaleX
                         }
                         .clip(CircleShape)
-                        .background(CandyPurple),
+                        .background(VolaBrand.Violet),
                 )
                 Surface(
                     modifier = Modifier

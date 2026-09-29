@@ -7,14 +7,14 @@ import kotlin.test.assertTrue
 
 class AppearanceSettingsTest {
     @Test
-    fun `defaults preserve system appearance and Material You`() {
+    fun `defaults follow system appearance with the Vola palette`() {
         val settings = AppearanceSettings()
 
         assertEquals(BrowserAppearanceMode.System, settings.appearanceMode)
         assertTrue(settings.animationsEnabled)
         assertFalse(settings.forceDarkWebsites)
         assertEquals(100, settings.webContentFontSizePercent)
-        assertEquals(BrowserColorPalette.Dynamic, settings.colorPalette)
+        assertEquals(BrowserColorPalette.Vola, settings.colorPalette)
         assertEquals(BrowserSurfaceStyle.Clear, settings.surfaceStyle)
         assertEquals(BrowserShapeStyle.Rounded, settings.shapeStyle)
         assertEquals(BrowserAddressBarStyle.Classic, settings.addressBarStyle)
@@ -47,7 +47,7 @@ class AppearanceSettingsTest {
         }
 
         assertEquals(BrowserAppearanceMode.System, BrowserAppearanceMode.fromStableId("unknown"))
-        assertEquals(BrowserColorPalette.Dynamic, BrowserColorPalette.fromStableId("unknown"))
+        assertEquals(BrowserColorPalette.Vola, BrowserColorPalette.fromStableId("unknown"))
         assertEquals(BrowserSurfaceStyle.Clear, BrowserSurfaceStyle.fromStableId("unknown"))
         assertEquals(BrowserShapeStyle.Rounded, BrowserShapeStyle.fromStableId("unknown"))
         assertEquals(

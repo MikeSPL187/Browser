@@ -84,7 +84,7 @@ class MaterialBrowserThemeInstrumentedTest {
 
     @Test
     fun palettesAndShapesProduceDistinctThemeTokens() {
-        val candyPrimary = AtomicReference<Color>()
+        val volaPrimary = AtomicReference<Color>()
         val neutralPrimary = AtomicReference<Color>()
         val angularShape = AtomicReference<Any>()
         val extraRoundedShape = AtomicReference<Any>()
@@ -93,11 +93,11 @@ class MaterialBrowserThemeInstrumentedTest {
             MaterialBrowserTheme(
                 settings = AppearanceSettings(
                     appearanceMode = BrowserAppearanceMode.Light,
-                    colorPalette = BrowserColorPalette.Candy,
+                    colorPalette = BrowserColorPalette.Vola,
                     shapeStyle = BrowserShapeStyle.Angular,
                 ),
             ) {
-                candyPrimary.set(MaterialTheme.colorScheme.primary)
+                volaPrimary.set(MaterialTheme.colorScheme.primary)
                 angularShape.set(MaterialTheme.shapes.large)
             }
             MaterialBrowserTheme(
@@ -113,7 +113,7 @@ class MaterialBrowserThemeInstrumentedTest {
         }
         composeRule.waitForIdle()
 
-        assertNotEquals(candyPrimary.get(), neutralPrimary.get())
+        assertNotEquals(volaPrimary.get(), neutralPrimary.get())
         assertNotEquals(angularShape.get(), extraRoundedShape.get())
     }
 

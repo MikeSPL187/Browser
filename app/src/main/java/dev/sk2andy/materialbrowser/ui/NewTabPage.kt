@@ -62,6 +62,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 
 @Composable
 internal fun NewTabPage(
@@ -155,7 +156,7 @@ internal fun NewTabPage(
                     shape = RoundedCornerShape(
                         BlankTabModeMorphRules.heroCornerRadiusDp(boundedProgress).dp,
                     ),
-                    color = lerp(NewTabHeroRegularColor, colors.inverseSurface, boundedProgress),
+                    color = lerp(VolaBrand.Ink, colors.inverseSurface, boundedProgress),
                     shadowElevation = BlankTabModeMorphRules.HERO_SHADOW_ELEVATION_DP.dp,
                 ) {
                     Box(
@@ -285,6 +286,5 @@ internal fun NewTabPage(
     }
 }
 
-private val NewTabHeroRegularColor = Color(0xFF17171D)
 
 private fun Offset.isUsable(): Boolean = x.isFinite() && y.isFinite()

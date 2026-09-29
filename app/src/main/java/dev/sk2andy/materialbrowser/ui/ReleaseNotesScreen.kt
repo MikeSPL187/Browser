@@ -62,8 +62,7 @@ import dev.sk2andy.materialbrowser.browser.ReleaseNotesDecoration
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesDocument
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesInline
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesInlineStyle
-import dev.sk2andy.materialbrowser.ui.theme.CandyPink
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurple
+import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -157,9 +156,9 @@ private fun ReleaseNotesHero(
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        CandyPurple.copy(alpha = 0.30f),
+                        VolaBrand.Violet.copy(alpha = 0.30f),
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
-                        CandyPink.copy(alpha = 0.24f),
+                        VolaBrand.Cyan.copy(alpha = 0.24f),
                     ),
                 ),
             )

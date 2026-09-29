@@ -22,7 +22,7 @@ or address component tree.
 Android renders page-specific binary menu actions as compact Material 3 Expressive tonal toggle
 buttons: unselected controls use the round `secondaryContainer` treatment, selected controls morph
 to a 12dp rounded-square `secondary` treatment, and pressed controls use the shared 8dp shape. All
-colors resolve from `MaterialTheme.colorScheme`, so the saved Candy or Neutral palette and Android
+colors resolve from `MaterialTheme.colorScheme`, so the saved Vola or Neutral palette and Android
 dynamic device colors continue to follow the appearance setting. iOS keeps its native-style switch
 presentation through the shared menu effect seam.
 

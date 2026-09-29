@@ -49,10 +49,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
-import dev.sk2andy.materialbrowser.ui.theme.CandyPink
-import dev.sk2andy.materialbrowser.ui.theme.CandyInk
-import dev.sk2andy.materialbrowser.ui.theme.CandyPinkSoft
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurple
 
 internal sealed interface PageErrorFeedbackState {
     data object Hidden : PageErrorFeedbackState
@@ -199,10 +195,10 @@ internal fun PageErrorFeedback(
 @Composable
 private fun pageErrorBackground(): Brush = Brush.verticalGradient(
     colorStops = arrayOf(
-        0f to CandyPink.copy(alpha = 0.10f),
+        0f to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f),
         0.38f to MaterialTheme.colorScheme.surface,
-        0.72f to CandyPurple.copy(alpha = 0.08f),
-        1f to CandyPink.copy(alpha = 0.18f),
+        0.72f to MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+        1f to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.18f),
     ),
 )
 
@@ -372,7 +368,7 @@ internal fun OfflinePill(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = CandyPinkSoft,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 22.dp, vertical = 13.dp),
@@ -381,13 +377,13 @@ internal fun OfflinePill(modifier: Modifier = Modifier) {
         ) {
             ConnectivityGlyph(
                 isOnline = false,
-                color = CandyInk,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(24.dp),
             )
             Text(
                 text = stringResource(R.string.page_error_offline_badge),
                 style = MaterialTheme.typography.labelLarge,
-                color = CandyInk,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
                 fontWeight = FontWeight.Bold,
             )
         }
