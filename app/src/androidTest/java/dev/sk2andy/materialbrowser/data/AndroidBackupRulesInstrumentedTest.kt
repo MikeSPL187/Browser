@@ -14,7 +14,7 @@ import org.xmlpull.v1.XmlPullParser
 @RunWith(AndroidJUnit4::class)
 class AndroidBackupRulesInstrumentedTest {
     @Test
-    fun encryptedCloudBackupIncludesPortableStateButNotWebViewRoot() {
+    fun encryptedCloudBackupCarriesOnlyUserConfigurationFiles() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertTrue(context.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP != 0)
         val parser = context.resources.getXml(R.xml.data_extraction_rules)
@@ -45,7 +45,9 @@ class AndroidBackupRulesInstrumentedTest {
         }
 
         assertTrue(encryptedCloudBackup)
-        assertTrue(("sharedpref" to ".") in included)
+        // Shared preferences hold tabs, history, favorites and sync credentials.
+        assertTrue(included.none { (domain, _) -> domain == "sharedpref" })
+        assertTrue(included.none { (domain, _) -> domain == "database" })
         assertTrue(("file" to "candy_filter_rules.json") in included)
         assertTrue(("file" to "user_scripts.json") in included)
         assertFalse(("root" to ".") in included)

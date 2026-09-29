@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
+    <!-- Cloud backup carries only the user's own configuration files. Shared preferences stay
+         out: they also hold open tabs, history, favorites, site exceptions and sync credentials,
+         which must not leave the device without an explicit export. -->
     <cloud-backup disableIfNoEncryptionCapabilities="true">
-        <include domain="sharedpref" path="." />
         <include domain="file" path="candy_filter_rules.json" />
         <include domain="file" path="candy_filter_rules.json.bak" />
         <include domain="file" path="user_scripts.json" />
