@@ -145,6 +145,7 @@ internal fun BrowserSettingsOverlay(
         SettingsScreen(
             browserEngineKind = controller.browserEngineKind,
             isDnsOverHttpsSupported = controller.isDnsOverHttpsSupported,
+            isHttpsOnlySupported = controller.isHttpsOnlySupported,
             destination = destination,
             appearanceSettings = controller.appearanceSettings,
             downloadSettings = controller.downloadSettings,
@@ -154,6 +155,7 @@ internal fun BrowserSettingsOverlay(
             privacySignalSettings = controller.privacySignalSettings,
             isAutoDeAmpEnabled = controller.isAutoDeAmpEnabled,
             dnsOverHttpsSettings = controller.dnsOverHttpsSettings,
+            httpsOnlyMode = controller.httpsOnlyMode,
             inactiveTabLifetime = controller.inactiveTabLifetime,
             residentTabLimit = controller.residentTabLimit,
             searchEngine = controller.searchEngine,
@@ -237,6 +239,7 @@ internal fun BrowserSettingsOverlay(
             onPrivacySignalSettingsChanged = controller::updatePrivacySignalSettings,
             onAutoDeAmpEnabledChanged = controller::updateAutoDeAmpEnabled,
             onDnsOverHttpsSettingsChanged = controller::updateDnsOverHttpsSettings,
+            onHttpsOnlyModeChanged = controller::updateHttpsOnlyMode,
             onInactiveTabLifetimeChanged = controller::updateInactiveTabLifetime,
             onResidentTabLimitChanged = controller::updateResidentTabLimit,
             onSearchEngineChanged = controller::updateSearchEngine,

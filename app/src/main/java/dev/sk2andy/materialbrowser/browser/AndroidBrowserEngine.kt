@@ -19,6 +19,7 @@ internal data class AndroidBrowserEngineCapabilities(
     val nativeAutoplayPolicy: Boolean,
     val insecureHttpPasswordManagerSelection: Boolean,
     val dnsOverHttps: Boolean,
+    val httpsOnly: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -27,6 +28,7 @@ internal data class AndroidBrowserEngineCapabilities(
             nativeAutoplayPolicy = true,
             insecureHttpPasswordManagerSelection = true,
             dnsOverHttps = true,
+            httpsOnly = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -35,6 +37,7 @@ internal data class AndroidBrowserEngineCapabilities(
             nativeAutoplayPolicy = true,
             insecureHttpPasswordManagerSelection = false,
             dnsOverHttps = false,
+            httpsOnly = false,
         )
     }
 }

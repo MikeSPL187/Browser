@@ -155,6 +155,13 @@ def tour(suffix):
         shot(f"page-{suffix}")
     step("page", page)
 
+    def https_only_warning():
+        # neverssl.com deliberately serves no HTTPS, so HTTPS-only mode shows its warning page.
+        open_url("http://neverssl.com/")
+        time.sleep(15)
+        shot(f"https-only-{suffix}")
+    step("https-only", https_only_warning)
+
     def overview():
         address = find("wikipedia.org", contains=True)
         x, y = address["center"] if address else (width // 2, height - 120)

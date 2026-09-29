@@ -588,6 +588,9 @@ class BrowserController(
     val isDnsOverHttpsSupported: Boolean
         get() = browserEngineCapabilities.dnsOverHttps
 
+    val isHttpsOnlySupported: Boolean
+        get() = browserEngineCapabilities.httpsOnly
+
     val supportsPageContentActions: Boolean
         get() = true
 
@@ -775,6 +778,8 @@ class BrowserController(
     var isAutoDeAmpEnabled by mutableStateOf(true)
         private set
     var dnsOverHttpsSettings by mutableStateOf(DnsOverHttpsRules.Default)
+        private set
+    var httpsOnlyMode by mutableStateOf(HttpsOnlyMode.Default)
         private set
     var externalLinkPreviewState by mutableStateOf<ExternalLinkPreviewState?>(null)
         private set
@@ -2326,6 +2331,8 @@ class BrowserController(
         isAutoDeAmpEnabled = store.loadAutoDeAmpEnabled()
         dnsOverHttpsSettings = store.loadDnsOverHttpsSettings()
         browserEngineSessionFactory.setDnsOverHttpsSettings(dnsOverHttpsSettings)
+        httpsOnlyMode = store.loadHttpsOnlyMode()
+        browserEngineSessionFactory.setHttpsOnlyMode(httpsOnlyMode)
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY && usesGeckoEngine) {
             browserEngineSessionFactory.setExtensionChromeHost(
                 object : GeckoExtensionChromeHost {
@@ -9514,6 +9521,13 @@ class BrowserController(
         dnsOverHttpsSettings = sanitized
         store.saveDnsOverHttpsSettings(sanitized)
         browserEngineSessionFactory.setDnsOverHttpsSettings(sanitized)
+    }
+
+    fun updateHttpsOnlyMode(mode: HttpsOnlyMode) {
+        if (!isHttpsOnlySupported || httpsOnlyMode == mode) return
+        httpsOnlyMode = mode
+        store.saveHttpsOnlyMode(mode)
+        browserEngineSessionFactory.setHttpsOnlyMode(mode)
     }
 
     fun updateBrowserEngineKind(kind: AndroidBrowserEngineKind) {
