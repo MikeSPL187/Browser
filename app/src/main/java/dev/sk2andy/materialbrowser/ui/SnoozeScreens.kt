@@ -65,6 +65,8 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Date
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 internal suspend fun showSnoozeUndoFeedback(
     hostState: SnackbarHostState,
@@ -361,7 +363,13 @@ private fun SnoozedTabCard(
         Column(Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (profileEmoji.isNotEmpty()) {
-                    Text(profileEmoji, modifier = Modifier.padding(end = 10.dp))
+                    PlatformProfileEmoji(
+                        emoji = profileEmoji,
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .testTag(SnoozeTestTags.workspaceIcon(snoozed.tab.id)),
+                    )
                 }
                 Text(
                     snoozeDisplayTitle(snoozed.tab),
@@ -541,4 +549,5 @@ internal object SnoozeTestTags {
     fun overviewTitle(tabId: String) = "overview_title:$tabId"
     fun overviewClose(tabId: String) = "overview_close:$tabId"
     fun card(tabId: String) = "snoozed_tab:$tabId"
+    fun workspaceIcon(tabId: String) = "snooze_workspace_icon:$tabId"
 }

@@ -24,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.compose.ui.test.onNodeWithContentDescription
 
 @RunWith(AndroidJUnit4::class)
 class ProfileCreationSheetInstrumentedTest {
@@ -70,7 +71,7 @@ class ProfileCreationSheetInstrumentedTest {
         )
         createButton.assertIsNotEnabled()
 
-        composeRule.onNodeWithText("💼").performClick()
+        composeRule.onNodeWithContentDescription("💼").performClick()
         composeRule.onNodeWithText(
             context.getString(R.string.settings_profile_isolation_title),
         ).performClick()
@@ -165,7 +166,7 @@ class ProfileCreationSheetInstrumentedTest {
         assertTrue(titleBounds.bottom <= iconScrollBounds.bottom)
         assertTrue(iconScrollBounds.bottom <= buttonBoundsBeforeScroll.top)
 
-        composeRule.onNodeWithText("📅").performScrollTo()
+        composeRule.onNodeWithContentDescription("📅").performScrollTo()
         composeRule.waitForIdle()
 
         val iconScrollBoundsAfterScroll = composeRule

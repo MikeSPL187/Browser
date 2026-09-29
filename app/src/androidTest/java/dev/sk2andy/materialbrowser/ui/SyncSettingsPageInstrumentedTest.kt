@@ -194,9 +194,7 @@ class SyncSettingsPageInstrumentedTest {
         composeRule.onNodeWithTag(SyncSettingsTestTags.LocalProfile)
             .performScrollTo()
             .performClick()
-        composeRule.onNodeWithText(
-            "💼  ${context.getString(R.string.sync_local_profile_existing)}",
-        ).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.workspace_untitled)).performClick()
         composeRule.onNodeWithTag(SyncSettingsTestTags.Endpoint)
             .performTextInput("https://sync.example")
         composeRule.onNodeWithTag(SyncSettingsTestTags.Username).performTextInput("candy")

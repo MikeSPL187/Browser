@@ -6,6 +6,7 @@ import dev.sk2andy.materialbrowser.browser.isSynced
 internal data class CandySearchWidgetProfile(
     val profileId: String,
     val emoji: String,
+    val name: String = "",
 )
 
 internal data class CandySearchWidgetState(
@@ -56,6 +57,7 @@ internal object CandySearchWidgetRules {
                     CandySearchWidgetProfile(
                         profileId = profile.id,
                         emoji = profile.emoji,
+                        name = profile.name,
                     )
                 }
                 .take(MAX_VISIBLE_PROFILES)

@@ -6,8 +6,6 @@
     <string name="widget_open_app">Open Vola</string>
     <string name="widget_open_private_tab">Open a private tab in the current workspace</string>
     <string name="widget_open_profile_tab">Open a new tab in workspace %1$s</string>
-    <string name="widget_preview_profile_one" translatable="false">🏠</string>
-    <string name="widget_preview_profile_two" translatable="false">💼</string>
     <string name="onboarding_welcome_title">Meet Vola</string>
     <string name="onboarding_welcome_body">A gesture-first browser that keeps tabs, journeys and privacy controls close at hand.</string>
     <string name="onboarding_welcome_card_title">Three gestures. One fluid workflow.</string>
@@ -130,6 +128,7 @@
     <string name="workspace_accent_coral">Coral</string>
     <string name="workspace_accent_rose">Rose</string>
     <string name="workspace_accent_graphite">Graphite</string>
+    <string name="workspace_isolated_description">Own storage</string>
     <string name="cd_add_profile">Add workspace</string>
     <string name="action_edit_profile">Edit workspace</string>
     <string name="profile_actions_title">Workspace options</string>
@@ -1023,8 +1022,8 @@
     <string name="filter_error_adblock_unsupported">Vola cannot represent this Adblock Plus/uBlock syntax safely.</string>
     <string name="filter_error_invalid">The rule is malformed or unsupported.</string>
     <string name="permission_radar_title">Permission Radar</string>
-    <string name="permission_radar_profile_summary">%1$s workspace · saved separately for each site</string>
-    <string name="permission_radar_private_summary">%1$s private workspace · kept only for this session</string>
+    <string name="permission_radar_profile_summary">%1$s · saved separately for each site</string>
+    <string name="permission_radar_private_summary">%1$s · private, kept only for this session</string>
     <string name="permission_radar_sites">Sites in this workspace</string>
     <string name="permission_radar_no_site">Open a secure website to manage its permissions.</string>
     <string name="permission_radar_reset_site">Reset site</string>
@@ -1186,7 +1185,6 @@
     <string name="sync_this_device_section">This device</string>
     <string name="sync_local_profile_label">Workspace to sync</string>
     <string name="sync_local_profile_current">Current workspace</string>
-    <string name="sync_local_profile_existing">Existing workspace</string>
     <string name="sync_device_name_label">Device name</string>
     <string name="sync_device_icon_label">Workspace icon</string>
     <string name="sync_accent_color_label">Accent color</string>

@@ -125,7 +125,7 @@ internal fun PrivacyXRaySheet(
     blockerSettings: BlockerSettings,
     siteState: SiteProtectionState,
     permissionSnapshot: PermissionRadarSnapshot,
-    profileEmoji: String,
+    workspaceName: String,
     websiteNotificationsSupported: Boolean,
     backdropSource: CandyChromeBackdropSource? = null,
     onPause: (persistently: Boolean) -> Unit,
@@ -217,7 +217,7 @@ internal fun PrivacyXRaySheet(
                 } else {
                     PermissionRadarContent(
                         snapshot = permissionSnapshot,
-                        profileEmoji = profileEmoji,
+                        workspaceName = workspaceName,
                         websiteNotificationsSupported = websiteNotificationsSupported,
                         onOriginSelected = onPermissionOriginSelected,
                         onDecisionChanged = onPermissionDecisionChanged,

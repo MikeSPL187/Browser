@@ -56,6 +56,11 @@ import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
 
 internal object ExternalLinkPreviewTestTags {
     const val Bar = "external_link_preview_bar"
@@ -124,13 +129,14 @@ internal fun ExternalLinkPreviewBar(
     DisposableEffect(Unit) {
         onDispose { currentOnBackdropBlurRegionChanged(null) }
     }
+    val targetProfileName = targetProfile?.workspaceDisplayName().orEmpty()
     val openDescription = stringResource(
         R.string.external_link_preview_open_description,
-        targetProfile?.emoji.orEmpty(),
+        targetProfileName,
     )
     val profileDescription = stringResource(
         R.string.external_link_preview_profile_description,
-        targetProfile?.emoji.orEmpty(),
+        targetProfileName,
     )
     Box(
         modifier = modifier
@@ -214,11 +220,14 @@ internal fun ExternalLinkPreviewBar(
                                     .semantics { contentDescription = profileDescription },
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = targetProfile?.emoji.orEmpty(),
-                                        color = chromeTokens.contentColor,
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
+                                    CompositionLocalProvider(
+                                        LocalContentColor provides chromeTokens.contentColor,
+                                    ) {
+                                        PlatformProfileEmoji(
+                                            emoji = targetProfile?.emoji.orEmpty(),
+                                            fontSize = 20.sp,
+                                        )
+                                    }
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = null,
@@ -231,22 +240,27 @@ internal fun ExternalLinkPreviewBar(
                                 expanded = profileMenuExpanded,
                                 onDismissRequest = { profileMenuExpanded = false },
                             ) {
-                                profiles.forEachIndexed { index, profile ->
+                                profiles.forEach { profile ->
                                     DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                buildString {
-                                                    append(index + 1)
-                                                    append(" · ")
-                                                    append(profile.emoji)
-                                                    if (profile.isolationEnabled) append("  🔒")
-                                                },
-                                            )
+                                        text = { Text(profile.workspaceDisplayName()) },
+                                        leadingIcon = {
+                                            PlatformProfileEmoji(emoji = profile.emoji, fontSize = 20.sp)
                                         },
-                                        leadingIcon = if (profile.id == state.targetProfileId) {
-                                            { Icon(Icons.Default.Check, contentDescription = null) }
-                                        } else {
-                                            null
+                                        trailingIcon = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                if (profile.isolationEnabled) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Lock,
+                                                        contentDescription = stringResource(
+                                                            R.string.workspace_isolated_description,
+                                                        ),
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                }
+                                                if (profile.id == state.targetProfileId) {
+                                                    Icon(Icons.Default.Check, contentDescription = null)
+                                                }
+                                            }
                                         },
                                         onClick = {
                                             profileMenuExpanded = false

@@ -603,7 +603,7 @@ fun TabActionsMenuContent(
                         color = colors.secondaryContainer,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(profile.emoji, fontSize = 24.sp)
+                            PlatformProfileEmoji(emoji = profile.emoji, fontSize = 24.sp)
                         }
                     }
                 }

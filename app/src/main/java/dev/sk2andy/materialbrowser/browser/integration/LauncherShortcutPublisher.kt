@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_ID
 
 internal class LauncherShortcutPublisher(private val context: Context) {
     suspend fun publishSerially(state: LauncherShortcutState): Boolean =
@@ -80,8 +81,13 @@ internal class LauncherShortcutPublisher(private val context: Context) {
         LauncherShortcutRules.shortcutId(LauncherShortcutTarget.Profile(profile.profileId)),
     )
         .setActivity(ComponentName(context, MainActivity::class.java))
-        .setShortLabel(context.getString(R.string.command_target_profile, profile.emoji))
-        .setLongLabel(context.getString(R.string.command_target_profile, profile.emoji))
+        .setShortLabel(context.workspaceDisplayName(profile.profileId, profile.name))
+        .setLongLabel(
+            context.getString(
+                R.string.command_target_profile,
+                context.workspaceDisplayName(profile.profileId, profile.name),
+            ),
+        )
         .setIcon(IconCompat.createWithResource(context, R.mipmap.ic_shortcut_profile))
         .setIntent(dispatcherIntent(LauncherShortcutTarget.Profile(profile.profileId)))
         .setRank(rank)
@@ -105,6 +111,17 @@ internal class LauncherShortcutPublisher(private val context: Context) {
             }
 
     private companion object {
+        fun Context.workspaceDisplayName(profileId: String, name: String): String =
+            name.ifBlank {
+                getString(
+                    if (profileId == DEFAULT_PROFILE_ID) {
+                        R.string.workspace_default_name
+                    } else {
+                        R.string.workspace_untitled
+                    },
+                )
+            }
+
         const val STATIC_SHORTCUT_COUNT = 2
         const val MAX_DYNAMIC_PROFILE_SHORTCUTS = 2
         val PUBLISH_MUTEX = Mutex()

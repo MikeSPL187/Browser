@@ -66,7 +66,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun PermissionRadarSheet(
     snapshot: PermissionRadarSnapshot,
-    profileEmoji: String,
+    workspaceName: String,
     websiteNotificationsSupported: Boolean,
     onOriginSelected: (String) -> Unit,
     onDecisionChanged: (SitePermission, SitePermissionDecision) -> Unit,
@@ -80,7 +80,7 @@ internal fun PermissionRadarSheet(
     ) {
         PermissionRadarContent(
             snapshot = snapshot,
-            profileEmoji = profileEmoji,
+            workspaceName = workspaceName,
             websiteNotificationsSupported = websiteNotificationsSupported,
             onOriginSelected = onOriginSelected,
             onDecisionChanged = onDecisionChanged,
@@ -97,7 +97,7 @@ internal fun PermissionRadarSheet(
 @Composable
 internal fun PermissionRadarContent(
     snapshot: PermissionRadarSnapshot,
-    profileEmoji: String,
+    workspaceName: String,
     websiteNotificationsSupported: Boolean,
     onOriginSelected: (String) -> Unit,
     onDecisionChanged: (SitePermission, SitePermissionDecision) -> Unit,
@@ -118,7 +118,7 @@ internal fun PermissionRadarContent(
                 } else {
                     R.string.permission_radar_profile_summary
                 },
-                profileEmoji,
+                workspaceName,
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

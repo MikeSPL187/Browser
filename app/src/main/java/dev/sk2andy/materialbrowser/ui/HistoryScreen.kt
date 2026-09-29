@@ -83,6 +83,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -281,7 +283,10 @@ internal fun HistoryScreen(
                                         selectedProfileIds = updated
                                         selectedEntryKeys = arrayListOf()
                                     },
-                                    label = { Text(profile.emoji) },
+                                    label = { Text(profile.workspaceDisplayName()) },
+                                    leadingIcon = {
+                                        PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
+                                    },
                                     modifier = Modifier.testTag(
                                         HistoryScreenTestTags.profile(profile.id),
                                     ),
@@ -562,7 +567,10 @@ private fun HistoryClearDialog(
                                 }
                                 selectedProfileIdList = ArrayList(updated)
                             },
-                            label = { Text(profile.emoji) },
+                            label = { Text(profile.workspaceDisplayName()) },
+                                    leadingIcon = {
+                                        PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
+                                    },
                             modifier = Modifier.testTag(
                                 HistoryScreenTestTags.clearProfile(profile.id),
                             ),
@@ -770,7 +778,10 @@ private fun HistoryEntryRow(
             trailingContent = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     profileEmoji?.let { emoji ->
-                        Text(emoji, style = MaterialTheme.typography.bodyMedium)
+                        PlatformProfileEmoji(
+                            emoji = emoji,
+                            fontSize = 18.sp,
+                        )
                         Spacer(Modifier.width(8.dp))
                     }
                     Text(

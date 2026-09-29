@@ -145,7 +145,7 @@ class PrivacyXRaySheetInstrumentedTest {
                             ),
                         ),
                     ),
-                    profileEmoji = "🍬",
+                    workspaceName = "Personal",
                     websiteNotificationsSupported = true,
                     onPause = {},
                     onResume = {},
@@ -197,7 +197,7 @@ class PrivacyXRaySheetInstrumentedTest {
                             canPersist = false,
                         ),
                         permissionSnapshot = PermissionRadarSnapshot.Empty,
-                        profileEmoji = "🍬",
+                        workspaceName = "Personal",
                         websiteNotificationsSupported = true,
                         backdropSource = blurTarget.asCandyChromeBackdropSource(),
                         onPause = { persistently ->

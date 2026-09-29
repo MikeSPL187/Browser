@@ -127,6 +127,7 @@
     <string name="workspace_accent_coral">Коралловый</string>
     <string name="workspace_accent_rose">Розовый</string>
     <string name="workspace_accent_graphite">Графитовый</string>
+    <string name="workspace_isolated_description">Отдельное хранилище</string>
     <string name="cd_add_profile">Добавить пространство</string>
     <string name="action_edit_profile">Изменить пространство</string>
     <string name="profile_actions_title">Действия с пространством</string>
@@ -1028,8 +1029,8 @@
     <string name="filter_error_adblock_unsupported">Vola не может безопасно представить этот синтаксис Adblock Plus/uBlock.</string>
     <string name="filter_error_invalid">Правило имеет неверный формат или не поддерживается.</string>
     <string name="permission_radar_title">Радар разрешений</string>
-    <string name="permission_radar_profile_summary">Пространство %1$s · хранится отдельно для каждого сайта</string>
-    <string name="permission_radar_private_summary">Приватное пространство %1$s · только на этот сеанс</string>
+    <string name="permission_radar_profile_summary">%1$s · хранится отдельно для каждого сайта</string>
+    <string name="permission_radar_private_summary">%1$s · приватно, только на этот сеанс</string>
     <string name="permission_radar_sites">Сайты в этом пространстве</string>
     <string name="permission_radar_no_site">Откройте защищённый сайт, чтобы управлять его разрешениями.</string>
     <string name="permission_radar_reset_site">Сбросить для сайта</string>
@@ -1196,7 +1197,6 @@
     <string name="sync_this_device_section">Это устройство</string>
     <string name="sync_local_profile_label">Пространство для синхронизации</string>
     <string name="sync_local_profile_current">Текущее пространство</string>
-    <string name="sync_local_profile_existing">Существующее пространство</string>
     <string name="sync_device_name_label">Название устройства</string>
     <string name="sync_device_icon_label">Значок пространства</string>
     <string name="sync_accent_color_label">Акцентный цвет</string>

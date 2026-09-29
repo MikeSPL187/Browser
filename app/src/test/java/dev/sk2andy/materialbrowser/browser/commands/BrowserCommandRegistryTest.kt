@@ -28,7 +28,7 @@ class BrowserCommandRegistryTest {
             context(
                 profiles = listOf(
                     BrowserProfile("home", "🏠"),
-                    BrowserProfile("work", "💼"),
+                    BrowserProfile("work", "💼", name = "Work"),
                     BrowserProfile("travel", "✈️"),
                 ),
             ),
@@ -45,7 +45,7 @@ class BrowserCommandRegistryTest {
                 .map(BrowserCommand::executionId),
         )
         assertEquals(
-            listOf("2 · 💼", "3 · ✈️"),
+            listOf("2 · Work", "3"),
             commands.filter { it.kind == BrowserCommandKind.SwitchProfile }
                 .map(BrowserCommand::targetProfileLabel),
         )

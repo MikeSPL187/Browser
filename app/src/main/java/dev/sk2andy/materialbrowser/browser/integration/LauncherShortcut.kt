@@ -7,6 +7,7 @@ import dev.sk2andy.materialbrowser.browser.isSynced
 internal data class LauncherProfileShortcut(
     val profileId: String,
     val emoji: String,
+    val name: String = "",
 )
 
 internal data class LauncherShortcutState(
@@ -68,6 +69,7 @@ internal object LauncherShortcutRules {
                     LauncherProfileShortcut(
                         profileId = profile.id,
                         emoji = profile.emoji,
+                        name = profile.name,
                     )
                 }
                 .take(MAX_RECENT_PROFILE_SHORTCUTS)

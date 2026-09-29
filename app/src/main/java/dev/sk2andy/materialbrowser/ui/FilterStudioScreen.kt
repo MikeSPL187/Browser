@@ -96,6 +96,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 internal object FilterStudioTestTags {
     const val Screen = "filter_studio_screen"
@@ -349,7 +351,7 @@ internal fun FilterStudioScreen(
                         FilterRuleCard(
                             rule = rule,
                             profileLabel = rule.profileId?.let { id ->
-                                profiles.firstOrNull { it.id == id }?.emoji ?: id
+                                profiles.firstOrNull { it.id == id }?.workspaceDisplayName() ?: id
                             } ?: stringResource(R.string.filter_scope_global),
                             selected = rule.id == selectedRuleId,
                             onToggle = { onToggle(rule.id, it) },
@@ -924,7 +926,10 @@ private fun AddFilterRuleDialog(
                         FilterChip(
                             selected = profileId == profile.id,
                             onClick = { profileId = profile.id },
-                            label = { Text(profile.emoji) },
+                            label = { Text(profile.workspaceDisplayName()) },
+                            leadingIcon = {
+                                PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
+                            },
                         )
                     }
                 }
@@ -1082,7 +1087,7 @@ private fun FilterImportDialog(
                         profiles.forEach { profile ->
                             val profileDescription = stringResource(
                                 R.string.filter_profile_description,
-                                profile.emoji,
+                                profile.workspaceDisplayName(),
                             )
                             FilterChip(
                                 selected = targetProfileId == profile.id,
@@ -1096,7 +1101,10 @@ private fun FilterImportDialog(
                                 ).semantics {
                                     contentDescription = profileDescription
                                 },
-                                label = { Text(profile.emoji) },
+                                label = { Text(profile.workspaceDisplayName()) },
+                                leadingIcon = {
+                                    PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
+                                },
                             )
                         }
                     }
@@ -1305,7 +1313,7 @@ private fun FilterSubscriptionDialog(
                     profiles.forEach { profile ->
                         val profileDescription = stringResource(
                             R.string.filter_profile_description,
-                            profile.emoji,
+                            profile.workspaceDisplayName(),
                         )
                         FilterChip(
                             selected = targetProfileId == profile.id,
@@ -1319,7 +1327,10 @@ private fun FilterSubscriptionDialog(
                                     },
                                 )
                                 .semantics { contentDescription = profileDescription },
-                            label = { Text(profile.emoji) },
+                            label = { Text(profile.workspaceDisplayName()) },
+                            leadingIcon = {
+                                PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
+                            },
                         )
                     }
                 }

@@ -48,6 +48,13 @@ import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.color
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.sp
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
 internal object WorkspaceIdentityTestTags {
     const val Name = "workspace_name"
@@ -223,6 +230,39 @@ private fun WorkspaceIdentityEditorDarkPreview() {
                 onAccentChange = {},
                 modifier = Modifier.padding(20.dp),
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Preview(name = "Workspace icons", widthDp = 360)
+@Composable
+private fun WorkspaceIconsPreview() {
+    MaterialBrowserTheme {
+        androidx.compose.material3.Surface {
+            FlowRow(
+                modifier = Modifier.padding(20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                WorkspaceIcons.ids.forEachIndexed { index, id ->
+                    val accent = WorkspaceAccent.entries[index % WorkspaceAccent.entries.size]
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CompositionLocalProvider(LocalContentColor provides accent.color()) {
+                            PlatformProfileEmoji(
+                                emoji = WorkspaceIcons.emojiFor(id).orEmpty(),
+                                fontSize = 22.sp,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
