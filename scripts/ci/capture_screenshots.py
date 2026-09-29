@@ -88,6 +88,27 @@ def tap(*labels, contains=False):
     return True
 
 
+def save_ui(name):
+    """Keeps the UI hierarchy next to the screenshots, so a missed element can be diagnosed."""
+    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
+    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
+    (OUT / f"ui-{name}.xml").write_bytes(raw)
+    log(f"saved ui-{name}.xml")
+
+
+def tap_scrolling(*labels, name, attempts=4):
+    """Taps a label, scrolling the visible list up between attempts when it is off screen."""
+    width, height = screen_size()
+    for _ in range(attempts):
+        if tap(*labels):
+            return True
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.8)),
+            str(width // 2), str(int(height * 0.4)), "300")
+        time.sleep(1)
+    save_ui(name)
+    return False
+
+
 def screen_size():
     output = (adb("shell", "wm", "size", capture=True) or b"").decode()
     match = re.search(r"(\d+)x(\d+)", output)
@@ -148,10 +169,10 @@ def tour(suffix):
         if tap("More options", "Другие действия"):
             time.sleep(2)
             shot(f"menu-{suffix}")
-            if tap("Settings", "Настройки"):
+            if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
-                if tap("Appearance", "Внешний вид"):
+                if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
                     adb("shell", "input", "keyevent", "BACK")
