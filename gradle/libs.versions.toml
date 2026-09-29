@@ -1,7 +1,7 @@
 [versions]
-agp = "9.4.0"
-kotlin = "2.4.10"
-compose-multiplatform = "1.8.2"
+agp = "9.4.1"
+kotlin = "2.4.20"
+compose-multiplatform = "1.12.1"
 # Keep GeckoView on the latest stable release: it carries the engine's security fixes.
 geckoview = "156.0.20260921121718"
 compose-bom = "2025.05.01"
@@ -9,8 +9,8 @@ compose-material3 = "1.4.0-alpha08"
 lifecycle = "2.8.7"
 # GeckoView resolves Media3 core at this version; keep the session API aligned with it.
 media3 = "1.11.0"
-kotlinx-serialization = "1.8.1"
-kotlinx-datetime = "0.6.1"
+kotlinx-serialization = "1.11.0"
+kotlinx-datetime = "0.8.0"
 
 [libraries]
 geckoview = { module = "org.mozilla.geckoview:geckoview", version.ref = "geckoview" }
