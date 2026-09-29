@@ -1,98 +1,83 @@
 <p align="center">
-  <img src="docs/vola/brand/vola-mark.svg" width="120" alt="Vola logo">
+  <img src="docs/vola/brand/vola-mark.svg" width="112" alt="Vola logo">
 </p>
 
 <h1 align="center">Vola</h1>
 
 <p align="center">
-  <strong>A calm, private Android browser.</strong><br>
-  GeckoView with Firefox extensions, Android System WebView as a lightweight alternative,
-  and a design inspired by Zen Browser.
+  <strong>Красивый, быстрый и приватный браузер для Android.</strong><br>
+  <sub>A calm, private Android browser with a design inspired by Zen Browser.</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/MikeSPL187/Browser/releases"><img alt="Release" src="https://img.shields.io/github/v/release/MikeSPL187/Browser?display_name=tag&sort=semver"></a>
-  <a href="https://github.com/MikeSPL187/Browser/actions/workflows/build.yml"><img alt="Build" src="https://github.com/MikeSPL187/Browser/actions/workflows/build.yml/badge.svg"></a>
   <img alt="Android 13+" src="https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&logoColor=white">
-  <a href="LICENSE"><img alt="License: MPL 2.0" src="https://img.shields.io/badge/License-MPL%202.0-orange.svg"></a>
+  <img alt="GeckoView" src="https://img.shields.io/badge/engine-GeckoView-FF7139?logo=firefoxbrowser&logoColor=white">
+  <img alt="Material 3" src="https://img.shields.io/badge/UI-Material%203-6D4CFF?logo=materialdesign&logoColor=white">
+  <a href="LICENSE"><img alt="License: MPL 2.0" src="https://img.shields.io/badge/License-MPL%202.0-22D3EE.svg"></a>
 </p>
 
-> **English:** Vola is an Android browser forked from [Candy Browser](https://github.com/sk2andy/candy-browser)
-> (MPL-2.0). It keeps Candy's gesture-first browsing, dual engines and local privacy tools, and adds a
-> Zen-inspired design: Workspaces, Essentials, Compact Mode, Split View, themes and Glance.
+<p align="center">
+  <img src="docs/vola/screenshots/new-tab.png" width="200" alt="Новая вкладка">
+  &nbsp;
+  <img src="docs/vola/screenshots/tabs-light.png" width="200" alt="Обзор вкладок, светлая тема">
+  &nbsp;
+  <img src="docs/vola/screenshots/tabs-dark.png" width="200" alt="Обзор вкладок, тёмная тема">
+  &nbsp;
+  <img src="docs/vola/screenshots/settings-dark.png" width="200" alt="Настройки внешнего вида">
+</p>
 
-## Что это
+## Что такое Vola
 
-Vola — браузер для Android с упором на красоту, удобство, скорость и приватность.
+Vola — браузер, в котором вокруг страницы нет ничего лишнего: плавающая адресная строка,
+мягкие цвета, крупные скругления и пружинные анимации. Всё в духе Zen Browser и на базе
+Material 3.
 
-- **Два движка.** GeckoView (основной, поддерживает расширения Firefox, в том числе uBlock Origin) и
-  Android System WebView (лёгкая сборка). Интерфейс общий, движок — сменный адаптер.
-- **Приватность по умолчанию.** Никакой телеметрии и аналитики, никаких Google Play Services.
-  Блокировка рекламы и трекеров работает локально, приватные вкладки ничего не пишут на диск,
-  профили изолированы друг от друга.
-- **Жесты и плавность.** Плавающая адресная строка, переключение вкладок свайпом, визуальный обзор
-  вкладок, пружинные анимации и тактильная отдача.
-- **Телефон и планшет.** На широких экранах вкладки показываются полосой.
-- **Русский и английский интерфейс.** Язык выбирается по системе или в настройках приложения Android.
+- **Красота без шума.** Собственная палитра Vola, тёмная и чистая OLED-тема, Material You по желанию.
+- **Приватность по умолчанию.** Никакой телеметрии, аналитики и Google Play Services. Режим
+  «Только HTTPS», локальная блокировка рекламы и трекеров, приватные вкладки ничего не пишут на диск.
+- **Расширения Firefox.** Движок GeckoView поддерживает расширения Firefox, uBlock Origin установлен сразу.
+- **Жесты.** Переключение вкладок свайпом по адресной строке, визуальный обзор вкладок, тактильная отдача.
+- **Телефон и планшет**, интерфейс на русском и английском.
 
-### В разработке (в духе Zen Browser)
+### Скоро
 
-| Фича | Суть |
+| | |
 | --- | --- |
-| Workspaces | Отдельные пространства вкладок со своим названием, эмодзи и акцентным цветом |
-| Essentials | Сетка закреплённых сайтов над обзором вкладок |
-| Compact Mode | Страница на весь экран, панели появляются по жесту |
-| Split View | Две вкладки рядом с перетаскиваемым разделителем |
-| Темы | Готовые темы и редактор акцента, скруглений и плотности |
-| Glance | Быстрый предпросмотр ссылки по долгому тапу |
+| **Пространства** | Отдельные наборы вкладок со своим названием, эмодзи и цветом |
+| **Essentials** | Закреплённые сайты над обзором вкладок |
+| **Компактный режим** | Страница на весь экран, панели появляются по жесту |
+| **Split View** | Две вкладки рядом |
+| **Темы** | Готовые темы и редактор акцента, скруглений и плотности |
+| **Glance** | Предпросмотр ссылки по долгому тапу |
 
 ## Установка
 
-Нужен Android 13 или новее, 64-битный ARM (arm64-v8a) — это почти все современные телефоны и
-планшеты.
+Нужен Android 13 или новее на 64-битном ARM (arm64-v8a), то есть почти любой современный
+телефон или планшет.
 
-- **Релизы:** скачать APK на странице [Releases](https://github.com/MikeSPL187/Browser/releases).
-- **Автообновление:** добавить `https://github.com/MikeSPL187/Browser` в
-  [Obtainium](https://github.com/ImranR98/Obtainium).
-- **Свежие сборки:** каждый PR и коммит в `main` собирает оптимизированную сборку **Vola Preview**
-  (ставится отдельным приложением рядом с релизной). Скачать можно из раздела **Artifacts**
-  соответствующего запуска в [Actions](https://github.com/MikeSPL187/Browser/actions).
+- **Релизы** появятся на странице [Releases](https://github.com/MikeSPL187/Browser/releases).
+  Для автообновления добавьте адрес этого репозитория в [Obtainium](https://github.com/ImranR98/Obtainium).
+- **Свежие сборки** каждого изменения — в разделе **Artifacts** соответствующего запуска на вкладке
+  [Actions](https://github.com/MikeSPL187/Browser/actions). Сборка **Vola Preview** ставится
+  отдельным приложением и не мешает основной.
 
-| APK | Движок |
+| Сборка | Движок |
 | --- | --- |
-| `Vola-vX.Y.Z-arm64-v8a-release.apk` | GeckoView, расширения Firefox |
-| `Vola-vX.Y.Z-systemwebview-release.apk` | Android System WebView, меньше размер |
+| Vola | GeckoView, расширения Firefox |
+| Vola WebView | Android System WebView, меньше размер |
 
 ## Разработка
 
-Проект ведётся без локального компьютера: код пишет Claude Code в облаке, собирает и проверяет
-GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Правила проекта —
-в [`CLAUDE.md`](CLAUDE.md).
-
-Стек: Kotlin, Jetpack Compose, Material 3 Expressive, JDK 17, Gradle Kotlin DSL. Версии зависимостей —
-в [`gradle/libs.versions.toml`](gradle/libs.versions.toml); Dependabot раз в неделю предлагает
-обновления (GeckoView — отдельным PR, чтобы исправления безопасности движка не ждали).
+Kotlin, Jetpack Compose, Material 3 Expressive, JDK 17. Каждое изменение собирается и проверяется
+в GitHub Actions. Правила проекта — в [`CLAUDE.md`](CLAUDE.md), документация по устройству кода —
+в [`docs/`](docs/).
 
 ```bash
 ./gradlew testFullDebugUnitTest lintFullDebug   # тесты и lint
 ./gradlew assembleFullDebug                     # debug APK (GeckoView)
-./gradlew assembleSystemwebviewDebug            # debug APK (System WebView)
 ```
 
-Для локальной сборки нужны Android SDK 37.1 и JDK 17. Подпись релизов и выпуск версий описаны в
-[`docs/vola/signing.md`](docs/vola/signing.md).
+## Лицензия
 
-Документация по устройству кода (наследие Candy) — в [`docs/`](docs/README.md) и
-[`AGENTS.md`](AGENTS.md).
-
-## Лицензия и благодарности
-
-Vola распространяется по [Mozilla Public License 2.0](LICENSE).
-
-Vola основан на [Candy Browser](https://github.com/sk2andy/candy-browser) André Naumann. Спасибо
-за отличную основу! Идеи дизайна вдохновлены [Zen Browser](https://zen-browser.app); код Zen не
-используется.
-
-Сторонние компоненты и списки фильтров распространяются под своими лицензиями. Полный перечень
-есть в приложении (**Настройки → О приложении**) и в
-`app/src/main/assets/third_party_notices.txt`.
+[Mozilla Public License 2.0](LICENSE). Сторонние компоненты и списки фильтров распространяются под
+своими лицензиями; перечень есть в приложении: **Настройки → О приложении**.
