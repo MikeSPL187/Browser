@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — связать устройства</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 4px"><a href="SetSync.dc.html" class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></a><span class="t-title">Связать устройства</span></div>
+<div style="border-radius: 28px; background: var(--surface); padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: var(--shadow-sm)">
+<div aria-label="QR-код связки" style="width: 188px; height: 188px; border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--outline-var); padding: 14px; display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 1px">
+<sc-for list="{{qr}}" as="q" hint-placeholder-count="256"><span style="background: {{q}}; border-radius: 1px"></span></sc-for>
+</div>
+<span style="text-align: center; display: flex; flex-direction: column; gap: 4px"><span class="t-title">Отсканируйте на втором устройстве</span><span class="t-sub">Vola → Настройки → Синхронизация → «Присоединиться». Ключ передаётся только через этот код.</span></span>
+<button style="height: 40px; border-radius: 20px; padding: 0 16px; background: {{c.a14}}; color: {{c.a}}; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.key}}"></path></svg>Показать фразу из 12 слов</button>
+</div>
+<span class="t-over" style="padding: 4px 4px 0">Как передавать данные</span>
+<div class="group">
+<sc-for list="{{ways}}" as="w" hint-placeholder-count="3">
+<div class="row" style="min-height: 68px">
+<span class="lead" style="background: {{w.bg}}; color: {{w.fg}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{w.icon}}"></path></svg></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">{{w.title}}</span><span class="t-sub">{{w.sub}}</span></span>
+<span class="sw {{w.cls}}" style="background: {{w.sw}}"><span></span></span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2F5BD3","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#2F5BD3';
+const c = window.VA ? window.VA(accent) : { a: accent, a14: accent };
+const i = window.VI || {};
+const bits = '1111111011011111100000101010000110111010110110111011101001001011101110101101101100000101000100011111111010111111000000001100000011011011100111011001001110100111101111010110101001001011101000110000000011011010111111100111001010000010100010111011101011011010';
+const finder = (x, y) => (x < 7 && y < 7) || (x > 8 && y < 7) || (x < 7 && y > 8);
+const ring = (x, y, ox, oy) => { const dx = x - ox; const dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; if (dx === 0 || dy === 0 || dx === 6 || dy === 6) return true; if (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4) return true; return false; };
+const qr = [];
+for (let y = 0; y < 16; y++) {
+for (let x = 0; x < 16; x++) {
+let on;
+if (finder(x, y)) { on = ring(x, y, 0, 0) ?? ring(x, y, 9, 0) ?? ring(x, y, 0, 9) ?? false; }
+else { on = bits[(y * 16 + x) % bits.length] === '1'; }
+qr.push(on ? '#1C1B20' : 'transparent');
+}
+}
+const way = (icon, title, sub, on, bg, fg) => ({ icon: icon, title: title, sub: sub, cls: on ? 'on' : '', sw: on ? accent : 'var(--s-highest)', bg: bg, fg: fg });
+return {
+i: i,
+c: c,
+qr: qr,
+ways: [
+way(i.wifi, 'Напрямую по Wi-Fi', 'Когда устройства в одной сети', true, '#DDE3FF', '#2F4AA8'),
+way(i.folder, 'Через вашу папку', 'Syncthing, Nextcloud, Диск — любые файлы', true, '#D4F1EC', '#00665A'),
+way(i.dns, 'Свой сервер Candy Sync', 'Для опытных, как раньше', false, 'var(--s-high)', 'var(--on-var)')
+]
+};
+}
+}
+</script>
+</body>
+</html>

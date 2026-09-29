@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — надёжный пароль</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="padding: 64px 24px 0; display: flex; flex-direction: column; gap: 16px">
+<h1 style="font-size: 26px; font-weight: 800; color: #151B2E">Регистрация</h1>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 700; color: #4A5270">Эл. почта</span><span style="height: 52px; border-radius: 12px; border: 1px solid #C8CCDA; display: flex; align-items: center; padding: 0 14px; font-size: 16px; color: #151B2E">anna@example.com</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 700; color: #4A5270">Придумайте пароль</span><span style="height: 52px; border-radius: 12px; border: 2px solid #9A3A1E"></span></div>
+</div>
+<div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(22,18,30,0) 25%, rgba(22,18,30,0.3) 100%)"></div>
+<div class="sheet" style="height: 520px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="handle"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 0"><span class="t-title">Надёжный пароль</span>
+<div style="display: flex; padding: 3px; border-radius: 20px; background: var(--s-high)">
+<button style="height: 34px; border-radius: 17px; padding: 0 14px; background: var(--surface); font-size: 13px; font-weight: 800; box-shadow: var(--shadow-sm)">Пароль</button>
+<button style="height: 34px; border-radius: 17px; padding: 0 14px; font-size: 13px; font-weight: 700; color: var(--on-var)">Фраза</button>
+</div>
+</div>
+<div style="border-radius: 24px; background: var(--surface); padding: 18px 12px 18px 18px; display: flex; align-items: center; gap: 8px">
+<span style="flex-grow: 1; font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 700; line-height: 1.35; word-break: break-all"><span>vK7</span><span style="color: {{c.a}}">#</span><span>qe2Lm</span><span style="color: {{c.a}}">!</span><span>Tz9pWf</span></span>
+<button class="ib" aria-label="Другой пароль" style="width: 44px; height: 44px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.reload}}"></path></svg></button>
+<button class="ib" aria-label="Копировать" style="width: 44px; height: 44px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.copy}}"></path></svg></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
+<div style="display: flex; gap: 4px"><span style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></span></div>
+<span class="t-sub" style="font-weight: 700; color: var(--ok)">Очень надёжный · подбор займёт века</span>
+</div>
+<div class="group">
+<div class="row" style="min-height: 60px"><span class="t-label" style="flex-grow: 1">Длина</span><span style="width: 150px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, {{c.a}} 0 55%, var(--s-highest) 55% 100%); position: relative"><span style="position: absolute; left: 55%; top: -9px; width: 4px; height: 24px; border-radius: 2px; background: {{c.a}}"></span></span><span class="t-label" style="width: 28px; text-align: right">20</span></div>
+<div class="row" style="min-height: 56px"><span class="t-label" style="flex-grow: 1">Цифры и символы</span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+<div class="row" style="min-height: 56px"><span class="t-label" style="flex-grow: 1">Без похожих знаков (l, 1, O, 0)</span><span class="sw"><span></span></span></div>
+</div>
+<button style="height: 56px; border-radius: 28px; background: {{c.a}}; color: #FFFFFF; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.check}}"></path></svg>Использовать и сохранить</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent, a14: accent }
+};
+}
+}
+</script>
+</body>
+</html>

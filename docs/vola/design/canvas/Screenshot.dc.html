@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — скриншот страницы</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vd" style="width: 390px; height: 844px; background: #0F0E12">
+<div style="padding: 44px 12px 0; display: flex; align-items: center; justify-content: space-between">
+<button class="ib" aria-label="Закрыть" style="color: var(--on)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
+<div role="tablist" style="display: flex; padding: 3px; border-radius: 22px; background: var(--s-high)">
+<button role="tab" aria-selected="false" style="height: 38px; border-radius: 19px; padding: 0 14px; font-size: 13px; font-weight: 700; color: var(--on-var)">Видимая часть</button>
+<button role="tab" aria-selected="true" style="height: 38px; border-radius: 19px; padding: 0 14px; font-size: 13px; font-weight: 800; background: var(--on); color: #16141A">Вся страница</button>
+</div>
+<span style="width: 48px"></span>
+</div>
+<div style="position: absolute; left: 70px; right: 70px; top: 112px; height: 560px; border-radius: 16px; background: #FFFFFF; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6)">
+<div style="padding: 16px 14px 0; display: flex; flex-direction: column; gap: 9px">
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #2F6B5F"></span><span style="font-size: 9px; font-weight: 800; color: #1F3A34">Северный путеводитель</span></div>
+<span style="font-family: Literata, Georgia, serif; font-size: 16px; line-height: 1.15; font-weight: 600; color: #16211E">Байкал зимой: как выбрать маршрут по льду</span>
+<div style="height: 90px; border-radius: 9px; background: linear-gradient(160deg, #CFE3EA 0%, #7FA7B8 100%)"></div>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="16"><span style="height: 5px; border-radius: 3px; background: #E3E6EA; width: {{l}}"></span></sc-for>
+</div>
+<div style="height: 70px; border-radius: 9px; background: linear-gradient(160deg, #DDE7F2 0%, #A7BCD2 100%)"></div>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<sc-for list="{{lines}}" as="l" hint-placeholder-count="16"><span style="height: 5px; border-radius: 3px; background: #E3E6EA; width: {{l}}"></span></sc-for>
+</div>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; top: 262px; height: 44px; border-radius: 8px; background: rgba(120,120,130,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #FFFFFF">размыто</div>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 62px; right: 62px; top: 104px; height: 576px; border-radius: 20px; box-shadow: inset 0 0 0 2px {{c.a}}"></div>
+<span aria-hidden="true" style="position: absolute; left: 165px; top: 96px; width: 60px; height: 16px; border-radius: 8px; background: {{c.a}}"></span>
+<span aria-hidden="true" style="position: absolute; left: 165px; top: 672px; width: 60px; height: 16px; border-radius: 8px; background: {{c.a}}"></span>
+<div style="position: absolute; left: 0; right: 0; top: 696px; text-align: center" class="t-sub">390 × 4 180 · 1,3 МБ · PNG</div>
+<div style="position: absolute; left: 12px; right: 12px; bottom: 24px; display: flex; align-items: center; gap: 8px">
+<div style="flex-grow: 1; height: 64px; border-radius: 32px; background: var(--s-high); display: flex; align-items: center; justify-content: space-around; padding: 0 4px">
+<button class="ib" aria-label="Обрезать" style="color: var(--on)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.crop}}"></path></svg></button>
+<button class="ib" aria-label="Рисовать" style="color: var(--on)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.draw}}"></path></svg></button>
+<button class="ib" aria-label="Скрыть личное" style="background: {{c.a30}}; color: var(--on)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.blur}}"></path></svg></button>
+<button class="ib" aria-label="Поделиться" style="color: var(--on)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.share}}"></path></svg></button>
+</div>
+<button style="height: 64px; border-radius: 22px; padding: 0 20px; background: {{c.a}}; color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.download}}"></path></svg>Сохранить</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#8E7BEF","options":["#8E7BEF","#4FB6C4","#E0826C","#6C8EF2"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#8E7BEF';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent, a30: accent },
+lines: ['96%', '88%', '92%', '70%', '94%', '84%', '90%', '60%']
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — автозаполнение входа</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="padding: 64px 24px 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 32px; height: 32px; border-radius: 10px; background: #2F4AA8"></span><span style="font-size: 18px; font-weight: 800; color: #1B2A55">Почта</span></div>
+<h1 style="font-size: 26px; font-weight: 800; color: #151B2E; margin-top: 12px">Вход в аккаунт</h1>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 700; color: #4A5270">Эл. почта</span><span style="height: 52px; border-radius: 12px; border: 2px solid #2F4AA8; background: #FFFFFF; display: flex; align-items: center; padding: 0 14px; font-size: 16px; color: #8A90A6">name@example.com</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 700; color: #4A5270">Пароль</span><span style="height: 52px; border-radius: 12px; border: 1px solid #C8CCDA; background: #FFFFFF"></span></div>
+</div>
+<div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(22,18,30,0) 30%, rgba(22,18,30,0.28) 100%)"></div>
+<div class="sheet" style="height: 436px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="handle"></div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 4px 4px 0">
+<span class="lead" style="background: {{c.a14}}; color: {{c.a}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.key}}"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-title">Войти на mail.example.com</span><span class="t-sub">Vola проверила адрес: это тот же сайт</span></span>
+</div>
+<button style="height: 56px; border-radius: 28px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 800"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.passkey}}"></path></svg>Войти с ключом доступа</button>
+<div class="group">
+<sc-for list="{{accounts}}" as="a" hint-placeholder-count="2">
+<button class="row" style="min-height: 64px; width: 100%">
+<span class="mono" style="width: 40px; height: 40px; border-radius: 20px; background: {{a.bg}}; color: {{a.fg}}; font-size: 15px">{{a.letter}}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left"><span class="t-label" style="font-size: 15px">{{a.login}}</span><span class="t-sub">{{a.sub}}</span></span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.fingerprint}}"></path></svg>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="flex: 1; height: 48px; border-radius: 24px; box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>Другой пароль</button>
+<button style="flex: 1; height: 48px; border-radius: 24px; box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg>Не заполнять</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent, a14: accent },
+accounts: [
+{ letter: 'А', login: 'anna@example.com', sub: 'Последний вход вчера', bg: '#DDE3FF', fg: '#2F4AA8' },
+{ letter: 'Р', login: 'anna.work@example.com', sub: 'Пространство «Работа»', bg: '#D4F1EC', fg: '#00665A' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

@@ -43,8 +43,13 @@
 <span style="font-size: 15px; font-weight: 800">Аниме</span><span class="t-sub">3 вкладки</span>
 </div>
 <div style="position: absolute; left: 16px; right: 16px; bottom: 26px; display: flex; align-items: center; gap: 10px; opacity: 0.55">
-<div class="glass" style="flex-grow: 1; height: 64px; border-radius: 32px"></div>
-<div style="width: 64px; height: 64px; border-radius: 22px; background: #A23F2B"></div>
+<div class="glass" style="flex-grow: 1; height: 64px; border-radius: 32px; display: flex; align-items: center; justify-content: space-around; padding: 0 6px">
+<button class="ib" aria-label="Приватные вкладки"><svg class="i" viewBox="0 0 24 24"><path d="{{i.incognito}}"></path></svg></button>
+<button class="ib" aria-label="Вид: сетка" style="background: rgba(162,63,43,0.12); color: #A23F2B"><svg class="i" viewBox="0 0 24 24"><path d="{{i.grid}}"></path></svg></button>
+<button class="ib" aria-label="Недавно закрытые"><svg class="i" viewBox="0 0 24 24"><path d="{{i.undo}}"></path></svg></button>
+<button class="ib" aria-label="Ещё"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+<button aria-label="Новая вкладка" style="width: 64px; height: 64px; border-radius: 22px; background: #A23F2B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px rgba(162,63,43,0.35)"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
 </div>
 </div>
 </x-dc>

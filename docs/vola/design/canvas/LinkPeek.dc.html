@@ -31,7 +31,7 @@
 </div>
 <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 10px 8px">
 <sc-for list="{{acts}}" as="a" hint-placeholder-count="8">
-<button style="height: 76px; border-radius: 20px; background: {{a.bg}}; color: {{a.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; font-weight: 700; line-height: 1.15; text-align: center; padding: 0 2px"><svg class="i" viewBox="0 0 24 24"><path d="{{a.icon}}"></path></svg>{{a.label}}</button>
+<button style="height: 80px; border-radius: 20px; background: {{a.bg}}; color: {{a.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; font-size: 11.5px; font-weight: 700; line-height: 1.15; text-align: center; padding: 14px 2px 0"><svg class="i" viewBox="0 0 24 24"><path d="{{a.icon}}"></path></svg><span style="height: 27px; display: flex; align-items: flex-start; justify-content: center">{{a.label}}</span></button>
 </sc-for>
 </div>
 </div>

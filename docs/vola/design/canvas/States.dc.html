@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — состояния</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1440px; height: 1080px; background: var(--bg); padding: 56px 64px; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span class="t-over">Vola design · основа</span>
+<h1 style="font-size: 48px; font-weight: 800; letter-spacing: -0.03em; line-height: 1">Состояния: пусто, загрузка, ошибка</h1>
+<p class="t-sub" style="font-size: 15px; max-width: 760px">Каждый экран со списком знает, что показать, когда в нём ничего нет, пока данные грузятся и когда что-то пошло не так. Одна схема: значок, короткий заголовок, одно предложение, одно главное действие.</p>
+</div>
+<sc-for list="{{rows}}" as="row" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span class="t-title">{{row.title}}</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+<sc-for list="{{row.cards}}" as="s" hint-placeholder-count="4">
+<div style="height: 360px; border-radius: 32px; background: var(--surface); box-shadow: var(--shadow-sm); padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; position: relative; overflow: hidden">
+<sc-if value="{{s.skeleton}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 24px; right: 24px; top: 28px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; text-align: left">
+<span style="height: 22px; width: 80%; border-radius: 8px; background: linear-gradient(90deg, var(--s-high), var(--s-low), var(--s-high))"></span>
+<span style="height: 110px; border-radius: 18px; background: linear-gradient(90deg, var(--s-high), var(--s-low), var(--s-high))"></span>
+<span style="height: 10px; width: 92%; border-radius: 5px; background: var(--s-high)"></span>
+<span style="height: 10px; width: 76%; border-radius: 5px; background: var(--s-high)"></span>
+<span style="height: 10px; width: 84%; border-radius: 5px; background: var(--s-high)"></span>
+</div>
+<div class="glass" style="position: absolute; left: 16px; right: 16px; bottom: 16px; height: 56px; border-radius: 28px; display: flex; align-items: center; padding: 0 16px; gap: 10px; overflow: hidden">
+<span style="font-size: 13px; font-weight: 700; color: var(--on-var); flex-grow: 1">Загрузка · north-guide.ru</span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.close}}"></path></svg>
+<span style="position: absolute; left: 20px; bottom: 6px; width: 45%; height: 3px; border-radius: 2px; background: {{c.a}}"></span>
+</div>
+</sc-if>
+<sc-if value="{{s.plain}}" hint-placeholder-val="{{ true }}">
+<span style="width: 72px; height: 72px; border-radius: 24px; background: {{s.bg}}; color: {{s.fg}}; display: flex; align-items: center; justify-content: center"><svg class="i l" viewBox="0 0 24 24"><path d="{{s.icon}}"></path></svg></span>
+<span class="t-title" style="font-size: 18px">{{s.title}}</span>
+<span class="t-sub" style="font-size: 14px; max-width: 240px">{{s.text}}</span>
+<button style="margin-top: 6px; height: 44px; border-radius: 22px; padding: 0 18px; background: {{s.btnBg}}; color: {{s.btnFg}}; font-size: 14px; font-weight: 800">{{s.action}}</button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+const c = window.VA ? window.VA(accent) : { a: accent, a14: accent };
+const i = window.VI || {};
+const tonal = { btnBg: c.a14, btnFg: accent };
+const filled = { btnBg: accent, btnFg: '#FFFFFF' };
+const card = (icon, title, text, action, bg, fg, btn) => Object.assign({ plain: true, skeleton: false, icon: icon, title: title, text: text, action: action, bg: bg, fg: fg }, btn);
+return {
+i: i,
+c: c,
+rows: [
+{ title: 'Пусто', cards: [
+card(i.history, 'История пуста', 'Здесь появятся сайты, которые вы откроете. Приватные вкладки сюда не попадают.', 'Открыть новую вкладку', c.a14, accent, tonal),
+card(i.download, 'Загрузок пока нет', 'Файлы сохраняются в «Загрузки» телефона. Папку можно сменить.', 'Выбрать папку', '#D4F1EC', '#00665A', tonal),
+card(i.bookmark, 'Избранное пусто', 'Нажмите звёздочку в меню страницы или перенесите закладки из другого браузера.', 'Перенести закладки', '#FFEBC2', '#6E4F00', filled),
+card(i.key, 'Паролей пока нет', 'Vola предложит сохранить пароль при входе на сайт. Можно перенести из Chrome или Bitwarden.', 'Перенести пароли', c.a14, accent, filled)
+] },
+{ title: 'Загрузка и ошибки', cards: [
+{ plain: false, skeleton: true },
+card(i.wifiOff, 'Сайт не отвечает', 'north-guide.ru долго не отвечает. Возможно, он перегружен или недоступен из вашей сети.', 'Повторить', 'var(--s-high)', 'var(--on-var)', filled),
+card(i.warning, 'Небезопасное соединение', 'Сертификат сайта не подходит к адресу. Данные могут прочитать по пути.', 'Вернуться назад', 'var(--danger-cont)', 'var(--danger)', filled),
+card(i.fingerprint, 'Пароли заблокированы', 'Подтвердите, что это вы, чтобы увидеть или заполнить пароль.', 'Разблокировать', c.a14, accent, filled)
+] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

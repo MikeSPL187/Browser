@@ -19,7 +19,7 @@
 <p class="t-read">Лёд на Байкале становится крепким к середине февраля.</p>
 </div>
 <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
-<div class="sheet" style="height: 664px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="sheet" style="height: 756px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
 <div class="handle"></div>
 <div style="display: flex; gap: 4px; padding-top: 4px">
 <sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
@@ -27,12 +27,12 @@
 </sc-for>
 </div>
 <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
-<sc-for list="{{tiles}}" as="t" hint-placeholder-count="8">
-<button style="height: 84px; border-radius: 22px; background: {{t.bg}}; color: {{t.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 12px; font-weight: 700; line-height: 1.15; text-align: center; padding: 0 4px"><svg class="i" viewBox="0 0 24 24"><path d="{{t.icon}}"></path></svg>{{t.label}}</button>
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+<button style="height: 84px; border-radius: 22px; background: {{t.bg}}; color: {{t.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; font-size: 12px; font-weight: 700; line-height: 1.15; text-align: center; padding: 16px 4px 0"><svg class="i" viewBox="0 0 24 24"><path d="{{t.icon}}"></path></svg><span style="height: 28px; display: flex; align-items: flex-start; justify-content: center">{{t.label}}</span></button>
 </sc-for>
 </div>
 <div class="group">
-<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
 <a href="#" class="row" style="min-height: 52px; padding: 6px 16px">
 <svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{r.icon}}"></path></svg>
 <span style="flex-grow: 1; font-size: 15px; font-weight: 600">{{r.label}}</span>
@@ -67,14 +67,19 @@ Object.assign({ label: 'Приватная', icon: i.incognito }, plain),
 Object.assign({ label: 'Найти', icon: i.find }, plain),
 Object.assign({ label: 'Чтение', icon: i.reader }, plain),
 Object.assign({ label: 'Перевести', icon: i.translate }, plain),
-Object.assign({ label: 'Версия для ПК', icon: i.desktop }, plain),
+Object.assign({ label: 'Скриншот', icon: i.crop }, plain),
 Object.assign({ label: 'Split View', icon: i.split }, plain),
-Object.assign({ label: 'Компактно', icon: i.compact }, on)
+Object.assign({ label: 'Компактно', icon: i.compact }, on),
+Object.assign({ label: 'Версия для ПК', icon: i.desktop }, plain),
+Object.assign({ label: 'Сохранить PDF', icon: i.print }, plain),
+Object.assign({ label: 'На главный экран', icon: i.phone }, plain),
+Object.assign({ label: 'Тема сайта', icon: i.moon }, plain)
 ],
 rows: [
 { icon: i.download, label: 'Загрузки', hint: '1 идёт' },
 { icon: i.history, label: 'История', hint: '' },
 { icon: i.bookmark, label: 'Избранное', hint: '' },
+{ icon: i.key, label: 'Пароли', hint: '' },
 { icon: i.puzzle, label: 'Расширения', hint: '3' },
 { icon: i.settings, label: 'Настройки', hint: '' }
 ]

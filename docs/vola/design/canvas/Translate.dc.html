@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — перевод страницы</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="height: 96px; padding: 44px 20px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #EEF0F2">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 26px; height: 26px; border-radius: 8px; background: #1E5E8C"></span><span style="font-size: 15px; font-weight: 800; color: #1B3550">Lake Journal</span></div>
+<span style="font-size: 13px; font-weight: 700; color: #1E5E8C">Subscribe</span>
+</div>
+<article style="padding: 24px 20px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #1E5E8C">Science · 6 min read</div>
+<h1 style="font-family: Literata, Georgia, serif; font-size: 29px; line-height: 1.15; font-weight: 600; color: #121D28">Why Baikal ice turns turquoise in March</h1>
+<p class="t-read">Clear, cold nights and almost no snow let the ice grow without bubbles. Sunlight then travels deep into it, and only the blue part of the spectrum makes it back.</p>
+</article>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 420px; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 30%)"></div>
+<div class="glass" style="position: absolute; left: 12px; right: 12px; bottom: 24px; border-radius: 32px; padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span class="lead" style="background: {{c.a14}}; color: {{c.a}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.translate}}"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-title">Перевести на русский?</span><span class="t-sub">Страница на английском</span></span>
+<button class="ib" aria-label="Закрыть" style="width: 44px; height: 44px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<button style="height: 40px; border-radius: 20px; padding: 0 14px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 14px; font-weight: 800">Английский</button>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.forward}}"></path></svg>
+<button style="height: 40px; border-radius: 20px; padding: 0 14px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 14px; font-weight: 800">Русский</button>
+</div>
+<div style="border-radius: 18px; background: var(--ok-cont); color: var(--ok); padding: 10px 12px; display: flex; gap: 10px; align-items: center">
+<svg class="i s" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg>
+<span style="font-size: 13px; font-weight: 700; line-height: 1.35">Переводит сам телефон: текст страницы никуда не отправляется</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 0 2px">
+<div style="display: flex; justify-content: space-between"><span class="t-sub" style="font-weight: 700">Загрузка языка · 17 из 24 МБ</span><span class="t-sub" style="font-weight: 700">один раз</span></div>
+<span style="height: 6px; border-radius: 3px; background: linear-gradient(90deg, {{c.a}} 0 71%, var(--s-highest) 71% 100%)"></span>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="flex: 1; height: 52px; border-radius: 26px; box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 14px; font-weight: 800; text-align: center">Не для этого сайта</button>
+<button style="flex: 1; height: 52px; border-radius: 26px; background: {{c.a}}; color: #FFFFFF; font-size: 15px; font-weight: 800; text-align: center">Перевести</button>
+</div>
+<label style="display: flex; align-items: center; gap: 12px; padding: 0 4px"><span class="t-label" style="flex-grow: 1">Всегда переводить английский</span><span class="sw"><span></span></span></label>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent, a14: accent }
+};
+}
+}
+</script>
+</body>
+</html>

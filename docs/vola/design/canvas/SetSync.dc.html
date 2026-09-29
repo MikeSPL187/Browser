@@ -19,9 +19,9 @@
 <div style="border-radius: 28px; background: {{c.a}}; color: #FFFFFF; padding: 18px; display: flex; flex-direction: column; gap: 14px">
 <div style="display: flex; align-items: center; gap: 14px">
 <span style="width: 52px; height: 52px; border-radius: 18px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.sync}}"></path></svg></span>
-<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 800">Синхронизировано</span><span style="font-size: 13px; opacity: 0.85">5 минут назад · sync.example.org</span></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 800">Связка из 2 устройств</span><span style="font-size: 13px; opacity: 0.85">5 минут назад · напрямую по Wi-Fi</span></span>
 </div>
-<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.14); border-radius: 14px; padding: 10px 12px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.key}}"></path></svg>Сквозное шифрование: ключ есть только у ваших устройств</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.14); border-radius: 14px; padding: 10px 12px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.key}}"></path></svg>Сквозное шифрование. Своего сервера нет: данные идут напрямую или через вашу папку</div>
 </div>
 <span class="t-over" style="padding: 4px 4px 0">Устройства</span>
 <div class="group">
@@ -32,9 +32,10 @@
 </div>
 </sc-for>
 </div>
+<a href="SyncPair.dc.html" style="height: 52px; border-radius: 26px; background: {{c.a14}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 800"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.qr}}"></path></svg>Добавить устройство</a>
 <span class="t-over" style="padding: 4px 4px 0">Что синхронизировать</span>
 <div class="group">
-<sc-for list="{{what}}" as="w" hint-placeholder-count="4">
+<sc-for list="{{what}}" as="w" hint-placeholder-count="5">
 <div class="row" style="min-height: 54px"><span style="flex-grow: 1" class="t-label">{{w.t}}</span><span class="sw {{w.cls}}" style="background: {{w.bg}}"><span></span></span></div>
 </sc-for>
 </div>
@@ -53,9 +54,9 @@ i: i,
 c: window.VA ? window.VA(accent) : { a: accent },
 devices: [
 { name: 'Этот телефон', sub: 'Vola · пространство «Работа»', icon: i.phone, bg: '#DDE3FF', fg: '#2F4AA8' },
-{ name: 'Ноутбук', sub: 'Firefox с расширением синхронизации', icon: i.desktop, bg: '#E6DEFF', fg: '#4A3A9E' }
+{ name: 'Планшет', sub: 'Vola · через папку Syncthing', icon: i.desktop, bg: '#E6DEFF', fg: '#4A3A9E' }
 ],
-what: [on('Открытые вкладки'), on('Пространства и Essentials'), on('Избранное'), off('История')]
+what: [on('Открытые вкладки'), on('Пространства и Essentials'), on('Избранное'), on('Пароли и ключи доступа'), off('История')]
 };
 }
 }
