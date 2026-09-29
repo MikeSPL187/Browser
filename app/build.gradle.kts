@@ -182,11 +182,11 @@ val debugApplicationIdSuffix =
 val debugAppLabel = providers.gradleProperty("vola.debugAppLabel").orElse("Vola Debug")
 val localReleaseApplicationIdSuffix =
     providers.gradleProperty("vola.localReleaseApplicationIdSuffix")
-        .orElse(".local")
+        .orElse(".preview")
         .map(::validatedApplicationIdSuffix)
 val localReleaseAppLabel =
     providers.gradleProperty("vola.localReleaseAppLabel")
-        .orElse("Vola Local")
+        .orElse("Vola Preview")
         .map(::validatedAppLabel)
 val releaseAbi = providers.gradleProperty("vola.releaseAbi").map { value ->
     require(value == "arm64-v8a") {
@@ -281,10 +281,13 @@ android {
             )
         }
 
+        // Optimized, installable preview of a release build. CI signs it with the stable preview
+        // key restored as the debug keystore, so each preview updates the previous install.
         create("localRelease") {
             initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = localReleaseApplicationIdSuffix.get()
-            versionNameSuffix = "-local"
+            versionNameSuffix = "-preview"
             manifestPlaceholders["appLabel"] = localReleaseAppLabel.get()
             buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
             matchingFallbacks += listOf("release")
@@ -556,7 +559,6 @@ val validateReleaseSigning by tasks.registering {
 
 tasks.matching {
     it.name == "preFullReleaseBuild" ||
-        it.name == "preFullLocalReleaseBuild" ||
         it.name == "preFullUserCaReleaseBuild" ||
         it.name == "preSystemwebviewReleaseBuild"
 }.configureEach {

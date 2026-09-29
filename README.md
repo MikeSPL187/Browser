@@ -53,8 +53,9 @@ Vola — браузер для Android с упором на красоту, уд
 - **Релизы:** скачать APK на странице [Releases](https://github.com/MikeSPL187/Browser/releases).
 - **Автообновление:** добавить `https://github.com/MikeSPL187/Browser` в
   [Obtainium](https://github.com/ImranR98/Obtainium).
-- **Свежие сборки:** каждый PR и коммит в `main` собирает debug-APK. Скачать можно из раздела
-  **Artifacts** соответствующего запуска в [Actions](https://github.com/MikeSPL187/Browser/actions).
+- **Свежие сборки:** каждый PR и коммит в `main` собирает оптимизированную сборку **Vola Preview**
+  (ставится отдельным приложением рядом с релизной). Скачать можно из раздела **Artifacts**
+  соответствующего запуска в [Actions](https://github.com/MikeSPL187/Browser/actions).
 
 | APK | Движок |
 | --- | --- |

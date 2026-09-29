@@ -2,12 +2,12 @@
 #
 # - Every pull request and push to main: script tests, a no-Google-Play-services dependency
 #   policy check, unit tests (GeckoView and System WebView flavors), Android lint, and
-#   installable arm64 debug APKs.
+#   installable, optimized arm64 preview APKs.
 # - Tags v*, or a manual run on main with "release" enabled: the same checks, then signed
 #   release APKs published as a GitHub Release (the manual run also creates the tag).
 #
 # Secrets (Settings -> Secrets and variables -> Actions):
-#   VOLA_PREVIEW_KEYSTORE_BASE64   optional, stable key for debug APKs so they install over each other
+#   VOLA_PREVIEW_KEYSTORE_BASE64   optional, stable key for preview APKs so they install over each other
 #   VOLA_RELEASE_KEYSTORE_BASE64   required for tags
 #   VOLA_RELEASE_STORE_PASSWORD    required for tags
 #   VOLA_RELEASE_KEY_ALIAS         required for tags
@@ -115,10 +115,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  debug-apk:
-    name: Debug APKs (arm64)
+  preview-apk:
+    name: Preview APKs (arm64)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Check out source
@@ -139,15 +139,15 @@ jobs:
       - name: Install Android SDK platform
         run: sdkmanager "$ANDROID_PLATFORM"
 
-      # AGP signs debug builds with $ANDROID_USER_HOME/debug.keystore (alias androiddebugkey,
-      # passwords "android"). Restoring a stable one lets each new APK update the previous
-      # install instead of requiring an uninstall that wipes browser data.
+      # Preview (localRelease) builds are signed with $ANDROID_USER_HOME/debug.keystore (alias
+      # androiddebugkey, passwords "android"). Restoring a stable one lets each new APK update the
+      # previous install instead of requiring an uninstall that wipes browser data.
       - name: Restore preview signing key
         env:
           VOLA_PREVIEW_KEYSTORE_BASE64: ${{ secrets.VOLA_PREVIEW_KEYSTORE_BASE64 }}
         run: |
           if [[ -z "${VOLA_PREVIEW_KEYSTORE_BASE64:-}" ]]; then
-            echo "::notice title=Preview signing::VOLA_PREVIEW_KEYSTORE_BASE64 is not set. Debug APKs use a throwaway key and cannot be installed over each other."
+            echo "::notice title=Preview signing::VOLA_PREVIEW_KEYSTORE_BASE64 is not set. Preview APKs use a throwaway key and cannot be installed over each other."
             exit 0
           fi
           android_user_home="${ANDROID_USER_HOME:-$HOME/.android}"
@@ -157,24 +157,28 @@ jobs:
           chmod 600 "$keystore"
           keytool -list -keystore "$keystore" -storepass android -alias androiddebugkey > /dev/null
 
-      - name: Build debug APKs
+      # Optimized like a release (R8, compressed native libraries) so previews show real size and
+      # speed, but installed as the separate "Vola Preview" app.
+      - name: Build preview APKs
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --no-daemon --stacktrace --max-workers=2
+          "-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8"
           -Pvola.releaseAbi="$RELEASE_ABI"
-          assembleFullDebug
-          assembleSystemwebviewDebug
+          -Pvola.compressNativeLibs=true
+          assembleFullLocalRelease
+          assembleSystemwebviewLocalRelease
 
       - name: Collect APKs
         run: |
           short_sha="${GITHUB_SHA::7}"
           mkdir -p dist/gecko dist/systemwebview
-          cp app/build/outputs/apk/full/debug/app-full-debug.apk \
-            "dist/gecko/Vola-${short_sha}-gecko-${RELEASE_ABI}-debug.apk"
-          cp app/build/outputs/apk/systemwebview/debug/app-systemwebview-debug.apk \
-            "dist/systemwebview/Vola-${short_sha}-systemwebview-debug.apk"
+          cp app/build/outputs/apk/full/localRelease/app-full-localRelease.apk \
+            "dist/gecko/Vola-${short_sha}-gecko-${RELEASE_ABI}-preview.apk"
+          cp app/build/outputs/apk/systemwebview/localRelease/app-systemwebview-localRelease.apk \
+            "dist/systemwebview/Vola-${short_sha}-systemwebview-preview.apk"
           aapt2="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name aapt2 | sort -V | tail -n 1)"
           {
-            echo "### Debug APKs"
+            echo "### Preview APKs"
             echo
             echo "| APK | Size | Package | Native code | SHA-256 |"
             echo "| --- | ---: | --- | --- | --- |"
@@ -193,7 +197,7 @@ jobs:
       - name: Upload GeckoView APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: Vola-gecko-debug-${{ github.run_number }}
+          name: Vola-gecko-preview-${{ github.run_number }}
           path: dist/gecko/*.apk
           if-no-files-found: error
           retention-days: 14
@@ -201,7 +205,7 @@ jobs:
       - name: Upload System WebView APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: Vola-webview-debug-${{ github.run_number }}
+          name: Vola-webview-preview-${{ github.run_number }}
           path: dist/systemwebview/*.apk
           if-no-files-found: error
           retention-days: 14
