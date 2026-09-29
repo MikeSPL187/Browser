@@ -1,0 +1,14 @@
+--------- beginning of crash
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: FATAL EXCEPTION: UiThreadHelper
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: Process: com.google.android.apps.nexuslauncher, PID: 1176
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: java.lang.NullPointerException: mNativeObject of Surface(name=TaskFragment{ee5fea2 mode=fullscreen})/@0x72acb5a is null. Have you called release() already?
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.view.SurfaceControl.checkNotReleased(SurfaceControl.java:1600)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.view.SurfaceControl.-$$Nest$mcheckNotReleased(Unknown Source:0)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.view.SurfaceControl$Transaction.reparent(SurfaceControl.java:3475)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at com.google.android.apps.nexuslauncher.overlay.d.a(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:25)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at com.google.android.apps.nexuslauncher.overlay.b.run(go/retraceme 31f9979659277bb965985aff1272c33e3c3c9e755b77166d20a2465454178f2c:45)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:959)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:232)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:317)
+09-29 12:53:26.591  1176  1197 E AndroidRuntime: 	at android.os.HandlerThread.run(HandlerThread.java:85)
