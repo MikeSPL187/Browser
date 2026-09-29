@@ -151,7 +151,7 @@ class SiteCapsuleEditorContract :
     }
 
     companion object {
-        const val DEFAULT_DEDICATED_EMOJI = "🧩"
+        const val DEFAULT_DEDICATED_EMOJI = "🌍"
         private const val MAX_OPAQUE_ID_LENGTH = 128
         private const val MAX_EMOJI_LENGTH = 16
         private const val MAX_PREVIEW_DIMENSION = 96

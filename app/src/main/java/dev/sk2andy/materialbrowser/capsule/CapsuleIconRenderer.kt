@@ -2,12 +2,15 @@ package dev.sk2andy.materialbrowser.capsule
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
+import androidx.core.graphics.PathParser
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -67,19 +70,41 @@ object CapsuleIconRenderer {
                 ),
                 Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG),
             )
+        } else if (iconEmoji.isNotBlank()) {
+            drawSymbol(canvas, iconEmoji, iconColor.foregroundArgb.toInt())
         } else {
-            val fallback = iconEmoji.trim().takeIf(String::isNotEmpty)
-                ?: name.trim().take(1).uppercase().ifEmpty { "C" }
+            val fallback = name.trim().take(1).uppercase().ifEmpty { "V" }
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = iconColor.foregroundArgb.toInt()
                 textAlign = Paint.Align.CENTER
-                textSize = if (fallback.length <= 2) 72f else 58f
+                textSize = 72f
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
             val baseline = 96f - (paint.ascent() + paint.descent()) / 2f
             canvas.drawText(fallback, 96f, baseline, paint)
         }
         return output
+    }
+
+    /** Draws the Material Symbol for [iconKey], centered and [SYMBOL_SIZE] pixels wide. */
+    private fun drawSymbol(canvas: Canvas, iconKey: String, color: Int) {
+        val path = PathParser.createPathFromPathData(WorkspaceIcons.pathData(iconKey))
+        val scale = SYMBOL_SIZE / SYMBOL_VIEWPORT
+        val offset = (ICON_SIZE - SYMBOL_SIZE) / 2f
+        path.transform(
+            Matrix().apply {
+                setTranslate(0f, SYMBOL_VIEWPORT)
+                postScale(scale, scale)
+                postTranslate(offset, offset)
+            },
+        )
+        canvas.drawPath(
+            path,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = color
+                style = Paint.Style.FILL
+            },
+        )
     }
 
     internal fun faviconSurfaceColor(favicon: Bitmap): Int {
@@ -121,6 +146,8 @@ object CapsuleIconRenderer {
             channel(Color.blue(color)) * 0.0722
     }
 
+    private const val SYMBOL_SIZE = 96f
+    private const val SYMBOL_VIEWPORT = 960f
     internal const val LIGHT_FAVICON_SURFACE = 0xFFFAF7FC.toInt()
     internal const val DARK_FAVICON_SURFACE = 0xFF29252F.toInt()
     private const val LIGHT_ICON_LUMINANCE_THRESHOLD = 0.5

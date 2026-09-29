@@ -17,8 +17,14 @@ import androidx.compose.ui.unit.dp
 object WorkspaceIcons {
     const val FALLBACK_ID = "star"
 
-    /** Catalog ids in picker order. */
+    /** Icon ids in picker order: the sync catalog first, then icons only local data can use. */
     val ids: List<String> get() = PATHS.keys.toList()
+
+    /** Stored emoji keys of every icon, in picker order. */
+    val keys: List<String> get() = ids.mapNotNull(::emojiFor)
+
+    /** Stored emoji keys a workspace can use: only the sync catalog, so it can be synced. */
+    val workspaceKeys: List<String> get() = CATALOG_IDS.mapNotNull(::emojiFor)
 
     /** The stored emoji key for a catalog id, used when a workspace picks an icon. */
     fun emojiFor(id: String): String? = EMOJI_TO_ID.entries.firstOrNull { it.value == id }?.key
@@ -27,6 +33,12 @@ object WorkspaceIcons {
     fun idFor(emoji: String): String = NORMALIZED_TO_ID[normalize(emoji)] ?: FALLBACK_ID
 
     fun vector(emoji: String): ImageVector = vectorForId(idFor(emoji))
+
+    /**
+     * SVG path data of the icon for a stored emoji key, in a 960 by 960 viewport shifted up by
+     * 960 (Material Symbols coordinates). Used to draw the icon into bitmaps.
+     */
+    fun pathData(emoji: String): String = PATHS[idFor(emoji)] ?: PATHS.getValue(FALLBACK_ID)
 
     fun vectorForId(id: String): ImageVector = cache.getOrPut(id) {
         ImageVector.Builder(
@@ -100,6 +112,67 @@ object WorkspaceIcons {
         "world" to "M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-82v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q20-22 36-47.5t26.5-53q10.5-27.5 16-56.5t5.5-59q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z", // public
         "health" to "M540-80q-108 0-184-76t-76-184v-23q-86-14-143-80.5T80-600v-200q0-17 11.5-28.5T120-840h80q0-17 11.5-28.5T240-880q17 0 28.5 11.5T280-840v80q0 17-11.5 28.5T240-720q-17 0-28.5-11.5T200-760h-40v160q0 66 47 113t113 47q66 0 113-47t47-113v-160h-40q0 17-11.5 28.5T400-720q-17 0-28.5-11.5T360-760v-80q0-17 11.5-28.5T400-880q17 0 28.5 11.5T440-840h80q17 0 28.5 11.5T560-800v200q0 90-57 156.5T360-363v23q0 75 52.5 127.5T540-160q75 0 127.5-52.5T720-340v-67q-35-13-57.5-43.5T640-520q0-50 35-85t85-35q50 0 85 35t35 85q0 39-22.5 69.5T800-407v67q0 108-76 184T540-80Zm220-400q17 0 28.5-11.5T800-520q0-17-11.5-28.5T760-560q-17 0-28.5 11.5T720-520q0 17 11.5 28.5T760-480Zm0-40Z", // stethoscope
         "calendar" to "M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-40q0-17 11.5-28.5T280-880q17 0 28.5 11.5T320-840v40h320v-40q0-17 11.5-28.5T680-880q17 0 28.5 11.5T720-840v40h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z", // calendar_month
+        "puzzle" to "M352-120H200q-33 0-56.5-23.5T120-200v-152q48 0 84-30.5t36-77.5q0-47-36-77.5T120-568v-152q0-33 23.5-56.5T200-800h160q0-42 29-71t71-29q42 0 71 29t29 71h160q33 0 56.5 23.5T800-720v160q42 0 71 29t29 71q0 42-29 71t-71 29v160q0 33-23.5 56.5T720-120H568q0-50-31.5-85T460-240q-45 0-76.5 35T352-120Zm-152-80h85q24-66 77-93t98-27q45 0 98 27t77 93h85v-240h80q8 0 14-6t6-14q0-8-6-14t-14-6h-80v-240H480v-80q0-8-6-14t-14-6q-8 0-14 6t-6 14v80H200v88q54 20 87 67t33 105q0 57-33 104t-87 68v88Zm260-260Z", // extension
+        "folder" to "M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h207q16 0 30.5 6t25.5 17l57 57h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z", // folder
+        "bookmark" to "m480-240-168 72q-40 17-76-6.5T200-241v-519q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v519q0 43-36 66.5t-76 6.5l-168-72Zm0-88 200 86v-518H280v518l200-86Zm0-432H280h400-200Z", // bookmark
+        "globe" to "M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q83 0 155.5 31.5t127 86q54.5 54.5 86 127T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Zm0-82q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z", // language
+    )
+
+    private val CATALOG_IDS: List<String> = listOf(
+        "candy",
+        "star",
+        "work",
+        "shopping",
+        "gaming",
+        "books",
+        "travel",
+        "home",
+        "music",
+        "lab",
+        "news",
+        "heart",
+        "fire",
+        "moon",
+        "nature",
+        "art",
+        "fitness",
+        "idea",
+        "school",
+        "backpack",
+        "writing",
+        "graduation",
+        "reading",
+        "student",
+        "baby",
+        "teddy",
+        "bottle",
+        "family",
+        "ring",
+        "wedding",
+        "money",
+        "card",
+        "coin",
+        "chart",
+        "movie",
+        "popcorn",
+        "television",
+        "camera",
+        "computer",
+        "phone",
+        "car",
+        "bike",
+        "football",
+        "basketball",
+        "beach",
+        "pizza",
+        "coffee",
+        "party",
+        "gift",
+        "dog",
+        "cat",
+        "world",
+        "health",
+        "calendar",
     )
 
     private val EMOJI_TO_ID: Map<String, String> = mapOf(
@@ -157,6 +230,10 @@ object WorkspaceIcons {
         "🌍" to "world",
         "🩺" to "health",
         "📅" to "calendar",
+        "🧩" to "puzzle",
+        "📁" to "folder",
+        "🔖" to "bookmark",
+        "🌐" to "globe",
     )
 
     private val NORMALIZED_TO_ID: Map<String, String> =

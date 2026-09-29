@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -28,6 +29,24 @@ class CapsuleIconRendererInstrumentedTest {
         assertEquals(Color.GREEN, icon.getPixel(96, 96))
 
         custom.recycle()
+        icon.recycle()
+    }
+
+    @Test
+    fun iconWithoutFaviconDrawsMaterialSymbolInForegroundColor() {
+        val icon = CapsuleIconRenderer.render(
+            name = "Mail",
+            iconEmoji = "📚",
+            iconColor = CapsuleIconColor.Purple,
+            favicon = null,
+        )
+        val foreground = CapsuleIconColor.Purple.foregroundArgb.toInt()
+        val pixels = IntArray(icon.width * icon.height)
+        icon.getPixels(pixels, 0, icon.width, 0, 0, icon.width, icon.height)
+
+        assertEquals(CapsuleIconColor.Purple.backgroundArgb.toInt(), icon.getPixel(16, 96))
+        assertTrue(pixels.count { it == foreground } > 500)
+
         icon.recycle()
     }
 

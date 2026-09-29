@@ -62,6 +62,8 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.painterResource
+import androidx.annotation.DrawableRes
 
 @Composable
 internal fun PermissionRadarSheet(
@@ -230,7 +232,11 @@ private fun PermissionRadarRow(
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(entry.permission.symbol(), style = MaterialTheme.typography.titleLarge)
+                Icon(
+                    painter = painterResource(entry.permission.icon()),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -512,13 +518,14 @@ private fun SitePermission.displayName(): String = when (this) {
     SitePermission.ProtectedMedia -> stringResource(R.string.permission_protected_media)
 }
 
-private fun SitePermission.symbol(): String = when (this) {
-    SitePermission.Camera -> "◉"
-    SitePermission.Microphone -> "●"
-    SitePermission.Location -> "⌖"
-    SitePermission.Notifications -> "●"
-    SitePermission.MidiSysex -> "♫"
-    SitePermission.ProtectedMedia -> "◆"
+@DrawableRes
+private fun SitePermission.icon(): Int = when (this) {
+    SitePermission.Camera -> R.drawable.ic_symbol_photo_camera
+    SitePermission.Microphone -> R.drawable.ic_symbol_mic
+    SitePermission.Location -> R.drawable.ic_symbol_location_on
+    SitePermission.Notifications -> R.drawable.ic_symbol_notifications
+    SitePermission.MidiSysex -> R.drawable.ic_symbol_piano
+    SitePermission.ProtectedMedia -> R.drawable.ic_symbol_shield_lock
 }
 
 @Composable

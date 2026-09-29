@@ -81,6 +81,8 @@ import dev.sk2andy.materialbrowser.data.FavoriteLibraryEntry
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -365,11 +367,15 @@ private fun FavoriteIconDialog(folder: FavoriteFolder, onDismiss: () -> Unit, on
         title = { Text(stringResource(R.string.favorites_folder_icon)) },
         text = {
             Column {
-                OutlinedTextField(
-                    value = emoji,
-                    onValueChange = { emoji = it.take(BrowsingFavoritesRules.MAX_FOLDER_EMOJI_CHARS) },
-                    label = { Text(stringResource(R.string.favorites_folder_emoji)) },
-                    singleLine = true,
+                Text(
+                    stringResource(R.string.favorites_folder_symbol),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                IconKeyChoices(
+                    selected = emoji,
+                    onSelect = { emoji = it },
+                    testTagForKey = FavoritesScreenTestTags::folderIcon,
                 )
                 TextButton(onClick = onUpload) { Text(stringResource(R.string.favorites_upload_icon)) }
                 TextButton(onClick = { onConfirm(null) }) { Text(stringResource(R.string.favorites_reset_icon)) }
@@ -441,7 +447,7 @@ private fun FavoriteFolderThumbnail(folder: FavoriteFolder, library: FavoriteLib
     Surface(Modifier.size(36.dp), shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
         Box(contentAlignment = Alignment.Center) {
             when {
-                folder.icon is FavoriteFolderIcon.Emoji -> Text(folder.icon.value, style = MaterialTheme.typography.titleMedium)
+                folder.icon is FavoriteFolderIcon.Emoji -> PlatformProfileEmoji(emoji = folder.icon.value, fontSize = 20.sp)
                 folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
                     Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else -> {
@@ -539,4 +545,6 @@ internal object FavoritesScreenTestTags {
     fun favorite(url: String): String = "favorite:$url"
 
     fun delete(url: String): String = "favorite_delete:$url"
+
+    fun folderIcon(key: String): String = "favorite_folder_icon:$key"
 }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "icons": [
-    { "id": "candy", "emoji": "🍬", "label": "Candy" },
+    { "id": "candy", "emoji": "🍬", "label": "Sparkles" },
     { "id": "star", "emoji": "⭐", "label": "Star" },
     { "id": "work", "emoji": "💼", "label": "Work" },
     { "id": "shopping", "emoji": "🛒", "label": "Shopping" },

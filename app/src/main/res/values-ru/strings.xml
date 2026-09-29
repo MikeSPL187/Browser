@@ -339,7 +339,7 @@
     <string name="favorites_parent">Родительская папка</string>
     <string name="favorites_folder_empty">Папка пуста</string>
     <string name="favorites_folder_icon">Значок папки</string>
-    <string name="favorites_folder_emoji">Эмодзи (необязательно)</string>
+    <string name="favorites_folder_symbol">Значок</string>
     <string name="favorites_upload_icon">Выбрать изображение</string>
     <string name="favorites_reset_icon">Использовать значок сайта</string>
     <string name="favorites_icon_failed">Не удалось загрузить изображение</string>
@@ -812,11 +812,9 @@
     <string name="capsule_icon_custom">Своё изображение</string>
     <string name="capsule_icon_custom_summary">Импорт изображения с кадрированием для этой капсулы</string>
     <string name="capsule_icon_custom_edit">Изменить кадр</string>
-    <string name="capsule_icon_fallback">Эмодзи капсулы</string>
-    <string name="capsule_icon_fallback_summary">Использует эмодзи или символ этой капсулы</string>
-    <string name="capsule_icon_emoji">Эмодзи капсулы</string>
-    <string name="capsule_icon_emoji_input">Эмодзи или символ</string>
-    <string name="capsule_icon_emoji_option">Вариант эмодзи %1$s</string>
+    <string name="capsule_icon_fallback">Значок капсулы</string>
+    <string name="capsule_icon_fallback_summary">Использует значок, выбранный ниже</string>
+    <string name="capsule_icon_symbol">Значок</string>
     <string name="capsule_icon_background">Фон значка</string>
     <string name="capsule_icon_background_option">Фон значка: %1$s</string>
     <string name="capsule_icon_color_light">Светлый</string>

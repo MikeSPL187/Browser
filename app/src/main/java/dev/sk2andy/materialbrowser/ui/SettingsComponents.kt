@@ -61,6 +61,7 @@ import dev.sk2andy.materialbrowser.data.DownloadManagerMode
 import dev.sk2andy.materialbrowser.data.InactiveTabLifetime
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import androidx.compose.ui.res.painterResource
 
 @Composable
 internal fun SettingsPage(
@@ -118,11 +119,10 @@ internal fun PrivacyXRaySettingsCounter(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
-            Text(
-                "◈",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            Icon(
+                painter = painterResource(R.drawable.ic_symbol_shield),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
             )
         }
     }

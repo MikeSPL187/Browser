@@ -42,6 +42,8 @@ import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.Icon
 
 internal object ProtectionSettingsTestTags {
     const val UserCaWarning = "protection_settings_user_ca_warning"
@@ -139,10 +141,10 @@ internal fun ProtectionAndDataSettingsPage(
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
-                Text(
-                    "◉",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    style = MaterialTheme.typography.titleLarge,
+                Icon(
+                    painter = painterResource(R.drawable.ic_symbol_radar),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
                 )
             }
         }

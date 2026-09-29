@@ -2,10 +2,17 @@
 """Generates WorkspaceIcons.kt from Material Symbols Rounded (Apache License 2.0).
 
 Each line of icons.txt maps a workspace icon catalog id (sync/protocol/device-icons-v1.json) to a
-Material Symbols name. The script downloads the 24px rounded SVGs and writes their path data, so
-the app draws vector icons instead of emoji. The home screen widget cannot draw Compose vectors,
-so the script also writes one vector drawable per icon, tinted with the widget colors. Run it after
-changing icons.txt:
+Material Symbols name. A line with a third column adds an icon outside the sync catalog, keyed by
+that emoji; site capsules and favorite folders can use it, synced workspaces cannot. labels.tsv
+holds the English and Russian name of every icon.
+
+The script downloads the 24px rounded SVGs and writes:
+- WorkspaceIcons.kt (shared): path data and Compose vectors, so the app never draws emoji;
+- WorkspaceIconResources.kt (app): localized names and, for the home screen widget, which cannot
+  draw Compose vectors, one vector drawable per catalog icon tinted with the widget colors;
+- values/workspace_icon_names.xml and values-ru/workspace_icon_names.xml.
+
+Run it after changing icons.txt or labels.tsv:
 
     python3 scripts/workspace-icons/generate.py
 """
@@ -19,8 +26,10 @@ ROOT = Path(__file__).resolve().parents[2]
 ICONS = Path(__file__).with_name("icons.txt")
 CATALOG = ROOT / "sync/protocol/device-icons-v1.json"
 OUTPUT = ROOT / "shared/src/commonMain/kotlin/dev/sk2andy/materialbrowser/shared/ui/WorkspaceIcons.kt"
-WIDGET_OUTPUT = ROOT / "app/src/main/java/dev/sk2andy/materialbrowser/WidgetWorkspaceIcons.kt"
-DRAWABLES = ROOT / "app/src/main/res/drawable"
+LABELS = Path(__file__).with_name("labels.tsv")
+APP_OUTPUT = ROOT / "app/src/main/java/dev/sk2andy/materialbrowser/WorkspaceIconResources.kt"
+RES = ROOT / "app/src/main/res"
+DRAWABLES = RES / "drawable"
 URL = (
     "https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/"
     "{name}/materialsymbolsrounded/{name}_24px.svg"
@@ -38,29 +47,57 @@ def path_data(name: str) -> str:
 
 
 def main() -> None:
-    mapping = [line.split() for line in ICONS.read_text().splitlines() if line.strip()]
+    lines = [line.split() for line in ICONS.read_text().splitlines() if line.strip()]
     catalog = {icon["id"]: icon["emoji"] for icon in json.loads(CATALOG.read_text())["icons"]}
-    missing = sorted(set(catalog) - {icon_id for icon_id, _ in mapping})
+    missing = sorted(set(catalog) - {line[0] for line in lines})
     if missing:
         raise SystemExit(f"catalog ids without an icon: {missing}")
+    for line in lines:
+        if len(line) == 3:
+            if line[0] in catalog:
+                raise SystemExit(f"{line[0]}: catalog icons take their emoji from the catalog")
+            catalog[line[0]] = line[2]
+        elif line[0] not in catalog:
+            raise SystemExit(f"{line[0]}: not in the catalog, add its emoji key as a third column")
+    mapping = [(line[0], line[1]) for line in lines]
+    widget_mapping = [(line[0], line[1]) for line in lines if len(line) == 2]
     data = {icon_id: path_data(name) for icon_id, name in mapping}
     paths = "\n".join(
         f'        "{icon_id}" to "{data[icon_id]}", // {name}' for icon_id, name in mapping
     )
     emoji = "\n".join(f'        "{catalog[icon_id]}" to "{icon_id}",' for icon_id, _ in mapping)
-    OUTPUT.write_text(TEMPLATE.format(paths=paths, emoji=emoji))
+    catalog_ids = "\n".join(f'        "{icon_id}",' for icon_id, _ in widget_mapping)
+    OUTPUT.write_text(TEMPLATE.format(paths=paths, emoji=emoji, catalog_ids=catalog_ids))
     for old in DRAWABLES.glob("ic_widget_workspace_*.xml"):
         old.unlink()
-    for icon_id, name in mapping:
+    for icon_id, name in widget_mapping:
         drawable = DRAWABLES / f"ic_widget_workspace_{icon_id}.xml"
         drawable.write_text(DRAWABLE_TEMPLATE.format(name=name, path=data[icon_id]))
-    resources = "\n".join(
+    labels = {
+        row[0]: (row[1], row[2])
+        for row in (line.split("\t") for line in LABELS.read_text().splitlines() if line.strip())
+    }
+    unlabeled = sorted({icon_id for icon_id, _ in mapping} - set(labels))
+    if unlabeled:
+        raise SystemExit(f"icons without labels: {unlabeled}")
+    for folder, column in (("values", 0), ("values-ru", 1)):
+        names = "\n".join(
+            f'    <string name="workspace_icon_{icon_id}">{labels[icon_id][column]}</string>'
+            for icon_id, _ in mapping
+        )
+        (RES / folder / "workspace_icon_names.xml").write_text(NAMES_TEMPLATE.format(names=names))
+    drawables = "\n".join(
         f'        "{icon_id}" -> R.drawable.ic_widget_workspace_{icon_id}'
+        for icon_id, _ in widget_mapping
+        if icon_id != "star"
+    )
+    names = "\n".join(
+        f'        "{icon_id}" -> R.string.workspace_icon_{icon_id}'
         for icon_id, _ in mapping
         if icon_id != "star"
     )
-    WIDGET_OUTPUT.write_text(WIDGET_TEMPLATE.format(resources=resources))
-    print(f"wrote {OUTPUT.relative_to(ROOT)}, {WIDGET_OUTPUT.relative_to(ROOT)} and {len(mapping)} drawables")
+    APP_OUTPUT.write_text(APP_TEMPLATE.format(drawables=drawables, names=names))
+    print(f"wrote {len(mapping)} icons, {len(widget_mapping)} widget drawables")
 
 
 TEMPLATE = """// Generated by scripts/workspace-icons/generate.py from Material Symbols Rounded
@@ -82,8 +119,14 @@ import androidx.compose.ui.unit.dp
 object WorkspaceIcons {{
     const val FALLBACK_ID = "star"
 
-    /** Catalog ids in picker order. */
+    /** Icon ids in picker order: the sync catalog first, then icons only local data can use. */
     val ids: List<String> get() = PATHS.keys.toList()
+
+    /** Stored emoji keys of every icon, in picker order. */
+    val keys: List<String> get() = ids.mapNotNull(::emojiFor)
+
+    /** Stored emoji keys a workspace can use: only the sync catalog, so it can be synced. */
+    val workspaceKeys: List<String> get() = CATALOG_IDS.mapNotNull(::emojiFor)
 
     /** The stored emoji key for a catalog id, used when a workspace picks an icon. */
     fun emojiFor(id: String): String? = EMOJI_TO_ID.entries.firstOrNull {{ it.value == id }}?.key
@@ -92,6 +135,12 @@ object WorkspaceIcons {{
     fun idFor(emoji: String): String = NORMALIZED_TO_ID[normalize(emoji)] ?: FALLBACK_ID
 
     fun vector(emoji: String): ImageVector = vectorForId(idFor(emoji))
+
+    /**
+     * SVG path data of the icon for a stored emoji key, in a 960 by 960 viewport shifted up by
+     * 960 (Material Symbols coordinates). Used to draw the icon into bitmaps.
+     */
+    fun pathData(emoji: String): String = PATHS[idFor(emoji)] ?: PATHS.getValue(FALLBACK_ID)
 
     fun vectorForId(id: String): ImageVector = cache.getOrPut(id) {{
         ImageVector.Builder(
@@ -112,6 +161,10 @@ object WorkspaceIcons {{
 
     private val PATHS: Map<String, String> = linkedMapOf(
 {paths}
+    )
+
+    private val CATALOG_IDS: List<String> = listOf(
+{catalog_ids}
     )
 
     private val EMOJI_TO_ID: Map<String, String> = mapOf(
@@ -142,19 +195,35 @@ DRAWABLE_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
 </vector>
 """
 
-WIDGET_TEMPLATE = """// Generated by scripts/workspace-icons/generate.py. Do not edit by hand.
+NAMES_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated by scripts/workspace-icons/generate.py from labels.tsv. Do not edit by hand. -->
+<resources>
+{names}
+</resources>
+"""
+
+APP_TEMPLATE = """// Generated by scripts/workspace-icons/generate.py. Do not edit by hand.
 
 package dev.sk2andy.materialbrowser
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 
-/** Workspace icons as drawables for the home screen widget, which cannot draw Compose vectors. */
-internal object WidgetWorkspaceIcons {{
+/** Android resources for workspace icons: localized names and home screen widget drawables. */
+internal object WorkspaceIconResources {{
+    /** A drawable for the home screen widget, which cannot draw Compose vectors. */
     @DrawableRes
-    fun forEmoji(emoji: String): Int = when (WorkspaceIcons.idFor(emoji)) {{
-{resources}
+    fun widgetDrawableFor(emoji: String): Int = when (WorkspaceIcons.idFor(emoji)) {{
+{drawables}
         else -> R.drawable.ic_widget_workspace_star
+    }}
+
+    /** The localized icon name, for accessibility and pickers. */
+    @StringRes
+    fun nameFor(emoji: String): Int = when (WorkspaceIcons.idFor(emoji)) {{
+{names}
+        else -> R.string.workspace_icon_star
     }}
 }}
 """

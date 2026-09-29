@@ -136,7 +136,7 @@ class CandySearchWidgetProvider : AppWidgetProvider() {
         ) {
             views.setViewVisibility(viewId, if (profile == null) View.GONE else View.VISIBLE)
             if (profile == null) return
-            views.setImageViewResource(viewId, WidgetWorkspaceIcons.forEmoji(profile.emoji))
+            views.setImageViewResource(viewId, WorkspaceIconResources.widgetDrawableFor(profile.emoji))
             val name = profile.name.ifBlank {
                 context.getString(
                     if (profile.profileId == DEFAULT_PROFILE_ID) {

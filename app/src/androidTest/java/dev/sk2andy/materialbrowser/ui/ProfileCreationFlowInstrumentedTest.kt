@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
@@ -58,7 +59,9 @@ class ProfileCreationFlowInstrumentedTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(ProfileCreationTestTags.Sheet).assertExists()
-        composeRule.onNodeWithContentDescription("💼").performClick()
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.workspace_icon_work),
+        ).performClick()
         composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000L) {

@@ -52,3 +52,7 @@ cat cruelty_free
 world public
 health stethoscope
 calendar calendar_month
+puzzle extension 🧩
+folder folder 📁
+bookmark bookmark 🔖
+globe language 🌐

@@ -43,6 +43,7 @@ import dev.sk2andy.materialbrowser.shared.ui.SharedProfileActionsSheet
 import dev.sk2andy.materialbrowser.shared.ui.SharedProfileEmojiPickerSheet
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsSwitch
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.WorkspaceIconResources
 
 internal data class ProfileCreationOptions(
     val protection: ProfileProtection? = null,
@@ -169,6 +170,7 @@ internal fun EmojiPickerSheet(
         emojis = emojis,
         selectedEmoji = selectedEmoji,
         copy = profileSheetCopy(),
+        iconDescription = { emoji -> stringResource(WorkspaceIconResources.nameFor(emoji)) },
         onCreate = { emoji, isolationEnabled ->
             onCreate(
                 emoji,
