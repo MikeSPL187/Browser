@@ -91,9 +91,11 @@ class AppDataTransferActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        onBackInvokedDispatcher.registerOnBackInvokedCallback(
-            OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-        ) {}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+            ) {}
+        }
         var request = requestFrom(intent)
         if (request == null) {
             finishAndRemoveTask()
@@ -304,6 +306,10 @@ class AppDataTransferActivity : Activity() {
             }
         }
     }
+
+    /** Android 12 has no OnBackInvokedDispatcher, so Back is blocked here during the transfer. */
+    @Deprecated("Android 13+ blocks Back with the OnBackInvokedCallback registered in onCreate.")
+    override fun onBackPressed() = Unit
 
     private sealed interface TransferRequest {
         val mainProcessId: Int

@@ -208,7 +208,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.mikespl187.vola"
-        minSdk = 33
+        minSdk = 31
         targetSdk = 36
         versionCode = volaVersionCode.get().toInt()
         versionName = volaVersionName.get()

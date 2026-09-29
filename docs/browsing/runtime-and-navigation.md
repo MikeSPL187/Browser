@@ -313,7 +313,7 @@
   Fullscreen keeps the renderer edge to edge.
   GeckoView always keeps its default SurfaceView backend so frames reach Android's compositor
   directly. Android 17 and newer apply Frosted blur through a rounded native SurfaceView region;
-  Android 13 through 16 keep the translucent glass treatment without website blur.
+  Android 12 through 16 keep the translucent glass treatment without website blur.
   PiP, clipping and tab motion preserve the same browser host, GeckoView, surface, display and
   session. The static status-bar overlay remains outside the renderer and keeps system icons legible.
 - System WebView's shared safe-area read caches, including Light-/Shadow-DOM parent paths and null parents, are scoped to

@@ -10,6 +10,8 @@ import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
+import dev.sk2andy.materialbrowser.getActivityInfoCompat
+import dev.sk2andy.materialbrowser.queryIntentActivitiesCompat
 import java.util.Locale
 
 enum class ExternalDownloadProtocol(val stableId: String) {
@@ -119,10 +121,7 @@ class ExternalDownloadManager(private val context: Context) {
     private fun oneDmApp(packageName: String): ExternalDownloadManagerApp? {
         val component = ComponentName(packageName, ONE_DM_ACTIVITY)
         val activityInfo = runCatching {
-            packageManager.getActivityInfo(
-                component,
-                PackageManager.ComponentInfoFlags.of(0),
-            )
+            packageManager.getActivityInfoCompat(component)
         }.getOrNull()?.takeIf { it.enabled && it.exported } ?: return null
         val label = runCatching { activityInfo.loadLabel(packageManager).toString() }
             .getOrNull()
@@ -168,10 +167,8 @@ class ExternalDownloadManager(private val context: Context) {
         )
     }
 
-    private fun query(intent: Intent): List<ResolveInfo> = packageManager.queryIntentActivities(
-        intent,
-        PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()),
-    )
+    private fun query(intent: Intent): List<ResolveInfo> =
+        packageManager.queryIntentActivitiesCompat(intent, PackageManager.MATCH_DEFAULT_ONLY)
 
     private companion object {
         val PROBE_URI: Uri = Uri.parse("https://example.com/download")

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.service.voice.VoiceInteractionService
+import dev.sk2andy.materialbrowser.queryIntentServicesCompat
 
 data class AssistantSummaryRequest(
     val url: String,
@@ -86,9 +87,8 @@ class AssistantSummaryLauncher(private val context: Context) {
     }
 
     private fun activeVoiceServicePackage(): String? =
-        context.packageManager.queryIntentServices(
+        context.packageManager.queryIntentServicesCompat(
             Intent(VoiceInteractionService.SERVICE_INTERFACE),
-            PackageManager.ResolveInfoFlags.of(0L),
         ).firstNotNullOfOrNull { resolvedService ->
             val service = resolvedService.serviceInfo ?: return@firstNotNullOfOrNull null
             val component = ComponentName(service.packageName, service.name)

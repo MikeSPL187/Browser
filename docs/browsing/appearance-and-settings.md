@@ -128,9 +128,9 @@ Frosted exposes three persisted controls while selected:
 - AMOLED keeps root surfaces black. An explicit address-bar color may color address chrome, but it
   stays opaque; Frosted transparency and blur do not override AMOLED chrome.
 - Frosted changes only Candy browser chrome. It does not inject styles into websites or claim backdrop refraction.
-- Frosted uses view-hierarchy capture for Android System WebView on Android 13 and newer,
+- Frosted uses view-hierarchy capture for Android System WebView on Android 12 and newer,
   native `SurfaceView` blur regions for GeckoView on Android 17 and newer, and Compose-backed blur
-  sources on the new-tab page and tab overview. GeckoView on Android 13, 14, 15 and 16 keeps its
+  sources on the new-tab page and tab overview. GeckoView on Android 12, 13, 14, 15 and 16 keeps its
   performant `SurfaceView` and renders the glass treatment without website blur.
 - The status-bar protection is a static surface-tint fade drawn above page content. It never samples
   or continuously invalidates the browser engine; the optional Frosted address chrome keeps its
