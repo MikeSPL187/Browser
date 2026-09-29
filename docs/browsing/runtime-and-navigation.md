@@ -36,7 +36,7 @@
 | Gecko permissions and prompts | `PermissionRequestRules` / `BrowserWebPromptRules` → controller → existing Candy dialogs and Android permission presenter | Preserve profile/private permission scope, deny stale prompts, and fail closed for unsupported sensitive prompt classes |
 | Local userscript | `UserScriptRules` → Gecko Topping document-start bridge | Require an explicit HTTP(S) pattern, top frame and regular tab; apply full URL exclusions before source runs |
 | Main-frame 404 | engine HTTP status → tab state → `PageErrorFeedbackRules` | Keep the navigation committed, preserve URL/title/history side effects, and cover the page with Candy's native not-found surface |
-| Offline page | failed main-frame navigation + `BrowserConnectivityMonitor` → controller → `PageErrorFeedbackRules` | Require Android's validated default internet capability, never cover an already loaded page merely because connectivity drops, auto-reload on reconnect only before the game starts, and preserve the game behind an explicit reload banner afterward |
+| Offline page | failed main-frame navigation + `BrowserConnectivityMonitor` → controller → `PageErrorFeedbackRules` | Require Android's validated default internet capability, never cover an already loaded page merely because connectivity drops, and offer one explicit reload once the connection is back |
 | Pull to refresh | `BrowserPullToRefreshLayout` → `BrowserPullGestureRules` / `BrowserPullToRefreshRules` → `BrowserController.reload()` | Admit a downward-dominant gesture starting within 160 dp below the top safe inset only for a visible, idle web page whose engine-reported document offset is at the top; keep gestures starting lower in the page body with nested scrollers, plus blank, obscured, Find-in-page, overview and video-only surfaces, out of the gesture path |
 
 ## Invariants
@@ -188,20 +188,10 @@
   only with both `NET_CAPABILITY_INTERNET` and `NET_CAPABILITY_VALIDATED`; close the registered callback
   with `BrowserController`. Do not issue Candy-owned probe requests or replace an already usable page
   solely because the network disconnects. Show the offline surface after a main-frame transport failure.
-  Offline Candy Circuit board, score, combo, moves and best score remain UI-local and memory-only.
-  The deterministic 4×4 rotation puzzle gives a round twelve moves; a circuit scores only when at least
-  four tiles form a cycle through reciprocal edge connections. Extra open or dangling branches do not
-  invalidate that cycle. Scoring replaces every participating tile with a different randomized tile,
-  rejects refills that already contain a closed cycle, and grants one capped nonlinear move reward per
-  scoring turn: two moves for 4–7 tiles, three for 8–11, five for 12–15, and nine for all 16;
-  consecutive scoring turns add up to three combo moves, with ten moves as the per-turn cap. A
-  player may rebuild and score the same circuit positions again after refill. The UI resolves a scored
-  turn as one input-locked sequence: rotate the closing
-  tile, pulse and dissolve the closed circuit, then fly the randomized refill tiles in with a stable
-  stagger; score and move semantics update from the reducer result without waiting for motion. Open the
-  puzzle immediately with no intermediate play prompt. If connectivity
-  returns, keep game state and morph the offline pill into a polite **Back online** banner. Its button
-  plays the page exit motion before performing the only retry. Load the exact failed URL when the engine
+  The offline page is calm and static: a connectivity glyph, a short explanation and an **Offline**
+  pill. If connectivity returns, the heading changes to a polite **Back online** live region and the
+  pill becomes a **Load page** button. The button performs the only retry; Vola never reloads on its
+  own, so a flapping or captive network cannot trigger a reload loop. Load the exact failed URL when the engine
   has no matching committed history entry; retain normal reload semantics when history already points at
   the target, including committed HTTP failures such as 404.
 - Treat a main-frame HTTP 404 as a committed response, not a failed navigation. System WebView reports it
@@ -736,7 +726,7 @@ WebView request state.
 | --- | --- |
 | Input/URL policy | Matching JVM rule test |
 | WebView settings or callbacks | Focused browser instrumented test |
-| Native 404/offline pages and Candy Circuit | `CandyCircuitRulesTest`, `PageErrorFeedbackRulesTest`, `BrowserConnectivityRulesTest`, `GeckoMainFrameResponseRulesTest`, `PageErrorFeedbackInstrumentedTest`, and engine-specific main-frame 404 coverage |
+| Native 404/offline pages | `PageErrorFeedbackRulesTest`, `BrowserConnectivityRulesTest`, `GeckoMainFrameResponseRulesTest`, `PageErrorFeedbackInstrumentedTest`, and engine-specific main-frame 404 coverage |
 | Federated login | `FederatedLoginRulesTest`, `FederatedLoginPromptInstrumentedTest`, `BrowserSessionStoreInstrumentedTest`, and popup-blocker regression tests |
 | CAPTCHA compatibility | `CaptchaCompatibilityRulesTest`, `CaptchaCompatibilityPromptInstrumentedTest`, `BrowserControllerCaptchaCompatibilityInstrumentedTest`, and `BrowserSessionStoreInstrumentedTest` |
 | Gecko password Autofill, opt-in HTTP login selection, Credential Manager and browser-origin manifest contract | `CredentialPromptRulesTest`, `DeveloperOptionsSettingsPageInstrumentedTest` and `GeckoCredentialsInstrumentedTest` on API 34+ |
