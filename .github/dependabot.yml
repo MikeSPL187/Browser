@@ -1,0 +1,66 @@
+# Keeps gradle/libs.versions.toml and the pinned GitHub Actions current. Every update arrives as a
+# pull request that goes through .github/workflows/build.yml before it can be merged.
+version: 2
+
+registries:
+  google:
+    type: maven-repository
+    url: https://dl.google.com/dl/android/maven2/
+  mozilla:
+    type: maven-repository
+    url: https://maven.mozilla.org/maven2/
+  jitpack:
+    type: maven-repository
+    url: https://jitpack.io
+
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    registries:
+      - google
+      - mozilla
+      - jitpack
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    labels:
+      - dependencies
+    groups:
+      # GeckoView is the engine and its security fixes: always a separate, prompt pull request.
+      geckoview:
+        patterns:
+          - org.mozilla.geckoview:*
+      kotlin-and-build:
+        patterns:
+          - com.android.*
+          - org.jetbrains.kotlin*
+          - org.jetbrains.compose*
+      androidx:
+        patterns:
+          - androidx.*
+      other:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - org.mozilla.geckoview:*
+          - com.android.*
+          - org.jetbrains.kotlin*
+          - org.jetbrains.compose*
+          - androidx.*
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+    groups:
+      actions:
+        patterns:
+          - "*"

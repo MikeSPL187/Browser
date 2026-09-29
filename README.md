@@ -67,7 +67,9 @@ Vola — браузер для Android с упором на красоту, уд
 GitHub Actions ([`.github/workflows/build.yml`](.github/workflows/build.yml)). Правила проекта —
 в [`CLAUDE.md`](CLAUDE.md).
 
-Стек: Kotlin, Jetpack Compose, Material 3 Expressive, JDK 17, Gradle Kotlin DSL.
+Стек: Kotlin, Jetpack Compose, Material 3 Expressive, JDK 17, Gradle Kotlin DSL. Версии зависимостей —
+в [`gradle/libs.versions.toml`](gradle/libs.versions.toml); Dependabot раз в неделю предлагает
+обновления (GeckoView — отдельным PR, чтобы исправления безопасности движка не ждали).
 
 ```bash
 ./gradlew testFullDebugUnitTest lintFullDebug   # тесты и lint

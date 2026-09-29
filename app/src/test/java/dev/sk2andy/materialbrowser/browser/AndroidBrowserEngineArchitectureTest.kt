@@ -10,9 +10,12 @@ class AndroidBrowserEngineArchitectureTest {
     @Test
     fun `build includes Gecko and AndroidX WebKit without a compile time engine flag`() {
         val buildScript = source("app/build.gradle.kts")
+        val versionCatalog = source("gradle/libs.versions.toml")
 
-        assertTrue(buildScript.contains("org.mozilla.geckoview:geckoview"))
-        assertTrue(buildScript.contains("androidx.webkit:webkit"))
+        assertTrue(versionCatalog.contains("org.mozilla.geckoview:geckoview"))
+        assertTrue(versionCatalog.contains("androidx.webkit:webkit"))
+        assertTrue(buildScript.contains("libs.geckoview"))
+        assertTrue(buildScript.contains("libs.androidx.webkit"))
         assertFalse(buildScript.contains("USE_GECKO_ENGINE"))
     }
 
