@@ -9,6 +9,8 @@
 - Kotlin, Jetpack Compose, Material 3 (Expressive), JDK 17, Gradle Kotlin DSL, version catalog (gradle/libs.versions.toml).
 - Движки: GeckoView (основной, flavor `full`/`foss`) и Android System WebView (flavor `systemwebview`).
 - Все типы GeckoView/WebView — только внутри адаптеров движка. UI и ViewModel зависят лишь от engine-neutral интерфейсов.
+- applicationId — `io.github.mikespl187.vola`. Kotlin-пакет `dev.sk2andy.materialbrowser` и внутренние идентификаторы Candy (имена классов, intent-действий, мостов, ассетов) сохранены намеренно: они не видны пользователю, а переименование раздуло бы диффы. Бренд меняем только в том, что видит пользователь.
+- Координаты репозитория (владелец, имя, URL) — только через `VolaProject`.
 
 ## Дизайн: визуальный ориентир — Zen Browser
 Главный образец эстетики — Zen Browser (десктопный Firefox-форк, наследник стиля Arc). Мы переносим его идеи на мобильный Android, а не копируем пиксель в пиксель.

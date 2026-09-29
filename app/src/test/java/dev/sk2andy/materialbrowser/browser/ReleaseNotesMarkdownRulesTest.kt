@@ -11,18 +11,18 @@ class ReleaseNotesMarkdownRulesTest {
     fun `supported release notes become structured content`() {
         val document = ReleaseNotesMarkdownRules.parse(
             markdown = """
-                # Candy Sync is here
+                # Vola Sync is here
 
-                Move between **Candy Browser** and your `desktop`.
+                Move between **Vola** and your `desktop`.
 
-                ![Synced device](https://raw.githubusercontent.com/sk2andy/candy-browser/v0.32/docs/screenshots/candy-sync-device-profile.png)
+                ![Synced device](https://raw.githubusercontent.com/MikeSPL187/Browser/v0.32/docs/screenshots/candy-sync-device-profile.png)
 
                 ## Your tabs, everywhere
 
                 - Open tabs
                 - Close tabs
 
-                Learn more in [Cross-device sync](https://github.com/sk2andy/candy-browser/blob/v0.32/README.md#cross-device-sync).
+                Learn more in [Cross-device sync](https://github.com/MikeSPL187/Browser/blob/v0.32/README.md#cross-device-sync).
 
                 > Everything is end-to-end encrypted.
             """.trimIndent(),
@@ -31,7 +31,7 @@ class ReleaseNotesMarkdownRulesTest {
 
         assertNotNull(document)
         requireNotNull(document)
-        assertEquals("Candy Sync is here", document.title.text)
+        assertEquals("Vola Sync is here", document.title.text)
         assertTrue(document.blocks[1] is ReleaseNotesBlock.Paragraph)
         assertEquals(
             "release-notes-images/candy-sync-device-profile.png",
@@ -64,8 +64,8 @@ class ReleaseNotesMarkdownRulesTest {
     fun `unsafe or version-mismatched screenshots reject the document`() {
         listOf(
             "http://example.com/screenshot.png",
-            "https://raw.githubusercontent.com/sk2andy/candy-browser/v0.31/docs/screenshots/screenshot.png",
-            "https://raw.githubusercontent.com/sk2andy/candy-browser/v0.32/docs/screenshots/../secret.png",
+            "https://raw.githubusercontent.com/MikeSPL187/Browser/v0.31/docs/screenshots/screenshot.png",
+            "https://raw.githubusercontent.com/MikeSPL187/Browser/v0.32/docs/screenshots/../secret.png",
         ).forEach { target ->
             assertNull(
                 ReleaseNotesMarkdownRules.parse(

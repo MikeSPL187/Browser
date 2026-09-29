@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.VolaProject
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.DEFAULT_BROWSER_PROFILE
 import dev.sk2andy.materialbrowser.sync.SyncConnectionSettings
@@ -53,8 +54,7 @@ import dev.sk2andy.materialbrowser.sync.SyncStatus
 
 private val SYNC_ACCENT_HUES = listOf(0, 36, 72, 108, 144, 180, 216, 252, 288, 312)
 private const val SYNC_ACCENT_COLORS_PER_ROW = 5
-private const val SYNC_DOCUMENTATION_ROOT =
-    "https://github.com/sk2andy/candy-browser/blob/main/docs/sync"
+private const val SYNC_DOCUMENTATION_ROOT = "${VolaProject.DOCS_URL}/sync"
 
 private object SyncDocumentationUrls {
     const val Overview = "$SYNC_DOCUMENTATION_ROOT/README.md#documentation"

@@ -1360,7 +1360,7 @@ internal class GeckoViewPrivacyHostRuntime(
         const val INLINE_VIDEO_PRESENTATION_TIMEOUT_MILLIS = 2_000L
         const val PICTURE_IN_PICTURE_PREPARATION_TIMEOUT_MILLIS = 2_000L
         const val MAX_SAFE_JAVASCRIPT_INTEGER = 9_007_199_254_740_991L
-        const val PRIVACY_FAILURE_DESCRIPTION = "Candy Privacy protection failed to initialize"
+        const val PRIVACY_FAILURE_DESCRIPTION = "Vola privacy protection failed to initialize"
     }
 }
 

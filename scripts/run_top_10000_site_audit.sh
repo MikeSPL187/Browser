@@ -23,8 +23,8 @@ if ! [[ "$batch_size" =~ ^[0-9]+$ ]] || ((batch_size < 1 || batch_size > 100)); 
 fi
 
 ./gradlew assembleFullDebug assembleFullDebugAndroidTest \
-    -Pcandy.debugApplicationIdSuffix=.candyaudit \
-    '-Pcandy.debugAppLabel=Candy Site Audit'
+    -Pvola.debugApplicationIdSuffix=.candyaudit \
+    '-Pvola.debugAppLabel=Vola Site Audit'
 build_id="$(shasum -a 256 app/build/outputs/apk/full/debug/app-full-debug.apk | awk '{print $1}')"
 
 for ((start_rank = 1; start_rank <= 10000; start_rank += batch_size)); do

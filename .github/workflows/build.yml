@@ -156,7 +156,7 @@ jobs:
       - name: Build debug APKs
         run: >-
           ./gradlew --no-daemon --stacktrace
-          -Pcandy.releaseAbi="$RELEASE_ABI"
+          -Pvola.releaseAbi="$RELEASE_ABI"
           assembleFullDebug
           assembleSystemwebviewDebug
 
@@ -209,13 +209,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          project_version="$(sed -n 's/^candy\.versionName=//p' gradle.properties)"
+          project_version="$(sed -n 's/^vola\.versionName=//p' gradle.properties)"
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             tag="$GITHUB_REF_NAME"
           else
             tag="v${project_version}"
             if gh release view "$tag" > /dev/null 2>&1; then
-              echo "Release ${tag} already exists. Bump candy.versionName in gradle.properties." >&2
+              echo "Release ${tag} already exists. Bump vola.versionName in gradle.properties." >&2
               exit 1
             fi
           fi
@@ -293,27 +293,27 @@ jobs:
 
           # app/build.gradle.kts reads these names.
           {
-            echo "CANDY_RELEASE_KEYSTORE_PATH=${keystore}"
+            echo "VOLA_RELEASE_KEYSTORE_PATH=${keystore}"
             echo "EXPECTED_CERTIFICATE=${actual_certificate}"
           } >> "$GITHUB_ENV"
 
       - name: Build signed release APKs
         env:
-          CANDY_RELEASE_STORE_PASSWORD: ${{ secrets.VOLA_RELEASE_STORE_PASSWORD }}
-          CANDY_RELEASE_KEY_ALIAS: ${{ secrets.VOLA_RELEASE_KEY_ALIAS }}
-          CANDY_RELEASE_KEY_PASSWORD: ${{ secrets.VOLA_RELEASE_KEY_PASSWORD }}
+          VOLA_RELEASE_STORE_PASSWORD: ${{ secrets.VOLA_RELEASE_STORE_PASSWORD }}
+          VOLA_RELEASE_KEY_ALIAS: ${{ secrets.VOLA_RELEASE_KEY_ALIAS }}
+          VOLA_RELEASE_KEY_PASSWORD: ${{ secrets.VOLA_RELEASE_KEY_PASSWORD }}
         run: >-
           ./gradlew --no-daemon --stacktrace --max-workers=1
-          -Pcandy.releaseAbi="$RELEASE_ABI"
-          -Pcandy.compressNativeLibs=true
+          -Pvola.releaseAbi="$RELEASE_ABI"
+          -Pvola.compressNativeLibs=true
           assembleFullRelease
           assembleSystemwebviewRelease
 
       - name: Verify and checksum APKs
         run: |
           mkdir -p dist
-          gecko_apk="dist/Vola-${RELEASE_TAG}-${RELEASE_ABI}.apk"
-          webview_apk="dist/Vola-${RELEASE_TAG}-systemwebview.apk"
+          gecko_apk="dist/Vola-${RELEASE_TAG}-${RELEASE_ABI}-release.apk"
+          webview_apk="dist/Vola-${RELEASE_TAG}-systemwebview-release.apk"
           cp app/build/outputs/apk/full/release/app-full-release.apk "$gecko_apk"
           cp app/build/outputs/apk/systemwebview/release/app-systemwebview-release.apk "$webview_apk"
 

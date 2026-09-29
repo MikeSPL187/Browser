@@ -5,7 +5,7 @@ internal object WebRtcBlockerScript {
         (() => {
           "use strict";
           const blocked = function RTCPeerConnection() {
-            throw new DOMException("WebRTC is disabled by Candy.", "NotAllowedError");
+            throw new DOMException("WebRTC is disabled by Vola.", "NotAllowedError");
           };
           for (const name of ["RTCPeerConnection", "webkitRTCPeerConnection", "mozRTCPeerConnection"]) {
             try {

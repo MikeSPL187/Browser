@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.VolaProject
+
 internal data class ReleaseNotesDocument(
     val title: ReleaseNotesInline,
     val blocks: List<ReleaseNotesBlock>,
@@ -83,8 +85,7 @@ internal object ReleaseNotesMarkdownRules {
             if (imageMatch != null) {
                 val altText = imageMatch.groupValues[1].trim()
                 val sourceUrl = imageMatch.groupValues[2]
-                val prefix = "https://raw.githubusercontent.com/sk2andy/candy-browser/" +
-                    "v$versionName/docs/screenshots/"
+                val prefix = "${VolaProject.RAW_CONTENT_URL}/v$versionName/docs/screenshots/"
                 val fileName = sourceUrl.removePrefix(prefix)
                 require(altText.isNotEmpty() && sourceUrl.startsWith(prefix))
                 require(fileName.matches(screenshotFilePattern))

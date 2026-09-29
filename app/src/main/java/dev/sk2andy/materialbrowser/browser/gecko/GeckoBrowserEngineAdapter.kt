@@ -386,7 +386,7 @@ internal class GeckoBrowserEngineSessionFactory(
                 isPrivate = isPrivate,
                 privacyPolicy = privacyPolicy,
                 privacyEventSink = privacyEventSink,
-            ) ?: error("Prepared extension session does not match Candy tab context")
+            ) ?: error("Prepared extension session does not match Vola tab context")
         }.also { created ->
             val generation = extensionSessionGenerations.getOrDefault(tabId, 0L) + 1L
             extensionSessionGenerations[tabId] = generation

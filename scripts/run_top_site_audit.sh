@@ -13,15 +13,15 @@ site_count="${4:-25}"
 target_ranks="${5:-}"
 app_id="dev.sk2andy.materialbrowser.candyaudit"
 gradle_args=(
-    -Pcandy.debugApplicationIdSuffix=.candyaudit
-    '-Pcandy.debugAppLabel=Candy Site Audit'
+    -Pvola.debugApplicationIdSuffix=.candyaudit
+    '-Pvola.debugAppLabel=Vola Site Audit'
 )
 
 if [[ "$audit_pass" == "safe-area" ]]; then
     app_id="dev.sk2andy.materialbrowser.edgeaudit"
     gradle_args+=(
-        -Pcandy.debugApplicationIdSuffix=.edgeaudit
-        '-Pcandy.debugAppLabel=Candy Edge Audit'
+        -Pvola.debugApplicationIdSuffix=.edgeaudit
+        '-Pvola.debugAppLabel=Vola Edge Audit'
     )
 fi
 test_app_id="${app_id}.test"

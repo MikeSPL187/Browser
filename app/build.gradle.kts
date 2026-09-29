@@ -103,8 +103,8 @@ abstract class GenerateSystemWebViewThirdPartyNotices : DefaultTask() {
         val generated = source
             .removeRange(startIndex, endIndex)
             .replace(
-                "This inventory reflects the full release runtime classpath for Candy Browser.",
-                "This inventory reflects the System WebView release runtime classpath for Candy Browser.",
+                "This inventory reflects the full release runtime classpath for Vola.",
+                "This inventory reflects the System WebView release runtime classpath for Vola.",
             )
         check("Gecko default extensions" !in generated && ".xpi" !in generated.lowercase()) {
             "System WebView notices still describe Gecko extension packages."
@@ -135,38 +135,38 @@ fun releaseSigningValue(propertyName: String, environmentVariable: String): Stri
 
 fun validatedApplicationIdSuffix(value: String): String {
     require(value.matches(Regex("""\.[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*"""))) {
-        "candy.localReleaseApplicationIdSuffix must start with '.' and contain valid ID segments."
+        "vola.localReleaseApplicationIdSuffix must start with '.' and contain valid ID segments."
     }
     return value
 }
 
 fun validatedAppLabel(value: String): String {
     require(value.isNotBlank() && value.none(Char::isISOControl)) {
-        "candy.localReleaseAppLabel must contain visible text without control characters."
+        "vola.localReleaseAppLabel must contain visible text without control characters."
     }
     return value
 }
 
 val releaseSigningValues = mapOf(
-    "storeFile" to releaseSigningValue("storeFile", "CANDY_RELEASE_KEYSTORE_PATH"),
-    "storePassword" to releaseSigningValue("storePassword", "CANDY_RELEASE_STORE_PASSWORD"),
-    "keyAlias" to releaseSigningValue("keyAlias", "CANDY_RELEASE_KEY_ALIAS"),
-    "keyPassword" to releaseSigningValue("keyPassword", "CANDY_RELEASE_KEY_PASSWORD"),
+    "storeFile" to releaseSigningValue("storeFile", "VOLA_RELEASE_KEYSTORE_PATH"),
+    "storePassword" to releaseSigningValue("storePassword", "VOLA_RELEASE_STORE_PASSWORD"),
+    "keyAlias" to releaseSigningValue("keyAlias", "VOLA_RELEASE_KEY_ALIAS"),
+    "keyPassword" to releaseSigningValue("keyPassword", "VOLA_RELEASE_KEY_PASSWORD"),
 )
 val missingReleaseSigningValues = releaseSigningValues.filterValues { it == null }.keys
 val hasReleaseSigning = missingReleaseSigningValues.isEmpty()
-val candyVersionCode = providers.gradleProperty("candy.versionCode").orElse("1")
-val candyVersionName = providers.gradleProperty("candy.versionName").orElse("0.1")
-val candyReleaseNotesFile = providers.gradleProperty("candy.releaseNotesFile")
-    .orElse(candyVersionName.map { version -> "release-notes/$version.md" })
+val volaVersionCode = providers.gradleProperty("vola.versionCode").orElse("1")
+val volaVersionName = providers.gradleProperty("vola.versionName").orElse("0.1")
+val volaReleaseNotesFile = providers.gradleProperty("vola.releaseNotesFile")
+    .orElse(volaVersionName.map { version -> "release-notes/$version.md" })
 val releaseNotesImageSyntax = Regex("""!\[([^]]+)]\(([^)]+)\)""")
 val releaseNotesImageFiles = providers.provider {
-    val notes = rootProject.file(candyReleaseNotesFile.get())
+    val notes = rootProject.file(volaReleaseNotesFile.get())
     if (!notes.isFile) {
         emptyList()
     } else {
-        val prefix = "https://raw.githubusercontent.com/sk2andy/candy-browser/" +
-            "v${candyVersionName.get()}/docs/screenshots/"
+        val prefix = "https://raw.githubusercontent.com/MikeSPL187/Browser/" +
+            "v${volaVersionName.get()}/docs/screenshots/"
         releaseNotesImageSyntax.findAll(notes.readText(Charsets.UTF_8))
             .mapNotNull { match ->
                 match.groupValues[2]
@@ -178,26 +178,26 @@ val releaseNotesImageFiles = providers.provider {
     }
 }
 val debugApplicationIdSuffix =
-    providers.gradleProperty("candy.debugApplicationIdSuffix").orElse(".linkpeek")
-val debugAppLabel = providers.gradleProperty("candy.debugAppLabel").orElse("Candy Link Peek")
+    providers.gradleProperty("vola.debugApplicationIdSuffix").orElse(".debug")
+val debugAppLabel = providers.gradleProperty("vola.debugAppLabel").orElse("Vola Debug")
 val localReleaseApplicationIdSuffix =
-    providers.gradleProperty("candy.localReleaseApplicationIdSuffix")
+    providers.gradleProperty("vola.localReleaseApplicationIdSuffix")
         .orElse(".local")
         .map(::validatedApplicationIdSuffix)
 val localReleaseAppLabel =
-    providers.gradleProperty("candy.localReleaseAppLabel")
-        .orElse("Candy Browser Local")
+    providers.gradleProperty("vola.localReleaseAppLabel")
+        .orElse("Vola Local")
         .map(::validatedAppLabel)
-val releaseAbi = providers.gradleProperty("candy.releaseAbi").map { value ->
+val releaseAbi = providers.gradleProperty("vola.releaseAbi").map { value ->
     require(value == "arm64-v8a") {
-        "candy.releaseAbi must be arm64-v8a."
+        "vola.releaseAbi must be arm64-v8a."
     }
     value
 }
-val compressNativeLibs = providers.gradleProperty("candy.compressNativeLibs")
+val compressNativeLibs = providers.gradleProperty("vola.compressNativeLibs")
     .map(String::toBooleanStrict)
     .orElse(false)
-val performanceDiagnostics = providers.gradleProperty("candy.performanceDiagnostics")
+val performanceDiagnostics = providers.gradleProperty("vola.performanceDiagnostics")
     .map(String::toBooleanStrict)
     .orElse(false)
 
@@ -207,11 +207,11 @@ android {
     compileSdkMinor = 1
 
     defaultConfig {
-        applicationId = "dev.sk2andy.materialbrowser"
+        applicationId = "io.github.mikespl187.vola"
         minSdk = 33
         targetSdk = 36
-        versionCode = candyVersionCode.get().toInt()
-        versionName = candyVersionName.get()
+        versionCode = volaVersionCode.get().toInt()
+        versionName = volaVersionName.get()
         manifestPlaceholders["appLabel"] = "@string/app_name"
         manifestPlaceholders["networkSecurityConfig"] = "@xml/network_security_config"
         buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
@@ -225,7 +225,7 @@ android {
         )
         manifestPlaceholders["performanceDiagnosticsEnabled"] =
             performanceDiagnostics.get().toString()
-        buildConfigField("String", "RELEASE_NOTES_VERSION", "\"${candyVersionName.get()}\"")
+        buildConfigField("String", "RELEASE_NOTES_VERSION", "\"${volaVersionName.get()}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -245,7 +245,7 @@ android {
         create("foss") {
             dimension = "distribution"
             applicationIdSuffix = ".foss"
-            manifestPlaceholders["appLabel"] = "Candy FOSS"
+            manifestPlaceholders["appLabel"] = "Vola FOSS"
             buildConfigField("boolean", "FOSS_DISTRIBUTION", "true")
             proguardFile("proguard-foss-rules.pro")
         }
@@ -253,7 +253,7 @@ android {
         create("systemwebview") {
             dimension = "distribution"
             applicationIdSuffix = ".systemwebview"
-            manifestPlaceholders["appLabel"] = "Candy System WebView"
+            manifestPlaceholders["appLabel"] = "Vola WebView"
             manifestPlaceholders["performanceDiagnosticsEnabled"] = "false"
             buildConfigField("boolean", "SYSTEM_WEBVIEW_ONLY", "true")
         }
@@ -301,7 +301,7 @@ android {
         create("userCaDebug") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".ca.debug"
-            manifestPlaceholders["appLabel"] = "Candy CA Debug"
+            manifestPlaceholders["appLabel"] = "Vola CA Debug"
             manifestPlaceholders["networkSecurityConfig"] =
                 "@xml/network_security_config_user_ca"
             buildConfigField("boolean", "TRUST_USER_CERTIFICATES", "true")
@@ -311,7 +311,7 @@ android {
         create("userCaRelease") {
             initWith(getByName("release"))
             applicationIdSuffix = ".ca"
-            manifestPlaceholders["appLabel"] = "Candy CA"
+            manifestPlaceholders["appLabel"] = "Vola CA"
             manifestPlaceholders["networkSecurityConfig"] =
                 "@xml/network_security_config_user_ca"
             buildConfigField("boolean", "TRUST_USER_CERTIFICATES", "true")
@@ -458,15 +458,15 @@ tasks.matching { task ->
 val validateReleaseNotes by tasks.registering {
     group = "verification"
     description = "Validates the Markdown release notes packaged into the app."
-    val releaseNotes = candyReleaseNotesFile.map(rootProject::file)
-    inputs.property("releaseNotesVersion", candyVersionName)
-    inputs.property("releaseNotesPath", candyReleaseNotesFile)
+    val releaseNotes = volaReleaseNotesFile.map(rootProject::file)
+    inputs.property("releaseNotesVersion", volaVersionName)
+    inputs.property("releaseNotesPath", volaReleaseNotesFile)
     inputs.file(releaseNotes)
 
     doLast {
-        val version = candyVersionName.get()
+        val version = volaVersionName.get()
         val expectedPath = "release-notes/$version.md"
-        val configuredPath = candyReleaseNotesFile.get().replace('\\', '/')
+        val configuredPath = volaReleaseNotesFile.get().replace('\\', '/')
         check(configuredPath == expectedPath) {
             "Release notes must use the version-matched path $expectedPath, got $configuredPath."
         }
@@ -506,7 +506,7 @@ val validateReleaseNotes by tasks.registering {
         }
         val imageMatches = releaseNotesImageSyntax.findAll(content).toList()
         check(imageMatches.size <= 2) { "Release notes support at most two screenshots." }
-        val expectedImagePrefix = "https://raw.githubusercontent.com/sk2andy/candy-browser/" +
+        val expectedImagePrefix = "https://raw.githubusercontent.com/MikeSPL187/Browser/" +
             "v$version/docs/screenshots/"
         val imageFiles = imageMatches.map { match ->
             val altText = match.groupValues[1].trim()
@@ -535,7 +535,7 @@ val validateReleaseNotes by tasks.registering {
 val generateReleaseNotesAsset by tasks.registering(Sync::class) {
     dependsOn(validateReleaseNotes)
     inputs.files(releaseNotesImageFiles)
-    from(candyReleaseNotesFile.map(rootProject::file)) {
+    from(volaReleaseNotesFile.map(rootProject::file)) {
         rename { "candy_release_notes.md" }
     }
     from(releaseNotesImageFiles) {
@@ -557,7 +557,7 @@ val validateReleaseSigning by tasks.registering {
     doLast {
         check(missingReleaseSigningValues.isEmpty()) {
             "Missing release signing values: ${missingReleaseSigningValues.sorted().joinToString()}. " +
-                "Configure keystore.properties or the CANDY_RELEASE_* environment variables."
+                "Configure keystore.properties or the VOLA_RELEASE_* environment variables."
         }
 
         val keystoreFile = rootProject.file(requireNotNull(releaseSigningValues["storeFile"]))

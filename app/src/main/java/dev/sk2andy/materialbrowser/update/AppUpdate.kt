@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.update
 
+import dev.sk2andy.materialbrowser.VolaProject
 import java.net.URI
 
 data class AvailableAppUpdate(
@@ -8,7 +9,7 @@ data class AvailableAppUpdate(
     val fileName: String,
 ) {
     val releaseNotesUrl: String
-        get() = "https://github.com/sk2andy/candy-browser/releases/tag/v$versionName"
+        get() = "${VolaProject.REPOSITORY_URL}/releases/tag/v$versionName"
 
     companion object {
         const val APK_MIME_TYPE = "application/vnd.android.package-archive"
@@ -67,9 +68,9 @@ internal object AppUpdateRules {
         val normalizedTag = release.tagName.removePrefix("v")
         val expectedFileNames = buildList {
             if (channel == AppReleaseChannel.Standard && "arm64-v8a" in supportedAbis) {
-                add("CandyBrowser-v$normalizedTag-arm64-v8a-release.apk")
+                add("$ASSET_PREFIX-v$normalizedTag-arm64-v8a-release.apk")
             }
-            add("CandyBrowser-v$normalizedTag-${channel.assetSuffix}.apk")
+            add("$ASSET_PREFIX-v$normalizedTag-${channel.assetSuffix}.apk")
         }
         val asset = selectExpectedAsset(
             assets = release.assets,
@@ -115,7 +116,9 @@ internal object AppUpdateRules {
             uri.rawPath == "${RELEASE_DOWNLOAD_PATH}v$versionName/$fileName"
     }.getOrDefault(false)
 
-    private const val RELEASE_DOWNLOAD_PATH = "/sk2andy/candy-browser/releases/download/"
+    private const val ASSET_PREFIX = "Vola"
+    private const val RELEASE_DOWNLOAD_PATH =
+        "/${VolaProject.GITHUB_OWNER}/${VolaProject.GITHUB_REPOSITORY}/releases/download/"
 }
 
 internal data class AppVersion(

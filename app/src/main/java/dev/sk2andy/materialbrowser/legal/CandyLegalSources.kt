@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.legal
 
+import dev.sk2andy.materialbrowser.VolaProject
+
 enum class ThirdPartyComponent {
     AndroidX,
     Kotlin,
@@ -20,8 +22,8 @@ data class ThirdPartyNotice(
 )
 
 object CandyLegalSources {
-    const val DEVELOPER_NAME = "André Naumann"
-    const val GITHUB_PROFILE_URL = "https://github.com/sk2andy"
+    const val DEVELOPER_NAME = VolaProject.GITHUB_OWNER
+    const val SOURCE_CODE_URL = VolaProject.REPOSITORY_URL
     const val UASSETS_REVISION = "05bc031ad40c2270223f068f052970201ca1bf14"
     const val UASSETS_SHORT_REVISION = "05bc031ad40c"
     const val UASSETS_SOURCE_URL =
@@ -99,7 +101,7 @@ object CandyLegalSources {
 
     val destinations: List<String>
         get() = buildList {
-            add(GITHUB_PROFILE_URL)
+            add(SOURCE_CODE_URL)
             thirdPartyNotices.forEach { notice ->
                 add(notice.sourceUrl)
                 add(notice.licenseUrl)

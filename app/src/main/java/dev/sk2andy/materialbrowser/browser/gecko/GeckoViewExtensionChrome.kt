@@ -251,7 +251,7 @@ internal class GeckoViewExtensionChrome(
                 return deniedSessionResult("Extension tab request rejected")
             }
             val owner = allowed.value.source
-                ?: return deniedSessionResult("Extension tab request has no Candy owner")
+                ?: return deniedSessionResult("Extension tab request has no Vola owner")
             val created = GeckoSession(
                 org.mozilla.geckoview.GeckoSessionSettings.Builder()
                     .contextId(
@@ -265,12 +265,12 @@ internal class GeckoViewExtensionChrome(
                     .build(),
             )
             val tabId = host.createTab(allowed.value, GeckoPreparedSession(created))
-                ?: return deniedSessionResult("Candy could not create extension tab")
+                ?: return deniedSessionResult("Vola could not create extension tab")
             val bound = sessions.values.firstOrNull { binding ->
                 binding.identity.tabId == tabId && host.isCurrentSession(binding.identity)
             }?.session
             if (bound !== created || created.isOpen) {
-                return deniedSessionResult("Candy did not adopt unopened extension tab session")
+                return deniedSessionResult("Vola did not adopt unopened extension tab session")
             }
             return GeckoResult.fromValue(created)
         }
@@ -391,7 +391,7 @@ internal class GeckoViewExtensionChrome(
                 override fun onStarted(start: GeckoDownloadTransferStart) {
                     val download = controller.createDownload(start.id) ?: run {
                         result.completeExceptionally(
-                            IllegalStateException("Gecko rejected Candy download identity"),
+                            IllegalStateException("Gecko rejected Vola download identity"),
                         )
                         cancellation?.cancel()
                         return
@@ -484,8 +484,8 @@ internal class GeckoViewExtensionChrome(
         val snapshot = extensionSnapshot(extension.id)
             ?: return deniedSessionResult("Extension unavailable")
         val owner = delegateIdentity ?: host.currentSessionIdentity()
-            ?: return deniedSessionResult("No selected Candy tab")
-        if (!host.isCurrentSession(owner)) return deniedSessionResult("Stale Candy tab")
+            ?: return deniedSessionResult("No selected Vola tab")
+        if (!host.isCurrentSession(owner)) return deniedSessionResult("Stale Vola tab")
         if (!snapshot.enabled || owner.isPrivate && !snapshot.allowedInPrivateBrowsing) {
             return deniedSessionResult("Extension unavailable in selected tab")
         }
@@ -513,7 +513,7 @@ internal class GeckoViewExtensionChrome(
         ).also { session -> session.open(runtime) }
         if (!host.openPopup(popup, GeckoPreparedSession(popupSession), toggle)) {
             popupSession.close()
-            return deniedSessionResult("Candy could not present extension popup")
+            return deniedSessionResult("Vola could not present extension popup")
         }
         activePopup = PopupBinding(popup, popupSession)
         return GeckoResult.fromValue(popupSession)

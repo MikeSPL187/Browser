@@ -19,7 +19,7 @@ internal data class DeveloperDiagnosticsSnapshot(
 
 internal object DeveloperDiagnosticsReport {
     fun render(snapshot: DeveloperDiagnosticsSnapshot): String = listOf(
-        "Candy developer diagnostics",
+        "Vola developer diagnostics",
         "App version: ${snapshot.appVersion}",
         "Version code: ${snapshot.versionCode}",
         "Build type: ${snapshot.buildType}",

@@ -55,7 +55,7 @@ class BuildVariantContractTest {
         }
 
         assertEquals(
-            "dev.sk2andy.materialbrowser$flavorSuffix$buildTypeSuffix",
+            "io.github.mikespl187.vola$flavorSuffix$buildTypeSuffix",
             BuildConfig.APPLICATION_ID,
         )
     }

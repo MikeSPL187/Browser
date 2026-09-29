@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vola mark: two soft wings meeting in a "V". Keep in sync with docs/vola/brand/vola-mark.svg. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M31,34 C35.5,52.5 42.5,67.5 51.5,78.5"
+        android:strokeWidth="13"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="29.5"
+                android:startY="30"
+                android:endX="51.5"
+                android:endY="80">
+                <item android:offset="0" android:color="#FFA78BFA" />
+                <item android:offset="1" android:color="#FF6D4CFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M51.5,78.5 C58.5,62.5 66.5,44.5 77,30"
+        android:strokeWidth="13"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="77.5"
+                android:startY="28"
+                android:endX="51.5"
+                android:endY="80">
+                <item android:offset="0" android:color="#FF22D3EE" />
+                <item android:offset="1" android:color="#FF3B6BFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
