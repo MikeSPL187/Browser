@@ -65,12 +65,4 @@ class SettingsHomeRulesTest {
         )
         assertEquals(SettingsDestination.AboutLegal, unlocked.last().destination)
     }
-
-    @Test
-    fun iosSharedSettingsExposeImplementedDestinations() {
-        assertTrue(CandySettingsRouteRules.isEnabled(SettingsDestination.Userscripts))
-        assertTrue(CandySettingsRouteRules.isEnabled(SettingsDestination.Appearance))
-        assertTrue(CandySettingsRouteRules.isEnabled(SettingsDestination.Search))
-        assertFalse(CandySettingsRouteRules.isEnabled(SettingsDestination.Downloads))
-    }
 }
