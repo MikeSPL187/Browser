@@ -1,5 +1,5 @@
 name: New Feature
-description: Suggest a new capability for Candy Browser
+description: Suggest a new capability for Vola
 labels:
   - enhancement
 body:
@@ -8,7 +8,7 @@ body:
     attributes:
       label: Description
       description: Describe the new feature.
-      placeholder: What would you like Candy Browser to support?
+      placeholder: What would you like Vola to support?
     validations:
       required: true
 
