@@ -16199,12 +16199,9 @@ class BrowserController(
     }
 }
 
+// Private by default: typed text is only sent to a suggestion provider after the user opts in.
 private fun defaultSearchSuggestionProvider(): SearchSuggestionProvider =
-    if (BuildConfig.FOSS_DISTRIBUTION) {
-        SearchSuggestionProvider.None
-    } else {
-        SearchSuggestionProvider.DuckDuckGo
-    }
+    SearchSuggestionProvider.None
 
 enum class CapsuleSaveResult {
     PinRequested,

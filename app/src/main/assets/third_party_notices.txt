@@ -1,7 +1,7 @@
 Vola third-party notices
 ========================
 
-This inventory reflects the FOSS release runtime classpath for Vola.
+This inventory reflects the GeckoView release runtime classpath for Vola.
 
 Apache License 2.0 components
 -----------------------------

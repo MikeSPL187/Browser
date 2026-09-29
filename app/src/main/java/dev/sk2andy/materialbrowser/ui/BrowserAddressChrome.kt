@@ -46,7 +46,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -287,9 +286,9 @@ internal fun BoxScope.BrowserAddressChrome(
         editing = addressEditorVisible,
         addressBarStyle = controller.appearanceSettings.addressBarStyle,
         actionLayout = controller.addressBarActionLayout,
-        showCastButton = !BuildConfig.FOSS_DISTRIBUTION &&
-            (controller.castMediaCandidate != null || castUiState.isConnected),
-        showQrScanner = !BuildConfig.FOSS_DISTRIBUTION,
+        // Cast and the system code scanner need Google Play services, which Vola does not ship.
+        showCastButton = false,
+        showQrScanner = false,
         tabCount = controller.activeTabs.size,
         wideTabs = wideTabs,
         wideTabStripEnabled = wideTabStripEnabled,

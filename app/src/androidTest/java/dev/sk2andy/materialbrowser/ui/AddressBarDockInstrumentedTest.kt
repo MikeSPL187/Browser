@@ -681,13 +681,7 @@ class AddressBarDockInstrumentedTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        if (BuildConfig.FOSS_DISTRIBUTION) {
-            composeRule.onNodeWithTag(AddressBarTestTags.QrScanner).assertDoesNotExist()
-        } else {
-            composeRule.onNodeWithTag(AddressBarTestTags.QrScanner)
-                .assertExists()
-                .assertHasClickAction()
-        }
+        composeRule.onNodeWithTag(AddressBarTestTags.QrScanner).assertDoesNotExist()
     }
 
     @Test

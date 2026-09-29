@@ -127,14 +127,8 @@ class AboutLegalSectionInstrumentedTest {
             ),
         )
 
-        if (BuildConfig.FOSS_DISTRIBUTION) {
-            assertTrue(notices.contains("FOSS release runtime classpath"))
-            assertFalse(notices.contains("Google Code Scanner"))
-            assertFalse(notices.contains("Google Data Transport"))
-        } else {
-            assertTrue(notices.contains("full release runtime classpath"))
-            assertTrue(notices.contains("Google Code Scanner"))
-            assertTrue(notices.contains("Google Data Transport"))
-        }
+        assertTrue(notices.contains("release runtime classpath for Vola"))
+        assertFalse(notices.contains("Google Code Scanner"))
+        assertFalse(notices.contains("Google Data Transport"))
     }
 }

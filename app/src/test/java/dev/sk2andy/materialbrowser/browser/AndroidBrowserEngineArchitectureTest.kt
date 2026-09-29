@@ -66,7 +66,7 @@ class AndroidBrowserEngineArchitectureTest {
     }
 
     private fun productionKotlinFiles(): Sequence<File> =
-        listOf("main", "full", "foss", "debug")
+        listOf("main", "full", "systemwebview", "debug")
             .asSequence()
             .map { sourceSet -> repositoryRoot.resolve("app/src/$sourceSet/java") }
             .filter(File::isDirectory)

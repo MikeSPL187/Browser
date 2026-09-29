@@ -1,7 +1,8 @@
 # Vola CI: the single source of truth for builds.
 #
-# - Every pull request and push to main: script tests, unit tests (GeckoView and
-#   System WebView flavors), Android lint, and installable arm64 debug APKs.
+# - Every pull request and push to main: script tests, a no-Google-Play-services dependency
+#   policy check, unit tests (GeckoView and System WebView flavors), Android lint, and
+#   installable arm64 debug APKs.
 # - Tags v*, or a manual run on main with "release" enabled: the same checks, then signed
 #   release APKs published as a GitHub Release (the manual run also creates the tag).
 #
@@ -87,6 +88,9 @@ jobs:
           done
           python3 scripts/generate_gecko_default_extensions.py verify
           node --test scripts/*.test.mjs
+
+      - name: Dependency policy
+        run: ./gradlew --no-daemon --stacktrace verifyNoPlayServicesDependencies
 
       - name: Unit tests
         run: >-
