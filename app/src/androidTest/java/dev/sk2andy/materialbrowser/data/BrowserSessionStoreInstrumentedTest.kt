@@ -479,7 +479,7 @@ class BrowserSessionStoreInstrumentedTest {
             animationsEnabled = false,
             forceDarkWebsites = true,
             webContentFontSizePercent = 155,
-            colorPalette = BrowserColorPalette.Candy,
+            colorPalette = BrowserColorPalette.Neutral,
             surfaceStyle = BrowserSurfaceStyle.Frosted,
             shapeStyle = BrowserShapeStyle.Angular,
             addressBarStyle = BrowserAddressBarStyle.Segmented,
@@ -656,7 +656,7 @@ class BrowserSessionStoreInstrumentedTest {
             .putString("appearance_mode", "unknown")
             .putString("force_dark_websites", "invalid")
             .putInt("web_content_font_size_percent", 123)
-            .putString("color_palette", "candy")
+            .putString("color_palette", "neutral")
             .putString("surface_style", "unknown")
             .putString("shape_style", "extra_rounded")
             .putString("address_bar_style", "unknown")
@@ -671,7 +671,7 @@ class BrowserSessionStoreInstrumentedTest {
             AppearanceSettings(
                 appearanceMode = BrowserAppearanceMode.System,
                 webContentFontSizePercent = 125,
-                colorPalette = BrowserColorPalette.Candy,
+                colorPalette = BrowserColorPalette.Neutral,
                 surfaceStyle = BrowserSurfaceStyle.Clear,
                 shapeStyle = BrowserShapeStyle.ExtraRounded,
                 addressBarStyle = BrowserAddressBarStyle.Classic,

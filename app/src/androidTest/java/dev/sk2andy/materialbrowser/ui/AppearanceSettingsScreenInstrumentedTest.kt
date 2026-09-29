@@ -70,8 +70,8 @@ class AppearanceSettingsScreenInstrumentedTest {
         assertEquals(150, settings.webContentFontSizePercent)
 
         composeRule.onNodeWithTag(AppearanceSettingsTestTags.ColorPalette).performClick()
-        composeRule.onNodeWithText(context.getString(R.string.color_palette_candy)).performClick()
-        assertEquals(BrowserColorPalette.Candy, settings.colorPalette)
+        composeRule.onNodeWithText(context.getString(R.string.color_palette_neutral)).performClick()
+        assertEquals(BrowserColorPalette.Neutral, settings.colorPalette)
 
         composeRule.onNodeWithTag(AppearanceSettingsTestTags.SurfaceStyle).performClick()
         composeRule.onNodeWithTag(AppearanceSettingsTestTags.FrostedTransparency)
@@ -113,7 +113,7 @@ class AppearanceSettingsScreenInstrumentedTest {
                 animationsEnabled = false,
                 forceDarkWebsites = true,
                 webContentFontSizePercent = 150,
-                colorPalette = BrowserColorPalette.Candy,
+                colorPalette = BrowserColorPalette.Neutral,
                 surfaceStyle = BrowserSurfaceStyle.Frosted,
                 shapeStyle = BrowserShapeStyle.Angular,
                 addressBarStyle = BrowserAddressBarStyle.Segmented,

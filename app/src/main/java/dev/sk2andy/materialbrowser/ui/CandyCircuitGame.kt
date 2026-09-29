@@ -77,14 +77,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.ui.theme.CandyPink
-import dev.sk2andy.materialbrowser.ui.theme.CandyPinkSoft
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurple
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurpleSoft
 import java.text.NumberFormat
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 
 private data class CandyCircuitResolution(
     val id: Int,
@@ -160,8 +157,8 @@ internal fun CandyCircuitGame(
                     TextStyle(
                         brush = Brush.horizontalGradient(
                             listOf(
-                                CandyPink,
-                                CandyPurple,
+                                VolaBrand.CyanDeep,
+                                VolaBrand.Violet,
                             ),
                         ),
                     ),
@@ -267,7 +264,7 @@ private fun ConnectionHeader(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(CandyPurpleSoft, RoundedCornerShape(28.dp))
+                        .background(VolaBrand.VioletSoft, RoundedCornerShape(28.dp))
                         .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                         .testTag(PageErrorFeedbackTestTags.OnlineBanner)
                         .semantics { liveRegion = LiveRegionMode.Polite },
@@ -276,7 +273,7 @@ private fun ConnectionHeader(
                 ) {
                     ConnectivityGlyph(
                         isOnline = true,
-                        color = CandyPurple,
+                        color = VolaBrand.Violet,
                         modifier = Modifier.size(38.dp),
                     )
                     Column(modifier = Modifier.weight(1f)) {
@@ -322,8 +319,8 @@ private fun CircuitMetrics(game: CandyCircuitGameState) {
         CircuitMetric(
             label = stringResource(R.string.page_error_game_score_label),
             value = formattedScore(game.score),
-            tint = CandyPink,
-            background = CandyPinkSoft,
+            tint = VolaBrand.CyanDeep,
+            background = VolaBrand.CyanSoft,
             modifier = Modifier
                 .weight(1f)
                 .testTag(PageErrorFeedbackTestTags.Score),
@@ -331,8 +328,8 @@ private fun CircuitMetrics(game: CandyCircuitGameState) {
         CircuitMetric(
             label = stringResource(R.string.page_error_game_best_label),
             value = formattedScore(game.bestScore),
-            tint = CandyPurple,
-            background = CandyPurpleSoft,
+            tint = VolaBrand.Violet,
+            background = VolaBrand.VioletSoft,
             modifier = Modifier
                 .weight(1f)
                 .testTag(PageErrorFeedbackTestTags.BestScore),
@@ -341,8 +338,8 @@ private fun CircuitMetrics(game: CandyCircuitGameState) {
             label = stringResource(R.string.page_error_game_moves_label),
             value = game.movesRemaining.toString(),
             unit = stringResource(R.string.page_error_game_moves_unit),
-            tint = CandyPurple,
-            background = CandyPurpleSoft,
+            tint = VolaBrand.Violet,
+            background = VolaBrand.VioletSoft,
             modifier = Modifier
                 .weight(1f)
                 .testTag(PageErrorFeedbackTestTags.Moves),
@@ -575,7 +572,7 @@ private fun CandyCircuitTile(
                 rotation = outgoingRotation,
                 background = lerp(
                     circuitTileBackground(tileIndex),
-                    CandyPink.copy(alpha = 0.42f),
+                    VolaBrand.Cyan.copy(alpha = 0.42f),
                     glowAlpha,
                 ),
                 emphasized = true,
@@ -657,7 +654,7 @@ private fun CandyCircuitParticles(
             val distance = size.minDimension * (0.12f + progress * 0.48f)
             val radius = size.minDimension * (0.035f - progress * 0.017f)
             drawCircle(
-                color = if ((particle + tileIndex) % 2 == 0) CandyPink else CandyPurple,
+                color = if ((particle + tileIndex) % 2 == 0) VolaBrand.CyanDeep else VolaBrand.Violet,
                 radius = radius.coerceAtLeast(1f),
                 center = Offset(
                     x = center.x + cos(angle) * distance,
@@ -670,11 +667,11 @@ private fun CandyCircuitParticles(
 }
 
 private fun circuitTileBackground(tileIndex: Int): Color =
-    if (tileIndex % 2 == 0) CandyPink.copy(alpha = 0.08f)
-    else CandyPurple.copy(alpha = 0.10f)
+    if (tileIndex % 2 == 0) VolaBrand.Cyan.copy(alpha = 0.08f)
+    else VolaBrand.Violet.copy(alpha = 0.10f)
 
 private fun circuitTileColor(tileIndex: Int): Color =
-    if (tileIndex % 3 == 1) CandyPurple else CandyPink
+    if (tileIndex % 3 == 1) VolaBrand.Violet else VolaBrand.CyanDeep
 
 private const val PARTICLE_COUNT = 10
 private const val PARTICLE_ANGLE_OFFSET = 0.37f
@@ -777,7 +774,7 @@ private fun CircuitResult(
                 FontWeight.Medium
             },
             color = if (game.lastPointsGained > 0) {
-                CandyPink
+                VolaBrand.CyanDeep
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
@@ -816,7 +813,7 @@ private fun CircuitRecordProgress(game: CandyCircuitGameState) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(7.dp),
-            color = CandyPink,
+            color = VolaBrand.CyanDeep,
             trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             strokeCap = StrokeCap.Round,
         )

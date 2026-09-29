@@ -103,8 +103,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.ui.theme.CandyPink
-import dev.sk2andy.materialbrowser.ui.theme.CandyPurple
+import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -297,9 +296,9 @@ internal fun GestureOnboardingScreen(
                     .background(
                         Brush.verticalGradient(
                             listOf(
-                                CandyPink.copy(alpha = 0.14f),
+                                VolaBrand.Cyan.copy(alpha = 0.14f),
                                 MaterialTheme.colorScheme.surface,
-                                CandyPurple.copy(alpha = 0.18f),
+                                VolaBrand.Violet.copy(alpha = 0.18f),
                             ),
                         ),
                     )
@@ -429,9 +428,9 @@ private fun GestureOnboardingWelcome(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        CandyPink.copy(alpha = 0.24f),
+                        VolaBrand.Cyan.copy(alpha = 0.24f),
                         MaterialTheme.colorScheme.surface,
-                        CandyPurple.copy(alpha = 0.24f),
+                        VolaBrand.Violet.copy(alpha = 0.24f),
                     ),
                 ),
             ),
@@ -481,17 +480,17 @@ private fun GestureOnboardingWelcome(
                 WelcomeGestureRow(
                     symbol = "↔",
                     title = stepTitle(GestureOnboardingStep.SwitchTabs),
-                    color = CandyPurple,
+                    color = VolaBrand.Violet,
                 )
                 WelcomeGestureRow(
                     symbol = "↑",
                     title = stepTitle(GestureOnboardingStep.OpenTabOverview),
-                    color = CandyPink,
+                    color = VolaBrand.CyanDeep,
                 )
                 WelcomeGestureRow(
                     symbol = "↑",
                     title = stepTitle(GestureOnboardingStep.CloseTab),
-                    color = CandyPurple,
+                    color = VolaBrand.Violet,
                 )
             }
         }
@@ -504,7 +503,7 @@ private fun GestureOnboardingWelcome(
                 .testTag("gesture_onboarding_start"),
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = CandyPurple,
+                containerColor = VolaBrand.Violet,
                 contentColor = Color.White,
             ),
         ) {
@@ -526,7 +525,7 @@ private fun GestureOnboardingWelcome(
         ) {
             Text(
                 text = stringResource(R.string.onboarding_skip),
-                color = CandyPurple,
+                color = VolaBrand.Violet,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -564,8 +563,8 @@ private fun GestureOnboardingCelebration(
         contentVisible = true
     }
     val confettiColors = listOf(
-        CandyPink,
-        CandyPurple,
+        VolaBrand.CyanDeep,
+        VolaBrand.Violet,
         Color(0xFFFFC857),
         Color(0xFF2EC4B6),
     )
@@ -585,9 +584,9 @@ private fun GestureOnboardingCelebration(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        CandyPurple.copy(alpha = 0.22f),
+                        VolaBrand.Violet.copy(alpha = 0.22f),
                         MaterialTheme.colorScheme.surface,
-                        CandyPink.copy(alpha = 0.20f),
+                        VolaBrand.Cyan.copy(alpha = 0.20f),
                     ),
                 ),
             ),
@@ -669,7 +668,7 @@ private fun GestureOnboardingCelebration(
             Surface(
                 modifier = Modifier.size(132.dp),
                 shape = CircleShape,
-                color = CandyPurple,
+                color = VolaBrand.Violet,
                 shadowElevation = 18.dp,
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -736,9 +735,9 @@ private fun GestureOnboardingCelebration(
                     },
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CandyPurple,
+                    containerColor = VolaBrand.Violet,
                     contentColor = Color.White,
-                    disabledContainerColor = CandyPurple,
+                    disabledContainerColor = VolaBrand.Violet,
                     disabledContentColor = Color.White,
                 ),
             ) {
@@ -803,7 +802,7 @@ private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
                 .size(70.dp)
                 .graphicsLayer { rotationZ = -14f + floatOffset }
                 .clip(RoundedCornerShape(24.dp))
-                .background(CandyPink.copy(alpha = 0.8f)),
+                .background(VolaBrand.Cyan.copy(alpha = 0.8f)),
         )
         Box(
             modifier = Modifier
@@ -811,7 +810,7 @@ private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
                 .offset(x = (-4).dp, y = (-18).dp)
                 .size(62.dp)
                 .clip(CircleShape)
-                .background(CandyPurple.copy(alpha = 0.8f)),
+                .background(VolaBrand.Violet.copy(alpha = 0.8f)),
         )
         Surface(
             modifier = Modifier
@@ -833,8 +832,8 @@ private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                CandyPink.copy(alpha = 0.18f),
-                                CandyPurple.copy(alpha = 0.24f),
+                                VolaBrand.Cyan.copy(alpha = 0.18f),
+                                VolaBrand.Violet.copy(alpha = 0.24f),
                             ),
                         ),
                     ),
@@ -1186,10 +1185,10 @@ private fun GestureDirectionBadge(
 }
 
 private fun gestureAccent(step: GestureOnboardingStep): Color = when (step) {
-    GestureOnboardingStep.OpenTabOverview -> CandyPink
+    GestureOnboardingStep.OpenTabOverview -> VolaBrand.CyanDeep
     GestureOnboardingStep.SwitchTabs,
     GestureOnboardingStep.CloseTab,
-    -> CandyPurple
+    -> VolaBrand.Violet
 }
 
 @Composable

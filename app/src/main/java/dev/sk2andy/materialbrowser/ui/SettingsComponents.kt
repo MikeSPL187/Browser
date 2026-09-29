@@ -170,8 +170,8 @@ internal fun BrowserAppearanceMode.displayName(): String = when (this) {
 
 @Composable
 internal fun BrowserColorPalette.displayName(): String = when (this) {
+    BrowserColorPalette.Vola -> stringResource(R.string.color_palette_vola)
     BrowserColorPalette.Dynamic -> stringResource(R.string.color_palette_dynamic)
-    BrowserColorPalette.Candy -> stringResource(R.string.color_palette_candy)
     BrowserColorPalette.Neutral -> stringResource(R.string.color_palette_neutral)
 }
 

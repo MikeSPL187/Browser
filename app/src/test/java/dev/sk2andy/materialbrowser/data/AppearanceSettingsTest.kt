@@ -7,14 +7,14 @@ import org.junit.Test
 
 class AppearanceSettingsTest {
     @Test
-    fun `defaults preserve system appearance and Material You`() {
+    fun `defaults follow system appearance with the Vola palette`() {
         val settings = AppearanceSettings()
 
         assertTrue(settings.appearanceMode == BrowserAppearanceMode.System)
         assertTrue(settings.animationsEnabled)
         assertFalse(settings.forceDarkWebsites)
         assertEquals(100, settings.webContentFontSizePercent)
-        assertTrue(settings.colorPalette == BrowserColorPalette.Dynamic)
+        assertTrue(settings.colorPalette == BrowserColorPalette.Vola)
         assertTrue(settings.surfaceStyle == BrowserSurfaceStyle.Clear)
         assertTrue(settings.shapeStyle == BrowserShapeStyle.Rounded)
         assertTrue(settings.addressBarStyle == BrowserAddressBarStyle.Classic)
@@ -58,7 +58,7 @@ class AppearanceSettingsTest {
     @Test
     fun `unknown and removed stable ids use safe defaults`() {
         assertTrue(BrowserAppearanceMode.fromStableId("unknown") == BrowserAppearanceMode.System)
-        assertTrue(BrowserColorPalette.fromStableId("unknown") == BrowserColorPalette.Dynamic)
+        assertTrue(BrowserColorPalette.fromStableId("unknown") == BrowserColorPalette.Vola)
         assertTrue(BrowserSurfaceStyle.fromStableId("unknown") == BrowserSurfaceStyle.Clear)
         assertTrue(BrowserSurfaceStyle.fromStableId("soft") == BrowserSurfaceStyle.Clear)
         assertTrue(BrowserShapeStyle.fromStableId("unknown") == BrowserShapeStyle.Rounded)

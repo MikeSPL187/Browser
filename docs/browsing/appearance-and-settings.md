@@ -27,7 +27,7 @@
 | Animations | Off, on | On |
 | Force dark mode on websites | Off, on | Off |
 | Website font size | 50–200% in 5% steps | 100% |
-| Color palette | Material You, Candy, neutral | Material You |
+| Color palette | Vola, Material You, neutral | Vola |
 | Address-bar color | Theme, dimmed, graphite, black, custom RGB hex | Theme |
 | Surfaces | Clear, frosted | Clear |
 | Shape | Angular, rounded, extra rounded | Rounded |
