@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     id("com.android.library")
@@ -12,15 +11,6 @@ kotlin {
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
-        }
-    }
-    iosArm64()
-    iosSimulatorArm64()
-
-    targets.withType<KotlinNativeTarget>().configureEach {
-        binaries.framework {
-            baseName = "CandyShared"
-            isStatic = true
         }
     }
 
@@ -38,37 +28,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-    }
-}
-
-tasks.register<Exec>("iosSimulatorArm64IsolatedTest") {
-    group = "verification"
-    description = "Runs shared tests on the explicitly configured isolated iOS simulator."
-    dependsOn("linkDebugTestIosSimulatorArm64")
-
-    val deviceSet = providers.environmentVariable("CANDY_IOS_SIMULATOR_DEVICE_SET")
-    val deviceId = providers.environmentVariable("CANDY_IOS_SIMULATOR_UDID")
-    val testExecutable = layout.buildDirectory.file(
-        "bin/iosSimulatorArm64/debugTest/test.kexe",
-    )
-
-    doFirst {
-        check(deviceSet.isPresent) {
-            "CANDY_IOS_SIMULATOR_DEVICE_SET must point to this session's dedicated device set."
-        }
-        check(deviceId.isPresent) {
-            "CANDY_IOS_SIMULATOR_UDID must identify this session's dedicated simulator."
-        }
-        commandLine(
-            "/usr/bin/xcrun",
-            "simctl",
-            "--set",
-            deviceSet.get(),
-            "spawn",
-            "--standalone",
-            deviceId.get(),
-            testExecutable.get().asFile.absolutePath,
-        )
     }
 }
 

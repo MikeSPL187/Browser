@@ -1,1 +1,0 @@
-Vollständig freien F-Droid-Build ohne Google Play-Dienste ergänzt. Offizielle Obtainium-Einrichtung und im Quellcode gespeicherte Release-Versionen ergänzt.
