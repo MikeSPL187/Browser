@@ -81,7 +81,8 @@ jobs:
 
       - name: Script tests
         run: |
-          for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py; do
+          for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py \
+            scripts/test_translations.py; do
             echo "::group::${test}"
             python3 "$test"
             echo "::endgroup::"
