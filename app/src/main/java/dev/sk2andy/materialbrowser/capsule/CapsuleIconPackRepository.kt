@@ -10,6 +10,7 @@ import android.util.LruCache
 import android.util.Xml
 import dev.sk2andy.materialbrowser.getApplicationInfoCompat
 import dev.sk2andy.materialbrowser.queryIntentActivitiesCompat
+import dev.sk2andy.materialbrowser.readUpTo
 import java.io.ByteArrayInputStream
 
 @SuppressLint("DiscouragedApi", "UseCompatLoadingForDrawables")
@@ -104,7 +105,7 @@ class CapsuleIconPackRepository(context: Context) {
                 resources.openRawResource(rawResourceId).use { input ->
                     parseStreamCatalog(
                         packageName,
-                        input.readNBytes(MAX_CATALOG_BYTES + 1),
+                        input.readUpTo(MAX_CATALOG_BYTES + 1),
                     )?.let(entries::addAll)
                 }
             }
@@ -119,7 +120,7 @@ class CapsuleIconPackRepository(context: Context) {
     ): List<CapsuleIconPackEntry>? {
         val encoded = runCatching {
             resources.assets.open("$catalogName.xml").use { input ->
-                input.readNBytes(MAX_CATALOG_BYTES + 1)
+                input.readUpTo(MAX_CATALOG_BYTES + 1)
             }
         }.getOrNull() ?: return null
         return parseStreamCatalog(packageName, encoded)
