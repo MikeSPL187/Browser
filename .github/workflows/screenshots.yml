@@ -1,0 +1,159 @@
+# Visual check on a real Android emulator: builds Vola, tours the key screens in light, dark and
+# Russian, and publishes the screenshots to the "screenshots" branch under <branch>/<sha>/.
+#
+# Runs for pull requests labelled "screenshots" and on manual dispatch.
+
+name: Screenshots
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ANDROID_SERIAL: emulator-5554
+  PACKAGE: io.github.mikespl187.vola.debug
+
+jobs:
+  screenshots:
+    name: Emulator screenshots
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'screenshots') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+
+      - name: Install emulator and system image
+        run: |
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          sdkmanager \
+            "emulator" \
+            "platform-tools" \
+            "platforms;android-37.1" \
+            "system-images;android-35;google_apis;x86_64"
+          printf 'no\n' | avdmanager create avd \
+            --force \
+            --name vola_ci \
+            --package "system-images;android-35;google_apis;x86_64" \
+            --device pixel_6
+          sudo chmod 666 /dev/kvm
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+
+      - name: Start emulator
+        run: |
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd vola_ci \
+            -port 5554 \
+            -no-window \
+            -noaudio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            > "$RUNNER_TEMP/emulator.log" 2>&1 &
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon --stacktrace assembleFullDebug
+
+      - name: Wait for emulator
+        run: |
+          timeout 300 adb wait-for-device
+          # shellcheck disable=SC2016 # expanded by the inner shell
+          timeout 300 bash -c '
+            until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do
+              sleep 2
+            done
+          '
+          adb shell settings put global hide_error_dialogs 1
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell input keyevent 82
+
+      - name: Capture screenshots
+        run: |
+          adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
+          python3 scripts/ci/capture_screenshots.py "$PACKAGE" "$RUNNER_TEMP/shots"
+
+      - name: Publish screenshots
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if ! compgen -G "$RUNNER_TEMP/shots/*.png" > /dev/null; then
+            echo "No screenshots were captured."
+            exit 0
+          fi
+          sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          target="${SOURCE_BRANCH//\//-}/${sha::7}"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          dest="$RUNNER_TEMP/screenshots-branch"
+          # Match the exact ref: a plain "screenshots" pattern also matches refs/heads/ci/screenshots.
+          if git ls-remote --exit-code "$remote" refs/heads/screenshots > /dev/null; then
+            git clone --quiet --depth 1 --branch screenshots "$remote" "$dest"
+          else
+            git init --quiet -b screenshots "$dest"
+            git -C "$dest" remote add origin "$remote"
+          fi
+          mkdir -p "$dest/$target"
+          cp "$RUNNER_TEMP"/shots/* "$dest/$target/"
+          {
+            echo "# Screenshots: ${SOURCE_BRANCH} @ ${sha::7}"
+            echo
+            for image in "$dest/$target"/*.png; do
+              name="$(basename "$image")"
+              echo "## ${name%.png}"
+              echo
+              echo "![${name%.png}](${name})"
+              echo
+            done
+          } > "$dest/$target/README.md"
+          git -C "$dest" config user.name "github-actions[bot]"
+          git -C "$dest" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$dest" add "$target"
+          git -C "$dest" commit --quiet -m "screenshots: ${SOURCE_BRANCH} @ ${sha::7}"
+          for _ in 1 2 3; do
+            if git -C "$dest" push --quiet origin screenshots; then
+              break
+            fi
+            git -C "$dest" pull --quiet --rebase origin screenshots
+          done
+          url="https://github.com/${GITHUB_REPOSITORY}/tree/screenshots/${target}"
+          echo "### Screenshots" >> "$GITHUB_STEP_SUMMARY"
+          echo "[${target}](${url})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show emulator log after failure
+        if: ${{ failure() }}
+        run: sed -n '1,300p' "$RUNNER_TEMP/emulator.log" || true
+
+      - name: Stop emulator
+        if: ${{ always() }}
+        run: adb emu kill || true
