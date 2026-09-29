@@ -116,7 +116,8 @@ jobs:
           target="${SOURCE_BRANCH//\//-}/${sha::7}"
           remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           dest="$RUNNER_TEMP/screenshots-branch"
-          if git ls-remote --exit-code --heads "$remote" screenshots > /dev/null; then
+          # Match the exact ref: a plain "screenshots" pattern also matches refs/heads/ci/screenshots.
+          if git ls-remote --exit-code "$remote" refs/heads/screenshots > /dev/null; then
             git clone --quiet --depth 1 --branch screenshots "$remote" "$dest"
           else
             git init --quiet -b screenshots "$dest"
