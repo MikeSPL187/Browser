@@ -7,7 +7,6 @@ enum class ThirdPartyComponent {
     Kotlin,
     MaterialIcons,
     GoogleOpenSource,
-    GoogleCodeScanner,
     EasyList,
     Uassets,
     UblockOrigin,
@@ -66,12 +65,6 @@ object CandyLegalSources {
             licenseName = "Apache License 2.0",
             sourceUrl = "https://opensource.google/projects",
             licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0",
-        ),
-        ThirdPartyNotice(
-            component = ThirdPartyComponent.GoogleCodeScanner,
-            licenseName = "Google APIs Terms of Service",
-            sourceUrl = "https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner",
-            licenseUrl = "https://developers.google.com/terms",
         ),
         ThirdPartyNotice(
             component = ThirdPartyComponent.EasyList,

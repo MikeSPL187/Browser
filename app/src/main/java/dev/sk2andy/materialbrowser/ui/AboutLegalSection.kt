@@ -240,20 +240,11 @@ private fun OpenSourceDialog(
         onDismiss = onDismiss,
     ) {
         Text(
-            stringResource(
-                if (BuildConfig.FOSS_DISTRIBUTION) {
-                    R.string.about_open_source_intro_foss
-                } else {
-                    R.string.about_open_source_intro
-                },
-            ),
+            stringResource(R.string.about_open_source_intro),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(12.dp))
-        val notices = CandyLegalSources.thirdPartyNotices.filter { notice ->
-            !BuildConfig.FOSS_DISTRIBUTION ||
-                notice.component != ThirdPartyComponent.GoogleCodeScanner
-        }
+        val notices = CandyLegalSources.thirdPartyNotices
         notices.forEachIndexed { index, notice ->
             if (index > 0) {
                 HorizontalDivider(
@@ -316,14 +307,7 @@ private fun OpenSourceLicenseEntry(notice: ThirdPartyNotice, onOpenUrl: (String)
         onClick = { onOpenUrl(notice.sourceUrl) },
     )
     LegalLinkButton(
-        text = stringResource(
-            if (notice.component == ThirdPartyComponent.GoogleCodeScanner) {
-                R.string.about_terms_action
-            } else {
-                R.string.about_license_action
-            },
-            notice.component.displayName(),
-        ),
+        text = stringResource(R.string.about_license_action, notice.component.displayName()),
         tag = AboutLegalTestTags.licenseLink(notice.component),
         onClick = { onOpenUrl(notice.licenseUrl) },
     )
@@ -406,7 +390,6 @@ private fun ThirdPartyComponent.displayName(): String = when (this) {
     ThirdPartyComponent.Kotlin -> stringResource(R.string.about_license_kotlin)
     ThirdPartyComponent.MaterialIcons -> stringResource(R.string.about_license_material_icons)
     ThirdPartyComponent.GoogleOpenSource -> stringResource(R.string.about_license_google_oss)
-    ThirdPartyComponent.GoogleCodeScanner -> stringResource(R.string.about_license_google_scanner)
     ThirdPartyComponent.EasyList -> stringResource(R.string.about_license_easylist)
     ThirdPartyComponent.Uassets -> stringResource(R.string.about_license_uassets)
     ThirdPartyComponent.UblockOrigin -> "uBlock Origin"

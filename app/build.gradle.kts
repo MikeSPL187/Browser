@@ -103,7 +103,7 @@ abstract class GenerateSystemWebViewThirdPartyNotices : DefaultTask() {
         val generated = source
             .removeRange(startIndex, endIndex)
             .replace(
-                "This inventory reflects the full release runtime classpath for Vola.",
+                "This inventory reflects the GeckoView release runtime classpath for Vola.",
                 "This inventory reflects the System WebView release runtime classpath for Vola.",
             )
         check("Gecko default extensions" !in generated && ".xpi" !in generated.lowercase()) {
@@ -215,7 +215,6 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
         manifestPlaceholders["networkSecurityConfig"] = "@xml/network_security_config"
         buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
-        buildConfigField("boolean", "FOSS_DISTRIBUTION", "false")
         buildConfigField("boolean", "SYSTEM_WEBVIEW_ONLY", "false")
         buildConfigField("boolean", "TRUST_USER_CERTIFICATES", "false")
         buildConfigField(
@@ -240,14 +239,7 @@ android {
     productFlavors {
         create("full") {
             dimension = "distribution"
-        }
-
-        create("foss") {
-            dimension = "distribution"
-            applicationIdSuffix = ".foss"
-            manifestPlaceholders["appLabel"] = "Vola FOSS"
-            buildConfigField("boolean", "FOSS_DISTRIBUTION", "true")
-            proguardFile("proguard-foss-rules.pro")
+            proguardFile("proguard-gecko-rules.pro")
         }
 
         create("systemwebview") {
@@ -329,12 +321,7 @@ android {
         getByName("full").assets.srcDir(
             layout.buildDirectory.dir("generated/geckoPrivacy/assets").get().asFile,
         )
-        getByName("foss").assets.srcDir(
-            layout.buildDirectory.dir("generated/geckoPrivacy/assets").get().asFile,
-        )
         getByName("full").assets.srcDir("src/gecko/assets")
-        getByName("foss").assets.srcDir("src/gecko/assets")
-        getByName("systemwebview").java.srcDir("src/full/java")
         getByName("systemwebview").assets.srcDir(
             layout.buildDirectory.dir("generated/systemWebViewNotices/assets").get().asFile,
         )
@@ -391,7 +378,7 @@ val generateCandySyncDeviceIconAsset by tasks.registering(Copy::class) {
 val generateSystemWebViewThirdPartyNotices by tasks.registering(
     GenerateSystemWebViewThirdPartyNotices::class,
 ) {
-    sourceFile.set(layout.projectDirectory.file("src/full/assets/third_party_notices.txt"))
+    sourceFile.set(layout.projectDirectory.file("src/main/assets/third_party_notices.txt"))
     outputFile.set(
         layout.buildDirectory.file(
             "generated/systemWebViewNotices/assets/third_party_notices.txt",
@@ -448,7 +435,7 @@ val verifyGeckoDefaultExtensionAssets by tasks.registering(Exec::class) {
 
 tasks.matching { task ->
     task.name.endsWith("Build") &&
-        (task.name.startsWith("preFull") || task.name.startsWith("preFoss"))
+        task.name.startsWith("preFull")
 }.configureEach {
     dependsOn(generateGeckoPrivacyRuleAssets)
     dependsOn(generateGeckoContentTopInsetScript)
@@ -601,9 +588,9 @@ tasks.matching { it.name == "preSystemwebviewReleaseBuild" }.configureEach {
     dependsOn(verifySystemWebViewReleaseDependencies)
 }
 
-val verifyFossReleaseDependencies by tasks.registering {
+val verifyNoPlayServicesDependencies by tasks.registering {
     group = "verification"
-    description = "Rejects proprietary Google runtime dependencies from the FOSS release."
+    description = "Rejects proprietary Google runtime dependencies from every release APK."
 
     doLast {
         val forbiddenGroups = listOf(
@@ -613,28 +600,33 @@ val verifyFossReleaseDependencies by tasks.registering {
             "com.google.firebase",
             "com.google.mlkit",
         )
-        val violations = configurations.getByName("fossReleaseRuntimeClasspath")
-            .incoming
-            .resolutionResult
-            .allComponents
-            .mapNotNull { it.moduleVersion }
-            .filter { module ->
-                forbiddenGroups.any { group ->
-                    module.group == group || module.group.startsWith("$group.")
+        val violations = listOf(
+            "fullReleaseRuntimeClasspath",
+            "systemwebviewReleaseRuntimeClasspath",
+        ).flatMap { configurationName ->
+            configurations.getByName(configurationName)
+                .incoming
+                .resolutionResult
+                .allComponents
+                .mapNotNull { it.moduleVersion }
+                .filter { module ->
+                    forbiddenGroups.any { group ->
+                        module.group == group || module.group.startsWith("$group.")
+                    }
                 }
-            }
-            .map { it.toString() }
-            .sorted()
+                .map { "$configurationName: $it" }
+        }.sorted()
 
         check(violations.isEmpty()) {
-            "FOSS release contains forbidden Google runtime dependencies: " +
-                violations.joinToString()
+            "Release contains forbidden Google runtime dependencies: " + violations.joinToString()
         }
     }
 }
 
-tasks.matching { it.name == "preFossReleaseBuild" }.configureEach {
-    dependsOn(verifyFossReleaseDependencies)
+tasks.matching { task ->
+    task.name == "preFullReleaseBuild" || task.name == "preSystemwebviewReleaseBuild"
+}.configureEach {
+    dependsOn(verifyNoPlayServicesDependencies)
 }
 
 val geckoViewDependency = "org.mozilla.geckoview:geckoview:156.0.20260921121718"
@@ -646,7 +638,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.core:core-ktx:1.18.0")
     // Gecko uses Android's framework Credential Manager for WebAuthn on API 34+. AndroidX keeps
-    // password save/select available across system and Full-build Google providers.
+    // password save/select available through the system and installed credential providers.
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
@@ -661,8 +653,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.lambdapioneer.argon2kt:argon2kt:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    "fullImplementation"(geckoViewDependency)
-    "fossImplementation"(geckoViewDependency) {
+    // Vola ships without Google Play services. GeckoView uses the framework Credential Manager for
+    // WebAuthn on API 34+, so its optional Play services FIDO provider is excluded.
+    "fullImplementation"(geckoViewDependency) {
         exclude(group = "com.google.android.gms", module = "play-services-fido")
     }
     "systemwebviewCompileOnly"(geckoViewDependency)
@@ -672,16 +665,6 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.4.0-alpha08")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    "fullImplementation"("com.google.android.gms:play-services-code-scanner:16.1.0")
-    "fullImplementation"("androidx.credentials:credentials-play-services-auth:1.5.0")
-    "fullImplementation"("com.google.android.gms:play-services-cast-framework:21.4.0") {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
-    "systemwebviewImplementation"("com.google.android.gms:play-services-code-scanner:16.1.0")
-    "systemwebviewImplementation"("androidx.credentials:credentials-play-services-auth:1.5.0")
-    "systemwebviewImplementation"("com.google.android.gms:play-services-cast-framework:21.4.0") {
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")

@@ -109,7 +109,7 @@ gradle_args=(
   -I "$repo_root/sync/scripts/test-build-isolation.gradle"
 )
 CANDY_SYNC_GRADLE_BUILD_ROOT="$build_root" ./gradlew "${gradle_args[@]}" \
-  testFullDebugUnitTest testFossDebugUnitTest
+  testFullDebugUnitTest testSystemwebviewDebugUnitTest
 ANDROID_SERIAL="$serial" CANDY_SYNC_GRADLE_BUILD_ROOT="$build_root" \
   ./gradlew "${gradle_args[@]}" connectedFullDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=dev.sk2andy.materialbrowser.data.BrowserSessionStoreInstrumentedTest,dev.sk2andy.materialbrowser.data.sync.AndroidSyncSecurityInstrumentedTest,dev.sk2andy.materialbrowser.browser.BrowserControllerSyncInstrumentedTest,dev.sk2andy.materialbrowser.ui.ProfileCreationSheetInstrumentedTest,dev.sk2andy.materialbrowser.ui.ProfileSwitcherInstrumentedTest,dev.sk2andy.materialbrowser.ui.SyncSettingsPageInstrumentedTest
