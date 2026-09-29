@@ -82,10 +82,11 @@ screen remains open and preserves its journal and backup instead of launching mi
 ## Android Auto Backup
 
 Android Auto Backup is enabled as a smaller automatic restore path. Cloud backup requires
-client-side encryption and includes shared preferences, Candy Rules, userscripts and Site
-Capsules. This covers settings, domain exceptions, regular tabs, snoozes and Filter Studio
-state. Rules and userscripts migrate once from `noBackupFilesDir` to `filesDir` so Android can
-include them.
+client-side encryption and carries only the user's own configuration files: Candy Rules,
+userscripts and Site Capsules. Shared preferences are deliberately excluded from cloud backup
+because they also hold open tabs, history, favorites, site exceptions and sync credentials;
+Vola never sends browsing data off the device without an explicit export. Rules and
+userscripts migrate once from `noBackupFilesDir` to `filesDir` so Android can include them.
 
 Device-to-device transfer additionally includes all `filesDir` and database content. Android's
 `noBackupFilesDir` remains outside automatic backup and transfer, so Candy Recall text stays on
@@ -96,6 +97,6 @@ full, user-controlled route for cookies and website storage. Auto Backup timing 
 availability are controlled by Android and the active backup transport.
 
 Profile wallpaper files remain outside cloud backup to avoid consuming Android's small shared
-quota with user images. Each slot's profile metadata can still restore through shared preferences;
-Candy removes only the metadata whose corresponding image is absent. Device-to-device transfer and
+quota with user images. Profile metadata lives in shared preferences and therefore moves only
+through device-to-device transfer or the manual archive. Device-to-device transfer and
 the manual ZIP archive include both Candy-owned wallpaper files per configured profile.
