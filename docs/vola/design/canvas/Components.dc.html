@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — компоненты</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1440px; height: 1240px; background: var(--bg); padding: 56px 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 36px; align-content: start">
+<header style="grid-column: span 12; display: flex; flex-direction: column; gap: 8px"><span class="t-over">Vola Design · основа</span><h1 style="font-size: 48px; font-weight: 800; letter-spacing: -0.03em">Компоненты</h1></header>
+<section style="grid-column: span 6; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Адресная панель · состояния</span>
+<div style="border-radius: 28px; background: linear-gradient(135deg, {{c.a20}}, rgba(94,78,183,0.14)); padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div class="glass" style="height: 64px; border-radius: 32px; display: flex; align-items: center; gap: 2px; padding: 0 8px">
+<span style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span></span>
+<span style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 16px; font-weight: 700"><svg class="i xs" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.lock}}"></path></svg>north-guide.ru</span>
+<span class="ib"><span class="tc">4</span></span><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></span>
+</div>
+<div class="glass" style="height: 64px; border-radius: 32px; display: flex; align-items: center; gap: 2px; padding: 0 8px; position: relative; overflow: hidden">
+<span style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span></span>
+<span style="flex-grow: 1; text-align: center; font-size: 16px; font-weight: 700; color: var(--muted)">Загрузка · ice-forecast.example.ru</span>
+<span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></span>
+<span style="position: absolute; left: 28px; bottom: 0; width: 55%; height: 3px; border-radius: 2px; background: {{c.a}}"></span>
+</div>
+<div style="display: flex; gap: 12px; align-items: center">
+<span class="glass" style="height: 36px; border-radius: 18px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 8px"><span style="width: 24px; height: 24px; border-radius: 12px; background: {{c.a}}"></span><span style="font-size: 14px; font-weight: 700">north-guide.ru</span></span>
+<span class="t-sub">Капсула при прокрутке</span>
+<span style="flex-grow: 1"></span>
+<span style="height: 44px; border-radius: 22px; background: rgba(38,32,64,0.9); color: #E7E1F5; padding: 0 16px 0 6px; display: flex; align-items: center; gap: 8px"><span style="width: 32px; height: 32px; border-radius: 16px; background: #C9BFFF; color: #22106E; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.incognito}}"></path></svg></span><span style="font-size: 14px; font-weight: 700">Приватно</span></span>
+</div>
+</div>
+</section>
+<section style="grid-column: span 6; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Кнопки</span>
+<div style="border-radius: 28px; background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+<button style="height: 52px; border-radius: 26px; background: {{c.a}}; color: #FFFFFF; padding: 0 22px; font-size: 15px; font-weight: 800">Основная</button>
+<button style="height: 52px; border-radius: 26px; background: {{c.a14}}; color: {{c.a}}; padding: 0 22px; font-size: 15px; font-weight: 800">Тональная</button>
+<button style="height: 52px; border-radius: 26px; box-shadow: inset 0 0 0 1px var(--outline-var); padding: 0 22px; font-size: 15px; font-weight: 800">Контурная</button>
+<button style="height: 52px; border-radius: 26px; padding: 0 16px; font-size: 15px; font-weight: 800; color: {{c.a}}">Текст</button>
+<button style="height: 52px; border-radius: 26px; background: var(--danger-cont); color: var(--danger); padding: 0 22px; font-size: 15px; font-weight: 800">Удалить</button>
+</div>
+<div style="display: flex; gap: 14px; align-items: center">
+<span style="display: flex; gap: 4px"><span style="width: 64px; height: 52px; border-radius: 26px 10px 10px 26px; background: var(--s-high); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></span><span style="width: 64px; height: 52px; border-radius: 10px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.reload}}"></path></svg></span><span style="width: 64px; height: 52px; border-radius: 10px 26px 26px 10px; background: var(--s-high); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.forward}}"></path></svg></span></span>
+<span class="t-sub">Группа кнопок</span>
+<span style="flex-grow: 1"></span>
+<span style="width: 64px; height: 64px; border-radius: 22px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px {{c.a45}}"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></span>
+<span style="height: 60px; border-radius: 20px; background: {{c.a14}}; color: {{c.a}}; padding: 0 20px 0 16px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800"><svg class="i" viewBox="0 0 24 24"><path d="{{i.folder}}"></path></svg>Папка</span>
+</div>
+</div>
+</section>
+<section style="grid-column: span 4; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Пространства</span>
+<div style="border-radius: 28px; background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 28px; background: var(--s-high); align-self: flex-start">
+<span style="width: 44px; height: 44px; border-radius: 22px; color: #5E4EB7; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.home}}"></path></svg></span>
+<span style="height: 44px; border-radius: 16px; background: {{c.a}}; color: #FFFFFF; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg>Работа</span>
+<span style="width: 44px; height: 44px; border-radius: 22px; color: #A23F2B; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></span>
+</div>
+<div style="display: flex; gap: 10px">
+<sc-for list="{{orbs}}" as="o" hint-placeholder-count="6"><span style="width: 44px; height: 44px; border-radius: 22px; background: {{o.c}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{o.i}}"></path></svg></span></sc-for>
+</div>
+<span class="t-sub">Выбранное пространство — пилюля с названием (форма морфится из круга), остальные — значки в своём цвете.</span>
+</div>
+</section>
+<section style="grid-column: span 4; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Выбор и ввод</span>
+<div style="border-radius: 28px; background: var(--surface); padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<span style="height: 36px; border-radius: 12px; background: {{c.a}}; color: #FFFFFF; padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.check}}"></path></svg>Выбран</span>
+<span style="height: 36px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--outline-var); padding: 0 12px; display: flex; align-items: center; font-size: 13px; font-weight: 700">Фильтр</span>
+<span style="height: 36px; border-radius: 18px; background: var(--s-high); padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.alarm}}"></path></svg>До завтра</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: center"><span class="sw on" style="background: {{c.a}}"><span></span></span><span class="sw"><span></span></span><span style="width: 22px; height: 22px; border-radius: 11px; box-shadow: inset 0 0 0 2px {{c.a}}; display: flex; align-items: center; justify-content: center"><span style="width: 12px; height: 12px; border-radius: 6px; background: {{c.a}}"></span></span><span style="width: 22px; height: 22px; border-radius: 7px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke-width: 3"><path d="{{i.check}}"></path></svg></span></div>
+<div style="height: 32px; position: relative; display: flex; align-items: center"><div style="width: 100%; height: 16px; border-radius: 8px; background: var(--s-high)"></div><div style="position: absolute; left: 0; width: 60%; height: 16px; border-radius: 8px; background: {{c.a}}"></div><div style="position: absolute; left: calc(60% + 4px); width: 4px; height: 32px; border-radius: 2px; background: {{c.a}}"></div></div>
+<span style="height: 52px; border-radius: 26px; background: var(--s-high); display: flex; align-items: center; gap: 12px; padding: 0 18px; color: var(--muted); font-size: 15px; font-weight: 600"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>Поиск по истории</span>
+</div>
+</section>
+<section style="grid-column: span 4; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Плитки и карточки</span>
+<div style="border-radius: 28px; background: var(--s-high); padding: 24px; display: flex; gap: 16px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 68px; height: 68px; border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 36px; height: 36px; border-radius: 12px; background: #DDE3FF; color: #2F4AA8; font-size: 17px">П</span></span><span style="font-size: 12px; font-weight: 700">Essentials</span></div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+<div style="height: 150px; border-radius: 24px; background: var(--surface); box-shadow: 0 0 0 3px {{c.a}}; padding: 10px; display: flex; flex-direction: column; gap: 7px"><div style="height: 12px; width: 46%; border-radius: 5px; background: #4A3A9E"></div><div style="height: 54px; border-radius: 12px; background: #E6DEFF"></div><div style="height: 7px; width: 90%; border-radius: 4px; background: #E6E1EB"></div></div>
+<span style="font-size: 13px; font-weight: 700">Активная вкладка</span>
+</div>
+</div>
+</section>
+<section style="grid-column: span 7; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Списки и листы</span>
+<div style="display: flex; gap: 20px">
+<div class="group" style="flex: 1">
+<div class="row"><span class="lead" style="background: #D3F0D9; color: #2B6C3F"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg></span><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Приватность и защита</span><span class="t-sub">Строгая · только HTTPS</span></span><svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.chevR}}"></path></svg></div>
+<div class="row"><span class="lead" style="background: #E6DEFF; color: #4A3A9E"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.cookie}}"></path></svg></span><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Скрывать cookie-баннеры</span><span class="t-sub">Отказываться от необязательных</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+</div>
+<div style="width: 300px; height: 150px; border-radius: 32px 32px 0 0; background: var(--s-low); box-shadow: 0 -10px 40px rgba(20,12,50,0.12); padding: 10px 20px; display: flex; flex-direction: column; gap: 12px"><div class="handle" style="margin-top: 0"></div><span class="t-title">Лист снизу</span><span class="t-sub">Скругление 32, ручка, затемнение фона. Закрывается свайпом вниз.</span></div>
+</div>
+</section>
+<section style="grid-column: span 5; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Уведомления</span>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="height: 56px; border-radius: 18px; background: #322F37; color: #F4EFF4; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 18px"><span style="flex-grow: 1; font-size: 15px; font-weight: 600">Вкладка закрыта</span><button style="height: 40px; border-radius: 20px; padding: 0 14px; color: #C9BFFF; font-size: 14px; font-weight: 800">Вернуть</button></div>
+<div style="height: 56px; border-radius: 18px; background: #322F37; color: #F4EFF4; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 14px"><svg class="i s" viewBox="0 0 24 24" style="color: #93D6A0"><path d="{{i.download}}"></path></svg><span style="flex-grow: 1; font-size: 15px; font-weight: 600">Файл загружен</span><button style="height: 40px; border-radius: 20px; padding: 0 14px; color: #C9BFFF; font-size: 14px; font-weight: 800">Открыть</button></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const i = window.VI || {};
+return {
+i: i,
+c: window.VA ? window.VA(accent) : { a: accent },
+orbs: [
+{ c: '#5E4EB7', i: i.home }, { c: '#2F5BD3', i: i.book }, { c: '#006877', i: i.work },
+{ c: '#2B6C3F', i: i.globe }, { c: '#A23F2B', i: i.movie }, { c: '#A0305B', i: i.heart }
+]
+};
+}
+}
+</script>
+</body>
+</html>

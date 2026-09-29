@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — долгое нажатие на ссылку</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="padding: 60px 20px 0; display: flex; flex-direction: column; gap: 16px; filter: blur(4px)">
+<p class="t-read">Лёд на Байкале становится крепким к середине февраля.</p>
+<p class="t-read">Перед выходом проверьте прогноз толщины льда и сообщите маршрут знакомым.</p>
+</div>
+<div style="position: absolute; inset: 0; background: rgba(22,18,30,0.28)"></div>
+<div style="position: absolute; left: 20px; top: 150px; height: 34px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 0 0 3px {{c.a}}; padding: 0 10px; display: flex; align-items: center; font-family: Literata, Georgia, serif; font-size: 17px; color: #1E5E8C; text-decoration: underline">прогноз толщины льда</div>
+<div style="position: absolute; left: 16px; right: 16px; top: 210px; border-radius: 30px; background: var(--s-low); box-shadow: var(--shadow); overflow: hidden">
+<div style="height: 150px; background: linear-gradient(160deg, #EEF6F4, #D4F1EC); padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px">
+<span class="t-over" style="color: #2F6B5F">Прогноз льда</span>
+<span style="font-size: 19px; font-weight: 800; color: #16211E">Толщина льда: южная часть озера</span>
+</div>
+<div style="padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--hair)">
+<svg class="i xs" viewBox="0 0 24 24" style="color: var(--ok)"><path d="{{i.lock}}"></path></svg>
+<span class="t-sub" style="font-weight: 700; flex-grow: 1">ice-forecast.example.ru/south</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 10px 8px">
+<sc-for list="{{acts}}" as="a" hint-placeholder-count="8">
+<button style="height: 76px; border-radius: 20px; background: {{a.bg}}; color: {{a.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; font-weight: 700; line-height: 1.15; text-align: center; padding: 0 2px"><svg class="i" viewBox="0 0 24 24"><path d="{{a.icon}}"></path></svg>{{a.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const c = window.VA ? window.VA(accent) : { a: accent };
+const i = window.VI || {};
+const p = (label, icon) => ({ label: label, icon: icon, bg: 'transparent', fg: 'var(--on-var)' });
+return {
+i: i,
+c: c,
+acts: [
+{ label: 'Glance', icon: i.glance, bg: c.a14, fg: accent },
+p('Новая вкладка', i.plus),
+p('В фоне', i.tabs),
+p('Рядом', i.split),
+p('Приватно', i.incognito),
+p('В пространство', i.swap),
+p('Копировать', i.copy),
+p('Отправить', i.share)
+]
+};
+}
+}
+</script>
+</body>
+</html>

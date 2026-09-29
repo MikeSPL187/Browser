@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — отложенные вкладки</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center"><button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button></div>
+<div style="padding: 0 4px; display: flex; flex-direction: column; gap: 6px"><h1 class="t-display">Отложенные</h1><span class="t-sub" style="font-size: 15px">Вкладки вернутся в своё пространство в выбранное время</span></div>
+<sc-for list="{{items}}" as="s" hint-placeholder-count="3">
+<div style="border-radius: 26px; background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span class="mono" style="width: 40px; height: 40px; border-radius: 14px; background: {{s.tone}}; color: {{s.ink}}; font-size: 16px">{{s.l}}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.title}}</span><span class="t-sub">{{s.host}}</span></span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="height: 36px; border-radius: 18px; background: {{s.wsBg}}; color: {{s.ws}}; padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800"><svg class="i xs" viewBox="0 0 24 24"><path d="{{s.wsIcon}}"></path></svg>{{s.wsName}}</span>
+<span style="height: 36px; border-radius: 18px; background: var(--s-high); padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.alarm}}"></path></svg>{{s.when}}</span>
+<span style="flex-grow: 1"></span>
+<button style="height: 36px; border-radius: 18px; background: {{c.a}}; color: #FFFFFF; padding: 0 14px; font-size: 13px; font-weight: 800">Открыть</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const i = window.VI || {};
+return {
+i: i,
+c: window.VA ? window.VA(accent) : { a: accent },
+items: [
+{ l: 'О', tone: '#FFEBC2', ink: '#6E4F00', title: 'Отчёт по метрикам', host: 'metrics.example.com', wsName: 'Работа', ws: '#006877', wsBg: '#006877' + '1A', wsIcon: i.work, when: 'Сегодня, 18:00' },
+{ l: 'Р', tone: '#FFE1D6', ink: '#9A3A1E', title: 'Расписание сезона: осень', host: 'calendar.example.com', wsName: 'Аниме', ws: '#A23F2B', wsBg: '#A23F2B' + '1A', wsIcon: i.movie, when: 'В субботу' },
+{ l: 'К', tone: '#FFDDEA', ink: '#962F59', title: 'Каталог шрифтов с кириллицей', host: 'fonts.example.org', wsName: 'Личное', ws: '#5E4EB7', wsBg: '#5E4EB7' + '1A', wsIcon: i.home, when: 'Через неделю' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

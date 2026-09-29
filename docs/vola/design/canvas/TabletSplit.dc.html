@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — планшет, Split View</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1280px; height: 800px; background: var(--frame); display: flex; gap: 8px; padding: 12px">
+<div style="position: absolute; left: -260px; top: -300px; width: 900px; height: 800px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a45}}, rgba(236,230,241,0))"></div>
+<nav aria-label="Свёрнутая боковая панель" style="position: relative; width: 60px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 2px">
+<button class="ib" aria-label="Развернуть панель"><svg class="i" viewBox="0 0 24 24"><path d="{{i.sidebar}}"></path></svg></button>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="5">
+<a href="#" aria-label="{{r.name}}" style="width: 48px; height: 48px; border-radius: 16px; background: {{r.bg}}; box-shadow: {{r.ring}}; display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 26px; height: 26px; border-radius: 8px; background: {{r.tone}}; color: {{r.ink}}; font-size: 12px">{{r.l}}</span></a>
+</sc-for>
+<span style="flex-grow: 1"></span>
+<span style="width: 40px; height: 40px; border-radius: 14px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-bottom: 6px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span>
+</nav>
+<main style="position: relative; flex: 1.15; border-radius: 20px; background: #FFFFFF; box-shadow: 0 0 0 2.5px {{c.a}}, 0 12px 40px rgba(38,22,86,0.12); overflow: hidden; display: flex; flex-direction: column">
+<div style="height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid #F0EBF4; font-size: 13px; font-weight: 800; color: var(--on-var)"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{c.a}}"></span>docs.example.com/launch</div>
+<div style="padding: 36px 40px; display: flex; flex-direction: column; gap: 14px">
+<h1 style="font-family: Literata, Georgia, serif; font-size: 34px; line-height: 1.12; font-weight: 600">План запуска на октябрь</h1>
+<p style="font-family: Literata, Georgia, serif; font-size: 17px; line-height: 1.62; color: var(--ink)">Цели релиза, сроки по неделям и ответственные. Документ открыт рядом с доской задач, чтобы сверять пункты.</p>
+<div style="display: flex; gap: 10px; align-items: center"><span style="width: 20px; height: 20px; border-radius: 6px; background: {{c.a}}"></span><span style="font-size: 16px">Бета для тестировщиков — 6 октября</span></div>
+<div style="display: flex; gap: 10px; align-items: center"><span style="width: 20px; height: 20px; border-radius: 6px; box-shadow: inset 0 0 0 2px #AFA8B8"></span><span style="font-size: 16px">Публичный релиз — 20 октября</span></div>
+</div>
+</main>
+<div style="position: relative; width: 16px; display: flex; align-items: center; justify-content: center"><button aria-label="Изменить ширину панелей" style="width: 16px; height: 64px; display: flex; align-items: center; justify-content: center; cursor: col-resize"><span style="width: 5px; height: 48px; border-radius: 3px; background: var(--outline); display: block"></span></button></div>
+<main style="position: relative; flex: 1; border-radius: 20px; background: #FFFFFF; overflow: hidden; display: flex; flex-direction: column; opacity: 0.96">
+<div style="height: 44px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #F0EBF4; font-size: 13px; font-weight: 800; color: var(--muted)">tasks.example.com/sprint-42</div>
+<div style="padding: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="t-over">В работе</span><div style="height: 76px; border-radius: 16px; background: #FFE1D6; padding: 12px; font-size: 14px; font-weight: 700">Экран оплаты</div><div style="height: 76px; border-radius: 16px; background: #E6DEFF; padding: 12px; font-size: 14px; font-weight: 700">Онбординг</div></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="t-over">Готово</span><div style="height: 76px; border-radius: 16px; background: #D4F1EC; padding: 12px; font-size: 14px; font-weight: 700">Поиск</div><div style="height: 76px; border-radius: 16px; background: #D8EEFF; padding: 12px; font-size: 14px; font-weight: 700">Профиль</div></div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const soft = 'rgba(255,255,255,0.72)';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+rail: [
+{ name: 'Почта', l: 'П', tone: '#DDE3FF', ink: '#2F4AA8', bg: soft, ring: 'none' },
+{ name: 'Документы', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E', bg: '#FFFFFF', ring: '0 0 0 2px ' + accent },
+{ name: 'Задачи', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E', bg: '#FFFFFF', ring: '0 0 0 2px ' + accent + '80' },
+{ name: 'Календарь', l: 'К', tone: '#D4F1EC', ink: '#00665A', bg: soft, ring: 'none' },
+{ name: 'Чат', l: 'Ч', tone: '#D8EEFF', ink: '#1E5E8C', bg: soft, ring: 'none' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

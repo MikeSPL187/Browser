@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — новая вкладка</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; left: -160px; top: -200px; width: 660px; height: 600px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a45}}, rgba(243,238,247,0))"></div>
+<div style="position: absolute; right: -220px; bottom: 60px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(closest-side, rgba(94,78,183,0.16), rgba(243,238,247,0))"></div>
+<div style="position: relative; padding: 56px 20px 0; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<button style="height: 48px; border-radius: 24px; background: rgba(255,255,255,0.7); padding: 0 16px 0 5px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm)">
+<span style="width: 38px; height: 38px; border-radius: 19px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span>
+<span style="font-size: 17px; font-weight: 800">Работа</span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.chevD}}"></path></svg>
+</button>
+<svg viewBox="0 0 108 108" style="width: 40px; height: 40px" aria-hidden="true"><defs><linearGradient id="nl" x1="29.5" y1="30" x2="51.5" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#A78BFA"></stop><stop offset="1" stop-color="#6D4CFF"></stop></linearGradient><linearGradient id="nr" x1="77.5" y1="28" x2="51.5" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#22D3EE"></stop><stop offset="1" stop-color="#3B6BFF"></stop></linearGradient></defs><path d="M31,34 C35.5,52.5 42.5,67.5 51.5,78.5" fill="none" stroke="url(#nl)" stroke-width="13" stroke-linecap="round"></path><path d="M51.5,78.5 C58.5,62.5 66.5,44.5 77,30" fill="none" stroke="url(#nr)" stroke-width="13" stroke-linecap="round"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span class="t-over">Essentials</span><button class="t-sub" style="font-weight: 800; color: {{c.a}}">Изменить</button></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 10px">
+<sc-for list="{{ess}}" as="e" hint-placeholder-count="8">
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 68px; height: 68px; border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 36px; height: 36px; border-radius: 12px; background: {{e.tone}}; color: {{e.ink}}; font-size: 17px">{{e.l}}</span></span>
+<span style="font-size: 12px; font-weight: 700; color: var(--on-var)">{{e.name}}</span>
+</a>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="t-over">Продолжить</span>
+<a href="#" style="border-radius: 24px; background: rgba(255,255,255,0.78); box-shadow: var(--shadow-sm); padding: 12px; display: flex; align-items: center; gap: 14px">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #E6DEFF; flex-shrink: 0; display: flex; align-items: flex-end; padding: 6px"><span style="height: 6px; width: 70%; border-radius: 3px; background: #4A3A9E"></span></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">План запуска на октябрь</span><span class="t-sub">Закрыта 20 минут назад · docs.example.com</span></span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.undo}}"></path></svg>
+</a>
+</div>
+</div>
+<div class="glass" style="position: absolute; left: 12px; right: 12px; bottom: 24px; height: 64px; border-radius: 32px; display: flex; align-items: center; gap: 2px; padding: 0 8px">
+<button aria-label="Пространство «Работа»" style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span></button>
+<button style="flex-grow: 1; height: 48px; border-radius: 24px; display: flex; align-items: center; gap: 8px; padding: 0 8px; color: var(--muted); font-size: 16px; font-weight: 600"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>Поиск или адрес</button>
+<button class="ib" aria-label="Голосовой поиск"><svg class="i" viewBox="0 0 24 24"><path d="{{i.mic}}"></path></svg></button>
+<button class="ib" aria-label="Вкладки: 4"><span class="tc">4</span></button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+ess: [
+{ name: 'Почта', l: 'П', tone: '#DDE3FF', ink: '#2F4AA8' },
+{ name: 'Календарь', l: 'К', tone: '#D4F1EC', ink: '#00665A' },
+{ name: 'Задачи', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E' },
+{ name: 'Документы', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E' },
+{ name: 'Код', l: 'К', tone: '#E2E2E6', ink: '#303036' },
+{ name: 'Чат', l: 'Ч', tone: '#D8EEFF', ink: '#1E5E8C' },
+{ name: 'Дизайн', l: 'Д', tone: '#FFDDEA', ink: '#962F59' },
+{ name: 'Отчёты', l: 'О', tone: '#FFEBC2', ink: '#6E4F00' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

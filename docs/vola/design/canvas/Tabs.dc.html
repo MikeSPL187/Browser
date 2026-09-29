@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — обзор вкладок</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; left: -140px; top: -210px; width: 640px; height: 560px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a30}}, rgba(243,238,247,0))"></div>
+<div style="position: absolute; right: -200px; top: 180px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(closest-side, rgba(94,78,183,0.12), rgba(243,238,247,0))"></div>
+<div style="position: relative; padding: 50px 16px 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 6px">
+<div role="tablist" aria-label="Пространства" style="display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 28px; background: rgba(255,255,255,0.6)">
+<button role="tab" aria-selected="false" aria-label="Личное" style="width: 44px; height: 44px; border-radius: 22px; color: #5E4EB7; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.home}}"></path></svg></button>
+<button role="tab" aria-selected="true" style="height: 44px; border-radius: 16px; background: {{c.a}}; color: #FFFFFF; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; box-shadow: 0 6px 16px {{c.a30}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg>Работа</button>
+<button role="tab" aria-selected="false" aria-label="Аниме" style="width: 44px; height: 44px; border-radius: 22px; color: #A23F2B; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></button>
+<button aria-label="Новое пространство" style="width: 44px; height: 44px; border-radius: 22px; color: var(--muted); display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
+</div>
+<span style="flex-grow: 1"></span>
+<button class="ib" aria-label="Найти вкладку" style="background: rgba(255,255,255,0.6)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ess}}" as="e" hint-placeholder-count="5">
+<a href="#" aria-label="{{e.name}}" style="height: 60px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; position: relative">
+<span class="mono" style="width: 30px; height: 30px; border-radius: 10px; background: {{e.tone}}; color: {{e.ink}}; font-size: 14px">{{e.l}}</span>
+<span style="position: absolute; bottom: 6px; width: 4px; height: 4px; border-radius: 2px; background: {{e.dot}}"></span>
+</a>
+</sc-for>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 0">
+<span class="t-h2">Вкладки</span>
+<span class="t-sub" style="font-weight: 700">6 открыто</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="height: 196px; border-radius: 24px; background: var(--surface); box-shadow: {{t.ring}}; overflow: hidden; position: relative; padding: 10px; display: flex; flex-direction: column; gap: 7px">
+<div style="height: 14px; width: 46%; border-radius: 5px; background: {{t.brand}}"></div>
+<div style="height: 70px; border-radius: 12px; background: {{t.tone}}"></div>
+<div style="height: 7px; width: 92%; border-radius: 4px; background: #E6E1EB"></div>
+<div style="height: 7px; width: 78%; border-radius: 4px; background: #E6E1EB"></div>
+<div style="height: 7px; width: 85%; border-radius: 4px; background: #E6E1EB"></div>
+<div style="height: 7px; width: 40%; border-radius: 4px; background: #E6E1EB"></div>
+<button aria-label="Закрыть вкладку" style="position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.9); box-shadow: var(--shadow-sm); color: var(--on-var); display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+<span class="mono" style="width: 18px; height: 18px; border-radius: 6px; background: {{t.brand}}; color: #FFFFFF; font-size: 10px">{{t.l}}</span>
+<span style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 140px; background: linear-gradient(180deg, rgba(243,238,247,0) 0%, rgba(243,238,247,0.95) 55%)"></div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 26px; display: flex; align-items: center; gap: 10px">
+<div class="glass" style="flex-grow: 1; height: 64px; border-radius: 32px; display: flex; align-items: center; justify-content: space-around; padding: 0 6px">
+<button class="ib" aria-label="Приватные вкладки"><svg class="i" viewBox="0 0 24 24"><path d="{{i.incognito}}"></path></svg></button>
+<button class="ib" aria-label="Вид: сетка" style="background: {{c.a10}}; color: {{c.a}}"><svg class="i" viewBox="0 0 24 24"><path d="{{i.grid}}"></path></svg></button>
+<button class="ib" aria-label="Недавно закрытые"><svg class="i" viewBox="0 0 24 24"><path d="{{i.undo}}"></path></svg></button>
+<button class="ib" aria-label="Ещё"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+<button aria-label="Новая вкладка" style="width: 64px; height: 64px; border-radius: 22px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px {{c.a45}}"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const c = window.VA ? window.VA(accent) : { a: accent };
+return {
+i: window.VI || {},
+c: c,
+ess: [
+{ name: 'Почта', l: 'П', tone: '#DDE3FF', ink: '#2F4AA8', dot: accent },
+{ name: 'Календарь', l: 'К', tone: '#D4F1EC', ink: '#00665A', dot: 'transparent' },
+{ name: 'Задачи', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E', dot: accent },
+{ name: 'Документы', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E', dot: 'transparent' },
+{ name: 'Чат', l: 'Ч', tone: '#D8EEFF', ink: '#1E5E8C', dot: 'transparent' }
+],
+tabs: [
+{ title: 'План запуска на октябрь', l: 'Д', brand: '#4A3A9E', tone: '#E6DEFF', ring: '0 0 0 3px ' + accent + ', 0 8px 20px ' + c.a30 },
+{ title: 'Спринт 42 · доска задач', l: 'З', brand: '#9A3A1E', tone: '#FFE1D6', ring: 'var(--shadow-sm)' },
+{ title: 'Отчёт по метрикам', l: 'О', brand: '#00665A', tone: '#D4F1EC', ring: 'var(--shadow-sm)' },
+{ title: 'Макеты главного экрана', l: 'М', brand: '#962F59', tone: '#FFDDEA', ring: 'var(--shadow-sm)' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

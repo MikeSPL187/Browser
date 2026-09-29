@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — переключение пространств</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: linear-gradient(100deg, #DCEFEF 0%, #F3EEF7 50%, #F8E4DE 100%)">
+<div style="position: absolute; left: 50%; top: 56px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px">
+<span style="width: 8px; height: 8px; border-radius: 4px; background: #5E4EB7; opacity: 0.35"></span>
+<span style="width: 22px; height: 8px; border-radius: 4px; background: #006877; opacity: 0.8"></span>
+<span style="width: 18px; height: 8px; border-radius: 4px; background: #A23F2B; opacity: 0.7"></span>
+</div>
+<div style="position: absolute; top: 88px; left: -178px; width: 756px; display: flex; gap: 12px">
+<div style="width: 360px; display: flex; flex-direction: column; gap: 14px; opacity: 0.75; transform: scale(0.96)">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 40px; height: 40px; border-radius: 20px; background: #006877; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span><span class="t-h1">Работа</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px"><div style="height: 70px; border-radius: 12px; background: #E6DEFF"></div></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px"><div style="height: 70px; border-radius: 12px; background: #FFE1D6"></div></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px"><div style="height: 70px; border-radius: 12px; background: #D4F1EC"></div></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px"><div style="height: 70px; border-radius: 12px; background: #FFDDEA"></div></div>
+</div>
+</div>
+<div style="width: 360px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 40px; height: 40px; border-radius: 20px; background: #A23F2B; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></span><span class="t-h1">Аниме</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px; display: flex; flex-direction: column; gap: 7px"><div style="height: 14px; width: 40%; border-radius: 5px; background: #6B2C8C"></div><div style="height: 90px; border-radius: 12px; background: #3A2A5C"></div></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px; display: flex; flex-direction: column; gap: 7px"><div style="height: 14px; width: 40%; border-radius: 5px; background: #1E5E8C"></div><div style="height: 90px; border-radius: 12px; background: #16384A"></div></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: var(--shadow-sm); padding: 10px; display: flex; flex-direction: column; gap: 7px"><div style="height: 14px; width: 40%; border-radius: 5px; background: #9A3A1E"></div><div style="height: 90px; border-radius: 12px; background: #4A2A22"></div></div>
+</div>
+</div>
+</div>
+<div class="glass" style="position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); height: 48px; border-radius: 24px; padding: 0 18px 0 8px; display: flex; align-items: center; gap: 10px">
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #A23F2B; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></span>
+<span style="font-size: 15px; font-weight: 800">Аниме</span><span class="t-sub">3 вкладки</span>
+</div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 26px; display: flex; align-items: center; gap: 10px; opacity: 0.55">
+<div class="glass" style="flex-grow: 1; height: 64px; border-radius: 32px"></div>
+<div style="width: 64px; height: 64px; border-radius: 22px; background: #A23F2B"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { i: window.VI || {} };
+}
+}
+</script>
+</body>
+</html>

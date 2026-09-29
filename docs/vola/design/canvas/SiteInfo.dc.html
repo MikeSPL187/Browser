@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — сведения о сайте</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+<div class="sheet" style="height: 760px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="handle"></div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 6px 4px 0">
+<span class="mono" style="width: 52px; height: 52px; border-radius: 18px; background: #2F6B5F; color: #FFFFFF; font-size: 22px">С</span>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+<span class="t-title">north-guide.ru</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ok)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.lock}}"></path></svg>Соединение защищено</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<a href="#" style="border-radius: 22px; background: {{c.a10}}; padding: 14px; display: flex; flex-direction: column; gap: 6px; color: {{c.a}}">
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg>
+<span style="font-size: 26px; font-weight: 800; line-height: 1">14</span>
+<span style="font-size: 13px; font-weight: 700; color: var(--on-var)">трекеров заблокировано</span>
+</a>
+<div style="border-radius: 22px; background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 6px; color: var(--on-var)">
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.cookie}}"></path></svg>
+<span style="font-size: 26px; font-weight: 800; line-height: 1; color: var(--on)">1</span>
+<span style="font-size: 13px; font-weight: 700">cookie-баннер скрыт</span>
+</div>
+</div>
+<span class="t-over" style="padding: 4px 4px 0">Разрешения сайта</span>
+<div class="group">
+<sc-for list="{{perms}}" as="p" hint-placeholder-count="3">
+<div class="row" style="min-height: 56px">
+<svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{p.icon}}"></path></svg>
+<span style="flex-grow: 1; font-size: 15px; font-weight: 600">{{p.label}}</span>
+<span style="height: 32px; border-radius: 16px; padding: 0 12px; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 800; background: {{p.bg}}; color: {{p.fg}}">{{p.state}}<svg class="i xs" viewBox="0 0 24 24" style="width: 14px; height: 14px"><path d="{{i.chevD}}"></path></svg></span>
+</div>
+</sc-for>
+</div>
+<div class="group">
+<div class="row"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.shield}}"></path></svg><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Защита на этом сайте</span><span class="t-sub">Выключите, если сайт работает неправильно</span></div><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+<div class="row"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.block}}"></path></svg><span style="flex-grow: 1; font-size: 15px; font-weight: 700">Блокировать всплывающие окна</span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto">
+<button style="flex: 1; height: 52px; border-radius: 26px; background: var(--danger-cont); color: var(--danger); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 800"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.trash}}"></path></svg>Удалить данные сайта</button>
+<button style="height: 52px; border-radius: 26px; background: var(--surface); padding: 0 18px; font-size: 14px; font-weight: 800; color: var(--on-var)">Сертификат</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const i = window.VI || {};
+return {
+i: i,
+c: window.VA ? window.VA(accent) : { a: accent },
+perms: [
+{ icon: i.location, label: 'Геолокация', state: 'Разрешено', bg: 'var(--ok-cont)', fg: 'var(--ok)' },
+{ icon: i.camera, label: 'Камера', state: 'Спрашивать', bg: 'var(--s-high)', fg: 'var(--on-var)' },
+{ icon: i.bell, label: 'Уведомления', state: 'Запрещено', bg: 'var(--danger-cont)', fg: 'var(--danger)' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

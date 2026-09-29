@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — режим чтения</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: #F8F2E7">
+<div style="padding: 52px 28px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span style="font-size: 13px; font-weight: 700; color: #7A6A55">north-guide.ru · 12 мин</span>
+<button class="ib" aria-label="Выйти из режима чтения" style="width: 40px; height: 40px; background: rgba(122,106,85,0.12); color: #5C4E3C"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
+</div>
+<h1 style="font-family: Literata, Georgia, serif; font-size: 30px; line-height: 1.18; font-weight: 600; color: #2E2518">Байкал зимой: как выбрать маршрут по льду</h1>
+<p style="font-family: Literata, Georgia, serif; font-size: 19px; line-height: 1.7; color: #3B3024">Лёд на Байкале становится крепким к середине февраля. До этого лучше выбирать прогулки у берега и маршруты с проводником.</p>
+<p style="font-family: Literata, Georgia, serif; font-size: 19px; line-height: 1.7; color: #3B3024">Ниже — три маршрута разной длины: от короткой прогулки к гроту до двухдневного перехода вдоль берега.</p>
+</div>
+<div class="sheet" style="height: 372px; background: #FFFBF4; padding: 0 20px 28px; display: flex; flex-direction: column; gap: 18px">
+<div class="handle" style="background: #D8CCBA"></div>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span class="t-title" style="color: #2E2518">Вид для чтения</span>
+<button style="height: 40px; border-radius: 20px; background: {{c.a}}; color: #FFFFFF; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.play}}"></path></svg>Слушать</button>
+</div>
+<div role="radiogroup" aria-label="Фон" style="display: flex; gap: 10px">
+<button role="radio" aria-checked="false" style="flex: 1; height: 52px; border-radius: 18px; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E7DECF; font-size: 14px; font-weight: 700; color: #2E2518">Светлый</button>
+<button role="radio" aria-checked="true" style="flex: 1; height: 52px; border-radius: 18px; background: #F8F2E7; box-shadow: inset 0 0 0 2.5px {{c.a}}; font-size: 14px; font-weight: 800; color: #2E2518">Бумага</button>
+<button role="radio" aria-checked="false" style="flex: 1; height: 52px; border-radius: 18px; background: #2A2620; font-size: 14px; font-weight: 700; color: #EDE3D2">Тёмный</button>
+<button role="radio" aria-checked="false" style="flex: 1; height: 52px; border-radius: 18px; background: #000000; font-size: 14px; font-weight: 700; color: #D8D2C8">Чёрный</button>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="font-family: Literata, Georgia, serif; font-size: 15px; color: #5C4E3C">A</span>
+<div style="flex-grow: 1; height: 40px; display: flex; align-items: center; position: relative">
+<div style="width: 100%; height: 16px; border-radius: 8px; background: #EFE6D6"></div>
+<div style="position: absolute; left: 0; width: 58%; height: 16px; border-radius: 8px; background: {{c.a}}"></div>
+<div style="position: absolute; left: calc(58% - 2px); width: 4px; height: 40px; border-radius: 2px; background: {{c.a}}"></div>
+</div>
+<span style="font-family: Literata, Georgia, serif; font-size: 24px; color: #5C4E3C">A</span>
+</div>
+<div role="radiogroup" aria-label="Шрифт" style="display: flex; gap: 8px">
+<button role="radio" aria-checked="true" style="height: 44px; border-radius: 14px; background: {{c.a14}}; color: #2E2518; padding: 0 16px; font-family: Literata, Georgia, serif; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px"><svg class="i xs" viewBox="0 0 24 24" style="color: {{c.a}}"><path d="{{i.check}}"></path></svg>С засечками</button>
+<button role="radio" aria-checked="false" style="height: 44px; border-radius: 14px; box-shadow: inset 0 0 0 1px #E1D6C4; color: #2E2518; padding: 0 16px; font-size: 15px; font-weight: 700">Без засечек</button>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; color: #3B3024">
+<span style="font-size: 15px; font-weight: 700">Широкие поля</span>
+<span class="sw on" style="background: {{c.a}}"><span></span></span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

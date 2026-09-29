@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — избранное</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 4px">
+<button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button>
+<span style="flex-grow: 1"></span>
+<button class="ib" aria-label="Поиск"><svg class="i" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></button>
+<button class="ib" aria-label="Ещё"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+<h1 class="t-display" style="padding: 0 4px">Избранное</h1>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{folders}}" as="f" hint-placeholder-count="4">
+<a href="#" style="height: 112px; border-radius: 24px; background: var(--surface); padding: 14px; display: flex; flex-direction: column; justify-content: space-between">
+<span style="width: 44px; height: 44px; border-radius: 16px; background: {{f.bg}}; color: {{f.fg}}; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{f.icon}}"></path></svg></span>
+<span style="display: flex; flex-direction: column"><span class="t-label">{{f.name}}</span><span class="t-sub">{{f.count}}</span></span>
+</a>
+</sc-for>
+</div>
+<span class="t-over" style="padding: 6px 4px 0">Без папки</span>
+<div class="group">
+<sc-for list="{{marks}}" as="m" hint-placeholder-count="3">
+<a href="#" class="row" style="min-height: 64px">
+<span class="mono" style="width: 36px; height: 36px; border-radius: 12px; background: {{m.tone}}; color: {{m.ink}}; font-size: 15px">{{m.l}}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.title}}</span><span class="t-sub">{{m.host}}</span></span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.more}}"></path></svg>
+</a>
+</sc-for>
+</div>
+</div>
+<button aria-label="Новая папка" style="position: absolute; right: 16px; bottom: 28px; height: 60px; border-radius: 20px; background: {{c.a}}; color: #FFFFFF; padding: 0 22px 0 18px; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; box-shadow: 0 10px 24px {{c.a45}}"><svg class="i" viewBox="0 0 24 24"><path d="{{i.folder}}"></path></svg>Папка</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const i = window.VI || {};
+return {
+i: i,
+c: window.VA ? window.VA(accent) : { a: accent },
+folders: [
+{ name: 'Путешествия', count: '12 сайтов', icon: i.globe, bg: '#D4F1EC', fg: '#00665A' },
+{ name: 'Чтение', count: '8 статей', icon: i.book, bg: '#E6DEFF', fg: '#4A3A9E' },
+{ name: 'Работа', count: '15 сайтов', icon: i.work, bg: '#D8EEFF', fg: '#1E5E8C' },
+{ name: 'Идеи', count: '5 сайтов', icon: i.sparkle, bg: '#FFEBC2', fg: '#6E4F00' }
+],
+marks: [
+{ l: 'П', tone: '#D4F1EC', ink: '#00665A', title: 'Прогноз толщины льда', host: 'ice-forecast.example.ru' },
+{ l: 'С', tone: '#2F6B5F', ink: '#FFFFFF', title: 'Байкал зимой: как выбрать маршрут', host: 'north-guide.ru' },
+{ l: 'К', tone: '#FFDDEA', ink: '#962F59', title: 'Каталог шрифтов с кириллицей', host: 'fonts.example.org' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

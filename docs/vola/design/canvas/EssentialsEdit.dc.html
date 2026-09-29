@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — редактирование Essentials</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; left: -160px; top: -200px; width: 660px; height: 600px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a30}}, rgba(243,238,247,0))"></div>
+<div style="position: relative; padding: 56px 20px 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 2px"><span class="t-h1">Essentials</span><span class="t-sub">Перетащите, чтобы изменить порядок</span></div>
+<button style="height: 44px; border-radius: 22px; background: {{c.a}}; color: #FFFFFF; padding: 0 20px; font-size: 15px; font-weight: 800">Готово</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 10px">
+<sc-for list="{{ess}}" as="e" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; transform: rotate({{e.tilt}})">
+<span style="width: 68px; height: 68px; border-radius: 24px; background: var(--surface); box-shadow: {{e.shadow}}; display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 36px; height: 36px; border-radius: 12px; background: {{e.tone}}; color: {{e.ink}}; font-size: 17px">{{e.l}}</span></span>
+<button aria-label="Убрать {{e.name}}" style="position: absolute; top: -6px; left: 4px; width: 24px; height: 24px; border-radius: 12px; background: var(--on-var); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3"><path d="M6 12h12"></path></svg></button>
+<span style="font-size: 12px; font-weight: 700; color: var(--on-var)">{{e.name}}</span>
+</div>
+</sc-for>
+<button style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 68px; height: 68px; border-radius: 24px; box-shadow: inset 0 0 0 2px {{c.a45}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center; background: {{c.a06}}"><svg class="i" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></span>
+<span style="font-size: 12px; font-weight: 800; color: {{c.a}}">Добавить</span>
+</button>
+</div>
+<div class="group" style="margin-top: 8px">
+<div class="row"><span class="lead" style="background: {{c.a10}}; color: {{c.a}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.stack}}"></path></svg></span><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Общие для всех пространств</span><span class="t-sub">Иначе у каждого пространства свои</span></div><span class="sw"><span></span></span></div>
+<div class="row"><span class="lead" style="background: {{c.a10}}; color: {{c.a}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.tabs}}"></path></svg></span><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Показывать в обзоре вкладок</span><span class="t-sub">Ряд значков над вкладками</span></div><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+</div>
+</div>
+<div class="sheet" style="height: 250px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 12px">
+<div class="handle"></div>
+<span class="t-title" style="padding: 4px 4px 0">Добавить из открытых вкладок</span>
+<sc-for list="{{open}}" as="o" hint-placeholder-count="2">
+<div style="height: 60px; border-radius: 20px; background: var(--surface); display: flex; align-items: center; gap: 12px; padding: 0 8px 0 12px">
+<span class="mono" style="width: 36px; height: 36px; border-radius: 12px; background: {{o.tone}}; color: {{o.ink}}; font-size: 15px">{{o.l}}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column"><span class="t-label">{{o.title}}</span><span class="t-sub">{{o.host}}</span></span>
+<button class="ib" aria-label="Добавить в Essentials" style="background: {{c.a10}}; color: {{c.a}}"><svg class="i" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const base = 'var(--shadow-sm)';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+ess: [
+{ name: 'Почта', l: 'П', tone: '#DDE3FF', ink: '#2F4AA8', tilt: '-1.5deg', shadow: base },
+{ name: 'Календарь', l: 'К', tone: '#D4F1EC', ink: '#00665A', tilt: '1.5deg', shadow: base },
+{ name: 'Задачи', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E', tilt: '-1deg', shadow: '0 14px 28px rgba(38,22,86,0.22)' },
+{ name: 'Документы', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E', tilt: '1deg', shadow: base },
+{ name: 'Код', l: 'К', tone: '#E2E2E6', ink: '#303036', tilt: '-1.5deg', shadow: base },
+{ name: 'Чат', l: 'Ч', tone: '#D8EEFF', ink: '#1E5E8C', tilt: '1.5deg', shadow: base },
+{ name: 'Дизайн', l: 'Д', tone: '#FFDDEA', ink: '#962F59', tilt: '-1deg', shadow: base }
+],
+open: [
+{ title: 'Отчёт по метрикам', host: 'metrics.example.com', l: 'О', tone: '#FFEBC2', ink: '#6E4F00' },
+{ title: 'Спринт 42 · доска задач', host: 'tasks.example.com', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

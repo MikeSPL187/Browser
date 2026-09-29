@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — настройки</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center"><button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button></div>
+<h1 class="t-display" style="padding: 0 4px">Настройки</h1>
+<label style="height: 52px; border-radius: 26px; background: var(--s-high); display: flex; align-items: center; gap: 12px; padding: 0 18px; color: var(--muted)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg><span style="position: absolute; left: -9999px">Поиск настроек</span><input type="text" placeholder="Поиск настроек" style="flex-grow: 1; border: none; outline: none; background: transparent; font-size: 16px; font-weight: 600"></label>
+<div style="border-radius: 26px; background: {{c.a}}; color: #FFFFFF; padding: 16px; display: flex; align-items: center; gap: 14px">
+<svg viewBox="0 0 108 108" style="width: 44px; height: 44px; flex-shrink: 0" aria-hidden="true"><path d="M31,34 C35.5,52.5 42.5,67.5 51.5,78.5" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"></path><path d="M51.5,78.5 C58.5,62.5 66.5,44.5 77,30" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="13" stroke-linecap="round"></path></svg>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">Сделать Vola основным</span><span style="font-size: 13px; opacity: 0.85">Ссылки из других приложений откроются здесь</span></span>
+<button style="height: 40px; border-radius: 20px; background: #FFFFFF; color: {{c.a}}; padding: 0 14px; font-size: 14px; font-weight: 800">Да</button>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div class="group">
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="4">
+<a href="#" class="row" style="min-height: 64px">
+<span class="lead" style="background: {{r.bg}}; color: {{r.fg}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{r.icon}}"></path></svg></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">{{r.title}}</span><span class="t-sub">{{r.sub}}</span></span>
+</a>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+const i = window.VI || {};
+const r = (icon, title, sub, bg, fg) => ({ icon: icon, title: title, sub: sub, bg: bg, fg: fg });
+return {
+i: i,
+c: window.VA ? window.VA(accent) : { a: accent },
+groups: [
+{ rows: [
+r(i.palette, 'Внешний вид', 'Тема, цвета, скругления', '#E6DEFF', '#4A3A9E'),
+r(i.stack, 'Пространства', '3 пространства, Essentials', '#D4F1EC', '#00665A'),
+r(i.gesture, 'Вкладки и жесты', 'Свайпы, обзор, автозакрытие', '#D8EEFF', '#1E5E8C'),
+r(i.search, 'Поиск', 'DuckDuckGo, подсказки', '#FFEBC2', '#6E4F00')
+] },
+{ rows: [
+r(i.shieldCheck, 'Приватность и защита', 'Строгая · только HTTPS', '#D3F0D9', '#2B6C3F'),
+r(i.puzzle, 'Расширения', 'uBlock Origin и ещё 2', '#FFE1D6', '#9A3A1E'),
+r(i.sync, 'Синхронизация', 'Свой сервер, шифрование', '#DDE3FF', '#2F4AA8'),
+r(i.download, 'Загрузки', 'Папка, запрос перед загрузкой', '#FFDDEA', '#962F59')
+] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

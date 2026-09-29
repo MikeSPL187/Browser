@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — токены</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1440px; height: 1000px; background: var(--bg); padding: 56px 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 40px; align-content: start">
+<header style="grid-column: span 12; display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="t-over">Vola Design · основа</span><h1 style="font-size: 48px; font-weight: 800; letter-spacing: -0.03em">Токены</h1></div>
+<span class="t-sub" style="font-size: 15px; max-width: 480px; text-align: right">Все значения живут в ui/theme. Material 3 — основа, Zen — характер: мягкие градиенты пространств, стекло панелей, крупные скругления.</span>
+</header>
+<section style="grid-column: span 7; display: flex; flex-direction: column; gap: 16px">
+<span class="t-title">Цвет · роли</span>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="14">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="height: 64px; border-radius: 16px; background: {{r.hex}}; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); display: block"></span>
+<span style="font-size: 12px; font-weight: 800">{{r.name}}</span>
+<span style="font-size: 11px; font-weight: 600; color: var(--muted)">{{r.hex}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="grid-column: span 5; display: flex; flex-direction: column; gap: 16px">
+<span class="t-title">Цвета пространств · светлая / тёмная</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{accents}}" as="a" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="height: 56px; border-radius: 16px; overflow: hidden; display: flex"><span style="flex: 1; background: {{a.l}}; display: block"></span><span style="flex: 1; background: {{a.d}}; display: block"></span></span>
+<span style="font-size: 12px; font-weight: 800">{{a.name}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="grid-column: span 7; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Шрифт · Manrope (интерфейс), Literata (чтение)</span>
+<div style="border-radius: 24px; background: var(--surface); padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{type}}" as="t" hint-placeholder-count="7">
+<div style="display: flex; align-items: baseline; gap: 20px"><span style="width: 130px; flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--muted)">{{t.spec}}</span><span style="font-size: {{t.size}}; font-weight: {{t.w}}; letter-spacing: {{t.ls}}; font-family: {{t.font}}; line-height: 1.2">{{t.sample}}</span></div>
+</sc-for>
+</div>
+</section>
+<section style="grid-column: span 5; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Форма · скругления</span>
+<div style="display: flex; gap: 12px; align-items: flex-end">
+<sc-for list="{{radii}}" as="r" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 52px; height: 52px; border-radius: {{r.v}}; background: var(--p-cont); box-shadow: inset 0 0 0 2px #5E4EB7; display: block"></span><span style="font-size: 11px; font-weight: 800">{{r.v}}</span><span style="font-size: 10px; font-weight: 600; color: var(--muted)">{{r.use}}</span></div>
+</sc-for>
+</div>
+<span class="t-title" style="padding-top: 8px">Глубина · стекло</span>
+<div style="height: 140px; border-radius: 24px; background: linear-gradient(120deg, #9EDDE6, #C9BFFF 55%, #FFB4A5); display: flex; align-items: center; justify-content: space-around; padding: 0 16px">
+<span style="width: 110px; height: 64px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800">Уровень 1</span>
+<span style="width: 110px; height: 64px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800">Уровень 3</span>
+<span class="glass" style="width: 110px; height: 64px; border-radius: 32px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800">Стекло · 24 px</span>
+</div>
+</section>
+<section style="grid-column: span 12; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Движение · пружины Material 3 Expressive</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{motion}}" as="m" hint-placeholder-count="4">
+<div style="border-radius: 24px; background: var(--surface); padding: 18px; display: flex; flex-direction: column; gap: 8px">
+<svg viewBox="0 0 200 60" style="width: 100%; height: 60px"><path d="{{m.curve}}" fill="none" stroke="#5E4EB7" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="t-label">{{m.name}}</span>
+<span class="t-sub">{{m.spec}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+roles: [
+{ name: 'Фон', hex: '#F3EEF7' }, { name: 'Поверхность', hex: '#FFFFFF' }, { name: 'Контейнер', hex: '#ECE6F1' }, { name: 'Текст', hex: '#1C1B20' },
+{ name: 'Текст 2', hex: '#48454F' }, { name: 'Основной', hex: '#5E4EB7' }, { name: 'Осн. контейнер', hex: '#E6DEFF' },
+{ name: 'Тёмн. фон', hex: '#131117' }, { name: 'Тёмн. поверх.', hex: '#1B1920' }, { name: 'Тёмн. контейнер', hex: '#2C2A31' }, { name: 'Тёмн. текст', hex: '#E7E1EA' },
+{ name: 'OLED', hex: '#000000' }, { name: 'Тёмн. основной', hex: '#C9BFFF' }, { name: 'Ошибка', hex: '#B3261E' }
+],
+accents: [
+{ name: 'Фиолетовый', l: '#5E4EB7', d: '#C9BFFF' }, { name: 'Синий', l: '#2F5BD3', d: '#B3C5FF' },
+{ name: 'Бирюзовый', l: '#006877', d: '#75D4E7' }, { name: 'Зелёный', l: '#2B6C3F', d: '#93D6A0' },
+{ name: 'Янтарный', l: '#7C5800', d: '#F7BD48' }, { name: 'Коралловый', l: '#A23F2B', d: '#FFB4A5' },
+{ name: 'Розовый', l: '#A0305B', d: '#FFB0C8' }, { name: 'Графитовый', l: '#55595F', d: '#C3C7CE' }
+],
+type: [
+{ spec: 'Display · 34/800', size: '34px', w: 800, ls: '-0.025em', font: 'Manrope, sans-serif', sample: 'Пространства' },
+{ spec: 'Headline · 28/800', size: '28px', w: 800, ls: '-0.02em', font: 'Manrope, sans-serif', sample: 'Обзор вкладок' },
+{ spec: 'Title · 22/800', size: '22px', w: 800, ls: '-0.01em', font: 'Manrope, sans-serif', sample: 'Настройки пространства' },
+{ spec: 'Subtitle · 17/700', size: '17px', w: 700, ls: '0', font: 'Manrope, sans-serif', sample: 'north-guide.ru' },
+{ spec: 'Body · 15/500', size: '15px', w: 500, ls: '0', font: 'Manrope, sans-serif', sample: 'Свои cookie, входы и данные сайтов' },
+{ spec: 'Overline · 12/800', size: '12px', w: 800, ls: '0.07em', font: 'Manrope, sans-serif', sample: 'ESSENTIALS' },
+{ spec: 'Чтение · Literata 17', size: '17px', w: 400, ls: '0', font: 'Literata, Georgia, serif', sample: 'Лёд на Байкале становится крепким к середине февраля.' }
+],
+radii: [
+{ v: '8px', use: 'метки' }, { v: '12px', use: 'чипы' }, { v: '16px', use: 'плитки' }, { v: '20px', use: 'списки' },
+{ v: '24px', use: 'карточки' }, { v: '32px', use: 'листы' }, { v: '50%', use: 'панель' }
+],
+motion: [
+{ name: 'Быстрая пространственная', spec: 'Кнопки, переключатели, выбор · жёсткость 1400, затухание 0.9', curve: 'M4 56 C 40 56, 50 4, 90 6 S 150 4, 196 4' },
+{ name: 'Обычная пространственная', spec: 'Адресная панель, листы, карточки вкладок · 700, 0.9', curve: 'M4 56 C 60 56, 70 -2, 110 4 S 160 4, 196 4' },
+{ name: 'Медленная пространственная', spec: 'Смена пространства, Split View, Glance · 300, 0.9', curve: 'M4 56 C 80 56, 90 -6, 130 2 S 170 4, 196 4' },
+{ name: 'Эффекты', spec: 'Цвет, прозрачность, размытие · без отскока, 200–350 мс', curve: 'M4 56 C 70 56, 110 4, 196 4' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

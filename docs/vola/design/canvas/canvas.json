@@ -1,0 +1,108 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-09-29T16:50:00Z"},
+  "title": "Vola — новый дизайн",
+  "launch": {"view": "canvas", "page": "browse"},
+  "pages": [
+    {"id": "base", "name": "Основа"},
+    {"id": "browse", "name": "Браузинг"},
+    {"id": "tabs", "name": "Вкладки и пространства"},
+    {"id": "newtab", "name": "Новая вкладка"},
+    {"id": "menu", "name": "Меню и сайт"},
+    {"id": "library", "name": "Библиотека"},
+    {"id": "settings", "name": "Настройки"},
+    {"id": "zen", "name": "Фичи Zen"},
+    {"id": "system", "name": "Системные экраны"},
+    {"id": "dark", "name": "Тёмная и OLED"},
+    {"id": "tablet", "name": "Планшет"}
+  ],
+  "boards": {
+    "Tokens.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1000, "title": "Токены", "page": "base", "radius": 24},
+    "Components.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1240, "title": "Компоненты", "page": "base", "radius": 24},
+
+    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Страница", "page": "browse", "radius": 40},
+    "Scrolled.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Прокрутка: панель сворачивается", "page": "browse", "radius": 40},
+    "Editing.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Ввод адреса и подсказки", "page": "browse", "radius": 40},
+    "Find.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Поиск на странице", "page": "browse", "radius": 40},
+    "Reader.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Режим чтения", "page": "browse", "radius": 40},
+
+    "Tabs.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Обзор вкладок", "page": "tabs", "radius": 40},
+    "TabActions.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Действия с вкладкой", "page": "tabs", "radius": 40},
+    "WorkspaceSwipe.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Переключение пространств свайпом", "page": "tabs", "radius": 40},
+    "WorkspaceSheet.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Новое пространство", "page": "tabs", "radius": 40, "is_interactive": true},
+    "WorkspaceSettings.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Настройки пространства", "page": "tabs", "radius": 40},
+
+    "NewTab.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Новая вкладка", "page": "newtab", "radius": 40},
+    "EssentialsEdit.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Редактирование Essentials", "page": "newtab", "radius": 40},
+    "PrivateTab.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Приватная вкладка", "page": "newtab", "radius": 40},
+
+    "Menu.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Главное меню", "page": "menu", "radius": 40},
+    "SiteInfo.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Сведения о сайте", "page": "menu", "radius": 40},
+    "PrivacyXRay.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Privacy X-Ray", "page": "menu", "radius": 40},
+    "Permission.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Запрос разрешения", "page": "menu", "radius": 40},
+    "LinkPeek.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Долгое нажатие на ссылку", "page": "menu", "radius": 40},
+
+    "History.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "История", "page": "library", "radius": 40},
+    "Favorites.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Избранное", "page": "library", "radius": 40},
+    "Downloads.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Загрузки", "page": "library", "radius": 40},
+    "Snoozed.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Отложенные вкладки", "page": "library", "radius": 40},
+
+    "Settings.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Настройки", "page": "settings", "radius": 40},
+    "SetAppearance.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Внешний вид", "page": "settings", "radius": 40},
+    "SetPrivacy.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Приватность и защита", "page": "settings", "radius": 40},
+    "SetSearch.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Поиск", "page": "settings", "radius": 40},
+    "SetTabs.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Вкладки и жесты", "page": "settings", "radius": 40},
+    "SetExtensions.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "Расширения", "page": "settings", "radius": 40},
+    "SetSync.dc.html": {"x": 2820, "y": 0, "w": 390, "h": 844, "title": "Синхронизация", "page": "settings", "radius": 40},
+
+    "Compact.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Компактный режим", "page": "zen", "radius": 40},
+    "Split.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Split View", "page": "zen", "radius": 40},
+    "Glance.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Glance", "page": "zen", "radius": 40},
+    "Themes.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Темы", "page": "zen", "radius": 40, "is_interactive": true},
+
+    "Splash.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Заставка", "page": "system", "radius": 40},
+    "Welcome.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Приветствие", "page": "system", "radius": 40},
+    "Setup.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Первая настройка", "page": "system", "radius": 40},
+    "Offline.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Нет сети", "page": "system", "radius": 40},
+    "HttpsOnly.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Только HTTPS", "page": "system", "radius": 40},
+    "Locked.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "Пространство заблокировано", "page": "system", "radius": 40},
+
+    "PageDark.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Страница · тёмная", "page": "dark", "radius": 40},
+    "TabsOled.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Вкладки · OLED", "page": "dark", "radius": 40},
+    "MenuDark.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Меню · тёмная", "page": "dark", "radius": 40},
+
+    "Tablet.dc.html": {"x": 0, "y": 0, "w": 1280, "h": 800, "title": "Планшет", "page": "tablet", "radius": 28},
+    "TabletSplit.dc.html": {"x": 1360, "y": 0, "w": 1280, "h": 800, "title": "Планшет · Split View", "page": "tablet", "radius": 28},
+    "TabletSettings.dc.html": {"x": 2720, "y": 0, "w": 1280, "h": 800, "title": "Планшет · настройки", "page": "tablet", "radius": 28}
+  },
+  "order": [
+    "Tokens.dc.html", "Components.dc.html",
+    "Main.dc.html", "Scrolled.dc.html", "Editing.dc.html", "Find.dc.html", "Reader.dc.html",
+    "Tabs.dc.html", "TabActions.dc.html", "WorkspaceSwipe.dc.html", "WorkspaceSheet.dc.html", "WorkspaceSettings.dc.html",
+    "NewTab.dc.html", "EssentialsEdit.dc.html", "PrivateTab.dc.html",
+    "Menu.dc.html", "SiteInfo.dc.html", "PrivacyXRay.dc.html", "Permission.dc.html", "LinkPeek.dc.html",
+    "History.dc.html", "Favorites.dc.html", "Downloads.dc.html", "Snoozed.dc.html",
+    "Settings.dc.html", "SetAppearance.dc.html", "SetPrivacy.dc.html", "SetSearch.dc.html", "SetTabs.dc.html", "SetExtensions.dc.html", "SetSync.dc.html",
+    "Compact.dc.html", "Split.dc.html", "Glance.dc.html", "Themes.dc.html",
+    "Splash.dc.html", "Welcome.dc.html", "Setup.dc.html", "Offline.dc.html", "HttpsOnly.dc.html", "Locked.dc.html",
+    "PageDark.dc.html", "TabsOled.dc.html", "MenuDark.dc.html",
+    "Tablet.dc.html", "TabletSplit.dc.html", "TabletSettings.dc.html"
+  ],
+  "notes": {
+    "t_base": {"x": 0, "y": -300, "text": "Основа: токены и компоненты", "kind": "title1", "maxW": 2960, "page": "base"},
+    "t_browse": {"x": 0, "y": -300, "text": "Браузинг", "kind": "title1", "maxW": 2270, "page": "browse"},
+    "n_browse": {"x": 2350, "y": 0, "w": 360, "maxH": 520, "fill": "purple", "page": "browse", "text": "Адресная панель — плавающий остров над страницей.\n\n• Свайп по панели влево/вправо — соседняя вкладка.\n• Свайп вверх по панели — обзор вкладок.\n• Прокрутка вниз — панель сжимается в капсулу с адресом, вверх — возвращается.\n• Тап по адресу — ввод, тап по значку замка — сведения о сайте.\n• Кружок слева — пространство: тап открывает список, долгое нажатие — настройки."},
+    "t_tabs": {"x": 0, "y": -300, "text": "Вкладки и пространства", "kind": "title1", "maxW": 2270, "page": "tabs"},
+    "n_tabs": {"x": 2350, "y": 0, "w": 360, "maxH": 480, "fill": "purple", "page": "tabs", "text": "У каждого пространства свои вкладки, Essentials, цвет и значок.\n\n• Свайп по обзору вкладок влево/вправо переключает пространство: фон плавно перетекает из одного цвета в другой, лёгкая тактильная отдача на смене.\n• Долгое нажатие на вкладку — действия.\n• Долгое нажатие на пространство — его настройки."},
+    "t_newtab": {"x": 0, "y": -300, "text": "Новая вкладка и Essentials", "kind": "title1", "maxW": 1330, "page": "newtab"},
+    "n_newtab": {"x": 1410, "y": 0, "w": 360, "maxH": 360, "fill": "purple", "page": "newtab", "text": "Essentials — закреплённые сайты пространства (до 12). Они не закрываются вместе с вкладками и видны в обзоре вкладок.\n\nДолгое нажатие на плитку — режим правки: перетаскивание, удаление, «Добавить сайт»."},
+    "t_menu": {"x": 0, "y": -300, "text": "Меню и сведения о сайте", "kind": "title1", "maxW": 2270, "page": "menu"},
+    "t_library": {"x": 0, "y": -300, "text": "Библиотека", "kind": "title1", "maxW": 1800, "page": "library"},
+    "t_settings": {"x": 0, "y": -300, "text": "Настройки", "kind": "title1", "maxW": 3210, "page": "settings"},
+    "t_zen": {"x": 0, "y": -300, "text": "Фичи в духе Zen", "kind": "title1", "maxW": 1800, "page": "zen"},
+    "t_system": {"x": 0, "y": -300, "text": "Первый запуск и системные экраны", "kind": "title1", "maxW": 2740, "page": "system"},
+    "t_dark": {"x": 0, "y": -300, "text": "Тёмная тема и чистый чёрный OLED", "kind": "title1", "maxW": 1330, "page": "dark"},
+    "t_tablet": {"x": 0, "y": -300, "text": "Планшет: боковая панель как в Zen", "kind": "title1", "maxW": 4000, "page": "tablet"}
+  },
+  "designSystems": []
+}

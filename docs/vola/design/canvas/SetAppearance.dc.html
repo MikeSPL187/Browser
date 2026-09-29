@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — внешний вид</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 4px"><button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button><span class="t-title">Внешний вид</span></div>
+<div style="height: 176px; border-radius: 28px; background: linear-gradient(135deg, {{c.a30}}, rgba(94,78,183,0.18)); padding: 14px; display: flex; gap: 12px; justify-content: center">
+<div style="width: 104px; border-radius: 22px; background: #FFFFFF; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px">
+<div style="height: 8px; width: 80%; border-radius: 4px; background: #D8D2DE"></div><div style="height: 40px; border-radius: 8px; background: #DCE9EF"></div><div style="height: 6px; width: 90%; border-radius: 3px; background: #E6E1EB"></div><div style="height: 6px; width: 70%; border-radius: 3px; background: #E6E1EB"></div>
+<div style="position: absolute; left: 6px; right: 6px; bottom: 8px; height: 22px; border-radius: 11px; background: rgba(250,246,253,0.9); box-shadow: 0 4px 10px rgba(38,22,86,0.14); display: flex; align-items: center; padding: 0 4px; gap: 4px"><span style="width: 14px; height: 14px; border-radius: 7px; background: {{c.a}}"></span><span style="height: 5px; width: 40px; border-radius: 3px; background: #CAC4D0"></span></div>
+</div>
+<div style="width: 104px; border-radius: 22px; background: #1B1920; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; outline: 3px solid {{c.a}}; outline-offset: 2px">
+<div style="height: 8px; width: 80%; border-radius: 4px; background: #3A3740"></div><div style="height: 40px; border-radius: 8px; background: #2C3A40"></div><div style="height: 6px; width: 90%; border-radius: 3px; background: #2C2A31"></div><div style="height: 6px; width: 70%; border-radius: 3px; background: #2C2A31"></div>
+<div style="position: absolute; left: 6px; right: 6px; bottom: 8px; height: 22px; border-radius: 11px; background: rgba(44,42,49,0.95); display: flex; align-items: center; padding: 0 4px; gap: 4px"><span style="width: 14px; height: 14px; border-radius: 7px; background: #75D4E7"></span><span style="height: 5px; width: 40px; border-radius: 3px; background: #49454F"></span></div>
+</div>
+</div>
+<div role="radiogroup" aria-label="Тема" style="display: flex; gap: 4px">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{m.on}}" style="flex: 1; height: 52px; border-radius: {{m.radius}}; background: {{m.bg}}; color: {{m.fg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 800"><svg class="i s" viewBox="0 0 24 24"><path d="{{m.icon}}"></path></svg>{{m.label}}</button>
+</sc-for>
+</div>
+<div class="group">
+<div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Чистый чёрный (OLED)</span><span class="t-sub">Экономит заряд на OLED-экранах</span></div><span class="sw"><span></span></span></div>
+<div class="row" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px">
+<span class="t-label" style="font-size: 15px">Палитра</span>
+<div style="display: flex; gap: 10px">
+<sc-for list="{{palettes}}" as="p" hint-placeholder-count="5">
+<span style="width: 52px; height: 52px; border-radius: 18px; background: conic-gradient({{p.a}} 0 50%, {{p.b}} 50% 75%, {{p.c}} 75% 100%); box-shadow: {{p.ring}}; display: block"></span>
+</sc-for>
+</div>
+<span class="t-sub">Vola · Material You — цвета обоев · Моно</span>
+</div>
+<div class="row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px">
+<div style="display: flex; justify-content: space-between"><span class="t-label" style="font-size: 15px">Скругления</span><span class="t-sub" style="font-weight: 800">Мягкие</span></div>
+<div style="height: 32px; position: relative; display: flex; align-items: center"><div style="width: 100%; height: 16px; border-radius: 8px; background: var(--s-high)"></div><div style="position: absolute; left: 0; width: 66%; height: 16px; border-radius: 8px; background: {{c.a}}"></div><div style="position: absolute; left: calc(66% + 4px); width: 4px; height: 32px; border-radius: 2px; background: {{c.a}}"></div></div>
+</div>
+<div class="row"><span style="flex-grow: 1" class="t-label">Плотность</span><span style="display: flex; gap: 4px"><span style="height: 32px; border-radius: 16px; padding: 0 12px; background: var(--s-high); font-size: 13px; font-weight: 700; display: flex; align-items: center">Плотно</span><span style="height: 32px; border-radius: 16px; padding: 0 12px; background: {{c.a}}; color: #FFFFFF; font-size: 13px; font-weight: 800; display: flex; align-items: center">Обычно</span></span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+const c = window.VA ? window.VA(accent) : { a: accent };
+const i = window.VI || {};
+const off = { bg: 'var(--surface)', fg: 'var(--on-var)', on: 'false' };
+return {
+i: i,
+c: c,
+modes: [
+Object.assign({ label: 'Светлая', icon: i.sun, radius: '26px 10px 10px 26px' }, off),
+{ label: 'Тёмная', icon: i.moon, radius: '10px', bg: accent, fg: '#FFFFFF', on: 'true' },
+Object.assign({ label: 'Авто', icon: i.auto, radius: '10px 26px 26px 10px' }, off)
+],
+palettes: [
+{ a: '#5E4EB7', b: '#006877', c: '#E6DEFF', ring: '0 0 0 3px var(--s-low), 0 0 0 5.5px ' + accent },
+{ a: '#3F6837', b: '#55624C', c: '#C0EFB0', ring: 'none' },
+{ a: '#8E4957', b: '#77565B', c: '#FFD9DE', ring: 'none' },
+{ a: '#2F5BD3', b: '#575E71', c: '#DBE1FF', ring: 'none' },
+{ a: '#303036', b: '#5E5E62', c: '#E2E2E6', ring: 'none' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

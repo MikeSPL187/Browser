@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — запрос разрешения</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: #E8EEE6">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(35deg, transparent 46%, #FFFFFF 46% 49%, transparent 49%), linear-gradient(120deg, transparent 58%, #FFFFFF 58% 60%, transparent 60%), linear-gradient(80deg, transparent 20%, #D4E4F0 20% 30%, transparent 30%)"></div>
+<div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+<div class="sheet" style="height: 470px; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div class="handle"></div>
+<div style="width: 60px; height: 60px; border-radius: 22px; background: {{c.a14}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center; margin-top: 8px"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.location}}"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 class="t-h2">Показать сайту, где вы?</h2>
+<p class="t-body" style="color: var(--on-var)"><b>maps.example.com</b> просит доступ к вашему местоположению.</p>
+</div>
+<div class="group">
+<div class="row" style="min-height: 56px"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Точное местоположение</span><span class="t-sub">Иначе — только примерный район</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+<button style="height: 52px; border-radius: 26px; background: {{c.a}}; color: #FFFFFF; font-size: 15px; font-weight: 800; text-align: center">Разрешить на этом сайте</button>
+<div style="display: flex; gap: 8px">
+<button style="flex: 1; height: 52px; border-radius: 26px; background: {{c.a14}}; color: {{c.a}}; font-size: 15px; font-weight: 800; text-align: center">Только сейчас</button>
+<button style="flex: 1; height: 52px; border-radius: 26px; box-shadow: inset 0 0 0 1px var(--outline-var); font-size: 15px; font-weight: 800; text-align: center">Запретить</button>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — планшет</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1280px; height: 800px; background: var(--frame); display: flex; gap: 10px; padding: 12px">
+<div style="position: absolute; left: -260px; top: -300px; width: 900px; height: 800px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a45}}, rgba(236,230,241,0))"></div>
+<div style="position: absolute; left: 80px; bottom: -380px; width: 760px; height: 660px; border-radius: 50%; background: radial-gradient(closest-side, rgba(94,78,183,0.16), rgba(236,230,241,0))"></div>
+<nav aria-label="Боковая панель" style="position: relative; width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding: 2px 4px 0">
+<div style="display: flex; align-items: center">
+<button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button>
+<button class="ib" aria-label="Вперёд" style="color: var(--outline-var)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.forward}}"></path></svg></button>
+<button class="ib" aria-label="Обновить"><svg class="i" viewBox="0 0 24 24"><path d="{{i.reload}}"></path></svg></button>
+<span style="flex-grow: 1"></span>
+<button class="ib" aria-label="Скрыть боковую панель"><svg class="i" viewBox="0 0 24 24"><path d="{{i.sidebar}}"></path></svg></button>
+</div>
+<button style="height: 48px; border-radius: 16px; background: rgba(255,255,255,0.72); display: flex; align-items: center; gap: 8px; padding: 0 14px; box-shadow: var(--shadow-sm)"><svg class="i xs" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.lock}}"></path></svg><span style="font-size: 14px; font-weight: 700">docs.example.com/launch</span></button>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{ess}}" as="e" hint-placeholder-count="6">
+<a href="#" aria-label="{{e.name}}" style="height: 56px; border-radius: 16px; background: {{e.bg}}; box-shadow: {{e.ring}}; display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 28px; height: 28px; border-radius: 9px; background: {{e.tone}}; color: {{e.ink}}; font-size: 13px">{{e.l}}</span></a>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 2px"><span style="width: 28px; height: 28px; border-radius: 14px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></span><span style="font-size: 15px; font-weight: 800; flex-grow: 1">Работа</span><span class="t-sub" style="font-weight: 700">4</span></div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<a href="#" style="height: 44px; border-radius: 14px; background: {{t.bg}}; box-shadow: {{t.shadow}}; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 12px">
+<span class="mono" style="width: 20px; height: 20px; border-radius: 6px; background: {{t.tone}}; color: {{t.ink}}; font-size: 10px">{{t.l}}</span>
+<span style="flex-grow: 1; min-width: 0; font-size: 14px; font-weight: {{t.w}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+</a>
+</sc-for>
+<button style="height: 44px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; color: var(--muted); font-size: 14px; font-weight: 700"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg>Новая вкладка</button>
+</div>
+<div style="margin-top: auto; padding: 0 0 6px; display: flex; align-items: center; gap: 2px">
+<button class="ib" aria-label="Личное" style="width: 40px; height: 40px; color: #5E4EB7"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.home}}"></path></svg></button>
+<button class="ib" aria-label="Работа" aria-current="true" style="width: 40px; height: 40px; border-radius: 14px; background: {{c.a}}; color: #FFFFFF"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></button>
+<button class="ib" aria-label="Аниме" style="width: 40px; height: 40px; color: #A23F2B"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></button>
+<button class="ib" aria-label="Новое пространство" style="width: 40px; height: 40px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
+<span style="flex-grow: 1"></span>
+<button class="ib" aria-label="Загрузки" style="width: 40px; height: 40px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.download}}"></path></svg></button>
+<button class="ib" aria-label="Меню" style="width: 40px; height: 40px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+</nav>
+<main style="position: relative; flex-grow: 1; border-radius: 20px; background: #FFFFFF; box-shadow: 0 12px 40px rgba(38,22,86,0.12), 0 1px 3px rgba(38,22,86,0.08); overflow: hidden; padding: 60px 76px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 44px; align-content: start">
+<div style="grid-column: span 2; display: flex; flex-direction: column; gap: 18px">
+<span class="t-over" style="color: {{c.a}}">Запуск · октябрь</span>
+<h1 style="font-family: Literata, Georgia, serif; font-size: 44px; line-height: 1.1; font-weight: 600">План запуска на октябрь</h1>
+<p style="font-family: Literata, Georgia, serif; font-size: 18px; line-height: 1.65; color: var(--ink)">Документ собирает цели релиза, сроки по неделям и ответственных. Он лежит в Essentials пространства «Работа» и открывается одним касанием.</p>
+<h2 style="font-size: 22px; font-weight: 800; padding-top: 6px">Неделя 1</h2>
+<p style="font-family: Literata, Georgia, serif; font-size: 18px; line-height: 1.65; color: var(--ink)">Закрываем задачи беты и собираем отзывы тестировщиков. [ДОБАВЬТЕ СВОИ ПУНКТЫ]</p>
+</div>
+<aside style="padding-top: 36px; display: flex; flex-direction: column; gap: 12px">
+<div style="border-radius: 20px; background: #F4F1F7; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 800; color: var(--on-var)">Сроки</span>
+<div style="display: flex; justify-content: space-between; font-size: 14px"><span>Бета</span><b>6 октября</b></div>
+<div style="display: flex; justify-content: space-between; font-size: 14px"><span>Релиз</span><b>20 октября</b></div>
+</div>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const soft = 'rgba(255,255,255,0.72)';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+ess: [
+{ name: 'Почта', l: 'П', tone: '#DDE3FF', ink: '#2F4AA8', bg: soft, ring: 'none' },
+{ name: 'Календарь', l: 'К', tone: '#D4F1EC', ink: '#00665A', bg: soft, ring: 'none' },
+{ name: 'Задачи', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E', bg: soft, ring: 'none' },
+{ name: 'Документы', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E', bg: '#FFFFFF', ring: '0 0 0 2px ' + accent },
+{ name: 'Чат', l: 'Ч', tone: '#D8EEFF', ink: '#1E5E8C', bg: soft, ring: 'none' },
+{ name: 'Дизайн', l: 'Д', tone: '#FFDDEA', ink: '#962F59', bg: soft, ring: 'none' }
+],
+tabs: [
+{ title: 'План запуска на октябрь', l: 'Д', tone: '#E6DEFF', ink: '#4A3A9E', bg: '#FFFFFF', shadow: 'var(--shadow-sm)', w: 800 },
+{ title: 'Спринт 42 · доска задач', l: 'З', tone: '#FFE1D6', ink: '#9A3A1E', bg: 'transparent', shadow: 'none', w: 600 },
+{ title: 'Отчёт по метрикам', l: 'О', tone: '#FFEBC2', ink: '#6E4F00', bg: 'transparent', shadow: 'none', w: 600 },
+{ title: 'Макеты главного экрана', l: 'М', tone: '#FFDDEA', ink: '#962F59', bg: 'transparent', shadow: 'none', w: 600 }
+]
+};
+}
+}
+</script>
+</body>
+</html>

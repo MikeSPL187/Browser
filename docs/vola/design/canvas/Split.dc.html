@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — Split View</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--frame); padding: 40px 8px 104px; display: flex; flex-direction: column">
+<div style="position: absolute; inset: 0; background: radial-gradient(90% 50% at 0% 0%, {{c.a30}}, rgba(236,230,241,0) 70%)"></div>
+<div style="position: relative; height: 340px; border-radius: 24px; background: #FFFFFF; overflow: hidden; box-shadow: 0 0 0 2.5px {{c.a}}; display: flex; flex-direction: column">
+<div style="height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 12px; font-weight: 800; color: var(--on-var); border-bottom: 1px solid #F0EBF4"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{c.a}}"></span>docs.example.com</div>
+<div style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 20px; font-weight: 800">План запуска на октябрь</div>
+<div style="font-size: 14px; line-height: 1.5; color: var(--on-var)">Цели релиза, сроки по неделям и ответственные. Документ открыт рядом с доской задач, чтобы сверять пункты.</div>
+<div style="display: flex; gap: 10px; align-items: center"><span style="width: 18px; height: 18px; border-radius: 6px; background: {{c.a}}"></span><span style="font-size: 14px">Бета для тестировщиков — 6 октября</span></div>
+<div style="display: flex; gap: 10px; align-items: center"><span style="width: 18px; height: 18px; border-radius: 6px; box-shadow: inset 0 0 0 2px #AFA8B8"></span><span style="font-size: 14px">Публичный релиз — 20 октября</span></div>
+</div>
+</div>
+<div style="position: relative; height: 26px; display: flex; align-items: center; justify-content: center"><button aria-label="Изменить размер панелей" style="width: 64px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: row-resize"><span style="width: 44px; height: 5px; border-radius: 3px; background: var(--outline); display: block"></span></button></div>
+<div style="position: relative; flex-grow: 1; border-radius: 24px; background: #FFFFFF; overflow: hidden; display: flex; flex-direction: column">
+<div style="height: 38px; display: flex; align-items: center; padding: 0 14px; font-size: 12px; font-weight: 800; color: var(--muted); border-bottom: 1px solid #F0EBF4">tasks.example.com</div>
+<div style="padding: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="t-over">В работе</span><div style="height: 62px; border-radius: 14px; background: #FFE1D6; padding: 10px; font-size: 13px; font-weight: 700">Экран оплаты</div><div style="height: 62px; border-radius: 14px; background: #E6DEFF; padding: 10px; font-size: 13px; font-weight: 700">Онбординг</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="t-over">Готово</span><div style="height: 62px; border-radius: 14px; background: #D4F1EC; padding: 10px; font-size: 13px; font-weight: 700">Поиск</div><div style="height: 62px; border-radius: 14px; background: #D8EEFF; padding: 10px; font-size: 13px; font-weight: 700">Профиль</div></div>
+</div>
+</div>
+<div class="glass" style="position: absolute; left: 12px; right: 12px; bottom: 24px; height: 64px; border-radius: 32px; display: flex; align-items: center; gap: 4px; padding: 0 8px">
+<button aria-label="Выйти из Split View" style="width: 48px; height: 48px; border-radius: 24px; background: {{c.a14}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.split}}"></path></svg></button>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; align-items: center"><span style="font-size: 15px; font-weight: 800">docs.example.com</span><span class="t-sub" style="font-size: 12px">Верхняя панель активна</span></div>
+<button class="ib" aria-label="Поменять панели местами"><svg class="i" viewBox="0 0 24 24"><path d="{{i.swap}}"></path></svg></button>
+<button class="ib" aria-label="Меню"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

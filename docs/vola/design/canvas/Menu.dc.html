@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — главное меню</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="padding: 60px 20px 0; display: flex; flex-direction: column; gap: 14px">
+<h1 style="font-family: Literata, Georgia, serif; font-size: 30px; line-height: 1.15; font-weight: 600; color: #16211E">Байкал зимой: как выбрать маршрут по льду</h1>
+<p class="t-read">Лёд на Байкале становится крепким к середине февраля.</p>
+</div>
+<div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+<div class="sheet" style="height: 664px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="handle"></div>
+<div style="display: flex; gap: 4px; padding-top: 4px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+<button aria-label="{{n.label}}" style="flex: 1; height: 56px; border-radius: {{n.radius}}; background: {{n.bg}}; color: {{n.fg}}; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{n.icon}}"></path></svg></button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="8">
+<button style="height: 84px; border-radius: 22px; background: {{t.bg}}; color: {{t.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 12px; font-weight: 700; line-height: 1.15; text-align: center; padding: 0 4px"><svg class="i" viewBox="0 0 24 24"><path d="{{t.icon}}"></path></svg>{{t.label}}</button>
+</sc-for>
+</div>
+<div class="group">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<a href="#" class="row" style="min-height: 52px; padding: 6px 16px">
+<svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{r.icon}}"></path></svg>
+<span style="flex-grow: 1; font-size: 15px; font-weight: 600">{{r.label}}</span>
+<span class="t-sub" style="font-weight: 700">{{r.hint}}</span>
+</a>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+const c = window.VA ? window.VA(accent) : { a: accent };
+const i = window.VI || {};
+const plain = { bg: 'var(--surface)', fg: 'var(--on-var)' };
+const on = { bg: c.a14, fg: accent };
+return {
+i: i,
+c: c,
+nav: [
+{ label: 'Назад', icon: i.back, bg: 'var(--surface)', fg: 'var(--on-var)', radius: '28px 12px 12px 28px' },
+{ label: 'Вперёд', icon: i.forward, bg: 'var(--surface)', fg: 'var(--outline-var)', radius: '12px' },
+{ label: 'Обновить', icon: i.reload, bg: 'var(--surface)', fg: 'var(--on-var)', radius: '12px' },
+{ label: 'В избранном', icon: i.star, bg: c.a14, fg: accent, radius: '12px' },
+{ label: 'Поделиться', icon: i.share, bg: 'var(--surface)', fg: 'var(--on-var)', radius: '12px 28px 28px 12px' }
+],
+tiles: [
+Object.assign({ label: 'Новая вкладка', icon: i.plus }, plain),
+Object.assign({ label: 'Приватная', icon: i.incognito }, plain),
+Object.assign({ label: 'Найти', icon: i.find }, plain),
+Object.assign({ label: 'Чтение', icon: i.reader }, plain),
+Object.assign({ label: 'Перевести', icon: i.translate }, plain),
+Object.assign({ label: 'Версия для ПК', icon: i.desktop }, plain),
+Object.assign({ label: 'Split View', icon: i.split }, plain),
+Object.assign({ label: 'Компактно', icon: i.compact }, on)
+],
+rows: [
+{ icon: i.download, label: 'Загрузки', hint: '1 идёт' },
+{ icon: i.history, label: 'История', hint: '' },
+{ icon: i.bookmark, label: 'Избранное', hint: '' },
+{ icon: i.puzzle, label: 'Расширения', hint: '3' },
+{ icon: i.settings, label: 'Настройки', hint: '' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

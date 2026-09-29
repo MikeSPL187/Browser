@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — пространство заблокировано</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; inset: 0; padding: 50px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; filter: blur(18px); opacity: 0.8">
+<div style="height: 196px; border-radius: 24px; background: #E6DEFF"></div><div style="height: 196px; border-radius: 24px; background: #FFE1D6"></div>
+<div style="height: 196px; border-radius: 24px; background: #D4F1EC"></div><div style="height: 196px; border-radius: 24px; background: #FFDDEA"></div>
+</div>
+<div style="position: absolute; inset: 0; background: radial-gradient(80% 50% at 50% 30%, {{c.a45}}, rgba(243,238,247,0.85) 70%)"></div>
+<div style="position: relative; padding: 200px 32px 0; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center">
+<div style="position: relative; width: 104px; height: 104px">
+<div style="width: 104px; height: 104px; border-radius: 36px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px {{c.a45}}"><svg class="i xl" viewBox="0 0 24 24"><path d="{{i.work}}"></path></svg></div>
+<span style="position: absolute; right: -8px; bottom: -8px; width: 40px; height: 40px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--on); display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.lock}}"></path></svg></span>
+</div>
+<h1 class="t-h1" style="padding-top: 10px">«Работа» заблокирована</h1>
+<p style="font-size: 16px; line-height: 1.5; color: var(--on-var)">Вкладки этого пространства скрыты. Подтвердите, что это вы.</p>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 8px">
+<button style="height: 60px; border-radius: 30px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 800"><svg class="i" viewBox="0 0 24 24"><path d="{{i.fingerprint}}"></path></svg>Разблокировать</button>
+<button style="height: 52px; border-radius: 26px; font-size: 15px; font-weight: 800; color: var(--on-var); text-align: center">Перейти в другое пространство</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

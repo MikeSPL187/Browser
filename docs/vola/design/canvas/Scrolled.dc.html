@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — прокрутка</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<article style="padding: 40px 20px 0; display: flex; flex-direction: column; gap: 16px">
+<p class="t-read">Ниже — три маршрута разной длины: от короткой прогулки к гроту до двухдневного перехода вдоль берега.</p>
+<h2 style="font-size: 21px; font-weight: 800; color: #16211E">Маршрут 1. Листвянка — Большие Коты</h2>
+<p class="t-read">Около 20 км вдоль берега. Большую часть пути видно посёлок и дорогу, поэтому маршрут подходит для первого выхода на лёд.</p>
+<div style="border-radius: 16px; background: #EEF5F3; padding: 14px 16px; display: flex; gap: 12px">
+<span style="width: 4px; border-radius: 2px; background: #2F6B5F; flex-shrink: 0"></span>
+<p style="font-size: 15px; line-height: 1.5; color: #1F3A34">Перед выходом проверьте прогноз толщины льда и сообщите маршрут знакомым.</p>
+</div>
+<h2 style="font-size: 21px; font-weight: 800; color: #16211E">Маршрут 2. Ольхон — мыс Хобой</h2>
+<p class="t-read">Самый известный зимний маршрут: ледяные гроты, сокуи и прозрачный лёд у северной оконечности острова.</p>
+<p class="t-read">Дорога от Хужира занимает около двух часов. На мысе ветер сильнее, чем в посёлке, поэтому возьмите маску и запасные перчатки.</p>
+<p class="t-read">Лучшее время — утро: солнце подсвечивает лёд сбоку, а в гротах меньше людей.</p>
+</article>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 70%)"></div>
+<button class="glass" aria-label="Показать панель: north-guide.ru" style="position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); height: 36px; border-radius: 18px; padding: 0 14px 0 6px; display: flex; align-items: center; gap: 8px">
+<span style="width: 24px; height: 24px; border-radius: 12px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24" style="width: 14px; height: 14px"><path d="{{i.work}}"></path></svg></span>
+<span style="font-size: 14px; font-weight: 700; white-space: nowrap">north-guide.ru</span>
+</button>
+<div style="position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 64px; height: 3px; border-radius: 2px; background: var(--s-highest); overflow: hidden"><div style="width: 58%; height: 3px; background: {{c.a}}"></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

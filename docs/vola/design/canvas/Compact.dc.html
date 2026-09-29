@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — компактный режим</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<article style="padding: 36px 20px 0; display: flex; flex-direction: column; gap: 16px">
+<h2 style="font-size: 21px; font-weight: 800; color: #16211E">Маршрут 3. Вдоль берега за два дня</h2>
+<div style="height: 230px; border-radius: 18px; background: linear-gradient(160deg, #DDE6F3 0%, #B8C9E0 60%, #8FA6C6 100%); display: flex; align-items: flex-end; padding: 12px"><span style="font-size: 12px; font-weight: 700; color: #2A3A52; background: rgba(255,255,255,0.72); padding: 6px 10px; border-radius: 10px">[Фото: торосы на закате]</span></div>
+<p class="t-read">Двухдневный переход для тех, кто уже ходил по льду. Ночёвка — на турбазе у берега.</p>
+<p class="t-read">Договоритесь о встрече с проводником заранее: зимой связь пропадает между бухтами.</p>
+<p class="t-read">Берите запас еды и воды на сутки больше, чем планируете.</p>
+</article>
+<div class="glass" style="position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); width: 300px; border-radius: 22px; padding: 14px 16px; display: flex; align-items: center; gap: 12px">
+<span style="width: 40px; height: 40px; border-radius: 14px; background: {{c.a14}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg class="i" viewBox="0 0 24 24"><path d="{{i.up}}"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="t-label">Компактный режим</span><span class="t-sub">Проведите от нижнего края, чтобы открыть панель</span></span>
+</div>
+<div style="position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 120px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, {{c.a45}}, {{c.a}}, {{c.a45}})"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+}
+}
+</script>
+</body>
+</html>

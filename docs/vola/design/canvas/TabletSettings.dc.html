@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — планшет, настройки</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 1280px; height: 800px; background: var(--bg); display: flex; gap: 24px; padding: 24px 32px">
+<nav aria-label="Разделы настроек" style="width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 4px"><button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button><h1 class="t-h1">Настройки</h1></div>
+<label style="height: 48px; border-radius: 24px; background: var(--s-high); display: flex; align-items: center; gap: 12px; padding: 0 16px; color: var(--muted)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg><span style="position: absolute; left: -9999px">Поиск настроек</span><input type="text" placeholder="Поиск настроек" style="flex-grow: 1; border: none; outline: none; background: transparent; font-size: 15px; font-weight: 600"></label>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="8">
+<a href="#" aria-current="{{n.cur}}" style="height: 56px; border-radius: 28px; background: {{n.bg}}; display: flex; align-items: center; gap: 14px; padding: 0 16px; color: {{n.fg}}">
+<svg class="i" viewBox="0 0 24 24"><path d="{{n.icon}}"></path></svg>
+<span style="font-size: 15px; font-weight: {{n.w}}">{{n.label}}</span>
+</a>
+</sc-for>
+</div>
+</nav>
+<section style="flex-grow: 1; border-radius: 32px; background: var(--s-low); padding: 32px; display: flex; flex-direction: column; gap: 20px">
+<h2 class="t-h1">Внешний вид</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{t.on}}" style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+<span style="width: 100%; height: 150px; border-radius: 24px; background: {{t.bg}}; box-shadow: {{t.ring}}; display: flex; gap: 8px; padding: 12px">
+<span style="width: 34%; border-radius: 12px; background: {{t.side}}; display: block"></span>
+<span style="flex-grow: 1; border-radius: 12px; background: {{t.page}}; display: block"></span>
+</span>
+<span style="font-size: 15px; font-weight: 800">{{t.name}}</span>
+</button>
+</sc-for>
+</div>
+<div class="group">
+<div class="row"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Чистый чёрный (OLED)</span><span class="t-sub">В тёмной теме</span></span><span class="sw"><span></span></span></div>
+<div class="row"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Боковая панель</span><span class="t-sub">Слева, прячется по жесту от края</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+<div class="row"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Отступы вокруг страницы</span><span class="t-sub">Страница лежит карточкой на фоне пространства</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#5E4EB7';
+const c = window.VA ? window.VA(accent) : { a: accent };
+const i = window.VI || {};
+const n = (icon, label, cur) => ({ icon: icon, label: label, cur: cur ? 'page' : 'false', bg: cur ? c.a14 : 'transparent', fg: cur ? accent : 'var(--on-var)', w: cur ? 800 : 600 });
+return {
+i: i,
+c: c,
+nav: [
+n(i.palette, 'Внешний вид', true),
+n(i.stack, 'Пространства', false),
+n(i.gesture, 'Вкладки и жесты', false),
+n(i.search, 'Поиск', false),
+n(i.shieldCheck, 'Приватность и защита', false),
+n(i.puzzle, 'Расширения', false),
+n(i.sync, 'Синхронизация', false),
+n(i.info, 'О Vola', false)
+],
+themes: [
+{ name: 'Светлая', on: 'false', bg: '#ECE6F1', side: '#F8F4FB', page: '#FFFFFF', ring: 'var(--shadow-sm)' },
+{ name: 'Тёмная', on: 'true', bg: '#0F0E12', side: '#1D1B22', page: '#1B1920', ring: '0 0 0 3px var(--s-low), 0 0 0 5.5px ' + accent },
+{ name: 'Авто', on: 'false', bg: 'linear-gradient(90deg, #ECE6F1 50%, #0F0E12 50%)', side: 'rgba(128,120,140,0.5)', page: 'rgba(160,152,170,0.55)', ring: 'var(--shadow-sm)' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

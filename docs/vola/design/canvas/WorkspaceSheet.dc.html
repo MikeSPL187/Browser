@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — новое пространство</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; inset: 0; background: radial-gradient(120% 60% at 0% 0%, {{glow}}, rgba(243,238,247,0) 70%)"></div>
+<div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+<div class="sheet" style="height: 736px; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 18px">
+<div class="handle"></div>
+<div style="display: flex; align-items: center; gap: 16px; padding-top: 4px">
+<div style="width: 72px; height: 72px; border-radius: 26px; background: {{accent}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px {{shadow}}"><svg class="i l" viewBox="0 0 24 24"><path d="{{iconPath}}"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><h2 class="t-h2">Новое пространство</h2><span class="t-sub">Свои вкладки, Essentials и цвет</span></div>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span class="t-label" style="color: var(--on-var)">Название</span>
+<input type="text" value="Работа" style="height: 56px; border: none; border-radius: 18px; padding: 0 16px; font-size: 17px; font-weight: 700; background: var(--surface); box-shadow: inset 0 0 0 2px {{accent}}; outline: none">
+</label>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="t-label" style="color: var(--on-var)">Цвет</span>
+<div role="radiogroup" aria-label="Цвет пространства" style="display: flex; justify-content: space-between">
+<sc-for list="{{accents}}" as="a" hint-placeholder-count="8">
+<button role="radio" aria-checked="{{a.checked}}" aria-label="{{a.name}}" onClick="{{a.pick}}" style="width: 40px; height: 40px; border-radius: 20px; box-shadow: inset 0 0 0 2.5px {{a.ring}}; display: flex; align-items: center; justify-content: center">
+<span style="width: {{a.dot}}; height: {{a.dot}}; border-radius: 50%; background: {{a.color}}; display: block"></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="t-label" style="color: var(--on-var)">Значок</span>
+<div role="radiogroup" aria-label="Значок пространства" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{icons}}" as="ic" hint-placeholder-count="12">
+<button role="radio" aria-checked="{{ic.checked}}" aria-label="{{ic.name}}" onClick="{{ic.pick}}" style="height: 48px; border-radius: {{ic.radius}}; background: {{ic.bg}}; color: {{ic.fg}}; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{ic.path}}"></path></svg></button>
+</sc-for>
+</div>
+</div>
+<div class="group">
+<div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Отдельное хранилище</span><span class="t-sub">Свои cookie, входы и данные сайтов</span></div><button role="switch" aria-checked="true" aria-label="Отдельное хранилище" class="sw on" style="background: {{accent}}"><span></span></button></div>
+<div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Вход по отпечатку</span><span class="t-sub">Вкладки скрыты, пока вы не войдёте</span></div><button role="switch" aria-checked="false" aria-label="Вход по отпечатку" class="sw"><span></span></button></div>
+</div>
+<button style="margin-top: auto; height: 56px; border-radius: 28px; background: {{accent}}; color: #FFFFFF; font-size: 16px; font-weight: 800; box-shadow: 0 10px 24px {{shadow}}; text-align: center">Создать пространство</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { accent: 2, icon: 0 };
+}
+renderVals() {
+const i = window.VI || {};
+const palette = [
+['Фиолетовый', '#5E4EB7'], ['Синий', '#2F5BD3'], ['Бирюзовый', '#006877'], ['Зелёный', '#2B6C3F'],
+['Янтарный', '#7C5800'], ['Коралловый', '#A23F2B'], ['Розовый', '#A0305B'], ['Графитовый', '#55595F']
+];
+const shapes = [
+['Работа', i.work], ['Дом', i.home], ['Кино', i.movie], ['Книги', i.book], ['Звезда', i.star], ['Сердце', i.heart],
+['Мир', i.globe], ['Код', i.code], ['Искусство', i.palette], ['Энергия', i.bolt], ['Фото', i.camera], ['Пазл', i.puzzle]
+];
+const accent = palette[this.state.accent][1];
+return {
+accent: accent,
+glow: accent + '55',
+shadow: accent + '59',
+iconPath: shapes[this.state.icon][1],
+accents: palette.map((p, n) => ({
+name: p[0], color: p[1],
+checked: n === this.state.accent ? 'true' : 'false',
+ring: n === this.state.accent ? p[1] : 'transparent',
+dot: n === this.state.accent ? '26px' : '32px',
+pick: () => this.setState({ accent: n })
+})),
+icons: shapes.map((s, n) => ({
+name: s[0], path: s[1],
+checked: n === this.state.icon ? 'true' : 'false',
+bg: n === this.state.icon ? accent : 'var(--s-high)',
+fg: n === this.state.icon ? '#FFFFFF' : 'var(--on-var)',
+radius: n === this.state.icon ? '16px' : '24px',
+pick: () => this.setState({ icon: n })
+}))
+};
+}
+}
+</script>
+</body>
+</html>

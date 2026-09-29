@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — ввод адреса</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
+<div style="position: absolute; left: -120px; top: -160px; width: 620px; height: 520px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a20}}, rgba(243,238,247,0))"></div>
+<div style="position: absolute; left: 12px; right: 12px; top: 52px; display: flex; gap: 8px">
+<button style="height: 40px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); padding: 0 14px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--on-var)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.link}}"></path></svg>Вставить ссылку</button>
+<button class="ib" aria-label="Сканировать QR-код" style="width: 40px; height: 40px; background: var(--surface); box-shadow: var(--shadow-sm)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.qr}}"></path></svg></button>
+<span style="flex-grow: 1"></span>
+<button style="height: 40px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); padding: 0 12px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--on-var)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>DuckDuckGo<svg class="i xs" viewBox="0 0 24 24"><path d="{{i.chevD}}"></path></svg></button>
+</div>
+<div style="position: absolute; left: 12px; right: 12px; bottom: 360px; display: flex; flex-direction: column; gap: 10px">
+<div style="background: var(--surface); border-radius: 24px; box-shadow: var(--shadow-sm); padding: 6px">
+<div class="t-over" style="padding: 10px 12px 6px">История</div>
+<a href="#" style="min-height: 52px; display: flex; align-items: center; gap: 14px; padding: 6px 12px; border-radius: 18px">
+<span class="mono" style="width: 32px; height: 32px; border-radius: 10px; background: #D4F1EC; color: #00665A; font-size: 14px">П</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">Прогноз толщины льда</span><span class="t-sub">ice-forecast.example.ru</span></span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.history}}"></path></svg>
+</a>
+<div class="t-over" style="padding: 10px 12px 6px">Открытая вкладка</div>
+<a href="#" style="min-height: 52px; display: flex; align-items: center; gap: 14px; padding: 6px 12px; border-radius: 18px">
+<span class="mono" style="width: 32px; height: 32px; border-radius: 10px; background: #2F6B5F; color: #FFFFFF; font-size: 14px">С</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Байкал зимой: как выбрать маршрут</span><span class="t-sub">north-guide.ru · в «Работе»</span></span>
+<span style="height: 32px; border-radius: 16px; background: {{c.a10}}; color: {{c.a}}; padding: 0 12px; display: flex; align-items: center; font-size: 13px; font-weight: 800">Перейти</span>
+</a>
+</div>
+<div style="background: var(--surface); border-radius: 24px; box-shadow: var(--shadow-sm); padding: 6px">
+<sc-for list="{{suggest}}" as="s" hint-placeholder-count="3">
+<a href="#" style="height: 50px; display: flex; align-items: center; gap: 14px; padding: 0 12px; border-radius: 18px">
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.search}}"></path></svg>
+<span style="flex-grow: 1; font-size: 16px; font-weight: 500">байкал лёд <b style="font-weight: 800">{{s.rest}}</b></span>
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted); transform: rotate(-45deg)"><path d="{{i.up}}"></path></svg>
+</a>
+</sc-for>
+</div>
+</div>
+<div style="position: absolute; left: 12px; right: 12px; bottom: 294px; height: 56px; border-radius: 28px; background: var(--surface); box-shadow: 0 0 0 2px {{c.a}}, var(--shadow); display: flex; align-items: center; gap: 10px; padding: 0 6px 0 18px">
+<svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.search}}"></path></svg>
+<label style="flex-grow: 1; min-width: 0; display: flex; align-items: center"><span style="position: absolute; left: -9999px">Поиск или адрес</span><input type="text" value="байкал лёд" style="width: 100%; border: none; outline: none; background: transparent; font-size: 17px; font-weight: 600; caret-color: {{c.a}}"></label>
+<button class="ib" aria-label="Голосовой ввод"><svg class="i" viewBox="0 0 24 24"><path d="{{i.mic}}"></path></svg></button>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 282px; background: #E4DFE8; padding: 10px 4px 0; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 5px; justify-content: center"><sc-for list="{{r1}}" as="k" hint-placeholder-count="11"><span style="width: 30px; height: 44px; border-radius: 8px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #1C1B20">{{k}}</span></sc-for></div>
+<div style="display: flex; gap: 5px; justify-content: center"><sc-for list="{{r2}}" as="k" hint-placeholder-count="11"><span style="width: 30px; height: 44px; border-radius: 8px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #1C1B20">{{k}}</span></sc-for></div>
+<div style="display: flex; gap: 5px; justify-content: center"><sc-for list="{{r3}}" as="k" hint-placeholder-count="9"><span style="width: 30px; height: 44px; border-radius: 8px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #1C1B20">{{k}}</span></sc-for></div>
+<div style="display: flex; gap: 6px; padding: 0 6px"><span style="width: 76px; height: 44px; border-radius: 8px; background: #CFC9D6"></span><span style="flex-grow: 1; height: 44px; border-radius: 8px; background: #FFFFFF"></span><span style="width: 76px; height: 44px; border-radius: 8px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#006877';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+suggest: [{ rest: 'толщина' }, { rest: 'прогноз на неделю' }, { rest: 'экскурсии' }],
+r1: ['й','ц','у','к','е','н','г','ш','щ','з','х'],
+r2: ['ф','ы','в','а','п','р','о','л','д','ж','э'],
+r3: ['я','ч','с','м','и','т','ь','б','ю']
+};
+}
+}
+</script>
+</body>
+</html>
