@@ -22,7 +22,7 @@ object CandySubscriptionClient {
             connection.connectTimeout = CandySubscriptionRules.CONNECT_TIMEOUT_MS
             connection.readTimeout = CandySubscriptionRules.READ_TIMEOUT_MS
             connection.setRequestProperty("Accept", "text/plain")
-            connection.setRequestProperty("User-Agent", "CandyBrowser-FilterStudio/1")
+            connection.setRequestProperty("User-Agent", "Vola-FilterStudio/1")
             val code = connection.responseCode
             if (code !in 200..299) return CandySubscriptionResult.Error("http-$code")
             val contentLength = connection.contentLengthLong

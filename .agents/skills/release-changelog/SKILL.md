@@ -5,12 +5,12 @@ description: Create or update Candy Browser's English, image-rich, versioned rel
 
 # Candy Browser release changelog
 
-Create one polished Markdown file at `release-notes/<candy.versionName>.md`. This file is both the
+Create one polished Markdown file at `release-notes/<vola.versionName>.md`. This file is both the
 in-app What's New content and the exact GitHub release body; never maintain a second release summary.
 
 ## Source the release story
 
-- Read `candy.versionName` from `gradle.properties` and inspect changes since the previous release tag.
+- Read `vola.versionName` from `gradle.properties` and inspect changes since the previous release tag.
 - Read the relevant feature documentation from `docs/README.md`; link claims to the owning README
   section rather than to implementation files.
 - Describe user-visible outcomes. Omit raw commit lists, internal refactors, test counts, and features
@@ -40,7 +40,7 @@ Run:
 
 ```sh
 ./gradlew :app:validateReleaseNotes \
-  -Pcandy.releaseNotesFile=release-notes/<version>.md
+  -Pvola.releaseNotesFile=release-notes/<version>.md
 ```
 
 Before release dispatch, use the same path as the required workflow input:

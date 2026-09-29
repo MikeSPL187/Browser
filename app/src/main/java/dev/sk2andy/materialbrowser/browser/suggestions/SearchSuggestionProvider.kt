@@ -216,7 +216,7 @@ private object HttpSearchSuggestionTransport : SearchSuggestionTransport {
     private const val READ_TIMEOUT_MILLIS = 2_500
     private const val MAX_RESPONSE_CHARS = 65_536
     private const val KAGI_SUGGESTION_HOST = "kagisuggest.com"
-    private const val USER_AGENT = "Candy Browser Search Suggestions"
+    private const val USER_AGENT = "Vola Search Suggestions"
 }
 
 internal fun parseSearchSuggestions(body: String, query: String): List<String> {

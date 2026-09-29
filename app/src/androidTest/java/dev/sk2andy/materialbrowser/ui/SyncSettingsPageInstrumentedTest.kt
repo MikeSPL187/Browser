@@ -152,15 +152,15 @@ class SyncSettingsPageInstrumentedTest {
 
         listOf(
             SyncSettingsTestTags.ServerGuide to
-                "https://github.com/sk2andy/candy-browser/blob/main/docs/sync/server.md#quick-start",
+                "https://github.com/MikeSPL187/Browser/blob/main/docs/sync/server.md#quick-start",
             SyncSettingsTestTags.ExtensionGuide to
-                "https://github.com/sk2andy/candy-browser/blob/main/docs/sync/extension.md#build-and-load",
+                "https://github.com/MikeSPL187/Browser/blob/main/docs/sync/extension.md#build-and-load",
             SyncSettingsTestTags.WorkspaceGuide to
-                "https://github.com/sk2andy/candy-browser/blob/main/docs/sync/extension.md#setup-flow",
+                "https://github.com/MikeSPL187/Browser/blob/main/docs/sync/extension.md#setup-flow",
             SyncSettingsTestTags.AndroidGuide to
-                "https://github.com/sk2andy/candy-browser/blob/main/docs/sync/app-integration.md#setup-and-secrets",
+                "https://github.com/MikeSPL187/Browser/blob/main/docs/sync/app-integration.md#setup-and-secrets",
             SyncSettingsTestTags.Documentation to
-                "https://github.com/sk2andy/candy-browser/blob/main/docs/sync/README.md#documentation",
+                "https://github.com/MikeSPL187/Browser/blob/main/docs/sync/README.md#documentation",
         ).forEach { (tag, expectedUrl) ->
             composeRule.onNodeWithTag(tag).performScrollTo().performClick()
             assertEquals(expectedUrl, openedUrl.get())

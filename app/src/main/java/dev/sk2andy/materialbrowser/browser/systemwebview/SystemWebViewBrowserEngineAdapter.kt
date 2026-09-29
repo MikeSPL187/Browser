@@ -731,8 +731,8 @@ private class SystemWebViewBrowserEngineSession(
     override fun printPage(): Boolean {
         val printManager = webView.context.getSystemService(PrintManager::class.java) ?: return false
         printManager.print(
-            webView.title?.takeIf(String::isNotBlank) ?: "Candy page",
-            webView.createPrintDocumentAdapter(webView.title ?: "Candy page"),
+            webView.title?.takeIf(String::isNotBlank) ?: "Vola page",
+            webView.createPrintDocumentAdapter(webView.title ?: "Vola page"),
             PrintAttributes.Builder().build(),
         )
         return true

@@ -190,7 +190,7 @@ def verify_local_assets(catalog_path: Path, assets_root: Path) -> None:
 def download_and_validate(extension: dict[str, Any]) -> bytes:
     request = Request(
         extension["sourceUrl"],
-        headers={"User-Agent": "Candy-Browser-default-extension-audit/1"},
+        headers={"User-Agent": "Vola-default-extension-audit/1"},
     )
     with urlopen(request, timeout=60) as response:
         final_url = urlparse(response.geturl())

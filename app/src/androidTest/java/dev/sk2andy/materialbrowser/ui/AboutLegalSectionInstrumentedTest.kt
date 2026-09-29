@@ -59,7 +59,7 @@ class AboutLegalSectionInstrumentedTest {
         composeRule.onNodeWithTag(AboutLegalTestTags.ImprintDialog).assertExists()
         composeRule.onNodeWithTag(AboutLegalTestTags.GitHubLink).performClick()
 
-        assertEquals(CandyLegalSources.GITHUB_PROFILE_URL, openedUrl.get())
+        assertEquals(CandyLegalSources.SOURCE_CODE_URL, openedUrl.get())
     }
 
     @Test

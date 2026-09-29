@@ -225,7 +225,7 @@
       selectors.push(...HIGH_CONFIDENCE_SELECTORS);
       selectors.push(...scopedSelectors(staticRules.cosmetics, frameHost));
       selectors.push(...staticRules.candyDefaults.filter((rule) =>
-        rule.group === "Candy Ads" && hostPatternMatches(frameHost, rule.host),
+        rule.group === "Built-in ads" && hostPatternMatches(frameHost, rule.host),
       ).map((rule) => rule.selector));
       selectors.push(...policy.cosmetics.filter((rule) =>
         hostMatches(frameHost, rule.h),
@@ -233,7 +233,7 @@
     }
     if (policy.hideConsent && !policy.cookieBannerRemovalDisabled) {
       selectors.push(...staticRules.candyDefaults.filter((rule) =>
-        rule.group === "Candy Cookies" && hostPatternMatches(frameHost, rule.host),
+        rule.group === "Built-in cookies" && hostPatternMatches(frameHost, rule.host),
       ).map((rule) => rule.selector));
     }
     const unique = [...new Set(selectors)].slice(0, 4096);

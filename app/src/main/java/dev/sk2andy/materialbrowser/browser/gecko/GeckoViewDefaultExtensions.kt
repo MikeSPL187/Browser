@@ -232,7 +232,7 @@ private class GeckoDefaultExtensionRemoteSource(context: Context) {
     private companion object {
         const val CACHE_DIRECTORY = "gecko-default-extensions"
         const val NETWORK_TIMEOUT_MILLIS = 30_000
-        const val USER_AGENT = "Candy-Browser-default-extension/1"
+        const val USER_AGENT = "Vola-default-extension/1"
     }
 }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.VolaProject
 import dev.sk2andy.materialbrowser.legal.CandyLegalSources
 import dev.sk2andy.materialbrowser.legal.ThirdPartyComponent
 import dev.sk2andy.materialbrowser.legal.ThirdPartyNotice
@@ -128,7 +129,7 @@ internal fun AboutLegalSection(
         AboutLegalDialog.Imprint -> ImprintDialog(
             onOpenUrl = {
                 dialog = null
-                onOpenUrl(CandyLegalSources.GITHUB_PROFILE_URL)
+                onOpenUrl(CandyLegalSources.SOURCE_CODE_URL)
             },
             onDismiss = { dialog = null },
         )
@@ -205,7 +206,12 @@ private fun ImprintDialog(onOpenUrl: () -> Unit, onDismiss: () -> Unit) {
         onDismiss = onDismiss,
     ) {
         Text(
-            stringResource(R.string.about_imprint_body, CandyLegalSources.DEVELOPER_NAME),
+            stringResource(
+                R.string.about_imprint_body,
+                CandyLegalSources.DEVELOPER_NAME,
+                VolaProject.UPSTREAM_NAME,
+                VolaProject.UPSTREAM_AUTHOR,
+            ),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(10.dp))

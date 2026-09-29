@@ -109,7 +109,7 @@ internal class GitHubToppingCatalogClient : ToppingCatalogRemoteSource {
         const val RAW_BASE_URL =
             "https://raw.githubusercontent.com/sk2andy/candy-browser-toppings/main/"
         const val MANIFEST_URL = RAW_BASE_URL + "catalog.json"
-        private const val USER_AGENT = "Candy-Browser-Android"
+        private const val USER_AGENT = "Vola-Android"
         private const val CONNECT_TIMEOUT_MILLIS = 5_000
         private const val READ_TIMEOUT_MILLIS = 8_000
         private const val BUFFER_BYTES = 8 * 1_024

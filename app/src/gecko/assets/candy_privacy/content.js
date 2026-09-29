@@ -24,13 +24,13 @@ const candyPictureInPicturePlayback = {
   inlineOpenRequestTimer: null,
   inlineMediaPolicyRevision: 0,
   inlineMediaNavigationGeneration: 0,
-  inlineMediaPlayerActionLabel: "Open in Candy Player",
+  inlineMediaPlayerActionLabel: "Open in Vola Player",
   inlineMediaPlayerPlayLabel: "Play",
   inlineMediaPlayerPauseLabel: "Pause",
   inlineMediaPlayerSeekLabel: "Seek",
   inlineMediaPlayerEnterFullscreenLabel: "Enter fullscreen",
   inlineMediaPlayerExitFullscreenLabel: "Exit fullscreen",
-  inlineMediaPlayerCloseLabel: "Close Candy Player",
+  inlineMediaPlayerCloseLabel: "Close Vola Player",
   generation: 0,
   presentedVideo: null,
   alignmentFrame: null,
@@ -1971,7 +1971,7 @@ function updateCandyInlineMediaPlayerEnabled(
     mode : "button_inline_and_fullscreen";
   const normalizedActionLabel =
     typeof actionLabel === "string" && actionLabel.trim() ?
-      actionLabel.trim().slice(0, 80) : "Open in Candy Player";
+      actionLabel.trim().slice(0, 80) : "Open in Vola Player";
   const normalizedPlayLabel = typeof playLabel === "string" && playLabel.trim() ?
     playLabel.trim().slice(0, 80) : "Play";
   const normalizedPauseLabel = typeof pauseLabel === "string" && pauseLabel.trim() ?
@@ -1985,7 +1985,7 @@ function updateCandyInlineMediaPlayerEnabled(
     typeof exitFullscreenLabel === "string" && exitFullscreenLabel.trim() ?
       exitFullscreenLabel.trim().slice(0, 80) : "Exit fullscreen";
   const normalizedCloseLabel = typeof closeLabel === "string" && closeLabel.trim() ?
-    closeLabel.trim().slice(0, 80) : "Close Candy Player";
+    closeLabel.trim().slice(0, 80) : "Close Vola Player";
   const normalizedShowControlsLabel = typeof showControlsLabel === "string" &&
       showControlsLabel.trim() ? showControlsLabel.trim().slice(0, 80) :
     "Show controls";

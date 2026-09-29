@@ -69,7 +69,7 @@ object CandyRuleFormat {
 
     fun export(rules: Iterable<CandyRule>): String = buildString {
         appendLine(HEADER)
-        appendLine("# Candy Browser format; not ABP/uBlock compatible")
+        appendLine("# Vola rules format; not ABP/uBlock compatible")
         CandyRuleValidator.normalizeAll(rules).sortedBy(CandyRule::id).forEach { rule ->
             appendLine(encode(rule))
         }

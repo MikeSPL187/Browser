@@ -1,7 +1,7 @@
-Candy Browser third-party notices
-=================================
+Vola third-party notices
+========================
 
-This inventory reflects the full release runtime classpath for Candy Browser.
+This inventory reflects the full release runtime classpath for Vola.
 
 Apache License 2.0 components
 -----------------------------

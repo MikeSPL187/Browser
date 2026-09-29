@@ -8,7 +8,7 @@ internal object UserScriptApi {
         encodedValues: Map<String, String>,
     ): String {
         val info = JSONObject()
-            .put("scriptHandler", "Candy")
+            .put("scriptHandler", "Vola")
             .put("version", "1")
             .put(
                 "script",

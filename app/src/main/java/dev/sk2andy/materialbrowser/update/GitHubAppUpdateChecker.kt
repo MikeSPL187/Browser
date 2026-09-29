@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.update
 
 import android.os.Build
 import android.util.JsonReader
+import dev.sk2andy.materialbrowser.VolaProject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -106,9 +107,9 @@ internal class GitHubAppUpdateChecker {
 
     private companion object {
         const val LATEST_RELEASE_URL =
-            "https://api.github.com/repos/sk2andy/candy-browser/releases/latest"
+            "https://api.github.com/repos/${VolaProject.GITHUB_OWNER}/${VolaProject.GITHUB_REPOSITORY}/releases/latest"
         const val GITHUB_API_VERSION = "2026-03-10"
-        const val USER_AGENT = "Candy-Browser-Android"
+        const val USER_AGENT = "Vola-Android"
         const val CONNECT_TIMEOUT_MILLIS = 5_000
         const val READ_TIMEOUT_MILLIS = 8_000
         const val MAX_RESPONSE_CHARACTERS = 256 * 1_024

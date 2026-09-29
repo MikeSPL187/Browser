@@ -314,7 +314,7 @@ function contentPolicy(policy) {
     inlineMediaPlayerMode,
     inlineMediaPlayerActionLabel:
       typeof policy?.inlineMediaPlayerActionLabel === "string" ?
-        policy.inlineMediaPlayerActionLabel.slice(0, 80) : "Open in Candy Player",
+        policy.inlineMediaPlayerActionLabel.slice(0, 80) : "Open in Vola Player",
     inlineMediaPlayerPlayLabel:
       typeof policy?.inlineMediaPlayerPlayLabel === "string" ?
         policy.inlineMediaPlayerPlayLabel.slice(0, 80) : "Play",
@@ -332,7 +332,7 @@ function contentPolicy(policy) {
         policy.inlineMediaPlayerExitFullscreenLabel.slice(0, 80) : "Exit fullscreen",
     inlineMediaPlayerCloseLabel:
       typeof policy?.inlineMediaPlayerCloseLabel === "string" ?
-        policy.inlineMediaPlayerCloseLabel.slice(0, 80) : "Close Candy Player",
+        policy.inlineMediaPlayerCloseLabel.slice(0, 80) : "Close Vola Player",
     inlineMediaPlayerShowControlsLabel:
       typeof policy?.inlineMediaPlayerShowControlsLabel === "string" ?
         policy.inlineMediaPlayerShowControlsLabel.slice(0, 80) : "Show controls",

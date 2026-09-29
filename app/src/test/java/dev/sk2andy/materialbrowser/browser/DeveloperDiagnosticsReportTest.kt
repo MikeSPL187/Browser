@@ -34,7 +34,7 @@ class DeveloperDiagnosticsReportTest {
 
         assertEquals(
             """
-            Candy developer diagnostics
+            Vola developer diagnostics
             App version: 0.38-debug
             Version code: 38
             Build type: debug
@@ -79,7 +79,7 @@ class DeveloperDiagnosticsReportTest {
 
         assertEquals(
             """
-            Candy developer diagnostics
+            Vola developer diagnostics
             App version: 0.38
             Version code: 38
             Build type: release

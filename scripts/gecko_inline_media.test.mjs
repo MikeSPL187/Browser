@@ -582,7 +582,7 @@ test("repeated enabled policy reconciles inline state with new navigation identi
       inlinePresentationExpected: false,
       inlineMediaPolicyRevision: 0,
       inlineMediaNavigationGeneration: 0,
-      inlineMediaPlayerActionLabel: "Open in Candy Player",
+      inlineMediaPlayerActionLabel: "Open in Vola Player",
       inlineMediaPlayerPlayLabel: "Play",
       inlineMediaPlayerPauseLabel: "Pause",
       inlineMediaPlayerSeekLabel: "Seek",
@@ -1855,13 +1855,13 @@ function inlineControlsHarness({ fullscreen = false, paused = true } = {}) {
     inlineOpenRequest: { identity: "pending-existing-request" },
   };
   const labels = {
-    inlineMediaPlayerActionLabel: "Open in Candy Player",
+    inlineMediaPlayerActionLabel: "Open in Vola Player",
     inlineMediaPlayerPlayLabel: "Play",
     inlineMediaPlayerPauseLabel: "Pause",
     inlineMediaPlayerSeekLabel: "Seek",
     inlineMediaPlayerEnterFullscreenLabel: "Enter fullscreen",
     inlineMediaPlayerExitFullscreenLabel: "Exit fullscreen",
-    inlineMediaPlayerCloseLabel: "Close Candy Player",
+    inlineMediaPlayerCloseLabel: "Close Vola Player",
     inlineMediaPlayerShowControlsLabel: "Show controls",
     inlineMediaPlayerHideControlsLabel: "Hide controls",
   };

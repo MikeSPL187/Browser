@@ -9,7 +9,7 @@ class CandyLegalSourcesTest {
     @Test
     fun allDestinationsAreUniqueHttpsUrls() {
         val rawDestinations = buildList {
-            add(CandyLegalSources.GITHUB_PROFILE_URL)
+            add(CandyLegalSources.SOURCE_CODE_URL)
             CandyLegalSources.thirdPartyNotices.forEach { notice ->
                 add(notice.sourceUrl)
                 add(notice.licenseUrl)

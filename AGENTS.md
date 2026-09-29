@@ -1,4 +1,7 @@
-# Candy Browser agent guide
+# Vola agent guide (inherited from Candy Browser)
+
+> Project rules for Vola live in `CLAUDE.md` and take precedence over this file. The device-testing
+> rules below assume a local emulator; in Vola, CI (`.github/workflows/build.yml`) is the source of truth.
 
 ## Start here
 

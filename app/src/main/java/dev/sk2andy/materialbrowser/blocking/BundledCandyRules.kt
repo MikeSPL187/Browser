@@ -1,8 +1,8 @@
 package dev.sk2andy.materialbrowser.blocking
 
 internal object BundledCandyRuleGroups {
-    const val Ads = "Candy Ads"
-    const val Cookies = "Candy Cookies"
+    const val Ads = "Built-in ads"
+    const val Cookies = "Built-in cookies"
 }
 
 internal data class BundledCandyRules private constructor(
