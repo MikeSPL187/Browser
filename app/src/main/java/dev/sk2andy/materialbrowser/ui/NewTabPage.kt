@@ -142,7 +142,7 @@ internal fun NewTabPage(
                     },
                 ),
         ) {
-            if (title != null && !incognito) {
+            if (interactive && !incognito) {
                 NewTabHeader(
                     title = title,
                     modifier = Modifier
@@ -303,7 +303,7 @@ internal fun NewTabPage(
 
 /** Workspace name and today's date, as on the NewTab board. */
 @Composable
-private fun NewTabHeader(title: String, modifier: Modifier = Modifier) {
+private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
     val locale = LocalConfiguration.current.locales[0]
     val date = remember(locale) {
         val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
@@ -319,7 +319,7 @@ private fun NewTabHeader(title: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
     ) {
         Text(
-            text = title,
+            text = title.orEmpty(),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
