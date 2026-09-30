@@ -527,7 +527,7 @@ class MainActivity : AppCompatActivity() {
                 animationsEnabled = browserController.appearanceSettings.animationsEnabled,
                 startupAnimationEnabled = browserController.isStartupAnimationEnabled,
             ),
-            startupAddressFocusMode = browserController.startupAddressFocusMode,
+            startupAddressFocusMode = browserController.addressBar.startupFocusMode,
             isOnboardingRequired = onboardingRequired,
             isReleaseNotesRequired = releaseNotesRequired,
         )
@@ -887,7 +887,7 @@ class MainActivity : AppCompatActivity() {
                     animationsEnabled = browserController.appearanceSettings.animationsEnabled,
                     startupAnimationEnabled = browserController.isStartupAnimationEnabled,
                 ),
-                startupAddressFocusMode = browserController.startupAddressFocusMode,
+                startupAddressFocusMode = browserController.addressBar.startupFocusMode,
                 isOnboardingRequired = onboardingVisible,
                 isReleaseNotesRequired = releaseNotesVisible,
             )

@@ -7,6 +7,7 @@ import dev.sk2andy.materialbrowser.blocking.BlockerSettings
 import dev.sk2andy.materialbrowser.blocking.SiteExceptionRules
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrides
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
+import dev.sk2andy.materialbrowser.browser.AddressBarPreferenceStore
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineRules
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
@@ -53,7 +54,7 @@ import org.json.JSONObject
 
 class BrowserSessionStore internal constructor(
     private val preferences: SharedPreferences,
-) {
+) : AddressBarPreferenceStore {
     constructor(context: Context) : this(
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE),
     )
@@ -855,12 +856,12 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_ADDRESS_BAR_DOCKED, docked).apply()
     }
 
-    fun loadAddressBarDockPlacement(): AddressBarDockPlacement? {
+    override fun loadAddressBarDockPlacement(): AddressBarDockPlacement? {
         if (!loadAddressBarDocked()) return null
         return loadLastAddressBarDockPlacement() ?: AddressBarDockPlacement.Default
     }
 
-    fun loadLastAddressBarDockPlacement(): AddressBarDockPlacement? {
+    override fun loadLastAddressBarDockPlacement(): AddressBarDockPlacement? {
         if (
             !preferences.contains(KEY_ADDRESS_BAR_DOCK_EDGE) &&
             !preferences.contains(KEY_ADDRESS_BAR_DOCK_VERTICAL_FRACTION)
@@ -878,7 +879,7 @@ class BrowserSessionStore internal constructor(
         ).normalized()
     }
 
-    fun saveAddressBarDockPlacement(placement: AddressBarDockPlacement?) {
+    override fun saveAddressBarDockPlacement(placement: AddressBarDockPlacement?) {
         val normalized = placement?.normalized()
         preferences.edit()
             .putBoolean(KEY_ADDRESS_BAR_DOCKED, normalized != null)
@@ -894,10 +895,10 @@ class BrowserSessionStore internal constructor(
             .apply()
     }
 
-    fun loadAddressBarDockingEnabled(): Boolean =
+    override fun loadAddressBarDockingEnabled(): Boolean =
         preferences.getBoolean(KEY_ADDRESS_BAR_DOCKING_ENABLED, true)
 
-    fun saveAddressBarDockingEnabled(enabled: Boolean) {
+    override fun saveAddressBarDockingEnabled(enabled: Boolean) {
         preferences.edit().putBoolean(KEY_ADDRESS_BAR_DOCKING_ENABLED, enabled).apply()
     }
 
@@ -925,12 +926,12 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putString(KEY_LINK_LONG_PRESS_ACTION, action.stableId).apply()
     }
 
-    fun loadAddressBarLongPressAction(): AddressBarLongPressAction =
+    override fun loadAddressBarLongPressAction(): AddressBarLongPressAction =
         AddressBarLongPressAction.fromStableId(
             preferences.getString(KEY_ADDRESS_BAR_LONG_PRESS_ACTION, null),
         )
 
-    fun saveAddressBarLongPressAction(action: AddressBarLongPressAction) {
+    override fun saveAddressBarLongPressAction(action: AddressBarLongPressAction) {
         preferences.edit().putString(KEY_ADDRESS_BAR_LONG_PRESS_ACTION, action.stableId).apply()
     }
 
@@ -953,7 +954,7 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putString(KEY_LINK_PEEK_ACTION_LAYOUT, encoded.toString()).apply()
     }
 
-    fun loadAddressBarActionLayout(): AddressBarActionLayout {
+    override fun loadAddressBarActionLayout(): AddressBarActionLayout {
         if (!preferences.contains(KEY_ADDRESS_BAR_ACTION_LAYOUT)) {
             val legacyTabButtonVisible = runCatching {
                 preferences.getBoolean(KEY_TAB_BUTTON_VISIBLE, true)
@@ -979,7 +980,7 @@ class BrowserSessionStore internal constructor(
         return normalized
     }
 
-    fun saveAddressBarActionLayout(layout: AddressBarActionLayout) {
+    override fun saveAddressBarActionLayout(layout: AddressBarActionLayout) {
         val normalized = AddressBarActionLayoutRules.normalize(layout)
         val root = JSONObject()
             .put(
@@ -1026,12 +1027,12 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_STARTUP_ANIMATION_ENABLED, enabled).apply()
     }
 
-    fun loadStartupAddressFocusMode(): StartupAddressFocusMode =
+    override fun loadStartupAddressFocusMode(): StartupAddressFocusMode =
         StartupAddressFocusMode.fromStableId(
             preferences.getString(KEY_STARTUP_ADDRESS_FOCUS_MODE, null),
         )
 
-    fun saveStartupAddressFocusMode(mode: StartupAddressFocusMode) {
+    override fun saveStartupAddressFocusMode(mode: StartupAddressFocusMode) {
         preferences.edit().putString(KEY_STARTUP_ADDRESS_FOCUS_MODE, mode.stableId).apply()
     }
 

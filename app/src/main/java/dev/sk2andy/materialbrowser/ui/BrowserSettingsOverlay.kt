@@ -160,7 +160,7 @@ internal fun BrowserSettingsOverlay(
             residentTabLimit = controller.residentTabLimit,
             searchEngine = controller.searchEngine,
             pageTranslationProvider = controller.pageTranslationProvider,
-            addressBarLongPressAction = controller.addressBarLongPressAction,
+            addressBarLongPressAction = controller.addressBar.longPressAction,
             linkLongPressAction = controller.linkLongPressAction,
             linkPeekActionLayout = controller.linkPeekActionLayout,
             searxngSettings = controller.searxngSettings,
@@ -179,14 +179,14 @@ internal fun BrowserSettingsOverlay(
             profiles = controller.profiles,
             activeProfileId = controller.activeProfileId,
             tabCount = controller.activeTabs.size,
-            addressBarActionLayout = controller.addressBarActionLayout,
+            addressBarActionLayout = controller.addressBar.actionLayout,
             browserMenuLayout = controller.browserMenuLayout,
-            isAddressBarDockingEnabled = controller.isAddressBarDockingEnabled,
+            isAddressBarDockingEnabled = controller.addressBar.isDockingEnabled,
             isExternalLinkPreviewEnabled = controller.isExternalLinkPreviewEnabled,
             externalAppLinkHandling = controller.externalAppLinkHandling,
             isFullImmersiveModeEnabled = controller.isFullImmersiveModeEnabled,
             isStartupAnimationEnabled = controller.isStartupAnimationEnabled,
-            startupAddressFocusMode = controller.startupAddressFocusMode,
+            startupAddressFocusMode = controller.addressBar.startupFocusMode,
             isHttpPasswordAutofillEnabled = controller.isHttpPasswordAutofillEnabled,
             isHttpPasswordAutofillSupported = controller.isHttpPasswordAutofillSupported,
             isFavoriteLaunchAnimationEnabled =
@@ -245,7 +245,7 @@ internal fun BrowserSettingsOverlay(
             onSearchEngineChanged = controller::updateSearchEngine,
             onPageTranslationProviderChanged = controller::updatePageTranslationProvider,
             onAddressBarLongPressActionChanged =
-                controller::updateAddressBarLongPressAction,
+                controller.addressBar::updateLongPressAction,
             onLinkLongPressActionChanged = controller::updateLinkLongPressAction,
             onLinkPeekActionLayoutChanged = controller::updateLinkPeekActionLayout,
             onSearxngSettingsChanged = controller::updateSearxngSettings,
@@ -263,10 +263,10 @@ internal fun BrowserSettingsOverlay(
             onClosedTabUndoEnabledChanged = controller::updateClosedTabUndoEnabled,
             onDismissResistancePercentChanged = controller::updateDismissResistancePercent,
             onProfilesEnabledChanged = controller::updateProfilesEnabled,
-            onAddressBarActionLayoutChanged = controller::updateAddressBarActionLayout,
+            onAddressBarActionLayoutChanged = controller.addressBar::updateActionLayout,
             onBrowserMenuLocationChanged = controller::updateBrowserMenuLocation,
             onAddressBarDockingEnabledChanged =
-                controller::updateAddressBarDockingEnabled,
+                controller.addressBar::updateDockingEnabled,
             onExternalLinkPreviewEnabledChanged =
                 controller::updateExternalLinkPreviewEnabled,
             onExternalAppLinkHandlingChanged = controller::updateExternalAppLinkHandling,
@@ -275,7 +275,7 @@ internal fun BrowserSettingsOverlay(
             onStartupAnimationEnabledChanged =
                 controller::updateStartupAnimationEnabled,
             onStartupAddressFocusModeChanged =
-                controller::updateStartupAddressFocusMode,
+                controller.addressBar::updateStartupFocusMode,
             onHttpPasswordAutofillEnabledChanged =
                 controller::updateHttpPasswordAutofillEnabled,
             onFavoriteLaunchAnimationEnabledChanged =
