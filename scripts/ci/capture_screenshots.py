@@ -153,6 +153,11 @@ def tour(suffix):
         open_url("https://en.wikipedia.org/wiki/Zen")
         time.sleep(15)
         shot(f"page-{suffix}")
+        # Scrolling down the page compacts the address bar.
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.3)), "400")
+        time.sleep(3)
+        shot(f"page-scrolled-{suffix}")
     step("page", page)
 
     def https_upgrade():
@@ -208,6 +213,34 @@ def tour(suffix):
     step("settings", menu_and_settings)
 
 
+def air_layout(suffix):
+    """Switches Appearance → Browser layout to Air and shoots the edge-to-edge page."""
+    if not tap("More options", "Другие действия"):
+        log("not found: menu for the Air layout")
+        return
+    time.sleep(2)
+    if not tap_scrolling("Settings", "Настройки", name=f"air-menu-{suffix}"):
+        return
+    time.sleep(3)
+    if not tap_scrolling("Appearance", "Внешний вид", name=f"air-settings-{suffix}"):
+        return
+    time.sleep(2)
+    if not tap("Browser layout", "Оформление"):
+        log("not found: browser layout choice")
+        return
+    time.sleep(1)
+    if not tap("Air", "Воздух"):
+        log("not found: Air layout")
+        return
+    time.sleep(1)
+    for _ in range(3):
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+    open_url("https://en.wikipedia.org/wiki/Zen")
+    time.sleep(12)
+    shot(f"page-air-{suffix}")
+
+
 def main():
     adb("shell", "cmd", "uimode", "night", "no", check=False)
     launch()
@@ -228,6 +261,7 @@ def main():
     time.sleep(12)
     dismiss_first_run()
     tour("ru")
+    step("air", lambda: air_layout("ru"))
 
     crashes = (adb("logcat", "-d", "-b", "crash", check=False, capture=True) or b"").decode(
         "utf-8", "replace"
