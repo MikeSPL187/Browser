@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,6 +64,9 @@ import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
 @Composable
 internal fun NewTabPage(
@@ -82,6 +86,8 @@ internal fun NewTabPage(
     interactive: Boolean = true,
     favoritesAlpha: () -> Float = { 1f },
     explicitSafeDrawingPadding: PaddingValues? = null,
+    /** The workspace name shown above the page, as on the NewTab board. */
+    title: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val profileWallpaper = LocalProfileWallpaper.current.takeUnless { incognito }
@@ -106,6 +112,7 @@ internal fun NewTabPage(
                 incognitoCenterColor = colors.inverseSurface,
                 edgeColor = colors.surface,
                 wallpaper = profileWallpaper,
+                regularBackground = VolaTheme.auraBrush,
             ),
     ) {
         if (profileWallpaper != null) {
@@ -135,6 +142,14 @@ internal fun NewTabPage(
                     },
                 ),
         ) {
+            if (title != null && !incognito) {
+                NewTabHeader(
+                    title = title,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .graphicsLayer { alpha = 1f - boundedProgress },
+                )
+            }
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -286,5 +301,37 @@ internal fun NewTabPage(
     }
 }
 
+/** Workspace name and today's date, as on the NewTab board. */
+@Composable
+private fun NewTabHeader(title: String, modifier: Modifier = Modifier) {
+    val locale = LocalConfiguration.current.locales[0]
+    val date = remember(locale) {
+        val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
+        java.time.LocalDate.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern(pattern, locale))
+            .replaceFirstChar { it.titlecase(locale) }
+    }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = VolaSpacing.x4, vertical = VolaSpacing.x3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+        Text(
+            text = date,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
 private fun Offset.isUsable(): Boolean = x.isFinite() && y.isFinite()

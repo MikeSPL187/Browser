@@ -534,6 +534,10 @@ internal fun BrowserViewport(
                                     controller.isFavoriteLaunchAnimationEnabled,
                             ),
                         favoriteAnimationSpeed = controller.favoriteAnimationSpeed,
+                        title = controller.localBrowserProfiles
+                            .firstOrNull { profile -> profile.id == controller.activeProfileId }
+                            ?.name
+                            ?.takeIf(String::isNotBlank),
                     )
                 }
             }
