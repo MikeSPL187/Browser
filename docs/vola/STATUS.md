@@ -7,6 +7,10 @@ _Обновлено: 2026-09-30 (сессия PR 3: `AddressBarController` #28 �
 
 ## PR и сборка
 
+- **2026-09-30: слиты #25, #26, #27, #28 и #29** (токены, lint, значки, `AddressBarController`,
+  «Рама», «Остров», «Поиск», новая вкладка). Dependabot `rebase` запрошен в #21 и #22; после
+  слияния #22 заменить `currentResources()` на `LocalResources.current`.
+
 - **PR #25 — PR 1 переноса дизайна: токены темы v4** (ветка `ccr-d3f28808-uk5drv`, метка
   `screenshots`).
   - Схемы 8 пространств и приватного режима генерируются `gencss.mjs --kotlin` в
