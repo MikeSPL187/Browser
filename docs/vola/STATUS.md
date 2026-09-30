@@ -3,70 +3,75 @@
 Файл для передачи работы между сессиями Claude Code. Новая сессия читает его первым и
 обновляет в конце работы.
 
-_Обновлено: 2026-09-29 (вторая сессия дня)._
+_Обновлено: 2026-09-30._
 
 ## PR и сборка
 
-- **PR #1–#17 слиты в `main`** по порядку, merge commit, CI каждого был зелёным. Цепочка
-  перенацеливалась на `main` перед слиянием.
+- **PR #1–#17, #19, #20 слиты в `main`** (merge commit, CI зелёный). #20 — поддержка Android 12+
+  (`minSdk` 31, обёртки в `PlatformCompat.kt`, `IoCompat.kt`). #19 — Dependabot, обновление actions.
 - **Ветки слитых PR не удалены:** облачной среде запрещено удалять ветки в GitHub. Владельцу:
   удалить их на странице *Branches* и включить *Settings → General → Automatically delete head
-  branches*, тогда GitHub будет удалять ветку сам после каждого слияния.
-- **PR #20** `build: поддержка Android 12+ (minSdk 31)`, ветка `ccr-86902d83-x44u8j`.
-  `minSdk` 33 → 31, обёртки над API Android 13 в `PlatformCompat.kt`, «Назад» в
-  `AppDataTransferActivity` через `OnBackPressedDispatcher`, README и строки «Android 12+».
-  В `build.yml` добавлен шаг «Show lint errors»: при падении lint в логе видны все ошибки,
-  а не только первая. В том же PR — документы и холст дизайна v2 (только docs, без кода).
-  CI зелёный, конфликтов нет, ждёт решения владельца.
-- **PR #19** — Dependabot (обновление actions). Не трогали, ждёт решения владельца.
-- Подписка на события PR #1–#17 и #20 оформлена в сессии 2026-09-29.
+  branches*.
+- **Dependabot, открыты:**
+  - **#23** (Gradle 9.8, OkHttp 5, Guava, org.json) — CI зелёный, ждёт решения владельца.
+  - **#21** (Kotlin 2.4.20, Compose Multiplatform 1.12, kotlinx) и **#22** (Compose BOM 2026.09,
+    AndroidX) — CI красный. Новая версия Compose добавила проверку lint
+    `LocalContextGetResourceValueCall`: 18 ошибок, первая — `ui/BrowserScreen.kt:423`
+    (`context.getString` внутри Compose). Нужен отдельный PR: заменить на `stringResource` /
+    `LocalResources`, потом перезапустить эти PR. Effort: High.
+- **Текущий PR** — ветка `ccr-86902d83-x44u8j`: холст дизайна v3 и документы (без кода).
+
+## Подпись
+
+- Ключ Preview сгенерирован в сессии 2026-09-30 и передан владельцу файлами (в git не попал).
+  Владелец добавляет секрет `VOLA_PREVIEW_KEYSTORE_BASE64` сам. Проверка: в запуске
+  *Preview APKs* нет уведомления «VOLA_PREVIEW_KEYSTORE_BASE64 is not set».
+- `docs/vola/signing.md` переписан без Termux: ключ делает Claude, владелец только вставляет секрет.
+- Релизный ключ ещё не нужен — сделать перед первым релизом.
 
 ## Дизайн
 
-Направление: Zen Browser + Material 3 Expressive. Холст (62 экрана, 14 страниц):
-https://claude.ai/artifact/CEgKgiZHg4zuju2u7ALZ8C, версия 18 — исходники в
-`docs/vola/design/canvas/` (`vola.css` — токены, `vola-icons.js` — иконки, `*.dc.html` — экраны).
+Направление: Zen Browser + Material 3 Expressive. Холст (63 экрана, 14 страниц):
+https://claude.ai/artifact/CEgKgiZHg4zuju2u7ALZ8C, версия 21 — исходники в
+`docs/vola/design/canvas/`.
 
-- Ревизия v2 и список исправлений: `docs/vola/design/review-v2.md`.
-- Новые страницы холста: «Пароли и автозаполнение», «Перенос и синхронизация», «Инструменты
-  страницы», доска «Состояния», OLED-вариант паролей.
-- Ключевые решения прежние: адресная панель — плавающий стеклянный остров внизу, капсула при
-  прокрутке; цвет пространства тонирует фон; Manrope для интерфейса, Literata для чтения;
-  никаких эмодзи, только иконки.
-- Владелец ещё не видел v2 — ждём замечаний.
+- Ревизии: `docs/vola/design/review-v2.md`, `docs/vola/design/review-v3.md` (полировка всех
+  экранов, общие правила: строка состояния и полоска жестов, зона большого пальца, миниатюры-страницы,
+  группы кнопок M3 Expressive).
+- После замечаний владельца: «Ввод адреса» — ссылка из буфера и «Перейти» у строки ввода;
+  «Видео» — кнопки Vola поверх плеера сайта (новый экран) и лист только с тем, чего у сайта нет.
+- Ждём, примет ли владелец v3.
 
-## Документы этой сессии
+## Решения владельца
 
-| Файл | О чём |
-| --- | --- |
-| `docs/vola/signing.md` | Пошагово с телефона: ключ Preview в Termux → секрет GitHub → резервная копия |
-| `docs/vola/ci-instrumented-tests.md` | Скриншоты Compose Preview на JVM + androidTest на эмуляторе (Gradle Managed Devices, шарды) + дымовой прогон на Android 12 |
-| `docs/vola/features-roadmap.md` | Сравнение с Chrome, Firefox, Safari, Samsung, Vivaldi, Brave, Opera, Arc, Zen; менеджер паролей и синхронизация без сервера |
-| `docs/vola/tech-plan.md` | Разгрузка BrowserController и настроек по правилу бойскаута, процесс обновления GeckoView, план PR переноса дизайна с уровнями Effort |
+- Сторонняя открытая библиотека для KDBX допустима (`features-roadmap.md`).
+- План переноса дизайна в код одобрен (`tech-plan.md`, раздел 4). Первый PR — токены темы и шрифты
+  Manrope/Literata (Effort: High), начать после приёмки макетов.
 
 ## Следующие шаги
 
-1. Владелец: удалить ветки слитых PR; добавить секрет `VOLA_PREVIEW_KEYSTORE_BASE64`
-   (`signing.md`); посмотреть холст v2; решить про PR #19 и про стороннюю библиотеку для KDBX.
-2. PR #20 зелёный и без конфликтов: слить после согласия владельца (merge commit).
-3. Перенос дизайна в код — по таблице в `tech-plan.md`, начиная с токенов и шрифтов
-   (Effort: High). Перед каждым PR рекомендовать Effort и ждать подтверждения.
-4. Параллельно по готовности: `geckoview-update.yml`, храповик размера `BrowserController`,
-   скриншоты Compose Preview в CI.
+1. Владелец: секрет Preview; удалить ветки слитых PR; решить про #23; посмотреть холст v3.
+2. PR с исправлением lint `LocalContextGetResourceValueCall`, затем перезапуск #21 и #22.
+3. После приёмки макетов — PR 1 переноса дизайна (токены и шрифты). Перед каждым PR рекомендовать
+   Effort.
+4. По готовности: `geckoview-update.yml`, храповик размера `BrowserController`, скриншоты Compose
+   Preview в CI.
 
 ## Заметки о среде
 
 - Android SDK в облачной среде нет (`dl.google.com`, `maven.mozilla.org` закрыты; `maven.google.com`
   открыт). Сборку и тесты проверяет CI. `python3 scripts/test_translations.py` проверяет строки
   EN/RU локально.
-- Логи CI из blob-хранилища скачать нельзя: смотреть хвост лога через GitHub-инструменты.
-  Для lint теперь есть шаг «Show lint errors».
+- Логи CI из blob-хранилища скачать нельзя: смотреть хвост лога через GitHub-инструменты
+  (`get_job_logs` с `tail_lines`). Для lint есть шаг «Show lint errors».
 - **Удалять ветки GitHub из среды нельзя** (прокси git не пускает, классификатор запрещает).
 - **Рендер холста для проверки глазами:** `support.js` = `artifact-type/dc-runtime.js` из
-  артефакта (action `read` с `path`), локальный `python3 -m http.server`, Playwright из
-  `/opt/node22/lib/node_modules/playwright` с `executablePath: /opt/pw-browsers/chromium`.
-  Шрифты Google подгружать через `curl` и отдавать через `page.route` (сертификат прокси
-  Chromium не принимает; TLS-проверку не отключать).
+  артефакта (action `read` с `path`), локальный `python3 -m http.server` (запускать в фоне с
+  большим `timeout`), Playwright из `/opt/node22/lib/node_modules/playwright` с
+  `executablePath: /opt/pw-browsers/chromium`. Шрифты Google подгружать через `curl` и отдавать
+  через `page.route` (сертификат прокси Chromium не принимает; TLS-проверку не отключать).
+- Строка состояния и полоска жестов вставляются в каждый экран одним скриптом: разметка —
+  `.stat` и `.navh` в `vola.css`, в конце корневого `div` доски.
 - Публикация холста: копии файлов в папке `<scratch>/pub/project/…`, вызов Artifact с `url`,
   `root` = эта папка, `file_path` = `project/canvas.json`, `files` = изменённые файлы.
 - Firefox, по сообщениям СМИ, с версии 155 выходит раз в две недели. Учитывать в процессе
