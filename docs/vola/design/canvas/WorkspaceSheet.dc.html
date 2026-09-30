@@ -15,8 +15,13 @@
 </helmet>
 <div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
 <div style="position: absolute; inset: 0; background: radial-gradient(120% 60% at 0% 0%, {{glow}}, rgba(243,238,247,0) 70%)"></div>
+<div aria-hidden="true" style="position: absolute; left: 16px; right: 16px; top: 50px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 6px"><span style="display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 28px; background: rgba(255,255,255,0.6)"><i style="width: 44px; height: 44px; border-radius: 22px"></i><span style="height: 44px; width: 112px; border-radius: 16px; background: #006877"></span><i style="width: 44px; height: 44px; border-radius: 22px"></i><i style="width: 44px; height: 44px; border-radius: 22px"></i></span><span style="flex-grow: 1"></span><i style="width: 48px; height: 48px; border-radius: 24px; background: rgba(255,255,255,0.6)"></i></div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px"><i style="height: 60px; border-radius: 20px; background: #FFFFFF"></i><i style="height: 60px; border-radius: 20px; background: #FFFFFF"></i><i style="height: 60px; border-radius: 20px; background: #FFFFFF"></i><i style="height: 60px; border-radius: 20px; background: #FFFFFF"></i><i style="height: 60px; border-radius: 20px; background: #FFFFFF"></i></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 30px"><i style="height: 196px; border-radius: 24px; background: #FFFFFF"></i><i style="height: 196px; border-radius: 24px; background: #FFFFFF"></i></div>
+</div>
 <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
-<div class="sheet" style="height: 736px; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 18px">
+<div class="sheet" style="padding: 0 20px 32px; display: flex; flex-direction: column; gap: 18px">
 <div class="handle"></div>
 <div style="display: flex; align-items: center; gap: 16px; padding-top: 4px">
 <div style="width: 72px; height: 72px; border-radius: 26px; background: {{accent}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px {{shadow}}"><svg class="i l" viewBox="0 0 24 24"><path d="{{iconPath}}"></path></svg></div>
@@ -48,8 +53,10 @@
 <div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Отдельное хранилище</span><span class="t-sub">Свои cookie, входы и данные сайтов</span></div><button role="switch" aria-checked="true" aria-label="Отдельное хранилище" class="sw on" style="background: {{accent}}"><span></span></button></div>
 <div class="row"><div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Вход по биометрии</span><span class="t-sub">Вкладки скрыты, пока вы не войдёте</span></div><button role="switch" aria-checked="false" aria-label="Вход по биометрии" class="sw"><span></span></button></div>
 </div>
-<button style="margin-top: auto; height: 56px; border-radius: 28px; background: {{accent}}; color: #FFFFFF; font-size: 16px; font-weight: 800; box-shadow: 0 10px 24px {{shadow}}; text-align: center">Создать пространство</button>
+<button style="margin-top: 4px; height: 56px; border-radius: 28px; background: {{accent}}; color: #FFFFFF; font-size: 16px; font-weight: 800; box-shadow: 0 10px 24px {{shadow}}; text-align: center">Создать пространство</button>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>

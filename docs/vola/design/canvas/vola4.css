@@ -1,0 +1,95 @@
+/* Vola v4 design language. Colors come from vola4-colors.css (generated per workspace seed);
+   this file holds type, shape, icons, elevation and the two chrome treatments (frame, air). */
+
+.v4 {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  font-family: Manrope, system-ui, sans-serif; color: var(--on-sf); background: var(--sf);
+  -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 0;
+  --r-xs: 8px; --r-s: 12px; --r-m: 16px; --r-l: 20px; --r-xl: 28px; --r-card: 24px; --r-sheet: 32px;
+  --e1: 0 1px 2px rgba(10, 20, 24, 0.06), 0 2px 8px rgba(10, 20, 24, 0.06);
+  --e2: 0 2px 6px rgba(10, 20, 24, 0.07), 0 10px 28px rgba(10, 20, 24, 0.10);
+  --e3: 0 6px 16px rgba(10, 20, 24, 0.10), 0 24px 56px rgba(10, 20, 24, 0.16);
+}
+.v4 *, .v4 *::before, .v4 *::after { box-sizing: border-box; }
+.v4 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+.v4 input { font: inherit; color: inherit; }
+.v4 a { color: inherit; text-decoration: none; }
+.v4 p, .v4 h1, .v4 h2, .v4 h3 { margin: 0; }
+.v4 i { font-style: normal; display: block; }
+.v4.t-dark { --e1: 0 1px 2px rgba(0, 0, 0, 0.4); --e2: 0 8px 24px rgba(0, 0, 0, 0.45); --e3: 0 20px 48px rgba(0, 0, 0, 0.6); }
+
+/* Type scale: Manrope for UI, Literata for reading. Weights stay at 500–700: calmer than v3. */
+.ty-display { font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.025em; }
+.ty-head { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ty-title-l { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.ty-title { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.005em; }
+.ty-body { font-size: 15px; line-height: 22px; font-weight: 500; }
+.ty-label { font-size: 14px; line-height: 18px; font-weight: 600; }
+.ty-cap { font-size: 12.5px; line-height: 16px; font-weight: 500; color: var(--on-sf-v); }
+.ty-over { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-sf-v); }
+.ty-read { font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; }
+
+/* Material Symbols Rounded: the same glyphs the app will ship. */
+.ms { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0; flex-shrink: 0; user-select: none; }
+.ms.f { font-variation-settings: 'FILL' 1; }
+.ms.s { font-size: 20px; }
+.ms.xs { font-size: 18px; }
+.ms.l { font-size: 28px; }
+
+/* Buttons. */
+.ib4 { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-sf-v); flex-shrink: 0; }
+.v4 .btn { height: 48px; border-radius: 24px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.v4 .btn.fill { background: var(--pri); color: var(--on-pri); }
+.v4 .btn.tonal { background: var(--sec-c); color: var(--on-sec-c); }
+.v4 .btn.out { box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf); }
+.v4 .chip { height: 36px; border-radius: 18px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; white-space: nowrap; background: var(--sf-lowest); box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf-v); }
+
+/* Site monogram (no third-party logos in mockups). */
+.fav { display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+
+/* Glass with a legibility floor: the surface is at least 84 % opaque so text keeps 4.5:1 over any page. */
+.glass4 { background: color-mix(in srgb, var(--sf-lowest) 86%, transparent); backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5); box-shadow: var(--e2), inset 0 0 0 1px color-mix(in srgb, var(--on-sf) 8%, transparent); }
+.t-dark .glass4, .glass4.dk { background: color-mix(in srgb, var(--sf-high) 88%, transparent); box-shadow: var(--e2), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+
+/* Workspace aura: the gradient that carries the workspace color through the shell. */
+.aura { background: linear-gradient(172deg, var(--aura-1) 0%, var(--aura-2) 48%, var(--aura-3) 100%); }
+.t-dark .aura, .aura.dk { background: linear-gradient(180deg, var(--aura-1) 0%, var(--aura-2) 38%, #000000 100%); }
+
+/* Direction A «Рама»: the page is a card inside the workspace frame. */
+.page-card { position: absolute; left: 6px; right: 6px; border-radius: 26px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent), 0 8px 24px rgba(10, 20, 24, 0.08); }
+
+/* Android chrome around artboards (not app UI). */
+.sb4 { position: absolute; top: 0; left: 0; right: 0; height: 40px; padding: 2px 22px 0 28px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--on-sf); z-index: 60; pointer-events: none; }
+.sb4 .ic { display: flex; align-items: center; gap: 7px; }
+.sb4 svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.sb4 svg.bat { width: 25px; }
+.sb4.lt { color: #FFFFFF; }
+.gh4 { position: absolute; left: 50%; bottom: 8px; width: 108px; height: 4px; margin-left: -54px; border-radius: 2px; background: var(--on-sf); opacity: 0.4; z-index: 60; pointer-events: none; }
+.gh4.lt { background: #FFFFFF; opacity: 0.7; }
+
+/* Workspace gem: the workspace icon on its aura gradient. */
+.gem { display: flex; align-items: center; justify-content: center; color: var(--on-pri); background: linear-gradient(145deg, color-mix(in srgb, var(--pri) 78%, #FFFFFF) 0%, var(--pri) 70%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 6px color-mix(in srgb, var(--pri) 30%, transparent); flex-shrink: 0; }
+.t-dark .gem { color: var(--on-pri); }
+
+/* Tab counter glyph drawn to match Material Symbols stroke weight. */
+.tabcount { width: 23px; height: 23px; border-radius: 7px; box-shadow: inset 0 0 0 1.9px var(--on-sf-v); display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; color: var(--on-sf); }
+
+/* Direction B «Воздух»: floating island with an aura rim and glow. */
+.halo { border: 1.5px solid transparent; background: linear-gradient(color-mix(in srgb, var(--sf-lowest) 88%, transparent), color-mix(in srgb, var(--sf-lowest) 88%, transparent)) padding-box, linear-gradient(100deg, var(--aura-1), var(--aura-2)) border-box; box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 38%, transparent), 0 4px 14px color-mix(in srgb, var(--aura-2) 30%, transparent); }
+.t-dark .halo { background: linear-gradient(color-mix(in srgb, var(--sf-high) 90%, transparent), color-mix(in srgb, var(--sf-high) 90%, transparent)) padding-box, linear-gradient(100deg, var(--aura-1), var(--aura-2)) border-box; box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 22%, transparent); }
+.t-dark .fieldpill { background: var(--sf-high) !important; }
+.t-dark .glass4 .fieldpill { background: transparent !important; }
+
+/* M3 Expressive connected button group. */
+.bgroup4 { display: flex; gap: 2px; }
+.bgroup4 > button { flex: 1 1 0; height: 44px; border-radius: 8px; background: var(--sf-high); color: var(--on-sf-v); font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.bgroup4 > button:first-child { border-radius: 22px 8px 8px 22px; }
+.bgroup4 > button:last-child { border-radius: 8px 22px 22px 8px; }
+.bgroup4 > button.sel { border-radius: 22px; background: var(--pri); color: var(--on-pri); }
+.air .fieldpill { background: transparent !important; box-shadow: none !important; }
+.gem.priv { background: linear-gradient(135deg, #3B2F8F 0%, #6A4BD8 100%); color: #FFFFFF; }
+
+/* Card surface: white on light themes, a raised grey on the black dark theme. */
+.v4 { --card: var(--sf-lowest); }
+.v4.t-dark { --card: var(--sf-c); }
+.v4 .chip { background: var(--card); }

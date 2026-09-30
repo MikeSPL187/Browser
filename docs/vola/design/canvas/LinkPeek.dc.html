@@ -21,7 +21,8 @@
 <div style="position: absolute; inset: 0; background: rgba(22,18,30,0.28)"></div>
 <div style="position: absolute; left: 20px; top: 150px; height: 34px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 0 0 3px {{c.a}}; padding: 0 10px; display: flex; align-items: center; font-family: Literata, Georgia, serif; font-size: 17px; color: #1E5E8C; text-decoration: underline">прогноз толщины льда</div>
 <div style="position: absolute; left: 16px; right: 16px; top: 210px; border-radius: 30px; background: var(--s-low); box-shadow: var(--shadow); overflow: hidden">
-<div style="height: 150px; background: linear-gradient(160deg, #EEF6F4, #D4F1EC); padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px">
+<div style="position: relative; height: 150px; background: linear-gradient(160deg, #EEF6F4, #D4F1EC); padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px">
+<span aria-hidden="true" style="position: absolute; right: 18px; top: 16px; width: 112px; height: 56px; display: flex; align-items: flex-end; gap: 5px"><i style="flex: 1; height: 35%; border-radius: 4px 4px 1px 1px; background: #BFE0D8"></i><i style="flex: 1; height: 46%; border-radius: 4px 4px 1px 1px; background: #BFE0D8"></i><i style="flex: 1; height: 56%; border-radius: 4px 4px 1px 1px; background: #BFE0D8"></i><i style="flex: 1; height: 64%; border-radius: 4px 4px 1px 1px; background: #BFE0D8"></i><i style="flex: 1; height: 78%; border-radius: 4px 4px 1px 1px; background: #BFE0D8"></i><i style="flex: 1; height: 100%; border-radius: 4px 4px 1px 1px; background: #2F6B5F"></i></span>
 <span class="t-over" style="color: #2F6B5F">Прогноз льда</span>
 <span style="font-size: 19px; font-weight: 800; color: #16211E">Толщина льда: южная часть озера</span>
 </div>
@@ -35,6 +36,8 @@
 </sc-for>
 </div>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>

@@ -14,21 +14,27 @@
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
 <div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
-<div style="position: absolute; inset: 0; padding: 50px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; filter: blur(6px); opacity: 0.7">
-<div style="height: 52px; grid-column: span 2; border-radius: 26px; background: rgba(255,255,255,0.7)"></div>
-<div style="height: 196px; border-radius: 24px; background: #FFFFFF"></div><div style="height: 196px; border-radius: 24px; background: #FFFFFF"></div>
-<div style="height: 196px; border-radius: 24px; background: #FFFFFF"></div><div style="height: 196px; border-radius: 24px; background: #FFFFFF"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; padding: 52px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; align-content: start; filter: blur(7px); opacity: 0.75">
+<div style="height: 52px; grid-column: span 2; border-radius: 26px; background: rgba(255,255,255,0.75)"></div>
+<div style="height: 60px; grid-column: span 2; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px"><i style="border-radius: 20px; background: #FFFFFF"></i><i style="border-radius: 20px; background: #FFFFFF"></i><i style="border-radius: 20px; background: #FFFFFF"></i><i style="border-radius: 20px; background: #FFFFFF"></i><i style="border-radius: 20px; background: #FFFFFF"></i></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; padding: 12px; display: flex; flex-direction: column; gap: 8px"><i style="height: 60px; border-radius: 12px; background: #E6DEFF"></i><i style="height: 8px; width: 80%; border-radius: 4px; background: #E6E1EB"></i></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; padding: 12px; display: flex; gap: 6px"><i style="flex: 1; height: 90px; border-radius: 10px; background: #FFE1D6"></i><i style="flex: 1; height: 120px; border-radius: 10px; background: #E6DEFF"></i><i style="flex: 1; height: 70px; border-radius: 10px; background: #D4F1EC"></i></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; padding: 12px; display: flex; align-items: flex-end; gap: 6px"><i style="flex: 1; height: 40%; border-radius: 4px; background: #D4F1EC"></i><i style="flex: 1; height: 60%; border-radius: 4px; background: #D4F1EC"></i><i style="flex: 1; height: 80%; border-radius: 4px; background: #00665A"></i><i style="flex: 1; height: 55%; border-radius: 4px; background: #D4F1EC"></i></div>
+<div style="height: 196px; border-radius: 24px; background: #FFFFFF; padding: 12px"><i style="display: block; height: 100%; border-radius: 12px; background: #FFDDEA"></i></div>
 </div>
-<div style="position: absolute; inset: 0; background: rgba(243,238,247,0.35)"></div>
-<div style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 236px; display: flex; flex-direction: column; gap: 10px; align-items: center">
-<div style="width: 236px; height: 300px; border-radius: 28px; background: var(--surface); box-shadow: 0 0 0 3px {{c.a}}, 0 24px 48px rgba(38,22,86,0.22); padding: 14px; display: flex; flex-direction: column; gap: 9px">
-<div style="height: 18px; width: 46%; border-radius: 6px; background: #9A3A1E"></div>
-<div style="height: 110px; border-radius: 16px; background: #FFE1D6"></div>
-<div style="height: 9px; width: 92%; border-radius: 4px; background: #E6E1EB"></div>
-<div style="height: 9px; width: 70%; border-radius: 4px; background: #E6E1EB"></div>
-<div style="height: 9px; width: 84%; border-radius: 4px; background: #E6E1EB"></div>
+<div style="position: absolute; inset: 0; background: rgba(243,238,247,0.4)"></div>
+<div style="position: absolute; left: 50%; top: 64px; transform: translateX(-50%); width: 236px; display: flex; flex-direction: column; gap: 4px; align-items: center">
+<div style="width: 236px; height: 284px; border-radius: 28px; background: var(--surface); box-shadow: 0 0 0 3px {{c.a}}, 0 24px 48px rgba(38,22,86,0.22); padding: 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px">
+<div class="mp-head"><i style="background: #9A3A1E; width: 18px; height: 18px; border-radius: 6px"></i><span class="mp-l" style="width: 40%; height: 7px"></span><span style="flex-grow: 1"></span><i style="width: 22px; height: 22px; border-radius: 11px; background: #E6DEFF"></i></div>
+<span class="mp-t" style="width: 58%; height: 11px; margin-top: 4px"></span>
+<span style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 6px">
+<span style="display: flex; flex-direction: column; gap: 7px"><span class="mp-l" style="height: 6px; width: 72%"></span><i style="height: 58px; border-radius: 10px; background: #FFE1D6"></i><i style="height: 40px; border-radius: 10px; background: #FFE1D6"></i><i style="height: 50px; border-radius: 10px; background: #FFE1D6"></i></span>
+<span style="display: flex; flex-direction: column; gap: 7px"><span class="mp-l" style="height: 6px; width: 60%"></span><i style="height: 46px; border-radius: 10px; background: #E6DEFF"></i><i style="height: 68px; border-radius: 10px; background: #E6DEFF"></i></span>
+<span style="display: flex; flex-direction: column; gap: 7px"><span class="mp-l" style="height: 6px; width: 78%"></span><i style="height: 36px; border-radius: 10px; background: #D4F1EC"></i><i style="height: 48px; border-radius: 10px; background: #D4F1EC"></i><i style="height: 30px; border-radius: 10px; background: #D4F1EC"></i></span>
+</span>
 </div>
 <span class="t-label">Спринт 42 · доска задач</span>
+<span class="t-sub">tasks.example.com</span>
 </div>
 <div style="position: absolute; left: 24px; right: 24px; top: 440px; border-radius: 28px; background: var(--surface); box-shadow: var(--shadow); padding: 8px; display: flex; flex-direction: column">
 <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px 0 8px; border-bottom: 1px solid var(--hair)">
@@ -40,10 +46,13 @@
 <button style="height: 52px; border-radius: 16px; display: flex; align-items: center; gap: 14px; padding: 0 14px; color: {{m.color}}">
 <svg class="i" viewBox="0 0 24 24"><path d="{{m.icon}}"></path></svg>
 <span style="flex-grow: 1; font-size: 15px; font-weight: 600">{{m.label}}</span>
-<span class="t-sub">{{m.hint}}</span>
+<span class="t-sub" style="font-weight: 700">{{m.hint}}</span>
+<sc-if value="{{m.more}}"><svg class="i s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.chevR}}"></path></svg></sc-if>
 </button>
 </sc-for>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
@@ -61,9 +70,9 @@ quick: [
 { icon: i.share, label: 'Отправить' }
 ],
 items: [
-{ icon: i.swap, label: 'Переместить в пространство', hint: '›', color: 'var(--on)' },
-{ icon: i.stack, label: 'Добавить в стопку', hint: '', color: 'var(--on)' },
-{ icon: i.alarm, label: 'Отложить', hint: 'до завтра', color: 'var(--on)' },
+{ icon: i.swap, label: 'Переместить', hint: 'Работа', more: true, color: 'var(--on)' },
+{ icon: i.stack, label: 'Добавить в группу', hint: '', more: true, color: 'var(--on)' },
+{ icon: i.alarm, label: 'Отложить', hint: 'до завтра', more: true, color: 'var(--on)' },
 { icon: i.close, label: 'Закрыть вкладку', hint: '', color: 'var(--danger)' }
 ]
 };

@@ -20,33 +20,49 @@
 <div style="height: 180px; border-radius: 18px; background: #DCE9EF"></div>
 </div>
 <div style="position: absolute; inset: 0; background: rgba(22,18,30,0.36)"></div>
-<div style="position: absolute; left: 12px; right: 12px; top: 54px; bottom: 116px; border-radius: 32px; background: var(--page); box-shadow: 0 0 0 1px rgba(255,255,255,0.6), 0 28px 64px rgba(20,12,50,0.34); overflow: hidden; display: flex; flex-direction: column">
+<span aria-hidden="true" style="position: absolute; left: 50%; top: 50px; width: 40px; height: 5px; margin-left: -20px; border-radius: 3px; background: rgba(255,255,255,0.85)"></span>
+<div style="position: absolute; left: 12px; right: 12px; top: 62px; bottom: 108px; border-radius: 32px; background: var(--page); box-shadow: 0 0 0 1px rgba(255,255,255,0.6), 0 28px 64px rgba(20,12,50,0.34); overflow: hidden; display: flex; flex-direction: column">
 <div style="height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; background: var(--s-low)">
 <svg class="i xs" viewBox="0 0 24 24" style="color: var(--ok)"><path d="{{i.lock}}"></path></svg>
 <span style="flex-grow: 1; font-size: 14px; font-weight: 800">ice-forecast.example.ru</span>
 <button class="ib" aria-label="Закрыть предпросмотр" style="width: 40px; height: 40px"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
 </div>
-<div style="flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 14px">
-<span class="t-over" style="color: #2F6B5F">Прогноз льда</span>
+<div style="flex-grow: 1; padding: 18px 20px 0; display: flex; flex-direction: column; gap: 14px">
+<span class="t-over" style="color: #2F6B5F">Прогноз льда · обновлено в 9:00</span>
 <span class="t-h2">Толщина льда: южная часть озера</span>
-<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
-<div style="border-radius: 18px; background: #EEF6F4; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; color: var(--muted)">Листвянка</span><span style="font-size: 22px; font-weight: 800">52 см</span></div>
-<div style="border-radius: 18px; background: #EEF6F4; padding: 14px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; color: var(--muted)">Большие Коты</span><span style="font-size: 22px; font-weight: 800">47 см</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{spots}}" as="p" hint-placeholder-count="3"><div style="border-radius: 18px; background: #EEF6F4; padding: 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap">{{p.name}}</span><span style="font-size: 22px; font-weight: 800; color: #16211E">{{p.cm}}<span style="font-size: 13px; font-weight: 700; color: var(--muted)"> см</span></span></div></sc-for>
 </div>
-<span class="t-sub" style="font-size: 14px; line-height: 1.5">Предпросмотр не попадает во вкладки и историю, пока вы его не откроете. Потяните окно вверх — оно станет вкладкой.</span>
+<div style="border-radius: 20px; box-shadow: inset 0 0 0 1px var(--s-high); padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px">
+<span style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 800"><span>По неделям, см</span><span style="color: #2F6B5F">+6 за неделю</span></span>
+<span style="height: 132px; display: flex; align-items: flex-end; gap: 8px; border-bottom: 1px solid var(--s-high); padding: 0 2px">
+<sc-for list="{{weeks}}" as="w" hint-placeholder-count="8"><i style="flex: 1 1 0; height: {{w.h}}; border-radius: 6px 6px 2px 2px; background: {{w.c}}"></i></sc-for>
+</span>
+<span style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--muted); padding: 0 2px"><span>янв</span><span>фев</span><span>мар</span></span>
 </div>
+<p class="t-read" style="font-size: 15px; line-height: 1.55">Лёд держит пешехода от 10 см, но у берега и возле трещин он тоньше. Сверяйтесь с картой разломов перед выходом.</p>
 </div>
-<div style="position: absolute; left: 12px; right: 12px; bottom: 32px; display: flex; gap: 10px">
+<div style="margin: 0 12px 12px; border-radius: 18px; background: var(--s-low); padding: 10px 14px; display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.eyeOff}}"></path></svg>Не попадёт в историю, пока не откроете</div>
+</div>
+<div style="position: absolute; left: 12px; right: 12px; bottom: 30px; display: flex; gap: 10px">
 <button style="flex-grow: 1; height: 60px; border-radius: 30px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 800; box-shadow: 0 10px 24px {{c.a45}}"><svg class="i" viewBox="0 0 24 24"><path d="{{i.glance}}"></path></svg>Открыть во вкладке</button>
 <button aria-label="Открыть рядом (Split View)" class="glass" style="width: 60px; height: 60px; border-radius: 30px; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.split}}"></path></svg></button>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
 renderVals() {
 const accent = this.props.accent ?? '#006877';
-return { i: window.VI || {}, c: window.VA ? window.VA(accent) : { a: accent } };
+const weeks = [18, 24, 29, 33, 38, 41, 46, 52].map((v, k) => ({ h: Math.round(v / 52 * 100) + '%', c: k === 7 ? '#2F6B5F' : '#CFE7E1' }));
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent },
+spots: [{ name: 'Листвянка', cm: '52' }, { name: 'Б. Коты', cm: '47' }, { name: 'Ольхон', cm: '61' }],
+weeks: weeks
+};
 }
 }
 </script>

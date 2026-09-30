@@ -1,0 +1,27 @@
+<svg viewBox="0 0 360 210" preserveAspectRatio="xMidYMid slice" style="display: block; width: 100%; height: 100%" aria-hidden="true">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9CBE0"></stop><stop offset="0.55" stop-color="#DCEAF2"></stop><stop offset="1" stop-color="#F3E9DF"></stop></linearGradient>
+<radialGradient id="sun" cx="0.72" cy="0.34" r="0.3"><stop offset="0" stop-color="#FFF6E4" stop-opacity="1"></stop><stop offset="0.35" stop-color="#FFE9C6" stop-opacity="0.7"></stop><stop offset="1" stop-color="#FFE9C6" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="ice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD0DC"></stop><stop offset="0.45" stop-color="#3FA1B8"></stop><stop offset="1" stop-color="#1D6A83"></stop></linearGradient>
+<linearGradient id="shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"></stop><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.55"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop></linearGradient>
+</defs>
+<rect width="360" height="210" fill="url(#sky)"></rect>
+<rect width="360" height="210" fill="url(#sun)"></rect>
+<path d="M0 98 L34 80 L58 90 L92 66 L120 84 L150 72 L182 88 L214 70 L246 86 L276 74 L306 88 L338 78 L360 86 L360 112 L0 112 Z" fill="#9DB4C6"></path>
+<path d="M0 104 L40 92 L78 100 L116 88 L160 102 L204 92 L248 102 L292 94 L332 104 L360 98 L360 116 L0 116 Z" fill="#7F9AAF"></path>
+<path d="M0 112 L360 112 L360 210 L0 210 Z" fill="url(#ice)"></path>
+<path d="M-10 128 L380 122" stroke="url(#shine)" stroke-width="5"></path>
+<g fill="none" stroke="#E9F8FB" stroke-linecap="round" stroke-opacity="0.85">
+<path d="M42 210 L78 168 L70 150 L96 132" stroke-width="1.6"></path>
+<path d="M78 168 L120 176 L150 160" stroke-width="1.2"></path>
+<path d="M214 210 L238 172 L268 164 L286 138" stroke-width="1.6"></path>
+<path d="M238 172 L230 150 L246 128" stroke-width="1.1"></path>
+<path d="M300 210 L318 186 L352 178" stroke-width="1.2"></path>
+</g>
+<g fill="#F4FBFD" stroke="#CFE7EE" stroke-width="0.8">
+<path d="M118 132 L128 116 L134 126 L142 112 L152 132 Z"></path>
+<path d="M150 134 L158 122 L166 134 Z"></path>
+<path d="M300 138 L310 124 L318 138 Z"></path>
+</g>
+<g fill="#0F3C4C" fill-opacity="0.18"><ellipse cx="136" cy="134" rx="22" ry="3"></ellipse><ellipse cx="310" cy="139" rx="12" ry="2"></ellipse></g>
+</svg>

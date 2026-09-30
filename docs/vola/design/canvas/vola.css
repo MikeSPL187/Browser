@@ -109,3 +109,27 @@ svg.i.xl { width: 44px; height: 44px; stroke-width: 1.5; }
 
 /* Site monogram (no third-party logos in mockups). */
 .mono { display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+
+/* Android chrome around phone artboards: status bar and gesture handle. Not part of the app UI. */
+.stat { position: absolute; top: 0; left: 0; right: 0; height: 40px; padding: 2px 22px 0 28px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; letter-spacing: 0.01em; color: var(--on); z-index: 60; pointer-events: none; }
+.stat .ic { display: flex; align-items: center; gap: 7px; }
+.stat svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.stat svg.bat { width: 25px; height: 15px; }
+.stat.on-dark { color: #FFFFFF; }
+.navh { position: absolute; left: 50%; bottom: 8px; width: 108px; height: 4px; margin-left: -54px; border-radius: 2px; background: var(--on); opacity: 0.38; z-index: 60; pointer-events: none; }
+.navh.on-dark { background: #FFFFFF; opacity: 0.6; }
+
+/* M3 Expressive connected button group: inner corners small, selected item fully round. */
+.bgroup { display: flex; gap: 2px; }
+.bgroup > button { flex: 1 1 0; height: 40px; background: var(--s-high); border-radius: 8px; font-size: 14px; font-weight: 800; color: var(--on-var); display: flex; align-items: center; justify-content: center; }
+.bgroup > button:first-child { border-radius: 20px 8px 8px 20px; }
+.bgroup > button:last-child { border-radius: 8px 20px 20px 8px; }
+.bgroup > button.sel { border-radius: 20px; color: #FFFFFF; }
+
+/* Miniature page parts for tab thumbnails. */
+.mp-l { display: block; height: 6px; border-radius: 3px; background: var(--s-high); flex-shrink: 0; }
+.mp-t { display: block; height: 9px; border-radius: 4px; background: var(--on); opacity: 0.72; flex-shrink: 0; }
+.mp-head { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.mp-head > i { width: 14px; height: 14px; border-radius: 5px; flex-shrink: 0; }
+.stat.tab { height: 32px; padding: 0 28px; font-size: 13px; }
+.navh.tab { width: 160px; margin-left: -80px; bottom: 6px; }

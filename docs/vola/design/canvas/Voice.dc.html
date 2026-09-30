@@ -14,22 +14,29 @@
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
 <div class="vl" style="width: 390px; height: 844px; background: var(--bg)">
-<div style="position: absolute; left: -120px; top: 260px; width: 630px; height: 630px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a30}}, rgba(243,238,247,0))"></div>
-<div style="position: relative; padding: 44px 16px 0; display: flex; align-items: center; justify-content: space-between">
-<button class="ib" aria-label="Отмена"><svg class="i" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
-<button style="height: 40px; border-radius: 20px; padding: 0 14px; background: var(--surface); box-shadow: var(--shadow-sm); font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.globe}}"></path></svg>Русский<svg class="i xs" viewBox="0 0 24 24"><path d="{{i.chevD}}"></path></svg></button>
+<div style="position: absolute; left: -165px; top: 200px; width: 720px; height: 720px; border-radius: 50%; background: radial-gradient(closest-side, {{c.a30}}, rgba(243,238,247,0))"></div>
+<div style="position: absolute; left: 8px; right: 16px; top: 44px; display: flex; align-items: center; justify-content: space-between">
+<button class="ib" aria-label="Отменить"><svg class="i" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
+<button style="height: 40px; border-radius: 20px; padding: 0 12px 0 14px; background: var(--surface); box-shadow: var(--shadow-sm); font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.globe}}"></path></svg>Русский<svg class="i xs" viewBox="0 0 24 24"><path d="{{i.chevD}}"></path></svg></button>
 </div>
-<div style="position: relative; padding: 120px 28px 0; display: flex; flex-direction: column; gap: 12px">
-<span class="t-sub" style="font-size: 15px; font-weight: 700">Говорите…</span>
-<p style="font-size: 30px; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em">погода на Байкале в феврале <span style="color: var(--muted)">и толщина</span></p>
+<div style="position: absolute; left: 28px; right: 28px; top: 176px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center">
+<span style="height: 28px; border-radius: 14px; padding: 0 12px; background: {{c.a10}}; color: {{c.a}}; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{c.a}}; box-shadow: 0 0 0 4px {{c.a20}}"></span>Слушаю</span>
+<p style="font-size: 30px; line-height: 1.22; font-weight: 800; letter-spacing: -0.015em">погода на Байкале в&nbsp;феврале <span style="color: var(--muted)">и толщина льда</span></p>
 </div>
-<div style="position: absolute; left: 0; right: 0; bottom: 214px; height: 72px; display: flex; align-items: center; justify-content: center; gap: 6px" aria-hidden="true">
-<sc-for list="{{bars}}" as="b" hint-placeholder-count="15"><span style="width: 6px; height: {{b}}; border-radius: 3px; background: {{c.a}}"></span></sc-for>
+<div style="position: absolute; left: 0; right: 0; top: 400px; height: 248px; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; width: 248px; height: 248px; border-radius: 50%; background: {{c.a06}}; box-shadow: inset 0 0 0 1px {{c.a14}}"></span>
+<span style="position: absolute; width: 186px; height: 186px; border-radius: 50%; background: {{c.a10}}"></span>
+<span style="position: absolute; width: 132px; height: 132px; border-radius: 50%; background: {{c.a20}}"></span>
+<button aria-label="Остановить запись" style="position: relative; width: 92px; height: 92px; border-radius: 46px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 32px {{c.a45}}"><svg class="i xl" viewBox="0 0 24 24"><path d="{{i.mic}}"></path></svg></button>
 </div>
-<div style="position: absolute; left: 0; right: 0; bottom: 60px; display: flex; flex-direction: column; align-items: center; gap: 16px">
-<button aria-label="Остановить запись" style="width: 84px; height: 84px; border-radius: 30px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 10px {{c.a14}}, 0 14px 30px {{c.a45}}"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.mic}}"></path></svg></button>
-<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg>Распознаётся на телефоне, запись не сохраняется</span>
+<p class="t-sub" style="position: absolute; left: 0; right: 0; top: 664px; text-align: center; font-weight: 700">Коснитесь, чтобы закончить</p>
+<div style="position: absolute; left: 20px; right: 20px; top: 704px; display: flex; gap: 10px">
+<button style="flex: 1 1 0; height: 52px; border-radius: 26px; background: var(--surface); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--on)"><svg class="i s" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.keyboard}}"></path></svg>Текстом</button>
+<button style="flex: 1 1 0; height: 52px; border-radius: 26px; background: {{c.a14}}; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 800; color: {{c.a}}"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>Искать сейчас</button>
 </div>
+<span style="position: absolute; left: 0; right: 0; top: 784px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg>Распознаётся на телефоне, запись не сохраняется</span>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
@@ -38,8 +45,7 @@ renderVals() {
 const accent = this.props.accent ?? '#5E4EB7';
 return {
 i: window.VI || {},
-c: window.VA ? window.VA(accent) : { a: accent, a14: accent, a30: accent, a45: accent },
-bars: ['10px', '18px', '30px', '44px', '26px', '52px', '64px', '40px', '58px', '34px', '22px', '38px', '16px', '24px', '10px']
+c: window.VA ? window.VA(accent) : { a: accent, a06: accent, a10: accent, a14: accent, a20: accent, a30: accent, a45: accent }
 };
 }
 }

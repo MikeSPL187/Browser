@@ -7,9 +7,13 @@
  "title": "Vola — новый дизайн",
  "launch": {
   "view": "canvas",
-  "page": "browse"
+  "page": "v4"
  },
  "pages": [
+  {
+   "id": "v4",
+   "name": "Прототип и оформление"
+  },
   {
    "id": "base",
    "name": "Основа"
@@ -56,37 +60,163 @@
   },
   {
    "id": "system",
-   "name": "Системные экраны"
+   "name": "Первый запуск"
+  },
+  {
+   "id": "security",
+   "name": "Защита"
   },
   {
    "id": "dark",
-   "name": "Тёмная и OLED"
+   "name": "Тёмная тема"
   },
   {
    "id": "tablet",
    "name": "Планшет"
+  },
+  {
+   "id": "v3",
+   "name": "v3 · архив"
   }
  ],
  "boards": {
-  "Tokens.dc.html": {
+  "V4A-Page.dc.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "А · Страница",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4A-Tabs.dc.html": {
+   "x": 470,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "А · Обзор вкладок",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4A-Address.dc.html": {
+   "x": 940,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "А · Ввод адреса",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4A-Anime.dc.html": {
+   "x": 1410,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "А · Другое пространство: «Аниме»",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4A-PageDark.dc.html": {
+   "x": 1880,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "А · Тёмная тема",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4B-Page.dc.html": {
+   "x": 0,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Б · Страница",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4B-Tabs.dc.html": {
+   "x": 470,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Б · Обзор вкладок",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4B-Address.dc.html": {
+   "x": 940,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Б · Ввод адреса",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4B-Anime.dc.html": {
+   "x": 1410,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Б · Другое пространство: «Аниме»",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4-Appearance.dc.html": {
+   "x": 2350,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Выбор в настройках: Внешний вид",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4B-PageDark.dc.html": {
+   "x": 1880,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "Б · Тёмная тема",
+   "page": "v4",
+   "radius": 40
+  },
+  "V4-Proto.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 780,
+   "h": 844,
+   "title": "Живой прототип: нажимайте",
+   "page": "v4",
+   "radius": 40,
+   "is_interactive": true
+  },
+  "W-Tokens.dc.html": {
    "x": 0,
    "y": 0,
    "w": 1440,
-   "h": 1320,
+   "h": 1800,
    "title": "Токены",
    "page": "base",
    "radius": 24
   },
-  "Components.dc.html": {
+  "W-Components.dc.html": {
    "x": 1520,
    "y": 0,
    "w": 1440,
-   "h": 1240,
+   "h": 1580,
    "title": "Компоненты",
    "page": "base",
    "radius": 24
   },
-  "Main.dc.html": {
+  "W-States.dc.html": {
+   "x": 0,
+   "y": 1880,
+   "w": 1440,
+   "h": 940,
+   "title": "Состояния: пусто, загрузка, ошибка",
+   "page": "base",
+   "radius": 24
+  },
+  "W-Main.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -95,7 +225,7 @@
    "page": "browse",
    "radius": 40
   },
-  "Scrolled.dc.html": {
+  "W-Scrolled.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -104,7 +234,7 @@
    "page": "browse",
    "radius": 40
   },
-  "Editing.dc.html": {
+  "W-Editing.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -113,7 +243,7 @@
    "page": "browse",
    "radius": 40
   },
-  "Find.dc.html": {
+  "W-Find.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
@@ -122,7 +252,7 @@
    "page": "browse",
    "radius": 40
   },
-  "Reader.dc.html": {
+  "W-Reader.dc.html": {
    "x": 1880,
    "y": 0,
    "w": 390,
@@ -131,7 +261,7 @@
    "page": "browse",
    "radius": 40
   },
-  "Tabs.dc.html": {
+  "W-Tabs.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -140,7 +270,7 @@
    "page": "tabs",
    "radius": 40
   },
-  "TabActions.dc.html": {
+  "W-TabActions.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -149,7 +279,7 @@
    "page": "tabs",
    "radius": 40
   },
-  "WorkspaceSwipe.dc.html": {
+  "W-WorkspaceSwipe.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -158,17 +288,16 @@
    "page": "tabs",
    "radius": 40
   },
-  "WorkspaceSheet.dc.html": {
+  "W-WorkspaceSheet.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
    "h": 844,
    "title": "Новое пространство",
    "page": "tabs",
-   "radius": 40,
-   "is_interactive": true
+   "radius": 40
   },
-  "WorkspaceSettings.dc.html": {
+  "W-WorkspaceSettings.dc.html": {
    "x": 1880,
    "y": 0,
    "w": 390,
@@ -177,7 +306,7 @@
    "page": "tabs",
    "radius": 40
   },
-  "NewTab.dc.html": {
+  "W-NewTab.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -186,7 +315,7 @@
    "page": "newtab",
    "radius": 40
   },
-  "EssentialsEdit.dc.html": {
+  "W-EssentialsEdit.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -195,7 +324,7 @@
    "page": "newtab",
    "radius": 40
   },
-  "PrivateTab.dc.html": {
+  "W-PrivateTab.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -204,7 +333,7 @@
    "page": "newtab",
    "radius": 40
   },
-  "Menu.dc.html": {
+  "W-Menu.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -213,7 +342,7 @@
    "page": "menu",
    "radius": 40
   },
-  "SiteInfo.dc.html": {
+  "W-SiteInfo.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -222,7 +351,7 @@
    "page": "menu",
    "radius": 40
   },
-  "PrivacyXRay.dc.html": {
+  "W-PrivacyXRay.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -231,7 +360,7 @@
    "page": "menu",
    "radius": 40
   },
-  "Permission.dc.html": {
+  "W-Permission.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
@@ -240,7 +369,7 @@
    "page": "menu",
    "radius": 40
   },
-  "LinkPeek.dc.html": {
+  "W-LinkPeek.dc.html": {
    "x": 1880,
    "y": 0,
    "w": 390,
@@ -249,260 +378,7 @@
    "page": "menu",
    "radius": 40
   },
-  "History.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "История",
-   "page": "library",
-   "radius": 40
-  },
-  "Favorites.dc.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Избранное",
-   "page": "library",
-   "radius": 40
-  },
-  "Downloads.dc.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Загрузки",
-   "page": "library",
-   "radius": 40
-  },
-  "Snoozed.dc.html": {
-   "x": 1410,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Отложенные вкладки",
-   "page": "library",
-   "radius": 40
-  },
-  "Settings.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Настройки",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetAppearance.dc.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Внешний вид",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetPrivacy.dc.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Приватность и защита",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetSearch.dc.html": {
-   "x": 1410,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Поиск",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetTabs.dc.html": {
-   "x": 1880,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Вкладки и жесты",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetExtensions.dc.html": {
-   "x": 2350,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Расширения",
-   "page": "settings",
-   "radius": 40
-  },
-  "SetSync.dc.html": {
-   "x": 2820,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Синхронизация",
-   "page": "settings",
-   "radius": 40
-  },
-  "Compact.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Компактный режим",
-   "page": "zen",
-   "radius": 40
-  },
-  "Split.dc.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Split View",
-   "page": "zen",
-   "radius": 40
-  },
-  "Glance.dc.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Glance",
-   "page": "zen",
-   "radius": 40
-  },
-  "Themes.dc.html": {
-   "x": 1410,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Темы",
-   "page": "zen",
-   "radius": 40,
-   "is_interactive": true
-  },
-  "Splash.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Заставка",
-   "page": "system",
-   "radius": 40
-  },
-  "Welcome.dc.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Приветствие",
-   "page": "system",
-   "radius": 40
-  },
-  "Setup.dc.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Первая настройка",
-   "page": "system",
-   "radius": 40
-  },
-  "Offline.dc.html": {
-   "x": 1410,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Нет сети",
-   "page": "system",
-   "radius": 40
-  },
-  "HttpsOnly.dc.html": {
-   "x": 1880,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Только HTTPS",
-   "page": "system",
-   "radius": 40
-  },
-  "Locked.dc.html": {
-   "x": 2350,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Пространство заблокировано",
-   "page": "system",
-   "radius": 40
-  },
-  "PageDark.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Страница · тёмная",
-   "page": "dark",
-   "radius": 40
-  },
-  "TabsOled.dc.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Вкладки · OLED",
-   "page": "dark",
-   "radius": 40
-  },
-  "MenuDark.dc.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "Меню · тёмная",
-   "page": "dark",
-   "radius": 40
-  },
-  "Tablet.dc.html": {
-   "x": 0,
-   "y": 0,
-   "w": 1280,
-   "h": 800,
-   "title": "Планшет",
-   "page": "tablet",
-   "radius": 28
-  },
-  "TabletSplit.dc.html": {
-   "x": 1360,
-   "y": 0,
-   "w": 1280,
-   "h": 800,
-   "title": "Планшет · Split View",
-   "page": "tablet",
-   "radius": 28
-  },
-  "TabletSettings.dc.html": {
-   "x": 2720,
-   "y": 0,
-   "w": 1280,
-   "h": 800,
-   "title": "Планшет · настройки",
-   "page": "tablet",
-   "radius": 28
-  },
-  "States.dc.html": {
-   "x": 0,
-   "y": 1440,
-   "w": 1440,
-   "h": 1080,
-   "title": "Состояния: пусто, загрузка, ошибка",
-   "page": "base",
-   "radius": 24
-  },
-  "Passwords.dc.html": {
+  "W-Passwords.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -511,7 +387,7 @@
    "page": "passwords",
    "radius": 40
   },
-  "PasswordDetail.dc.html": {
+  "W-PasswordDetail.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -520,7 +396,7 @@
    "page": "passwords",
    "radius": 40
   },
-  "PasswordHealth.dc.html": {
+  "W-PasswordHealth.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -529,7 +405,7 @@
    "page": "passwords",
    "radius": 40
   },
-  "Autofill.dc.html": {
+  "W-Autofill.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
@@ -538,7 +414,7 @@
    "page": "passwords",
    "radius": 40
   },
-  "Generator.dc.html": {
+  "W-Generator.dc.html": {
    "x": 1880,
    "y": 0,
    "w": 390,
@@ -547,7 +423,7 @@
    "page": "passwords",
    "radius": 40
   },
-  "Import.dc.html": {
+  "W-Import.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -556,7 +432,7 @@
    "page": "transfer",
    "radius": 40
   },
-  "ImportChrome.dc.html": {
+  "W-ImportChrome.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -565,7 +441,7 @@
    "page": "transfer",
    "radius": 40
   },
-  "SyncPair.dc.html": {
+  "W-SyncPair.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -574,7 +450,7 @@
    "page": "transfer",
    "radius": 40
   },
-  "TabGroups.dc.html": {
+  "W-TabGroups.dc.html": {
    "x": 0,
    "y": 0,
    "w": 390,
@@ -583,7 +459,7 @@
    "page": "tools",
    "radius": 40
   },
-  "Translate.dc.html": {
+  "W-Translate.dc.html": {
    "x": 470,
    "y": 0,
    "w": 390,
@@ -592,7 +468,7 @@
    "page": "tools",
    "radius": 40
   },
-  "Screenshot.dc.html": {
+  "W-Screenshot.dc.html": {
    "x": 940,
    "y": 0,
    "w": 390,
@@ -601,17 +477,26 @@
    "page": "tools",
    "radius": 40
   },
-  "Video.dc.html": {
+  "W-VideoPill.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
    "h": 844,
-   "title": "Видео: картинка в картинке",
+   "title": "Видео: кнопки Vola на плеере",
    "page": "tools",
    "radius": 40
   },
-  "Voice.dc.html": {
+  "W-Video.dc.html": {
    "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Видео: лист инструментов",
+   "page": "tools",
+   "radius": 40
+  },
+  "W-Voice.dc.html": {
+   "x": 2350,
    "y": 0,
    "w": 390,
    "h": 844,
@@ -619,7 +504,241 @@
    "page": "tools",
    "radius": 40
   },
-  "PasswordsDark.dc.html": {
+  "W-History.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "История",
+   "page": "library",
+   "radius": 40
+  },
+  "W-Favorites.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Избранное",
+   "page": "library",
+   "radius": 40
+  },
+  "W-Downloads.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Загрузки",
+   "page": "library",
+   "radius": 40
+  },
+  "W-Snoozed.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Отложенные вкладки",
+   "page": "library",
+   "radius": 40
+  },
+  "W-Settings.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Настройки",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetAppearance.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Внешний вид",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetPrivacy.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Приватность и защита",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetSearch.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Поиск",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetTabs.dc.html": {
+   "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Вкладки и жесты",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetExtensions.dc.html": {
+   "x": 2350,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Расширения",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-SetSync.dc.html": {
+   "x": 2820,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Синхронизация",
+   "page": "settings",
+   "radius": 40
+  },
+  "W-Compact.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Компактный режим",
+   "page": "zen",
+   "radius": 40
+  },
+  "W-Split.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Split View",
+   "page": "zen",
+   "radius": 40
+  },
+  "W-Glance.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Glance",
+   "page": "zen",
+   "radius": 40
+  },
+  "W-Themes.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Темы",
+   "page": "zen",
+   "radius": 40
+  },
+  "W-Splash.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Заставка",
+   "page": "system",
+   "radius": 40
+  },
+  "W-Welcome.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Приветствие",
+   "page": "system",
+   "radius": 40
+  },
+  "W-Setup.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Первая настройка",
+   "page": "system",
+   "radius": 40
+  },
+  "W-Offline.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Нет сети",
+   "page": "system",
+   "radius": 40
+  },
+  "W-DangerousSite.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Опасный сайт",
+   "page": "security",
+   "radius": 40
+  },
+  "W-DownloadCheck.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Проверка загрузки",
+   "page": "security",
+   "radius": 40
+  },
+  "W-HttpsOnly.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Только HTTPS",
+   "page": "security",
+   "radius": 40
+  },
+  "W-Locked.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Пространство заблокировано",
+   "page": "security",
+   "radius": 40
+  },
+  "W-PageDark.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Страница · тёмная",
+   "page": "dark",
+   "radius": 40
+  },
+  "W-TabsDark.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Обзор вкладок (тёмная)",
+   "page": "dark",
+   "radius": 40
+  },
+  "W-MenuDark.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Меню · тёмная",
+   "page": "dark",
+   "radius": 40
+  },
+  "W-PasswordsDark.dc.html": {
    "x": 1410,
    "y": 0,
    "w": 390,
@@ -627,9 +746,682 @@
    "title": "Пароли · OLED",
    "page": "dark",
    "radius": 40
+  },
+  "W-Tablet.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Планшет",
+   "page": "tablet",
+   "radius": 24
+  },
+  "W-TabletSplit.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Планшет · Split View",
+   "page": "tablet",
+   "radius": 24
+  },
+  "W-TabletSettings.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "Планшет · настройки",
+   "page": "tablet",
+   "radius": 24
+  },
+  "Tokens.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1320,
+   "title": "v3 · Токены",
+   "page": "v3",
+   "radius": 24
+  },
+  "Components.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1240,
+   "title": "v3 · Компоненты",
+   "page": "v3",
+   "radius": 24
+  },
+  "States.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1080,
+   "title": "v3 · Состояния: пусто, загрузка, ошибка",
+   "page": "v3",
+   "radius": 24
+  },
+  "Main.dc.html": {
+   "x": 0,
+   "y": 1580,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Страница",
+   "page": "v3",
+   "radius": 40
+  },
+  "Scrolled.dc.html": {
+   "x": 470,
+   "y": 1580,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Прокрутка: панель сворачивается",
+   "page": "v3",
+   "radius": 40
+  },
+  "Editing.dc.html": {
+   "x": 940,
+   "y": 1580,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Ввод адреса и подсказки",
+   "page": "v3",
+   "radius": 40
+  },
+  "Find.dc.html": {
+   "x": 1410,
+   "y": 1580,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Поиск на странице",
+   "page": "v3",
+   "radius": 40
+  },
+  "Reader.dc.html": {
+   "x": 1880,
+   "y": 1580,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Режим чтения",
+   "page": "v3",
+   "radius": 40
+  },
+  "Tabs.dc.html": {
+   "x": 0,
+   "y": 2684,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Обзор вкладок",
+   "page": "v3",
+   "radius": 40
+  },
+  "TabActions.dc.html": {
+   "x": 470,
+   "y": 2684,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Действия с вкладкой",
+   "page": "v3",
+   "radius": 40
+  },
+  "WorkspaceSwipe.dc.html": {
+   "x": 940,
+   "y": 2684,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Переключение пространств свайпом",
+   "page": "v3",
+   "radius": 40
+  },
+  "WorkspaceSheet.dc.html": {
+   "x": 1410,
+   "y": 2684,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Новое пространство",
+   "page": "v3",
+   "radius": 40,
+   "is_interactive": true
+  },
+  "WorkspaceSettings.dc.html": {
+   "x": 1880,
+   "y": 2684,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Настройки пространства",
+   "page": "v3",
+   "radius": 40
+  },
+  "NewTab.dc.html": {
+   "x": 0,
+   "y": 3788,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Новая вкладка",
+   "page": "v3",
+   "radius": 40
+  },
+  "EssentialsEdit.dc.html": {
+   "x": 470,
+   "y": 3788,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Редактирование Essentials",
+   "page": "v3",
+   "radius": 40
+  },
+  "PrivateTab.dc.html": {
+   "x": 940,
+   "y": 3788,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Приватная вкладка",
+   "page": "v3",
+   "radius": 40
+  },
+  "Menu.dc.html": {
+   "x": 0,
+   "y": 4892,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Главное меню",
+   "page": "v3",
+   "radius": 40
+  },
+  "SiteInfo.dc.html": {
+   "x": 470,
+   "y": 4892,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Сведения о сайте",
+   "page": "v3",
+   "radius": 40
+  },
+  "PrivacyXRay.dc.html": {
+   "x": 940,
+   "y": 4892,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Privacy X-Ray",
+   "page": "v3",
+   "radius": 40
+  },
+  "Permission.dc.html": {
+   "x": 1410,
+   "y": 4892,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Запрос разрешения",
+   "page": "v3",
+   "radius": 40
+  },
+  "LinkPeek.dc.html": {
+   "x": 1880,
+   "y": 4892,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Долгое нажатие на ссылку",
+   "page": "v3",
+   "radius": 40
+  },
+  "Passwords.dc.html": {
+   "x": 0,
+   "y": 5996,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Пароли",
+   "page": "v3",
+   "radius": 40
+  },
+  "PasswordDetail.dc.html": {
+   "x": 470,
+   "y": 5996,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Запись: логин, пароль, 2FA",
+   "page": "v3",
+   "radius": 40
+  },
+  "PasswordHealth.dc.html": {
+   "x": 940,
+   "y": 5996,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Проверка паролей",
+   "page": "v3",
+   "radius": 40
+  },
+  "Autofill.dc.html": {
+   "x": 1410,
+   "y": 5996,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Автозаполнение входа",
+   "page": "v3",
+   "radius": 40
+  },
+  "Generator.dc.html": {
+   "x": 1880,
+   "y": 5996,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Генератор при регистрации",
+   "page": "v3",
+   "radius": 40
+  },
+  "Import.dc.html": {
+   "x": 0,
+   "y": 7100,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Перенести в Vola",
+   "page": "v3",
+   "radius": 40
+  },
+  "ImportChrome.dc.html": {
+   "x": 470,
+   "y": 7100,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Перенос из Chrome: шаги и итог",
+   "page": "v3",
+   "radius": 40
+  },
+  "SyncPair.dc.html": {
+   "x": 940,
+   "y": 7100,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Связать устройства (без сервера)",
+   "page": "v3",
+   "radius": 40
+  },
+  "TabGroups.dc.html": {
+   "x": 0,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Группы вкладок",
+   "page": "v3",
+   "radius": 40
+  },
+  "Translate.dc.html": {
+   "x": 470,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Перевод на устройстве",
+   "page": "v3",
+   "radius": 40
+  },
+  "Screenshot.dc.html": {
+   "x": 940,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Скриншот всей страницы",
+   "page": "v3",
+   "radius": 40
+  },
+  "VideoPill.dc.html": {
+   "x": 1410,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Видео: кнопки Vola на плеере",
+   "page": "v3",
+   "radius": 40
+  },
+  "Video.dc.html": {
+   "x": 1880,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Видео: лист инструментов",
+   "page": "v3",
+   "radius": 40
+  },
+  "Voice.dc.html": {
+   "x": 2350,
+   "y": 8204,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Голосовой поиск",
+   "page": "v3",
+   "radius": 40
+  },
+  "History.dc.html": {
+   "x": 0,
+   "y": 9308,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · История",
+   "page": "v3",
+   "radius": 40
+  },
+  "Favorites.dc.html": {
+   "x": 470,
+   "y": 9308,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Избранное",
+   "page": "v3",
+   "radius": 40
+  },
+  "Downloads.dc.html": {
+   "x": 940,
+   "y": 9308,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Загрузки",
+   "page": "v3",
+   "radius": 40
+  },
+  "Snoozed.dc.html": {
+   "x": 1410,
+   "y": 9308,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Отложенные вкладки",
+   "page": "v3",
+   "radius": 40
+  },
+  "Settings.dc.html": {
+   "x": 0,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Настройки",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetAppearance.dc.html": {
+   "x": 470,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Внешний вид",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetPrivacy.dc.html": {
+   "x": 940,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Приватность и защита",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetSearch.dc.html": {
+   "x": 1410,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Поиск",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetTabs.dc.html": {
+   "x": 1880,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Вкладки и жесты",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetExtensions.dc.html": {
+   "x": 2350,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Расширения",
+   "page": "v3",
+   "radius": 40
+  },
+  "SetSync.dc.html": {
+   "x": 2820,
+   "y": 10412,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Синхронизация",
+   "page": "v3",
+   "radius": 40
+  },
+  "Compact.dc.html": {
+   "x": 0,
+   "y": 11516,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Компактный режим",
+   "page": "v3",
+   "radius": 40
+  },
+  "Split.dc.html": {
+   "x": 470,
+   "y": 11516,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Split View",
+   "page": "v3",
+   "radius": 40
+  },
+  "Glance.dc.html": {
+   "x": 940,
+   "y": 11516,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Glance",
+   "page": "v3",
+   "radius": 40
+  },
+  "Themes.dc.html": {
+   "x": 1410,
+   "y": 11516,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Темы",
+   "page": "v3",
+   "radius": 40,
+   "is_interactive": true
+  },
+  "Splash.dc.html": {
+   "x": 0,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Заставка",
+   "page": "v3",
+   "radius": 40
+  },
+  "Welcome.dc.html": {
+   "x": 470,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Приветствие",
+   "page": "v3",
+   "radius": 40
+  },
+  "Setup.dc.html": {
+   "x": 940,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Первая настройка",
+   "page": "v3",
+   "radius": 40
+  },
+  "Offline.dc.html": {
+   "x": 1410,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Нет сети",
+   "page": "v3",
+   "radius": 40
+  },
+  "HttpsOnly.dc.html": {
+   "x": 1880,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Только HTTPS",
+   "page": "v3",
+   "radius": 40
+  },
+  "Locked.dc.html": {
+   "x": 2350,
+   "y": 12620,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Пространство заблокировано",
+   "page": "v3",
+   "radius": 40
+  },
+  "PageDark.dc.html": {
+   "x": 0,
+   "y": 13724,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Страница · тёмная",
+   "page": "v3",
+   "radius": 40
+  },
+  "TabsOled.dc.html": {
+   "x": 470,
+   "y": 13724,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Вкладки · OLED",
+   "page": "v3",
+   "radius": 40
+  },
+  "MenuDark.dc.html": {
+   "x": 940,
+   "y": 13724,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Меню · тёмная",
+   "page": "v3",
+   "radius": 40
+  },
+  "PasswordsDark.dc.html": {
+   "x": 1410,
+   "y": 13724,
+   "w": 390,
+   "h": 844,
+   "title": "v3 · Пароли · OLED",
+   "page": "v3",
+   "radius": 40
+  },
+  "Tablet.dc.html": {
+   "x": 0,
+   "y": 14828,
+   "w": 1280,
+   "h": 800,
+   "title": "v3 · Планшет",
+   "page": "v3",
+   "radius": 28
+  },
+  "TabletSplit.dc.html": {
+   "x": 1360,
+   "y": 14828,
+   "w": 1280,
+   "h": 800,
+   "title": "v3 · Планшет · Split View",
+   "page": "v3",
+   "radius": 28
+  },
+  "TabletSettings.dc.html": {
+   "x": 2720,
+   "y": 14828,
+   "w": 1280,
+   "h": 800,
+   "title": "v3 · Планшет · настройки",
+   "page": "v3",
+   "radius": 28
   }
  },
  "order": [
+  "V4-Proto.dc.html",
+  "V4A-Page.dc.html",
+  "V4A-Tabs.dc.html",
+  "V4A-Address.dc.html",
+  "V4A-Anime.dc.html",
+  "V4A-PageDark.dc.html",
+  "V4B-Page.dc.html",
+  "V4B-Tabs.dc.html",
+  "V4B-Address.dc.html",
+  "V4B-Anime.dc.html",
+  "V4B-PageDark.dc.html",
+  "V4-Appearance.dc.html",
+  "W-Tokens.dc.html",
+  "W-Components.dc.html",
+  "W-States.dc.html",
+  "W-Main.dc.html",
+  "W-Scrolled.dc.html",
+  "W-Editing.dc.html",
+  "W-Find.dc.html",
+  "W-Reader.dc.html",
+  "W-Tabs.dc.html",
+  "W-TabActions.dc.html",
+  "W-WorkspaceSwipe.dc.html",
+  "W-WorkspaceSheet.dc.html",
+  "W-WorkspaceSettings.dc.html",
+  "W-NewTab.dc.html",
+  "W-EssentialsEdit.dc.html",
+  "W-PrivateTab.dc.html",
+  "W-Menu.dc.html",
+  "W-SiteInfo.dc.html",
+  "W-PrivacyXRay.dc.html",
+  "W-Permission.dc.html",
+  "W-LinkPeek.dc.html",
+  "W-Passwords.dc.html",
+  "W-PasswordDetail.dc.html",
+  "W-PasswordHealth.dc.html",
+  "W-Autofill.dc.html",
+  "W-Generator.dc.html",
+  "W-Import.dc.html",
+  "W-ImportChrome.dc.html",
+  "W-SyncPair.dc.html",
+  "W-TabGroups.dc.html",
+  "W-Translate.dc.html",
+  "W-Screenshot.dc.html",
+  "W-VideoPill.dc.html",
+  "W-Video.dc.html",
+  "W-Voice.dc.html",
+  "W-History.dc.html",
+  "W-Favorites.dc.html",
+  "W-Downloads.dc.html",
+  "W-Snoozed.dc.html",
+  "W-Settings.dc.html",
+  "W-SetAppearance.dc.html",
+  "W-SetPrivacy.dc.html",
+  "W-SetSearch.dc.html",
+  "W-SetTabs.dc.html",
+  "W-SetExtensions.dc.html",
+  "W-SetSync.dc.html",
+  "W-Compact.dc.html",
+  "W-Split.dc.html",
+  "W-Glance.dc.html",
+  "W-Themes.dc.html",
+  "W-Splash.dc.html",
+  "W-Welcome.dc.html",
+  "W-Setup.dc.html",
+  "W-Offline.dc.html",
+  "W-DangerousSite.dc.html",
+  "W-DownloadCheck.dc.html",
+  "W-HttpsOnly.dc.html",
+  "W-Locked.dc.html",
+  "W-PageDark.dc.html",
+  "W-TabsDark.dc.html",
+  "W-MenuDark.dc.html",
+  "W-PasswordsDark.dc.html",
+  "W-Tablet.dc.html",
+  "W-TabletSplit.dc.html",
+  "W-TabletSettings.dc.html",
   "Tokens.dc.html",
   "Components.dc.html",
   "States.dc.html",
@@ -662,6 +1454,7 @@
   "TabGroups.dc.html",
   "Translate.dc.html",
   "Screenshot.dc.html",
+  "VideoPill.dc.html",
   "Video.dc.html",
   "Voice.dc.html",
   "History.dc.html",
@@ -717,7 +1510,7 @@
    "maxH": 520,
    "fill": "purple",
    "page": "browse",
-   "text": "Адресная панель — плавающий остров над страницей.\n\n• Свайп по панели влево/вправо — соседняя вкладка.\n• Свайп вверх по панели — обзор вкладок.\n• Прокрутка вниз — панель сжимается в капсулу с адресом, вверх — возвращается.\n• Тап по адресу — ввод, тап по значку замка — сведения о сайте.\n• Кружок слева — пространство: тап открывает список, долгое нажатие — настройки."
+   "text": "Адресная панель — плавающий остров над страницей.\n\n• Свайп по панели влево/вправо — соседняя вкладка.\n• Свайп вверх по панели — обзор вкладок.\n• Прокрутка вниз — панель сжимается в капсулу с адресом, вверх — возвращается.\n• Тап по адресу — ввод, тап по значку замка — сведения о сайте.\n• Самоцвет слева — пространство: тап открывает список, долгое нажатие — настройки."
   },
   "t_tabs": {
    "x": 0,
@@ -790,15 +1583,15 @@
    "y": -300,
    "text": "Первый запуск и системные экраны",
    "kind": "title1",
-   "maxW": 2740,
+   "maxW": 1800,
    "page": "system"
   },
   "t_dark": {
    "x": 0,
    "y": -300,
-   "text": "Тёмная тема и чистый чёрный OLED",
+   "text": "Тёмная тема — всегда чистый чёрный",
    "kind": "title1",
-   "maxW": 1330,
+   "maxW": 1800,
    "page": "dark"
   },
   "t_tablet": {
@@ -841,24 +1634,211 @@
    "maxH": 560,
    "fill": "purple",
    "page": "transfer",
-   "text": "Перенос: закладки HTML, пароли CSV/JSON (Chrome, Firefox, Bitwarden, Proton Pass, 1Password), файл KeePass .kdbx. Всё разбирается на телефоне, после импорта Vola предлагает удалить файл.\n\nСинхронизация без своего сервера: ключ создаётся на телефоне и переходит на второе устройство только через QR или фразу из 12 слов. Данные шифруются сквозным ключом и идут напрямую по Wi-Fi или через вашу папку (Syncthing, Nextcloud, Диск). Сервер Candy Sync остаётся опцией для опытных."
+   "text": "Перенос: закладки HTML, пароли CSV/JSON (Chrome, Firefox, Bitwarden, Proton Pass, 1Password), файл KeePass .kdbx. Всё разбирается на телефоне, после импорта Vola предлагает удалить файл.\n\nСинхронизация без своего сервера: ключ создаётся на телефоне и переходит на второе устройство только через QR или фразу из 12 слов. Данные шифруются сквозным ключом и идут напрямую по Wi-Fi или через вашу папку (Syncthing, Nextcloud, Диск). Свой сервер синхронизации остаётся опцией для тех, у кого он уже есть."
   },
   "t_tools": {
    "x": 0,
    "y": -300,
    "text": "Инструменты страницы",
    "kind": "title1",
-   "maxW": 2270,
+   "maxW": 2740,
    "page": "tools"
   },
   "n_tools": {
-   "x": 2350,
+   "x": 2820,
    "y": 0,
    "w": 360,
    "maxH": 560,
    "fill": "purple",
    "page": "tools",
-   "text": "• Группы вкладок внутри пространства; Vola может предложить собрать похожие вкладки (разбор на устройстве).\n• Перевод на устройстве: модели Firefox Translations через GeckoView, текст никуда не уходит. В WebView-сборке — через выбранный сервис, с предупреждением.\n• Скриншот всей страницы с обрезкой и размытием личных данных.\n• Картинка в картинке уже есть в коде Candy; здесь её место в меню видео.\n• Голосовой ввод: распознавание на устройстве, запись не сохраняется."
+   "text": "• Группы вкладок внутри пространства; Vola может предложить собрать похожие вкладки (разбор на устройстве).\n• Перевод на устройстве: модели Firefox Translations через GeckoView, текст никуда не уходит. В WebView-сборке — через выбранный сервис, с предупреждением.\n• Скриншот всей страницы с обрезкой и размытием личных данных.\n• Видео: плеер принадлежит сайту, его кнопки Vola не меняет. Поверх любого плеера Vola кладёт свою маленькую кнопку: ⧉ — картинка в картинке сразу, ⋯ — лист «Видео» с тем, чего у сайта нет: звук в фоне, скорость, окно при выходе, без звука на сайте. Субтитры и качество остаются в плеере сайта. Кнопка гаснет через 3 секунды и появляется при касании видео; подсказка «Это кнопки Vola» показывается один раз.\n• Голосовой ввод: распознавание на устройстве, запись не сохраняется."
+  },
+  "n_base": {
+   "x": 3040,
+   "y": 0,
+   "w": 360,
+   "maxH": 520,
+   "fill": "purple",
+   "page": "base",
+   "text": "Строка состояния и полоска жестов на макетах — системные элементы Android. Они нарисованы для масштаба и отступов, к интерфейсу Vola не относятся.\n\n• Сверху 40 dp под статус-бар, снизу 24 dp под жесты: панели Vola не заходят в эти зоны.\n• Миниатюры вкладок — уменьшенные страницы (документ, доска, график, макет), а не заглушки.\n• Выбор из 2–5 вариантов — группа кнопок M3 Expressive: выбранная кнопка становится круглой и получает цвет пространства.\n\nВсе значения v4 — в canvas/vola4-colors.css (генерируется из цвета пространства) и canvas/vola4.css; генератор и сборщики экранов — docs/vola/design/tools/."
+  },
+  "t_v4": {
+   "x": 0,
+   "y": -300,
+   "text": "v4 · живой прототип и два оформления",
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "v4"
+  },
+  "t_v4a": {
+   "x": 0,
+   "y": 950,
+   "text": "А · «Рама» — по умолчанию: страница — карточка внутри цвета пространства",
+   "kind": "title2",
+   "maxW": 2270,
+   "page": "v4"
+  },
+  "t_v4b": {
+   "x": 0,
+   "y": 2010,
+   "text": "Б · «Воздух» — в настройках: страница от края до края, цвет в ореоле панели",
+   "kind": "title2",
+   "maxW": 2270,
+   "page": "v4"
+  },
+  "n_v4": {
+   "x": 2350,
+   "y": 0,
+   "w": 400,
+   "maxH": 900,
+   "fill": "purple",
+   "page": "v4",
+   "text": "Что общего у обоих направлений:\n\n• Цвета генерируются из цвета пространства (Material Color Utilities, схема M3 2025): светлая, тёмная (всегда на чистом чёрном — отдельного переключателя OLED нет) и повышенный контраст. Каждая пара «текст — фон» проверена скриптом, контраст не ниже 4,5:1.\n• Значки — Material Symbols Rounded, те же, что будут в приложении.\n• Внизу одна полоса, никогда не два ряда. Переключатель пространств — внизу обзора вкладок, у большого пальца; приватные вкладки — отдельное «пространство» в том же ряду.\n• Essentials — над панелью, в зоне большого пальца.\n• Режим чтения и картинка в картинке — прямо в адресной строке, как у Safari.\n\nЧем отличаются. По умолчанию — «Рама» (решение владельца); «Воздух» включается в Настройки → Внешний вид и при первом запуске:\n\nА · «Рама». Вся оболочка лежит на градиенте пространства; страница — карточка со скруглёнными углами. Сменил пространство — сменился цвет рамки (сравните «Работу» и «Аниме»). Узнаётся с первого взгляда, как Zen и Arc; цена — 6 dp по бокам экрана.\n\nБ · «Воздух». Страница на весь экран. Цвет пространства живёт в ореоле и кромке плавающей панели и в мягком свечении под ней. Спокойнее и ближе к Safari; экрана под страницу больше."
+  },
+  "t_v4p": {
+   "x": 0,
+   "y": -110,
+   "text": "Живой прототип: прокрутка, свайпы по панели, вкладки, пространства, оформление и тема",
+   "kind": "title2",
+   "maxW": 2270,
+   "page": "v4"
+  },
+  "t_security": {
+   "x": 0,
+   "y": -300,
+   "text": "Защита: опасные сайты, загрузки, HTTPS, блокировка",
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "security"
+  },
+  "n_security": {
+   "x": 1880,
+   "y": 0,
+   "w": 360,
+   "maxH": 560,
+   "fill": "purple",
+   "page": "security",
+   "text": "Защита видна, но не мешает.\n\n• Опасный сайт — полноэкранное предупреждение в цвете ошибки; безопасный выход — главная кнопка, «Всё равно открыть» — только текстом.\n• Файл проверяется на телефоне до открытия: тип, источник, подпись. Никуда не отправляется.\n• Только HTTPS по умолчанию; переход на HTTP — осознанное действие.\n• Пространство можно запереть биометрией: вкладки скрыты, пока вы не подтвердите вход."
+  },
+  "t_v3_base": {
+   "x": 0,
+   "y": -110,
+   "text": "v3 · Основа",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_browse": {
+   "x": 0,
+   "y": 1470,
+   "text": "v3 · Браузинг",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_tabs": {
+   "x": 0,
+   "y": 2574,
+   "text": "v3 · Вкладки и пространства",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_newtab": {
+   "x": 0,
+   "y": 3678,
+   "text": "v3 · Новая вкладка",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_menu": {
+   "x": 0,
+   "y": 4782,
+   "text": "v3 · Меню и сайт",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_passwords": {
+   "x": 0,
+   "y": 5886,
+   "text": "v3 · Пароли и автозаполнение",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_transfer": {
+   "x": 0,
+   "y": 6990,
+   "text": "v3 · Перенос и синхронизация",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_tools": {
+   "x": 0,
+   "y": 8094,
+   "text": "v3 · Инструменты страницы",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_library": {
+   "x": 0,
+   "y": 9198,
+   "text": "v3 · Библиотека",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_settings": {
+   "x": 0,
+   "y": 10302,
+   "text": "v3 · Настройки",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_zen": {
+   "x": 0,
+   "y": 11406,
+   "text": "v3 · Фичи Zen",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_system": {
+   "x": 0,
+   "y": 12510,
+   "text": "v3 · Системные экраны",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_dark": {
+   "x": 0,
+   "y": 13614,
+   "text": "v3 · Тёмная и OLED",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3_tablet": {
+   "x": 0,
+   "y": 14718,
+   "text": "v3 · Планшет",
+   "kind": "title2",
+   "maxW": 3000,
+   "page": "v3"
+  },
+  "t_v3": {
+   "x": 0,
+   "y": -300,
+   "text": "v3 · архив до 30.09.2026 (заменён v4)",
+   "kind": "title1",
+   "maxW": 4000,
+   "page": "v3"
   }
  },
  "designSystems": []
