@@ -9695,9 +9695,7 @@ class BrowserController(
             when (settings.appearanceMode) {
                 BrowserAppearanceMode.System -> BrowserWebContentColorScheme.System
                 BrowserAppearanceMode.Light -> BrowserWebContentColorScheme.Light
-                BrowserAppearanceMode.Dark,
-                BrowserAppearanceMode.Amoled,
-                -> BrowserWebContentColorScheme.Dark
+                BrowserAppearanceMode.Dark -> BrowserWebContentColorScheme.Dark
             },
         )
         browserEngineSessionFactory.setForceDarkWebsites(settings.forceDarkWebsites)

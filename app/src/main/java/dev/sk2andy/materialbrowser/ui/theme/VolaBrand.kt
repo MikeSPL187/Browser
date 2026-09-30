@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
  *
  * They are for brand moments that must look the same in every palette, such as the mark itself
  * or the onboarding. Regular UI takes its colors from MaterialTheme.colorScheme, so it follows
- * the selected palette, dark mode and the AMOLED theme.
+ * the selected palette, workspace and dark mode.
  */
 internal object VolaBrand {
     val VioletLight = Color(0xFFA78BFA)

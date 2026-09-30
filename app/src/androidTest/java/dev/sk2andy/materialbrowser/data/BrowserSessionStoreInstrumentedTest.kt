@@ -478,11 +478,12 @@ class BrowserSessionStoreInstrumentedTest {
         assertEquals(AppearanceSettings(), store.loadAppearanceSettings())
 
         val settings = AppearanceSettings(
-            appearanceMode = BrowserAppearanceMode.Amoled,
+            appearanceMode = BrowserAppearanceMode.Dark,
             animationsEnabled = false,
             forceDarkWebsites = true,
             webContentFontSizePercent = 155,
             colorPalette = BrowserColorPalette.Neutral,
+            chromeStyle = BrowserChromeStyle.Air,
             surfaceStyle = BrowserSurfaceStyle.Frosted,
             shapeStyle = BrowserShapeStyle.Angular,
             addressBarStyle = BrowserAddressBarStyle.Segmented,
@@ -493,6 +494,21 @@ class BrowserSessionStoreInstrumentedTest {
         store.saveAppearanceSettings(settings)
 
         assertEquals(settings, store.loadAppearanceSettings())
+    }
+
+    @Test
+    fun legacyAmoledAppearanceMigratesToDark() {
+        preferences.edit()
+            .putString("appearance_mode", BrowserAppearanceMode.LEGACY_AMOLED_STABLE_ID)
+            .commit()
+
+        val loaded = BrowserSessionStore(context).loadAppearanceSettings()
+
+        assertEquals(BrowserAppearanceMode.Dark, loaded.appearanceMode)
+        assertEquals(
+            BrowserAppearanceMode.Dark.stableId,
+            preferences.getString("appearance_mode", null),
+        )
     }
 
     @Test
@@ -660,6 +676,7 @@ class BrowserSessionStoreInstrumentedTest {
             .putString("force_dark_websites", "invalid")
             .putInt("web_content_font_size_percent", 123)
             .putString("color_palette", "neutral")
+            .putString("chrome_style", "unknown")
             .putString("surface_style", "unknown")
             .putString("shape_style", "extra_rounded")
             .putString("address_bar_style", "unknown")

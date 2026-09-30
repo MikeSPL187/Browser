@@ -110,7 +110,8 @@ internal object GeckoHttpsOnlyErrorPage {
             "<circle cx=\"12\" cy=\"16\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/>" +
             "</svg>"
 
-    // Vola palette: VolaLightColors / VolaDarkColors in shared/ui/theme/BrowserColorSchemes.kt.
+    // The violet palette Vola used before the v4 workspace schemes; the page moves to v4 with the
+    // HTTPS-only screen redesign.
     private val STYLE = """
         :root {
           --surface: #FDF8FE; --on-surface: #1C1B1F; --on-surface-variant: #484550;

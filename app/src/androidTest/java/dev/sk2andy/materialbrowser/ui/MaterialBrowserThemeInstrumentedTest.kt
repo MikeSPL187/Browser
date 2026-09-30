@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -24,6 +25,8 @@ import dev.sk2andy.materialbrowser.ui.theme.CandyDesignLanguage
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyDesignLanguage
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaSchemes
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceTokens
@@ -61,25 +64,58 @@ class MaterialBrowserThemeInstrumentedTest {
     }
 
     @Test
-    fun amoledUsesBlackRootSurfaces() {
-        val surface = AtomicReference<Color>()
-        val background = AtomicReference<Color>()
+    fun darkUsesBlackRootSurfacesInEveryPalette() {
+        val surfaces = BrowserColorPalette.entries.associateWith { AtomicReference<Color>() }
+        val backgrounds = BrowserColorPalette.entries.associateWith { AtomicReference<Color>() }
 
         composeRule.setContent {
-            MaterialBrowserTheme(
-                settings = AppearanceSettings(
-                    appearanceMode = BrowserAppearanceMode.Amoled,
-                    surfaceStyle = BrowserSurfaceStyle.Frosted,
-                ),
-            ) {
-                surface.set(MaterialTheme.colorScheme.surface)
-                background.set(MaterialTheme.colorScheme.background)
+            BrowserColorPalette.entries.forEach { palette ->
+                MaterialBrowserTheme(
+                    settings = AppearanceSettings(
+                        appearanceMode = BrowserAppearanceMode.Dark,
+                        colorPalette = palette,
+                        surfaceStyle = BrowserSurfaceStyle.Frosted,
+                    ),
+                ) {
+                    surfaces.getValue(palette).set(MaterialTheme.colorScheme.surface)
+                    backgrounds.getValue(palette).set(MaterialTheme.colorScheme.background)
+                }
             }
         }
         composeRule.waitForIdle()
 
-        assertEquals(Color.Black, surface.get())
-        assertEquals(Color.Black, background.get())
+        BrowserColorPalette.entries.forEach { palette ->
+            assertEquals(Color.Black, surfaces.getValue(palette).get())
+            assertEquals(Color.Black, backgrounds.getValue(palette).get())
+        }
+    }
+
+    @Test
+    fun workspaceAccentDrivesVolaColors() {
+        val tealPrimary = AtomicReference<Color>()
+        val coralPrimary = AtomicReference<Color>()
+        val coralAura = AtomicReference<Color>()
+
+        composeRule.setContent {
+            MaterialBrowserTheme(
+                settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.Light),
+                workspaceAccent = WorkspaceAccent.Teal,
+            ) {
+                tealPrimary.set(MaterialTheme.colorScheme.primary)
+            }
+            MaterialBrowserTheme(
+                settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.Light),
+                workspaceAccent = WorkspaceAccent.Coral,
+            ) {
+                coralPrimary.set(MaterialTheme.colorScheme.primary)
+                coralAura.set(VolaTheme.extendedColors.aura1)
+            }
+        }
+        composeRule.waitForIdle()
+
+        assertEquals(Color(VolaSchemes.Teal.light.primary), tealPrimary.get())
+        assertEquals(Color(VolaSchemes.Coral.light.primary), coralPrimary.get())
+        assertEquals(Color(VolaSchemes.Coral.light.aura1), coralAura.get())
     }
 
     @Test
@@ -118,29 +154,32 @@ class MaterialBrowserThemeInstrumentedTest {
     }
 
     @Test
-    fun frostedChromeIsTranslucentExceptInAmoledMode() {
-        val frosted = AtomicReference<Color>()
-        val amoled = AtomicReference<Color>()
+    fun frostedChromeIsTranslucentInLightAndDark() {
+        val light = AtomicReference<Color>()
+        val dark = AtomicReference<Color>()
 
         composeRule.setContent {
             MaterialBrowserTheme(
-                settings = AppearanceSettings(surfaceStyle = BrowserSurfaceStyle.Frosted),
-            ) {
-                frosted.set(browserChromeColor(Color.Red))
-            }
-            MaterialBrowserTheme(
                 settings = AppearanceSettings(
-                    appearanceMode = BrowserAppearanceMode.Amoled,
+                    appearanceMode = BrowserAppearanceMode.Light,
                     surfaceStyle = BrowserSurfaceStyle.Frosted,
                 ),
             ) {
-                amoled.set(browserChromeColor(Color.Red))
+                light.set(browserChromeColor(Color.Red))
+            }
+            MaterialBrowserTheme(
+                settings = AppearanceSettings(
+                    appearanceMode = BrowserAppearanceMode.Dark,
+                    surfaceStyle = BrowserSurfaceStyle.Frosted,
+                ),
+            ) {
+                dark.set(browserChromeColor(Color.Red))
             }
         }
         composeRule.waitForIdle()
 
-        assertEquals(0.82f, frosted.get().alpha, 0.001f)
-        assertEquals(1f, amoled.get().alpha, 0f)
+        assertEquals(0.82f, light.get().alpha, 0.001f)
+        assertEquals(0.82f, dark.get().alpha, 0.001f)
     }
 
     @Test
@@ -172,10 +211,9 @@ class MaterialBrowserThemeInstrumentedTest {
     }
 
     @Test
-    fun customAddressBarColorPreservesClearFrostedAndAmoledTreatments() {
+    fun customAddressBarColorPreservesClearAndFrostedTreatments() {
         val clear = AtomicReference<BrowserChromeSurfaceTokens>()
         val frosted = AtomicReference<BrowserChromeSurfaceTokens>()
-        val amoled = AtomicReference<BrowserChromeSurfaceTokens>()
         val colorSettings = AppearanceSettings(
             addressBarColorPreset = BrowserAddressBarColorPreset.Custom,
             addressBarCustomColorHex = "#123456",
@@ -193,14 +231,6 @@ class MaterialBrowserThemeInstrumentedTest {
             ) {
                 frosted.set(browserChromeSurfaceTokens(BrowserChromeSurfaceRole.AddressBar))
             }
-            MaterialBrowserTheme(
-                settings = colorSettings.copy(
-                    appearanceMode = BrowserAppearanceMode.Amoled,
-                    surfaceStyle = BrowserSurfaceStyle.Frosted,
-                ),
-            ) {
-                amoled.set(browserChromeSurfaceTokens(BrowserChromeSurfaceRole.AddressBar))
-            }
         }
         composeRule.waitForIdle()
 
@@ -209,8 +239,6 @@ class MaterialBrowserThemeInstrumentedTest {
         assertTrue(frosted.get().containerColor.alpha >= 0.5f)
         assertTrue(frosted.get().fieldContainerColor.alpha >= 0.183f)
         assertNotEquals(0f, frosted.get().blurRadiusPx)
-        assertEquals(1f, amoled.get().containerColor.alpha, 0f)
-        assertEquals(0f, amoled.get().blurRadiusPx, 0f)
     }
 
     @Test

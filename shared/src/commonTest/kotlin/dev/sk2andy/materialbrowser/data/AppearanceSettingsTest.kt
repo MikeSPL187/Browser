@@ -15,6 +15,7 @@ class AppearanceSettingsTest {
         assertFalse(settings.forceDarkWebsites)
         assertEquals(100, settings.webContentFontSizePercent)
         assertEquals(BrowserColorPalette.Vola, settings.colorPalette)
+        assertEquals(BrowserChromeStyle.Frame, settings.chromeStyle)
         assertEquals(BrowserSurfaceStyle.Clear, settings.surfaceStyle)
         assertEquals(BrowserShapeStyle.Rounded, settings.shapeStyle)
         assertEquals(BrowserAddressBarStyle.Classic, settings.addressBarStyle)
@@ -33,6 +34,9 @@ class AppearanceSettingsTest {
         BrowserColorPalette.entries.forEach { palette ->
             assertEquals(palette, BrowserColorPalette.fromStableId(palette.stableId))
         }
+        BrowserChromeStyle.entries.forEach { style ->
+            assertEquals(style, BrowserChromeStyle.fromStableId(style.stableId))
+        }
         BrowserSurfaceStyle.entries.forEach { style ->
             assertEquals(style, BrowserSurfaceStyle.fromStableId(style.stableId))
         }
@@ -48,6 +52,7 @@ class AppearanceSettingsTest {
 
         assertEquals(BrowserAppearanceMode.System, BrowserAppearanceMode.fromStableId("unknown"))
         assertEquals(BrowserColorPalette.Vola, BrowserColorPalette.fromStableId("unknown"))
+        assertEquals(BrowserChromeStyle.Frame, BrowserChromeStyle.fromStableId("unknown"))
         assertEquals(BrowserSurfaceStyle.Clear, BrowserSurfaceStyle.fromStableId("unknown"))
         assertEquals(BrowserShapeStyle.Rounded, BrowserShapeStyle.fromStableId("unknown"))
         assertEquals(
@@ -57,6 +62,15 @@ class AppearanceSettingsTest {
         assertEquals(
             BrowserAddressBarColorPreset.Theme,
             BrowserAddressBarColorPreset.fromStableId("unknown"),
+        )
+    }
+
+    @Test
+    fun `legacy amoled mode reads as dark`() {
+        assertEquals(BrowserAppearanceMode.Dark, BrowserAppearanceMode.fromStableId("amoled"))
+        assertTrue(
+            AppearanceSettings(appearanceMode = BrowserAppearanceMode.fromStableId("amoled"))
+                .usesDarkColors(systemDark = false),
         )
     }
 

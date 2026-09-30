@@ -49,10 +49,14 @@ class CapsuleIconPackPickerActivity : ComponentActivity() {
         isFullImmersiveModeEnabled = sessionStore.loadFullImmersiveModeEnabled()
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         val appearanceSettings = sessionStore.loadAppearanceSettings()
+        val workspaceAccent = sessionStore.loadActiveWorkspaceAccent()
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
-            MaterialBrowserTheme(settings = appearanceSettings) {
+            MaterialBrowserTheme(
+                settings = appearanceSettings,
+                workspaceAccent = workspaceAccent,
+            ) {
                 CapsuleIconPackPickerScreen(
                     packs = packs,
                     selectedPackageName = selectedPackageName,

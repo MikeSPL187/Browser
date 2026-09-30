@@ -76,10 +76,14 @@ class SiteCapsuleEditorActivity : ComponentActivity() {
         customIcon = restoredCustomIcon ?: request.customIcon
         if (customIcon == null) customIconRevision = 0
         val appearanceSettings = BrowserSessionStore(this).loadAppearanceSettings()
+        val workspaceAccent = BrowserSessionStore(this).loadActiveWorkspaceAccent()
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
-            CandyTheme(settings = appearanceSettings) {
+            CandyTheme(
+                settings = appearanceSettings,
+                workspaceAccent = workspaceAccent,
+            ) {
                 SiteCapsuleEditorScreen(
                     request = request,
                     onSubmit = { submission ->

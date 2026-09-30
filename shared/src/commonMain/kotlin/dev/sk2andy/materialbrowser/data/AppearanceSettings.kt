@@ -6,6 +6,7 @@ data class AppearanceSettings(
     val forceDarkWebsites: Boolean = false,
     val webContentFontSizePercent: Int = DEFAULT_WEB_CONTENT_FONT_SIZE_PERCENT,
     val colorPalette: BrowserColorPalette = BrowserColorPalette.Vola,
+    val chromeStyle: BrowserChromeStyle = BrowserChromeStyle.Frame,
     val surfaceStyle: BrowserSurfaceStyle = BrowserSurfaceStyle.Clear,
     val shapeStyle: BrowserShapeStyle = BrowserShapeStyle.Rounded,
     val addressBarStyle: BrowserAddressBarStyle = BrowserAddressBarStyle.Classic,
@@ -19,9 +20,7 @@ data class AppearanceSettings(
     fun usesDarkColors(systemDark: Boolean): Boolean = when (appearanceMode) {
         BrowserAppearanceMode.System -> systemDark
         BrowserAppearanceMode.Light -> false
-        BrowserAppearanceMode.Dark,
-        BrowserAppearanceMode.Amoled,
-        -> true
+        BrowserAppearanceMode.Dark -> true
     }
 
     fun normalized(): AppearanceSettings {
@@ -80,15 +79,20 @@ data class AppearanceSettings(
     }
 }
 
+/** Light or dark shell. The dark theme is always pure black, so there is no separate OLED mode. */
 enum class BrowserAppearanceMode(val stableId: String) {
     System("system"),
     Light("light"),
-    Dark("dark"),
-    Amoled("amoled");
+    Dark("dark");
 
     companion object {
-        fun fromStableId(value: String?): BrowserAppearanceMode =
-            entries.firstOrNull { it.stableId == value } ?: System
+        /** Stored by versions that offered a separate OLED mode; it now reads as [Dark]. */
+        const val LEGACY_AMOLED_STABLE_ID = "amoled"
+
+        fun fromStableId(value: String?): BrowserAppearanceMode = when (value) {
+            LEGACY_AMOLED_STABLE_ID -> Dark
+            else -> entries.firstOrNull { it.stableId == value } ?: System
+        }
     }
 }
 
@@ -100,6 +104,21 @@ enum class BrowserColorPalette(val stableId: String) {
     companion object {
         fun fromStableId(value: String?): BrowserColorPalette =
             entries.firstOrNull { it.stableId == value } ?: Vola
+    }
+}
+
+/**
+ * How the shell frames the page. Frame (the default) lays the chrome on the workspace aura and
+ * shows the page as a rounded card; Air runs the page edge to edge and keeps the aura in the rim
+ * of the address island.
+ */
+enum class BrowserChromeStyle(val stableId: String) {
+    Frame("frame"),
+    Air("air");
+
+    companion object {
+        fun fromStableId(value: String?): BrowserChromeStyle =
+            entries.firstOrNull { it.stableId == value } ?: Frame
     }
 }
 

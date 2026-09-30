@@ -75,12 +75,16 @@ class HistoryActivity : ComponentActivity() {
         clearRequests += HistoryActivityContract.clearRequestsFrom(savedInstanceState)
         history = accessibleHistory()
         val appearanceSettings = store.loadAppearanceSettings()
+        val workspaceAccent = store.loadActiveWorkspaceAccent()
         val recallEnabled = store.loadRecallEnabled()
 
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
-            CandyTheme(settings = appearanceSettings) {
+            CandyTheme(
+                settings = appearanceSettings,
+                workspaceAccent = workspaceAccent,
+            ) {
                 HistoryScreen(
                     profiles = profiles,
                     activeProfileId = activeProfileId,

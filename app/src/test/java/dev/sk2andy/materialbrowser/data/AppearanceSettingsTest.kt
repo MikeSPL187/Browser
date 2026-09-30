@@ -15,6 +15,7 @@ class AppearanceSettingsTest {
         assertFalse(settings.forceDarkWebsites)
         assertEquals(100, settings.webContentFontSizePercent)
         assertTrue(settings.colorPalette == BrowserColorPalette.Vola)
+        assertTrue(settings.chromeStyle == BrowserChromeStyle.Frame)
         assertTrue(settings.surfaceStyle == BrowserSurfaceStyle.Clear)
         assertTrue(settings.shapeStyle == BrowserShapeStyle.Rounded)
         assertTrue(settings.addressBarStyle == BrowserAddressBarStyle.Classic)
@@ -32,6 +33,9 @@ class AppearanceSettingsTest {
         }
         BrowserColorPalette.entries.forEach { palette ->
             assertTrue(BrowserColorPalette.fromStableId(palette.stableId) == palette)
+        }
+        BrowserChromeStyle.entries.forEach { style ->
+            assertTrue(BrowserChromeStyle.fromStableId(style.stableId) == style)
         }
         BrowserSurfaceStyle.entries.forEach { style ->
             assertTrue(BrowserSurfaceStyle.fromStableId(style.stableId) == style)
@@ -59,6 +63,7 @@ class AppearanceSettingsTest {
     fun `unknown and removed stable ids use safe defaults`() {
         assertTrue(BrowserAppearanceMode.fromStableId("unknown") == BrowserAppearanceMode.System)
         assertTrue(BrowserColorPalette.fromStableId("unknown") == BrowserColorPalette.Vola)
+        assertTrue(BrowserChromeStyle.fromStableId("unknown") == BrowserChromeStyle.Frame)
         assertTrue(BrowserSurfaceStyle.fromStableId("unknown") == BrowserSurfaceStyle.Clear)
         assertTrue(BrowserSurfaceStyle.fromStableId("soft") == BrowserSurfaceStyle.Clear)
         assertTrue(BrowserShapeStyle.fromStableId("unknown") == BrowserShapeStyle.Rounded)
@@ -68,6 +73,25 @@ class AppearanceSettingsTest {
         assertTrue(
             BrowserAddressBarColorPreset.fromStableId("unknown") ==
                 BrowserAddressBarColorPreset.Theme,
+        )
+    }
+
+    @Test
+    fun `legacy amoled mode migrates to the pure black dark mode`() {
+        val migrated = BrowserAppearanceMode.fromStableId(
+            BrowserAppearanceMode.LEGACY_AMOLED_STABLE_ID,
+        )
+
+        assertEquals(BrowserAppearanceMode.Dark, migrated)
+        assertEquals("dark", migrated.stableId)
+        assertTrue(AppearanceSettings(appearanceMode = migrated).usesDarkColors(systemDark = false))
+        assertEquals(
+            listOf(
+                BrowserAppearanceMode.System,
+                BrowserAppearanceMode.Light,
+                BrowserAppearanceMode.Dark,
+            ),
+            BrowserAppearanceMode.entries,
         )
     }
 
@@ -87,10 +111,6 @@ class AppearanceSettingsTest {
         )
         assertTrue(
             AppearanceSettings(appearanceMode = BrowserAppearanceMode.Dark)
-                .usesDarkColors(systemDark = false),
-        )
-        assertTrue(
-            AppearanceSettings(appearanceMode = BrowserAppearanceMode.Amoled)
                 .usesDarkColors(systemDark = false),
         )
     }

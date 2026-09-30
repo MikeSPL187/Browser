@@ -165,7 +165,6 @@ internal fun BrowserAppearanceMode.displayName(): String = when (this) {
     BrowserAppearanceMode.System -> stringResource(R.string.appearance_mode_system)
     BrowserAppearanceMode.Light -> stringResource(R.string.appearance_mode_light)
     BrowserAppearanceMode.Dark -> stringResource(R.string.appearance_mode_dark)
-    BrowserAppearanceMode.Amoled -> stringResource(R.string.appearance_mode_amoled)
 }
 
 @Composable

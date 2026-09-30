@@ -97,11 +97,15 @@ class ProfileWallpaperEditorActivity : ComponentActivity() {
         isFullImmersiveModeEnabled = sessionStore.loadFullImmersiveModeEnabled()
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         val appearanceSettings = sessionStore.loadAppearanceSettings()
+        val workspaceAccent = sessionStore.loadActiveWorkspaceAccent()
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             val imageBitmap = remember(bitmap) { bitmap?.asImageBitmap() }
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
-            CandyTheme(settings = appearanceSettings) {
+            CandyTheme(
+                settings = appearanceSettings,
+                workspaceAccent = workspaceAccent,
+            ) {
                 ProfileWallpaperEditorScreen(
                     bitmap = imageBitmap,
                     wallpaperTarget = wallpaperTarget,
