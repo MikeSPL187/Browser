@@ -24,8 +24,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import kotlinx.coroutines.flow.first
 
@@ -243,7 +242,7 @@ private fun WideAddressTab(
                     .testTag(WideAddressTabStripTestTags.ClosePrefix + tab.id),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = VolaIcons.Close,
                     contentDescription = "${stringResource(R.string.cd_close_tab)}: $title",
                     modifier = Modifier.size(18.dp),
                     tint = contentColor,

@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.shared.ui.TabTitleRow
 import dev.sk2andy.materialbrowser.shared.ui.CompactTabGrid
 import dev.sk2andy.materialbrowser.shared.ui.CompactTabList
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.ProfileSwitcher
 import dev.sk2andy.materialbrowser.ui.allowTopOverflow
 
@@ -65,11 +66,6 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -1437,13 +1433,13 @@ internal fun TabOverview(
                 shadowElevation = overviewChromeTokens.shadowElevation,
                 newTabIcon = {
                     Icon(
-                        Icons.Default.Add,
+                        VolaIcons.Add,
                         contentDescription = stringResource(R.string.cd_new_tab),
                     )
                 },
                 moreIcon = {
                     Icon(
-                        Icons.Default.MoreVert,
+                        VolaIcons.MoreVert,
                         contentDescription = stringResource(R.string.cd_more_options),
                     )
                 },
@@ -1479,9 +1475,9 @@ internal fun TabOverview(
                     ) {
                         Icon(
                             imageVector = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
-                                Icons.AutoMirrored.Filled.KeyboardArrowLeft
+                                VolaIcons.KeyboardArrowLeft
                             } else {
-                                Icons.Default.KeyboardArrowUp
+                                VolaIcons.KeyboardArrowUp
                             },
                             contentDescription = null,
                             modifier = Modifier.size(17.dp),

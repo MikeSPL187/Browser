@@ -36,11 +36,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -96,6 +91,7 @@ import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 
@@ -346,10 +342,10 @@ private fun siteConnectionLabel(kind: SiteConnectionKind): String = stringResour
 )
 
 private fun siteConnectionIcon(kind: SiteConnectionKind): ImageVector = when (kind) {
-    SiteConnectionKind.Https -> Icons.Default.Lock
-    SiteConnectionKind.Http -> Icons.Default.Warning
-    SiteConnectionKind.Unavailable -> Icons.Default.Info
-    SiteConnectionKind.Other -> Icons.Default.Info
+    SiteConnectionKind.Https -> VolaIcons.Lock
+    SiteConnectionKind.Http -> VolaIcons.WarningFilled
+    SiteConnectionKind.Unavailable -> VolaIcons.Info
+    SiteConnectionKind.Other -> VolaIcons.Info
 }
 
 @Composable
@@ -465,7 +461,7 @@ internal fun PrivacyXRayContent(
                             style = MaterialTheme.typography.labelLarge,
                         )
                         Icon(
-                            Icons.Default.KeyboardArrowDown,
+                            VolaIcons.KeyboardArrowDown,
                             contentDescription = null,
                             modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
                         )

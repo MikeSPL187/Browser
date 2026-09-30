@@ -42,10 +42,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -119,6 +115,7 @@ import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
 import dev.sk2andy.materialbrowser.shared.ui.AddressBarFieldContent
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
@@ -542,7 +539,7 @@ internal fun ExpandedBottomBarContent(
                             editorLeadingContent = {
                                 if (segmentedAddressBar) {
                                     Icon(
-                                        Icons.Default.Search,
+                                        VolaIcons.Search,
                                         contentDescription = null,
                                         modifier = Modifier
                                             .padding(start = 8.dp)
@@ -569,7 +566,7 @@ internal fun ExpandedBottomBarContent(
                                 if (!segmentedAddressBar) {
                                     IconButton(onClick = onDismissEditor) {
                                         Icon(
-                                            Icons.Default.Close,
+                                            VolaIcons.Close,
                                             contentDescription = stringResource(
                                                 R.string.cd_close_address_input,
                                             ),
@@ -648,7 +645,7 @@ internal fun ExpandedBottomBarContent(
                         ) {
                             IconButton(onClick = { onMenuExpandedChange(true) }) {
                                 Icon(
-                                    Icons.Default.MoreVert,
+                                    VolaIcons.MoreVert,
                                     contentDescription = stringResource(R.string.cd_more_options),
                                 )
                             }
@@ -765,7 +762,7 @@ internal fun ExpandedBottomBarContent(
                     ) {
                         IconButton(onClick = onDismissEditor) {
                             Icon(
-                                Icons.Default.Close,
+                                VolaIcons.Close,
                                 contentDescription = stringResource(
                                     R.string.cd_close_address_input,
                                 ),

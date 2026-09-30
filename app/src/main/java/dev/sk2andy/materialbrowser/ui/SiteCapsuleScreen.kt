@@ -30,11 +30,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -91,6 +86,7 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorContract
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorRequest
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorSubmission
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleRules
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.flow.collect
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
@@ -241,13 +237,13 @@ private fun CapsuleChrome(
         ) {
             IconButton(onClick = onBack, enabled = canGoBack) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
+                    VolaIcons.ArrowBack,
                     contentDescription = stringResource(R.string.action_back),
                 )
             }
             IconButton(onClick = onReloadOrStop) {
                 Icon(
-                    if (isLoading) Icons.Default.Close else Icons.Default.Refresh,
+                    if (isLoading) VolaIcons.Close else VolaIcons.Refresh,
                     contentDescription = stringResource(
                         if (isLoading) R.string.action_stop_loading else R.string.action_reload,
                     ),
@@ -431,7 +427,7 @@ fun SiteCapsuleEditorScreen(
             ) {
                 IconButton(onClick = onDismiss) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        VolaIcons.ArrowBack,
                         contentDescription = stringResource(R.string.action_back),
                     )
                 }
@@ -861,7 +857,7 @@ private fun CapsuleOptionRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (selected) Icon(Icons.Default.Check, contentDescription = null)
+            if (selected) Icon(VolaIcons.Check, contentDescription = null)
         }
     }
 }

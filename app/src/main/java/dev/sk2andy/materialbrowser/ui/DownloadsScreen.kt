@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -58,6 +56,7 @@ import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadHistoryRules
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.data.DownloadTimeFilter
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -106,7 +105,7 @@ internal fun DownloadsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            VolaIcons.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }

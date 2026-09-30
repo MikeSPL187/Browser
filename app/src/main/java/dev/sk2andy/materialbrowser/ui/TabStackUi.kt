@@ -49,9 +49,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -95,6 +92,7 @@ import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.delay
 
 internal object TabStackTestTags {
@@ -161,7 +159,7 @@ internal fun TabStackMarker(
                 fontWeight = FontWeight.Bold,
             )
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
+                imageVector = VolaIcons.KeyboardArrowDown,
                 contentDescription = stringResource(
                     if (stack.isCollapsed) R.string.action_expand_tab_stack
                     else R.string.action_collapse_tab_stack,
@@ -364,7 +362,7 @@ internal fun TabStackFolderDialog(
                                 enabled = !dismissPending,
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = VolaIcons.Close,
                                     contentDescription = stringResource(R.string.action_cancel),
                                 )
                             }

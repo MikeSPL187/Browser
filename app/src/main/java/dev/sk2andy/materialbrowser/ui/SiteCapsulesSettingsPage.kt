@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 @Composable
@@ -79,7 +78,7 @@ internal fun SiteCapsulesSettingsPage(
                         }
                         IconButton(onClick = { onDeleteCapsule(capsule) }) {
                             Icon(
-                                Icons.Default.Close,
+                                VolaIcons.Close,
                                 contentDescription = stringResource(R.string.capsule_delete_title),
                                 tint = MaterialTheme.colorScheme.error,
                             )

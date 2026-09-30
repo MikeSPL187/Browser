@@ -18,8 +18,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -46,6 +44,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_ID
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.color
 import androidx.compose.foundation.layout.FlowRow
@@ -172,7 +171,7 @@ private fun WorkspaceAccentSwatch(
         ) {
             if (selected) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = VolaIcons.Check,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = if (color.luminance() > 0.4f) Color.Black else Color.White,

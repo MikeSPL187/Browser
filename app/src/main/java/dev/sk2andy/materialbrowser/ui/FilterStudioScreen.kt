@@ -31,12 +31,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -90,6 +84,7 @@ import dev.sk2andy.materialbrowser.blocking.CandySubscriptionDiff
 import dev.sk2andy.materialbrowser.blocking.CandySubscriptionResult
 import dev.sk2andy.materialbrowser.blocking.CandySubscriptionRules
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
@@ -212,7 +207,7 @@ internal fun FilterStudioScreen(
             ) {
                 IconButton(onClick = onDismiss) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        VolaIcons.ArrowBack,
                         contentDescription = stringResource(R.string.action_back),
                     )
                 }
@@ -247,7 +242,7 @@ internal fun FilterStudioScreen(
                                 .testTag(FilterStudioTestTags.Add),
                             shape = RoundedCornerShape(18.dp),
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
+                            Icon(VolaIcons.Add, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.filter_add_rule))
                         }
@@ -268,7 +263,7 @@ internal fun FilterStudioScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag(FilterStudioTestTags.Search),
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        leadingIcon = { Icon(VolaIcons.Search, contentDescription = null) },
                         label = { Text(stringResource(R.string.filter_search)) },
                         singleLine = true,
                         shape = RoundedCornerShape(22.dp),
@@ -521,7 +516,7 @@ private fun StudioEmptyState(
             )
             if (actionVisible) {
                 OutlinedButton(onClick = onAdd) {
-                    Icon(Icons.Default.Add, contentDescription = null)
+                    Icon(VolaIcons.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.filter_add_first_rule))
                 }
@@ -749,13 +744,13 @@ private fun FilterRuleCard(
             )
             IconButton(onClick = onEdit) {
                 Icon(
-                    Icons.Default.Edit,
+                    VolaIcons.Edit,
                     stringResource(R.string.filter_edit_rule_target, rule.displayTarget()),
                 )
             }
             IconButton(onClick = onDelete) {
                 Icon(
-                    Icons.Default.Delete,
+                    VolaIcons.Delete,
                     stringResource(R.string.filter_delete_rule_target, rule.displayTarget()),
                 )
             }

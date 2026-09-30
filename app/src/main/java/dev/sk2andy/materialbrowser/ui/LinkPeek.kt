@@ -32,9 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -77,6 +74,7 @@ import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayoutRules as LinkPeekActionSelectionRules
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionSlot
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import java.net.URI
 import kotlin.math.roundToInt
 
@@ -320,7 +318,7 @@ internal fun <T : View> LinkPeekOverlay(
                     ) {
                         if (isSecure) {
                             Icon(
-                                Icons.Default.Lock,
+                                VolaIcons.Lock,
                                 contentDescription = null,
                                 modifier = Modifier.size(22.dp),
                                 tint = MaterialTheme.colorScheme.primary,
@@ -561,7 +559,7 @@ internal fun <T : View> LinkPeekOverlay(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = VolaIcons.Add,
                             contentDescription = openLabel,
                             modifier = Modifier.size(26.dp),
                             tint = if (armed) {

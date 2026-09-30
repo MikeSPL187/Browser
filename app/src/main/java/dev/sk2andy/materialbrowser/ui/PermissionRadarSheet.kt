@@ -21,10 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -60,6 +56,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.painterResource
@@ -179,7 +176,7 @@ internal fun PermissionRadarContent(
             ) {
                 val isHttps = site.origin.startsWith("https://")
                 Icon(
-                    if (isHttps) Icons.Default.Lock else Icons.Default.Warning,
+                    if (isHttps) VolaIcons.Lock else VolaIcons.WarningFilled,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
@@ -408,9 +405,9 @@ internal fun PermissionRadarBadge(
             ) {
                 Icon(
                     when (connectionKind) {
-                        SiteConnectionKind.Https -> Icons.Default.Lock
-                        SiteConnectionKind.Http -> Icons.Default.Warning
-                        SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> Icons.Default.Info
+                        SiteConnectionKind.Https -> VolaIcons.Lock
+                        SiteConnectionKind.Http -> VolaIcons.WarningFilled
+                        SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> VolaIcons.Info
                     },
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
