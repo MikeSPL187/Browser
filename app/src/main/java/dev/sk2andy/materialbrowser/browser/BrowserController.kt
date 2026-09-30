@@ -207,9 +207,6 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.data.AddressSuggestion
-import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
-import dev.sk2andy.materialbrowser.data.AddressBarActionLayoutRules
-import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
@@ -217,7 +214,6 @@ import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
-import dev.sk2andy.materialbrowser.data.AddressBarDockPlacement
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.BrowsingLibraryRules
@@ -286,7 +282,6 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
-import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuEntry
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
@@ -685,8 +680,6 @@ class BrowserController(
         private set
     var linkLongPressAction by mutableStateOf(LinkLongPressAction.LinkPeek)
         private set
-    var addressBarLongPressAction by mutableStateOf(AddressBarLongPressAction.Default)
-        private set
     var searxngSettings by mutableStateOf(SearxngSettings())
         private set
     var isAiModeToggleVisible by mutableStateOf(false)
@@ -719,22 +712,11 @@ class BrowserController(
     private var closedTabUndoStack: TabStack? = null
     private var closedTabUndoStackAfterClose: TabStack? = null
     private val closedTabUndoExpiry = Runnable { dismissClosedTabUndo() }
-    var addressBarDockPlacement by mutableStateOf<AddressBarDockPlacement?>(null)
-        private set
-    private var lastAddressBarDockPlacement = AddressBarDockPlacement.Default
-    val lastAddressBarDockEdge: AddressBarDockEdge
-        get() = lastAddressBarDockPlacement.edge
-    val isAddressBarDocked: Boolean
-        get() = addressBarDockPlacement != null
-    var isAddressBarDockingEnabled by mutableStateOf(true)
-        private set
     var isExternalLinkPreviewEnabled by mutableStateOf(false)
         private set
     var externalAppLinkHandling by mutableStateOf(ExternalAppLinkHandling.Default)
         private set
     var externalAppPrompt by mutableStateOf<ExternalAppPrompt?>(null)
-        private set
-    var addressBarActionLayout by mutableStateOf(AddressBarActionLayout.Default)
         private set
     var browserMenuLayout by mutableStateOf(BrowserMenuLayout.Default)
         private set
@@ -747,8 +729,6 @@ class BrowserController(
     var isFullImmersiveModeEnabled by mutableStateOf(false)
         private set
     var isStartupAnimationEnabled by mutableStateOf(true)
-        private set
-    var startupAddressFocusMode by mutableStateOf(StartupAddressFocusMode.Default)
         private set
     var isHttpPasswordAutofillEnabled by mutableStateOf(false)
         private set
@@ -1464,11 +1444,7 @@ class BrowserController(
     @Volatile
     private var destroyed = false
     private var previewContentBottomInWindowPx: Int? = null
-    private var addressBarViewportRect: BrowserViewportRect? = null
     private var selectedBrowserBackdropBlurRegion: BrowserBackdropBlurRegion? = null
-    private var pendingAddressBarAutoDockProbe: Runnable? = null
-    private var pendingAddressBarAutoDockTabId: String? = null
-    private var addressBarAutoDockProbeGeneration = 0L
     private val pendingGeckoPreviewCaptures = mutableMapOf<String, PendingGeckoPreviewCapture>()
     @VisibleForTesting
     var previewCaptureRequestCountForTesting = 0
@@ -1493,6 +1469,29 @@ class BrowserController(
     private var isCandyTrailRestoreInProgress = false
     private var candyTrailEpoch = 0
     private val store = BrowserSessionStore(activity)
+    val addressBar = AddressBarController(
+        store = store,
+        host = object : AddressBarController.Host {
+            override val selectedTabId: String
+                get() = this@BrowserController.selectedTabId
+            override val selectedTab: BrowserTab
+                get() = this@BrowserController.selectedTab
+
+            override fun tab(tabId: String): BrowserTab? = tabs.firstOrNull { it.id == tabId }
+
+            override fun engineSession(tabId: String): AndroidBrowserEngineSessionPort? =
+                browserEngineSessions[tabId]
+
+            override fun navigationGeneration(tabId: String): Int =
+                navigationGenerations.getOrDefault(tabId, 0)
+
+            override fun isPageImeVisible(): Boolean = this@BrowserController.isPageImeVisible()
+
+            override fun onDockPlacementChanging() = collapseBottomBar()
+        },
+        postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
+        removeCallbacks = mainHandler::removeCallbacks,
+    )
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
@@ -2477,7 +2476,6 @@ class BrowserController(
         searchEngine = store.loadSearchEngine()
         pageTranslationProvider = store.loadPageTranslationProvider()
         linkLongPressAction = store.loadLinkLongPressAction()
-        addressBarLongPressAction = store.loadAddressBarLongPressAction()
         linkPeekActionLayout = store.loadLinkPeekActionLayout()
         browserMenuLayout = store.loadBrowserMenuLayout()
         isAiModeToggleVisible = store.loadAiModeToggleVisible()
@@ -2494,22 +2492,11 @@ class BrowserController(
         tabListStartsAtBottom = store.loadTabListStartsAtBottom()
         automaticTabSortingEnabled = store.loadAutomaticTabSortingEnabled()
         isClosedTabUndoEnabled = store.loadClosedTabUndoEnabled()
-        isAddressBarDockingEnabled = store.loadAddressBarDockingEnabled()
+        addressBar.restore()
         isExternalLinkPreviewEnabled = store.loadExternalLinkPreviewEnabled()
         externalAppLinkHandling = store.loadExternalAppLinkHandling()
-        val storedAddressBarDockPlacement = store.loadAddressBarDockPlacement()
-        lastAddressBarDockPlacement = store.loadLastAddressBarDockPlacement()
-            ?: storedAddressBarDockPlacement
-            ?: AddressBarDockPlacement.Default
-        addressBarDockPlacement = storedAddressBarDockPlacement
-            .takeIf { isAddressBarDockingEnabled }
-        if (!isAddressBarDockingEnabled && storedAddressBarDockPlacement != null) {
-            store.saveAddressBarDockPlacement(null)
-        }
-        addressBarActionLayout = store.loadAddressBarActionLayout()
         isFullImmersiveModeEnabled = store.loadFullImmersiveModeEnabled()
         isStartupAnimationEnabled = store.loadStartupAnimationEnabled()
-        startupAddressFocusMode = store.loadStartupAddressFocusMode()
         isHttpPasswordAutofillEnabled = store.loadHttpPasswordAutofillEnabled()
         isFavoriteLaunchAnimationEnabled = store.loadFavoriteLaunchAnimationEnabled()
         favoriteAnimationSpeed = store.loadFavoriteAnimationSpeed()
@@ -3021,13 +3008,13 @@ class BrowserController(
             browserChromeOwnsIme = browserChromeOwnsIme,
         )
         if (isPageImeVisible) {
-            scheduleAddressBarAutoDockProbe(
+            addressBar.scheduleAutoDockProbe(
                 tabId = selectedTab.id,
                 url = selectedTab.url,
                 requiresPageIme = true,
             )
         } else if (wasPageImeVisible) {
-            cancelAddressBarAutoDockProbe()
+            addressBar.cancelAutoDockProbe()
         }
         if (
             browserChromeOwnsIme &&
@@ -3168,9 +3155,9 @@ class BrowserController(
         if (browserChromeOwnsIme == ownsIme) return
         browserChromeOwnsIme = ownsIme
         if (ownsIme) {
-            cancelAddressBarAutoDockProbe()
+            addressBar.cancelAutoDockProbe()
         } else if (isPageImeVisible()) {
-            scheduleAddressBarAutoDockProbe(
+            addressBar.scheduleAutoDockProbe(
                 tabId = selectedTab.id,
                 url = selectedTab.url,
                 requiresPageIme = true,
@@ -9214,42 +9201,6 @@ class BrowserController(
         bottomBarCompactStates[selectedTabId] = true
     }
 
-    fun updateAddressBarDocked(docked: Boolean) {
-        if (docked && !isAddressBarDockingEnabled) return
-        val placement = if (docked) {
-            addressBarDockPlacement ?: lastAddressBarDockPlacement
-        } else {
-            null
-        }
-        updateAddressBarDockPlacement(placement)
-    }
-
-    fun parkAddressBarOnRight() {
-        if (!isAddressBarDockingEnabled) return
-        updateAddressBarDockPlacement(
-            lastAddressBarDockPlacement.copy(edge = AddressBarDockEdge.Right),
-        )
-    }
-
-    fun updateAddressBarDockPlacement(placement: AddressBarDockPlacement?) {
-        val normalized = placement?.normalized()
-        if (normalized != null && !isAddressBarDockingEnabled) return
-        if (addressBarDockPlacement == normalized) return
-        if (normalized != null) cancelAddressBarAutoDockProbe()
-        collapseBottomBar()
-        addressBarDockPlacement = normalized
-        if (normalized != null) lastAddressBarDockPlacement = normalized
-        store.saveAddressBarDockPlacement(normalized)
-    }
-
-    fun updateAddressBarDockingEnabled(enabled: Boolean) {
-        if (isAddressBarDockingEnabled == enabled) return
-        isAddressBarDockingEnabled = enabled
-        store.saveAddressBarDockingEnabled(enabled)
-        if (!enabled) cancelAddressBarAutoDockProbe()
-        if (!enabled) updateAddressBarDocked(false)
-    }
-
     fun updateExternalLinkPreviewEnabled(enabled: Boolean) {
         if (isExternalLinkPreviewEnabled == enabled) return
         isExternalLinkPreviewEnabled = enabled
@@ -9268,19 +9219,6 @@ class BrowserController(
         if (linkLongPressAction == action) return
         linkLongPressAction = action
         store.saveLinkLongPressAction(action)
-    }
-
-    fun updateAddressBarLongPressAction(action: AddressBarLongPressAction) {
-        if (addressBarLongPressAction == action) return
-        addressBarLongPressAction = action
-        store.saveAddressBarLongPressAction(action)
-    }
-
-    fun updateAddressBarActionLayout(layout: AddressBarActionLayout) {
-        val normalized = AddressBarActionLayoutRules.normalize(layout)
-        if (addressBarActionLayout == normalized) return
-        addressBarActionLayout = normalized
-        store.saveAddressBarActionLayout(normalized)
     }
 
     fun updateBrowserMenuLocation(
@@ -9311,12 +9249,6 @@ class BrowserController(
         if (isStartupAnimationEnabled == enabled) return
         isStartupAnimationEnabled = enabled
         store.saveStartupAnimationEnabled(enabled)
-    }
-
-    fun updateStartupAddressFocusMode(mode: StartupAddressFocusMode) {
-        if (startupAddressFocusMode == mode) return
-        startupAddressFocusMode = mode
-        store.saveStartupAddressFocusMode(mode)
     }
 
     fun updateHttpPasswordAutofillEnabled(enabled: Boolean) {
@@ -9762,37 +9694,6 @@ class BrowserController(
         if (runtime.backdropBlurRegion == region) return
         runtime.backdropBlurRegion = region
         runtime.geckoBinding.session.setBackdropBlurRegion(region)
-    }
-
-    fun setAddressBarBoundsInViewport(
-        leftPx: Float,
-        topPx: Float,
-        rightPx: Float,
-        bottomPx: Float,
-        viewportWidthPx: Float,
-        viewportHeightPx: Float,
-    ) {
-        val updatedRect = AddressBarAutoDockRules.viewportRect(
-            leftPx = leftPx,
-            topPx = topPx,
-            rightPx = rightPx,
-            bottomPx = bottomPx,
-            viewportWidthPx = viewportWidthPx,
-            viewportHeightPx = viewportHeightPx,
-        )
-        if (addressBarViewportRect == updatedRect) return
-        addressBarViewportRect = updatedRect
-        if (isPageImeVisible()) {
-            scheduleAddressBarAutoDockProbe(
-                tabId = selectedTab.id,
-                url = selectedTab.url,
-                requiresPageIme = true,
-            )
-        }
-    }
-
-    fun clearAddressBarBoundsInViewport() {
-        addressBarViewportRect = null
     }
 
     fun previewTopInsetPx(tabId: String): Int = if (
@@ -10353,7 +10254,7 @@ class BrowserController(
 
     fun onPause() {
         stopInlineVideoGestureHaptic()
-        cancelAddressBarAutoDockProbe()
+        addressBar.cancelAutoDockProbe()
         contentActions.dismiss()
         if (externalLinkPreviewState == null) {
             captureVisiblePreview(selectedTabId, acceptAfterDeparture = true)
@@ -10578,7 +10479,7 @@ class BrowserController(
                 protection.lockTrigger == ProfileLockTrigger.AppClosed
             }
         }
-        cancelAddressBarAutoDockProbe()
+        addressBar.cancelAutoDockProbe()
         val downloadChoices = listOfNotNull(pendingDownloadChoice) + queuedDownloadChoices.toList()
         pendingDownloadChoice = null
         queuedDownloadChoices.clear()
@@ -12417,7 +12318,7 @@ class BrowserController(
         when (event.type) {
             BrowserEngineEventType.NavigationStarted -> {
                 invalidateExternalAppPromptForNavigation(event.tabId)
-                cancelAddressBarAutoDockProbe(event.tabId)
+                addressBar.cancelAutoDockProbe(event.tabId)
                 val navigatingSession = browserEngineSessions[event.tabId] ?: return
                 val previousTab = tabs.firstOrNull { it.id == event.tabId }
                 if (
@@ -12577,7 +12478,7 @@ class BrowserController(
                 )
                 persist()
                 committedUrl?.let { url ->
-                    scheduleAddressBarAutoDockProbe(event.tabId, url)
+                    addressBar.scheduleAutoDockProbe(event.tabId, url)
                     scheduleGeckoFaviconFetch(event.tabId, url)
                 }
             }
@@ -12645,7 +12546,7 @@ class BrowserController(
                         refreshGeckoSafeAreaForSameDocumentNavigation(event.tabId)
                         markLocalSyncNavigationPending(event.tabId, normalizedChangedUrl)
                         scheduleSyncedTabNavigation(event.tabId)
-                        scheduleAddressBarAutoDockProbe(event.tabId, normalizedChangedUrl)
+                        addressBar.scheduleAutoDockProbe(event.tabId, normalizedChangedUrl)
                     }
                     persist()
                 }
@@ -12706,151 +12607,6 @@ class BrowserController(
         }
         handlePageTranslationEngineEvent(event)
         engineViewRevision++
-    }
-
-    private fun scheduleAddressBarAutoDockProbe(
-        tabId: String,
-        url: String,
-        requiresPageIme: Boolean = false,
-    ) {
-        if (selectedTabId != tabId) return
-        val expectedUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return
-        val session = browserEngineSessions[tabId] ?: return
-        val navigationGeneration = navigationGenerations.getOrDefault(tabId, 0)
-        cancelAddressBarAutoDockProbe()
-        val probeGeneration = addressBarAutoDockProbeGeneration
-        scheduleAddressBarAutoDockProbeAttempt(
-            tabId = tabId,
-            expectedUrl = expectedUrl,
-            session = session,
-            navigationGeneration = navigationGeneration,
-            requiresPageIme = requiresPageIme,
-            completedRetryCount = 0,
-            probeGeneration = probeGeneration,
-            delayMillis = ADDRESS_BAR_AUTO_DOCK_PROBE_DELAY_MILLIS,
-        )
-    }
-
-    private fun scheduleAddressBarAutoDockProbeAttempt(
-        tabId: String,
-        expectedUrl: String,
-        session: AndroidBrowserEngineSessionPort,
-        navigationGeneration: Int,
-        requiresPageIme: Boolean,
-        completedRetryCount: Int,
-        probeGeneration: Long,
-        delayMillis: Long,
-    ) {
-        val probe = Runnable {
-            if (addressBarAutoDockProbeGeneration != probeGeneration) return@Runnable
-            pendingAddressBarAutoDockProbe = null
-            val viewportRect = addressBarViewportRect
-            if (
-                (requiresPageIme && !isPageImeVisible()) ||
-                !AddressBarAutoDockRules.shouldProbe(
-                    dockingEnabled = isAddressBarDockingEnabled,
-                    addressBarDocked = isAddressBarDocked,
-                    selectedTabMatches = selectedTabId == tabId,
-                    isHttpPage = true,
-                    isPrivatePage = tabs.firstOrNull { tab -> tab.id == tabId }?.isIncognito !=
-                        false,
-                    hasViewportRect = viewportRect != null,
-                )
-            ) {
-                cancelAddressBarAutoDockProbe()
-                return@Runnable
-            }
-            val currentUrl = tabs.firstOrNull { tab -> tab.id == tabId }
-                ?.url
-                ?.let(BrowserUriPolicy::normalizeHttpUrl)
-            val probeIsCurrent = AddressBarAutoDockRules.isProbeContextCurrent(
-                dockingEnabled = isAddressBarDockingEnabled,
-                addressBarDocked = isAddressBarDocked,
-                selectedTabMatches = selectedTabId == tabId,
-                sessionMatches = browserEngineSessions[tabId] === session,
-                navigationMatches = navigationGenerations.getOrDefault(tabId, 0) ==
-                    navigationGeneration,
-                urlMatches = currentUrl == expectedUrl,
-                viewportRectMatches = addressBarViewportRect == viewportRect,
-                isPrivatePage = tabs.firstOrNull { tab -> tab.id == tabId }?.isIncognito != false,
-            )
-            if (!probeIsCurrent) {
-                cancelAddressBarAutoDockProbe()
-                return@Runnable
-            }
-            session.probeTextInputOcclusion(
-                viewportRect = requireNotNull(viewportRect),
-                mode = if (requiresPageIme) {
-                    TextInputOcclusionProbeMode.FocusedTextInput
-                } else {
-                    TextInputOcclusionProbeMode.AllEditors
-                },
-            ) { result ->
-                if (addressBarAutoDockProbeGeneration != probeGeneration) {
-                    return@probeTextInputOcclusion
-                }
-                if (requiresPageIme && !isPageImeVisible()) {
-                    cancelAddressBarAutoDockProbe()
-                    return@probeTextInputOcclusion
-                }
-                val resultUrl = tabs.firstOrNull { tab -> tab.id == tabId }
-                    ?.url
-                    ?.let(BrowserUriPolicy::normalizeHttpUrl)
-                val resultIsCurrent = AddressBarAutoDockRules.isProbeContextCurrent(
-                    dockingEnabled = isAddressBarDockingEnabled,
-                    addressBarDocked = isAddressBarDocked,
-                    selectedTabMatches = selectedTabId == tabId,
-                    sessionMatches = browserEngineSessions[tabId] === session,
-                    navigationMatches = navigationGenerations.getOrDefault(tabId, 0) ==
-                        navigationGeneration,
-                    urlMatches = resultUrl == expectedUrl,
-                    viewportRectMatches = addressBarViewportRect == viewportRect,
-                    isPrivatePage = tabs.firstOrNull { tab -> tab.id == tabId }?.isIncognito !=
-                        false,
-                )
-                if (!resultIsCurrent) {
-                    cancelAddressBarAutoDockProbe()
-                    return@probeTextInputOcclusion
-                }
-                if (result == TextInputOcclusionProbeResult.Occluded) {
-                    parkAddressBarOnRight()
-                    return@probeTextInputOcclusion
-                }
-                val retryDelayMillis = if (
-                    requiresPageIme &&
-                    AddressBarAutoDockRules.shouldRetryFocusedProbe(result)
-                ) {
-                    AddressBarAutoDockRules.focusedProbeRetryDelayMillis(completedRetryCount)
-                } else {
-                    null
-                }
-                if (retryDelayMillis == null) {
-                    cancelAddressBarAutoDockProbe()
-                    return@probeTextInputOcclusion
-                }
-                scheduleAddressBarAutoDockProbeAttempt(
-                    tabId = tabId,
-                    expectedUrl = expectedUrl,
-                    session = session,
-                    navigationGeneration = navigationGeneration,
-                    requiresPageIme = true,
-                    completedRetryCount = completedRetryCount + 1,
-                    probeGeneration = probeGeneration,
-                    delayMillis = retryDelayMillis,
-                )
-            }
-        }
-        pendingAddressBarAutoDockProbe = probe
-        pendingAddressBarAutoDockTabId = tabId
-        mainHandler.postDelayed(probe, delayMillis)
-    }
-
-    private fun cancelAddressBarAutoDockProbe(tabId: String? = null) {
-        if (tabId != null && pendingAddressBarAutoDockTabId != tabId) return
-        pendingAddressBarAutoDockProbe?.let(mainHandler::removeCallbacks)
-        pendingAddressBarAutoDockProbe = null
-        pendingAddressBarAutoDockTabId = null
-        addressBarAutoDockProbeGeneration++
     }
 
     private fun isPageImeVisible(): Boolean = AddressBarAutoDockRules.shouldProbeForImeState(
@@ -13079,7 +12835,7 @@ class BrowserController(
         autoDeAmpReplacementGuards.remove(tabId)
         pendingBrowserEngineLoadRequests.remove(tabId)
         invalidateMedia3OwnerFor(tabId)
-        cancelAddressBarAutoDockProbe(tabId)
+        addressBar.cancelAutoDockProbe(tabId)
         cancelPendingGeckoPreviewCapture(tabId)
         pageTranslationAttempts.remove(tabId)
         if (geckoMediaPresentation?.tabId == tabId) clearGeckoMediaPresentation()
@@ -16097,7 +15853,6 @@ class BrowserController(
             WindowInsetsCompat.Type.displayCutout(),
         )
         const val PREVIEW_CAPTURE_TIMEOUT_MS = 64L
-        const val ADDRESS_BAR_AUTO_DOCK_PROBE_DELAY_MILLIS = 350L
         const val PAGE_TRANSLATION_CONTENT_CHECK_DELAY_MILLIS = 2_500L
         const val PAGE_TRANSLATION_CONTENT_RETRY_DELAY_MILLIS = 2_500L
         const val PAGE_TRANSLATION_EMPTY_CHECKS_REQUIRED = 2

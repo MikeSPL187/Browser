@@ -805,7 +805,7 @@ internal fun BrowserScreen(
             AddressBarLongPressAction.NewTab -> openNewTabAndEdit()
             AddressBarLongPressAction.NewPrivateTab -> openNewTabAndEdit(isIncognito = true)
             AddressBarLongPressAction.OpenHistory -> onOpenHistory()
-            AddressBarLongPressAction.ParkAddressBar -> controller.parkAddressBarOnRight()
+            AddressBarLongPressAction.ParkAddressBar -> controller.addressBar.parkOnRight()
             AddressBarLongPressAction.OpenCandyTrail -> {
                 candyTrailSourceBounds = null
                 candyTrailTabId = selectedTab.id

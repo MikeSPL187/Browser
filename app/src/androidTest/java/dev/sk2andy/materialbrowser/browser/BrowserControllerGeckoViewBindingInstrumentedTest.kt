@@ -369,7 +369,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     failureDescription = null,
                 ),
             )
-            browserController.setAddressBarBoundsInViewport(
+            browserController.addressBar.setBoundsInViewport(
                 leftPx = 50f,
                 topPx = 800f,
                 rightPx = 950f,
@@ -384,7 +384,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             )
             browserController.setBrowserChromeOwnsIme(true)
 
-            assertFalse(browserController.isAddressBarDocked)
+            assertFalse(browserController.addressBar.isDocked)
 
             browserController.onWindowInsetsChanged(
                 WindowInsetsCompat.Builder()
@@ -396,7 +396,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     .build(),
             )
             browserController.setBrowserChromeOwnsIme(false)
-            browserController.setAddressBarBoundsInViewport(
+            browserController.addressBar.setBoundsInViewport(
                 leftPx = 50f,
                 topPx = 700f,
                 rightPx = 950f,
@@ -423,8 +423,8 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 TextInputOcclusionProbeMode.FocusedTextInput,
                 session.lastTextInputOcclusionProbeMode,
             )
-            assertTrue(requireNotNull(controller).isAddressBarDocked)
-            requireNotNull(controller).updateAddressBarDocked(false)
+            assertTrue(requireNotNull(controller).addressBar.isDocked)
+            requireNotNull(controller).addressBar.updateDocked(false)
         }
     }
 
@@ -456,7 +456,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     failureDescription = null,
                 ),
             )
-            browserController.setAddressBarBoundsInViewport(
+            browserController.addressBar.setBoundsInViewport(
                 leftPx = 50f,
                 topPx = 700f,
                 rightPx = 950f,
@@ -474,14 +474,14 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
 
         composeRule.waitUntil(timeoutMillis = 5_000L) {
             session.textInputOcclusionProbeCount == 3 &&
-                requireNotNull(controller).isAddressBarDocked
+                requireNotNull(controller).addressBar.isDocked
         }
         composeRule.runOnIdle {
             assertEquals(
                 TextInputOcclusionProbeMode.FocusedTextInput,
                 session.lastTextInputOcclusionProbeMode,
             )
-            requireNotNull(controller).updateAddressBarDocked(false)
+            requireNotNull(controller).addressBar.updateDocked(false)
         }
     }
 
@@ -511,7 +511,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     failureDescription = null,
                 ),
             )
-            browserController.setAddressBarBoundsInViewport(
+            browserController.addressBar.setBoundsInViewport(
                 leftPx = 50f,
                 topPx = 700f,
                 rightPx = 950f,
@@ -536,7 +536,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         Thread.sleep(700L)
         composeRule.runOnIdle {
             assertEquals(1, session.textInputOcclusionProbeCount)
-            assertFalse(requireNotNull(controller).isAddressBarDocked)
+            assertFalse(requireNotNull(controller).addressBar.isDocked)
         }
     }
 

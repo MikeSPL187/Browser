@@ -207,12 +207,12 @@ internal fun BoxScope.BrowserAddressChrome(
     }
 
     val addressBarDockingAvailable = AddressBarDockingRules.isAvailable(
-        settingEnabled = controller.isAddressBarDockingEnabled,
+        settingEnabled = controller.addressBar.isDockingEnabled,
         isBlankTab = selectedTab.url == BLANK_URL,
     )
-    val effectiveAddressBarDockPlacement = controller.addressBarDockPlacement
+    val effectiveAddressBarDockPlacement = controller.addressBar.dockPlacement
         .takeIf { addressBarDockingAvailable && !linkPeekAddressBarExpanded }
-    val addressBarLongPressAction = controller.addressBarLongPressAction
+    val addressBarLongPressAction = controller.addressBar.longPressAction
     val hasHttpPage = BrowserUriPolicy.normalizeHttpUrl(selectedTab.url) != null
     val addressBarLongPressEnabled = AddressBarLongPressActionRules.isAvailable(
         action = addressBarLongPressAction,
@@ -257,7 +257,7 @@ internal fun BoxScope.BrowserAddressChrome(
     ) {
         val bounds = addressBarBoundsInRoot
         if (autoDockGeometryAvailable && bounds != null) {
-            controller.setAddressBarBoundsInViewport(
+            controller.addressBar.setBoundsInViewport(
                 leftPx = bounds.left,
                 topPx = bounds.top,
                 rightPx = bounds.right,
@@ -266,11 +266,11 @@ internal fun BoxScope.BrowserAddressChrome(
                 viewportHeightPx = visibleViewportHeightPx.toFloat(),
             )
         } else {
-            controller.clearAddressBarBoundsInViewport()
+            controller.addressBar.clearBoundsInViewport()
         }
     }
     DisposableEffect(controller) {
-        onDispose(controller::clearAddressBarBoundsInViewport)
+        onDispose(controller.addressBar::clearBoundsInViewport)
     }
     BrowserBottomBar(
         tab = selectedTab,
@@ -282,10 +282,10 @@ internal fun BoxScope.BrowserAddressChrome(
             enabled = addressBarDockingAvailable,
             placement = effectiveAddressBarDockPlacement,
         ),
-        dockTargetEdge = controller.lastAddressBarDockEdge,
+        dockTargetEdge = controller.addressBar.lastDockEdge,
         editing = addressEditorVisible,
         addressBarStyle = controller.appearanceSettings.addressBarStyle,
-        actionLayout = controller.addressBarActionLayout,
+        actionLayout = controller.addressBar.actionLayout,
         // Cast and the system code scanner need Google Play services, which Vola does not ship.
         showCastButton = false,
         showQrScanner = false,
@@ -381,10 +381,10 @@ internal fun BoxScope.BrowserAddressChrome(
             }
         },
         onExpand = controller::expandBottomBar,
-        onDock = { controller.updateAddressBarDocked(true) },
-        onParkRight = controller::parkAddressBarOnRight,
-        onDockPlacementChanged = controller::updateAddressBarDockPlacement,
-        onRestoreDock = { controller.updateAddressBarDocked(false) },
+        onDock = { controller.addressBar.updateDocked(true) },
+        onParkRight = controller.addressBar::parkOnRight,
+        onDockPlacementChanged = controller.addressBar::updateDockPlacement,
+        onRestoreDock = { controller.addressBar.updateDocked(false) },
         onTabDrag = { delta ->
             if (tabSwipeEnabled && !addressEditorVisible && !tabOverviewVisible) {
                 if (browserDragOffset.floatValue == 0f && delta != 0f) {

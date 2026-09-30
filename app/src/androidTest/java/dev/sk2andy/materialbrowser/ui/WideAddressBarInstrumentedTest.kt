@@ -88,7 +88,7 @@ class WideAddressBarInstrumentedTest {
             }
         }.isSuccess
         assertTrue(
-            "Action layout: ${browserController.addressBarActionLayout}\n" +
+            "Action layout: ${browserController.addressBar.actionLayout}\n" +
                 composeRule.onRoot().printToString(),
             tabsActionVisible,
         )
