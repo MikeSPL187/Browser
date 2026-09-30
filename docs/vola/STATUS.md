@@ -3,24 +3,30 @@
 Файл для передачи работы между сессиями Claude Code. Новая сессия читает его первым и
 обновляет в конце работы.
 
-_Обновлено: 2026-09-30._
+_Обновлено: 2026-09-30 (сессия PR 1 — токены темы)._
 
 ## PR и сборка
 
-- **PR #1–#17, #19, #20 слиты в `main`** (merge commit, CI зелёный). #20 — поддержка Android 12+
+- **PR #25 — PR 1 переноса дизайна: токены темы v4** (ветка `ccr-d3f28808-uk5drv`, метка
+  `screenshots`).
+  - Схемы 8 пространств и приватного режима генерируются `gencss.mjs --kotlin` в
+    `ui/theme/VolaSchemes.kt`.
+  - `VolaTheme` / `VolaExtendedColors`, шрифты Manrope и Literata, `VolaShapes`, `VolaSpacing`,
+    `VolaElevation`, `VolaMotion`, настройка `BrowserChromeStyle` (Frame/Air, пока без UI).
+  - AMOLED убран: тёмная всегда чёрная, `amoled` мигрирует в `dark`.
+  - Статус CI — в самом PR. Слить после зелёного CI и проверки владельцем.
+- **PR #1–#17, #19, #20, #23, #24 слиты в `main`** (merge commit, CI зелёный).
+  #20 — поддержка Android 12+
   (`minSdk` 31, обёртки в `PlatformCompat.kt`, `IoCompat.kt`). #19 — Dependabot, обновление actions.
 - **Ветки слитых PR не удалены:** облачной среде запрещено удалять ветки в GitHub. Владельцу:
   удалить их на странице *Branches* и включить *Settings → General → Automatically delete head
   branches*.
 - **Dependabot, открыты:**
-  - **#23** (Gradle 9.8, OkHttp 5, Guava, org.json) — CI зелёный, ждёт решения владельца.
   - **#21** (Kotlin 2.4.20, Compose Multiplatform 1.12, kotlinx) и **#22** (Compose BOM 2026.09,
     AndroidX) — CI красный. Новая версия Compose добавила проверку lint
     `LocalContextGetResourceValueCall`: 18 ошибок, первая — `ui/BrowserScreen.kt:423`
     (`context.getString` внутри Compose). Нужен отдельный PR: заменить на `stringResource` /
     `LocalResources`, потом перезапустить эти PR. Effort: High.
-- **PR #24** — ветка `ccr-86902d83-x44u8j`: макеты v3 и v4, инструменты дизайна, документы (без кода).
-  Слить, когда CI зелёный (в `NEXT_SESSION.md` это шаг 0).
 
 ## Подпись
 
@@ -52,21 +58,27 @@ _Обновлено: 2026-09-30._
 - Тёмная тема всегда на чистом чёрном, переключателя OLED нет (записано в `CLAUDE.md`).
 - Сторонняя открытая библиотека для KDBX допустима (`features-roadmap.md`).
 - План переноса дизайна в код одобрен (`tech-plan.md`, раздел 4, обновлён под v4: 19 PR с
-  досками и Effort). Первый PR — токены темы v4 и шрифты (Effort: High).
+  досками и Effort). PR 1 (токены темы) — #25.
+- Палитры Dynamic и Neutral оставлены; в тёмной теме у них тоже чёрный фон.
 
 ## Следующие шаги
 
 Готовый промпт для новой сессии — `docs/vola/NEXT_SESSION.md`.
 
-1. Слить PR #24, когда CI зелёный.
-2. PR 1 переноса дизайна — токены темы v4. Цвета генерируются из `gencss.mjs` в Kotlin, плюс
-   шрифты, формы, отступы, движение (Effort: High).
-3. Дальше по таблице `tech-plan.md` (раздел 4). Перед каждым PR рекомендовать Effort.
-4. Отдельно: PR с исправлением lint `LocalContextGetResourceValueCall`, затем перезапуск #21 и #22.
+1. Довести #25 до зелёного CI; владелец проверяет по чек-листу в описании и сливает.
+2. Отдельный PR: исправить lint `LocalContextGetResourceValueCall` (18 мест, `context.getString`
+   в Compose → `stringResource` / `LocalResources`), затем перезапустить Dependabot #21 и #22
+   (Effort: High). Рекомендуется до PR 2: #21/#22 обновляют Compose, на котором строится весь
+   дальнейший UI.
+3. PR 2 плана — значки Material Symbols Rounded (`VolaIcons`, Effort: High), дальше по таблице
+   `tech-plan.md`.
+4. Хвосты PR 1 для следующих PR:
+   - PR 5: включать `privateMode = true` в `CandyTheme` на приватной вкладке;
+   - PR 7: страница HTTPS-only (`GeckoHttpsOnlyErrorPage.kt`) пока в старых фиолетовых цветах;
+   - PR 3/8: показать выбор «Рама»/«Воздух» (`AppearanceSettings.chromeStyle` уже хранится).
 5. Владелец:
    - секрет Preview;
-   - удалить ветки слитых PR;
-   - решить про #23.
+   - удалить ветки слитых PR.
 6. По готовности:
    - `geckoview-update.yml`;
    - храповик размера `BrowserController`;
@@ -95,5 +107,15 @@ _Обновлено: 2026-09-30._
   `files` = изменённые файлы (`project/<имя>` → `project/<имя>`).
 - Firefox, по сообщениям СМИ, с версии 155 выходит раз в две недели. Учитывать в процессе
   обновления GeckoView (`tech-plan.md`).
+- **Проверка Kotlin без Android SDK:** Gradle есть (`/opt/gradle`), Maven Central открыт, а
+  Google Maven (`dl.google.com`, `maven.google.com`) закрыт. Файлы без Android-зависимостей
+  (цвета, токены, модели `shared`) собираются в отдельном JVM-проекте в scratchpad на
+  `org.jetbrains.compose.material3:material3-desktop` с исключёнными группами `androidx.lifecycle`,
+  `androidx.annotation`, `androidx.collection`, `androidx.arch.core`. Так гоняются и JVM-тесты.
+  Maven Central иногда отвечает 429 — повторить через минуту.
+- **Библиотека цвета 0.4.0:** часть импортов уже с `.js`; правка из README инструментов
+  идемпотентна.
+- **Визуальная проверка цветов:** HTML-копия сетки превью из `VolaSchemes.kt` рендерится в
+  Chromium (Playwright) с локальным `res/font/manrope.ttf`, так проверены схемы в PR #25.
 - Иконки пространств генерирует `scripts/workspace-icons/generate.py`
   (нужен доступ к raw.githubusercontent.com).
