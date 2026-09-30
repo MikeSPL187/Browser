@@ -1,0 +1,89 @@
+/* Vola v4 design language. Colors come from vola4-colors.css (generated per workspace seed);
+   this file holds type, shape, icons, elevation and the two chrome treatments (frame, air). */
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=add,apps,archive,arrow_back,arrow_forward,arrow_outward,arrow_upward,article,auto_awesome,backspace,block,bolt,bookmark,bookmarks,calendar_month,check,check_circle,chevron_right,close,closed_caption,content_copy,content_paste,contrast,cookie,dark_mode,delete,description,devices,dock_to_bottom,domino_mask,download,edit,error,expand_more,fingerprint,folder,format_size,fullscreen,gpp_good,gpp_maybe,grid_view,headphones,history,home,info,inventory_2,ios_share,key,keyboard,keyboard_arrow_down,keyboard_capslock,language,layers,light_mode,link,location_on,lock,menu_book,mic,more_horiz,more_vert,movie,north_west,notifications,open_in_new,palette,passkey,password,person,photo_camera,picture_in_picture_alt,play_arrow,public,qr_code_scanner,refresh,schedule,search,send,settings,share,shield,shield_lock,snooze,sort,speed,splitscreen,star,swipe,sync,tab,tab_group,translate,travel_explore,tune,undo,verified,visibility,visibility_off,volume_off,warning,work,workspaces&display=block");
+
+.v4 {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  font-family: Manrope, system-ui, sans-serif; color: var(--on-sf); background: var(--sf);
+  -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 0;
+  --r-xs: 8px; --r-s: 12px; --r-m: 16px; --r-l: 20px; --r-xl: 28px; --r-card: 24px; --r-sheet: 32px;
+  --e1: 0 1px 2px rgba(10, 20, 24, 0.06), 0 2px 8px rgba(10, 20, 24, 0.06);
+  --e2: 0 2px 6px rgba(10, 20, 24, 0.07), 0 10px 28px rgba(10, 20, 24, 0.10);
+  --e3: 0 6px 16px rgba(10, 20, 24, 0.10), 0 24px 56px rgba(10, 20, 24, 0.16);
+}
+.v4 *, .v4 *::before, .v4 *::after { box-sizing: border-box; }
+.v4 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+.v4 input { font: inherit; color: inherit; }
+.v4 a { color: inherit; text-decoration: none; }
+.v4 p, .v4 h1, .v4 h2, .v4 h3 { margin: 0; }
+.v4 i { font-style: normal; display: block; }
+.v4.t-dark, .v4.t-oled { --e1: 0 1px 2px rgba(0, 0, 0, 0.4); --e2: 0 8px 24px rgba(0, 0, 0, 0.45); --e3: 0 20px 48px rgba(0, 0, 0, 0.6); }
+
+/* Type scale: Manrope for UI, Literata for reading. Weights stay at 500–700: calmer than v3. */
+.ty-display { font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.025em; }
+.ty-head { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ty-title-l { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.ty-title { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.005em; }
+.ty-body { font-size: 15px; line-height: 22px; font-weight: 500; }
+.ty-label { font-size: 14px; line-height: 18px; font-weight: 600; }
+.ty-cap { font-size: 12.5px; line-height: 16px; font-weight: 500; color: var(--on-sf-v); }
+.ty-over { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-sf-v); }
+.ty-read { font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; }
+
+/* Material Symbols Rounded: the same glyphs the app will ship. */
+.ms { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0; flex-shrink: 0; user-select: none; }
+.ms.f { font-variation-settings: 'FILL' 1; }
+.ms.s { font-size: 20px; }
+.ms.xs { font-size: 18px; }
+.ms.l { font-size: 28px; }
+
+/* Buttons. */
+.ib4 { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-sf-v); flex-shrink: 0; }
+.btn { height: 48px; border-radius: 24px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.btn.fill { background: var(--pri); color: var(--on-pri); }
+.btn.tonal { background: var(--sec-c); color: var(--on-sec-c); }
+.btn.out { box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf); }
+.chip { height: 36px; border-radius: 18px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; white-space: nowrap; background: var(--sf-lowest); box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf-v); }
+
+/* Site monogram (no third-party logos in mockups). */
+.fav { display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+
+/* Glass with a legibility floor: the surface is at least 84 % opaque so text keeps 4.5:1 over any page. */
+.glass4 { background: color-mix(in srgb, var(--sf-lowest) 86%, transparent); backdrop-filter: blur(28px) saturate(1.5); -webkit-backdrop-filter: blur(28px) saturate(1.5); box-shadow: var(--e2), inset 0 0 0 1px color-mix(in srgb, var(--on-sf) 8%, transparent); }
+.t-dark .glass4, .t-oled .glass4, .glass4.dk { background: color-mix(in srgb, var(--sf-high) 88%, transparent); box-shadow: var(--e2), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+
+/* Workspace aura: the gradient that carries the workspace color through the shell. */
+.aura { background:
+  radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--aura-1) 58%, transparent) 0%, transparent 72%),
+  radial-gradient(110% 60% at 100% 35%, color-mix(in srgb, var(--aura-2) 48%, transparent) 0%, transparent 72%),
+  radial-gradient(120% 70% at 20% 100%, color-mix(in srgb, var(--aura-3) 60%, transparent) 0%, transparent 72%),
+  var(--sf-c); }
+.t-dark .aura, .t-oled .aura, .aura.dk { background:
+  radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--aura-1) 16%, transparent) 0%, transparent 70%),
+  radial-gradient(110% 60% at 100% 30%, color-mix(in srgb, var(--aura-2) 14%, transparent) 0%, transparent 70%),
+  var(--sf); }
+
+/* Direction A «Рама»: the page is a card inside the workspace frame. */
+.page-card { position: absolute; left: 6px; right: 6px; border-radius: 26px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent), 0 8px 24px rgba(10, 20, 24, 0.08); }
+
+/* Android chrome around artboards (not app UI). */
+.sb4 { position: absolute; top: 0; left: 0; right: 0; height: 40px; padding: 2px 22px 0 28px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--on-sf); z-index: 60; pointer-events: none; }
+.sb4 .ic { display: flex; align-items: center; gap: 7px; }
+.sb4 svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.sb4 svg.bat { width: 25px; }
+.sb4.lt { color: #FFFFFF; }
+.gh4 { position: absolute; left: 50%; bottom: 8px; width: 108px; height: 4px; margin-left: -54px; border-radius: 2px; background: var(--on-sf); opacity: 0.4; z-index: 60; pointer-events: none; }
+.gh4.lt { background: #FFFFFF; opacity: 0.7; }
+
+/* Workspace gem: the workspace icon on its aura gradient. */
+.gem { display: flex; align-items: center; justify-content: center; color: var(--on-pri-c); background: linear-gradient(135deg, var(--aura-1) 0%, var(--aura-2) 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); flex-shrink: 0; }
+.t-dark .gem, .t-oled .gem { color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+
+/* Tab counter glyph drawn to match Material Symbols stroke weight. */
+.tabcount { width: 23px; height: 23px; border-radius: 7px; box-shadow: inset 0 0 0 1.9px var(--on-sf-v); display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; color: var(--on-sf); }
+
+/* Direction B «Воздух»: floating island with an aura rim and glow. */
+.halo { border: 1.5px solid transparent; background: linear-gradient(color-mix(in srgb, var(--sf-lowest) 88%, transparent), color-mix(in srgb, var(--sf-lowest) 88%, transparent)) padding-box, linear-gradient(100deg, var(--aura-1), var(--aura-2)) border-box; box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 38%, transparent), 0 4px 14px color-mix(in srgb, var(--aura-2) 30%, transparent); }
+.t-dark .halo, .t-oled .halo { background: linear-gradient(color-mix(in srgb, var(--sf-high) 90%, transparent), color-mix(in srgb, var(--sf-high) 90%, transparent)) padding-box, linear-gradient(100deg, var(--aura-1), var(--aura-2)) border-box; box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 22%, transparent); }
+.t-dark .fieldpill, .t-oled .fieldpill { background: var(--sf-high) !important; }
+.t-dark .glass4 .fieldpill, .t-oled .glass4 .fieldpill { background: transparent !important; }
