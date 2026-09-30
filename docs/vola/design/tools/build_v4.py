@@ -159,6 +159,14 @@ def mini(kind, brand, tone):
                  '<i style="height: 8px; width: 88%; border-radius: 4px; background: #15201D; opacity: 0.8"></i><i style="height: 8px; width: 62%; border-radius: 4px; background: #15201D; opacity: 0.8"></i>'
                  f'<span style="height: 66px; border-radius: 9px; overflow: hidden; margin-top: 2px">{BAIKAL_T}</span>'
                  + ''.join(f'<i style="height: 5px; width: {w}%; border-radius: 3px; background: #E3E8E6"></i>' for w in (96, 90, 74)))
+    elif kind == 'video':
+        inner = (head + '<span style="position: relative; height: 84px; border-radius: 10px; margin-top: 2px; background: linear-gradient(160deg, #1F1838 0%, #4A2A55 45%, #9A4E55 75%, #D9905C 100%); display: flex; align-items: center; justify-content: center">'
+                 '<span style="width: 26px; height: 26px; border-radius: 13px; background: rgba(0,0,0,0.4); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><span class="ms f xs" style="font-size: 16px">play_arrow</span></span>'
+                 '<i style="position: absolute; left: 8px; right: 8px; bottom: 7px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #FFFFFF 0 34%, rgba(255,255,255,0.35) 34% 100%)"></i></span>'
+                 + ink(78) + line(54) + '<span style="display: flex; gap: 5px; margin-top: 2px">' + ''.join(f'<i style="flex: 1; height: 26px; border-radius: 6px; background: {c}"></i>' for c in ('#3A2448', '#4A2A22', '#16384A')) + '</span>')
+    elif kind == 'cal':
+        cells = ''.join(f'<i style="height: 16px; border-radius: 4px; background: {c}"></i>' for c in (['var(--sf-low)'] * 2 + [tone] + ['var(--sf-low)'] * 5 + [brand] + ['var(--sf-low)'] * 3 + [tone] + ['var(--sf-low)'] * 8))
+        inner = head + ink(66) + f'<span style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 2px">{cells}</span>'
     elif kind == 'list':
         inner = head + ink(60) + ''.join(f'<span style="display: flex; gap: 6px; align-items: center"><i style="width: 22px; height: 16px; border-radius: 4px; background: {tone}"></i>{line(w)}</span>' for w in (70, 58, 76, 64))
     else:

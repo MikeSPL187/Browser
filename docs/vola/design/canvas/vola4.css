@@ -39,11 +39,11 @@
 
 /* Buttons. */
 .ib4 { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: var(--on-sf-v); flex-shrink: 0; }
-.btn { height: 48px; border-radius: 24px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; }
-.btn.fill { background: var(--pri); color: var(--on-pri); }
-.btn.tonal { background: var(--sec-c); color: var(--on-sec-c); }
-.btn.out { box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf); }
-.chip { height: 36px; border-radius: 18px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; white-space: nowrap; background: var(--sf-lowest); box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf-v); }
+.v4 .btn { height: 48px; border-radius: 24px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.v4 .btn.fill { background: var(--pri); color: var(--on-pri); }
+.v4 .btn.tonal { background: var(--sec-c); color: var(--on-sec-c); }
+.v4 .btn.out { box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf); }
+.v4 .chip { height: 36px; border-radius: 18px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; white-space: nowrap; background: var(--sf-lowest); box-shadow: inset 0 0 0 1px var(--ol-v); color: var(--on-sf-v); }
 
 /* Site monogram (no third-party logos in mockups). */
 .fav { display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
@@ -95,3 +95,4 @@
 .bgroup4 > button:last-child { border-radius: 8px 22px 22px 8px; }
 .bgroup4 > button.sel { border-radius: 22px; background: var(--pri); color: var(--on-pri); }
 .air .fieldpill { background: transparent !important; box-shadow: none !important; }
+.gem.priv { background: linear-gradient(135deg, #3B2F8F 0%, #6A4BD8 100%); color: #FFFFFF; }
