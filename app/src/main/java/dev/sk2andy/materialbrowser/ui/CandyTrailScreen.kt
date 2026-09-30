@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
@@ -35,12 +34,14 @@ internal fun CandyTrailScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
+    val resources = currentResources()
+    val forkOpenStatus = stringResource(R.string.fork_status_open)
+    val forkClosedStatus = stringResource(R.string.fork_status_closed)
     val rootView = LocalView.current
     val strings = CandyTrailStrings(
         empty = stringResource(R.string.candy_trail_empty),
         nodeDescription = { isCurrent, title, host ->
-            context.getString(
+            resources.getString(
                 if (isCurrent) {
                     R.string.cd_candy_trail_current_node
                 } else {
@@ -51,13 +52,13 @@ internal fun CandyTrailScreen(
             )
         },
         nodeActionsDescription = { title ->
-            context.getString(R.string.cd_candy_trail_node_actions, title)
+            resources.getString(R.string.cd_candy_trail_node_actions, title)
         },
         forkStatus = { isOpen ->
-            context.getString(if (isOpen) R.string.fork_status_open else R.string.fork_status_closed)
+            if (isOpen) forkOpenStatus else forkClosedStatus
         },
         forkDescription = { isOpen, title, host ->
-            context.getString(
+            resources.getString(
                 if (isOpen) {
                     R.string.cd_candy_trail_fork_open
                 } else {
