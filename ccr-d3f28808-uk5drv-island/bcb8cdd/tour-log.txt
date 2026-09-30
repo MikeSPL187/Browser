@@ -1,0 +1,57 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+screenshot 05-https-upgrade-light.png
+screenshot 06-https-only-early-light.png
+screenshot 07-https-only-light.png
+screenshot 08-tab-overview-light.png
+screenshot 09-workspace-options-light.png
+tap 'More options' at 964,2232
+screenshot 10-menu-light.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+saved ui-menu-light.xml
+screenshot 11-current-dark.png
+screenshot 12-new-tab-dark.png
+screenshot 13-page-dark.png
+screenshot 14-page-scrolled-dark.png
+screenshot 15-https-upgrade-dark.png
+screenshot 16-https-only-early-dark.png
+screenshot 17-https-only-dark.png
+screenshot 18-tab-overview-dark.png
+screenshot 19-workspace-options-dark.png
+tap 'More options' at 964,2232
+screenshot 20-menu-dark.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 21-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 22-appearance-dark.png
+screenshot 23-new-tab-ru.png
+screenshot 24-page-ru.png
+screenshot 25-page-scrolled-ru.png
+screenshot 26-https-upgrade-ru.png
+screenshot 27-https-only-early-ru.png
+screenshot 28-https-only-ru.png
+screenshot 29-tab-overview-ru.png
+screenshot 30-workspace-options-ru.png
+tap 'More options' at 964,2232
+screenshot 31-menu-ru.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+screenshot 32-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 33-appearance-ru.png
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+saved ui-air-menu-ru.xml
