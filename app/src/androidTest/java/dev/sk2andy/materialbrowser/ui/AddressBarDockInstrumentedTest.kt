@@ -655,7 +655,7 @@ class AddressBarDockInstrumentedTest {
         composeRule.runOnIdle {
             assertEquals(
                 rememberedPlacement.copy(edge = AddressBarDockEdge.Right),
-                browserController.addressBarDockPlacement,
+                browserController.addressBar.dockPlacement,
             )
         }
     }
@@ -842,7 +842,7 @@ class AddressBarDockInstrumentedTest {
             }
 
         composeRule.waitForIdle()
-        val placement = requireNotNull(browserController.addressBarDockPlacement)
+        val placement = requireNotNull(browserController.addressBar.dockPlacement)
         assertTrue(
             "Unexpected placement after full-host drag: $placement",
             placement.edge == AddressBarDockEdge.Left,
@@ -868,27 +868,27 @@ class AddressBarDockInstrumentedTest {
         }
 
         composeRule.runOnIdle {
-            browserController.updateAddressBarDocked(false)
-            assertNull(browserController.addressBarDockPlacement)
+            browserController.addressBar.updateDocked(false)
+            assertNull(browserController.addressBar.dockPlacement)
             browserController.destroy()
 
             browserController = BrowserController(composeRule.activity)
             controller = browserController
-            assertNull(browserController.addressBarDockPlacement)
-            browserController.updateAddressBarDocked(true)
-            assertEquals(rememberedPlacement, browserController.addressBarDockPlacement)
+            assertNull(browserController.addressBar.dockPlacement)
+            browserController.addressBar.updateDocked(true)
+            assertEquals(rememberedPlacement, browserController.addressBar.dockPlacement)
 
-            browserController.updateAddressBarDockingEnabled(false)
-            assertFalse(browserController.isAddressBarDockingEnabled)
-            assertNull(browserController.addressBarDockPlacement)
+            browserController.addressBar.updateDockingEnabled(false)
+            assertFalse(browserController.addressBar.isDockingEnabled)
+            assertNull(browserController.addressBar.dockPlacement)
             browserController.destroy()
 
             browserController = BrowserController(composeRule.activity)
             controller = browserController
-            assertFalse(browserController.isAddressBarDockingEnabled)
-            browserController.updateAddressBarDockingEnabled(true)
-            browserController.updateAddressBarDocked(true)
-            assertEquals(rememberedPlacement, browserController.addressBarDockPlacement)
+            assertFalse(browserController.addressBar.isDockingEnabled)
+            browserController.addressBar.updateDockingEnabled(true)
+            browserController.addressBar.updateDocked(true)
+            assertEquals(rememberedPlacement, browserController.addressBar.dockPlacement)
         }
     }
 
