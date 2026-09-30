@@ -453,3 +453,173 @@ if __name__ == '__main__':
     import sys
     if 'appearance' in sys.argv[1:]:
         appearance()
+
+
+# ---------- interactive prototype ----------
+
+def forecast_page():
+    bars = [18, 24, 29, 33, 38, 41, 46, 52]
+    chart = ''.join(f'<i style="flex: 1 1 0; height: {round(b / 52 * 100)}%; border-radius: 6px 6px 2px 2px; background: {"#2F6B5F" if k == 7 else "#CFE7E1"}"></i>' for k, b in enumerate(bars))
+    spots = ''.join(f'<div style="border-radius: 16px; background: #EEF6F4; padding: 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 600; color: #5B6B67">{n}</span><span style="font-size: 22px; font-weight: 700; color: #16211E">{v}<span style="font-size: 13px; font-weight: 600; color: #5B6B67"> см</span></span></div>' for n, v in (('Листвянка', 52), ('Б. Коты', 47), ('Ольхон', 61)))
+    return f'''<div style="position: absolute; inset: 0; background: #FFFFFF">
+<div style="height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #EDF0EF"><span class="fav" style="width: 28px; height: 28px; border-radius: 9px; background: #D4F1EC; color: #00665A; font-size: 14px">П</span><span style="font-size: 15px; font-weight: 700; color: #15201D">Прогноз льда</span></div>
+<div style="padding: 20px 18px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2F6B5F">Обновлено в 9:00</span>
+<span style="font-size: 26px; line-height: 32px; font-weight: 700; color: #15201D; letter-spacing: -0.015em">Толщина льда: южная часть озера</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">{spots}</div>
+<div style="border-radius: 20px; box-shadow: inset 0 0 0 1px #E3E8E6; padding: 14px; display: flex; flex-direction: column; gap: 10px"><span style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #15201D"><span>По неделям, см</span><span style="color: #2F6B5F">+6 за неделю</span></span><span style="height: 150px; display: flex; align-items: flex-end; gap: 8px; border-bottom: 1px solid #E3E8E6">{chart}</span></div>
+<p style="font-family: Literata, Georgia, serif; font-size: 16px; line-height: 26px; color: #2B3432">Лёд держит пешехода от 10 см, но у берега и возле трещин он тоньше.</p>
+</div>
+</div>'''
+
+
+def doc_page():
+    item = lambda done, t: f'<span style="display: flex; gap: 12px; align-items: center; font-size: 15px; color: #1C1B1F"><span style="width: 20px; height: 20px; border-radius: 6px; {"background: #4A3A9E" if done else "box-shadow: inset 0 0 0 2px #AFA8B8"}; display: flex; align-items: center; justify-content: center; color: #FFFFFF"><span class="ms xs" style="font-size: 16px">{"check" if done else ""}</span></span>{t}</span>'
+    return f'''<div style="position: absolute; inset: 0; background: #FFFFFF">
+<div style="height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #EFEDF3"><span class="fav" style="width: 28px; height: 28px; border-radius: 9px; background: #E6DEFF; color: #4A3A9E; font-size: 14px">Д</span><span style="font-size: 15px; font-weight: 700; color: #1C1B1F">Документы</span></div>
+<div style="padding: 22px 20px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4A3A9E">Запуск · октябрь</span>
+<span style="font-family: Literata, Georgia, serif; font-size: 30px; line-height: 36px; font-weight: 600; color: #1C1B1F">План запуска на октябрь</span>
+<p style="font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; color: #2E2B33">Цели релиза, сроки по неделям и ответственные.</p>
+{item(True, 'Бета для тестировщиков — 6 октября')}{item(False, 'Публичный релиз — 20 октября')}{item(False, 'Пост в блоге и заметки о выпуске')}
+<span style="border-radius: 16px; background: #F4F1F7; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px"><span style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #1C1B1F"><span>Готовность</span><span style="color: #4A3A9E">3 из 8</span></span><span style="height: 8px; border-radius: 4px; background: #E6E1EB; overflow: hidden"><i style="width: 38%; height: 8px; border-radius: 4px; background: #4A3A9E"></i></span></span>
+</div>
+</div>'''
+
+
+def watchlist_page():
+    rows = ''.join(f'<span style="display: flex; gap: 12px; align-items: center"><i style="width: 56px; height: 76px; border-radius: 10px; background: linear-gradient(160deg, {a}, {b}); flex-shrink: 0"></i><span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; font-weight: 600; color: #1C1B1F">{t}</span><span style="font-size: 12.5px; color: #6B6470">{m}</span></span></span>'
+                   for t, m, a, b in (('Северное сияние', '12 серий · смотрю', '#1F1838', '#6B3E7A'), ('Ледяной город', '8 серий · в планах', '#16384A', '#3E6E86'), ('Дорога к Ольхону', 'Фильм · в планах', '#2A2216', '#8A6A3A'), ('Шаманка', '6 серий · в планах', '#2B1A16', '#9A4E55')))
+    return f'''<div style="position: absolute; inset: 0; background: #FFFFFF">
+<div style="height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 10px"><span class="fav" style="width: 28px; height: 28px; border-radius: 9px; background: #6B2C8C; color: #FFFFFF; font-size: 14px">С</span><span style="font-size: 16px; font-weight: 700; color: #2A1636">Список к просмотру</span></div>
+<div style="padding: 12px 18px; display: flex; flex-direction: column; gap: 14px">{rows}</div>
+</div>'''
+
+
+def static_card(t):
+    """Tab card without a nested close button, safe inside a clickable wrapper."""
+    return tab_card(t, current=False).replace('<button aria-label="Закрыть вкладку"', '<span aria-label="Закрыть вкладку"').replace('<span class="ms xs">close</span></button>', '<span class="ms xs">close</span></span>')
+
+
+def proto():
+    panes_work = [article(), forecast_page(), doc_page()]
+    panes_anime = [kino(), watchlist_page()]
+    strip = lambda panes, key: f'<sc-if value="{{{{{key}}}}}"><div style="position: absolute; inset: 0; transition: transform 420ms cubic-bezier(0.2, 0.9, 0.25, 1.05); {{{{strip}}}}">' + ''.join(
+        f'<div style="position: absolute; top: 0; bottom: 0; left: {k * 100}%; width: 100%">{p}</div>' for k, p in enumerate(panes)) + '</div></sc-if>'
+    tr = 'transition: all 380ms cubic-bezier(0.2, 0.9, 0.25, 1.08)'
+    full_bar = address_bar().replace('>north-guide.ru<', '>{{domain}}<').replace('>work<', '>{{wsIcon}}<').replace('tabcount">4', 'tabcount">{{tabCount}}').replace('>menu_book<', '>{{pageAction}}<')
+    full_bar = full_bar.replace('<button class="fieldpill"', '<button onClick="{{openAddress}}" class="fieldpill"').replace('<button class="ib4" aria-label="Вкладки: 4"', '<button onClick="{{openTabs}}" class="ib4" aria-label="Вкладки"')
+    tabs_grid = lambda tabs, key: f'<sc-if value="{{{{{key}}}}}"><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">' + ''.join(
+        f'<div role="button" onClick="{{{{open{k}}}}}" style="cursor: pointer">{static_card(t)}</div>' for k, t in enumerate(tabs)) + '</div></sc-if>'
+    work_tabs = [TABS[5], TABS[0], TABS[2]]
+    anime_tabs = [('Обзор первой серии', 'К', '#A23F2B', '#FFFFFF', 'list'), ('Список к просмотру', 'С', '#F1DEFA', '#6B2C8C', 'list')]
+    pill = lambda ws, icon, name: f'<button onClick="{{{{ws_{ws}}}}}" role="tab" style="height: 48px; border-radius: 24px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 4px; {{{{pill_{ws}}}}}"><span class="w-{ws} t-light gem" style="width: 40px; height: 40px; border-radius: 14px"><span class="ms f s">{icon}</span></span><span style="font-size: 15px; font-weight: 600; {{{{label_{ws}}}}}">{name}</span></button>'
+    addr_proto = address_body('A').replace(keyboard(False), '<sc-if value="{{isLight}}">' + keyboard(False) + '</sc-if><sc-if value="{{isDark}}">' + keyboard(True) + '</sc-if>').replace('<a href="#" style="min-height: 56px; display: flex; align-items: center; gap: 14px; padding: 6px 8px 6px 12px; border-radius: 18px; background', '<a href="#" onClick="{{go}}" style="min-height: 56px; display: flex; align-items: center; gap: 14px; padding: 6px 8px 6px 12px; border-radius: 18px; background').replace('<button class="ib4" aria-label="Очистить"', '<button onClick="{{closeAddress}}" class="ib4" aria-label="Закрыть"')
+    phone = f'''<div class="{{{{root}}}}" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; border-radius: 40px; overflow: hidden; transition: background-color 400ms">
+<sc-if value="{{{{isPage}}}}">
+<div style="position: absolute; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent), 0 8px 24px rgba(10, 20, 24, 0.08); {tr}; {{{{card}}}}" onClick="{{{{scroll}}}}">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; {tr}; {{{{inner}}}}">{strip(panes_work, 'isWork')}{strip(panes_anime, 'isAnime')}</div>
+</div>
+<div class="{{{{barCls}}}}" style="position: absolute; {tr}; {{{{bar}}}}">
+<div style="position: absolute; inset: 0; display: flex; align-items: center; gap: 4px; padding: {{{{barPad}}}}; transition: opacity 200ms; {{{{full}}}}">{full_bar}</div>
+<button onClick="{{{{scroll}}}}" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; transition: opacity 200ms; {{{{mini}}}}"><span class="ms xs" style="color: var(--on-sf-v); font-size: 15px">lock</span>{{{{domain}}}}</button>
+</div>
+</sc-if>
+<sc-if value="{{{{isTabs}}}}">
+<div style="position: absolute; left: 20px; right: 8px; top: 44px; height: 56px; display: flex; align-items: center"><span style="flex-grow: 1; display: flex; align-items: baseline; gap: 10px"><span class="ty-head">{{{{wsName}}}}</span><span class="ty-cap" style="font-size: 14px">{{{{tabWord}}}}</span></span><span class="ib4" style="color: var(--on-sf)"><span class="ms">search</span></span></div>
+<div style="position: absolute; left: 16px; right: 16px; top: 112px">{tabs_grid(work_tabs, 'isWork')}{tabs_grid(anime_tabs, 'isAnime')}</div>
+<div style="position: absolute; left: 12px; right: 12px; bottom: 26px; display: flex; align-items: center; gap: 10px">
+<div role="tablist" style="flex-grow: 1; height: 56px; border-radius: 28px; background: color-mix(in srgb, var(--sf-lowest) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent); display: flex; align-items: center; gap: 2px; padding: 0 4px">{pill('work', 'work', 'Работа')}{pill('anime', 'movie', 'Аниме')}</div>
+<button onClick="{{{{openAddress}}}}" style="width: 56px; height: 56px; border-radius: 20px; background: var(--pri); color: var(--on-pri); display: flex; align-items: center; justify-content: center"><span class="ms l">add</span></button>
+</div>
+</sc-if>
+<sc-if value="{{{{isAddress}}}}">
+<div style="position: absolute; inset: 0">{addr_proto}</div>
+</sc-if>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 40px; z-index: 61; pointer-events: none; {{{{sbStyle}}}}">{status()}</div>
+{handle()}
+</div>'''
+    ctl = lambda label, fn, icon, sub='': f'<button onClick="{{{{{fn}}}}}" style="min-height: 56px; border-radius: 18px; background: var(--sf-lowest); box-shadow: var(--e1); display: flex; align-items: center; gap: 14px; padding: 8px 14px; text-align: left"><span class="ms" style="color: var(--pri)">{icon}</span><span style="display: flex; flex-direction: column; gap: 2px"><span class="ty-label">{label}</span>{sub}</span></button>'
+    panel = f'''<div class="v4 w-work t-light" style="position: absolute; left: 420px; top: 0; width: 360px; height: 844px; border-radius: 32px; background: var(--sf-c); padding: 24px 20px; display: flex; flex-direction: column; gap: 10px">
+<span class="ty-title-l">Прототип</span>
+<span class="ty-cap" style="font-size: 13.5px; line-height: 19px">Жесты заменены касаниями. Можно нажимать и на сам телефон: страница — прокрутка, адрес — ввод, счётчик — вкладки.</span>
+<span class="ty-over" style="padding-top: 8px">Жесты</span>
+{ctl('{{scrollLabel}}', 'scroll', 'swipe', '<span class="ty-cap">Панель сжимается в капсулу с адресом</span>')}
+{ctl('Свайп по панели влево', 'next', 'arrow_back', '<span class="ty-cap">Соседняя вкладка</span>')}
+{ctl('Свайп по панели вправо', 'prev', 'arrow_forward', '<span class="ty-cap">Предыдущая вкладка</span>')}
+{ctl('Свайп вверх по панели', 'openTabs', 'arrow_upward', '<span class="ty-cap">Обзор вкладок</span>')}
+<span class="ty-over" style="padding-top: 8px">Вид</span>
+{ctl('Пространство: {{wsName}}', 'toggleWs', 'workspaces', '<span class="ty-cap">Цвет оболочки меняется вместе с пространством</span>')}
+{ctl('Оформление: {{styleName}}', 'toggleStyle', 'dock_to_bottom')}
+{ctl('Тема: {{themeName}}', 'toggleTheme', 'contrast')}
+</div>'''
+    logic = r'''class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { screen: 'page', tab: 0, collapsed: false, ws: 'work', style: 'frame', theme: 'light' };
+}
+renderVals() {
+const S = this.state;
+const set = (o) => () => this.setState(o);
+const frame = S.style === 'frame';
+const col = S.collapsed && S.screen === 'page';
+const tabs = S.ws === 'work' ? 3 : 2;
+const domains = S.ws === 'work' ? ['north-guide.ru', 'ice-forecast.example.ru', 'docs.example.com'] : ['kinoteka.example', 'lists.example.com'];
+let card, inner, bar, barPad;
+if (frame) {
+card = `left: 6px; right: 6px; top: 40px; bottom: ${col ? 58 : 92}px; border-radius: 26px;`;
+inner = 'top: 0;';
+bar = col ? 'left: 110px; right: 110px; bottom: 20px; height: 32px; border-radius: 16px; background: color-mix(in srgb, var(--sf-lowest) 80%, transparent);' : 'left: 8px; right: 8px; bottom: 28px; height: 56px; border-radius: 28px; background: transparent;';
+barPad = '0';
+} else {
+card = 'left: 0; right: 0; top: 0; bottom: 0; border-radius: 0;';
+inner = 'top: 40px;';
+bar = (col ? 'left: 110px; right: 110px; bottom: 20px; height: 32px; border-radius: 16px;' : 'left: 12px; right: 12px; bottom: 22px; height: 60px; border-radius: 30px;') + ' background: color-mix(in srgb, var(--sf-lowest) 88%, transparent); box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 38%, transparent), inset 0 0 0 1.5px color-mix(in srgb, var(--aura-1) 70%, transparent); backdrop-filter: blur(24px);';
+barPad = '0 4px 0 6px';
+}
+const pillOn = 'background: var(--sf-lowest); box-shadow: var(--e1);';
+const pillOff = 'background: transparent; box-shadow: none;';
+const labOff = 'display: none;';
+const openTab = (k) => set({ screen: 'page', tab: k, collapsed: false });
+return {
+root: `v4 w-${S.ws} t-${S.theme}${frame ? ' aura' : ''}`,
+barCls: frame ? 'frame' : 'air',
+sbStyle: (!frame && S.screen === 'page') ? '--on-sf: #1B1F20;' : '',
+isLight: S.theme === 'light', isDark: S.theme === 'dark',
+card: card, inner: inner, bar: bar, barPad: barPad,
+full: col ? 'opacity: 0; pointer-events: none;' : 'opacity: 1;',
+mini: col ? 'opacity: 1;' : 'opacity: 0; pointer-events: none;',
+strip: `transform: translateX(${-S.tab * 100}%);`,
+isPage: S.screen === 'page', isTabs: S.screen === 'tabs', isAddress: S.screen === 'address',
+isWork: S.ws === 'work', isAnime: S.ws === 'anime',
+domain: domains[Math.min(S.tab, tabs - 1)],
+wsIcon: S.ws === 'work' ? 'work' : 'movie',
+wsName: S.ws === 'work' ? 'Работа' : 'Аниме',
+tabCount: String(tabs), tabWord: tabs === 3 ? '3 вкладки' : '2 вкладки',
+pageAction: S.ws === 'work' ? 'menu_book' : 'picture_in_picture_alt',
+pill_work: S.ws === 'work' ? pillOn : pillOff, pill_anime: S.ws === 'anime' ? pillOn : pillOff,
+label_work: S.ws === 'work' ? '' : labOff, label_anime: S.ws === 'anime' ? '' : labOff,
+styleName: frame ? 'Рама' : 'Воздух', themeName: S.theme === 'light' ? 'светлая' : 'тёмная',
+scrollLabel: S.collapsed ? 'Прокрутка вверх' : 'Прокрутка вниз',
+scroll: set({ collapsed: !S.collapsed, screen: 'page' }),
+next: set({ screen: 'page', tab: Math.min(S.tab + 1, tabs - 1), collapsed: false }),
+prev: set({ screen: 'page', tab: Math.max(S.tab - 1, 0), collapsed: false }),
+openTabs: set({ screen: 'tabs' }),
+openAddress: set({ screen: 'address' }),
+closeAddress: set({ screen: 'page' }),
+go: set({ screen: 'page', ws: 'work', tab: 0, collapsed: false }),
+ws_work: set({ ws: 'work', tab: 0 }), ws_anime: set({ ws: 'anime', tab: 0 }),
+toggleWs: set({ ws: S.ws === 'work' ? 'anime' : 'work', tab: 0, screen: 'page', collapsed: false }),
+toggleStyle: set({ style: frame ? 'air' : 'frame' }),
+toggleTheme: set({ theme: S.theme === 'light' ? 'dark' : 'light' }),
+open0: openTab(0), open1: openTab(1), open2: openTab(2)
+};
+}
+}'''
+    board('V4-Proto.dc.html', 'Vola v4 — прототип', '', phone + panel, w=780, h=844, style='background: transparent; overflow: visible', logic=logic)
+
+
+if __name__ == '__main__':
+    import sys
+    if 'proto' in sys.argv[1:]:
+        proto()
