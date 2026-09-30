@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 
 class AddressBarMotionTest {
     private val materialMotion = CandyMotionSchemes.MaterialExpressive
@@ -89,7 +90,7 @@ class AddressBarMotionTest {
             ),
         )
         assertEquals(
-            48.dp,
+            VolaIsland.compactHeight,
             AddressBarMotion.heightTarget(
                 presentation = AddressBarPresentation.Compact,
                 expandedHeight = SegmentedAddressBarGeometry.EXPANDED_HEIGHT,

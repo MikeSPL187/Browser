@@ -65,11 +65,15 @@ internal fun Modifier.contentFramePadding(frame: BrowserContentFrame): Modifier 
  * The aura around the page card, drawn over the page host. The engines render into a
  * SurfaceView, which ignores rounded clips, so the card corners are cut by painting the aura
  * over them; the same pass draws the card's hairline and soft shadow.
+ *
+ * [coveredBottomPx] lifts the card's bottom edge above [frame] while the expanded address bar
+ * covers the page; it is read while drawing, so a moving bar only redraws the mask.
  */
 @Composable
 internal fun BrowserContentFrameMask(
     frame: BrowserContentFrame,
     modifier: Modifier = Modifier,
+    coveredBottomPx: () -> Float = { 0f },
 ) {
     val aura = VolaTheme.auraBrush
     val outlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = VolaFrame.OUTLINE_ALPHA)
@@ -79,7 +83,7 @@ internal fun BrowserContentFrameMask(
             left = frame.leftPx.toFloat(),
             top = frame.topPx.toFloat(),
             right = size.width - frame.rightPx,
-            bottom = size.height - frame.bottomPx,
+            bottom = size.height - frame.bottomPx - coveredBottomPx().coerceAtLeast(0f),
             cornerRadius = CornerRadius(VolaFrame.pageRadius.toPx()),
         )
         if (card.width <= 0f || card.height <= 0f) return@Canvas

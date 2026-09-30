@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -33,6 +34,7 @@ import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
@@ -50,6 +52,7 @@ private val PreviewNavigationBarHeight = 24.dp
 private fun BrowserShellPreviewContent(
     mode: BrowserAppearanceMode,
     chromeStyle: BrowserChromeStyle,
+    scrolled: Boolean = false,
 ) {
     val settings = AppearanceSettings(appearanceMode = mode, chromeStyle = chromeStyle)
     MaterialBrowserTheme(settings = settings) {
@@ -69,8 +72,13 @@ private fun BrowserShellPreviewContent(
                 sideGutterPx = VolaFrame.sideGutter.toPx(),
                 barGapPx = VolaFrame.barGap.toPx(),
                 addressBarReservePx = (
-                    addressBarExpandedHeight(BrowserAddressBarStyle.Classic) +
-                        ADDRESS_BAR_VERTICAL_MARGIN
+                    (
+                        if (scrolled) {
+                            VolaIsland.compactHeight
+                        } else {
+                            addressBarExpandedHeight(BrowserAddressBarStyle.Classic)
+                        }
+                        ) + ADDRESS_BAR_VERTICAL_MARGIN
                     ).toPx(),
             )
         }
@@ -97,6 +105,8 @@ private fun BrowserShellPreviewContent(
                 BrowserContentFrameMask(frame = frame, modifier = Modifier.fillMaxSize())
             }
             PreviewAddressBar(
+                compact = scrolled,
+                auraRim = chromeStyle == BrowserChromeStyle.Air,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = PreviewNavigationBarHeight)
@@ -143,31 +153,63 @@ private fun PreviewArticle(topInset: Dp) {
 }
 
 @Composable
-private fun PreviewAddressBar(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(addressBarExpandedHeight(BrowserAddressBarStyle.Classic))
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(horizontal = VolaSpacing.x4),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x2),
+private fun PreviewAddressBar(
+    compact: Boolean,
+    auraRim: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val shape = CircleShape
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = VolaIcons.Lock,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = "north-guide.ru",
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.size(VolaSpacing.x1))
-        Icon(imageVector = VolaIcons.MoreVert, contentDescription = null)
+        Box(
+            modifier = Modifier
+                .then(if (compact) Modifier else Modifier.fillMaxWidth())
+                .height(
+                    if (compact) {
+                        VolaIsland.compactHeight
+                    } else {
+                        addressBarExpandedHeight(BrowserAddressBarStyle.Classic)
+                    },
+                )
+                .then(if (auraRim) Modifier.islandAuraRim(shape) else Modifier)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .padding(horizontal = VolaSpacing.x4),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (compact) {
+                AddressBarCompactContent(
+                    domain = "north-guide.ru",
+                    secure = true,
+                    showCastButton = false,
+                    dockingEnabled = false,
+                    dockTargetEdge = AddressBarDockEdge.Right,
+                    onDock = {},
+                )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x2),
+                ) {
+                    Icon(
+                        imageVector = VolaIcons.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "north-guide.ru",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.size(VolaSpacing.x1))
+                    Icon(imageVector = VolaIcons.MoreVert, contentDescription = null)
+                }
+            }
+        }
     }
 }
 
@@ -215,3 +257,33 @@ private fun AirDarkPreview() {
 private fun FrameLargeFontPreview() {
     BrowserShellPreviewContent(BrowserAppearanceMode.Light, BrowserChromeStyle.Frame)
 }
+
+@Preview(
+    name = "Shell · Frame · scrolled · light",
+    widthDp = PREVIEW_WIDTH_DP,
+    heightDp = PREVIEW_HEIGHT_DP,
+)
+@Composable
+private fun FrameScrolledLightPreview() {
+    BrowserShellPreviewContent(
+        mode = BrowserAppearanceMode.Light,
+        chromeStyle = BrowserChromeStyle.Frame,
+        scrolled = true,
+    )
+}
+
+@Preview(
+    name = "Shell · Air · scrolled · dark",
+    widthDp = PREVIEW_WIDTH_DP,
+    heightDp = PREVIEW_HEIGHT_DP,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+private fun AirScrolledDarkPreview() {
+    BrowserShellPreviewContent(
+        mode = BrowserAppearanceMode.Dark,
+        chromeStyle = BrowserChromeStyle.Air,
+        scrolled = true,
+    )
+}
+

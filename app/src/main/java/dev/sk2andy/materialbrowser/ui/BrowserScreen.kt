@@ -54,6 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInWindow
@@ -126,6 +128,8 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
@@ -1383,7 +1387,7 @@ internal fun BrowserScreen(
         isBlankPage = selectedTab.url == BLANK_URL,
     )
     val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
-    val contentFrame = BrowserContentFrameRules.resolve(
+    fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(
         framed = contentFramed,
         safeLeftPx = frameSafeInsets.getLeft(density, LayoutDirection.Ltr),
         safeTopPx = frameSafeInsets.getTop(density),
@@ -1394,15 +1398,56 @@ internal fun BrowserScreen(
         addressBarReservePx = if (addressBarDocked) {
             0f
         } else {
-            with(density) {
-                (addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle) +
-                    ADDRESS_BAR_VERTICAL_MARGIN).toPx()
-            }
+            with(density) { (addressBarHeight + ADDRESS_BAR_VERTICAL_MARGIN).toPx() }
         },
     )
+    val expandedContentFrame = framedContent(
+        addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
+    )
+    // With a dynamic toolbar the engine lays the page out for the compact capsule and the
+    // expanded bar only covers the card's bottom, so scrolling never resizes the page.
+    val dynamicContentFrame = contentFramed &&
+        !addressBarDocked &&
+        controller.supportsDynamicContentFrame
+    val contentFrame = if (dynamicContentFrame) {
+        framedContent(VolaIsland.compactHeight)
+    } else {
+        expandedContentFrame
+    }
+    val dynamicBottomMaxPx = if (dynamicContentFrame) {
+        (expandedContentFrame.bottomPx - contentFrame.bottomPx).coerceAtLeast(0)
+    } else {
+        0
+    }
+    val addressBarCompactShown = controller.isBottomBarCompact &&
+        !addressEditorVisible &&
+        !linkPeekAddressBarExpanded &&
+        commandFeedback == null &&
+        !tabOverviewVisible &&
+        !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp = browserWidthPx / density.density)
+    val coveredBottomPx = remember { Animatable(0f) }
+    var coveredBottomMaxPx by remember { mutableIntStateOf(0) }
+    LaunchedEffect(dynamicBottomMaxPx, addressBarCompactShown) {
+        val target = if (addressBarCompactShown) 0f else dynamicBottomMaxPx.toFloat()
+        if (coveredBottomMaxPx != dynamicBottomMaxPx) {
+            // A new card size is not a bar transition: settle at once.
+            coveredBottomMaxPx = dynamicBottomMaxPx
+            coveredBottomPx.snapTo(target)
+        } else {
+            coveredBottomPx.animateTo(target, VolaMotion.standard())
+        }
+    }
+    LaunchedEffect(controller, dynamicBottomMaxPx) {
+        snapshotFlow { coveredBottomPx.value.roundToInt() }.collect { coveredPx ->
+            controller.updateContentFrameCoveredBottom(dynamicBottomMaxPx, coveredPx)
+        }
+    }
     SideEffect { controller.updateContentFrame(contentFrame) }
     DisposableEffect(controller) {
-        onDispose { controller.updateContentFrame(BrowserContentFrame.None) }
+        onDispose {
+            controller.updateContentFrame(BrowserContentFrame.None)
+            controller.updateContentFrameCoveredBottom(maxPx = 0, coveredPx = 0)
+        }
     }
     val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
 
@@ -1483,7 +1528,11 @@ internal fun BrowserScreen(
             }
         }
         if (contentFramed) {
-            BrowserContentFrameMask(frame = contentFrame, modifier = Modifier.fillMaxSize())
+            BrowserContentFrameMask(
+                frame = contentFrame,
+                coveredBottomPx = { coveredBottomPx.value },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         controller.findInPageState

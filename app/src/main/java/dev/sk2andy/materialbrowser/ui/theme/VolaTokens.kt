@@ -89,6 +89,18 @@ internal object VolaFrame {
     val shadowBlur = 24.dp
 }
 
+/** The address island (boards Main, Scrolled, V4B-Page). */
+internal object VolaIsland {
+    /** The scrolled-away bar: a small capsule with the lock and the site. */
+    val compactHeight = 40.dp
+
+    /** The aura rim of the island in the Air layout (`.halo` in vola4.css). */
+    val rimWidth = 1.5.dp
+
+    /** Glow of the aura under the island in the Air layout. */
+    val glowElevation = 14.dp
+}
+
 /** Shadow depth: --e1 … --e3 in vola4.css. */
 internal object VolaElevation {
     /** Cards and tiles. */

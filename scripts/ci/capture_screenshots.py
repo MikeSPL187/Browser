@@ -153,10 +153,13 @@ def tour(suffix):
         open_url("https://en.wikipedia.org/wiki/Zen")
         time.sleep(15)
         shot(f"page-{suffix}")
-        # Scrolling down the page compacts the address bar.
-        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
-            str(width // 2), str(int(height * 0.3)), "400")
-        time.sleep(3)
+        # Scrolling down the page compacts the address bar. The first scroll event only sets the
+        # baseline, so scroll twice.
+        for _ in range(2):
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+                str(width // 2), str(int(height * 0.4)), "600")
+            time.sleep(1)
+        time.sleep(2)
         shot(f"page-scrolled-{suffix}")
     step("page", page)
 

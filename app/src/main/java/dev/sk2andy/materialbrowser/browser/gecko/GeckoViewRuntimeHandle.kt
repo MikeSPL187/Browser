@@ -23,6 +23,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.BrowserPerformanceTrace
+import dev.sk2andy.materialbrowser.browser.BrowserDynamicToolbarHost
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
 import dev.sk2andy.materialbrowser.browser.BrowserSurfaceBackdropBlurRegion
@@ -3423,7 +3424,12 @@ private class GeckoViewBrowserSession(
  * Small GeckoView edge exposing Android's protected scroll metrics to the shared chrome.
  * Gecko still owns all scrolling; Candy only renders and drags the indicator.
  */
-internal class CandyGeckoView(context: Context) : FrameLayout(context), GeckoViewInsetHost {
+internal class CandyGeckoView(context: Context) :
+    FrameLayout(context),
+    GeckoViewInsetHost,
+    BrowserDynamicToolbarHost {
+    private var dynamicToolbarMaxHeightPx = 0
+    private var dynamicToolbarCoveredPx = 0
     private var autofillEnabled = true
     private var animationsEnabled = true
     private var activityContextDelegate: GeckoView.ActivityContextDelegate? = null
@@ -3452,6 +3458,21 @@ internal class CandyGeckoView(context: Context) : FrameLayout(context), GeckoVie
 
     fun setBackdropBlurRegion(region: BrowserBackdropBlurRegion?) {
         engineView.setBackdropBlurRegion(region)
+    }
+
+    override fun updateDynamicToolbar(maxHeightPx: Int, coveredPx: Int) {
+        val maxHeight = maxHeightPx.coerceAtLeast(0)
+        val covered = coveredPx.coerceIn(0, maxHeight)
+        if (maxHeight != dynamicToolbarMaxHeightPx) {
+            dynamicToolbarMaxHeightPx = maxHeight
+            // Gecko resets the clipping to 0 whenever the maximum changes.
+            engineView.setDynamicToolbarMaxHeight(maxHeight)
+            dynamicToolbarCoveredPx = 0
+        }
+        if (covered != dynamicToolbarCoveredPx) {
+            dynamicToolbarCoveredPx = covered
+            engineView.setVerticalClipping(covered)
+        }
     }
 
     fun setAnimationsEnabled(enabled: Boolean) {

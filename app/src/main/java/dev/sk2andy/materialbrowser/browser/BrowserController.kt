@@ -1451,6 +1451,8 @@ class BrowserController(
         private set
     private var lastWindowInsets: WindowInsetsCompat? = null
     private var contentFrame = BrowserContentFrame.None
+    private var contentFrameDynamicBottomPx = 0
+    private var contentFrameCoveredBottomPx = 0
     private var browserChromeOwnsIme = false
     private var previewEpoch = 0
     private var faviconEpoch = 0
@@ -3181,6 +3183,33 @@ class BrowserController(
         if (topChanged) refreshGeckoContentTopInsetPolicies()
     }
 
+    /** Whether the page card can grow under a compacting address bar without resizing the page. */
+    val supportsDynamicContentFrame: Boolean
+        get() = usesGeckoEngine
+
+    /**
+     * The bottom part of the page card the expanded address bar may cover, [maxPx] tall, and how
+     * much of it it covers now. The engine keeps bottom-fixed page elements above [coveredPx].
+     */
+    fun updateContentFrameCoveredBottom(maxPx: Int, coveredPx: Int) {
+        val max = maxPx.coerceAtLeast(0)
+        val covered = coveredPx.coerceIn(0, max)
+        if (contentFrameDynamicBottomPx == max && contentFrameCoveredBottomPx == covered) return
+        contentFrameDynamicBottomPx = max
+        contentFrameCoveredBottomPx = covered
+        geckoViewBindings.values.forEach { binding ->
+            if (binding.view.isAttachedToWindow) applyDynamicContentFrame(binding.view)
+        }
+    }
+
+    private fun applyDynamicContentFrame(view: View) {
+        val framed = view !== geckoMediaPresentation?.view
+        (view as? BrowserDynamicToolbarHost)?.updateDynamicToolbar(
+            maxHeightPx = if (framed) contentFrameDynamicBottomPx else 0,
+            coveredPx = if (framed) contentFrameCoveredBottomPx else 0,
+        )
+    }
+
     private fun dispatchWindowInsetsToAttachedEngineViews(insets: WindowInsetsCompat) {
         geckoViewBindings.values.forEach { binding ->
             if (binding.view.isAttachedToWindow) {
@@ -4838,6 +4867,7 @@ class BrowserController(
         // The outer host always fills the edge-to-edge window. Its inner GeckoView either receives
         // GeckoView 155's current root safe area or native margins for the keyboard/site override.
         (view as? GeckoViewInsetHost)?.updateInsets(layout, effectiveInsets)
+        if (tabId != null) applyDynamicContentFrame(view)
     }
 
     private fun isFullscreenVideoInsideSafeDrawingHost(view: View): Boolean =
