@@ -324,6 +324,7 @@
         <item quantity="other">Закрыть %1$d дубликата вкладок? Закреплённые и текущая вкладки останутся открытыми.</item>
     </plurals>
     <string name="favorites_title">Избранное</string>
+    <string name="new_tab_continue">Продолжить</string>
     <string name="favorites_search">Поиск в избранном</string>
     <string name="favorites_clear_search">Очистить поиск</string>
     <string name="favorites_delete">Удалить «%1$s» из избранного</string>

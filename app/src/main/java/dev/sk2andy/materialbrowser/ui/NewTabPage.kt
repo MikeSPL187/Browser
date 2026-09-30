@@ -9,7 +9,9 @@ package dev.sk2andy.materialbrowser.ui
 import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +46,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -58,12 +62,18 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.AddressResolver
+import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
+import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
+import dev.sk2andy.materialbrowser.ui.theme.VolaShapes
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
@@ -88,6 +98,10 @@ internal fun NewTabPage(
     explicitSafeDrawingPadding: PaddingValues? = null,
     /** The workspace name shown above the page, as on the NewTab board. */
     title: String? = null,
+    /** Recently used tabs for the Continue card, newest first. */
+    recentTabs: List<BrowserTab> = emptyList(),
+    recentTabFavicons: Map<String, Bitmap> = emptyMap(),
+    onRecentTab: (String) -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
     val profileWallpaper = LocalProfileWallpaper.current.takeUnless { incognito }
@@ -283,6 +297,15 @@ internal fun NewTabPage(
                         }
                     }
                 }
+                if (!incognito && interactive && recentTabs.isNotEmpty()) {
+                    Spacer(Modifier.height(VolaSpacing.x5))
+                    NewTabContinueCard(
+                        tabs = recentTabs,
+                        favicons = recentTabFavicons,
+                        enabled = contentEnabled,
+                        onTab = onRecentTab,
+                    )
+                }
             }
         }
         launchRequest?.let { request ->
@@ -297,6 +320,77 @@ internal fun NewTabPage(
                     onFavorite(favorite.url)
                 },
             )
+        }
+    }
+}
+
+internal const val NEW_TAB_RECENT_TAB_COUNT = 3
+
+/** «Continue»: the tabs used last in this workspace, as on the NewTab board. */
+@Composable
+private fun NewTabContinueCard(
+    tabs: List<BrowserTab>,
+    favicons: Map<String, Bitmap>,
+    enabled: Boolean,
+    onTab: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(VolaSpacing.x2)) {
+        Text(
+            text = stringResource(R.string.new_tab_continue),
+            modifier = Modifier.padding(horizontal = VolaSpacing.x1),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Surface(
+            shape = VolaShapes.card,
+            color = VolaTheme.extendedColors.card,
+            shadowElevation = VolaElevation.level1,
+        ) {
+            Column {
+                tabs.forEach { tab ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = enabled) { onTab(tab.id) }
+                            .padding(horizontal = VolaSpacing.x4, vertical = VolaSpacing.x3),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
+                    ) {
+                        val favicon = favicons[tab.id]
+                        if (favicon != null) {
+                            Image(
+                                bitmap = favicon.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(VolaSpacing.x6)
+                                    .clip(VolaShapes.material.extraSmall),
+                            )
+                        } else {
+                            Icon(
+                                imageVector = VolaIcons.Tab,
+                                contentDescription = null,
+                                modifier = Modifier.size(VolaSpacing.x6),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = displayTabTitle(tab),
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = AddressResolver.displayText(tab.url),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

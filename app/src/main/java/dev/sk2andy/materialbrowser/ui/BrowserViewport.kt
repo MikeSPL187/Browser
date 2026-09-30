@@ -534,6 +534,16 @@ internal fun BrowserViewport(
                                     controller.isFavoriteLaunchAnimationEnabled,
                             ),
                         favoriteAnimationSpeed = controller.favoriteAnimationSpeed,
+                        recentTabs = controller.activeTabs
+                            .filter { tab ->
+                                tab.id != selectedTab.id &&
+                                    !tab.isIncognito &&
+                                    tab.url != BLANK_URL
+                            }
+                            .sortedByDescending(BrowserTab::lastAccessedAt)
+                            .take(NEW_TAB_RECENT_TAB_COUNT),
+                        recentTabFavicons = controller.favicons,
+                        onRecentTab = controller::selectTab,
                         title = controller.localBrowserProfiles
                             .firstOrNull { profile -> profile.id == controller.activeProfileId }
                             ?.name

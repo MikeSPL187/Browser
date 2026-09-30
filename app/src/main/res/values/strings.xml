@@ -325,6 +325,7 @@
 
     <!-- Favorites and page content -->
     <string name="favorites_title">Favorites</string>
+    <string name="new_tab_continue">Continue</string>
     <string name="favorites_search">Search favorites</string>
     <string name="favorites_clear_search">Clear search</string>
     <string name="favorites_delete">Delete favorite %1$s</string>
