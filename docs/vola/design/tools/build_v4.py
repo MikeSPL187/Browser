@@ -5,8 +5,10 @@ SP = pathlib.Path(__file__).resolve().parent
 OUT = pathlib.Path(__file__).resolve().parent.parent / 'canvas'
 BAIKAL = (SP / 'baikal.svg').read_text(encoding='utf-8')
 BAIKAL_T = BAIKAL.replace('id="', 'id="t').replace('url(#', 'url(#t')
+ICON_URL = (pathlib.Path(__file__).resolve().parent / 'icon_font_url.txt').read_text().strip()
 FONTS = ('<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;'
-         'family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">')
+         'family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">\n'
+         f'<link href="{ICON_URL.replace("&", "&amp;")}" rel="stylesheet">')
 
 
 def status(light=False):
@@ -186,18 +188,19 @@ TABS = [
 ]
 
 
-def tab_card(t, current=False, card_bg='var(--sf-lowest)'):
+def tab_card(t, current=False, card_bg='var(--card)'):
     title, l, tone, ink, kind = t
     brand = ink if kind != 'article' else '#2F6B5F'
-    ring = 'box-shadow: 0 0 0 2.5px var(--pri), 0 10px 28px color-mix(in srgb, var(--pri) 28%, transparent);' if current else 'box-shadow: var(--e1);'
+    ring = 'box-shadow: 0 0 0 2.5px var(--pri), 0 12px 28px color-mix(in srgb, var(--pri) 24%, transparent);' if current else 'box-shadow: var(--e1);'
     fav_bg, fav_ink = (tone, ink) if kind != 'article' else ('#2F6B5F', '#FFFFFF')
-    return f'''<div style="height: 248px; border-radius: 22px; background: {card_bg}; {ring} padding: 6px; display: flex; flex-direction: column; gap: 4px">
-<div style="height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 0 0 6px">
+    preview = mini(kind, brand, tone if kind != 'article' else '#D4F1EC').replace('border-radius: 16px;', 'border-radius: 0;').replace('box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent)', 'box-shadow: none')
+    return f'''<div style="height: 262px; border-radius: 22px; background: {card_bg}; {ring} overflow: hidden; display: flex; flex-direction: column">
+<div style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 2px 0 12px; border-bottom: 1px solid var(--sf-high)">
 <span class="fav" style="width: 20px; height: 20px; border-radius: 6px; background: {fav_bg}; color: {fav_ink}; font-size: 11px">{l}</span>
 <span style="flex-grow: 1; min-width: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{title}</span>
-<button aria-label="Закрыть вкладку" style="width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--on-sf-v)"><span class="ms xs">close</span></button>
+<button aria-label="Закрыть вкладку" style="width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--on-sf-v)"><span class="ms xs">close</span></button>
 </div>
-<div style="flex-grow: 1; min-height: 0">{mini(kind, brand, tone if kind != 'article' else '#D4F1EC')}</div>
+<div style="flex-grow: 1; min-height: 0; background: #FFFFFF">{preview}</div>
 </div>'''
 
 
@@ -209,7 +212,7 @@ def tabs_body(direction):
     frame = direction == 'A'
     card_bg = 'var(--sf-lowest)' if frame else 'var(--sf-low)'
     fade_to = 'var(--sf-c)' if frame else 'var(--sf)'
-    grid = ''.join(tab_card(t, current=(k == 5), card_bg=card_bg) for k, t in enumerate(TABS))
+    grid = ''.join(tab_card(t, current=(k == 5), card_bg=card_bg) for k, t in enumerate(TABS) if k >= 2)
     ess = ''.join(f'<a href="#" aria-label="{n}" style="height: 56px; border-radius: 18px; background: {"color-mix(in srgb, var(--sf-lowest) 82%, transparent)" if frame else "var(--sf-lowest)"}; box-shadow: var(--e1); display: flex; align-items: center; justify-content: center"><span class="fav" style="width: 30px; height: 30px; border-radius: 10px; background: {bg}; color: {ink}; font-size: 14px">{l}</span></a>' for n, l, bg, ink in ESS)
     pills = f'''<button role="tab" aria-selected="true" style="height: 48px; border-radius: 24px; background: var(--sf-lowest); box-shadow: var(--e1); display: flex; align-items: center; gap: 8px; padding: 0 14px 0 4px"><span class="gem" style="width: 40px; height: 40px; border-radius: 14px"><span class="ms f s">work</span></span><span style="font-size: 15px; font-weight: 600">Работа</span></button>
 <button role="tab" aria-selected="false" aria-label="Аниме" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><span class="w-anime t-light gem" style="width: 32px; height: 32px; border-radius: 11px"><span class="ms f xs">movie</span></span></button>
@@ -229,8 +232,8 @@ def tabs_body(direction):
 <button class="ib4" aria-label="Найти вкладку" style="color: var(--on-sf)"><span class="ms">search</span></button>
 <button class="ib4" aria-label="Ещё" style="color: var(--on-sf)"><span class="ms">more_vert</span></button>
 </div>
-<div style="position: absolute; left: 10px; right: 10px; top: 104px; height: 578px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 72px); mask-image: linear-gradient(180deg, transparent 0, #000 72px)">
-<div style="position: absolute; left: 6px; right: 6px; bottom: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">{grid}</div>
+<div style="position: absolute; left: 10px; right: 10px; top: 104px; height: 578px; overflow: hidden">
+<div style="position: absolute; left: 6px; right: 6px; top: 6px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">{grid}</div>
 </div>
 <div style="position: absolute; left: 16px; right: 16px; top: 690px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">{ess}</div>
 {bottom}
@@ -402,11 +405,11 @@ def mini_phone(style):
             f'<i style="height: 6px; width: 86%; border-radius: 3px; background: #15201D; opacity: 0.8; margin-top: 3px"></i><i style="height: 6px; width: 58%; border-radius: 3px; background: #15201D; opacity: 0.8"></i>'
             f'<span style="height: 44px; border-radius: 7px; overflow: hidden; margin-top: 3px">{pic}</span>{lines}')
     if style == 'frame':
-        return f'''<span class="aura" style="position: relative; width: 104px; height: 188px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
+        return f'''<span class="aura" style="position: relative; width: 84px; height: 138px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
 <span style="position: absolute; left: 3px; right: 3px; top: 10px; bottom: 26px; border-radius: 13px; background: #FFFFFF; padding: 8px 7px; display: flex; flex-direction: column; gap: 4px; overflow: hidden">{page}</span>
 <span style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 14px; display: flex; align-items: center; gap: 3px"><i class="gem" style="width: 13px; height: 13px; border-radius: 5px"></i><i style="flex-grow: 1; height: 13px; border-radius: 7px; background: color-mix(in srgb, #FFFFFF 85%, transparent)"></i></span>
 </span>'''
-    return f'''<span style="position: relative; width: 104px; height: 188px; border-radius: 20px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
+    return f'''<span style="position: relative; width: 84px; height: 138px; border-radius: 20px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
 <span style="position: absolute; left: 0; right: 0; top: 10px; bottom: 0; padding: 8px 7px; display: flex; flex-direction: column; gap: 4px">{page}</span>
 <span style="position: absolute; left: -20px; right: -20px; bottom: -20px; height: 60px; background: radial-gradient(50% 60% at 30% 100%, color-mix(in srgb, var(--aura-1) 55%, transparent) 0%, transparent 70%), radial-gradient(50% 60% at 75% 100%, color-mix(in srgb, var(--aura-2) 50%, transparent) 0%, transparent 70%)"></span>
 <span class="halo" style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 17px; border-radius: 9px; display: flex; align-items: center; padding: 0 2px; box-shadow: 0 3px 8px color-mix(in srgb, var(--aura-1) 40%, transparent)"><i class="gem" style="width: 11px; height: 11px; border-radius: 4px"></i></span>
@@ -432,25 +435,29 @@ def switch(on):
 
 
 def appearance():
-    choice = lambda style, name, sub, on: f'''<button role="radio" aria-checked="{'true' if on else 'false'}" style="flex: 1 1 0; border-radius: 24px; padding: 14px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: {'var(--sec-c)' if on else 'var(--sf-lowest)'}; box-shadow: {'inset 0 0 0 2px var(--pri)' if on else 'var(--e1)'}">
+    pal = [('Vola', 'conic-gradient(#006978 0 33%, #A23F2B 0 66%, #5F4FB8 0)', True), ('Обои', 'conic-gradient(#6D8F5A 0 50%, #D8C9A7 0)', False), ('Океан', 'linear-gradient(135deg, #0B6E99, #3FC1C9)', False), ('Закат', 'linear-gradient(135deg, #C2410C, #F59E0B)', False), ('Моно', 'conic-gradient(#1F2426 0 50%, #D9DEE0 0)', False)]
+    swatches = ''.join(f'<span style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; border-radius: 24px; background: {g}; box-shadow: {"0 0 0 3px var(--sf-lowest), 0 0 0 5px var(--pri)" if on else "none"}"></span><span class="ty-cap" style="font-size: 11.5px; font-weight: 600">{n}</span></span>' for n, g, on in pal)
+    choice = lambda style, name, sub, on: f'''<button role="radio" aria-checked="{'true' if on else 'false'}" style="flex: 1 1 0; border-radius: 24px; padding: 12px 10px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: {'var(--sec-c)' if on else 'var(--sf-lowest)'}; box-shadow: {'inset 0 0 0 2px var(--pri)' if on else 'var(--e1)'}">
 {mini_phone(style)}
 <span style="display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center"><span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700">{'<span class="ms f xs" style="color: var(--pri)">check_circle</span>' if on else ''}{name}</span><span class="ty-cap">{sub}</span></span>
 </button>'''
     body = f'''{status()}
 <div style="position: absolute; left: 8px; right: 8px; top: 44px; height: 56px; display: flex; align-items: center; gap: 4px"><button class="ib4" aria-label="Назад" style="color: var(--on-sf)"><span class="ms">arrow_back</span></button><span class="ty-title-l">Внешний вид</span></div>
-<div style="position: absolute; left: 16px; right: 16px; top: 108px; display: flex; flex-direction: column; gap: 12px">
+<div style="position: absolute; left: 16px; right: 16px; top: 104px; display: flex; flex-direction: column; gap: 10px">
 <span class="ty-over" style="padding: 0 4px">Оформление</span>
 <div role="radiogroup" aria-label="Оформление" style="display: flex; gap: 10px">
 {choice('frame', 'Рама', 'Страница в цвете пространства', True)}
 {choice('air', 'Воздух', 'Страница на весь экран', False)}
 </div>
 <div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden; margin-top: 4px">
-<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span style="display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px">Тема</span><span class="ty-cap">Тёмная тема — на чистом чёрном</span></span>{seg(['<span class="ms xs">light_mode</span>Светлая', '<span class="ms xs">dark_mode</span>Тёмная', '<span class="ms xs">contrast</span>Авто'], 2)}</div>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Тема</span>{seg(['<span class="ms xs">light_mode</span>Светлая', '<span class="ms xs">dark_mode</span>Тёмная', '<span class="ms xs">contrast</span>Авто'], 2)}</div>
 <i style="height: 1px; background: var(--sf-high); margin: 0 16px"></i>
 <div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Плотность</span>{seg(['Компактно', 'Обычно', 'Просторно'], 1)}</div>
 </div>
-<div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden">
-{row('palette', 'Цвета', 'Свои у каждого пространства', '<span class="ms s" style="color: var(--on-sf-v)">chevron_right</span>')}
+<div style="border-radius: 24px; background: var(--sf-lowest); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; justify-content: space-between"><span class="ty-label" style="font-size: 15px">Цвета</span><span class="ty-cap" style="font-weight: 600">Свои у каждого пространства</span></span>
+<div style="display: flex; justify-content: space-between">{swatches}</div>
+<span class="ty-label" style="font-size: 15px; padding-top: 4px">Скругления</span>{seg(['Строгие', 'Мягкие', 'Круглые'], 2)}
 </div>
 </div>
 {handle()}'''

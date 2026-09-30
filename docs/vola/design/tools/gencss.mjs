@@ -1,5 +1,5 @@
-// Emit vola4.css color tokens: M3 2025 TonalSpot for UI roles, Expressive containers for the workspace aura.
-import { Hct, SchemeTonalSpot, SchemeExpressive, TonalPalette, MaterialDynamicColors as M, hexFromArgb, argbFromHex, Blend } from '@material/material-color-utilities';
+// Emit vola4-colors.css: M3 2025 TonalSpot roles per workspace seed, a vivid primary and an analogous-hue aura.
+import { Hct, SchemeTonalSpot, TonalPalette, DynamicScheme, Variant, MaterialDynamicColors as M, hexFromArgb, argbFromHex, Blend } from '@material/material-color-utilities';
 const seeds = { work: '#006877', anime: '#A23F2B', personal: '#5E4EB7', private: '#4B3FB5' };
 const map = {
   pri: 'primary', 'on-pri': 'onPrimary', 'pri-c': 'primaryContainer', 'on-pri-c': 'onPrimaryContainer',
@@ -13,17 +13,23 @@ const map = {
 const hex = a => hexFromArgb(a).toUpperCase();
 function scheme(seed, dark, contrast) {
   const src = Hct.fromInt(argbFromHex(seed));
-  const s = new SchemeTonalSpot(src, dark, contrast, '2025');
-  const e = new SchemeExpressive(src, dark, 0, '2025');
+  // Tonal spot neutrals, but the primary keeps the seed's chroma so workspace colors stay vivid.
+  const base = new SchemeTonalSpot(src, dark, contrast, '2025');
+  const s = new DynamicScheme({
+    sourceColorHct: src, variant: Variant.TONAL_SPOT, contrastLevel: contrast, isDark: dark, specVersion: '2025',
+    primaryPalette: TonalPalette.fromHueAndChroma(src.hue, Math.max(src.chroma, 48)),
+    secondaryPalette: base.secondaryPalette, tertiaryPalette: base.tertiaryPalette,
+    neutralPalette: TonalPalette.fromHueAndChroma(src.hue, 4), neutralVariantPalette: TonalPalette.fromHueAndChroma(src.hue, 8),
+    errorPalette: base.errorPalette,
+  });
   const v = {};
   for (const [k, r] of Object.entries(map)) v[k] = hex(M[r].getArgb(s));
-  // Aura: expressive containers give the workspace its own gradient.
-  // Analogous hues keep every workspace harmonious: teal→blue, terracotta→gold, violet→pink.
+  // Containers stay soft (tonal spot); only the primary itself is vivid.
+  for (const k of ['pri-c', 'on-pri-c']) v[k] = hex(M[map[k]].getArgb(base));
+  // Aura: three analogous stops for a smooth workspace gradient (Zen-like), vivid but light.
   const h = src.hue;
-  const at = dark ? [38, 34, 26] : [86, 84, 92];
-  v['aura-1'] = hex(Hct.from(h, 44, at[0]).toInt());
-  v['aura-2'] = hex(Hct.from((h + 42) % 360, 40, at[1]).toInt());
-  v['aura-3'] = hex(Hct.from((h + 330) % 360, 22, at[2]).toInt());
+  const au = dark ? [[h, 30, 22], [(h + 38) % 360, 24, 16], [(h + 340) % 360, 14, 10]] : [[h, 26, 91], [(h + 38) % 360, 22, 93], [(h + 340) % 360, 12, 96]];
+  au.forEach(([hh, c, t], k) => { v[`aura-${k + 1}`] = hex(Hct.from(hh, c, t).toInt()); });
   // Success and warning harmonized with the workspace primary.
   const pri = M.primary.getArgb(s);
   const ok = TonalPalette.fromInt(Blend.harmonize(argbFromHex('#2E7D32'), pri));

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola v4 — генератор пароля</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola4-colors.css">
+<link rel="stylesheet" href="./vola4.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&amp;icon_names=add,add_to_home_screen,animation,apps,archive,arrow_back,arrow_forward,arrow_outward,arrow_upward,article,auto_awesome,backspace,backup,block,blur_on,bolt,bookmark,bookmarks,brightness_auto,bug_report,calendar_month,cancel,casino,check,check_circle,chevron_left,chevron_right,cleaning_services,close,close_fullscreen,closed_caption,cloud,code,colors,compare_arrows,content_copy,content_paste,contrast,cookie,create_new_folder,credit_card,crop,dangerous,dark_mode,delete,delete_sweep,density_medium,description,desktop_windows,devices,dns,dock_to_bottom,domino_mask,download,download_done,drag_handle,drag_indicator,draw,edit,encrypted,error,expand_more,extension,fingerprint,folder,format_paint,format_size,fullscreen,fullscreen_exit,gpp_bad,gpp_good,gpp_maybe,graphic_eq,grid_view,headphones,health_and_safety,history,home,home_app_logo,image,info,insights,inventory_2,ios_share,key,keyboard,keyboard_arrow_down,keyboard_capslock,keyboard_voice,language,layers,left_panel_close,left_panel_open,light_mode,link,location_off,location_on,lock,lock_open,lock_person,logout,mail,map,menu_book,mic,more_horiz,more_vert,movie,my_location,no_encryption,north_east,north_west,note,notifications,open_in_full,open_in_new,palette,passkey,password,pause,person,photo_camera,photo_library,picture_as_pdf,picture_in_picture_alt,pin,play_arrow,progress_activity,public,qr_code_2,qr_code_scanner,redo,refresh,report,restart_alt,rocket_launch,rounded_corner,schedule,search,security,send,settings,share,shield,shield_lock,smartphone,snooze,sort,spa,speed,splitscreen,star,swap_horiz,swap_vert,swipe,sync,tab,tab_group,table_chart,text_fields,timer,translate,travel_explore,tune,undo,upload_file,verified,verified_user,videocam,view_agenda,view_sidebar,visibility,visibility_lock,visibility_off,volume_off,volume_up,warning,warning_amber,wifi,wifi_off,work,workspaces&amp;display=block" rel="stylesheet">
+<style>body{margin:0;background:#E7EBEC}</style>
+</helmet>
+<div class="v4 w-personal t-light" style="width: 390px; height: 844px; ">
+<div class="sb4" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div><div style="position: absolute; left: 0; right: 0; top: 40px; bottom: 0; background: #FFFFFF; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<span style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: #1B2A55"><span class="fav" style="width: 30px; height: 30px; border-radius: 9px; background: #3B5BDB; color: #FFFFFF; font-size: 14px">О</span>Облако</span>
+<span style="font-size: 26px; font-weight: 700; color: #151B2E; margin-top: 8px; letter-spacing: -0.01em">Регистрация</span>
+<span style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #4A5270">Эл. почта</span><span style="height: 52px; border-radius: 12px; border: 1px solid #C8CCDA; display: flex; align-items: center; padding: 0 14px; font-size: 16px; color: #151B2E">anna@example.com</span></span>
+<span style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #4A5270">Придумайте пароль</span><span style="height: 52px; border-radius: 12px; border: 2px solid #3B5BDB; display: flex; align-items: center; padding: 0 13px"><i style="width: 2px; height: 22px; background: #3B5BDB"></i></span></span>
+</div><div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(8, 14, 16, 0.3) 100%)"></div><div style="position: absolute; left: 0; right: 0; bottom: 0;  border-radius: 32px 32px 0 0; background: var(--sf-low); box-shadow: 0 -10px 40px rgba(8, 14, 16, 0.18); padding: 0 16px 30px; display: flex; flex-direction: column; gap: 12px; z-index: 5">
+<i style="width: 36px; height: 4px; border-radius: 2px; background: var(--ol-v); margin: 10px auto 2px"></i>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px"><span class="ty-title">Надёжный пароль</span><div style="width: 170px"><div class="bgroup4" role="radiogroup"><button role="radio" aria-checked="true" class="sel">Пароль</button><button role="radio" aria-checked="false" class="">Фраза</button></div></div></div>
+<div style="border-radius: 24px; background: var(--card); padding: 16px 8px 16px 18px; display: flex; align-items: center; gap: 4px"><span style="flex-grow: 1"><span style="font-family: JetBrains Mono, monospace; font-size: 22px; font-weight: 600; letter-spacing: 0.02em">vK7<b style="color: var(--pri)">#</b>qe2Lm<b style="color: var(--pri)">!</b>Tz9pWf</span></span><button class="ib4" aria-label="Другой"><span class="ms " style="">refresh</span></button><button class="ib4" aria-label="Копировать"><span class="ms " style="">content_copy</span></button></div>
+<div style="display: flex; gap: 4px"><i style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></i><i style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></i><i style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></i><i style="flex: 1; height: 6px; border-radius: 3px; background: var(--ok)"></i></div><span style="font-size: 13px; font-weight: 600; color: var(--ok); padding: 0 4px; margin-top: -6px">Очень надёжный · подбор займёт века</span>
+<div style="border-radius: 24px; background: var(--card); overflow: hidden"><div style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 10px 16px; ">
+
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px; ">Длина</span></span>
+<span style="position: relative; flex-grow: 1; height: 16px; display: flex; align-items: center; margin: 0 8px"><i style="flex-grow: 1; height: 16px; border-radius: 8px; background: linear-gradient(90deg, var(--pri) 0 62%, var(--sf-highest) 62% 100%)"></i><i style="position: absolute; left: 62%; width: 4px; height: 28px; margin-left: 2px; border-radius: 2px; background: var(--pri)"></i></span><span class="ty-label" style="width: 22px; text-align: right">20</span>
+</div><i style="height: 1px; background: var(--sf-high); margin: 0 16px 0 56px"></i><div style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 10px 16px; ">
+
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px; ">Цифры и символы</span></span>
+<span aria-hidden="true" style="width: 52px; height: 32px; border-radius: 16px; background: var(--pri); box-shadow: none; display: flex; align-items: center; justify-content: flex-end; padding: 0 4px; flex-shrink: 0"><i style="width: 24px; height: 24px; border-radius: 12px; background: var(--on-pri); display: flex; align-items: center; justify-content: center"><span class="ms " style="font-size: 16px; color: var(--pri)">check</span></i></span>
+</div><i style="height: 1px; background: var(--sf-high); margin: 0 16px 0 56px"></i><div style="min-height: 56px; display: flex; align-items: center; gap: 16px; padding: 10px 16px; ">
+
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px; ">Без похожих знаков (l, 1, O, 0)</span></span>
+<span aria-hidden="true" style="width: 52px; height: 32px; border-radius: 16px; background: var(--sf-highest); box-shadow: inset 0 0 0 2px var(--ol); display: flex; align-items: center; justify-content: flex-start; padding: 0 7px; flex-shrink: 0"><i style="width: 16px; height: 16px; border-radius: 12px; background: var(--ol); display: flex; align-items: center; justify-content: center"></i></span>
+</div></div>
+<button class="btn fill" style="height: 56px; border-radius: 28px; "><span class="ms s" style="">check</span>Использовать и сохранить</button>
+</div><div class="gh4" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
