@@ -4,6 +4,7 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /*
@@ -62,6 +63,30 @@ internal object VolaSpacing {
 
     /** Above a screen title. */
     val x12 = 48.dp
+}
+
+/** The framed shell («Рама»): the page card on the workspace aura (`.page-card` in vola4.css). */
+internal object VolaFrame {
+    /** Aura visible left and right of the page card. */
+    val sideGutter = 6.dp
+
+    /** Aura between the page card and the address bar below it. */
+    val barGap = 8.dp
+
+    /** Page card corners, a little tighter than the screen corners around them. */
+    val pageRadius = 26.dp
+
+    val pageShape = RoundedCornerShape(pageRadius)
+
+    /** Hairline around the card: onSurface at this opacity. */
+    const val OUTLINE_ALPHA = 0.06f
+    val outlineWidth = 1.dp
+
+    /** Soft drop shadow under the card: rgba(10, 20, 24, 0.08) 0 8px 24px. */
+    val shadowColor = Color(0xFF0A1418)
+    const val SHADOW_ALPHA = 0.08f
+    val shadowOffsetY = 8.dp
+    val shadowBlur = 24.dp
 }
 
 /** Shadow depth: --e1 … --e3 in vola4.css. */

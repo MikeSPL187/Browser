@@ -9,6 +9,7 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
@@ -18,6 +19,7 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.AppearanceSettingsPage as 
 
 internal object AppearanceSettingsTestTags {
     const val AppearanceMode = "appearance_settings_mode"
+    const val ChromeStyle = "appearance_settings_chrome_style"
     const val Animations = "appearance_settings_animations"
     const val ForceDarkWebsites = "appearance_settings_force_dark_websites"
     const val WebContentFontSize = "appearance_settings_web_content_font_size"
@@ -50,6 +52,9 @@ internal fun AppearanceSettingsPage(
             back = stringResource(R.string.action_back),
             appearanceMode = stringResource(R.string.settings_appearance_mode),
             appearanceModeNames = BrowserAppearanceMode.entries.associateWith { it.displayName() },
+            chromeStyle = stringResource(R.string.settings_chrome_style),
+            chromeStyleNames = BrowserChromeStyle.entries.associateWith { it.displayName() },
+            chromeStyleSummaries = BrowserChromeStyle.entries.associateWith { it.summary() },
             animations = stringResource(R.string.settings_animations),
             animationsSummary = stringResource(R.string.settings_animations_summary),
             forceDarkWebsites = stringResource(R.string.settings_force_dark_websites),

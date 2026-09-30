@@ -381,6 +381,11 @@
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_home_appearance_summary">Colors, website text, surfaces, and shape</string>
     <string name="settings_appearance_mode">Appearance</string>
+    <string name="settings_chrome_style">Browser layout</string>
+    <string name="settings_chrome_style_frame">Frame</string>
+    <string name="settings_chrome_style_air">Air</string>
+    <string name="settings_chrome_style_frame_summary">The page is a card in the color of your space.</string>
+    <string name="settings_chrome_style_air_summary">The page fills the whole screen.</string>
     <string name="appearance_mode_system">System</string>
     <string name="appearance_mode_light">Light</string>
     <string name="appearance_mode_dark">Dark</string>

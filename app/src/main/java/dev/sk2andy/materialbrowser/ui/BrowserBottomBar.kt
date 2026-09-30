@@ -87,6 +87,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -341,7 +342,7 @@ internal fun BrowserBottomBar(
                 imeInsets = WindowInsets.ime,
                 navigationBarInsets = WindowInsets.navigationBars,
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
             .then(if (visualOnly) Modifier.clearAndSetSemantics { } else Modifier),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -431,11 +432,7 @@ internal fun BrowserBottomBar(
             maxWidth = maxWidth,
             feedbackWidth = feedbackWidth,
             edgeTabWidth = edgeTabWidth,
-            expandedHeight = if (addressBarStyle == BrowserAddressBarStyle.Segmented) {
-                SegmentedAddressBarGeometry.EXPANDED_HEIGHT
-            } else {
-                AddressBarMotion.EXPANDED_HEIGHT
-            },
+            expandedHeight = addressBarExpandedHeight(addressBarStyle),
             verticalTravel = verticalTravel,
             dockPosition = dockInteraction.position,
         )
@@ -1104,3 +1101,14 @@ internal fun Modifier.addressBarVerticalGesture(
         }
     }
 }
+
+/** Space the bottom address bar keeps above and below itself. */
+internal val ADDRESS_BAR_VERTICAL_MARGIN = 12.dp
+
+/** Height of the expanded bottom address bar for [style]. */
+internal fun addressBarExpandedHeight(style: BrowserAddressBarStyle): Dp =
+    if (style == BrowserAddressBarStyle.Segmented) {
+        SegmentedAddressBarGeometry.EXPANDED_HEIGHT
+    } else {
+        AddressBarMotion.EXPANDED_HEIGHT
+    }

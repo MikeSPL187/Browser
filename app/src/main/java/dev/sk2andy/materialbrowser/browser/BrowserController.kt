@@ -1450,6 +1450,7 @@ class BrowserController(
     var previewCaptureRequestCountForTesting = 0
         private set
     private var lastWindowInsets: WindowInsetsCompat? = null
+    private var contentFrame = BrowserContentFrame.None
     private var browserChromeOwnsIme = false
     private var previewEpoch = 0
     private var faviconEpoch = 0
@@ -3167,6 +3168,16 @@ class BrowserController(
         dispatchWindowInsetsToAttachedEngineViews(insets)
     }
 
+    /**
+     * Where the browser screen places the page card. Only the selected-tab host of the browser
+     * screen is framed; fullscreen content, video and link previews stay edge to edge.
+     */
+    fun updateContentFrame(frame: BrowserContentFrame) {
+        if (contentFrame == frame) return
+        contentFrame = frame
+        lastWindowInsets?.let(::dispatchWindowInsetsToAttachedEngineViews)
+    }
+
     private fun dispatchWindowInsetsToAttachedEngineViews(insets: WindowInsetsCompat) {
         geckoViewBindings.values.forEach { binding ->
             if (binding.view.isAttachedToWindow) {
@@ -4804,6 +4815,11 @@ class BrowserController(
                 0
             },
             nativeTopHeaderSafeArea = nativeTopHeaderSafeArea,
+            hostFrame = if (tabId != null && view !== geckoMediaPresentation?.view) {
+                contentFrame.toGeckoViewInsets()
+            } else {
+                GeckoViewInsets.Zero
+            },
         )
         (view.layoutParams as? FrameLayout.LayoutParams)?.let { layoutParams ->
             if (
@@ -4823,6 +4839,13 @@ class BrowserController(
 
     private fun isFullscreenVideoInsideSafeDrawingHost(view: View): Boolean =
         fullscreenVideoInsideSafeDrawingHost && geckoMediaPresentation?.view === view
+
+    private fun BrowserContentFrame.toGeckoViewInsets(): GeckoViewInsets = GeckoViewInsets(
+        left = leftPx,
+        top = topPx,
+        right = rightPx,
+        bottom = bottomPx,
+    )
 
     private fun Insets.toGeckoViewInsets(): GeckoViewInsets = GeckoViewInsets(
         left = left,
@@ -9704,7 +9727,9 @@ class BrowserController(
     ) {
         0
     } else {
-        lastWindowInsets?.getInsets(SAFE_AREA_INSET_TYPES)?.top?.coerceAtLeast(0) ?: 0
+        val safeTop = lastWindowInsets?.getInsets(SAFE_AREA_INSET_TYPES)?.top ?: 0
+        // A framed page card already starts below the status bar.
+        (safeTop - contentFrame.topPx).coerceAtLeast(0)
     }
 
     fun updateBlockerSettings(settings: BlockerSettings) {

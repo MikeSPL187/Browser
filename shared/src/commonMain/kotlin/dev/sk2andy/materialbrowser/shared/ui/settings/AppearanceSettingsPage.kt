@@ -30,6 +30,7 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
@@ -40,6 +41,9 @@ data class AppearanceSettingsStrings(
     val back: String,
     val appearanceMode: String,
     val appearanceModeNames: Map<BrowserAppearanceMode, String>,
+    val chromeStyle: String,
+    val chromeStyleNames: Map<BrowserChromeStyle, String>,
+    val chromeStyleSummaries: Map<BrowserChromeStyle, String>,
     val animations: String,
     val animationsSummary: String,
     val forceDarkWebsites: String,
@@ -70,6 +74,7 @@ data class AppearanceSettingsStrings(
 
 object SharedAppearanceSettingsTestTags {
     const val APPEARANCE_MODE = "appearance_settings_mode"
+    const val CHROME_STYLE = "appearance_settings_chrome_style"
     const val ANIMATIONS = "appearance_settings_animations"
     const val FORCE_DARK_WEBSITES = "appearance_settings_force_dark_websites"
     const val WEB_CONTENT_FONT_SIZE = "appearance_settings_web_content_font_size"
@@ -98,6 +103,7 @@ fun AppearanceSettingsPage(
     forceDarkWebsitesAvailable: Boolean = true,
 ) {
     var appearanceMenuExpanded by remember { mutableStateOf(false) }
+    var chromeStyleMenuExpanded by remember { mutableStateOf(false) }
     var paletteMenuExpanded by remember { mutableStateOf(false) }
     var addressBarColorMenuExpanded by remember { mutableStateOf(false) }
     var customAddressBarColorDialogVisible by remember { mutableStateOf(false) }
@@ -142,6 +148,39 @@ fun AppearanceSettingsPage(
                 }
             }
         }
+        SettingsPageSpacer()
+        Box {
+            SettingsChoice(
+                title = strings.chromeStyle,
+                value = strings.chromeStyleNames.getValue(settings.chromeStyle),
+                expanded = chromeStyleMenuExpanded,
+                onClick = { chromeStyleMenuExpanded = true },
+                containerColor = containerColor,
+                modifier = Modifier.testTag(SharedAppearanceSettingsTestTags.CHROME_STYLE),
+                enabled = enabled,
+            )
+            SettingsDropdown(
+                expanded = enabled && chromeStyleMenuExpanded,
+                onDismissRequest = { chromeStyleMenuExpanded = false },
+            ) {
+                BrowserChromeStyle.entries.forEach { style ->
+                    SettingsDropdownItem(
+                        label = strings.chromeStyleNames.getValue(style),
+                        selected = style == settings.chromeStyle,
+                        onClick = {
+                            chromeStyleMenuExpanded = false
+                            onSettingsChanged(settings.copy(chromeStyle = style))
+                        },
+                    )
+                }
+            }
+        }
+        Text(
+            strings.chromeStyleSummaries.getValue(settings.chromeStyle),
+            modifier = Modifier.padding(start = 18.dp, top = 6.dp, end = 18.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         SettingsPageSpacer()
         SettingsSwitch(
             title = strings.animations,

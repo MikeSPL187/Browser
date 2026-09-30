@@ -14,6 +14,8 @@ import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
@@ -44,7 +46,11 @@ class GeckoSafeAreaScalingInstrumentedTest {
         assumeTrue(BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS)
         preferences.edit().clear().commit()
         GestureOnboardingStore(context).markCompleted()
-        BrowserSessionStore(context).saveStartupAnimationEnabled(false)
+        BrowserSessionStore(context).apply {
+            saveStartupAnimationEnabled(false)
+            // These tests measure the edge-to-edge page; the framed card would inset it.
+            saveAppearanceSettings(AppearanceSettings(chromeStyle = BrowserChromeStyle.Air))
+        }
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
         instrumentation.runOnMainSync { GeckoPerformanceDiagnostics.discard(context) }
     }

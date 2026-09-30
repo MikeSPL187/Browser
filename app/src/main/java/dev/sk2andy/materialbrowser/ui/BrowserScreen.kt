@@ -23,11 +23,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +40,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -53,9 +59,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -73,6 +79,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
+import dev.sk2andy.materialbrowser.browser.BrowserContentFrame
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
@@ -118,6 +125,9 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -1364,6 +1374,37 @@ internal fun BrowserScreen(
         addressValue.text.isEmpty() &&
         !selectedTab.isIncognito &&
         controller.favorites.isNotEmpty()
+    val addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled
+    val contentFramed = BrowserContentFrameRules.isFramed(
+        chromeStyle = controller.appearanceSettings.chromeStyle,
+        browserChromeVisible = !hideBrowserChrome &&
+            fullscreenVideoGestureState == null &&
+            firefoxExtensionOptionsTitle == null,
+        isBlankPage = selectedTab.url == BLANK_URL,
+    )
+    val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    val contentFrame = BrowserContentFrameRules.resolve(
+        framed = contentFramed,
+        safeLeftPx = frameSafeInsets.getLeft(density, LayoutDirection.Ltr),
+        safeTopPx = frameSafeInsets.getTop(density),
+        safeRightPx = frameSafeInsets.getRight(density, LayoutDirection.Ltr),
+        safeBottomPx = frameSafeInsets.getBottom(density),
+        sideGutterPx = with(density) { VolaFrame.sideGutter.toPx() },
+        barGapPx = with(density) { VolaFrame.barGap.toPx() },
+        addressBarReservePx = if (addressBarDocked) {
+            0f
+        } else {
+            with(density) {
+                (addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle) +
+                    ADDRESS_BAR_VERTICAL_MARGIN).toPx()
+            }
+        },
+    )
+    SideEffect { controller.updateContentFrame(contentFrame) }
+    DisposableEffect(controller) {
+        onDispose { controller.updateContentFrame(BrowserContentFrame.None) }
+    }
+    val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
 
     Box(
         modifier = Modifier
@@ -1375,21 +1416,8 @@ internal fun BrowserScreen(
             .onGloballyPositioned { coordinates ->
                 browserRootBottomInWindowPx = coordinates.boundsInWindow().bottom.roundToInt()
             }
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            .background(VolaTheme.auraBrush),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.tertiaryContainer,
-                            MaterialTheme.colorScheme.surface,
-                        ),
-                    ),
-                ),
-        )
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (showFirefoxExtensionOptionsChrome) {
@@ -1407,7 +1435,8 @@ internal fun BrowserScreen(
                             } else {
                                 Color.Transparent
                             },
-                        ),
+                        )
+                        .contentFramePadding(contentFrame),
                 ) {
                     BrowserViewport(
                         controller = controller,
@@ -1417,8 +1446,15 @@ internal fun BrowserScreen(
                         selectedTab = selectedTab,
                         dragOffset = browserDragOffset,
                         travelDistance = tabSwitchTravelPx,
-                        rootHeightPx = browserHeightPx,
-                        bottomBarTopPx = bottomBarTopPx,
+                        rootHeightPx = if (contentFramed) {
+                            (browserHeightPx - contentFrame.topPx - contentFrame.bottomPx)
+                                .coerceAtLeast(0f)
+                        } else {
+                            browserHeightPx
+                        },
+                        // Inside the card nothing overlaps the page from below.
+                        bottomBarTopPx = if (contentFramed) framedBottomBarTopPx else bottomBarTopPx,
+                        contentFramed = contentFramed,
                         handoff = tabHandoff,
                         handoffAlpha = tabHandoffAlpha.value,
                         liveFrameTabId = liveFrameTabId,
@@ -1445,6 +1481,9 @@ internal fun BrowserScreen(
                     )
                 }
             }
+        }
+        if (contentFramed) {
+            BrowserContentFrameMask(frame = contentFrame, modifier = Modifier.fillMaxSize())
         }
 
         controller.findInPageState
@@ -1498,6 +1537,7 @@ internal fun BrowserScreen(
             browserHeightPx = browserHeightPx,
             bottomBarTopPx = bottomBarTopPx,
             browserContentBlurTarget = browserContentBlurTarget,
+            pageBehindAddressBar = !contentFramed || addressBarDocked,
             linkPeekAddressBarExpanded = linkPeekAddressBarExpanded,
             castUiState = castUiState,
             settingsVisible = settingsVisible,

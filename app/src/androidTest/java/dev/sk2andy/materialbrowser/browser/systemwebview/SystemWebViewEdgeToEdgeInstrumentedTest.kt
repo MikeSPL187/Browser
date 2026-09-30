@@ -18,6 +18,8 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteMatrix
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
@@ -47,6 +49,8 @@ class SystemWebViewEdgeToEdgeInstrumentedTest {
         preferences.edit().clear().commit()
         GestureOnboardingStore(context).markCompleted()
         store.saveStartupAnimationEnabled(false)
+        // These tests measure the edge-to-edge page; the framed card would inset it.
+        store.saveAppearanceSettings(AppearanceSettings(chromeStyle = BrowserChromeStyle.Air))
         store.saveAndroidBrowserEngineKind(AndroidBrowserEngineKind.SystemWebView)
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
         val tab = BrowserTab(

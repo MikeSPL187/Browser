@@ -77,6 +77,8 @@ internal fun BoxScope.BrowserAddressChrome(
     browserHeightPx: Float,
     bottomBarTopPx: MutableFloatState,
     browserContentBlurTarget: BlurTarget?,
+    /** False when the framed page card ends above the bar, so there is no page to blur. */
+    pageBehindAddressBar: Boolean,
     linkPeekAddressBarExpanded: Boolean,
     castUiState: CastUiState,
     settingsVisible: Boolean,
@@ -303,8 +305,10 @@ internal fun BoxScope.BrowserAddressChrome(
         supportsPageContentActions = controller.supportsPageContentActions,
         onUserScriptMenuCommand = controller::invokeUserScriptMenuCommand,
         commandFeedback = commandFeedback,
-        backdropSource = chromeBackdropSource,
-        blurSourceVisible = browserContentBlurTarget != null && !tabOverviewVisible,
+        backdropSource = chromeBackdropSource.takeIf { pageBehindAddressBar },
+        blurSourceVisible = pageBehindAddressBar &&
+            browserContentBlurTarget != null &&
+            !tabOverviewVisible,
         feedbackGesturesEnabled = !addressEditorVisible && !settingsVisible,
         onBack = controller::goBack,
         onForward = controller::goForward,
@@ -587,7 +591,9 @@ internal fun BoxScope.BrowserAddressChrome(
                 controller.setPreviewContentBottomInWindowPx(topInWindowPx)
             }
         },
-        backdropBlurRegionEnabled = browserDragOffset.floatValue == 0f && !settingsVisible,
+        backdropBlurRegionEnabled = pageBehindAddressBar &&
+            browserDragOffset.floatValue == 0f &&
+            !settingsVisible,
         onBackdropBlurRegionChanged = controller::setSelectedBrowserBackdropBlurRegion,
         modifier = Modifier
             .fillMaxSize()

@@ -377,6 +377,11 @@
     <string name="settings_appearance_title">Внешний вид</string>
     <string name="settings_home_appearance_summary">Цвета, текст сайтов, поверхности и форма</string>
     <string name="settings_appearance_mode">Тема</string>
+    <string name="settings_chrome_style">Оформление</string>
+    <string name="settings_chrome_style_frame">Рама</string>
+    <string name="settings_chrome_style_air">Воздух</string>
+    <string name="settings_chrome_style_frame_summary">Страница — карточка в цвете пространства.</string>
+    <string name="settings_chrome_style_air_summary">Страница на весь экран.</string>
     <string name="appearance_mode_system">Как в системе</string>
     <string name="appearance_mode_light">Светлая</string>
     <string name="appearance_mode_dark">Тёмная</string>
