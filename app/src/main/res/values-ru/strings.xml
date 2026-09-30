@@ -45,6 +45,8 @@
     <string name="action_back">Назад</string>
     <string name="action_forward">Вперёд</string>
     <string name="action_find_in_page">Найти на странице</string>
+    <string name="find_in_page_match_case">Регистр</string>
+    <string name="find_in_page_whole_word">Слово целиком</string>
     <string name="address_bar_action_tabs">Вкладки</string>
     <string name="action_home">Домой</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>

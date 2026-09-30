@@ -7822,6 +7822,7 @@ class BrowserController(
             geckoSession = session,
             navigationGeneration = navigationGenerations.getOrDefault(tab.id, 0),
         )
+        session.setFindInPageOptions(FindInPageOptions())
         findInPageState = FindInPageState(tabId = tab.id)
         return true
 
@@ -7911,6 +7912,21 @@ class BrowserController(
             )
         }
         return true
+    }
+
+    /** Whether the find bar can offer match case and whole word for the page being searched. */
+    internal val supportsFindInPageOptions: Boolean
+        get() = findInPageSession?.geckoSession?.supportsFindInPageOptions == true
+
+    /** Changes how the page is searched and repeats the current search with it. */
+    internal fun updateFindInPageOptions(options: FindInPageOptions) {
+        val session = findInPageSession ?: return
+        val state = findInPageState?.takeIf { it.tabId == session.tabId } ?: return
+        if (state.options == options) return
+        session.geckoSession?.setFindInPageOptions(options)
+        val query = state.query
+        findInPageState = FindInPageRules.withQuery(state.copy(options = options), query = "")
+        if (query.isNotEmpty()) updateFindInPageQuery(query)
     }
 
     fun closeFindInPage() {

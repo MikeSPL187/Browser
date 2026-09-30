@@ -22,6 +22,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import dev.sk2andy.materialbrowser.BuildConfig
+import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.browser.BrowserPerformanceTrace
 import dev.sk2andy.materialbrowser.browser.BrowserDynamicToolbarHost
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
@@ -905,6 +906,8 @@ private class GeckoViewBrowserSession(
 
     @Volatile
     private var state = GeckoBrowserSessionState()
+
+    private var findInPageOptions = FindInPageOptions()
 
     @Volatile
     private var listener: GeckoBrowserSessionStateListener? = null
@@ -2798,11 +2801,13 @@ private class GeckoViewBrowserSession(
         }
         val finder = session.finder
         finder.displayFlags = GeckoSession.FINDER_DISPLAY_HIGHLIGHT_ALL
-        val flags = if (forward) {
+        var flags = if (forward) {
             GeckoSession.FINDER_FIND_FORWARD
         } else {
             GeckoSession.FINDER_FIND_BACKWARDS
         }
+        if (findInPageOptions.matchCase) flags = flags or GeckoSession.FINDER_FIND_MATCH_CASE
+        if (findInPageOptions.wholeWord) flags = flags or GeckoSession.FINDER_FIND_WHOLE_WORD
         finder.find(query, flags)
             .withHandler(Handler(Looper.getMainLooper()))
             .accept(
@@ -2825,6 +2830,10 @@ private class GeckoViewBrowserSession(
 
     override fun clearFindInPage() {
         if (!closed) session.finder.clear()
+    }
+
+    override fun setFindInPageOptions(options: FindInPageOptions) {
+        findInPageOptions = options
     }
 
     @UiThread

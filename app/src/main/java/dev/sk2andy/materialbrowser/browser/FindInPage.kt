@@ -1,8 +1,15 @@
 package dev.sk2andy.materialbrowser.browser
 
+/** How the page is searched. Engines without these options ignore them (see the port). */
+internal data class FindInPageOptions(
+    val matchCase: Boolean = false,
+    val wholeWord: Boolean = false,
+)
+
 internal data class FindInPageState(
     val tabId: String,
     val query: String = "",
+    val options: FindInPageOptions = FindInPageOptions(),
     val activeMatchOrdinal: Int? = null,
     val matchCount: Int = 0,
     val isDoneCounting: Boolean = true,

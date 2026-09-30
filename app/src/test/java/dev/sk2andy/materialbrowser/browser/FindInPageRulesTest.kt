@@ -152,4 +152,22 @@ class FindInPageRulesTest {
             ),
         )
     }
+
+    @Test
+    fun `search options survive new queries and results`() {
+        val options = FindInPageOptions(matchCase = true, wholeWord = true)
+        val searching = FindInPageRules.withQuery(
+            FindInPageState(tabId = "tab", options = options),
+            query = "Ice",
+        )
+        val found = FindInPageRules.withResult(
+            state = searching,
+            activeMatchOrdinal = 1,
+            matchCount = 7,
+            isDoneCounting = true,
+        )
+
+        assertEquals(options, searching.options)
+        assertEquals(options, found.options)
+    }
 }

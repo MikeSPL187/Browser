@@ -9,6 +9,7 @@ package dev.sk2andy.materialbrowser.ui
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 
 import android.view.HapticFeedbackConstants
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
 import androidx.activity.BackEventCompat
@@ -29,7 +30,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
@@ -130,6 +132,7 @@ import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
@@ -1420,6 +1423,7 @@ internal fun BrowserScreen(
         0
     }
     val addressBarCompactShown = controller.isBottomBarCompact &&
+        controller.findInPageState == null &&
         !addressEditorVisible &&
         !linkPeekAddressBarExpanded &&
         commandFeedback == null &&
@@ -1450,6 +1454,9 @@ internal fun BrowserScreen(
         }
     }
     val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
+    val fullWindowHeightPx = remember(context) {
+        context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
+    }
 
     Box(
         modifier = Modifier
@@ -1562,16 +1569,30 @@ internal fun BrowserScreen(
                 onPreviousMatch = { controller.findNextInPage(forward = false) },
                 onNextMatch = { controller.findNextInPage(forward = true) },
                 onClose = controller::closeFindInPage,
-                backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
+                options = findState.options,
+                optionsAvailable = controller.supportsFindInPageOptions,
+                matchCaseLabel = stringResource(R.string.find_in_page_match_case),
+                wholeWordLabel = stringResource(R.string.find_in_page_whole_word),
+                onOptionsChange = controller::updateFindInPageOptions,
+                // The find bar takes the island's place in the thumb zone, above the keyboard.
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(12.dp)
+                    .align(Alignment.BottomCenter)
+                    .addressBarWindowInsetsPadding(
+                        fullWindowHeightPx = fullWindowHeightPx,
+                        rootBottomInWindowPx = browserRootBottomInWindowPx,
+                        imeInsets = WindowInsets.ime,
+                        navigationBarInsets = WindowInsets.navigationBars,
+                    )
+                    .padding(horizontal = VolaSpacing.x2, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
                     .zIndex(25f),
             )
         }
 
-        if (firefoxExtensionOptionsTitle == null && !hideBrowserChrome) {
+        if (
+            firefoxExtensionOptionsTitle == null &&
+            !hideBrowserChrome &&
+            controller.findInPageState == null
+        ) {
             BrowserAddressChrome(
             controller = controller,
             selectedTab = selectedTab,

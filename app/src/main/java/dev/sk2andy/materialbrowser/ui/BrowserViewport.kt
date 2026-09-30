@@ -174,7 +174,6 @@ internal fun ExternalLinkPreviewScreen(
                 onPreviousMatch = { controller.findNextInPage(forward = false) },
                 onNextMatch = { controller.findNextInPage(forward = true) },
                 onClose = controller::closeFindInPage,
-                backdropSource = blurTarget.asCandyChromeBackdropSource(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()

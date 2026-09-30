@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.UiThread
 import androidx.annotation.VisibleForTesting
+import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
@@ -63,6 +64,13 @@ internal interface BrowserEngineViewPort {
     )
 
     fun clearFindInPage()
+
+    /** Whether the engine honours [setFindInPageOptions]; the find bar hides them otherwise. */
+    val supportsFindInPageOptions: Boolean
+        get() = false
+
+    /** Options for the next [findInPage] calls. */
+    fun setFindInPageOptions(options: FindInPageOptions) = Unit
 
     fun printPage(): Boolean
 
@@ -741,6 +749,14 @@ internal class GeckoBrowserEngineSessionAdapter(
     @UiThread
     override fun clearFindInPage() {
         if (!closed) session.clearFindInPage()
+    }
+
+    override val supportsFindInPageOptions: Boolean
+        get() = true
+
+    @UiThread
+    override fun setFindInPageOptions(options: FindInPageOptions) {
+        if (!closed) session.setFindInPageOptions(options)
     }
 
     @UiThread

@@ -163,6 +163,27 @@ def tour(suffix):
         shot(f"page-scrolled-{suffix}")
     step("page", page)
 
+    def find_in_page():
+        if not find("More options", "Другие действия"):
+            # The scrolled page left the compact capsule: tap it to expand the bar.
+            tap("wikipedia.org", contains=True)
+            time.sleep(2)
+        if not tap("More options", "Другие действия"):
+            log("not found: menu for find in page")
+            return
+        time.sleep(2)
+        if not tap_scrolling("Find on page", "Найти на странице", name=f"find-menu-{suffix}"):
+            return
+        time.sleep(2)
+        adb("shell", "input", "text", "Zen")
+        time.sleep(3)
+        shot(f"find-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+    step("find", find_in_page)
+
     def https_upgrade():
         # example.com serves HTTPS, so HTTPS-only mode must upgrade this link (lock in the bar).
         open_url("http://example.com/")
