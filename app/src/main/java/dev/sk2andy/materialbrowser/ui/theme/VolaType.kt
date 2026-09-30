@@ -1,32 +1,47 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
+import androidx.annotation.FontRes
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
 
 /*
- * Both fonts ship as variable TTFs in res/font (SIL OFL 1.1, licenses in assets). Each Font entry
- * sets the file's weight axis, so one file covers every weight. Nothing is downloaded at runtime.
+ * Both fonts ship as variable TTFs in res/font (SIL OFL 1.1, licenses in assets). Nothing is
+ * downloaded at runtime.
  */
+
+/**
+ * One weight of a variable font. The weight axis must be set explicitly: the plain
+ * Font(resId, weight) overload only labels the file and Android then draws the font's default
+ * instance, which for Manrope is ExtraLight.
+ */
+@OptIn(ExperimentalTextApi::class)
+private fun variableFont(@FontRes resId: Int, weight: FontWeight): Font = Font(
+    resId = resId,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+)
 
 /** Manrope: the interface font. */
 internal val ManropeFontFamily = FontFamily(
-    Font(R.font.manrope, FontWeight.Normal),
-    Font(R.font.manrope, FontWeight.Medium),
-    Font(R.font.manrope, FontWeight.SemiBold),
-    Font(R.font.manrope, FontWeight.Bold),
+    variableFont(R.font.manrope, FontWeight.Normal),
+    variableFont(R.font.manrope, FontWeight.Medium),
+    variableFont(R.font.manrope, FontWeight.SemiBold),
+    variableFont(R.font.manrope, FontWeight.Bold),
 )
 
 /** Literata: the reading font for articles and reader mode. */
 internal val LiterataFontFamily = FontFamily(
-    Font(R.font.literata, FontWeight.Normal),
-    Font(R.font.literata, FontWeight.Medium),
-    Font(R.font.literata, FontWeight.Bold),
+    variableFont(R.font.literata, FontWeight.Normal),
+    variableFont(R.font.literata, FontWeight.Medium),
+    variableFont(R.font.literata, FontWeight.Bold),
 )
 
 /** The v4 type scale, one style per `.ty-*` class of vola4.css. Weights stay within 500–700. */
