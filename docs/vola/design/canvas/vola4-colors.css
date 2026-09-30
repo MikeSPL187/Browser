@@ -24,8 +24,8 @@
   --inv-sf: #0A0F10;
   --inv-on-sf: #999E9F;
   --err: #A83836;
-  --err-c: #FA746F;
-  --on-err-c: #6E0A12;
+  --err-c: #FFE2DF;
+  --on-err-c: #771317;
   --aura-1: #78E6FD;
   --aura-2: #B5D4FF;
   --aura-3: #C6F1E7;
@@ -62,7 +62,7 @@
   --inv-on-sf: #515657;
   --err: #FA746F;
   --err-c: #871F21;
-  --on-err-c: #FF9993;
+  --on-err-c: #FFDAD7;
   --aura-1: #006371;
   --aura-2: #1D5286;
   --aura-3: #1C443E;
@@ -98,8 +98,8 @@
   --inv-sf: #0A0F10;
   --inv-on-sf: #FFFFFF;
   --err: #510007;
-  --err-c: #972B2B;
-  --on-err-c: #FFFFFF;
+  --err-c: #FFE1DF;
+  --on-err-c: #731A1B;
   --aura-1: #78E6FD;
   --aura-2: #B5D4FF;
   --aura-3: #C6F1E7;
@@ -135,8 +135,8 @@
   --inv-sf: #130D0B;
   --inv-on-sf: #A79A97;
   --err: #A8364B;
-  --err-c: #F97386;
-  --on-err-c: #6E0523;
+  --err-c: #FFE1E3;
+  --on-err-c: #770F29;
   --aura-1: #FFCBC1;
   --aura-2: #FFC881;
   --aura-3: #FFE1E7;
@@ -172,8 +172,8 @@
   --inv-sf: #FFF8F6;
   --inv-on-sf: #5D5350;
   --err: #F97386;
-  --err-c: #871C34;
-  --on-err-c: #FF97A3;
+  --err-c: #871C33;
+  --on-err-c: #FFDADC;
   --aura-1: #924130;
   --aura-2: #704700;
   --aura-3: #57333E;
@@ -209,8 +209,8 @@
   --inv-sf: #130D0B;
   --inv-on-sf: #FFFFFF;
   --err: #500016;
-  --err-c: #97283E;
-  --on-err-c: #FFFFFF;
+  --err-c: #FFE1E3;
+  --on-err-c: #711A2C;
   --aura-1: #FFCBC1;
   --aura-2: #FFC881;
   --aura-3: #FFE1E7;
@@ -246,8 +246,8 @@
   --inv-sf: #0E0E12;
   --inv-on-sf: #9F9CA2;
   --err: #A8364B;
-  --err-c: #F97386;
-  --on-err-c: #6E0523;
+  --err-c: #FFE1E3;
+  --on-err-c: #770F29;
   --aura-1: #DAD2FF;
   --aura-2: #FFBDF4;
   --aura-3: #DFE8FF;
@@ -283,8 +283,8 @@
   --inv-sf: #FDF8FE;
   --inv-on-sf: #565459;
   --err: #F97386;
-  --err-c: #871C34;
-  --on-err-c: #FF97A3;
+  --err-c: #871C33;
+  --on-err-c: #FFDADC;
   --aura-1: #5A4F9A;
   --aura-2: #733C6E;
   --aura-3: #2F3E57;
@@ -320,8 +320,8 @@
   --inv-sf: #0E0E12;
   --inv-on-sf: #FFFFFF;
   --err: #500016;
-  --err-c: #97283E;
-  --on-err-c: #FFFFFF;
+  --err-c: #FFE1E3;
+  --on-err-c: #711A2C;
   --aura-1: #DAD2FF;
   --aura-2: #FFBDF4;
   --aura-3: #DFE8FF;
@@ -357,8 +357,8 @@
   --inv-sf: #FCF8FE;
   --inv-on-sf: #565459;
   --err: #F97386;
-  --err-c: #871C34;
-  --on-err-c: #FF97A3;
+  --err-c: #871C33;
+  --on-err-c: #FFDADC;
   --aura-1: #56509B;
   --aura-2: #713D71;
   --aura-3: #2E3E57;

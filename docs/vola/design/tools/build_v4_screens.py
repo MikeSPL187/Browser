@@ -80,7 +80,7 @@ def row(icon, title, sub='', trail='', tone=None, ink=None, danger=False, h=64, 
 </div>'''
 
 
-def group(rows, bg='var(--sf-lowest)'):
+def group(rows, bg='var(--card)'):
     sep = '<i style="height: 1px; background: var(--sf-high); margin: 0 16px 0 56px"></i>'
     return f'<div style="border-radius: 24px; background: {bg}; overflow: hidden">{sep.join(rows)}</div>'
 
@@ -176,7 +176,7 @@ def g_browse():
     hl = lambda w, cur=False: f'<mark style="background: {"var(--pri)" if cur else "color-mix(in srgb, var(--pri-c) 80%, transparent)"}; color: {"var(--on-pri)" if cur else "inherit"}; border-radius: 4px; padding: 0 2px">{w}</mark>'
     find_page = article_long(hl)
     find_bar = f'''<div style="position: absolute; left: 8px; right: 8px; bottom: 76px; display: flex; gap: 8px; z-index: 4">{chip('Регистр')}{chip('Слово целиком')}{chip('ё = е', True)}</div>
-<div style="position: absolute; left: 8px; right: 8px; bottom: 22px; height: 56px; border-radius: 28px; background: var(--sf-lowest); box-shadow: 0 0 0 2px var(--pri), var(--e2); display: flex; align-items: center; gap: 2px; padding: 0 4px 0 16px; z-index: 4">
+<div style="position: absolute; left: 8px; right: 8px; bottom: 22px; height: 56px; border-radius: 28px; background: var(--card); box-shadow: 0 0 0 2px var(--pri), var(--e2); display: flex; align-items: center; gap: 2px; padding: 0 4px 0 16px; z-index: 4">
 {ms('search', 's', 'color: var(--on-sf-v)')}
 <span style="flex-grow: 1; min-width: 0; display: flex; align-items: center; padding-left: 10px; font-size: 17px; font-weight: 600">лёд<i style="width: 2px; height: 22px; margin-left: 1px; border-radius: 1px; background: var(--pri)"></i></span>
 <span class="ty-cap" style="font-size: 14px; font-weight: 600; padding: 0 6px; white-space: nowrap">2 из 7</span>
@@ -208,7 +208,7 @@ def g_browse():
 
 def tabs_backdrop():
     """Blurred tab overview used behind sheets and menus."""
-    cards = ''.join('<i style="height: 248px; border-radius: 22px; background: var(--sf-lowest)"></i>' for _ in range(4))
+    cards = ''.join('<i style="height: 248px; border-radius: 22px; background: var(--card)"></i>' for _ in range(4))
     return ('<div aria-hidden="true" style="position: absolute; inset: 0; filter: blur(8px); opacity: 0.8">'
             '<div style="position: absolute; left: 20px; top: 52px; width: 150px; height: 32px; border-radius: 10px; background: color-mix(in srgb, var(--on-sf) 70%, transparent)"></div>'
             f'<div style="position: absolute; left: 16px; right: 16px; top: 120px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px">{cards}</div></div>')
@@ -236,7 +236,7 @@ def g_tabs():
     card = tab_card(TABS[3], current=True).replace('height: 248px', 'height: 300px')
     quick = ''.join(f'<button style="height: 72px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--on-sf); font-size: 12.5px; font-weight: 600">{ms(i)}{t}</button>'
                     for i, t in (('star', 'В Essentials'), ('content_copy', 'Дублировать'), ('splitscreen', 'Рядом'), ('share', 'Отправить')))
-    menu = ('<div style="position: absolute; left: 20px; right: 20px; top: 452px; border-radius: 28px; background: var(--sf-lowest); box-shadow: var(--e3); padding: 6px; z-index: 5">'
+    menu = ('<div style="position: absolute; left: 20px; right: 20px; top: 452px; border-radius: 28px; background: var(--card); box-shadow: var(--e3); padding: 6px; z-index: 5">'
             f'<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px 0 6px; border-bottom: 1px solid var(--sf-high)">{quick}</div>'
             + row('workspaces', 'Переместить', '', value('Работа') + CHEV, h=52)
             + row('tab_group', 'Добавить в группу', '', CHEV, h=52)
@@ -262,7 +262,7 @@ def g_tabs():
             + '<div class="w-anime t-light" style="position: absolute; left: 12px; right: 12px; bottom: 26px; display: flex; align-items: center; gap: 10px">'
             + '<div style="flex-grow: 1; height: 56px; border-radius: 28px; background: color-mix(in srgb, var(--sf-lowest) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-sf) 6%, transparent); display: flex; align-items: center; gap: 2px; padding: 0 4px">'
             + small('w-work t-light', 'work')
-            + f'<span style="height: 48px; border-radius: 24px; background: var(--sf-lowest); box-shadow: var(--e1); display: flex; align-items: center; gap: 8px; padding: 0 14px 0 4px">{gem("movie", 40, 14, "s")}<span style="font-size: 15px; font-weight: 600">Аниме</span></span>'
+            + f'<span style="height: 48px; border-radius: 24px; background: var(--card); box-shadow: var(--e1); display: flex; align-items: center; gap: 8px; padding: 0 14px 0 4px">{gem("movie", 40, 14, "s")}<span style="font-size: 15px; font-weight: 600">Аниме</span></span>'
             + small('w-personal t-light', 'home') + '</div>'
             + f'<span style="width: 56px; height: 56px; border-radius: 20px; background: var(--pri); color: var(--on-pri); display: flex; align-items: center; justify-content: center">{ms("add", "l")}</span></div>'
             + handle())
@@ -272,7 +272,7 @@ def g_tabs():
     ic = ''.join(f'<button role="radio" aria-checked="{"true" if k == 0 else "false"}" style="height: 48px; border-radius: {"16px" if k == 0 else "24px"}; background: {"var(--pri)" if k == 0 else "var(--sf-high)"}; color: {"var(--on-pri)" if k == 0 else "var(--on-sf-v)"}; display: flex; align-items: center; justify-content: center">{ms(n, "f s" if k == 0 else "s")}</button>' for k, n in enumerate(icons))
     head = lambda title, sub, trail='': f'<div style="display: flex; align-items: center; gap: 14px; padding: 4px 4px 0">{gem("work")}<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="ty-title-l">{title}</span><span class="ty-cap">{sub}</span></span>{trail}</div>'
     new_ws = sheet(head('Новое пространство', 'Свои вкладки, Essentials и цвет')
-                   + '<label style="display: flex; flex-direction: column; gap: 6px"><span class="ty-label" style="padding: 0 4px">Название</span><span style="height: 56px; border-radius: 16px; background: var(--sf-lowest); box-shadow: inset 0 0 0 2px var(--pri); display: flex; align-items: center; padding: 0 16px; font-size: 17px; font-weight: 600">Работа<i style="width: 2px; height: 22px; margin-left: 1px; background: var(--pri)"></i></span></label>'
+                   + '<label style="display: flex; flex-direction: column; gap: 6px"><span class="ty-label" style="padding: 0 4px">Название</span><span style="height: 56px; border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 2px var(--pri); display: flex; align-items: center; padding: 0 16px; font-size: 17px; font-weight: 600">Работа<i style="width: 2px; height: 22px; margin-left: 1px; background: var(--pri)"></i></span></label>'
                    + '<span class="ty-label" style="padding: 0 4px">Цвет</span>' + color_dots()
                    + f'<span class="ty-label" style="padding: 0 4px">Значок</span><div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">{ic}</div>'
                    + group([row('shield_lock', 'Отдельное хранилище', 'Свои cookie, входы и данные сайтов', switch(True), h=60),
@@ -280,7 +280,7 @@ def g_tabs():
                    + btn('Создать пространство', 'fill', '', h=56), gap=12)
     W('WorkspaceSheet', 'новое пространство', 'w-work t-light aura', tabs_backdrop() + status() + scrim() + new_ws + handle())
 
-    edit = f'<button class="ib4" aria-label="Переименовать" style="background: var(--sf-lowest); color: var(--on-sf)">{ms("edit")}</button>'
+    edit = f'<button class="ib4" aria-label="Переименовать" style="background: var(--card); color: var(--on-sf)">{ms("edit")}</button>'
     ws_set = sheet(head('Работа', '6 вкладок · 5 в Essentials', edit) + color_dots()
                    + group([row('star', 'Essentials', '5 сайтов · свои для пространства', CHEV, h=60), row('palette', 'Фон и значок', 'Градиент из цвета пространства', CHEV, h=60),
                             row('search', 'Поиск по умолчанию', 'Как в браузере · DuckDuckGo', CHEV, h=60), row('shield', 'Защита', 'Строгая блокировка трекеров', CHEV, h=60)])
@@ -341,7 +341,7 @@ def g_newtab():
         + ms('add', 'l') + '</span><span style="font-size: 12.5px; font-weight: 600; color: var(--pri)">Добавить</span></a>')
     add_rows = (list_item('О', '#FFEBC2', '#6E4F00', 'Отчёт по метрикам', 'metrics.example.com', f'<button class="ib4" aria-label="Добавить" style="background: var(--sec-c); color: var(--on-sec-c)">{ms("add")}</button>')
                 + list_item('З', '#FFE1D6', '#9A3A1E', 'Спринт 42 · доска задач', 'tasks.example.com', f'<button class="ib4" aria-label="Добавить" style="background: var(--sec-c); color: var(--on-sec-c)">{ms("add")}</button>'))
-    add_sheet = sheet(f'<span class="ty-title" style="padding: 0 4px">Добавить из открытых вкладок</span><div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden">{add_rows}</div>', gap=12)
+    add_sheet = sheet(f'<span class="ty-title" style="padding: 0 4px">Добавить из открытых вкладок</span><div style="border-radius: 24px; background: var(--card); overflow: hidden">{add_rows}</div>', gap=12)
     body = f'''{status()}
 <div style="position: absolute; left: 20px; right: 16px; top: 52px; display: flex; align-items: center; gap: 12px"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="ty-head">Essentials</span><span class="ty-cap" style="font-size: 13.5px">Перетащите, чтобы поменять порядок</span></span>{btn("Готово", "fill", "", h=44)}</div>
 <div style="position: absolute; left: 16px; right: 16px; top: 140px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 8px">{edit}</div>
@@ -363,3 +363,96 @@ def g_newtab():
 {newtab_bar("Поиск без следов", "domino_mask").replace('class="gem"', 'class="gem priv"').replace('tabcount">4', 'tabcount">1')}
 {handle()}'''
     W('PrivateTab', 'приватная вкладка', 'w-private t-dark', body, style='background: radial-gradient(120% 60% at 0% 0%, rgba(106, 75, 216, 0.35) 0%, transparent 70%), #000000')
+
+# ---------------------------------------------------------------- menu & site
+
+MAP = (__import__('pathlib').Path(__file__).resolve().parent / 'map.svg').read_text(encoding='utf-8')
+
+
+def page_under(content=None):
+    """The current page behind a sheet (frame chrome)."""
+    return f'{status()}<div class="page-card" style="top: 40px; bottom: 92px">{content or article()}</div>{page_bar()}'
+
+
+def conn_group(items):
+    """M3 Expressive connected icon button group (first/last rounded)."""
+    out = []
+    n = len(items)
+    for k, (icon, label, state) in enumerate(items):
+        r = '26px 10px 10px 26px' if k == 0 else ('10px 26px 26px 10px' if k == n - 1 else '10px')
+        bg = 'var(--sec-c)' if state == 'on' else 'var(--card)'
+        fg = 'var(--on-sec-c)' if state == 'on' else ('var(--ol-v)' if state == 'off' else 'var(--on-sf)')
+        fill = ' f' if state == 'on' else ''
+        out.append(f'<button aria-label="{label}" style="flex: 1 1 0; height: 56px; border-radius: {r}; background: {bg}; color: {fg}; display: flex; align-items: center; justify-content: center">{ms(icon, fill.strip())}</button>')
+    return '<div style="display: flex; gap: 3px">' + ''.join(out) + '</div>'
+
+
+def tile(icon, label, on=False):
+    bg = 'var(--sec-c)' if on else 'var(--card)'
+    fg = 'var(--on-sec-c)' if on else 'var(--on-sf)'
+    return (f'<button style="height: 84px; border-radius: 22px; background: {bg}; color: {fg}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 4px">'
+            f'{ms(icon, "f" if on else "")}<span style="font-size: 12px; line-height: 14px; font-weight: 600; text-align: center; height: 28px; display: flex; align-items: flex-start">{label}</span></button>')
+
+
+def g_menu():
+    nav = conn_group([('arrow_back', 'Назад', ''), ('arrow_forward', 'Вперёд', 'off'), ('refresh', 'Обновить', ''), ('star', 'В избранном', 'on'), ('share', 'Поделиться', '')])
+    tiles = ''.join(tile(*t) for t in [('add', 'Новая вкладка'), ('domino_mask', 'Приватная'), ('search', 'Найти'), ('menu_book', 'Чтение'),
+                                        ('translate', 'Перевести'), ('crop', 'Скриншот'), ('splitscreen', 'Split View'), ('fullscreen_exit', 'Компактно', True),
+                                        ('desktop_windows', 'Версия для ПК'), ('picture_as_pdf', 'Сохранить PDF'), ('add_to_home_screen', 'На главный экран'), ('dark_mode', 'Тёмный сайт')])
+    lst = group([row('download', 'Загрузки', '', value('1 идёт') + CHEV, h=52), row('history', 'История', '', CHEV, h=52), row('bookmarks', 'Избранное', '', CHEV, h=52),
+                 row('key', 'Пароли', '', CHEV, h=52), row('extension', 'Расширения', '', value('3') + CHEV, h=52), row('settings', 'Настройки', '', CHEV, h=52)])
+    menu = sheet(f'{nav}<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">{tiles}</div>{lst}', gap=10, pad='0 12px 28px')
+    W('Menu', 'главное меню', 'w-work t-light aura', page_under() + scrim() + menu + handle())
+    W('MenuDark', 'главное меню (тёмная)', 'w-work t-dark aura', page_under(article(dark=True)) + scrim() + menu + handle())
+
+    perm = lambda icon, label, state, bg, fg: row(icon, label, '', f'<span style="height: 34px; border-radius: 17px; padding: 0 10px 0 12px; background: {bg}; color: {fg}; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600">{state}{ms("expand_more", "xs")}</span>', h=56)
+    stat = lambda icon, n, label, tone, ink: f'<div style="flex: 1 1 0; border-radius: 22px; background: {tone}; color: {ink}; padding: 14px; display: flex; flex-direction: column; gap: 6px">{ms(icon, "f")}<span style="font-size: 28px; line-height: 30px; font-weight: 700">{n}</span><span style="font-size: 13px; font-weight: 600; opacity: 0.85">{label}</span></div>'
+    site = sheet(f'''<div style="display: flex; align-items: center; gap: 14px; padding: 4px 4px 0">{fav('С', '#2F6B5F', '#FFFFFF', 52, 18, 22)}<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span class="ty-title-l">north-guide.ru</span><span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ok)">{ms("lock", "xs f")}Соединение защищено</span></span></div>
+<div style="display: flex; gap: 10px">{stat('gpp_good', '14', 'трекеров заблокировано', 'var(--pri-c)', 'var(--on-pri-c)')}{stat('cookie', '1', 'cookie-баннер скрыт', 'var(--sf-lowest)', 'var(--on-sf)')}</div>
+{section('Разрешения сайта')}
+{group([perm('location_on', 'Геолокация', 'Разрешено', 'var(--ok-c)', 'var(--on-ok-c)'), perm('photo_camera', 'Камера', 'Спрашивать', 'var(--sf-high)', 'var(--on-sf-v)'), perm('notifications', 'Уведомления', 'Запрещено', 'var(--err-c)', 'var(--on-err-c)')])}
+{group([row('shield', 'Защита на этом сайте', 'Выключите, если сайт работает неправильно', switch(True), h=64), row('block', 'Блокировать всплывающие окна', '', switch(True), h=56)])}
+{group([row('dns', 'Данные сайта', '2,4 МБ · 3 cookie', f'<button class="btn" style="height: 36px; border-radius: 18px; padding: 0 14px; background: var(--err-c); color: var(--on-err-c); font-size: 13px">{ms("delete", "xs")}Удалить</button>', h=64), row('verified', 'Сертификат', 'Let’s Encrypt · до 12 января', CHEV, h=64)])}''', gap=10, pad='0 14px 28px')
+    W('SiteInfo', 'сведения о сайте', 'w-work t-light aura', page_under() + scrim() + site + handle())
+
+    cats = [('Реклама', 6, '#1E6875'), ('Аналитика', 5, '#7D5700'), ('Соцсети', 2, '#A0305B'), ('Отпечатки', 1, '#2F5BD3')]
+    total = sum(c[1] for c in cats)
+    stops, acc = [], 0
+    for _, n, color in cats:
+        stops.append(f'{color} {acc / total * 100:.1f}% {(acc + n) / total * 100 - 0.8:.1f}%, transparent {(acc + n) / total * 100 - 0.8:.1f}% {(acc + n) / total * 100:.1f}%')
+        acc += n
+    donut = f'<span style="position: relative; width: 112px; height: 112px; border-radius: 56px; background: conic-gradient({", ".join(stops)}); flex-shrink: 0; display: flex; align-items: center; justify-content: center"><span style="width: 84px; height: 84px; border-radius: 42px; background: var(--card); display: flex; flex-direction: column; align-items: center; justify-content: center"><span style="font-size: 28px; font-weight: 700; line-height: 30px">14</span><span class="ty-cap" style="font-size: 11.5px">запросов</span></span></span>'
+    bars = ''.join(f'<div style="display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 16px"><i style="width: 10px; height: 10px; border-radius: 5px; background: {c}"></i><span class="ty-label" style="width: 96px">{name}</span><span style="flex-grow: 1; height: 8px; border-radius: 4px; background: var(--sf-high)"><i style="width: {n / 6 * 100:.0f}%; height: 8px; border-radius: 4px; background: {c}"></i></span><span class="ty-label" style="width: 18px; text-align: right">{n}</span></div>' for name, n, c in cats)
+    hosts = [('ads.example-network.com', 'Реклама', 4), ('metrics.example.net', 'Аналитика', 3), ('pixel.example-social.com', 'Соцсети', 2), ('fp.example-cdn.com', 'Снятие отпечатка', 1)]
+    hl = group([row('block', h, k, f'<span class="ty-cap" style="font-weight: 700">×{n}</span>', tone='var(--sf-high)', ink='var(--on-sf-v)', h=60) for h, k, n in hosts])
+    body = f'''{status()}{topbar('Privacy X-Ray')}
+{screen(108, f"""<div style="border-radius: 28px; background: var(--card); padding: 18px; display: flex; gap: 18px; align-items: center; box-shadow: var(--e1)">{donut}<span style="display: flex; flex-direction: column; gap: 6px"><span class="ty-title">Заблокировано на north-guide.ru</span><span class="ty-cap" style="font-size: 13px; line-height: 18px">Страница грузится быстрее и не передаёт сведения о вас</span></span></div>
+<div style="border-radius: 24px; background: var(--card); padding: 8px 0">{bars}</div>
+{section('Кому страница пыталась отправить данные')}{hl}
+<a href="#" style="border-radius: 22px; background: color-mix(in srgb, var(--pri-c) 55%, transparent); padding: 12px 12px 12px 16px; display: flex; align-items: center; gap: 12px">{ms('insights' if False else 'shield', 'f', 'color: var(--pri)')}<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="ty-label">За неделю: 1 284 трекера на 96 сайтах</span><span class="ty-cap" style="color: var(--on-pri-c)">Настройки защиты</span></span>{CHEV}</a>""", gap=12)}
+{handle()}'''
+    W('PrivacyXRay', 'Privacy X-Ray', 'w-work t-light aura', body)
+
+    perm_sheet = sheet(f'''<span style="width: 60px; height: 60px; border-radius: 22px; background: var(--pri-c); color: var(--on-pri-c); display: flex; align-items: center; justify-content: center; margin: 6px 4px 0">{ms("location_on", "f l")}</span>
+<span style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px"><span class="ty-title-l">Показать сайту, где вы?</span><span class="ty-body" style="color: var(--on-sf-v)"><b style="color: var(--on-sf)">maps.example.com</b> просит доступ к вашему местоположению.</span></span>
+{group([row('my_location' if False else 'location_on', 'Точное местоположение', 'Иначе — только примерный район', switch(True), h=64)])}
+<span class="ty-cap" style="padding: 0 6px">Решение можно изменить в сведениях о сайте</span>
+{btn('Разрешить на этом сайте', 'fill', '', h=52)}
+<div style="display: flex; gap: 8px">{btn('Только сейчас', 'tonal', '', True)}{btn('Запретить', 'out', '', True)}</div>''', gap=12, pad='0 16px 32px')
+    body = f'''<div aria-hidden="true" style="position: absolute; inset: 0">{MAP}</div>
+<div aria-hidden="true" style="position: absolute; left: 16px; right: 16px; top: 52px; height: 52px; border-radius: 26px; background: #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; padding: 0 16px; color: #5F6368; font-size: 15px; font-weight: 500">{ms("search", "s")}Поиск на карте</div>
+{status()}{scrim()}{perm_sheet}{handle()}'''
+    W('Permission', 'запрос разрешения', 'w-work t-light', body)
+
+    act = lambda icon, label, on=False: f'<button style="height: 76px; border-radius: 20px; background: {"var(--sec-c)" if on else "transparent"}; color: {"var(--on-sec-c)" if on else "var(--on-sf)"}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px; line-height: 14px; font-weight: 600; text-align: center">{ms(icon, "f" if on else "")}{label}</button>'
+    acts = ''.join(act(*a) for a in [('open_in_new', 'Glance', True), ('add', 'Новая вкладка'), ('tab', 'В фоне'), ('splitscreen', 'Рядом'),
+                                     ('domino_mask', 'Приватно'), ('tab_group', 'В группу…'), ('content_copy', 'Копировать'), ('share', 'Отправить')])
+    bars = ''.join(f'<i style="flex: 1; height: {h}%; border-radius: 4px 4px 1px 1px; background: {"#2F6B5F" if k == 5 else "#BFE0D8"}"></i>' for k, h in enumerate((35, 46, 56, 64, 78, 100)))
+    peek = f'''<div style="position: absolute; left: 14px; right: 14px; top: 212px; border-radius: 30px; background: var(--sf-low); box-shadow: var(--e3); overflow: hidden; z-index: 5">
+<div style="position: relative; height: 150px; background: linear-gradient(160deg, #EEF6F4, #D4F1EC); padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span aria-hidden="true" style="position: absolute; right: 18px; top: 18px; width: 112px; height: 56px; display: flex; align-items: flex-end; gap: 5px">{bars}</span><span class="ty-over" style="color: #2F6B5F">Прогноз льда</span><span style="font-size: 19px; line-height: 24px; font-weight: 700; color: #16211E">Толщина льда: южная часть озера</span></div>
+<div style="height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--sf-high)">{ms("lock", "xs", "color: var(--ok)")}<span class="ty-cap" style="font-size: 13px; font-weight: 600">ice-forecast.example.ru/south</span></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 8px">{acts}</div></div>'''
+    link = '<div style="position: absolute; left: 20px; top: 150px; height: 36px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 0 0 3px var(--pri); padding: 0 10px; display: flex; align-items: center; font-family: Literata, Georgia, serif; font-size: 17px; color: #1E5E8C; text-decoration: underline; z-index: 5">прогноз толщины льда</div>'
+    body = f'''{status()}<div class="page-card" style="top: 40px; bottom: 92px; filter: blur(3px)">{article_long()}</div>{page_bar()}
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(8, 14, 16, 0.3)"></div>{link}{peek}{handle()}'''
+    W('LinkPeek', 'долгое нажатие на ссылку', 'w-work t-light aura', body)

@@ -1,0 +1,20 @@
+<svg aria-hidden="true" viewBox="0 0 390 844" style="position: absolute; inset: 0; width: 390px; height: 844px">
+<rect width="390" height="844" fill="#EDF1E8"></rect>
+<path d="M-20 120 C60 150 90 250 70 330 C50 420 110 470 90 560 C75 630 20 660 -20 700 Z" fill="#CFE2F1"></path>
+<path d="M260 -10 C300 60 390 70 410 60 L410 -10 Z" fill="#CFE2F1"></path>
+<rect x="180" y="150" width="120" height="90" rx="18" fill="#D6EACC"></rect>
+<rect x="230" y="420" width="140" height="110" rx="22" fill="#D6EACC"></rect>
+<rect x="120" y="610" width="110" height="80" rx="16" fill="#D6EACC"></rect>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M-10 280 C120 300 200 260 410 320" stroke="#D8DCE0" stroke-width="16"></path>
+<path d="M-10 280 C120 300 200 260 410 320" stroke="#FFFFFF" stroke-width="12"></path>
+<path d="M160 -10 C150 200 190 420 150 860" stroke="#E9D9A6" stroke-width="16"></path>
+<path d="M160 -10 C150 200 190 420 150 860" stroke="#FFF3C9" stroke-width="12"></path>
+<path d="M-10 520 C150 540 260 500 410 560" stroke="#FFFFFF" stroke-width="8"></path>
+<path d="M260 -10 L300 844" stroke="#FFFFFF" stroke-width="6"></path>
+<path d="M170 400 L410 380" stroke="#FFFFFF" stroke-width="6"></path>
+<path d="M20 720 L410 700" stroke="#FFFFFF" stroke-width="6"></path>
+</g>
+<circle cx="214" cy="352" r="34" fill="#1A73E8" opacity="0.16"></circle>
+<circle cx="214" cy="352" r="10" fill="#1A73E8" stroke="#FFFFFF" stroke-width="4"></circle>
+</svg>

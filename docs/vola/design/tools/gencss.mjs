@@ -29,6 +29,9 @@ function scheme(seed, dark, contrast) {
   const ok = TonalPalette.fromInt(Blend.harmonize(argbFromHex('#2E7D32'), pri));
   const warn = TonalPalette.fromInt(Blend.harmonize(argbFromHex('#B26A00'), pri));
   v.ok = hex(ok.tone(dark ? 80 : 40)); v['ok-c'] = hex(ok.tone(dark ? 30 : 90)); v['on-ok-c'] = hex(ok.tone(dark ? 90 : 20));
+  // Softer error container than the 2025 spec default: alerts stay calm next to workspace colors.
+  const errP = TonalPalette.fromInt(M.error.getArgb(s));
+  v['err-c'] = hex(errP.tone(dark ? 30 : 92)); v['on-err-c'] = hex(errP.tone(dark ? 90 : 25));
   v.warn = hex(warn.tone(dark ? 80 : 40)); v['warn-c'] = hex(warn.tone(dark ? 30 : 90)); v['on-warn-c'] = hex(warn.tone(dark ? 90 : 20));
   return v;
 }
