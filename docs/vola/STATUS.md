@@ -14,7 +14,20 @@ _Обновлено: 2026-09-30 (сессия PR 1 — токены темы)._
   - `VolaTheme` / `VolaExtendedColors`, шрифты Manrope и Literata, `VolaShapes`, `VolaSpacing`,
     `VolaElevation`, `VolaMotion`, настройка `BrowserChromeStyle` (Frame/Air, пока без UI).
   - AMOLED убран: тёмная всегда чёрная, `amoled` мигрирует в `dark`.
-  - Статус CI — в самом PR. Слить после зелёного CI и проверки владельцем.
+  - CI зелёный, снимки эмулятора проверены (исправлен тонкий шрифт: у вариативных TTF ось
+    `wght` задаётся явно через `variationSettings`). Ждёт проверки владельцем.
+- **PR #26 — исправление lint `LocalContextGetResourceValueCall`** (ветка
+  `ccr-d3f28808-uk5drv-lint`). 18 мест: тосты по id строки, `stringResource()`, хелпер
+  `ui/ComposeResources.kt` `currentResources()` (замена на `LocalResources` после обновления
+  Compose). Проверено временным поднятием Compose до версии из #22: lint зелёный. CI зелёный.
+  После слияния: Dependabot `rebase` в #21 и #22.
+- **PR #27 — PR 2 плана: значки Material Symbols Rounded** (ветка `ccr-d3f28808-uk5drv-icons`).
+  Генератор `scripts/compile_material_symbols.py` (кэш путей `material_symbols.json`, тест
+  `test_compile_material_symbols.py`): `VolaIcons` (`ImageVector` в `shared`) вместо
+  `Icons.Default` и 64 перегенерированных drawable с прежними именами. Удалены
+  `material-icons-core` и `materialIconsExtended`.
+- **Порядок слияния:** #26 и #27 независимы от #25, конфликтов по файлам нет; сливать в любом
+  порядке. После слияния #25 и #27 значки превью темы можно перевести на `VolaIcons`.
 - **PR #1–#17, #19, #20, #23, #24 слиты в `main`** (merge commit, CI зелёный).
   #20 — поддержка Android 12+
   (`minSdk` 31, обёртки в `PlatformCompat.kt`, `IoCompat.kt`). #19 — Dependabot, обновление actions.
@@ -65,24 +78,17 @@ _Обновлено: 2026-09-30 (сессия PR 1 — токены темы)._
 
 Готовый промпт для новой сессии — `docs/vola/NEXT_SESSION.md`.
 
-1. Довести #25 до зелёного CI; владелец проверяет по чек-листу в описании и сливает.
-2. Отдельный PR: исправить lint `LocalContextGetResourceValueCall` (18 мест, `context.getString`
-   в Compose → `stringResource` / `LocalResources`), затем перезапустить Dependabot #21 и #22
-   (Effort: High). Рекомендуется до PR 2: #21/#22 обновляют Compose, на котором строится весь
-   дальнейший UI.
-3. PR 2 плана — значки Material Symbols Rounded (`VolaIcons`, Effort: High), дальше по таблице
-   `tech-plan.md`.
-4. Хвосты PR 1 для следующих PR:
-   - PR 5: включать `privateMode = true` в `CandyTheme` на приватной вкладке;
-   - PR 7: страница HTTPS-only (`GeckoHttpsOnlyErrorPage.kt`) пока в старых фиолетовых цветах;
-   - PR 3/8: показать выбор «Рама»/«Воздух» (`AppearanceSettings.chromeStyle` уже хранится).
-5. Владелец:
-   - секрет Preview;
-   - удалить ветки слитых PR.
-6. По готовности:
-   - `geckoview-update.yml`;
-   - храповик размера `BrowserController`;
-   - скриншоты Compose Preview в CI.
+1. Владелец проверяет и сливает #25, #26, #27 (чек-листы в описаниях).
+2. После #26: команда Dependabot `rebase` в #21 и #22, затем перевести `currentResources()` на
+   `LocalResources.current`.
+3. PR 3 плана — рама пространства и адресная панель-остров (Effort: **Extra**): карточка
+   страницы на ореоле, капсула при прокрутке, жесты, вынос `AddressBarController`. Опирается на
+   токены #25 и значки #27 — начинать после их слияния.
+4. Хвосты PR 1: PR 5 — `privateMode = true` на приватной вкладке; PR 7 — страница HTTPS-only в
+   цветах v4; PR 3/8 — выбор «Рама»/«Воздух» в настройках.
+5. Владелец: секрет Preview; удалить ветки слитых PR.
+6. По готовности: `geckoview-update.yml`, храповик размера `BrowserController`, скриншоты
+   Compose Preview в CI.
 
 ## Заметки о среде
 
@@ -117,5 +123,11 @@ _Обновлено: 2026-09-30 (сессия PR 1 — токены темы)._
   идемпотентна.
 - **Визуальная проверка цветов:** HTML-копия сетки превью из `VolaSchemes.kt` рендерится в
   Chromium (Playwright) с локальным `res/font/manrope.ttf`, так проверены схемы в PR #25.
+- **Отдельные PR при неслитом #25:** владелец разрешил новые ветки
+  `ccr-d3f28808-uk5drv-<тема>` от свежего `main` (сессия 2026-09-30).
+- **Проверка новой проверки lint без SDK:** временный коммит с поднятием версий в своей ветке →
+  CI → убрать коммит (`git reset` + `push --force-with-lease` в своей ветке).
+- **Значки:** правка — только через манифест `scripts/compile_material_symbols.py`, затем
+  `fetch`. Проверка глазами — лист «было → стало» (SVG из путей, рендер в Chromium).
 - Иконки пространств генерирует `scripts/workspace-icons/generate.py`
   (нужен доступ к raw.githubusercontent.com).

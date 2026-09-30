@@ -4,46 +4,42 @@
 
 ---
 
-Продолжаем Vola. PR 1 переноса дизайна v4 (токены темы) — PR #25. Холст:
-https://claude.ai/artifact/CEgKgiZHg4zuju2u7ALZ8C.
+Продолжаем Vola. Открыты PR #25 (токены темы v4), #26 (lint для обновления Compose) и #27
+(значки Material Symbols Rounded). Холст: https://claude.ai/artifact/CEgKgiZHg4zuju2u7ALZ8C.
 
 **Сначала прочитай:**
 - `CLAUDE.md`;
 - `docs/vola/STATUS.md`;
 - `docs/vola/tech-plan.md`, раздел 4;
-- `app/src/main/java/dev/sk2andy/materialbrowser/ui/theme/` — новые токены v4: `VolaColors.kt`,
-  `VolaSchemes.kt` (генерируется, руками не править), `VolaType.kt`, `VolaTokens.kt`.
+- `docs/vola/design/review-v4.md`;
+- доски `docs/vola/design/canvas/W-Main.dc.html`, `W-Scrolled.dc.html`, `W-Editing.dc.html`,
+  `W-Find.dc.html`, `W-Reader.dc.html`, `W-Compact.dc.html`;
+- токены `app/.../ui/theme/Vola*.kt` и значки `shared/.../ui/icons/VolaIcons.kt`.
 
 Перед работой порекомендуй мне уровень Effort (правило 10) и дай план из 3–7 шагов. Если план
 совпадает с заданием — сразу начинай.
 
-**Шаг 0. PR #25.** Если он ещё открыт: проверь CI на последнем коммите и доведи его до зелёного.
-Сливать без моего слова не надо.
+**Шаг 0.** Проверь #25, #26, #27: если какой-то не слит и CI красный — почини. Сливать без моего
+слова не надо. Если #26 слит — команда Dependabot `rebase` в #21 и #22 и доведи их до зелёного.
 
-**Задача: lint `LocalContextGetResourceValueCall` (Effort: High).** Отдельный PR от свежего `main`.
-1. Dependabot #21 (Kotlin 2.4.20, Compose Multiplatform 1.12) и #22 (Compose BOM 2026.09) красные:
-   новая проверка lint запрещает `context.getString(...)` / `context.resources` внутри Compose.
-   Список ошибок — в шаге «Show lint errors» их CI (18 штук, первая `ui/BrowserScreen.kt:423`).
-2. Замени такие вызовы на `stringResource` / `pluralStringResource` или `LocalResources.current`
-   там, где строка нужна в лямбде. Поведение не менять, строки не добавлять.
-3. После слияния перезапусти #21 и #22 (комментарий `@dependabot rebase`) и убедись, что они
-   зелёные.
+**Задача: PR 3 плана — рама пространства и адресная панель-остров (Effort: Extra).** Только после
+слияния #25 и #27. Отдельный PR от свежего `main`:
+1. «Рама»: оболочка на ореоле пространства (`VolaTheme.extendedColors.aura`), страница —
+   карточка со скруглением `VolaShapes.cardRadius`; «Воздух»: страница на весь экран, ореол в
+   ободке острова. Выбор — `AppearanceSettings.chromeStyle`.
+2. Адресная панель-остров по доскам Main/Scrolled/Editing: сжатие в капсулу при прокрутке,
+   пружины `VolaMotion`, значки `VolaIcons`.
+3. Вынести логику адресной панели из `BrowserController` в `AddressBarController` без смены
+   поведения; движки не трогать напрямую (только порты).
+4. Превью: светлая/тёмная, «Рама»/«Воздух», крупный шрифт 200 %.
 
-**Правила (из `CLAUDE.md`, обязательны):**
-- Код, комментарии и коммиты — на английском (Conventional Commits); описание PR — на русском с
-  чек-листом ручной проверки.
-- Никаких захардкоженных цветов и размеров вне `ui/theme`; новые значения — через токены v4.
-- Имена, унаследованные от Candy, не переименовывай.
-- Android SDK в облаке нет — сборку, тесты и lint проверяет CI, он должен быть зелёным. Части кода
-  без Android можно проверить в JVM-проекте на Compose Desktop (см. «Заметки о среде» в
-  `STATUS.md`).
-- После открытия PR подпишись на его события и доведи CI до зелёного.
+**Правила (из `CLAUDE.md`, обязательны):** код и коммиты на английском, описание PR на русском с
+чек-листом; никаких захардкоженных цветов и размеров вне `ui/theme`; строки сразу в `values/` и
+`values-ru/`; CI должен быть зелёным; после открытия PR подпишись на события.
 
-**Не делай без моего отдельного слова:** следующие PR плана (2 — значки Material Symbols, 3 — рама
-и адресная панель, …).
+**Не делай без моего отдельного слова:** следующие PR плана (4 — обзор вкладок, …).
 
-После PR предложи, что брать следующим, с рекомендацией Effort. В конце работы обнови
-`docs/vola/STATUS.md` и этот файл.
+В конце работы обнови `docs/vola/STATUS.md` и этот файл.
 
 ---
 
@@ -54,4 +50,4 @@ https://claude.ai/artifact/CEgKgiZHg4zuju2u7ALZ8C.
   Значение — из файла, который Claude прислал в сессии 2026-09-30.
 - Удалить ветки слитых PR на странице *Branches*.
 - Включить *Settings → General → Automatically delete head branches*.
-- Проверить PR #25 по чек-листу в его описании и слить.
+- Проверить PR #25, #26, #27 по чек-листам в описаниях и слить.
