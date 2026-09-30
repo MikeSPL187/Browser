@@ -3174,8 +3174,11 @@ class BrowserController(
      */
     fun updateContentFrame(frame: BrowserContentFrame) {
         if (contentFrame == frame) return
+        val topChanged = contentFrame.topPx != frame.topPx
         contentFrame = frame
         lastWindowInsets?.let(::dispatchWindowInsetsToAttachedEngineViews)
+        // Page policies carry the top inset for the CSS and script safe-area fallbacks.
+        if (topChanged) refreshGeckoContentTopInsetPolicies()
     }
 
     private fun dispatchWindowInsetsToAttachedEngineViews(insets: WindowInsetsCompat) {
@@ -12065,7 +12068,7 @@ class BrowserController(
         ) {
             return 0
         }
-        return currentSafeAreaTopInsetPx()
+        return tabSafeAreaTopInsetPx()
     }
 
     private fun geckoCssSafeAreaTopInsetPx(tab: BrowserTab, pageUrl: String): Int =
@@ -12080,7 +12083,7 @@ class BrowserController(
         ) {
             0
         } else {
-            currentSafeAreaTopInsetPx()
+            tabSafeAreaTopInsetPx()
         }
 
     private fun currentSafeAreaTopInsetPx(): Int = lastWindowInsets
@@ -12088,6 +12091,10 @@ class BrowserController(
         ?.top
         ?.coerceAtLeast(0)
         ?: 0
+
+    /** The status bar part a tab page still has to clear; a framed card starts below it. */
+    private fun tabSafeAreaTopInsetPx(): Int =
+        (currentSafeAreaTopInsetPx() - contentFrame.topPx).coerceAtLeast(0)
 
     private fun externalLinkPreviewContentTopInsetPx(): Int =
         if (usesGeckoEngine || developerSettings.forceSafeAreaFallback) 0 else currentSafeAreaTopInsetPx()
@@ -12299,7 +12306,7 @@ class BrowserController(
             browserEngineSessions[tabId] === session &&
             navigationGenerations[tabId] == nextNavigationGeneration
         val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
-            if (usesGeckoEngine) 0 else currentSafeAreaTopInsetPx()
+            if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
         } else {
             geckoContentTopInsetPx(tabId)
         }
@@ -12403,7 +12410,7 @@ class BrowserController(
                 refreshDomainMuteForTab(event.tabId)
                 updateProtectionRequestContext(event.tabId, event.address)
                 val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
-                    if (usesGeckoEngine) 0 else currentSafeAreaTopInsetPx()
+                    if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
                 } else {
                     geckoContentTopInsetPx(event.tabId)
                 }
