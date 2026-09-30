@@ -394,4 +394,6 @@ private fun ThirdPartyComponent.displayName(): String = when (this) {
     ThirdPartyComponent.Uassets -> stringResource(R.string.about_license_uassets)
     ThirdPartyComponent.UblockOrigin -> "uBlock Origin"
     ThirdPartyComponent.IStillDontCareAboutCookies -> "I still don't care about cookies"
+    ThirdPartyComponent.Manrope -> "Manrope"
+    ThirdPartyComponent.Literata -> "Literata"
 }
