@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.ui.theme.CandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -88,9 +89,8 @@ internal object AddressBarMotion {
         presentation: AddressBarPresentation,
         expandedHeight: Dp = EXPANDED_HEIGHT,
     ): Dp = when (presentation) {
-        AddressBarPresentation.Docked,
-        AddressBarPresentation.Compact,
-        -> 48.dp
+        AddressBarPresentation.Docked -> 48.dp
+        AddressBarPresentation.Compact -> VolaIsland.compactHeight
         AddressBarPresentation.Expanded -> expandedHeight
         AddressBarPresentation.Overview -> 56.dp
         AddressBarPresentation.CommandFeedback -> 46.dp

@@ -15,6 +15,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
@@ -57,10 +58,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -87,6 +91,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -108,6 +113,9 @@ import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -233,6 +241,8 @@ internal fun BrowserBottomBar(
     onBarPositioned: (boundsInRoot: Rect, topInWindowPx: Int) -> Unit,
     backdropBlurRegionEnabled: Boolean = true,
     onBackdropBlurRegionChanged: (BrowserBackdropBlurRegion?) -> Unit = {},
+    /** The Air layout rims the island with the workspace aura and lets it glow. */
+    auraRim: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val docked = dockState.placement != null
@@ -250,6 +260,7 @@ internal fun BrowserBottomBar(
     val pulseScale = remember { Animatable(1f) }
     val newTabPulseScale = remember { Animatable(1f) }
     val domain = AddressResolver.displayText(tab.url)
+    val secureCompactAddress = tab.url.startsWith("https://")
     val feedbackText = commandFeedback?.localizedText().orEmpty()
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -313,6 +324,7 @@ internal fun BrowserBottomBar(
             maxLines = 1,
         ).size.width.toDp() +
             AddressBarDockingRules.compactAddressSlackDp(dockingEnabled).dp +
+            (if (secureCompactAddress) COMPACT_LOCK_ICON_SIZE + VolaSpacing.x1 else 0.dp) +
             (if (dockingEnabled) 48.dp else 0.dp) +
             (if (showCastButton) 48.dp else 0.dp)
     }
@@ -341,7 +353,7 @@ internal fun BrowserBottomBar(
                 imeInsets = WindowInsets.ime,
                 navigationBarInsets = WindowInsets.navigationBars,
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
             .then(if (visualOnly) Modifier.clearAndSetSemantics { } else Modifier),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -431,11 +443,7 @@ internal fun BrowserBottomBar(
             maxWidth = maxWidth,
             feedbackWidth = feedbackWidth,
             edgeTabWidth = edgeTabWidth,
-            expandedHeight = if (addressBarStyle == BrowserAddressBarStyle.Segmented) {
-                SegmentedAddressBarGeometry.EXPANDED_HEIGHT
-            } else {
-                AddressBarMotion.EXPANDED_HEIGHT
-            },
+            expandedHeight = addressBarExpandedHeight(addressBarStyle),
             verticalTravel = verticalTravel,
             dockPosition = dockInteraction.position,
         )
@@ -455,6 +463,13 @@ internal fun BrowserBottomBar(
                     .offset(x = dockOffset.x, y = dockOffset.y)
                     .width(animatedBarWidth)
                     .height(animatedBarHeight)
+                    .then(
+                        if (auraRim && presentation != AddressBarPresentation.Docked) {
+                            Modifier.islandAuraRim(RoundedCornerShape(barCornerRadius))
+                        } else {
+                            Modifier
+                        },
+                    )
                     .then(
                         if (visualOnly) {
                             Modifier.pointerInput(Unit) {
@@ -558,6 +573,7 @@ internal fun BrowserBottomBar(
                                 ) {
                                     AddressBarCompactContent(
                                         domain = domain,
+                                        secure = secureCompactAddress,
                                         showCastButton = showCastButton,
                                         dockingEnabled = dockingEnabled,
                                         dockTargetEdge = dockTargetEdge,
@@ -744,6 +760,7 @@ internal object AddressBarDockTestTags {
 @Composable
 internal fun AddressBarCompactContent(
     domain: String,
+    secure: Boolean = false,
     showCastButton: Boolean,
     dockingEnabled: Boolean,
     dockTargetEdge: AddressBarDockEdge,
@@ -768,6 +785,16 @@ internal fun AddressBarCompactContent(
             AddressBarParkAction(
                 edge = dockTargetEdge,
                 onDock = onDock,
+            )
+        }
+        if (secure) {
+            Icon(
+                imageVector = VolaIcons.Lock,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(end = VolaSpacing.x1)
+                    .size(COMPACT_LOCK_ICON_SIZE),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
@@ -1103,4 +1130,36 @@ internal fun Modifier.addressBarVerticalGesture(
             }
         }
     }
+}
+
+/** The lock next to the site in the compact capsule, sized to its label. */
+private val COMPACT_LOCK_ICON_SIZE = 14.dp
+
+/** Space the bottom address bar keeps above and below itself. */
+internal val ADDRESS_BAR_VERTICAL_MARGIN = 12.dp
+
+/** Height of the expanded bottom address bar for [style]. */
+internal fun addressBarExpandedHeight(style: BrowserAddressBarStyle): Dp =
+    if (style == BrowserAddressBarStyle.Segmented) {
+        SegmentedAddressBarGeometry.EXPANDED_HEIGHT
+    } else {
+        AddressBarMotion.EXPANDED_HEIGHT
+    }
+
+/** The aura rim and glow of the island in the Air layout (`.halo` in vola4.css). */
+@Composable
+internal fun Modifier.islandAuraRim(shape: Shape): Modifier {
+    val colors = VolaTheme.extendedColors
+    return this
+        .shadow(
+            elevation = VolaIsland.glowElevation,
+            shape = shape,
+            ambientColor = colors.aura1,
+            spotColor = colors.aura2,
+        )
+        .border(
+            width = VolaIsland.rimWidth,
+            brush = Brush.linearGradient(listOf(colors.aura1, colors.aura2)),
+            shape = shape,
+        )
 }

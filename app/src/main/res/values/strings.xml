@@ -46,6 +46,8 @@
     <string name="action_back">Back</string>
     <string name="action_forward">Forward</string>
     <string name="action_find_in_page">Find on page</string>
+    <string name="find_in_page_match_case">Match case</string>
+    <string name="find_in_page_whole_word">Whole word</string>
     <string name="address_bar_action_tabs">Tabs</string>
     <string name="action_home">Home</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
@@ -323,6 +325,7 @@
 
     <!-- Favorites and page content -->
     <string name="favorites_title">Favorites</string>
+    <string name="new_tab_continue">Continue</string>
     <string name="favorites_search">Search favorites</string>
     <string name="favorites_clear_search">Clear search</string>
     <string name="favorites_delete">Delete favorite %1$s</string>
@@ -381,6 +384,11 @@
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_home_appearance_summary">Colors, website text, surfaces, and shape</string>
     <string name="settings_appearance_mode">Appearance</string>
+    <string name="settings_chrome_style">Browser layout</string>
+    <string name="settings_chrome_style_frame">Frame</string>
+    <string name="settings_chrome_style_air">Air</string>
+    <string name="settings_chrome_style_frame_summary">The page is a card in the color of your space.</string>
+    <string name="settings_chrome_style_air_summary">The page fills the whole screen.</string>
     <string name="appearance_mode_system">System</string>
     <string name="appearance_mode_light">Light</string>
     <string name="appearance_mode_dark">Dark</string>

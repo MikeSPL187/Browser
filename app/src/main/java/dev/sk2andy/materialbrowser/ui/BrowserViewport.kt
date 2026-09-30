@@ -101,6 +101,7 @@ import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewCommitResult
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import eightbitlab.com.blurview.BlurTarget
 import kotlin.math.absoluteValue
@@ -173,7 +174,6 @@ internal fun ExternalLinkPreviewScreen(
                 onPreviousMatch = { controller.findNextInPage(forward = false) },
                 onNextMatch = { controller.findNextInPage(forward = true) },
                 onClose = controller::closeFindInPage,
-                backdropSource = blurTarget.asCandyChromeBackdropSource(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
@@ -313,6 +313,7 @@ internal fun BrowserViewport(
     travelDistance: Float,
     rootHeightPx: Float,
     bottomBarTopPx: FloatState,
+    contentFramed: Boolean = false,
     handoff: TabHandoff?,
     handoffAlpha: Float,
     liveFrameTabId: String?,
@@ -451,10 +452,10 @@ internal fun BrowserViewport(
             .fullscreenVideoGestureTransform(fullscreenVideoGestureState)
             .fullscreenVideoGestures(fullscreenVideoGestureState)
             .background(
-                if (fullscreenVideoGestureState != null) {
-                    Color.Black
-                } else {
-                    MaterialTheme.colorScheme.surface
+                when {
+                    fullscreenVideoGestureState != null -> Color.Black
+                    contentFramed -> VolaTheme.extendedColors.card
+                    else -> MaterialTheme.colorScheme.surface
                 },
             ),
     ) {
@@ -470,7 +471,9 @@ internal fun BrowserViewport(
                     controller.selectedFirefoxExtensionOptionsTitle == null &&
                     controller.findInPageState == null &&
                     pageErrorFeedback is PageErrorFeedbackState.Hidden,
-                showStatusBarOverlay = !videoOnlyPresentation &&
+                // A framed card starts below the status bar, which then shows the aura.
+                showStatusBarOverlay = !contentFramed &&
+                    !videoOnlyPresentation &&
                     !tabOverviewVisible &&
                     controller.selectedFirefoxExtensionOptionsTitle == null,
                 statusBarTint = webContentStatusBarAppearance?.colorArgb
@@ -479,6 +482,7 @@ internal fun BrowserViewport(
                     controller.selectedWebContentStatusBarBackdrop != null,
                 statusBarUsesDarkIcons = webContentStatusBarAppearance?.useDarkIcons,
                 defaultStatusBarUsesDarkIcons = defaultStatusBarUsesDarkIcons,
+                refreshIndicatorBelowStatusBar = !contentFramed,
                 onRefresh = controller::reload,
                 onLiveFrame = onLiveFrame,
                 onBlurTargetAttached = onBlurTargetAttached,
@@ -531,6 +535,20 @@ internal fun BrowserViewport(
                                     controller.isFavoriteLaunchAnimationEnabled,
                             ),
                         favoriteAnimationSpeed = controller.favoriteAnimationSpeed,
+                        recentTabs = controller.activeTabs
+                            .filter { tab ->
+                                tab.id != selectedTab.id &&
+                                    !tab.isIncognito &&
+                                    tab.url != BLANK_URL
+                            }
+                            .sortedByDescending(BrowserTab::lastAccessedAt)
+                            .take(NEW_TAB_RECENT_TAB_COUNT),
+                        recentTabFavicons = controller.favicons,
+                        onRecentTab = controller::selectTab,
+                        title = controller.localBrowserProfiles
+                            .firstOrNull { profile -> profile.id == controller.activeProfileId }
+                            ?.name
+                            ?.takeIf(String::isNotBlank),
                     )
                 }
             }
@@ -560,7 +578,7 @@ internal fun BrowserViewport(
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
+                    .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
                     .padding(
                         bottom = with(density) {
                             val bottomBarTop = bottomBarTopPx.floatValue
@@ -623,6 +641,7 @@ private fun ActiveBrowserEngineView(
     solidStatusBarOverlay: Boolean,
     statusBarUsesDarkIcons: Boolean?,
     defaultStatusBarUsesDarkIcons: Boolean,
+    refreshIndicatorBelowStatusBar: Boolean,
     onRefresh: () -> Unit,
     onLiveFrame: (String) -> Unit,
     onBlurTargetAttached: (BlurTarget) -> Unit,
@@ -658,7 +677,11 @@ private fun ActiveBrowserEngineView(
         statusBarHeightPx = WindowInsets.statusBars.getTop(density),
         density = density.density,
     )
-    val refreshIndicatorTopInsetPx = WindowInsets.safeDrawing.getTop(density)
+    val refreshIndicatorTopInsetPx = if (refreshIndicatorBelowStatusBar) {
+        WindowInsets.safeDrawing.getTop(density)
+    } else {
+        0
+    }
     val selectedTabId = controller.selectedTabId
     val engineViewRevision = controller.engineViewRevision
     var pullRefreshRequested by remember(selectedTabId) { mutableStateOf(false) }

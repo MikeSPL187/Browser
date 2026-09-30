@@ -45,6 +45,8 @@
     <string name="action_back">Назад</string>
     <string name="action_forward">Вперёд</string>
     <string name="action_find_in_page">Найти на странице</string>
+    <string name="find_in_page_match_case">Регистр</string>
+    <string name="find_in_page_whole_word">Слово целиком</string>
     <string name="address_bar_action_tabs">Вкладки</string>
     <string name="action_home">Домой</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
@@ -322,6 +324,7 @@
         <item quantity="other">Закрыть %1$d дубликата вкладок? Закреплённые и текущая вкладки останутся открытыми.</item>
     </plurals>
     <string name="favorites_title">Избранное</string>
+    <string name="new_tab_continue">Продолжить</string>
     <string name="favorites_search">Поиск в избранном</string>
     <string name="favorites_clear_search">Очистить поиск</string>
     <string name="favorites_delete">Удалить «%1$s» из избранного</string>
@@ -377,6 +380,11 @@
     <string name="settings_appearance_title">Внешний вид</string>
     <string name="settings_home_appearance_summary">Цвета, текст сайтов, поверхности и форма</string>
     <string name="settings_appearance_mode">Тема</string>
+    <string name="settings_chrome_style">Оформление</string>
+    <string name="settings_chrome_style_frame">Рама</string>
+    <string name="settings_chrome_style_air">Воздух</string>
+    <string name="settings_chrome_style_frame_summary">Страница — карточка в цвете пространства.</string>
+    <string name="settings_chrome_style_air_summary">Страница на весь экран.</string>
     <string name="appearance_mode_system">Как в системе</string>
     <string name="appearance_mode_light">Светлая</string>
     <string name="appearance_mode_dark">Тёмная</string>

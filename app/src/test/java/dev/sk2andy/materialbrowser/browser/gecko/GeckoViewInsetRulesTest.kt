@@ -254,4 +254,74 @@ class GeckoViewInsetRulesTest {
         assertEquals(GeckoViewInsets.Zero, layout.rendererSafeAreaOverride)
         assertEquals(0, layout.scrollableTopInsetPx)
     }
+
+    @Test
+    fun `framed host removes the safe area it already keeps clear of`() {
+        val layout = GeckoViewInsetRules.resolve(
+            safeArea = GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 48),
+            forceNativeSafeArea = false,
+            forceNativeTopSafeArea = false,
+            isFullscreenContent = false,
+            isInsideSafeDrawingHost = false,
+            hostFrame = GeckoViewInsets(left = 18, top = 72, right = 18, bottom = 252),
+        )
+
+        assertEquals(GeckoViewInsets.Zero, layout.margins)
+        assertEquals(GeckoViewInsets.Zero, layout.rendererSafeAreaOverride)
+        assertEquals(0, layout.scrollableTopInsetPx)
+    }
+
+    @Test
+    fun `framed host keeps a display cutout wider than the frame`() {
+        val layout = GeckoViewInsetRules.resolve(
+            safeArea = GeckoViewInsets(left = 96, top = 72, right = 0, bottom = 48),
+            forceNativeSafeArea = true,
+            forceNativeTopSafeArea = false,
+            isFullscreenContent = false,
+            isInsideSafeDrawingHost = false,
+            hostFrame = GeckoViewInsets(left = 18, top = 72, right = 18, bottom = 252),
+        )
+
+        assertEquals(GeckoViewInsets(left = 78, top = 0, right = 0, bottom = 0), layout.margins)
+    }
+
+    @Test
+    fun `framed host reserves only the keyboard part that covers the card`() {
+        val frame = GeckoViewInsets(left = 18, top = 72, right = 18, bottom = 252)
+        for ((keyboardInset, expectedBottom) in listOf(900 to 648, 200 to 0)) {
+            val layout = GeckoViewInsetRules.resolve(
+                safeArea = GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 48),
+                forceNativeSafeArea = false,
+                forceNativeTopSafeArea = false,
+                isFullscreenContent = false,
+                isInsideSafeDrawingHost = false,
+                keyboardBottomInsetPx = keyboardInset,
+                hostFrame = frame,
+            )
+
+            assertEquals(GeckoViewInsets(0, 0, 0, expectedBottom), layout.margins)
+        }
+    }
+
+    @Test
+    fun `fullscreen content ignores the host frame`() {
+        val safeArea = GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 48)
+        val framed = GeckoViewInsetRules.resolve(
+            safeArea = safeArea,
+            forceNativeSafeArea = false,
+            forceNativeTopSafeArea = false,
+            isFullscreenContent = true,
+            isInsideSafeDrawingHost = false,
+            hostFrame = GeckoViewInsets(left = 18, top = 72, right = 18, bottom = 252),
+        )
+        val unframed = GeckoViewInsetRules.resolve(
+            safeArea = safeArea,
+            forceNativeSafeArea = false,
+            forceNativeTopSafeArea = false,
+            isFullscreenContent = true,
+            isInsideSafeDrawingHost = false,
+        )
+
+        assertEquals(unframed, framed)
+    }
 }

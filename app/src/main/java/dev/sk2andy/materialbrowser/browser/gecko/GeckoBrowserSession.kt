@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import android.content.Context
 import android.graphics.Bitmap
 import android.view.View
+import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.browser.BrowserEngineAndroidPermissionRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineAuthPromptRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineContentPermissionRequest
@@ -373,6 +374,9 @@ internal interface GeckoBrowserSession {
     )
 
     fun clearFindInPage()
+
+    /** Options for the next [findInPage] calls. */
+    fun setFindInPageOptions(options: FindInPageOptions) = Unit
 
     /** Extracts bounded article JSON through Candy's internal Gecko content-script bridge. */
     fun extractPageForReader(onComplete: (String?) -> Unit)

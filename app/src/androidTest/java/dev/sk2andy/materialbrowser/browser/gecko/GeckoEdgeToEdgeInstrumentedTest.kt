@@ -26,6 +26,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteMatrix
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
@@ -51,6 +52,8 @@ class GeckoEdgeToEdgeInstrumentedTest {
         preferences.edit().clear().commit()
         GestureOnboardingStore(context).markCompleted()
         store.saveStartupAnimationEnabled(false)
+        // These tests measure the edge-to-edge page; the framed card would inset it.
+        store.saveAppearanceSettings(AppearanceSettings(chromeStyle = BrowserChromeStyle.Air))
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
         val tab = BrowserTab(
             id = "gecko-edge-to-edge-fixture",
@@ -154,6 +157,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
                     val controller = activity.browserControllerForTesting()
                     controller.updateAppearanceSettings(
                         AppearanceSettings(
+                            chromeStyle = BrowserChromeStyle.Air,
                             surfaceStyle = BrowserSurfaceStyle.Frosted,
                             frostedTransparencyPercent = 0,
                             frostedAddressBarTransparencyPercent = 50,
@@ -225,7 +229,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
                         assertTrue(region.blurRadius > 0f)
                     }
                     activity.browserControllerForTesting().updateAppearanceSettings(
-                        AppearanceSettings(),
+                        AppearanceSettings(chromeStyle = BrowserChromeStyle.Air),
                     )
                 }
                 awaitViewReady(scenario)

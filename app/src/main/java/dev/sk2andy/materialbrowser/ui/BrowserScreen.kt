@@ -9,6 +9,7 @@ package dev.sk2andy.materialbrowser.ui
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 
 import android.view.HapticFeedbackConstants
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
 import androidx.activity.BackEventCompat
@@ -23,11 +24,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +42,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -48,14 +56,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -73,6 +83,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
+import dev.sk2andy.materialbrowser.browser.BrowserContentFrame
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
@@ -118,6 +129,12 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -1364,6 +1381,82 @@ internal fun BrowserScreen(
         addressValue.text.isEmpty() &&
         !selectedTab.isIncognito &&
         controller.favorites.isNotEmpty()
+    val addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled
+    val contentFramed = BrowserContentFrameRules.isFramed(
+        chromeStyle = controller.appearanceSettings.chromeStyle,
+        browserChromeVisible = !hideBrowserChrome &&
+            fullscreenVideoGestureState == null &&
+            firefoxExtensionOptionsTitle == null,
+        isBlankPage = selectedTab.url == BLANK_URL,
+    )
+    val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(
+        framed = contentFramed,
+        safeLeftPx = frameSafeInsets.getLeft(density, LayoutDirection.Ltr),
+        safeTopPx = frameSafeInsets.getTop(density),
+        safeRightPx = frameSafeInsets.getRight(density, LayoutDirection.Ltr),
+        safeBottomPx = frameSafeInsets.getBottom(density),
+        sideGutterPx = with(density) { VolaFrame.sideGutter.toPx() },
+        barGapPx = with(density) { VolaFrame.barGap.toPx() },
+        addressBarReservePx = if (addressBarDocked) {
+            0f
+        } else {
+            with(density) { (addressBarHeight + ADDRESS_BAR_VERTICAL_MARGIN).toPx() }
+        },
+    )
+    val expandedContentFrame = framedContent(
+        addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
+    )
+    // With a dynamic toolbar the engine lays the page out for the compact capsule and the
+    // expanded bar only covers the card's bottom, so scrolling never resizes the page.
+    val dynamicContentFrame = contentFramed &&
+        !addressBarDocked &&
+        controller.supportsDynamicContentFrame
+    val contentFrame = if (dynamicContentFrame) {
+        framedContent(VolaIsland.compactHeight)
+    } else {
+        expandedContentFrame
+    }
+    val dynamicBottomMaxPx = if (dynamicContentFrame) {
+        (expandedContentFrame.bottomPx - contentFrame.bottomPx).coerceAtLeast(0)
+    } else {
+        0
+    }
+    val addressBarCompactShown = controller.isBottomBarCompact &&
+        controller.findInPageState == null &&
+        !addressEditorVisible &&
+        !linkPeekAddressBarExpanded &&
+        commandFeedback == null &&
+        !tabOverviewVisible &&
+        !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp = browserWidthPx / density.density)
+    val coveredBottomPx = remember { Animatable(0f) }
+    var coveredBottomMaxPx by remember { mutableIntStateOf(0) }
+    LaunchedEffect(dynamicBottomMaxPx, addressBarCompactShown) {
+        val target = if (addressBarCompactShown) 0f else dynamicBottomMaxPx.toFloat()
+        if (coveredBottomMaxPx != dynamicBottomMaxPx) {
+            // A new card size is not a bar transition: settle at once.
+            coveredBottomMaxPx = dynamicBottomMaxPx
+            coveredBottomPx.snapTo(target)
+        } else {
+            coveredBottomPx.animateTo(target, VolaMotion.standard())
+        }
+    }
+    LaunchedEffect(controller, dynamicBottomMaxPx) {
+        snapshotFlow { coveredBottomPx.value.roundToInt() }.collect { coveredPx ->
+            controller.updateContentFrameCoveredBottom(dynamicBottomMaxPx, coveredPx)
+        }
+    }
+    SideEffect { controller.updateContentFrame(contentFrame) }
+    DisposableEffect(controller) {
+        onDispose {
+            controller.updateContentFrame(BrowserContentFrame.None)
+            controller.updateContentFrameCoveredBottom(maxPx = 0, coveredPx = 0)
+        }
+    }
+    val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
+    val fullWindowHeightPx = remember(context) {
+        context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
+    }
 
     Box(
         modifier = Modifier
@@ -1375,21 +1468,8 @@ internal fun BrowserScreen(
             .onGloballyPositioned { coordinates ->
                 browserRootBottomInWindowPx = coordinates.boundsInWindow().bottom.roundToInt()
             }
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            .background(VolaTheme.auraBrush),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.tertiaryContainer,
-                            MaterialTheme.colorScheme.surface,
-                        ),
-                    ),
-                ),
-        )
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (showFirefoxExtensionOptionsChrome) {
@@ -1407,7 +1487,8 @@ internal fun BrowserScreen(
                             } else {
                                 Color.Transparent
                             },
-                        ),
+                        )
+                        .contentFramePadding(contentFrame),
                 ) {
                     BrowserViewport(
                         controller = controller,
@@ -1417,8 +1498,15 @@ internal fun BrowserScreen(
                         selectedTab = selectedTab,
                         dragOffset = browserDragOffset,
                         travelDistance = tabSwitchTravelPx,
-                        rootHeightPx = browserHeightPx,
-                        bottomBarTopPx = bottomBarTopPx,
+                        rootHeightPx = if (contentFramed) {
+                            (browserHeightPx - contentFrame.topPx - contentFrame.bottomPx)
+                                .coerceAtLeast(0f)
+                        } else {
+                            browserHeightPx
+                        },
+                        // Inside the card nothing overlaps the page from below.
+                        bottomBarTopPx = if (contentFramed) framedBottomBarTopPx else bottomBarTopPx,
+                        contentFramed = contentFramed,
                         handoff = tabHandoff,
                         handoffAlpha = tabHandoffAlpha.value,
                         liveFrameTabId = liveFrameTabId,
@@ -1445,6 +1533,13 @@ internal fun BrowserScreen(
                     )
                 }
             }
+        }
+        if (contentFramed) {
+            BrowserContentFrameMask(
+                frame = contentFrame,
+                coveredBottomPx = { coveredBottomPx.value },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         controller.findInPageState
@@ -1474,16 +1569,30 @@ internal fun BrowserScreen(
                 onPreviousMatch = { controller.findNextInPage(forward = false) },
                 onNextMatch = { controller.findNextInPage(forward = true) },
                 onClose = controller::closeFindInPage,
-                backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
+                options = findState.options,
+                optionsAvailable = controller.supportsFindInPageOptions,
+                matchCaseLabel = stringResource(R.string.find_in_page_match_case),
+                wholeWordLabel = stringResource(R.string.find_in_page_whole_word),
+                onOptionsChange = controller::updateFindInPageOptions,
+                // The find bar takes the island's place in the thumb zone, above the keyboard.
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(12.dp)
+                    .align(Alignment.BottomCenter)
+                    .addressBarWindowInsetsPadding(
+                        fullWindowHeightPx = fullWindowHeightPx,
+                        rootBottomInWindowPx = browserRootBottomInWindowPx,
+                        imeInsets = WindowInsets.ime,
+                        navigationBarInsets = WindowInsets.navigationBars,
+                    )
+                    .padding(horizontal = VolaSpacing.x2, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
                     .zIndex(25f),
             )
         }
 
-        if (firefoxExtensionOptionsTitle == null && !hideBrowserChrome) {
+        if (
+            firefoxExtensionOptionsTitle == null &&
+            !hideBrowserChrome &&
+            controller.findInPageState == null
+        ) {
             BrowserAddressChrome(
             controller = controller,
             selectedTab = selectedTab,
@@ -1498,6 +1607,7 @@ internal fun BrowserScreen(
             browserHeightPx = browserHeightPx,
             bottomBarTopPx = bottomBarTopPx,
             browserContentBlurTarget = browserContentBlurTarget,
+            pageBehindAddressBar = !contentFramed || addressBarDocked,
             linkPeekAddressBarExpanded = linkPeekAddressBarExpanded,
             castUiState = castUiState,
             settingsVisible = settingsVisible,

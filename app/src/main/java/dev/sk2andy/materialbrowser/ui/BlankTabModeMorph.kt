@@ -106,6 +106,8 @@ internal fun Modifier.blankTabModeBackground(
     incognitoCenterColor: Color,
     edgeColor: Color,
     wallpaper: ProfileWallpaperRuntime? = null,
+    /** The workspace aura; replaces the regular color fields when set. */
+    regularBackground: Brush? = null,
 ): Modifier = drawWithCache {
     val center = Offset(size.width / 2f, size.height / 2f)
     val origin = revealOriginInRoot.takeIf { it.x.isFinite() && it.y.isFinite() } ?: center
@@ -138,7 +140,9 @@ internal fun Modifier.blankTabModeBackground(
         )
     }
     onDrawBehind {
-        if (wallpaper == null) {
+        if (wallpaper == null && regularBackground != null) {
+            drawRect(regularBackground)
+        } else if (wallpaper == null) {
             drawRect(regularBrush)
             // Keep Blank Tab visually calm while giving it same oversized, soft
             // color fields as Candy's home surface.

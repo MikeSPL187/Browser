@@ -105,6 +105,7 @@ internal fun CandyTheme(
             LocalContentColor provides colorScheme.onSurface,
             LocalAppearanceSettings provides settings,
             LocalVolaExtendedColors provides extendedColors,
+            LocalVolaDarkTheme provides dark,
             LocalCandyDesignLanguage provides designLanguage,
             LocalCandyMotionScheme provides CandyMotionSchemes.forDesignLanguage(designLanguage),
             LocalCandyChromeSurfaceRenderer provides chromeSurfaceRenderer,

@@ -24,6 +24,12 @@ internal data class GeckoViewInsetLayout(
 
 /** Assigns every safe-area edge to either Candy's native host or Gecko, never both. */
 internal object GeckoViewInsetRules {
+    /**
+     * [hostFrame] is how far the host already sits inside the window on each edge, such as the
+     * page card of the framed browser chrome. Those pixels are neither safe area nor keyboard for
+     * the page, so they are subtracted before any edge is assigned. Fullscreen content and safe
+     * drawing hosts ignore the frame.
+     */
     fun resolve(
         safeArea: GeckoViewInsets,
         forceNativeSafeArea: Boolean,
@@ -33,7 +39,20 @@ internal object GeckoViewInsetRules {
         useNativeCssSafeArea: Boolean = true,
         keyboardBottomInsetPx: Int = 0,
         nativeTopHeaderSafeArea: Boolean = false,
+        hostFrame: GeckoViewInsets = GeckoViewInsets.Zero,
     ): GeckoViewInsetLayout {
+        if (hostFrame != GeckoViewInsets.Zero && !isFullscreenContent && !isInsideSafeDrawingHost) {
+            return resolve(
+                safeArea = safeArea.coerceAtLeastZero().minus(hostFrame),
+                forceNativeSafeArea = forceNativeSafeArea,
+                forceNativeTopSafeArea = forceNativeTopSafeArea,
+                isFullscreenContent = false,
+                isInsideSafeDrawingHost = false,
+                useNativeCssSafeArea = useNativeCssSafeArea,
+                keyboardBottomInsetPx = keyboardBottomInsetPx - hostFrame.bottom.coerceAtLeast(0),
+                nativeTopHeaderSafeArea = nativeTopHeaderSafeArea,
+            )
+        }
         val topInsetTransitionState = when {
             isInsideSafeDrawingHost || isFullscreenContent || forceNativeSafeArea ->
                 WebContentTopInsetTransitionState.Other
@@ -106,6 +125,13 @@ internal interface GeckoViewInsetHost {
         windowInsets: WindowInsetsCompat,
     )
 }
+
+private fun GeckoViewInsets.minus(other: GeckoViewInsets): GeckoViewInsets = GeckoViewInsets(
+    left = (left - other.left.coerceAtLeast(0)).coerceAtLeast(0),
+    top = (top - other.top.coerceAtLeast(0)).coerceAtLeast(0),
+    right = (right - other.right.coerceAtLeast(0)).coerceAtLeast(0),
+    bottom = (bottom - other.bottom.coerceAtLeast(0)).coerceAtLeast(0),
+)
 
 private fun GeckoViewInsets.coerceAtLeastZero(): GeckoViewInsets = GeckoViewInsets(
     left = left.coerceAtLeast(0),

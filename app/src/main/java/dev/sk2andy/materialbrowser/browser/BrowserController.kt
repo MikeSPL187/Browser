@@ -1450,6 +1450,9 @@ class BrowserController(
     var previewCaptureRequestCountForTesting = 0
         private set
     private var lastWindowInsets: WindowInsetsCompat? = null
+    private var contentFrame = BrowserContentFrame.None
+    private var contentFrameDynamicBottomPx = 0
+    private var contentFrameCoveredBottomPx = 0
     private var browserChromeOwnsIme = false
     private var previewEpoch = 0
     private var faviconEpoch = 0
@@ -3167,6 +3170,46 @@ class BrowserController(
         dispatchWindowInsetsToAttachedEngineViews(insets)
     }
 
+    /**
+     * Where the browser screen places the page card. Only the selected-tab host of the browser
+     * screen is framed; fullscreen content, video and link previews stay edge to edge.
+     */
+    fun updateContentFrame(frame: BrowserContentFrame) {
+        if (contentFrame == frame) return
+        val topChanged = contentFrame.topPx != frame.topPx
+        contentFrame = frame
+        lastWindowInsets?.let(::dispatchWindowInsetsToAttachedEngineViews)
+        // Page policies carry the top inset for the CSS and script safe-area fallbacks.
+        if (topChanged) refreshGeckoContentTopInsetPolicies()
+    }
+
+    /** Whether the page card can grow under a compacting address bar without resizing the page. */
+    val supportsDynamicContentFrame: Boolean
+        get() = usesGeckoEngine
+
+    /**
+     * The bottom part of the page card the expanded address bar may cover, [maxPx] tall, and how
+     * much of it it covers now. The engine keeps bottom-fixed page elements above [coveredPx].
+     */
+    fun updateContentFrameCoveredBottom(maxPx: Int, coveredPx: Int) {
+        val max = maxPx.coerceAtLeast(0)
+        val covered = coveredPx.coerceIn(0, max)
+        if (contentFrameDynamicBottomPx == max && contentFrameCoveredBottomPx == covered) return
+        contentFrameDynamicBottomPx = max
+        contentFrameCoveredBottomPx = covered
+        geckoViewBindings.values.forEach { binding ->
+            if (binding.view.isAttachedToWindow) applyDynamicContentFrame(binding.view)
+        }
+    }
+
+    private fun applyDynamicContentFrame(view: View) {
+        val framed = view !== geckoMediaPresentation?.view
+        (view as? BrowserDynamicToolbarHost)?.updateDynamicToolbar(
+            maxHeightPx = if (framed) contentFrameDynamicBottomPx else 0,
+            coveredPx = if (framed) contentFrameCoveredBottomPx else 0,
+        )
+    }
+
     private fun dispatchWindowInsetsToAttachedEngineViews(insets: WindowInsetsCompat) {
         geckoViewBindings.values.forEach { binding ->
             if (binding.view.isAttachedToWindow) {
@@ -4804,6 +4847,11 @@ class BrowserController(
                 0
             },
             nativeTopHeaderSafeArea = nativeTopHeaderSafeArea,
+            hostFrame = if (tabId != null && view !== geckoMediaPresentation?.view) {
+                contentFrame.toGeckoViewInsets()
+            } else {
+                GeckoViewInsets.Zero
+            },
         )
         (view.layoutParams as? FrameLayout.LayoutParams)?.let { layoutParams ->
             if (
@@ -4819,10 +4867,18 @@ class BrowserController(
         // The outer host always fills the edge-to-edge window. Its inner GeckoView either receives
         // GeckoView 155's current root safe area or native margins for the keyboard/site override.
         (view as? GeckoViewInsetHost)?.updateInsets(layout, effectiveInsets)
+        if (tabId != null) applyDynamicContentFrame(view)
     }
 
     private fun isFullscreenVideoInsideSafeDrawingHost(view: View): Boolean =
         fullscreenVideoInsideSafeDrawingHost && geckoMediaPresentation?.view === view
+
+    private fun BrowserContentFrame.toGeckoViewInsets(): GeckoViewInsets = GeckoViewInsets(
+        left = leftPx,
+        top = topPx,
+        right = rightPx,
+        bottom = bottomPx,
+    )
 
     private fun Insets.toGeckoViewInsets(): GeckoViewInsets = GeckoViewInsets(
         left = left,
@@ -7766,6 +7822,7 @@ class BrowserController(
             geckoSession = session,
             navigationGeneration = navigationGenerations.getOrDefault(tab.id, 0),
         )
+        session.setFindInPageOptions(FindInPageOptions())
         findInPageState = FindInPageState(tabId = tab.id)
         return true
 
@@ -7855,6 +7912,21 @@ class BrowserController(
             )
         }
         return true
+    }
+
+    /** Whether the find bar can offer match case and whole word for the page being searched. */
+    internal val supportsFindInPageOptions: Boolean
+        get() = findInPageSession?.geckoSession?.supportsFindInPageOptions == true
+
+    /** Changes how the page is searched and repeats the current search with it. */
+    internal fun updateFindInPageOptions(options: FindInPageOptions) {
+        val session = findInPageSession ?: return
+        val state = findInPageState?.takeIf { it.tabId == session.tabId } ?: return
+        if (state.options == options) return
+        session.geckoSession?.setFindInPageOptions(options)
+        val query = state.query
+        findInPageState = FindInPageRules.withQuery(state.copy(options = options), query = "")
+        if (query.isNotEmpty()) updateFindInPageQuery(query)
     }
 
     fun closeFindInPage() {
@@ -9704,7 +9776,9 @@ class BrowserController(
     ) {
         0
     } else {
-        lastWindowInsets?.getInsets(SAFE_AREA_INSET_TYPES)?.top?.coerceAtLeast(0) ?: 0
+        val safeTop = lastWindowInsets?.getInsets(SAFE_AREA_INSET_TYPES)?.top ?: 0
+        // A framed page card already starts below the status bar.
+        (safeTop - contentFrame.topPx).coerceAtLeast(0)
     }
 
     fun updateBlockerSettings(settings: BlockerSettings) {
@@ -12040,7 +12114,7 @@ class BrowserController(
         ) {
             return 0
         }
-        return currentSafeAreaTopInsetPx()
+        return tabSafeAreaTopInsetPx()
     }
 
     private fun geckoCssSafeAreaTopInsetPx(tab: BrowserTab, pageUrl: String): Int =
@@ -12055,7 +12129,7 @@ class BrowserController(
         ) {
             0
         } else {
-            currentSafeAreaTopInsetPx()
+            tabSafeAreaTopInsetPx()
         }
 
     private fun currentSafeAreaTopInsetPx(): Int = lastWindowInsets
@@ -12063,6 +12137,10 @@ class BrowserController(
         ?.top
         ?.coerceAtLeast(0)
         ?: 0
+
+    /** The status bar part a tab page still has to clear; a framed card starts below it. */
+    private fun tabSafeAreaTopInsetPx(): Int =
+        (currentSafeAreaTopInsetPx() - contentFrame.topPx).coerceAtLeast(0)
 
     private fun externalLinkPreviewContentTopInsetPx(): Int =
         if (usesGeckoEngine || developerSettings.forceSafeAreaFallback) 0 else currentSafeAreaTopInsetPx()
@@ -12274,7 +12352,7 @@ class BrowserController(
             browserEngineSessions[tabId] === session &&
             navigationGenerations[tabId] == nextNavigationGeneration
         val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
-            if (usesGeckoEngine) 0 else currentSafeAreaTopInsetPx()
+            if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
         } else {
             geckoContentTopInsetPx(tabId)
         }
@@ -12378,7 +12456,7 @@ class BrowserController(
                 refreshDomainMuteForTab(event.tabId)
                 updateProtectionRequestContext(event.tabId, event.address)
                 val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
-                    if (usesGeckoEngine) 0 else currentSafeAreaTopInsetPx()
+                    if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
                 } else {
                     geckoContentTopInsetPx(event.tabId)
                 }

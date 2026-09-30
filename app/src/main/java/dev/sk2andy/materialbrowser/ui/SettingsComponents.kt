@@ -48,6 +48,7 @@ import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
@@ -160,6 +161,18 @@ internal fun BrowserAppearanceMode.displayName(): String = when (this) {
     BrowserAppearanceMode.System -> stringResource(R.string.appearance_mode_system)
     BrowserAppearanceMode.Light -> stringResource(R.string.appearance_mode_light)
     BrowserAppearanceMode.Dark -> stringResource(R.string.appearance_mode_dark)
+}
+
+@Composable
+internal fun BrowserChromeStyle.displayName(): String = when (this) {
+    BrowserChromeStyle.Frame -> stringResource(R.string.settings_chrome_style_frame)
+    BrowserChromeStyle.Air -> stringResource(R.string.settings_chrome_style_air)
+}
+
+@Composable
+internal fun BrowserChromeStyle.summary(): String = when (this) {
+    BrowserChromeStyle.Frame -> stringResource(R.string.settings_chrome_style_frame_summary)
+    BrowserChromeStyle.Air -> stringResource(R.string.settings_chrome_style_air_summary)
 }
 
 @Composable
