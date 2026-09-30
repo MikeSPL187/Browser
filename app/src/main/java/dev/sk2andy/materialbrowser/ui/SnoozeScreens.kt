@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -59,6 +57,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.SnoozePreset
 import dev.sk2andy.materialbrowser.data.SnoozeTimeRules
 import dev.sk2andy.materialbrowser.data.SnoozedTab
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import java.text.DateFormat
 import java.time.Instant
 import java.time.LocalTime
@@ -276,7 +275,7 @@ internal fun SnoozedTabsScreen(
             ) {
                 IconButton(onClick = onBack) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        VolaIcons.ArrowBack,
                         contentDescription = stringResource(R.string.action_back),
                     )
                 }

@@ -29,9 +29,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +53,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 data class BrowserViewportProfile(
     val id: String,
@@ -91,7 +89,7 @@ fun ProfileSwitcher(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.88f),
     addIcon: @Composable (Boolean) -> Unit = { isEnabled ->
         Icon(
-            imageVector = Icons.Default.Add,
+            imageVector = VolaIcons.Add,
             contentDescription = addProfileDescription,
             tint = if (isEnabled) {
                 MaterialTheme.colorScheme.primary
@@ -263,7 +261,7 @@ fun ProfileSwitcher(
                                             tonalElevation = 2.dp,
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.Refresh,
+                                                imageVector = VolaIcons.Refresh,
                                                 contentDescription = null,
                                                 modifier = Modifier.padding(3.dp),
                                             )

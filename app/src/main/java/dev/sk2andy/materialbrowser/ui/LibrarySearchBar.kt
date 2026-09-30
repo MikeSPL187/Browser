@@ -3,9 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,12 +33,12 @@ internal fun LibrarySearchBar(
                 expanded = false,
                 onExpandedChange = {},
                 placeholder = { Text(placeholder) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                leadingIcon = { Icon(VolaIcons.Search, contentDescription = null) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { onQueryChange("") }) {
                             Icon(
-                                Icons.Default.Close,
+                                VolaIcons.Close,
                                 contentDescription = clearContentDescription,
                             )
                         }

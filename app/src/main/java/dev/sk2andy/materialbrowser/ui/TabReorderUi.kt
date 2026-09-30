@@ -31,8 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +69,7 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -370,7 +369,7 @@ internal fun DraggedTabReorderOverlay(
                         )
                     } else {
                         Icon(
-                            Icons.Default.Close,
+                            VolaIcons.Close,
                             contentDescription = null,
                             modifier = Modifier
                                 .padding(horizontal = 15.dp)

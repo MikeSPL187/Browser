@@ -21,11 +21,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -47,6 +42,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 @Composable
 fun SettingsPage(
@@ -71,7 +67,7 @@ fun SettingsPage(
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
+                    VolaIcons.ArrowBack,
                     contentDescription = backContentDescription,
                 )
             }
@@ -140,7 +136,7 @@ fun SettingsLink(
             }
             Spacer(Modifier.width(16.dp))
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                VolaIcons.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
@@ -211,7 +207,7 @@ fun SettingsChoice(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.Default.KeyboardArrowDown,
+                        VolaIcons.KeyboardArrowDown,
                         contentDescription = null,
                         modifier = Modifier
                             .size(24.dp)
@@ -251,7 +247,7 @@ fun SettingsDropdownItem(
         onClick = onClick,
         modifier = Modifier.semantics { this.selected = selected },
         trailingIcon = {
-            if (selected) Icon(Icons.Default.Check, contentDescription = null)
+            if (selected) Icon(VolaIcons.Check, contentDescription = null)
         },
     )
 }

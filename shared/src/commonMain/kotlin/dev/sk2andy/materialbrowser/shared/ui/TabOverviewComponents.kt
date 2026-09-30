@@ -30,8 +30,6 @@ import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
@@ -81,6 +79,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -704,7 +703,7 @@ fun TabListHeroContent(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                Icons.Default.Close,
+                                VolaIcons.Close,
                                 contentDescription = null,
                                 modifier = Modifier.size(21.dp),
                             )
@@ -815,7 +814,7 @@ fun GridTabPreviewChrome(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Close,
+                            VolaIcons.Close,
                             contentDescription = onClose?.let { visuals.closeContentDescription },
                             modifier = Modifier.size(18.dp),
                         )

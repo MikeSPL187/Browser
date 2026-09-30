@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,6 +40,7 @@ import dev.sk2andy.materialbrowser.VolaProject
 import dev.sk2andy.materialbrowser.legal.CandyLegalSources
 import dev.sk2andy.materialbrowser.legal.ThirdPartyComponent
 import dev.sk2andy.materialbrowser.legal.ThirdPartyNotice
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 internal object AboutLegalTestTags {
     const val Section = "about_legal_section"
@@ -188,7 +187,7 @@ private fun AboutLegalRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowForward,
+                    VolaIcons.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary,
@@ -377,7 +376,7 @@ private fun LegalLinkButton(text: String, tag: String, onClick: () -> Unit) {
         Text(text)
         Spacer(Modifier.width(6.dp))
         Icon(
-            Icons.AutoMirrored.Filled.ArrowForward,
+            VolaIcons.ArrowForward,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
         )

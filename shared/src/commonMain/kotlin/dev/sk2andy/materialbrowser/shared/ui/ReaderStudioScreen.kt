@@ -18,17 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.FormatAlignJustify
-import androidx.compose.material.icons.filled.FormatAlignLeft
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -89,6 +78,7 @@ import dev.sk2andy.materialbrowser.reader.ReaderSpeechRules
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechStatus
 import dev.sk2andy.materialbrowser.reader.ReaderTheme
 import dev.sk2andy.materialbrowser.reader.ReaderTextAlignment
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.delay
 
 object ReaderStudioTestTags {
@@ -209,13 +199,13 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
     ) {
         Icon(
             imageVector = when (icon) {
-                ReaderStudioIcon.Download -> Icons.Filled.Download
-                ReaderStudioIcon.FontDecrease -> Icons.Filled.Remove
-                ReaderStudioIcon.FontIncrease -> Icons.Filled.Add
-                ReaderStudioIcon.AlignmentStart -> Icons.Filled.FormatAlignLeft
-                ReaderStudioIcon.AlignmentJustified -> Icons.Filled.FormatAlignJustify
-                ReaderStudioIcon.Pause -> Icons.Filled.Pause
-                ReaderStudioIcon.Stop -> Icons.Filled.Stop
+                ReaderStudioIcon.Download -> VolaIcons.Download
+                ReaderStudioIcon.FontDecrease -> VolaIcons.Remove
+                ReaderStudioIcon.FontIncrease -> VolaIcons.Add
+                ReaderStudioIcon.AlignmentStart -> VolaIcons.FormatAlignLeft
+                ReaderStudioIcon.AlignmentJustified -> VolaIcons.FormatAlignJustify
+                ReaderStudioIcon.Pause -> VolaIcons.PauseFilled
+                ReaderStudioIcon.Stop -> VolaIcons.StopFilled
             },
             contentDescription = contentDescription,
             modifier = modifier,
@@ -423,7 +413,7 @@ private fun ReaderStudioHeader(
     ) {
         IconButton(onClick = onDismiss) {
             Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
+                VolaIcons.ArrowBack,
                 contentDescription = resources.text(ReaderStudioLabel.Close),
             )
         }
@@ -952,7 +942,7 @@ private fun ReaderSpeechTransport(
                         contentDescription = primaryActionDescription,
                     )
                 } else {
-                    Icon(Icons.Default.PlayArrow, contentDescription = primaryActionDescription)
+                    Icon(VolaIcons.PlayArrowFilled, contentDescription = primaryActionDescription)
                 }
             }
             Text(
@@ -1115,7 +1105,7 @@ private fun ReaderLibraryContent(
                     }
                     IconButton(onClick = { onDelete(snapshot) }) {
                         Icon(
-                            Icons.Default.Delete,
+                            VolaIcons.Delete,
                             contentDescription = resources.text(ReaderStudioLabel.DeleteSnapshot),
                         )
                     }

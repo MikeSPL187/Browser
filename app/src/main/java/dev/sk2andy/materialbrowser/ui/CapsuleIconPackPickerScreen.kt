@@ -23,9 +23,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -58,6 +55,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconPack
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconPackEntry
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconPackRules
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 @Composable
 internal fun CapsuleIconPackPickerScreen(
@@ -85,7 +83,7 @@ internal fun CapsuleIconPackPickerScreen(
                 navigationIcon = {
                     IconButton(onClick = onDismiss, enabled = !choosing) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            VolaIcons.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }
@@ -126,7 +124,7 @@ internal fun CapsuleIconPackPickerScreen(
                     onValueChange = { query = it.take(MAX_QUERY_LENGTH) },
                     enabled = !choosing,
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    leadingIcon = { Icon(VolaIcons.Search, contentDescription = null) },
                     label = { Text(stringResource(R.string.capsule_icon_pack_search)) },
                     modifier = Modifier
                         .fillMaxWidth()

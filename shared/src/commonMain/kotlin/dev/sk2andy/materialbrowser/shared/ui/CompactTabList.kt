@@ -17,8 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +46,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 @Composable
 fun CompactTabList(
@@ -233,7 +232,7 @@ private fun CompactListTabItem(
                             .testTag(visuals.closeTestTag),
                     ) {
                         Icon(
-                            Icons.Default.Close,
+                            VolaIcons.Close,
                             contentDescription = visuals.closeContentDescription,
                             modifier = Modifier.size(21.dp),
                         )

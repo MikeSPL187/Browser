@@ -39,12 +39,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -111,6 +105,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
 import dev.sk2andy.materialbrowser.shared.ui.OverviewAddressBarContent
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
@@ -692,13 +687,13 @@ internal fun BrowserBottomBar(
                                 onMore = {},
                                 newTabIcon = {
                                     Icon(
-                                        Icons.Default.Add,
+                                        VolaIcons.Add,
                                         contentDescription = stringResource(R.string.cd_new_tab),
                                     )
                                 },
                                 moreIcon = {
                                     Icon(
-                                        Icons.Default.MoreVert,
+                                        VolaIcons.MoreVert,
                                         contentDescription = stringResource(
                                             R.string.cd_more_options,
                                         ),
@@ -832,7 +827,7 @@ private fun AddressBarParkIcon(
             .semantics { this.contentDescription = contentDescription },
     ) {
         Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
+            imageVector = VolaIcons.KeyboardArrowDown,
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.Center)
@@ -893,7 +888,7 @@ internal fun AddressBarEdgeTab(
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
+                imageVector = VolaIcons.KeyboardArrowDown,
                 contentDescription = null,
                 modifier = Modifier
                     .size(24.dp)
@@ -952,9 +947,9 @@ private fun AddressCommandFeedbackContent(
     ) {
         Icon(
             imageVector = if (feedback.tone == AddressCommandFeedbackTone.Confirm) {
-                Icons.Default.Check
+                VolaIcons.Check
             } else {
-                Icons.Default.Close
+                VolaIcons.Close
             },
             contentDescription = null,
             tint = contentColor,

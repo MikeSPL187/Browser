@@ -27,11 +27,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -71,6 +66,7 @@ import dev.sk2andy.materialbrowser.browser.commands.BrowserCommandKind
 import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 
@@ -431,7 +427,7 @@ internal fun SearchSuggestionRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                Icons.Default.Search,
+                VolaIcons.Search,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
                 tint = contentColor,
@@ -550,7 +546,7 @@ private fun CommandIcon(kind: BrowserCommandKind, tint: Color) {
     when (kind) {
         BrowserCommandKind.ClearCacheAndReload,
         BrowserCommandKind.Reload,
-        -> Icon(Icons.Default.Refresh, contentDescription = null, modifier = modifier, tint = tint)
+        -> Icon(VolaIcons.Refresh, contentDescription = null, modifier = modifier, tint = tint)
         BrowserCommandKind.ClearCookiesAndReload -> Icon(
             painterResource(R.drawable.ic_delete_outline),
             contentDescription = null,
@@ -558,7 +554,7 @@ private fun CommandIcon(kind: BrowserCommandKind, tint: Color) {
             tint = tint,
         )
         BrowserCommandKind.StopLoading ->
-            Icon(Icons.Default.Close, contentDescription = null, modifier = modifier, tint = tint)
+            Icon(VolaIcons.Close, contentDescription = null, modifier = modifier, tint = tint)
         BrowserCommandKind.PinTab,
         BrowserCommandKind.UnpinTab,
         -> Icon(
@@ -582,7 +578,7 @@ private fun CommandIcon(kind: BrowserCommandKind, tint: Color) {
             tint = tint,
         )
         BrowserCommandKind.NewRegularTab ->
-            Icon(Icons.Default.Add, contentDescription = null, modifier = modifier, tint = tint)
+            Icon(VolaIcons.Add, contentDescription = null, modifier = modifier, tint = tint)
         BrowserCommandKind.NewIncognitoTab -> Icon(
             painterResource(R.drawable.ic_incognito_outline),
             contentDescription = null,

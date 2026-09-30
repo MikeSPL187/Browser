@@ -19,11 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +52,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoOffset
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoPlacement
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoRules
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlin.math.roundToInt
 
 internal object FullscreenVideoTestTags {
@@ -136,7 +132,7 @@ private fun BrowserViewportVideoControls(
                 contentDescription = stringResource(R.string.cd_minimize_fullscreen_video),
             ) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
+                    imageVector = VolaIcons.KeyboardArrowDown,
                     contentDescription = null,
                 )
             }
@@ -261,7 +257,7 @@ private fun StableFullscreenVideoHost(
                             ),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
+                                imageVector = VolaIcons.KeyboardArrowDown,
                                 contentDescription = null,
                             )
                         }
@@ -280,7 +276,7 @@ private fun StableFullscreenVideoHost(
                                 ),
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.KeyboardArrowUp,
+                                    imageVector = VolaIcons.KeyboardArrowUp,
                                     contentDescription = null,
                                 )
                             }
@@ -292,7 +288,7 @@ private fun StableFullscreenVideoHost(
                                 ),
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = VolaIcons.Close,
                                     contentDescription = null,
                                 )
                             }
@@ -336,7 +332,7 @@ private fun StableFullscreenVideoHost(
                             ),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
+                                imageVector = VolaIcons.MoreVert,
                                 contentDescription = null,
                                 modifier = Modifier.rotate(90f),
                             )

@@ -31,10 +31,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -83,6 +79,7 @@ import dev.sk2andy.materialbrowser.browser.CandyTrail
 import dev.sk2andy.materialbrowser.browser.CandyTrailFork
 import dev.sk2andy.materialbrowser.browser.CandyTrailForkLifecycle
 import dev.sk2andy.materialbrowser.browser.CandyTrailNode
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.CandyTrailDirectedEdge
 import dev.sk2andy.materialbrowser.ui.CandyTrailForkPosition
 import dev.sk2andy.materialbrowser.ui.CandyTrailGraphMotionRules
@@ -96,8 +93,6 @@ import dev.sk2andy.materialbrowser.ui.CandyTrailPathSegment
 import dev.sk2andy.materialbrowser.ui.CandyTrailViewportRules
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Refresh
 
 data class CandyTrailStrings(
     val empty: String,
@@ -947,7 +942,7 @@ private fun CandyTrailNodeCard(
             }
             IconButton(onClick = onMore) {
                 Icon(
-                    Icons.Default.MoreVert,
+                    VolaIcons.MoreVert,
                     contentDescription = strings.nodeActionsDescription(title),
                 )
             }
@@ -1090,7 +1085,7 @@ private fun CandyTrailTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.close)
+            Icon(VolaIcons.ArrowBack, strings.close)
         }
         Column(Modifier.weight(1f)) {
             Text(
@@ -1134,16 +1129,16 @@ private fun CandyTrailZoomControls(
                     contentDescription = strings.zoomOut
                 },
             ) {
-                Icon(Icons.Default.Remove, contentDescription = null)
+                Icon(VolaIcons.Remove, contentDescription = null)
             }
             FilledIconButton(
                 onClick = onReset,
                 modifier = Modifier.semantics { contentDescription = strings.resetZoom },
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = null)
+                Icon(VolaIcons.Refresh, contentDescription = null)
             }
             IconButton(onClick = onZoomIn) {
-                Icon(Icons.Default.Add, strings.zoomIn)
+                Icon(VolaIcons.Add, strings.zoomIn)
             }
         }
     }

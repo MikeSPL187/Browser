@@ -10,10 +10,6 @@ import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 
@@ -156,7 +153,7 @@ internal fun FindInPageBar(
                 modifier = Modifier.testTag(FindInPageBarTestTags.Previous),
             ) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
+                    imageVector = VolaIcons.KeyboardArrowUp,
                     contentDescription = previousMatchContentDescription,
                 )
             }
@@ -166,7 +163,7 @@ internal fun FindInPageBar(
                 modifier = Modifier.testTag(FindInPageBarTestTags.Next),
             ) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
+                    imageVector = VolaIcons.KeyboardArrowDown,
                     contentDescription = nextMatchContentDescription,
                 )
             }
@@ -175,7 +172,7 @@ internal fun FindInPageBar(
                 modifier = Modifier.testTag(FindInPageBarTestTags.Close),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = VolaIcons.Close,
                     contentDescription = closeContentDescription,
                 )
             }

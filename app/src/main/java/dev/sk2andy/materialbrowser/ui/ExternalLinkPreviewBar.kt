@@ -15,10 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -54,11 +50,11 @@ import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.LocalContentColor
 
@@ -229,7 +225,7 @@ internal fun ExternalLinkPreviewBar(
                                         )
                                     }
                                     Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
+                                        imageVector = VolaIcons.ArrowDropDown,
                                         contentDescription = null,
                                         tint = chromeTokens.contentColor,
                                         modifier = Modifier.size(18.dp),
@@ -250,7 +246,7 @@ internal fun ExternalLinkPreviewBar(
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 if (profile.isolationEnabled) {
                                                     Icon(
-                                                        imageVector = Icons.Default.Lock,
+                                                        imageVector = VolaIcons.Lock,
                                                         contentDescription = stringResource(
                                                             R.string.workspace_isolated_description,
                                                         ),
@@ -258,7 +254,7 @@ internal fun ExternalLinkPreviewBar(
                                                     )
                                                 }
                                                 if (profile.id == state.targetProfileId) {
-                                                    Icon(Icons.Default.Check, contentDescription = null)
+                                                    Icon(VolaIcons.Check, contentDescription = null)
                                                 }
                                             }
                                         },
@@ -281,7 +277,7 @@ internal fun ExternalLinkPreviewBar(
                         modifier = Modifier.testTag(ExternalLinkPreviewTestTags.Overflow),
                     ) {
                         Icon(
-                            imageVector = Icons.Default.MoreVert,
+                            imageVector = VolaIcons.MoreVert,
                             contentDescription = stringResource(R.string.cd_more_options),
                         )
                     }
