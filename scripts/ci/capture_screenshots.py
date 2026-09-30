@@ -96,7 +96,7 @@ def save_ui(name):
     log(f"saved ui-{name}.xml")
 
 
-def tap_scrolling(*labels, name, attempts=4):
+def tap_scrolling(*labels, name, attempts=7):
     """Taps a label, scrolling the visible list up between attempts when it is off screen."""
     width, height = screen_size()
     for _ in range(attempts):
