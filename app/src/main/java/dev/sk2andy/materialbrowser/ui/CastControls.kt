@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -36,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 internal object CastControlsTestTags {
     const val RouteButton = "cast_route_button"
@@ -149,7 +147,7 @@ private fun CastMiniController(
                         painterResource(R.drawable.ic_pause)
                     } else {
                         androidx.compose.ui.graphics.vector.rememberVectorPainter(
-                            Icons.Default.PlayArrow,
+                            VolaIcons.PlayArrowFilled,
                         )
                     },
                     contentDescription = stringResource(
@@ -162,7 +160,7 @@ private fun CastMiniController(
                 modifier = Modifier.testTag(CastControlsTestTags.Disconnect),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = VolaIcons.Close,
                     contentDescription = stringResource(R.string.cd_cast_stop),
                 )
             }
@@ -263,7 +261,7 @@ private fun CastExpandedController(
                             painterResource(R.drawable.ic_pause)
                         } else {
                             androidx.compose.ui.graphics.vector.rememberVectorPainter(
-                                Icons.Default.PlayArrow,
+                                VolaIcons.PlayArrowFilled,
                             )
                         },
                         contentDescription = stringResource(
@@ -277,7 +275,7 @@ private fun CastExpandedController(
                 }
                 IconButton(onClick = onDisconnect) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = VolaIcons.Close,
                         contentDescription = stringResource(R.string.cd_cast_stop),
                     )
                 }

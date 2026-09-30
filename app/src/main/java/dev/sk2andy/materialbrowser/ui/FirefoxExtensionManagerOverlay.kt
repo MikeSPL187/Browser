@@ -15,12 +15,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,6 +48,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerMessage
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.flow.collect
 
 internal object FirefoxExtensionManagerTestTags {
@@ -206,7 +201,7 @@ private fun ExtensionManagerHeader(
     ) {
         IconButton(onClick = onDismiss) {
             Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
+                VolaIcons.ArrowBack,
                 contentDescription = stringResource(R.string.action_back),
             )
         }
@@ -224,7 +219,7 @@ private fun ExtensionManagerHeader(
         }
         IconButton(onClick = onInstall, enabled = canManage) {
             Icon(
-                Icons.Default.Add,
+                VolaIcons.Add,
                 contentDescription = stringResource(R.string.gecko_extension_install),
             )
         }
@@ -301,7 +296,7 @@ private fun GeckoExtensionRow(
                 ),
             ) {
                 Icon(
-                    Icons.Default.Settings,
+                    VolaIcons.Settings,
                     contentDescription = stringResource(
                         R.string.gecko_extensions_options_summary,
                     ),
@@ -309,13 +304,13 @@ private fun GeckoExtensionRow(
             }
             IconButton(onClick = onUpdate, enabled = controlsEnabled) {
                 Icon(
-                    Icons.Default.Refresh,
+                    VolaIcons.Refresh,
                     contentDescription = stringResource(R.string.gecko_extension_update),
                 )
             }
             IconButton(onClick = onUninstall, enabled = controlsEnabled) {
                 Icon(
-                    Icons.Default.Delete,
+                    VolaIcons.Delete,
                     contentDescription = stringResource(R.string.gecko_extension_uninstall),
                 )
             }

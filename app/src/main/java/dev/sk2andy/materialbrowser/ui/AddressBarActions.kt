@@ -5,11 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -38,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.AddressBarAction
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 internal data class AddressBarActionState(
     val tabCount: Int,
@@ -300,25 +296,25 @@ internal fun AddressBarActionGlyph(
             modifier = modifier,
         )
         AddressBarAction.FindInPage -> Icon(
-            Icons.Default.Search,
+            VolaIcons.Search,
             contentDescription = contentDescription,
             modifier = modifier,
             tint = tint,
         )
         AddressBarAction.NewTab -> Icon(
-            Icons.Default.Add,
+            VolaIcons.Add,
             contentDescription = contentDescription,
             modifier = modifier,
             tint = tint,
         )
         AddressBarAction.CloseTab -> Icon(
-            Icons.Default.Close,
+            VolaIcons.Close,
             contentDescription = contentDescription,
             modifier = modifier,
             tint = tint,
         )
         AddressBarAction.Home -> Icon(
-            Icons.Default.Home,
+            VolaIcons.Home,
             contentDescription = contentDescription,
             modifier = modifier,
             tint = tint,

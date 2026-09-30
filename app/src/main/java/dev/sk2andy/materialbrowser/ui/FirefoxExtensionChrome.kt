@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +38,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuRow
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object FirefoxExtensionChromeTestTags {
@@ -70,7 +68,7 @@ internal fun FirefoxExtensionOptionsTopBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = VolaIcons.ArrowBack,
                     contentDescription = stringResource(R.string.action_back),
                 )
             }
@@ -184,7 +182,7 @@ private fun FirefoxExtensionActionIcon(action: GeckoExtensionActionState) {
                 modifier = Modifier.size(24.dp),
             )
         } ?: Icon(
-            imageVector = Icons.Default.Settings,
+            imageVector = VolaIcons.Settings,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
         )

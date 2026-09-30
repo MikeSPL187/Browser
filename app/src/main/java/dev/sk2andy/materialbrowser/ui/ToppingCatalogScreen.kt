@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 
 internal data class ToppingCatalogItem(
     val id: String,
@@ -129,7 +128,7 @@ private fun ToppingCatalogHeader(onDismiss: () -> Unit) {
     ) {
         IconButton(onClick = onDismiss) {
             Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
+                VolaIcons.ArrowBack,
                 contentDescription = stringResource(R.string.action_back),
             )
         }

@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -56,6 +54,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaper
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperRules
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlin.math.roundToInt
 
 internal data class ProfileWallpaperRuntime(
@@ -105,7 +104,7 @@ internal fun ProfileWallpaperEditorScreen(
                 navigationIcon = {
                     IconButton(onClick = onDismiss, enabled = !loading) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            VolaIcons.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }

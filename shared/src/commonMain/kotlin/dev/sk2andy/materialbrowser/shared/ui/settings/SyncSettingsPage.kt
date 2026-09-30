@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,6 +39,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.sync.SyncConnectionSettings
 import dev.sk2andy.materialbrowser.sync.SyncDeviceIconDefinition
 import dev.sk2andy.materialbrowser.sync.SyncEnrollmentOutcome
@@ -447,7 +445,7 @@ private fun SecretTextField(
         trailingIcon = {
             IconButton(onClick = { visible = !visible }) {
                 Icon(
-                    imageVector = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    imageVector = if (visible) VolaIcons.VisibilityOff else VolaIcons.Visibility,
                     contentDescription = if (visible) "Passwort ausblenden" else "Passwort anzeigen",
                 )
             }

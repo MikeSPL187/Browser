@@ -21,11 +21,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -79,6 +74,7 @@ import dev.sk2andy.materialbrowser.data.FavoriteFolderIcon
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.FavoriteLibraryEntry
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
@@ -173,12 +169,12 @@ internal fun FavoritesScreen(
                 title = { Text(currentFolder?.title ?: stringResource(R.string.favorites_title)) },
                 actions = {
                     IconButton(onClick = { creatingFolder = true }, modifier = Modifier.testTag("favorites_create_folder")) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.favorites_create_folder))
+                        Icon(VolaIcons.Add, contentDescription = stringResource(R.string.favorites_create_folder))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -417,12 +413,12 @@ private fun FavoriteLibraryRow(
             Row {
                 if (entry is FavoriteEntry) {
                     IconButton(onClick = onDelete, modifier = Modifier.testTag(FavoritesScreenTestTags.delete(entry.url))) {
-                        Icon(Icons.Default.Delete, stringResource(R.string.favorites_delete, entry.title))
+                        Icon(VolaIcons.Delete, stringResource(R.string.favorites_delete, entry.title))
                     }
                 }
                 Box {
                     IconButton(onClick = { menuOpen = true }, modifier = Modifier.testTag("favorites_actions:${entry.id}")) {
-                        Icon(Icons.Default.MoreVert, stringResource(R.string.favorites_actions, entry.entryTitle()))
+                        Icon(VolaIcons.MoreVert, stringResource(R.string.favorites_actions, entry.entryTitle()))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.favorites_rename)) }, onClick = { menuOpen = false; onRename() })

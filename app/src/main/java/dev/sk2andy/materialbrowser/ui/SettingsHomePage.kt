@@ -1,15 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,6 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeIcon
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeLabel
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeResources
@@ -105,19 +96,19 @@ private fun AndroidSettingsHomeIcon(
     tint: Color,
 ) {
     val vector = when (icon) {
-        SettingsHomeIcon.Search -> Icons.Default.Search
-        SettingsHomeIcon.Sync -> Icons.Default.Refresh
-        SettingsHomeIcon.TabsAndGestures -> Icons.AutoMirrored.Filled.List
-        SettingsHomeIcon.Appearance -> Icons.Default.Face
-        SettingsHomeIcon.Browser -> Icons.Default.Settings
+        SettingsHomeIcon.Search -> VolaIcons.Search
+        SettingsHomeIcon.Sync -> VolaIcons.Sync
+        SettingsHomeIcon.TabsAndGestures -> VolaIcons.Tab
+        SettingsHomeIcon.Appearance -> VolaIcons.Palette
+        SettingsHomeIcon.Browser -> VolaIcons.Settings
         SettingsHomeIcon.Downloads -> ImageVector.vectorResource(R.drawable.ic_reader_download)
         SettingsHomeIcon.Userscripts,
         SettingsHomeIcon.FirefoxExtensions,
         -> ImageVector.vectorResource(R.drawable.ic_symbol_extension)
-        SettingsHomeIcon.SiteCapsules -> Icons.Default.Favorite
-        SettingsHomeIcon.ProtectionAndData -> Icons.Default.Lock
-        SettingsHomeIcon.DeveloperOptions -> Icons.Default.Build
-        SettingsHomeIcon.AboutLegal -> Icons.Default.Info
+        SettingsHomeIcon.SiteCapsules -> VolaIcons.Favorite
+        SettingsHomeIcon.ProtectionAndData -> VolaIcons.Lock
+        SettingsHomeIcon.DeveloperOptions -> VolaIcons.Build
+        SettingsHomeIcon.AboutLegal -> VolaIcons.Info
     }
     Icon(
         imageVector = vector,

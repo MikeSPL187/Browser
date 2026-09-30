@@ -22,9 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
@@ -75,6 +72,7 @@ import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecallRules
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.recall.RecallRules
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -174,7 +172,7 @@ internal fun HistoryScreen(
                         onClick = ::handleBack,
                     ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            VolaIcons.ArrowBack,
                             contentDescription = stringResource(R.string.history_back),
                         )
                     }
@@ -189,7 +187,7 @@ internal fun HistoryScreen(
                             modifier = Modifier.testTag(HistoryScreenTestTags.DeleteSelected),
                         ) {
                             Icon(
-                                Icons.Default.Delete,
+                                VolaIcons.Delete,
                                 contentDescription = stringResource(R.string.history_delete_selected),
                             )
                         }

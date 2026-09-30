@@ -23,6 +23,10 @@
 - Картинки: `baikal.svg` (иллюстрация статьи), `map.svg` (карта для экрана разрешений).
 - `icon_font_url.txt` — ссылка на Material Symbols Rounded с нужным набором значков. Новый значок
   нужно добавить в параметр `icon_names` (по алфавиту), иначе вместо него появится текст.
+- В приложении значки те же, Material Symbols Rounded, но генерируются скриптом
+  `scripts/compile_material_symbols.py`: `VolaIcons` для Compose (модуль `shared`) и vector
+  drawables для меню, уведомлений и виджетов. Новый значок: строка в `COMPOSE_ICONS` или
+  `DRAWABLES`, затем `python3 scripts/compile_material_symbols.py fetch`.
 
 ## Проверка глазами
 

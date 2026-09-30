@@ -34,10 +34,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -85,6 +81,7 @@ import dev.sk2andy.materialbrowser.data.AddressBarAction
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayoutRules
 import dev.sk2andy.materialbrowser.data.AddressBarActionSide
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -623,7 +620,7 @@ internal fun AddressBarActionEditorPage(
             ) {
                 IconButton(onClick = onBack) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        VolaIcons.ArrowBack,
                         contentDescription = backLabel,
                     )
                 }
@@ -726,7 +723,7 @@ internal fun AddressBarActionEditorPage(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            Icons.Default.MoreVert,
+                            VolaIcons.MoreVert,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -1004,7 +1001,7 @@ private fun AddressBarActionDropIndicators(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = VolaIcons.Add,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = if (slot.target == currentTarget) {

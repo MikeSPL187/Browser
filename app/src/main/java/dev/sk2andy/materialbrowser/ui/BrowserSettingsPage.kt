@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +26,7 @@ import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.shared.ui.settings.TranslationProviderSettings
 import dev.sk2andy.materialbrowser.shared.ui.settings.TranslationProviderSettingsStrings
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
@@ -256,7 +255,7 @@ internal fun BrowserSettingsPage(
         }
         Spacer(Modifier.height(8.dp))
         SettingsLink(
-            icon = Icons.Filled.Favorite,
+            icon = VolaIcons.Favorite,
             title = stringResource(R.string.settings_favorite_bookmark_import_title),
             subtitle = stringResource(R.string.settings_favorite_bookmark_import_summary),
             onClick = onImportFavoriteBookmarks,

@@ -19,11 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -58,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.launch
 
 internal data class UserscriptUiItem(
@@ -149,7 +145,7 @@ internal fun UserscriptManagementScreen(
             ) {
                 IconButton(onClick = onDismiss) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        VolaIcons.ArrowBack,
                         contentDescription = stringResource(R.string.action_back),
                     )
                 }
@@ -200,7 +196,7 @@ internal fun UserscriptManagementScreen(
                             .testTag(UserscriptManagementTestTags.Add),
                         shape = MaterialTheme.shapes.large,
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(VolaIcons.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.userscript_add))
                     }
@@ -562,7 +558,7 @@ private fun UserscriptCard(
                 modifier = Modifier.testTag(UserscriptManagementTestTags.edit(script.id)),
             ) {
                 Icon(
-                    Icons.Default.Edit,
+                    VolaIcons.Edit,
                     contentDescription = stringResource(
                         R.string.userscript_edit_description,
                         script.name,
@@ -575,7 +571,7 @@ private fun UserscriptCard(
                 modifier = Modifier.testTag(UserscriptManagementTestTags.delete(script.id)),
             ) {
                 Icon(
-                    Icons.Default.Delete,
+                    VolaIcons.Delete,
                     contentDescription = stringResource(
                         R.string.userscript_delete_description,
                         script.name,
