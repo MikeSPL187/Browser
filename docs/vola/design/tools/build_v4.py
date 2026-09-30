@@ -108,9 +108,10 @@ def page_a(dark=False):
     board(name, 'Vola v4 А — страница' + (' (тёмная)' if dark else ''), f'w-work {theme} aura', body)
 
 
-def page_b(oled=False):
-    theme = 't-oled' if oled else 't-light'
-    glow_a = 30 if not oled else 22
+def page_b(dark=False):
+    oled = dark
+    theme = 't-dark' if dark else 't-light'
+    glow_a = 30 if not dark else 22
     body = f'''<div style="position: absolute; inset: 0">{article(oled, top_pad=40)}</div>
 {status(light=False) if not oled else status(light=True)}
 <div aria-hidden="true" style="position: absolute; left: -40px; right: -40px; bottom: -60px; height: 220px; background: radial-gradient(60% 70% at 30% 100%, color-mix(in srgb, var(--aura-1) {glow_a}%, transparent) 0%, transparent 70%), radial-gradient(60% 70% at 75% 100%, color-mix(in srgb, var(--aura-2) {glow_a}%, transparent) 0%, transparent 70%); filter: blur(6px)"></div>
@@ -118,15 +119,15 @@ def page_b(oled=False):
 {address_bar(glass=True)}
 </div>
 {handle(light=oled)}'''
-    name = 'V4B-PageOled.dc.html' if oled else 'V4B-Page.dc.html'
-    board(name, 'Vola v4 Б — страница' + (' (OLED)' if oled else ''), f'w-work {theme}', body)
+    name = 'V4B-PageDark.dc.html' if dark else 'V4B-Page.dc.html'
+    board(name, 'Vola v4 Б — страница' + (' (тёмная)' if dark else ''), f'w-work {theme}', body)
 
 
 if __name__ == '__main__':
     import sys
     targets = sys.argv[1:] or ['page']
     if 'page' in targets:
-        page_a(); page_a(dark=True); page_b(); page_b(oled=True)
+        page_a(); page_a(dark=True); page_b(); page_b(dark=True)
     print('built', targets)
 
 
@@ -436,9 +437,7 @@ def appearance():
 {choice('air', 'Воздух', 'Страница на весь экран', False)}
 </div>
 <div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden; margin-top: 4px">
-<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Тема</span>{seg(['<span class="ms xs">light_mode</span>Светлая', '<span class="ms xs">dark_mode</span>Тёмная', '<span class="ms xs">contrast</span>Авто'], 2)}</div>
-<i style="height: 1px; background: var(--sf-high); margin: 0 16px"></i>
-{row('bolt', 'Чистый чёрный (OLED)', 'В тёмной теме, экономит заряд', switch(False))}
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span style="display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px">Тема</span><span class="ty-cap">Тёмная тема — на чистом чёрном</span></span>{seg(['<span class="ms xs">light_mode</span>Светлая', '<span class="ms xs">dark_mode</span>Тёмная', '<span class="ms xs">contrast</span>Авто'], 2)}</div>
 <i style="height: 1px; background: var(--sf-high); margin: 0 16px"></i>
 <div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Плотность</span>{seg(['Компактно', 'Обычно', 'Просторно'], 1)}</div>
 </div>
