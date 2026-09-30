@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
-import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import org.junit.Assert.assertEquals
@@ -14,7 +13,6 @@ class BrowserChromeSurfaceRulesTest {
     fun `clear stays opaque and uses strongest elevation`() {
         val specification = BrowserChromeSurfaceRules.resolve(
             surfaceStyle = BrowserSurfaceStyle.Clear,
-            appearanceMode = BrowserAppearanceMode.Light,
             darkColors = false,
             frostedTransparencyPercent = AppearanceSettings.DEFAULT_FROSTED_TRANSPARENCY_PERCENT,
             frostedBlurPercent = AppearanceSettings.DEFAULT_FROSTED_BLUR_PERCENT,
@@ -30,7 +28,6 @@ class BrowserChromeSurfaceRulesTest {
     fun `frosted is translucent and blurs its backdrop`() {
         val specification = BrowserChromeSurfaceRules.resolve(
             surfaceStyle = BrowserSurfaceStyle.Frosted,
-            appearanceMode = BrowserAppearanceMode.Light,
             darkColors = false,
             frostedTransparencyPercent = 40,
             frostedBlurPercent = 60,
@@ -42,32 +39,29 @@ class BrowserChromeSurfaceRulesTest {
     }
 
     @Test
-    fun `amoled keeps frosted chrome opaque and unblurred`() {
+    fun `dark frosted chrome stays translucent on the black theme`() {
         val specification = BrowserChromeSurfaceRules.resolve(
             surfaceStyle = BrowserSurfaceStyle.Frosted,
-            appearanceMode = BrowserAppearanceMode.Amoled,
             darkColors = true,
-            frostedTransparencyPercent = 80,
-            frostedBlurPercent = 100,
+            frostedTransparencyPercent = 40,
+            frostedBlurPercent = 60,
         )
 
-        assertEquals(1f, specification.containerAlpha)
-        assertEquals(0f, specification.blurRadiusPx)
-        assertFalse(specification.backdropBlurEnabled)
+        assertEquals(CandyChromeTreatment.Backdrop, specification.treatment)
+        assertTrue(specification.containerAlpha < 1f)
+        assertTrue(specification.backdropBlurEnabled)
     }
 
     @Test
     fun `frosted controls are bounded and zero blur disables backdrop`() {
         val transparentWithoutBlur = BrowserChromeSurfaceRules.resolve(
             surfaceStyle = BrowserSurfaceStyle.Frosted,
-            appearanceMode = BrowserAppearanceMode.Light,
             darkColors = false,
             frostedTransparencyPercent = 200,
             frostedBlurPercent = -1,
         )
         val opaqueWithMaximumBlur = BrowserChromeSurfaceRules.resolve(
             surfaceStyle = BrowserSurfaceStyle.Frosted,
-            appearanceMode = BrowserAppearanceMode.Dark,
             darkColors = true,
             frostedTransparencyPercent = -1,
             frostedBlurPercent = 200,
@@ -86,7 +80,6 @@ class BrowserChromeSurfaceRulesTest {
         val specification = BrowserChromeSurfaceRules.resolve(
             designLanguage = CandyDesignLanguage.LiquidGlass,
             surfaceStyle = BrowserSurfaceStyle.Clear,
-            appearanceMode = BrowserAppearanceMode.Light,
             darkColors = false,
             frostedTransparencyPercent = 40,
             frostedBlurPercent = 60,
@@ -102,21 +95,5 @@ class BrowserChromeSurfaceRulesTest {
                 shapeStyle = BrowserShapeStyle.Angular,
             ),
         )
-    }
-
-    @Test
-    fun `amoled disables liquid glass and keeps opaque material fallback`() {
-        val specification = BrowserChromeSurfaceRules.resolve(
-            designLanguage = CandyDesignLanguage.LiquidGlass,
-            surfaceStyle = BrowserSurfaceStyle.Frosted,
-            appearanceMode = BrowserAppearanceMode.Amoled,
-            darkColors = true,
-            frostedTransparencyPercent = 80,
-            frostedBlurPercent = 100,
-        )
-
-        assertEquals(CandyChromeTreatment.Opaque, specification.treatment)
-        assertEquals(1f, specification.containerAlpha)
-        assertFalse(specification.backdropBlurEnabled)
     }
 }

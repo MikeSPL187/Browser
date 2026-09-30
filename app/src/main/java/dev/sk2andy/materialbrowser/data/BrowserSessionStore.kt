@@ -270,6 +270,13 @@ class BrowserSessionStore internal constructor(
         return profiles to activeProfileId
     }
 
+    /** Accent of the active workspace: screens outside the browser take their colors from it. */
+    fun loadActiveWorkspaceAccent(): WorkspaceAccent {
+        val (profiles, activeProfileId) = loadProfiles()
+        return profiles.firstOrNull { profile -> profile.id == activeProfileId }?.accent
+            ?: WorkspaceAccent.Default
+    }
+
     fun saveProfiles(profiles: List<BrowserProfile>, activeProfileId: String) {
         val safeProfiles = profiles.ifEmpty { listOf(DEFAULT_BROWSER_PROFILE) }
         val array = JSONArray()
@@ -1300,10 +1307,15 @@ class BrowserSessionStore internal constructor(
             range = AppearanceSettings.MIN_FROSTED_TRANSPARENCY_PERCENT..
                 AppearanceSettings.MAX_FROSTED_TRANSPARENCY_PERCENT,
         )
+        val storedAppearanceMode = preferences.getString(KEY_APPEARANCE_MODE, null)
+        if (storedAppearanceMode == BrowserAppearanceMode.LEGACY_AMOLED_STABLE_ID) {
+            // The OLED mode merged into Dark, which is pure black now.
+            preferences.edit()
+                .putString(KEY_APPEARANCE_MODE, BrowserAppearanceMode.Dark.stableId)
+                .apply()
+        }
         return AppearanceSettings(
-            appearanceMode = BrowserAppearanceMode.fromStableId(
-                preferences.getString(KEY_APPEARANCE_MODE, null),
-            ),
+            appearanceMode = BrowserAppearanceMode.fromStableId(storedAppearanceMode),
             animationsEnabled = loadBoolean(KEY_ANIMATIONS_ENABLED, true),
             forceDarkWebsites = runCatching {
                 preferences.getBoolean(KEY_FORCE_DARK_WEBSITES, false)
@@ -1316,6 +1328,9 @@ class BrowserSessionStore internal constructor(
             ),
             colorPalette = BrowserColorPalette.fromStableId(
                 preferences.getString(KEY_COLOR_PALETTE, null),
+            ),
+            chromeStyle = BrowserChromeStyle.fromStableId(
+                preferences.getString(KEY_CHROME_STYLE, null),
             ),
             surfaceStyle = BrowserSurfaceStyle.fromStableId(
                 preferences.getString(KEY_SURFACE_STYLE, null),
@@ -1357,6 +1372,7 @@ class BrowserSessionStore internal constructor(
             .putBoolean(KEY_FORCE_DARK_WEBSITES, normalized.forceDarkWebsites)
             .putInt(KEY_WEB_CONTENT_FONT_SIZE_PERCENT, normalized.webContentFontSizePercent)
             .putString(KEY_COLOR_PALETTE, normalized.colorPalette.stableId)
+            .putString(KEY_CHROME_STYLE, normalized.chromeStyle.stableId)
             .putString(KEY_SURFACE_STYLE, normalized.surfaceStyle.stableId)
             .putString(KEY_SHAPE_STYLE, normalized.shapeStyle.stableId)
             .putString(KEY_ADDRESS_BAR_STYLE, normalized.addressBarStyle.stableId)
@@ -1591,6 +1607,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_FORCE_DARK_WEBSITES = "force_dark_websites"
         const val KEY_WEB_CONTENT_FONT_SIZE_PERCENT = "web_content_font_size_percent"
         const val KEY_COLOR_PALETTE = "color_palette"
+        const val KEY_CHROME_STYLE = "chrome_style"
         const val KEY_SURFACE_STYLE = "surface_style"
         const val KEY_SHAPE_STYLE = "shape_style"
         const val KEY_ADDRESS_BAR_STYLE = "address_bar_style"

@@ -1,16 +1,25 @@
 # Инструменты холста дизайна
 
-Всё здесь нужно только для макетов и в приложение не попадает.
+Инструменты и их библиотеки в приложение не попадают. Исключение — сгенерированный файл
+`VolaSchemes.kt` (см. «Цвета»).
 
 ## Цвета
 
-- `gencss.mjs` генерирует `canvas/vola4-colors.css` из цветов пространств (Material Color
-  Utilities, схема M3 2025): светлая, тёмная (фон всегда `#000000`) и повышенный контраст, плюс
-  приватная тёмная. Запуск во временной папке:
-  `npm install @material/material-color-utilities@0.4.0`, затем
-  `node gencss.mjs > ../canvas/vola4-colors.css`. Если Node не находит модули библиотеки,
-  допишите `.js` к относительным импортам в её файлах:
-  `find node_modules/@material/material-color-utilities -name '*.js' -exec sed -i -E "s#(from '\./[^']+|from '\.\./[^']+)';#\1.js';#" {} +`.
+- `gencss.mjs` генерирует цвета из исходных цветов пространств (Material Color Utilities,
+  схема M3 2025): светлая, тёмная (фон всегда `#000000`) и повышенный контраст. Серые исходники
+  (Graphite) остаются серыми: яркий основной цвет и цветной ореол — только у цветных.
+  - `node gencss.mjs > ../canvas/vola4-colors.css` — CSS холста (три примера пространств и
+    приватная тёмная).
+  - `node gencss.mjs --kotlin > <корень репозитория>/app/src/main/java/dev/sk2andy/materialbrowser/ui/theme/VolaSchemes.kt`
+    — схемы приложения: все восемь `WorkspaceAccent` и приватный режим, по четыре варианта
+    (светлая, тёмная, повышенный контраст светлая и тёмная), плюс ореол, ok/warn и карточка.
+    Исходные цвета — тона 40 из `ui/theme/WorkspaceAccents.kt` (`appSeeds`); юнит-тест
+    `VolaSchemesTest` сверяет их. Если контраст любой пары ниже 4,5:1, генератор падает с ошибкой.
+    Файл не править руками.
+  - Запуск во временной папке, в приложение библиотека не попадает:
+    `npm install @material/material-color-utilities@0.4.0`. Если Node не находит модули
+    библиотеки, допишите `.js` к относительным импортам (команда безопасна при повторном запуске):
+    `find node_modules/@material/material-color-utilities -name '*.js' -exec sed -i -E "s#(from '\.\.?/[^']+)';#\1.js';#; s#\.js\.js'#.js'#" {} +`.
 - `contrast.py` проверяет контраст пар «текст — фон» в сгенерированном CSS (порог 4,5:1):
   `python3 contrast.py ../canvas/vola4-colors.css`. Запускать после каждой генерации.
 

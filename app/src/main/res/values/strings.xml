@@ -384,7 +384,6 @@
     <string name="appearance_mode_system">System</string>
     <string name="appearance_mode_light">Light</string>
     <string name="appearance_mode_dark">Dark</string>
-    <string name="appearance_mode_amoled">AMOLED</string>
     <string name="settings_animations">Animations</string>
     <string name="settings_animations_summary">Show animations in Vola and supported websites. Turn off to skip motion.</string>
     <string name="settings_force_dark_websites">Force dark mode on websites</string>

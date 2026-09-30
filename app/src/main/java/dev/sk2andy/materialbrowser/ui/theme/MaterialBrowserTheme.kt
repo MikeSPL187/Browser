@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
+import android.app.UiModeManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -10,8 +13,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.graphics.Color
@@ -19,12 +27,13 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AddressBarColorRules
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
-import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
@@ -33,17 +42,21 @@ import dev.sk2andy.materialbrowser.ui.LocalCandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.ui.androidCandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.shared.ui.theme.NeutralDarkColors
 import dev.sk2andy.materialbrowser.shared.ui.theme.NeutralLightColors
-import dev.sk2andy.materialbrowser.shared.ui.theme.VolaDarkColors
-import dev.sk2andy.materialbrowser.shared.ui.theme.VolaLightColors
 
 private val LocalAppearanceSettings = staticCompositionLocalOf { AppearanceSettings() }
 
+/**
+ * The app theme. With the Vola palette every color comes from the selected workspace (or the
+ * private scheme); the dark theme is always pure black, whatever the palette.
+ */
 @Composable
 internal fun CandyTheme(
     settings: AppearanceSettings = AppearanceSettings(),
     designLanguage: CandyDesignLanguage = CandyDesignLanguage.MaterialExpressive,
     chromeSurfaceRenderer: CandyChromeSurfaceRenderer =
         androidCandyChromeSurfaceRenderer(designLanguage),
+    workspaceAccent: WorkspaceAccent = WorkspaceAccent.Default,
+    privateMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val effectMotionDurationScale = rememberCoroutineScope()
@@ -57,26 +70,41 @@ internal fun CandyTheme(
     }
     val systemDark = isSystemInDarkTheme()
     val dark = settings.usesDarkColors(systemDark)
+    val highContrast = rememberSystemHighContrast()
+    val workspaceTokens = VolaColorRules.schemeSet(workspaceAccent, privateMode)
+        .select(dark = dark, highContrast = highContrast)
     val baseColors = when (settings.colorPalette) {
-        BrowserColorPalette.Vola -> if (dark) VolaDarkColors else VolaLightColors
-        BrowserColorPalette.Dynamic ->
-            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        BrowserColorPalette.Neutral -> if (dark) NeutralDarkColors else NeutralLightColors
+        BrowserColorPalette.Vola -> remember(workspaceTokens, dark) {
+            workspaceTokens.toColorScheme(dark)
+        }
+        BrowserColorPalette.Dynamic -> if (dark) {
+            dynamicDarkColorScheme(context).withPureBlackSurfaces()
+        } else {
+            dynamicLightColorScheme(context)
+        }
+        BrowserColorPalette.Neutral -> if (dark) {
+            NeutralDarkColors.withPureBlackSurfaces()
+        } else {
+            NeutralLightColors
+        }
     }
-    val appearanceColors = if (settings.appearanceMode == BrowserAppearanceMode.Amoled) {
-        baseColors.withAmoledSurfaces()
-    } else {
-        baseColors
-    }
-    val colorScheme = appearanceColors.withSurfaceStyle(settings.surfaceStyle)
+    val colorScheme = baseColors.withSurfaceStyle(settings.surfaceStyle)
+    val extendedColors = VolaColorRules.extendedColors(
+        palette = settings.colorPalette,
+        colorScheme = colorScheme,
+        workspaceTokens = workspaceTokens,
+        dark = dark,
+    )
 
     MaterialTheme(
         colorScheme = colorScheme,
         shapes = browserShapes(settings.shapeStyle),
+        typography = VolaTypography,
     ) {
         CompositionLocalProvider(
             LocalContentColor provides colorScheme.onSurface,
             LocalAppearanceSettings provides settings,
+            LocalVolaExtendedColors provides extendedColors,
             LocalCandyDesignLanguage provides designLanguage,
             LocalCandyMotionScheme provides CandyMotionSchemes.forDesignLanguage(designLanguage),
             LocalCandyChromeSurfaceRenderer provides chromeSurfaceRenderer,
@@ -88,14 +116,50 @@ internal fun CandyTheme(
 @Composable
 fun MaterialBrowserTheme(
     settings: AppearanceSettings = AppearanceSettings(),
+    workspaceAccent: WorkspaceAccent = WorkspaceAccent.Default,
+    privateMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     CandyTheme(
         settings = settings,
         designLanguage = CandyDesignLanguage.MaterialExpressive,
+        workspaceAccent = workspaceAccent,
+        privateMode = privateMode,
         content = content,
     )
 }
+
+/**
+ * Whether the user asked the system for more contrast (Android 14+, medium or high). Vola then
+ * uses the high-contrast variant of the workspace scheme.
+ */
+@Composable
+private fun rememberSystemHighContrast(): Boolean =
+    if (
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+        !LocalInspectionMode.current
+    ) {
+        rememberSystemContrast() >= HIGH_CONTRAST_THRESHOLD
+    } else {
+        false
+    }
+
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@Composable
+private fun rememberSystemContrast(): Float {
+    val context = LocalContext.current
+    val uiModeManager = remember(context) { context.getSystemService(UiModeManager::class.java) }
+    var contrast by remember(uiModeManager) { mutableFloatStateOf(uiModeManager?.contrast ?: 0f) }
+    DisposableEffect(uiModeManager) {
+        val listener = UiModeManager.ContrastChangeListener { value -> contrast = value }
+        uiModeManager?.addContrastChangeListener(context.mainExecutor, listener)
+        onDispose { uiModeManager?.removeContrastChangeListener(listener) }
+    }
+    return contrast
+}
+
+/** UiModeManager reports 0 for standard, 0.5 for medium and 1 for high contrast. */
+private const val HIGH_CONTRAST_THRESHOLD = 0.5f
 
 internal fun browserShapes(style: BrowserShapeStyle): Shapes = when (style) {
     BrowserShapeStyle.Angular -> Shapes(
@@ -105,13 +169,7 @@ internal fun browserShapes(style: BrowserShapeStyle): Shapes = when (style) {
         large = RoundedCornerShape(12.dp),
         extraLarge = RoundedCornerShape(16.dp),
     )
-    BrowserShapeStyle.Rounded -> Shapes(
-        extraSmall = RoundedCornerShape(4.dp),
-        small = RoundedCornerShape(8.dp),
-        medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(20.dp),
-        extraLarge = RoundedCornerShape(28.dp),
-    )
+    BrowserShapeStyle.Rounded -> VolaShapes.material
     BrowserShapeStyle.ExtraRounded -> Shapes(
         extraSmall = RoundedCornerShape(8.dp),
         small = RoundedCornerShape(14.dp),
@@ -128,10 +186,7 @@ internal fun browserChromeColor(
     role: BrowserChromeSurfaceRole = BrowserChromeSurfaceRole.General,
 ): Color {
     val settings = LocalAppearanceSettings.current
-    return if (
-        settings.surfaceStyle == BrowserSurfaceStyle.Frosted &&
-        settings.appearanceMode != BrowserAppearanceMode.Amoled
-    ) {
+    return if (settings.surfaceStyle == BrowserSurfaceStyle.Frosted) {
         val defaultOpacity = 1f -
             AppearanceSettings.DEFAULT_FROSTED_TRANSPARENCY_PERCENT / 100f
         val normalizedSettings = settings.normalized()
@@ -187,7 +242,6 @@ internal fun browserChromeSurfaceTokens(
     val specification = BrowserChromeSurfaceRules.resolve(
         designLanguage = LocalCandyDesignLanguage.current,
         surfaceStyle = settings.surfaceStyle,
-        appearanceMode = settings.appearanceMode,
         darkColors = colors.surface.luminance() < 0.5f,
         frostedTransparencyPercent = frostedTransparencyPercent,
         frostedBlurPercent = settings.frostedBlurPercent,
@@ -457,13 +511,11 @@ internal object BrowserChromeSurfaceRules {
     fun resolve(
         designLanguage: CandyDesignLanguage = CandyDesignLanguage.MaterialExpressive,
         surfaceStyle: BrowserSurfaceStyle,
-        appearanceMode: BrowserAppearanceMode,
         darkColors: Boolean,
         frostedTransparencyPercent: Int,
         frostedBlurPercent: Int,
     ): BrowserChromeSurfaceSpecification = when {
-        designLanguage == CandyDesignLanguage.LiquidGlass &&
-            appearanceMode != BrowserAppearanceMode.Amoled -> {
+        designLanguage == CandyDesignLanguage.LiquidGlass -> {
             val normalizedTransparency = frostedTransparencyPercent.coerceIn(
                 AppearanceSettings.MIN_FROSTED_TRANSPARENCY_PERCENT,
                 AppearanceSettings.MAX_FROSTED_TRANSPARENCY_PERCENT,
@@ -482,8 +534,7 @@ internal object BrowserChromeSurfaceRules {
                 backdropBlurEnabled = true,
             )
         }
-        surfaceStyle == BrowserSurfaceStyle.Frosted &&
-            appearanceMode != BrowserAppearanceMode.Amoled -> {
+        surfaceStyle == BrowserSurfaceStyle.Frosted -> {
             val normalizedTransparency = frostedTransparencyPercent.coerceIn(
                 AppearanceSettings.MIN_FROSTED_TRANSPARENCY_PERCENT,
                 AppearanceSettings.MAX_FROSTED_TRANSPARENCY_PERCENT,
@@ -539,18 +590,6 @@ internal object BrowserChromeSurfaceRules {
 
     private const val MAX_FROSTED_BLUR_RADIUS_PX = 36f
 }
-
-private fun ColorScheme.withAmoledSurfaces(): ColorScheme = copy(
-    background = Color.Black,
-    surface = Color.Black,
-    surfaceDim = Color.Black,
-    surfaceBright = Color(0xFF171717),
-    surfaceContainerLowest = Color.Black,
-    surfaceContainerLow = Color(0xFF080808),
-    surfaceContainer = Color(0xFF0D0D0D),
-    surfaceContainerHigh = Color(0xFF141414),
-    surfaceContainerHighest = Color(0xFF1B1B1B),
-)
 
 private fun ColorScheme.withSurfaceStyle(style: BrowserSurfaceStyle): ColorScheme = when (style) {
     BrowserSurfaceStyle.Clear -> this

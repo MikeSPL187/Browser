@@ -11,6 +11,8 @@ enum class ThirdPartyComponent {
     Uassets,
     UblockOrigin,
     IStillDontCareAboutCookies,
+    Manrope,
+    Literata,
 }
 
 data class ThirdPartyNotice(
@@ -89,6 +91,18 @@ object CandyLegalSources {
             licenseName = "GPL-3.0-only",
             sourceUrl = ISTILLDONTCARE_SOURCE_URL,
             licenseUrl = ISTILLDONTCARE_LICENSE_URL,
+        ),
+        ThirdPartyNotice(
+            component = ThirdPartyComponent.Manrope,
+            licenseName = "SIL Open Font License 1.1",
+            sourceUrl = "https://github.com/googlefonts/manrope",
+            licenseUrl = "https://github.com/google/fonts/blob/main/ofl/manrope/OFL.txt",
+        ),
+        ThirdPartyNotice(
+            component = ThirdPartyComponent.Literata,
+            licenseName = "SIL Open Font License 1.1",
+            sourceUrl = "https://github.com/googlefonts/literata",
+            licenseUrl = "https://github.com/google/fonts/blob/main/ofl/literata/OFL.txt",
         ),
     )
 

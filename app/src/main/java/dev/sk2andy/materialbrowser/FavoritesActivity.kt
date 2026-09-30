@@ -115,10 +115,14 @@ class FavoritesActivity : ComponentActivity() {
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         favoriteLibrary = store.loadFavoriteLibrary()
         val appearanceSettings = store.loadAppearanceSettings()
+        val workspaceAccent = store.loadActiveWorkspaceAccent()
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
-            CandyTheme(settings = appearanceSettings) {
+            CandyTheme(
+                settings = appearanceSettings,
+                workspaceAccent = workspaceAccent,
+            ) {
                 FavoritesScreen(
                     favorites = favoriteLibrary.favorites,
                     library = favoriteLibrary,

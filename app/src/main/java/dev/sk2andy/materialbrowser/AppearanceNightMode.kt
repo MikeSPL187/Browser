@@ -8,9 +8,7 @@ internal fun AppCompatActivity.applyAppearanceNightMode(appearanceMode: BrowserA
     val nightMode = when (appearanceMode) {
         BrowserAppearanceMode.System -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         BrowserAppearanceMode.Light -> AppCompatDelegate.MODE_NIGHT_NO
-        BrowserAppearanceMode.Dark,
-        BrowserAppearanceMode.Amoled,
-        -> AppCompatDelegate.MODE_NIGHT_YES
+        BrowserAppearanceMode.Dark -> AppCompatDelegate.MODE_NIGHT_YES
     }
     if (delegate.localNightMode != nightMode) delegate.localNightMode = nightMode
 }

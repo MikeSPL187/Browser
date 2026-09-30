@@ -58,6 +58,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserHardwareInputRules
 import dev.sk2andy.materialbrowser.browser.BrowserHardwareKey
 import dev.sk2andy.materialbrowser.browser.BrowserHardwareKeyStroke
 import dev.sk2andy.materialbrowser.browser.BrowserInputDiagnostics
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.BrowserMediaSystemSession
 import dev.sk2andy.materialbrowser.browser.BrowserMediaPlaybackService
 import dev.sk2andy.materialbrowser.browser.BrowserMediaLifecycleTrace
@@ -538,15 +539,17 @@ class MainActivity : AppCompatActivity() {
             val appearanceDark = appearanceSettings.usesDarkColors(
                 isSystemInDarkTheme(),
             )
+            val activeProfile = browserController.localBrowserProfiles
+                .firstOrNull { profile -> profile.id == browserController.activeProfileId }
             SideEffect {
                 applyAppearanceNightMode(appearanceSettings.appearanceMode)
                 applyAppearanceSystemBars(appearanceDark)
-                val activeProfileProtected = browserController.localBrowserProfiles
-                    .firstOrNull { profile -> profile.id == browserController.activeProfileId }
-                    ?.protection != null
-                setRecentsPreviewEnabled(!activeProfileProtected)
+                setRecentsPreviewEnabled(activeProfile?.protection == null)
             }
-            CandyTheme(settings = appearanceSettings) {
+            CandyTheme(
+                settings = appearanceSettings,
+                workspaceAccent = activeProfile?.accent ?: WorkspaceAccent.Default,
+            ) {
                 val launcherShortcutState = LauncherShortcutRules.state(
                     profiles = browserController.localBrowserProfiles,
                     tabs = browserController.tabs.toList(),

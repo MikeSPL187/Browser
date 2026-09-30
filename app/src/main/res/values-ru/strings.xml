@@ -380,7 +380,6 @@
     <string name="appearance_mode_system">Как в системе</string>
     <string name="appearance_mode_light">Светлая</string>
     <string name="appearance_mode_dark">Тёмная</string>
-    <string name="appearance_mode_amoled">AMOLED</string>
     <string name="settings_animations">Анимации</string>
     <string name="settings_animations_summary">Показывать анимации в Vola и на поддерживаемых сайтах. Выключите, чтобы убрать движение.</string>
     <string name="settings_force_dark_websites">Тёмная тема для сайтов</string>
