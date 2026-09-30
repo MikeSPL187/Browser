@@ -259,9 +259,9 @@ Camera and microphone permissions remain separate and continue through Candy's p
   insets.
   Candy always keeps GeckoView's default `SurfaceView` backend so page frames go directly to
   Android's compositor. On Android 17 and newer, Frosted address chrome maps its measured rounded
-  bounds to a native `SurfaceView` blur region. Android 13, 14, 15 and 16 keep the same translucent
+  bounds to a native `SurfaceView` blur region. Android 12, 13, 14, 15 and 16 keep the same translucent
   glass overlay without website blur. System WebView remains in the ordinary View hierarchy and
-  therefore retains live Frosted blur on every supported version from Android 13 onward.
+  therefore retains live Frosted blur on every supported version from Android 12 onward.
 - System WebView's shared safe-area compatibility script gives stable viewport-sticky elements a CSS `max()` top
   anchor with owned inline styling for Shadow DOM. Window scrolling does not read their geometry
   or rewrite their styling; relevant semantic mutations, viewport changes and policy reconfiguration

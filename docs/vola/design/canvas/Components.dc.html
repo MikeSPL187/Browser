@@ -110,6 +110,16 @@
 <div style="height: 56px; border-radius: 18px; background: #322F37; color: #F4EFF4; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 14px"><svg class="i s" viewBox="0 0 24 24" style="color: #93D6A0"><path d="{{i.download}}"></path></svg><span style="flex-grow: 1; font-size: 15px; font-weight: 600">Файл загружен</span><button style="height: 40px; border-radius: 20px; padding: 0 14px; color: #C9BFFF; font-size: 14px; font-weight: 800">Открыть</button></div>
 </div>
 </section>
+<section style="grid-column: span 12; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Индикаторы и защита данных</span>
+<div style="border-radius: 28px; background: var(--surface); padding: 24px 28px; display: flex; align-items: center; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 10px; width: 260px"><svg viewBox="0 0 260 12" style="width: 260px; height: 12px" aria-hidden="true"><path d="M2 6 Q 8 1 14 6 T 26 6 T 38 6 T 50 6 T 62 6 T 74 6 T 86 6 T 98 6 T 110 6 T 122 6 T 134 6 T 146 6" fill="none" stroke="#006877" stroke-width="4" stroke-linecap="round"></path><path d="M156 6 H 258" stroke="#DCE9EC" stroke-width="4" stroke-linecap="round"></path></svg><span class="t-sub">Волнистый прогресс · загрузки</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 10px"><span style="width: 44px; height: 44px; border-radius: 30% 70% 60% 40% / 40% 40% 60% 60%; background: #006877"></span><span class="t-sub">Морфинг-индикатор</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; width: 220px"><span style="height: 14px; width: 70%; border-radius: 7px; background: linear-gradient(90deg, var(--s-high), var(--s-low), var(--s-high))"></span><span style="height: 10px; border-radius: 5px; background: var(--s-high)"></span><span style="height: 10px; width: 85%; border-radius: 5px; background: var(--s-high)"></span><span class="t-sub" style="margin-top: 2px">Скелет · списки и карточки</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 52px; border-radius: 16px; background: var(--s); display: flex; align-items: center; gap: 10px; padding: 0 16px; font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 0.12em">•••••••• <svg class="i s" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.eye}}"></path></svg></span><span class="t-sub">Скрытое значение · пароль, карта</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="height: 36px; border-radius: 18px; padding: 0 14px; display: flex; align-items: center; gap: 6px; background: #D3F0D9; color: #2B6C3F; font-size: 13px; font-weight: 800"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.shieldCheck}}"></path></svg>На устройстве</span><span class="t-sub">Метка «данные не уходят»</span></div>
+</div>
+</section>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1440,"height":1240}}'>

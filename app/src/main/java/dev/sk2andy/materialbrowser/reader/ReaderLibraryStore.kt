@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.reader
 
 import android.content.Context
 import android.util.AtomicFile
+import dev.sk2andy.materialbrowser.readUpTo
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -74,7 +75,7 @@ class ReaderLibraryStore(context: Context) {
             return ReaderLibraryState()
         }
         val bytes = runCatching {
-            file.openRead().use { it.readNBytes(MAX_JSON_BYTES + 1) }
+            file.openRead().use { it.readUpTo(MAX_JSON_BYTES + 1) }
         }.getOrNull() ?: return ReaderLibraryState()
         if (bytes.size > MAX_JSON_BYTES) return ReaderLibraryState()
         return runCatching { decode(JSONObject(bytes.toString(StandardCharsets.UTF_8))) }

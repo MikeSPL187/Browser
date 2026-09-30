@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Android 13+" src="https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&logoColor=white">
+  <img alt="Android 12+" src="https://img.shields.io/badge/Android-12%2B-3DDC84?logo=android&logoColor=white">
   <img alt="GeckoView" src="https://img.shields.io/badge/engine-GeckoView-FF7139?logo=firefoxbrowser&logoColor=white">
   <img alt="Material 3" src="https://img.shields.io/badge/UI-Material%203-6D4CFF?logo=materialdesign&logoColor=white">
   <a href="LICENSE"><img alt="License: MPL 2.0" src="https://img.shields.io/badge/License-MPL%202.0-22D3EE.svg"></a>
@@ -52,7 +52,7 @@ Material 3.
 
 ## Установка
 
-Нужен Android 13 или новее на 64-битном ARM (arm64-v8a), то есть почти любой современный
+Нужен Android 12 или новее на 64-битном ARM (arm64-v8a), то есть почти любой современный
 телефон или планшет.
 
 - **Релизы** появятся на странице [Releases](https://github.com/MikeSPL187/Browser/releases).

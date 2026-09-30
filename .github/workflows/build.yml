@@ -103,6 +103,16 @@ jobs:
       - name: Android lint
         run: ./gradlew --no-daemon --stacktrace lintFullDebug
 
+      # Gradle prints only the first lint error. List all of them so the job log alone is enough
+      # to fix a red build (report artifacts are hard to open from a phone).
+      - name: Show lint errors
+        if: ${{ failure() }}
+        run: |
+          report=app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt
+          if [[ -f "$report" ]]; then
+            grep -E -A2 ': Error: ' "$report" || true
+          fi
+
       - name: Upload test and lint reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

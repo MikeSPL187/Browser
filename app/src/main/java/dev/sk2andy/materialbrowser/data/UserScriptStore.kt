@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScript
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParseResult
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
+import dev.sk2andy.materialbrowser.readUpTo
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import org.json.JSONArray
 import org.json.JSONObject
@@ -22,7 +23,7 @@ internal class UserScriptStore(context: Context) {
     @Synchronized
     fun load(): List<UserScript> {
         return try {
-            val bytes = atomicFile.openRead().use { input -> input.readNBytes(MAX_FILE_BYTES + 1) }
+            val bytes = atomicFile.openRead().use { input -> input.readUpTo(MAX_FILE_BYTES + 1) }
             if (bytes.size !in 1..MAX_FILE_BYTES) {
                 atomicFile.delete()
                 return emptyList()

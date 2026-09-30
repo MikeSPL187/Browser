@@ -544,7 +544,7 @@ class MainActivity : AppCompatActivity() {
                 val activeProfileProtected = browserController.localBrowserProfiles
                     .firstOrNull { profile -> profile.id == browserController.activeProfileId }
                     ?.protection != null
-                setRecentsScreenshotEnabled(!activeProfileProtected)
+                setRecentsPreviewEnabled(!activeProfileProtected)
             }
             CandyTheme(settings = appearanceSettings) {
                 val launcherShortcutState = LauncherShortcutRules.state(

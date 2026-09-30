@@ -25,7 +25,7 @@
 </div>
 <div style="display: flex; align-items: center; gap: 8px">
 <span style="height: 36px; border-radius: 18px; background: {{s.wsBg}}; color: {{s.ws}}; padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800"><svg class="i xs" viewBox="0 0 24 24"><path d="{{s.wsIcon}}"></path></svg>{{s.wsName}}</span>
-<span style="height: 36px; border-radius: 18px; background: var(--s-high); padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.alarm}}"></path></svg>{{s.when}}</span>
+<span style="height: 36px; border-radius: 18px; background: var(--s-high); padding: 0 12px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--on-var); white-space: nowrap"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.alarm}}"></path></svg>{{s.when}}</span>
 <span style="flex-grow: 1"></span>
 <button style="height: 36px; border-radius: 18px; background: {{c.a}}; color: #FFFFFF; padding: 0 14px; font-size: 13px; font-weight: 800">Открыть</button>
 </div>
@@ -43,9 +43,9 @@ return {
 i: i,
 c: window.VA ? window.VA(accent) : { a: accent },
 items: [
-{ l: 'О', tone: '#FFEBC2', ink: '#6E4F00', title: 'Отчёт по метрикам', host: 'metrics.example.com', wsName: 'Работа', ws: '#006877', wsBg: '#006877' + '1A', wsIcon: i.work, when: 'Сегодня, 18:00' },
+{ l: 'О', tone: '#FFEBC2', ink: '#6E4F00', title: 'Отчёт по метрикам', host: 'metrics.example.com', wsName: 'Работа', ws: '#006877', wsBg: '#006877' + '1A', wsIcon: i.work, when: 'Сегодня 18:00' },
 { l: 'Р', tone: '#FFE1D6', ink: '#9A3A1E', title: 'Расписание сезона: осень', host: 'calendar.example.com', wsName: 'Аниме', ws: '#A23F2B', wsBg: '#A23F2B' + '1A', wsIcon: i.movie, when: 'В субботу' },
-{ l: 'К', tone: '#FFDDEA', ink: '#962F59', title: 'Каталог шрифтов с кириллицей', host: 'fonts.example.org', wsName: 'Личное', ws: '#5E4EB7', wsBg: '#5E4EB7' + '1A', wsIcon: i.home, when: 'Через неделю' }
+{ l: 'К', tone: '#FFDDEA', ink: '#962F59', title: 'Каталог шрифтов с кириллицей', host: 'fonts.example.org', wsName: 'Личное', ws: '#5E4EB7', wsBg: '#5E4EB7' + '1A', wsIcon: i.home, when: '6 октября' }
 ]
 };
 }

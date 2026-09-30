@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.data
 
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import dev.sk2andy.materialbrowser.readUpTo
 import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.ByteBuffer
@@ -32,7 +33,7 @@ internal class FaviconClient {
                     val declaredLength = connection.contentLengthLong
                     if (declaredLength !in -1..MAX_FILE_SIZE_BYTES.toLong()) return null
                     val encoded = connection.inputStream.use { input ->
-                        input.readNBytes(MAX_FILE_SIZE_BYTES + 1)
+                        input.readUpTo(MAX_FILE_SIZE_BYTES + 1)
                     }
                     if (encoded.isEmpty() || encoded.size > MAX_FILE_SIZE_BYTES) return null
                     return decode(encoded)

@@ -408,8 +408,8 @@
     <string name="settings_frosted_transparency">Прозрачность</string>
     <string name="settings_frosted_address_bar_transparency">Прозрачность адресной строки</string>
     <string name="settings_frosted_blur">Сила размытия</string>
-    <string name="settings_frosted_blur_summary_gecko">С GeckoView размытие сайта под адресной строкой доступно начиная с Android 17. На Android 13–16 матовое стекло работает без размытия сайта.</string>
-    <string name="settings_frosted_blur_summary_system_webview">С Android System WebView размытие сайта под адресной строкой доступно начиная с Android 13.</string>
+    <string name="settings_frosted_blur_summary_gecko">С GeckoView размытие сайта под адресной строкой доступно начиная с Android 17. На Android 12–16 матовое стекло работает без размытия сайта.</string>
+    <string name="settings_frosted_blur_summary_system_webview">С Android System WebView размытие сайта под адресной строкой доступно начиная с Android 12.</string>
     <string name="settings_shape_style">Форма</string>
     <string name="shape_style_angular">Угловатая</string>
     <string name="shape_style_rounded">Скруглённая</string>

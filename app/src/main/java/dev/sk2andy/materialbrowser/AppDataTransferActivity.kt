@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,8 +8,9 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.DocumentsContract
 import android.view.Gravity
-import android.window.OnBackInvokedDispatcher
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import dev.sk2andy.materialbrowser.browser.systemwebview.currentSystemWebViewIdentity
 import dev.sk2andy.materialbrowser.data.AppDataArchiveCodec
 import dev.sk2andy.materialbrowser.data.AppDataArchiveManifest
@@ -86,14 +86,18 @@ internal fun currentBrowserEngineIdentity(): String =
         "org.mozilla.geckoview@${org.mozilla.geckoview.BuildConfig.MOZ_APP_VERSION}"
     }
 
-class AppDataTransferActivity : Activity() {
+class AppDataTransferActivity : ComponentActivity() {
     private lateinit var statusView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        onBackInvokedDispatcher.registerOnBackInvokedCallback(
-            OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-        ) {}
+        // Back must not interrupt a running transfer.
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() = Unit
+            },
+        )
         var request = requestFrom(intent)
         if (request == null) {
             finishAndRemoveTask()

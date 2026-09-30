@@ -68,7 +68,7 @@ class SiteCapsuleEditorActivity : ComponentActivity() {
             finish()
             return
         }
-        setRecentsScreenshotEnabled(protectedProfileIds.isEmpty())
+        setRecentsPreviewEnabled(protectedProfileIds.isEmpty())
         customIconRevision = savedInstanceState?.getInt(STATE_CUSTOM_ICON_REVISION) ?: 0
         val restoredCustomIcon = savedInstanceState
             ?.getByteArray(STATE_CUSTOM_ICON)

@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser.browser.downloads
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,7 +7,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.text.format.Formatter
 import androidx.core.app.NotificationCompat
@@ -19,6 +17,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.DownloadStatus
+import dev.sk2andy.materialbrowser.hasPostNotificationsPermission
 import java.util.concurrent.ConcurrentHashMap
 
 /** Material Expressive progress notifications for Candy-owned download transfers. */
@@ -255,8 +254,7 @@ internal class CandyDownloadNotifier(
 
     private fun canNotify(): Boolean {
         canNotifyOverride?.let { return it() }
-        return appContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED && manager.areNotificationsEnabled()
+        return appContext.hasPostNotificationsPermission() && manager.areNotificationsEnabled()
     }
 
     internal companion object {

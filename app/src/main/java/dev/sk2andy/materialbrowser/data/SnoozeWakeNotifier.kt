@@ -1,18 +1,17 @@
 package dev.sk2andy.materialbrowser.data
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.util.Log
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.hasPostNotificationsPermission
 
 class SnoozeWakeNotifier(context: Context) {
     private val appContext = context.applicationContext
@@ -30,9 +29,7 @@ class SnoozeWakeNotifier(context: Context) {
         )
     }
 
-    fun hasPostNotificationPermission(): Boolean =
-        appContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
+    fun hasPostNotificationPermission(): Boolean = appContext.hasPostNotificationsPermission()
 
     fun canNotify(): Boolean =
         hasPostNotificationPermission() && notificationManager.areNotificationsEnabled()

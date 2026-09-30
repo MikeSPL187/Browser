@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap" rel="stylesheet">
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
-<div class="vl" style="width: 1440px; height: 1000px; background: var(--bg); padding: 56px 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 40px; align-content: start">
+<div class="vl" style="width: 1440px; height: 1320px; background: var(--bg); padding: 56px 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 40px; align-content: start">
 <header style="grid-column: span 12; display: flex; align-items: flex-end; justify-content: space-between">
 <div style="display: flex; flex-direction: column; gap: 8px"><span class="t-over">Vola Design · основа</span><h1 style="font-size: 48px; font-weight: 800; letter-spacing: -0.03em">Токены</h1></div>
 <span class="t-sub" style="font-size: 15px; max-width: 480px; text-align: right">Все значения живут в ui/theme. Material 3 — основа, Zen — характер: мягкие градиенты пространств, стекло панелей, крупные скругления.</span>
@@ -75,9 +75,30 @@
 </sc-for>
 </div>
 </section>
+<section style="grid-column: span 7; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Отступы · шаг 4</span>
+<div style="border-radius: 24px; background: var(--surface); padding: 20px 24px; display: flex; align-items: flex-start; gap: 22px">
+<sc-for list="{{space}}" as="sp" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="height: 48px; display: flex; align-items: flex-end"><span style="width: {{sp.v}}; height: {{sp.v}}; border-radius: 4px; background: #C9BFFF; display: block"></span></span>
+<span class="t-label" style="font-size: 13px">{{sp.v}}</span>
+<span class="t-sub" style="font-size: 11px; text-align: center; max-width: 72px">{{sp.use}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="grid-column: span 5; display: flex; flex-direction: column; gap: 14px">
+<span class="t-title">Касание и состояния</span>
+<div style="border-radius: 24px; background: var(--surface); padding: 20px 24px; display: flex; align-items: center; gap: 18px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 24px; box-shadow: inset 0 0 0 2px #5E4EB7; display: flex; align-items: center; justify-content: center"><span style="width: 24px; height: 24px; border-radius: 6px; background: #E6DEFF"></span></span><span class="t-sub" style="font-size: 11px; text-align: center">Зона касания ≥ 48</span></div>
+<sc-for list="{{states}}" as="st" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 88px; height: 44px; border-radius: 22px; background: {{st.bg}}; box-shadow: {{st.ring}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #5E4EB7">Кнопка</span><span class="t-sub" style="font-size: 11px; text-align: center">{{st.name}}</span></div>
+</sc-for>
+</div>
+</section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
 class Component extends DCLogic {
 renderVals() {
 return {
@@ -105,6 +126,15 @@ type: [
 radii: [
 { v: '8px', use: 'метки' }, { v: '12px', use: 'чипы' }, { v: '16px', use: 'плитки' }, { v: '20px', use: 'списки' },
 { v: '24px', use: 'карточки' }, { v: '32px', use: 'листы' }, { v: '50%', use: 'панель' }
+],
+space: [
+{ v: '4px', use: 'внутри значка' }, { v: '8px', use: 'между чипами' }, { v: '12px', use: 'в строке списка' }, { v: '16px', use: 'поля экрана' },
+{ v: '20px', use: 'внутри карточки' }, { v: '24px', use: 'между группами' }, { v: '32px', use: 'секции' }, { v: '48px', use: 'заголовок экрана' }
+],
+states: [
+{ name: 'Наведение · 8%', bg: 'rgba(94,78,183,0.08)', ring: 'none' },
+{ name: 'Нажатие · 12%', bg: 'rgba(94,78,183,0.12)', ring: 'none' },
+{ name: 'Фокус · кольцо 3', bg: 'transparent', ring: '0 0 0 3px #5E4EB7' }
 ],
 motion: [
 { name: 'Быстрая пространственная', spec: 'Кнопки, переключатели, выбор · жёсткость 1400, затухание 0.9', curve: 'M4 56 C 40 56, 50 4, 90 6 S 150 4, 196 4' },

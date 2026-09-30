@@ -81,7 +81,7 @@ class CapsuleCustomIconEditorActivity : ComponentActivity() {
             finish()
             return
         }
-        setRecentsScreenshotEnabled(protectedProfileIds.isEmpty())
+        setRecentsPreviewEnabled(protectedProfileIds.isEmpty())
         val restoredBitmap = savedInstanceState
             ?.getByteArray(STATE_PACK_ICON)
             ?.let(CapsuleCustomIconEditorContract::decodeIcon)

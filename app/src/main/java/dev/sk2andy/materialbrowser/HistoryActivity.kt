@@ -67,7 +67,7 @@ class HistoryActivity : ComponentActivity() {
             finish()
             return
         }
-        setRecentsScreenshotEnabled(profiles.none { profile -> profile.protection != null })
+        setRecentsPreviewEnabled(profiles.none { profile -> profile.protection != null })
         accessibleProfileIds = profiles.mapTo(hashSetOf()) { profile -> profile.id }
         val activeProfileId = storedActiveProfileId.takeIf { candidate ->
             profiles.any { profile -> profile.id == candidate }
