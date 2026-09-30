@@ -23,6 +23,7 @@
 <span style="width: 100%; height: 132px; border-radius: 22px; background: {{t.bg}}; box-shadow: {{t.ring}}; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; position: relative">
 <span style="height: 7px; width: 70%; border-radius: 4px; background: {{t.line}}; display: block"></span><span style="height: 36px; border-radius: 8px; background: {{t.block}}; display: block"></span><span style="height: 6px; width: 86%; border-radius: 3px; background: {{t.line}}; display: block"></span>
 <span style="position: absolute; left: 8px; right: 8px; bottom: 8px; height: 20px; border-radius: 10px; background: {{t.bar}}; display: block"></span>
+<sc-if value="{{t.auto}}"><span aria-hidden="true" style="position: absolute; inset: 0; border-radius: 22px; overflow: hidden; clip-path: polygon(58% 0, 100% 0, 100% 100%, 42% 100%); background: #1B1920; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px"><span style="height: 7px; width: 70%; border-radius: 4px; background: #37353C; display: block"></span><span style="height: 36px; border-radius: 8px; background: #2C3A40; display: block"></span><span style="height: 6px; width: 86%; border-radius: 3px; background: #37353C; display: block"></span><span style="position: absolute; left: 8px; right: 8px; bottom: 8px; height: 20px; border-radius: 10px; background: #2C2A31; display: block"></span></span></sc-if>
 </span>
 <span style="font-size: 14px; font-weight: 800">{{t.name}}</span>
 </button>
@@ -39,6 +40,8 @@
 </div>
 </div>
 <button style="position: absolute; left: 20px; right: 20px; bottom: 36px; height: 60px; border-radius: 30px; background: #5E4EB7; color: #FFFFFF; font-size: 16px; font-weight: 800; text-align: center">Далее</button>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
@@ -49,7 +52,7 @@ i: window.VI || {},
 themes: [
 { name: 'Светлая', on: 'false', bg: '#FFFFFF', line: '#E1DCE6', block: '#DCE9EF', bar: '#EFE9F4', ring: 'var(--shadow-sm)' },
 { name: 'Тёмная', on: 'false', bg: '#1B1920', line: '#37353C', block: '#2C3A40', bar: '#2C2A31', ring: 'var(--shadow-sm)' },
-{ name: 'Авто', on: 'true', bg: 'linear-gradient(90deg, #FFFFFF 50%, #1B1920 50%)', line: '#9A95A2', block: '#8FA6B0', bar: '#8E8A94', ring: '0 0 0 3px var(--bg), 0 0 0 5.5px #5E4EB7' }
+{ name: 'Авто', on: 'true', auto: true, bg: '#FFFFFF', line: '#E1DCE6', block: '#DCE9EF', bar: '#EFE9F4', ring: '0 0 0 3px var(--bg), 0 0 0 5.5px #5E4EB7' }
 ]
 };
 }

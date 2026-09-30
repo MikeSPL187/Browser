@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Vola — кнопки Vola на видео</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vola.css">
+<script src="./vola-icons.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
+</helmet>
+<div class="vl" style="width: 390px; height: 844px; background: var(--page)">
+<div style="position: absolute; left: 0; right: 0; top: 40px; height: 56px; padding: 0 8px 0 20px; display: flex; align-items: center; gap: 10px">
+<span class="mono" style="width: 28px; height: 28px; border-radius: 9px; background: #A23F2B; color: #FFFFFF; font-size: 14px">К</span>
+<span style="flex-grow: 1; font-size: 16px; font-weight: 800; color: #3A1A12">Кинотека</span>
+<span class="ib" style="color: #5B4A45"><svg class="i" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 96px; height: 220px; overflow: hidden; background: linear-gradient(160deg, #1F1838 0%, #4A2A55 42%, #9A4E55 72%, #D9905C 100%)">
+<span style="position: absolute; right: 64px; top: 38px; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(closest-side, #FFE2B8 0%, rgba(255,226,184,0.35) 55%, rgba(255,226,184,0) 100%)"></span>
+<span style="position: absolute; left: -40px; right: -40px; bottom: 36px; height: 70px; border-radius: 50% 50% 0 0; background: #3A2448; opacity: 0.85"></span>
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 100px; background: linear-gradient(180deg, rgba(16,10,24,0) 0%, rgba(16,10,24,0.82) 100%)"></span>
+<div style="position: absolute; left: 0; right: 0; top: 74px; display: flex; align-items: center; justify-content: center; gap: 36px; color: #FFFFFF">
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.replay}}"></path></svg>
+<span style="width: 60px; height: 60px; border-radius: 30px; background: rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.pause}}"></path></svg></span>
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.fwd}}"></path></svg>
+</div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 12px; display: flex; flex-direction: column; gap: 8px; color: #FFFFFF">
+<span style="position: relative; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 34%; border-radius: 2px; background: #FFFFFF"></span><span style="position: absolute; left: 34%; top: -4px; width: 12px; height: 12px; margin-left: -6px; border-radius: 6px; background: #FFFFFF"></span></span>
+<span style="display: flex; align-items: center; gap: 16px; font-size: 12px; font-weight: 700"><span style="flex-grow: 1">8:12 / 24:00</span><svg class="i s" viewBox="0 0 24 24"><path d="{{i.cc}}"></path></svg><svg class="i s" viewBox="0 0 24 24"><path d="{{i.compact}}"></path></svg></span>
+</div>
+<div role="group" aria-label="Кнопки Vola для видео" style="position: absolute; right: 10px; top: 10px; height: 40px; border-radius: 20px; background: rgba(28,24,36,0.62); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 0 0 3px {{c.a45}}; display: flex; align-items: center; padding: 0 4px; color: #FFFFFF">
+<button aria-label="Картинка в картинке" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.pip}}"></path></svg></button>
+<span style="width: 1px; height: 18px; background: rgba(255,255,255,0.25)"></span>
+<button aria-label="Инструменты видео" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.moreH}}"></path></svg></button>
+</div>
+</div>
+<div style="position: absolute; right: 12px; top: 158px; width: 272px; border-radius: 20px; background: #2E2B35; color: #F4EFF7; padding: 14px 16px 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.14), var(--shadow); display: flex; flex-direction: column; gap: 8px; z-index: 3">
+<span aria-hidden="true" style="position: absolute; right: 30px; top: -6px; width: 14px; height: 14px; border-radius: 3px; background: #2E2B35; transform: rotate(45deg)"></span>
+<span style="font-size: 15px; font-weight: 800">Это кнопки Vola, не сайта</span>
+<span style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.4; color: #D6D0DE"><svg class="i xs" viewBox="0 0 24 24" style="margin-top: 2px; color: #C9BFFF"><path d="{{i.pip}}"></path></svg>Картинка в картинке — одним касанием</span>
+<span style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.4; color: #D6D0DE"><svg class="i xs" viewBox="0 0 24 24" style="margin-top: 2px; color: #C9BFFF"><path d="{{i.moreH}}"></path></svg>Звук в фоне, скорость, окно при выходе</span>
+<span style="display: flex; justify-content: flex-end"><button style="height: 36px; border-radius: 18px; padding: 0 12px; color: #C9BFFF; font-size: 14px; font-weight: 800">Понятно</button></span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 316px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 19px; font-weight: 800; color: #1C1B20">Обзор первой серии</span><span style="font-size: 13px; color: #625D6B">24 мин · субтитры · 12 тыс. просмотров</span></span>
+<span style="display: flex; gap: 8px"><span style="height: 36px; border-radius: 18px; padding: 0 14px; background: #F3ECEA; color: #5B4A45; display: flex; align-items: center; font-size: 13px; font-weight: 800">В список</span><span style="height: 36px; border-radius: 18px; padding: 0 14px; background: #F3ECEA; color: #5B4A45; display: flex; align-items: center; font-size: 13px; font-weight: 800">Поделиться</span></span>
+<span style="font-size: 14px; font-weight: 800; color: #1C1B20; padding-top: 6px">Следующие серии</span>
+<sc-for list="{{eps}}" as="e" hint-placeholder-count="3">
+<span style="display: flex; gap: 12px; align-items: center"><span style="position: relative; width: 112px; height: 64px; border-radius: 12px; background: {{e.bg}}; flex-shrink: 0"><span style="position: absolute; right: 6px; bottom: 6px; height: 18px; border-radius: 6px; padding: 0 6px; background: rgba(0,0,0,0.55); color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center">{{e.len}}</span></span><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 700; color: #1C1B20">{{e.title}}</span><span style="font-size: 12px; color: #625D6B">{{e.meta}}</span></span></span>
+</sc-for>
+</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 150px; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #FFFFFF 62%)"></div>
+<div class="glass" style="position: absolute; left: 12px; right: 12px; bottom: 24px; height: 64px; border-radius: 32px; display: flex; align-items: center; gap: 2px; padding: 0 8px">
+<button aria-label="Пространство «Аниме»" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><span style="width: 38px; height: 38px; border-radius: 19px; background: {{c.a}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.movie}}"></path></svg></span></button>
+<button aria-label="Сведения о сайте и адрес" style="flex-grow: 1; min-width: 0; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 16px; font-weight: 700; white-space: nowrap"><svg class="i xs" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{i.lock}}"></path></svg>kinoteka.example</button>
+<button class="ib" aria-label="Вкладки: 3"><span class="tc">3</span></button>
+<button class="ib" aria-label="Меню"><svg class="i" viewBox="0 0 24 24"><path d="{{i.more}}"></path></svg></button>
+</div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#A23F2B","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const accent = this.props.accent ?? '#A23F2B';
+return {
+i: window.VI || {},
+c: window.VA ? window.VA(accent) : { a: accent, a45: accent },
+eps: [
+{ title: 'Серия 2. Лёд и огонь', meta: 'Кинотека · 23 мин', len: '23:10', bg: 'linear-gradient(160deg, #16384A 0%, #3E6E86 100%)' },
+{ title: 'Серия 3. Под водой', meta: 'Кинотека · 25 мин', len: '24:48', bg: 'linear-gradient(160deg, #2A2216 0%, #8A6A3A 100%)' },
+{ title: 'Серия 4. Большие Коты', meta: 'Кинотека · 22 мин', len: '22:05', bg: 'linear-gradient(160deg, #231A2E 0%, #6B3E7A 100%)' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

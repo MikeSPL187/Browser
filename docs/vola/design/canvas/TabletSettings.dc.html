@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
-<div class="vl" style="width: 1280px; height: 800px; background: var(--bg); display: flex; gap: 24px; padding: 24px 32px">
+<div class="vl" style="width: 1280px; height: 800px; background: var(--bg); display: flex; gap: 24px; padding: 40px 32px 24px">
 <nav aria-label="Разделы настроек" style="width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px">
 <div style="display: flex; align-items: center; gap: 4px"><button class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></button><h1 class="t-h1">Настройки</h1></div>
 <label style="height: 48px; border-radius: 24px; background: var(--s-high); display: flex; align-items: center; gap: 12px; padding: 0 16px; color: var(--muted)"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg><span style="position: absolute; left: -9999px">Поиск настроек</span><input type="text" placeholder="Поиск настроек" style="flex-grow: 1; border: none; outline: none; background: transparent; font-size: 15px; font-weight: 600"></label>
@@ -26,14 +26,15 @@
 </sc-for>
 </div>
 </nav>
-<section style="flex-grow: 1; border-radius: 32px; background: var(--s-low); padding: 32px; display: flex; flex-direction: column; gap: 20px">
+<section style="flex-grow: 1; border-radius: 32px; background: var(--s-low); padding: 28px 32px; display: flex; flex-direction: column; gap: 18px">
 <h2 class="t-h1">Внешний вид</h2>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
 <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
 <button role="radio" aria-checked="{{t.on}}" style="display: flex; flex-direction: column; gap: 10px; align-items: center">
-<span style="width: 100%; height: 150px; border-radius: 24px; background: {{t.bg}}; box-shadow: {{t.ring}}; display: flex; gap: 8px; padding: 12px">
+<span style="position: relative; width: 100%; height: 132px; border-radius: 24px; background: {{t.bg}}; box-shadow: {{t.ring}}; display: flex; gap: 8px; padding: 12px">
 <span style="width: 34%; border-radius: 12px; background: {{t.side}}; display: block"></span>
 <span style="flex-grow: 1; border-radius: 12px; background: {{t.page}}; display: block"></span>
+<sc-if value="{{t.auto}}"><span aria-hidden="true" style="position: absolute; inset: 0; border-radius: 24px; overflow: hidden; clip-path: polygon(58% 0, 100% 0, 100% 100%, 42% 100%); background: #0F0E12; display: flex; gap: 8px; padding: 12px"><span style="width: 34%; border-radius: 12px; background: #1D1B22; display: block"></span><span style="flex-grow: 1; border-radius: 12px; background: #1B1920; display: block"></span></span></sc-if>
 </span>
 <span style="font-size: 15px; font-weight: 800">{{t.name}}</span>
 </button>
@@ -44,7 +45,24 @@
 <div class="row"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Боковая панель</span><span class="t-sub">Слева, прячется по жесту от края</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
 <div class="row"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Отступы вокруг страницы</span><span class="t-sub">Страница лежит карточкой на фоне пространства</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
 </div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="group" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px">
+<span style="display: flex; justify-content: space-between"><span class="t-label" style="font-size: 15px">Палитра</span><span class="t-sub" style="font-weight: 800">Как у пространства</span></span>
+<span style="display: flex; gap: 12px">
+<sc-for list="{{palette}}" as="p" hint-placeholder-count="5"><span style="width: 48px; height: 48px; border-radius: 24px; background: {{p.bg}}; box-shadow: {{p.ring}}; display: block"></span></sc-for>
+</span>
+<span style="display: flex; flex-direction: column; gap: 8px"><span style="display: flex; justify-content: space-between"><span class="t-label" style="font-size: 15px">Размер текста</span><span class="t-sub" style="font-weight: 800">100 %</span></span><span style="position: relative; height: 16px; display: flex; align-items: center"><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: linear-gradient(90deg, {{c.a}} 0 50%, var(--s-high) 50% 100%)"></span><span style="position: absolute; left: 50%; width: 4px; height: 22px; margin-left: -2px; border-radius: 2px; background: {{c.a}}"></span></span></span>
+</div>
+<div class="group" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<span class="t-label" style="font-size: 15px">Скругления</span>
+<div class="bgroup"><button>Строгие</button><button>Мягкие</button><button class="sel" style="background: {{c.a}}">Круглые</button></div>
+<span class="t-label" style="font-size: 15px; padding-top: 4px">Плотность</span>
+<div class="bgroup"><button>Плотно</button><button class="sel" style="background: {{c.a}}">Обычно</button><button>Просторно</button></div>
+</div>
+</div>
 </section>
+<div class="stat tab" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh tab" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#5E4EB7","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":1280,"height":800}}'>
@@ -68,10 +86,17 @@ n(i.puzzle, 'Расширения', false),
 n(i.sync, 'Синхронизация', false),
 n(i.info, 'О Vola', false)
 ],
+palette: [
+{ bg: 'conic-gradient(#5E4EB7 0 25%, #006877 0 50%, #A23F2B 0 75%, #2F5BD3 0)', ring: '0 0 0 3px var(--surface), 0 0 0 5px ' + accent },
+{ bg: '#5E4EB7', ring: 'none' },
+{ bg: '#006877', ring: 'none' },
+{ bg: '#A23F2B', ring: 'none' },
+{ bg: '#2F5BD3', ring: 'none' }
+],
 themes: [
 { name: 'Светлая', on: 'false', bg: '#ECE6F1', side: '#F8F4FB', page: '#FFFFFF', ring: 'var(--shadow-sm)' },
 { name: 'Тёмная', on: 'true', bg: '#0F0E12', side: '#1D1B22', page: '#1B1920', ring: '0 0 0 3px var(--s-low), 0 0 0 5.5px ' + accent },
-{ name: 'Авто', on: 'false', bg: 'linear-gradient(90deg, #ECE6F1 50%, #0F0E12 50%)', side: 'rgba(128,120,140,0.5)', page: 'rgba(160,152,170,0.55)', ring: 'var(--shadow-sm)' }
+{ name: 'Авто', on: 'false', auto: true, bg: '#ECE6F1', side: '#F8F4FB', page: '#FFFFFF', ring: 'var(--shadow-sm)' }
 ]
 };
 }

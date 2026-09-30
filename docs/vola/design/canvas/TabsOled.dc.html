@@ -25,11 +25,19 @@
 <span style="flex-grow: 1"></span>
 <button class="ib" aria-label="Найти вкладку" style="background: var(--s)"><svg class="i" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></button>
 </div>
-<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 6px 4px 0"><span class="t-h2">Вкладки</span><span class="t-sub" style="font-weight: 700">3 открыто</span></div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ess}}" as="e" hint-placeholder-count="5"><a href="#" aria-label="{{e.name}}" style="height: 60px; border-radius: 20px; background: var(--s); display: flex; align-items: center; justify-content: center"><span class="mono" style="width: 30px; height: 30px; border-radius: 10px; background: {{e.tone}}; color: {{e.ink}}; font-size: 14px">{{e.l}}</span></a></sc-for>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding: 6px 4px 0"><span class="t-h2">Вкладки</span><span class="t-sub" style="font-weight: 700">4 открыто</span></div>
 <div style="display: flex; flex-direction: column; gap: 8px">
-<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
 <div style="height: 88px; border-radius: 26px; background: var(--s); box-shadow: {{t.ring}}; display: flex; align-items: center; gap: 14px; padding: 0 6px 0 10px">
-<div style="width: 68px; height: 68px; border-radius: 18px; background: {{t.tone}}; flex-shrink: 0; padding: 8px; display: flex; flex-direction: column; gap: 5px"><span style="height: 6px; width: 60%; border-radius: 3px; background: rgba(255,255,255,0.4); display: block"></span><span style="height: 5px; width: 80%; border-radius: 3px; background: rgba(255,255,255,0.18); display: block"></span></div>
+<div style="width: 68px; height: 68px; border-radius: 18px; background: {{t.tone}}; flex-shrink: 0; overflow: hidden; position: relative; padding: 8px; display: flex; flex-direction: column; gap: 4px">
+<sc-if value="{{t.video}}"><i style="position: absolute; inset: 0; background: linear-gradient(160deg, #1F1838 0%, #4A2A55 45%, #9A4E55 75%, #D9905C 100%)"></i><span style="position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 11px; background: rgba(0,0,0,0.45); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i xs" viewBox="0 0 24 24" style="width: 12px; height: 12px"><path d="{{i.play}}"></path></svg></span><i style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #FFFFFF 0 34%, rgba(255,255,255,0.35) 34% 100%)"></i></sc-if>
+<sc-if value="{{t.cal}}"><i style="height: 5px; width: 60%; border-radius: 3px; background: rgba(255,255,255,0.5)"></i><span style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-top: 2px"><sc-for list="{{calCells}}" as="d" hint-placeholder-count="12"><i style="height: 9px; border-radius: 2px; background: {{d}}"></i></sc-for></span></sc-if>
+<sc-if value="{{t.list}}"><sc-for list="{{listRows}}" as="r" hint-placeholder-count="3"><span style="display: flex; gap: 4px; align-items: center"><i style="width: 11px; height: 14px; border-radius: 3px; background: {{r}}"></i><i style="flex-grow: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3)"></i></span></sc-for></sc-if>
+<sc-if value="{{t.forum}}"><sc-for list="{{listRows}}" as="r" hint-placeholder-count="3"><span style="display: flex; gap: 4px; align-items: center"><i style="width: 10px; height: 10px; border-radius: 5px; background: {{r}}"></i><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><i style="height: 3px; border-radius: 2px; background: rgba(255,255,255,0.35)"></i><i style="height: 3px; width: 60%; border-radius: 2px; background: rgba(255,255,255,0.2)"></i></span></span></sc-for></sc-if>
+</div>
 <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span><span class="t-sub">{{t.host}}</span></span>
 <button class="ib" aria-label="Закрыть вкладку"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.close}}"></path></svg></button>
 </div>
@@ -46,6 +54,8 @@
 </div>
 <button aria-label="Новая вкладка" style="width: 64px; height: 64px; border-radius: 22px; background: {{c.a}}; color: #3B0A02; display: flex; align-items: center; justify-content: center"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.plus}}"></path></svg></button>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFB4A5","options":["#C9BFFF","#75D4E7","#FFB4A5","#F7BD48"]},"$preview":{"width":390,"height":844}}'>
@@ -56,10 +66,20 @@ return {
 i: window.VI || {},
 c: window.VA ? window.VA(accent) : { a: accent },
 tabs: [
-{ title: 'Расписание сезона: осень', host: 'calendar.example.com', tone: '#3A2A5C', ring: '0 0 0 2px ' + accent },
-{ title: 'Обзор первой серии', host: 'reviews.example.com', tone: '#16384A', ring: 'none' },
-{ title: 'Список к просмотру', host: 'lists.example.com', tone: '#4A2A22', ring: 'none' }
-]
+{ title: 'Расписание сезона: осень', host: 'calendar.example.com', tone: '#1B2A3A', ring: '0 0 0 2px ' + accent, cal: true },
+{ title: 'Обзор первой серии', host: 'kinoteka.example', tone: '#16131F', ring: 'none', video: true },
+{ title: 'Список к просмотру', host: 'lists.example.com', tone: '#231A2E', ring: 'none', list: true },
+{ title: 'Обсуждение третьей серии', host: 'forum.example.org', tone: '#2A2216', ring: 'none', forum: true }
+],
+ess: [
+{ name: 'Кинотека', l: 'К', tone: '#4A1E14', ink: '#FFB4A5' },
+{ name: 'Список', l: 'С', tone: '#3A1F4A', ink: '#E4B8FF' },
+{ name: 'Расписание', l: 'Р', tone: '#12324A', ink: '#9CCBFF' },
+{ name: 'Форум', l: 'Ф', tone: '#3F2E00', ink: '#F7BD48' },
+{ name: 'Субтитры', l: 'Т', tone: '#0C3A33', ink: '#86D6C6' }
+],
+calCells: ['#2B3E52', '#2B3E52', '#9CCBFF', '#2B3E52', '#2B3E52', '#2B3E52', '#2B3E52', '#9CCBFF', '#2B3E52', '#FFB4A5', '#2B3E52', '#2B3E52'],
+listRows: ['#6B3E7A', '#9A4E55', '#2E5D7A']
 };
 }
 }

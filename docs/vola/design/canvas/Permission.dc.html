@@ -14,9 +14,29 @@
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
 <div class="vl" style="width: 390px; height: 844px; background: #E8EEE6">
-<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(35deg, transparent 46%, #FFFFFF 46% 49%, transparent 49%), linear-gradient(120deg, transparent 58%, #FFFFFF 58% 60%, transparent 60%), linear-gradient(80deg, transparent 20%, #D4E4F0 20% 30%, transparent 30%)"></div>
+<svg aria-hidden="true" viewBox="0 0 390 844" style="position: absolute; inset: 0; width: 390px; height: 844px">
+<rect width="390" height="844" fill="#EDF1E8"></rect>
+<path d="M-20 120 C60 150 90 250 70 330 C50 420 110 470 90 560 C75 630 20 660 -20 700 Z" fill="#CFE2F1"></path>
+<path d="M260 -10 C300 60 390 70 410 60 L410 -10 Z" fill="#CFE2F1"></path>
+<rect x="180" y="150" width="120" height="90" rx="18" fill="#D6EACC"></rect>
+<rect x="230" y="420" width="140" height="110" rx="22" fill="#D6EACC"></rect>
+<rect x="120" y="610" width="110" height="80" rx="16" fill="#D6EACC"></rect>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M-10 280 C120 300 200 260 410 320" stroke="#D8DCE0" stroke-width="16"></path>
+<path d="M-10 280 C120 300 200 260 410 320" stroke="#FFFFFF" stroke-width="12"></path>
+<path d="M160 -10 C150 200 190 420 150 860" stroke="#E9D9A6" stroke-width="16"></path>
+<path d="M160 -10 C150 200 190 420 150 860" stroke="#FFF3C9" stroke-width="12"></path>
+<path d="M-10 520 C150 540 260 500 410 560" stroke="#FFFFFF" stroke-width="8"></path>
+<path d="M260 -10 L300 844" stroke="#FFFFFF" stroke-width="6"></path>
+<path d="M170 400 L410 380" stroke="#FFFFFF" stroke-width="6"></path>
+<path d="M20 720 L410 700" stroke="#FFFFFF" stroke-width="6"></path>
+</g>
+<circle cx="214" cy="352" r="34" fill="#1A73E8" opacity="0.16"></circle>
+<circle cx="214" cy="352" r="10" fill="#1A73E8" stroke="#FFFFFF" stroke-width="4"></circle>
+</svg>
+<div aria-hidden="true" style="position: absolute; left: 16px; right: 16px; top: 52px; height: 52px; border-radius: 26px; background: #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; padding: 0 16px; color: #5F6368; font-size: 15px; font-weight: 600"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg>Поиск на карте</div>
 <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
-<div class="sheet" style="height: 470px; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div class="sheet" style="padding: 0 20px 32px; display: flex; flex-direction: column; gap: 16px">
 <div class="handle"></div>
 <div style="width: 60px; height: 60px; border-radius: 22px; background: {{c.a14}}; color: {{c.a}}; display: flex; align-items: center; justify-content: center; margin-top: 8px"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.location}}"></path></svg></div>
 <div style="display: flex; flex-direction: column; gap: 6px">
@@ -26,7 +46,8 @@
 <div class="group">
 <div class="row" style="min-height: 56px"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label">Точное местоположение</span><span class="t-sub">Иначе — только примерный район</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
 </div>
-<div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+<p class="t-sub" style="margin-top: -4px; padding: 0 4px">Решение можно изменить в сведениях о сайте</p>
+<div style="display: flex; flex-direction: column; gap: 8px">
 <button style="height: 52px; border-radius: 26px; background: {{c.a}}; color: #FFFFFF; font-size: 15px; font-weight: 800; text-align: center">Разрешить на этом сайте</button>
 <div style="display: flex; gap: 8px">
 <button style="flex: 1; height: 52px; border-radius: 26px; background: {{c.a14}}; color: {{c.a}}; font-size: 15px; font-weight: 800; text-align: center">Только сейчас</button>
@@ -34,6 +55,8 @@
 </div>
 </div>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#006877","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>

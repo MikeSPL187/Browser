@@ -17,10 +17,11 @@
 <div style="padding: 44px 16px 0; display: flex; flex-direction: column; gap: 14px">
 <div style="display: flex; align-items: center; gap: 4px"><a href="SetSync.dc.html" class="ib" aria-label="Назад"><svg class="i" viewBox="0 0 24 24"><path d="{{i.back}}"></path></svg></a><span class="t-title">Связать устройства</span></div>
 <div style="border-radius: 28px; background: var(--surface); padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: var(--shadow-sm)">
-<div aria-label="QR-код связки" style="width: 188px; height: 188px; border-radius: 20px; background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--outline-var); padding: 14px; display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 1px">
-<sc-for list="{{qr}}" as="q" hint-placeholder-count="256"><span style="background: {{q}}; border-radius: 1px"></span></sc-for>
+<div role="img" aria-label="QR-код связки" style="position: relative; width: 196px; height: 196px; border-radius: 24px; background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--outline-var); padding: 18px; display: grid; grid-template-columns: repeat(25, minmax(0, 1fr)); grid-auto-rows: 1fr">
+<sc-for list="{{qr}}" as="q" hint-placeholder-count="625"><span style="background: {{q}}"></span></sc-for>
+<span style="position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 0 0 3px #FFFFFF; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 108 108" style="width: 34px; height: 34px"><defs><linearGradient id="ql" x1="29.5" y1="30" x2="51.5" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#A78BFA"></stop><stop offset="1" stop-color="#6D4CFF"></stop></linearGradient><linearGradient id="qr" x1="77.5" y1="28" x2="51.5" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#22D3EE"></stop><stop offset="1" stop-color="#3B6BFF"></stop></linearGradient></defs><path d="M31,34 C35.5,52.5 42.5,67.5 51.5,78.5" fill="none" stroke="url(#ql)" stroke-width="13" stroke-linecap="round"></path><path d="M51.5,78.5 C58.5,62.5 66.5,44.5 77,30" fill="none" stroke="url(#qr)" stroke-width="13" stroke-linecap="round"></path></svg></span>
 </div>
-<span style="text-align: center; display: flex; flex-direction: column; gap: 4px"><span class="t-title">Отсканируйте на втором устройстве</span><span class="t-sub">Vola → Настройки → Синхронизация → «Присоединиться». Ключ передаётся только через этот код.</span></span>
+<span style="text-align: center; display: flex; flex-direction: column; gap: 4px"><span class="t-title">Отсканируйте на втором устройстве</span><span class="t-sub">Vola → Настройки → Синхронизация → «Присоединиться». Ключ передаётся только через этот код.</span><span style="align-self: center; margin-top: 6px; height: 26px; border-radius: 13px; padding: 0 10px; background: var(--s); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: var(--on-var)"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.clock}}"></path></svg>Код действует ещё 4:52</span></span>
 <button style="height: 40px; border-radius: 20px; padding: 0 16px; background: {{c.a14}}; color: {{c.a}}; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px"><svg class="i xs" viewBox="0 0 24 24"><path d="{{i.key}}"></path></svg>Показать фразу из 12 слов</button>
 </div>
 <span class="t-over" style="padding: 4px 4px 0">Как передавать данные</span>
@@ -34,6 +35,8 @@
 </sc-for>
 </div>
 </div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2F5BD3","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
@@ -42,15 +45,21 @@ renderVals() {
 const accent = this.props.accent ?? '#2F5BD3';
 const c = window.VA ? window.VA(accent) : { a: accent, a14: accent };
 const i = window.VI || {};
-const bits = '1111111011011111100000101010000110111010110110111011101001001011101110101101101100000101000100011111111010111111000000001100000011011011100111011001001110100111101111010110101001001011101000110000000011011010111111100111001010000010100010111011101011011010';
-const finder = (x, y) => (x < 7 && y < 7) || (x > 8 && y < 7) || (x < 7 && y > 8);
-const ring = (x, y, ox, oy) => { const dx = x - ox; const dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return null; if (dx === 0 || dy === 0 || dx === 6 || dy === 6) return true; if (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4) return true; return false; };
+const N = 25;
+let seed = 1847;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const inFinder = (x, y, ox, oy) => x >= ox - 1 && x <= ox + 7 && y >= oy - 1 && y <= oy + 7;
+const finderOn = (x, y, ox, oy) => { const dx = x - ox; const dy = y - oy; if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return false; if (dx === 0 || dy === 0 || dx === 6 || dy === 6) return true; return dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4; };
 const qr = [];
-for (let y = 0; y < 16; y++) {
-for (let x = 0; x < 16; x++) {
+for (let y = 0; y < N; y++) {
+for (let x = 0; x < N; x++) {
 let on;
-if (finder(x, y)) { on = ring(x, y, 0, 0) ?? ring(x, y, 9, 0) ?? ring(x, y, 0, 9) ?? false; }
-else { on = bits[(y * 16 + x) % bits.length] === '1'; }
+if (inFinder(x, y, 0, 0) || inFinder(x, y, N - 7, 0) || inFinder(x, y, 0, N - 7)) { on = finderOn(x, y, 0, 0) || finderOn(x, y, N - 7, 0) || finderOn(x, y, 0, N - 7); }
+else if (x >= 16 && x <= 20 && y >= 16 && y <= 20) { const dx = Math.abs(x - 18); const dy = Math.abs(y - 18); on = Math.max(dx, dy) !== 1; }
+else if (y === 6) { on = x % 2 === 0; }
+else if (x === 6) { on = y % 2 === 0; }
+else if (x >= 9 && x <= 15 && y >= 9 && y <= 15) { on = false; }
+else { on = rnd() > 0.52; }
 qr.push(on ? '#1C1B20' : 'transparent');
 }
 }
@@ -62,7 +71,7 @@ qr: qr,
 ways: [
 way(i.wifi, 'Напрямую по Wi-Fi', 'Когда устройства в одной сети', true, '#DDE3FF', '#2F4AA8'),
 way(i.folder, 'Через вашу папку', 'Syncthing, Nextcloud, Диск — любые файлы', true, '#D4F1EC', '#00665A'),
-way(i.dns, 'Свой сервер Candy Sync', 'Для опытных, как раньше', false, 'var(--s-high)', 'var(--on-var)')
+way(i.dns, 'Свой сервер', 'Если он у вас уже настроен', false, 'var(--s-high)', 'var(--on-var)')
 ]
 };
 }

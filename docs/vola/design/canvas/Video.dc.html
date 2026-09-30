@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<title>Vola — видео и картинка в картинке</title>
+<title>Vola — лист «Видео»</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="./vola.css">
 <script src="./vola-icons.js"></script>
@@ -14,42 +14,65 @@
 <style>body{margin:0;background:#E9E4EE}a{color:inherit}a:hover{color:inherit}</style>
 </helmet>
 <div class="vl" style="width: 390px; height: 844px; background: var(--page)">
-<div style="height: 96px; padding: 44px 20px 0; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #EEF0F2"><span style="width: 26px; height: 26px; border-radius: 8px; background: #A23F2B"></span><span style="font-size: 15px; font-weight: 800; color: #3A1A12">Кинотека</span></div>
-<div style="margin: 16px 0 0; height: 219px; background: linear-gradient(135deg, #3B2A5E 0%, #7A3E4F 55%, #D08A5C 100%); position: relative; display: flex; align-items: center; justify-content: center">
-<span style="width: 64px; height: 64px; border-radius: 32px; background: rgba(0,0,0,0.35); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.pause}}"></path></svg></span>
-<span style="position: absolute; left: 12px; right: 12px; bottom: 10px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #FFFFFF 0 38%, rgba(255,255,255,0.35) 38% 100%)"></span>
+<div style="position: absolute; left: 0; right: 0; top: 40px; height: 56px; padding: 0 8px 0 20px; display: flex; align-items: center; gap: 10px">
+<span class="mono" style="width: 28px; height: 28px; border-radius: 9px; background: #A23F2B; color: #FFFFFF; font-size: 14px">К</span>
+<span style="flex-grow: 1; font-size: 16px; font-weight: 800; color: #3A1A12">Кинотека</span>
+<span class="ib" style="color: #5B4A45"><svg class="i" viewBox="0 0 24 24"><path d="{{i.search}}"></path></svg></span>
 </div>
-<div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 19px; font-weight: 800; color: #1C1B20">Обзор первой серии</span><span style="font-size: 13px; color: #625D6B">24 мин · субтитры</span></div>
+<div style="position: absolute; left: 0; right: 0; top: 96px; height: 220px; overflow: hidden; background: linear-gradient(160deg, #1F1838 0%, #4A2A55 42%, #9A4E55 72%, #D9905C 100%)">
+<span style="position: absolute; right: 64px; top: 38px; width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(closest-side, #FFE2B8 0%, rgba(255,226,184,0.35) 55%, rgba(255,226,184,0) 100%)"></span>
+<span style="position: absolute; left: -40px; right: -40px; bottom: 36px; height: 70px; border-radius: 50% 50% 0 0; background: #3A2448; opacity: 0.85"></span>
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 100px; background: linear-gradient(180deg, rgba(16,10,24,0) 0%, rgba(16,10,24,0.82) 100%)"></span>
+<div style="position: absolute; right: 10px; top: 10px; height: 40px; border-radius: 20px; background: rgba(28,24,36,0.62); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); display: flex; align-items: center; padding: 0 4px; color: #FFFFFF"><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.pip}}"></path></svg></span><span style="width: 1px; height: 18px; background: rgba(255,255,255,0.25)"></span><span style="width: 36px; height: 36px; border-radius: 18px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center"><svg class="i s" viewBox="0 0 24 24"><path d="{{i.moreH}}"></path></svg></span></div>
+<div style="position: absolute; left: 0; right: 0; top: 74px; display: flex; align-items: center; justify-content: center; gap: 36px; color: #FFFFFF">
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.replay}}"></path></svg>
+<span style="width: 60px; height: 60px; border-radius: 30px; background: rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center"><svg class="i l" viewBox="0 0 24 24"><path d="{{i.pause}}"></path></svg></span>
+<svg class="i" viewBox="0 0 24 24"><path d="{{i.fwd}}"></path></svg>
+</div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 12px; display: flex; flex-direction: column; gap: 8px; color: #FFFFFF">
+<span style="position: relative; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.3)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 34%; border-radius: 2px; background: #FFFFFF"></span><span style="position: absolute; left: 34%; top: -4px; width: 12px; height: 12px; margin-left: -6px; border-radius: 6px; background: #FFFFFF"></span></span>
+<span style="display: flex; align-items: center; gap: 16px; font-size: 12px; font-weight: 700"><span style="flex-grow: 1">8:12 / 24:00</span><svg class="i s" viewBox="0 0 24 24"><path d="{{i.cc}}"></path></svg><svg class="i s" viewBox="0 0 24 24"><path d="{{i.compact}}"></path></svg></span>
+</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 316px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 19px; font-weight: 800; color: #1C1B20">Обзор первой серии</span><span style="font-size: 13px; color: #625D6B">24 мин · субтитры · 12 тыс. просмотров</span></div>
 <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
-<div class="sheet" style="height: 420px; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="sheet" style="padding: 0 16px 30px; display: flex; flex-direction: column; gap: 12px">
 <div class="handle"></div>
-<span class="t-title" style="padding: 4px 4px 0">Видео</span>
-<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
-<button style="height: 96px; border-radius: 24px; background: {{c.a}}; color: #FFFFFF; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; text-align: left"><svg class="i" viewBox="0 0 24 24"><path d="{{i.pip}}"></path></svg><span style="font-size: 14px; font-weight: 800; line-height: 1.2">Картинка в картинке</span></button>
-<button style="height: 96px; border-radius: 24px; background: var(--surface); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; text-align: left"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.speaker}}"></path></svg><span style="font-size: 14px; font-weight: 800; line-height: 1.2">Только звук в фоне</span></button>
+<span class="t-over" style="padding: 0 4px; margin-bottom: -4px">Видео · инструменты Vola</span>
+<div style="display: flex; align-items: center; gap: 14px; padding: 2px 4px 0">
+<span style="position: relative; width: 72px; height: 44px; border-radius: 12px; overflow: hidden; flex-shrink: 0; background: linear-gradient(160deg, #1F1838 0%, #4A2A55 42%, #9A4E55 72%, #D9905C 100%)"><span style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #FFFFFF 0 34%, rgba(255,255,255,0.4) 34% 100%)"></span></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="t-title">Обзор первой серии</span><span class="t-sub">Кинотека · 8:12 из 24:00</span></span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<button style="height: 80px; border-radius: 24px; background: {{c.a}}; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center"><svg class="i" viewBox="0 0 24 24"><path d="{{i.pip}}"></path></svg><span style="font-size: 13px; font-weight: 800; line-height: 1.2">Картинка<br>в картинке</span></button>
+<button style="height: 80px; border-radius: 24px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.speaker}}"></path></svg><span style="font-size: 13px; font-weight: 800; line-height: 1.2">Звук<br>в фоне</span></button>
+<button style="height: 80px; border-radius: 24px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.compact}}"></path></svg><span style="font-size: 13px; font-weight: 800; line-height: 1.2">Во весь<br>экран</span></button>
+</div>
+<div style="background: var(--surface); border-radius: 24px; padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 16px"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.speed}}"></path></svg><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Скорость</span><span class="t-sub">Работает и там, где у плеера её нет</span></span><span style="font-size: 14px; font-weight: 800; color: {{c.a}}">1,25×</span></div>
+<div class="bgroup" role="radiogroup" aria-label="Скорость воспроизведения">
+<sc-for list="{{speeds}}" as="s" hint-placeholder-count="5"><button role="radio" class="{{s.cls}}" style="background: {{s.bg}}">{{s.v}}</button></sc-for>
+</div>
 </div>
 <div class="group">
-<div class="row" style="min-height: 60px"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.speed}}"></path></svg><span class="t-label" style="flex-grow: 1; font-size: 15px">Скорость</span>
-<div style="display: flex; gap: 4px">
-<sc-for list="{{speeds}}" as="s" hint-placeholder-count="4"><button style="height: 36px; min-width: 48px; border-radius: 18px; padding: 0 8px; font-size: 13px; font-weight: 800; background: {{s.bg}}; color: {{s.fg}}">{{s.v}}</button></sc-for>
+<div class="row" style="min-height: 72px"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.exitApp}}"></path></svg><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Окно при выходе из Vola</span><span class="t-sub">Видео продолжится поверх других приложений</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
+<div class="row"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.mute}}"></path></svg><span class="t-label" style="flex-grow: 1; font-size: 15px">Без звука на этом сайте</span><span class="sw"><span></span></span></div>
 </div>
 </div>
-<div class="row" style="min-height: 60px"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.pip}}"></path></svg><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span class="t-label" style="font-size: 15px">Окно при выходе из Vola</span><span class="t-sub">Видео продолжится поверх других приложений</span></span><span class="sw on" style="background: {{c.a}}"><span></span></span></div>
-<div class="row" style="min-height: 60px"><svg class="i" viewBox="0 0 24 24" style="color: var(--on-var)"><path d="{{i.mute}}"></path></svg><span class="t-label" style="flex-grow: 1; font-size: 15px">Без звука на этом сайте</span><span class="sw"><span></span></span></div>
-</div>
-</div>
+<div class="stat" aria-hidden="true"><span>12:30</span><span class="ic"><svg viewBox="0 0 16 16"><path d="M15 1.5v13H1.5z"></path></svg><svg viewBox="0 0 16 16"><path d="M8 14.2L.6 5.3a11.6 11.6 0 0 1 14.8 0z"></path></svg><svg class="bat" viewBox="0 0 26 16"><rect x="1" y="3.5" width="20" height="9" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"></rect><rect x="2.9" y="5.4" width="13" height="5.2" rx="1.6"></rect><rect x="22.3" y="6.3" width="2" height="3.4" rx="1"></rect></svg></span></div>
+<div class="navh" aria-hidden="true"></div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#A23F2B","options":["#5E4EB7","#006877","#A23F2B","#2F5BD3"]},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
 renderVals() {
 const accent = this.props.accent ?? '#A23F2B';
-const c = window.VA ? window.VA(accent) : { a: accent, a14: accent };
-const sp = (v, on) => ({ v: v, bg: on ? c.a14 : 'transparent', fg: on ? accent : 'var(--on-var)' });
+const c = window.VA ? window.VA(accent) : { a: accent };
+const sp = (v, on) => ({ v: v, cls: on ? 'sel' : '', bg: on ? accent : 'var(--s-high)' });
 return {
 i: window.VI || {},
 c: c,
-speeds: [sp('1×', false), sp('1,25×', true), sp('1,5×', false), sp('2×', false)]
+speeds: [sp('0,75', false), sp('1', false), sp('1,25', true), sp('1,5', false), sp('2', false)]
 };
 }
 }
