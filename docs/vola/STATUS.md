@@ -33,7 +33,9 @@ _Обновлено: 2026-09-30 (сессия PR 3: `AddressBarController` #28 �
   `controller.addressBar.*`. Поведение не меняется, 9 юнит-тестов. CI зелёный.
 - **PR 3a «Рама» — ветка `ccr-d3f28808-uk5drv-frame`, PR ещё не открыт.** Собрана от `main` с
   вливанием #25, #27 и #28 (merge-коммиты); PR открыть после их слияния, дифф сократится сам.
-  CI проверяется ручным запуском *Build* и *Screenshots* на ветке (`workflow_dispatch`).
+  CI проверяется ручным запуском *Build* и *Screenshots* на ветке (`workflow_dispatch`): на
+  `7880b95` оба зелёные, снимки эмулятора проверены (шапка сайта прилегает к верху карточки;
+  исправлен двойной отступ под статус-бар из политики страницы — `tabSafeAreaTopInsetPx()`).
   - Порт `BrowserContentFrame`: `BrowserController.updateContentFrame()` → общий для обоих
     движков `GeckoViewInsetRules.resolve(hostFrame = …)` вычитает карточку из safe-area и
     клавиатуры (страница не получает двойных отступов).
