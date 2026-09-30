@@ -165,8 +165,8 @@ def tour(suffix):
 
     def find_in_page():
         if not find("More options", "Другие действия"):
-            # The scrolled page left the compact capsule: tap it to expand the bar.
-            tap("wikipedia.org", contains=True)
+            # The scrolled page left the compact capsule, which exposes no label: tap its spot.
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
             time.sleep(2)
         if not tap("More options", "Другие действия"):
             log("not found: menu for find in page")
