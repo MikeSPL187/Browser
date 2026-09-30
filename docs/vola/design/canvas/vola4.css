@@ -87,3 +87,10 @@
 .t-dark .halo, .t-oled .halo { background: linear-gradient(color-mix(in srgb, var(--sf-high) 90%, transparent), color-mix(in srgb, var(--sf-high) 90%, transparent)) padding-box, linear-gradient(100deg, var(--aura-1), var(--aura-2)) border-box; box-shadow: 0 10px 30px color-mix(in srgb, var(--aura-1) 22%, transparent); }
 .t-dark .fieldpill, .t-oled .fieldpill { background: var(--sf-high) !important; }
 .t-dark .glass4 .fieldpill, .t-oled .glass4 .fieldpill { background: transparent !important; }
+
+/* M3 Expressive connected button group. */
+.bgroup4 { display: flex; gap: 2px; }
+.bgroup4 > button { flex: 1 1 0; height: 44px; border-radius: 8px; background: var(--sf-high); color: var(--on-sf-v); font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.bgroup4 > button:first-child { border-radius: 22px 8px 8px 22px; }
+.bgroup4 > button:last-child { border-radius: 8px 22px 22px 8px; }
+.bgroup4 > button.sel { border-radius: 22px; background: var(--pri); color: var(--on-pri); }

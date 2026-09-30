@@ -381,3 +381,76 @@ if __name__ == '__main__':
     import sys
     if 'anime' in sys.argv[1:]:
         anime_a(); anime_b()
+
+
+# ---------- settings: appearance with the A/B chooser ----------
+
+def mini_phone(style):
+    """Tiny phone preview of a chrome style: 'frame' or 'air'."""
+    lines = ''.join(f'<i style="height: 4px; width: {w}%; border-radius: 2px; background: #DCE3E2"></i>' for w in (92, 84, 88, 70))
+    pic = BAIKAL_T.replace('id="t', 'id="m' + style).replace('url(#t', 'url(#m' + style)
+    page = (f'<span style="display: flex; align-items: center; gap: 4px"><i style="width: 9px; height: 9px; border-radius: 3px; background: #2F6B5F"></i><i style="height: 4px; width: 46%; border-radius: 2px; background: #DCE3E2"></i></span>'
+            f'<i style="height: 6px; width: 86%; border-radius: 3px; background: #15201D; opacity: 0.8; margin-top: 3px"></i><i style="height: 6px; width: 58%; border-radius: 3px; background: #15201D; opacity: 0.8"></i>'
+            f'<span style="height: 44px; border-radius: 7px; overflow: hidden; margin-top: 3px">{pic}</span>{lines}')
+    if style == 'frame':
+        return f'''<span class="aura" style="position: relative; width: 104px; height: 188px; border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
+<span style="position: absolute; left: 3px; right: 3px; top: 10px; bottom: 26px; border-radius: 13px; background: #FFFFFF; padding: 8px 7px; display: flex; flex-direction: column; gap: 4px; overflow: hidden">{page}</span>
+<span style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 14px; display: flex; align-items: center; gap: 3px"><i class="gem" style="width: 13px; height: 13px; border-radius: 5px"></i><i style="flex-grow: 1; height: 13px; border-radius: 7px; background: color-mix(in srgb, #FFFFFF 85%, transparent)"></i></span>
+</span>'''
+    return f'''<span style="position: relative; width: 104px; height: 188px; border-radius: 20px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-sf) 10%, transparent)">
+<span style="position: absolute; left: 0; right: 0; top: 10px; bottom: 0; padding: 8px 7px; display: flex; flex-direction: column; gap: 4px">{page}</span>
+<span style="position: absolute; left: -20px; right: -20px; bottom: -20px; height: 60px; background: radial-gradient(50% 60% at 30% 100%, color-mix(in srgb, var(--aura-1) 55%, transparent) 0%, transparent 70%), radial-gradient(50% 60% at 75% 100%, color-mix(in srgb, var(--aura-2) 50%, transparent) 0%, transparent 70%)"></span>
+<span class="halo" style="position: absolute; left: 6px; right: 6px; bottom: 6px; height: 17px; border-radius: 9px; display: flex; align-items: center; padding: 0 2px; box-shadow: 0 3px 8px color-mix(in srgb, var(--aura-1) 40%, transparent)"><i class="gem" style="width: 11px; height: 11px; border-radius: 4px"></i></span>
+</span>'''
+
+
+def seg(options, selected):
+    return '<div class="bgroup4" role="radiogroup">' + ''.join(
+        f'<button role="radio" aria-checked="{"true" if k == selected else "false"}" class="{"sel" if k == selected else ""}">{o}</button>' for k, o in enumerate(options)) + '</div>'
+
+
+def row(icon, title, sub, trail):
+    return f'''<div style="min-height: 64px; display: flex; align-items: center; gap: 16px; padding: 10px 16px">
+<span class="ms" style="color: var(--on-sf-v)">{icon}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="ty-label" style="font-size: 15px">{title}</span>{f'<span class="ty-cap">{sub}</span>' if sub else ''}</span>
+{trail}
+</div>'''
+
+
+def switch(on):
+    return (f'<span style="width: 52px; height: 32px; border-radius: 16px; background: {"var(--pri)" if on else "var(--sf-highest)"}; box-shadow: {"none" if on else "inset 0 0 0 2px var(--ol)"}; display: flex; align-items: center; justify-content: {"flex-end" if on else "flex-start"}; padding: 0 {"4px" if on else "7px"}; flex-shrink: 0">'
+            f'<i style="width: {24 if on else 16}px; height: {24 if on else 16}px; border-radius: 12px; background: {"var(--on-pri)" if on else "var(--ol)"}"></i></span>')
+
+
+def appearance():
+    choice = lambda style, name, sub, on: f'''<button role="radio" aria-checked="{'true' if on else 'false'}" style="flex: 1 1 0; border-radius: 24px; padding: 14px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: {'var(--sec-c)' if on else 'var(--sf-lowest)'}; box-shadow: {'inset 0 0 0 2px var(--pri)' if on else 'var(--e1)'}">
+{mini_phone(style)}
+<span style="display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center"><span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700">{'<span class="ms f xs" style="color: var(--pri)">check_circle</span>' if on else ''}{name}</span><span class="ty-cap">{sub}</span></span>
+</button>'''
+    body = f'''{status()}
+<div style="position: absolute; left: 8px; right: 8px; top: 44px; height: 56px; display: flex; align-items: center; gap: 4px"><button class="ib4" aria-label="Назад" style="color: var(--on-sf)"><span class="ms">arrow_back</span></button><span class="ty-title-l">Внешний вид</span></div>
+<div style="position: absolute; left: 16px; right: 16px; top: 108px; display: flex; flex-direction: column; gap: 12px">
+<span class="ty-over" style="padding: 0 4px">Оформление</span>
+<div role="radiogroup" aria-label="Оформление" style="display: flex; gap: 10px">
+{choice('frame', 'Рама', 'Страница в цвете пространства', True)}
+{choice('air', 'Воздух', 'Страница на весь экран', False)}
+</div>
+<div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden; margin-top: 4px">
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Тема</span>{seg(['<span class="ms xs">light_mode</span>Светлая', '<span class="ms xs">dark_mode</span>Тёмная', '<span class="ms xs">contrast</span>Авто'], 2)}</div>
+<i style="height: 1px; background: var(--sf-high); margin: 0 16px"></i>
+{row('bolt', 'Чистый чёрный (OLED)', 'В тёмной теме, экономит заряд', switch(False))}
+<i style="height: 1px; background: var(--sf-high); margin: 0 16px"></i>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px"><span class="ty-label" style="font-size: 15px">Плотность</span>{seg(['Компактно', 'Обычно', 'Просторно'], 1)}</div>
+</div>
+<div style="border-radius: 24px; background: var(--sf-lowest); overflow: hidden">
+{row('palette', 'Цвета', 'Свои у каждого пространства', '<span class="ms s" style="color: var(--on-sf-v)">chevron_right</span>')}
+</div>
+</div>
+{handle()}'''
+    board('V4-Appearance.dc.html', 'Vola v4 — внешний вид', 'w-work t-light', body, style='background: var(--sf-c)')
+
+
+if __name__ == '__main__':
+    import sys
+    if 'appearance' in sys.argv[1:]:
+        appearance()
