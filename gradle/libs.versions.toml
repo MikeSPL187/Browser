@@ -2,6 +2,9 @@
 agp = "9.4.1"
 kotlin = "2.4.20"
 compose-multiplatform = "1.12.1"
+# The Material 3 build that Compose Multiplatform 1.12.1 pairs with its compose.material3 alias.
+# Android resolves the AndroidX artifact from compose-material3 below.
+jetbrains-compose-material3 = "1.9.0"
 # Keep GeckoView on the latest stable release: it carries the engine's security fixes.
 geckoview = "156.0.20260921121718"
 compose-bom = "2026.09.00"
@@ -35,6 +38,11 @@ androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "jetbrains-compose-material3" }
 
 guava = { module = "com.google.guava:guava", version = "33.7.1-android" }
 blurview = { module = "com.github.Dimezis:BlurView", version = "version-3.2.0" }
