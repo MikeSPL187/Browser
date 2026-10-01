@@ -127,16 +127,15 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
 **Q1. Обновление зависимостей вместо Dependabot #21 и #22** · High · 1 сессия
 - **Цель.** Compose BOM 2026.09 и Material 3 1.5 (компоненты M3 Expressive для досок: группы
   кнопок, плавающие панели, индикатор загрузки), AndroidX, Kotlin 2.4.20, Compose Multiplatform
-  1.12, kotlinx-serialization 1.11, kotlinx-datetime 0.8. Затем `currentResources()` →
-  `LocalResources.current`, хелпер удаляется.
+  1.12, kotlinx-serialization 1.11. Затем `currentResources()` → `LocalResources.current`, хелпер
+  удаляется. kotlinx-datetime не нужен: единственный `Instant.parse` переходит на `kotlin.time`.
 - **Как.** Своя ветка от `main` с версиями из обоих PR: команда `@dependabot rebase` не сработала,
   ветки Dependabot не трогаем. После слияния Dependabot сам закроет #21 и #22.
-- **Файлы.** `gradle/libs.versions.toml`, `ui/ComposeResources.kt` и два места вызова, один файл с
+- **Файлы.** `gradle/libs.versions.toml`, `ui/ComposeResources.kt` и одно место вызова, один файл с
   `kotlinx.datetime.Instant`, исправления новых предупреждений и lint.
 - **Порты.** Нет.
 - **Риски.** Новые проверки lint. Поведение Compose (отступы, ripple, текст, фокус) ловим полным
-  туром снимков. Совместимость Kotlin 2.4.20 и CMP 1.12. В kotlinx-datetime с 0.7 `Instant`
-  переехал в `kotlin.time`. Без SDK проверить нельзя: только CI.
+  туром снимков. Совместимость Kotlin 2.4.20 и CMP 1.12. Без SDK проверить нельзя: только CI.
 
 **Q2. GeckoView: последняя стабильная версия и еженедельное обновление** · High · 1 сессия
 - **Цель.** Правило 6. В `main` — GeckoView 156 (сборка от 21.09), а Firefox 157 вышел 29.09.
@@ -599,7 +598,7 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
 | Что | Сейчас | Решение | Когда |
 | --- | --- | --- | --- |
 | Dependabot #21, #22 | CI красный с 29.09; `@dependabot rebase` не сработал | Свой PR с теми же версиями, Dependabot закроет свои сам | Q1 |
-| `currentResources()` | Хелпер в `ui/ComposeResources.kt`, два вызова | `LocalResources.current`, хелпер удалить | Q1 |
+| `currentResources()` | Хелпер в `ui/ComposeResources.kt`, один вызов | `LocalResources.current`, хелпер удалить | Q1 |
 | Размер `BrowserController` | 16 093 строки (было 16 262) | Храповик; вынос по фичам: Tabs и Workspaces (Q7, Q8), Essentials (Q5), SiteInfo и Permissions (Q10), Downloads (Q18), Credentials (Q19), FindInPage — при первом касании. Цель — меньше 10 000 строк к концу фазы D | Q3 и далее |
 | Другие большие файлы | `TabOverview.kt` 2 287, `BrowserScreen.kt` 1 992, `MainActivity.kt` 1 856 | Под храповик; `TabOverview` делится в Q7 | Q3, Q7 |
 | GeckoView | 156 при вышедшем Firefox 157; цикл Firefox — две недели | Обновление и еженедельный воркфлоу; точечные обновления безопасности — за 48 часов | Q2 |
