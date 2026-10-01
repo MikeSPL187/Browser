@@ -1,0 +1,4 @@
+Vola controls in the tour: 0 accessibility finding(s).
+- [gone] unlabeled | View | appearance — not seen in this tour; delete it from the baseline if fixed
+- [gone] unlabeled | View | tab-overview — not seen in this tour; delete it from the baseline if fixed
+- [gone] unlabeled | View | workspace-options — not seen in this tour; delete it from the baseline if fixed

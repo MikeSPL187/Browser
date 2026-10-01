@@ -1,0 +1,52 @@
+10-01 17:17:37.507  4528  4552 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+10-01 17:17:37.507  4528  4552 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+10-01 17:18:12.016  4528  4552 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://example.com/” to use “https”." {file: "http://example.com/" line: 0}]
+10-01 17:18:25.144   575   673 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=http://neverssl.com/... flg=0x10000000 pkg=io.github.mikespl187.vola.debug cmp=io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+10-01 17:18:26.181  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=http://neverssl.com/
+10-01 17:18:26.293  4528  4552 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://neverssl.com/” to use “https”." {file: "http://neverssl.com/" line: 0}]
+10-01 17:19:03.742  5243  5258 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://neverssl.com/" line: 0}]
+10-01 17:19:04.080  4528  4528 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://neverssl.com/
+10-01 17:19:04.590  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=http://brightsilvershinysunrise.neverssl.com/online
+10-01 17:19:05.373  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://brightsilvershinysunrise.neverssl.com/online” to use “https”." {file: "http://brightsilvershinysunrise.neverssl.com/online" line: 0}]
+10-01 17:19:35.675  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://brightsilvershinysunrise.neverssl.com/online/” to use “https”." {file: "http://brightsilvershinysunrise.neverssl.com/online/" line: 0}]
+10-01 17:19:36.233  5243  5258 E Isolated Web Content: [JavaScript Error: "HTTPS-Only Mode: Upgrading insecure request “http://brightsilvershinysunrise.neverssl.com/online/” failed. (M24-C39)" {file: "http://brightsilvershinysunrise.neverssl.com/online/" line: 0}]
+10-01 17:19:36.233  5243  5258 E Isolated Web Content: [JavaScript Error: "HTTPS-Only Mode: Upgrading insecure request “http://brightsilvershinysunrise.neverssl.com/online/” failed. (M24-C39)" {file: "http://brightsilvershinysunrise.neverssl.com/online/" line: 0}]
+10-01 17:19:36.507  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=https://neverssl.com/
+10-01 17:20:12.944  5243  5258 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://neverssl.com/" line: 0}]
+10-01 17:20:12.948  4528  4528 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://neverssl.com/
+10-01 17:20:12.988  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=http://silverastoundingmajesticlove.neverssl.com/online
+10-01 17:20:13.086  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://silverastoundingmajesticlove.neverssl.com/online” to use “https”." {file: "http://silverastoundingmajesticlove.neverssl.com/online" line: 0}]
+10-01 17:20:23.235  4528  4552 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://example.com/” to use “https”." {file: "http://example.com/" line: 0}]
+10-01 17:20:25.692  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://silverastoundingmajesticlove.neverssl.com/online/” to use “https”." {file: "http://silverastoundingmajesticlove.neverssl.com/online/" line: 0}]
+10-01 17:20:26.100  5243  5258 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://silverastoundingmajesticlove.neverssl.com/online/" line: 0}]
+10-01 17:20:26.102  4528  4528 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://silverastoundingmajesticlove.neverssl.com/online/
+10-01 17:20:36.728   575  1608 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=http://neverssl.com/... flg=0x10000000 pkg=io.github.mikespl187.vola.debug cmp=io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+10-01 17:20:38.066  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=http://neverssl.com/
+10-01 17:20:38.132  4528  4552 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://neverssl.com/” to use “https”." {file: "http://neverssl.com/" line: 0}]
+10-01 17:20:39.154  5243  5258 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://neverssl.com/" line: 0}]
+10-01 17:20:39.289  4528  4528 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://neverssl.com/
+10-01 17:20:39.791  4528  4528 D GeckoSession: handleMessage GeckoView:PageStart uri=http://silvergoodglowingmorning.neverssl.com/online
+10-01 17:20:40.103  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://silvergoodglowingmorning.neverssl.com/online” to use “https”." {file: "http://silvergoodglowingmorning.neverssl.com/online" line: 0}]
+10-01 17:21:06.195  5243  5258 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://silvergoodglowingmorning.neverssl.com/online/” to use “https”." {file: "http://silvergoodglowingmorning.neverssl.com/online/" line: 0}]
+10-01 17:21:06.787  5243  5258 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://silvergoodglowingmorning.neverssl.com/online/" line: 0}]
+10-01 17:21:06.950  4528  4528 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://silvergoodglowingmorning.neverssl.com/online/
+10-01 17:21:44.384  6030  6152 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+10-01 17:21:44.384  6030  6152 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+10-01 17:21:46.262  6030  6030 D GeckoSession: handleMessage GeckoView:PageStart uri=https://silvergoodglowingmorning.neverssl.com/online/
+10-01 17:21:46.826  6300  6356 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://silvergoodglowingmorning.neverssl.com/online/" line: 0}]
+10-01 17:21:47.516  6030  6030 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://silvergoodglowingmorning.neverssl.com/online/
+10-01 17:22:21.310  6632  6654 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+10-01 17:22:21.310  6632  6654 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+10-01 17:23:16.196  7487  7509 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+10-01 17:23:16.198  7487  7509 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
+10-01 17:23:48.336  7487  7509 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://example.com/” to use “https”." {file: "http://example.com/" line: 0}]
+10-01 17:24:02.410   575  1197 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=http://neverssl.com/... flg=0x10000000 pkg=io.github.mikespl187.vola.debug cmp=io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+10-01 17:24:03.405  7487  7509 W GeckoConsole: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://neverssl.com/” to use “https”." {file: "http://neverssl.com/" line: 0}]
+10-01 17:24:03.429  7487  7487 D GeckoSession: handleMessage GeckoView:PageStart uri=http://neverssl.com/
+10-01 17:24:03.921  8027  8045 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://neverssl.com/" line: 0}]
+10-01 17:24:04.175  7487  7487 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://neverssl.com/
+10-01 17:24:04.381  7487  7487 D GeckoSession: handleMessage GeckoView:PageStart uri=http://wholeuniqueoldlight.neverssl.com/online
+10-01 17:24:05.122  8027  8045 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://wholeuniqueoldlight.neverssl.com/online” to use “https”." {file: "http://wholeuniqueoldlight.neverssl.com/online" line: 0}]
+10-01 17:24:54.664  8027  8045 W Isolated Web Content: [JavaScript Warning: "HTTPS-Only Mode: Upgrading insecure request “http://wholeuniqueoldlight.neverssl.com/online/” to use “https”." {file: "http://wholeuniqueoldlight.neverssl.com/online/" line: 0}]
+10-01 17:24:55.378  8027  8045 W Isolated Web Content: [JavaScript Warning: "This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”." {file: "https://wholeuniqueoldlight.neverssl.com/online/" line: 0}]
+10-01 17:24:55.540  7487  7487 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://wholeuniqueoldlight.neverssl.com/online/
