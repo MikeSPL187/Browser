@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +42,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
@@ -52,6 +50,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
+import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
@@ -321,14 +320,8 @@ private fun FindInPageBarPreviewContent(mode: BrowserAppearanceMode) {
     }
 }
 
-@Preview(name = "Find in page · light", widthDp = 390)
+@VolaPreviews
 @Composable
-private fun FindInPageBarLightPreview() {
-    FindInPageBarPreviewContent(BrowserAppearanceMode.Light)
-}
-
-@Preview(name = "Find in page · dark", widthDp = 390, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun FindInPageBarDarkPreview() {
-    FindInPageBarPreviewContent(BrowserAppearanceMode.Dark)
+private fun FindInPageBarPreview() {
+    FindInPageBarPreviewContent(BrowserAppearanceMode.System)
 }
