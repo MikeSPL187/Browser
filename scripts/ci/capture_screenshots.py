@@ -3,6 +3,9 @@
 
 Usage: capture_screenshots.py <package> <output-dir>
 
+Next to the output directory it keeps ui-dumps/: the UI hierarchy behind every screenshot, read by
+a11y_audit.py, and the screen density.
+
 Navigation uses visible text and accessibility descriptions (English and Russian), so the script
 keeps working when layouts change. Every step is best effort: a failed step is logged and the
 tour continues, so one broken screen never hides the rest.
@@ -18,6 +21,8 @@ from pathlib import Path
 PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
+DUMPS = OUT.parent / "ui-dumps"
+DUMPS.mkdir(parents=True, exist_ok=True)
 LOG = []
 _counter = 0
 
@@ -45,6 +50,10 @@ def shot(name):
     with target.open("wb") as file:
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True, timeout=60)
     log(f"screenshot {target.name}")
+    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
+    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
+    if raw.lstrip().startswith(b"<?xml"):
+        (DUMPS / f"{target.stem}.xml").write_bytes(raw)
 
 
 def nodes():
@@ -237,6 +246,61 @@ def tour(suffix):
     step("settings", menu_and_settings)
 
 
+def accessibility_pass():
+    """Key screens with the largest system font (200 %). The workflow already turns animations off
+    for the whole tour, so these shots also show the reduced-motion state."""
+    adb("shell", "settings", "put", "system", "font_scale", "2.0", check=False)
+    adb("shell", "am", "force-stop", PACKAGE, check=False)
+    launch()
+    time.sleep(12)
+    step("new-tab-a11y", lambda: shot("new-tab-a11y"))
+
+    def page_and_menu():
+        open_url("https://en.wikipedia.org/wiki/Zen")
+        time.sleep(15)
+        shot("page-a11y")
+        if tap("More options", "Другие действия"):
+            time.sleep(2)
+            shot("menu-a11y")
+            if tap_scrolling("Settings", "Настройки", name="a11y-menu"):
+                time.sleep(3)
+                shot("settings-a11y")
+                adb("shell", "input", "keyevent", "BACK")
+                time.sleep(1)
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(1)
+    step("page-a11y", page_and_menu)
+
+    adb("shell", "settings", "put", "system", "font_scale", "1.0", check=False)
+
+
+def measure_cold_start(runs=5):
+    """Cold start time (am start -W, TotalTime) for the summary: a trend, not a gate."""
+    resolved = (adb("shell", "cmd", "package", "resolve-activity", "--brief", "-c",
+                    "android.intent.category.LAUNCHER", PACKAGE, check=False, capture=True) or b"")
+    component = resolved.decode().strip().splitlines()[-1] if resolved.strip() else ""
+    if "/" not in component:
+        log("cold start: launcher activity not found")
+        return
+    times = []
+    for _ in range(runs):
+        adb("shell", "am", "force-stop", PACKAGE, check=False)
+        time.sleep(2)
+        output = (adb("shell", "am", "start", "-W", "-n", component, check=False, capture=True,
+                      timeout=90) or b"").decode()
+        match = re.search(r"TotalTime:\s*(\d+)", output)
+        if match:
+            times.append(int(match.group(1)))
+        time.sleep(3)
+    if times:
+        summary = (f"Cold start (am start -W, {len(times)} runs): average {sum(times) // len(times)} ms, "
+                   f"min {min(times)} ms, max {max(times)} ms")
+    else:
+        summary = "Cold start: no TotalTime reported"
+    (OUT / "startup.txt").write_text(summary + "\n")
+    log(summary)
+
+
 def air_layout(suffix):
     """Switches Appearance → Browser layout to Air and shoots the edge-to-edge page."""
     if not tap("More options", "Другие действия"):
@@ -266,6 +330,9 @@ def air_layout(suffix):
 
 
 def main():
+    density = (adb("shell", "wm", "density", capture=True, check=False) or b"").decode()
+    match = re.search(r"(\d+)\s*$", density.strip())
+    (DUMPS / "density.txt").write_text((match.group(1) if match else "420") + "\n")
     adb("shell", "cmd", "uimode", "night", "no", check=False)
     launch()
     time.sleep(15)
@@ -279,6 +346,8 @@ def main():
     tour("dark")
 
     adb("shell", "cmd", "uimode", "night", "no", check=False)
+    step("accessibility", accessibility_pass)
+    step("cold-start", measure_cold_start)
     adb("shell", "cmd", "locale", "set-app-locales", PACKAGE, "--locales", "ru-RU", check=False)
     adb("shell", "am", "force-stop", PACKAGE, check=False)
     launch()
