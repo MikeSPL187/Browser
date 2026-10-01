@@ -43,22 +43,55 @@ def log(message):
     LOG.append(message)
 
 
+# A slow emulator can raise "System UI isn't responding" over the app. While it is open,
+# uiautomator sees only the dialog: taps miss and screenshots show the dialog, not Vola.
+NOT_RESPONDING_MARKERS = ("isn't responding", "not responding", "не отвечает")
+WAIT_LABELS = ("Wait", "Подождать", "Ждать")
+
+
+def dump_ui():
+    """The current UI hierarchy as raw XML, after closing a system "not responding" dialog."""
+    raw = b""
+    for _ in range(3):
+        adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
+        raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
+        if not dismiss_not_responding_dialog(raw):
+            break
+        time.sleep(2)
+    return raw
+
+
+def dismiss_not_responding_dialog(raw):
+    """Taps "Wait" on a system "not responding" dialog in [raw]; True if there was one."""
+    text = raw.decode("utf-8", "replace")
+    if not any(marker in text for marker in NOT_RESPONDING_MARKERS):
+        return False
+    for node in parse_nodes(raw):
+        if node["text"] in WAIT_LABELS or node["desc"] in WAIT_LABELS:
+            x, y = node["center"]
+            adb("shell", "input", "tap", str(x), str(y))
+            log(f"dismissed a system 'not responding' dialog at {x},{y}")
+            return True
+    return False
+
+
 def shot(name):
     global _counter
     _counter += 1
     target = OUT / f"{_counter:02d}-{name}.png"
+    raw = dump_ui()
     with target.open("wb") as file:
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True, timeout=60)
     log(f"screenshot {target.name}")
-    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
-    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
     if raw.lstrip().startswith(b"<?xml"):
         (DUMPS / f"{target.stem}.xml").write_bytes(raw)
 
 
 def nodes():
-    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
-    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
+    return parse_nodes(dump_ui())
+
+
+def parse_nodes(raw):
     try:
         root = ElementTree.fromstring(raw.decode("utf-8", "replace"))
     except ElementTree.ParseError:
@@ -99,9 +132,7 @@ def tap(*labels, contains=False):
 
 def save_ui(name):
     """Keeps the UI hierarchy next to the screenshots, so a missed element can be diagnosed."""
-    adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
-    raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
-    (OUT / f"ui-{name}.xml").write_bytes(raw)
+    (OUT / f"ui-{name}.xml").write_bytes(dump_ui())
     log(f"saved ui-{name}.xml")
 
 
