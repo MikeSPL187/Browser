@@ -1,0 +1,11 @@
+Vola controls in the tour: 10 accessibility finding(s).
+- [NEW] small | View | 288x24 dp — menu-a11y
+- [NEW] small | View | 288x30 dp — menu-dark, menu-light, menu-ru
+- [NEW] small | View | 42x675 dp — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [NEW] small | View | 52x24 dp — workspace-options-ru
+- [NEW] small | View | 52x43 dp — workspace-options-dark, workspace-options-light
+- [NEW] unlabeled | View | 304x675 dp — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [NEW] unlabeled | View | 42x675 dp — tab-overview-dark
+- [NEW] unlabeled | View | 52x24 dp — workspace-options-ru
+- [NEW] unlabeled | View | 52x43 dp — workspace-options-dark, workspace-options-light
+- [NEW] unlabeled | View | 52x48 dp — appearance-dark, appearance-light, appearance-ru
