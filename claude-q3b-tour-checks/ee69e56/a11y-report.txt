@@ -1,0 +1,9 @@
+Vola controls in the tour: 3 accessibility finding(s).
+- [known] unlabeled | View | appearance — appearance-dark, appearance-light, appearance-ru
+- [known] unlabeled | View | tab-overview — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [known] unlabeled | View | workspace-options — workspace-options-dark, workspace-options-light, workspace-options-ru
+- [gone] small | View | 288x24 dp — not seen in this tour; delete it from the baseline if fixed
+- [gone] small | View | 288x30 dp — not seen in this tour; delete it from the baseline if fixed
+- [gone] small | View | 42x675 dp — not seen in this tour; delete it from the baseline if fixed
+- [gone] small | View | 52x24 dp — not seen in this tour; delete it from the baseline if fixed
+- [gone] small | View | 52x43 dp — not seen in this tour; delete it from the baseline if fixed
