@@ -250,7 +250,8 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
     один PR — делим на 7a (раскладка, переключатель внизу, Essentials) и 7b (действия, морф,
     `TabsController`).
   - Память и декодирование миниатюр — вне главного потока.
-  - Порядок обхода TalkBack.
+  - Порядок обхода TalkBack. Долг из Q3b: у карточки вкладки нет подписи (`a11y-baseline.txt`,
+    `unlabeled | View | tab-overview`) — исправить и удалить строку.
 - **Предложения П2, П3.**
 
 **Q8. Пространства: свайп, создание, настройки** · **Extra** · 1 сессия
@@ -269,6 +270,8 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
     отрисовки (`drawBehind`, лямбда-модификаторы).
   - Конфликт со смахиванием вкладок.
   - Запертое пространство (биометрия) посреди свайпа.
+  - Долг из Q3b: у переключателя изоляции в настройках пространства нет подписи
+    (`unlabeled | View | workspace-options`).
 - **Решение владельца:** раскладка жестов (П8).
 
 **Q9. Главное меню плитками** · High · 1 сессия
@@ -384,6 +387,8 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
   `ui/SettingsComponents.kt`, `data/BrowserSessionStore.kt`, новый `settings/SettingSpec.kt`.
 - **Риски.** 87 ключей и миграции значений. Видимость по движку (`visibleWhen`). Поиск по
   настройкам должен работать как раньше.
+- **Долг из Q3b.** У переключателя во «Внешнем виде» нет подписи для TalkBack
+  (`unlabeled | View | appearance` в `a11y-baseline.txt`).
 - **Долг из Q1.** Устаревший `Slider(value = …)` из Material 3 1.5 заменить перегрузкой со
   `SliderState`: `ui/TabSettingsPage.kt`, `ui/DeveloperOptionsSettingsPage.kt`,
   `ui/CapsuleCustomIconEditorScreen.kt`, `ui/ProfileWallpaperEditorScreen.kt`,
