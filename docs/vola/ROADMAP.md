@@ -378,6 +378,10 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
   `ui/SettingsComponents.kt`, `data/BrowserSessionStore.kt`, новый `settings/SettingSpec.kt`.
 - **Риски.** 87 ключей и миграции значений. Видимость по движку (`visibleWhen`). Поиск по
   настройкам должен работать как раньше.
+- **Долг из Q1.** Устаревший `Slider(value = …)` из Material 3 1.5 заменить перегрузкой со
+  `SliderState`: `ui/TabSettingsPage.kt`, `ui/DeveloperOptionsSettingsPage.kt`,
+  `ui/CapsuleCustomIconEditorScreen.kt`, `ui/ProfileWallpaperEditorScreen.kt`,
+  `ui/CastControls.kt` (7 мест).
 
 **Q17. Темы** · High · 1 сессия
 - **Цель.**
@@ -397,6 +401,9 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
   `ui/SnoozeScreens.kt`, `ui/LibrarySearchBar.kt`. Новый `DownloadsController`.
 - **Риски.** «Очистить историю» с «Отменить» — через отложенное удаление. Длинные списки без
   рывков. Цвет пространства у записи.
+- **Долг из Q1.** Устаревшие API Material 3 1.5: `ListItem(headlineContent = …)` → перегрузка с
+  `content` (`HistoryScreen.kt`, `FavoritesScreen.kt`, `DownloadsScreen.kt`, 6 мест);
+  `SearchBar`/`InputField` → `SearchBarState` и `TextFieldState` (`LibrarySearchBar.kt`).
 
 #### Фаза E. Пароли и перенос
 
@@ -599,6 +606,9 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
 | --- | --- | --- | --- |
 | Dependabot #21, #22 | CI красный с 29.09; `@dependabot rebase` не сработал | Свой PR с теми же версиями, Dependabot закроет свои сам | Q1 |
 | `currentResources()` | Хелпер в `ui/ComposeResources.kt`, один вызов | `LocalResources.current`, хелпер удалить | Q1 |
+| Устаревшие API Material 3 1.5 | 13 предупреждений после Q1: `Slider` (7), `ListItem` (6 мест в библиотеке), `SearchBar` | Переход на новые API вместе с переделкой экранов по доскам: там их проверят снимки | Q16, Q18 |
+| Устаревший DSL сборки | `app/build.gradle.kts`: блок `android {}` старого вида, `srcDir`, `by registering` (Gradle 9.6) | Перевести на `ApplicationExtension`, `directories`, `register`/`named` отдельным PR сборки | Вместе с Q3 |
+| Поиск по странице: «0/0» | На снимке `find-dark` в #31 счётчик «0/0» при подсвеченных совпадениях; в RU-проходе — «1/541». Код поиска и GeckoView в #31 не менялись | Разобрать порядок результатов `GeckoSession.finder` и показывать «ищу…», пока Gecko не вернул окончательный итог | Отдельный небольшой PR (High) |
 | Размер `BrowserController` | 16 093 строки (было 16 262) | Храповик; вынос по фичам: Tabs и Workspaces (Q7, Q8), Essentials (Q5), SiteInfo и Permissions (Q10), Downloads (Q18), Credentials (Q19), FindInPage — при первом касании. Цель — меньше 10 000 строк к концу фазы D | Q3 и далее |
 | Другие большие файлы | `TabOverview.kt` 2 287, `BrowserScreen.kt` 1 992, `MainActivity.kt` 1 856 | Под храповик; `TabOverview` делится в Q7 | Q3, Q7 |
 | GeckoView | 156 при вышедшем Firefox 157; цикл Firefox — две недели | Обновление и еженедельный воркфлоу; точечные обновления безопасности — за 48 часов | Q2 |

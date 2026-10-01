@@ -3,10 +3,26 @@
 Файл для передачи работы между сессиями Claude Code. Новая сессия читает его первым и
 обновляет в конце работы.
 
-_Обновлено: 2026-09-30 (сессия PR 3: `AddressBarController` #28 и «Рама» 3a)._
+_Обновлено: 2026-10-01 (сессия ROADMAP и Q1: обновление зависимостей, PR #31)._
 
 ## PR и сборка
 
+- **2026-10-01: план работ — `docs/vola/ROADMAP.md`** (очередь Q1–Q31 с Effort, порядок работы
+  над PR, критерии качества, Vola vs лидеры, техдолг). Владелец подтвердил очередь, начата Q1.
+- **PR #31 — Q1: зависимости вместо Dependabot #21 и #22** (ветка `claude/new-session-sdccw8`,
+  метка `screenshots`). Compose BOM 2026.09.00, Material 3 1.5.0-alpha29, AndroidX, AGP 9.4.1,
+  Kotlin 2.4.20, Compose Multiplatform 1.12.1, kotlinx-serialization 1.11.0. kotlinx-datetime
+  удалён: `Instant.parse` → `kotlin.time.Instant` (сверено на 14 входах). `currentResources()` →
+  `LocalResources.current`. Аксессоры `compose.*` в `shared` заменены записями каталога
+  `jetbrains-compose-*` (те же координаты: 1.12.1 и material3 1.9.0).
+  - CI на `bbeb28f` зелёный, снимки эмулятора сверены с #30: раскладка та же, отличия — живые
+    сайты и часы; падений нет.
+  - Новые предупреждения Material 3 1.5 (`Slider`, `ListItem`, `SearchBar`, 13 мест) не
+    исправлены намеренно: экраны переделываются в Q16/Q18, там их проверят снимки (ROADMAP).
+  - Наблюдение: на снимке `find-dark` счётчик «0/0» при подсвеченных совпадениях (код поиска не
+    менялся) — отдельный PR, см. ROADMAP, раздел 5.
+  - После слияния Dependabot должен сам закрыть #21 и #22.
+- **2026-09-30: слиты #30** (тур снимков: капсула по координатам).
 - **2026-09-30: слиты #25, #26, #27, #28 и #29** (токены, lint, значки, `AddressBarController`,
   «Рама», «Остров», «Поиск», новая вкладка). Dependabot `rebase` запрошен в #21 и #22; после
   слияния #22 заменить `currentResources()` на `LocalResources.current`.
@@ -72,22 +88,14 @@ _Обновлено: 2026-09-30 (сессия PR 3: `AddressBarController` #28 �
   ореол пространства, сверху название пространства (если задано) и дата. Не сделано: «Продолжить»,
   карточка защиты, новая сетка Essentials. CI зелёный. Шаг тура `find-*` не находит сжатую капсулу —
   поправить тур (нажимать по координатам капсулы).
-- **Стек веток «Рама» → «Остров» → «Поиск»:** после слияния #25/#27/#28 открывать PR по очереди,
-  каждый — от предыдущей ветки после её слияния (дифф каждого PR — только его фича).
-- **Порядок слияния:** #26, #27, #28 независимы от #25 и друг от друга; сливать в любом порядке.
-  После слияния #25, #27 и #28 — открыть PR «Рамы». Значки превью темы — перевести на `VolaIcons`.
 - **PR #1–#17, #19, #20, #23, #24 слиты в `main`** (merge commit, CI зелёный).
   #20 — поддержка Android 12+
   (`minSdk` 31, обёртки в `PlatformCompat.kt`, `IoCompat.kt`). #19 — Dependabot, обновление actions.
 - **Ветки слитых PR не удалены:** облачной среде запрещено удалять ветки в GitHub. Владельцу:
   удалить их на странице *Branches* и включить *Settings → General → Automatically delete head
   branches*.
-- **Dependabot, открыты:**
-  - **#21** (Kotlin 2.4.20, Compose Multiplatform 1.12, kotlinx) и **#22** (Compose BOM 2026.09,
-    AndroidX) — CI красный. Новая версия Compose добавила проверку lint
-    `LocalContextGetResourceValueCall`: 18 ошибок, первая — `ui/BrowserScreen.kt:423`
-    (`context.getString` внутри Compose). Нужен отдельный PR: заменить на `stringResource` /
-    `LocalResources`, потом перезапустить эти PR. Effort: High.
+- **Dependabot, открыты:** #21 и #22 (CI красный с 29.09, `rebase` не сработал) — их версии
+  взяты в #31.
 
 ## Подпись
 
@@ -126,21 +134,25 @@ _Обновлено: 2026-09-30 (сессия PR 3: `AddressBarController` #28 �
 
 Готовый промпт для новой сессии — `docs/vola/NEXT_SESSION.md`.
 
-1. Владелец проверяет и сливает #25, #26, #27, #28 (чек-листы в описаниях).
-2. После #26: команда Dependabot `rebase` в #21 и #22, затем перевести `currentResources()` на
-   `LocalResources.current`.
-3. После слияния #25, #27, #28: влить `main` в ветку «Рамы», открыть PR (метка `screenshots`),
-   подписаться на события. Затем 3b «Остров» (Effort: **Extra**): капсула при прокрутке с ростом
-   карточки (для Gecko — `setVerticalClipping`/динамическая панель, без перекладки страницы),
-   ободок ореола в «Воздухе», пружины `VolaMotion`.
-4. Хвосты PR 1: PR 5 — `privateMode = true` на приватной вкладке и новая вкладка на ореоле; PR 7 —
-   страница HTTPS-only в цветах v4; PR 8 — визуальный выбор «Рама»/«Воздух» по доске SetAppearance.
-5. Владелец: секрет Preview; удалить ветки слитых PR.
-6. По готовности: `geckoview-update.yml`, храповик размера `BrowserController`, скриншоты
-   Compose Preview в CI.
+Очередь и порядок — `docs/vola/ROADMAP.md`, раздел 2.
+
+1. Владелец проверяет и сливает #31 (чек-лист в описании). Проверить, что Dependabot закрыл #21 и
+   #22.
+2. Ответы владельца на вопросы ROADMAP, раздел 6 (Essentials, жесты, Safe Browsing, П1–П8,
+   релизный ключ).
+3. Следующий пункт очереди — **Q2: GeckoView** (последняя стабильная + `geckoview-update.yml`),
+   Effort High. Начинать только по слову владельца.
+4. Владелец: секрет Preview; удалить ветки слитых PR.
 
 ## Заметки о среде
 
+- **Исходники Material 3 без Google Maven:** `dl.google.com` закрыт, но JetBrains публирует
+  копию на Maven Central: `org.jetbrains.compose.material3:material3:<v>:sources` (общий код:
+  `Slider.kt`, `ListItem.kt`, `SearchBar.kt`). Соответствие версий — в
+  `material3-android-<v>.module` (1.13.0-alpha01 → AndroidX 1.5.0-alpha27). Константы плагина
+  CMP (`composeMaterial3Version`) — `javap -constants` на `compose-gradle-plugin-<v>.jar`.
+- **Сравнение снимков с прошлым PR:** `git archive origin/screenshots <папка>` для обеих веток,
+  Pillow (`pip install pillow`) — разница по пикселям и листы «было → стало».
 - Android SDK в облачной среде нет (`dl.google.com`, `maven.mozilla.org` закрыты; `maven.google.com`
   открыт). Сборку и тесты проверяет CI. `python3 scripts/test_translations.py` проверяет строки
   EN/RU локально.
