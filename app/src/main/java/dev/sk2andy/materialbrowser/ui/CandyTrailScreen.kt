@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
@@ -34,7 +35,7 @@ internal fun CandyTrailScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val resources = currentResources()
+    val resources = LocalResources.current
     val forkOpenStatus = stringResource(R.string.fork_status_open)
     val forkClosedStatus = stringResource(R.string.fork_status_closed)
     val rootView = LocalView.current
