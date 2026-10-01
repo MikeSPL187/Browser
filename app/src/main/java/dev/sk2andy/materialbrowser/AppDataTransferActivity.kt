@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import dev.sk2andy.materialbrowser.browser.gecko.currentGeckoIdentity
 import dev.sk2andy.materialbrowser.browser.systemwebview.currentSystemWebViewIdentity
 import dev.sk2andy.materialbrowser.data.AppDataArchiveCodec
 import dev.sk2andy.materialbrowser.data.AppDataArchiveManifest
@@ -83,7 +84,7 @@ internal fun currentBrowserEngineIdentity(): String =
     if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
         currentSystemWebViewIdentity()
     } else {
-        "org.mozilla.geckoview@${org.mozilla.geckoview.BuildConfig.MOZ_APP_VERSION}"
+        currentGeckoIdentity()
     }
 
 class AppDataTransferActivity : ComponentActivity() {
