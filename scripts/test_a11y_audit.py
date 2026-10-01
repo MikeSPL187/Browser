@@ -23,6 +23,10 @@ DUMP = f"""<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
       <node class="android.widget.TextView" package="{PACKAGE}" text="Settings" clickable="false" bounds="[10,310][200,380]" />
     </node>
     <node class="android.view.View" package="{PACKAGE}" content-desc="Hidden" clickable="true" visible-to-user="false" bounds="[0,400][10,410]" />
+    <node class="android.view.View" package="{PACKAGE}" content-desc="Peeking card" clickable="true" bounds="[0,420][40,900]" />
+    <node class="androidx.compose.ui.platform.ComposeView" package="{PACKAGE}" scrollable="true" clickable="false" bounds="[200,1000][800,1200]">
+      <node class="android.view.View" package="{PACKAGE}" content-desc="Cut row" clickable="true" bounds="[200,1150][800,1200]" />
+    </node>
     <node class="org.mozilla.geckoview.GeckoView" package="{PACKAGE}" clickable="false" bounds="[0,500][1080,2000]">
       <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[0,600][20,620]" />
     </node>
@@ -42,8 +46,12 @@ class AuditTest(unittest.TestCase):
     def test_broken_dump_has_no_findings(self):
         self.assertEqual(audit.audit("ERROR: could not get idle state.", PACKAGE, 420), [])
 
-    def test_key_ignores_the_screen(self):
-        self.assertEqual(audit.finding_key("small", "Close", 32, 32), "small | Close | 32x32 dp")
+    def test_small_key_ignores_the_screen_unlabeled_key_ignores_the_size(self):
+        self.assertEqual(audit.finding_key("small", "Close", 32, 32, "find-dark"), "small | Close | 32x32 dp")
+        self.assertEqual(
+            audit.finding_key("unlabeled", "View", 42, 675, "tab-overview-ru"),
+            "unlabeled | View | tab-overview",
+        )
 
 
 class BaselineTest(unittest.TestCase):
@@ -70,7 +78,7 @@ class BaselineTest(unittest.TestCase):
             baseline.write_text("small | Close | 32x32 dp\n")
             status, output = self.run_audit(dumps, baseline)
             self.assertEqual(status, 1)
-            self.assertIn("New accessibility finding: unlabeled | star | 48x48 dp (screens: find-light)", output)
+            self.assertIn("New accessibility finding: unlabeled | star | find (screens: find-light)", output)
 
 
 if __name__ == "__main__":

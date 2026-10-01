@@ -6,6 +6,10 @@ and reports every clickable Vola control that is smaller than 48 dp on either si
 text and no content description for TalkBack. Web content (GeckoView and WebView subtrees) and other
 apps are skipped: the page is the site's, not Vola's.
 
+uiautomator reports only the visible part of a control, so a control cut by the screen edge or by a
+scrolling container (a peeking tab card, the last row of a sheet) is not size-checked: its size
+depends on the scroll position, not on the design.
+
 Usage:
   a11y_audit.py DUMPS_DIR PACKAGE --baseline FILE [--report FILE] [--write-baseline]
 
@@ -38,6 +42,12 @@ def has_label(node):
     )
 
 
+def clipped_axes(bounds, container):
+    """(horizontally, vertically): whether bounds meet an edge of the container that may clip them."""
+    near = [abs(side - edge) <= 1 for side, edge in zip(bounds, container)]
+    return near[0] or near[2], near[1] or near[3]
+
+
 def describe(node):
     label = (node.get("content-desc") or node.get("text") or "").strip()
     resource = (node.get("resource-id") or "").rsplit("/", 1)[-1]
@@ -54,31 +64,42 @@ def audit(xml_text, package, density):
     scale = density / 160
     findings = []
 
-    def visit(node, in_web_content):
+    def visit(node, in_web_content, container):
         node_class = node.get("class") or ""
         in_web_content = in_web_content or any(name in node_class for name in WEB_CONTENT_CLASSES)
+        bounds = parse_bounds(node.get("bounds"))
         ours = node.get("package") == package and node.get("visible-to-user", "true") == "true"
-        if ours and not in_web_content and node.get("clickable") == "true":
-            bounds = parse_bounds(node.get("bounds"))
-            if bounds:
-                width = round((bounds[2] - bounds[0]) / scale)
-                height = round((bounds[3] - bounds[1]) / scale)
-                if width > 0 and height > 0:
-                    if min(width, height) < MIN_TOUCH_DP - TOUCH_TOLERANCE_DP:
-                        findings.append(("small", describe(node), width, height))
-                    if not has_label(node):
-                        findings.append(("unlabeled", describe(node), width, height))
+        if ours and not in_web_content and node.get("clickable") == "true" and bounds:
+            width = round((bounds[2] - bounds[0]) / scale)
+            height = round((bounds[3] - bounds[1]) / scale)
+            if width > 0 and height > 0:
+                limit = MIN_TOUCH_DP - TOUCH_TOLERANCE_DP
+                clipped_x, clipped_y = clipped_axes(bounds, container)
+                if (width < limit and not clipped_x) or (height < limit and not clipped_y):
+                    findings.append(("small", describe(node), width, height))
+                if not has_label(node):
+                    findings.append(("unlabeled", describe(node), width, height))
+        if bounds and node.get("scrollable") == "true":
+            container = bounds
         for child in node.findall("node"):
-            visit(child, in_web_content)
+            visit(child, in_web_content, container)
 
     for top in root.findall("node"):
-        visit(top, False)
+        visit(top, False, parse_bounds(top.get("bounds")) or [0, 0, 0, 0])
     return findings
 
 
-def finding_key(kind, description, width, height):
-    """Stable across screens and runs: the same control on two screens is one finding."""
-    return f"{kind} | {description} | {width}x{height} dp"
+def screen_group(screen):
+    """The screen without its pass: tab-overview-dark and tab-overview-ru are one screen."""
+    return re.sub(r"-(light|dark|ru|a11y)$", "", screen)
+
+
+def finding_key(kind, description, width, height, screen):
+    """Stable across runs. A small control is keyed by its size, so the same control on two screens
+    is one finding; an unlabeled one by its screen, since a clipped size would change with scroll."""
+    if kind == "small":
+        return f"small | {description} | {width}x{height} dp"
+    return f"unlabeled | {description} | {screen_group(screen)}"
 
 
 def collect(dumps_dir, package, density):
@@ -87,7 +108,7 @@ def collect(dumps_dir, package, density):
     for dump in sorted(Path(dumps_dir).glob("*.xml")):
         screen = re.sub(r"^\d+-", "", dump.stem)
         for finding in audit(dump.read_text(encoding="utf-8", errors="replace"), package, density):
-            found.setdefault(finding_key(*finding), []).append(screen)
+            found.setdefault(finding_key(*finding, screen), []).append(screen)
     return found
 
 
@@ -104,6 +125,8 @@ def report_text(found, baseline):
         status = "known" if baseline is not None and key in baseline else "NEW"
         screens = ", ".join(sorted(set(found[key])))
         lines.append(f"- [{status}] {key} — {screens}")
+    for key in sorted((baseline or set()) - set(found)):
+        lines.append(f"- [gone] {key} — not seen in this tour; delete it from the baseline if fixed")
     return "\n".join(lines) + "\n"
 
 
