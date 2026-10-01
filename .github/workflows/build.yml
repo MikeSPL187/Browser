@@ -55,6 +55,9 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The quality gates diff a pull request against its base: the merge commit's first parent.
+          fetch-depth: 2
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
@@ -82,13 +85,31 @@ jobs:
       - name: Script tests
         run: |
           for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py \
-            scripts/test_translations.py scripts/test_geckoview_latest.py; do
+            scripts/test_translations.py scripts/test_geckoview_latest.py \
+            scripts/test_quality_gates.py; do
             echo "::group::${test}"
             python3 "$test"
             echo "::endgroup::"
           done
           python3 scripts/generate_gecko_default_extensions.py verify
           node --test scripts/*.test.mjs
+
+      # docs/vola/ROADMAP.md, section 4: what a machine can check, it checks on every pull request.
+      - name: Quality gates
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # Run every gate, then fail once, so one finding does not hide the others.
+          status=0
+          gates=(size engine brand)
+          if [ "$EVENT_NAME" = pull_request ]; then
+            gates+=("tokens --base HEAD^1")
+          fi
+          for gate in "${gates[@]}"; do
+            # shellcheck disable=SC2086 # the gate carries its own arguments
+            python3 scripts/ci/quality_gates.py $gate || status=1
+          done
+          exit "$status"
 
       - name: Dependency policy
         run: ./gradlew --no-daemon --stacktrace verifyNoPlayServicesDependencies

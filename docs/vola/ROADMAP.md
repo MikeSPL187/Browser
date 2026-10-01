@@ -3,8 +3,8 @@
 _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 19 PR переноса дизайна), фичи Zen из
 `CLAUDE.md`, `features-roadmap.md`, доски v4 в `design/canvas/`, код `main` после PR #30._
 
-**Сделано:** Q1 — #31 (зависимости, `LocalResources`, ROADMAP). **В работе:** Q2 — #32
-(GeckoView 157 и ежедневная проверка обновлений).
+**Сделано:** Q1 — #31 (зависимости, `LocalResources`, ROADMAP), Q2 — #32 (GeckoView 157 и
+ежедневная проверка обновлений). **В работе:** Q3a — статические проверки качества в CI.
 
 Документ отвечает на четыре вопроса: что уже сделано, что делаем дальше и в каком порядке, как
 делаем один PR и как проверяем качество. Очередь пронумерована **Q1…Q31**. Номера из
@@ -83,7 +83,7 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
 | | **Фаза A. Фундамент** | | | |
 | Q1 | Обновление зависимостей вместо Dependabot #21 и #22, `LocalResources` | — | High | 1 |
 | Q2 | GeckoView: последняя стабильная, ежедневный `geckoview-update.yml` | — | High | 1 |
-| Q3 | Проверки качества в CI | — | High | 1 |
+| Q3 | Проверки качества в CI: 3a — статические, 3b — тур и превью | — | High | 2 × 0,5 |
 | | **Фаза B. Ежедневный путь** | | | |
 | Q4 | Ввод адреса и подсказки | 3 | High | 1 |
 | Q5 | Essentials и новая вкладка, `EssentialsController` | 5 | High | 1 |
@@ -158,20 +158,20 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
   - Новый воркфлоу нельзя запустить вручную до слияния в `main`. До этого проверяем его
     триггером `pull_request` на изменение самого файла.
 
-**Q3. Проверки качества в CI** · High · 1 сессия
+**Q3. Проверки качества в CI** · High · 2 PR: **Q3a** — пункты 1–4 (`scripts/ci/quality_gates.py`,
+шаг *Quality gates* в *Build*), **Q3b** — пункты 5–7.
 - **Цель.** Всё, что можно проверить машиной, проверяется в каждом PR:
-  1. **Храповик размера** `scripts/ci/size_ratchet.py` + `size-baseline.json`:
+  1. **Храповик размера** `quality_gates.py size` + `scripts/ci/size-baseline.json`:
      `BrowserController.kt` (16 093 строки), `MainActivity.kt`, `ui/BrowserScreen.kt`,
-     `ui/TabOverview.kt` не растут.
-  2. **Токены** `scripts/ci/check_tokens.py`. В добавленных строках вне `ui/theme` запрещены
+     `ui/TabOverview.kt` не растут; уменьшение нужно закрепить (`size --update`).
+  2. **Токены** `quality_gates.py tokens`. В добавленных строках вне `ui/theme` запрещены
      `Color(0x…)`, числовые `.dp`/`.sp` (кроме `0.dp`) и `tween`/`spring` с числами. Исключение —
      комментарий `// token-exempt: причина`. Около 1 070 литералов `dp` из кода Candy уходят
      по мере переноса экранов.
-  3. **Граница движков** `scripts/ci/check_engine_imports.py`: `org.mozilla.geckoview.*` и
-     `android.webkit.WebView` — только в `browser/gecko`, `browser/systemwebview` и
-     `browser/userscript`. Сейчас нарушений нет; проверка их не допустит.
-  4. **Бренд.** Слово «Candy» в `values*/strings.xml` — ошибка (дополнение к
-     `test_translations.py`).
+  3. **Граница движков** `quality_gates.py engine`: `org.mozilla.geckoview.*` и `android.webkit.*`
+     — только в `browser/gecko`, `browser/systemwebview` и `browser/userscript`. Единственное
+     нарушение (`AppDataTransferActivity`: версия GeckoView) перенесено в адаптер в Q3a.
+  4. **Бренд** `quality_gates.py brand`: слово «Candy» в тексте `values*/strings.xml` — ошибка.
   5. **Доступность в туре снимков.** По дампу uiautomator на каждом шаге: кликабельные
      элементы ≥ 48 dp; у кликабельного без текста есть `content-desc`. Новые нарушения — ошибка.
   6. **Тур снимков.** Новые экраны снимаются со шрифтом 200 % и с выключенными анимациями.
@@ -613,7 +613,7 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
 | `currentResources()` | Заменён на `LocalResources.current` | — | Сделано в Q1 |
 | Устаревшие API Material 3 1.5 | 13 предупреждений после Q1: `Slider` (7), `ListItem` (6 мест в библиотеке), `SearchBar` | Переход на новые API вместе с переделкой экранов по доскам: там их проверят снимки | Q16, Q18 |
 | Устаревший DSL сборки | `app/build.gradle.kts`: блок `android {}` старого вида, `srcDir`, `by registering` (Gradle 9.6) | Перевести на `ApplicationExtension`, `directories`, `register`/`named` отдельным PR сборки | Вместе с Q3 |
-| Поиск по странице: «0/0» | На снимке `find-dark` в #31 счётчик «0/0» при подсвеченных совпадениях; в RU-проходе — «1/541». Код поиска и GeckoView в #31 не менялись | Разобрать порядок результатов `GeckoSession.finder` и показывать «ищу…», пока Gecko не вернул окончательный итог | Отдельный небольшой PR (High) |
+| Поиск по странице: «0/0» | Счётчик «0/0» при подсвеченных совпадениях в тёмном проходе тура дважды подряд на GeckoView 156 (#31: `bbeb28f`, `6b8d08d`); в RU-проходе — «1/541». Воспроизводится, не случайный кадр | Разобрать порядок результатов `GeckoSession.finder` и показывать «ищу…», пока Gecko не вернул окончательный итог | Отдельный небольшой PR (High) |
 | Размер `BrowserController` | 16 093 строки (было 16 262) | Храповик; вынос по фичам: Tabs и Workspaces (Q7, Q8), Essentials (Q5), SiteInfo и Permissions (Q10), Downloads (Q18), Credentials (Q19), FindInPage — при первом касании. Цель — меньше 10 000 строк к концу фазы D | Q3 и далее |
 | Другие большие файлы | `TabOverview.kt` 2 287, `BrowserScreen.kt` 1 992, `MainActivity.kt` 1 856 | Под храповик; `TabOverview` делится в Q7 | Q3, Q7 |
 | GeckoView | 157.0 (#32); цикл Firefox — две недели | Ежедневный `geckoview-update.yml`; точечные обновления безопасности — за 48 часов. Владельцу: разрешить Actions открывать PR | Q2 |
