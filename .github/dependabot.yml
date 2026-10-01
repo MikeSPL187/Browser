@@ -24,15 +24,15 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # GeckoView comes from .github/workflows/geckoview-update.yml: daily, so security dot
+      # releases land within 48 hours, with the release links and the phone checklist.
+      - dependency-name: "org.mozilla.geckoview:*"
     commit-message:
       prefix: build
     labels:
       - dependencies
     groups:
-      # GeckoView is the engine and its security fixes: always a separate, prompt pull request.
-      geckoview:
-        patterns:
-          - org.mozilla.geckoview:*
       kotlin-and-build:
         patterns:
           - com.android.*
@@ -45,7 +45,6 @@ updates:
         patterns:
           - "*"
         exclude-patterns:
-          - org.mozilla.geckoview:*
           - com.android.*
           - org.jetbrains.kotlin*
           - org.jetbrains.compose*
