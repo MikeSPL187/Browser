@@ -121,14 +121,15 @@ internal fun PrivateTabPage(
                 .size(VolaPrivateTab.gemSize)
                 .shadow(VolaPrivateTab.gemGlow, VolaPrivateTab.gemShape, spotColor = colors.primary)
                 .clip(VolaPrivateTab.gemShape)
-                .background(colors.primary),
+                // A deep private accent with a light mask, as on the board, in the always-dark scheme.
+                .background(colors.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_incognito_filled),
                 contentDescription = null,
                 modifier = Modifier.size(VolaPrivateTab.gemGlyphSize),
-                tint = colors.onPrimary,
+                tint = colors.onPrimaryContainer,
             )
         }
         Text(
