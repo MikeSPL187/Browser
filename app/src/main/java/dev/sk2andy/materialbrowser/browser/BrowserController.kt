@@ -224,8 +224,6 @@ import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
 import dev.sk2andy.materialbrowser.data.CanonicalWebUrl
-import dev.sk2andy.materialbrowser.data.EssentialsRules
-import dev.sk2andy.materialbrowser.data.EssentialsStore
 import dev.sk2andy.materialbrowser.data.FavoriteFaviconRepository
 import dev.sk2andy.materialbrowser.data.FavoriteFolderIconStore
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
@@ -1484,20 +1482,13 @@ class BrowserController(
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
         removeCallbacks = mainHandler::removeCallbacks,
     )
-    val essentials = EssentialsController(
-        store = EssentialsStore(activity),
-        icons = EssentialIconRepository(activity),
-        host = object : EssentialsController.Host {
-            override val profileIds: List<String>
-                get() = localProfiles.map(BrowserProfile::id)
-
-            override fun migrationSeed() = EssentialsRules.migrationSeed(favoriteLibrary)
-
-            override fun post(action: () -> Unit) {
-                mainHandler.post(action)
-            }
-        },
+    val essentials = androidEssentialsController(
+        context = activity,
+        handler = mainHandler,
+        localProfileIds = { localProfiles.map(BrowserProfile::id) },
+        favoriteLibrary = { favoriteLibrary },
     )
+    val protectionReport = androidProtectionReportController(activity, mainHandler)
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
@@ -2582,6 +2573,7 @@ class BrowserController(
         history += historyRepository.snapshot()
         applyFavoriteLibrary(store.loadFavoriteLibrary())
         essentials.restore()
+        protectionReport.restore()
         val profileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
         tabs += restoredTabs.take(MAX_TABS).map { tab ->
             if (tab.profileId in profileIds) tab else tab.copy(profileId = profiles.first().id)
@@ -10205,6 +10197,7 @@ class BrowserController(
 
     fun onPause() {
         stopInlineVideoGestureHaptic()
+        protectionReport.flush()
         addressBar.cancelAutoDockProbe()
         contentActions.dismiss()
         if (externalLinkPreviewState == null) {
@@ -10461,6 +10454,7 @@ class BrowserController(
         releaseExternalLinkPreviewRuntime(resumeSelectedTab = false)
         clearGeckoMediaPresentation()
         essentials.destroy()
+        protectionReport.flush()
         destroyed = true
         notifyGeckoPictureInPictureModeChanged(false)
         pictureInPicturePlaybackRetryGeneration++
@@ -13745,9 +13739,7 @@ class BrowserController(
             }
             pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }.incrementAndGet()
             pendingPrivacyTabs += tabId
-            if (blockerFlushScheduled.compareAndSet(false, true)) {
-                mainHandler.postDelayed(blockerCountFlush, BLOCKER_COUNT_FLUSH_DELAY_MS)
-            }
+            scheduleBlockerFlush()
         }
     }
 
@@ -13790,9 +13782,7 @@ class BrowserController(
                     },
                 ),
             )
-            if (wasBlocked) {
-                pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }.incrementAndGet()
-            }
+            if (wasBlocked) pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }.incrementAndGet()
             pendingPrivacyTabs += tabId
             scheduleBlockerFlush()
         }
@@ -14331,10 +14321,15 @@ class BrowserController(
         override fun run() {
             pendingBlockedCounts.forEach { (tabId, count) ->
                 val delta = count.getAndSet(0)
-                if (delta > 0 && tabs.any { it.id == tabId }) {
+                val tab = tabs.firstOrNull { it.id == tabId }
+                if (delta > 0 && tab != null) {
                     updateTab(tabId) { it.copy(blockedCount = it.blockedCount + delta) }
+                    // The weekly report counts regular tabs only (П7).
+                    if (!tab.isIncognito && !isSessionEphemeralTab(tabId)) {
+                        protectionReport.record(tab.url, delta)
+                    }
                     privacySnapshots[tabId] = privacyXRayRepository.snapshot(tabId)
-                } else if (tabs.none { it.id == tabId }) {
+                } else if (tab == null) {
                     privacyXRayRepository.remove(tabId)
                 }
             }

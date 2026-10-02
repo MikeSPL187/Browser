@@ -193,6 +193,26 @@ internal object VolaStateTokens {
     val paddingBottom = VolaSpacing.x6
 }
 
+/** The protection card on the new tab and its weekly report (boards NewTab, ProtectionReport). */
+internal object VolaProtection {
+    val cardMinHeight = 72.dp
+    val cardIconSize = 40.dp
+    val cardIconShape = RoundedCornerShape(VolaShapes.smallRadius)
+
+    val heroIconSize = 56.dp
+    val heroIconShape = RoundedCornerShape(VolaShapes.largeRadius)
+    val heroGlyphSize = 30.dp
+
+    /** The seven day bars. */
+    val chartHeight = 88.dp
+    val barShape = RoundedCornerShape(6.dp)
+
+    /** The share of a site next to its name. */
+    val siteBarHeight = 6.dp
+    val siteBarShape = RoundedCornerShape(3.dp)
+    val siteCountWidth = 48.dp
+}
+
 /** The address editor at the bottom (boards Editing, V4A-Address, V4B-Address). */
 internal object VolaAddressEditor {
     /** The field the island morphs into while typing, a pill with an accent ring. */

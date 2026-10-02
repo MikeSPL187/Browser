@@ -328,6 +328,25 @@ def tour(suffix):
             time.sleep(1)
     step("essentials", essentials)
 
+    def protection_report():
+        # The protection card below Essentials opens the weekly report (Q5b, П7).
+        labels = ("this week", "за неделю", "Tracker protection is on", "Защита от трекеров")
+        for _ in range(3):
+            if find(*labels, contains=True):
+                break
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+                str(width // 2), str(int(height * 0.4)), "300")
+            time.sleep(1)
+        shot(f"protection-card-{suffix}")
+        if not tap(*labels, contains=True):
+            save_ui(f"protection-card-{suffix}")
+            return
+        time.sleep(2)
+        shot(f"protection-report-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("protection-report", protection_report)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)

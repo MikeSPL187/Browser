@@ -509,7 +509,10 @@ internal fun BrowserViewport(
                     val essentials = controller.essentials
                     val profileId = selectedTab.profileId
                     if (!selectedTab.isIncognito) {
-                        LaunchedEffect(profileId) { essentials.materialize(profileId) }
+                        LaunchedEffect(profileId) {
+                            essentials.materialize(profileId)
+                            controller.protectionReport.refresh()
+                        }
                     }
                     NewTabPage(
                         essentials = essentials.entriesFor(profileId),
@@ -520,6 +523,13 @@ internal fun BrowserViewport(
                         onSearch = onSearch,
                         onOpenEssential = onFavorite,
                         editor = rememberNewTabEssentialsEditor(controller, profileId),
+                        protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
+                            NewTabProtection(
+                                week = report.week,
+                                onClear = report::clear,
+                                onHideCard = { report.updateCardVisible(false) },
+                            )
+                        },
                         recentTabs = controller.activeTabs
                             .filter { tab ->
                                 tab.id != selectedTab.id &&

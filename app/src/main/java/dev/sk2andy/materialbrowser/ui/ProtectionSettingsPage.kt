@@ -42,6 +42,7 @@ import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
 
@@ -58,6 +59,7 @@ internal object ProtectionSettingsTestTags {
     const val WebRtcProtection = "protection_settings_webrtc_protection"
     const val DnsOverHttps = "protection_settings_dns_over_https"
     const val HttpsOnly = "protection_settings_https_only"
+    const val ProtectionCard = "protection_settings_protection_card"
     const val CustomDnsEndpoint = "protection_settings_custom_dns_endpoint"
 }
 
@@ -71,6 +73,7 @@ internal fun ProtectionAndDataSettingsPage(
     webRtcProtectionMode: WebRtcProtectionMode = WebRtcProtectionMode.Default,
     privacySignalSettings: PrivacySignalSettings = PrivacySignalSettings.Default,
     isAutoDeAmpEnabled: Boolean = true,
+    isProtectionCardVisible: Boolean = true,
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
     httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
     isRecallEnabled: Boolean = false,
@@ -80,6 +83,7 @@ internal fun ProtectionAndDataSettingsPage(
     onWebRtcProtectionModeChanged: (WebRtcProtectionMode) -> Unit = {},
     onPrivacySignalSettingsChanged: (PrivacySignalSettings) -> Unit = {},
     onAutoDeAmpEnabledChanged: (Boolean) -> Unit = {},
+    onProtectionCardVisibleChanged: (Boolean) -> Unit = {},
     onDnsOverHttpsSettingsChanged: (DnsOverHttpsSettings) -> Unit = {},
     onHttpsOnlyModeChanged: (HttpsOnlyMode) -> Unit = {},
     onRecallEnabledChanged: (Boolean) -> Unit = {},
@@ -152,6 +156,14 @@ internal fun ProtectionAndDataSettingsPage(
         PrivacyXRaySettingsCounter(
             blockedCount = blockedCount,
             onClick = onPrivacyXRay,
+        )
+        Spacer(Modifier.height(VolaSpacing.x2))
+        SettingsSwitch(
+            title = stringResource(R.string.settings_protection_card_title),
+            subtitle = stringResource(R.string.settings_protection_card_subtitle),
+            checked = isProtectionCardVisible,
+            onCheckedChange = onProtectionCardVisibleChanged,
+            modifier = Modifier.testTag(ProtectionSettingsTestTags.ProtectionCard),
         )
         Spacer(Modifier.height(8.dp))
         Surface(
