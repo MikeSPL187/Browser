@@ -51,6 +51,7 @@
     <string name="address_bar_action_tabs">Tabs</string>
     <string name="action_home">Home</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
+    <string name="find_in_page_match_count_unknown">%1$d/…</string>
     <string name="cd_find_in_page_query">Text to find on page</string>
     <string name="cd_find_in_page_counting">Counting matches</string>
     <string name="cd_find_in_page_previous">Previous match</string>
@@ -1403,4 +1404,18 @@
     <string name="settings_menu_location_both">Both menus</string>
     <string name="settings_menu_entry_topping_commands">Topping commands</string>
     <string name="settings_menu_entry_firefox_page_actions">Firefox page actions</string>
+    <!-- Address editor (Q4, board Editing) -->
+    <string name="address_editor_new_tab_in_workspace">New tab in “%1$s”</string>
+    <string name="address_editor_tab_in_workspace">Tab in “%1$s”</string>
+    <string name="address_editor_private_tab">Private tab</string>
+    <string name="address_suggestion_open_here">Open in a tab</string>
+    <string name="address_suggestion_open_in_workspace">Open in “%1$s”</string>
+    <string name="address_suggestion_switch">Switch</string>
+    <string name="address_suggestion_favorite">Favorites · %1$s</string>
+    <string name="address_suggestion_detail">%1$s · %2$s</string>
+    <string name="address_suggestion_fill">Fill in the address field</string>
+    <string name="address_clipboard_link">Link from the clipboard</string>
+    <string name="address_clipboard_text">Text from the clipboard</string>
+    <string name="address_clipboard_open">Open</string>
+    <string name="address_clipboard_paste">Paste</string>
 </resources>
