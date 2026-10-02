@@ -102,6 +102,22 @@ jobs:
           adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
           python3 scripts/ci/capture_screenshots.py "$PACKAGE" "$RUNNER_TEMP/shots"
 
+      # Vola's own controls on every screenshot: 48 dp touch targets and a label for TalkBack.
+      # Only findings missing from scripts/ci/a11y-baseline.txt fail the job.
+      - name: Accessibility audit
+        run: |
+          status=0
+          python3 scripts/ci/a11y_audit.py "$RUNNER_TEMP/ui-dumps" "$PACKAGE" \
+            --baseline scripts/ci/a11y-baseline.txt \
+            --report "$RUNNER_TEMP/shots/a11y-report.txt" || status=$?
+          {
+            echo "### Accessibility"
+            cat "$RUNNER_TEMP/shots/a11y-report.txt" 2>/dev/null || echo "No report."
+            echo "### Cold start"
+            cat "$RUNNER_TEMP/shots/startup.txt" 2>/dev/null || echo "Not measured."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
       - name: Publish screenshots
         if: ${{ always() }}
         env:
