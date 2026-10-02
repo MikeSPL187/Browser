@@ -191,4 +191,56 @@ internal object VolaStateTokens {
     val paddingTop = 28.dp
     val paddingHorizontal = 22.dp
     val paddingBottom = VolaSpacing.x6
+
+/** The address editor at the bottom (boards Editing, V4A-Address, V4B-Address). */
+internal object VolaAddressEditor {
+    /** The field the island morphs into while typing, a pill with an accent ring. */
+    val fieldHeight = 56.dp
+    val fieldRingWidth = 2.dp
+
+    /** The card of suggestions above the field. */
+    val cardRadius = 26.dp
+    val cardPadding = 6.dp
+
+    /** Rows with a site tile and two lines of text. */
+    val siteRowMinHeight = 56.dp
+    val siteRowRadius = 18.dp
+    val siteTileSize = 36.dp
+    val siteTileRadius = 12.dp
+
+    /** One-line search rows. */
+    val searchRowHeight = 48.dp
+    val searchRowRadius = 16.dp
+
+    /** The filled "Switch" pill on an open-tab row. */
+    val switchPillHeight = 36.dp
+
+    /** Hairline between groups: outlineVariant at this opacity. */
+    const val DIVIDER_ALPHA = 0.5f
+
+    /** Tint of the open-tab row: primaryContainer at this opacity. */
+    const val OPEN_TAB_TINT_ALPHA = 0.45f
+
+    /** The clipboard chip and its action pill. */
+    val chipHeight = 40.dp
+    val chipActionHeight = 32.dp
+
+    /** The workspace gem in the header and on rows from another workspace. */
+    val headerGemSize = 32.dp
+    val rowGemSize = 18.dp
+}
+
+/** The workspace gem (`.gem` in vola4.css): the workspace icon on its primary color. */
+internal object VolaGem {
+    /** Corner radius as a share of the gem's size: 11 dp on a 32 dp gem. */
+    const val CORNER_FRACTION = 0.34f
+
+    /** The gradient starts from primary lightened by this much white. */
+    const val HIGHLIGHT_FRACTION = 0.22f
+
+    /** The gradient reaches pure primary at this share of the diagonal. */
+    const val PRIMARY_STOP = 0.7f
+
+    /** The icon inside, as a share of the gem's size. */
+    const val ICON_FRACTION = 0.56f
 }

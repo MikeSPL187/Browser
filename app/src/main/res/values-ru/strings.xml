@@ -1395,4 +1395,18 @@
     <string name="settings_menu_location_both">Оба меню</string>
     <string name="settings_menu_entry_topping_commands">Команды скриптов</string>
     <string name="settings_menu_entry_firefox_page_actions">Действия Firefox для страницы</string>
+    <!-- Address editor (Q4, board Editing) -->
+    <string name="address_editor_new_tab_in_workspace">Новая вкладка в «%1$s»</string>
+    <string name="address_editor_tab_in_workspace">Вкладка в «%1$s»</string>
+    <string name="address_editor_private_tab">Приватная вкладка</string>
+    <string name="address_suggestion_open_here">Открыта во вкладке</string>
+    <string name="address_suggestion_open_in_workspace">Открыта в «%1$s»</string>
+    <string name="address_suggestion_switch">Перейти</string>
+    <string name="address_suggestion_favorite">Избранное · %1$s</string>
+    <string name="address_suggestion_detail">%1$s · %2$s</string>
+    <string name="address_suggestion_fill">Подставить в строку</string>
+    <string name="address_clipboard_link">Ссылка из буфера</string>
+    <string name="address_clipboard_text">Текст из буфера</string>
+    <string name="address_clipboard_open">Открыть</string>
+    <string name="address_clipboard_paste">Вставить</string>
 </resources>

@@ -206,7 +206,6 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
-import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
@@ -1478,6 +1477,17 @@ class BrowserController(
             override fun isPageImeVisible(): Boolean = this@BrowserController.isPageImeVisible()
 
             override fun onDockPlacementChanging() = collapseBottomBar()
+
+            override fun suggestionSources() = AddressSuggestionSources(
+                activeTabs = activeTabs,
+                otherWorkspaceTabs = tabs.filter { tab ->
+                    profilesEnabled && tab.profileId != activeProfileId &&
+                        tab.profileId !in lockedProfileIds && tab.id !in transientPopupTabIds
+                },
+                history = history,
+                favorites = favorites,
+                includeHistory = isHistorySuggestionsEnabled,
+            )
         },
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
         removeCallbacks = mainHandler::removeCallbacks,
@@ -9050,7 +9060,7 @@ class BrowserController(
         val navigationMatches = if (CommandMatcher.isExplicitCommandQuery(query)) {
             emptyList()
         } else {
-            addressSuggestions(query, limit)
+            addressBar.navigationSuggestions(query, limit)
         }
         return AddressSuggestionComposer.compose(
             query = query,
@@ -9116,27 +9126,6 @@ class BrowserController(
         persist()
         return closeIds.size
     }
-
-    fun addressSuggestions(query: String, limit: Int = 8): List<AddressSuggestion> =
-        BrowsingLibraryRules.addressSuggestions(
-            history = history.filter { entry -> entry.profileId == selectedTab.profileId },
-            tabs = activeTabs,
-            selectedTabId = selectedTabId,
-            isIncognito = selectedTab.isIncognito,
-            query = query,
-            limit = limit,
-            includeHistory = isHistorySuggestionsEnabled,
-        )
-
-    fun addressDomainCompletion(query: String): String? = BrowsingLibraryRules.domainCompletion(
-        history = history.filter { entry -> entry.profileId == selectedTab.profileId },
-        favorites = favorites,
-        tabs = activeTabs,
-        selectedTabId = selectedTabId,
-        isIncognito = selectedTab.isIncognito,
-        query = query,
-        includeHistory = isHistorySuggestionsEnabled,
-    )
 
     val isSelectedTabFavorite: Boolean
         get() = !selectedTab.isIncognito && BrowsingLibraryRules.isFavorite(favorites, selectedTab.url)

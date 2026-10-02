@@ -63,20 +63,18 @@ class RecallAddressSuggestionsInstrumentedTest {
                             AddressSuggestionItem.Recall(match),
                             AddressSuggestionItem.Search("candy browser remote"),
                         ),
+                        query = "candy",
                         highlightedIndex = -1,
                         onHighlight = {},
                         onSelect = selected::set,
                         onFill = {},
                         rootHeightPx = 2_000f,
                         bottomBarTopPx = bottomBarTopPx,
-                        backdropSource = blurTarget.asCandyChromeBackdropSource(),
                     )
                 }
             }
         }
 
-        composeRule.onNodeWithTag(BrowserChromeSurfaceTestTags.BackdropBlur)
-            .assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.recall_from_history))
             .assertIsDisplayed()
         composeRule.onNodeWithText(match.excerpt).assertIsDisplayed()
