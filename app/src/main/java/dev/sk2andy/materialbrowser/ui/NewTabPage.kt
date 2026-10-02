@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,6 +72,7 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaEssentials
 import dev.sk2andy.materialbrowser.ui.theme.VolaShapes
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
 /**
@@ -255,9 +257,11 @@ private fun NewTabContinueCard(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(VolaSpacing.x2)) {
         Text(
-            text = stringResource(R.string.new_tab_continue),
-            modifier = Modifier.padding(horizontal = VolaSpacing.x1),
-            style = MaterialTheme.typography.labelLarge,
+            text = stringResource(R.string.new_tab_continue).uppercase(),
+            modifier = Modifier
+                .padding(horizontal = VolaSpacing.x1)
+                .semantics { heading() },
+            style = VolaTypeScale.overline,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Surface(
