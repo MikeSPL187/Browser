@@ -51,6 +51,7 @@
     <string name="address_bar_action_tabs">Tabs</string>
     <string name="action_home">Home</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
+    <string name="find_in_page_match_count_unknown">%1$d/…</string>
     <string name="cd_find_in_page_query">Text to find on page</string>
     <string name="cd_find_in_page_counting">Counting matches</string>
     <string name="cd_find_in_page_previous">Previous match</string>
