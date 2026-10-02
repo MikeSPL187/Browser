@@ -711,12 +711,6 @@ class BrowserController(
         private set
     var linkPeekActionLayout by mutableStateOf(LinkPeekActionLayout.Default)
         private set
-    // Declared before anything that can change the selected tab, which closes find in page.
-    private val findInPage = FindInPageController(
-        host = ::isFindInPageSessionCurrent,
-        postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
-        removeCallbacks = { runnable -> mainHandler.removeCallbacks(runnable) },
-    )
     internal val findInPageState: FindInPageState?
         get() = findInPage.state
         private set
@@ -1360,6 +1354,11 @@ class BrowserController(
     private val federatedLoginCompatibilityTabIds = mutableSetOf<String>()
     private val pageUrls = ConcurrentHashMap<String, String>()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val findInPage = FindInPageController(
+        host = ::isFindInPageSessionCurrent,
+        postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
+        removeCallbacks = mainHandler::removeCallbacks,
+    )
     private val recycleRetiredFavoriteFavicons = Runnable {
         val displayedBitmaps = favoriteFavicons.values.toSet()
         val recyclable = retiredFavoriteFavicons.filterNot(displayedBitmaps::contains)
