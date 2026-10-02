@@ -447,7 +447,7 @@ private fun FavoriteFolderThumbnail(folder: FavoriteFolder, library: FavoriteLib
                 folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
                     Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else -> {
-                    val children = newTabFolderPreviewFavorites(library, folder.id)
+                    val children = favoriteFolderPreviewFavorites(library, folder.id)
                     if (children.isEmpty()) Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(22.dp))
                     else Column(Modifier.padding(3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         children.chunked(2).forEach { row ->
@@ -544,3 +544,24 @@ internal object FavoritesScreenTestTags {
 
     fun folderIcon(key: String): String = "favorite_folder_icon:$key"
 }
+
+/** Up to four favorites of a folder and its subfolders, for the folder's preview tile. */
+internal fun favoriteFolderPreviewFavorites(
+    library: FavoriteLibrary,
+    folderId: String,
+): List<FavoriteEntry> {
+    if (BrowsingFavoritesRules.folder(library, folderId) == null) return emptyList()
+    val visited = hashSetOf<String>()
+    fun collect(parentId: String): List<FavoriteEntry> {
+        if (!visited.add(parentId)) return emptyList()
+        return BrowsingFavoritesRules.children(library, parentId).flatMap { entry ->
+            when (entry) {
+                is FavoriteEntry -> listOf(entry)
+                is FavoriteFolder -> collect(entry.id)
+            }
+        }
+    }
+    return collect(folderId).take(FOLDER_PREVIEW_FAVORITE_COUNT)
+}
+
+private const val FOLDER_PREVIEW_FAVORITE_COUNT = 4
