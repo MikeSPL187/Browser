@@ -14028,7 +14028,7 @@ class BrowserController(
         val view = binding?.view
         if (
             tab == null ||
-            tab.isIncognito ||
+            !TabPreviewCaptureRules.mayCapture(tab.isIncognito, isBlank = tab.url == BLANK_URL) ||
             tabId != selectedTabId ||
             !isActivityResumed ||
             binding == null ||
@@ -14036,8 +14036,7 @@ class BrowserController(
             !view.isAttachedToWindow ||
             !view.isShown ||
             view.width <= 0 ||
-            view.height <= 0 ||
-            tab.url == BLANK_URL
+            view.height <= 0
         ) {
             onComplete()
             return

@@ -69,11 +69,14 @@ internal fun CandyTheme(
         activity?.let { CandyActivityMotionPolicy.apply(it, settings.animationsEnabled) }
     }
     val systemDark = isSystemInDarkTheme()
-    val dark = settings.usesDarkColors(systemDark)
+    // A private tab is always dark, on the purple private scheme (board PrivateTab).
+    val dark = privateMode || settings.usesDarkColors(systemDark)
     val highContrast = rememberSystemHighContrast()
     val workspaceTokens = VolaColorRules.schemeSet(workspaceAccent, privateMode)
         .select(dark = dark, highContrast = highContrast)
-    val baseColors = when (settings.colorPalette) {
+    // The private scheme wins over Dynamic and Neutral too: the color says «private».
+    val palette = if (privateMode) BrowserColorPalette.Vola else settings.colorPalette
+    val baseColors = when (palette) {
         BrowserColorPalette.Vola -> remember(workspaceTokens, dark) {
             workspaceTokens.toColorScheme(dark)
         }
@@ -88,12 +91,16 @@ internal fun CandyTheme(
             NeutralLightColors
         }
     }
-    val colorScheme = baseColors.withSurfaceStyle(settings.surfaceStyle)
-    val extendedColors = VolaColorRules.extendedColors(
-        palette = settings.colorPalette,
-        colorScheme = colorScheme,
-        workspaceTokens = workspaceTokens,
-        dark = dark,
+    val targetColorScheme = baseColors.withSurfaceStyle(settings.surfaceStyle)
+    val colorScheme = animateColorScheme(targetColorScheme, animate = settings.animationsEnabled)
+    val extendedColors = animateExtendedColors(
+        VolaColorRules.extendedColors(
+            palette = palette,
+            colorScheme = targetColorScheme,
+            workspaceTokens = workspaceTokens,
+            dark = dark,
+        ),
+        animate = settings.animationsEnabled,
     )
 
     MaterialTheme(

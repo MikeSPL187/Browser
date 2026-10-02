@@ -377,6 +377,27 @@
     <string name="protection_report_clear_body">Счёт за неделю удалится с телефона. Защита продолжит работать.</string>
     <string name="settings_protection_card_title">Отчёт за неделю на новой вкладке</string>
     <string name="settings_protection_card_subtitle">Сколько трекеров заблокировано за 7 дней</string>
+    <string name="private_tab_title">Приватная вкладка</string>
+    <string name="private_tab_body">Vola не ведёт историю того, что вы делаете здесь.</string>
+    <string name="private_tab_fact_history">Без истории</string>
+    <string name="private_tab_fact_history_caption">Адреса и поиски не попадают в историю</string>
+    <string name="private_tab_fact_memory">Ничего на диске</string>
+    <string name="private_tab_fact_memory_caption">Cookie, кэш и данные сайтов живут только в памяти</string>
+    <string name="private_tab_fact_profile">Отдельные cookie</string>
+    <string name="private_tab_fact_profile_caption">Входы отделены от обычных вкладок и удаляются после последней приватной</string>
+    <string name="private_tab_fact_shared">Cookie общие</string>
+    <string name="private_tab_fact_shared_caption">У этого WebView нет отдельного профиля: сайты видят ваши обычные входы</string>
+    <string name="private_tab_fact_protection">Защита та же</string>
+    <string name="private_tab_fact_protection_caption">Трекеры блокируются, как в обычных вкладках, но в недельный отчёт не попадают</string>
+    <string name="private_tab_fact_downloads">Загрузки остаются</string>
+    <string name="private_tab_fact_downloads_caption">Скачанные файлы сохраняются в «Загрузках»</string>
+    <plurals name="private_tab_close_all">
+        <item quantity="one">Закрыть %1$d приватную вкладку</item>
+        <item quantity="few">Закрыть все %1$d приватные вкладки</item>
+        <item quantity="many">Закрыть все %1$d приватных вкладок</item>
+        <item quantity="other">Закрыть все %1$d приватной вкладки</item>
+    </plurals>
+    <string name="address_private_hint">Поиск без следов</string>
     <string name="favorites_search">Поиск в избранном</string>
     <string name="favorites_clear_search">Очистить поиск</string>
     <string name="favorites_delete">Удалить «%1$s» из избранного</string>

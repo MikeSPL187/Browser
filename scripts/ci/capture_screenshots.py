@@ -319,6 +319,29 @@ def tour(suffix):
         time.sleep(2)
     step("protection-report", protection_report)
 
+    def private_tab():
+        # The mask button of a blank tab turns it private (Q6): the purple page, then «Close all».
+        if not tap("Search or enter an address", "Поиск или адрес"):
+            save_ui(f"private-start-{suffix}")
+            return
+        time.sleep(2)
+        if not tap("Make blank tab incognito", "Сделать пустую вкладку приватной", contains=True):
+            save_ui(f"private-toggle-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(3)
+        for _ in range(2):
+            if not find("Switch to tab", "Перейти во вкладку", "Search or enter a URL",
+                        "Поиск или адрес сайта", contains=True):
+                break
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        shot(f"private-new-tab-{suffix}")
+        if tap("Close 1 private", "Close all", "Закрыть 1 приватную", "Закрыть все", contains=True):
+            time.sleep(3)
+            shot(f"private-closed-{suffix}")
+    step("private-tab", private_tab)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)

@@ -88,7 +88,6 @@ class NewTabPageInstrumentedTest {
                     incognito = incognito,
                     modeProgress = if (incognito) 1f else 0f,
                     revealOriginInRoot = Offset.Zero,
-                    onSearch = {},
                     onOpenEssential = onOpen,
                     editor = editor,
                     interactive = interactive,

@@ -212,3 +212,17 @@ internal object VolaProtection {
     val siteBarShape = RoundedCornerShape(3.dp)
     val siteCountWidth = 48.dp
 }
+
+/** The private new tab (board PrivateTab). */
+internal object VolaPrivateTab {
+    /** The mask gem above the title, lit with the private accent. */
+    val gemSize = 72.dp
+    val gemShape = RoundedCornerShape(26.dp)
+    val gemGlyphSize = 36.dp
+    val gemGlow = 12.dp
+
+    /** One fact: an icon in a tinted square, a title and a caption. */
+    val factIconSize = 40.dp
+    val factIconShape = RoundedCornerShape(14.dp)
+    val factGap = 14.dp
+}

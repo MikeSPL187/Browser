@@ -475,7 +475,9 @@ internal fun ExpandedBottomBarContent(
                             ghostCompletion = ghostCompletion,
                             placeholder = stringResource(R.string.search_or_enter_url),
                             displayText = if (tab.url == BLANK_URL) {
-                                stringResource(R.string.address_empty_hint)
+                                stringResource(
+                                    if (tab.isIncognito) R.string.address_private_hint else R.string.address_empty_hint,
+                                )
                             } else {
                                 AddressResolver.displayText(tab.url)
                             },
