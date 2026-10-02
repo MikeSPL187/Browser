@@ -321,6 +321,9 @@ def tour(suffix):
 
     def private_tab():
         # The mask button of a blank tab turns it private (Q6): the purple page, then «Close all».
+        # A private tab shows an ongoing notification; grant it up front so Android 13+ does not
+        # cover the page with its permission dialog.
+        adb("shell", "pm", "grant", PACKAGE, "android.permission.POST_NOTIFICATIONS", check=False)
         if not tap("Search or enter an address", "Поиск или адрес"):
             save_ui(f"private-start-{suffix}")
             return
@@ -330,6 +333,8 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
             return
         time.sleep(3)
+        if tap("Don’t allow", "Don't allow", "Не разрешать", contains=True):
+            time.sleep(2)
         for _ in range(2):
             if not find("Switch to tab", "Перейти во вкладку", "Search or enter a URL",
                         "Поиск или адрес сайта", contains=True):
