@@ -50,6 +50,7 @@
     <string name="address_bar_action_tabs">Вкладки</string>
     <string name="action_home">Домой</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
+    <string name="find_in_page_match_count_unknown">%1$d/…</string>
     <string name="cd_find_in_page_query">Текст для поиска на странице</string>
     <string name="cd_find_in_page_counting">Подсчёт совпадений</string>
     <string name="cd_find_in_page_previous">Предыдущее совпадение</string>

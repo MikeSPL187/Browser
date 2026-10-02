@@ -2814,12 +2814,13 @@ private class GeckoViewBrowserSession(
                 { result ->
                     onComplete(
                         result?.let { value ->
-                            val matchCount = value.total.coerceAtLeast(0)
+                            // GeckoView can report a found match before it has counted: total is
+                            // -1 or 0 then. FindInPageRules keeps counting instead of "0/0".
                             GeckoFindResult(
-                                activeMatchOrdinal = (value.current - 1)
-                                    .coerceIn(0, (matchCount - 1).coerceAtLeast(0)),
-                                matchCount = matchCount,
+                                activeMatchOrdinal = (value.current - 1).coerceAtLeast(0),
+                                matchCount = value.total.coerceAtLeast(0),
                                 isDoneCounting = value.total >= 0,
+                                found = value.found || value.total > 0,
                             )
                         },
                     )

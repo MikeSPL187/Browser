@@ -35,6 +35,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -43,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.FindInPageMatchPosition
 import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
@@ -273,6 +276,19 @@ private fun FindOptionChip(
         elevation = FilterChipDefaults.filterChipElevation(elevation = VolaElevation.level1),
     )
 }
+
+/** "3/541", or "3/…" when the engine found matches but never said how many. */
+@Composable
+internal fun findInPageMatchText(position: FindInPageMatchPosition): String =
+    if (position.isCountKnown) {
+        stringResource(
+            R.string.find_in_page_match_count,
+            position.activeMatchNumber,
+            position.matchCount,
+        )
+    } else {
+        stringResource(R.string.find_in_page_match_count_unknown, position.activeMatchNumber)
+    }
 
 internal object FindInPageBarTestTags {
     const val Bar = "find_in_page_bar"

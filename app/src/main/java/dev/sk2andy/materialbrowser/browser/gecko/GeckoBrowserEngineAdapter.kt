@@ -38,8 +38,26 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineSessionPort
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 
+/** Find in page, the part of [BrowserEngineViewPort] that FindInPageController needs. */
+internal interface BrowserEngineFindPort {
+    fun findInPage(
+        query: String,
+        forward: Boolean,
+        onComplete: (GeckoFindResult?) -> Unit,
+    )
+
+    fun clearFindInPage()
+
+    /** Whether the engine honours [setFindInPageOptions]; the find bar hides them otherwise. */
+    val supportsFindInPageOptions: Boolean
+        get() = false
+
+    /** Options for the next [findInPage] calls. */
+    fun setFindInPageOptions(options: FindInPageOptions) = Unit
+}
+
 /** Android view-host edge kept separate from the engine-neutral shared session port. */
-internal interface BrowserEngineViewPort {
+internal interface BrowserEngineViewPort : BrowserEngineFindPort {
     fun setBackdropCaptureEnabled(enabled: Boolean) = Unit
 
     fun setBackdropBlurRegion(region: BrowserBackdropBlurRegion?) = Unit
@@ -56,21 +74,6 @@ internal interface BrowserEngineViewPort {
         maximumTargetHeightPx: Int,
         onComplete: (Bitmap?) -> Unit,
     ): BrowserEnginePreviewCapture?
-
-    fun findInPage(
-        query: String,
-        forward: Boolean,
-        onComplete: (GeckoFindResult?) -> Unit,
-    )
-
-    fun clearFindInPage()
-
-    /** Whether the engine honours [setFindInPageOptions]; the find bar hides them otherwise. */
-    val supportsFindInPageOptions: Boolean
-        get() = false
-
-    /** Options for the next [findInPage] calls. */
-    fun setFindInPageOptions(options: FindInPageOptions) = Unit
 
     fun printPage(): Boolean
 

@@ -218,6 +218,11 @@ def tour(suffix):
         adb("shell", "input", "text", "Zen")
         time.sleep(3)
         shot(f"find-{suffix}")
+        # The counter as the find bar shows it: "1/541", "1/…" or none while counting ("0/0" with
+        # highlighted matches was a GeckoView race, see FindInPageRules.withResult).
+        counter = next((node["text"] for node in nodes()
+                        if re.fullmatch(r"\d+/(\d+|…)", node["text"])), None)
+        log(f"find counter {suffix}: {counter or 'counting'}")
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(1)
         adb("shell", "input", "keyevent", "BACK")
