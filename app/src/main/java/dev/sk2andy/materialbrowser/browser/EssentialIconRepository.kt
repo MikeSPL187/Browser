@@ -2,7 +2,32 @@ package dev.sk2andy.materialbrowser.browser
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Handler
+import dev.sk2andy.materialbrowser.data.EssentialsRules
+import dev.sk2andy.materialbrowser.data.EssentialsStore
 import dev.sk2andy.materialbrowser.data.FavoriteFaviconRepository
+import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+
+/** Essentials on the device stores and the main thread [handler]; the first run copies [favoriteLibrary]. */
+internal fun androidEssentialsController(
+    context: Context,
+    handler: Handler,
+    localProfileIds: () -> List<String>,
+    favoriteLibrary: () -> FavoriteLibrary,
+): EssentialsController = EssentialsController(
+    store = EssentialsStore(context),
+    icons = EssentialIconRepository(context),
+    host = object : EssentialsController.Host {
+        override val profileIds: List<String>
+            get() = localProfileIds()
+
+        override fun migrationSeed() = EssentialsRules.migrationSeed(favoriteLibrary())
+
+        override fun post(action: () -> Unit) {
+            handler.post(action)
+        }
+    },
+)
 
 /** [EssentialIconSource] on the device icon stores; Essentials keep a directory of their own. */
 internal class EssentialIconRepository(context: Context) : EssentialIconSource {

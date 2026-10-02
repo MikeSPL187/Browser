@@ -595,7 +595,7 @@ private fun EssentialAddTile(onAdd: () -> Unit, modifier: Modifier = Modifier) {
 
 /** The site icon, or its first letter on one of the theme's container colors. */
 @Composable
-private fun EssentialIcon(
+internal fun EssentialIcon(
     entry: EssentialEntry,
     icon: Bitmap?,
     colorIndex: Int,

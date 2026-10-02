@@ -64,6 +64,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.EssentialEntry
+import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
@@ -97,6 +98,8 @@ internal fun NewTabPage(
     recentTabs: List<BrowserTab> = emptyList(),
     recentTabFavicons: Map<String, Bitmap> = emptyMap(),
     onRecentTab: (String) -> Unit = {},
+    /** The weekly protection card; `null` when the user hid it. */
+    protection: NewTabProtection? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val profileWallpaper = LocalProfileWallpaper.current.takeUnless { incognito }
@@ -105,6 +108,7 @@ internal fun NewTabPage(
     val incognitoIconAlpha = BlankTabModeMorphRules.incognitoIconAlpha(boundedProgress)
     val openSearchDescription = stringResource(R.string.cd_open_search)
     var editing by rememberSaveable { mutableStateOf(false) }
+    var protectionReportVisible by rememberSaveable { mutableStateOf(false) }
     val editable = interactive && !incognito && editor != null
     BackHandler(enabled = editing && editable) { editing = false }
     val contentEnabled = interactive
@@ -182,6 +186,13 @@ internal fun NewTabPage(
                             onTab = onRecentTab,
                         )
                     }
+                    if (!incognito && interactive && !editing && protection != null) {
+                        NewTabProtectionCard(
+                            week = protection.week,
+                            enabled = contentEnabled,
+                            onOpen = { protectionReportVisible = true },
+                        )
+                    }
                 }
             }
             if (incognito || boundedProgress > 0f) {
@@ -241,7 +252,25 @@ internal fun NewTabPage(
             }
         }
     }
+    if (protectionReportVisible && protection != null && !incognito) {
+        ProtectionReportSheet(
+            week = protection.week,
+            onClear = protection.onClear,
+            onHideCard = {
+                protectionReportVisible = false
+                protection.onHideCard()
+            },
+            onDismiss = { protectionReportVisible = false },
+        )
+    }
 }
+
+/** The protection card's week and what its report can do. */
+internal class NewTabProtection(
+    val week: ProtectionWeek,
+    val onClear: () -> Unit,
+    val onHideCard: () -> Unit,
+)
 
 internal const val NEW_TAB_RECENT_TAB_COUNT = 3
 
