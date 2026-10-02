@@ -206,7 +206,6 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
-import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
@@ -374,17 +373,6 @@ private class PendingMediaLayoutRestoration(
     val restore: (acceptCompletion: () -> Boolean) -> Unit,
 ) {
     var started = false
-}
-
-private data class FindInPageSession(
-    val id: Long,
-    val tabId: String,
-    val geckoSession: AndroidBrowserEngineSessionPort? = null,
-    val navigationGeneration: Int,
-) {
-    init {
-        require(geckoSession != null)
-    }
 }
 
 private data class GeckoViewBinding(
@@ -717,10 +705,8 @@ class BrowserController(
         private set
     var linkPeekActionLayout by mutableStateOf(LinkPeekActionLayout.Default)
         private set
-    internal var findInPageState by mutableStateOf<FindInPageState?>(null)
-        private set
-    private var findInPageSession: FindInPageSession? = null
-    private var nextFindInPageSessionId = 0L
+    internal val findInPageState: FindInPageState?
+        get() = findInPage.state
     var isFullImmersiveModeEnabled by mutableStateOf(false)
         private set
     var isStartupAnimationEnabled by mutableStateOf(true)
@@ -1357,6 +1343,11 @@ class BrowserController(
     private val federatedLoginCompatibilityTabIds = mutableSetOf<String>()
     private val pageUrls = ConcurrentHashMap<String, String>()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val findInPage = FindInPageController(
+        host = ::isFindInPageSessionCurrent,
+        postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
+        removeCallbacks = mainHandler::removeCallbacks,
+    )
     val syncIconCatalog = SyncDeviceIconCatalog.decode(
         activity.assets.open("candy_sync_device_icons_v1.json")
             .bufferedReader(Charsets.UTF_8)
@@ -1476,6 +1467,17 @@ class BrowserController(
             override fun isPageImeVisible(): Boolean = this@BrowserController.isPageImeVisible()
 
             override fun onDockPlacementChanging() = collapseBottomBar()
+
+            override fun suggestionSources() = AddressSuggestionSources(
+                activeTabs = activeTabs,
+                otherWorkspaceTabs = tabs.filter { tab ->
+                    profilesEnabled && tab.profileId != activeProfileId &&
+                        tab.profileId !in lockedProfileIds && tab.id !in transientPopupTabIds
+                },
+                history = history,
+                favorites = favorites,
+                includeHistory = isHistorySuggestionsEnabled,
+            )
         },
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
         removeCallbacks = mainHandler::removeCallbacks,
@@ -4212,15 +4214,12 @@ class BrowserController(
         val runtime = externalLinkPreviewRuntime
             ?.takeIf { it.sessionId == sessionId }
             ?: return false
-        val session = runtime.geckoBinding.session
-        closeFindInPage()
-        findInPageSession = FindInPageSession(
-            id = ++nextFindInPageSessionId,
-            tabId = runtime.policyTab.id,
-            geckoSession = session,
-            navigationGeneration = runtime.generation,
+        findInPage.open(
+            runtime.policyTab.id,
+            runtime.geckoBinding.session,
+            runtime.generation,
+            resetOptions = false,
         )
-        findInPageState = FindInPageState(tabId = runtime.policyTab.id)
         return true
     }
 
@@ -4431,7 +4430,7 @@ class BrowserController(
         val wasSafeAreaForced = isExternalLinkPreviewSafeAreaForced(runtime.binding.view)
         val safeUrl = ExternalLinkPreviewRules.safeCurrentUrl(event.address)
         if (event.type == BrowserEngineEventType.NavigationStarted &&
-            findInPageSession?.geckoSession === session
+            findInPage.engineSession === session
         ) {
             closeFindInPage()
         }
@@ -4738,7 +4737,7 @@ class BrowserController(
             pendingExternalAppPrompt = null
             externalAppPrompt = null
         }
-        if (findInPageSession?.geckoSession === runtime?.geckoBinding?.session) closeFindInPage()
+        if (findInPage.engineSession === runtime?.geckoBinding?.session) closeFindInPage()
         externalLinkPreviewRuntime = null
         externalLinkPreviewState = null
         runtime?.policyTab?.id?.let { policyTabId ->
@@ -7807,128 +7806,42 @@ class BrowserController(
         val tab = selectedTab
         if (tab.url == BLANK_URL) return false
         val session = browserEngineSessions[tab.id] ?: return false
-        closeFindInPage()
-        findInPageSession = FindInPageSession(
-            id = ++nextFindInPageSessionId,
-            tabId = tab.id,
-            geckoSession = session,
-            navigationGeneration = navigationGenerations.getOrDefault(tab.id, 0),
-        )
-        session.setFindInPageOptions(FindInPageOptions())
-        findInPageState = FindInPageState(tabId = tab.id)
+        val generation = navigationGenerations.getOrDefault(tab.id, 0)
+        findInPage.open(tab.id, session, generation, resetOptions = true)
         return true
 
     }
 
     private fun isFindInPageSessionCurrent(session: FindInPageSession): Boolean {
-        if (session.geckoSession != null) {
-            val previewRuntime = externalLinkPreviewRuntime
-            if (
-                previewRuntime?.policyTab?.id == session.tabId &&
-                previewRuntime.geckoBinding.session === session.geckoSession
-            ) {
-                return previewRuntime.generation == session.navigationGeneration &&
-                    ExternalLinkPreviewRules.isCurrent(
-                        state = externalLinkPreviewState,
-                        sessionId = previewRuntime.sessionId,
-                        generation = previewRuntime.generation,
-                    )
-            }
-            return selectedTabId == session.tabId &&
-                browserEngineSessions[session.tabId] === session.geckoSession &&
-                navigationGenerations.getOrDefault(session.tabId, 0) ==
-                session.navigationGeneration
-        }
-
-        return false
-    }
-
-    fun updateFindInPageQuery(query: String) {
-        val session = findInPageSession ?: return
-        val state = findInPageState?.takeIf { it.tabId == session.tabId } ?: return
-        val updated = FindInPageRules.withQuery(state, query)
-        if (updated === state) return
-        findInPageState = updated
-        if (query.isEmpty()) {
-            session.geckoSession?.clearFindInPage()
-        } else {
-            session.geckoSession?.findInPage(
-                query = query,
-                forward = true,
-            ) findComplete@{ result ->
-                val currentSession = findInPageSession
-                val currentState = findInPageState
-                if (
-                    result == null ||
-                    currentSession?.id != session.id ||
-                    currentState?.tabId != session.tabId ||
-                    currentState.query != query ||
-                    !isFindInPageSessionCurrent(session)
-                ) {
-                    return@findComplete
-                }
-                findInPageState = FindInPageRules.withResult(
-                    state = currentState,
-                    activeMatchOrdinal = result.activeMatchOrdinal,
-                    matchCount = result.matchCount,
-                    isDoneCounting = result.isDoneCounting,
+        val previewRuntime = externalLinkPreviewRuntime
+        if (
+            previewRuntime?.policyTab?.id == session.tabId &&
+            previewRuntime.geckoBinding.session === session.engineSession
+        ) {
+            return previewRuntime.generation == session.navigationGeneration &&
+                ExternalLinkPreviewRules.isCurrent(
+                    state = externalLinkPreviewState,
+                    sessionId = previewRuntime.sessionId,
+                    generation = previewRuntime.generation,
                 )
-            }
         }
+        return selectedTabId == session.tabId &&
+            browserEngineSessions[session.tabId] === session.engineSession &&
+            navigationGenerations.getOrDefault(session.tabId, 0) == session.navigationGeneration
     }
 
-    fun findNextInPage(forward: Boolean): Boolean {
-        val session = findInPageSession ?: return false
-        val state = findInPageState ?: return false
-        if (!FindInPageRules.canNavigate(state)) return false
-        session.geckoSession?.findInPage(
-            query = state.query,
-            forward = forward,
-        ) findComplete@{ result ->
-            val currentSession = findInPageSession
-            val currentState = findInPageState
-            if (
-                result == null ||
-                currentSession?.id != session.id ||
-                currentState?.tabId != session.tabId ||
-                currentState.query != state.query ||
-                !isFindInPageSessionCurrent(session)
-            ) {
-                return@findComplete
-            }
-            findInPageState = FindInPageRules.withResult(
-                state = currentState,
-                activeMatchOrdinal = result.activeMatchOrdinal,
-                matchCount = result.matchCount,
-                isDoneCounting = result.isDoneCounting,
-            )
-        }
-        return true
-    }
+    fun updateFindInPageQuery(query: String) = findInPage.updateQuery(query)
+
+    fun findNextInPage(forward: Boolean): Boolean = findInPage.findNext(forward)
 
     /** Whether the find bar can offer match case and whole word for the page being searched. */
     internal val supportsFindInPageOptions: Boolean
-        get() = findInPageSession?.geckoSession?.supportsFindInPageOptions == true
+        get() = findInPage.supportsOptions
 
-    /** Changes how the page is searched and repeats the current search with it. */
-    internal fun updateFindInPageOptions(options: FindInPageOptions) {
-        val session = findInPageSession ?: return
-        val state = findInPageState?.takeIf { it.tabId == session.tabId } ?: return
-        if (state.options == options) return
-        session.geckoSession?.setFindInPageOptions(options)
-        val query = state.query
-        findInPageState = FindInPageRules.withQuery(state.copy(options = options), query = "")
-        if (query.isNotEmpty()) updateFindInPageQuery(query)
-    }
+    internal fun updateFindInPageOptions(options: FindInPageOptions) =
+        findInPage.updateOptions(options)
 
-    fun closeFindInPage() {
-        val session = findInPageSession
-        findInPageSession = null
-        findInPageState = null
-        nextFindInPageSessionId++
-
-        session?.geckoSession?.clearFindInPage()
-    }
+    fun closeFindInPage() = findInPage.close()
 
     fun shareSelectedPage() = sharePage(selectedTabId)
 
@@ -9042,7 +8955,7 @@ class BrowserController(
         val navigationMatches = if (CommandMatcher.isExplicitCommandQuery(query)) {
             emptyList()
         } else {
-            addressSuggestions(query, limit)
+            addressBar.navigationSuggestions(query, limit)
         }
         return AddressSuggestionComposer.compose(
             query = query,
@@ -9108,27 +9021,6 @@ class BrowserController(
         persist()
         return closeIds.size
     }
-
-    fun addressSuggestions(query: String, limit: Int = 8): List<AddressSuggestion> =
-        BrowsingLibraryRules.addressSuggestions(
-            history = history.filter { entry -> entry.profileId == selectedTab.profileId },
-            tabs = activeTabs,
-            selectedTabId = selectedTabId,
-            isIncognito = selectedTab.isIncognito,
-            query = query,
-            limit = limit,
-            includeHistory = isHistorySuggestionsEnabled,
-        )
-
-    fun addressDomainCompletion(query: String): String? = BrowsingLibraryRules.domainCompletion(
-        history = history.filter { entry -> entry.profileId == selectedTab.profileId },
-        favorites = favorites,
-        tabs = activeTabs,
-        selectedTabId = selectedTabId,
-        isIncognito = selectedTab.isIncognito,
-        query = query,
-        includeHistory = isHistorySuggestionsEnabled,
-    )
 
     val isSelectedTabFavorite: Boolean
         get() = !selectedTab.isIncognito && BrowsingLibraryRules.isFavorite(favorites, selectedTab.url)

@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -51,6 +52,8 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.ClipboardAction
+import dev.sk2andy.materialbrowser.browser.ClipboardOfferRules
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
@@ -186,25 +189,59 @@ internal fun BoxScope.BrowserAddressChrome(
         rootBottomInWindowPx = browserRootBottomInWindowPx,
         imeBottomPx = imeBottomPx,
     )
-    if (addressEditorVisible && !showInteractiveBlankStart) {
-        AddressEditorBackdrop(
-            showStartContent = selectedTab.url == BLANK_URL,
-            modeProgress = blankTabModeProgress,
-            revealOriginInRoot = blankTabModeRevealOrigin,
-            wallpaper = profileWallpaperRuntime.takeUnless { selectedTab.isIncognito },
-            onDismiss = onAddressEditorDismiss,
-        )
+    val addressEditor = controller.addressBar.editor
+    val clipboardOffer = rememberAddressClipboardOffer(
+        enabled = addressEditorVisible && commandFeedback == null,
+        usedCopiedAtElapsedMillis = addressEditor.usedClipCopiedAtElapsedMillis,
+    )
+    if (addressEditorVisible) {
+        if (!showInteractiveBlankStart) {
+            AddressEditorBackdrop(
+                showStartContent = selectedTab.url == BLANK_URL,
+                modeProgress = blankTabModeProgress,
+                revealOriginInRoot = blankTabModeRevealOrigin,
+                wallpaper = profileWallpaperRuntime.takeUnless { selectedTab.isIncognito },
+                onDismiss = onAddressEditorDismiss,
+            )
+            controller.profiles.firstOrNull { it.id == controller.activeProfileId }?.let { workspace ->
+                AddressEditorHeader(
+                    workspace = workspace,
+                    newTab = selectedTab.url == BLANK_URL,
+                    privateTab = selectedTab.isIncognito,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding(),
+                )
+            }
+        }
         if (commandFeedback == null) {
             AddressSuggestions(
-                suggestions = suggestionItems,
+                suggestions = if (showInteractiveBlankStart) emptyList() else suggestionItems,
+                query = addressValue.text,
                 highlightedIndex = highlightedSuggestionIndex,
                 onHighlight = onHighlightedSuggestionChanged,
                 onSelect = selectSuggestion,
                 onFill = fillAddressFromSuggestion,
                 rootHeightPx = browserHeightPx,
                 bottomBarTopPx = bottomBarTopPx,
-                backdropSource = chromeBackdropSource,
                 modifier = Modifier.align(Alignment.BottomCenter),
+                workspaces = controller.profiles.associateBy { it.id },
+                clipboardOffer = clipboardOffer?.offer,
+                onClipboardOffer = clipboardOffer@{
+                    val offer = clipboardOffer ?: return@clipboardOffer
+                    // The only clipboard read: the system shows its "pasted" notice now.
+                    val text = readClipboardText(context) ?: return@clipboardOffer
+                    addressEditor.markClipUsed(offer.copiedAtElapsedMillis)
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    when (val action = ClipboardOfferRules.action(offer.offer, text)) {
+                        is ClipboardAction.Open -> {
+                            controller.submitAddress(action.address)
+                            onAddressEditorDismiss()
+                        }
+                        is ClipboardAction.Paste -> addressEditor.fill(action.text)
+                        null -> Unit
+                    }
+                },
             )
         }
     }

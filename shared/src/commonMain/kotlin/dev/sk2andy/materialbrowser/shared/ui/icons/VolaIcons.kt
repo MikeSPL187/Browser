@@ -60,6 +60,13 @@ object VolaIcons {
         )
     }
 
+    val ContentPaste: ImageVector by lazy {
+        materialSymbol(
+            name = "ContentPaste",
+            pathData = "M200 840 q-33 0 -56.5 -23.5 T120 760 v-560 q0 -33 23.5 -56.5 T200 120 h167 q11 -35 43 -57.5 t70 -22.5 q40 0 71.5 22.5 T594 120 h166 q33 0 56.5 23.5 T840 200 v560 q0 33 -23.5 56.5 T760 840 H200 Z m0 -80 h560 v-560 h-80 v80 q0 17 -11.5 28.5 T640 320 H320 q-17 0 -28.5 -11.5 T280 280 v-80 h-80 v560 Z m280 -560 q17 0 28.5 -11.5 T520 160 q0 -17 -11.5 -28.5 T480 120 q-17 0 -28.5 11.5 T440 160 q0 17 11.5 28.5 T480 200 Z",
+        )
+    }
+
     val Delete: ImageVector by lazy {
         materialSymbol(
             name = "Delete",
@@ -99,6 +106,13 @@ object VolaIcons {
         materialSymbol(
             name = "FormatAlignLeft",
             pathData = "M160 840 q-17 0 -28.5 -11.5 T120 800 q0 -17 11.5 -28.5 T160 760 h640 q17 0 28.5 11.5 T840 800 q0 17 -11.5 28.5 T800 840 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 640 q0 -17 11.5 -28.5 T160 600 h400 q17 0 28.5 11.5 T600 640 q0 17 -11.5 28.5 T560 680 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 480 q0 -17 11.5 -28.5 T160 440 h640 q17 0 28.5 11.5 T840 480 q0 17 -11.5 28.5 T800 520 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 320 q0 -17 11.5 -28.5 T160 280 h400 q17 0 28.5 11.5 T600 320 q0 17 -11.5 28.5 T560 360 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 160 q0 -17 11.5 -28.5 T160 120 h640 q17 0 28.5 11.5 T840 160 q0 17 -11.5 28.5 T800 200 H160 Z",
+        )
+    }
+
+    val History: ImageVector by lazy {
+        materialSymbol(
+            name = "History",
+            pathData = "M480 840 q-126 0 -223 -76.5 T131 568 q-4 -15 6 -27.5 t27 -14.5 q16 -2 29 6 t18 24 q24 90 99 147 t170 57 q117 0 198.5 -81.5 T760 480 q0 -117 -81.5 -198.5 T480 200 q-69 0 -129 32 t-101 88 h70 q17 0 28.5 11.5 T360 360 q0 17 -11.5 28.5 T320 400 H160 q-17 0 -28.5 -11.5 T120 360 v-160 q0 -17 11.5 -28.5 T160 160 q17 0 28.5 11.5 T200 200 v54 q51 -64 124.5 -99 T480 120 q75 0 140.5 28.5 t114 77 q48.5 48.5 77 114 T840 480 q0 75 -28.5 140.5 t-77 114 q-48.5 48.5 -114 77 T480 840 Z m40 -376 l100 100 q11 11 11 28 t-11 28 q-11 11 -28 11 t-28 -11 L452 508 q-6 -6 -9 -13.5 t-3 -15.5 v-159 q0 -17 11.5 -28.5 T480 280 q17 0 28.5 11.5 T520 320 v144 Z",
         )
     }
 
@@ -160,6 +174,13 @@ object VolaIcons {
         )
     }
 
+    val NorthWest: ImageVector by lazy {
+        materialSymbol(
+            name = "NorthWest",
+            pathData = "M280 336 v224 q0 17 -11.5 28.5 T240 600 q-17 0 -28.5 -11.5 T200 560 v-320 q0 -17 11.5 -28.5 T240 200 h320 q17 0 28.5 11.5 T600 240 q0 17 -11.5 28.5 T560 280 H336 l436 436 q11 11 11 28 t-11 28 q-11 11 -28 11 t-28 -11 L280 336 Z",
+        )
+    }
+
     val Palette: ImageVector by lazy {
         materialSymbol(
             name = "Palette",
@@ -206,6 +227,13 @@ object VolaIcons {
         materialSymbol(
             name = "Settings",
             pathData = "M433 880 q-27 0 -46.5 -18 T363 818 l-9 -66 q-13 -5 -24.5 -12 T307 725 l-62 26 q-25 11 -50 2 t-39 -32 l-47 -82 q-14 -23 -8 -49 t27 -43 l53 -40 q-1 -7 -1 -13.5 v-27 q0 -6.5 1 -13.5 l-53 -40 q-21 -17 -27 -43 t8 -49 l47 -82 q14 -23 39 -32 t50 2 l62 26 q11 -8 23 -15 t24 -12 l9 -66 q4 -26 23.5 -44 t46.5 -18 h94 q27 0 46.5 18 t23.5 44 l9 66 q13 5 24.5 12 t22.5 15 l62 -26 q25 -11 50 -2 t39 32 l47 82 q14 23 8 49 t-27 43 l-53 40 q1 7 1 13.5 v27 q0 6.5 -2 13.5 l53 40 q21 17 27 43 t-8 49 l-48 82 q-14 23 -39 32 t-50 -2 l-60 -26 q-11 8 -23 15 t-24 12 l-9 66 q-4 26 -23.5 44 T527 880 h-94 Z m7 -80 h79 l14 -106 q31 -8 57.5 -23.5 T639 633 l99 41 l39 -68 l-86 -65 q5 -14 7 -29.5 t2 -31.5 q0 -16 -2 -31.5 t-7 -29.5 l86 -65 l-39 -68 l-99 42 q-22 -23 -48.5 -38.5 T533 266 l-13 -106 h-79 l-14 106 q-31 8 -57.5 23.5 T321 327 l-99 -41 l-39 68 l86 64 q-5 15 -7 30 t-2 32 q0 16 2 31 t7 30 l-86 65 l39 68 l99 -42 q22 23 48.5 38.5 T427 694 l13 106 Z m42 -180 q58 0 99 -41 t41 -99 q0 -58 -41 -99 t-99 -41 q-59 0 -99.5 41 T342 480 q0 58 40.5 99 t99.5 41 Z m-2 -140 Z",
+        )
+    }
+
+    val Star: ImageVector by lazy {
+        materialSymbol(
+            name = "Star",
+            pathData = "M354 673 l126 -76 l126 77 l-33 -144 l111 -96 l-146 -13 l-58 -136 l-58 135 l-146 13 l111 97 l-33 143 Z m126 18 L314 791 q-11 7 -23 6 t-21 -8 q-9 -7 -14 -17.5 t-2 -23.5 l44 -189 l-147 -127 q-10 -9 -12.5 -20.5 T140 389 q4 -11 12 -18 t22 -9 l194 -17 l75 -178 q5 -12 15.5 -18 t21.5 -6 q11 0 21.5 6 t15.5 18 l75 178 l194 17 q14 2 22 9 t12 18 q4 11 1.5 22.5 T809 432 L662 559 l44 189 q3 13 -2 23.5 T690 789 q-9 7 -21 8 t-23 -6 L480 691 Z m0 -201 Z",
         )
     }
 
@@ -261,12 +289,14 @@ object VolaIcons {
             Build,
             Check,
             Close,
+            ContentPaste,
             Delete,
             Download,
             Edit,
             Favorite,
             FormatAlignJustify,
             FormatAlignLeft,
+            History,
             Home,
             Info,
             KeyboardArrowDown,
@@ -275,6 +305,7 @@ object VolaIcons {
             KeyboardArrowUp,
             Lock,
             MoreVert,
+            NorthWest,
             Palette,
             PauseFilled,
             PlayArrowFilled,
@@ -282,6 +313,7 @@ object VolaIcons {
             Remove,
             Search,
             Settings,
+            Star,
             StopFilled,
             Sync,
             Tab,

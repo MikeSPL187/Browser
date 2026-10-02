@@ -541,6 +541,70 @@ class BrowsingLibraryRulesTest {
         assertFalse(BrowsingLibraryRules.isFavorite(removed, favorite.url))
     }
 
+    @Test
+    fun `tabs open in another workspace switch there, after the current workspace's own tabs`() {
+        val suggestions = BrowsingLibraryRules.addressSuggestions(
+            history = listOf(HistoryEntry("https://ice.example/", "Ice in history", 50)),
+            tabs = listOf(
+                browserTab(id = "current", url = BLANK_URL),
+                browserTab(id = "here", url = "https://ice-here.example/", title = "Ice here"),
+            ),
+            selectedTabId = "current",
+            isIncognito = false,
+            query = "ice",
+            limit = 6,
+            otherWorkspaceTabs = listOf(
+                browserTab(id = "there", url = "https://ice.example/", title = "Ice there")
+                    .copy(profileId = "anime"),
+            ),
+        )
+
+        assertEquals(listOf("here", "there"), suggestions.map(AddressSuggestion::openTabId))
+        assertEquals(listOf(null, "anime"), suggestions.map(AddressSuggestion::openTabProfileId))
+        assertEquals("Ice there", suggestions.last().title)
+    }
+
+    @Test
+    fun `a private tab never sees other workspaces or favorites`() {
+        val suggestions = BrowsingLibraryRules.addressSuggestions(
+            history = emptyList(),
+            tabs = listOf(browserTab(id = "current", url = BLANK_URL, isIncognito = true)),
+            selectedTabId = "current",
+            isIncognito = true,
+            query = "ice",
+            limit = 6,
+            favorites = listOf(FavoriteEntry("https://ice-saved.example/", "Ice saved", 1)),
+            otherWorkspaceTabs = listOf(
+                browserTab(id = "there", url = "https://ice.example/", title = "Ice there"),
+            ),
+        )
+
+        assertTrue(suggestions.isEmpty())
+    }
+
+    @Test
+    fun `favorites are suggested once, above their own history entry`() {
+        val suggestions = BrowsingLibraryRules.addressSuggestions(
+            history = listOf(
+                HistoryEntry("https://ice.example/", "Ice visited", 90),
+                HistoryEntry("https://ice-old.example/", "Ice old", 10),
+            ),
+            tabs = listOf(browserTab(id = "current", url = BLANK_URL)),
+            selectedTabId = "current",
+            isIncognito = false,
+            query = "ice",
+            limit = 6,
+            favorites = listOf(FavoriteEntry("https://ice.example/", "Ice saved", 20)),
+        )
+
+        assertEquals(
+            listOf(AddressSuggestionSource.Favorite, AddressSuggestionSource.History),
+            suggestions.map(AddressSuggestion::source),
+        )
+        assertEquals("Ice saved", suggestions.first().title)
+        assertEquals(90L, suggestions.first().lastVisitedAt)
+    }
+
     private fun browserTab(
         id: String,
         url: String,
