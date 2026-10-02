@@ -55,11 +55,23 @@ jobs:
           export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
-          sdkmanager \
-            "emulator" \
-            "platform-tools" \
-            "platforms;android-37.1" \
-            "system-images;android-35;google_apis;x86_64"
+          # The SDK mirror sometimes cuts a download short ("Error reading Zip content"):
+          # drop the partial file and try again before failing the job.
+          for attempt in 1 2 3; do
+            if sdkmanager \
+              "emulator" \
+              "platform-tools" \
+              "platforms;android-37.1" \
+              "system-images;android-35;google_apis;x86_64"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "sdkmanager failed (attempt $attempt), retrying"
+            rm -rf "$ANDROID_HOME/.temp" "$HOME/.android/cache"
+            sleep $((attempt * 15))
+          done
           printf 'no\n' | avdmanager create avd \
             --force \
             --name vola_ci \
