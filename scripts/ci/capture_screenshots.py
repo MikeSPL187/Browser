@@ -224,6 +224,29 @@ def tour(suffix):
         time.sleep(1)
     step("find", find_in_page)
 
+    def address_editor():
+        # The address editor over the Zen page: library, search and open-tab suggestions (Q4).
+        address = find("wikipedia.org", contains=True)
+        if address is None:
+            # The scrolled page left the compact capsule: tap it to bring the full bar back.
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
+            time.sleep(2)
+            address = find("wikipedia.org", contains=True)
+        if address is None:
+            log("not found: address field")
+            return
+        x, y = address["center"]
+        adb("shell", "input", "tap", str(x), str(y))
+        time.sleep(2)
+        adb("shell", "input", "text", "zen")
+        time.sleep(4)
+        shot(f"address-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+    step("address", address_editor)
+
     def https_upgrade():
         # example.com serves HTTPS, so HTTPS-only mode must upgrade this link (lock in the bar).
         open_url("http://example.com/")
