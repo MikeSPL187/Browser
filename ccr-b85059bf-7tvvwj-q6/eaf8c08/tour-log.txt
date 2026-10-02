@@ -1,0 +1,132 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 05-find-light.png
+screenshot 06-https-upgrade-light.png
+screenshot 07-https-only-early-light.png
+screenshot 08-https-only-light.png
+screenshot 09-tab-overview-light.png
+screenshot 10-workspace-options-light.png
+tap 'New tab' at 467,2233
+screenshot 11-essentials-start-light.png
+tap 'Add a site' at 540,1043
+screenshot 12-essentials-add-light.png
+screenshot 13-essentials-light.png
+tap 'Edit' at 951,363
+screenshot 14-essentials-edit-light.png
+tap 'Done' at 930,280
+screenshot 15-protection-card-light.png
+tap 'this week' at 428,1406
+screenshot 16-protection-report-light.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 17-private-new-tab-light.png
+tap 'Close 1 private' at 282,1479
+screenshot 18-private-closed-light.png
+tap 'More options' at 964,2232
+screenshot 19-menu-light.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 20-settings-light.png
+tap 'Appearance' at 360,1494
+screenshot 21-appearance-light.png
+screenshot 22-current-dark.png
+screenshot 23-new-tab-dark.png
+screenshot 24-page-dark.png
+screenshot 25-page-scrolled-dark.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 26-find-dark.png
+screenshot 27-https-upgrade-dark.png
+screenshot 28-https-only-early-dark.png
+screenshot 29-https-only-dark.png
+screenshot 30-tab-overview-dark.png
+screenshot 31-workspace-options-dark.png
+tap 'New tab' at 467,2233
+screenshot 32-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 33-essentials-dark.png
+tap 'Edit' at 951,363
+screenshot 34-essentials-edit-dark.png
+tap 'Done' at 930,280
+screenshot 35-protection-card-dark.png
+tap 'this week' at 428,1406
+screenshot 36-protection-report-dark.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 37-private-new-tab-dark.png
+tap 'Close 1 private' at 282,1479
+screenshot 38-private-closed-dark.png
+tap 'More options' at 964,2232
+screenshot 39-menu-dark.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 40-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 41-appearance-dark.png
+screenshot 42-new-tab-a11y.png
+screenshot 43-page-a11y.png
+tap 'More options' at 964,2232
+screenshot 44-menu-a11y.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 501,2181
+screenshot 45-settings-a11y.png
+Cold start (am start -W, 5 runs): average 2684 ms, min 2445 ms, max 3210 ms
+screenshot 46-new-tab-ru.png
+screenshot 47-page-ru.png
+screenshot 48-page-scrolled-ru.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 547,1203
+screenshot 49-find-ru.png
+screenshot 50-https-upgrade-ru.png
+screenshot 51-https-only-early-ru.png
+screenshot 52-https-only-ru.png
+screenshot 53-tab-overview-ru.png
+screenshot 54-workspace-options-ru.png
+tap 'New tab' at 467,2233
+screenshot 55-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 56-essentials-ru.png
+tap 'Edit' at 908,363
+screenshot 57-essentials-edit-ru.png
+tap 'Done' at 914,280
+screenshot 58-protection-card-ru.png
+tap 'this week' at 491,1406
+screenshot 59-protection-report-ru.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 60-private-new-tab-ru.png
+tap 'Close 1 private' at 388,1479
+screenshot 61-private-closed-ru.png
+tap 'More options' at 964,2232
+screenshot 62-menu-ru.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+screenshot 63-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 64-appearance-ru.png
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+tap 'Appearance' at 371,1494
+tap 'Browser layout' at 225,590
+tap 'Air' at 158,917
+screenshot 65-page-air-ru.png
