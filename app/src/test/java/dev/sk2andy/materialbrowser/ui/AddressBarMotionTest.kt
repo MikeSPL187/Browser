@@ -42,13 +42,14 @@ class AddressBarMotionTest {
 
     @Test
     fun `all width targets clamp to unusually narrow viewport`() {
+        // Narrower than the 56 dp new-tab button, so every presentation clamps.
         AddressBarPresentation.entries.forEach { presentation ->
             assertEquals(
-                80.dp,
+                48.dp,
                 AddressBarMotion.widthTarget(
                     presentation = presentation,
                     compactWidth = 184.dp,
-                    maxWidth = 80.dp,
+                    maxWidth = 48.dp,
                     feedbackWidth = 220.dp,
                     edgeTabWidth = 100.dp,
                 ),

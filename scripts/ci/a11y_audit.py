@@ -43,9 +43,15 @@ def has_label(node):
 
 
 def clipped_axes(bounds, container):
-    """(horizontally, vertically): whether bounds meet an edge of the container that may clip them."""
-    near = [abs(side - edge) <= 1 for side, edge in zip(bounds, container)]
-    return near[0] or near[2], near[1] or near[3]
+    """(horizontally, vertically): whether bounds reach an edge of the container that may clip them.
+
+    A scrolled list item can also cross the edge: Compose reports its full bounds above the list."""
+    left, top, right, bottom = bounds
+    container_left, container_top, container_right, container_bottom = container
+    return (
+        left <= container_left + 1 or right >= container_right - 1,
+        top <= container_top + 1 or bottom >= container_bottom - 1,
+    )
 
 
 def describe(node):
@@ -64,7 +70,7 @@ def audit(xml_text, package, density):
     scale = density / 160
     findings = []
 
-    def visit(node, in_web_content, container):
+    def visit(node, in_web_content, container, scrolling):
         node_class = node.get("class") or ""
         in_web_content = in_web_content or any(name in node_class for name in WEB_CONTENT_CLASSES)
         bounds = parse_bounds(node.get("bounds"))
@@ -77,15 +83,18 @@ def audit(xml_text, package, density):
                 clipped_x, clipped_y = clipped_axes(bounds, container)
                 if (width < limit and not clipped_x) or (height < limit and not clipped_y):
                     findings.append(("small", describe(node), width, height))
-                if not has_label(node):
+                # A list item cut by scrolling may keep its label in the part scrolled away.
+                cut_by_scrolling = scrolling and (clipped_x or clipped_y)
+                if not has_label(node) and not cut_by_scrolling:
                     findings.append(("unlabeled", describe(node), width, height))
         if bounds and node.get("scrollable") == "true":
             container = bounds
+            scrolling = True
         for child in node.findall("node"):
-            visit(child, in_web_content, container)
+            visit(child, in_web_content, container, scrolling)
 
     for top in root.findall("node"):
-        visit(top, False, parse_bounds(top.get("bounds")) or [0, 0, 0, 0])
+        visit(top, False, parse_bounds(top.get("bounds")) or [0, 0, 0, 0], False)
     return findings
 
 
