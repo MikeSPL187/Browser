@@ -1,0 +1,6 @@
+Vola controls in the tour: 4 accessibility finding(s).
+- [NEW] unlabeled | View | page — page-dark
+- [NEW] unlabeled | View | page-scrolled — page-scrolled-dark
+- [known] unlabeled | View | tab-overview — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [known] unlabeled | View | workspace-options — workspace-options-dark, workspace-options-light, workspace-options-ru
+- [gone] unlabeled | View | appearance — not seen in this tour; delete it from the baseline if fixed
