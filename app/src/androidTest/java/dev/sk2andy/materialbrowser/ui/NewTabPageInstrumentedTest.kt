@@ -1,42 +1,21 @@
 package dev.sk2andy.materialbrowser.ui
 
 import android.graphics.Bitmap
-import android.graphics.Color
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.cancel
-import androidx.compose.ui.test.down
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.moveBy
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.up
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
-import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.data.EssentialCandidate
+import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,360 +25,92 @@ class NewTabPageInstrumentedTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    @Test
-    fun emptyFavoritesHideContainer() {
-        setNewTab(favorites = emptyList())
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container).assertDoesNotExist()
-        composeRule.onNodeWithText(favoritesTitle()).assertDoesNotExist()
+    @Test
+    fun tapOpensTheEssential() {
+        var opened: String? = null
+        setNewTab(essentials = listOf(entry(1), entry(2)), onOpen = { opened = it })
+
+        composeRule.onNodeWithText("Site 2").performClick()
+
+        assertEquals("https://site2.example.com/", opened)
     }
 
     @Test
-    fun favoritesShowSectionHeading() {
-        setNewTab(favorites = listOf(favorite(1)))
+    fun editShowsRemoveButtonsAndAddTile() {
+        val editor = FakeEditor()
+        setNewTab(essentials = listOf(entry(1)), editor = editor)
 
-        val headingBounds = composeRule.onNodeWithText(favoritesTitle())
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val gridBounds = composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container)
-            .fetchSemanticsNode()
-            .boundsInRoot
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Edit).performClick()
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Add).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.essentials_remove, "Site 1"))
+            .performClick()
 
-        assertTrue(headingBounds.bottom < gridBounds.top)
+        assertEquals(listOf("https://site1.example.com/"), editor.removed)
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Done).performClick()
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Add).assertDoesNotExist()
     }
 
     @Test
-    fun longPressDragReordersFavoritesAndCommitsDestination() {
-        val first = favorite(1)
-        val second = favorite(2)
-        var library by mutableStateOf(FavoriteLibrary(listOf(first, second)))
-        val reorders = mutableListOf<Pair<String, Int>>()
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                NewTabPage(
-                    favorites = emptyList(),
-                    favoriteLibrary = library,
-                    incognito = false,
-                    modeProgress = 0f,
-                    revealOriginInRoot = Offset.Zero,
-                    onSearch = {},
-                    onFavorite = {},
-                    onReorderFavorite = { entryId, destinationIndex ->
-                        reorders += entryId to destinationIndex
-                        library = BrowsingFavoritesRules.reorder(
-                            library,
-                            entryId,
-                            destinationIndex,
-                        )
-                    },
-                )
-            }
-        }
-        composeRule.waitForIdle()
+    fun emptyGridShowsTheStateMessage() {
+        setNewTab(essentials = emptyList(), editor = FakeEditor())
 
-        val source = composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(first.url))
-        val sourceCenter = source.fetchSemanticsNode().boundsInRoot.center
-        val destinationCenter = composeRule
-            .onNodeWithTag(NewTabFavoritesTestTags.favorite(second.url))
-            .fetchSemanticsNode().boundsInRoot.center
-
-        source.performTouchInput {
-            down(center)
-            advanceEventTime(700L)
-            moveBy(destinationCenter - sourceCenter)
-            up()
-        }
-        composeRule.waitForIdle()
-
-        assertEquals(listOf(first.id to 1), reorders)
-        assertEquals(
-            listOf(second.id, first.id),
-            BrowsingFavoritesRules.children(library, parentFolderId = null).map { it.id },
-        )
+        composeRule.onNodeWithText(context.getString(R.string.essentials_empty_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(R.string.essentials_empty_action)).assertIsDisplayed()
     }
 
     @Test
-    fun canceledLongPressDragLeavesFavoritesInPlace() {
-        val first = favorite(1)
-        val second = favorite(2)
-        var library by mutableStateOf(FavoriteLibrary(listOf(first, second)))
-        val reorders = mutableListOf<Pair<String, Int>>()
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                NewTabPage(
-                    favorites = emptyList(),
-                    favoriteLibrary = library,
-                    incognito = false,
-                    modeProgress = 0f,
-                    revealOriginInRoot = Offset.Zero,
-                    onSearch = {},
-                    onFavorite = {},
-                    onReorderFavorite = { entryId, destinationIndex ->
-                        reorders += entryId to destinationIndex
-                        library = BrowsingFavoritesRules.reorder(
-                            library,
-                            entryId,
-                            destinationIndex,
-                        )
-                    },
-                )
-            }
-        }
-        composeRule.waitForIdle()
-
-        val source = composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(first.url))
-        val sourceCenter = source.fetchSemanticsNode().boundsInRoot.center
-        val destinationCenter = composeRule
-            .onNodeWithTag(NewTabFavoritesTestTags.favorite(second.url))
-            .fetchSemanticsNode().boundsInRoot.center
-
-        source.performTouchInput {
-            down(center)
-            advanceEventTime(700L)
-            moveBy(destinationCenter - sourceCenter)
-            cancel()
-        }
-        composeRule.waitForIdle()
-
-        assertTrue(reorders.isEmpty())
-        assertEquals(
-            listOf(first.id, second.id),
-            BrowsingFavoritesRules.children(library, parentFolderId = null).map { it.id },
-        )
+    fun previewAndPrivateTabShowNoEditing() {
+        setNewTab(essentials = listOf(entry(1)), editor = null, interactive = false)
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Edit).assertDoesNotExist()
+        assertEquals(1, composeRule.onAllNodesWithTag(NewTabEssentialsTestTags.Tile).fetchSemanticsNodes().size)
     }
 
     @Test
-    fun favoritesUseFourColumnsAndScrollInsideBoundedContainer() {
-        val favorites = (1..21).map(::favorite)
-        setNewTab(favorites = favorites)
+    fun privateTabHidesEssentials() {
+        setNewTab(essentials = listOf(entry(1)), editor = FakeEditor(), incognito = true)
 
-        val firstRow = favorites.take(4).map { entry ->
-            composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(entry.url))
-                .fetchSemanticsNode().boundsInRoot.center
-        }
-        val fifth = composeRule.onNodeWithTag(
-            NewTabFavoritesTestTags.favorite(favorites[4].url),
-        ).fetchSemanticsNode().boundsInRoot.center
-        val rootBounds = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
-        val containerBounds = composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container)
-            .fetchSemanticsNode().boundsInRoot
-
-        assertEquals(4, firstRow.map(Offset::x).distinct().size)
-        assertEquals(1, firstRow.map(Offset::y).distinct().size)
-        assertTrue(fifth.y > firstRow.first().y)
-        assertTrue(containerBounds.left >= rootBounds.width * 0.08f)
-        assertTrue(rootBounds.right - containerBounds.right >= rootBounds.width * 0.08f)
-
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container)
-            .performScrollToNode(
-                hasTestTag(NewTabFavoritesTestTags.favorite(favorites.last().url)),
-            )
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(favorites.last().url))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun shortViewportKeepsFavoritesInsideAndScrollable() {
-        val favorites = (1..21).map(::favorite)
-        setNewTab(
-            favorites = favorites,
-            viewportHeight = 360.dp,
-        )
-
-        val viewportBounds = composeRule.onNodeWithTag(SHORT_VIEWPORT_TAG)
-            .fetchSemanticsNode().boundsInRoot
-        val containerBounds = composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container)
-            .fetchSemanticsNode().boundsInRoot
-        assertTrue(containerBounds.bottom <= viewportBounds.bottom)
-
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.Container)
-            .performScrollToNode(
-                hasTestTag(NewTabFavoritesTestTags.favorite(favorites.last().url)),
-            )
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(favorites.last().url))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun storedBitmapRendersAsFavoriteFavicon() {
-        val favorite = favorite(1)
-        val bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888).apply {
-            eraseColor(Color.MAGENTA)
-        }
-        try {
-            setNewTab(
-                favorites = listOf(favorite),
-                favicons = mapOf(favorite.url to bitmap),
-            )
-
-            composeRule.onNodeWithTag(
-                NewTabFavoritesTestTags.favicon(favorite.url),
-                useUnmergedTree = true,
-            )
-                .assertExists()
-        } finally {
-            bitmap.recycle()
-        }
-    }
-
-    @Test
-    fun blankTabPreviewKeepsFavoriteFavicons() {
-        val favorite = favorite(1)
-        val bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888).apply {
-            eraseColor(Color.MAGENTA)
-        }
-        try {
-            composeRule.setContent {
-                MaterialBrowserTheme {
-                    BlankTabPreview(
-                        favorites = listOf(favorite),
-                        favoriteFavicons = mapOf(favorite.url to bitmap),
-                        favoritesAlpha = { 1f },
-                    )
-                }
-            }
-
-            composeRule.onNodeWithTag(
-                NewTabFavoritesTestTags.favicon(favorite.url),
-                useUnmergedTree = true,
-            ).assertExists()
-        } finally {
-            bitmap.recycle()
-        }
-    }
-
-    @Test
-    fun disabledLaunchAnimationOpensFavoriteImmediately() {
-        val favorite = favorite(1)
-        var openedUrl: String? = null
-        setNewTab(
-            favorites = listOf(favorite),
-            favoriteLaunchAnimationEnabled = false,
-            onFavorite = { openedUrl = it },
-        )
-
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(favorite.url)).performClick()
-
-        composeRule.runOnIdle { assertEquals(favorite.url, openedUrl) }
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.LaunchOverlay).assertDoesNotExist()
-    }
-
-    @Test
-    fun enabledLaunchAnimationCompletesBeforeOpeningFavorite() {
-        val favorite = favorite(1)
-        var openedUrl: String? = null
-        composeRule.mainClock.autoAdvance = false
-        setNewTab(
-            favorites = listOf(favorite),
-            favoriteLaunchAnimationEnabled = true,
-            onFavorite = { openedUrl = it },
-        )
-
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(favorite.url)).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(
-            NewTabFavoritesTestTags.LaunchOverlay,
-            useUnmergedTree = true,
-        ).assertExists()
-        composeRule.runOnIdle { assertEquals(null, openedUrl) }
-
-        composeRule.mainClock.advanceTimeBy(
-            NewTabFavoriteLaunchMotionRules.DURATION_MILLIS.toLong() + 100L,
-        )
-        composeRule.waitForIdle()
-
-        composeRule.runOnIdle { assertEquals(favorite.url, openedUrl) }
-    }
-
-    @Test
-    fun changingBlankTabCancelsItsPendingLaunch() {
-        val favorite = favorite(1)
-        var ownerTabId by mutableStateOf("first")
-        var openedUrl: String? = null
-        composeRule.mainClock.autoAdvance = false
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                key(ownerTabId) {
-                    NewTabPage(
-                        favorites = listOf(favorite),
-                        incognito = false,
-                        modeProgress = 0f,
-                        revealOriginInRoot = Offset.Zero,
-                        onSearch = {},
-                        onFavorite = { openedUrl = it },
-                        favoriteLaunchAnimationEnabled = true,
-                    )
-                }
-            }
-        }
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.favorite(favorite.url)).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(
-            NewTabFavoritesTestTags.LaunchOverlay,
-            useUnmergedTree = true,
-        ).assertExists()
-
-        composeRule.runOnIdle { ownerTabId = "second" }
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(NewTabFavoritesTestTags.LaunchOverlay).assertDoesNotExist()
-        composeRule.mainClock.advanceTimeBy(
-            NewTabFavoriteLaunchMotionRules.DURATION_MILLIS.toLong() + 100L,
-        )
-        composeRule.runOnIdle { assertEquals(null, openedUrl) }
+        composeRule.onNodeWithTag(NewTabEssentialsTestTags.Tile).assertDoesNotExist()
     }
 
     private fun setNewTab(
-        favorites: List<FavoriteEntry>,
-        favicons: Map<String, Bitmap> = emptyMap(),
-        favoriteLaunchAnimationEnabled: Boolean = false,
-        onFavorite: (String) -> Unit = {},
-        viewportHeight: Dp? = null,
+        essentials: List<EssentialEntry>,
+        editor: NewTabEssentialsEditor? = null,
+        interactive: Boolean = true,
+        incognito: Boolean = false,
+        onOpen: (String) -> Unit = {},
     ) {
         composeRule.setContent {
             MaterialBrowserTheme {
-                Box(
-                    modifier = if (viewportHeight == null) {
-                        Modifier.fillMaxSize()
-                    } else {
-                        Modifier
-                            .fillMaxWidth()
-                            .height(viewportHeight)
-                            .testTag(SHORT_VIEWPORT_TAG)
-                    },
-                ) {
-                    NewTabPage(
-                        favorites = favorites,
-                        favicons = favicons,
-                        incognito = false,
-                        modeProgress = 0f,
-                        revealOriginInRoot = Offset.Zero,
-                        onSearch = {},
-                        onFavorite = onFavorite,
-                        favoriteLaunchAnimationEnabled = favoriteLaunchAnimationEnabled,
-                    )
-                }
+                NewTabPage(
+                    essentials = essentials,
+                    incognito = incognito,
+                    modeProgress = if (incognito) 1f else 0f,
+                    revealOriginInRoot = Offset.Zero,
+                    onSearch = {},
+                    onOpenEssential = onOpen,
+                    editor = editor,
+                    interactive = interactive,
+                )
             }
         }
-        composeRule.waitForIdle()
     }
 
-    private fun favorite(index: Int): FavoriteEntry = FavoriteEntry(
-        url = "https://favorite-$index.example/",
-        title = "Favorite $index",
-        addedAt = index.toLong(),
-    )
+    private fun entry(index: Int) = EssentialEntry("https://site$index.example.com/", "Site $index")
 
-    private fun favoritesTitle(): String = InstrumentationRegistry.getInstrumentation()
-        .targetContext
-        .getString(R.string.favorites_title)
+    private class FakeEditor : NewTabEssentialsEditor {
+        val removed = mutableListOf<String>()
+        override val candidates: List<EssentialCandidate> = emptyList()
+        override val candidateIcons: Map<String, Bitmap> = emptyMap()
+        override val isFull: Boolean = false
 
-    private companion object {
-        const val SHORT_VIEWPORT_TAG = "new_tab_short_viewport"
+        override fun remove(entry: EssentialEntry) {
+            removed += entry.url
+        }
+
+        override fun move(entry: EssentialEntry, toIndex: Int) = Unit
+
+        override fun add(candidate: EssentialCandidate) = Unit
     }
 }

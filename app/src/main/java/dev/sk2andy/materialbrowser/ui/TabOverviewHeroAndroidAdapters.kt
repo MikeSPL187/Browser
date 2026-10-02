@@ -15,12 +15,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
+import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
-import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.shared.ui.TabCardHeroContent
 import dev.sk2andy.materialbrowser.shared.ui.TabListHeroContent
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroVisuals
@@ -103,9 +102,7 @@ internal fun AndroidTabCardHeroContent(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap>,
+    essentials: EssentialsController? = null,
     targetBounds: Rect,
     rootWidthPx: Float,
     rootHeightPx: Float,
@@ -130,9 +127,7 @@ internal fun AndroidTabCardHeroContent(
                 tab = tab,
                 preview = preview,
                 favicon = favicon,
-                favorites = favorites,
-                favoriteLibrary = favoriteLibrary,
-                favoriteFavicons = favoriteFavicons,
+                essentials = essentials,
                 rootHeightPx = rootHeightPx,
                 previewTopInsetPx = previewTopInsetPx,
                 bottomBarTopPx = bottomBarTopPx,
@@ -144,8 +139,7 @@ internal fun AndroidTabCardHeroContent(
                 tab = tab,
                 preview = preview,
                 favicon = favicon,
-                favorites = favorites,
-                favoriteFavicons = favoriteFavicons,
+                essentials = essentials,
             )
         },
     )
@@ -156,9 +150,7 @@ internal fun AndroidTabListHeroContent(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap>,
+    essentials: EssentialsController? = null,
     targetBounds: Rect,
     rootWidthPx: Float,
     rootHeightPx: Float,
@@ -178,9 +170,7 @@ internal fun AndroidTabListHeroContent(
                 tab = tab,
                 preview = preview,
                 favicon = favicon,
-                favorites = favorites,
-                favoriteLibrary = favoriteLibrary,
-                favoriteFavicons = favoriteFavicons,
+                essentials = essentials,
                 rootHeightPx = rootHeightPx,
                 previewTopInsetPx = previewTopInsetPx,
                 bottomBarTopPx = bottomBarTopPx,

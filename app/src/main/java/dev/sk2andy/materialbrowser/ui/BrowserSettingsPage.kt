@@ -22,7 +22,6 @@ import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
@@ -34,8 +33,6 @@ import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 internal object BrowserSettingsTestTags {
     const val StartupAnimation = "browser_settings_startup_animation"
     const val StartupAddressFocus = "browser_settings_startup_address_focus"
-    const val FavoriteLaunchAnimation = "browser_settings_favorite_launch_animation"
-    const val FavoriteAnimationSpeed = "browser_settings_favorite_animation_speed"
     const val OpenHomeOnStartup = "browser_settings_open_home_on_startup"
     const val ScrollBar = "browser_settings_scroll_bar"
     const val TranslationProvider = "browser_settings_translation_provider"
@@ -54,8 +51,6 @@ internal fun BrowserSettingsPage(
     isFullImmersiveModeEnabled: Boolean,
     isStartupAnimationEnabled: Boolean,
     startupAddressFocusMode: StartupAddressFocusMode = StartupAddressFocusMode.Default,
-    isFavoriteLaunchAnimationEnabled: Boolean = true,
-    favoriteAnimationSpeed: FavoriteAnimationSpeed = FavoriteAnimationSpeed.Default,
     isOpenHomeOnStartupEnabled: Boolean = false,
     isScrollBarEnabled: Boolean,
     isVideoAutoplayBlocked: Boolean,
@@ -69,8 +64,6 @@ internal fun BrowserSettingsPage(
     onFullImmersiveModeEnabledChanged: (Boolean) -> Unit,
     onStartupAnimationEnabledChanged: (Boolean) -> Unit,
     onStartupAddressFocusModeChanged: (StartupAddressFocusMode) -> Unit = {},
-    onFavoriteLaunchAnimationEnabledChanged: (Boolean) -> Unit = {},
-    onFavoriteAnimationSpeedChanged: (FavoriteAnimationSpeed) -> Unit = {},
     onImportFavoriteBookmarks: () -> Unit = {},
     onOpenHomeOnStartupEnabledChanged: (Boolean) -> Unit = {},
     onScrollBarEnabledChanged: (Boolean) -> Unit,
@@ -82,7 +75,6 @@ internal fun BrowserSettingsPage(
 ) {
     var engineMenuExpanded by remember { mutableStateOf(false) }
     var startupAddressFocusMenuExpanded by remember { mutableStateOf(false) }
-    var favoriteSpeedMenuExpanded by remember { mutableStateOf(false) }
     var externalAppLinksMenuExpanded by remember { mutableStateOf(false) }
     var inlineMediaPlayerMenuExpanded by remember { mutableStateOf(false) }
     SettingsPage(
@@ -218,41 +210,6 @@ internal fun BrowserSettingsPage(
         )
         Spacer(Modifier.height(18.dp))
         SettingsSectionTitle(stringResource(R.string.settings_browser_group_favorites))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_favorite_launch_animation_title),
-            subtitle = stringResource(R.string.settings_favorite_launch_animation_subtitle),
-            checked = isFavoriteLaunchAnimationEnabled,
-            onCheckedChange = onFavoriteLaunchAnimationEnabledChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.FavoriteLaunchAnimation),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_favorite_animation_speed_title),
-                value = favoriteAnimationSpeed.displayName(),
-                expanded = favoriteSpeedMenuExpanded,
-                onClick = { favoriteSpeedMenuExpanded = true },
-                modifier = Modifier.testTag(BrowserSettingsTestTags.FavoriteAnimationSpeed),
-            )
-            SettingsDropdown(
-                expanded = favoriteSpeedMenuExpanded,
-                onDismissRequest = { favoriteSpeedMenuExpanded = false },
-            ) {
-                FavoriteAnimationSpeed.entries.forEach { speed ->
-                    SettingsDropdownItem(
-                        label = speed.displayName(),
-                        selected = speed == favoriteAnimationSpeed,
-                        onClick = {
-                            favoriteSpeedMenuExpanded = false
-                            if (speed != favoriteAnimationSpeed) {
-                                onFavoriteAnimationSpeedChanged(speed)
-                            }
-                        },
-                    )
-                }
-            }
-        }
         Spacer(Modifier.height(8.dp))
         SettingsLink(
             icon = VolaIcons.Favorite,
@@ -406,16 +363,6 @@ private fun AndroidBrowserEngineKind.displayName(): String = when (this) {
         stringResource(R.string.settings_browser_engine_gecko)
     AndroidBrowserEngineKind.SystemWebView ->
         stringResource(R.string.settings_browser_engine_system)
-}
-
-@Composable
-private fun FavoriteAnimationSpeed.displayName(): String = when (this) {
-    FavoriteAnimationSpeed.Relaxed ->
-        stringResource(R.string.settings_favorite_animation_speed_relaxed)
-    FavoriteAnimationSpeed.Normal ->
-        stringResource(R.string.settings_favorite_animation_speed_normal)
-    FavoriteAnimationSpeed.Fast ->
-        stringResource(R.string.settings_favorite_animation_speed_fast)
 }
 
 @Composable

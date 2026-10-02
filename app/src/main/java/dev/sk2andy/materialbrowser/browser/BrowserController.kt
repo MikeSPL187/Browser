@@ -224,6 +224,8 @@ import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
 import dev.sk2andy.materialbrowser.data.CanonicalWebUrl
+import dev.sk2andy.materialbrowser.data.EssentialsRules
+import dev.sk2andy.materialbrowser.data.EssentialsStore
 import dev.sk2andy.materialbrowser.data.FavoriteFaviconRepository
 import dev.sk2andy.materialbrowser.data.FavoriteFolderIconStore
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
@@ -589,14 +591,9 @@ class BrowserController(
     val favorites = mutableStateListOf<FavoriteEntry>()
     var favoriteLibrary by mutableStateOf(FavoriteLibrary())
         private set
-    val favoriteFavicons = mutableStateMapOf<String, Bitmap>()
-    val favoriteFolderIcons = mutableStateMapOf<String, Bitmap>()
-    private val retiredFavoriteFavicons = mutableSetOf<Bitmap>()
     private var favoriteRevision = 0L
     private val favoriteLibraryUndoSnapshots = mutableMapOf<Long, FavoriteLibrary>()
     private var favoriteImportInFlight = false
-    private var favoriteFaviconLoadGeneration = 0
-    private var favoriteFolderIconLoadGeneration = 0
     val privacySnapshots = mutableStateMapOf<String, PrivacyXRaySnapshot>()
     val filterRules = mutableStateListOf<CandyRule>()
     private val incognitoRuleHits = mutableStateMapOf<String, Int>()
@@ -717,10 +714,6 @@ class BrowserController(
     var isStartupAnimationEnabled by mutableStateOf(true)
         private set
     var isHttpPasswordAutofillEnabled by mutableStateOf(false)
-        private set
-    var isFavoriteLaunchAnimationEnabled by mutableStateOf(true)
-        private set
-    internal var favoriteAnimationSpeed by mutableStateOf(FavoriteAnimationSpeed.Default)
         private set
     var isOpenHomeOnStartupEnabled by mutableStateOf(false)
         private set
@@ -1357,12 +1350,6 @@ class BrowserController(
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
         removeCallbacks = mainHandler::removeCallbacks,
     )
-    private val recycleRetiredFavoriteFavicons = Runnable {
-        val displayedBitmaps = favoriteFavicons.values.toSet()
-        val recyclable = retiredFavoriteFavicons.filterNot(displayedBitmaps::contains)
-        recycleFavoriteFavicons(recyclable)
-        retiredFavoriteFavicons.removeAll(recyclable.toSet())
-    }
     val syncIconCatalog = SyncDeviceIconCatalog.decode(
         activity.assets.open("candy_sync_device_icons_v1.json")
             .bufferedReader(Charsets.UTF_8)
@@ -1496,6 +1483,20 @@ class BrowserController(
         },
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
         removeCallbacks = mainHandler::removeCallbacks,
+    )
+    val essentials = EssentialsController(
+        store = EssentialsStore(activity),
+        icons = EssentialIconRepository(activity),
+        host = object : EssentialsController.Host {
+            override val profileIds: List<String>
+                get() = localProfiles.map(BrowserProfile::id)
+
+            override fun migrationSeed() = EssentialsRules.migrationSeed(favoriteLibrary)
+
+            override fun post(action: () -> Unit) {
+                mainHandler.post(action)
+            }
+        },
     )
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
@@ -2503,8 +2504,6 @@ class BrowserController(
         isFullImmersiveModeEnabled = store.loadFullImmersiveModeEnabled()
         isStartupAnimationEnabled = store.loadStartupAnimationEnabled()
         isHttpPasswordAutofillEnabled = store.loadHttpPasswordAutofillEnabled()
-        isFavoriteLaunchAnimationEnabled = store.loadFavoriteLaunchAnimationEnabled()
-        favoriteAnimationSpeed = store.loadFavoriteAnimationSpeed()
         isOpenHomeOnStartupEnabled = store.loadOpenHomeOnStartupEnabled()
         isScrollBarEnabled = store.loadScrollBarEnabled()
         inlineMediaPlayerMode = store.loadInlineMediaPlayerMode()
@@ -2582,7 +2581,7 @@ class BrowserController(
         val (restoredTabs, restoredSelection) = store.loadTabs(nowMillis)
         history += historyRepository.snapshot()
         applyFavoriteLibrary(store.loadFavoriteLibrary())
-        refreshFavoriteFavicons()
+        essentials.restore()
         val profileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
         tabs += restoredTabs.take(MAX_TABS).map { tab ->
             if (tab.profileId in profileIds) tab else tab.copy(profileId = profiles.first().id)
@@ -6595,6 +6594,7 @@ class BrowserController(
 
         }
         profiles.removeAt(profileIndex)
+        essentials.forgetProfile(profileId)
         lockedProfileIds -= profileId
         ProfileProtectionSession.forget(profileId)
         profileWallpaperExecutor.execute { profileWallpaperStore.delete(profileId) }
@@ -9072,7 +9072,6 @@ class BrowserController(
         if (mutation?.added == true) {
             favoriteFaviconRepository.capture(tab.url, favicons[tabId])
         }
-        if (mutation != null) refreshFavoriteFavicons()
         return mutation
     }
 
@@ -9087,7 +9086,6 @@ class BrowserController(
         )
         if (mutation != null) {
             if (mutation.added) favoriteFaviconRepository.capture(safeUrl, bitmap = null)
-            refreshFavoriteFavicons()
             contentActions.dismiss()
         }
         return mutation
@@ -9153,7 +9151,6 @@ class BrowserController(
                 .firstOrNull { entry -> mutation.applied.none { it.url == entry.url } }
                 ?.let { entry -> favoriteFaviconRepository.capture(entry.url, bitmap = null) }
         }
-        refreshFavoriteFavicons()
         return true
     }
 
@@ -9223,18 +9220,6 @@ class BrowserController(
         browserEngineSessions.values.forEach { session ->
             session.setHttpPasswordManagerSelectionEnabled(enabled)
         }
-    }
-
-    fun updateFavoriteLaunchAnimationEnabled(enabled: Boolean) {
-        if (isFavoriteLaunchAnimationEnabled == enabled) return
-        isFavoriteLaunchAnimationEnabled = enabled
-        store.saveFavoriteLaunchAnimationEnabled(enabled)
-    }
-
-    fun updateFavoriteAnimationSpeed(speed: FavoriteAnimationSpeed) {
-        if (favoriteAnimationSpeed == speed) return
-        favoriteAnimationSpeed = speed
-        store.saveFavoriteAnimationSpeed(speed)
     }
 
     fun updateOpenHomeOnStartupEnabled(enabled: Boolean) {
@@ -10475,6 +10460,7 @@ class BrowserController(
         closeFindInPage()
         releaseExternalLinkPreviewRuntime(resumeSelectedTab = false)
         clearGeckoMediaPresentation()
+        essentials.destroy()
         destroyed = true
         notifyGeckoPictureInPictureModeChanged(false)
         pictureInPicturePlaybackRetryGeneration++
@@ -10513,8 +10499,6 @@ class BrowserController(
         profileWallpaperExecutor.shutdownNow()
         historyMutationExecutor.shutdown()
         favoriteMutationExecutor.shutdown()
-        favoriteFaviconLoadGeneration++
-        mainHandler.removeCallbacks(recycleRetiredFavoriteFavicons)
         activePermissions.clear()
         permissionRepository.clearPrivateSession()
         mainHandler.removeCallbacks(blockerCountFlush)
@@ -10563,12 +10547,7 @@ class BrowserController(
         browserChromeScrollStates.clear()
         previews.clear()
         favicons.clear()
-        recycleFavoriteFavicons(favoriteFavicons.values + retiredFavoriteFavicons)
-        favoriteFavicons.clear()
-        recycleFavoriteFavicons(favoriteFolderIcons.values)
-        favoriteFolderIcons.clear()
         favoriteLibraryUndoSnapshots.clear()
-        retiredFavoriteFavicons.clear()
         privacySnapshots.clear()
         faviconGenerations.clear()
         faviconFetchAttempts.values.forEach { it.cancelled.set(true) }
@@ -13897,107 +13876,16 @@ class BrowserController(
         val restored = store.loadFavoriteLibrary()
         favoriteRevision++
         applyFavoriteLibrary(restored)
-        refreshFavoriteFavicons()
-    }
-
-    fun reorderFavorite(entryId: String, destinationIndex: Int): Boolean {
-        val current = favoriteLibrary
-        val updated = BrowsingFavoritesRules.reorder(
-            library = current,
-            entryId = entryId,
-            destinationIndex = destinationIndex,
-        )
-        if (updated == current) return false
-        favoriteMutationExecutor.execute {
-            val saved = store.saveFavoriteLibraryCommitted(
-                library = updated,
-                expectedCurrent = current,
-            )
-            mainHandler.post {
-                if (destroyed || !saved || favoriteLibrary != current) return@post
-                applyFavoriteLibrary(updated)
-                favoriteRevision++
-                favoriteLibraryUndoSnapshots.clear()
-                refreshFavoriteFavicons()
-            }
-        }
-        return true
     }
 
     private fun applyFavoriteLibrary(library: FavoriteLibrary) {
         favoriteLibrary = BrowsingFavoritesRules.normalizeLibrary(library)
         favorites.clear()
         favorites += favoriteLibrary.favorites
-        refreshFavoriteFolderIcons()
-    }
-
-    private fun refreshFavoriteFolderIcons() {
         if (destroyed) return
-        val folderIds = favoriteLibrary.folders.map { folder -> folder.id }.toSet()
-        favoriteFolderIcons.keys.filterNot(folderIds::contains).forEach { id ->
-            favoriteFolderIcons.remove(id)?.let { bitmap -> recycleFavoriteFavicons(listOf(bitmap)) }
-        }
-        val generation = ++favoriteFolderIconLoadGeneration
-        favoriteMutationExecutor.execute {
-            favoriteFolderIconStore.prune(folderIds)
-            val loaded = favoriteFolderIconStore.loadAll(folderIds)
-            mainHandler.post {
-                if (destroyed || generation != favoriteFolderIconLoadGeneration) {
-                    recycleFavoriteFavicons(loaded.values)
-                    return@post
-                }
-                loaded.forEach { (id, bitmap) ->
-                    val old = favoriteFolderIcons.put(id, bitmap)
-                    if (old != null && old !== bitmap) recycleFavoriteFavicons(listOf(old))
-                }
-            }
-        }
-    }
-
-    private fun refreshFavoriteFavicons() {
-        if (destroyed) return
-        val urls = favorites.map(FavoriteEntry::url)
-        val validUrls = urls.toSet()
-        val removedBitmaps = favoriteFavicons.keys
-            .filterNot(validUrls::contains)
-            .mapNotNull(favoriteFavicons::remove)
-        retireFavoriteFavicons(removedBitmaps)
-        val missingUrls = urls.filterNot(favoriteFavicons::containsKey)
-        val generation = ++favoriteFaviconLoadGeneration
-        if (missingUrls.isEmpty()) return
-        favoriteFaviconRepository.loadAll(missingUrls) { loaded ->
-            mainHandler.post {
-                val currentUrls = favorites.mapTo(hashSetOf(), FavoriteEntry::url)
-                if (destroyed || generation != favoriteFaviconLoadGeneration) {
-                    recycleFavoriteFavicons(loaded.values)
-                    return@post
-                }
-                val accepted = loaded.filterKeys(currentUrls::contains)
-                val installedBitmaps = mutableSetOf<Bitmap>()
-                accepted.forEach { (url, bitmap) ->
-                    if (favoriteFavicons.putIfAbsent(url, bitmap) == null) {
-                        installedBitmaps += bitmap
-                    }
-                }
-                recycleFavoriteFavicons(loaded.values.filterNot(installedBitmaps::contains))
-            }
-        }
-    }
-
-    private fun retireFavoriteFavicons(bitmaps: Collection<Bitmap>) {
-        if (bitmaps.isEmpty()) return
-        retiredFavoriteFavicons += bitmaps
-        mainHandler.removeCallbacks(recycleRetiredFavoriteFavicons)
-        mainHandler.postDelayed(
-            recycleRetiredFavoriteFavicons,
-            FAVORITE_FAVICON_RECYCLE_DELAY_MILLIS,
-        )
-    }
-
-    private fun recycleFavoriteFavicons(bitmaps: Collection<Bitmap>) {
-        bitmaps.distinct().forEach { bitmap ->
-            if (!bitmap.isRecycled) bitmap.recycle()
-        }
+        // Icons of folders that no longer exist; Favorites shows the rest.
+        val folderIds = favoriteLibrary.folders.mapTo(hashSetOf()) { folder -> folder.id }
+        favoriteMutationExecutor.execute { favoriteFolderIconStore.prune(folderIds) }
     }
 
     private fun updateTab(tabId: String, transform: (BrowserTab) -> BrowserTab) {

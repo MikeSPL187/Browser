@@ -5,9 +5,4 @@ internal object CandyAnimationRules {
         animationsEnabled: Boolean,
         startupAnimationEnabled: Boolean,
     ): Boolean = animationsEnabled && startupAnimationEnabled
-
-    fun favoriteLaunchAnimationEnabled(
-        animationsEnabled: Boolean,
-        favoriteLaunchAnimationEnabled: Boolean,
-    ): Boolean = animationsEnabled && favoriteLaunchAnimationEnabled
 }

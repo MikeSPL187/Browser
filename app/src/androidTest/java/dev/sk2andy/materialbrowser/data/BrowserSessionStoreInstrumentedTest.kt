@@ -15,7 +15,6 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsProvider
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaper
@@ -349,33 +348,6 @@ class BrowserSessionStoreInstrumentedTest {
 
         store.saveHttpPasswordAutofillEnabled(false)
         assertFalse(store.loadHttpPasswordAutofillEnabled())
-    }
-
-    @Test
-    fun favoriteLaunchAnimationDefaultsOnAndRoundTrips() {
-        val store = BrowserSessionStore(context)
-
-        assertTrue(store.loadFavoriteLaunchAnimationEnabled())
-
-        store.saveFavoriteLaunchAnimationEnabled(false)
-        assertFalse(store.loadFavoriteLaunchAnimationEnabled())
-
-        store.saveFavoriteLaunchAnimationEnabled(true)
-        assertTrue(store.loadFavoriteLaunchAnimationEnabled())
-    }
-
-    @Test
-    fun favoriteAnimationSpeedDefaultsToNormalAndRoundTrips() {
-        val store = BrowserSessionStore(context)
-
-        assertEquals(FavoriteAnimationSpeed.Normal, store.loadFavoriteAnimationSpeed())
-
-        store.saveFavoriteAnimationSpeed(FavoriteAnimationSpeed.Fast)
-        assertEquals(FavoriteAnimationSpeed.Fast, store.loadFavoriteAnimationSpeed())
-
-        preferences.edit().putString(BrowserSessionStore.KEY_FAVORITE_ANIMATION_SPEED, "unknown")
-            .commit()
-        assertEquals(FavoriteAnimationSpeed.Normal, store.loadFavoriteAnimationSpeed())
     }
 
     @Test

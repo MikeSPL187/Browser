@@ -326,6 +326,26 @@
     </plurals>
     <string name="favorites_title">Избранное</string>
     <string name="new_tab_continue">Продолжить</string>
+    <string name="essentials_title">Essentials</string>
+    <string name="essentials_edit">Изменить</string>
+    <string name="essentials_edit_hint">Перетащите, чтобы поменять порядок</string>
+    <string name="essentials_add">Добавить</string>
+    <string name="essentials_remove">Убрать «%1$s»</string>
+    <string name="essentials_move_earlier">Переместить раньше</string>
+    <string name="essentials_move_later">Переместить дальше</string>
+    <string name="essentials_removed">Убрано из Essentials</string>
+    <string name="essentials_add_sheet_title">Добавить из открытых вкладок</string>
+    <string name="essentials_add_sheet_empty">Откройте сайт в этом пространстве, и его можно будет закрепить здесь.</string>
+    <string name="essentials_add_tab">Добавить «%1$s»</string>
+    <plurals name="essentials_full">
+        <item quantity="one">В Essentials помещается до %1$d сайта</item>
+        <item quantity="few">В Essentials помещается до %1$d сайтов</item>
+        <item quantity="many">В Essentials помещается до %1$d сайтов</item>
+        <item quantity="other">В Essentials помещается до %1$d сайта</item>
+    </plurals>
+    <string name="essentials_empty_title">Закрепите сайты на каждый день</string>
+    <string name="essentials_empty_body">Essentials открываются одним касанием. У каждого пространства — свои.</string>
+    <string name="essentials_empty_action">Добавить сайт</string>
     <string name="favorites_search">Поиск в избранном</string>
     <string name="favorites_clear_search">Очистить поиск</string>
     <string name="favorites_delete">Удалить «%1$s» из избранного</string>
@@ -551,12 +571,6 @@
     <string name="settings_startup_address_focus_current">Когда анимация выключена</string>
     <string name="settings_startup_address_focus_always">При каждом запуске</string>
     <string name="settings_startup_address_focus_never">Никогда</string>
-    <string name="settings_favorite_launch_animation_title">Анимации избранного</string>
-    <string name="settings_favorite_launch_animation_subtitle">Плавно меняет форму значков избранного и открывает выбранный сайт через красочный переход Vola.</string>
-    <string name="settings_favorite_animation_speed_title">Скорость анимации</string>
-    <string name="settings_favorite_animation_speed_relaxed">Неспешная</string>
-    <string name="settings_favorite_animation_speed_normal">Обычная</string>
-    <string name="settings_favorite_animation_speed_fast">Быстрая</string>
     <string name="settings_favorite_bookmark_import_title">Импорт закладок из HTML</string>
     <string name="settings_favorite_bookmark_import_summary">Добавить в избранное закладки, экспортированные из другого браузера.</string>
     <plurals name="favorite_bookmark_import_success">

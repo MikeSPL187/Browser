@@ -204,7 +204,6 @@ class TabStackUiInstrumentedTest {
                     mode = mode,
                     previews = emptyMap(),
                     favicons = emptyMap(),
-                    favorites = emptyList(),
                     onSelectTab = selectedTabId::set,
                     onPreviewTabChanged = {},
                     onDismiss = {},

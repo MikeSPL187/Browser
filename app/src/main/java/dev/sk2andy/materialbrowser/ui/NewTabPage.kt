@@ -1,14 +1,12 @@
 @file:OptIn(
     ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class,
     ExperimentalLayoutApi::class,
 )
 
 package dev.sk2andy.materialbrowser.ui
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,13 +27,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,58 +42,56 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
-import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
+import dev.sk2andy.materialbrowser.ui.theme.VolaEssentials
 import dev.sk2andy.materialbrowser.ui.theme.VolaShapes
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
+/**
+ * The new tab as the NewTab board draws it: the workspace name and date, the workspace's
+ * Essentials and «Continue» with the tabs used last. A private tab shows only the search hero
+ * (its own design is Q6). [interactive] is false for the miniature in the tab overview.
+ */
 @Composable
 internal fun NewTabPage(
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favicons: Map<String, Bitmap> = emptyMap(),
-    folderIcons: Map<String, Bitmap> = emptyMap(),
+    essentials: List<EssentialEntry>,
+    essentialIcons: Map<String, Bitmap> = emptyMap(),
     incognito: Boolean,
     modeProgress: Float,
     revealOriginInRoot: Offset,
     onSearch: () -> Unit,
-    onFavorite: (String) -> Unit,
-    onOpenFavorites: () -> Unit = {},
-    onReorderFavorite: (String, Int) -> Unit = { _, _ -> },
-    favoriteLaunchAnimationEnabled: Boolean = true,
-    favoriteAnimationSpeed: FavoriteAnimationSpeed = FavoriteAnimationSpeed.Default,
+    onOpenEssential: (String) -> Unit,
+    editor: NewTabEssentialsEditor? = null,
     interactive: Boolean = true,
-    favoritesAlpha: () -> Float = { 1f },
+    essentialsAlpha: () -> Float = { 1f },
     explicitSafeDrawingPadding: PaddingValues? = null,
     /** The workspace name shown above the page, as on the NewTab board. */
     title: String? = null,
@@ -109,16 +106,13 @@ internal fun NewTabPage(
     val regularIconAlpha = BlankTabModeMorphRules.regularIconAlpha(boundedProgress)
     val incognitoIconAlpha = BlankTabModeMorphRules.incognitoIconAlpha(boundedProgress)
     val openSearchDescription = stringResource(R.string.cd_open_search)
-    var rootOriginInWindow by remember { mutableStateOf(Offset.Unspecified) }
-    var heroCenterInWindow by remember { mutableStateOf(Offset.Unspecified) }
-    var launchRequest by remember { mutableStateOf<NewTabFavoriteLaunchRequest?>(null) }
-    val contentEnabled = interactive && launchRequest == null
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val editable = interactive && !incognito && editor != null
+    BackHandler(enabled = editing && editable) { editing = false }
+    val contentEnabled = interactive
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .onGloballyPositioned { coordinates ->
-                rootOriginInWindow = coordinates.positionInWindow()
-            }
             .blankTabModeBackground(
                 progress = boundedProgress,
                 revealOriginInRoot = revealOriginInRoot,
@@ -156,170 +150,97 @@ internal fun NewTabPage(
                     },
                 ),
         ) {
-            if (interactive && !incognito) {
-                NewTabHeader(
-                    title = title,
+            if (!incognito || boundedProgress < 1f) {
+                Column(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .graphicsLayer { alpha = 1f - boundedProgress },
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(0.82f)
-                    .heightIn(max = 664.dp)
-                    .padding(vertical = BlankTabModeMorphRules.HERO_SHADOW_CLEARANCE_DP.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Surface(
-                    onClick = onSearch,
-                    enabled = contentEnabled,
-                    modifier = Modifier
-                        .onGloballyPositioned { coordinates ->
-                            heroCenterInWindow = coordinates.boundsInWindow().center
-                        }
-                        .semantics {
-                            contentDescription = openSearchDescription
-                        },
-                    shape = RoundedCornerShape(
-                        BlankTabModeMorphRules.heroCornerRadiusDp(boundedProgress).dp,
-                    ),
-                    color = lerp(VolaBrand.Ink, colors.inverseSurface, boundedProgress),
-                    shadowElevation = BlankTabModeMorphRules.HERO_SHADOW_ELEVATION_DP.dp,
+                        .align(Alignment.TopCenter)
+                        .widthIn(max = VolaEssentials.maxContentWidth)
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = 1f - boundedProgress }
+                        .verticalScroll(rememberScrollState(), enabled = interactive)
+                        .padding(horizontal = VolaSpacing.x4)
+                        .padding(bottom = VolaSpacing.x12),
+                    verticalArrangement = Arrangement.spacedBy(VolaSpacing.x5),
                 ) {
-                    Box(
-                        modifier = Modifier.size(96.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_launcher_foreground_art),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(68.dp)
-                                .graphicsLayer {
-                                    alpha = regularIconAlpha
-                                    scaleX = BlankTabModeMorphRules.iconScale(regularIconAlpha)
-                                    scaleY = scaleX
-                                },
-                            tint = Color.Unspecified,
-                        )
-                        Icon(
-                            painter = painterResource(R.drawable.ic_incognito_filled),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .graphicsLayer {
-                                    alpha = incognitoIconAlpha
-                                    scaleX = BlankTabModeMorphRules.iconScale(incognitoIconAlpha)
-                                    scaleY = scaleX
-                                },
-                            tint = colors.inverseOnSurface,
+                    if (interactive && !editing) NewTabHeader(title = title)
+                    if (editing) Spacer(Modifier.height(VolaSpacing.x3))
+                    NewTabEssentialsSection(
+                        entries = if (incognito) emptyList() else essentials,
+                        icons = essentialIcons,
+                        editing = editing && editable,
+                        onEditingChange = { editing = it },
+                        enabled = contentEnabled && !incognito,
+                        onOpen = { entry -> onOpenEssential(entry.url) },
+                        editor = editor.takeIf { editable },
+                        modifier = Modifier.graphicsLayer {
+                            alpha = essentialsAlpha().coerceIn(0f, 1f)
+                        },
+                    )
+                    if (!incognito && interactive && !editing && recentTabs.isNotEmpty()) {
+                        NewTabContinueCard(
+                            tabs = recentTabs,
+                            favicons = recentTabFavicons,
+                            enabled = contentEnabled,
+                            onTab = onRecentTab,
                         )
                     }
                 }
-                if (!incognito && (favoriteLibrary?.entries?.isNotEmpty() == true || favorites.isNotEmpty())) {
-                    Column(
+            }
+            if (incognito || boundedProgress > 0f) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .graphicsLayer { alpha = if (incognito) 1f else boundedProgress }
+                        .fillMaxWidth(0.82f)
+                        .heightIn(max = 664.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
+                        .padding(vertical = BlankTabModeMorphRules.HERO_SHADOW_CLEARANCE_DP.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Surface(
+                        onClick = onSearch,
+                        enabled = contentEnabled,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f, fill = false)
-                            .graphicsLayer {
-                                alpha = favoritesAlpha().coerceIn(0f, 1f)
+                            .semantics {
+                                contentDescription = openSearchDescription
                             },
+                        shape = RoundedCornerShape(
+                            BlankTabModeMorphRules.heroCornerRadiusDp(boundedProgress).dp,
+                        ),
+                        color = lerp(VolaBrand.Ink, colors.inverseSurface, boundedProgress),
+                        shadowElevation = BlankTabModeMorphRules.HERO_SHADOW_ELEVATION_DP.dp,
                     ) {
-                        Spacer(Modifier.height(24.dp))
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f, fill = false),
-                            shape = RoundedCornerShape(28.dp),
-                            color = colors.surfaceContainerLow.copy(alpha = 0.74f),
-                            tonalElevation = 3.dp,
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = colors.outlineVariant.copy(alpha = 0.32f),
-                            ),
+                        Box(
+                            modifier = Modifier.size(96.dp), // token-exempt: Candy search hero of the private tab, redesigned in Q6
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 2.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.favorites_title),
-                                        color = colors.onSurfaceVariant,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Spacer(Modifier.weight(1f))
-                                    IconButton(
-                                        onClick = onOpenFavorites,
-                                        enabled = contentEnabled,
-                                        modifier = Modifier.testTag(NewTabFavoritesTestTags.Manage),
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_symbol_favorite),
-                                            contentDescription = stringResource(R.string.favorites_title),
-                                            tint = colors.onSurfaceVariant,
-                                        )
-                                    }
-                                }
-                                NewTabFavoriteGrid(
-                                    favorites = favorites,
-                                    library = favoriteLibrary,
-                                    favicons = favicons,
-                                    folderIcons = folderIcons,
-                                    enabled = contentEnabled,
-                                    animateShapes = interactive && favoriteLaunchAnimationEnabled,
-                                    animationSpeed = favoriteAnimationSpeed,
-                                    onFavorite = { favorite, startCenterInWindow, shapeState ->
-                                        if (
-                                            !favoriteLaunchAnimationEnabled ||
-                                            !startCenterInWindow.isUsable() ||
-                                            !rootOriginInWindow.isUsable() ||
-                                            !heroCenterInWindow.isUsable()
-                                        ) {
-                                            onFavorite(favorite.url)
-                                        } else {
-                                            launchRequest = NewTabFavoriteLaunchRequest(
-                                                favorite = favorite,
-                                                startCenterInWindow = startCenterInWindow,
-                                                shapeState = shapeState,
-                                            )
-                                        }
+                            Icon(
+                                painter = painterResource(R.drawable.ic_launcher_foreground_art),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(68.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
+                                    .graphicsLayer {
+                                        alpha = regularIconAlpha
+                                        scaleX = BlankTabModeMorphRules.iconScale(regularIconAlpha)
+                                        scaleY = scaleX
                                     },
-                                    onReorderFavorite = onReorderFavorite,
-                                )
-                            }
+                                tint = Color.Unspecified,
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_incognito_filled),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(48.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
+                                    .graphicsLayer {
+                                        alpha = incognitoIconAlpha
+                                        scaleX = BlankTabModeMorphRules.iconScale(incognitoIconAlpha)
+                                        scaleY = scaleX
+                                    },
+                                tint = colors.inverseOnSurface,
+                            )
                         }
                     }
                 }
-                if (!incognito && interactive && recentTabs.isNotEmpty()) {
-                    Spacer(Modifier.height(VolaSpacing.x5))
-                    NewTabContinueCard(
-                        tabs = recentTabs,
-                        favicons = recentTabFavicons,
-                        enabled = contentEnabled,
-                        onTab = onRecentTab,
-                    )
-                }
             }
-        }
-        launchRequest?.let { request ->
-            NewTabFavoriteLaunchOverlay(
-                request = request,
-                favicon = favicons[request.favorite.url],
-                animationSpeed = favoriteAnimationSpeed,
-                rootOriginInWindow = rootOriginInWindow,
-                targetCenterInWindow = heroCenterInWindow,
-                onFinished = { favorite ->
-                    launchRequest = null
-                    onFavorite(favorite.url)
-                },
-            )
         }
     }
 }
@@ -336,9 +257,11 @@ private fun NewTabContinueCard(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(VolaSpacing.x2)) {
         Text(
-            text = stringResource(R.string.new_tab_continue),
-            modifier = Modifier.padding(horizontal = VolaSpacing.x1),
-            style = MaterialTheme.typography.labelLarge,
+            text = stringResource(R.string.new_tab_continue).uppercase(),
+            modifier = Modifier
+                .padding(horizontal = VolaSpacing.x1)
+                .semantics { heading() },
+            style = VolaTypeScale.overline,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Surface(
@@ -408,7 +331,7 @@ private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = VolaSpacing.x4, vertical = VolaSpacing.x3),
+            .padding(top = VolaSpacing.x3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
     ) {
@@ -427,5 +350,3 @@ private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
         )
     }
 }
-
-private fun Offset.isUsable(): Boolean = x.isFinite() && y.isFinite()

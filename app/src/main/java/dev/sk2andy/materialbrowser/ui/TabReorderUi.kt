@@ -6,6 +6,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.shared.ui.GridTabPreviewChrome
 
 import android.graphics.Bitmap
@@ -67,7 +68,6 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlin.math.absoluteValue
@@ -241,7 +241,7 @@ internal fun DraggedTabReorderOverlay(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     selected: Boolean,
     rootTopLeft: Offset,
 ) {
@@ -289,7 +289,7 @@ internal fun DraggedTabReorderOverlay(
                     tab = tab,
                     preview = preview,
                     favicon = favicon,
-                    favorites = favorites,
+                    essentials = essentials,
                 )
             }
             TabOverviewMode.Grid -> Surface(
@@ -311,7 +311,7 @@ internal fun DraggedTabReorderOverlay(
                         tab = tab,
                         preview = preview,
                         favicon = favicon,
-                        favorites = favorites,
+                        essentials = essentials,
                     )
                     GridTabPreviewChrome(
                         tab = tab,

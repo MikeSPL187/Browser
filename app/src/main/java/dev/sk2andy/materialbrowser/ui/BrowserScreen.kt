@@ -653,6 +653,7 @@ internal fun BrowserScreen(
     }
     BrowserOfferSnackbarEffects(controller, feedbackSnackbarHostState)
     ClosedTabUndoSnackbarEffect(controller, feedbackSnackbarHostState)
+    EssentialRemovalSnackbarEffect(controller.essentials, feedbackSnackbarHostState)
     val tabSwitchGapPx = with(density) { 8.dp.toPx() }
     val tabSwitchTravelPx = browserWidthPx + tabSwitchGapPx
     val settleOverviewGesture: () -> Unit = {
@@ -1373,7 +1374,7 @@ internal fun BrowserScreen(
         selectedTab.url == BLANK_URL &&
         addressValue.text.isEmpty() &&
         !selectedTab.isIncognito &&
-        controller.favorites.isNotEmpty()
+        controller.essentials.entriesFor(selectedTab.profileId).isNotEmpty()
     val addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled
     val contentFramed = BrowserContentFrameRules.isFramed(
         chromeStyle = controller.appearanceSettings.chromeStyle,
@@ -1514,8 +1515,6 @@ internal fun BrowserScreen(
                             addressEditorVisible = false
                             controller.submitAddress(url)
                         },
-                        onOpenFavorites = onOpenFavorites,
-                        onReorderFavorite = controller::reorderFavorite,
                         blankTabModeProgress = blankTabModeProgress,
                         blankTabModeRevealOrigin = blankTabModeRevealOrigin,
                         onRetry = controller::retryFailedPage,

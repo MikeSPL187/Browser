@@ -83,13 +83,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.TabStack
 import dev.sk2andy.materialbrowser.browser.TabStackColor
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -254,7 +254,7 @@ internal fun TabStackFolderDialog(
     mode: TabOverviewMode,
     previews: Map<String, Bitmap>,
     favicons: Map<String, Bitmap>,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     onSelectTab: (String) -> Unit,
     onPreviewTabChanged: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -376,7 +376,7 @@ internal fun TabStackFolderDialog(
                                 tabs = tabs,
                                 previews = previews,
                                 favicons = favicons,
-                                favorites = favorites,
+                                essentials = essentials,
                                 interactionsEnabled = !dismissPending,
                                 pageWidth = layout.coverflowPageWidth.dp,
                                 contentPadding = layout.coverflowContentPadding.dp,
@@ -388,7 +388,7 @@ internal fun TabStackFolderDialog(
                                 tabs = tabs,
                                 previews = previews,
                                 favicons = favicons,
-                                favorites = favorites,
+                                essentials = essentials,
                                 interactionsEnabled = !dismissPending,
                                 columnCount = layout.gridColumnCount,
                                 onSelectTab = animatedSelectTab,
@@ -399,7 +399,7 @@ internal fun TabStackFolderDialog(
                                 tabs = tabs,
                                 previews = previews,
                                 favicons = favicons,
-                                favorites = favorites,
+                                essentials = essentials,
                                 interactionsEnabled = !dismissPending,
                                 onSelectTab = animatedSelectTab,
                                 onPreviewTabChanged = onPreviewTabChanged,
@@ -418,7 +418,7 @@ private fun TabStackFolderCoverflow(
     tabs: List<BrowserTab>,
     previews: Map<String, Bitmap>,
     favicons: Map<String, Bitmap>,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     interactionsEnabled: Boolean,
     pageWidth: Dp,
     contentPadding: Dp,
@@ -454,7 +454,7 @@ private fun TabStackFolderCoverflow(
             tab = tabs[page],
             preview = previews[tabs[page].id],
             favicon = favicons[tabs[page].id],
-            favorites = favorites,
+            essentials = essentials,
             interactionsEnabled = interactionsEnabled,
             onSelectTab = onSelectTab,
             onPreviewTabChanged = onPreviewTabChanged,
@@ -479,7 +479,7 @@ private fun TabStackFolderGrid(
     tabs: List<BrowserTab>,
     previews: Map<String, Bitmap>,
     favicons: Map<String, Bitmap>,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     interactionsEnabled: Boolean,
     columnCount: Int,
     onSelectTab: (String) -> Unit,
@@ -502,7 +502,7 @@ private fun TabStackFolderGrid(
                 tab = tab,
                 preview = previews[tab.id],
                 favicon = favicons[tab.id],
-                favorites = favorites,
+                essentials = essentials,
                 interactionsEnabled = interactionsEnabled,
                 onSelectTab = onSelectTab,
                 onPreviewTabChanged = onPreviewTabChanged,
@@ -518,7 +518,7 @@ private fun TabStackFolderList(
     tabs: List<BrowserTab>,
     previews: Map<String, Bitmap>,
     favicons: Map<String, Bitmap>,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     interactionsEnabled: Boolean,
     onSelectTab: (String) -> Unit,
     onPreviewTabChanged: (String) -> Unit,
@@ -563,7 +563,7 @@ private fun TabStackFolderList(
                             tab = tab,
                             preview = previews[tab.id],
                             favicon = favicons[tab.id],
-                            favorites = favorites,
+                            essentials = essentials,
                         )
                     }
                     Text(
@@ -622,7 +622,7 @@ private fun TabStackFolderPreviewCard(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry>,
+    essentials: EssentialsController? = null,
     interactionsEnabled: Boolean,
     onSelectTab: (String) -> Unit,
     onPreviewTabChanged: (String) -> Unit,
@@ -651,7 +651,7 @@ private fun TabStackFolderPreviewCard(
                     tab = tab,
                     preview = preview,
                     favicon = favicon,
-                    favorites = favorites,
+                    essentials = essentials,
                 )
             }
             Row(

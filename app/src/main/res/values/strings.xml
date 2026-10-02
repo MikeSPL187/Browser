@@ -327,6 +327,24 @@
     <!-- Favorites and page content -->
     <string name="favorites_title">Favorites</string>
     <string name="new_tab_continue">Continue</string>
+    <string name="essentials_title">Essentials</string>
+    <string name="essentials_edit">Edit</string>
+    <string name="essentials_edit_hint">Drag to reorder</string>
+    <string name="essentials_add">Add</string>
+    <string name="essentials_remove">Remove %1$s</string>
+    <string name="essentials_move_earlier">Move earlier</string>
+    <string name="essentials_move_later">Move later</string>
+    <string name="essentials_removed">Removed from Essentials</string>
+    <string name="essentials_add_sheet_title">Add from open tabs</string>
+    <string name="essentials_add_sheet_empty">Open a site in this workspace, then pin it here.</string>
+    <string name="essentials_add_tab">Add %1$s</string>
+    <plurals name="essentials_full">
+        <item quantity="one">Essentials hold up to %1$d site</item>
+        <item quantity="other">Essentials hold up to %1$d sites</item>
+    </plurals>
+    <string name="essentials_empty_title">Pin your everyday sites</string>
+    <string name="essentials_empty_body">Essentials open in one tap. Each workspace keeps its own.</string>
+    <string name="essentials_empty_action">Add a site</string>
     <string name="favorites_search">Search favorites</string>
     <string name="favorites_clear_search">Clear search</string>
     <string name="favorites_delete">Delete favorite %1$s</string>
@@ -549,12 +567,6 @@
     <string name="settings_startup_address_focus_current">When animation is off</string>
     <string name="settings_startup_address_focus_always">On every launch</string>
     <string name="settings_startup_address_focus_never">Never</string>
-    <string name="settings_favorite_launch_animation_title">Favorite animations</string>
-    <string name="settings_favorite_launch_animation_subtitle">Morphs favorite shapes and sends a selected favorite through a colorful Vola warp.</string>
-    <string name="settings_favorite_animation_speed_title">Animation speed</string>
-    <string name="settings_favorite_animation_speed_relaxed">Relaxed</string>
-    <string name="settings_favorite_animation_speed_normal">Normal</string>
-    <string name="settings_favorite_animation_speed_fast">Fast</string>
     <string name="settings_favorite_bookmark_import_title">Import bookmark HTML</string>
     <string name="settings_favorite_bookmark_import_summary">Add bookmarks exported by another browser to Favorites.</string>
     <plurals name="favorite_bookmark_import_success">

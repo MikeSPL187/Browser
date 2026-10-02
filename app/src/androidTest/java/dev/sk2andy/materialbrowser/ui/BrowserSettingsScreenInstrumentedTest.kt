@@ -17,7 +17,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
@@ -210,73 +209,6 @@ class BrowserSettingsScreenInstrumentedTest {
         ).performClick()
 
         assertEquals(StartupAddressFocusMode.Never, mode)
-    }
-
-    @Test
-    fun favoriteLaunchAnimationSwitchUpdatesSetting() {
-        var enabled by mutableStateOf(true)
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                BrowserSettingsPage(
-                    pageTranslationProvider = PageTranslationProvider.Google,
-                    isFullImmersiveModeEnabled = false,
-                    isStartupAnimationEnabled = true,
-                    isFavoriteLaunchAnimationEnabled = enabled,
-                    isScrollBarEnabled = false,
-                    isVideoAutoplayBlocked = false,
-                    isVideoAutoplayBlockingSupported = true,
-                    isDefaultBrowser = false,
-                    onFullImmersiveModeEnabledChanged = {},
-                    onStartupAnimationEnabledChanged = {},
-                    onFavoriteLaunchAnimationEnabledChanged = { enabled = it },
-                    onScrollBarEnabledChanged = {},
-                    onVideoAutoplayBlockedChanged = {},
-                    onPageTranslationProviderChanged = {},
-                    onOpenDefaultBrowserSettings = {},
-                    onBack = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(BrowserSettingsTestTags.FavoriteLaunchAnimation).performClick()
-
-        assertFalse(enabled)
-    }
-
-    @Test
-    fun favoriteAnimationSpeedChoiceUpdatesSetting() {
-        var speed by mutableStateOf(FavoriteAnimationSpeed.Normal)
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                BrowserSettingsPage(
-                    pageTranslationProvider = PageTranslationProvider.Google,
-                    isFullImmersiveModeEnabled = false,
-                    isStartupAnimationEnabled = true,
-                    favoriteAnimationSpeed = speed,
-                    isScrollBarEnabled = false,
-                    isVideoAutoplayBlocked = false,
-                    isVideoAutoplayBlockingSupported = true,
-                    isDefaultBrowser = false,
-                    onFullImmersiveModeEnabledChanged = {},
-                    onStartupAnimationEnabledChanged = {},
-                    onFavoriteAnimationSpeedChanged = { speed = it },
-                    onScrollBarEnabledChanged = {},
-                    onVideoAutoplayBlockedChanged = {},
-                    onPageTranslationProviderChanged = {},
-                    onOpenDefaultBrowserSettings = {},
-                    onBack = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(BrowserSettingsTestTags.FavoriteAnimationSpeed)
-            .performScrollTo()
-            .performClick()
-        composeRule.onNodeWithText(
-            context.getString(R.string.settings_favorite_animation_speed_fast),
-        ).performClick()
-
-        assertEquals(FavoriteAnimationSpeed.Fast, speed)
     }
 
     @Test

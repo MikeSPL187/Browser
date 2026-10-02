@@ -5,8 +5,12 @@ import android.graphics.Bitmap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-internal class FavoriteFaviconRepository private constructor(context: Context) {
-    private val store = FavoriteFaviconStore(context.applicationContext)
+/** Site icons saved by page url, for favorites and, in a directory of their own, Essentials. */
+internal class FavoriteFaviconRepository private constructor(
+    context: Context,
+    directoryName: String = FavoriteFaviconStore.DIRECTORY_NAME,
+) {
+    private val store = FavoriteFaviconStore(context.applicationContext, directoryName)
     private val client = FaviconClient()
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { task ->
         Thread(task, "favorite-favicon-io")
@@ -69,11 +73,22 @@ internal class FavoriteFaviconRepository private constructor(context: Context) {
     fun flush(): Boolean = executor.awaitIdle()
 
     companion object {
+        private const val ESSENTIALS_DIRECTORY_NAME = "essential_favicons"
+
         @Volatile
         private var instance: FavoriteFaviconRepository? = null
+
+        @Volatile
+        private var essentialsInstance: FavoriteFaviconRepository? = null
 
         fun get(context: Context): FavoriteFaviconRepository = instance ?: synchronized(this) {
             instance ?: FavoriteFaviconRepository(context).also { instance = it }
         }
+
+        fun essentials(context: Context): FavoriteFaviconRepository =
+            essentialsInstance ?: synchronized(this) {
+                essentialsInstance ?: FavoriteFaviconRepository(context, ESSENTIALS_DIRECTORY_NAME)
+                    .also { essentialsInstance = it }
+            }
     }
 }

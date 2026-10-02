@@ -6,6 +6,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 
 import android.graphics.Bitmap
@@ -75,8 +76,6 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
-import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 
 @Composable
 internal fun TabFavicon(
@@ -128,17 +127,14 @@ internal fun TabPreviewContent(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry> = emptyList(),
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap> = emptyMap(),
+    essentials: EssentialsController? = null,
 ) {
     when {
         tab.isIncognito -> IncognitoTabPlaceholder()
         tab.url == BLANK_URL -> BlankTabPreview(
-            favorites = favorites,
-            favoriteLibrary = favoriteLibrary,
-            favoriteFavicons = favoriteFavicons,
-            favoritesAlpha = { 0f },
+            profileId = tab.profileId,
+            essentials = essentials,
+            essentialsAlpha = { 0f },
         )
         preview != null && !preview.isRecycled -> Image(
             bitmap = preview.asImageBitmap(),

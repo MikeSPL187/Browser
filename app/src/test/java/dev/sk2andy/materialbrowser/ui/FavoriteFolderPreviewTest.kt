@@ -17,8 +17,8 @@ class FavoriteFolderPreviewTest {
         val fourth = favorite("fourth", "root")
         val fifth = favorite("fifth", "root")
         val source = FavoriteLibrary(listOf(root, first, nested, fourth, second, third, fifth))
-        assertEquals(listOf(first, second, third, fourth), newTabFolderPreviewFavorites(source, root.id))
-        assertEquals(emptyList<FavoriteEntry>(), newTabFolderPreviewFavorites(source, "missing"))
+        assertEquals(listOf(first, second, third, fourth), favoriteFolderPreviewFavorites(source, root.id))
+        assertEquals(emptyList<FavoriteEntry>(), favoriteFolderPreviewFavorites(source, "missing"))
     }
 
     private fun favorite(name: String, parent: String) = FavoriteEntry(
