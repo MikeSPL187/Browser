@@ -271,9 +271,12 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
             return
         time.sleep(3)
-        # A new tab opens the address editor with the keyboard; close it to see the page.
-        if find("Switch to tab", "Перейти во вкладку", "Search or enter a URL", "Поиск или адрес сайта",
-                contains=True):
+        # A new tab opens the address editor with the keyboard. The first Back hides the keyboard,
+        # the second closes the editor; stop as soon as the editor is gone.
+        for _ in range(2):
+            if not find("Switch to tab", "Перейти во вкладку", "Search or enter a URL",
+                        "Поиск или адрес сайта", contains=True):
+                break
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         shot(f"essentials-start-{suffix}")
