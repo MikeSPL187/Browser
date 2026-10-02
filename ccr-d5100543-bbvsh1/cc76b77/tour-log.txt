@@ -1,0 +1,85 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 05-find-light.png
+screenshot 06-address-light.png
+screenshot 07-https-upgrade-light.png
+screenshot 08-https-only-early-light.png
+screenshot 09-https-only-light.png
+screenshot 10-tab-overview-light.png
+screenshot 11-workspace-options-light.png
+tap 'More options' at 964,2232
+screenshot 12-menu-light.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 13-settings-light.png
+tap 'Appearance' at 360,1494
+screenshot 14-appearance-light.png
+screenshot 15-current-dark.png
+screenshot 16-new-tab-dark.png
+screenshot 17-page-dark.png
+screenshot 18-page-scrolled-dark.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 19-find-dark.png
+screenshot 20-address-dark.png
+screenshot 21-https-upgrade-dark.png
+screenshot 22-https-only-early-dark.png
+screenshot 23-https-only-dark.png
+screenshot 24-tab-overview-dark.png
+screenshot 25-workspace-options-dark.png
+tap 'More options' at 964,2232
+screenshot 26-menu-dark.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 27-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 28-appearance-dark.png
+screenshot 29-new-tab-a11y.png
+screenshot 30-page-a11y.png
+tap 'More options' at 964,2232
+screenshot 31-menu-a11y.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 501,2181
+screenshot 32-settings-a11y.png
+Cold start (am start -W, 5 runs): average 2428 ms, min 2148 ms, max 3113 ms
+screenshot 33-new-tab-ru.png
+screenshot 34-page-ru.png
+screenshot 35-page-scrolled-ru.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 547,1203
+screenshot 36-find-ru.png
+screenshot 37-address-ru.png
+screenshot 38-https-upgrade-ru.png
+screenshot 39-https-only-early-ru.png
+screenshot 40-https-only-ru.png
+screenshot 41-tab-overview-ru.png
+screenshot 42-workspace-options-ru.png
+tap 'More options' at 964,2232
+screenshot 43-menu-ru.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2239
+screenshot 44-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 45-appearance-ru.png
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+tap 'Appearance' at 371,1494
+tap 'Browser layout' at 225,590
+tap 'Air' at 158,917
+screenshot 46-page-air-ru.png

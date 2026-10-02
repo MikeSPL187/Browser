@@ -1,0 +1,5 @@
+Vola controls in the tour: 4 accessibility finding(s).
+- [NEW] unlabeled | View | address — address-dark, address-light, address-ru
+- [known] unlabeled | View | appearance — appearance-dark, appearance-light, appearance-ru
+- [known] unlabeled | View | tab-overview — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [known] unlabeled | View | workspace-options — workspace-options-dark, workspace-options-light, workspace-options-ru
