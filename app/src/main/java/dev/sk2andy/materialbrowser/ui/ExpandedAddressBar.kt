@@ -18,7 +18,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -95,7 +97,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
@@ -118,6 +122,8 @@ import dev.sk2andy.materialbrowser.shared.ui.AddressBarFieldContent
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaAddressEditor
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 
 internal object SegmentedAddressBarGeometry {
@@ -272,6 +278,11 @@ internal fun ExpandedBottomBarContent(
         animationSpec = tween(motionScheme.addressBarActionExpandMillis),
         label = "Segmented address field background",
     )
+    val editorMorph by animateFloatAsState(
+        targetValue = if (editing && !segmentedAddressBar) 1f else 0f,
+        animationSpec = VolaMotion.standard(),
+        label = "Address field morph",
+    )
     val wideTabScrollState = rememberLazyListState(
         initialFirstVisibleItemIndex = wideTabs.indexOfFirst { it.id == tab.id }.coerceAtLeast(0),
     )
@@ -381,10 +392,10 @@ internal fun ExpandedBottomBarContent(
                 visible = visibleActionLayout.beforeAddress.isNotEmpty() &&
                     !editorUsesFullWidth &&
                     !segmentedEditorActive,
-                enter = fadeIn(tween(motionScheme.addressBarActionFadeInMillis)) +
-                    expandHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
-                exit = fadeOut(tween(motionScheme.addressBarActionFadeOutMillis)) +
-                    shrinkHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
+                enter = fadeIn(VolaMotion.effects()) +
+                    expandHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
+                exit = fadeOut(VolaMotion.effects()) +
+                    shrinkHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     visibleActionLayout.beforeAddress.forEach { action ->
@@ -420,15 +431,31 @@ internal fun ExpandedBottomBarContent(
                         enabled = !editing && tabSwipeEnabled,
                         onDragStopped = { velocity -> onTabDragStopped(velocity) },
                     ),
-                shape = RoundedCornerShape(fieldCornerRadius),
+                shape = RoundedCornerShape(
+                    lerp(fieldCornerRadius, VolaAddressEditor.fieldHeight / 2, editorMorph),
+                ),
                 color = fieldSurfaceColor,
                 contentColor = addressChromeTokens.fieldContentColor,
+                border = if (editorMorph > 0f) {
+                    BorderStroke(
+                        VolaAddressEditor.fieldRingWidth,
+                        MaterialTheme.colorScheme.primary.copy(alpha = editorMorph),
+                    )
+                } else {
+                    null
+                },
             ) {
                 AnimatedContent(
                     targetState = wideTabStripVisible,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(SegmentedAddressBarGeometry.ACTION_SIZE),
+                        .height(
+                            lerp(
+                                SegmentedAddressBarGeometry.ACTION_SIZE,
+                                VolaAddressEditor.fieldHeight,
+                                editorMorph,
+                            ),
+                        ),
                     transitionSpec = {
                         val direction = if (targetState) -1 else 1
                         val enter = fadeIn(
@@ -594,10 +621,10 @@ internal fun ExpandedBottomBarContent(
             }
             AnimatedVisibility(
                 visible = !editorUsesFullWidth && !segmentedEditorActive,
-                enter = fadeIn(tween(motionScheme.addressBarActionFadeInMillis)) +
-                    expandHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
-                exit = fadeOut(tween(motionScheme.addressBarActionFadeOutMillis)) +
-                    shrinkHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
+                enter = fadeIn(VolaMotion.effects()) +
+                    expandHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
+                exit = fadeOut(VolaMotion.effects()) +
+                    shrinkHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -747,10 +774,10 @@ internal fun ExpandedBottomBarContent(
             }
             AnimatedVisibility(
                 visible = segmentedEditorActive,
-                enter = fadeIn(tween(motionScheme.addressBarActionFadeInMillis)) +
-                    expandHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
-                exit = fadeOut(tween(motionScheme.addressBarActionFadeOutMillis)) +
-                    shrinkHorizontally(tween(motionScheme.addressBarActionExpandMillis)),
+                enter = fadeIn(VolaMotion.effects()) +
+                    expandHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
+                exit = fadeOut(VolaMotion.effects()) +
+                    shrinkHorizontally(VolaMotion.standard(IntSize.VisibilityThreshold)),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(SegmentedAddressBarGeometry.SEGMENT_GAP))

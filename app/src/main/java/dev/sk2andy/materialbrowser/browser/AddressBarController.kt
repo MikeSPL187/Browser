@@ -9,6 +9,10 @@ import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayoutRules
 import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.AddressBarDockPlacement
+import dev.sk2andy.materialbrowser.data.AddressSuggestion
+import dev.sk2andy.materialbrowser.data.BrowsingLibraryRules
+import dev.sk2andy.materialbrowser.data.FavoriteEntry
+import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 
 /** The address bar preferences [AddressBarController] reads at startup and saves on change. */
@@ -26,10 +30,21 @@ interface AddressBarPreferenceStore {
     fun saveStartupAddressFocusMode(mode: StartupAddressFocusMode)
 }
 
+/** The library the address suggestions draw from, as the browser holds it right now. */
+internal class AddressSuggestionSources(
+    val activeTabs: List<BrowserTab>,
+    /** Tabs of the other workspaces that suggestions may show: not locked, no popups. */
+    val otherWorkspaceTabs: List<BrowserTab>,
+    val history: List<HistoryEntry>,
+    val favorites: List<FavoriteEntry>,
+    val includeHistory: Boolean,
+)
+
 /**
- * The address bar's placement and preferences, plus the probe that parks the bar on the right
- * edge when it would cover the text field a page is editing. [BrowserController] owns one and
- * answers the [Host] questions about tabs, engine sessions and the keyboard.
+ * The address bar's placement and preferences, the address editor's input and the suggestions
+ * from the library, plus the probe that parks the bar on the right edge when it would cover the
+ * text field a page is editing. [BrowserController] owns one and answers the [Host] questions
+ * about tabs, engine sessions, the library and the keyboard.
  */
 class AddressBarController internal constructor(
     private val store: AddressBarPreferenceStore,
@@ -52,7 +67,12 @@ class AddressBarController internal constructor(
 
         /** Called before the dock placement changes; the browser collapses its bottom bar. */
         fun onDockPlacementChanging()
+
+        fun suggestionSources(): AddressSuggestionSources
     }
+
+    /** What the address editor holds while the user types. */
+    val editor = AddressEditorState()
 
     var longPressAction by mutableStateOf(AddressBarLongPressAction.Default)
         private set
@@ -142,6 +162,38 @@ class AddressBarController internal constructor(
         if (startupFocusMode == mode) return
         startupFocusMode = mode
         store.saveStartupAddressFocusMode(mode)
+    }
+
+    /** Open tabs of every unlocked workspace, favorites and history matching [query]. */
+    fun navigationSuggestions(query: String, limit: Int): List<AddressSuggestion> {
+        val sources = host.suggestionSources()
+        val selectedTab = host.selectedTab
+        return BrowsingLibraryRules.addressSuggestions(
+            history = sources.history.filter { entry -> entry.profileId == selectedTab.profileId },
+            tabs = sources.activeTabs,
+            selectedTabId = selectedTab.id,
+            isIncognito = selectedTab.isIncognito,
+            query = query,
+            limit = limit,
+            includeHistory = sources.includeHistory,
+            favorites = sources.favorites,
+            otherWorkspaceTabs = sources.otherWorkspaceTabs,
+        )
+    }
+
+    /** The host the field completes [query] to inline, from the current workspace only. */
+    fun domainCompletion(query: String): String? {
+        val sources = host.suggestionSources()
+        val selectedTab = host.selectedTab
+        return BrowsingLibraryRules.domainCompletion(
+            history = sources.history.filter { entry -> entry.profileId == selectedTab.profileId },
+            favorites = sources.favorites,
+            tabs = sources.activeTabs,
+            selectedTabId = selectedTab.id,
+            isIncognito = selectedTab.isIncognito,
+            query = query,
+            includeHistory = sources.includeHistory,
+        )
     }
 
     /** Where the floating bar sits over the page; the auto-dock probe tests fields against it. */

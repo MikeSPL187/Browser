@@ -1,9 +1,11 @@
 package dev.sk2andy.materialbrowser.browser
 
+import androidx.compose.ui.text.TextRange
 import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
 import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.AddressBarDockPlacement
+import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -161,12 +163,68 @@ class AddressBarControllerTest {
         removeCallbacks = {},
     )
 
+    @Test
+    fun `navigation suggestions come from this workspace's history and every unlocked workspace`() {
+        val elsewhere = BrowserTab(
+            id = "elsewhere",
+            url = "https://ice.example/",
+            title = "Ice forecast",
+            profileId = "anime",
+            lastAccessedAt = 5L,
+        )
+        val host = FakeHost(
+            sources = AddressSuggestionSources(
+                activeTabs = emptyList(),
+                otherWorkspaceTabs = listOf(elsewhere),
+                history = listOf(
+                    HistoryEntry("https://ice.example/history", "Ice here", 3L),
+                    HistoryEntry("https://ice.example/other", "Ice there", 4L, profileId = "anime"),
+                ),
+                favorites = emptyList(),
+                includeHistory = true,
+            ),
+        )
+        val controller = controller(FakeStore(), host)
+
+        val suggestions = controller.navigationSuggestions("ice", limit = 5)
+
+        assertEquals(listOf("https://ice.example/", "https://ice.example/history"), suggestions.map { it.url })
+        assertEquals("anime", suggestions.first().openTabProfileId)
+    }
+
+    @Test
+    fun `the editor opens selected, fills at the end and closes a pending open`() {
+        val editor = controller(FakeStore()).editor
+
+        editor.open("https://example.com/")
+        assertTrue(editor.isVisible)
+        assertEquals(TextRange(20, 0), editor.value.selection)
+        val generation = editor.openGeneration
+
+        editor.fill("example")
+        assertEquals(TextRange(7), editor.value.selection)
+        assertEquals(2, editor.focusNonce)
+
+        editor.close()
+        assertFalse(editor.isVisible)
+        assertTrue(editor.openGeneration > generation)
+    }
+
     private class FakeHost(
         override val selectedTabId: String = "tab",
+        private val sources: AddressSuggestionSources = AddressSuggestionSources(
+            activeTabs = emptyList(),
+            otherWorkspaceTabs = emptyList(),
+            history = emptyList(),
+            favorites = emptyList(),
+            includeHistory = true,
+        ),
     ) : AddressBarController.Host {
         var dockPlacementChanges = 0
 
         override val selectedTab: BrowserTab = BrowserTab(id = selectedTabId, lastAccessedAt = 0L)
+
+        override fun suggestionSources(): AddressSuggestionSources = sources
 
         override fun tab(tabId: String): BrowserTab? = selectedTab.takeIf { it.id == tabId }
 
