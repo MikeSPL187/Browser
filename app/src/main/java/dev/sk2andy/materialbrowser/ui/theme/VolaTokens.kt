@@ -191,6 +191,7 @@ internal object VolaStateTokens {
     val paddingTop = 28.dp
     val paddingHorizontal = 22.dp
     val paddingBottom = VolaSpacing.x6
+}
 
 /** The address editor at the bottom (boards Editing, V4A-Address, V4B-Address). */
 internal object VolaAddressEditor {
