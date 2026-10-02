@@ -10,14 +10,14 @@
 
 **Где мы.** План работ — `docs/vola/ROADMAP.md`. Фаза A закрыта: Q1 (#31), Q2 (#32), Q3a (#33),
 Q3b (#34 — тур нажимает «Подождать» в системном диалоге «не отвечает»). Q4 — ввод адреса и
-подсказки (П1 «Перейти на вкладку» в другом пространстве принято и сделано) — PR открыт, описание
+подсказки (П1 «Перейти на вкладку» в другом пространстве принято и сделано) — PR #35, описание
 и состояние в `docs/vola/STATUS.md`.
 
 **Сначала прочитай:** `CLAUDE.md`; `docs/vola/STATUS.md`; `docs/vola/ROADMAP.md` (разделы 2–5);
 `browser/FindInPage.kt` (`FindInPageRules`), `browser/gecko/GeckoViewRuntimeHandle.kt`,
 `BrowserController.updateFindInPageQuery`, `ui/FindInPageBar.kt`.
 
-**Шаг 0.** Если #34 или PR Q4 не слиты — проверь CI (зелёный) и снимки глазами, спроси меня про
+**Шаг 0.** Если #34 или #35 (Q4) не слиты — проверь CI (зелёный) и снимки глазами, спроси меня про
 слияние. Ветку новой задачи — от свежего `main` после слияния (иначе — поверх ветки Q4).
 
 **Задача — счётчик поиска «0/0»** (Effort High, небольшой). В тёмном проходе тура на GeckoView 156
@@ -47,6 +47,6 @@ View). Перед Q5 и Q8 нужны мои решения (раздел 6: Ess
 
 - *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* — чтобы
   воркфлоу обновления GeckoView мог открывать PR.
-- Слить #34, затем PR Q4.
+- Слить #34, затем #35 (Q4).
 - Ответить на вопросы ROADMAP, раздел 6 (до Q5 и Q8).
 - По желанию: секрет `VOLA_PREVIEW_KEYSTORE_BASE64` (*Settings → Secrets and variables → Actions*).
