@@ -713,7 +713,6 @@ class BrowserController(
         private set
     internal val findInPageState: FindInPageState?
         get() = findInPage.state
-        private set
     var isFullImmersiveModeEnabled by mutableStateOf(false)
         private set
     var isStartupAnimationEnabled by mutableStateOf(true)
