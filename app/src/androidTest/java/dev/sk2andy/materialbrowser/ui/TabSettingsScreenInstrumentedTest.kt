@@ -39,6 +39,46 @@ class TabSettingsScreenInstrumentedTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
+    fun archiveSwitchAppearsOnlyForLifetimesCountedInDays() {
+        var lifetime by mutableStateOf(InactiveTabLifetime.WhenAppCloses)
+        var archive by mutableStateOf(true)
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                TabsAndGesturesSettingsPage(
+                    inactiveTabLifetime = lifetime,
+                    residentTabLimit = 10,
+                    tabOverviewMode = TabOverviewMode.Grid,
+                    tabStackFolderMode = TabOverviewMode.Grid,
+                    tabListStartsAtBottom = false,
+                    automaticTabSortingEnabled = false,
+                    dismissResistancePercent = 40,
+                    profilesEnabled = true,
+                    isAddressBarDockingEnabled = true,
+                    archiveInactiveTabs = archive,
+                    onInactiveTabLifetimeChanged = {},
+                    onArchiveInactiveTabsChanged = { archive = it },
+                    onResidentTabLimitChanged = {},
+                    onTabOverviewModeChanged = {},
+                    onTabStackFolderModeChanged = {},
+                    onTabListStartsAtBottomChanged = {},
+                    onAutomaticTabSortingEnabledChanged = {},
+                    onDismissResistancePercentChanged = {},
+                    onProfilesEnabledChanged = {},
+                    onAddressBarDockingEnabledChanged = {},
+                    onAddressBarActions = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(TabSettingsTestTags.ArchiveInactiveTabs).assertDoesNotExist()
+        composeRule.runOnIdle { lifetime = InactiveTabLifetime.SevenDays }
+        composeRule.onNodeWithTag(TabSettingsTestTags.ArchiveInactiveTabs)
+            .performScrollTo().performClick()
+        composeRule.runOnIdle { assertFalse(archive) }
+    }
+
+    @Test
     fun closedTabUndoSettingReflectsStateAndInvokesCallback() {
         var enabled by mutableStateOf(false)
         composeRule.setContent {

@@ -557,6 +557,8 @@
     <string name="settings_automatic_tab_sorting_subtitle">Давно не использованные — первыми, недавние — последними. Закреплённые остаются в начале; ручная сортировка отключается.</string>
     <string name="cd_scroll_to_pinned_tabs">Показать закреплённые вкладки</string>
     <string name="settings_auto_close_tabs">Автоматически закрывать вкладки</string>
+    <string name="settings_archive_inactive_tabs_title">Архивировать, а не закрывать</string>
+    <string name="settings_archive_inactive_tabs_summary">Неактивные вкладки уходят в «Отложенные», откуда их можно вернуть.</string>
     <string name="settings_resident_tab_limit">Вкладки в памяти</string>
     <plurals name="settings_resident_tab_limit_summary">
         <item quantity="one">Держать загруженной %1$d последнюю вкладку. Остальные сохраняют превью и загружаются заново при открытии.</item>
@@ -1148,6 +1150,7 @@
     <string name="snoozed_tabs_empty_title">Отложенных вкладок нет</string>
     <string name="snoozed_tabs_empty_body">Нажмите и удерживайте вкладку в обзоре или откройте её меню ⋮, чтобы отложить.</string>
     <string name="snoozed_until">Вернётся %1$s</string>
+    <string name="snoozed_archived_at">В архиве с %1$s</string>
     <string name="action_reschedule">Изменить время</string>
     <string name="action_open_now">Открыть сейчас</string>
     <string name="snooze_invalid_time">Выберите дату и время в будущем</string>

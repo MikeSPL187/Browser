@@ -32,6 +32,7 @@ import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.shared.ui.settings.TabDismissResistanceSettings
 import dev.sk2andy.materialbrowser.shared.ui.settings.TabOverviewSettings
 import dev.sk2andy.materialbrowser.shared.ui.settings.TabOverviewSettingsStrings
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettings
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import kotlin.math.roundToInt
 
@@ -44,6 +45,7 @@ internal object TabSettingsTestTags {
     const val AddressBarDocking = "tab_settings_address_bar_docking"
     const val AddressBarLongPressAction = "tab_settings_address_bar_long_press_action"
     const val LinkLongPressAction = "tab_settings_link_long_press_action"
+    const val ArchiveInactiveTabs = "tab_settings_archive_inactive_tabs"
 }
 
 @Composable
@@ -58,9 +60,11 @@ internal fun TabsAndGesturesSettingsPage(
     dismissResistancePercent: Int,
     profilesEnabled: Boolean,
     isAddressBarDockingEnabled: Boolean,
+    archiveInactiveTabs: Boolean = true,
     addressBarLongPressAction: AddressBarLongPressAction = AddressBarLongPressAction.Default,
     linkLongPressAction: LinkLongPressAction = LinkLongPressAction.LinkPeek,
     onInactiveTabLifetimeChanged: (InactiveTabLifetime) -> Unit,
+    onArchiveInactiveTabsChanged: (Boolean) -> Unit = {},
     onResidentTabLimitChanged: (Int) -> Unit,
     onTabOverviewModeChanged: (TabOverviewMode) -> Unit,
     onTabStackFolderModeChanged: (TabOverviewMode) -> Unit,
@@ -206,6 +210,17 @@ internal fun TabsAndGesturesSettingsPage(
                     )
                 }
             }
+        }
+        // Only the lifetimes counted in days can archive; the others close every tab on leaving.
+        if (inactiveTabLifetime.maxAgeMillis != null) {
+            Spacer(Modifier.height(VolaSettings.rowGap))
+            SettingsSwitch(
+                title = stringResource(R.string.settings_archive_inactive_tabs_title),
+                subtitle = stringResource(R.string.settings_archive_inactive_tabs_summary),
+                checked = archiveInactiveTabs,
+                onCheckedChange = onArchiveInactiveTabsChanged,
+                modifier = Modifier.testTag(TabSettingsTestTags.ArchiveInactiveTabs),
+            )
         }
         SettingsPageSpacer()
         SettingsSwitch(

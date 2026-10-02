@@ -389,6 +389,28 @@ def tour(suffix):
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
 
+    def tab_archive_setting():
+        """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
+        lifetime = ("Automatically close tabs", "Автоматически закрывать вкладки")
+        if not tap_scrolling(*lifetime, name=f"tabs-settings-{suffix}"):
+            return
+        time.sleep(1)
+        if not tap("After 7 days", "Через 7 дней"):
+            save_ui(f"tabs-lifetime-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(2)
+        width, height = screen_size()
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.4)), "300")
+        time.sleep(1)
+        shot(f"tabs-archive-{suffix}")
+        save_ui(f"tabs-archive-{suffix}")
+        if tap(*lifetime):
+            time.sleep(1)
+            tap("Never", "Никогда")
+            time.sleep(1)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)
@@ -399,6 +421,11 @@ def tour(suffix):
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
             adb("shell", "input", "keyevent", "BACK")
