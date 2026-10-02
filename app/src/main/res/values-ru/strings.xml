@@ -362,10 +362,10 @@
     <string name="protection_card_open">Открыть отчёт за неделю</string>
     <string name="protection_report_title">Защита за неделю</string>
     <plurals name="protection_report_total">
-        <item quantity="one">трекер заблокирован</item>
-        <item quantity="few">трекера заблокировано</item>
-        <item quantity="many">трекеров заблокировано</item>
-        <item quantity="other">трекера заблокировано</item>
+        <item quantity="one">%1$s трекер заблокирован</item>
+        <item quantity="few">%1$s трекера заблокировано</item>
+        <item quantity="many">%1$s трекеров заблокировано</item>
+        <item quantity="other">%1$s трекера заблокировано</item>
     </plurals>
     <string name="protection_report_chart">Заблокировано по дням: %1$s</string>
     <string name="protection_report_top_sites">Чаще всего пытались следить</string>

@@ -357,8 +357,8 @@
     <string name="protection_card_open">Open the weekly report</string>
     <string name="protection_report_title">Protection this week</string>
     <plurals name="protection_report_total">
-        <item quantity="one">tracker blocked</item>
-        <item quantity="other">trackers blocked</item>
+        <item quantity="one">%1$s tracker blocked</item>
+        <item quantity="other">%1$s trackers blocked</item>
     </plurals>
     <string name="protection_report_chart">Blocked trackers by day: %1$s</string>
     <string name="protection_report_top_sites">Tried to track you most</string>

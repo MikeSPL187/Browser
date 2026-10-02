@@ -322,12 +322,12 @@ private fun ProtectionReportTotal(week: ProtectionWeek) {
             Column(modifier = Modifier.weight(1f)) {
                 if (week.total > 0) {
                     Text(
-                        text = formatCount(week.total, locale),
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Text(
-                        text = pluralStringResource(R.plurals.protection_report_total, week.total),
-                        style = MaterialTheme.typography.labelLarge,
+                        text = pluralStringResource(
+                            R.plurals.protection_report_total,
+                            week.total,
+                            formatCount(week.total, locale),
+                        ),
+                        style = MaterialTheme.typography.titleLarge,
                     )
                     Text(
                         text = pluralStringResource(R.plurals.protection_card_sites, week.siteCount, week.siteCount),
