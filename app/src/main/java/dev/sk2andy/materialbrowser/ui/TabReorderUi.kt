@@ -7,6 +7,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.draw.clipToBounds
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.browser.EssentialsController
@@ -317,7 +318,8 @@ internal fun DraggedTabReorderOverlay(
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .clipToBounds(),
                     ) {
                         TabPreviewContent(
                             tab = tab,

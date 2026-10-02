@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -62,6 +63,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -574,6 +576,10 @@ private fun CompactGridTabItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(previewAspectRatio)
+                // A blank tab's preview is drawn from the full screen and cropped: keep it
+                // below the title row. The card is the control; the picture says nothing.
+                .clipToBounds()
+                .then(if (titleRow != null) Modifier.clearAndSetSemantics { } else Modifier)
                 .graphicsLayer {
                     alpha = if (
                         TabOverviewHeroRules.isGridPreviewVisible(

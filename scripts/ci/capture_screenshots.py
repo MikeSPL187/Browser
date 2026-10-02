@@ -274,6 +274,7 @@ def tour(suffix):
         adb("shell", "input", "swipe", str(x), str(y), str(x), str(int(height * 0.35)), "350")
         time.sleep(3)
         shot(f"tab-overview-{suffix}")
+        save_ui(f"tab-overview-{suffix}")
         # The workspace gem in the dock carries the name as its label; the header shows it as
         # text, which a long press would miss.
         workspace = next((n for n in nodes() if n["desc"] in ("Personal", "Личное")), None)
@@ -336,6 +337,7 @@ def tour(suffix):
             str(width // 2), str(int(height * 0.35)), "350")
         time.sleep(3)
         shot(f"tab-overview-essentials-{suffix}")
+        save_ui(f"tab-overview-essentials-{suffix}")
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("overview-essentials", overview_essentials)
