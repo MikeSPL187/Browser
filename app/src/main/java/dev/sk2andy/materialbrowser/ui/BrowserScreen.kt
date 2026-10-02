@@ -1541,11 +1541,7 @@ internal fun BrowserScreen(
             FindInPageBar(
                 query = findState.query,
                 onQueryChange = controller::updateFindInPageQuery,
-                matchText = stringResource(
-                    R.string.find_in_page_match_count,
-                    matchPosition.activeMatchNumber,
-                    matchPosition.matchCount,
-                ),
+                matchText = findInPageMatchText(matchPosition),
                 isCounting = findState.query.isNotEmpty() && !findState.isDoneCounting,
                 canNavigate = FindInPageRules.canNavigate(findState),
                 focusNonce = 0,

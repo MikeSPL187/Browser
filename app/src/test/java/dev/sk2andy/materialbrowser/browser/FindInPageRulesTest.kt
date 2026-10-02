@@ -170,4 +170,78 @@ class FindInPageRulesTest {
         assertEquals(options, searching.options)
         assertEquals(options, found.options)
     }
+
+    @Test
+    fun `a found match without a count keeps counting instead of 0 of 0`() {
+        val state = FindInPageState(tabId = "tab", query = "zen")
+
+        val uncounted = FindInPageRules.withResult(
+            state = state,
+            activeMatchOrdinal = 0,
+            matchCount = 0,
+            isDoneCounting = true,
+            found = true,
+        )
+
+        assertFalse(uncounted.isDoneCounting)
+        assertTrue(uncounted.isMatchFound)
+        assertTrue(FindInPageRules.needsRecount(uncounted))
+        assertTrue(FindInPageRules.canNavigate(uncounted))
+        assertEquals(0, uncounted.activeMatchOrdinal)
+    }
+
+    @Test
+    fun `a real miss is a final zero and needs no recount`() {
+        val missed = FindInPageRules.withResult(
+            state = FindInPageState(tabId = "tab", query = "zen"),
+            activeMatchOrdinal = 0,
+            matchCount = 0,
+            isDoneCounting = true,
+            found = false,
+        )
+
+        assertTrue(missed.isDoneCounting)
+        assertFalse(FindInPageRules.needsRecount(missed))
+        assertFalse(FindInPageRules.canNavigate(missed))
+        assertEquals(
+            FindInPageMatchPosition(activeMatchNumber = 0, matchCount = 0),
+            FindInPageRules.displayPosition(missed),
+        )
+    }
+
+    @Test
+    fun `a withheld count ends as the match number without a total`() {
+        val uncounted = FindInPageRules.withResult(
+            state = FindInPageState(tabId = "tab", query = "zen"),
+            activeMatchOrdinal = 2,
+            matchCount = 0,
+            isDoneCounting = false,
+            found = true,
+        )
+
+        val settled = FindInPageRules.withoutCount(uncounted)
+
+        assertTrue(settled.isDoneCounting)
+        assertFalse(FindInPageRules.needsRecount(settled))
+        assertEquals(
+            FindInPageMatchPosition(activeMatchNumber = 3, matchCount = 0, isCountKnown = false),
+            FindInPageRules.displayPosition(settled),
+        )
+    }
+
+    @Test
+    fun `a new query forgets that the last one was found`() {
+        val found = FindInPageRules.withResult(
+            state = FindInPageState(tabId = "tab", query = "zen"),
+            activeMatchOrdinal = 0,
+            matchCount = 0,
+            isDoneCounting = true,
+            found = true,
+        )
+
+        val next = FindInPageRules.withQuery(found, "zenith")
+
+        assertFalse(next.isMatchFound)
+        assertFalse(FindInPageRules.needsRecount(next))
+    }
 }

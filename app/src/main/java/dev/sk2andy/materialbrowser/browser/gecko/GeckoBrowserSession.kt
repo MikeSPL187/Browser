@@ -152,6 +152,8 @@ internal data class GeckoFindResult(
     val activeMatchOrdinal: Int,
     val matchCount: Int,
     val isDoneCounting: Boolean,
+    /** Whether the query is on the page; true with no count means the engine has not counted. */
+    val found: Boolean = matchCount > 0,
 )
 
 internal data class GeckoMediaSessionState(
