@@ -139,6 +139,15 @@ internal object VolaMotion {
     fun <T> slow(visibilityThreshold: T? = null): SpringSpec<T> =
         spring(SLOW_DAMPING_RATIO, SLOW_STIFFNESS, visibilityThreshold)
 
+    /**
+     * The page shrinking into its tab card and growing back: critically damped, so the page lands
+     * in its card without overshooting. Settles within [TAB_MORPH_SETTLE_MILLIS].
+     */
+    fun tabMorph(): SpringSpec<Float> = spring(TAB_MORPH_DAMPING_RATIO, TAB_MORPH_STIFFNESS)
+    const val TAB_MORPH_DAMPING_RATIO = 1f
+    const val TAB_MORPH_STIFFNESS = 800f
+    const val TAB_MORPH_SETTLE_MILLIS = 260L
+
     /** Color, opacity and blur: no overshoot. */
     fun <T> effects(visibilityThreshold: T? = null): SpringSpec<T> =
         spring(EFFECTS_DAMPING_RATIO, EFFECTS_STIFFNESS, visibilityThreshold)

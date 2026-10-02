@@ -512,6 +512,7 @@ fun TabHeroLayer(
     targetCornerRadius: Dp = 28.dp,
     targetFraction: () -> Float,
     modifier: Modifier = Modifier,
+    squareTopTarget: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -540,7 +541,11 @@ fun TabHeroLayer(
                 val scale = width / rootWidthPx
                 val visibleHeight = height / scale
                 val clipTop = (rootHeightPx - visibleHeight) * PREVIEW_CROP_TOP_FRACTION
-                val cornerRadius = targetCornerRadiusPx * fraction / scale
+                val cornerRadius = CornerRadius(targetCornerRadiusPx * fraction / scale)
+                val topCornerRadius = CornerRadius(
+                    cornerRadius.x *
+                        TabOverviewHeroRules.topCornerFraction(fraction, squareTopTarget),
+                )
                 heroClipPath.reset()
                 heroClipPath.addRoundRect(
                     RoundRect(
@@ -548,7 +553,10 @@ fun TabHeroLayer(
                         top = clipTop,
                         right = rootWidthPx,
                         bottom = clipTop + visibleHeight,
-                        cornerRadius = CornerRadius(cornerRadius),
+                        topLeftCornerRadius = topCornerRadius,
+                        topRightCornerRadius = topCornerRadius,
+                        bottomRightCornerRadius = cornerRadius,
+                        bottomLeftCornerRadius = cornerRadius,
                     ),
                 )
                 clipPath(heroClipPath) { this@drawWithContent.drawContent() }

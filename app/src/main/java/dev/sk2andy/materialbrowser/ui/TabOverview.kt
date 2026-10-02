@@ -293,6 +293,7 @@ internal fun TabOverview(
         tab: BrowserTab,
         bounds: Rect,
         cornerRadius: Dp = 28.dp,
+        squareTop: Boolean = false,
     ) {
         if (
             dismissingTabId != null ||
@@ -314,6 +315,7 @@ internal fun TabOverview(
                 startBounds = bounds,
                 isIncognito = tab.isIncognito,
                 startCornerRadius = cornerRadius,
+                squareTop = squareTop,
                 previewTopInsetPx = controller.previewTopInsetPx(tab.id),
                 mode = mode,
             ),
@@ -324,10 +326,7 @@ internal fun TabOverview(
                 withFrameNanos { }
                 exitHeroProgress.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = TabOverviewHeroRules.EXIT_DURATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
+                    animationSpec = VolaMotion.tabMorph(),
                 )
                 onSelect(tab.id)
                 onClose()
@@ -865,10 +864,7 @@ internal fun TabOverview(
             if (hasStableTarget) {
                 heroProgress.animateTo(
                     1f,
-                    tween(
-                        durationMillis = TabOverviewHeroRules.ENTRY_DURATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
+                    VolaMotion.tabMorph(),
                 )
             } else {
                 heroProgress.snapTo(1f)
@@ -1327,7 +1323,9 @@ internal fun TabOverview(
                     onPreviewBoundsDisposed = { tab, bounds ->
                         if (tabCardBounds[tab.id] == bounds) tabCardBounds.remove(tab.id)
                     },
-                    onSelect = { tab, bounds -> startExitHero(tab, bounds, 22.dp) },
+                    onSelect = { tab, bounds ->
+                        startExitHero(tab, bounds, VolaTabOverview.cardRadius, squareTop = true)
+                    },
                     onCloseTab = { tab -> closeCompactTab(tab, emitHaptic = true) },
                     onSwipeDismissStart = { tab ->
                         if (dismissingTabId == null) {
@@ -1500,9 +1498,10 @@ internal fun TabOverview(
                 targetCornerRadius = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
                     28.dp
                 } else {
-                    22.dp
+                    VolaTabOverview.cardRadius
                 },
                 targetFraction = { heroProgress.value },
+                squareTopTarget = controller.tabOverviewMode == TabOverviewMode.Grid,
                 modifier = if (initialTab.isIncognito) {
                     Modifier.graphicsLayer {
                         alpha = TabOverviewHeroRules.incognitoVeilAlpha(
@@ -1575,6 +1574,7 @@ internal fun TabOverview(
                 rootHeightPx = rootHeightPx,
                 targetCornerRadius = hero.startCornerRadius,
                 targetFraction = { 1f - exitHeroProgress.value },
+                squareTopTarget = hero.squareTop,
                 modifier = Modifier.zIndex(20f),
             ) {
                 val preview = hero.preview
@@ -1739,10 +1739,7 @@ internal fun TabOverview(
                                     withFrameNanos { }
                                     exitHeroProgress.animateTo(
                                         targetValue = 1f,
-                                        animationSpec = tween(
-                                            durationMillis = TabOverviewHeroRules.EXIT_DURATION_MILLIS,
-                                            easing = FastOutSlowInEasing,
-                                        ),
+                                        animationSpec = VolaMotion.tabMorph(),
                                     )
                                     onSelect(candyTrailTab.id)
                                     onClose()
