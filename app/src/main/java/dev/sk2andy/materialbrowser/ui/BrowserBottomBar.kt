@@ -9,6 +9,7 @@ package dev.sk2andy.materialbrowser.ui
 import android.view.HapticFeedbackConstants
 import android.view.WindowManager
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -108,9 +109,9 @@ import dev.sk2andy.materialbrowser.data.AddressBarDockEdge
 import dev.sk2andy.materialbrowser.data.AddressBarDockPlacement
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
-import dev.sk2andy.materialbrowser.shared.ui.OverviewAddressBarContent
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
@@ -270,15 +271,18 @@ internal fun BrowserBottomBar(
         .bounds
         .height()
     val chromeTokens = browserChromeSurfaceTokens(BrowserChromeSurfaceRole.AddressBar)
-    val barCornerRadius = if (
-        addressBarStyle == BrowserAddressBarStyle.Segmented &&
-        presentation == AddressBarPresentation.Expanded
-    ) {
-        SegmentedAddressBarGeometry.outerCornerRadius(chromeTokens.cornerRadius)
-    } else {
-        chromeTokens.cornerRadius
-    }
     val motionScheme = LocalCandyMotionScheme.current
+    val barCornerRadius by animateDpAsState(
+        targetValue = when {
+            presentation == AddressBarPresentation.Overview -> VolaTabOverview.newTabButtonRadius
+            addressBarStyle == BrowserAddressBarStyle.Segmented &&
+                presentation == AddressBarPresentation.Expanded ->
+                SegmentedAddressBarGeometry.outerCornerRadius(chromeTokens.cornerRadius)
+            else -> chromeTokens.cornerRadius
+        },
+        animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
+        label = "address-bar-corner-radius",
+    )
     val currentOnBackdropBlurRegionChanged by rememberUpdatedState(onBackdropBlurRegionChanged)
     var barBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
     LaunchedEffect(addressBarPulseNonce, motionScheme) {
@@ -339,7 +343,12 @@ internal fun BrowserBottomBar(
         targetValue = when (commandFeedback?.tone) {
             AddressCommandFeedbackTone.Confirm -> MaterialTheme.colorScheme.primaryContainer
             AddressCommandFeedbackTone.Reject -> MaterialTheme.colorScheme.errorContainer
-            null -> chromeTokens.containerColor
+            // The island lands on the tab overview's new-tab button, so it takes its color.
+            null -> if (presentation == AddressBarPresentation.Overview) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                chromeTokens.containerColor
+            }
         },
         animationSpec = tween(motionScheme.addressBarFeedbackColorMillis),
         label = "Address command feedback color",
@@ -353,7 +362,10 @@ internal fun BrowserBottomBar(
                 imeInsets = WindowInsets.ime,
                 navigationBarInsets = WindowInsets.navigationBars,
             )
-            .padding(horizontal = 16.dp, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
+            .padding(
+                horizontal = ADDRESS_BAR_HORIZONTAL_MARGIN,
+                vertical = ADDRESS_BAR_VERTICAL_MARGIN,
+            )
             .then(if (visualOnly) Modifier.clearAndSetSemantics { } else Modifier),
         contentAlignment = Alignment.BottomCenter,
     ) {
@@ -698,24 +710,18 @@ internal fun BrowserBottomBar(
                                 onOverviewGestureStarted = onOverviewGestureStarted,
                                 onOverviewGestureCancelled = onOverviewGestureCancelled,
                             )
-                            AddressBarPresentation.Overview -> OverviewAddressBarContent(
-                                onNewTab = onNewTab,
-                                onMore = {},
-                                newTabIcon = {
+                            AddressBarPresentation.Overview -> Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                IconButton(onClick = onNewTab) {
                                     Icon(
                                         VolaIcons.Add,
                                         contentDescription = stringResource(R.string.cd_new_tab),
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                     )
-                                },
-                                moreIcon = {
-                                    Icon(
-                                        VolaIcons.MoreVert,
-                                        contentDescription = stringResource(
-                                            R.string.cd_more_options,
-                                        ),
-                                    )
-                                },
-                            )
+                                }
+                            }
                             AddressBarPresentation.CommandFeedback -> {
                                 commandFeedback?.let { feedback ->
                                     AddressCommandFeedbackContent(
@@ -1137,6 +1143,7 @@ private val COMPACT_LOCK_ICON_SIZE = 14.dp
 
 /** Space the bottom address bar keeps above and below itself. */
 internal val ADDRESS_BAR_VERTICAL_MARGIN = 12.dp
+internal val ADDRESS_BAR_HORIZONTAL_MARGIN = 16.dp
 
 /** Height of the expanded bottom address bar for [style]. */
 internal fun addressBarExpandedHeight(style: BrowserAddressBarStyle): Dp =

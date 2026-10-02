@@ -57,7 +57,7 @@ class AddressBarMotionTest {
     }
 
     @Test
-    fun `overview chrome has two-button width and centers docked chrome`() {
+    fun `overview chrome is the new-tab button and centers docked chrome`() {
         assertEquals(
             AddressBarMotion.OVERVIEW_WIDTH,
             AddressBarMotion.widthTarget(
@@ -68,6 +68,7 @@ class AddressBarMotionTest {
                 edgeTabWidth = 52.dp,
             ),
         )
+        assertEquals(56.dp, AddressBarMotion.OVERVIEW_WIDTH)
         assertEquals(56.dp, AddressBarMotion.heightTarget(AddressBarPresentation.Overview))
         assertEquals(
             DpOffset.Zero,
@@ -246,5 +247,12 @@ class AddressBarMotionTest {
 
         assertEquals(Offset(1f, 1f), AddressBarMotion.dockRepositionFeedbackScale(1f))
         assertEquals(Offset(1f, 1f), AddressBarMotion.dockRepositionFeedbackScale(Float.NaN))
+    }
+
+    @Test
+    fun `in the tab overview the island moves onto the new-tab button at the right`() {
+        // A 360 dp screen: the bar row is 328 dp wide, the button ends 12 dp from the edge.
+        assertEquals(140.dp, AddressBarMotion.overviewOffsetX(328.dp))
+        assertEquals(0.dp, AddressBarMotion.overviewOffsetX(40.dp))
     }
 }

@@ -279,3 +279,59 @@ internal object VolaGem {
     /** The icon inside, as a share of the gem's size. */
     const val ICON_FRACTION = 0.56f
 }
+
+/** The tab overview (boards W-Tabs, W-TabsDark): one card per tab on the workspace aura. */
+internal object VolaTabOverview {
+    /** The workspace name and the tab count above the grid. */
+    val headerHeight = 56.dp
+    val headerStartPadding = VolaSpacing.x5
+    val headerEndPadding = VolaSpacing.x2
+    val headerCountGap = 10.dp
+
+    /** A tab card: a title row over the page, with no frame around the page itself. */
+    val cardRadius = 22.dp
+    val cardShape = RoundedCornerShape(cardRadius)
+    /** 40 dp on the board; 48 dp so the ✕ in it is a full touch target. */
+    val cardTitleRowHeight = 48.dp
+    val cardTitleStartPadding = VolaSpacing.x3
+    val cardTitleEndPadding = 2.dp
+    val cardTitleGap = VolaSpacing.x2
+    val cardFaviconSize = 20.dp
+    val cardFaviconShape = RoundedCornerShape(6.dp)
+    val cardCloseIconSize = 18.dp
+    val cardDividerWidth = 1.dp
+
+    /** The current tab: an accent ring and an accent glow. */
+    val selectedRingWidth = 2.5.dp
+    val selectedGlowElevation = 14.dp
+
+    /** The Essentials row over the workspace dock. */
+    const val ESSENTIALS_COLUMNS = 5
+    val essentialTileHeight = 56.dp
+    val essentialTileShape = RoundedCornerShape(18.dp)
+    val essentialIconSize = 30.dp
+    val essentialGap = 10.dp
+    const val ESSENTIAL_TILE_ALPHA = 0.82f
+
+    /** The workspace dock and the new-tab button, at the bottom within reach of the thumb. */
+    val dockHeight = 56.dp
+    val dockPadding = VolaSpacing.x1
+    val dockSideMargin = VolaSpacing.x3
+    val dockBottomMargin = VolaSpacing.x3
+    val dockGap = 10.dp
+    const val DOCK_ALPHA = 0.7f
+    const val DOCK_OUTLINE_ALPHA = 0.06f
+    val dockOutlineWidth = 1.dp
+    val dockItemSize = 48.dp
+    val activeWorkspaceGemSize = 40.dp
+    val workspaceGemSize = 32.dp
+    val activeWorkspaceEndPadding = 14.dp
+    val activeWorkspaceGap = VolaSpacing.x2
+    val newTabButtonSize = 56.dp
+    val newTabButtonRadius = VolaShapes.largeRadius
+    val newTabButtonShape = RoundedCornerShape(newTabButtonRadius)
+    val newTabGlowElevation = VolaElevation.level3
+
+    /** Space between the grid, the Essentials row and the dock. */
+    val sectionGap = VolaSpacing.x2
+}

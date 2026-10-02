@@ -118,4 +118,19 @@ class EssentialsRulesTest {
     }
 
     private fun entry(url: String) = EssentialEntry(url = url, title = "")
+
+    @Test
+    fun `a tap switches to the first open tab on the same page, else opens a new one`() {
+        val entry = EssentialEntry("https://www.example.com/", "Example")
+        val tabs = listOf(
+            EssentialCandidate("a", "https://other.org/", "Other"),
+            EssentialCandidate("b", "https://www.example.com", "Example"),
+            EssentialCandidate("c", "https://www.example.com/", "Example again"),
+            EssentialCandidate("d", "https://example.com/", "Another host"),
+        )
+
+        assertEquals("b", EssentialsRules.openTabId(entry, tabs))
+        assertNull(EssentialsRules.openTabId(entry, tabs.take(1)))
+        assertNull(EssentialsRules.openTabId(entry, emptyList()))
+    }
 }

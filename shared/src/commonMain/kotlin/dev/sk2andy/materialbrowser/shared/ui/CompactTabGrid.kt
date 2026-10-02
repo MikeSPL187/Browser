@@ -34,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -45,18 +46,23 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -67,6 +73,22 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
+
+/**
+ * How the app draws a grid card when it supplies a title row: one shape around the title row and
+ * the page, the current tab ringed and lifted on a glow. Without a title row the grid keeps
+ * Candy's card with the title floating over the page.
+ */
+@Immutable
+data class CompactTabCardStyle(
+    val shape: Shape,
+    val containerColor: Color,
+    val selectedBorder: BorderStroke,
+    val elevation: Dp,
+    val selectedElevation: Dp,
+    val shadowColor: Color,
+    val selectedShadowColor: Color,
+)
 
 @Composable
 fun CompactTabGrid(
@@ -105,6 +127,10 @@ fun CompactTabGrid(
     tabTestTag: (BrowserTab) -> String,
     topPadding: Dp = 8.dp,
     modifier: Modifier = Modifier,
+    cardStyle: CompactTabCardStyle? = null,
+    cardTitleRow: (@Composable (BrowserTab) -> Unit)? = null,
+    tabDescription: @Composable (BrowserTab) -> String? = { null },
+    edgeFadeBrush: Brush? = null,
 ) {
     val selectedIndex = tabs.indexOfFirst { it.id == selectedTabId }.coerceAtLeast(0)
     val leadingEmptyCellCount = TabOverviewGridRules.leadingEmptyCellCount(
@@ -180,6 +206,9 @@ fun CompactTabGrid(
                 CompactGridTabItem(
                     tab = tab,
                     visuals = visuals(tab),
+                    cardStyle = cardStyle,
+                    titleRow = cardTitleRow?.let { row -> { row(tab) } },
+                    description = tabDescription(tab),
                     previewContent = { previewContent(tab) },
                     selected = tab.id == selectedTabId,
                     initial = tab.id == initialTabId,
@@ -228,16 +257,7 @@ fun CompactTabGrid(
                 .drawWithContent {
                     val topInRoot = gridBounds?.top ?: 0f
                     val rootSize = viewportSize()
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = overviewBackgroundColors,
-                            start = Offset(0f, -topInRoot),
-                            end = Offset(
-                                rootSize.width.toFloat(),
-                                rootSize.height.toFloat() - topInRoot,
-                            ),
-                        ),
-                    )
+                    drawEdgeFade(edgeFadeBrush, overviewBackgroundColors, topInRoot, rootSize)
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Black, Color.Transparent),
@@ -259,16 +279,7 @@ fun CompactTabGrid(
                     val rootSize = viewportSize()
                     val bottomInRoot = gridBounds?.bottom ?: rootSize.height.toFloat()
                     val topInRoot = bottomInRoot - size.height
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = overviewBackgroundColors,
-                            start = Offset(0f, -topInRoot),
-                            end = Offset(
-                                rootSize.width.toFloat(),
-                                rootSize.height.toFloat() - topInRoot,
-                            ),
-                        ),
-                    )
+                    drawEdgeFade(edgeFadeBrush, overviewBackgroundColors, topInRoot, rootSize)
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(Color.Transparent, Color.Black),
@@ -280,10 +291,40 @@ fun CompactTabGrid(
     }
 }
 
+/** Paints the overview background behind a fade, positioned as it is on the whole screen. */
+private fun DrawScope.drawEdgeFade(
+    brush: Brush?,
+    fallbackColors: List<Color>,
+    topInRoot: Float,
+    rootSize: IntSize,
+) {
+    if (brush != null) {
+        drawRect(
+            brush = brush,
+            topLeft = Offset(0f, -topInRoot),
+            size = Size(rootSize.width.toFloat(), rootSize.height.toFloat()),
+        )
+    } else {
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = fallbackColors,
+                start = Offset(0f, -topInRoot),
+                end = Offset(
+                    rootSize.width.toFloat(),
+                    rootSize.height.toFloat() - topInRoot,
+                ),
+            ),
+        )
+    }
+}
+
 @Composable
 private fun CompactGridTabItem(
     tab: BrowserTab,
     visuals: TabOverviewHeroVisuals,
+    cardStyle: CompactTabCardStyle?,
+    titleRow: (@Composable () -> Unit)?,
+    description: String?,
     previewContent: @Composable () -> Unit,
     selected: Boolean,
     initial: Boolean,
@@ -335,7 +376,7 @@ private fun CompactGridTabItem(
             }
         }
     }
-    val shape = RoundedCornerShape(22.dp)
+    val shape = cardStyle?.shape ?: RoundedCornerShape(22.dp)
     val realCardVisible = TabOverviewHeroRules.isCardVisible(
         isInitialCard = initial,
         progress = if (heroCompleted) 1f else 0f,
@@ -413,6 +454,28 @@ private fun CompactGridTabItem(
                 scaleY = dismissScale
                 rotationZ = (currentDismissOffset / cardWidthPx).coerceIn(-1f, 1f) * 2f
             }
+            .then(
+                if (cardStyle != null) {
+                    val shadowColor = if (selected) {
+                        cardStyle.selectedShadowColor
+                    } else {
+                        cardStyle.shadowColor
+                    }
+                    Modifier.shadow(
+                        elevation = if (selected) {
+                            cardStyle.selectedElevation
+                        } else {
+                            cardStyle.elevation
+                        },
+                        shape = shape,
+                        clip = false,
+                        ambientColor = shadowColor,
+                        spotColor = shadowColor,
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .draggable(
                 state = dragState,
                 orientation = Orientation.Horizontal,
@@ -481,7 +544,10 @@ private fun CompactGridTabItem(
                     }
                 },
             )
-            .semantics { this.selected = selected }
+            .semantics {
+                this.selected = selected
+                if (description != null) contentDescription = description
+            }
             .clickable(
                 enabled = interactionsEnabled,
                 role = Role.Button,
@@ -489,19 +555,20 @@ private fun CompactGridTabItem(
             ),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainer
+            containerColor = when {
+                cardStyle != null -> cardStyle.containerColor
+                selected -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainer
             },
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = if (selected) {
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        } else {
-            null
+        border = when {
+            !selected -> null
+            cardStyle != null -> cardStyle.selectedBorder
+            else -> BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
         },
     ) {
+        titleRow?.invoke()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -526,13 +593,15 @@ private fun CompactGridTabItem(
                 },
         ) {
             previewContent()
-            GridTabPreviewChrome(
-                tab = tab,
-                visuals = visuals,
-                interactionsEnabled = interactionsEnabled,
-                onClose = onClose,
-                modifier = Modifier.fillMaxSize(),
-            )
+            if (titleRow == null) {
+                GridTabPreviewChrome(
+                    tab = tab,
+                    visuals = visuals,
+                    interactionsEnabled = interactionsEnabled,
+                    onClose = onClose,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

@@ -1463,4 +1463,14 @@
     <string name="address_clipboard_text">Текст из буфера</string>
     <string name="address_clipboard_open">Открыть</string>
     <string name="address_clipboard_paste">Вставить</string>
+    <!-- Tab overview v4 (Q7a) -->
+    <string name="tab_overview_title">Вкладки</string>
+    <plurals name="tab_overview_count">
+        <item quantity="one">%1$d вкладка</item>
+        <item quantity="few">%1$d вкладки</item>
+        <item quantity="many">%1$d вкладок</item>
+        <item quantity="other">%1$d вкладки</item>
+    </plurals>
+    <string name="tab_card_current">текущая вкладка</string>
+    <string name="tab_overview_open_essential">открыть</string>
 </resources>

@@ -82,9 +82,11 @@ object BrowserTabOverviewLayoutRules {
         )
     }
 
+    /** [titleRowHeight] is the row a card shows above its page, if any; it adds to the row pitch. */
     fun grid(
         viewportWidth: Float,
         viewportHeight: Float,
+        titleRowHeight: Float = 0f,
     ): BrowserTabGridLayout {
         val safeWidth = viewportWidth.takeIf { it.isFinite() && it > 0f } ?: 0f
         val safeHeight = viewportHeight.takeIf { it.isFinite() && it > 0f } ?: 0f
@@ -107,7 +109,8 @@ object BrowserTabOverviewLayoutRules {
             previewAspectRatio = previewAspectRatio,
             cardWidth = cardWidth,
             columnPitch = cardWidth + GRID_ITEM_SPACING,
-            rowPitch = cardWidth / previewAspectRatio + GRID_ITEM_SPACING,
+            rowPitch = cardWidth / previewAspectRatio + titleRowHeight.coerceAtLeast(0f) +
+                GRID_ITEM_SPACING,
             contentPadding = GRID_CONTENT_PADDING,
             itemSpacing = GRID_ITEM_SPACING,
         )

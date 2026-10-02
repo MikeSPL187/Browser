@@ -8,22 +8,20 @@ package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewGridRules
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewEdgeAction
 import dev.sk2andy.materialbrowser.shared.ui.TabHeroLayer
-import dev.sk2andy.materialbrowser.shared.ui.TabDismissPhysics
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroPager
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroPagerHaptics
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroPagerReorder
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewBottomChrome
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.shared.ui.TabTitleRow
 import dev.sk2andy.materialbrowser.shared.ui.CompactTabGrid
 import dev.sk2andy.materialbrowser.shared.ui.CompactTabList
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.ProfileSwitcher
 import dev.sk2andy.materialbrowser.ui.allowTopOverflow
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.EnterTransition
@@ -38,65 +36,47 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.core.VectorConverter
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
@@ -104,7 +84,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.layout
@@ -117,7 +96,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
@@ -130,15 +108,19 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.isSynced
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
-import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.TabAutoSortingRules
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.data.TabPinningRules
 import dev.sk2andy.materialbrowser.data.TabReorderingRules
 import dev.sk2andy.materialbrowser.data.TabStackRules
-import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
+import dev.sk2andy.materialbrowser.data.EssentialCandidate
+import dev.sk2andy.materialbrowser.data.EssentialEntry
+import dev.sk2andy.materialbrowser.data.EssentialsRules
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
@@ -264,10 +246,7 @@ internal fun TabOverview(
     var tabActionsTabId by remember { mutableStateOf<String?>(null) }
     var tabStackEditorTabId by remember { mutableStateOf<String?>(null) }
     var overviewBlurTarget by remember { mutableStateOf<BlurTarget?>(null) }
-    var profileActionsProfileId by remember { mutableStateOf<String?>(null) }
-    var profileIsolationChange by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-    var profileProtectionTargetId by remember { mutableStateOf<String?>(null) }
-    var emojiPickerTargetId by remember { mutableStateOf<String?>(null) }
+    val workspaceSheets = remember { WorkspaceSheetsState() }
     var movingTabId by remember { mutableStateOf<String?>(null) }
     var profileSwitching by remember { mutableStateOf(false) }
     var reorderAnimation by remember { mutableStateOf<TabReorderAnimation?>(null) }
@@ -308,11 +287,7 @@ internal fun TabOverview(
         onDispose { currentOnExitHeroVisibilityChanged(false) }
     }
     LaunchedEffect(controller.lockedProfileIds) {
-        val lockedProfileIds = controller.lockedProfileIds
-        if (profileActionsProfileId in lockedProfileIds) profileActionsProfileId = null
-        if (profileIsolationChange?.first in lockedProfileIds) profileIsolationChange = null
-        if (profileProtectionTargetId in lockedProfileIds) profileProtectionTargetId = null
-        if (emojiPickerTargetId in lockedProfileIds) emojiPickerTargetId = null
+        workspaceSheets.forgetLocked(controller.lockedProfileIds)
     }
     fun startExitHero(
         tab: BrowserTab,
@@ -540,6 +515,7 @@ internal fun TabOverview(
         val gridLayout = TabOverviewGridRules.layout(
             viewportWidth = maxWidth.value,
             viewportHeight = maxHeight.value,
+            titleRowHeight = VolaTabOverview.cardTitleRowHeight.value,
         )
         val gridColumnPitchPx = with(density) { gridLayout.columnPitch.dp.toPx() }
         val gridRowPitchPx = with(density) { gridLayout.rowPitch.dp.toPx() }
@@ -549,12 +525,7 @@ internal fun TabOverview(
             startsAtBottom = controller.tabListStartsAtBottom,
         )
         val listRowPitchPx = with(density) { 72.dp.toPx() }
-        val heroPagerTopOverflow = TAB_OVERVIEW_TOP_SPACING +
-            if (controller.profilesEnabled) {
-                PROFILE_SWITCHER_LAYOUT_HEIGHT + TAB_OVERVIEW_PROFILE_SPACING
-            } else {
-                0.dp
-            }
+        val heroPagerTopOverflow = VolaTabOverview.headerHeight
 
         fun reorderSlotOffset(
             reorder: ActiveTabReorder,
@@ -927,6 +898,31 @@ internal fun TabOverview(
                 },
         )
 
+        val actionTargetId = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
+            controller.activeTabs.getOrNull(pagerState.currentPage)?.id
+        } else {
+            controller.selectedTabId
+        }
+        val chromeEnabled = destinationChromeVisible &&
+            dismissingTabId == null &&
+            movingTabId == null &&
+            exitHero == null &&
+            reorderAnimation == null &&
+            !heroReorderDropAnimating &&
+            activeTabReorder == null &&
+            tabActionsTabId == null
+        val workspaceControlsEnabled = !profileSwitching && !workspaceSheets.isOpen
+        val pinnedTabsJumpVisible = destinationChromeVisible &&
+            controller.activeTabs.any(BrowserTab::isPinned) &&
+            !pinnedTabsVisible
+        val activeWorkspace = controller.profiles
+            .firstOrNull { profile -> profile.id == controller.activeProfileId }
+        val overviewTitle = if (controller.profilesEnabled && activeWorkspace != null) {
+            activeWorkspace.syncedDisplayName ?: activeWorkspace.workspaceDisplayName()
+        } else {
+            stringResource(R.string.tab_overview_title)
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -997,101 +993,134 @@ internal fun TabOverview(
                     },
                 ),
         ) {
-            Spacer(Modifier.height(TAB_OVERVIEW_TOP_SPACING))
-            if (controller.profilesEnabled) {
-                ProfileSwitcher(
-                    profiles = controller.profiles,
-                    activeProfileId = controller.activeProfileId,
-                    enabled = dismissingTabId == null &&
-                        movingTabId == null &&
-                        !profileSwitching &&
-                        exitHero == null &&
-                        reorderAnimation == null &&
-                        !heroReorderDropAnimating &&
-                        activeTabReorder == null &&
-                        tabActionsTabId == null &&
-                        profileActionsProfileId == null &&
-                        profileIsolationChange == null &&
-                        profileProtectionTargetId == null &&
-                        emojiPickerTargetId == null,
-                    onSelect = { profileId ->
-                        if (profileId == controller.activeProfileId) return@ProfileSwitcher
-                        overviewScope.launch {
-                            profileSwitching = true
-                            try {
-                                profileSwitchProgress.animateTo(
-                                    targetValue = 0f,
-                                    animationSpec = tween(
-                                        durationMillis = 120,
-                                        easing = FastOutSlowInEasing,
-                                    ),
-                                )
-                                if (
-                                    controller.tabOverviewMode == TabOverviewMode.Hero &&
-                                    pagerState.currentPage != 0
-                                ) {
-                                    pagerState.scrollToPage(0)
-                                }
-                                val selection = CompletableDeferred<Boolean>()
-                                controller.requestProfileSelection(profileId, selection::complete)
-                                if (selection.await()) {
-                                    controller.loadActiveProfileTabSwitcherWallpaper()
-                                    val selectedIndex = controller.activeTabs
-                                        .indexOfFirst { it.id == controller.selectedTabId }
-                                        .coerceAtLeast(0)
-                                    if (
-                                        controller.tabOverviewMode == TabOverviewMode.Hero &&
-                                        pagerState.currentPage != selectedIndex
-                                    ) {
-                                        pagerState.scrollToPage(selectedIndex)
-                                    }
-                                    withFrameNanos { }
-                                    rootView.performConfirmHaptic()
-                                }
-                                profileSwitchProgress.animateTo(
-                                    targetValue = 1f,
-                                    animationSpec = spring(
-                                        dampingRatio = 0.78f,
-                                        stiffness = 460f,
-                                    ),
-                                )
-                            } finally {
-                                withContext(NonCancellable) {
-                                    profileSwitchProgress.snapTo(1f)
-                                    profileSwitching = false
-                                }
-                            }
+            fun switchWorkspace(profileId: String) {
+                if (profileId == controller.activeProfileId) return
+                overviewScope.launch {
+                    profileSwitching = true
+                    try {
+                        profileSwitchProgress.animateTo(
+                            targetValue = 0f,
+                            animationSpec = tween(
+                                durationMillis = 120,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        )
+                        if (
+                            controller.tabOverviewMode == TabOverviewMode.Hero &&
+                            pagerState.currentPage != 0
+                        ) {
+                            pagerState.scrollToPage(0)
                         }
-                    },
-                    onLongClick = { profileId ->
-                        rootView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                        val profile = controller.profiles.firstOrNull { it.id == profileId }
-                        if (profile?.isSynced == true) {
-                            onClose()
-                            onOpenSyncSettings()
-                        } else if (profileId in controller.lockedProfileIds) {
-                            controller.requestProfileAccess(profileId) { authenticated ->
-                                if (authenticated) profileActionsProfileId = profileId
+                        val selection = CompletableDeferred<Boolean>()
+                        controller.requestProfileSelection(profileId, selection::complete)
+                        if (selection.await()) {
+                            controller.loadActiveProfileTabSwitcherWallpaper()
+                            val selectedIndex = controller.activeTabs
+                                .indexOfFirst { it.id == controller.selectedTabId }
+                                .coerceAtLeast(0)
+                            if (
+                                controller.tabOverviewMode == TabOverviewMode.Hero &&
+                                pagerState.currentPage != selectedIndex
+                            ) {
+                                pagerState.scrollToPage(selectedIndex)
                             }
-                        } else {
-                            profileActionsProfileId = profileId
+                            withFrameNanos { }
+                            rootView.performConfirmHaptic()
                         }
-                    },
-                    onAdd = {
-                        rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        emojiPickerTargetId = NEW_PROFILE_TARGET
-                    },
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .graphicsLayer {
-                            val chromeProgress =
-                                ((heroProgress.value - 0.34f) / 0.66f).coerceIn(0f, 1f)
-                            alpha = chromeProgress
-                            translationY = (1f - chromeProgress) * -18f
-                        },
-                )
-                Spacer(Modifier.height(TAB_OVERVIEW_PROFILE_SPACING))
+                        profileSwitchProgress.animateTo(
+                            targetValue = 1f,
+                            animationSpec = spring(
+                                dampingRatio = 0.78f,
+                                stiffness = 460f,
+                            ),
+                        )
+                    } finally {
+                        withContext(NonCancellable) {
+                            profileSwitchProgress.snapTo(1f)
+                            profileSwitching = false
+                        }
+                    }
+                }
             }
+            // A site already open in this workspace morphs out of its card, not opened twice.
+            fun openEssential(entry: EssentialEntry) {
+                val regularTabs = controller.activeTabs.filterNot(BrowserTab::isIncognito)
+                val openTabId = EssentialsRules.openTabId(
+                    entry = entry,
+                    tabs = regularTabs.map { tab ->
+                        EssentialCandidate(tab.id, tab.url, tab.title)
+                    },
+                )
+                val openTab = regularTabs.firstOrNull { tab -> tab.id == openTabId }
+                val openTabBounds = openTab?.let { tab -> tabCardBounds[tab.id] }
+                when {
+                    openTab != null && openTabBounds != null ->
+                        startExitHero(openTab, openTabBounds, VolaTabOverview.cardRadius)
+                    openTab != null -> {
+                        onSelect(openTab.id)
+                        onClose()
+                    }
+                    else -> {
+                        controller.createTab(initialUrl = entry.url, isIncognito = false)
+                        onClose()
+                    }
+                }
+            }
+            fun openWorkspaceActions(profileId: String) {
+                rootView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                val profile = controller.profiles.firstOrNull { it.id == profileId }
+                if (profile?.isSynced == true) {
+                    onClose()
+                    onOpenSyncSettings()
+                } else if (profileId in controller.lockedProfileIds) {
+                    controller.requestProfileAccess(profileId) { authenticated ->
+                        if (authenticated) workspaceSheets.actionsProfileId = profileId
+                    }
+                } else {
+                    workspaceSheets.actionsProfileId = profileId
+                }
+            }
+            TabOverviewHeader(
+                title = overviewTitle,
+                tabCount = controller.activeTabs.size,
+                enabled = chromeEnabled,
+                pinnedJumpVisible = pinnedTabsJumpVisible,
+                onPinnedJump = {
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    overviewScope.launch {
+                        when (controller.tabOverviewMode) {
+                            TabOverviewMode.Hero ->
+                                pagerState.animateScrollToPage(
+                                    page = 0,
+                                    animationSpec = spring(
+                                        dampingRatio = 0.86f,
+                                        stiffness = 720f,
+                                    ),
+                                )
+                            TabOverviewMode.Grid -> gridState.animateScrollToItem(0)
+                            TabOverviewMode.List -> listState.animateScrollToItem(0)
+                        }
+                    }
+                },
+                onSettings = {
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    onOpenSettings()
+                },
+                onMore = {
+                    actionTargetId?.let { tabId ->
+                        rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        tabActionsTabId = tabId
+                    }
+                },
+                modifier = Modifier
+                    .zIndex(1f)
+                    .graphicsLayer {
+                        val chromeProgress =
+                            ((heroProgress.value - 0.34f) / 0.66f).coerceIn(0f, 1f)
+                        alpha = chromeProgress
+                        translationY = (1f - chromeProgress) * -18f
+                    },
+            )
             when (controller.tabOverviewMode) {
                 TabOverviewMode.Hero -> TabOverviewHeroPager(
                     pagerState = pagerState,
@@ -1213,6 +1242,9 @@ internal fun TabOverview(
                         }
                         .allowTopOverflow(heroPagerTopOverflow)
                         .testTag(TabOverviewChromeTestTags.HeroPager),
+                    tabDescription = { tab ->
+                        tabCardDescription(tab, selected = tab.id == controller.selectedTabId)
+                    },
                 )
                 TabOverviewMode.Grid -> CompactTabGrid(
                     gridState = gridState,
@@ -1313,6 +1345,23 @@ internal fun TabOverview(
                     onSwipeDismiss = { tab -> closeCompactTab(tab, emitHaptic = false) },
                     gridTestTag = TabOverviewChromeTestTags.Grid,
                     tabTestTag = { tab -> SnoozeTestTags.overviewTab(tab.id) },
+                    cardStyle = tabOverviewCardStyle(),
+                    cardTitleRow = { tab ->
+                        TabGridCardTitleRow(
+                            tab = tab,
+                            favicon = controller.favicons[tab.id],
+                            enabled = dismissingTabId == null &&
+                                movingTabId == null &&
+                                exitHero == null &&
+                                activeTabReorder == null &&
+                                tabActionsTabId == null,
+                            onClose = { closeCompactTab(tab, emitHaptic = true) },
+                        )
+                    },
+                    tabDescription = { tab ->
+                        tabCardDescription(tab, selected = tab.id == controller.selectedTabId)
+                    },
+                    edgeFadeBrush = if (overviewWallpaper == null) VolaTheme.auraBrush else null,
                     modifier = Modifier
                         .weight(1f)
                         .graphicsLayer {
@@ -1394,122 +1443,38 @@ internal fun TabOverview(
                         },
                 )
             }
-            val actionTargetId = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
-                controller.activeTabs.getOrNull(pagerState.currentPage)?.id
-            } else {
-                controller.selectedTabId
-            }
-            val chromeEnabled = destinationChromeVisible &&
-                dismissingTabId == null &&
-                movingTabId == null &&
-                exitHero == null &&
-                reorderAnimation == null &&
-                !heroReorderDropAnimating &&
-                activeTabReorder == null &&
-                tabActionsTabId == null
-            val overviewChromeTokens = browserChromeSurfaceTokens(
-                BrowserChromeSurfaceRole.AddressBar,
+            val dockAlpha by animateFloatAsState(
+                targetValue = if (destinationChromeVisible) 1f else 0f,
+                animationSpec = VolaMotion.effects(),
+                label = "tab-overview-dock-alpha",
             )
-            val pinnedTabsJumpVisible = destinationChromeVisible &&
-                controller.activeTabs.any(BrowserTab::isPinned) &&
-                !pinnedTabsVisible
-            TabOverviewBottomChrome(
-                visible = destinationChromeVisible,
-                enabled = chromeEnabled,
+            TabOverviewDock(
+                essentials = controller.essentials.entriesFor(controller.activeProfileId),
+                essentialIcons = controller.essentials.iconsByUrl,
+                workspaces = controller.profiles,
+                activeWorkspaceId = controller.activeProfileId,
+                showWorkspaces = controller.profilesEnabled,
+                enabled = chromeEnabled && workspaceControlsEnabled,
+                onOpenEssential = { entry ->
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    openEssential(entry)
+                },
+                onSelectWorkspace = ::switchWorkspace,
+                onWorkspaceLongClick = ::openWorkspaceActions,
+                onAddWorkspace = {
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    workspaceSheets.startCreating()
+                },
                 onNewTab = onNewTab,
-                onMore = {
-                    actionTargetId?.let { tabId ->
-                        rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        tabActionsTabId = tabId
-                    }
-                },
-                containerColor = overviewChromeTokens.containerColor,
-                contentColor = overviewChromeTokens.contentColor,
-                tonalElevation = overviewChromeTokens.tonalElevation,
-                shadowElevation = overviewChromeTokens.shadowElevation,
-                newTabIcon = {
-                    Icon(
-                        VolaIcons.Add,
-                        contentDescription = stringResource(R.string.cd_new_tab),
-                    )
-                },
-                moreIcon = {
-                    Icon(
-                        VolaIcons.MoreVert,
-                        contentDescription = stringResource(R.string.cd_more_options),
-                    )
-                },
-                leadingAction = {
-                    TabOverviewEdgeAction(
-                        visible = pinnedTabsJumpVisible,
-                        enabled = chromeEnabled,
-                        contentDescription = stringResource(R.string.cd_scroll_to_pinned_tabs),
-                        testTag = TabOverviewChromeTestTags.PinnedTabsJump,
-                        animationLabel = "pinned-tabs-jump-alpha",
-                        onHaptic = {
-                            rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                modifier = Modifier
+                    .graphicsLayer { alpha = dockAlpha }
+                    .then(
+                        if (destinationChromeVisible) {
+                            Modifier
+                        } else {
+                            Modifier.clearAndSetSemantics { }
                         },
-                        onClick = {
-                            overviewScope.launch {
-                                when (controller.tabOverviewMode) {
-                                    TabOverviewMode.Hero ->
-                                        pagerState.animateScrollToPage(
-                                            page = 0,
-                                            animationSpec = spring(
-                                                dampingRatio = 0.86f,
-                                                stiffness = 720f,
-                                            ),
-                                        )
-                                    TabOverviewMode.Grid -> gridState.animateScrollToItem(0)
-                                    TabOverviewMode.List -> listState.animateScrollToItem(0)
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .zIndex(1f),
-                    ) {
-                        Icon(
-                            imageVector = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
-                                VolaIcons.KeyboardArrowLeft
-                            } else {
-                                VolaIcons.KeyboardArrowUp
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.76f),
-                        )
-                        Icon(
-                            painter = painterResource(R.drawable.ic_push_pin),
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.76f),
-                        )
-                    }
-                },
-                trailingAction = {
-                    TabOverviewEdgeAction(
-                        visible = destinationChromeVisible,
-                        enabled = chromeEnabled,
-                        contentDescription = stringResource(R.string.action_settings),
-                        testTag = TabOverviewChromeTestTags.Settings,
-                        animationLabel = "tab-overview-settings-alpha",
-                        onHaptic = {
-                            rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                        },
-                        onClick = onOpenSettings,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .zIndex(1f),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_settings),
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.76f),
-                        )
-                    }
-                },
+                    ),
             )
         }
 
@@ -1593,11 +1558,7 @@ internal fun TabOverview(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(statusBarInsets)
-                    .padding(
-                        top = TAB_OVERVIEW_TOP_SPACING +
-                            PROFILE_SWITCHER_LAYOUT_HEIGHT +
-                            TAB_OVERVIEW_PROFILE_SPACING,
-                    )
+                    .padding(top = VolaTabOverview.headerHeight)
                     .pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {
@@ -2032,238 +1993,18 @@ internal fun TabOverview(
             menuLayout = controller.browserMenuLayout,
         )
 
-        val stackEditorTab = tabStackEditorTabId?.let { tabId ->
-            controller.activeTabs.firstOrNull { tab -> tab.id == tabId }
-        }
-        val editedStack = stackEditorTab?.let { tab -> controller.tabStackFor(tab.id) }
-        val stackEditorCandidates = stackEditorTab?.let { target ->
-            controller.activeTabs.filter { candidate ->
-                candidate.profileId == target.profileId &&
-                    candidate.isIncognito == target.isIncognito &&
-                    candidate.isPinned == target.isPinned
-            }
-        }.orEmpty()
-        TabStackCreateDialog(
-            initialTabId = stackEditorTab?.id,
-            candidates = stackEditorCandidates,
-            preselectedTabIds = editedStack?.tabIds?.toSet().orEmpty(),
-            initialPreviewTabId = editedStack?.previewTabId,
-            initialName = editedStack?.name.orEmpty(),
-            initialColor = editedStack?.color ?: TabStackColor.Grape,
-            editing = editedStack != null,
-            onCreate = { tabIds, name, color, previewTabId ->
-                val changed = if (editedStack == null) {
-                    controller.createTabStack(
-                        tabIds = tabIds,
-                        name = name,
-                        color = color,
-                        previewTabId = previewTabId,
-                    ) != null
-                } else {
-                    controller.updateTabStack(
-                        stackId = editedStack.id,
-                        tabIds = tabIds,
-                        name = name,
-                        color = color,
-                        previewTabId = previewTabId,
-                    )
-                }
-                if (changed) {
-                    tabStackEditorTabId = null
-                    rootView.performConfirmHaptic()
-                }
-            },
-            onDismiss = { tabStackEditorTabId = null },
+        TabOverviewStackEditor(
+            controller = controller,
+            tabId = tabStackEditorTabId,
+            onDone = { tabStackEditorTabId = null },
         )
 
-        val actionProfile = profileActionsProfileId?.let { profileId ->
-            controller.localBrowserProfiles.firstOrNull { it.id == profileId }
-        }
-        ProfileActionsSheet(
-            profile = actionProfile,
-            canDelete = controller.localBrowserProfiles.size > 1,
-            isolationSupported = controller.isProfileIsolationSupported,
-            onChangeEmoji = {
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                emojiPickerTargetId = target.id
-            },
-            onCustomizeWallpaper = { wallpaperTarget ->
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                onEditProfileWallpaper(target.id, wallpaperTarget)
-            },
-            onDelete = {
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                controller.deleteProfileAsync(target.id) { deleted ->
-                    if (deleted) rootView.performConfirmHaptic()
-                }
-            },
-            onIsolationChange = { enabled ->
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                profileIsolationChange = target.id to enabled
-            },
-            profileProtectionSupported = controller.isProfileProtectionSupported,
-            onConfigureProtection = {
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                profileProtectionTargetId = target.id
-            },
-            onDisableProtection = {
-                val target = actionProfile ?: return@ProfileActionsSheet
-                profileActionsProfileId = null
-                controller.updateProfileProtection(target.id, protection = null) { changed ->
-                    if (changed) rootView.performConfirmHaptic()
-                }
-            },
-            onDismiss = { profileActionsProfileId = null },
-            onRename = { name ->
-                val target = actionProfile ?: return@ProfileActionsSheet
-                controller.updateProfileName(target.id, name)
-            },
-            onAccentChange = { accent ->
-                val target = actionProfile ?: return@ProfileActionsSheet
-                if (controller.updateProfileAccent(target.id, accent)) {
-                    rootView.performConfirmHaptic()
-                }
-            },
-        )
-
-        val protectionProfile = profileProtectionTargetId?.let { profileId ->
-            controller.localBrowserProfiles.firstOrNull { profile -> profile.id == profileId }
-        }
-        if (protectionProfile != null) {
-            ProfileProtectionDialog(
-                current = protectionProfile.protection,
-                onSave = { protection ->
-                    val profileId = protectionProfile.id
-                    profileProtectionTargetId = null
-                    controller.updateProfileProtection(profileId, protection) { changed ->
-                        if (changed) rootView.performConfirmHaptic()
-                    }
-                },
-                onDismiss = { profileProtectionTargetId = null },
-            )
-        }
-
-        profileIsolationChange?.let { (profileId, enabled) ->
-            AlertDialog(
-                onDismissRequest = { profileIsolationChange = null },
-                title = { Text(stringResource(R.string.profile_isolation_confirm_title)) },
-                text = {
-                    Text(
-                        stringResource(
-                            if (enabled) R.string.profile_isolation_enable_message
-                            else R.string.profile_isolation_disable_message,
-                        ),
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            controller.setProfileIsolationAsync(profileId, enabled) { changed ->
-                                if (changed) rootView.performConfirmHaptic()
-                            }
-                            profileIsolationChange = null
-                        },
-                    ) {
-                        Text(stringResource(R.string.action_switch_storage))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { profileIsolationChange = null }) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                },
-            )
-        }
-
-        val emojiPickerTarget = emojiPickerTargetId
-        EmojiPickerSheet(
-            visible = emojiPickerTarget != null,
-            creatingProfile = emojiPickerTarget == NEW_PROFILE_TARGET,
-            isolationSupported = controller.isProfileIsolationSupported,
-            profileProtectionSupported = controller.isProfileProtectionSupported,
-            emojis = controller.syncIconCatalog.icons.map { it.emoji },
-            selectedEmoji = controller.localBrowserProfiles
-                .firstOrNull { it.id == emojiPickerTarget }
-                ?.emoji,
-            onCreate = { emoji, isolationEnabled, options ->
-                if (emojiPickerTarget != NEW_PROFILE_TARGET) return@EmojiPickerSheet
-                val profileId = controller.createProfile(
-                    emoji = emoji,
-                    isolationEnabled = isolationEnabled,
-                    name = options.name,
-                    accent = options.accent,
-                )
-                if (profileId != null) {
-                    emojiPickerTargetId = null
-                    rootView.performConfirmHaptic()
-                    onConfigureCreatedProfile(profileId, options)
-                }
-            },
-            onSelect = { emoji ->
-                val target = emojiPickerTarget ?: return@EmojiPickerSheet
-                if (target == NEW_PROFILE_TARGET) return@EmojiPickerSheet
-                emojiPickerTargetId = null
-                val changed = controller.updateProfileEmoji(target, emoji)
-                if (changed) rootView.performConfirmHaptic()
-            },
-            onDismiss = { emojiPickerTargetId = null },
+        TabOverviewWorkspaceSheets(
+            controller = controller,
+            state = workspaceSheets,
+            onEditProfileWallpaper = onEditProfileWallpaper,
+            onConfigureCreatedProfile = onConfigureCreatedProfile,
         )
     }
 
-}
-
-@Composable
-internal fun TabOverviewBackground(
-    wallpaper: ProfileWallpaperRuntime?,
-    statusBarInsets: WindowInsets = WindowInsets.statusBars,
-    navigationBarInsets: WindowInsets = WindowInsets.navigationBars,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val backgroundModifier = if (wallpaper == null) {
-        Modifier.background(
-            Brush.linearGradient(
-                colors = listOf(
-                    colors.primaryContainer,
-                    colors.tertiaryContainer,
-                    colors.surface,
-                ),
-            ),
-        )
-    } else {
-        Modifier.drawBehind {
-            drawProfileWallpaper(
-                bitmap = wallpaper.bitmap,
-                wallpaper = wallpaper.wallpaper,
-                scrimAlpha = 0.54f,
-            )
-        }
-    }
-    Box(
-        modifier = modifier
-            .testTag(TabOverviewChromeTestTags.Background)
-            .then(backgroundModifier),
-    ) {
-        if (wallpaper != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .windowInsetsTopHeight(statusBarInsets)
-                    .background(colors.surface.copy(alpha = 0.92f)),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .windowInsetsBottomHeight(navigationBarInsets)
-                    .background(colors.surface.copy(alpha = 0.92f)),
-            )
-        }
-    }
 }

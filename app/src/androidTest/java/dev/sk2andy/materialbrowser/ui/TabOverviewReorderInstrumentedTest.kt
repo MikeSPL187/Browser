@@ -966,7 +966,7 @@ class TabOverviewReorderInstrumentedTest {
     }
 
     @Test
-    fun heroPagerDrawAreaExtendsBehindProfileSwitcher() {
+    fun heroPagerDrawAreaExtendsBehindHeader() {
         lateinit var browserController: BrowserController
         composeRule.runOnIdle {
             clearSession()
@@ -987,7 +987,7 @@ class TabOverviewReorderInstrumentedTest {
             .fetchSemanticsNode()
             .boundsInRoot
         val profileBounds = composeRule
-            .onNodeWithTag(ProfileSwitcherTestTags.Switcher)
+            .onNodeWithTag(TabOverviewChromeTestTags.Header)
             .fetchSemanticsNode()
             .boundsInRoot
 

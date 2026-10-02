@@ -677,7 +677,7 @@ class BrowserController(
         private set
     var dismissResistancePercent by mutableIntStateOf(40)
         private set
-    var tabOverviewMode by mutableStateOf(TabOverviewMode.Hero)
+    var tabOverviewMode by mutableStateOf(TabOverviewMode.Grid)
         private set
     var tabStackFolderMode by mutableStateOf(TabOverviewMode.Grid)
         private set

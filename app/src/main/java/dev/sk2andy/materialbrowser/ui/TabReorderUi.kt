@@ -6,8 +6,10 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.browser.EssentialsController
-import dev.sk2andy.materialbrowser.shared.ui.GridTabPreviewChrome
 
 import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
@@ -250,7 +252,7 @@ internal fun DraggedTabReorderOverlay(
     val height = with(density) { reorder.sourceBounds.height.toDp() }
     val shape = when (reorder.mode) {
         TabOverviewMode.Hero -> RoundedCornerShape(28.dp)
-        TabOverviewMode.Grid -> RoundedCornerShape(22.dp)
+        TabOverviewMode.Grid -> VolaTabOverview.cardShape
         TabOverviewMode.List -> RoundedCornerShape(18.dp)
     }
     val lift by animateFloatAsState(
@@ -295,31 +297,35 @@ internal fun DraggedTabReorderOverlay(
             TabOverviewMode.Grid -> Surface(
                 modifier = Modifier.fillMaxSize(),
                 shape = shape,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                },
+                color = VolaTheme.extendedColors.card,
                 border = if (selected) {
-                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                    BorderStroke(
+                        VolaTabOverview.selectedRingWidth,
+                        MaterialTheme.colorScheme.primary,
+                    )
                 } else {
                     null
                 },
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    TabPreviewContent(
+                Column(Modifier.fillMaxSize()) {
+                    TabGridCardTitleRow(
                         tab = tab,
-                        preview = preview,
                         favicon = favicon,
-                        essentials = essentials,
-                    )
-                    GridTabPreviewChrome(
-                        tab = tab,
-                        visuals = tabOverviewHeroVisuals(tab, favicon),
-                        interactionsEnabled = false,
+                        enabled = false,
                         onClose = null,
-                        modifier = Modifier.fillMaxSize(),
                     )
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    ) {
+                        TabPreviewContent(
+                            tab = tab,
+                            preview = preview,
+                            favicon = favicon,
+                            essentials = essentials,
+                        )
+                    }
                 }
             }
             TabOverviewMode.List -> Surface(
