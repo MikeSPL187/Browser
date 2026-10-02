@@ -260,6 +260,38 @@ def tour(suffix):
         time.sleep(2)
     step("overview", overview)
 
+    def essentials():
+        # A new tab from the tab overview shows the workspace's Essentials (Q5a): the empty
+        # state on a fresh install, the add sheet, the grid and its edit mode.
+        adb("shell", "input", "swipe", str(width // 2), str(height - 120),
+            str(width // 2), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        if not tap("New tab", "Новая вкладка"):
+            save_ui(f"essentials-overview-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(3)
+        shot(f"essentials-start-{suffix}")
+        if tap("Add a site", "Добавить сайт"):
+            time.sleep(2)
+            shot(f"essentials-add-{suffix}")
+            for _ in range(2):
+                node = next((n for n in nodes() if n["desc"].startswith(("Add ", "Добавить «"))), None)
+                if node is None:
+                    break
+                x, y = node["center"]
+                adb("shell", "input", "tap", str(x), str(y))
+                time.sleep(2)
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        shot(f"essentials-{suffix}")
+        if tap("Edit", "Изменить"):
+            time.sleep(2)
+            shot(f"essentials-edit-{suffix}")
+            tap("Done", "Готово")
+            time.sleep(1)
+    step("essentials", essentials)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)

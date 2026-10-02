@@ -23,7 +23,6 @@ import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
 import dev.sk2andy.materialbrowser.browser.DomainMuteRules
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.PopupSiteRules
@@ -1050,22 +1049,6 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_HTTP_PASSWORD_AUTOFILL_ENABLED, enabled).apply()
     }
 
-    fun loadFavoriteLaunchAnimationEnabled(): Boolean =
-        preferences.getBoolean(KEY_FAVORITE_LAUNCH_ANIMATION_ENABLED, true)
-
-    fun saveFavoriteLaunchAnimationEnabled(enabled: Boolean) {
-        preferences.edit().putBoolean(KEY_FAVORITE_LAUNCH_ANIMATION_ENABLED, enabled).apply()
-    }
-
-    fun loadFavoriteAnimationSpeed(): FavoriteAnimationSpeed =
-        FavoriteAnimationSpeed.fromWireValue(
-            preferences.getString(KEY_FAVORITE_ANIMATION_SPEED, null),
-        )
-
-    fun saveFavoriteAnimationSpeed(speed: FavoriteAnimationSpeed) {
-        preferences.edit().putString(KEY_FAVORITE_ANIMATION_SPEED, speed.wireValue).apply()
-    }
-
     fun loadOpenHomeOnStartupEnabled(): Boolean =
         preferences.getBoolean(KEY_OPEN_HOME_ON_STARTUP_ENABLED, false)
 
@@ -1563,9 +1546,6 @@ class BrowserSessionStore internal constructor(
         const val KEY_STARTUP_ANIMATION_ENABLED = "startup_animation_enabled"
         const val KEY_STARTUP_ADDRESS_FOCUS_MODE = "startup_address_focus_mode"
         const val KEY_HTTP_PASSWORD_AUTOFILL_ENABLED = "http_password_autofill_enabled"
-        const val KEY_FAVORITE_LAUNCH_ANIMATION_ENABLED =
-            "favorite_launch_animation_enabled"
-        const val KEY_FAVORITE_ANIMATION_SPEED = "favorite_animation_speed"
         const val KEY_OPEN_HOME_ON_STARTUP_ENABLED = "open_home_on_startup_enabled"
         const val KEY_SCROLL_BAR_ENABLED = "scroll_bar_enabled"
         const val KEY_INLINE_MEDIA_PLAYER_ENABLED = "inline_media_player_enabled"

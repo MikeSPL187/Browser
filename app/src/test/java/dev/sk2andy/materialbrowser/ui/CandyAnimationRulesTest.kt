@@ -20,20 +20,4 @@ class CandyAnimationRulesTest {
             ),
         )
     }
-
-    @Test
-    fun `global setting overrides favorite launch animation`() {
-        assertFalse(
-            CandyAnimationRules.favoriteLaunchAnimationEnabled(
-                animationsEnabled = false,
-                favoriteLaunchAnimationEnabled = true,
-            ),
-        )
-        assertTrue(
-            CandyAnimationRules.favoriteLaunchAnimationEnabled(
-                animationsEnabled = true,
-                favoriteLaunchAnimationEnabled = true,
-            ),
-        )
-    }
 }

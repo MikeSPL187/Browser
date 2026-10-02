@@ -11,7 +11,6 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
-import dev.sk2andy.materialbrowser.browser.FavoriteAnimationSpeed
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
@@ -94,8 +93,6 @@ internal fun SettingsScreen(
     startupAddressFocusMode: StartupAddressFocusMode = StartupAddressFocusMode.Default,
     isHttpPasswordAutofillEnabled: Boolean = false,
     isHttpPasswordAutofillSupported: Boolean = false,
-    isFavoriteLaunchAnimationEnabled: Boolean = true,
-    favoriteAnimationSpeed: FavoriteAnimationSpeed = FavoriteAnimationSpeed.Default,
     isOpenHomeOnStartupEnabled: Boolean = false,
     isScrollBarEnabled: Boolean,
     isVideoAutoplayBlocked: Boolean,
@@ -153,8 +150,6 @@ internal fun SettingsScreen(
     onStartupAnimationEnabledChanged: (Boolean) -> Unit,
     onStartupAddressFocusModeChanged: (StartupAddressFocusMode) -> Unit = {},
     onHttpPasswordAutofillEnabledChanged: (Boolean) -> Unit = {},
-    onFavoriteLaunchAnimationEnabledChanged: (Boolean) -> Unit = {},
-    onFavoriteAnimationSpeedChanged: (FavoriteAnimationSpeed) -> Unit = {},
     onImportFavoriteBookmarks: () -> Unit = {},
     onOpenHomeOnStartupEnabledChanged: (Boolean) -> Unit = {},
     onScrollBarEnabledChanged: (Boolean) -> Unit,
@@ -357,8 +352,6 @@ internal fun SettingsScreen(
                     isFullImmersiveModeEnabled = isFullImmersiveModeEnabled,
                     isStartupAnimationEnabled = isStartupAnimationEnabled,
                     startupAddressFocusMode = startupAddressFocusMode,
-                    isFavoriteLaunchAnimationEnabled = isFavoriteLaunchAnimationEnabled,
-                    favoriteAnimationSpeed = favoriteAnimationSpeed,
                     isOpenHomeOnStartupEnabled = isOpenHomeOnStartupEnabled,
                     isScrollBarEnabled = isScrollBarEnabled,
                     isVideoAutoplayBlocked = isVideoAutoplayBlocked,
@@ -373,9 +366,6 @@ internal fun SettingsScreen(
                     onFullImmersiveModeEnabledChanged = onFullImmersiveModeEnabledChanged,
                     onStartupAnimationEnabledChanged = onStartupAnimationEnabledChanged,
                     onStartupAddressFocusModeChanged = onStartupAddressFocusModeChanged,
-                    onFavoriteLaunchAnimationEnabledChanged =
-                        onFavoriteLaunchAnimationEnabledChanged,
-                    onFavoriteAnimationSpeedChanged = onFavoriteAnimationSpeedChanged,
                     onImportFavoriteBookmarks = onImportFavoriteBookmarks,
                     onOpenHomeOnStartupEnabledChanged =
                         onOpenHomeOnStartupEnabledChanged,

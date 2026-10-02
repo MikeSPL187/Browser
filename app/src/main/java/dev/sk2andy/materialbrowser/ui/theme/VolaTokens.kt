@@ -143,3 +143,52 @@ internal object VolaMotion {
     fun <T> effects(visibilityThreshold: T? = null): SpringSpec<T> =
         spring(EFFECTS_DAMPING_RATIO, EFFECTS_STIFFNESS, visibilityThreshold)
 }
+
+/** Essentials on the new tab (boards NewTab and EssentialsEdit). */
+internal object VolaEssentials {
+    const val COLUMNS = 4
+
+    /** On a tablet the new tab keeps a phone-wide column, so tiles stay together. */
+    val maxContentWidth = 560.dp
+
+    /** The tile behind a site icon: lowest surface at this opacity over the aura. */
+    val tileSize = 68.dp
+    val tileShape = VolaShapes.card
+    const val TILE_ALPHA = 0.86f
+
+    /** The site icon, or its letter, centered on the tile. */
+    val iconSize = 36.dp
+    val iconShape = RoundedCornerShape(VolaShapes.smallRadius)
+
+    val rowGap = 18.dp
+    val columnGap = VolaSpacing.x2
+    val labelGap = VolaSpacing.x2
+
+    /** The ✕ badge on a tile in edit mode, ringed with the page color, over its top-left corner. */
+    val removeBadgeSize = 24.dp
+    val removeBadgeInset = 4.dp
+    val removeBadgeRing = 2.dp
+    val removeIconSize = 15.dp
+
+    /** The «Add» tile: an accent outline. */
+    val addOutline = 2.dp
+
+    /** The lifted tile while it is dragged. */
+    const val DRAG_SCALE = 1.08f
+
+    /** Rows of the «Add from open tabs» sheet. */
+    val sheetIconSize = 40.dp
+    val sheetRowMinHeight = 64.dp
+}
+
+/** One empty, error or offline message (board States): icon, title, one sentence, one action. */
+internal object VolaStateTokens {
+    val iconContainerSize = 72.dp
+    val iconContainerShape = VolaShapes.card
+    val iconSize = 36.dp
+    val messageMaxWidth = 250.dp
+    val buttonHeight = 44.dp
+    val paddingTop = 28.dp
+    val paddingHorizontal = 22.dp
+    val paddingBottom = VolaSpacing.x6
+}

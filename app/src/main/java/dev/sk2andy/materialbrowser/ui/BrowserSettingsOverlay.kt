@@ -198,9 +198,6 @@ internal fun BrowserSettingsOverlay(
             startupAddressFocusMode = controller.addressBar.startupFocusMode,
             isHttpPasswordAutofillEnabled = controller.isHttpPasswordAutofillEnabled,
             isHttpPasswordAutofillSupported = controller.isHttpPasswordAutofillSupported,
-            isFavoriteLaunchAnimationEnabled =
-                controller.isFavoriteLaunchAnimationEnabled,
-            favoriteAnimationSpeed = controller.favoriteAnimationSpeed,
             isOpenHomeOnStartupEnabled = controller.isOpenHomeOnStartupEnabled,
             isScrollBarEnabled = controller.isScrollBarEnabled,
             isVideoAutoplayBlocked = controller.isVideoAutoplayBlocked,
@@ -283,9 +280,6 @@ internal fun BrowserSettingsOverlay(
                 controller.addressBar::updateStartupFocusMode,
             onHttpPasswordAutofillEnabledChanged =
                 controller::updateHttpPasswordAutofillEnabled,
-            onFavoriteLaunchAnimationEnabledChanged =
-                controller::updateFavoriteLaunchAnimationEnabled,
-            onFavoriteAnimationSpeedChanged = controller::updateFavoriteAnimationSpeed,
             onImportFavoriteBookmarks = onImportFavoriteBookmarks,
             onOpenHomeOnStartupEnabledChanged =
                 controller::updateOpenHomeOnStartupEnabled,

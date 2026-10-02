@@ -6,6 +6,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 import dev.sk2andy.materialbrowser.shared.ui.TabSwitchPreviewLayoutRules
 
@@ -99,8 +100,6 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.FindInPageRules
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewCommitResult
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
-import dev.sk2andy.materialbrowser.data.FavoriteEntry
-import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import eightbitlab.com.blurview.BlurTarget
@@ -321,8 +320,6 @@ internal fun BrowserViewport(
     onLiveFrame: (String) -> Unit,
     onSearch: () -> Unit,
     onFavorite: (String) -> Unit,
-    onOpenFavorites: () -> Unit = {},
-    onReorderFavorite: (String, Int) -> Unit = { _, _ -> },
     blankTabModeProgress: Float,
     blankTabModeRevealOrigin: Offset,
     onRetry: () -> Boolean,
@@ -397,9 +394,7 @@ internal fun BrowserViewport(
             tab = tab,
             preview = controller.previews[tab.id],
             favicon = controller.favicons[tab.id],
-            favorites = controller.favorites,
-            favoriteLibrary = controller.favoriteLibrary,
-            favoriteFavicons = controller.favoriteFavicons,
+            essentials = controller.essentials,
             dragOffset = dragOffset,
             dragDirection = dragDirection,
             travelDistance = travelDistance,
@@ -515,26 +510,20 @@ internal fun BrowserViewport(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 key(selectedTab.id) {
+                    val essentials = controller.essentials
+                    val profileId = selectedTab.profileId
+                    if (!selectedTab.isIncognito) {
+                        LaunchedEffect(profileId) { essentials.materialize(profileId) }
+                    }
                     NewTabPage(
-                        favorites = controller.favorites,
-                        favoriteLibrary = controller.favoriteLibrary,
-                        favicons = controller.favoriteFavicons,
-                        folderIcons = controller.favoriteFolderIcons,
+                        essentials = essentials.entriesFor(profileId),
+                        essentialIcons = essentials.iconsByUrl,
                         incognito = selectedTab.isIncognito,
                         modeProgress = blankTabModeProgress,
                         revealOriginInRoot = blankTabModeRevealOrigin,
                         onSearch = onSearch,
-                        onFavorite = onFavorite,
-                        onOpenFavorites = onOpenFavorites,
-                        onReorderFavorite = onReorderFavorite,
-                        favoriteLaunchAnimationEnabled =
-                            CandyAnimationRules.favoriteLaunchAnimationEnabled(
-                                animationsEnabled =
-                                    controller.appearanceSettings.animationsEnabled,
-                                favoriteLaunchAnimationEnabled =
-                                    controller.isFavoriteLaunchAnimationEnabled,
-                            ),
-                        favoriteAnimationSpeed = controller.favoriteAnimationSpeed,
+                        onOpenEssential = onFavorite,
+                        editor = rememberNewTabEssentialsEditor(controller, profileId),
                         recentTabs = controller.activeTabs
                             .filter { tab ->
                                 tab.id != selectedTab.id &&
@@ -597,9 +586,7 @@ internal fun BrowserViewport(
     handoff?.let { currentHandoff ->
         TabHandoffOverlay(
             handoff = currentHandoff,
-            favorites = controller.favorites,
-            favoriteLibrary = controller.favoriteLibrary,
-            favoriteFavicons = controller.favoriteFavicons,
+            essentials = controller.essentials,
             alpha = if (TabHandoffRules.shouldRevealLiveContent(
                     handoff = currentHandoff,
                     tabOverviewVisible = tabOverviewVisible,
@@ -868,9 +855,7 @@ private class BrowserEngineViewHostState(val container: FrameLayout) {
 @Composable
 private fun TabHandoffOverlay(
     handoff: TabHandoff,
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap>,
+    essentials: EssentialsController? = null,
     alpha: Float,
     rootHeightPx: Float,
     bottomBarTopPx: FloatState,
@@ -885,9 +870,7 @@ private fun TabHandoffOverlay(
             tab = handoff.tab,
             preview = handoff.preview,
             favicon = handoff.favicon,
-            favorites = favorites,
-            favoriteLibrary = favoriteLibrary,
-            favoriteFavicons = favoriteFavicons,
+            essentials = essentials,
             rootHeightPx = rootHeightPx,
             previewTopInsetPx = handoff.previewTopInsetPx,
             bottomBarTopPx = bottomBarTopPx,
@@ -900,9 +883,7 @@ private fun TabSwitchPreview(
     tab: BrowserTab,
     preview: Bitmap?,
     favicon: Bitmap?,
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap>,
+    essentials: EssentialsController? = null,
     dragOffset: MutableFloatState,
     dragDirection: Int,
     travelDistance: Float,
@@ -933,9 +914,7 @@ private fun TabSwitchPreview(
             tab = tab,
             preview = preview,
             favicon = favicon,
-            favorites = favorites,
-            favoriteLibrary = favoriteLibrary,
-            favoriteFavicons = favoriteFavicons,
+            essentials = essentials,
             rootHeightPx = rootHeightPx,
             previewTopInsetPx = previewTopInsetPx,
             bottomBarTopPx = bottomBarTopPx,
@@ -951,9 +930,7 @@ internal fun FullscreenTabPreviewContent(
     rootHeightPx: Float,
     previewTopInsetPx: Int,
     bottomBarTopPx: FloatState,
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap> = emptyMap(),
+    essentials: EssentialsController? = null,
     blankFavoritesAlpha: () -> Float = { 1f },
 ) {
     val density = LocalDensity.current
@@ -978,10 +955,9 @@ internal fun FullscreenTabPreviewContent(
         when {
             tab.isIncognito -> IncognitoTabPlaceholder()
             tab.url == BLANK_URL -> BlankTabPreview(
-                favorites = favorites,
-                favoriteLibrary = favoriteLibrary,
-                favoriteFavicons = favoriteFavicons,
-                favoritesAlpha = blankFavoritesAlpha,
+                profileId = tab.profileId,
+                essentials = essentials,
+                essentialsAlpha = blankFavoritesAlpha,
             )
             else -> {
                 Box(
@@ -1029,10 +1005,9 @@ private fun rootSafeDrawingPadding(rootView: View): PaddingValues {
 
 @Composable
 internal fun BlankTabPreview(
-    favorites: List<FavoriteEntry>,
-    favoriteLibrary: FavoriteLibrary? = null,
-    favoriteFavicons: Map<String, Bitmap> = emptyMap(),
-    favoritesAlpha: () -> Float,
+    profileId: String,
+    essentials: EssentialsController? = null,
+    essentialsAlpha: () -> Float,
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -1075,16 +1050,15 @@ internal fun BlankTabPreview(
                 },
         ) {
             NewTabPage(
-                favorites = favorites,
-                favoriteLibrary = favoriteLibrary,
-                favicons = favoriteFavicons,
+                essentials = essentials?.entriesFor(profileId).orEmpty(),
+                essentialIcons = essentials?.iconsByUrl.orEmpty(),
                 incognito = false,
                 modeProgress = 0f,
                 revealOriginInRoot = Offset.Zero,
                 onSearch = {},
-                onFavorite = {},
+                onOpenEssential = {},
                 interactive = false,
-                favoritesAlpha = favoritesAlpha,
+                essentialsAlpha = essentialsAlpha,
                 explicitSafeDrawingPadding = rootSafeDrawingPadding,
             )
         }

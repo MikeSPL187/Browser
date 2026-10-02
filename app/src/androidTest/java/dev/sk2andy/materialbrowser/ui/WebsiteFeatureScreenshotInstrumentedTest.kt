@@ -116,7 +116,6 @@ class WebsiteFeatureScreenshotInstrumentedTest {
                     mode = TabOverviewMode.Hero,
                     previews = previews,
                     favicons = emptyMap(),
-                    favorites = emptyList(),
                     onSelectTab = {},
                     onPreviewTabChanged = {},
                     onDismiss = {},

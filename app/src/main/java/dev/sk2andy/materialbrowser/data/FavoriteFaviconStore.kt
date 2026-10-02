@@ -7,9 +7,12 @@ import android.util.AtomicFile
 import java.io.File
 import java.io.FileNotFoundException
 
-internal class FavoriteFaviconStore(context: Context) {
+internal class FavoriteFaviconStore(
+    context: Context,
+    directoryName: String = DIRECTORY_NAME,
+) {
     private val files = AtomicTabFileDirectory(
-        directory = File(context.noBackupFilesDir, DIRECTORY_NAME),
+        directory = File(context.noBackupFilesDir, directoryName),
         extension = FILE_EXTENSION,
     )
 
@@ -87,7 +90,7 @@ internal class FavoriteFaviconStore(context: Context) {
         return sampleSize
     }
 
-    private companion object {
+    internal companion object {
         const val DIRECTORY_NAME = "favorite_favicons"
         const val FILE_EXTENSION = "png"
         const val PNG_QUALITY = 100
