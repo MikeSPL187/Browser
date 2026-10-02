@@ -75,7 +75,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -104,6 +103,7 @@ import dev.sk2andy.materialbrowser.browser.wallpaperFor
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionClient
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionRules
 import dev.sk2andy.materialbrowser.browser.commands.AddressAiModeRules
+import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionGroupRules
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.commands.AddressSubmission
 import dev.sk2andy.materialbrowser.browser.commands.AddressSubmissionRules
@@ -284,7 +284,12 @@ internal fun BrowserScreen(
     var tabOverviewVisible by rememberSaveable { mutableStateOf(false) }
     var candyTrailTabId by rememberSaveable { mutableStateOf<String?>(null) }
     var candyTrailSourceBounds by remember { mutableStateOf<Rect?>(null) }
-    var addressEditorVisible by remember { mutableStateOf(openAddressEditorOnLaunch) }
+    val addressEditor = controller.addressBar.editor
+    remember(addressEditor) {
+        val launchText = controller.selectedTab.url.takeUnless { it == BLANK_URL }.orEmpty()
+        addressEditor.openOnLaunch(openAddressEditorOnLaunch, launchText)
+    }
+    var addressEditorVisible by addressEditor::isVisible
     val aiModeSelectedState = remember { mutableStateOf(false) }
     var settingsVisible by remember { mutableStateOf(false) }
     var settingsDestination by rememberSaveable { mutableStateOf(SettingsDestination.Home) }
@@ -302,27 +307,13 @@ internal fun BrowserScreen(
     var readerStudioRequestId by remember { mutableIntStateOf(0) }
     var clearDialogVisible by remember { mutableStateOf(false) }
     var pendingCapsuleDelete by remember { mutableStateOf<SiteCapsule?>(null) }
-    var addressValue by remember {
-        val initialAddress = controller.selectedTab.url
-            .takeUnless { it == BLANK_URL }
-            .orEmpty()
-        mutableStateOf(
-            if (openAddressEditorOnLaunch) {
-                TextFieldValue(
-                    text = initialAddress,
-                    selection = TextRange(initialAddress.length, 0),
-                )
-            } else {
-                TextFieldValue()
-            },
-        )
-    }
+    var addressValue by addressEditor::value
     var remoteSearchSuggestions by remember { mutableStateOf(emptyList<String>()) }
     var localRecallMatches by remember { mutableStateOf(emptyList<RecallMatch>()) }
     val searchSuggestionClient = remember { SearchSuggestionClient() }
-    var highlightedSuggestionIndex by remember { mutableIntStateOf(-1) }
-    var addressFocusNonce by remember { mutableIntStateOf(0) }
-    var addressEditorOpenGeneration by remember { mutableIntStateOf(0) }
+    var highlightedSuggestionIndex by addressEditor::highlightedIndex
+    var addressFocusNonce by addressEditor::focusNonce
+    var addressEditorOpenGeneration by addressEditor::openGeneration
     var pendingCommand by remember { mutableStateOf<CommandSuggestion?>(null) }
     val overviewGestureProgress = remember { mutableFloatStateOf(0f) }
     val overviewMorphProgress = remember { mutableFloatStateOf(0f) }
@@ -720,16 +711,9 @@ internal fun BrowserScreen(
                 ) {
                     return@refreshSelectedTabPreview
                 }
-                val initialAddress = controller.selectedTab.url
-                    .takeUnless { it == BLANK_URL }
-                    .orEmpty()
-                addressValue = TextFieldValue(
-                    text = initialAddress,
-                    selection = TextRange(initialAddress.length, 0),
+                addressEditor.open(
+                    controller.selectedTab.url.takeUnless { it == BLANK_URL }.orEmpty(),
                 )
-                addressEditorVisible = true
-                highlightedSuggestionIndex = -1
-                addressFocusNonce++
             }
         }
     }
@@ -742,9 +726,7 @@ internal fun BrowserScreen(
     }
     LaunchedEffect(hardwareTabChangeRequestId) {
         if (hardwareTabChangeRequestId > 0) {
-            addressEditorOpenGeneration++
-            addressEditorVisible = false
-            highlightedSuggestionIndex = -1
+            addressEditor.close()
             pendingCommand = null
             commandFeedback = null
         }
@@ -759,10 +741,7 @@ internal fun BrowserScreen(
     fun openNewTabAndEdit(isIncognito: Boolean = false) {
         val createAndEdit = {
             if (createTabAndConfirm(isIncognito = isIncognito, emitHaptic = true)) {
-                addressValue = TextFieldValue()
-                addressEditorVisible = true
-                highlightedSuggestionIndex = -1
-                addressFocusNonce++
+                addressEditor.open("")
             }
         }
         if (addressEditorVisible || tabOverviewVisible) {
@@ -879,11 +858,13 @@ internal fun BrowserScreen(
     val suggestionItems by remember {
         derivedStateOf {
             if (addressEditorVisible) {
-                controller.addressSuggestionItems(
-                    query = addressValue.text,
-                    searchQueries = remoteSearchSuggestions,
-                    recallMatches = localRecallMatches,
-                    limit = 10,
+                AddressSuggestionGroupRules.displayOrder(
+                    controller.addressSuggestionItems(
+                        query = addressValue.text,
+                        searchQueries = remoteSearchSuggestions,
+                        recallMatches = localRecallMatches,
+                        limit = 10,
+                    ),
                 )
             } else {
                 emptyList()
@@ -895,7 +876,7 @@ internal fun BrowserScreen(
         addressValue.selection.start == addressValue.selection.end &&
         addressValue.selection.end == addressValue.text.length
     ) {
-        controller.addressDomainCompletion(addressValue.text)
+        controller.addressBar.domainCompletion(addressValue.text)
     } else {
         null
     }
@@ -1014,6 +995,24 @@ internal fun BrowserScreen(
     )
 
     fun selectNavigation(suggestion: AddressSuggestion): Unit {
+        val workspaceId = suggestion.openTabProfileId
+        val workspaceTabId = suggestion.openTabId
+        if (workspaceId != null && workspaceTabId != null) {
+            // Proposal П1: the tab is open in another workspace, so switch there first.
+            addressEditorVisible = false
+            controller.requestProfileSelection(workspaceId) { switched ->
+                val selected = switched && (
+                    controller.selectedTabId == workspaceTabId ||
+                        controller.switchToOpenTab(workspaceTabId)
+                    )
+                if (selected) {
+                    rootView.performConfirmHaptic()
+                } else {
+                    controller.submitAddress(suggestion.url)
+                }
+            }
+            return
+        }
         val target = suggestion.openTabId
             ?.let { tabId -> controller.activeTabs.firstOrNull { it.id == tabId } }
         if (target == null) {
@@ -1063,9 +1062,7 @@ internal fun BrowserScreen(
             is AddressSuggestionItem.Recall -> item.match.url
             is AddressSuggestionItem.Command -> return
         }
-        addressValue = TextFieldValue(text = text, selection = TextRange(text.length))
-        highlightedSuggestionIndex = -1
-        addressFocusNonce++
+        addressEditor.fill(text)
         rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
     }
 
@@ -1088,11 +1085,7 @@ internal fun BrowserScreen(
 
     fun moveSuggestionHighlight(delta: Int): Unit {
         if (suggestionItems.isEmpty()) return
-        highlightedSuggestionIndex = when {
-            highlightedSuggestionIndex < 0 && delta > 0 -> 0
-            highlightedSuggestionIndex < 0 -> suggestionItems.lastIndex
-            else -> (highlightedSuggestionIndex + delta).coerceIn(-1, suggestionItems.lastIndex)
-        }
+        addressEditor.moveHighlight(delta, suggestionItems.size)
     }
 
     LaunchedEffect(addressValue.text, suggestionItems.map(AddressSuggestionItem::stableId)) {

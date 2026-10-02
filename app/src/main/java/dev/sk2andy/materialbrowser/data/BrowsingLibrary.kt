@@ -32,7 +32,23 @@ data class AddressSuggestion(
     val url: String,
     val title: String,
     val openTabId: String? = null,
+    /** The workspace of [openTabId] when it is not the current one; null for the current one. */
+    val openTabProfileId: String? = null,
+    val source: AddressSuggestionSource = if (openTabId == null) {
+        AddressSuggestionSource.History
+    } else {
+        AddressSuggestionSource.OpenTab
+    },
+    /** When the page was last visited or saved, for the subtitle; null when unknown. */
+    val lastVisitedAt: Long? = null,
 )
+
+/** Where an address suggestion comes from; the row shows it with its own icon. */
+enum class AddressSuggestionSource {
+    OpenTab,
+    Favorite,
+    History,
+}
 
 internal object BrowsingLibraryRules {
     const val MAX_HISTORY_ENTRIES = 250
@@ -85,6 +101,13 @@ internal object BrowsingLibraryRules {
             .toList()
     }
 
+    /**
+     * Open tabs, favorites and history that match [query], best first; open tabs lead so the
+     * address bar offers "Switch to tab" before a second copy of the page.
+     *
+     * [otherWorkspaceTabs] are tabs of the other workspaces the caller may reveal: not locked and
+     * not private (proposal П1 in docs/vola/ROADMAP.md). A private tab sees only private tabs.
+     */
     fun addressSuggestions(
         history: List<HistoryEntry>,
         tabs: List<BrowserTab>,
@@ -93,44 +116,90 @@ internal object BrowsingLibraryRules {
         query: String,
         limit: Int,
         includeHistory: Boolean = true,
+        favorites: List<FavoriteEntry> = emptyList(),
+        otherWorkspaceTabs: List<BrowserTab> = emptyList(),
     ): List<AddressSuggestion> {
-        val openTabsByUrl = tabs.asSequence()
-            .filter { tab ->
-                tab.id != selectedTabId &&
-                    tab.isIncognito == isIncognito &&
-                    tab.url != BLANK_URL
+        val candidates = linkedMapOf<String, AddressSuggestion>()
+        fun addTabs(source: List<BrowserTab>, otherWorkspace: Boolean) {
+            source.asSequence()
+                .filter { tab ->
+                    tab.id != selectedTabId &&
+                        tab.isIncognito == isIncognito &&
+                        tab.url != BLANK_URL
+                }
+                .sortedByDescending(BrowserTab::lastAccessedAt)
+                .forEach { tab ->
+                    val key = urlKey(tab.url) ?: return@forEach
+                    candidates.putIfAbsent(
+                        key,
+                        AddressSuggestion(
+                            url = tab.url,
+                            title = tab.title.trim().ifEmpty { displayHost(tab.url) },
+                            openTabId = tab.id,
+                            openTabProfileId = tab.profileId.takeIf { otherWorkspace },
+                            lastVisitedAt = tab.lastAccessedAt,
+                        ),
+                    )
+                }
+        }
+        addTabs(tabs, otherWorkspace = false)
+        if (!isIncognito) {
+            addTabs(otherWorkspaceTabs, otherWorkspace = true)
+            val lastVisits = if (includeHistory) {
+                history.asSequence()
+                    .mapNotNull { entry -> urlKey(entry.url)?.let { key -> key to entry.lastVisitedAt } }
+                    .groupBy({ it.first }, { it.second })
+                    .mapValues { (_, visits) -> visits.max() }
+            } else {
+                emptyMap()
             }
-            .sortedByDescending(BrowserTab::lastAccessedAt)
-            .mapNotNull { tab -> urlKey(tab.url)?.let { key -> key to tab } }
-            .distinctBy { (key, _) -> key }
-            .toMap()
-        val candidates = buildList {
-            openTabsByUrl.values.forEach { tab ->
-                add(
-                    HistoryEntry(
-                        url = tab.url,
-                        title = tab.title.trim().ifEmpty { displayHost(tab.url) },
-                        lastVisitedAt = tab.lastAccessedAt,
+            favorites.forEach { favorite ->
+                val key = urlKey(favorite.url) ?: return@forEach
+                candidates.putIfAbsent(
+                    key,
+                    AddressSuggestion(
+                        url = favorite.url,
+                        title = favorite.title.trim().ifEmpty { displayHost(favorite.url) },
+                        source = AddressSuggestionSource.Favorite,
+                        lastVisitedAt = maxOf(lastVisits[key] ?: 0L, favorite.addedAt),
                     ),
                 )
             }
-            if (!isIncognito && includeHistory) {
+            if (includeHistory) {
                 history.forEach { entry ->
-                    val key = urlKey(entry.url)
-                    if (key != null && key !in openTabsByUrl) add(entry)
+                    val key = urlKey(entry.url) ?: return@forEach
+                    candidates.putIfAbsent(
+                        key,
+                        AddressSuggestion(
+                            url = entry.url,
+                            title = entry.title,
+                            lastVisitedAt = entry.lastVisitedAt,
+                        ),
+                    )
                 }
             }
         }
 
-        return suggestions(candidates, query, candidates.size)
-            .map { entry ->
-                AddressSuggestion(
-                    url = entry.url,
-                    title = entry.title,
-                    openTabId = urlKey(entry.url)?.let(openTabsByUrl::get)?.id,
+        val matches = suggestions(
+            history = candidates.values.map { suggestion ->
+                HistoryEntry(
+                    url = suggestion.url,
+                    title = suggestion.title,
+                    lastVisitedAt = suggestion.lastVisitedAt ?: 0L,
                 )
+            },
+            query = query,
+            limit = candidates.size,
+        )
+        return matches
+            .mapNotNull { entry -> urlKey(entry.url)?.let(candidates::get) }
+            .sortedByDescending { suggestion ->
+                when {
+                    suggestion.openTabId == null -> 0
+                    suggestion.openTabProfileId == null -> 2
+                    else -> 1
+                }
             }
-            .sortedByDescending { suggestion -> suggestion.openTabId != null }
             .take(limit.coerceAtLeast(0))
     }
 
