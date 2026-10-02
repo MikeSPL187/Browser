@@ -1,0 +1,6 @@
+Vola controls in the tour: 5 accessibility finding(s).
+- [known] unlabeled | View | appearance — appearance-dark, appearance-light, appearance-ru
+- [NEW] unlabeled | View | essentials — essentials-dark, essentials-light, essentials-ru
+- [NEW] unlabeled | View | essentials-start — essentials-start-dark, essentials-start-light, essentials-start-ru
+- [known] unlabeled | View | tab-overview — tab-overview-dark, tab-overview-light, tab-overview-ru
+- [known] unlabeled | View | workspace-options — workspace-options-dark, workspace-options-light, workspace-options-ru
