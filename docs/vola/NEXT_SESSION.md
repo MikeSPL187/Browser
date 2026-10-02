@@ -8,32 +8,23 @@
 Я работаю только с телефона; источник истины для сборки — GitHub Actions. Отвечай по-русски,
 коротко; экономь контекст: логи CI — только через grep, картинки — только нужные.
 
-**Где мы.** План работ — `docs/vola/ROADMAP.md`. Слиты: Q1 (#31, зависимости), Q2 (#32,
-GeckoView 157 и ежедневный `geckoview-update.yml`), Q3a (#33, проверки качества в CI:
-`scripts/ci/quality_gates.py`), Q3b (#34, доступность в туре, шрифт 200 %, холодный старт,
-`@VolaPreviews`). Фаза A (фундамент) закрыта — начинаем экраны.
+**Где мы.** План работ — `docs/vola/ROADMAP.md`. Фаза A закрыта: Q1 (#31), Q2 (#32), Q3a (#33),
+Q3b (#34 — тур нажимает «Подождать» в системном диалоге «не отвечает»). Q4 — ввод адреса и
+подсказки (П1 «Перейти на вкладку» в другом пространстве принято и сделано) — PR открыт, описание
+и состояние в `docs/vola/STATUS.md`.
 
-**Сначала прочитай:** `CLAUDE.md`; `docs/vola/STATUS.md`; `docs/vola/ROADMAP.md` (разделы 2–5,
-карточка Q4, предложение П1); доски `docs/vola/design/canvas/W-Editing.dc.html`,
-`V4A-Address.dc.html`, `V4B-Address.dc.html`, `W-Components.dc.html`; токены
-`app/.../ui/theme/Vola*.kt`; `ui/ExpandedAddressBar.kt`, `ui/AddressSuggestions.kt`,
-`browser/AddressBarController.kt`.
+**Сначала прочитай:** `CLAUDE.md`; `docs/vola/STATUS.md`; `docs/vola/ROADMAP.md` (разделы 2–5);
+`browser/FindInPage.kt` (`FindInPageRules`), `browser/gecko/GeckoViewRuntimeHandle.kt`,
+`BrowserController.updateFindInPageQuery`, `ui/FindInPageBar.kt`.
 
-**Шаг 0.** Если #34 не слит — доведи CI до зелёного. Проверь, что Dependabot закрыл #21 и #22.
+**Шаг 0.** Если #34 или PR Q4 не слиты — проверь CI (зелёный) и снимки глазами, спроси меня про
+слияние. Ветку новой задачи — от свежего `main` после слияния (иначе — поверх ветки Q4).
 
-**Задача 1 — Q4: ввод адреса и подсказки** (Effort High). Строка ввода у большого пальца на
-месте острова, морф капсула → строка пружиной `VolaMotion`, чип «ссылка из буфера» и «Перейти» у
-ввода, группы подсказок на токенах v4; состояние ввода — в `AddressBarController`. Буфер обмена:
-до нажатия читать только `ClipDescription` (иначе системное уведомление Android 12+). Предложение
-П1 («Перейти на вкладку» с самоцветом пространства) — спроси меня до кода. Порядок PR — ROADMAP,
-раздел 3: доска → порт (если нужен) → UI на токенах → строки EN/RU → `@VolaPreviews` → тесты →
-шаг в туре → CI и снимки → таблица «Vola vs лидер» и чек-лист в описании.
-
-**Задача 2 (следующим PR) — счётчик поиска «0/0»** (Effort High, небольшой). В тёмном проходе тура
-на GeckoView 156 дважды подряд счётчик показывал «0/0» при подсвеченных совпадениях (#31,
-`bbeb28f`, `6b8d08d`). Разобрать результаты `GeckoSession.finder` (`GeckoViewRuntimeHandle`,
-`FindInPageRules`, `BrowserController.updateFindInPageQuery`) и показывать «ищу…», пока Gecko не
-вернул окончательный итог; тест на правило; шаг `find-*` в туре.
+**Задача — счётчик поиска «0/0»** (Effort High, небольшой). В тёмном проходе тура на GeckoView 156
+дважды подряд счётчик показывал «0/0» при подсвеченных совпадениях (#31, `bbeb28f`, `6b8d08d`);
+в прогоне `460ec2e` (GeckoView 157) — верный «1/541», то есть гонка, а не постоянная ошибка.
+Разобрать порядок результатов `GeckoSession.finder` и показывать «ищу…», пока Gecko не вернул
+окончательный итог; тест на правило; шаг `find-*` в туре.
 
 **Дальше по очереди (ROADMAP, раздел 2):** Q5 Essentials и новая вкладка → Q6 приватная вкладка →
 Q7 обзор вкладок (Extra) → Q8 пространства: свайп, создание, настройки (Extra) → Q9 меню плитками →
@@ -56,5 +47,6 @@ View). Перед Q5 и Q8 нужны мои решения (раздел 6: Ess
 
 - *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* — чтобы
   воркфлоу обновления GeckoView мог открывать PR.
+- Слить #34, затем PR Q4.
 - Ответить на вопросы ROADMAP, раздел 6 (до Q5 и Q8).
 - По желанию: секрет `VOLA_PREVIEW_KEYSTORE_BASE64` (*Settings → Secrets and variables → Actions*).
