@@ -26,8 +26,8 @@ class AddressSuggestionRowInstrumentedTest {
             MaterialBrowserTheme {
                 SearchSuggestionRow(
                     query = query,
+                    typed = "candy",
                     highlighted = false,
-                    onHighlight = {},
                     onClick = opens::incrementAndGet,
                     onFill = fills::incrementAndGet,
                 )
