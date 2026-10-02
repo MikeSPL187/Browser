@@ -1143,7 +1143,7 @@ private val COMPACT_LOCK_ICON_SIZE = 14.dp
 
 /** Space the bottom address bar keeps above and below itself. */
 internal val ADDRESS_BAR_VERTICAL_MARGIN = 12.dp
-internal val ADDRESS_BAR_HORIZONTAL_MARGIN = 16.dp
+internal val ADDRESS_BAR_HORIZONTAL_MARGIN = VolaSpacing.x4
 
 /** Height of the expanded bottom address bar for [style]. */
 internal fun addressBarExpandedHeight(style: BrowserAddressBarStyle): Dp =

@@ -1001,7 +1001,7 @@ internal fun TabOverview(
                         profileSwitchProgress.animateTo(
                             targetValue = 0f,
                             animationSpec = tween(
-                                durationMillis = 120,
+                                durationMillis = 120, // token-exempt: Candy fade, Q8 redoes it
                                 easing = FastOutSlowInEasing,
                             ),
                         )

@@ -376,7 +376,8 @@ private fun CompactGridTabItem(
             }
         }
     }
-    val shape = cardStyle?.shape ?: RoundedCornerShape(22.dp)
+    // Candy's card when the app passes no style: shared code has no Vola tokens.
+    val shape = cardStyle?.shape ?: RoundedCornerShape(22.dp) // token-exempt: Candy card
     val realCardVisible = TabOverviewHeroRules.isCardVisible(
         isInitialCard = initial,
         progress = if (heroCompleted) 1f else 0f,
@@ -565,7 +566,7 @@ private fun CompactGridTabItem(
         border = when {
             !selected -> null
             cardStyle != null -> cardStyle.selectedBorder
-            else -> BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            else -> BorderStroke(2.dp, MaterialTheme.colorScheme.primary) // token-exempt: Candy
         },
     ) {
         titleRow?.invoke()
