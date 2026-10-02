@@ -21,6 +21,18 @@ class TabOverviewGridRulesTest {
     }
 
     @Test
+    fun `a title row above the page adds to the row pitch, so reordering lands on the right row`() {
+        val layout = TabOverviewGridRules.layout(
+            viewportWidth = 400f,
+            viewportHeight = 800f,
+            titleRowHeight = 48f,
+        )
+
+        assertEquals(178f, layout.cardWidth, 0f)
+        assertEquals(307.22223f, layout.rowPitch, 0.001f)
+    }
+
+    @Test
     fun `tablet landscape grid uses three wide columns`() {
         val layout = TabOverviewGridRules.layout(
             viewportWidth = 1_067f,

@@ -43,6 +43,26 @@ class AuditTest(unittest.TestCase):
             [("small", "Close", 32, 32), ("unlabeled", "star", 48, 48)],
         )
 
+    def test_a_list_item_scrolled_past_the_edge_is_cut_not_small_or_unlabeled(self):
+        dump = f"""<hierarchy rotation="0">
+  <node class="android.view.View" package="{PACKAGE}" scrollable="true" clickable="false" bounds="[0,500][1080,2000]">
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[40,420][520,560]">
+      <node class="android.view.View" package="{PACKAGE}" content-desc="Mail, mail.example.com" clickable="false" bounds="[40,500][520,560]" />
+    </node>
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[40,1960][520,2000]">
+      <node class="android.view.View" package="{PACKAGE}" content-desc="Close" clickable="true" bounds="[400,1962][520,2090]" />
+    </node>
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[600,1960][1040,2000]" />
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[40,1000][520,1400]" />
+  </node>
+</hierarchy>
+"""
+        # Only what reaches past the edge is excused; an item that merely touches it still needs a label.
+        self.assertEqual(
+            audit.audit(dump, PACKAGE, density=320),
+            [("unlabeled", "View", 220, 20), ("unlabeled", "View", 240, 200)],
+        )
+
     def test_broken_dump_has_no_findings(self):
         self.assertEqual(audit.audit("ERROR: could not get idle state.", PACKAGE, 420), [])
 

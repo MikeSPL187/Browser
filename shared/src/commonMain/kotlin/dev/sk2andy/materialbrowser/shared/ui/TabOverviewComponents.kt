@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser.shared.ui
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.exponentialDecay
@@ -11,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +61,6 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
@@ -72,7 +69,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.zIndex
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
@@ -130,6 +126,7 @@ fun TabCard(
     cardAspectRatio: Float,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    contentDescription: String? = null,
     previewContent: @Composable () -> Unit,
 ) {
     Card(
@@ -137,6 +134,9 @@ fun TabCard(
             .width(cardWidth)
             .aspectRatio(cardAspectRatio)
             .then(modifier)
+            .semantics {
+                if (contentDescription != null) this.contentDescription = contentDescription
+            }
             .clickable(
                 onClick = onClick,
                 role = Role.Button,
@@ -198,6 +198,7 @@ fun TabOverviewHeroPager(
     titleContent: @Composable (BrowserTab, Boolean, Modifier) -> Unit,
     cardModifier: (BrowserTab) -> Modifier = { Modifier },
     modifier: Modifier = Modifier,
+    tabDescription: @Composable (BrowserTab) -> String? = { null },
 ) {
     val pagerFlingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
@@ -469,6 +470,7 @@ fun TabOverviewHeroPager(
                     TabCard(
                         cardWidth = tabCardWidth,
                         cardAspectRatio = cardAspectRatio,
+                        contentDescription = tabDescription(tab),
                         modifier = Modifier
                             .graphicsLayer { alpha = if (realCardVisible) 1f else 0f }
                             .then(cardModifier(tab))
@@ -821,51 +823,6 @@ fun GridTabPreviewChrome(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun TabOverviewEdgeAction(
-    visible: Boolean,
-    enabled: Boolean,
-    contentDescription: String,
-    testTag: String,
-    animationLabel: String,
-    onHaptic: () -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val animatedAlpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = if (visible) 180 else 140),
-        label = animationLabel,
-    )
-    IconButton(
-        onClick = {
-            onHaptic()
-            onClick()
-        },
-        enabled = visible && enabled,
-        modifier = modifier
-            .graphicsLayer { alpha = animatedAlpha }
-            .then(
-                if (visible) {
-                    Modifier
-                        .testTag(testTag)
-                        .semantics { this.contentDescription = contentDescription }
-                } else {
-                    Modifier.clearAndSetSemantics { }
-                },
-            )
-            .size(48.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            content()
         }
     }
 }

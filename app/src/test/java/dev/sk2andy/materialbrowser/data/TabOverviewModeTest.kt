@@ -12,12 +12,12 @@ class TabOverviewModeTest {
     }
 
     @Test
-    fun `unknown values use the requested fallback`() {
-        assertEquals(TabOverviewMode.Hero, TabOverviewMode.fromWireValue(null))
-        assertEquals(TabOverviewMode.Hero, TabOverviewMode.fromWireValue("unknown"))
+    fun `a fresh install opens the grid and unknown values use the requested fallback`() {
+        assertEquals(TabOverviewMode.Grid, TabOverviewMode.fromWireValue(null))
+        assertEquals(TabOverviewMode.Grid, TabOverviewMode.fromWireValue("unknown"))
         assertEquals(
-            TabOverviewMode.Grid,
-            TabOverviewMode.fromWireValue("unknown", fallback = TabOverviewMode.Grid),
+            TabOverviewMode.Hero,
+            TabOverviewMode.fromWireValue("unknown", fallback = TabOverviewMode.Hero),
         )
     }
 }

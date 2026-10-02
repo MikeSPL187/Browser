@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.CandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
@@ -33,7 +34,8 @@ internal data class AddressBarMotionState(
 )
 
 internal object AddressBarMotion {
-    val OVERVIEW_WIDTH = 112.dp
+    /** The island becomes the tab overview's new-tab button: same size, same place. */
+    val OVERVIEW_WIDTH = VolaTabOverview.newTabButtonSize
     val EXPANDED_HEIGHT = 56.dp
     const val DOCK_REPOSITION_FEEDBACK_MILLIS = 260
 
@@ -92,9 +94,18 @@ internal object AddressBarMotion {
         AddressBarPresentation.Docked -> 48.dp
         AddressBarPresentation.Compact -> VolaIsland.compactHeight
         AddressBarPresentation.Expanded -> expandedHeight
-        AddressBarPresentation.Overview -> 56.dp
+        AddressBarPresentation.Overview -> VolaTabOverview.newTabButtonSize
         AddressBarPresentation.CommandFeedback -> 46.dp
     }
+
+    /**
+     * How far right of center the island sits as the tab overview's new-tab button: that button
+     * ends [VolaTabOverview.dockSideMargin] from the screen edge, the island's row ends
+     * [ADDRESS_BAR_HORIZONTAL_MARGIN] from it.
+     */
+    fun overviewOffsetX(maxWidth: Dp): Dp =
+        ((maxWidth - OVERVIEW_WIDTH) / 2f + ADDRESS_BAR_HORIZONTAL_MARGIN -
+            VolaTabOverview.dockSideMargin).coerceAtLeast(0.dp)
 
     fun dockOffsetForPosition(
         position: Offset,
@@ -182,13 +193,26 @@ internal fun rememberAddressBarMotionState(
         animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
         label = "Adressleistenhöhe beim Parken",
     )
+    val overviewShift by animateDpAsState(
+        targetValue = if (presentation == AddressBarPresentation.Overview) {
+            AddressBarMotion.overviewOffsetX(maxWidth)
+        } else {
+            0.dp
+        },
+        animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
+        label = "address-bar-overview-shift",
+    )
     val dockOffset = AddressBarMotion.dockOffsetForPosition(
         position = dockPosition,
         maxWidth = maxWidth,
         barWidth = width,
         verticalTravel = verticalTravel,
     )
-    return AddressBarMotionState(width = width, height = height, dockOffset = dockOffset)
+    return AddressBarMotionState(
+        width = width,
+        height = height,
+        dockOffset = DpOffset(dockOffset.x + overviewShift, dockOffset.y),
+    )
 }
 
 @Composable

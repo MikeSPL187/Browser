@@ -1437,4 +1437,12 @@
     <string name="address_clipboard_text">Text from the clipboard</string>
     <string name="address_clipboard_open">Open</string>
     <string name="address_clipboard_paste">Paste</string>
+    <!-- Tab overview v4 (Q7a) -->
+    <string name="tab_overview_title">Tabs</string>
+    <plurals name="tab_overview_count">
+        <item quantity="one">%1$d tab</item>
+        <item quantity="other">%1$d tabs</item>
+    </plurals>
+    <string name="tab_card_current">current tab</string>
+    <string name="tab_overview_open_essential">open</string>
 </resources>

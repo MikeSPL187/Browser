@@ -107,6 +107,13 @@ object EssentialsRules {
             .filterNot { tab -> CanonicalWebUrl.key(tab.url) in pinned }
     }
 
+    /**
+     * The open tab already showing [entry] in [tabs] (the workspace's regular tabs, in order), so
+     * a tap from the tab overview switches to it instead of opening a second copy.
+     */
+    fun openTabId(entry: EssentialEntry, tabs: List<EssentialCandidate>): String? =
+        tabs.firstOrNull { tab -> CanonicalWebUrl.key(tab.url) == entry.id }?.tabId
+
     /** The tile caption: the page title, or the site name when the page has none. */
     fun label(entry: EssentialEntry): String =
         entry.title.ifBlank { host(entry.url) }

@@ -63,6 +63,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +90,7 @@ import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.TabStack
+import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
@@ -967,4 +969,57 @@ private fun TabStackColor.labelResource(): Int = when (this) {
     TabStackColor.Cherry -> R.string.tab_stack_color_cherry
     TabStackColor.Lime -> R.string.tab_stack_color_lime
     TabStackColor.Blueberry -> R.string.tab_stack_color_blueberry
+}
+
+/** Creating or editing the tab stack of [tabId] from the tab overview; [onDone] closes it. */
+@Composable
+internal fun TabOverviewStackEditor(
+    controller: BrowserController,
+    tabId: String?,
+    onDone: () -> Unit,
+) {
+    val rootView = LocalView.current
+    val stackEditorTab = tabId?.let { id ->
+        controller.activeTabs.firstOrNull { tab -> tab.id == id }
+    }
+    val editedStack = stackEditorTab?.let { tab -> controller.tabStackFor(tab.id) }
+    val stackEditorCandidates = stackEditorTab?.let { target ->
+        controller.activeTabs.filter { candidate ->
+            candidate.profileId == target.profileId &&
+                candidate.isIncognito == target.isIncognito &&
+                candidate.isPinned == target.isPinned
+        }
+    }.orEmpty()
+    TabStackCreateDialog(
+        initialTabId = stackEditorTab?.id,
+        candidates = stackEditorCandidates,
+        preselectedTabIds = editedStack?.tabIds?.toSet().orEmpty(),
+        initialPreviewTabId = editedStack?.previewTabId,
+        initialName = editedStack?.name.orEmpty(),
+        initialColor = editedStack?.color ?: TabStackColor.Grape,
+        editing = editedStack != null,
+        onCreate = { tabIds, name, color, previewTabId ->
+            val changed = if (editedStack == null) {
+                controller.createTabStack(
+                    tabIds = tabIds,
+                    name = name,
+                    color = color,
+                    previewTabId = previewTabId,
+                ) != null
+            } else {
+                controller.updateTabStack(
+                    stackId = editedStack.id,
+                    tabIds = tabIds,
+                    name = name,
+                    color = color,
+                    previewTabId = previewTabId,
+                )
+            }
+            if (changed) {
+                onDone()
+                rootView.performConfirmHaptic()
+            }
+        },
+        onDismiss = onDone,
+    )
 }

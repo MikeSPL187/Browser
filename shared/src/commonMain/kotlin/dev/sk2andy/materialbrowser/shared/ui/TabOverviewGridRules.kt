@@ -16,9 +16,11 @@ object TabOverviewGridRules {
     fun layout(
         viewportWidth: Float,
         viewportHeight: Float,
+        titleRowHeight: Float = 0f,
     ): Layout = BrowserTabOverviewLayoutRules.grid(
         viewportWidth = viewportWidth,
         viewportHeight = viewportHeight,
+        titleRowHeight = titleRowHeight,
     ).let { layout ->
         Layout(
             columnCount = layout.columnCount,

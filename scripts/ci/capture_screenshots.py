@@ -274,7 +274,10 @@ def tour(suffix):
         adb("shell", "input", "swipe", str(x), str(y), str(x), str(int(height * 0.35)), "350")
         time.sleep(3)
         shot(f"tab-overview-{suffix}")
-        workspace = find("Personal", "Личное", contains=True)
+        save_ui(f"tab-overview-{suffix}")
+        # The workspace gem in the dock carries the name as its label; the header shows it as
+        # text, which a long press would miss.
+        workspace = next((n for n in nodes() if n["desc"] in ("Personal", "Личное")), None)
         if workspace:
             wx, wy = workspace["center"]
             adb("shell", "input", "swipe", str(wx), str(wy), str(wx), str(wy), "900")
@@ -327,6 +330,17 @@ def tour(suffix):
             tap("Done", "Готово")
             time.sleep(1)
     step("essentials", essentials)
+
+    def overview_essentials():
+        # Back in the tab overview the workspace's Essentials sit above the dock (Q7a).
+        adb("shell", "input", "swipe", str(width // 2), str(height - 120),
+            str(width // 2), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        shot(f"tab-overview-essentials-{suffix}")
+        save_ui(f"tab-overview-essentials-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("overview-essentials", overview_essentials)
 
     def protection_report():
         # The protection card below Essentials opens the weekly report (Q5b, П7).

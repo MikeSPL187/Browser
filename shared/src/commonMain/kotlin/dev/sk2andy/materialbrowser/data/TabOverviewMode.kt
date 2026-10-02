@@ -7,9 +7,10 @@ enum class TabOverviewMode(val wireValue: String) {
     ;
 
     companion object {
+        /** The grid of the W-Tabs board; a layout the user picked in settings is kept. */
         fun fromWireValue(
             value: String?,
-            fallback: TabOverviewMode = Hero,
+            fallback: TabOverviewMode = Grid,
         ): TabOverviewMode = entries.firstOrNull { it.wireValue == value } ?: fallback
     }
 }
