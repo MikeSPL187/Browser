@@ -35,6 +35,15 @@ class AddressEditorState {
         focusNonce++
     }
 
+    /**
+     * Opens the editor on [text] when the launcher asked for it ([requested]), before the first
+     * frame; returns whether it opened.
+     */
+    fun openOnLaunch(requested: Boolean, text: String): Boolean {
+        if (requested) open(text)
+        return requested
+    }
+
     /** Puts [text] into the field with the cursor at its end, keeping the editor open. */
     fun fill(text: String) {
         value = TextFieldValue(text = text, selection = TextRange(text.length))

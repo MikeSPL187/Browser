@@ -286,9 +286,8 @@ internal fun BrowserScreen(
     var candyTrailSourceBounds by remember { mutableStateOf<Rect?>(null) }
     val addressEditor = controller.addressBar.editor
     remember(addressEditor) {
-        if (openAddressEditorOnLaunch) {
-            addressEditor.open(controller.selectedTab.url.takeUnless { it == BLANK_URL }.orEmpty())
-        }
+        val launchText = controller.selectedTab.url.takeUnless { it == BLANK_URL }.orEmpty()
+        addressEditor.openOnLaunch(openAddressEditorOnLaunch, launchText)
     }
     var addressEditorVisible by addressEditor::isVisible
     val aiModeSelectedState = remember { mutableStateOf(false) }

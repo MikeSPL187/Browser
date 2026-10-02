@@ -52,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -721,11 +722,15 @@ internal fun AddressEditorHeader(
     modifier: Modifier = Modifier,
 ) {
     val name = workspace.workspaceDisplayName()
+    // On a pill of its own: over a page the scrim is light and the text must stay legible.
     Row(
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = VolaSpacing.x12)
-            .padding(horizontal = VolaSpacing.x5),
+            .padding(horizontal = VolaSpacing.x3, vertical = VolaSpacing.x1)
+            .shadow(VolaElevation.level1, CircleShape)
+            .clip(CircleShape)
+            .background(addressEditorSurfaceColor())
+            .padding(start = VolaSpacing.x1, end = VolaSpacing.x4)
+            .heightIn(min = VolaSpacing.x12),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
     ) {

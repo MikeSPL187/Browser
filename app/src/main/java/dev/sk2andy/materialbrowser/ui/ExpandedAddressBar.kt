@@ -973,11 +973,14 @@ internal fun AddressEditorBackdrop(
             ),
         )
     }
+    val dismissLabel = stringResource(R.string.cd_close_address_input)
     Box(
         modifier = Modifier
             .fillMaxSize()
             .then(backgroundModifier)
             .clickable(onClick = onDismiss)
+            // Like the scrim of a sheet: TalkBack announces what a tap outside the field does.
+            .semantics { contentDescription = dismissLabel }
             .safeDrawingPadding(),
     ) {
         if (showStartContent) {

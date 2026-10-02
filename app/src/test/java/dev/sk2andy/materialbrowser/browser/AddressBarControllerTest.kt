@@ -210,6 +210,17 @@ class AddressBarControllerTest {
         assertTrue(editor.openGeneration > generation)
     }
 
+    @Test
+    fun `the launcher can open the editor before the first frame`() {
+        val editor = controller(FakeStore()).editor
+
+        assertFalse(editor.openOnLaunch(requested = false, text = "example"))
+        assertFalse(editor.isVisible)
+        assertTrue(editor.openOnLaunch(requested = true, text = "example"))
+        assertTrue(editor.isVisible)
+        assertEquals("example", editor.value.text)
+    }
+
     private class FakeHost(
         override val selectedTabId: String = "tab",
         private val sources: AddressSuggestionSources = AddressSuggestionSources(

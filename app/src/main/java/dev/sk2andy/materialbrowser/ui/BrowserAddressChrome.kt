@@ -209,7 +209,7 @@ internal fun BoxScope.BrowserAddressChrome(
                     newTab = selectedTab.url == BLANK_URL,
                     privateTab = selectedTab.isIncognito,
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
+                        .align(Alignment.TopStart)
                         .statusBarsPadding(),
                 )
             }
