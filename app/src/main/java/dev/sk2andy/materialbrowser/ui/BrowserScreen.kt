@@ -1506,11 +1506,6 @@ internal fun BrowserScreen(
                         liveFrameTabId = liveFrameTabId,
                         tabOverviewVisible = tabOverviewVisible,
                         onLiveFrame = reportLiveFrame,
-                        onSearch = if (showInteractiveBlankStart) {
-                            { addressEditorVisible = false }
-                        } else {
-                            openAddressEditor
-                        },
                         onFavorite = { url ->
                             addressEditorVisible = false
                             controller.submitAddress(url)

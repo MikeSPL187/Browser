@@ -213,6 +213,20 @@ internal object VolaProtection {
     val siteCountWidth = 48.dp
 }
 
+/** The private new tab (board PrivateTab). */
+internal object VolaPrivateTab {
+    /** The mask gem above the title, lit with the private accent. */
+    val gemSize = 72.dp
+    val gemShape = RoundedCornerShape(26.dp)
+    val gemGlyphSize = 36.dp
+    val gemGlow = 12.dp
+
+    /** One fact: an icon in a tinted square, a title and a caption. */
+    val factIconSize = 40.dp
+    val factIconShape = RoundedCornerShape(14.dp)
+    val factGap = 14.dp
+}
+
 /** The address editor at the bottom (boards Editing, V4A-Address, V4B-Address). */
 internal object VolaAddressEditor {
     /** The field the island morphs into while typing, a pill with an accent ring. */

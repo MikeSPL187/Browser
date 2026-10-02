@@ -14,6 +14,12 @@ internal object TabPreviewCaptureRules {
     private const val MAX_TARGET_WIDTH_PX = 1_280
     private const val MAX_BITMAP_PIXELS = 2_500_000
 
+    /**
+     * Whether a tab may get a preview at all. Previews are saved to disk, so a private tab never
+     * gets one; a blank tab draws its new tab page instead.
+     */
+    fun mayCapture(isIncognito: Boolean, isBlank: Boolean): Boolean = !isIncognito && !isBlank
+
     fun targetWidthPx(
         sourceWidthPx: Int,
         viewportWidthPx: Int,

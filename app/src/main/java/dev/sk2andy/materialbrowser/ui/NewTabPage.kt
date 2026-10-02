@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,26 +46,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
 import dev.sk2andy.materialbrowser.ui.theme.VolaEssentials
 import dev.sk2andy.materialbrowser.ui.theme.VolaShapes
@@ -88,7 +80,6 @@ internal fun NewTabPage(
     incognito: Boolean,
     modeProgress: Float,
     revealOriginInRoot: Offset,
-    onSearch: () -> Unit,
     onOpenEssential: (String) -> Unit,
     editor: NewTabEssentialsEditor? = null,
     interactive: Boolean = true,
@@ -102,13 +93,12 @@ internal fun NewTabPage(
     onRecentTab: (String) -> Unit = {},
     /** The weekly protection card; `null` when the user hid it. */
     protection: NewTabProtection? = null,
+    /** What the private new tab shows; `null` in previews of regular tabs. */
+    privateTab: NewTabPrivate? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val profileWallpaper = LocalProfileWallpaper.current.takeUnless { incognito }
     val boundedProgress = BlankTabModeMorphRules.bounded(modeProgress)
-    val regularIconAlpha = BlankTabModeMorphRules.regularIconAlpha(boundedProgress)
-    val incognitoIconAlpha = BlankTabModeMorphRules.incognitoIconAlpha(boundedProgress)
-    val openSearchDescription = stringResource(R.string.cd_open_search)
     var editing by rememberSaveable { mutableStateOf(false) }
     var protectionReportVisible by rememberSaveable { mutableStateOf(false) }
     val editable = interactive && !incognito && editor != null
@@ -121,7 +111,7 @@ internal fun NewTabPage(
                 progress = boundedProgress,
                 revealOriginInRoot = revealOriginInRoot,
                 regularCenterColor = colors.primaryContainer,
-                incognitoCenterColor = colors.inverseSurface,
+                incognitoCenterColor = colors.primaryContainer,
                 edgeColor = colors.surface,
                 wallpaper = profileWallpaper,
                 regularBackground = VolaTheme.auraBrush,
@@ -197,60 +187,20 @@ internal fun NewTabPage(
                     }
                 }
             }
-            if (incognito || boundedProgress > 0f) {
-                Column(
+            if ((incognito || boundedProgress > 0f) && privateTab != null) {
+                PrivateTabPage(
+                    storage = privateTab.storage,
+                    privateTabCount = privateTab.count,
+                    enabled = interactive,
+                    onCloseAll = privateTab.onCloseAll,
                     modifier = Modifier
-                        .align(Alignment.Center)
+                        .align(Alignment.TopCenter)
+                        .widthIn(max = VolaEssentials.maxContentWidth)
                         .graphicsLayer { alpha = if (incognito) 1f else boundedProgress }
-                        .fillMaxWidth(0.82f)
-                        .heightIn(max = 664.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
-                        .padding(vertical = BlankTabModeMorphRules.HERO_SHADOW_CLEARANCE_DP.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Surface(
-                        onClick = onSearch,
-                        enabled = contentEnabled,
-                        modifier = Modifier
-                            .semantics {
-                                contentDescription = openSearchDescription
-                            },
-                        shape = RoundedCornerShape(
-                            BlankTabModeMorphRules.heroCornerRadiusDp(boundedProgress).dp,
-                        ),
-                        color = lerp(VolaBrand.Ink, colors.inverseSurface, boundedProgress),
-                        shadowElevation = BlankTabModeMorphRules.HERO_SHADOW_ELEVATION_DP.dp,
-                    ) {
-                        Box(
-                            modifier = Modifier.size(96.dp), // token-exempt: Candy search hero of the private tab, redesigned in Q6
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_launcher_foreground_art),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(68.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
-                                    .graphicsLayer {
-                                        alpha = regularIconAlpha
-                                        scaleX = BlankTabModeMorphRules.iconScale(regularIconAlpha)
-                                        scaleY = scaleX
-                                    },
-                                tint = Color.Unspecified,
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_incognito_filled),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp) // token-exempt: Candy search hero of the private tab, redesigned in Q6
-                                    .graphicsLayer {
-                                        alpha = incognitoIconAlpha
-                                        scaleX = BlankTabModeMorphRules.iconScale(incognitoIconAlpha)
-                                        scaleY = scaleX
-                                    },
-                                tint = colors.inverseOnSurface,
-                            )
-                        }
-                    }
-                }
+                        .verticalScroll(rememberScrollState(), enabled = interactive)
+                        .padding(horizontal = VolaSpacing.x6)
+                        .padding(top = VolaSpacing.x12, bottom = VolaSpacing.x12),
+                )
             }
         }
     }
@@ -266,6 +216,13 @@ internal fun NewTabPage(
         )
     }
 }
+
+/** The private new tab: what the engine keeps, and how many private tabs «Close all» closes. */
+internal class NewTabPrivate(
+    val storage: PrivateTabStorage,
+    val count: Int,
+    val onCloseAll: () -> Unit,
+)
 
 /** The protection card's week and what its report can do. */
 internal class NewTabProtection(

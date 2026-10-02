@@ -67,10 +67,11 @@ internal fun PackageManager.getActivityInfoCompat(
     }
 
 /**
- * Hides the window preview in Recents while a protected profile is visible.
+ * Hides the window preview in Recents while a protected profile or a private tab is visible:
+ * Android keeps that preview on disk.
  *
  * Android 12 has no Recents-only switch, so it falls back to FLAG_SECURE, which also blocks
- * screenshots of the protected profile. Nothing else in the app sets FLAG_SECURE.
+ * screenshots of the protected profile and of private tabs. Nothing else in the app sets FLAG_SECURE.
  */
 internal fun Activity.setRecentsPreviewEnabled(enabled: Boolean) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -536,19 +536,19 @@ class MainActivity : AppCompatActivity() {
             animationsEnabled = browserController.appearanceSettings.animationsEnabled,
         ) {
             val appearanceSettings = browserController.appearanceSettings
-            val appearanceDark = appearanceSettings.usesDarkColors(
-                isSystemInDarkTheme(),
-            )
+            val privateMode = browserController.selectedTab.isIncognito
+            val appearanceDark = privateMode || appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             val activeProfile = browserController.localBrowserProfiles
                 .firstOrNull { profile -> profile.id == browserController.activeProfileId }
             SideEffect {
                 applyAppearanceNightMode(appearanceSettings.appearanceMode)
                 applyAppearanceSystemBars(appearanceDark)
-                setRecentsPreviewEnabled(activeProfile?.protection == null)
+                setRecentsPreviewEnabled(activeProfile?.protection == null && !privateMode)
             }
             CandyTheme(
                 settings = appearanceSettings,
                 workspaceAccent = activeProfile?.accent ?: WorkspaceAccent.Default,
+                privateMode = privateMode,
             ) {
                 val launcherShortcutState = LauncherShortcutRules.state(
                     profiles = browserController.localBrowserProfiles,

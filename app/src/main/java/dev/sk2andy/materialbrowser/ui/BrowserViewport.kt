@@ -314,7 +314,6 @@ internal fun BrowserViewport(
     liveFrameTabId: String?,
     tabOverviewVisible: Boolean,
     onLiveFrame: (String) -> Unit,
-    onSearch: () -> Unit,
     onFavorite: (String) -> Unit,
     blankTabModeProgress: Float,
     blankTabModeRevealOrigin: Offset,
@@ -520,9 +519,16 @@ internal fun BrowserViewport(
                         incognito = selectedTab.isIncognito,
                         modeProgress = blankTabModeProgress,
                         revealOriginInRoot = blankTabModeRevealOrigin,
-                        onSearch = onSearch,
                         onOpenEssential = onFavorite,
                         editor = rememberNewTabEssentialsEditor(controller, profileId),
+                        privateTab = NewTabPrivate(
+                            storage = PrivateTabRules.storage(
+                                engine = controller.browserEngineKind,
+                                profilesSupported = controller.isProfileIsolationSupported,
+                            ),
+                            count = controller.tabs.count(BrowserTab::isIncognito),
+                            onCloseAll = { controller.closeAllPrivateTabs() },
+                        ),
                         protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
                             NewTabProtection(
                                 week = report.week,
@@ -1061,7 +1067,6 @@ internal fun BlankTabPreview(
                 incognito = false,
                 modeProgress = 0f,
                 revealOriginInRoot = Offset.Zero,
-                onSearch = {},
                 onOpenEssential = {},
                 interactive = false,
                 essentialsAlpha = essentialsAlpha,

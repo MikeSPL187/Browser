@@ -136,4 +136,12 @@ class TabPreviewCaptureRulesTest {
             ),
         )
     }
+
+    @Test
+    fun `private and blank tabs never get a preview on disk`() {
+        assertEquals(true, TabPreviewCaptureRules.mayCapture(isIncognito = false, isBlank = false))
+        assertEquals(false, TabPreviewCaptureRules.mayCapture(isIncognito = true, isBlank = false))
+        assertEquals(false, TabPreviewCaptureRules.mayCapture(isIncognito = false, isBlank = true))
+        assertEquals(false, TabPreviewCaptureRules.mayCapture(isIncognito = true, isBlank = true))
+    }
 }

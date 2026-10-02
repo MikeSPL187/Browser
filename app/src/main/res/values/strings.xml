@@ -371,6 +371,25 @@
     <string name="protection_report_clear_body">This week\'s counts are deleted from this phone. Protection keeps working.</string>
     <string name="settings_protection_card_title">Weekly report on the new tab</string>
     <string name="settings_protection_card_subtitle">Trackers blocked in the last 7 days</string>
+    <string name="private_tab_title">Private tab</string>
+    <string name="private_tab_body">Vola keeps no history of what you do here.</string>
+    <string name="private_tab_fact_history">No history</string>
+    <string name="private_tab_fact_history_caption">Addresses and searches stay out of history</string>
+    <string name="private_tab_fact_memory">Nothing on disk</string>
+    <string name="private_tab_fact_memory_caption">Cookies, cache and site data live only in memory</string>
+    <string name="private_tab_fact_profile">Separate cookies</string>
+    <string name="private_tab_fact_profile_caption">Sign-ins stay apart from regular tabs and are deleted after the last private tab</string>
+    <string name="private_tab_fact_shared">Shared cookies</string>
+    <string name="private_tab_fact_shared_caption">This WebView has no separate profile: sites can see your regular sign-ins</string>
+    <string name="private_tab_fact_protection">Same protection</string>
+    <string name="private_tab_fact_protection_caption">Trackers are blocked as in regular tabs, but not counted in the weekly report</string>
+    <string name="private_tab_fact_downloads">Downloads stay</string>
+    <string name="private_tab_fact_downloads_caption">Downloaded files are saved to Downloads</string>
+    <plurals name="private_tab_close_all">
+        <item quantity="one">Close %1$d private tab</item>
+        <item quantity="other">Close all %1$d private tabs</item>
+    </plurals>
+    <string name="address_private_hint">Search without a trace</string>
     <string name="favorites_search">Search favorites</string>
     <string name="favorites_clear_search">Clear search</string>
     <string name="favorites_delete">Delete favorite %1$s</string>
