@@ -267,18 +267,15 @@ private fun ProtectionReportHeader(week: ProtectionWeek) {
         "${LocalDate.ofEpochDay(week.firstEpochDay).format(formatter)} – " +
             LocalDate.ofEpochDay(week.lastEpochDay).format(formatter)
     }
-    Row(
+    // The date range sits under the title: next to it, an English title breaks in two.
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = VolaSpacing.x1),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
     ) {
         Text(
             text = stringResource(R.string.protection_report_title),
-            modifier = Modifier
-                .weight(1f)
-                .semantics { heading() },
+            modifier = Modifier.semantics { heading() },
             style = MaterialTheme.typography.titleLarge,
         )
         Text(
