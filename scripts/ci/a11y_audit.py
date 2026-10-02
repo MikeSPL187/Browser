@@ -54,6 +54,18 @@ def clipped_axes(bounds, container):
     )
 
 
+def crosses(node, container):
+    """Whether the node or anything inside it reaches past an edge of the container."""
+    left, top, right, bottom = container
+    for child in node.iter("node"):
+        bounds = parse_bounds(child.get("bounds"))
+        if bounds and (
+            bounds[0] < left - 1 or bounds[1] < top - 1 or bounds[2] > right + 1 or bounds[3] > bottom + 1
+        ):
+            return True
+    return False
+
+
 def describe(node):
     label = (node.get("content-desc") or node.get("text") or "").strip()
     resource = (node.get("resource-id") or "").rsplit("/", 1)[-1]
@@ -83,8 +95,8 @@ def audit(xml_text, package, density):
                 clipped_x, clipped_y = clipped_axes(bounds, container)
                 if (width < limit and not clipped_x) or (height < limit and not clipped_y):
                     findings.append(("small", describe(node), width, height))
-                # A list item cut by scrolling may keep its label in the part scrolled away.
-                cut_by_scrolling = scrolling and (clipped_x or clipped_y)
+                # A list item scrolled partly out may keep its label in the part scrolled away.
+                cut_by_scrolling = scrolling and crosses(node, container)
                 if not has_label(node) and not cut_by_scrolling:
                     findings.append(("unlabeled", describe(node), width, height))
         if bounds and node.get("scrollable") == "true":
