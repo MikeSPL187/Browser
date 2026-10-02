@@ -495,8 +495,8 @@ private fun EssentialTile(
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 shape = VolaEssentials.tileShape,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest
-                    .copy(alpha = VolaEssentials.TILE_ALPHA),
+                // The card color: lowest surface in light, a raised surface on pure black.
+                color = VolaTheme.extendedColors.card.copy(alpha = VolaEssentials.TILE_ALPHA),
                 shadowElevation = if (dragged) VolaElevation.level3 else VolaElevation.level1,
             ) {
                 Box(contentAlignment = Alignment.Center) {
