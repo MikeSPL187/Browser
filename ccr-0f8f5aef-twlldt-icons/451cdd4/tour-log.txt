@@ -1,0 +1,203 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 912,717
+screenshot 05-find-light.png
+find counter light: 1/541
+screenshot 06-address-light.png
+screenshot 07-https-upgrade-light.png
+screenshot 08-https-only-early-light.png
+screenshot 09-https-only-light.png
+screenshot 10-tab-overview-light.png
+saved ui-tab-overview-light.xml
+screenshot 11-workspace-options-light.png
+saved ui-workspace-options-light.xml
+tap 'Add workspace' at 465,2232
+screenshot 12-workspace-new-light.png
+tap 'All icons' at 540,1630
+screenshot 13-workspace-new-icons-light.png
+tap 'Add workspace' at 465,2232
+tap 'Work' at 456,1356
+tap 'Coral' at 728,1132
+tap 'Create workspace' at 540,2211
+screenshot 14-workspace-swipe-light.png
+tap 'Personal' at 106,2232
+tap 'New tab' at 283,693
+screenshot 15-essentials-start-light.png
+tap 'Add a site' at 540,1043
+screenshot 16-essentials-add-light.png
+screenshot 17-essentials-light.png
+tap 'Edit' at 951,363
+screenshot 18-essentials-edit-light.png
+tap 'Done' at 930,280
+screenshot 19-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+tap 'Tab actions' at 996,202
+screenshot 20-tab-actions-light.png
+tap 'More' at 540,1604
+screenshot 21-tab-actions-more-light.png
+tap 'Search tabs' at 744,202
+screenshot 22-tab-search-light.png
+tap 'Close search' at 996,202
+screenshot 23-protection-card-light.png
+tap 'this week' at 428,1406
+screenshot 24-protection-report-light.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 25-private-new-tab-light.png
+tap 'Close 1 private' at 282,1479
+screenshot 26-private-closed-light.png
+tap 'More options' at 964,2232
+screenshot 27-menu-light.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 258,2179
+screenshot 28-settings-light.png
+tap 'Appearance' at 360,1494
+screenshot 29-appearance-light.png
+tap 'Tabs & gestures' at 393,662
+tap 'Automatically close tabs' at 321,1862
+tap 'After 7 days' at 195,1585
+screenshot 30-tabs-archive-light.png
+saved ui-tabs-archive-light.xml
+tap 'Automatically close tabs' at 321,1207
+tap 'Never' at 144,699
+screenshot 31-current-dark.png
+screenshot 32-new-tab-dark.png
+screenshot 33-page-dark.png
+screenshot 34-page-scrolled-dark.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 912,717
+screenshot 35-find-dark.png
+find counter dark: 1/541
+screenshot 36-address-dark.png
+screenshot 37-https-upgrade-dark.png
+screenshot 38-https-only-early-dark.png
+screenshot 39-https-only-dark.png
+screenshot 40-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+screenshot 41-workspace-options-dark.png
+saved ui-workspace-options-dark.xml
+tap 'Add workspace' at 592,2232
+screenshot 42-workspace-new-dark.png
+tap 'All icons' at 540,1630
+screenshot 43-workspace-new-icons-dark.png
+screenshot 44-workspace-swipe-dark.png
+tap 'New tab' at 974,2231
+screenshot 45-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 46-essentials-dark.png
+tap 'Edit' at 951,363
+screenshot 47-essentials-edit-dark.png
+tap 'Done' at 930,280
+screenshot 48-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+tap 'Tab actions' at 996,202
+screenshot 49-tab-actions-dark.png
+tap 'More' at 540,1604
+screenshot 50-tab-actions-more-dark.png
+tap 'Search tabs' at 744,202
+screenshot 51-tab-search-dark.png
+tap 'Close search' at 996,202
+screenshot 52-protection-card-dark.png
+tap 'this week' at 428,1406
+screenshot 53-protection-report-dark.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 54-private-new-tab-dark.png
+tap 'Close 1 private' at 282,1479
+screenshot 55-private-closed-dark.png
+tap 'More options' at 964,2232
+screenshot 56-menu-dark.png
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 258,2179
+screenshot 57-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 58-appearance-dark.png
+tap 'Tabs & gestures' at 393,662
+tap 'Automatically close tabs' at 321,1862
+tap 'After 7 days' at 195,1585
+screenshot 59-tabs-archive-dark.png
+saved ui-tabs-archive-dark.xml
+tap 'Automatically close tabs' at 321,1170
+tap 'Never' at 144,662
+screenshot 60-new-tab-a11y.png
+screenshot 61-page-a11y.png
+tap 'More options' at 964,2232
+screenshot 62-menu-a11y.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 318,2178
+screenshot 63-settings-a11y.png
+Cold start (am start -W, 5 runs): average 2836 ms, min 2677 ms, max 3219 ms
+screenshot 64-new-tab-ru.png
+screenshot 65-page-ru.png
+screenshot 66-page-scrolled-ru.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 912,729
+screenshot 67-find-ru.png
+find counter ru: 1/541
+screenshot 68-address-ru.png
+screenshot 69-https-upgrade-ru.png
+screenshot 70-https-only-early-ru.png
+screenshot 71-https-only-ru.png
+screenshot 72-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+screenshot 73-workspace-options-ru.png
+saved ui-workspace-options-ru.xml
+tap 'Add workspace' at 569,2232
+screenshot 74-workspace-new-ru.png
+tap 'All icons' at 540,1630
+screenshot 75-workspace-new-icons-ru.png
+screenshot 76-workspace-swipe-ru.png
+tap 'New tab' at 283,744
+screenshot 77-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 78-essentials-ru.png
+tap 'Edit' at 908,363
+screenshot 79-essentials-edit-ru.png
+tap 'Done' at 914,280
+screenshot 80-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+tap 'Tab actions' at 996,202
+screenshot 81-tab-actions-ru.png
+tap 'More' at 540,1631
+screenshot 82-tab-actions-more-ru.png
+tap 'Search tabs' at 744,202
+screenshot 83-tab-search-ru.png
+tap 'Close search' at 996,202
+screenshot 84-protection-card-ru.png
+tap 'this week' at 491,1406
+screenshot 85-protection-report-ru.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 86-private-new-tab-ru.png
+tap 'Close 1 private' at 388,1479
+screenshot 87-private-closed-ru.png
+tap 'More options' at 964,2232
+screenshot 88-menu-ru.png
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 281,2248
+screenshot 89-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 90-appearance-ru.png
+tap 'Tabs & gestures' at 403,662
+tap 'Automatically close tabs' at 418,2099
+tap 'After 7 days' at 208,1822
+screenshot 91-tabs-archive-ru.png
+saved ui-tabs-archive-ru.xml
+tap 'Automatically close tabs' at 418,909
+tap 'Never' at 169,1110
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 281,2233
+tap 'Appearance' at 371,1494
+tap 'Browser layout' at 225,590
+tap 'Air' at 158,917
+screenshot 92-page-air-ru.png
