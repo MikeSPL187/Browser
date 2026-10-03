@@ -288,6 +288,11 @@ internal object VolaTabOverview {
     val headerEndPadding = VolaSpacing.x2
     val headerCountGap = 10.dp
 
+    /** The search field that replaces the header while searching tabs. */
+    val searchFieldHeight = 48.dp
+    val searchFieldPadding = VolaSpacing.x3
+    val searchFieldStartPadding = VolaSpacing.x3
+
     /** A tab card: a title row over the page, with no frame around the page itself. */
     val cardRadius = 22.dp
     val cardShape = RoundedCornerShape(cardRadius)
@@ -334,4 +339,43 @@ internal object VolaTabOverview {
 
     /** Space between the grid, the Essentials row and the dock. */
     val sectionGap = VolaSpacing.x2
+}
+
+/** The tab actions sheet (board W-TabActions): the tab lifted over a blurred overview. */
+internal object VolaTabActions {
+    /** The overview behind: blurred and veiled with surfaceContainer at this opacity. */
+    val backdropBlur = 8.dp
+    const val SCRIM_ALPHA = 0.45f
+
+    /** The lifted card, ringed like the current tab in the grid. */
+    val cardWidth = 240.dp
+    val cardHeight = 262.dp
+    val cardTopPadding = VolaSpacing.x4
+    val cardPanelGap = VolaSpacing.x4
+
+    /** The panel of actions below the card. */
+    val panelSideMargin = VolaSpacing.x5
+    val panelShape = RoundedCornerShape(VolaShapes.extraLargeRadius)
+    val panelPadding = 6.dp
+    val panelElevation = VolaElevation.level3
+    val panelBottomPadding = VolaSpacing.x4
+
+    /** The quick actions: four in a row, an icon over a short label. */
+    val quickActionHeight = 72.dp
+    val quickActionShape = RoundedCornerShape(VolaShapes.largeRadius)
+    val quickActionGap = 6.dp
+    val quickActionSpacing = 2.dp
+    val dividerWidth = 1.dp
+
+    /** A row: an icon, a label, then a value and a chevron. */
+    val rowMinHeight = 52.dp
+    val rowHorizontalPadding = VolaSpacing.x4
+    val rowVerticalPadding = 10.dp
+    val rowGap = VolaSpacing.x4
+    val rowIconSize = 24.dp
+    val rowShape = RoundedCornerShape(VolaShapes.largeRadius)
+
+    /** Rows opened under a row (workspaces, groups, more) sit a step in. */
+    val nestedIndent = VolaSpacing.x5
+    val nestedGemSize = 28.dp
 }

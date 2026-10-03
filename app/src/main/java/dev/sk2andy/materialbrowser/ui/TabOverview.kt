@@ -6,6 +6,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewGridRules
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 import dev.sk2andy.materialbrowser.shared.ui.TabHeroLayer
@@ -76,6 +77,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -113,15 +115,14 @@ import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.data.TabPinningRules
 import dev.sk2andy.materialbrowser.data.TabReorderingRules
-import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.EssentialCandidate
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabActions
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
-import eightbitlab.com.blurview.BlurTarget
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -245,8 +246,8 @@ internal fun TabOverview(
     var pagerSessionEndJob by remember { mutableStateOf<Job?>(null) }
     var tabActionsTabId by remember { mutableStateOf<String?>(null) }
     var tabStackEditorTabId by remember { mutableStateOf<String?>(null) }
-    var overviewBlurTarget by remember { mutableStateOf<BlurTarget?>(null) }
     val workspaceSheets = remember { WorkspaceSheetsState() }
+    val tabSearch = rememberTabOverviewSearchState(visible)
     var movingTabId by remember { mutableStateOf<String?>(null) }
     var profileSwitching by remember { mutableStateOf(false) }
     var reorderAnimation by remember { mutableStateOf<TabReorderAnimation?>(null) }
@@ -484,10 +485,8 @@ internal fun TabOverview(
     )
     BrowserContentBlurTargetWithConstraints(
         enabled = layerVisible,
-        onTargetAttached = { target -> overviewBlurTarget = target },
-        onTargetReleased = { target ->
-            if (overviewBlurTarget === target) overviewBlurTarget = null
-        },
+        onTargetAttached = {},
+        onTargetReleased = {},
         modifier = Modifier
             .fillMaxSize()
             .zIndex(if (layerVisible) 10f else -1f)
@@ -915,6 +914,7 @@ internal fun TabOverview(
         val pinnedTabsJumpVisible = destinationChromeVisible &&
             controller.activeTabs.any(BrowserTab::isPinned) &&
             !pinnedTabsVisible
+        val searchedTabs = tabSearch.filter(controller.activeTabs)
         val activeWorkspace = controller.profiles
             .firstOrNull { profile -> profile.id == controller.activeProfileId }
         val overviewTitle = if (controller.profilesEnabled && activeWorkspace != null) {
@@ -928,6 +928,7 @@ internal fun TabOverview(
                 .fillMaxSize()
                 .longPressTabOverviewReorder(
                     enabled = visible &&
+                        tabSearch.query == null &&
                         !controller.automaticTabSortingEnabled &&
                         heroCompleted &&
                         !heroVisible &&
@@ -979,6 +980,13 @@ internal fun TabOverview(
                         0f
                     }
                 }
+                .then(
+                    if (tabActionsTabId != null) {
+                        Modifier.blur(VolaTabActions.backdropBlur)
+                    } else {
+                        Modifier
+                    },
+                )
                 .windowInsetsPadding(statusBarInsets)
                 .windowInsetsPadding(navigationBarInsets)
                 .then(
@@ -1106,6 +1114,7 @@ internal fun TabOverview(
                     rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     onOpenSettings()
                 },
+                search = tabSearch.header(controller.tabOverviewMode != TabOverviewMode.Hero),
                 onMore = {
                     actionTargetId?.let { tabId ->
                         rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -1121,7 +1130,9 @@ internal fun TabOverview(
                         translationY = (1f - chromeProgress) * -18f
                     },
             )
-            when (controller.tabOverviewMode) {
+            if (tabSearch.hasNoResults(searchedTabs)) {
+                TabSearchEmptyState(Modifier.weight(1f).fillMaxWidth())
+            } else when (controller.tabOverviewMode) {
                 TabOverviewMode.Hero -> TabOverviewHeroPager(
                     pagerState = pagerState,
                     tabs = pagerTabs,
@@ -1249,7 +1260,7 @@ internal fun TabOverview(
                 TabOverviewMode.Grid -> CompactTabGrid(
                     gridState = gridState,
                     layout = gridLayout,
-                    tabs = controller.activeTabs,
+                    tabs = searchedTabs,
                     startsAtBottom = controller.tabListStartsAtBottom,
                     visible = visible,
                     selectedTabId = controller.selectedTabId,
@@ -1372,7 +1383,7 @@ internal fun TabOverview(
                 )
                 TabOverviewMode.List -> CompactTabList(
                     listState = listState,
-                    tabs = controller.activeTabs,
+                    tabs = searchedTabs,
                     startsAtBottom = controller.tabListStartsAtBottom,
                     visible = visible,
                     selectedTabId = controller.selectedTabId,
@@ -1780,52 +1791,10 @@ internal fun TabOverview(
             .fillMaxSize()
             .zIndex(if (layerVisible) 11f else -1f),
     ) {
-        val actionTab = tabActionsTabId?.let { tabId ->
-            controller.activeTabs.firstOrNull { it.id == tabId }
-        }
-        val actionTabStack = actionTab?.let { tab -> controller.tabStackFor(tab.id) }
-        val actionTabCandidates = actionTab?.let { target ->
-            controller.activeTabs.filter { candidate ->
-                candidate.profileId == target.profileId &&
-                    candidate.isIncognito == target.isIncognito &&
-                    candidate.isPinned == target.isPinned
-            }
-        }.orEmpty()
-        val actionCandidateIds = actionTabCandidates.mapTo(hashSetOf(), BrowserTab::id)
-        val availableActionStacks = controller.activeTabStacks.filter { stack ->
-            stack.id != actionTabStack?.id && stack.tabIds.any(actionCandidateIds::contains)
-        }
-        TabActionsFloatingMenu(
-            tab = actionTab,
-            backdropSource = overviewBlurTarget.asCandyChromeBackdropSource(),
-            profiles = if (controller.profilesEnabled) {
-                controller.profiles
-            } else {
-                controller.profiles.take(1)
-            },
-            isFavorite = actionTab?.let { tab -> controller.isFavorite(tab.url) } == true,
-            canToggleDomainMute = actionTab?.let { tab ->
-                controller.canToggleDomainMute(tab.id)
-            } == true,
-            isDomainMuted = actionTab?.let { tab ->
-                controller.isDomainMuted(tab.id)
-            } == true,
-            canCloseAllTabs = controller.activeTabs.any(TabDeletionRules::canDelete),
-            hasPinnedTabs = controller.activeTabs.any(BrowserTab::isPinned),
-            onToggleFavorite = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onToggleFavoriteTab(target.id)
-            },
-            onOpenCandyTrail = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                val bounds = tabCardBounds[target.id]
-                tabActionsTabId = null
-                onOpenCandyTrail(target.id, bounds)
-            },
-            onTogglePinned = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
+        TabOverviewTabActions(
+            controller = controller,
+            tabId = tabActionsTabId,
+            onTogglePinned = { target ->
                 overviewScope.launch {
                     val oldOrder = controller.activeTabs.map(BrowserTab::id)
                     val tabsWithUpdatedPin = TabPinningRules.withPinnedState(
@@ -1891,9 +1860,7 @@ internal fun TabOverview(
                     }
                 }
             },
-            onMoveToProfile = { profileId ->
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
+            onMoveToWorkspace = { target, profileId ->
                 overviewScope.launch {
                     try {
                         movingTabId = target.id
@@ -1911,86 +1878,13 @@ internal fun TabOverview(
                     }
                 }
             },
-            onShare = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.sharePage(target.id)
-            },
-            onOpenExternal = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.openPageExternally(target.id)
-            },
-            onPrint = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.printPage(target.id)
-            },
-            onDomainMutedChange = { muted ->
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                if (controller.setDomainMuted(target.id, muted)) {
-                    rootView.performConfirmHaptic()
-                }
-            },
-            onAddSiteCapsule = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onAddSiteCapsule(target.id)
-            },
-            onSummarize = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.summarizePageWithAssistant(target.id)
-            },
-            onSnooze = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onSnoozeTab(target.id)
-            },
-            onCloseAllTabs = {
-                actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                if (controller.closeAllTabs() > 0) rootView.performConfirmHaptic()
-            },
-            stackContent = {
-                TabStackMenuSection(
-                    currentStack = actionTabStack,
-                    availableStacks = availableActionStacks,
-                    canCreate = actionTabStack != null ||
-                        (actionTabCandidates.size >= TabStackRules.MIN_MEMBER_COUNT &&
-                            controller.tabStacks.size < TabStackRules.MAX_STACKS),
-                    onCreate = {
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        tabStackEditorTabId = target.id
-                    },
-                    onAddToStack = { stackId ->
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        if (controller.addTabToStack(target.id, stackId)) {
-                            rootView.performConfirmHaptic()
-                        }
-                    },
-                    onRemoveFromStack = {
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        if (controller.removeTabFromStack(target.id)) {
-                            rootView.performConfirmHaptic()
-                        }
-                    },
-                )
-            },
+            onOpenCandyTrail = { target -> onOpenCandyTrail(target.id, tabCardBounds[target.id]) },
+            onToggleBookmark = onToggleFavoriteTab,
+            onAddSiteCapsule = onAddSiteCapsule,
+            onSnooze = onSnoozeTab,
+            onEditStack = { tabId -> tabStackEditorTabId = tabId },
+            onClose = { target -> closeCompactTab(target, emitHaptic = true) },
             onDismiss = { tabActionsTabId = null },
-            extensionActions = if (actionTab?.id == controller.selectedTabId) {
-                controller.firefoxExtensionActions
-            } else {
-                emptyList()
-            },
-            onExtensionAction = { actionKey ->
-                tabActionsTabId = null
-                controller.clickFirefoxExtensionAction(actionKey)
-            },
-            menuLayout = controller.browserMenuLayout,
         )
 
         TabOverviewStackEditor(

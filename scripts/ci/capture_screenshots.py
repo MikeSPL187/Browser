@@ -342,6 +342,33 @@ def tour(suffix):
         time.sleep(2)
     step("overview-essentials", overview_essentials)
 
+    def tab_actions_and_search():
+        # The tab actions sheet (Q7b, board W-TabActions) with «More» open, then tab search.
+        adb("shell", "input", "swipe", str(width // 2), str(height - 120),
+            str(width // 2), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        if tap("Tab actions", "Действия со вкладкой"):
+            time.sleep(2)
+            shot(f"tab-actions-{suffix}")
+            if tap("More", "Ещё"):
+                time.sleep(2)
+                shot(f"tab-actions-more-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        if tap("Search tabs", "Найти вкладку"):
+            time.sleep(2)
+            adb("shell", "input", "text", "wiki")
+            time.sleep(2)
+            shot(f"tab-search-{suffix}")
+            # Hide the keyboard, close the search with its button, then leave the overview.
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(1)
+            tap("Close search", "Закрыть поиск")
+            time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("tab-actions", tab_actions_and_search)
+
     def protection_report():
         # The protection card below Essentials opens the weekly report (Q5b, П7).
         labels = ("this week", "за неделю", "Tracker protection is on", "Защита от трекеров")
