@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -256,7 +257,6 @@ import dev.sk2andy.materialbrowser.data.ClosedTabUndoToken
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.data.TabDuplicateRules
 import dev.sk2andy.materialbrowser.data.TabPinningRules
-import dev.sk2andy.materialbrowser.data.TabReorderingRules
 import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.TabWebViewStateRepository
 import dev.sk2andy.materialbrowser.data.TabPreviewRepository
@@ -581,7 +581,23 @@ class BrowserController(
         get() = true
 
     val tabs = mutableStateListOf<BrowserTab>()
-    val tabStacks = mutableStateListOf<TabStack>()
+    val tabStackController = TabStacksController(
+        allTabs = { tabs },
+        activeTabs = { activeTabs },
+        persist = { persist() },
+    )
+    val tabStacks: SnapshotStateList<TabStack>
+        get() = tabStackController.stacks
+    val tabOrder = TabOrderController(
+        tabs = tabs,
+        activeTabs = { activeTabs },
+        activeProfileId = { activeProfileId },
+        automaticSorting = { automaticTabSortingEnabled },
+        isEphemeral = { tabId -> isSessionEphemeralTab(tabId) },
+        onPinnedChanged = { tabId, pinned -> enqueueSyncedTabPinned(tabId, pinned) },
+        onOrderChanged = { profileId -> enqueueSyncedTabOrder(profileId) },
+        persist = { persist() },
+    )
     val profiles = mutableStateListOf<BrowserProfile>()
     val previews = mutableStateMapOf<String, Bitmap>()
     val favicons = mutableStateMapOf<String, Bitmap>()
@@ -1493,6 +1509,9 @@ class BrowserController(
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
     private val snoozeScheduler = SnoozeScheduler(activity)
+    val inactiveTabArchive = InactiveTabArchive(store, snoozedTabStore, snoozedTabs) { tab ->
+        !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id)
+    }
     private val snoozeRestoreCallback: (Long) -> Unit = { nowMillis ->
         mainHandler.post {
             if (!destroyed) restoreDueSnoozedTabs(nowMillis)
@@ -1626,26 +1645,11 @@ class BrowserController(
     private fun isBoundSyncProfile(profileId: String): Boolean =
         !isSyncedProfile(profileId) && syncTargetDeviceId(profileId) != null
 
-    val activeTabStacks: List<TabStack>
-        get() = TabStackRules.sanitized(tabStacks, activeTabs)
-
-    val stackAwareOverviewTabs: List<BrowserTab>
-        get() = TabStackRules.visibleTabs(
-            tabs = activeTabs,
-            stacks = activeTabStacks,
-        )
-
-    val gridOverviewTabs: List<BrowserTab>
-        get() = stackAwareOverviewTabs
-
-    fun tabStackFor(tabId: String): TabStack? =
-        activeTabStacks.firstOrNull { stack -> tabId in stack.tabIds }
-
-    fun stackAwareOverviewTabId(tabId: String): String = TabStackRules.visibleTabId(
-        tabId = tabId,
-        tabs = activeTabs,
-        stacks = activeTabStacks,
-    )
+    // Tab stacks live in [tabStackController]; these keep the controller's old calls working.
+    val activeTabStacks: List<TabStack> get() = tabStackController.activeStacks
+    val gridOverviewTabs: List<BrowserTab> get() = tabStackController.overviewTabs
+    fun tabStackFor(tabId: String): TabStack? = tabStackController.stackFor(tabId)
+    fun stackAwareOverviewTabId(tabId: String): String = tabStackController.overviewTabId(tabId)
 
     val canToggleSelectedDomainMute: Boolean
         get() = supportsPageContentActions && canToggleDomainMute(selectedTabId)
@@ -2362,7 +2366,7 @@ class BrowserController(
                         if (request.pinned) this@BrowserController.setTabPinned(tabId, true)
                         if (
                             request.index?.let { index ->
-                                !this@BrowserController.positionExtensionCreatedTab(tabId, index)
+                                !this@BrowserController.tabOrder.positionCreatedTab(tabId, index)
                             } == true
                         ) {
                             this@BrowserController.closeTab(tabId)
@@ -6601,7 +6605,7 @@ class BrowserController(
             loadActiveProfileTabSwitcherWallpaper()
         }
         val fallbackTabs = tabs.filter { it.profileId == fallbackProfile.id }
-        replaceProfileTabs(fallbackProfile.id, TabPinningRules.orderedTabs(fallbackTabs))
+        tabOrder.replaceProfileTabs(fallbackProfile.id, TabPinningRules.orderedTabs(fallbackTabs))
         val fallbackSelection = selectedTabId.takeIf { selectedId ->
             tabs.any { it.id == selectedId && it.profileId == fallbackProfile.id }
         } ?: fallbackProfile.selectedTabId?.takeIf { selectedId ->
@@ -6661,7 +6665,7 @@ class BrowserController(
         updateTab(tabId) { movedTab }
         updateProtectionRequestContext(tabId, pageUrls[tabId])
 
-        replaceProfileTabs(
+        tabOrder.replaceProfileTabs(
             profileId,
             TabPinningRules.orderedTabs(tabs.filter { it.profileId == profileId }),
         )
@@ -8522,55 +8526,18 @@ class BrowserController(
         return true
     }
 
-    fun setTabPinned(tabId: String, isPinned: Boolean): Boolean {
-        if (isSessionEphemeralTab(tabId)) return false
-        val updatedTabs = TabPinningRules.withPinnedState(
-            tabs = activeTabs,
-            tabId = tabId,
-            isPinned = isPinned,
-        )
-        if (updatedTabs == activeTabs) return false
-        replaceProfileTabs(activeProfileId, updatedTabs)
-        enqueueSyncedTabPinned(tabId, isPinned)
-        persist()
-        return true
-    }
+    fun setTabPinned(tabId: String, isPinned: Boolean): Boolean =
+        tabOrder.setPinned(tabId, isPinned)
 
     fun createTabStack(
         tabIds: List<String>,
         name: String,
         color: TabStackColor,
         previewTabId: String? = null,
-    ): String? {
-        val activeTabIds = activeTabs.mapTo(hashSetOf(), BrowserTab::id)
-        if (tabIds.any { it !in activeTabIds }) return null
-        val stackId = UUID.randomUUID().toString()
-        val updated = TabStackRules.create(
-            stacks = tabStacks,
-            tabs = tabs,
-            tabIds = tabIds,
-            stackId = stackId,
-            name = name,
-            color = color,
-            previewTabId = previewTabId,
-        ) ?: return null
-        tabStacks.replaceWith(updated)
-        persist()
-        return stackId
-    }
+    ): String? = tabStackController.create(tabIds, name, color, previewTabId)
 
-    fun addTabToStack(tabId: String, stackId: String): Boolean {
-        val updated = TabStackRules.addTab(
-            stacks = tabStacks,
-            tabs = tabs,
-            tabId = tabId,
-            stackId = stackId,
-        ) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun addTabToStack(tabId: String, stackId: String): Boolean =
+        tabStackController.addTab(tabId, stackId)
 
     fun updateTabStack(
         stackId: String,
@@ -8578,84 +8545,18 @@ class BrowserController(
         name: String,
         color: TabStackColor,
         previewTabId: String? = null,
-    ): Boolean {
-        val activeTabIds = activeTabs.mapTo(hashSetOf(), BrowserTab::id)
-        if (tabIds.any { it !in activeTabIds }) return false
-        val updated = TabStackRules.update(
-            stacks = tabStacks,
-            tabs = tabs,
-            stackId = stackId,
-            tabIds = tabIds,
-            name = name,
-            color = color,
-            previewTabId = previewTabId,
-        ) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    ): Boolean = tabStackController.update(stackId, tabIds, name, color, previewTabId)
 
-    fun removeTabFromStack(tabId: String): Boolean {
-        val updated = TabStackRules.removeTab(tabStacks, tabId)
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun removeTabFromStack(tabId: String): Boolean = tabStackController.removeTab(tabId)
 
-    fun toggleTabStackCollapsed(stackId: String, triggerTabId: String? = null): Boolean {
-        val updated = TabStackRules.toggleCollapsed(
-            stacks = tabStacks,
-            stackId = stackId,
-            triggerTabId = triggerTabId,
-        ) ?: return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun toggleTabStackCollapsed(stackId: String, triggerTabId: String? = null): Boolean =
+        tabStackController.toggleCollapsed(stackId, triggerTabId)
 
-    fun setTabStackPreview(stackId: String, tabId: String): Boolean {
-        if (activeTabStacks.none { stack -> stack.id == stackId && tabId in stack.tabIds }) {
-            return false
-        }
-        val updated = TabStackRules.setPreviewTab(tabStacks, stackId, tabId) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun setTabStackPreview(stackId: String, tabId: String): Boolean =
+        tabStackController.setPreview(stackId, tabId)
 
-    fun reorderTab(tabId: String, destinationIndex: Int): Boolean {
-        if (automaticTabSortingEnabled) return false
-        if (isSessionEphemeralTab(tabId)) return false
-        val updatedTabs = TabReorderingRules.move(
-            tabs = activeTabs,
-            tabId = tabId,
-            requestedIndex = destinationIndex,
-        )
-        if (updatedTabs == activeTabs) return false
-        replaceProfileTabs(activeProfileId, updatedTabs)
-        enqueueSyncedTabOrder(activeProfileId)
-        persist()
-        return true
-    }
-
-    private fun positionExtensionCreatedTab(tabId: String, requestedIndex: Int): Boolean {
-        if (automaticTabSortingEnabled || isSessionEphemeralTab(tabId)) return false
-        val tab = tabs.firstOrNull { candidate -> candidate.id == tabId } ?: return false
-        if (tab.profileId != activeProfileId) return false
-        val currentTabs = activeTabs
-        val destinationIndex = TabReorderingRules.clampedDestinationIndex(
-            tabs = currentTabs,
-            tabId = tabId,
-            requestedIndex = requestedIndex,
-        ) ?: return false
-        if (currentTabs.indexOfFirst { candidate -> candidate.id == tabId } == destinationIndex) {
-            return true
-        }
-        return reorderTab(tabId, requestedIndex)
-    }
+    fun reorderTab(tabId: String, destinationIndex: Int): Boolean =
+        tabOrder.move(tabId, destinationIndex)
 
     fun candyTrail(tabId: String): CandyTrail = candyTrails[tabId] ?: CandyTrail(tabId)
 
@@ -14551,7 +14452,7 @@ class BrowserController(
                 protectedRuntimeTabIds = syncProtectedRuntimeTabIds(),
             )
             reconciliation.removedRuntimeTabIds.forEach(::removeTabResources)
-            replaceProfileTabs(boundProfileId, reconciliation.tabs)
+            tabOrder.replaceProfileTabs(boundProfileId, reconciliation.tabs)
             reconciliation.hydrations.forEach(::prepareSyncedTabHydration)
             reconciliation.navigations.forEach(::applySyncedTabNavigation)
         }
@@ -14589,7 +14490,7 @@ class BrowserController(
             if (profileIndex >= 0) profiles[profileIndex] = runtimeProfile else profiles += runtimeProfile
 
             reconciliation.removedRuntimeTabIds.forEach(::removeTabResources)
-            replaceProfileTabs(profileId, reconciliation.tabs)
+            tabOrder.replaceProfileTabs(profileId, reconciliation.tabs)
             reconciliation.hydrations.forEach(::prepareSyncedTabHydration)
             reconciliation.navigations.forEach(::applySyncedTabNavigation)
         }
@@ -14898,19 +14799,13 @@ class BrowserController(
         }
     }
 
-    private fun replaceProfileTabs(profileId: String, orderedTabs: List<BrowserTab>) {
-        val insertionIndex = tabs.indexOfFirst { it.profileId == profileId }
-            .takeIf { it >= 0 }
-            ?: tabs.size
-        tabs.removeAll { it.profileId == profileId }
-        tabs.addAll(insertionIndex.coerceAtMost(tabs.size), orderedTabs)
-    }
-
     private fun pruneStaleTabs(
         nowMillis: Long = System.currentTimeMillis(),
         persistChanges: Boolean = true,
     ): Boolean = removeTabs(
-        tabIds = staleTabIds(nowMillis),
+        tabIds = inactiveTabArchive.closeOrArchive(
+            tabs, staleTabIds(nowMillis), inactiveTabLifetime, nowMillis,
+        ),
         nowMillis = nowMillis,
         persistChanges = persistChanges,
     )
@@ -14926,32 +14821,22 @@ class BrowserController(
     private fun closeTabsOnBackground(
         nowMillis: Long = System.currentTimeMillis(),
         protectedTabIds: Set<String> = emptySet(),
-    ): Boolean {
-        val closeIds = TabRetentionRules.tabIdsToCloseOnBackground(
-            tabs = tabs,
-            lifetime = inactiveTabLifetime,
-        ) - activeFederatedLoginFlowTabIds() - protectedTabIds
-        return removeTabs(
-            tabIds = closeIds,
-            nowMillis = nowMillis,
-            persistChanges = true,
-        )
-    }
+    ): Boolean = removeTabs(
+        tabIds = TabRetentionRules.tabIdsToCloseOnBackground(tabs, inactiveTabLifetime) -
+            activeFederatedLoginFlowTabIds() - protectedTabIds,
+        nowMillis = nowMillis,
+        persistChanges = true,
+    )
 
     private fun closeTabsOnTaskRemoval(
         nowMillis: Long = System.currentTimeMillis(),
         protectedTabIds: Set<String> = emptySet(),
-    ): Boolean {
-        val closeIds = TabRetentionRules.tabIdsToCloseOnTaskRemoval(
-            tabs = tabs,
-            lifetime = inactiveTabLifetime,
-        ) - activeFederatedLoginFlowTabIds() - protectedTabIds
-        return removeTabs(
-            tabIds = closeIds,
-            nowMillis = nowMillis,
-            persistChanges = true,
-        )
-    }
+    ): Boolean = removeTabs(
+        tabIds = TabRetentionRules.tabIdsToCloseOnTaskRemoval(tabs, inactiveTabLifetime) -
+            activeFederatedLoginFlowTabIds() - protectedTabIds,
+        nowMillis = nowMillis,
+        persistChanges = true,
+    )
 
     private fun removeTabs(
         tabIds: Set<String>,

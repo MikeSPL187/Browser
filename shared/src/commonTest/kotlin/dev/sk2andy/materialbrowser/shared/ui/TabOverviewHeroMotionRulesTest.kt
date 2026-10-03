@@ -27,6 +27,15 @@ class TabOverviewHeroMotionRulesTest {
     }
 
     @Test
+    fun `grid hero squares its top corners as it lands under the title row`() {
+        assertEquals(1f, TabOverviewHeroRules.topCornerFraction(0.5f, squareTopTarget = true))
+        assertEquals(0f, TabOverviewHeroRules.topCornerFraction(1f, squareTopTarget = true))
+        val landing = TabOverviewHeroRules.topCornerFraction(0.9f, squareTopTarget = true)
+        assertTrue(landing > 0f && landing < 1f)
+        assertEquals(1f, TabOverviewHeroRules.topCornerFraction(1f, squareTopTarget = false))
+    }
+
+    @Test
     fun `exit reverses card fraction back to browser viewport`() {
         assertEquals(
             1f,

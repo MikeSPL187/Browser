@@ -332,7 +332,8 @@ internal fun SnoozedTabsScreen(
     val editing = editingTab
     SnoozeDateTimeDialogs(
         visible = editing != null,
-        initialMillis = editing?.wakeAtMillis ?: System.currentTimeMillis(),
+        initialMillis = editing?.wakeAtMillis?.takeUnless { editing.isArchived }
+            ?: System.currentTimeMillis(),
         onDismiss = { editingTab = null },
         onConfirm = { wakeAtMillis ->
             val accepted = editing != null && onReschedule(editing.tab.id, wakeAtMillis)
@@ -389,12 +390,15 @@ private fun SnoozedTabCard(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
+            // An archived tab has no wake time, so it tells when it was put away instead.
+            val archived = snoozed.isArchived
+            val shownAtMillis = if (archived) snoozed.createdAtMillis else snoozed.wakeAtMillis
             Text(
                 stringResource(
-                    R.string.snoozed_until,
-                    remember(snoozed.wakeAtMillis) {
+                    if (archived) R.string.snoozed_archived_at else R.string.snoozed_until,
+                    remember(shownAtMillis) {
                         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-                            .format(Date(snoozed.wakeAtMillis))
+                            .format(Date(shownAtMillis))
                     },
                 ),
                 modifier = Modifier.padding(top = 10.dp),

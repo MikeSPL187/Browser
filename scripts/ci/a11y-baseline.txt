@@ -1,5 +1,3 @@
 # Known accessibility findings in Vola's UI (scripts/ci/a11y_audit.py), seeded from the first tour
 # on #34. They are Candy-era debt: fix them when the screen moves to v4, then delete the line.
 # A line the tour no longer sees is listed as [gone] in a11y-report.txt.
-unlabeled | View | appearance
-unlabeled | View | workspace-options

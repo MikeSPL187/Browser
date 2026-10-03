@@ -709,6 +709,13 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putString(KEY_INACTIVE_TAB_LIFETIME, lifetime.wireValue).apply()
     }
 
+    fun loadArchiveInactiveTabs(): Boolean =
+        preferences.getBoolean(KEY_ARCHIVE_INACTIVE_TABS, true)
+
+    fun saveArchiveInactiveTabs(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_ARCHIVE_INACTIVE_TABS, enabled).apply()
+    }
+
     fun loadPendingTabClearOnTaskRemoval(): Boolean =
         preferences.getBoolean(KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL, false)
 
@@ -1512,6 +1519,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_FAVORITES = "favorites"
         private val FAVORITES_COMMIT_LOCK = Any()
         const val KEY_INACTIVE_TAB_LIFETIME = "inactive_tab_lifetime"
+        const val KEY_ARCHIVE_INACTIVE_TABS = "archive_inactive_tabs"
         const val KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL =
             "pending_tab_clear_on_task_removal"
         const val KEY_RESIDENT_TAB_LIMIT = "resident_tab_limit"

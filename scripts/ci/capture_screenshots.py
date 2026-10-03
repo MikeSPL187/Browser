@@ -22,6 +22,8 @@ PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
 ADD_WORKSPACE_LABELS = ("Add workspace", "Добавить пространство")
+# The workspace the tour makes for the swipe: no name, so the default one.
+SECOND_WORKSPACE_LABELS = ("Workspace", "Пространство")
 DUMPS = OUT.parent / "ui-dumps"
 DUMPS.mkdir(parents=True, exist_ok=True)
 LOG = []
@@ -76,7 +78,9 @@ def dismiss_not_responding_dialog(raw):
     return False
 
 
-def shot(name):
+def shot(name, audit=True):
+    """A screenshot and, for the accessibility audit, the UI behind it. A frame caught in the
+    middle of a gesture is not a resting screen, so it stays out of the audit."""
     global _counter
     _counter += 1
     target = OUT / f"{_counter:02d}-{name}.png"
@@ -84,7 +88,7 @@ def shot(name):
     with target.open("wb") as file:
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True, timeout=60)
     log(f"screenshot {target.name}")
-    if raw.lstrip().startswith(b"<?xml"):
+    if audit and raw.lstrip().startswith(b"<?xml"):
         (DUMPS / f"{target.stem}.xml").write_bytes(raw)
 
 
@@ -269,6 +273,41 @@ def tour(suffix):
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
+    def workspace_swipe():
+        """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
+        the next workspace's aura shows through. The light tour makes the second workspace."""
+        if not find(*SECOND_WORKSPACE_LABELS):
+            if not tap(*ADD_WORKSPACE_LABELS):
+                return
+            time.sleep(2)
+            tap("Work", "Работа")
+            # Its own color, so the swipe shows its aura coming through.
+            tap("Coral", "Коралловый")
+            time.sleep(1)
+            if not tap("Create workspace", "Создать пространство"):
+                adb("shell", "input", "keyevent", "BACK")
+                return
+            time.sleep(3)
+        # The header names the active workspace; from the first one the swipe goes left.
+        on_first = any(n["text"] in ("Personal", "Личное") for n in nodes())
+        y = int(height * 0.075)
+        start, end = (int(width * 0.8), int(width * 0.35)) if on_first else \
+            (int(width * 0.2), int(width * 0.65))
+        adb("shell", "input", "motionevent", "DOWN", str(start), str(y))
+        for step_index in range(1, 9):
+            x = start + (end - start) * step_index // 8
+            adb("shell", "input", "motionevent", "MOVE", str(x), str(y))
+            time.sleep(0.05)
+        time.sleep(1)
+        shot(f"workspace-swipe-{suffix}", audit=False)
+        adb("shell", "input", "motionevent", "MOVE", str(start), str(y))
+        adb("shell", "input", "motionevent", "UP", str(start), str(y))
+        time.sleep(2)
+        # Back to the first workspace, where the rest of the tour runs.
+        if not any(n["text"] in ("Personal", "Личное") for n in nodes()):
+            tap("Personal", "Личное")
+            time.sleep(2)
+
     def overview():
         address = find("wikipedia.org", contains=True)
         x, y = address["center"] if address else (width // 2, height - 120)
@@ -298,6 +337,7 @@ def tour(suffix):
             time.sleep(2)
         else:
             log("not found: add workspace")
+        step("workspace-swipe", workspace_swipe)
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("overview", overview)
@@ -353,6 +393,33 @@ def tour(suffix):
         time.sleep(2)
     step("overview-essentials", overview_essentials)
 
+    def tab_actions_and_search():
+        # The tab actions sheet (Q7b, board W-TabActions) with «More» open, then tab search.
+        adb("shell", "input", "swipe", str(width // 2), str(height - 120),
+            str(width // 2), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        if tap("Tab actions", "Действия со вкладкой"):
+            time.sleep(2)
+            shot(f"tab-actions-{suffix}")
+            if tap("More", "Ещё"):
+                time.sleep(2)
+                shot(f"tab-actions-more-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        if tap("Search tabs", "Найти вкладку"):
+            time.sleep(2)
+            adb("shell", "input", "text", "wiki")
+            time.sleep(2)
+            shot(f"tab-search-{suffix}")
+            # Hide the keyboard, close the search with its button, then leave the overview.
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(1)
+            tap("Close search", "Закрыть поиск")
+            time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("tab-actions", tab_actions_and_search)
+
     def protection_report():
         # The protection card below Essentials opens the weekly report (Q5b, П7).
         labels = ("this week", "за неделю", "Tracker protection is on", "Защита от трекеров")
@@ -400,6 +467,28 @@ def tour(suffix):
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
 
+    def tab_archive_setting():
+        """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
+        lifetime = ("Automatically close tabs", "Автоматически закрывать вкладки")
+        if not tap_scrolling(*lifetime, name=f"tabs-settings-{suffix}"):
+            return
+        time.sleep(1)
+        if not tap("After 7 days", "Через 7 дней"):
+            save_ui(f"tabs-lifetime-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(2)
+        width, height = screen_size()
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.4)), "300")
+        time.sleep(1)
+        shot(f"tabs-archive-{suffix}")
+        save_ui(f"tabs-archive-{suffix}")
+        if tap(*lifetime):
+            time.sleep(1)
+            tap("Never", "Никогда")
+            time.sleep(1)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)
@@ -410,6 +499,11 @@ def tour(suffix):
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
             adb("shell", "input", "keyevent", "BACK")
