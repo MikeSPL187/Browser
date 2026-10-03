@@ -1504,4 +1504,15 @@
     <string name="tab_search_close">Закрыть поиск</string>
     <string name="tab_search_empty_title">Вкладки не найдены</string>
     <string name="tab_search_empty_message">Попробуйте другое слово или часть адреса.</string>
+    <plurals name="site_info_trackers_blocked">
+        <item quantity="one">%d трекер заблокирован</item>
+        <item quantity="few">%d трекера заблокировано</item>
+        <item quantity="many">%d трекеров заблокировано</item>
+        <item quantity="other">%d трекера заблокировано</item>
+    </plurals>
+    <string name="site_info_nothing_blocked">На странице пока ничего не заблокировано</string>
+    <string name="site_info_permissions_title">Разрешения сайта</string>
+    <string name="site_info_all_permissions">Все разрешения</string>
+    <string name="site_info_protection_summary">Выключите, если сайт работает неправильно</string>
+    <string name="site_info_permission_session">На этот сеанс</string>
 </resources>
