@@ -46,6 +46,15 @@ class SiteCertificateRulesTest {
     }
 
     @Test
+    fun `the fingerprint breaks between bytes, eight to a line`() {
+        val fingerprint = (1..20).joinToString(":") { "%02X".format(it) }
+        assertEquals(
+            "01:02:03:04:05:06:07:08\n09:0A:0B:0C:0D:0E:0F:10\n11:12:13:14",
+            SiteCertificateRules.fingerprintLines(fingerprint),
+        )
+    }
+
+    @Test
     fun `a certificate past its end date is expired`() {
         val site = SiteCertificate("example.com", null, null, 0L, 1_000L, null)
         assertFalse(SiteCertificateRules.isExpired(site, 1_000L))

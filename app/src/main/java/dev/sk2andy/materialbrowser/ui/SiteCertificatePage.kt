@@ -83,7 +83,9 @@ internal fun SiteCertificateContent(certificate: SiteCertificate, modifier: Modi
         SiteInfoCard {
             CertificateField(
                 label = stringResource(R.string.site_certificate_fingerprint),
-                value = certificate.sha256Fingerprint ?: unknown,
+                value = certificate.sha256Fingerprint
+                    ?.let { SiteCertificateRules.fingerprintLines(it) }
+                    ?: unknown,
                 monospace = true,
             )
         }

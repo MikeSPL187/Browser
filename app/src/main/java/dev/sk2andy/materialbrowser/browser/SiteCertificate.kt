@@ -65,6 +65,10 @@ internal object SiteCertificateRules {
         MessageDigest.getInstance("SHA-256").digest(encoded)
             .joinToString(":") { byte -> "%02X".format(byte.toInt() and 0xFF) }
 
+    /** The fingerprint in lines of [bytesPerLine] bytes, so a narrow screen never splits a byte. */
+    fun fingerprintLines(fingerprint: String, bytesPerLine: Int = 8): String =
+        fingerprint.split(':').chunked(bytesPerLine).joinToString("\n") { it.joinToString(":") }
+
     /** A certificate is shown only for the page it came with: a stale one from another host is not. */
     fun forPage(certificate: SiteCertificate?, pageUrl: String): SiteCertificate? {
         val uri = runCatching { URI(pageUrl.trim()) }.getOrNull() ?: return null
