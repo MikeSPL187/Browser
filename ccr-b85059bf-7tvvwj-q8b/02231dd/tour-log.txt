@@ -1,0 +1,176 @@
+dismissed a system 'not responding' dialog at 540,1363
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 05-find-light.png
+find counter light: 1/541
+screenshot 06-address-light.png
+screenshot 07-https-upgrade-light.png
+screenshot 08-https-only-early-light.png
+screenshot 09-https-only-light.png
+screenshot 10-tab-overview-light.png
+saved ui-tab-overview-light.xml
+screenshot 11-workspace-options-light.png
+tap 'Add workspace' at 465,2232
+tap 'Work' at 455,1857
+tap 'Create workspace' at 540,2212
+screenshot 12-workspace-swipe-light.png
+tap 'Personal' at 106,2232
+tap 'New tab' at 283,693
+screenshot 13-essentials-start-light.png
+tap 'Add a site' at 540,1043
+screenshot 14-essentials-add-light.png
+screenshot 15-essentials-light.png
+tap 'Edit' at 951,363
+screenshot 16-essentials-edit-light.png
+tap 'Done' at 930,280
+screenshot 17-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+tap 'Tab actions' at 996,202
+screenshot 18-tab-actions-light.png
+tap 'More' at 540,1604
+screenshot 19-tab-actions-more-light.png
+tap 'Search tabs' at 744,202
+screenshot 20-tab-search-light.png
+tap 'Close search' at 996,202
+screenshot 21-protection-card-light.png
+tap 'this week' at 428,1406
+screenshot 22-protection-report-light.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 23-private-new-tab-light.png
+tap 'Close 1 private' at 282,1479
+screenshot 24-private-closed-light.png
+tap 'More options' at 964,2232
+screenshot 25-menu-light.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2221
+screenshot 26-settings-light.png
+tap 'Appearance' at 360,1494
+screenshot 27-appearance-light.png
+screenshot 28-current-dark.png
+screenshot 29-new-tab-dark.png
+screenshot 30-page-dark.png
+screenshot 31-page-scrolled-dark.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 479,1203
+screenshot 32-find-dark.png
+find counter dark: 1/541
+screenshot 33-address-dark.png
+screenshot 34-https-upgrade-dark.png
+screenshot 35-https-only-early-dark.png
+screenshot 36-https-only-dark.png
+screenshot 37-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+screenshot 38-workspace-options-dark.png
+screenshot 39-workspace-swipe-dark.png
+tap 'New tab' at 974,2231
+screenshot 40-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 41-essentials-dark.png
+tap 'Edit' at 951,363
+screenshot 42-essentials-edit-dark.png
+tap 'Done' at 930,280
+screenshot 43-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+tap 'Tab actions' at 996,202
+screenshot 44-tab-actions-dark.png
+tap 'More' at 540,1604
+screenshot 45-tab-actions-more-dark.png
+tap 'Search tabs' at 744,202
+screenshot 46-tab-search-dark.png
+tap 'Close search' at 996,202
+screenshot 47-protection-card-dark.png
+tap 'this week' at 428,1406
+screenshot 48-protection-report-dark.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 49-private-new-tab-dark.png
+tap 'Close 1 private' at 282,1479
+screenshot 50-private-closed-dark.png
+tap 'More options' at 964,2232
+screenshot 51-menu-dark.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 438,2184
+screenshot 52-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 53-appearance-dark.png
+screenshot 54-new-tab-a11y.png
+screenshot 55-page-a11y.png
+tap 'More options' at 964,2232
+screenshot 56-menu-a11y.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 501,2181
+screenshot 57-settings-a11y.png
+Cold start (am start -W, 5 runs): average 3362 ms, min 3091 ms, max 3780 ms
+screenshot 58-new-tab-ru.png
+screenshot 59-page-ru.png
+screenshot 60-page-scrolled-ru.png
+tap 'More options' at 964,2232
+tap 'Find on page' at 547,1203
+screenshot 61-find-ru.png
+find counter ru: 1/541
+screenshot 62-address-ru.png
+screenshot 63-https-upgrade-ru.png
+screenshot 64-https-only-early-ru.png
+screenshot 65-https-only-ru.png
+screenshot 66-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+screenshot 67-workspace-options-ru.png
+screenshot 68-workspace-swipe-ru.png
+tap 'New tab' at 283,744
+screenshot 69-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 70-essentials-ru.png
+tap 'Edit' at 908,363
+screenshot 71-essentials-edit-ru.png
+tap 'Done' at 914,280
+screenshot 72-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+tap 'Tab actions' at 996,202
+screenshot 73-tab-actions-ru.png
+tap 'More' at 540,1631
+screenshot 74-tab-actions-more-ru.png
+tap 'Search tabs' at 744,202
+screenshot 75-tab-search-ru.png
+tap 'Close search' at 996,202
+screenshot 76-protection-card-ru.png
+tap 'this week' at 491,1406
+screenshot 77-protection-report-ru.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 78-private-new-tab-ru.png
+tap 'Close 1 private' at 388,1479
+screenshot 79-private-closed-ru.png
+tap 'More options' at 964,2232
+screenshot 80-menu-ru.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+screenshot 81-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 82-appearance-ru.png
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 465,2184
+tap 'Appearance' at 371,1494
+tap 'Browser layout' at 225,590
+tap 'Air' at 158,917
+screenshot 83-page-air-ru.png

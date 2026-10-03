@@ -1,0 +1,4 @@
+Vola controls in the tour: 3 accessibility finding(s).
+- [NEW] small | View | 27x48 dp — workspace-swipe-light
+- [known] unlabeled | View | appearance — appearance-dark, appearance-light, appearance-ru
+- [known] unlabeled | View | workspace-options — workspace-options-dark, workspace-options-light, workspace-options-ru
