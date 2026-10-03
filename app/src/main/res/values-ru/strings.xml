@@ -1512,6 +1512,12 @@
     </plurals>
     <string name="site_info_nothing_blocked">На странице пока ничего не заблокировано</string>
     <string name="site_info_permissions_title">Разрешения сайта</string>
+    <string name="site_info_site_data">Данные сайта</string>
+    <string name="site_info_site_data_summary">Cookie, хранилище и кэш</string>
+    <string name="site_info_site_data_summary_all_workspaces">Cookie, хранилище и кэш — во всех пространствах</string>
+    <string name="site_info_delete_site_data">Удалить</string>
+    <string name="site_info_delete_site_data_description">Удалить данные %1$s</string>
+    <string name="site_data_deleted">Данные %1$s удалены</string>
     <string name="site_info_all_permissions">Все разрешения</string>
     <string name="site_info_protection_summary">Выключите, если сайт работает неправильно</string>
     <string name="site_info_permission_session">На этот сеанс</string>

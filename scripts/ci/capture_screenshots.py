@@ -154,6 +154,19 @@ def tap_scrolling(*labels, name, attempts=7):
     return False
 
 
+def scroll_to(*labels, name, attempts=5):
+    """Scrolls the visible list up until a label (or a row containing it) is on screen."""
+    width, height = screen_size()
+    for _ in range(attempts):
+        if find(*labels, contains=True):
+            return True
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.45)), "300")
+        time.sleep(1)
+    save_ui(name)
+    return False
+
+
 def screen_size():
     output = (adb("shell", "wm", "size", capture=True) or b"").decode()
     match = re.search(r"(\d+)x(\d+)", output)
@@ -253,6 +266,16 @@ def tour(suffix):
             # The bar's Back returns to the overview; a missed tap must not leave the page.
             if tap("Back", "Назад"):
                 time.sleep(1)
+        # «Site data» at the end of the sheet (Q10b): «Delete» closes the sheet and waits behind
+        # «Undo»; the tour takes the deletion back.
+        if scroll_to("Site data", "Данные сайта", name=f"site-info-data-{suffix}"):
+            shot(f"site-info-data-{suffix}")
+            if tap("Delete data of", "Удалить данные", contains=True):
+                time.sleep(1)
+                shot(f"site-data-undo-{suffix}", audit=False)
+                tap("Undo", "Отменить")
+                time.sleep(1)
+                return
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("site-info", site_info)
