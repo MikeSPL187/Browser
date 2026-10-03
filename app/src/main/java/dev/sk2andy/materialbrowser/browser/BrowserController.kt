@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -581,7 +582,13 @@ class BrowserController(
         get() = true
 
     val tabs = mutableStateListOf<BrowserTab>()
-    val tabStacks = mutableStateListOf<TabStack>()
+    val tabStackController = TabStacksController(
+        allTabs = { tabs },
+        activeTabs = { activeTabs },
+        persist = { persist() },
+    )
+    val tabStacks: SnapshotStateList<TabStack>
+        get() = tabStackController.stacks
     val profiles = mutableStateListOf<BrowserProfile>()
     val previews = mutableStateMapOf<String, Bitmap>()
     val favicons = mutableStateMapOf<String, Bitmap>()
@@ -1626,26 +1633,11 @@ class BrowserController(
     private fun isBoundSyncProfile(profileId: String): Boolean =
         !isSyncedProfile(profileId) && syncTargetDeviceId(profileId) != null
 
-    val activeTabStacks: List<TabStack>
-        get() = TabStackRules.sanitized(tabStacks, activeTabs)
-
-    val stackAwareOverviewTabs: List<BrowserTab>
-        get() = TabStackRules.visibleTabs(
-            tabs = activeTabs,
-            stacks = activeTabStacks,
-        )
-
-    val gridOverviewTabs: List<BrowserTab>
-        get() = stackAwareOverviewTabs
-
-    fun tabStackFor(tabId: String): TabStack? =
-        activeTabStacks.firstOrNull { stack -> tabId in stack.tabIds }
-
-    fun stackAwareOverviewTabId(tabId: String): String = TabStackRules.visibleTabId(
-        tabId = tabId,
-        tabs = activeTabs,
-        stacks = activeTabStacks,
-    )
+    // Tab stacks live in [tabStackController]; these keep the controller's old calls working.
+    val activeTabStacks: List<TabStack> get() = tabStackController.activeStacks
+    val gridOverviewTabs: List<BrowserTab> get() = tabStackController.overviewTabs
+    fun tabStackFor(tabId: String): TabStack? = tabStackController.stackFor(tabId)
+    fun stackAwareOverviewTabId(tabId: String): String = tabStackController.overviewTabId(tabId)
 
     val canToggleSelectedDomainMute: Boolean
         get() = supportsPageContentActions && canToggleDomainMute(selectedTabId)
@@ -8541,36 +8533,10 @@ class BrowserController(
         name: String,
         color: TabStackColor,
         previewTabId: String? = null,
-    ): String? {
-        val activeTabIds = activeTabs.mapTo(hashSetOf(), BrowserTab::id)
-        if (tabIds.any { it !in activeTabIds }) return null
-        val stackId = UUID.randomUUID().toString()
-        val updated = TabStackRules.create(
-            stacks = tabStacks,
-            tabs = tabs,
-            tabIds = tabIds,
-            stackId = stackId,
-            name = name,
-            color = color,
-            previewTabId = previewTabId,
-        ) ?: return null
-        tabStacks.replaceWith(updated)
-        persist()
-        return stackId
-    }
+    ): String? = tabStackController.create(tabIds, name, color, previewTabId)
 
-    fun addTabToStack(tabId: String, stackId: String): Boolean {
-        val updated = TabStackRules.addTab(
-            stacks = tabStacks,
-            tabs = tabs,
-            tabId = tabId,
-            stackId = stackId,
-        ) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun addTabToStack(tabId: String, stackId: String): Boolean =
+        tabStackController.addTab(tabId, stackId)
 
     fun updateTabStack(
         stackId: String,
@@ -8578,53 +8544,15 @@ class BrowserController(
         name: String,
         color: TabStackColor,
         previewTabId: String? = null,
-    ): Boolean {
-        val activeTabIds = activeTabs.mapTo(hashSetOf(), BrowserTab::id)
-        if (tabIds.any { it !in activeTabIds }) return false
-        val updated = TabStackRules.update(
-            stacks = tabStacks,
-            tabs = tabs,
-            stackId = stackId,
-            tabIds = tabIds,
-            name = name,
-            color = color,
-            previewTabId = previewTabId,
-        ) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    ): Boolean = tabStackController.update(stackId, tabIds, name, color, previewTabId)
 
-    fun removeTabFromStack(tabId: String): Boolean {
-        val updated = TabStackRules.removeTab(tabStacks, tabId)
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun removeTabFromStack(tabId: String): Boolean = tabStackController.removeTab(tabId)
 
-    fun toggleTabStackCollapsed(stackId: String, triggerTabId: String? = null): Boolean {
-        val updated = TabStackRules.toggleCollapsed(
-            stacks = tabStacks,
-            stackId = stackId,
-            triggerTabId = triggerTabId,
-        ) ?: return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun toggleTabStackCollapsed(stackId: String, triggerTabId: String? = null): Boolean =
+        tabStackController.toggleCollapsed(stackId, triggerTabId)
 
-    fun setTabStackPreview(stackId: String, tabId: String): Boolean {
-        if (activeTabStacks.none { stack -> stack.id == stackId && tabId in stack.tabIds }) {
-            return false
-        }
-        val updated = TabStackRules.setPreviewTab(tabStacks, stackId, tabId) ?: return false
-        if (updated == tabStacks) return false
-        tabStacks.replaceWith(updated)
-        persist()
-        return true
-    }
+    fun setTabStackPreview(stackId: String, tabId: String): Boolean =
+        tabStackController.setPreview(stackId, tabId)
 
     fun reorderTab(tabId: String, destinationIndex: Int): Boolean {
         if (automaticTabSortingEnabled) return false
