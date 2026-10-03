@@ -77,7 +77,9 @@ def dismiss_not_responding_dialog(raw):
     return False
 
 
-def shot(name):
+def shot(name, audit=True):
+    """A screenshot and, for the accessibility audit, the UI behind it. A frame caught in the
+    middle of a gesture is not a resting screen, so it stays out of the audit."""
     global _counter
     _counter += 1
     target = OUT / f"{_counter:02d}-{name}.png"
@@ -85,7 +87,7 @@ def shot(name):
     with target.open("wb") as file:
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=file, check=True, timeout=60)
     log(f"screenshot {target.name}")
-    if raw.lstrip().startswith(b"<?xml"):
+    if audit and raw.lstrip().startswith(b"<?xml"):
         (DUMPS / f"{target.stem}.xml").write_bytes(raw)
 
 
@@ -278,6 +280,8 @@ def tour(suffix):
                 return
             time.sleep(2)
             tap("Work", "Работа")
+            # Its own color, so the swipe shows its aura coming through.
+            tap("Coral", "Коралловый")
             time.sleep(1)
             if not tap("Create workspace", "Создать пространство"):
                 adb("shell", "input", "keyevent", "BACK")
@@ -294,7 +298,7 @@ def tour(suffix):
             adb("shell", "input", "motionevent", "MOVE", str(x), str(y))
             time.sleep(0.05)
         time.sleep(1)
-        shot(f"workspace-swipe-{suffix}")
+        shot(f"workspace-swipe-{suffix}", audit=False)
         adb("shell", "input", "motionevent", "MOVE", str(start), str(y))
         adb("shell", "input", "motionevent", "UP", str(start), str(y))
         time.sleep(2)
