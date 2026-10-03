@@ -90,6 +90,7 @@ internal object WorkspaceSwipeRules {
 internal class WorkspaceSwitchState(private val scope: CoroutineScope) {
     private val offset = Animatable(0f)
     private var rawOffset = 0f
+    private var shownProfileId: String? = null
     var width by mutableFloatStateOf(0f)
 
     /** A switch is running: the dock and the swipe wait for it. */
@@ -157,6 +158,7 @@ internal class WorkspaceSwitchState(private val scope: CoroutineScope) {
         try {
             offset.animateTo(direction * width, VolaMotion.fast())
             if (select(profileId)) {
+                shownProfileId = profileId
                 offset.snapTo(-direction * width * WorkspaceSwipeRules.ENTER_FRACTION)
                 onSelected()
             }
@@ -171,9 +173,14 @@ internal class WorkspaceSwitchState(private val scope: CoroutineScope) {
         }
     }
 
-    /** A workspace changed elsewhere (settings, a link): the overview slides it in all the same. */
-    suspend fun playEnter() {
-        if (switching) return
+    /**
+     * The overview shows [profileId]. When it changed elsewhere (settings, a link) it slides in all
+     * the same; the first workspace the overview shows just appears, under the hero entry.
+     */
+    suspend fun show(profileId: String) {
+        val previous = shownProfileId
+        shownProfileId = profileId
+        if (switching || previous == null || previous == profileId) return
         offset.snapTo(width * WorkspaceSwipeRules.ENTER_FRACTION)
         offset.animateTo(0f, VolaMotion.standard())
     }

@@ -465,7 +465,7 @@ internal fun TabOverview(
         ) {
             pagerState.scrollToPage(selectedIndex)
         }
-        workspaceSwitch.playEnter()
+        workspaceSwitch.show(controller.activeProfileId)
     }
 
     val candyTrailTransition = updateTransition(
