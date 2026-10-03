@@ -133,7 +133,7 @@ class SnoozeScreensInstrumentedTest {
             closableTabId = requireNotNull(
                 browserController.createBackgroundTab("https://closable.example"),
             )
-            assertTrue(browserController.setTabPinned(pinnedTabId, true))
+            assertTrue(browserController.tabOrder.setPinned(pinnedTabId, true))
             browserController.selectTab(pinnedTabId)
         }
         composeRule.setContent {

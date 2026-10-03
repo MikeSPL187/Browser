@@ -340,14 +340,14 @@ class TabOverviewReorderInstrumentedTest {
             browserController.createBackgroundTab("https://adjacent-hero.example")
             browserController.updateTabOverviewMode(TabOverviewMode.Hero)
             stackId = requireNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf(selectedTabId, stackedTabId),
                     name = "Research",
                     color = TabStackColor.Blueberry,
                     previewTabId = stackedTabId,
                 ),
             )
-            assertTrue(browserController.toggleTabStackCollapsed(stackId))
+            assertTrue(browserController.tabStackController.toggleCollapsed(stackId))
         }
         setOverviewContent(browserController)
         composeRule.waitForIdle()
@@ -402,7 +402,7 @@ class TabOverviewReorderInstrumentedTest {
         composeRule.onNodeWithTag(TabStackTestTags.DialogConfirm).performClick()
 
         composeRule.runOnIdle {
-            val stack = browserController.activeTabStacks.single()
+            val stack = browserController.tabStackController.activeStacks.single()
             assertEquals("Research", stack.name)
             assertEquals(setOf(selectedTabId, secondTabId), stack.tabIds.toSet())
         }
@@ -431,7 +431,7 @@ class TabOverviewReorderInstrumentedTest {
             )
             browserController.updateTabOverviewMode(TabOverviewMode.Hero)
             stackId = requireNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf(anchorTabId, distantTabId),
                     name = "Distant",
                     color = TabStackColor.Blueberry,
@@ -519,13 +519,13 @@ class TabOverviewReorderInstrumentedTest {
             )
             browserController.updateTabOverviewMode(TabOverviewMode.Grid)
             stackId = requireNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf(selectedTabId, stackedTabId),
                     name = "Research",
                     color = TabStackColor.Blueberry,
                 ),
             )
-            assertTrue(browserController.toggleTabStackCollapsed(stackId))
+            assertTrue(browserController.tabStackController.toggleCollapsed(stackId))
         }
         setOverviewContent(browserController)
         composeRule.waitForIdle()
@@ -551,7 +551,10 @@ class TabOverviewReorderInstrumentedTest {
         composeRule.onNodeWithTag(TabStackTestTags.folderTab(stackedTabId)).assertIsDisplayed()
         composeRule.onNodeWithTag(TabStackTestTags.previewChoice(stackedTabId)).performClick()
         composeRule.runOnIdle {
-            assertEquals(stackedTabId, browserController.activeTabStacks.single().previewTabId)
+            assertEquals(
+                stackedTabId,
+                browserController.tabStackController.activeStacks.single().previewTabId,
+            )
         }
         composeRule.onNodeWithTag(TabStackTestTags.folderTab(selectedTabId)).performClick()
         composeRule.waitForIdle()
@@ -594,7 +597,7 @@ class TabOverviewReorderInstrumentedTest {
             assertEquals(originalOrder, browserController.activeTabs.map(BrowserTab::id))
             assertEquals(
                 listOf(selectedTabId, adjacentTabId, destinationTabId),
-                browserController.gridOverviewTabs.map(BrowserTab::id),
+                browserController.tabStackController.overviewTabs.map(BrowserTab::id),
             )
         }
     }
@@ -838,7 +841,7 @@ class TabOverviewReorderInstrumentedTest {
             pinnedTabId = requireNotNull(
                 browserController.createBackgroundTab("https://grid-pinned.example"),
             )
-            browserController.setTabPinned(pinnedTabId, true)
+            browserController.tabOrder.setPinned(pinnedTabId, true)
             browserController.updateTabOverviewMode(TabOverviewMode.Grid)
         }
         setOverviewContent(browserController)
@@ -1172,7 +1175,7 @@ class TabOverviewReorderInstrumentedTest {
             browserController = BrowserController(composeRule.activity)
             controller = browserController
             pinnedTabId = browserController.selectedTabId
-            assertTrue(browserController.setTabPinned(pinnedTabId, true))
+            assertTrue(browserController.tabOrder.setPinned(pinnedTabId, true))
             var newestTabId = pinnedTabId
             repeat(14) { index ->
                 newestTabId = requireNotNull(

@@ -44,12 +44,12 @@ class BrowserControllerTabReorderInstrumentedTest {
             )
             val firstController = BrowserController(activity).also { controller = it }
 
-            assertTrue(firstController.reorderTab("regular-b", 0))
+            assertTrue(firstController.tabOrder.move("regular-b", 0))
             assertEquals(
                 listOf("pin-a", "pin-b", "regular-b", "regular-a"),
                 firstController.activeTabs.map(BrowserTab::id),
             )
-            assertFalse(firstController.reorderTab("pin-b", 3))
+            assertFalse(firstController.tabOrder.move("pin-b", 3))
             assertEquals(
                 listOf("pin-a", "pin-b", "regular-b", "regular-a"),
                 firstController.activeTabs.map(BrowserTab::id),
@@ -86,7 +86,7 @@ class BrowserControllerTabReorderInstrumentedTest {
                 listOf("pin", "regular-b", "regular-a"),
                 browserController.activeTabs.map(BrowserTab::id),
             )
-            assertFalse(browserController.reorderTab("regular-a", 1))
+            assertFalse(browserController.tabOrder.move("regular-a", 1))
         }
     }
 

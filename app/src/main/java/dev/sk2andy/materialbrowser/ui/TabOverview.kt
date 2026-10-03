@@ -741,7 +741,7 @@ internal fun TabOverview(
                         heroReorderDropAnimating = true
                         withFrameNanos { }
                     }
-                    val changed = commit && orderUnchanged && controller.reorderTab(
+                    val changed = commit && orderUnchanged && controller.tabOrder.move(
                         tabId = settling.tabId,
                         destinationIndex = destinationIndex,
                     )
@@ -1808,13 +1808,13 @@ internal fun TabOverview(
                         tabsWithUpdatedPin
                     }.map(BrowserTab::id)
                     if (controller.tabOverviewMode != TabOverviewMode.Hero) {
-                        if (controller.setTabPinned(target.id, !target.isPinned)) {
+                        if (controller.tabOrder.setPinned(target.id, !target.isPinned)) {
                             rootView.performConfirmHaptic()
                         }
                         return@launch
                     }
                     if (oldOrder == newOrder) {
-                        if (controller.setTabPinned(target.id, !target.isPinned)) {
+                        if (controller.tabOrder.setPinned(target.id, !target.isPinned)) {
                             rootView.performConfirmHaptic()
                         }
                         return@launch
@@ -1830,7 +1830,7 @@ internal fun TabOverview(
                         // Switch Pager to temporary position keys before list mutation. Stable tab
                         // keys would move viewport anchor with target and break FLIP start positions.
                         withFrameNanos { }
-                        if (!controller.setTabPinned(target.id, !target.isPinned)) return@launch
+                        if (!controller.tabOrder.setPinned(target.id, !target.isPinned)) return@launch
                         reorderLayoutReady = true
                         withFrameNanos { }
                         rootView.performConfirmHaptic()

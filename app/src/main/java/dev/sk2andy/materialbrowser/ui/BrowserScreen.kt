@@ -789,7 +789,7 @@ internal fun BrowserScreen(
             AddressBarLongPressAction.ToggleFavorite ->
                 toggleFavoriteWithFeedback(selectedTab.id)
             AddressBarLongPressAction.TogglePinned -> {
-                if (controller.setTabPinned(selectedTab.id, !selectedTab.isPinned)) {
+                if (controller.tabOrder.setPinned(selectedTab.id, !selectedTab.isPinned)) {
                     rootView.performConfirmHaptic()
                 }
             }
@@ -906,7 +906,7 @@ internal fun BrowserScreen(
             return true
         }
         override fun setSelectedTabPinned(isPinned: Boolean): Boolean =
-            controller.setTabPinned(controller.selectedTabId, isPinned)
+            controller.tabOrder.setPinned(controller.selectedTabId, isPinned)
         override fun closeDuplicateTabs(confirmedTabIds: List<String>): Int =
             controller.closeDuplicateTabs(confirmedTabIds)
         override fun moveSelectedTabToProfile(profileId: String): Boolean =
