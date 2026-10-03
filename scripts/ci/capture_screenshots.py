@@ -309,7 +309,8 @@ def tour(suffix):
         adb(*airplane, "enable", check=False, capture=True)
         try:
             time.sleep(5)
-            open_url("https://example.org/")
+            # A new address in every pass: Gecko would show an already visited page from cache.
+            open_url(f"https://example.org/?vola-offline-{suffix}")
             time.sleep(8)
             shot(f"page-offline-{suffix}")
         finally:
