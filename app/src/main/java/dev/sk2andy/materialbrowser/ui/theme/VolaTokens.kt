@@ -266,6 +266,12 @@ internal object VolaAddressEditor {
 }
 
 /** The workspace gem (`.gem` in vola4.css): the workspace icon on its primary color. */
+/** The workspace swipe of the tab overview (board W-WorkspaceSwipe). */
+internal object VolaWorkspaceSwipe {
+    /** A flick this fast switches the workspace however short it was. */
+    val flingVelocity = 1000.dp
+}
+
 internal object VolaGem {
     /** Corner radius as a share of the gem's size: 11 dp on a 32 dp gem. */
     const val CORNER_FRACTION = 0.34f
