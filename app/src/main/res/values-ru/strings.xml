@@ -749,11 +749,11 @@
     <string name="settings_https_only_summary">Vola переводит каждое соединение на защищённый HTTPS и предупреждает, прежде чем открыть сайт, который работает только по незащищённому HTTP.</string>
     <string name="settings_https_only_unavailable">Недоступно с System WebView</string>
     <string name="settings_https_only_system_webview_summary">Доступно только с GeckoView.</string>
-    <string name="https_only_error_title">Защищённая версия сайта недоступна</string>
-    <string name="https_only_error_body">Vola открывает сайты только по защищённому соединению HTTPS, но %1$s его не поддерживает. Скорее всего, у сайта просто нет HTTPS, но кто-то может и вмешиваться в ваше соединение.</string>
-    <string name="https_only_error_advice">Если продолжить, данные, которые вы отправляете и получаете на этом сайте, смогут прочитать и изменить другие участники сети.</string>
-    <string name="https_only_error_continue">Перейти на HTTP-сайт</string>
-    <string name="https_only_error_back">Назад</string>
+    <string name="https_only_error_title">У сайта нет защищённой версии</string>
+    <string name="https_only_error_body">Vola открывает сайты только по HTTPS. %1$s не поддерживает защищённое соединение: всё, что вы увидите или введёте, могут прочитать или подменить по пути.</string>
+    <string name="https_only_error_advice">Не вводите на таком сайте пароли и данные карт.</string>
+    <string name="https_only_error_continue">Всё равно открыть по HTTP</string>
+    <string name="https_only_error_back">Вернуться назад</string>
     <string name="settings_dns_over_https_title">Зашифрованный DNS (DoH)</string>
     <string name="settings_dns_over_https_provider_system">Системный</string>
     <string name="settings_dns_over_https_provider_cloudflare">Cloudflare</string>

@@ -288,8 +288,9 @@ def tour(suffix):
     step("https-upgrade", https_upgrade)
 
     def https_only_warning():
-        # neverssl.com deliberately avoids HTTPS, so HTTPS-only mode ends on its warning page.
-        open_url("http://neverssl.com/")
+        # httpforever.com deliberately has no HTTPS, so HTTPS-only mode ends on its warning page.
+        # (neverssl.com now redirects to subdomains that do serve HTTPS.)
+        open_url("http://httpforever.com/")
         time.sleep(10)
         shot(f"https-only-early-{suffix}")
         time.sleep(30)
@@ -655,7 +656,7 @@ def main():
     gecko = (adb("logcat", "-d", check=False, capture=True) or b"").decode("utf-8", "replace")
     https_lines = [
         line for line in gecko.splitlines()
-        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl", line, re.I)
+        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl|httpforever", line, re.I)
     ]
     (OUT / "https-only-log.txt").write_text("\n".join(https_lines[-400:]) + "\n")
     (OUT / "tour-log.txt").write_text("\n".join(LOG) + "\n")
