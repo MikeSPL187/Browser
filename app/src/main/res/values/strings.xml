@@ -1472,6 +1472,15 @@
     <string name="tab_search_close">Close search</string>
     <string name="tab_search_empty_title">No tabs found</string>
     <string name="tab_search_empty_message">Try another word or part of the address.</string>
+    <plurals name="site_info_trackers_blocked">
+        <item quantity="one">%d tracker blocked</item>
+        <item quantity="other">%d trackers blocked</item>
+    </plurals>
+    <string name="site_info_nothing_blocked">Nothing blocked on this page yet</string>
+    <string name="site_info_permissions_title">Site permissions</string>
+    <string name="site_info_all_permissions">All permissions</string>
+    <string name="site_info_protection_summary">Turn it off if the site doesn’t work properly</string>
+    <string name="site_info_permission_session">This session</string>
     <string name="workspace_icons_all">All icons</string>
     <string name="workspace_icons_fewer">Fewer icons</string>
 </resources>

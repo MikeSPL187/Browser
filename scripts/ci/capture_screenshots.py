@@ -234,6 +234,29 @@ def tour(suffix):
         time.sleep(1)
     step("find", find_in_page)
 
+    def site_info():
+        """Site information (board W-SiteInfo) from the badge in the address bar, then X-Ray."""
+        labels = ("Open site information", "Открыть сведения о сайте")
+        if not find(*labels, contains=True):
+            # The scrolled page left the compact capsule, which exposes no label: tap its spot.
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
+            time.sleep(2)
+        if not tap(*labels, contains=True):
+            log("not found: site information badge")
+            return
+        time.sleep(3)
+        shot(f"site-info-{suffix}")
+        save_ui(f"site-info-{suffix}")
+        if tap("Privacy X-Ray", "Рентген приватности"):
+            time.sleep(2)
+            shot(f"site-info-xray-{suffix}")
+            # The bar's Back returns to the overview; a missed tap must not leave the page.
+            if tap("Back", "Назад"):
+                time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("site-info", site_info)
+
     def address_editor():
         # The address editor over the Zen page: library, search and open-tab suggestions (Q4).
         address = find("wikipedia.org", contains=True)
