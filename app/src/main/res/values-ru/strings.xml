@@ -1504,4 +1504,6 @@
     <string name="tab_search_close">Закрыть поиск</string>
     <string name="tab_search_empty_title">Вкладки не найдены</string>
     <string name="tab_search_empty_message">Попробуйте другое слово или часть адреса.</string>
+    <string name="workspace_icons_all">Все значки</string>
+    <string name="workspace_icons_fewer">Свернуть</string>
 </resources>
