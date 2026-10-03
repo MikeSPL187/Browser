@@ -356,6 +356,10 @@ def tour(suffix):
         if tap(*ADD_WORKSPACE_LABELS):
             time.sleep(2)
             shot(f"workspace-new-{suffix}")
+            # Two rows of icons until «All icons» opens the rest.
+            if tap("All icons", "Все значки"):
+                time.sleep(2)
+                shot(f"workspace-new-icons-{suffix}")
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         else:

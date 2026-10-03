@@ -1481,4 +1481,6 @@
     <string name="site_info_all_permissions">All permissions</string>
     <string name="site_info_protection_summary">Turn it off if the site doesn’t work properly</string>
     <string name="site_info_permission_session">This session</string>
+    <string name="workspace_icons_all">All icons</string>
+    <string name="workspace_icons_fewer">Fewer icons</string>
 </resources>
