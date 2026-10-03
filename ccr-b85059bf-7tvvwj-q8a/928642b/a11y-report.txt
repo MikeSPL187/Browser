@@ -1,0 +1,3 @@
+Vola controls in the tour: 1 accessibility finding(s).
+- [known] unlabeled | View | appearance — appearance-dark, appearance-light, appearance-ru
+- [gone] unlabeled | View | workspace-options — not seen in this tour; delete it from the baseline if fixed
