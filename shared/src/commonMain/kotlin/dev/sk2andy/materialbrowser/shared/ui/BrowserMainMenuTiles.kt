@@ -5,9 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,8 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -64,6 +69,17 @@ object BrowserMainMenuTileRules {
     /** Page and Vola actions become tiles; toolbar, user-script commands and the library stay. */
     fun isTile(item: BrowserFeatureMenuItem): Boolean = item.section in TILE_SECTIONS
 
+    /** Font scales at which the grid drops to three and then two columns. */
+    const val THREE_COLUMN_FONT_SCALE = 1.3f
+    const val TWO_COLUMN_FONT_SCALE = 1.8f
+
+    /** Large text gets wider tiles, so a label still breaks between words, not inside them. */
+    fun columnsFor(baseColumns: Int, fontScale: Float): Int = when {
+        fontScale >= TWO_COLUMN_FONT_SCALE -> minOf(baseColumns, 2)
+        fontScale >= THREE_COLUMN_FONT_SCALE -> minOf(baseColumns, 3)
+        else -> baseColumns
+    }.coerceAtLeast(1)
+
     /** Rows of the grid in menu order; the last row may be short. */
     fun <T> rows(items: List<T>, columns: Int): List<List<T>> = items.chunked(columns.coerceAtLeast(1))
 
@@ -99,12 +115,17 @@ fun BrowserMainMenuTileGrid(
     onToggle: (BrowserFeatureMenuItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val columns = BrowserMainMenuTileRules.columnsFor(tiles.columns, LocalDensity.current.fontScale)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(tiles.spacing),
     ) {
-        BrowserMainMenuTileRules.rows(items, tiles.columns).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(tiles.spacing)) {
+        BrowserMainMenuTileRules.rows(items, columns).forEach { row ->
+            // Tiles of a row share the tallest label's height.
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(tiles.spacing),
+            ) {
                 row.forEach { item ->
                     BrowserMainMenuTile(
                         item = item,
@@ -113,10 +134,12 @@ fun BrowserMainMenuTileGrid(
                         effects = effects,
                         onCommand = onCommand,
                         onToggle = onToggle,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                     )
                 }
-                repeat(tiles.columns - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
@@ -182,7 +205,7 @@ private fun BrowserMainMenuTile(
                 fontSize = tiles.labelFontSize,
                 lineHeight = tiles.labelLineHeight,
                 fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(hyphens = Hyphens.Auto),
             )
         }
     }

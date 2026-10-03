@@ -58,6 +58,14 @@ class BrowserMainMenuTileRulesTest {
     }
 
     @Test
+    fun `large text gets fewer, wider columns`() {
+        assertEquals(4, BrowserMainMenuTileRules.columnsFor(baseColumns = 4, fontScale = 1f))
+        assertEquals(3, BrowserMainMenuTileRules.columnsFor(baseColumns = 4, fontScale = 1.3f))
+        assertEquals(2, BrowserMainMenuTileRules.columnsFor(baseColumns = 4, fontScale = 2f))
+        assertEquals(2, BrowserMainMenuTileRules.columnsFor(baseColumns = 2, fontScale = 1.5f))
+    }
+
+    @Test
     fun `only toggles with a state switch in place`() {
         val desktop = items.first { item -> item.action == BrowserFeatureMenuAction.ToggleDesktopView }
         val reader = items.first { item -> item.action == BrowserFeatureMenuAction.OpenReader }

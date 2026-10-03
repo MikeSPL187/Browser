@@ -447,7 +447,7 @@ internal object VolaMenu {
     val rowLabelSize = 15.sp
     val groupRadius = 22.dp
 
-    /** Four tiles a row: an icon over a two-line label; a toggle that is on is tinted. */
+    /** Four tiles a row (fewer at large text): an icon over a short label; a toggle that is on is tinted. */
     val tiles = BrowserMainMenuTileStyle(
         columns = 4,
         tileHeight = 84.dp,
@@ -458,7 +458,7 @@ internal object VolaMenu {
         horizontalPadding = VolaSpacing.x1,
         labelFontSize = 12.sp,
         labelLineHeight = 14.sp,
-        labelMaxLines = 2,
+        labelMaxLines = 3,
         disabledAlpha = 0.38f,
         handleSize = DpSize(36.dp, 4.dp),
         handleTopPadding = 10.dp,
