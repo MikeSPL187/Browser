@@ -1,12 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.graphics.Rect
-import android.view.accessibility.AccessibilityNodeInfo
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -15,16 +11,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
-import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
 import dev.sk2andy.materialbrowser.sync.SyncDeviceIconCatalog
-import java.util.ArrayDeque
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.compose.ui.test.onNodeWithContentDescription
 
 @RunWith(AndroidJUnit4::class)
 class ProfileCreationSheetInstrumentedTest {
@@ -39,174 +33,78 @@ class ProfileCreationSheetInstrumentedTest {
     }
 
     @Test
-    fun createsProfileWithSelectedIconAndIsolationMode() {
-        val createdProfile = AtomicReference<ProfileCreationSubmission?>()
-        composeRule.setContent {
-            MaterialTheme {
-                EmojiPickerSheet(
-                    visible = true,
-                    creatingProfile = true,
-                    isolationSupported = true,
-                    profileProtectionSupported = true,
-                    emojis = profileEmojis,
-                    selectedEmoji = null,
-                    onCreate = { emoji, isolationEnabled, options ->
-                        createdProfile.set(
-                            ProfileCreationSubmission(
-                                emoji,
-                                isolationEnabled,
-                                options.protection,
-                                options.wallpaperTargets,
-                            ),
-                        )
-                    },
-                    onSelect = {},
-                    onDismiss = {},
-                )
-            }
+    fun createsWorkspaceWithChosenIconStorageAndLock() {
+        val created = AtomicReference<Submission?>()
+        setSheet { emoji, isolationEnabled, options ->
+            created.set(Submission(emoji, isolationEnabled, options.protection))
         }
 
-        val createButton = composeRule.onNodeWithText(
-            context.getString(R.string.action_create_profile),
-        )
-        createButton.assertIsNotEnabled()
-
-        composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_work)).performClick()
-        composeRule.onNodeWithText(
-            context.getString(R.string.settings_profile_isolation_title),
-        ).performClick()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_work))
+            .performClick()
+        composeRule.onNodeWithTag(ProfileCreationTestTags.Isolation).performScrollTo().performClick()
         composeRule.onNodeWithTag(ProfileCreationOptionTestTags.Protection)
-            .assertIsDisplayed()
+            .performScrollTo()
             .performClick()
         composeRule.onNodeWithText(context.getString(R.string.action_save)).performClick()
-        composeRule.onNodeWithTag(ProfileCreationOptionTestTags.NewTabWallpaper)
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton)
+            .assertIsEnabled()
             .performClick()
-        composeRule.onNodeWithTag(ProfileCreationOptionTestTags.TabSwitcherWallpaper)
-            .assertIsDisplayed()
-            .performClick()
-        createButton.assertIsEnabled().performClick()
 
-        val submission = requireNotNull(createdProfile.get())
+        val submission = requireNotNull(created.get())
         assertEquals("💼", submission.emoji)
         assertTrue(submission.isolationEnabled)
         assertTrue(submission.protection != null)
-        assertEquals(ProfileWallpaperTarget.entries.toSet(), submission.wallpaperTargets)
     }
 
     @Test
-    fun creationOptionsScrollWhileCreateButtonStaysFixed() {
+    fun aNewWorkspaceStartsWithAnIconChosen() {
+        val created = AtomicReference<String?>()
+        setSheet { emoji, _, _ -> created.set(emoji) }
+
+        composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton)
+            .assertIsEnabled()
+            .performClick()
+
+        assertEquals(profileEmojis.first(), created.get())
+    }
+
+    @Test
+    fun theCreateButtonStaysPutWhileTheOptionsScroll() {
+        setSheet { _, _, _ -> }
+        val button = composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton)
+        val before = button.fetchSemanticsNode().boundsInRoot
+        val scroll = composeRule.onNodeWithTag(ProfileCreationTestTags.IconScroll)
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertTrue(scroll.bottom <= before.top)
+        composeRule.onNodeWithTag(ProfileCreationOptionTestTags.Protection).performScrollTo()
+        composeRule.waitForIdle()
+
+        val after = button.fetchSemanticsNode().boundsInRoot
+        assertEquals(before.top, after.top, 0.5f)
+        assertEquals(before.bottom, after.bottom, 0.5f)
+    }
+
+    private fun setSheet(onCreate: (String, Boolean, ProfileCreationOptions) -> Unit) {
         composeRule.setContent {
-            MaterialTheme {
-                EmojiPickerSheet(
+            MaterialBrowserTheme {
+                NewWorkspaceSheet(
                     visible = true,
-                    creatingProfile = true,
                     isolationSupported = true,
                     profileProtectionSupported = true,
-                    emojis = profileEmojis,
-                    selectedEmoji = null,
-                    onCreate = { _, _, _ -> },
-                    onSelect = {},
+                    icons = profileEmojis,
+                    onCreate = onCreate,
                     onDismiss = {},
                 )
             }
         }
-
-        val isolationBounds = composeRule
-            .onNodeWithTag(ProfileCreationTestTags.Isolation)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val titleBounds = composeRule
-            .onNodeWithText(context.getString(R.string.add_profile_title))
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val sheetBounds = composeRule
-            .onNodeWithTag(ProfileCreationTestTags.Sheet)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val iconScrollBounds = composeRule
-            .onNodeWithTag(ProfileCreationTestTags.IconScroll)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val protectionBounds = composeRule
-            .onNodeWithTag(ProfileCreationOptionTestTags.Protection)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val newTabWallpaperBounds = composeRule
-            .onNodeWithTag(ProfileCreationOptionTestTags.NewTabWallpaper)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val tabSwitcherWallpaperBounds = composeRule
-            .onNodeWithTag(ProfileCreationOptionTestTags.TabSwitcherWallpaper)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val createButton = composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton)
-        val buttonBoundsBeforeScroll = createButton.fetchSemanticsNode().boundsInRoot
-
-        val displayHeight = context.resources.displayMetrics.heightPixels.toFloat()
-        val maxButtonBottomGap = context.resources.displayMetrics.density * 64f
-        val createButtonScreenBounds = screenBoundsForText(
-            context.getString(R.string.action_create_profile),
-        )
-        assertTrue(
-            "sheetHeight=${sheetBounds.height}, displayHeight=$displayHeight",
-            sheetBounds.height <= displayHeight * 0.9f + 1f,
-        )
-        assertTrue(
-            "buttonBottom=${createButtonScreenBounds.bottom}, " +
-                "displayHeight=$displayHeight, maxGap=$maxButtonBottomGap",
-            displayHeight - createButtonScreenBounds.bottom <= maxButtonBottomGap + 1f,
-        )
-        assertTrue(iconScrollBounds.height > 0f)
-        assertTrue(iconScrollBounds.top <= isolationBounds.top)
-        assertTrue(isolationBounds.bottom <= protectionBounds.top)
-        assertTrue(protectionBounds.bottom <= newTabWallpaperBounds.top)
-        assertTrue(newTabWallpaperBounds.bottom <= tabSwitcherWallpaperBounds.top)
-        assertTrue(tabSwitcherWallpaperBounds.bottom < titleBounds.top)
-        assertTrue(titleBounds.bottom <= iconScrollBounds.bottom)
-        assertTrue(iconScrollBounds.bottom <= buttonBoundsBeforeScroll.top)
-
-        composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_calendar)).performScrollTo()
         composeRule.waitForIdle()
-
-        val iconScrollBoundsAfterScroll = composeRule
-            .onNodeWithTag(ProfileCreationTestTags.IconScroll)
-            .fetchSemanticsNode()
-            .boundsInRoot
-        val buttonBoundsAfterScroll = createButton.fetchSemanticsNode().boundsInRoot
-        assertEquals(iconScrollBounds.top, iconScrollBoundsAfterScroll.top, 0.5f)
-        assertEquals(iconScrollBounds.bottom, iconScrollBoundsAfterScroll.bottom, 0.5f)
-        assertEquals(buttonBoundsBeforeScroll.top, buttonBoundsAfterScroll.top, 0.5f)
-        assertEquals(buttonBoundsBeforeScroll.bottom, buttonBoundsAfterScroll.bottom, 0.5f)
     }
 
-    private data class ProfileCreationSubmission(
+    private data class Submission(
         val emoji: String,
         val isolationEnabled: Boolean,
         val protection: ProfileProtection?,
-        val wallpaperTargets: Set<ProfileWallpaperTarget>,
     )
-
-    private fun screenBoundsForText(text: String): Rect {
-        var resolvedBounds: Rect? = null
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
-                ?.let { root -> findTextBounds(root, text) }
-                ?.also { resolvedBounds = it } != null
-        }
-        return checkNotNull(resolvedBounds)
-    }
-
-    private fun findTextBounds(root: AccessibilityNodeInfo, text: String): Rect? {
-        val pending = ArrayDeque<AccessibilityNodeInfo>()
-        pending += root
-        while (pending.isNotEmpty()) {
-            val node = pending.removeFirst()
-            if (node.text?.toString() == text) {
-                return Rect().also(node::getBoundsInScreen)
-            }
-            repeat(node.childCount) { index -> node.getChild(index)?.let(pending::addLast) }
-        }
-        return null
-    }
 }

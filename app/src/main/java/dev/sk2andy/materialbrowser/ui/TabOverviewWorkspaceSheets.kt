@@ -25,17 +25,17 @@ internal class WorkspaceSheetsState {
     var isolationChange by mutableStateOf<Pair<String, Boolean>?>(null)
     var protectionTargetId by mutableStateOf<String?>(null)
 
-    /** The workspace whose icon is being picked, or [NEW_PROFILE_TARGET] for a new one. */
-    var emojiPickerTargetId by mutableStateOf<String?>(null)
+    /** «New workspace» is open. */
+    var creating by mutableStateOf(false)
 
     val isOpen: Boolean
         get() = actionsProfileId != null ||
             isolationChange != null ||
             protectionTargetId != null ||
-            emojiPickerTargetId != null
+            creating
 
     fun startCreating() {
-        emojiPickerTargetId = NEW_PROFILE_TARGET
+        creating = true
     }
 
     /** A workspace that just locked takes its open sheets with it. */
@@ -43,11 +43,10 @@ internal class WorkspaceSheetsState {
         if (actionsProfileId in lockedProfileIds) actionsProfileId = null
         if (isolationChange?.first in lockedProfileIds) isolationChange = null
         if (protectionTargetId in lockedProfileIds) protectionTargetId = null
-        if (emojiPickerTargetId in lockedProfileIds) emojiPickerTargetId = null
     }
 }
 
-/** The workspace sheets of the tab overview: settings, protection, storage and the icon picker. */
+/** The workspace sheets of the tab overview: new workspace, its settings, protection, storage. */
 @Composable
 internal fun TabOverviewWorkspaceSheets(
     controller: BrowserController,
@@ -59,56 +58,53 @@ internal fun TabOverviewWorkspaceSheets(
     val actionProfile = state.actionsProfileId?.let { profileId ->
         controller.localBrowserProfiles.firstOrNull { it.id == profileId }
     }
-    ProfileActionsSheet(
+    val icons = controller.syncIconCatalog.icons.map { it.emoji }
+    // Closes the settings sheet, then runs [action] on its workspace.
+    fun closeThen(action: (String) -> Unit) {
+        val target = actionProfile ?: return
+        state.actionsProfileId = null
+        action(target.id)
+    }
+    WorkspaceSettingsSheet(
         profile = actionProfile,
+        tabCount = actionProfile?.let { WorkspaceSheetRules.tabCount(controller.tabs, it.id) } ?: 0,
+        essentialsCount = actionProfile?.let { controller.essentials.entriesFor(it.id).size } ?: 0,
+        icons = icons,
         canDelete = controller.localBrowserProfiles.size > 1,
         isolationSupported = controller.isProfileIsolationSupported,
-        onChangeEmoji = {
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
-            state.emojiPickerTargetId = target.id
+        profileProtectionSupported = controller.isProfileProtectionSupported,
+        onRename = { name ->
+            actionProfile?.let { target -> controller.updateProfileName(target.id, name) }
+        },
+        onAccentChange = { accent ->
+            val target = actionProfile ?: return@WorkspaceSettingsSheet
+            if (controller.updateProfileAccent(target.id, accent)) rootView.performConfirmHaptic()
+        },
+        onIconChange = { emoji ->
+            val target = actionProfile ?: return@WorkspaceSettingsSheet
+            if (controller.updateProfileEmoji(target.id, emoji)) rootView.performConfirmHaptic()
         },
         onCustomizeWallpaper = { wallpaperTarget ->
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
-            onEditProfileWallpaper(target.id, wallpaperTarget)
-        },
-        onDelete = {
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
-            controller.deleteProfileAsync(target.id) { deleted ->
-                if (deleted) rootView.performConfirmHaptic()
-            }
+            closeThen { profileId -> onEditProfileWallpaper(profileId, wallpaperTarget) }
         },
         onIsolationChange = { enabled ->
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
-            state.isolationChange = target.id to enabled
+            closeThen { profileId -> state.isolationChange = profileId to enabled }
         },
-        profileProtectionSupported = controller.isProfileProtectionSupported,
-        onConfigureProtection = {
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
-            state.protectionTargetId = target.id
-        },
+        onEnableProtection = { closeThen { profileId -> state.protectionTargetId = profileId } },
         onDisableProtection = {
-            val target = actionProfile ?: return@ProfileActionsSheet
-            state.actionsProfileId = null
+            val target = actionProfile ?: return@WorkspaceSettingsSheet
             controller.updateProfileProtection(target.id, protection = null) { changed ->
                 if (changed) rootView.performConfirmHaptic()
             }
         },
-        onDismiss = { state.actionsProfileId = null },
-        onRename = { name ->
-            val target = actionProfile ?: return@ProfileActionsSheet
-            controller.updateProfileName(target.id, name)
-        },
-        onAccentChange = { accent ->
-            val target = actionProfile ?: return@ProfileActionsSheet
-            if (controller.updateProfileAccent(target.id, accent)) {
-                rootView.performConfirmHaptic()
+        onDelete = {
+            closeThen { profileId ->
+                controller.deleteProfileAsync(profileId) { deleted ->
+                    if (deleted) rootView.performConfirmHaptic()
+                }
             }
         },
+        onDismiss = { state.actionsProfileId = null },
     )
 
     val protectionProfile = state.protectionTargetId?.let { profileId ->
@@ -160,18 +156,12 @@ internal fun TabOverviewWorkspaceSheets(
         )
     }
 
-    val emojiPickerTarget = state.emojiPickerTargetId
-    EmojiPickerSheet(
-        visible = emojiPickerTarget != null,
-        creatingProfile = emojiPickerTarget == NEW_PROFILE_TARGET,
+    NewWorkspaceSheet(
+        visible = state.creating,
         isolationSupported = controller.isProfileIsolationSupported,
         profileProtectionSupported = controller.isProfileProtectionSupported,
-        emojis = controller.syncIconCatalog.icons.map { it.emoji },
-        selectedEmoji = controller.localBrowserProfiles
-            .firstOrNull { it.id == emojiPickerTarget }
-            ?.emoji,
+        icons = icons,
         onCreate = { emoji, isolationEnabled, options ->
-            if (emojiPickerTarget != NEW_PROFILE_TARGET) return@EmojiPickerSheet
             val profileId = controller.createProfile(
                 emoji = emoji,
                 isolationEnabled = isolationEnabled,
@@ -179,18 +169,11 @@ internal fun TabOverviewWorkspaceSheets(
                 accent = options.accent,
             )
             if (profileId != null) {
-                state.emojiPickerTargetId = null
+                state.creating = false
                 rootView.performConfirmHaptic()
                 onConfigureCreatedProfile(profileId, options)
             }
         },
-        onSelect = { emoji ->
-            val target = emojiPickerTarget ?: return@EmojiPickerSheet
-            if (target == NEW_PROFILE_TARGET) return@EmojiPickerSheet
-            state.emojiPickerTargetId = null
-            val changed = controller.updateProfileEmoji(target, emoji)
-            if (changed) rootView.performConfirmHaptic()
-        },
-        onDismiss = { state.emojiPickerTargetId = null },
+        onDismiss = { state.creating = false },
     )
 }
