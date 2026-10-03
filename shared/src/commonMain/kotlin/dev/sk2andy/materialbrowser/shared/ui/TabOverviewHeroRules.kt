@@ -66,6 +66,18 @@ object TabOverviewHeroRules {
         ),
     ) * contentAlpha(exitProgress = exitProgress, isExiting = isExiting)
 
+    /**
+     * How round the hero's top corners are, as a share of its target radius. A grid card's page
+     * sits square under its title row, so the hero squares its top off while the title row fades
+     * in and lands in the card's exact shape, in both directions.
+     */
+    fun topCornerFraction(targetFraction: Float, squareTopTarget: Boolean): Float =
+        if (squareTopTarget) {
+            ((1f - targetFraction) / (1f - COMPACT_CHROME_START)).coerceIn(0f, 1f)
+        } else {
+            1f
+        }
+
     fun neighborAlpha(entryProgress: Float): Float =
         ((entryProgress - NEIGHBOR_ENTRY_START) / (1f - NEIGHBOR_ENTRY_START))
             .coerceIn(0f, 1f)

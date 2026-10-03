@@ -551,6 +551,8 @@
     <string name="settings_automatic_tab_sorting_subtitle">Least recently used first, most recent last. Pins stay first; manual sorting is disabled.</string>
     <string name="cd_scroll_to_pinned_tabs">Show pinned tabs</string>
     <string name="settings_auto_close_tabs">Automatically close tabs</string>
+    <string name="settings_archive_inactive_tabs_title">Archive instead of closing</string>
+    <string name="settings_archive_inactive_tabs_summary">Inactive tabs move to Snoozed tabs, where you can reopen them.</string>
     <string name="settings_resident_tab_limit">Tabs kept loaded</string>
     <plurals name="settings_resident_tab_limit_summary">
         <item quantity="one">Keep the most recently used tab loaded. Other tabs keep their previews and reload when opened.</item>
@@ -1132,6 +1134,7 @@
     <string name="snoozed_tabs_empty_title">No snoozed tabs</string>
     <string name="snoozed_tabs_empty_body">Long-press a tab in the switcher or use its ⋮ menu to snooze it.</string>
     <string name="snoozed_until">Returns %1$s</string>
+    <string name="snoozed_archived_at">Archived %1$s</string>
     <string name="action_reschedule">Change time</string>
     <string name="action_open_now">Open now</string>
     <string name="snooze_invalid_time">Choose a future date and time</string>
@@ -1445,4 +1448,18 @@
     </plurals>
     <string name="tab_card_current">current tab</string>
     <string name="tab_overview_open_essential">open</string>
+    <!-- Tab actions sheet and tab search (Q7b) -->
+    <string name="tab_actions_dismiss">Close tab actions</string>
+    <string name="tab_actions_add_essential">Add to Essentials</string>
+    <string name="tab_actions_remove_essential">Remove from Essentials</string>
+    <string name="tab_actions_duplicate">Duplicate</string>
+    <string name="tab_actions_pin">Pin</string>
+    <string name="tab_actions_share">Share</string>
+    <string name="tab_actions_add_to_group">Add to group</string>
+    <string name="tab_actions_more">More</string>
+    <string name="tab_actions_unmute_site">Unmute this site</string>
+    <string name="tab_search_hint">Search tabs</string>
+    <string name="tab_search_close">Close search</string>
+    <string name="tab_search_empty_title">No tabs found</string>
+    <string name="tab_search_empty_message">Try another word or part of the address.</string>
 </resources>

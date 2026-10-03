@@ -44,8 +44,8 @@ internal object SnoozeScheduleRules {
     private const val OVERDUE_RETRY_DELAY_MILLIS = 15 * 60 * 1_000L
 
     fun nextTriggerAt(tabs: List<SnoozedTab>, nowMillis: Long): Long? {
-        if (tabs.isEmpty()) return null
-        val earliest = tabs.minOf(SnoozedTab::wakeAtMillis)
+        val earliest = tabs.filterNot(SnoozedTab::isArchived)
+            .minOfOrNull(SnoozedTab::wakeAtMillis) ?: return null
         return if (earliest > nowMillis) earliest else nowMillis + OVERDUE_RETRY_DELAY_MILLIS
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
@@ -609,4 +610,17 @@ private fun ColorScheme.withSurfaceStyle(style: BrowserSurfaceStyle): ColorSchem
         surfaceContainerHighest = lerp(surfaceContainerHighest, primary, 0.1f),
         outlineVariant = outlineVariant.copy(alpha = 0.72f),
     )
+}
+
+/**
+ * The aura the workspace in [accent] would show, so a workspace swipe can let it through under the
+ * finger. Null when the palette paints every workspace alike or a private tab sets the colors.
+ */
+@Composable
+internal fun workspaceAuraBrush(accent: WorkspaceAccent): ShaderBrush? {
+    if (LocalAppearanceSettings.current.colorPalette != BrowserColorPalette.Vola) return null
+    val dark = LocalVolaDarkTheme.current
+    val tokens = VolaColorRules.schemeSet(accent, privateMode = false)
+        .select(dark = dark, highContrast = rememberSystemHighContrast())
+    return VolaAura.brush(tokens.toExtendedColors(), dark)
 }

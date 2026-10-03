@@ -1509,6 +1509,9 @@ class BrowserController(
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
     private val snoozeScheduler = SnoozeScheduler(activity)
+    val inactiveTabArchive = InactiveTabArchive(store, snoozedTabStore, snoozedTabs) { tab ->
+        !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id)
+    }
     private val snoozeRestoreCallback: (Long) -> Unit = { nowMillis ->
         mainHandler.post {
             if (!destroyed) restoreDueSnoozedTabs(nowMillis)
@@ -14800,7 +14803,9 @@ class BrowserController(
         nowMillis: Long = System.currentTimeMillis(),
         persistChanges: Boolean = true,
     ): Boolean = removeTabs(
-        tabIds = staleTabIds(nowMillis),
+        tabIds = inactiveTabArchive.closeOrArchive(
+            tabs, staleTabIds(nowMillis), inactiveTabLifetime, nowMillis,
+        ),
         nowMillis = nowMillis,
         persistChanges = persistChanges,
     )
@@ -14816,32 +14821,22 @@ class BrowserController(
     private fun closeTabsOnBackground(
         nowMillis: Long = System.currentTimeMillis(),
         protectedTabIds: Set<String> = emptySet(),
-    ): Boolean {
-        val closeIds = TabRetentionRules.tabIdsToCloseOnBackground(
-            tabs = tabs,
-            lifetime = inactiveTabLifetime,
-        ) - activeFederatedLoginFlowTabIds() - protectedTabIds
-        return removeTabs(
-            tabIds = closeIds,
-            nowMillis = nowMillis,
-            persistChanges = true,
-        )
-    }
+    ): Boolean = removeTabs(
+        tabIds = TabRetentionRules.tabIdsToCloseOnBackground(tabs, inactiveTabLifetime) -
+            activeFederatedLoginFlowTabIds() - protectedTabIds,
+        nowMillis = nowMillis,
+        persistChanges = true,
+    )
 
     private fun closeTabsOnTaskRemoval(
         nowMillis: Long = System.currentTimeMillis(),
         protectedTabIds: Set<String> = emptySet(),
-    ): Boolean {
-        val closeIds = TabRetentionRules.tabIdsToCloseOnTaskRemoval(
-            tabs = tabs,
-            lifetime = inactiveTabLifetime,
-        ) - activeFederatedLoginFlowTabIds() - protectedTabIds
-        return removeTabs(
-            tabIds = closeIds,
-            nowMillis = nowMillis,
-            persistChanges = true,
-        )
-    }
+    ): Boolean = removeTabs(
+        tabIds = TabRetentionRules.tabIdsToCloseOnTaskRemoval(tabs, inactiveTabLifetime) -
+            activeFederatedLoginFlowTabIds() - protectedTabIds,
+        nowMillis = nowMillis,
+        persistChanges = true,
+    )
 
     private fun removeTabs(
         tabIds: Set<String>,
