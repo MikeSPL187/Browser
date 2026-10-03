@@ -465,3 +465,25 @@ internal object VolaMenu {
         handleBottomPadding = VolaSpacing.x1,
     )
 }
+
+/** Site information (board W-SiteInfo): the site's gem, then cards of rows. */
+internal object VolaSiteInfo {
+    val sidePadding = VolaSpacing.x4
+    val bottomPadding = VolaSpacing.x5
+    val sectionGap = VolaSpacing.x3
+    val labelPadding = VolaSpacing.x2
+
+    val gemSize = 40.dp
+    val gemShape = RoundedCornerShape(14.dp)
+    val headerGap = VolaSpacing.x3
+
+    /** A card of rows divided by hairlines (board W-SiteInfo). */
+    val cardShape = RoundedCornerShape(22.dp)
+    val rowMinHeight = 52.dp
+    val rowHorizontalPadding = VolaSpacing.x4
+    val rowVerticalPadding = 10.dp
+    val rowGap = VolaSpacing.x4
+    val rowIconSize = 24.dp
+    val dividerInset = 56.dp
+    val dividerThickness = 1.dp
+}

@@ -123,6 +123,9 @@ internal fun BoxScope.BrowserModalSurfaces(
                     }
                 },
                 onDismiss = onPrivacyXRayDismiss,
+                canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
+                popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
+                onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
             )
         }
     }
