@@ -5,7 +5,10 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTileStyle
 
 /*
  * v4 design tokens from the Tokens board (docs/vola/design/canvas/W-Tokens.dc.html, vola4.css).
@@ -429,4 +432,36 @@ internal object VolaTabActions {
     /** Rows opened under a row (workspaces, groups, more) sit a step in. */
     val nestedIndent = VolaSpacing.x5
     val nestedGemSize = 28.dp
+}
+
+/** The main menu (boards W-Menu, W-MenuDark): a sheet of tiles over the library rows. */
+internal object VolaMenu {
+    /** The sheet spans the screen less this margin; on a tablet it stops at [maxWidth]. */
+    val screenMargin = VolaSpacing.x2
+    val maxWidth = 600.dp
+    val sheetRadius = VolaShapes.sheetRadius
+    val contentPadding = VolaSpacing.x3
+
+    /** Library rows: Downloads, History, Favorites … Settings. */
+    val rowMinHeight = 52.dp
+    val rowLabelSize = 15.sp
+    val groupRadius = 22.dp
+
+    /** Four tiles a row: an icon over a two-line label; a toggle that is on is tinted. */
+    val tiles = BrowserMainMenuTileStyle(
+        columns = 4,
+        tileHeight = 84.dp,
+        cornerRadius = groupRadius,
+        spacing = VolaSpacing.x2,
+        iconSize = 24.dp,
+        iconLabelGap = VolaSpacing.x2,
+        horizontalPadding = VolaSpacing.x1,
+        labelFontSize = 12.sp,
+        labelLineHeight = 14.sp,
+        labelMaxLines = 2,
+        disabledAlpha = 0.38f,
+        handleSize = DpSize(36.dp, 4.dp),
+        handleTopPadding = 10.dp,
+        handleBottomPadding = VolaSpacing.x1,
+    )
 }

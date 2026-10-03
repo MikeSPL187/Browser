@@ -48,10 +48,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuAction
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuItem
@@ -155,6 +158,10 @@ data class BrowserMainMenuStyle(
     val rowSupportingTextFontSize: TextUnit = TextUnit.Unspecified,
     val toggleTrackColor: Color? = null,
     val useExpressiveToggleButtons: Boolean = false,
+    /** Space left on each side of the menu; null keeps the narrow popup width. */
+    val screenMargin: Dp? = null,
+    /** Page and Vola actions as a tile grid under a sheet handle (v4); null keeps the list. */
+    val tiles: BrowserMainMenuTileStyle? = null,
 )
 
 interface BrowserMainMenuResources {
@@ -280,7 +287,8 @@ fun BrowserMainMenu(
         bottomEnd = outerCorners.bottomEnd,
         bottomStart = outerCorners.bottomStart,
     )
-    val menuWidth = minOf(style.menuMaxWidth, screenSize.width - 24.dp)
+    val menuMargin = style.screenMargin ?: 12.dp // token-exempt: Candy's popup margin
+    val menuWidth = minOf(style.menuMaxWidth, screenSize.width - menuMargin * 2)
     val toolbarSingleRowMinWidth = style.contentHorizontalPadding * 2 +
         style.toolbarButtonSize * 5 + style.toolbarSpacing * 4
     val compactToolbar = if (style.showToolbarLabels) {
@@ -421,8 +429,12 @@ fun BrowserMainMenu(
                 )
             }
         } ?: menuShape
-        Popup(
-            alignment = Alignment.BottomEnd,
+        val sheetPosition = remember(popupOffset.y) {
+            BrowserMainMenuSheetPositionProvider(offsetY = popupOffset.y)
+        }
+        BrowserMainMenuPopup(
+            centered = style.screenMargin != null,
+            sheetPosition = sheetPosition,
             offset = popupOffset,
             onDismissRequest = onDismissRequest,
             properties = PopupProperties(focusable = expanded),
@@ -492,6 +504,51 @@ fun BrowserMainMenu(
     }
 }
 
+/**
+ * A screen-wide sheet sits centered in the window; the narrow popup keeps its bottom-end anchor.
+ * Either way the bottom edge follows the anchor's, as before.
+ */
+private class BrowserMainMenuSheetPositionProvider(
+    private val offsetY: Int,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset(
+        x = (windowSize.width - popupContentSize.width) / 2,
+        y = anchorBounds.bottom - popupContentSize.height + offsetY,
+    )
+}
+
+@Composable
+private fun BrowserMainMenuPopup(
+    centered: Boolean,
+    sheetPosition: PopupPositionProvider,
+    offset: IntOffset,
+    onDismissRequest: () -> Unit,
+    properties: PopupProperties,
+    content: @Composable () -> Unit,
+) {
+    if (centered) {
+        Popup(
+            popupPositionProvider = sheetPosition,
+            onDismissRequest = onDismissRequest,
+            properties = properties,
+            content = content,
+        )
+    } else {
+        Popup(
+            alignment = Alignment.BottomEnd,
+            offset = offset,
+            onDismissRequest = onDismissRequest,
+            properties = properties,
+            content = content,
+        )
+    }
+}
+
 @Composable
 private fun BrowserMainMenuContent(
     snapshot: BrowserMainMenuSnapshot,
@@ -512,7 +569,9 @@ private fun BrowserMainMenuContent(
     val toolbarItems = groupedItems[BrowserFeatureMenuSection.Toolbar].orEmpty()
     val pageItems = groupedItems[BrowserFeatureMenuSection.Page].orEmpty()
     val candyItems = groupedItems[BrowserFeatureMenuSection.Candy].orEmpty()
+    val tiles = effects.style.tiles
     Column(modifier = modifier) {
+        tiles?.let { BrowserMainMenuHandle(it) }
         if (effects.style.showHeader) {
             Text(
                 text = resources.title(),
@@ -539,7 +598,20 @@ private fun BrowserMainMenuContent(
             )
         }
 
-        if (pageItems.isNotEmpty()) {
+        if (tiles != null) {
+            if (pageItems.isNotEmpty()) {
+                Spacer(Modifier.height(tiles.spacing))
+                BrowserMainMenuTileGrid(
+                    items = pageItems,
+                    tiles = tiles,
+                    resources = resources,
+                    effects = effects,
+                    onCommand = onCommand,
+                    onToggle = onToggle,
+                    modifier = Modifier.testTag(BrowserMainMenuTestTags.PageGroup),
+                )
+            }
+        } else if (pageItems.isNotEmpty()) {
             BrowserMainMenuSectionTitle(
                 title = resources.sectionTitle(BrowserFeatureMenuSection.Page),
                 topPadding = 12,
@@ -580,7 +652,18 @@ private fun BrowserMainMenuContent(
             )
         }
 
-        if (candyItems.isNotEmpty()) {
+        if (tiles != null && candyItems.isNotEmpty()) {
+            Spacer(Modifier.height(tiles.spacing))
+            BrowserMainMenuTileGrid(
+                items = candyItems,
+                tiles = tiles,
+                resources = resources,
+                effects = effects,
+                onCommand = onCommand,
+                onToggle = onToggle,
+                modifier = Modifier.testTag(BrowserMainMenuTestTags.CandyGroup),
+            )
+        } else if (candyItems.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             BrowserMainMenuItemGroup(
                 items = candyItems,
@@ -863,7 +946,7 @@ private fun BrowserFeatureMenuItem.hasTrailingIcon(): Boolean = action in setOf(
     BrowserFeatureMenuAction.OpenSettings,
 )
 
-private fun BrowserFeatureMenuItem.testTagModifier(): Modifier = when (action) {
+internal fun BrowserFeatureMenuItem.testTagModifier(): Modifier = when (action) {
     BrowserFeatureMenuAction.ToggleFavorite -> Modifier.testTag(BrowserMainMenuTestTags.Favorite)
     BrowserFeatureMenuAction.TogglePinned -> Modifier.testTag(BrowserMainMenuTestTags.Pin)
     BrowserFeatureMenuAction.TranslatePage -> Modifier.testTag(BrowserMainMenuTestTags.Translate)
