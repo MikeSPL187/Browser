@@ -21,6 +21,8 @@ from pathlib import Path
 PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
+# The workspace the tour makes for the swipe: no name, so the default one.
+SECOND_WORKSPACE_LABELS = ("Workspace", "Пространство")
 DUMPS = OUT.parent / "ui-dumps"
 DUMPS.mkdir(parents=True, exist_ok=True)
 LOG = []
@@ -268,6 +270,39 @@ def tour(suffix):
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
+    def workspace_swipe():
+        """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
+        the next workspace's aura shows through. The light tour makes the second workspace."""
+        if not find(*SECOND_WORKSPACE_LABELS):
+            if not tap("Add workspace", "Добавить пространство"):
+                return
+            time.sleep(2)
+            tap("Work", "Работа")
+            time.sleep(1)
+            if not tap("Create workspace", "Создать пространство"):
+                adb("shell", "input", "keyevent", "BACK")
+                return
+            time.sleep(3)
+        # The header names the active workspace; from the first one the swipe goes left.
+        on_first = any(n["text"] in ("Personal", "Личное") for n in nodes())
+        y = int(height * 0.075)
+        start, end = (int(width * 0.8), int(width * 0.35)) if on_first else \
+            (int(width * 0.2), int(width * 0.65))
+        adb("shell", "input", "motionevent", "DOWN", str(start), str(y))
+        for step_index in range(1, 9):
+            x = start + (end - start) * step_index // 8
+            adb("shell", "input", "motionevent", "MOVE", str(x), str(y))
+            time.sleep(0.05)
+        time.sleep(1)
+        shot(f"workspace-swipe-{suffix}")
+        adb("shell", "input", "motionevent", "MOVE", str(start), str(y))
+        adb("shell", "input", "motionevent", "UP", str(start), str(y))
+        time.sleep(2)
+        # Back to the first workspace, where the rest of the tour runs.
+        if not any(n["text"] in ("Personal", "Личное") for n in nodes()):
+            tap("Personal", "Личное")
+            time.sleep(2)
+
     def overview():
         address = find("wikipedia.org", contains=True)
         x, y = address["center"] if address else (width // 2, height - 120)
@@ -287,6 +322,7 @@ def tour(suffix):
             time.sleep(2)
         else:
             log("not found: workspace switcher entry")
+        step("workspace-swipe", workspace_swipe)
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("overview", overview)
