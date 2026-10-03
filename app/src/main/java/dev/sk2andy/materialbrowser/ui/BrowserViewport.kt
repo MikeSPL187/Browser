@@ -382,7 +382,11 @@ internal fun BrowserViewport(
                 selectedTab.url.startsWith("https://"),
         )
         pageErrorFeedback = observation.state
-        if (observation.shouldReload) onRetry()
+        // The connection came back: the page reloads by itself. Without a session to reload,
+        // the Retry button waits instead of a spinner that never ends.
+        if (observation.shouldReload && !onRetry()) {
+            pageErrorFeedback = PageErrorFeedbackState.Offline(isOnlineReady = true)
+        }
     }
     adjacentTab?.let { tab ->
         TabSwitchPreview(
@@ -558,6 +562,7 @@ internal fun BrowserViewport(
         key(selectedTab.id, selectedTab.url) {
             PageErrorFeedback(
                 state = pageErrorFeedback,
+                url = selectedTab.url,
                 onRetry = retry@{
                     val transition = PageErrorFeedbackRules.requestRetry(pageErrorFeedback)
                     if (!transition.shouldReload) return@retry

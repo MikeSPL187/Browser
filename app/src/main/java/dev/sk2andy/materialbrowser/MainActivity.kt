@@ -849,12 +849,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (browserController.isActiveProfileLocked) {
                     ProfileLockedOverlay(
-                        profileEmoji = browserController.localBrowserProfiles
+                        workspace = browserController.localBrowserProfiles
                             .firstOrNull { profile ->
                                 profile.id == browserController.activeProfileId
-                            }
-                            ?.emoji
-                            .orEmpty(),
+                            },
                         unlockAvailable = browserController.isProfileProtectionSupported,
                         canSwitchProfile = browserController.canLeaveLockedProfile,
                         onUnlock = browserController::retryActiveProfileAuthentication,

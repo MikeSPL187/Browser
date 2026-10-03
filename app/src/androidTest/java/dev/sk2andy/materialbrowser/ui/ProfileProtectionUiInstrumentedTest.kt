@@ -16,6 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -81,9 +82,9 @@ class ProfileProtectionUiInstrumentedTest {
     @Test
     fun lockedOverlayHidesProfileBehindUnlockAction() {
         composeRule.setContent {
-            MaterialTheme {
+            MaterialBrowserTheme {
                 ProfileLockedOverlay(
-                    profileEmoji = "💼",
+                    workspace = ProfileLockedPreviewWorkspace,
                     unlockAvailable = true,
                     canSwitchProfile = false,
                     onUnlock = {},
@@ -93,8 +94,12 @@ class ProfileProtectionUiInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(ProfileProtectionTestTags.LockedOverlay).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.profile_locked_title))
-            .assertIsDisplayed()
+        composeRule.onNodeWithText(
+            context.getString(
+                R.string.profile_locked_title_named,
+                ProfileLockedPreviewWorkspace.name,
+            ),
+        ).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.profile_unlock_action))
             .assertIsDisplayed()
     }

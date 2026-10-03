@@ -1,74 +1,112 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
+import dev.sk2andy.materialbrowser.browser.BrowserProfile
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
+import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
+/**
+ * «Workspace locked» (board W-Locked) over a protected workspace until the user confirms it is
+ * them. Its tabs are hidden underneath; the way out goes to another workspace.
+ */
 @Composable
 internal fun ProfileLockedOverlay(
-    profileEmoji: String,
+    workspace: BrowserProfile?,
     unlockAvailable: Boolean,
     canSwitchProfile: Boolean,
     onUnlock: () -> Unit,
     onSwitchProfile: () -> Unit,
 ) {
+    val name = workspace?.name?.takeIf(String::isNotBlank)
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .testTag(ProfileProtectionTestTags.LockedOverlay),
         color = MaterialTheme.colorScheme.surface,
     ) {
-        Column(
+        VolaStatePage(
+            title = if (name != null) {
+                stringResource(R.string.profile_locked_title_named, name)
+            } else {
+                stringResource(R.string.profile_locked_title)
+            },
+            message = stringResource(
+                if (unlockAvailable) {
+                    R.string.profile_locked_message
+                } else {
+                    R.string.profile_protection_unavailable
+                },
+            ),
+            icon = { LockedWorkspaceGem(workspace) },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+                .background(VolaTheme.auraBrush)
+                .safeDrawingPadding(),
         ) {
-            PlatformProfileEmoji(emoji = profileEmoji, fontSize = 52.sp)
-            Text(
-                text = stringResource(R.string.profile_locked_title),
-                modifier = Modifier.padding(top = 20.dp),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
+            VolaStatePagePrimaryButton(
+                text = stringResource(R.string.profile_unlock_action),
+                onClick = onUnlock,
+                icon = VolaIcons.Fingerprint,
+                enabled = unlockAvailable,
             )
-            Text(
-                text = stringResource(
-                    if (unlockAvailable) {
-                        R.string.profile_locked_message
-                    } else {
-                        R.string.profile_protection_unavailable
-                    },
-                ),
-                modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-            )
-            Button(onClick = onUnlock, enabled = unlockAvailable) {
-                Text(stringResource(R.string.profile_unlock_action))
-            }
             if (canSwitchProfile) {
-                TextButton(onClick = onSwitchProfile) {
-                    Text(stringResource(R.string.command_switch_profile_name))
-                }
+                VolaStatePageTextButton(
+                    text = stringResource(R.string.profile_locked_switch_action),
+                    onClick = onSwitchProfile,
+                )
+            }
+        }
+    }
+}
+
+/** The workspace's gem with a lock on its corner; a lock alone when the workspace is unknown. */
+@Composable
+private fun LockedWorkspaceGem(workspace: BrowserProfile?) {
+    if (workspace == null) {
+        VolaStatePageIcon(icon = VolaIcons.Lock, tone = VolaStatePageTone.Accent)
+        return
+    }
+    Box {
+        WorkspaceGem(workspace = workspace, size = VolaStatePageTokens.iconContainerSize)
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = VolaStatePageTokens.badgeOffset, y = VolaStatePageTokens.badgeOffset)
+                .size(VolaStatePageTokens.badgeSize),
+            shape = CircleShape,
+            color = VolaTheme.extendedColors.card,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shadowElevation = VolaElevation.level2,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = VolaIcons.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(VolaStatePageTokens.badgeIconSize),
+                )
             }
         }
     }
@@ -77,3 +115,25 @@ internal fun ProfileLockedOverlay(
 internal object ProfileProtectionTestTags {
     const val LockedOverlay = "profile_locked_overlay"
 }
+
+@VolaPreviews
+@Composable
+private fun ProfileLockedOverlayPreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        ProfileLockedOverlay(
+            workspace = ProfileLockedPreviewWorkspace,
+            unlockAvailable = true,
+            canSwitchProfile = true,
+            onUnlock = {},
+            onSwitchProfile = {},
+        )
+    }
+}
+
+/** The «Work» workspace of the W-Locked board; also used by the tour's debug screen. */
+internal val ProfileLockedPreviewWorkspace = BrowserProfile(
+    id = "work",
+    emoji = WorkspaceIcons.emojiFor("work").orEmpty(),
+    name = "Work",
+    accent = WorkspaceAccent.Teal,
+)

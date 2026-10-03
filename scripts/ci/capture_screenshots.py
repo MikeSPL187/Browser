@@ -296,6 +296,41 @@ def tour(suffix):
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
+    def unknown_host_page():
+        # The .invalid domain never resolves (RFC 6761): «Site not found» (Q15, board W-States).
+        open_url("https://vola-tour.invalid/")
+        time.sleep(8)
+        shot(f"page-unknown-host-{suffix}")
+    step("page-unknown-host", unknown_host_page)
+
+    def offline_page():
+        """No connection (board W-Offline); then the page reloads by itself once it is back."""
+        airplane = ("shell", "cmd", "connectivity", "airplane-mode")
+        adb(*airplane, "enable", check=False, capture=True)
+        try:
+            time.sleep(5)
+            open_url("https://example.org/")
+            time.sleep(8)
+            shot(f"page-offline-{suffix}")
+        finally:
+            adb(*airplane, "disable", check=False, capture=True)
+        time.sleep(20)
+        shot(f"page-back-online-{suffix}")
+    step("page-offline", offline_page)
+
+    def workspace_locked():
+        # «Workspace locked» (board W-Locked). The emulator has no biometrics to lock a workspace
+        # with, so a debug-only activity shows the screen itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.ProfileLockedPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"workspace-locked-{suffix}")
+        if not tap("Go to another workspace", "Перейти в другое пространство"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("workspace-locked", workspace_locked)
+
     def workspace_swipe():
         """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
         the next workspace's aura shows through. The light tour makes the second workspace."""
@@ -562,6 +597,13 @@ def accessibility_pass():
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(1)
     step("page-a11y", page_and_menu)
+
+    def unknown_host_a11y():
+        # The state page scrolls its text at 200 % and keeps the button on screen.
+        open_url("https://vola-tour.invalid/")
+        time.sleep(8)
+        shot("page-unknown-host-a11y")
+    step("page-unknown-host-a11y", unknown_host_a11y)
 
     adb("shell", "settings", "put", "system", "font_scale", "1.0", check=False)
 

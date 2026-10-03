@@ -25,5 +25,10 @@
                     android:scheme="http" />
             </intent-filter>
         </activity>
+        <!-- Exported for `adb shell am start` in the screenshot tour; debug builds only. -->
+        <activity
+            android:name="dev.sk2andy.materialbrowser.ui.ProfileLockedPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 </manifest>

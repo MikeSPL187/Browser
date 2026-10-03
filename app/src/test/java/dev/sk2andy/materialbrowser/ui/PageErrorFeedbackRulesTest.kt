@@ -63,7 +63,7 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
-    fun `connection return exposes ready state without reloading`() {
+    fun `connection return reloads the page once by itself`() {
         val observation = PageErrorFeedbackRules.observe(
             current = PageErrorFeedbackState.Offline(),
             error = "Network unavailable",
@@ -72,8 +72,63 @@ class PageErrorFeedbackRulesTest {
             isOnline = true,
         )
 
-        assertEquals(PageErrorFeedbackState.Offline(isOnlineReady = true), observation.state)
+        assertEquals(PageErrorFeedbackState.Retrying, observation.state)
+        assertTrue(observation.shouldReload)
+    }
+
+    @Test
+    fun `page that failed again after the automatic reload waits for the Retry button`() {
+        val current = PageErrorFeedbackState.Offline(isOnlineReady = true)
+
+        val observation = PageErrorFeedbackRules.observe(
+            current = current,
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.Offline,
+        )
+
+        assertEquals(current, observation.state)
         assertFalse(observation.shouldReload)
+    }
+
+    @Test
+    fun `unknown host gets its own page while online`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.UnknownHost,
+        )
+
+        assertEquals(PageErrorFeedbackState.UnknownHost, observation.state)
+    }
+
+    @Test
+    fun `unknown host while offline is a missing connection, not a typo`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = false,
+            failureKind = BrowserEngineFailureKind.UnknownHost,
+        )
+
+        assertEquals(PageErrorFeedbackState.Offline(), observation.state)
+    }
+
+    @Test
+    fun `page sentence names the host without www, or the address without a host`() {
+        assertEquals(
+            "north-guide.ru",
+            PageErrorFeedbackRules.displayHost("https://www.north-guide.ru/a?b=1"),
+        )
+        assertEquals("example.com", PageErrorFeedbackRules.displayHost("http://example.com:8080/"))
+        assertEquals("not a url", PageErrorFeedbackRules.displayHost("not a url"))
     }
 
     @Test
@@ -122,11 +177,11 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
-    fun `offline retry waits for the connection`() {
+    fun `offline retry still reloads, so the button never does nothing`() {
         val transition = PageErrorFeedbackRules.requestRetry(PageErrorFeedbackState.Offline())
 
         assertEquals(PageErrorFeedbackState.Retrying, transition.state)
-        assertFalse(transition.shouldReload)
-        assertFalse(transition.emitConfirmHaptic)
+        assertTrue(transition.shouldReload)
+        assertTrue(transition.emitConfirmHaptic)
     }
 }
