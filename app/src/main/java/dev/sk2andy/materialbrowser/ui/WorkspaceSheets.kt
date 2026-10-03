@@ -90,6 +90,7 @@ internal object WorkspaceSheetTestTags {
     const val Settings = "workspace_settings_sheet"
     const val Rename = "workspace_settings_rename"
     const val IconRow = "workspace_settings_icon"
+    const val AllIcons = "workspace_new_all_icons"
     const val WallpaperRow = "workspace_settings_wallpapers"
     const val Storage = "workspace_settings_storage"
     const val Biometric = "workspace_settings_biometric"
@@ -115,6 +116,7 @@ internal fun NewWorkspaceSheet(
     var name by remember { mutableStateOf("") }
     var accent by remember { mutableStateOf(WorkspaceAccent.Default) }
     var emoji by remember(icons) { mutableStateOf(WorkspaceSheetRules.defaultIcon(icons)) }
+    var allIconsShown by remember { mutableStateOf(false) }
     var isolationEnabled by remember { mutableStateOf(false) }
     var protection by remember { mutableStateOf<ProfileProtection?>(null) }
     var configuringProtection by remember { mutableStateOf(false) }
@@ -145,12 +147,31 @@ internal fun NewWorkspaceSheet(
             )
             Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
             WorkspaceSectionLabel(stringResource(R.string.workspace_icon_label))
+            val collapsedLimit = VolaWorkspaceSheet.ICON_COLUMNS * VolaWorkspaceSheet.ICON_COLLAPSED_ROWS
             WorkspaceIconGrid(
-                icons = icons,
+                icons = if (allIconsShown) {
+                    icons
+                } else {
+                    WorkspaceSheetRules.collapsedIcons(icons, emoji, collapsedLimit)
+                },
                 selected = emoji,
                 accent = accent,
                 onSelect = { emoji = it },
             )
+            if (icons.size > collapsedLimit) {
+                TextButton(
+                    onClick = { allIconsShown = !allIconsShown },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .testTag(WorkspaceSheetTestTags.AllIcons),
+                ) {
+                    Text(
+                        stringResource(
+                            if (allIconsShown) R.string.workspace_icons_fewer else R.string.workspace_icons_all,
+                        ),
+                    )
+                }
+            }
             Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
             WorkspaceSecurityGroup(
                 isolationSupported = isolationSupported,

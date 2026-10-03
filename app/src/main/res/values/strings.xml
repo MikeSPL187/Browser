@@ -1472,4 +1472,6 @@
     <string name="tab_search_close">Close search</string>
     <string name="tab_search_empty_title">No tabs found</string>
     <string name="tab_search_empty_message">Try another word or part of the address.</string>
+    <string name="workspace_icons_all">All icons</string>
+    <string name="workspace_icons_fewer">Fewer icons</string>
 </resources>
