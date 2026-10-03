@@ -399,6 +399,22 @@
         <item quantity="one">Close %1$d private tab</item>
         <item quantity="other">Close all %1$d private tabs</item>
     </plurals>
+    <string name="private_tab_lock_title">Lock on exit</string>
+    <string name="private_tab_lock_caption">Back to private tabs only with biometrics</string>
+    <string name="settings_section_private_tabs">Private tabs</string>
+    <string name="private_tabs_lock_settings_title">Lock private tabs on exit</string>
+    <string name="private_tabs_lock_settings_summary">After you leave Vola, private tabs open again only with biometrics</string>
+    <string name="private_tabs_lock_prompt_title">Vola private tabs</string>
+    <string name="private_tabs_lock_prompt_unlock">Authenticate to open private tabs</string>
+    <string name="private_tabs_lock_prompt_configure">Authenticate to change the private tabs lock</string>
+    <string name="private_tabs_locked_title">Private tabs locked</string>
+    <plurals name="private_tabs_locked_message">
+        <item quantity="one">%1$d private tab stays hidden until you unlock it.</item>
+        <item quantity="other">%1$d private tabs stay hidden until you unlock them.</item>
+    </plurals>
+    <string name="private_tabs_unlock_action">Unlock private tabs</string>
+    <string name="private_tabs_locked_regular_tabs">Regular tabs</string>
+    <string name="private_tab_locked_subtitle">Locked</string>
     <string name="address_private_hint">Search without a trace</string>
     <string name="favorites_search">Search favorites</string>
     <string name="favorites_clear_search">Clear search</string>
