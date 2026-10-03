@@ -35,7 +35,7 @@ internal fun TabOverviewTabActions(
     val essentialId = tab?.let { CanonicalWebUrl.key(it.url) }
     val workspaceEssentials = tab?.let { controller.essentials.entriesFor(it.profileId) }.orEmpty()
     val favicon = tab?.let { controller.favicons[it.id] }
-    val stack = tab?.let { controller.tabStackFor(it.id) }
+    val stack = tab?.let { controller.tabStackController.stackFor(it.id) }
     val stackCandidates = tab?.let { target ->
         controller.activeTabs.filter { candidate ->
             candidate.profileId == target.profileId &&
@@ -44,7 +44,7 @@ internal fun TabOverviewTabActions(
         }
     }.orEmpty()
     val stackCandidateIds = stackCandidates.mapTo(hashSetOf(), BrowserTab::id)
-    val otherStacks = controller.activeTabStacks.filter { candidate ->
+    val otherStacks = controller.tabStackController.activeStacks.filter { candidate ->
         candidate.id != stack?.id && candidate.tabIds.any(stackCandidateIds::contains)
     }
     val canCreateStack = stack != null ||
@@ -98,14 +98,14 @@ internal fun TabOverviewTabActions(
                 onCreate = { dismissThen { target -> onEditStack(target.id) } },
                 onAddToStack = { stackId ->
                     dismissThen { target ->
-                        if (controller.addTabToStack(target.id, stackId)) {
+                        if (controller.tabStackController.addTab(target.id, stackId)) {
                             rootView.performConfirmHaptic()
                         }
                     }
                 },
                 onRemoveFromStack = {
                     dismissThen { target ->
-                        if (controller.removeTabFromStack(target.id)) {
+                        if (controller.tabStackController.removeTab(target.id)) {
                             rootView.performConfirmHaptic()
                         }
                     }

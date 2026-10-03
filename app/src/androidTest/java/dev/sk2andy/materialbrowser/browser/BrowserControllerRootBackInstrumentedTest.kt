@@ -106,7 +106,7 @@ class BrowserControllerRootBackInstrumentedTest {
         activityRule.scenario.onActivity { activity ->
             val browserController = freshController(activity)
             val tabId = browserController.createTab()
-            assertTrue(browserController.setTabPinned(tabId, true))
+            assertTrue(browserController.tabOrder.setPinned(tabId, true))
 
             val result = browserController.performSelectedRootTabBack()
 

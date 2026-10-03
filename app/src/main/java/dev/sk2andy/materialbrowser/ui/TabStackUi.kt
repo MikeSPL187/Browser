@@ -982,7 +982,7 @@ internal fun TabOverviewStackEditor(
     val stackEditorTab = tabId?.let { id ->
         controller.activeTabs.firstOrNull { tab -> tab.id == id }
     }
-    val editedStack = stackEditorTab?.let { tab -> controller.tabStackFor(tab.id) }
+    val editedStack = stackEditorTab?.let { tab -> controller.tabStackController.stackFor(tab.id) }
     val stackEditorCandidates = stackEditorTab?.let { target ->
         controller.activeTabs.filter { candidate ->
             candidate.profileId == target.profileId &&
@@ -1000,14 +1000,14 @@ internal fun TabOverviewStackEditor(
         editing = editedStack != null,
         onCreate = { tabIds, name, color, previewTabId ->
             val changed = if (editedStack == null) {
-                controller.createTabStack(
+                controller.tabStackController.create(
                     tabIds = tabIds,
                     name = name,
                     color = color,
                     previewTabId = previewTabId,
                 ) != null
             } else {
-                controller.updateTabStack(
+                controller.tabStackController.update(
                     stackId = editedStack.id,
                     tabIds = tabIds,
                     name = name,

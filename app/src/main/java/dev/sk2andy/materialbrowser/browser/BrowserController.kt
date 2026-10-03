@@ -1645,12 +1645,6 @@ class BrowserController(
     private fun isBoundSyncProfile(profileId: String): Boolean =
         !isSyncedProfile(profileId) && syncTargetDeviceId(profileId) != null
 
-    // Tab stacks live in [tabStackController]; these keep the controller's old calls working.
-    val activeTabStacks: List<TabStack> get() = tabStackController.activeStacks
-    val gridOverviewTabs: List<BrowserTab> get() = tabStackController.overviewTabs
-    fun tabStackFor(tabId: String): TabStack? = tabStackController.stackFor(tabId)
-    fun stackAwareOverviewTabId(tabId: String): String = tabStackController.overviewTabId(tabId)
-
     val canToggleSelectedDomainMute: Boolean
         get() = supportsPageContentActions && canToggleDomainMute(selectedTabId)
 
@@ -2363,7 +2357,7 @@ class BrowserController(
                             ) ?: return null
                         }
                         if (tabId in existingTabIds) return null
-                        if (request.pinned) this@BrowserController.setTabPinned(tabId, true)
+                        if (request.pinned) this@BrowserController.tabOrder.setPinned(tabId, true)
                         if (
                             request.index?.let { index ->
                                 !this@BrowserController.tabOrder.positionCreatedTab(tabId, index)
@@ -2383,7 +2377,7 @@ class BrowserController(
                     override fun updateTab(request: GeckoExtensionUpdateTabRequest): Boolean {
                         if (!isCurrentSession(request.target)) return false
                         request.pinned?.let { pinned ->
-                            this@BrowserController.setTabPinned(request.target.tabId, pinned)
+                            this@BrowserController.tabOrder.setPinned(request.target.tabId, pinned)
                         }
                         request.muted?.let { muted ->
                             if (!this@BrowserController.setExtensionTabMuted(
@@ -8525,38 +8519,6 @@ class BrowserController(
         snoozeScheduler.schedule(remaining)
         return true
     }
-
-    fun setTabPinned(tabId: String, isPinned: Boolean): Boolean =
-        tabOrder.setPinned(tabId, isPinned)
-
-    fun createTabStack(
-        tabIds: List<String>,
-        name: String,
-        color: TabStackColor,
-        previewTabId: String? = null,
-    ): String? = tabStackController.create(tabIds, name, color, previewTabId)
-
-    fun addTabToStack(tabId: String, stackId: String): Boolean =
-        tabStackController.addTab(tabId, stackId)
-
-    fun updateTabStack(
-        stackId: String,
-        tabIds: List<String>,
-        name: String,
-        color: TabStackColor,
-        previewTabId: String? = null,
-    ): Boolean = tabStackController.update(stackId, tabIds, name, color, previewTabId)
-
-    fun removeTabFromStack(tabId: String): Boolean = tabStackController.removeTab(tabId)
-
-    fun toggleTabStackCollapsed(stackId: String, triggerTabId: String? = null): Boolean =
-        tabStackController.toggleCollapsed(stackId, triggerTabId)
-
-    fun setTabStackPreview(stackId: String, tabId: String): Boolean =
-        tabStackController.setPreview(stackId, tabId)
-
-    fun reorderTab(tabId: String, destinationIndex: Int): Boolean =
-        tabOrder.move(tabId, destinationIndex)
 
     fun candyTrail(tabId: String): CandyTrail = candyTrails[tabId] ?: CandyTrail(tabId)
 
