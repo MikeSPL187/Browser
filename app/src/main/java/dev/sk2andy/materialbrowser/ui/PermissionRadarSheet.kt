@@ -506,7 +506,7 @@ internal fun PermissionPromptDialog(
 }
 
 @Composable
-private fun SitePermission.displayName(): String = when (this) {
+internal fun SitePermission.displayName(): String = when (this) {
     SitePermission.Camera -> stringResource(R.string.permission_camera)
     SitePermission.Microphone -> stringResource(R.string.permission_microphone)
     SitePermission.Location -> stringResource(R.string.permission_location)
@@ -516,7 +516,7 @@ private fun SitePermission.displayName(): String = when (this) {
 }
 
 @DrawableRes
-private fun SitePermission.icon(): Int = when (this) {
+internal fun SitePermission.icon(): Int = when (this) {
     SitePermission.Camera -> R.drawable.ic_symbol_photo_camera
     SitePermission.Microphone -> R.drawable.ic_symbol_mic
     SitePermission.Location -> R.drawable.ic_symbol_location_on
@@ -526,7 +526,7 @@ private fun SitePermission.icon(): Int = when (this) {
 }
 
 @Composable
-private fun SitePermissionDecision.displayName(): String = when (this) {
+internal fun SitePermissionDecision.displayName(): String = when (this) {
     SitePermissionDecision.Ask -> stringResource(R.string.permission_decision_ask)
     SitePermissionDecision.Allow -> stringResource(R.string.permission_decision_allow)
     SitePermissionDecision.Block -> stringResource(R.string.permission_decision_block)

@@ -2,6 +2,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.compose.BackHandler
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewContrastRules
 
 import android.view.HapticFeedbackConstants
@@ -39,7 +40,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -94,6 +94,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
+import dev.sk2andy.materialbrowser.ui.theme.VolaSiteInfo
 
 internal object PrivacyXRayTestTags {
     const val SettingsCounter = "privacy_xray_settings_counter"
@@ -110,8 +111,6 @@ internal object PrivacyXRayTestTags {
     const val XRayTab = "site_info_xray_tab"
     const val PermissionsTab = "site_info_permissions_tab"
 }
-
-private enum class SiteInfoSection { Privacy, Permissions }
 
 @Composable
 internal fun PrivacyXRaySheet(
@@ -134,9 +133,12 @@ internal fun PrivacyXRaySheet(
     onPermissionDecisionChanged: (SitePermission, SitePermissionDecision) -> Unit,
     onResetSitePermissions: () -> Unit,
     onDismiss: () -> Unit,
+    canTogglePopups: Boolean = false,
+    popupsBlocked: Boolean = false,
+    onPopupsBlockedChange: (Boolean) -> Unit = {},
 ) {
     val title = stringResource(R.string.site_info_title)
-    var selectedSection by remember(pageUrl) { mutableStateOf(SiteInfoSection.Privacy) }
+    var page by remember(pageUrl) { mutableStateOf(SiteInfoPage.Overview) }
     var pauseWarningVisible by remember(siteState.host) { mutableStateOf(false) }
     val view = LocalView.current
     val chromeTokens = browserChromeSurfaceTokens().copy(
@@ -176,24 +178,56 @@ internal fun PrivacyXRaySheet(
             blurCornerRadius = 0.dp,
         ) {
             Column {
-                Row(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = selectedSection == SiteInfoSection.Privacy,
-                        onClick = { selectedSection = SiteInfoSection.Privacy },
-                        label = { Text(stringResource(R.string.privacy_xray_title)) },
-                        modifier = Modifier.testTag(PrivacyXRayTestTags.XRayTab),
-                    )
-                    FilterChip(
-                        selected = selectedSection == SiteInfoSection.Permissions,
-                        onClick = { selectedSection = SiteInfoSection.Permissions },
-                        label = { Text(stringResource(R.string.permission_radar_title)) },
-                        modifier = Modifier.testTag(PrivacyXRayTestTags.PermissionsTab),
+                // Inside the sheet's window, so Back returns to the overview before it closes.
+                BackHandler(enabled = page != SiteInfoPage.Overview) { page = SiteInfoPage.Overview }
+                if (page != SiteInfoPage.Overview) {
+                    SiteInfoPageBar(
+                        title = stringResource(
+                            if (page == SiteInfoPage.PrivacyXRay) {
+                                R.string.privacy_xray_title
+                            } else {
+                                R.string.permission_radar_title
+                            },
+                        ),
+                        onBack = { page = SiteInfoPage.Overview },
                     )
                 }
-                if (selectedSection == SiteInfoSection.Privacy) {
+                if (page == SiteInfoPage.Overview) {
+                    SiteInfoOverview(
+                        pageUrl = pageUrl,
+                        connectionKind = connectionKind,
+                        blockedCount = snapshot.totalBlocked,
+                        permissions = SiteInfoRules.visiblePermissions(
+                            entries = permissionSnapshot.entries,
+                            notificationsSupported = websiteNotificationsSupported,
+                            isPrivate = permissionSnapshot.isPrivate,
+                        ),
+                        canChangePermissions = permissionSnapshot.site != null,
+                        protectionOn = !siteState.isPaused,
+                        canTogglePopups = canTogglePopups,
+                        popupsBlocked = popupsBlocked,
+                        onOpenPrivacyXRay = { page = SiteInfoPage.PrivacyXRay },
+                        onOpenPermissions = { page = SiteInfoPage.Permissions },
+                        onPermissionDecisionChanged = onPermissionDecisionChanged,
+                        onProtectionChange = { on ->
+                            if (on) {
+                                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                                onResume()
+                            } else {
+                                pauseWarningVisible = true
+                            }
+                        },
+                        onPopupsBlockedChange = onPopupsBlockedChange,
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .navigationBarsPadding()
+                            .padding(
+                                start = VolaSiteInfo.sidePadding,
+                                end = VolaSiteInfo.sidePadding,
+                                bottom = VolaSiteInfo.bottomPadding,
+                            ),
+                    )
+                } else if (page == SiteInfoPage.PrivacyXRay) {
                     PrivacyXRayContent(
                         pageUrl = pageUrl,
                         connectionKind = connectionKind,
@@ -332,7 +366,7 @@ private fun SiteConnectionCard(pageUrl: String, kind: SiteConnectionKind) {
 }
 
 @Composable
-private fun siteConnectionLabel(kind: SiteConnectionKind): String = stringResource(
+internal fun siteConnectionLabel(kind: SiteConnectionKind): String = stringResource(
     when (kind) {
         SiteConnectionKind.Https -> R.string.site_connection_https
         SiteConnectionKind.Http -> R.string.site_connection_http
@@ -341,7 +375,7 @@ private fun siteConnectionLabel(kind: SiteConnectionKind): String = stringResour
     },
 )
 
-private fun siteConnectionIcon(kind: SiteConnectionKind): ImageVector = when (kind) {
+internal fun siteConnectionIcon(kind: SiteConnectionKind): ImageVector = when (kind) {
     SiteConnectionKind.Https -> VolaIcons.Lock
     SiteConnectionKind.Http -> VolaIcons.WarningFilled
     SiteConnectionKind.Unavailable -> VolaIcons.Info
