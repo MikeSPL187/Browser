@@ -250,8 +250,9 @@ def tour(suffix):
         if tap("Privacy X-Ray", "Рентген приватности"):
             time.sleep(2)
             shot(f"site-info-xray-{suffix}")
-            adb("shell", "input", "keyevent", "BACK")
-            time.sleep(1)
+            # The bar's Back returns to the overview; a missed tap must not leave the page.
+            if tap("Back", "Назад"):
+                time.sleep(1)
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("site-info", site_info)

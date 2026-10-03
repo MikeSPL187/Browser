@@ -139,7 +139,6 @@ internal fun PrivacyXRaySheet(
 ) {
     val title = stringResource(R.string.site_info_title)
     var page by remember(pageUrl) { mutableStateOf(SiteInfoPage.Overview) }
-    BackHandler(enabled = page != SiteInfoPage.Overview) { page = SiteInfoPage.Overview }
     var pauseWarningVisible by remember(siteState.host) { mutableStateOf(false) }
     val view = LocalView.current
     val chromeTokens = browserChromeSurfaceTokens().copy(
@@ -179,6 +178,8 @@ internal fun PrivacyXRaySheet(
             blurCornerRadius = 0.dp,
         ) {
             Column {
+                // Inside the sheet's window, so Back returns to the overview before it closes.
+                BackHandler(enabled = page != SiteInfoPage.Overview) { page = SiteInfoPage.Overview }
                 if (page != SiteInfoPage.Overview) {
                     SiteInfoPageBar(
                         title = stringResource(
