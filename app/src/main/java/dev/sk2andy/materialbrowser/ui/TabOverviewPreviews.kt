@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -144,5 +147,74 @@ private fun TabOverviewDockPreview() {
     }
 }
 
+@VolaPreviews
+@Composable
+private fun TabOverviewSearchPreview() {
+    TabOverviewPreviewFrame {
+        TabOverviewHeader(
+            title = "Work",
+            tabCount = 6,
+            enabled = true,
+            pinnedJumpVisible = false,
+            onPinnedJump = {},
+            onSettings = {},
+            onMore = {},
+            search = TabOverviewSearch(
+                query = "baikal",
+                onOpen = {},
+                onQueryChange = {},
+                onClose = {},
+            ),
+        )
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun TabActionsSheetPreview() {
+    val tab = previewTab("c", "Sprint 42 · task board", "https://tasks.example.com/sprint-42")
+    TabOverviewPreviewFrame {
+        Box(Modifier.height(PREVIEW_SHEET_HEIGHT)) {
+            TabActionsSheet(
+                tab = tab,
+                facts = TabActionsFacts(
+                    isWebPage = true,
+                    isHttpPage = true,
+                    isIncognito = false,
+                    isPinned = false,
+                    isEssential = false,
+                    canAddEssential = true,
+                    isBookmarked = false,
+                    canToggleSiteMute = true,
+                    isSiteMuted = false,
+                    canDelete = true,
+                    canCloseAll = true,
+                    otherWorkspaceCount = 2,
+                ),
+                favicon = null,
+                currentWorkspaceName = "Work",
+                otherWorkspaces = previewWorkspaces.drop(1),
+                canGroup = true,
+                preview = {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                    )
+                },
+                groupContent = {},
+                extensionContent = {},
+                onQuickAction = {},
+                onMoreAction = {},
+                onMoveTo = {},
+                onSnooze = {},
+                onClose = {},
+                onDismiss = {},
+            )
+        }
+    }
+}
+
 private val PREVIEW_CARD_WIDTH = 170.dp // token-exempt: preview frame only
 private const val PREVIEW_PAGE_ASPECT_RATIO = 0.72f
+private val PREVIEW_SHEET_HEIGHT = 760.dp // token-exempt: preview frame only

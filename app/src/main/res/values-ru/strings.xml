@@ -1476,4 +1476,18 @@
     </plurals>
     <string name="tab_card_current">текущая вкладка</string>
     <string name="tab_overview_open_essential">открыть</string>
+    <!-- Tab actions sheet and tab search (Q7b) -->
+    <string name="tab_actions_dismiss">Закрыть действия с вкладкой</string>
+    <string name="tab_actions_add_essential">В Essentials</string>
+    <string name="tab_actions_remove_essential">Убрать из Essentials</string>
+    <string name="tab_actions_duplicate">Дублировать</string>
+    <string name="tab_actions_pin">Закрепить</string>
+    <string name="tab_actions_share">Отправить</string>
+    <string name="tab_actions_add_to_group">Добавить в группу</string>
+    <string name="tab_actions_more">Ещё</string>
+    <string name="tab_actions_unmute_site">Включить звук на сайте</string>
+    <string name="tab_search_hint">Найти вкладку</string>
+    <string name="tab_search_close">Закрыть поиск</string>
+    <string name="tab_search_empty_title">Вкладки не найдены</string>
+    <string name="tab_search_empty_message">Попробуйте другое слово или часть адреса.</string>
 </resources>

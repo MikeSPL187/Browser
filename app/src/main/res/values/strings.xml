@@ -1448,4 +1448,18 @@
     </plurals>
     <string name="tab_card_current">current tab</string>
     <string name="tab_overview_open_essential">open</string>
+    <!-- Tab actions sheet and tab search (Q7b) -->
+    <string name="tab_actions_dismiss">Close tab actions</string>
+    <string name="tab_actions_add_essential">Add to Essentials</string>
+    <string name="tab_actions_remove_essential">Remove from Essentials</string>
+    <string name="tab_actions_duplicate">Duplicate</string>
+    <string name="tab_actions_pin">Pin</string>
+    <string name="tab_actions_share">Share</string>
+    <string name="tab_actions_add_to_group">Add to group</string>
+    <string name="tab_actions_more">More</string>
+    <string name="tab_actions_unmute_site">Unmute this site</string>
+    <string name="tab_search_hint">Search tabs</string>
+    <string name="tab_search_close">Close search</string>
+    <string name="tab_search_empty_title">No tabs found</string>
+    <string name="tab_search_empty_message">Try another word or part of the address.</string>
 </resources>

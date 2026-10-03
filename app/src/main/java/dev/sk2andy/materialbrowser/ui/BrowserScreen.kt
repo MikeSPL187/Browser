@@ -6,7 +6,6 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 
 import android.view.HapticFeedbackConstants
 import android.view.WindowManager
@@ -1755,10 +1754,7 @@ internal fun BrowserScreen(
                             val progress = Animatable(0f)
                             progress.animateTo(
                                 targetValue = 1f,
-                                animationSpec = tween(
-                                    durationMillis = TabOverviewHeroRules.ENTRY_DURATION_MILLIS,
-                                    easing = FastOutSlowInEasing,
-                                ),
+                                animationSpec = VolaMotion.tabMorph(),
                             ) { overviewMorphProgress.floatValue = value }
                         }
                     } else {

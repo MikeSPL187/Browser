@@ -15,6 +15,8 @@ internal data class TabExitHero(
     val startCornerRadius: Dp = 28.dp,
     val previewTopInsetPx: Int = 0,
     val mode: TabOverviewMode = TabOverviewMode.Hero,
+    /** A grid card: its page sits square under the title row. */
+    val squareTop: Boolean = false,
 )
 
 internal data class TabReorderAnimation(
