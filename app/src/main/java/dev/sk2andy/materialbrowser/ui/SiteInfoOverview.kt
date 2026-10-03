@@ -193,7 +193,7 @@ private fun SiteInfoHeader(host: String, connectionKind: SiteConnectionKind) {
 }
 
 @Composable
-private fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = VolaSiteInfo.cardShape,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -204,7 +204,7 @@ private fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun SiteInfoDivider() {
+internal fun SiteInfoDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(
             start = VolaSiteInfo.dividerInset,
