@@ -203,6 +203,12 @@ internal object VolaStateTokens {
 }
 
 /** The protection card on the new tab and its weekly report (boards NewTab, ProtectionReport). */
+/** Settings pages. */
+internal object VolaSettings {
+    /** Between the rows of one settings group. */
+    val rowGap = 2.dp
+}
+
 internal object VolaProtection {
     val cardMinHeight = 72.dp
     val cardIconSize = 40.dp

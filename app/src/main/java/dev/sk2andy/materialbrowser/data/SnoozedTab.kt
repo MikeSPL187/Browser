@@ -16,7 +16,15 @@ data class SnoozedTab(
     val tab: BrowserTab,
     val wakeAtMillis: Long,
     val createdAtMillis: Long,
-)
+) {
+    /** Put away by auto-archive: it waits in Snoozed with no wake time until reopened. */
+    val isArchived: Boolean get() = wakeAtMillis == ARCHIVED_WAKE_AT_MILLIS
+
+    companion object {
+        /** Archived tabs never wake on their own, and the latest wake time lists them last. */
+        const val ARCHIVED_WAKE_AT_MILLIS = Long.MAX_VALUE
+    }
+}
 
 data class SnoozeUndoToken(
     val tabId: String,

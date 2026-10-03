@@ -62,6 +62,7 @@ internal fun SettingsScreen(
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
     httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
     inactiveTabLifetime: InactiveTabLifetime,
+    archiveInactiveTabs: Boolean = true,
     residentTabLimit: Int,
     searchEngine: SearchEngine,
     pageTranslationProvider: PageTranslationProvider,
@@ -124,6 +125,7 @@ internal fun SettingsScreen(
     onDnsOverHttpsSettingsChanged: (DnsOverHttpsSettings) -> Unit = {},
     onHttpsOnlyModeChanged: (HttpsOnlyMode) -> Unit = {},
     onInactiveTabLifetimeChanged: (InactiveTabLifetime) -> Unit,
+    onArchiveInactiveTabsChanged: (Boolean) -> Unit = {},
     onResidentTabLimitChanged: (Int) -> Unit,
     onSearchEngineChanged: (SearchEngine) -> Unit,
     onPageTranslationProviderChanged: (PageTranslationProvider) -> Unit,
@@ -223,6 +225,7 @@ internal fun SettingsScreen(
 
                 SettingsDestination.TabsAndGestures -> TabsAndGesturesSettingsPage(
                     inactiveTabLifetime = inactiveTabLifetime,
+                    archiveInactiveTabs = archiveInactiveTabs,
                     residentTabLimit = residentTabLimit,
                     tabOverviewMode = tabOverviewMode,
                     tabStackFolderMode = tabStackFolderMode,
@@ -235,6 +238,7 @@ internal fun SettingsScreen(
                     addressBarLongPressAction = addressBarLongPressAction,
                     linkLongPressAction = linkLongPressAction,
                     onInactiveTabLifetimeChanged = onInactiveTabLifetimeChanged,
+                    onArchiveInactiveTabsChanged = onArchiveInactiveTabsChanged,
                     onResidentTabLimitChanged = onResidentTabLimitChanged,
                     onTabOverviewModeChanged = onTabOverviewModeChanged,
                     onTabStackFolderModeChanged = onTabStackFolderModeChanged,
