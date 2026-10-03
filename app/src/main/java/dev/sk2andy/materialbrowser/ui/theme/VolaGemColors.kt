@@ -10,7 +10,12 @@ import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 
 /** The fill and icon color of a workspace gem (`.gem` in vola4.css). */
 @Immutable
-internal data class VolaGemColors(val fill: Brush, val content: Color)
+internal data class VolaGemColors(
+    val fill: Brush,
+    val content: Color,
+    /** Plain primary, for what a gradient cannot fill: buttons and rings. */
+    val solid: Color,
+)
 
 /**
  * A gem in the colors of [accent]'s own scheme, whatever workspace tints the screen around it:
@@ -28,5 +33,6 @@ internal fun volaGemColors(accent: WorkspaceAccent, privateMode: Boolean = false
             VolaGem.PRIMARY_STOP to primary,
         ),
         content = Color(tokens.onPrimary),
+        solid = primary,
     )
 }

@@ -21,6 +21,7 @@ from pathlib import Path
 PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
+ADD_WORKSPACE_LABELS = ("Add workspace", "Добавить пространство")
 DUMPS = OUT.parent / "ui-dumps"
 DUMPS.mkdir(parents=True, exist_ok=True)
 LOG = []
@@ -283,10 +284,20 @@ def tour(suffix):
             adb("shell", "input", "swipe", str(wx), str(wy), str(wx), str(wy), "900")
             time.sleep(2)
             shot(f"workspace-options-{suffix}")
+            save_ui(f"workspace-options-{suffix}")
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         else:
             log("not found: workspace switcher entry")
+        # «+» in the workspace dock opens «New workspace» (board W-WorkspaceSheet); Back leaves it
+        # without creating anything.
+        if tap(*ADD_WORKSPACE_LABELS):
+            time.sleep(2)
+            shot(f"workspace-new-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        else:
+            log("not found: add workspace")
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("overview", overview)
