@@ -58,6 +58,8 @@ Safari (морфы и плавность), Arc и Zen (минимум интер
 - для UI — `@VolaPreviews`; тест на каждое правило; шаг тура в `scripts/ci/capture_screenshots.py`;
 - движки только через порты; новое не добавляется в `BrowserController`, трогаемая область
   выносится из него;
+- не ссылайся на код из ещё не слитых PR (ветка — от `main`, иначе CI упадёт на компиляции);
+  перед коммитом проверяй `git branch --show-current`;
 - перед пушем: `python3 scripts/ci/quality_gates.py size|tokens --base origin/main|engine|brand`,
   `python3 scripts/test_translations.py`, чистые части — в JVM-проекте из STATUS («Заметки о
   среде»), повторное чтение своего диффа глазами ревьюера;
