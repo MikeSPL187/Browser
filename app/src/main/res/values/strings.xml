@@ -1478,6 +1478,15 @@
     </plurals>
     <string name="site_info_nothing_blocked">Nothing blocked on this page yet</string>
     <string name="site_info_permissions_title">Site permissions</string>
+    <string name="site_info_certificate">Certificate</string>
+    <string name="site_info_certificate_summary">%1$s · until %2$s</string>
+    <string name="site_info_certificate_expired">%1$s · expired %2$s</string>
+    <string name="site_certificate_subject">Issued to</string>
+    <string name="site_certificate_issuer">Issued by</string>
+    <string name="site_certificate_valid_from">Valid from</string>
+    <string name="site_certificate_valid_until">Valid until</string>
+    <string name="site_certificate_fingerprint">SHA-256 fingerprint</string>
+    <string name="site_certificate_unknown">Not stated</string>
     <string name="site_info_all_permissions">All permissions</string>
     <string name="site_info_protection_summary">Turn it off if the site doesn’t work properly</string>
     <string name="site_info_permission_session">This session</string>

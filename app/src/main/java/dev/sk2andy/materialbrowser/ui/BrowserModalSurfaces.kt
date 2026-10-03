@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginOffer
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityOffer
@@ -126,6 +127,7 @@ internal fun BoxScope.BrowserModalSurfaces(
                 canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
                 popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
                 onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
+                certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
             )
         }
     }

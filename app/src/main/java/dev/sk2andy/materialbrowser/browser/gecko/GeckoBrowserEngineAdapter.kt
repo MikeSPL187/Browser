@@ -14,6 +14,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
@@ -115,6 +116,9 @@ internal interface AndroidBrowserEngineSessionPort :
     BrowserEngineSessionPort,
     BrowserEngineViewPort {
     fun setActive(active: Boolean)
+
+    /** The certificate the current page came with; none over plain HTTP or before it is known. */
+    fun siteCertificate(): SiteCertificate? = null
 
     /** Existing page icon from an engine callback; GeckoView does not expose one. */
     fun setFaviconListener(listener: ((String?, Bitmap) -> Unit)?) = Unit
@@ -642,6 +646,8 @@ internal class GeckoBrowserEngineSessionAdapter(
     override fun setVideoAutoplayBlocked(blocked: Boolean) {
         if (!closed) session.setVideoAutoplayBlocked(blocked)
     }
+
+    override fun siteCertificate(): SiteCertificate? = if (closed) null else session.siteCertificate()
 
     @UiThread
     override fun setHttpPasswordManagerSelectionEnabled(enabled: Boolean) {

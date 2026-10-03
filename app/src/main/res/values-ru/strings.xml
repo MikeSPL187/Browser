@@ -1512,6 +1512,15 @@
     </plurals>
     <string name="site_info_nothing_blocked">На странице пока ничего не заблокировано</string>
     <string name="site_info_permissions_title">Разрешения сайта</string>
+    <string name="site_info_certificate">Сертификат</string>
+    <string name="site_info_certificate_summary">%1$s · до %2$s</string>
+    <string name="site_info_certificate_expired">%1$s · истёк %2$s</string>
+    <string name="site_certificate_subject">Кому выдан</string>
+    <string name="site_certificate_issuer">Кем выдан</string>
+    <string name="site_certificate_valid_from">Действует с</string>
+    <string name="site_certificate_valid_until">Действует до</string>
+    <string name="site_certificate_fingerprint">Отпечаток SHA-256</string>
+    <string name="site_certificate_unknown">Не указано</string>
     <string name="site_info_all_permissions">Все разрешения</string>
     <string name="site_info_protection_summary">Выключите, если сайт работает неправильно</string>
     <string name="site_info_permission_session">На этот сеанс</string>

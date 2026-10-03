@@ -96,6 +96,7 @@ DRAWABLES = [
     ("ic_symbol_shield", "shield", False, WHITE, False),
     ("ic_symbol_shield_lock", "shield_lock", False, WHITE, False),
     ("ic_symbol_translate", "translate", False, BLACK, False),
+    ("ic_symbol_verified", "verified", False, WHITE, False),
     ("ic_symbol_vertical_scroll", "swipe_vertical", False, WHITE, False),
     ("ic_symbol_volume_off", "volume_off", False, BLACK, False),
     ("ic_symbol_zoom_in", "zoom_in", False, WHITE, False),

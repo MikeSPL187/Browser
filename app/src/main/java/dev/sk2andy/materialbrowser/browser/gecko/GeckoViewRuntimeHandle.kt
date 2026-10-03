@@ -52,6 +52,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.WebContentTopInsetTransitionRules
@@ -985,6 +987,7 @@ private class GeckoViewBrowserSession(
     private var activeMediaSession: MediaSession? = null
     private var deactivatedMediaSession: MediaSession? = null
     private var videoAutoplayBlocked = false
+    private var currentCertificate: SiteCertificate? = null
     private var audioMuted = false
     private var httpPasswordManagerSelectionEnabled = false
     private var autoplayPolicyRevision = 0
@@ -1895,6 +1898,17 @@ private class GeckoViewBrowserSession(
             override fun onProgressChange(session: GeckoSession, progress: Int) =
                 updateState { current -> current.copy(progress = progress.coerceIn(0, 100)) }
 
+            override fun onSecurityChange(
+                session: GeckoSession,
+                securityInfo: GeckoSession.ProgressDelegate.SecurityInformation,
+            ) {
+                currentCertificate = if (securityInfo.isSecure) {
+                    SiteCertificateRules.fromX509(securityInfo.host, securityInfo.certificate)
+                } else {
+                    null
+                }
+            }
+
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 finishStartedNavigation()
                 updateState { current ->
@@ -2253,6 +2267,8 @@ private class GeckoViewBrowserSession(
     override fun setScrollListener(listener: BrowserEngineScrollListener?) {
         scrollListener = listener
     }
+
+    override fun siteCertificate(): SiteCertificate? = currentCertificate
 
     override fun setVideoAutoplayBlocked(blocked: Boolean) {
         if (videoAutoplayBlocked == blocked) return
