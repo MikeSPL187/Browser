@@ -1,7 +1,9 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -14,7 +16,11 @@ import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
  */
 internal class PrivateTabsLockPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // Private tabs are always dark, as MainActivity draws them: light system bar icons.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         val unlockAvailable = !intent.getBooleanExtra(EXTRA_UNAVAILABLE, false)
         setCandyContent(animationsEnabled = false) {
