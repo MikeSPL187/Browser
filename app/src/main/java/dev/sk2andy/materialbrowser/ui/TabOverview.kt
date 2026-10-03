@@ -6,6 +6,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewGridRules
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 import dev.sk2andy.materialbrowser.shared.ui.TabHeroLayer
@@ -76,6 +77,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -105,6 +107,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.isSynced
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
@@ -113,15 +116,15 @@ import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.data.TabPinningRules
 import dev.sk2andy.materialbrowser.data.TabReorderingRules
-import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.EssentialCandidate
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.workspaceAuraBrush
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabActions
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
-import eightbitlab.com.blurview.BlurTarget
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
@@ -245,10 +248,9 @@ internal fun TabOverview(
     var pagerSessionEndJob by remember { mutableStateOf<Job?>(null) }
     var tabActionsTabId by remember { mutableStateOf<String?>(null) }
     var tabStackEditorTabId by remember { mutableStateOf<String?>(null) }
-    var overviewBlurTarget by remember { mutableStateOf<BlurTarget?>(null) }
     val workspaceSheets = remember { WorkspaceSheetsState() }
+    val tabSearch = rememberTabOverviewSearchState(visible)
     var movingTabId by remember { mutableStateOf<String?>(null) }
-    var profileSwitching by remember { mutableStateOf(false) }
     var reorderAnimation by remember { mutableStateOf<TabReorderAnimation?>(null) }
     var reorderLayoutReady by remember { mutableStateOf(false) }
     var activeTabReorder by remember { mutableStateOf<ActiveTabReorder?>(null) }
@@ -259,7 +261,8 @@ internal fun TabOverview(
     val tabCardBounds = remember { mutableStateMapOf<String, Rect>() }
     val tabReorderBounds = remember { mutableStateMapOf<String, Rect>() }
     var overviewRootBounds by remember { mutableStateOf<Rect?>(null) }
-    val profileSwitchProgress = remember { Animatable(1f) }
+    val workspaceSwitch = rememberWorkspaceSwitchState(overviewScope)
+    val workspaceFlingVelocity = workspaceFlingVelocity()
     val tabFocusHapticEvents = remember {
         Channel<Unit>(
             capacity = 8,
@@ -428,7 +431,7 @@ internal fun TabOverview(
         controller.activeProfileId,
         controller.selectedTabId,
         dismissingTabId,
-        profileSwitching,
+        workspaceSwitch.switching,
         controller.tabOverviewMode,
         visible,
     ) {
@@ -436,7 +439,7 @@ internal fun TabOverview(
             controller.tabOverviewMode != TabOverviewMode.Hero ||
             !visible ||
             dismissingTabId != null ||
-            profileSwitching ||
+            workspaceSwitch.switching ||
             activeTabReorder != null
         ) {
             return@LaunchedEffect
@@ -451,12 +454,7 @@ internal fun TabOverview(
         }
     }
     LaunchedEffect(controller.activeProfileId) {
-        if (!visible) {
-            profileSwitchProgress.snapTo(1f)
-            return@LaunchedEffect
-        }
-        if (profileSwitching) return@LaunchedEffect
-        profileSwitchProgress.snapTo(0f)
+        if (!visible || workspaceSwitch.switching) return@LaunchedEffect
         val selectedIndex = controller.activeTabs
             .indexOfFirst { it.id == controller.selectedTabId }
             .coerceAtLeast(0)
@@ -466,10 +464,7 @@ internal fun TabOverview(
         ) {
             pagerState.scrollToPage(selectedIndex)
         }
-        profileSwitchProgress.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(dampingRatio = 0.78f, stiffness = 520f),
-        )
+        workspaceSwitch.show(controller.activeProfileId)
     }
 
     val candyTrailTransition = updateTransition(
@@ -483,10 +478,8 @@ internal fun TabOverview(
     )
     BrowserContentBlurTargetWithConstraints(
         enabled = layerVisible,
-        onTargetAttached = { target -> overviewBlurTarget = target },
-        onTargetReleased = { target ->
-            if (overviewBlurTarget === target) overviewBlurTarget = null
-        },
+        onTargetAttached = {},
+        onTargetReleased = {},
         modifier = Modifier
             .fillMaxSize()
             .zIndex(if (layerVisible) 10f else -1f)
@@ -894,6 +887,56 @@ internal fun TabOverview(
                 },
         )
 
+        // A swipe or a tap in the dock: the content slides out, the workspace opens (a locked one
+        // asks for biometrics), and its tabs slide in from the other side.
+        fun switchWorkspace(
+            profileId: String,
+            direction: Int = WorkspaceSwipeRules.directionTo(
+                controller.profiles.map(BrowserProfile::id),
+                controller.activeProfileId,
+                profileId,
+            ),
+        ) {
+            if (profileId == controller.activeProfileId) return
+            overviewScope.launch {
+                workspaceSwitch.slideTo(
+                    profileId = profileId,
+                    direction = direction,
+                    select = { target ->
+                        if (controller.tabOverviewMode == TabOverviewMode.Hero) {
+                            pagerState.scrollToPage(0)
+                        }
+                        val selection = CompletableDeferred<Boolean>()
+                        controller.requestProfileSelection(target, selection::complete)
+                        selection.await()
+                    },
+                    onSelected = {
+                        controller.loadActiveProfileTabSwitcherWallpaper()
+                        val selectedIndex = controller.activeTabs
+                            .indexOfFirst { it.id == controller.selectedTabId }
+                            .coerceAtLeast(0)
+                        if (controller.tabOverviewMode == TabOverviewMode.Hero) {
+                            pagerState.scrollToPage(selectedIndex)
+                        }
+                        withFrameNanos { }
+                        rootView.performConfirmHaptic()
+                    },
+                )
+            }
+        }
+        // The next workspace's aura shows through as the content moves toward it.
+        val switchTarget = workspaceSwitch.targetProfileId
+            ?.let { id -> controller.profiles.firstOrNull { it.id == id } }
+        val switchTargetAura = switchTarget?.let { workspaceAuraBrush(it.accent) }
+        if (visible && overviewWallpaper == null && switchTargetAura != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = workspaceSwitch.progress }
+                    .background(switchTargetAura),
+            )
+        }
+
         val actionTargetId = if (controller.tabOverviewMode == TabOverviewMode.Hero) {
             controller.activeTabs.getOrNull(pagerState.currentPage)?.id
         } else {
@@ -907,10 +950,11 @@ internal fun TabOverview(
             !heroReorderDropAnimating &&
             activeTabReorder == null &&
             tabActionsTabId == null
-        val workspaceControlsEnabled = !profileSwitching && !workspaceSheets.isOpen
+        val workspaceControlsEnabled = !workspaceSwitch.switching && !workspaceSheets.isOpen
         val pinnedTabsJumpVisible = destinationChromeVisible &&
             controller.activeTabs.any(BrowserTab::isPinned) &&
             !pinnedTabsVisible
+        val searchedTabs = tabSearch.filter(controller.activeTabs)
         val activeWorkspace = controller.profiles
             .firstOrNull { profile -> profile.id == controller.activeProfileId }
         val overviewTitle = if (controller.profilesEnabled && activeWorkspace != null) {
@@ -922,14 +966,35 @@ internal fun TabOverview(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .workspaceSwipe(
+                    enabled = visible &&
+                        heroCompleted &&
+                        controller.profilesEnabled &&
+                        controller.tabOverviewMode != TabOverviewMode.Hero &&
+                        tabSearch.query == null &&
+                        chromeEnabled &&
+                        workspaceControlsEnabled,
+                    state = workspaceSwitch,
+                    flingVelocity = workspaceFlingVelocity,
+                    neighborOf = { direction ->
+                        WorkspaceSwipeRules.neighbor(
+                            controller.profiles.map(BrowserProfile::id),
+                            controller.activeProfileId,
+                            direction,
+                        )
+                    },
+                    onCommitLine = { rootView.performTabFocusHaptic() },
+                    switchTo = { profileId, direction -> switchWorkspace(profileId, direction) },
+                )
                 .longPressTabOverviewReorder(
                     enabled = visible &&
+                        tabSearch.query == null &&
                         !controller.automaticTabSortingEnabled &&
                         heroCompleted &&
                         !heroVisible &&
                         dismissingTabId == null &&
                         movingTabId == null &&
-                        !profileSwitching &&
+                        !workspaceSwitch.switching &&
                         exitHero == null &&
                         reorderAnimation == null &&
                         !heroReorderDropAnimating &&
@@ -975,6 +1040,13 @@ internal fun TabOverview(
                         0f
                     }
                 }
+                .then(
+                    if (tabActionsTabId != null) {
+                        Modifier.blur(VolaTabActions.backdropBlur)
+                    } else {
+                        Modifier
+                    },
+                )
                 .windowInsetsPadding(statusBarInsets)
                 .windowInsetsPadding(navigationBarInsets)
                 .then(
@@ -989,55 +1061,6 @@ internal fun TabOverview(
                     },
                 ),
         ) {
-            fun switchWorkspace(profileId: String) {
-                if (profileId == controller.activeProfileId) return
-                overviewScope.launch {
-                    profileSwitching = true
-                    try {
-                        profileSwitchProgress.animateTo(
-                            targetValue = 0f,
-                            animationSpec = tween(
-                                durationMillis = 120, // token-exempt: Candy fade, Q8 redoes it
-                                easing = FastOutSlowInEasing,
-                            ),
-                        )
-                        if (
-                            controller.tabOverviewMode == TabOverviewMode.Hero &&
-                            pagerState.currentPage != 0
-                        ) {
-                            pagerState.scrollToPage(0)
-                        }
-                        val selection = CompletableDeferred<Boolean>()
-                        controller.requestProfileSelection(profileId, selection::complete)
-                        if (selection.await()) {
-                            controller.loadActiveProfileTabSwitcherWallpaper()
-                            val selectedIndex = controller.activeTabs
-                                .indexOfFirst { it.id == controller.selectedTabId }
-                                .coerceAtLeast(0)
-                            if (
-                                controller.tabOverviewMode == TabOverviewMode.Hero &&
-                                pagerState.currentPage != selectedIndex
-                            ) {
-                                pagerState.scrollToPage(selectedIndex)
-                            }
-                            withFrameNanos { }
-                            rootView.performConfirmHaptic()
-                        }
-                        profileSwitchProgress.animateTo(
-                            targetValue = 1f,
-                            animationSpec = spring(
-                                dampingRatio = 0.78f,
-                                stiffness = 460f,
-                            ),
-                        )
-                    } finally {
-                        withContext(NonCancellable) {
-                            profileSwitchProgress.snapTo(1f)
-                            profileSwitching = false
-                        }
-                    }
-                }
-            }
             // A site already open in this workspace morphs out of its card, not opened twice.
             fun openEssential(entry: EssentialEntry) {
                 val regularTabs = controller.activeTabs.filterNot(BrowserTab::isIncognito)
@@ -1102,6 +1125,7 @@ internal fun TabOverview(
                     rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     onOpenSettings()
                 },
+                search = tabSearch.header(controller.tabOverviewMode != TabOverviewMode.Hero),
                 onMore = {
                     actionTargetId?.let { tabId ->
                         rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -1117,7 +1141,9 @@ internal fun TabOverview(
                         translationY = (1f - chromeProgress) * -18f
                     },
             )
-            when (controller.tabOverviewMode) {
+            if (tabSearch.hasNoResults(searchedTabs)) {
+                TabSearchEmptyState(Modifier.weight(1f).fillMaxWidth())
+            } else when (controller.tabOverviewMode) {
                 TabOverviewMode.Hero -> TabOverviewHeroPager(
                     pagerState = pagerState,
                     tabs = pagerTabs,
@@ -1228,14 +1254,7 @@ internal fun TabOverview(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .graphicsLayer {
-                            val progress = profileSwitchProgress.value
-                            alpha = progress
-                            translationY = (1f - progress) * 14f
-                            val scale = 0.97f + progress * 0.03f
-                            scaleX = scale
-                            scaleY = scale
-                        }
+                        .workspaceSwitchLayer(workspaceSwitch)
                         .allowTopOverflow(heroPagerTopOverflow)
                         .testTag(TabOverviewChromeTestTags.HeroPager),
                     tabDescription = { tab ->
@@ -1245,7 +1264,7 @@ internal fun TabOverview(
                 TabOverviewMode.Grid -> CompactTabGrid(
                     gridState = gridState,
                     layout = gridLayout,
-                    tabs = controller.activeTabs,
+                    tabs = searchedTabs,
                     startsAtBottom = controller.tabListStartsAtBottom,
                     visible = visible,
                     selectedTabId = controller.selectedTabId,
@@ -1362,15 +1381,11 @@ internal fun TabOverview(
                     edgeFadeBrush = if (overviewWallpaper == null) VolaTheme.auraBrush else null,
                     modifier = Modifier
                         .weight(1f)
-                        .graphicsLayer {
-                            val progress = profileSwitchProgress.value
-                            alpha = progress
-                            translationY = (1f - progress) * 14f
-                        },
+                        .workspaceSwitchLayer(workspaceSwitch),
                 )
                 TabOverviewMode.List -> CompactTabList(
                     listState = listState,
-                    tabs = controller.activeTabs,
+                    tabs = searchedTabs,
                     startsAtBottom = controller.tabListStartsAtBottom,
                     visible = visible,
                     selectedTabId = controller.selectedTabId,
@@ -1434,11 +1449,7 @@ internal fun TabOverview(
                     tabTestTag = { tab -> SnoozeTestTags.overviewTab(tab.id) },
                     modifier = Modifier
                         .weight(1f)
-                        .graphicsLayer {
-                            val progress = profileSwitchProgress.value
-                            alpha = progress
-                            translationY = (1f - progress) * 14f
-                        },
+                        .workspaceSwitchLayer(workspaceSwitch),
                 )
             }
             val dockAlpha by animateFloatAsState(
@@ -1457,7 +1468,7 @@ internal fun TabOverview(
                     rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     openEssential(entry)
                 },
-                onSelectWorkspace = ::switchWorkspace,
+                onSelectWorkspace = { profileId -> switchWorkspace(profileId) },
                 onWorkspaceLongClick = ::openWorkspaceActions,
                 onAddWorkspace = {
                     rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -1777,52 +1788,10 @@ internal fun TabOverview(
             .fillMaxSize()
             .zIndex(if (layerVisible) 11f else -1f),
     ) {
-        val actionTab = tabActionsTabId?.let { tabId ->
-            controller.activeTabs.firstOrNull { it.id == tabId }
-        }
-        val actionTabStack = actionTab?.let { tab -> controller.tabStackFor(tab.id) }
-        val actionTabCandidates = actionTab?.let { target ->
-            controller.activeTabs.filter { candidate ->
-                candidate.profileId == target.profileId &&
-                    candidate.isIncognito == target.isIncognito &&
-                    candidate.isPinned == target.isPinned
-            }
-        }.orEmpty()
-        val actionCandidateIds = actionTabCandidates.mapTo(hashSetOf(), BrowserTab::id)
-        val availableActionStacks = controller.activeTabStacks.filter { stack ->
-            stack.id != actionTabStack?.id && stack.tabIds.any(actionCandidateIds::contains)
-        }
-        TabActionsFloatingMenu(
-            tab = actionTab,
-            backdropSource = overviewBlurTarget.asCandyChromeBackdropSource(),
-            profiles = if (controller.profilesEnabled) {
-                controller.profiles
-            } else {
-                controller.profiles.take(1)
-            },
-            isFavorite = actionTab?.let { tab -> controller.isFavorite(tab.url) } == true,
-            canToggleDomainMute = actionTab?.let { tab ->
-                controller.canToggleDomainMute(tab.id)
-            } == true,
-            isDomainMuted = actionTab?.let { tab ->
-                controller.isDomainMuted(tab.id)
-            } == true,
-            canCloseAllTabs = controller.activeTabs.any(TabDeletionRules::canDelete),
-            hasPinnedTabs = controller.activeTabs.any(BrowserTab::isPinned),
-            onToggleFavorite = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onToggleFavoriteTab(target.id)
-            },
-            onOpenCandyTrail = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                val bounds = tabCardBounds[target.id]
-                tabActionsTabId = null
-                onOpenCandyTrail(target.id, bounds)
-            },
-            onTogglePinned = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
+        TabOverviewTabActions(
+            controller = controller,
+            tabId = tabActionsTabId,
+            onTogglePinned = { target ->
                 overviewScope.launch {
                     val oldOrder = controller.activeTabs.map(BrowserTab::id)
                     val tabsWithUpdatedPin = TabPinningRules.withPinnedState(
@@ -1888,9 +1857,7 @@ internal fun TabOverview(
                     }
                 }
             },
-            onMoveToProfile = { profileId ->
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
+            onMoveToWorkspace = { target, profileId ->
                 overviewScope.launch {
                     try {
                         movingTabId = target.id
@@ -1908,86 +1875,13 @@ internal fun TabOverview(
                     }
                 }
             },
-            onShare = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.sharePage(target.id)
-            },
-            onOpenExternal = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.openPageExternally(target.id)
-            },
-            onPrint = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.printPage(target.id)
-            },
-            onDomainMutedChange = { muted ->
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                if (controller.setDomainMuted(target.id, muted)) {
-                    rootView.performConfirmHaptic()
-                }
-            },
-            onAddSiteCapsule = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onAddSiteCapsule(target.id)
-            },
-            onSummarize = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                controller.summarizePageWithAssistant(target.id)
-            },
-            onSnooze = {
-                val target = actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                onSnoozeTab(target.id)
-            },
-            onCloseAllTabs = {
-                actionTab ?: return@TabActionsFloatingMenu
-                tabActionsTabId = null
-                if (controller.closeAllTabs() > 0) rootView.performConfirmHaptic()
-            },
-            stackContent = {
-                TabStackMenuSection(
-                    currentStack = actionTabStack,
-                    availableStacks = availableActionStacks,
-                    canCreate = actionTabStack != null ||
-                        (actionTabCandidates.size >= TabStackRules.MIN_MEMBER_COUNT &&
-                            controller.tabStacks.size < TabStackRules.MAX_STACKS),
-                    onCreate = {
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        tabStackEditorTabId = target.id
-                    },
-                    onAddToStack = { stackId ->
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        if (controller.addTabToStack(target.id, stackId)) {
-                            rootView.performConfirmHaptic()
-                        }
-                    },
-                    onRemoveFromStack = {
-                        val target = actionTab ?: return@TabStackMenuSection
-                        tabActionsTabId = null
-                        if (controller.removeTabFromStack(target.id)) {
-                            rootView.performConfirmHaptic()
-                        }
-                    },
-                )
-            },
+            onOpenCandyTrail = { target -> onOpenCandyTrail(target.id, tabCardBounds[target.id]) },
+            onToggleBookmark = onToggleFavoriteTab,
+            onAddSiteCapsule = onAddSiteCapsule,
+            onSnooze = onSnoozeTab,
+            onEditStack = { tabId -> tabStackEditorTabId = tabId },
+            onClose = { target -> closeCompactTab(target, emitHaptic = true) },
             onDismiss = { tabActionsTabId = null },
-            extensionActions = if (actionTab?.id == controller.selectedTabId) {
-                controller.firefoxExtensionActions
-            } else {
-                emptyList()
-            },
-            onExtensionAction = { actionKey ->
-                tabActionsTabId = null
-                controller.clickFirefoxExtensionAction(actionKey)
-            },
-            menuLayout = controller.browserMenuLayout,
         )
 
         TabOverviewStackEditor(
