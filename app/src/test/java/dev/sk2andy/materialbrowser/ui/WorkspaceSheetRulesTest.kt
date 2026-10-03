@@ -30,4 +30,14 @@ class WorkspaceSheetRulesTest {
         assertEquals("💼", WorkspaceSheetRules.defaultIcon(listOf("💼", "🏠")))
         assertNull(WorkspaceSheetRules.defaultIcon(emptyList()))
     }
+
+    @Test
+    fun `the collapsed grid keeps the chosen icon in view`() {
+        val icons = listOf("a", "b", "c", "d", "e")
+
+        assertEquals(listOf("a", "b", "c"), WorkspaceSheetRules.collapsedIcons(icons, "b", limit = 3))
+        assertEquals(listOf("a", "b", "e"), WorkspaceSheetRules.collapsedIcons(icons, "e", limit = 3))
+        assertEquals(listOf("a", "b", "c"), WorkspaceSheetRules.collapsedIcons(icons, null, limit = 3))
+        assertEquals(listOf("a", "b", "c"), WorkspaceSheetRules.collapsedIcons(icons, "z", limit = 3))
+    }
 }

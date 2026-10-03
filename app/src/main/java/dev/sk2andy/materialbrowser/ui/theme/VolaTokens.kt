@@ -294,6 +294,9 @@ internal object VolaWorkspaceSheet {
 
     /** The icon grid: six tiles a row, the chosen one in the workspace's own gem colors. */
     const val ICON_COLUMNS = 6
+
+    /** «New workspace» shows two rows until «All icons». */
+    const val ICON_COLLAPSED_ROWS = 2
     val iconTileHeight = 48.dp
     val iconTileShape = RoundedCornerShape(VolaShapes.mediumRadius)
     val iconTileGap = VolaSpacing.x2
