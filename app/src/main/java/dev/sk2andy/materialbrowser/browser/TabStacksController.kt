@@ -37,7 +37,7 @@ class TabStacksController internal constructor(
         tabIds: List<String>,
         name: String,
         color: TabStackColor,
-        previewTabId: String?,
+        previewTabId: String? = null,
     ): String? {
         if (!allActive(tabIds)) return null
         val stackId = UUID.randomUUID().toString()
@@ -62,7 +62,7 @@ class TabStacksController internal constructor(
         tabIds: List<String>,
         name: String,
         color: TabStackColor,
-        previewTabId: String?,
+        previewTabId: String? = null,
     ): Boolean = allActive(tabIds) && commit(
         TabStackRules.update(
             stacks = stacks,
@@ -77,7 +77,7 @@ class TabStacksController internal constructor(
 
     fun removeTab(tabId: String): Boolean = commit(TabStackRules.removeTab(stacks, tabId))
 
-    fun toggleCollapsed(stackId: String, triggerTabId: String?): Boolean = commit(
+    fun toggleCollapsed(stackId: String, triggerTabId: String? = null): Boolean = commit(
         TabStackRules.toggleCollapsed(
             stacks = stacks,
             stackId = stackId,

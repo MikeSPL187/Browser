@@ -342,14 +342,14 @@ class BrowserControllerProfilesInstrumentedTest {
             val backgroundTabId = requireNotNull(
                 controller.createBackgroundTab("https://example.com/second"),
             )
-            assertTrue(controller.setTabPinned("work-tab", true))
+            assertTrue(controller.tabOrder.setPinned("work-tab", true))
 
             assertEquals(1, controller.closeAllTabs())
             assertEquals(listOf("work-tab"), controller.activeTabs.map(BrowserTab::id))
             assertTrue(controller.tabs.any { it.id == "home-tab" })
             assertTrue(controller.tabs.none { it.id == backgroundTabId })
 
-            assertTrue(controller.setTabPinned("work-tab", false))
+            assertTrue(controller.tabOrder.setPinned("work-tab", false))
             assertEquals(1, controller.closeAllTabs())
             assertEquals(1, controller.activeTabs.size)
             assertEquals(BLANK_URL, controller.activeTabs.single().url)
@@ -369,7 +369,7 @@ class BrowserControllerProfilesInstrumentedTest {
                 initialUrl = "https://private.example/work",
                 isIncognito = true,
             )
-            assertTrue(controller.setTabPinned(workPrivateTabId, true))
+            assertTrue(controller.tabOrder.setPinned(workPrivateTabId, true))
             assertTrue(controller.selectProfile(profiles.first().id))
             val homePrivateTabId = controller.createTab(
                 initialUrl = "https://private.example/home",

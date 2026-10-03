@@ -38,7 +38,7 @@ class BrowserControllerTabStackInstrumentedTest {
             seedTabs(activity)
             val firstController = BrowserController(activity).also { controller = it }
             firstController.selectTab("two")
-            val stackId = firstController.createTabStack(
+            val stackId = firstController.tabStackController.create(
                 tabIds = listOf("one", "two"),
                 name = "Research",
                 color = TabStackColor.Blueberry,
@@ -46,26 +46,35 @@ class BrowserControllerTabStackInstrumentedTest {
             )
             assertNotNull(stackId)
             assertTrue(
-                firstController.toggleTabStackCollapsed(
+                firstController.tabStackController.toggleCollapsed(
                     stackId = requireNotNull(stackId),
                     triggerTabId = "two",
                 ),
             )
             assertEquals(
                 listOf("two", "three"),
-                firstController.gridOverviewTabs.map(BrowserTab::id),
+                firstController.tabStackController.overviewTabs.map(BrowserTab::id),
             )
 
             firstController.destroy()
             val restoredController = BrowserController(activity).also { controller = it }
 
-            assertEquals("Research", restoredController.activeTabStacks.single().name)
-            assertEquals("one", restoredController.activeTabStacks.single().previewTabId)
-            assertEquals("two", restoredController.activeTabStacks.single().collapsedAnchorTabId)
-            assertTrue(restoredController.activeTabStacks.single().isCollapsed)
+            assertEquals(
+                "Research",
+                restoredController.tabStackController.activeStacks.single().name,
+            )
+            assertEquals(
+                "one",
+                restoredController.tabStackController.activeStacks.single().previewTabId,
+            )
+            assertEquals(
+                "two",
+                restoredController.tabStackController.activeStacks.single().collapsedAnchorTabId,
+            )
+            assertTrue(restoredController.tabStackController.activeStacks.single().isCollapsed)
             assertEquals(
                 listOf("two", "three"),
-                restoredController.gridOverviewTabs.map(BrowserTab::id),
+                restoredController.tabStackController.overviewTabs.map(BrowserTab::id),
             )
         }
     }
@@ -76,7 +85,7 @@ class BrowserControllerTabStackInstrumentedTest {
             seedTabs(activity)
             val browserController = BrowserController(activity).also { controller = it }
             assertNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf("one", "two"),
                     name = "Research",
                     color = TabStackColor.Grape,
@@ -85,7 +94,7 @@ class BrowserControllerTabStackInstrumentedTest {
 
             browserController.closeTab("two")
 
-            assertTrue(browserController.activeTabStacks.isEmpty())
+            assertTrue(browserController.tabStackController.activeStacks.isEmpty())
             assertTrue(BrowserSessionStore(activity).loadTabStacks(browserController.tabs).isEmpty())
         }
     }
@@ -96,7 +105,7 @@ class BrowserControllerTabStackInstrumentedTest {
             seedTabs(activity)
             val browserController = BrowserController(activity).also { controller = it }
             val stackId = requireNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf("one", "two"),
                     name = "Research",
                     color = TabStackColor.Blueberry,
@@ -112,11 +121,11 @@ class BrowserControllerTabStackInstrumentedTest {
                     nowMillis = nowMillis,
                 ),
             )
-            assertTrue(browserController.activeTabStacks.isEmpty())
+            assertTrue(browserController.tabStackController.activeStacks.isEmpty())
 
             assertTrue(browserController.undoSnooze(token, nowMillis + 1L))
 
-            val restoredStack = browserController.activeTabStacks.single()
+            val restoredStack = browserController.tabStackController.activeStacks.single()
             assertEquals(stackId, restoredStack.id)
             assertEquals(listOf("one", "two"), restoredStack.tabIds)
             assertEquals("two", restoredStack.previewTabId)
@@ -160,7 +169,7 @@ class BrowserControllerTabStackInstrumentedTest {
             val browserController = BrowserController(activity).also { controller = it }
 
             assertNotNull(
-                browserController.createTabStack(
+                browserController.tabStackController.create(
                     tabIds = listOf("home-one", "home-two"),
                     name = "Home",
                     color = TabStackColor.Lime,

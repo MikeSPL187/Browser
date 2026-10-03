@@ -529,7 +529,7 @@ internal fun BoxScope.BrowserAddressChrome(
         onToggleFavorite = { toggleFavoriteWithFeedback(selectedTab.id) },
         isPinned = selectedTab.isPinned,
         onTogglePinned = {
-            if (controller.setTabPinned(selectedTab.id, !selectedTab.isPinned)) {
+            if (controller.tabOrder.setPinned(selectedTab.id, !selectedTab.isPinned)) {
                 rootView.performConfirmHaptic()
             }
         },
