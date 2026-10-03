@@ -490,3 +490,15 @@ internal object VolaSiteInfo {
     val dividerInset = 56.dp
     val dividerThickness = 1.dp
 }
+
+/** The permission request sheet (board W-Permission). */
+internal object VolaPermissionPrompt {
+    val sidePadding = VolaSpacing.x6
+    val bottomPadding = VolaSpacing.x6
+    val contentGap = VolaSpacing.x3
+    val buttonGap = VolaSpacing.x2
+
+    /** The permission's icon in an accent circle above the question. */
+    val iconContainerSize = 56.dp
+    val iconSize = 28.dp
+}

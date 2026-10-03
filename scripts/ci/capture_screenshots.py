@@ -494,6 +494,19 @@ def tour(suffix):
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
 
+    def permission_prompt():
+        # The permission request sheet (Q10c, board W-Permission). The tour has no page that asks
+        # for a permission, so a debug-only activity shows the sheet itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PermissionPromptPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"permission-prompt-{suffix}")
+        if not tap("Don’t allow", "Don't allow", "Запретить"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("permission-prompt", permission_prompt)
+
     def tab_archive_setting():
         """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
         lifetime = ("Automatically close tabs", "Автоматически закрывать вкладки")

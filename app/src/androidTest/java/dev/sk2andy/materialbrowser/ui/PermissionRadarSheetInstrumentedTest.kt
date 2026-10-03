@@ -82,7 +82,7 @@ class PermissionRadarSheetInstrumentedTest {
         val selected = AtomicReference<PermissionPromptChoice?>()
         composeRule.setContent {
             MaterialBrowserTheme {
-                PermissionPromptDialog(
+                PermissionPromptSheet(
                     prompt = PermissionPrompt(
                         id = 1L,
                         tabId = "tab-a",
@@ -196,7 +196,7 @@ class PermissionRadarSheetInstrumentedTest {
         val selected = AtomicReference<PermissionPromptChoice?>()
         composeRule.setContent {
             MaterialBrowserTheme {
-                PermissionPromptDialog(
+                PermissionPromptSheet(
                     prompt = PermissionPrompt(
                         id = 2L,
                         tabId = "tab-a",
