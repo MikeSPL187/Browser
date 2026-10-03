@@ -43,6 +43,7 @@ import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuEffects
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuContainerRole
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuResources
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuStyle
+import dev.sk2andy.materialbrowser.ui.theme.VolaMenu
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenu as SharedBrowserMainMenu
@@ -54,7 +55,7 @@ internal typealias BrowserMainMenuTestTags =
 internal typealias DomainMuteMenuTestTags =
     dev.sk2andy.materialbrowser.shared.ui.DomainMuteMenuTestTags
 
-private val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources {
+internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources {
     @Composable
     override fun title(): String = stringResource(R.string.browser_menu_title)
 
@@ -153,14 +154,20 @@ private class AndroidBrowserMainMenuEffects(
     private val backdropSource: CandyChromeBackdropSource?,
 ) : BrowserMainMenuEffects {
     override val style = BrowserMainMenuStyle(
-        menuMaxWidth = 320.dp,
+        showHeader = false,
+        menuMaxWidth = VolaMenu.maxWidth,
+        menuCornerRadius = VolaMenu.sheetRadius,
+        groupCornerRadius = VolaMenu.groupRadius,
+        contentHorizontalPadding = VolaMenu.contentPadding,
         toolbarLabelFontSize = 12.sp,
         toolbarMinHeight = 48.dp,
         showToolbarLabels = false,
-        rowMinHeight = 48.dp,
-        rowLabelFontSize = 16.sp,
+        rowMinHeight = VolaMenu.rowMinHeight,
+        rowLabelFontSize = VolaMenu.rowLabelSize,
         rowSupportingTextFontSize = 12.sp,
         useExpressiveToggleButtons = true,
+        screenMargin = VolaMenu.screenMargin,
+        tiles = VolaMenu.tiles,
     )
 
     @Composable
@@ -414,7 +421,7 @@ internal fun BrowserMainMenu(
 }
 
 @Composable
-private fun rememberAndroidBrowserMainMenuEffects(
+internal fun rememberAndroidBrowserMainMenuEffects(
     backdropSource: CandyChromeBackdropSource?,
 ): BrowserMainMenuEffects = androidx.compose.runtime.remember(backdropSource) {
     AndroidBrowserMainMenuEffects(backdropSource)
