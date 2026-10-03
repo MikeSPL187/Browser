@@ -21,6 +21,7 @@ from pathlib import Path
 PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
+ADD_WORKSPACE_LABELS = ("Add workspace", "Добавить пространство")
 # The workspace the tour makes for the swipe: no name, so the default one.
 SECOND_WORKSPACE_LABELS = ("Workspace", "Пространство")
 DUMPS = OUT.parent / "ui-dumps"
@@ -276,7 +277,7 @@ def tour(suffix):
         """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
         the next workspace's aura shows through. The light tour makes the second workspace."""
         if not find(*SECOND_WORKSPACE_LABELS):
-            if not tap("Add workspace", "Добавить пространство"):
+            if not tap(*ADD_WORKSPACE_LABELS):
                 return
             time.sleep(2)
             tap("Work", "Работа")
@@ -322,10 +323,20 @@ def tour(suffix):
             adb("shell", "input", "swipe", str(wx), str(wy), str(wx), str(wy), "900")
             time.sleep(2)
             shot(f"workspace-options-{suffix}")
+            save_ui(f"workspace-options-{suffix}")
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         else:
             log("not found: workspace switcher entry")
+        # «+» in the workspace dock opens «New workspace» (board W-WorkspaceSheet); Back leaves it
+        # without creating anything.
+        if tap(*ADD_WORKSPACE_LABELS):
+            time.sleep(2)
+            shot(f"workspace-new-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        else:
+            log("not found: add workspace")
         step("workspace-swipe", workspace_swipe)
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)

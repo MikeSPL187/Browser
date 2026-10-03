@@ -280,13 +280,43 @@ internal object VolaAddressEditor {
     val rowGemSize = 18.dp
 }
 
-/** The workspace gem (`.gem` in vola4.css): the workspace icon on its primary color. */
+/** Workspace sheets (boards W-WorkspaceSheet, W-WorkspaceSettings). */
+internal object VolaWorkspaceSheet {
+    val sidePadding = VolaSpacing.x5
+    val bottomPadding = VolaSpacing.x5
+    val headerGemSize = 56.dp
+    val headerGap = VolaSpacing.x3
+    val sectionGap = VolaSpacing.x4
+    val labelGap = VolaSpacing.x2
+
+    /** The icon grid: six tiles a row, the chosen one in the workspace's own gem colors. */
+    const val ICON_COLUMNS = 6
+    val iconTileHeight = 48.dp
+    val iconTileShape = RoundedCornerShape(VolaShapes.mediumRadius)
+    val iconTileGap = VolaSpacing.x2
+    val iconSize = 22.dp
+
+    /** A group of rows on one card, divided by hairlines. */
+    val groupShape = VolaShapes.card
+    val rowMinHeight = 64.dp
+    val rowPadding = VolaSpacing.x4
+    val rowGap = VolaSpacing.x4
+    val rowIconSize = 24.dp
+    val rowGemSize = 24.dp
+    val dividerInset = 56.dp
+    val dividerThickness = 1.dp
+
+    val buttonHeight = 56.dp
+    val buttonShape = RoundedCornerShape(percent = 50)
+}
+
 /** The workspace swipe of the tab overview (board W-WorkspaceSwipe). */
 internal object VolaWorkspaceSwipe {
     /** A flick this fast switches the workspace however short it was. */
     val flingVelocity = 1000.dp
 }
 
+/** The workspace gem (`.gem` in vola4.css): the workspace icon on its primary color. */
 internal object VolaGem {
     /** Corner radius as a share of the gem's size: 11 dp on a 32 dp gem. */
     const val CORNER_FRACTION = 0.34f
