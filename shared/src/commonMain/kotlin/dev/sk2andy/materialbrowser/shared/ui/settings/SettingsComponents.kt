@@ -3,7 +3,7 @@ package dev.sk2andy.materialbrowser.shared.ui.settings
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -264,7 +264,13 @@ fun SettingsSwitch(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            // One switch for TalkBack: the row toggles and reads its title; the Switch only draws.
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -290,7 +296,7 @@ fun SettingsSwitch(
         Switch(
             checked = checked,
             enabled = enabled,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = null,
         )
     }
 }

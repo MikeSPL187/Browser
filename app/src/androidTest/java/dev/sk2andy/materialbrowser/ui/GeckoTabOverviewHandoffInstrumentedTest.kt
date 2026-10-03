@@ -28,12 +28,12 @@ import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncCacheStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncVaultStore
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -125,7 +125,7 @@ class GeckoTabOverviewHandoffInstrumentedTest {
                 )
 
                 composeRule.mainClock.advanceTimeBy(
-                    TabOverviewHeroRules.ENTRY_DURATION_MILLIS.toLong() + 32L,
+                    VolaMotion.TAB_MORPH_SETTLE_MILLIS + 32L,
                 )
                 composeRule.onNodeWithTag(SnoozeTestTags.overviewTab(tabId)).performClick()
                 repeat(EXIT_NEAR_FULLSCREEN_FRAME_COUNT) {
@@ -419,7 +419,7 @@ class GeckoTabOverviewHandoffInstrumentedTest {
         const val PAGE_SETTLE_MILLIS = 2_000L
         const val PIXEL_STABLE_BOUNDARY_TOLERANCE_PX = 4
         const val EXIT_BOUNDARY_TOLERANCE_PX = 24
-        const val EXIT_NEAR_FULLSCREEN_FRAME_COUNT = 14
+        const val EXIT_NEAR_FULLSCREEN_FRAME_COUNT = 16
         const val GREEN_STRIPE_INDEX = 1
         const val BLUE_STRIPE_INDEX = 2
         val STRIPE_COLORS = listOf(
