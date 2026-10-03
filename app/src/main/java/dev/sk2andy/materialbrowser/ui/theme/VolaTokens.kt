@@ -442,9 +442,9 @@ internal object VolaSiteInfo {
     val gemShape = RoundedCornerShape(14.dp)
     val headerGap = VolaSpacing.x3
 
-    /** A card of rows divided by hairlines, as in the main menu's library. */
-    val cardShape = RoundedCornerShape(VolaMenu.groupRadius)
-    val rowMinHeight = VolaMenu.rowMinHeight
+    /** A card of rows divided by hairlines (board W-SiteInfo). */
+    val cardShape = RoundedCornerShape(22.dp)
+    val rowMinHeight = 52.dp
     val rowHorizontalPadding = VolaSpacing.x4
     val rowVerticalPadding = 10.dp
     val rowGap = VolaSpacing.x4
