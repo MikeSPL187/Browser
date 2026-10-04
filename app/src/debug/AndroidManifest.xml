@@ -27,6 +27,10 @@
         </activity>
         <!-- Exported for `adb shell am start` in the screenshot tour; debug builds only. -->
         <activity
+            android:name="dev.sk2andy.materialbrowser.ui.PrivateTabsLockPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+        <activity
             android:name="dev.sk2andy.materialbrowser.ui.PermissionPromptPreviewActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.NoActionBar" />

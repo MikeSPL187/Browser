@@ -248,7 +248,7 @@ internal fun BrowserScreen(
     launcherAddressEditorRequestId: Int = 0,
     hardwareTabChangeRequestId: Int = 0,
 ) {
-    if (controller.isActiveProfileLocked) return
+    if (controller.isSelectedContentLocked) return
     val hideBrowserChrome = FullscreenVideoRules.hidesBrowserChrome(
         isWebContentFullscreen = controller.isSelectedWebContentFullscreen,
         placement = controller.fullscreenVideoPlacement(videoOnlyPresentation),
@@ -651,8 +651,7 @@ internal fun BrowserScreen(
         controller.toggleFavorite(tabId)?.let(showFavoriteMutation)
     }
     BrowserOfferSnackbarEffects(controller, feedbackSnackbarHostState)
-    ClosedTabUndoSnackbarEffect(controller, feedbackSnackbarHostState)
-    EssentialRemovalSnackbarEffect(controller.essentials, feedbackSnackbarHostState)
+    BrowserUndoSnackbarEffects(controller, feedbackSnackbarHostState)
     val tabSwitchGapPx = with(density) { 8.dp.toPx() }
     val tabSwitchTravelPx = browserWidthPx + tabSwitchGapPx
     val settleOverviewGesture: () -> Unit = {

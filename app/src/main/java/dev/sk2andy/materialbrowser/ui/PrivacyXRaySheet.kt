@@ -3,6 +3,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.compose.BackHandler
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewContrastRules
 
 import android.view.HapticFeedbackConstants
@@ -136,6 +137,8 @@ internal fun PrivacyXRaySheet(
     canTogglePopups: Boolean = false,
     popupsBlocked: Boolean = false,
     onPopupsBlockedChange: (Boolean) -> Unit = {},
+    siteData: SiteInfoSiteData? = null,
+    certificate: SiteCertificate? = null,
 ) {
     val title = stringResource(R.string.site_info_title)
     var page by remember(pageUrl) { mutableStateOf(SiteInfoPage.Overview) }
@@ -183,10 +186,10 @@ internal fun PrivacyXRaySheet(
                 if (page != SiteInfoPage.Overview) {
                     SiteInfoPageBar(
                         title = stringResource(
-                            if (page == SiteInfoPage.PrivacyXRay) {
-                                R.string.privacy_xray_title
-                            } else {
-                                R.string.permission_radar_title
+                            when (page) {
+                                SiteInfoPage.PrivacyXRay -> R.string.privacy_xray_title
+                                SiteInfoPage.Certificate -> R.string.site_info_certificate
+                                else -> R.string.permission_radar_title
                             },
                         ),
                         onBack = { page = SiteInfoPage.Overview },
@@ -218,6 +221,9 @@ internal fun PrivacyXRaySheet(
                             }
                         },
                         onPopupsBlockedChange = onPopupsBlockedChange,
+                        siteData = siteData,
+                        certificate = certificate,
+                        onOpenCertificate = { page = SiteInfoPage.Certificate },
                         modifier = Modifier
                             .verticalScroll(rememberScrollState())
                             .navigationBarsPadding()
@@ -227,6 +233,20 @@ internal fun PrivacyXRaySheet(
                                 bottom = VolaSiteInfo.bottomPadding,
                             ),
                     )
+                } else if (page == SiteInfoPage.Certificate) {
+                    certificate?.let { cert ->
+                        SiteCertificateContent(
+                            certificate = cert,
+                            modifier = Modifier
+                                .verticalScroll(rememberScrollState())
+                                .navigationBarsPadding()
+                                .padding(
+                                    start = VolaSiteInfo.sidePadding,
+                                    end = VolaSiteInfo.sidePadding,
+                                    bottom = VolaSiteInfo.bottomPadding,
+                                ),
+                        )
+                    }
                 } else if (page == SiteInfoPage.PrivacyXRay) {
                     PrivacyXRayContent(
                         pageUrl = pageUrl,
