@@ -17,14 +17,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -32,17 +30,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeEntry
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeIcon
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeItem
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
-import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsTileColors
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomePage as SharedSettingsHomePage
-import dev.sk2andy.materialbrowser.ui.theme.LocalVolaDarkTheme
-import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsHomeTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
@@ -145,18 +139,6 @@ private fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState):
         )
         else -> SettingsHomeEntry(item = item, title = "", summary = null)
     }
-}
-
-/** The tile in [accent]'s own container colors, as a workspace gem keeps its own color. */
-@Composable
-@ReadOnlyComposable
-private fun settingsTileColors(accent: WorkspaceAccent): SettingsTileColors {
-    val tokens = VolaColorRules.schemeSet(accent, privateMode = false)
-        .select(dark = LocalVolaDarkTheme.current, highContrast = false)
-    return SettingsTileColors(
-        container = Color(tokens.primaryContainer),
-        content = Color(tokens.onPrimaryContainer),
-    )
 }
 
 @Composable

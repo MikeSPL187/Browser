@@ -785,6 +785,14 @@ def tour(suffix):
             tap("Never", "Никогда")
             time.sleep(1)
 
+    def settings_top():
+        """Back to the top of the settings home: its rows are found by scrolling down."""
+        width, height = screen_size()
+        for _ in range(3):
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                str(width // 2), str(int(height * 0.8)), "200")
+        time.sleep(1)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)
@@ -814,6 +822,14 @@ def tour(suffix):
                     if not find("Search settings", "Найти в настройках"):
                         adb("shell", "input", "keyevent", "BACK")
                         time.sleep(2)
+                # Search settings (Q16c, board W-SetSearch): engines on a card, then suggestions.
+                settings_top()
+                if tap_scrolling("Search", "Поиск", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"search-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
@@ -823,11 +839,13 @@ def tour(suffix):
                         shot(f"appearance-more-{suffix}", audit=False)
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
                     tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)

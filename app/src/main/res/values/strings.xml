@@ -646,6 +646,18 @@
     </plurals>
     <string name="settings_section_search">Search</string>
     <string name="settings_search_engine">Search engine</string>
+    <string name="search_engine_google_summary">The largest index</string>
+    <string name="search_engine_duckduckgo_summary">Doesn’t store your searches</string>
+    <string name="search_engine_bing_summary">Microsoft’s index</string>
+    <string name="search_engine_brave_summary">Its own index, no profiling</string>
+    <string name="search_engine_ecosia_summary">Plants trees with its ad income</string>
+    <string name="search_engine_startpage_summary">Google results without tracking</string>
+    <string name="search_engine_qwant_summary">European, doesn’t profile you</string>
+    <string name="search_engine_kagi_summary">Paid, no ads</string>
+    <string name="search_engine_perplexity_summary">AI answers with sources</string>
+    <string name="search_engine_chatgpt_summary">AI answers</string>
+    <string name="search_engine_searxng_summary">Your own server</string>
+    <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Show AI Mode logo</string>
     <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch the current query between Google Search and AI Mode.</string>
     <string name="settings_history_suggestions_title">Show browsing history suggestions</string>
