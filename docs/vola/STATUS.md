@@ -28,13 +28,16 @@ _Обновлено: 2026-10-04 (ночь: открыты #60 и #61 — Q15a и
     (`GeckoHttpsOnlyErrorPage`) в цветах v4 из `VolaSchemes` (пространство по умолчанию, тёмная —
     чёрная), янтарный значок, плашка «не вводите пароли», «Вернуться назад» внизу, «Всё равно открыть
     по HTTP» тише. Остаётся HTML: `document.reloadWithHttpsOnlyException()` есть только у
-    документа ошибки, публичного API GeckoView нет. **Находка:** тур ни разу не показывал
-    предупреждение — neverssl.com теперь открывается по HTTPS, а у httpforever.com апгрейд падает на
-    TLS (модуль безопасности M21): Gecko присылает ошибку безопасности, а не `ERROR_HTTPS_ONLY`, и
-    поверх ложится оверлей Vola без варианта «открыть по HTTP». В debug-сборке `onLoadError`
-    пишет в лог `VolaLoadError` категорию и код; тур перебирает хосты (`HTTP_ONLY_CANDIDATES`), пока
-    лог не покажет `httpsOnly=true`.
-  - Конфликты при слиянии: #60 ↔ #54 (#54 переносит вызов `ProfileLockedOverlay` в
+    документа ошибки, публичного API GeckoView нет. **Баг (был всегда):** при `ERROR_HTTPS_ONLY`
+    загрузка всё равно кончается `onPageStop(false)` → `NavigationFailed` → оверлей Vola «Сайт не
+    найден» закрывал предупреждение, и на HTTP-сайт было не попасть. Исправлено портом:
+    `BrowserEngineFailureKind.HttpsOnly` (адаптер Gecko ставит его, правила оверлея → `Hidden`).
+    Тур этого не ловил: neverssl.com теперь открывается по HTTPS. В debug-сборке `onLoadError` пишет
+    в лог `VolaLoadError` категорию и код; тур перебирает `HTTP_ONLY_CANDIDATES` (первым
+    `httpforever.com` — на нём `ERROR_HTTPS_ONLY` во всех проходах), пока лог не покажет
+    `httpsOnly=true`.
+  - Конфликты при слиянии: #60 ↔ #61 (правило `HttpsOnly` из `PageErrorFeedback.kt` перенести в
+    `PageErrorFeedbackRules.kt`, тест — в `PageErrorFeedbackRulesTest`); #60 ↔ #54 (#54 переносит вызов `ProfileLockedOverlay` в
     `BrowserLockScreens` — заменить `profileEmoji` на `workspace`), `material_symbols.json` и
     `compile_material_symbols.py` (`fingerprint` в #54 и #60 — после слияния `compile_material_symbols.py
     fetch` и обычный прогон), `VolaTokens.kt`, `capture_screenshots.py` и debug-манифест — добавления.
@@ -463,9 +466,8 @@ _Обновлено: 2026-10-04 (ночь: открыты #60 и #61 — Q15a и
 Очередь и порядок — `docs/vola/ROADMAP.md`, раздел 2.
 
 1. **Слить #54–#58, #60, #61 и docs-PR** (по слову владельца), разрешить конфликты по спискам выше.
-2. **#61:** по `tour-log.txt` (строки `https-only probe`) выбрать хост, на котором Gecko показывает
-   предупреждение, и оставить в `HTTP_ONLY_CANDIDATES` только его. Если ни один — снимать страницу
-   отладочной активити.
+2. **#61:** проверить кадр `https-only-*` после исправления (предупреждение без оверлея); если
+   `httpforever.com` получит HTTPS — тур возьмёт следующий хост из `HTTP_ONLY_CANDIDATES`.
 3. **Решения владельца** (раздел 6 ROADMAP): релизный ключ, П5 (Q11), темы чтения и шрифт (Q12),
    П4 (Q13), Safe Browsing (Q15).
 4. Без ответов — Q15c: проверка загрузки (`DownloadSafetyCheck`, доска W-DownloadCheck) и ошибки TLS

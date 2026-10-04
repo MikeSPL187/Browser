@@ -400,7 +400,8 @@ _Обновлено: 2026-10-01. Основа: `tech-plan.md` (раздел 4: 1
   - **15a — #60.** `VolaStatePage` и `VolaStatePageTokens`; «Нет подключения» с автоповтором и
     «Настройки сети»; «Сайт не отвечает»; «Сайт не найден»; «Страница не найдена»; «Пространство
     заблокировано».
-  - **15b — #61.** HTML-страница Gecko «Только HTTPS» по W-HttpsOnly в цветах v4.
+  - **15b — #61.** HTML-страница Gecko «Только HTTPS» по W-HttpsOnly в цветах v4 и исправление:
+    оверлей Vola больше не закрывает её (`BrowserEngineFailureKind.HttpsOnly`).
   - **15c — очередь.** `DownloadSafetyCheck` (W-DownloadCheck); ошибки TLS по W-States («Небезопасное
     соединение», «Вернуться назад»); неудачный апгрейд HTTPS-only на TLS (Gecko присылает ошибку
     безопасности, а не `ERROR_HTTPS_ONLY`, — выбора «открыть по HTTP» нет).
