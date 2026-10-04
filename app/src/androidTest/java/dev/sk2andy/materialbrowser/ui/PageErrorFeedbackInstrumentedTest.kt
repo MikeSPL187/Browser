@@ -1,12 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -31,77 +29,57 @@ class PageErrorFeedbackInstrumentedTest {
                 PageErrorFeedback(
                     state = PageErrorFeedbackState.NotFound,
                     onRetry = reloads::incrementAndGet,
+                    url = "https://north-guide.ru/old",
                 )
             }
         }
 
-        composeRule.onNodeWithText("This page was snacked away").assertExists()
-        composeRule.onNodeWithContentDescription("Destination not found").assertExists()
+        composeRule.onNodeWithText("Page not found").assertExists()
+        composeRule.onNodeWithText("north-guide.ru", substring = true).assertExists()
         composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).performClick()
 
         assertEquals(1, reloads.get())
     }
 
     @Test
-    fun unreachablePageUsesFriendlyMissingDestinationLayout() {
+    fun unreachablePageNamesTheSiteButNotTheEngineError() {
         composeRule.setContent {
             MaterialBrowserTheme {
                 PageErrorFeedback(
-                    state = PageErrorFeedbackState.Error("unknown host"),
+                    state = PageErrorFeedbackState.Error("NS_ERROR_NET_TIMEOUT"),
                     onRetry = {},
+                    url = "https://www.north-guide.ru/routes",
                 )
             }
         }
 
-        composeRule.onNodeWithText("Website not found").assertExists()
-        composeRule.onNodeWithContentDescription("Destination not found").assertExists()
-        composeRule.onNodeWithText("unknown host").assertDoesNotExist()
+        composeRule.onNodeWithText("Site isn’t responding").assertExists()
+        composeRule.onNodeWithText("north-guide.ru", substring = true).assertExists()
+        composeRule.onNodeWithText("NS_ERROR_NET_TIMEOUT", substring = true).assertDoesNotExist()
         composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).assertExists()
     }
 
     @Test
-    fun offlinePageWaitsForTheConnectionWithoutReloadButton() {
+    fun offlinePageOffersRetryAndNetworkSettings() {
+        val reloads = AtomicInteger()
         composeRule.setContent {
             MaterialBrowserTheme {
                 PageErrorFeedback(
                     state = PageErrorFeedbackState.Offline(),
-                    onRetry = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Offline).assertExists()
-        composeRule.onNodeWithText("No connection").assertExists()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OfflinePill).assertExists()
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).assertDoesNotExist()
-    }
-
-    @Test
-    fun reconnectAnnouncesItselfAndLoadsOnlyAfterButtonClick() {
-        val reloads = AtomicInteger()
-        val state = mutableStateOf<PageErrorFeedbackState>(PageErrorFeedbackState.Offline())
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                PageErrorFeedback(
-                    state = state.value,
                     onRetry = reloads::incrementAndGet,
                 )
             }
         }
 
-        composeRule.runOnIdle {
-            state.value = PageErrorFeedbackState.Offline(isOnlineReady = true)
-        }
-        composeRule.onNodeWithText("Back online")
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Offline).assertExists()
+        composeRule.onNodeWithText("No connection")
             .assert(
                 SemanticsMatcher.expectValue(
                     SemanticsProperties.LiveRegion,
                     LiveRegionMode.Polite,
                 ),
             )
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.OfflinePill).assertDoesNotExist()
-        assertEquals(0, reloads.get())
-
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.NetworkSettings).assertExists()
         composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).performClick()
 
         assertEquals(1, reloads.get())

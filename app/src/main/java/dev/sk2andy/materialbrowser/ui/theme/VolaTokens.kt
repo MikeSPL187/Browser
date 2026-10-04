@@ -518,3 +518,31 @@ internal object VolaPrivacyXRay {
     /** Trackers shown before «Show all». */
     const val COLLAPSED_DOMAINS = 5
 }
+
+/**
+ * A whole page in one state (boards W-Offline, W-HttpsOnly, W-Locked): the icon in a rounded
+ * square, a title and one sentence near the middle, the actions at the bottom under the thumb.
+ */
+internal object VolaStatePageTokens {
+    val maxContentWidth = 560.dp
+    val contentPaddingHorizontal = 28.dp
+    val contentPaddingVertical = VolaSpacing.x8
+    val contentGap = 14.dp
+
+    /** Extra room under the icon, on top of [contentGap]. */
+    val iconBottomGap = 6.dp
+    val iconContainerSize = 84.dp
+    val iconContainerShape = RoundedCornerShape(30.dp)
+    val iconSize = 44.dp
+
+    /** The small badge on the icon's corner, such as the lock on a locked workspace's gem. */
+    val badgeSize = 36.dp
+    val badgeIconSize = 20.dp
+    val badgeOffset = 8.dp
+
+    val actionsPaddingHorizontal = VolaSpacing.x5
+    val actionsPaddingBottom = VolaSpacing.x6
+    val actionGap = 10.dp
+    val buttonHeight = 52.dp
+    val buttonIconSize = 20.dp
+}
