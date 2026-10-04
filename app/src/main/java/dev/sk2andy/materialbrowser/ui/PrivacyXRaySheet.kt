@@ -136,6 +136,7 @@ internal fun PrivacyXRaySheet(
     canTogglePopups: Boolean = false,
     popupsBlocked: Boolean = false,
     onPopupsBlockedChange: (Boolean) -> Unit = {},
+    siteData: SiteInfoSiteData? = null,
 ) {
     val title = stringResource(R.string.site_info_title)
     var page by remember(pageUrl) { mutableStateOf(SiteInfoPage.Overview) }
@@ -218,6 +219,7 @@ internal fun PrivacyXRaySheet(
                             }
                         },
                         onPopupsBlockedChange = onPopupsBlockedChange,
+                        siteData = siteData,
                         modifier = Modifier
                             .verticalScroll(rememberScrollState())
                             .navigationBarsPadding()

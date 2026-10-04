@@ -44,6 +44,9 @@ internal interface GeckoRuntimeHandle {
         onComplete: (Boolean) -> Unit = {},
     )
 
+    /** Deletes one site's cookies, storage and caches across every session context. */
+    fun clearSiteData(baseDomain: String, onComplete: (Boolean) -> Unit) = onComplete(false)
+
     /** Dispatches context-scoped deletion after its sessions close. Gecko exposes no completion. */
     fun requestProfileDataDeletion(profileId: String): Boolean = false
 

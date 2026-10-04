@@ -651,8 +651,7 @@ internal fun BrowserScreen(
         controller.toggleFavorite(tabId)?.let(showFavoriteMutation)
     }
     BrowserOfferSnackbarEffects(controller, feedbackSnackbarHostState)
-    ClosedTabUndoSnackbarEffect(controller, feedbackSnackbarHostState)
-    EssentialRemovalSnackbarEffect(controller.essentials, feedbackSnackbarHostState)
+    BrowserUndoSnackbarEffects(controller, feedbackSnackbarHostState)
     val tabSwitchGapPx = with(density) { 8.dp.toPx() }
     val tabSwitchTravelPx = browserWidthPx + tabSwitchGapPx
     val settleOverviewGesture: () -> Unit = {

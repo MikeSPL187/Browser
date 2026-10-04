@@ -266,6 +266,16 @@ def tour(suffix):
             # The bar's Back returns to the overview; a missed tap must not leave the page.
             if tap("Back", "Назад"):
                 time.sleep(1)
+        # «Site data» at the end of the sheet (Q10b): «Delete» closes the sheet and waits behind
+        # «Undo»; the tour takes the deletion back.
+        if scroll_to("Site data", "Данные сайта", name=f"site-info-data-{suffix}"):
+            shot(f"site-info-data-{suffix}")
+            if tap("Delete data of", "Удалить данные", contains=True):
+                time.sleep(1)
+                shot(f"site-data-undo-{suffix}", audit=False)
+                tap("Undo", "Отменить")
+                time.sleep(1)
+                return
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("site-info", site_info)

@@ -473,6 +473,9 @@ class BrowserController(
     val isHttpsOnlySupported: Boolean
         get() = browserEngineCapabilities.httpsOnly
 
+    val isSiteDataDeletionSupported: Boolean
+        get() = browserEngineCapabilities.siteDataDeletion
+
     val supportsPageContentActions: Boolean
         get() = true
 
@@ -1424,6 +1427,13 @@ class BrowserController(
         authenticate = ::requestProfileAuthentication,
         suspendTabs = ::suspendLockedTabs,
         resumeSelectedTab = ::resumeUnlockedSelectedTab,
+    )
+    val siteDataDeletion = SiteDataDeletion(
+        clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
+        selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        reloadSelected = ::reload,
+        postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
     )
     private val snoozeRestoreCallback: (Long) -> Unit = { nowMillis ->
         mainHandler.post {
@@ -5757,16 +5767,7 @@ class BrowserController(
         if (!FederatedLoginRules.isProviderNavigation(offer.targetUrl)) {
             federatedLoginCompatibilityTabIds.remove(tab.id)
         }
-        updateTab(tab.id) { current ->
-            current.copy(
-                url = offer.targetUrl,
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(tab.id) { current -> current.startingLoad(url = offer.targetUrl) }
         tabs.firstOrNull { it.id == tab.id }?.let(::markSyncedTabPending)
         scheduleSyncedTabNavigation(tab.id)
         loadGeckoWithPrivacy(tab.id, view, offer.targetUrl)
@@ -8578,15 +8579,7 @@ class BrowserController(
     }
     fun reload() {
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
-        updateTab(selectedTabId) {
-            it.copy(
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
         val pending = pendingInitialBrowserEngineNavigations[selectedTabId]
         if (pending?.session !== session) session.execute(BrowserEngineCommands.reload())
@@ -8603,15 +8596,7 @@ class BrowserController(
         val existingSession = browserEngineSessions[tabId]
         val failedTab = selectedTab
         val command = FailedPageRetryRules.commandFor(failedTab) ?: return false
-        updateTab(tabId) {
-            it.copy(
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(tabId) { it.startingLoad() }
         if (existingSession == null) {
             browserEngineSessionFor(tabId, commandOnCreate = command)
         } else {
@@ -8674,15 +8659,7 @@ class BrowserController(
                 sameSession = browserEngineSessions[tabId] === session,
             )
             if (unchanged) {
-                updateTab(tabId) { tab ->
-                    tab.copy(
-                        isLoading = true,
-                        progress = 0,
-                        error = null,
-                        failureKind = null,
-                        httpStatusCode = null,
-                    )
-                }
+                updateTab(tabId) { tab -> tab.startingLoad() }
                 session.execute(BrowserEngineCommands.reload())
             }
             onComplete(unchanged)
@@ -10173,6 +10150,7 @@ class BrowserController(
             protection.lockTrigger == ProfileLockTrigger.AppBackgrounded
         }
         privateTabsLock.onAppBackgrounded()
+        siteDataDeletion.commit()
     }
 
     fun onAppForegrounded(nowElapsedRealtime: Long = SystemClock.elapsedRealtime()) {
@@ -13375,14 +13353,7 @@ class BrowserController(
             if (opener?.isPinned == true) {
                 openerView?.let { view ->
                     updateTab(opener.id) { tab ->
-                        tab.copy(
-                            url = candidate.originalOpenerUrl,
-                            isLoading = true,
-                            progress = 0,
-                            error = null,
-                            failureKind = null,
-                            httpStatusCode = null,
-                        )
+                        tab.startingLoad(url = candidate.originalOpenerUrl)
                     }
                     loadGeckoWithPrivacy(opener.id, view, candidate.originalOpenerUrl)
                 }

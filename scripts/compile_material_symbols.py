@@ -76,6 +76,7 @@ DRAWABLES = [
     ("ic_symbol_close", "close", False, BLACK, False),
     ("ic_symbol_cookie", "cookie", False, WHITE, False),
     ("ic_symbol_desktop", "desktop_windows", False, WHITE, False),
+    ("ic_symbol_dns", "dns", False, WHITE, False),
     ("ic_symbol_extension", "extension", False, WHITE, False),
     ("ic_symbol_favorite", "favorite", False, BLACK, False),
     ("ic_symbol_favorite_filled", "favorite", True, BLACK, False),

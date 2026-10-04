@@ -1494,6 +1494,12 @@
     </plurals>
     <string name="site_info_nothing_blocked">Nothing blocked on this page yet</string>
     <string name="site_info_permissions_title">Site permissions</string>
+    <string name="site_info_site_data">Site data</string>
+    <string name="site_info_site_data_summary">Cookies, storage and cache</string>
+    <string name="site_info_site_data_summary_all_workspaces">Cookies, storage and cache, in every workspace</string>
+    <string name="site_info_delete_site_data">Delete</string>
+    <string name="site_info_delete_site_data_description">Delete data of %1$s</string>
+    <string name="site_data_deleted">Data of %1$s deleted</string>
     <string name="site_info_all_permissions">All permissions</string>
     <string name="site_info_protection_summary">Turn it off if the site doesn’t work properly</string>
     <string name="site_info_permission_session">This session</string>
