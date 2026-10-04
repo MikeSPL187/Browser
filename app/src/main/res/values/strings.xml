@@ -614,6 +614,7 @@
     <string name="settings_download_one_dm_session_title">Share session data with 1DM</string>
     <string name="settings_download_one_dm_session_summary">Shares cookies, user agent, and referrer with 1DM so signed-in downloads can work. The app may use them to access your session. Session data is never shared in private browsing.</string>
     <string name="settings_section_tabs">Tabs</string>
+    <string name="settings_tabs_group_overview">Tab overview</string>
     <string name="settings_tab_overview_mode">Tab overview layout</string>
     <string name="settings_tab_stack_folder_mode">Stack folder layout</string>
     <string name="tab_overview_mode_hero">Cover flow</string>

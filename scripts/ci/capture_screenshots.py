@@ -842,6 +842,8 @@ def tour(suffix):
                 settings_top()
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Tabs and gestures on cards (Q16c, board W-SetTabs).
+                    shot(f"tabs-settings-{suffix}")
                     tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)

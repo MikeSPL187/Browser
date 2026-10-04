@@ -632,6 +632,7 @@
     <string name="settings_download_one_dm_session_title">Передавать данные сеанса в 1DM</string>
     <string name="settings_download_one_dm_session_summary">Передаёт в 1DM куки, user agent и referrer, чтобы работали загрузки, требующие входа. Приложение может использовать их для доступа к вашему сеансу. В приватном режиме данные сеанса не передаются.</string>
     <string name="settings_section_tabs">Вкладки</string>
+    <string name="settings_tabs_group_overview">Обзор вкладок</string>
     <string name="settings_tab_overview_mode">Вид обзора вкладок</string>
     <string name="settings_tab_stack_folder_mode">Вид вкладок внутри стопки</string>
     <string name="tab_overview_mode_hero">Карусель</string>
