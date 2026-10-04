@@ -193,11 +193,53 @@ def open_url(url):
         check=False, capture=True)
 
 
+# A step that misses a tap can leave a surface open over the page. The next step would then
+# shoot that surface instead of its own screen, and the audit would count its controls against
+# the wrong frame, so every step closes what is left over.
+LEFTOVER_SURFACES = (
+    ("Close address input", "Закрыть ввод адреса"),
+    ("Close Split View", "Выйти из Split View"),
+)
+
+
+def close_leftovers(name):
+    """One look at the screen per step; a second only after something had to be closed."""
+    current = nodes()
+    for labels in LEFTOVER_SURFACES:
+        node = next((node for node in current
+                     if node["text"] in labels or node["desc"] in labels), None)
+        if node is None:
+            continue
+        x, y = node["center"]
+        adb("shell", "input", "tap", str(x), str(y))
+        log(f"step {name}: closed a leftover {labels[0]!r}")
+        time.sleep(2)
+        current = nodes()
+
+
+def settle(attempts=6):
+    """Waits until the screen stops moving: two UI dumps in a row are the same. A frame caught
+    mid-animation shows controls half covered, which the audit reads as too small."""
+    previous = None
+    for _ in range(attempts):
+        raw = dump_ui()
+        if raw and raw == previous:
+            return True
+        previous = raw
+        time.sleep(1)
+    log("screen did not settle")
+    return False
+
+
 def step(name, action):
     try:
         action()
     except Exception as error:  # noqa: BLE001 - keep the tour going
         log(f"step {name} failed: {error}")
+    try:
+        close_leftovers(name)
+    except Exception as error:  # noqa: BLE001 - keep the tour going
+        log(f"step {name}: leftovers not checked: {error}")
 
 
 def dismiss_first_run():
@@ -335,18 +377,26 @@ def tour(suffix):
 
     def address_editor():
         # The address editor over the Zen page: library, search and open-tab suggestions (Q4).
-        address = find("wikipedia.org", contains=True)
+        address = None
+        for _ in range(3):
+            # «Undo» on the site data reloads the page; the bar shows the address once it is back.
+            address = find("wikipedia.org", contains=True)
+            if address is not None:
+                break
+            time.sleep(2)
         if address is None:
             # The scrolled page left the compact capsule: tap it to bring the full bar back.
             adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
             time.sleep(2)
             address = find("wikipedia.org", contains=True)
-        if address is None:
+        if address is not None:
+            x, y = address["center"]
+            adb("shell", "input", "tap", str(x), str(y))
+            time.sleep(2)
+        elif not find(*LEFTOVER_SURFACES[0]):
             log("not found: address field")
             return
-        x, y = address["center"]
-        adb("shell", "input", "tap", str(x), str(y))
-        time.sleep(2)
+        # Otherwise the tap on the capsule's spot landed on the full bar and opened the editor.
         adb("shell", "input", "text", "zen")
         time.sleep(4)
         shot(f"address-{suffix}")
@@ -424,6 +474,8 @@ def tour(suffix):
         x, y = link["center"]
         adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "900")
         time.sleep(6)
+        # The card rises over the bottom bar; caught on the way, the bar's buttons peek out.
+        settle()
         shot(f"glance-{suffix}")
         save_ui(f"glance-{suffix}")
         adb("shell", "input", "keyevent", "BACK")
@@ -809,6 +861,14 @@ def tour(suffix):
             tap("Never", "Никогда")
             time.sleep(1)
 
+    def settings_top():
+        """Back to the top of the settings home: its rows are found by scrolling down."""
+        width, height = screen_size()
+        for _ in range(3):
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                str(width // 2), str(int(height * 0.8)), "200")
+        time.sleep(1)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)
@@ -816,6 +876,15 @@ def tour(suffix):
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
+                # The home's lower cards (Q16c, board W-Settings), then back to the top.
+                width, height = screen_size()
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.75)),
+                    str(width // 2), str(int(height * 0.3)), "400")
+                time.sleep(1)
+                shot(f"settings-more-{suffix}")
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                    str(width // 2), str(int(height * 0.75)), "400")
+                time.sleep(1)
                 # Settings search (Q16a): the magnifier in the header, then «https».
                 if tap("Search settings", "Найти в настройках"):
                     time.sleep(2)
@@ -829,6 +898,14 @@ def tour(suffix):
                     if not find("Search settings", "Найти в настройках"):
                         adb("shell", "input", "keyevent", "BACK")
                         time.sleep(2)
+                # Search settings (Q16c, board W-SetSearch): engines on a card, then suggestions.
+                settings_top()
+                if tap_scrolling("Search", "Поиск", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"search-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
@@ -838,14 +915,34 @@ def tour(suffix):
                         shot(f"appearance-more-{suffix}", audit=False)
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Tabs and gestures on cards (Q16c, board W-SetTabs).
+                    shot(f"tabs-settings-{suffix}")
                     tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
+                # Browser settings on cards (Q16c, board W-Settings).
+                if tap_scrolling("Browser", "Браузер", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"browser-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
+                # Download settings on cards (Q16c, board W-Settings).
+                if tap_scrolling("Downloads", "Загрузки", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"download-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Protection and data on cards (Q16c, board W-SetPrivacy).
+                    shot(f"protection-settings-{suffix}")
                     if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
                                  name=f"protection-private-lock-{suffix}", attempts=8):
                         shot(f"protection-private-lock-{suffix}")
