@@ -219,7 +219,8 @@ def tour(suffix):
         if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-menu-{suffix}"):
             adb("shell", "input", "keyevent", "BACK")
             return
-        time.sleep(2)
+        # The bar folds into the handle once the menu has closed; give it time on a slow emulator.
+        time.sleep(5)
         shot(f"compact-mode-{suffix}")
         time.sleep(5)
         if tap("Show the bar", "Показать панель"):
