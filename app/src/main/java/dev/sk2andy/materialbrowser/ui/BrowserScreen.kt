@@ -248,7 +248,7 @@ internal fun BrowserScreen(
     launcherAddressEditorRequestId: Int = 0,
     hardwareTabChangeRequestId: Int = 0,
 ) {
-    if (controller.isActiveProfileLocked) return
+    if (controller.isSelectedContentLocked) return
     val hideBrowserChrome = FullscreenVideoRules.hidesBrowserChrome(
         isWebContentFullscreen = controller.isSelectedWebContentFullscreen,
         placement = controller.fullscreenVideoPlacement(videoOnlyPresentation),
@@ -292,6 +292,10 @@ internal fun BrowserScreen(
     val aiModeSelectedState = remember { mutableStateOf(false) }
     var settingsVisible by remember { mutableStateOf(false) }
     var settingsDestination by rememberSaveable { mutableStateOf(SettingsDestination.Home) }
+    fun openSettings(destination: SettingsDestination) {
+        settingsDestination = destination
+        settingsVisible = true
+    }
     var snoozedTabsVisible by rememberSaveable { mutableStateOf(false) }
     var snoozeTabId by remember { mutableStateOf<String?>(null) }
     var moveTabToProfileId by remember { mutableStateOf<String?>(null) }
@@ -651,8 +655,7 @@ internal fun BrowserScreen(
         controller.toggleFavorite(tabId)?.let(showFavoriteMutation)
     }
     BrowserOfferSnackbarEffects(controller, feedbackSnackbarHostState)
-    ClosedTabUndoSnackbarEffect(controller, feedbackSnackbarHostState)
-    EssentialRemovalSnackbarEffect(controller.essentials, feedbackSnackbarHostState)
+    BrowserUndoSnackbarEffects(controller, feedbackSnackbarHostState)
     val tabSwitchGapPx = with(density) { 8.dp.toPx() }
     val tabSwitchTravelPx = browserWidthPx + tabSwitchGapPx
     val settleOverviewGesture: () -> Unit = {
@@ -945,8 +948,7 @@ internal fun BrowserScreen(
                 }
                 BrowserCommandKind.OpenSettings -> {
                     addressEditorVisible = false
-                    settingsDestination = SettingsDestination.Home
-                    settingsVisible = true
+                    openSettings(SettingsDestination.Home)
                 }
                 else -> addressEditorVisible = false
             }
@@ -1643,10 +1645,7 @@ internal fun BrowserScreen(
             onOpenFavorites = onOpenFavorites,
             onOpenDownloads = onOpenDownloads,
             onOpenHistory = onOpenHistory,
-            onSettings = {
-                settingsDestination = SettingsDestination.Home
-                settingsVisible = true
-            },
+            onSettings = { openSettings(SettingsDestination.Home) },
             onPrivacyXRay = {
                 privacyXRayTabId = selectedTab.id
                 permissionRadarOrigin = null
@@ -1728,14 +1727,8 @@ internal fun BrowserScreen(
                     openNewTabAndEdit()
                     if (controller.selectedTabId != previousTabId) closeTabOverview()
                 },
-                onOpenSettings = {
-                    settingsDestination = SettingsDestination.Home
-                    settingsVisible = true
-                },
-                onOpenSyncSettings = {
-                    settingsDestination = SettingsDestination.Sync
-                    settingsVisible = true
-                },
+                onOpenSettings = { openSettings(SettingsDestination.Home) },
+                onOpenSyncSettings = { openSettings(SettingsDestination.Sync) },
                 onEditProfileWallpaper = ::openProfileWallpaperEditor,
                 onConfigureCreatedProfile = { profileId, options ->
                     configureProfile(
@@ -1916,6 +1909,10 @@ internal fun BrowserScreen(
                 filterStudioSelectedRuleId = ruleId
                 privacyXRayTabId = null
                 filterStudioVisible = true
+            },
+            onOpenProtectionSettings = {
+                privacyXRayTabId = null
+                openSettings(SettingsDestination.ProtectionAndData)
             },
             onPrivacyXRayDismiss = { privacyXRayTabId = null },
             onPermissionOriginSelected = { permissionRadarOrigin = it },

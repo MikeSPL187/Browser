@@ -491,6 +491,34 @@ internal object VolaSiteInfo {
     val dividerThickness = 1.dp
 }
 
+/** The permission request sheet (board W-Permission). */
+internal object VolaPermissionPrompt {
+    val sidePadding = VolaSpacing.x6
+    val bottomPadding = VolaSpacing.x6
+    val contentGap = VolaSpacing.x3
+    val buttonGap = VolaSpacing.x2
+
+    /** The permission's icon in an accent circle above the question. */
+    val iconContainerSize = 56.dp
+    val iconSize = 28.dp
+}
+
+/** Privacy X-Ray, the tracker page of Site info (board W-PrivacyXRay). */
+internal object VolaPrivacyXRay {
+    val sectionGap = VolaSpacing.x4
+    val heroPadding = VolaSpacing.x5
+    val heroShape = VolaShapes.card
+
+    /** One bar split by category, under a legend of colored dots. */
+    val categoryBarHeight = 10.dp
+    val categoryGap = 2.dp
+    val legendDotSize = 10.dp
+    val legendGap = VolaSpacing.x2
+
+    /** Trackers shown before «Show all». */
+    const val COLLAPSED_DOMAINS = 5
+}
+
 /**
  * A whole page in one state (boards W-Offline, W-HttpsOnly, W-Locked): the icon in a rounded
  * square, a title and one sentence near the middle, the actions at the bottom under the thumb.

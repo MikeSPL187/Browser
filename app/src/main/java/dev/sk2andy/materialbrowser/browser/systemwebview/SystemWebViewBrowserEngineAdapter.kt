@@ -63,6 +63,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.PrivacySignalDocumentScript
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionScript
@@ -599,6 +601,15 @@ private class SystemWebViewBrowserEngineSession(
 
     override fun setWebPromptListener(listener: GeckoWebPromptListener?) {
         webPromptListener = listener
+    }
+
+    override fun siteCertificate(): SiteCertificate? {
+        if (closed) return null
+        val certificate = webView.certificate ?: return null
+        return SiteCertificateRules.fromX509(
+            host = webView.url?.let { url -> Uri.parse(url).host },
+            certificate = certificate.x509Certificate,
+        )
     }
 
     override fun setVideoAutoplayBlocked(blocked: Boolean) {
