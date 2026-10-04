@@ -17,6 +17,11 @@ class BrowserContentFrameRulesTest {
     }
 
     @Test
+    fun `compact mode lets the page fill the screen even in the frame style`() {
+        assertFalse(framed(compactMode = true))
+    }
+
+    @Test
     fun `card sits below the status bar with side gutters and above the address bar`() {
         // 3x density: 6 dp gutter, 8 dp gap, 56 dp bar + 12 dp margin.
         val frame = resolve(addressBarReservePx = 204f)
@@ -59,7 +64,8 @@ class BrowserContentFrameRulesTest {
         chromeStyle: BrowserChromeStyle = BrowserChromeStyle.Frame,
         browserChromeVisible: Boolean = true,
         isBlankPage: Boolean = false,
-    ) = BrowserContentFrameRules.isFramed(chromeStyle, browserChromeVisible, isBlankPage)
+        compactMode: Boolean = false,
+    ) = BrowserContentFrameRules.isFramed(chromeStyle, browserChromeVisible, isBlankPage, compactMode)
 
     private fun resolve(
         framed: Boolean = true,

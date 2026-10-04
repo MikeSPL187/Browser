@@ -106,6 +106,22 @@ class BrowserFeatureMenuRulesTest {
     }
 
     @Test
+    fun `compact mode is a tile only where the browser can switch it`() {
+        assertTrue(
+            BrowserFeatureMenuRules.items(BrowserFeatureMenuState())
+                .none { it.action == BrowserFeatureMenuAction.ToggleCompactMode },
+        )
+        val compact = BrowserFeatureMenuRules.items(BrowserFeatureMenuState(isCompactMode = true))
+            .single { it.action == BrowserFeatureMenuAction.ToggleCompactMode }
+        assertTrue(compact.checked == true)
+        assertTrue(compact.enabled)
+        assertEquals(
+            BrowserMenuEntry.CompactMode,
+            BrowserMenuLayoutRules.entryForAction(BrowserFeatureMenuAction.ToggleCompactMode),
+        )
+    }
+
+    @Test
     fun `site compatibility group follows current Android presentation rule`() {
         val hidden = BrowserFeatureMenuRules.items(BrowserFeatureMenuState())
         val visible = BrowserFeatureMenuRules.items(

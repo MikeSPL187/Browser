@@ -730,11 +730,10 @@ class BrowserController(
         get() = SiteCapsuleRules.canCreate(siteCapsules.size)
     val selectedFavicon: Bitmap?
         get() = favicons[selectedTabId]
-    private val bottomBarCompactStates = mutableStateMapOf<String, Boolean>()
     private val browserChromeScrollStates = mutableMapOf<String, BrowserChromeScrollState>()
 
     val isBottomBarCompact: Boolean
-        get() = bottomBarCompactStates[selectedTabId] == true
+        get() = addressBar.isCollapsed(selectedTabId)
 
     internal val selectedWebContentTopBarState: WebContentTopBarState?
         get() = webContentTopBarStates[selectedTabId]
@@ -4813,7 +4812,7 @@ class BrowserController(
         input: String,
         searchMode: SearchMode = SearchMode.Web,
     ) {
-        bottomBarCompactStates[selectedTabId] = false
+        addressBar.resetCollapsed(selectedTabId)
         pendingExternalAppHandoff = null
         clearExternalNavigationAuthorization(selectedTabId)
         val externalUri = BrowserUriPolicy.normalizeExternalUri(input)?.let(Uri::parse)
@@ -8900,11 +8899,11 @@ class BrowserController(
     }
 
     fun expandBottomBar() {
-        bottomBarCompactStates[selectedTabId] = false
+        addressBar.setCollapsed(selectedTabId, false)
     }
 
     private fun collapseBottomBar() {
-        bottomBarCompactStates[selectedTabId] = true
+        addressBar.setCollapsed(selectedTabId, true)
     }
 
     fun updateExternalLinkPreviewEnabled(enabled: Boolean) {
@@ -10291,7 +10290,7 @@ class BrowserController(
         pendingExternalNavigationRollback = null
 
         pageUrls.clear()
-        bottomBarCompactStates.clear()
+        addressBar.clearCollapsed()
         browserChromeScrollStates.clear()
         previews.clear()
         favicons.clear()
@@ -12588,11 +12587,7 @@ class BrowserController(
             expandThresholdPx = BOTTOM_BAR_EXPAND_THRESHOLD_DP * density,
         )
         browserChromeScrollStates[tabId] = update.state
-        update.compact?.let { compact ->
-            if (bottomBarCompactStates[tabId] != compact) {
-                bottomBarCompactStates[tabId] = compact
-            }
-        }
+        update.compact?.let { compact -> addressBar.setCollapsed(tabId, compact) }
     }
 
     private fun onBrowserEngineScrollBarRefresh(
@@ -12614,7 +12609,7 @@ class BrowserController(
 
     private fun resetBrowserChromeScroll(tabId: String) {
         browserChromeScrollStates.remove(tabId)
-        bottomBarCompactStates[tabId] = false
+        addressBar.resetCollapsed(tabId)
         if (tabId == selectedTabId) scrollBarRefreshNonce++
     }
 
@@ -14747,7 +14742,7 @@ class BrowserController(
         clearExternalNavigationAuthorization(tabId)
         pageUrls.remove(tabId)
         extensionTabMuteOverrides.remove(tabId)
-        bottomBarCompactStates.remove(tabId)
+        addressBar.forgetTab(tabId)
         browserChromeScrollStates.remove(tabId)
         candyTrailHistoryBindings.remove(tabId)
         pendingCandyTrailTargets.remove(tabId)
@@ -14781,7 +14776,7 @@ class BrowserController(
         residentSessionAccessOrder.remove(tab.id)
         navigationGenerations.remove(tab.id)
         pageUrls.remove(tab.id)
-        bottomBarCompactStates.remove(tab.id)
+        addressBar.forgetTab(tab.id)
         browserChromeScrollStates.remove(tab.id)
         candyTrailHistoryBindings.remove(tab.id)
         pendingCandyTrailTargets.remove(tab.id)

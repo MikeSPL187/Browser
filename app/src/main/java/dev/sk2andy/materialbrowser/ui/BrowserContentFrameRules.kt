@@ -14,7 +14,11 @@ internal object BrowserContentFrameRules {
         chromeStyle: BrowserChromeStyle,
         browserChromeVisible: Boolean,
         isBlankPage: Boolean,
-    ): Boolean = chromeStyle == BrowserChromeStyle.Frame && browserChromeVisible && !isBlankPage
+        compactMode: Boolean = false,
+    ): Boolean = chromeStyle == BrowserChromeStyle.Frame &&
+        browserChromeVisible &&
+        !isBlankPage &&
+        !compactMode
 
     /**
      * @param safeLeftPx … [safeBottomPx] the window's safe drawing insets (system bars and cutouts).

@@ -67,6 +67,13 @@ object VolaIcons {
         )
     }
 
+    val CloseFullscreen: ImageVector by lazy {
+        materialSymbol(
+            name = "CloseFullscreen",
+            pathData = "M400 616 L164 852 q-11 11 -28 11 t-28 -11 q-11 -11 -11 -28 t11 -28 l236 -236 H200 q-17 0 -28.5 -11.5 T160 520 q0 -17 11.5 -28.5 T200 480 h240 q17 0 28.5 11.5 T480 520 v240 q0 17 -11.5 28.5 T440 800 q-17 0 -28.5 -11.5 T400 760 v-144 Z m216 -216 h144 q17 0 28.5 11.5 T800 440 q0 17 -11.5 28.5 T760 480 H520 q-17 0 -28.5 -11.5 T480 440 v-240 q0 -17 11.5 -28.5 T520 160 q17 0 28.5 11.5 T560 200 v144 l236 -236 q11 -11 28 -11 t28 11 q11 11 11 28 t-11 28 L616 400 Z",
+        )
+    }
+
     val ContentCopy: ImageVector by lazy {
         materialSymbol(
             name = "ContentCopy",
@@ -430,6 +437,7 @@ object VolaIcons {
             Build,
             Check,
             Close,
+            CloseFullscreen,
             ContentCopy,
             ContentPaste,
             Dangerous,

@@ -65,6 +65,7 @@ import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressActionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressContext
 import eightbitlab.com.blurview.BlurTarget
 import kotlin.math.absoluteValue
+import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 
 @Composable
 internal fun BoxScope.BrowserAddressChrome(
@@ -326,6 +327,8 @@ internal fun BoxScope.BrowserAddressChrome(
         tab = selectedTab,
         pageTranslationProvider = controller.pageTranslationProvider,
         compact = controller.isBottomBarCompact &&
+            // A new tab is where an address is typed: its bar stays open even in Compact Mode.
+            selectedTab.url != BLANK_URL &&
             !linkPeekAddressBarExpanded &&
             !wideWindow,
         dockState = AddressBarDockState(
@@ -552,6 +555,7 @@ internal fun BoxScope.BrowserAddressChrome(
         canToggleDesktopView = controller.canToggleSelectedDesktopView,
         isDesktopView = controller.isSelectedDesktopView,
         onDesktopViewChange = controller::setSelectedDesktopView,
+        onCompactModeChange = controller.addressBar::updateCompactMode,
         canToggleCookieBannerRemoval = canToggleSelectedCookieBannerRemoval,
         isCookieBannerRemovalEnabled = canToggleSelectedCookieBannerRemoval &&
             !selectedSiteState.cookieBannerRemovalDisabled,
@@ -640,6 +644,7 @@ internal fun BoxScope.BrowserAddressChrome(
             }
         },
         auraRim = controller.appearanceSettings.chromeStyle == BrowserChromeStyle.Air,
+        handle = controller.addressBar.compactMode,
         backdropBlurRegionEnabled = pageBehindAddressBar &&
             browserDragOffset.floatValue == 0f &&
             !settingsVisible,
@@ -653,6 +658,15 @@ internal fun BoxScope.BrowserAddressChrome(
                     else -> 0f
                 },
             ),
+    )
+    CompactModeHint(
+        visible = controller.addressBar.compactModeHintVisible && !tabOverviewVisible,
+        onDismiss = controller.addressBar::dismissCompactModeHint,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .navigationBarsPadding()
+            .padding(bottom = VolaCompactMode.hintBottomOffset)
+            .zIndex(25f),
     )
 
     if (

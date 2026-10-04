@@ -47,6 +47,57 @@ class AddressBarControllerTest {
     }
 
     @Test
+    fun `scrolling collapses one tab's bar and a new page brings it back`() {
+        val controller = controller(FakeStore())
+        controller.restore()
+
+        assertFalse(controller.isCollapsed("a"))
+        controller.setCollapsed("a", true)
+        assertTrue(controller.isCollapsed("a"))
+        assertFalse(controller.isCollapsed("b"))
+
+        controller.resetCollapsed("a")
+        assertFalse(controller.isCollapsed("a"))
+    }
+
+    @Test
+    fun `compact mode keeps every bar a handle until the user brings it back`() {
+        val store = FakeStore()
+        val controller = controller(store)
+        controller.restore()
+        controller.setCollapsed("a", false)
+
+        controller.updateCompactMode(true)
+
+        assertTrue(controller.compactMode)
+        assertTrue(controller.compactModeHintVisible)
+        assertTrue(controller.isCollapsed("a"))
+        assertTrue(controller.isCollapsed("new"))
+        controller.setCollapsed("a", false)
+        assertFalse(controller.isCollapsed("a"))
+        controller.resetCollapsed("a")
+        assertTrue(controller.isCollapsed("a"))
+        assertEquals(listOf(true), store.savedCompactModes)
+
+        controller.dismissCompactModeHint()
+        assertFalse(controller.compactModeHintVisible)
+    }
+
+    @Test
+    fun `compact mode is restored without the hint and switching off brings the bars back`() {
+        val store = FakeStore(compactMode = true)
+        val controller = controller(store)
+
+        controller.restore()
+
+        assertTrue(controller.compactMode)
+        assertFalse(controller.compactModeHintVisible)
+        controller.updateCompactMode(false)
+        assertFalse(controller.isCollapsed("a"))
+        assertEquals(listOf(false), store.savedCompactModes)
+    }
+
+    @Test
     fun `docking returns to the last placement and undocking forgets only the current one`() {
         val store = FakeStore(lastDockPlacement = leftMiddle)
         val host = FakeHost()
@@ -256,7 +307,16 @@ class AddressBarControllerTest {
         private val dockingEnabled: Boolean = true,
         private val longPressAction: AddressBarLongPressAction = AddressBarLongPressAction.Default,
         private val startupFocusMode: StartupAddressFocusMode = StartupAddressFocusMode.Default,
+        private val compactMode: Boolean = false,
     ) : AddressBarPreferenceStore {
+        val savedCompactModes = mutableListOf<Boolean>()
+
+        override fun loadCompactMode() = compactMode
+
+        override fun saveCompactMode(enabled: Boolean) {
+            savedCompactModes += enabled
+        }
+
         val savedDockPlacements = mutableListOf<AddressBarDockPlacement?>()
         val savedDockingEnabled = mutableListOf<Boolean>()
         val savedLongPressActions = mutableListOf<AddressBarLongPressAction>()

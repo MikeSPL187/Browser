@@ -922,6 +922,12 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_ADDRESS_BAR_DOCKING_ENABLED, enabled).apply()
     }
 
+    override fun loadCompactMode(): Boolean = preferences.getBoolean(KEY_COMPACT_MODE, false)
+
+    override fun saveCompactMode(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_COMPACT_MODE, enabled).apply()
+    }
+
     fun loadExternalLinkPreviewEnabled(): Boolean =
         preferences.getBoolean(KEY_EXTERNAL_LINK_PREVIEW_ENABLED, false)
 
@@ -1550,6 +1556,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_ADDRESS_BAR_DOCK_VERTICAL_FRACTION =
             "address_bar_dock_vertical_fraction"
         const val KEY_ADDRESS_BAR_DOCKING_ENABLED = "address_bar_docking_enabled"
+        const val KEY_COMPACT_MODE = "compact_mode"
         const val KEY_EXTERNAL_LINK_PREVIEW_ENABLED = "external_link_preview_enabled"
         const val KEY_EXTERNAL_APP_LINK_HANDLING = "external_app_link_handling"
         const val KEY_LINK_LONG_PRESS_ACTION = "link_long_press_action"

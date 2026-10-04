@@ -212,6 +212,8 @@ internal fun ExpandedBottomBarContent(
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
     onDesktopViewChange: (Boolean) -> Unit,
+    compactMode: Boolean = false,
+    onCompactModeChange: ((Boolean) -> Unit)? = null,
     canToggleCookieBannerRemoval: Boolean,
     isCookieBannerRemovalEnabled: Boolean,
     canToggleForceVerticalScrolling: Boolean,
@@ -748,6 +750,8 @@ internal fun ExpandedBottomBarContent(
                                 onDomainMutedChange = onDomainMutedChange,
                                 onAlwaysBlockPopupsChange = onAlwaysBlockPopupsChange,
                                 onDesktopViewChange = onDesktopViewChange,
+                                compactMode = compactMode.takeIf { onCompactModeChange != null },
+                                onCompactModeChange = onCompactModeChange ?: {},
                                 onCookieBannerRemovalEnabledChange =
                                     onCookieBannerRemovalEnabledChange,
                                 onForceVerticalScrollingChange =

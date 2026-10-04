@@ -208,6 +208,10 @@
     <string name="action_desktop_view">Версия для ПК</string>
     <string name="action_mobile_view">Мобильная версия</string>
     <string name="action_desktop_view_description">Запрашивать для этого домена версию для ПК</string>
+    <string name="compact_mode_title">Компактный режим</string>
+    <string name="compact_mode_description">Страница на весь экран, панель ждёт тонкой полоской</string>
+    <string name="compact_mode_hint">Прокрутите вверх или коснитесь полоски</string>
+    <string name="compact_mode_show_bar">Показать панель</string>
     <string name="action_always_block_popups">Всегда блокировать всплывающие окна</string>
     <string name="action_always_block_popups_description">Молча блокировать все всплывающие окна этого домена</string>
     <string name="browser_menu_title">Меню</string>
