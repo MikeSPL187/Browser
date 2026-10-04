@@ -172,6 +172,10 @@
 
 ![13-address-light](13-address-light.png)
 
+## 13-https-upgrade-light
+
+![13-https-upgrade-light](13-https-upgrade-light.png)
+
 ## 130-site-certificate-ru
 
 ![130-site-certificate-ru](130-site-certificate-ru.png)
@@ -216,6 +220,10 @@
 
 ![14-reader-settings-light](14-reader-settings-light.png)
 
+## 14-split-view-light
+
+![14-split-view-light](14-split-view-light.png)
+
 ## 140-split-view-ru
 
 ![140-split-view-ru](140-split-view-ru.png)
@@ -255,6 +263,10 @@
 ## 149-download-check-ru
 
 ![149-download-check-ru](149-download-check-ru.png)
+
+## 15-https-only-light
+
+![15-https-only-light](15-https-only-light.png)
 
 ## 15-reader-paper-light
 
@@ -299,6 +311,10 @@
 ## 159-essentials-start-ru
 
 ![159-essentials-start-ru](159-essentials-start-ru.png)
+
+## 16-page-unknown-host-light
+
+![16-page-unknown-host-light](16-page-unknown-host-light.png)
 
 ## 16-reader-light
 
@@ -348,6 +364,10 @@
 
 ![17-https-upgrade-light](17-https-upgrade-light.png)
 
+## 17-page-insecure-light
+
+![17-page-insecure-light](17-page-insecure-light.png)
+
 ## 170-private-closed-ru
 
 ![170-private-closed-ru](170-private-closed-ru.png)
@@ -388,6 +408,10 @@
 
 ![179-protection-private-lock-ru](179-protection-private-lock-ru.png)
 
+## 18-dangerous-site-light
+
+![18-dangerous-site-light](18-dangerous-site-light.png)
+
 ## 18-glance-light
 
 ![18-glance-light](18-glance-light.png)
@@ -396,9 +420,17 @@
 
 ![180-page-air-ru](180-page-air-ru.png)
 
+## 19-page-offline-light
+
+![19-page-offline-light](19-page-offline-light.png)
+
 ## 19-split-view-light
 
 ![19-split-view-light](19-split-view-light.png)
+
+## 20-page-back-online-light
+
+![20-page-back-online-light](20-page-back-online-light.png)
 
 ## 20-split-view-bottom-active-light
 
@@ -408,9 +440,21 @@
 
 ![21-https-only-light](21-https-only-light.png)
 
+## 21-workspace-locked-light
+
+![21-workspace-locked-light](21-workspace-locked-light.png)
+
+## 22-download-check-light
+
+![22-download-check-light](22-download-check-light.png)
+
 ## 22-page-unknown-host-light
 
 ![22-page-unknown-host-light](22-page-unknown-host-light.png)
+
+## 23-history-light
+
+![23-history-light](23-history-light.png)
 
 ## 23-page-insecure-light
 
@@ -420,6 +464,14 @@
 
 ![24-dangerous-site-light](24-dangerous-site-light.png)
 
+## 24-favorites-light
+
+![24-favorites-light](24-favorites-light.png)
+
+## 25-downloads-light
+
+![25-downloads-light](25-downloads-light.png)
+
 ## 25-page-offline-light
 
 ![25-page-offline-light](25-page-offline-light.png)
@@ -427,6 +479,14 @@
 ## 26-page-back-online-light
 
 ![26-page-back-online-light](26-page-back-online-light.png)
+
+## 26-snoozed-light
+
+![26-snoozed-light](26-snoozed-light.png)
+
+## 27-tab-overview-light
+
+![27-tab-overview-light](27-tab-overview-light.png)
 
 ## 27-workspace-locked-light
 
@@ -436,37 +496,77 @@
 
 ![28-download-check-light](28-download-check-light.png)
 
+## 28-workspace-options-light
+
+![28-workspace-options-light](28-workspace-options-light.png)
+
 ## 29-history-light
 
 ![29-history-light](29-history-light.png)
+
+## 29-workspace-new-light
+
+![29-workspace-new-light](29-workspace-new-light.png)
 
 ## 30-favorites-light
 
 ![30-favorites-light](30-favorites-light.png)
 
+## 30-workspace-new-icons-light
+
+![30-workspace-new-icons-light](30-workspace-new-icons-light.png)
+
 ## 31-downloads-light
 
 ![31-downloads-light](31-downloads-light.png)
+
+## 31-workspace-swipe-light
+
+![31-workspace-swipe-light](31-workspace-swipe-light.png)
+
+## 32-essentials-start-light
+
+![32-essentials-start-light](32-essentials-start-light.png)
 
 ## 32-snoozed-light
 
 ![32-snoozed-light](32-snoozed-light.png)
 
+## 33-essentials-light
+
+![33-essentials-light](33-essentials-light.png)
+
 ## 33-tab-overview-light
 
 ![33-tab-overview-light](33-tab-overview-light.png)
+
+## 34-tab-overview-essentials-light
+
+![34-tab-overview-essentials-light](34-tab-overview-essentials-light.png)
 
 ## 34-workspace-options-light
 
 ![34-workspace-options-light](34-workspace-options-light.png)
 
+## 35-tab-actions-light
+
+![35-tab-actions-light](35-tab-actions-light.png)
+
 ## 35-workspace-new-light
 
 ![35-workspace-new-light](35-workspace-new-light.png)
 
+## 36-tab-actions-more-light
+
+![36-tab-actions-more-light](36-tab-actions-more-light.png)
+
 ## 36-workspace-new-icons-light
 
 ![36-workspace-new-icons-light](36-workspace-new-icons-light.png)
+
+## 37-tab-search-light
+
+![37-tab-search-light](37-tab-search-light.png)
 
 ## 37-workspace-swipe-light
 
@@ -476,29 +576,61 @@
 
 ![38-essentials-start-light](38-essentials-start-light.png)
 
+## 38-protection-card-light
+
+![38-protection-card-light](38-protection-card-light.png)
+
 ## 39-essentials-add-light
 
 ![39-essentials-add-light](39-essentials-add-light.png)
+
+## 39-private-new-tab-light
+
+![39-private-new-tab-light](39-private-new-tab-light.png)
 
 ## 40-essentials-light
 
 ![40-essentials-light](40-essentials-light.png)
 
+## 40-private-lock-row-light
+
+![40-private-lock-row-light](40-private-lock-row-light.png)
+
 ## 41-essentials-edit-light
 
 ![41-essentials-edit-light](41-essentials-edit-light.png)
+
+## 41-private-closed-light
+
+![41-private-closed-light](41-private-closed-light.png)
+
+## 42-private-locked-light
+
+![42-private-locked-light](42-private-locked-light.png)
 
 ## 42-tab-overview-essentials-light
 
 ![42-tab-overview-essentials-light](42-tab-overview-essentials-light.png)
 
+## 43-permission-prompt-light
+
+![43-permission-prompt-light](43-permission-prompt-light.png)
+
 ## 43-tab-actions-light
 
 ![43-tab-actions-light](43-tab-actions-light.png)
 
+## 44-menu-light
+
+![44-menu-light](44-menu-light.png)
+
 ## 44-tab-actions-more-light
 
 ![44-tab-actions-more-light](44-tab-actions-more-light.png)
+
+## 45-settings-light
+
+![45-settings-light](45-settings-light.png)
 
 ## 45-tab-search-light
 
@@ -508,9 +640,21 @@
 
 ![46-protection-card-light](46-protection-card-light.png)
 
+## 46-settings-search-light
+
+![46-settings-search-light](46-settings-search-light.png)
+
+## 47-appearance-light
+
+![47-appearance-light](47-appearance-light.png)
+
 ## 47-protection-report-light
 
 ![47-protection-report-light](47-protection-report-light.png)
+
+## 48-appearance-more-light
+
+![48-appearance-more-light](48-appearance-more-light.png)
 
 ## 48-private-new-tab-light
 
@@ -520,13 +664,29 @@
 
 ![49-private-lock-row-light](49-private-lock-row-light.png)
 
+## 49-tabs-archive-light
+
+![49-tabs-archive-light](49-tabs-archive-light.png)
+
 ## 50-private-closed-light
 
 ![50-private-closed-light](50-private-closed-light.png)
 
+## 50-protection-private-lock-light
+
+![50-protection-private-lock-light](50-protection-private-lock-light.png)
+
+## 51-current-dark
+
+![51-current-dark](51-current-dark.png)
+
 ## 51-private-locked-light
 
 ![51-private-locked-light](51-private-locked-light.png)
+
+## 52-new-tab-dark
+
+![52-new-tab-dark](52-new-tab-dark.png)
 
 ## 52-permission-prompt-light
 
@@ -536,9 +696,21 @@
 
 ![53-menu-light](53-menu-light.png)
 
+## 53-page-dark
+
+![53-page-dark](53-page-dark.png)
+
+## 54-page-scrolled-dark
+
+![54-page-scrolled-dark](54-page-scrolled-dark.png)
+
 ## 54-settings-light
 
 ![54-settings-light](54-settings-light.png)
+
+## 55-compact-mode-dark
+
+![55-compact-mode-dark](55-compact-mode-dark.png)
 
 ## 55-settings-search-light
 
@@ -548,9 +720,21 @@
 
 ![56-appearance-light](56-appearance-light.png)
 
+## 56-compact-mode-bar-dark
+
+![56-compact-mode-bar-dark](56-compact-mode-bar-dark.png)
+
 ## 57-appearance-more-light
 
 ![57-appearance-more-light](57-appearance-more-light.png)
+
+## 57-find-dark
+
+![57-find-dark](57-find-dark.png)
+
+## 58-site-info-dark
+
+![58-site-info-dark](58-site-info-dark.png)
 
 ## 58-tabs-archive-light
 
@@ -560,17 +744,37 @@
 
 ![59-protection-private-lock-light](59-protection-private-lock-light.png)
 
+## 59-site-certificate-dark
+
+![59-site-certificate-dark](59-site-certificate-dark.png)
+
 ## 60-current-dark
 
 ![60-current-dark](60-current-dark.png)
+
+## 60-site-info-xray-dark
+
+![60-site-info-xray-dark](60-site-info-xray-dark.png)
 
 ## 61-new-tab-dark
 
 ![61-new-tab-dark](61-new-tab-dark.png)
 
+## 61-site-info-data-dark
+
+![61-site-info-data-dark](61-site-info-data-dark.png)
+
 ## 62-page-dark
 
 ![62-page-dark](62-page-dark.png)
+
+## 62-site-data-undo-dark
+
+![62-site-data-undo-dark](62-site-data-undo-dark.png)
+
+## 63-address-dark
+
+![63-address-dark](63-address-dark.png)
 
 ## 63-page-scrolled-dark
 
@@ -580,17 +784,37 @@
 
 ![64-compact-mode-dark](64-compact-mode-dark.png)
 
+## 64-reader-settings-dark
+
+![64-reader-settings-dark](64-reader-settings-dark.png)
+
 ## 65-compact-mode-bar-dark
 
 ![65-compact-mode-bar-dark](65-compact-mode-bar-dark.png)
+
+## 65-reader-paper-dark
+
+![65-reader-paper-dark](65-reader-paper-dark.png)
 
 ## 66-find-dark
 
 ![66-find-dark](66-find-dark.png)
 
+## 66-reader-dark
+
+![66-reader-dark](66-reader-dark.png)
+
+## 67-https-upgrade-dark
+
+![67-https-upgrade-dark](67-https-upgrade-dark.png)
+
 ## 67-site-info-dark
 
 ![67-site-info-dark](67-site-info-dark.png)
+
+## 68-glance-dark
+
+![68-glance-dark](68-glance-dark.png)
 
 ## 68-site-certificate-dark
 
@@ -600,9 +824,21 @@
 
 ![69-site-info-xray-dark](69-site-info-xray-dark.png)
 
+## 69-split-view-dark
+
+![69-split-view-dark](69-split-view-dark.png)
+
 ## 70-site-info-data-dark
 
 ![70-site-info-data-dark](70-site-info-data-dark.png)
+
+## 70-split-view-bottom-active-dark
+
+![70-split-view-bottom-active-dark](70-split-view-bottom-active-dark.png)
+
+## 71-https-only-dark
+
+![71-https-only-dark](71-https-only-dark.png)
 
 ## 71-site-data-undo-dark
 
@@ -612,13 +848,29 @@
 
 ![72-address-dark](72-address-dark.png)
 
+## 72-page-unknown-host-dark
+
+![72-page-unknown-host-dark](72-page-unknown-host-dark.png)
+
+## 73-page-insecure-dark
+
+![73-page-insecure-dark](73-page-insecure-dark.png)
+
 ## 73-reader-settings-dark
 
 ![73-reader-settings-dark](73-reader-settings-dark.png)
 
+## 74-dangerous-site-dark
+
+![74-dangerous-site-dark](74-dangerous-site-dark.png)
+
 ## 74-reader-paper-dark
 
 ![74-reader-paper-dark](74-reader-paper-dark.png)
+
+## 75-page-offline-dark
+
+![75-page-offline-dark](75-page-offline-dark.png)
 
 ## 75-reader-dark
 
@@ -628,21 +880,45 @@
 
 ![76-https-upgrade-dark](76-https-upgrade-dark.png)
 
+## 76-page-back-online-dark
+
+![76-page-back-online-dark](76-page-back-online-dark.png)
+
 ## 77-glance-dark
 
 ![77-glance-dark](77-glance-dark.png)
+
+## 77-workspace-locked-dark
+
+![77-workspace-locked-dark](77-workspace-locked-dark.png)
+
+## 78-download-check-dark
+
+![78-download-check-dark](78-download-check-dark.png)
 
 ## 78-split-view-dark
 
 ![78-split-view-dark](78-split-view-dark.png)
 
+## 79-history-dark
+
+![79-history-dark](79-history-dark.png)
+
 ## 79-split-view-bottom-active-dark
 
 ![79-split-view-bottom-active-dark](79-split-view-bottom-active-dark.png)
 
+## 80-favorites-dark
+
+![80-favorites-dark](80-favorites-dark.png)
+
 ## 80-https-only-dark
 
 ![80-https-only-dark](80-https-only-dark.png)
+
+## 81-downloads-dark
+
+![81-downloads-dark](81-downloads-dark.png)
 
 ## 81-page-unknown-host-dark
 
@@ -652,29 +928,61 @@
 
 ![82-page-insecure-dark](82-page-insecure-dark.png)
 
+## 82-snoozed-dark
+
+![82-snoozed-dark](82-snoozed-dark.png)
+
 ## 83-dangerous-site-dark
 
 ![83-dangerous-site-dark](83-dangerous-site-dark.png)
+
+## 83-tab-overview-dark
+
+![83-tab-overview-dark](83-tab-overview-dark.png)
 
 ## 84-page-offline-dark
 
 ![84-page-offline-dark](84-page-offline-dark.png)
 
+## 84-workspace-options-dark
+
+![84-workspace-options-dark](84-workspace-options-dark.png)
+
 ## 85-page-back-online-dark
 
 ![85-page-back-online-dark](85-page-back-online-dark.png)
+
+## 85-workspace-new-dark
+
+![85-workspace-new-dark](85-workspace-new-dark.png)
 
 ## 86-workspace-locked-dark
 
 ![86-workspace-locked-dark](86-workspace-locked-dark.png)
 
+## 86-workspace-new-icons-dark
+
+![86-workspace-new-icons-dark](86-workspace-new-icons-dark.png)
+
 ## 87-download-check-dark
 
 ![87-download-check-dark](87-download-check-dark.png)
 
+## 87-workspace-swipe-dark
+
+![87-workspace-swipe-dark](87-workspace-swipe-dark.png)
+
+## 88-essentials-start-dark
+
+![88-essentials-start-dark](88-essentials-start-dark.png)
+
 ## 88-history-dark
 
 ![88-history-dark](88-history-dark.png)
+
+## 89-essentials-add-dark
+
+![89-essentials-add-dark](89-essentials-add-dark.png)
 
 ## 89-favorites-dark
 
@@ -684,6 +992,14 @@
 
 ![90-downloads-dark](90-downloads-dark.png)
 
+## 90-essentials-dark
+
+![90-essentials-dark](90-essentials-dark.png)
+
+## 91-essentials-edit-dark
+
+![91-essentials-edit-dark](91-essentials-edit-dark.png)
+
 ## 91-snoozed-dark
 
 ![91-snoozed-dark](91-snoozed-dark.png)
@@ -691,6 +1007,14 @@
 ## 92-tab-overview-dark
 
 ![92-tab-overview-dark](92-tab-overview-dark.png)
+
+## 92-tab-overview-essentials-dark
+
+![92-tab-overview-essentials-dark](92-tab-overview-essentials-dark.png)
+
+## 93-tab-actions-dark
+
+![93-tab-actions-dark](93-tab-actions-dark.png)
 
 ## 93-workspace-options-dark
 
