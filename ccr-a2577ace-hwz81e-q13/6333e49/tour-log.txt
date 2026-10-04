@@ -40,7 +40,7 @@ screenshot 16-reader-light.png
 screenshot 17-https-upgrade-light.png
 screenshot 18-glance-light.png
 saved ui-glance-light.xml
-https-only probe httpforever.com: 10-04 11:58:03.545  4419  4419 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 12:52:12.827  4273  4273 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 19-https-only-light.png
 screenshot 20-page-unknown-host-light.png
 screenshot 21-page-insecure-light.png
@@ -108,10 +108,10 @@ tap 'Automatically close tabs' at 321,1862
 tap 'After 7 days' at 195,1585
 screenshot 50-tabs-archive-light.png
 saved ui-tabs-archive-light.xml
-tap 'Automatically close tabs' at 321,1312
-tap 'Never' at 144,279
+tap 'Automatically close tabs' at 321,1285
+tap 'Never' at 144,252
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 407,1748
+tap 'Protection & data' at 407,1780
 screenshot 51-protection-private-lock-light.png
 screenshot 52-current-dark.png
 screenshot 53-new-tab-dark.png
@@ -127,7 +127,7 @@ tap 'Compact mode' at 414,1444
 tap 'More options' at 964,2232
 tap 'Find on page' at 912,717
 screenshot 58-find-dark.png
-find counter dark: 300/300
+find counter dark: 541/541
 tap 'Open site information' at 711,2232
 screenshot 59-site-info-dark.png
 saved ui-site-info-dark.xml
@@ -155,7 +155,7 @@ screenshot 67-reader-dark.png
 screenshot 68-https-upgrade-dark.png
 screenshot 69-glance-dark.png
 saved ui-glance-dark.xml
-https-only probe httpforever.com: 10-04 12:09:34.959  4419  4419 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 13:03:22.587  4273  4273 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 70-https-only-dark.png
 screenshot 71-page-unknown-host-dark.png
 screenshot 72-page-insecure-dark.png
@@ -218,10 +218,10 @@ tap 'Automatically close tabs' at 321,1862
 tap 'After 7 days' at 195,1585
 screenshot 100-tabs-archive-dark.png
 saved ui-tabs-archive-dark.xml
-tap 'Automatically close tabs' at 321,1243
-tap 'Never' at 144,212
+tap 'Automatically close tabs' at 321,1206
+tap 'Never' at 144,698
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 407,1953
+tap 'Protection & data' at 407,1764
 screenshot 101-protection-private-lock-dark.png
 screenshot 102-new-tab-a11y.png
 screenshot 103-page-a11y.png
@@ -234,7 +234,7 @@ not found: ('Settings', 'Настройки')
 tap 'Settings' at 318,2178
 screenshot 105-settings-a11y.png
 screenshot 106-page-unknown-host-a11y.png
-Cold start (am start -W, 5 runs): average 3538 ms, min 3429 ms, max 3744 ms
+Cold start (am start -W, 5 runs): average 2643 ms, min 2340 ms, max 3013 ms
 screenshot 107-new-tab-ru.png
 screenshot 108-page-ru.png
 screenshot 109-page-scrolled-ru.png
@@ -276,7 +276,7 @@ screenshot 121-reader-ru.png
 screenshot 122-https-upgrade-ru.png
 screenshot 123-glance-ru.png
 saved ui-glance-ru.xml
-https-only probe httpforever.com: 10-04 12:22:50.917 15167 15167 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 13:15:58.890 15088 15088 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 124-https-only-ru.png
 screenshot 125-page-unknown-host-ru.png
 screenshot 126-page-insecure-ru.png
@@ -329,7 +329,7 @@ tap 'Don’t allow' at 540,2212
 tap 'More options' at 964,2232
 screenshot 151-menu-ru.png
 not found: ('Settings', 'Настройки')
-tap 'Settings' at 281,2179
+tap 'Settings' at 281,2256
 screenshot 152-settings-ru.png
 tap 'Appearance' at 371,1494
 screenshot 153-appearance-ru.png
@@ -338,13 +338,12 @@ tap 'Automatically close tabs' at 418,2099
 tap 'After 7 days' at 208,1822
 screenshot 154-tabs-archive-ru.png
 saved ui-tabs-archive-ru.xml
-tap 'Automatically close tabs' at 418,1482
-tap 'Never' at 169,449
+tap 'Automatically close tabs' at 418,1434
+tap 'Never' at 169,401
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 408,1808
+tap 'Protection & data' at 408,1993
 screenshot 155-protection-private-lock-ru.png
 tap 'More options' at 964,2232
-not found: ('Settings', 'Настройки')
 not found: ('Settings', 'Настройки')
 tap 'Settings' at 281,2179
 tap 'Appearance' at 371,1494
