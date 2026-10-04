@@ -19,6 +19,9 @@ object SettingsCardTokens {
     val shape = RoundedCornerShape(24.dp)
     val cardGap = 12.dp
 
+    /** The label above a card, lined up with the rows' text. */
+    val headerPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 0.dp)
+
     val rowMinHeight = 64.dp
     val rowPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
     val rowGap = 16.dp
