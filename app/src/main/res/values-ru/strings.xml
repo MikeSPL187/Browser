@@ -492,6 +492,11 @@
     <string name="download_notification_paused_unknown">Пауза · %1$s</string>
     <string name="download_notification_complete">Загрузка завершена</string>
     <string name="settings_title">Настройки</string>
+    <string name="settings_search_open">Найти в настройках</string>
+    <string name="settings_search_hint">Поиск в настройках</string>
+    <string name="settings_search_clear">Очистить</string>
+    <string name="settings_search_prompt">Найдите настройку по названию или описанию</string>
+    <string name="settings_search_empty">Ничего не найдено по запросу «%1$s»</string>
     <string name="settings_home_group_browsing">Просмотр</string>
     <string name="settings_home_group_personalization">Персонализация</string>
     <string name="settings_home_group_privacy_data">Приватность и данные</string>

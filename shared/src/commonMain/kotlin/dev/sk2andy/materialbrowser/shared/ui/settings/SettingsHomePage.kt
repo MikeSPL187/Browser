@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.shared.ui.settings
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -136,11 +137,13 @@ fun SettingsHomePage(
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
     isDestinationEnabled: (SettingsDestination) -> Boolean = { true },
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     SettingsPage(
         title = resources.text(SettingsHomeLabel.Title),
         backContentDescription = resources.text(SettingsHomeLabel.Back),
         onBack = onDismiss,
+        actions = actions,
     ) {
         val items = SettingsHomeRules.items(
             hasFirefoxExtensions = onOpenFirefoxExtensions != null,

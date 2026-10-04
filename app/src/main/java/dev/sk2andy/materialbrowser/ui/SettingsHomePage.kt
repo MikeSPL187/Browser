@@ -1,11 +1,17 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import dev.sk2andy.materialbrowser.R
@@ -25,6 +31,17 @@ internal fun SettingsHomePage(
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
 ) {
+    var searching by rememberSaveable { mutableStateOf(false) }
+    if (searching) {
+        SettingsSearchPage(
+            onOpen = { result ->
+                searching = false
+                onDestinationChanged(result.destination)
+            },
+            onBack = { searching = false },
+        )
+        return
+    }
     SharedSettingsHomePage(
         downloadSummary = downloadSummary,
         resources = AndroidSettingsHomeResources,
@@ -43,6 +60,17 @@ internal fun SettingsHomePage(
         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
         developerOptionsUnlocked = developerOptionsUnlocked,
         onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+        actions = {
+            IconButton(
+                onClick = { searching = true },
+                modifier = Modifier.testTag(SettingsSearchTestTags.Open),
+            ) {
+                Icon(
+                    VolaIcons.Search,
+                    contentDescription = stringResource(R.string.settings_search_open),
+                )
+            }
+        },
     )
 }
 
