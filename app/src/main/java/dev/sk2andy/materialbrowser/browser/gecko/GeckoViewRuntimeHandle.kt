@@ -9,6 +9,7 @@ import android.graphics.Region
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.RoundedRectBlurRegion
@@ -52,6 +53,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.WebContentTopInsetTransitionRules
@@ -74,6 +77,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.net.URI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -190,6 +194,20 @@ internal class GeckoViewRuntimeHandle private constructor(
             GeckoBrowsingData.All -> StorageController.ClearFlags.ALL
         }
         runtime.storageController.clearData(flags)
+            .withHandler(Handler(Looper.getMainLooper()))
+            .accept(
+                { onComplete(true) },
+                { onComplete(false) },
+            )
+    }
+
+    override fun clearSiteData(baseDomain: String, onComplete: (Boolean) -> Unit) {
+        // Site data, not site settings: permissions stay with Vola's own permission store.
+        val flags = StorageController.ClearFlags.COOKIES or
+            StorageController.ClearFlags.DOM_STORAGES or
+            StorageController.ClearFlags.AUTH_SESSIONS or
+            StorageController.ClearFlags.ALL_CACHES
+        runtime.storageController.clearDataFromBaseDomain(baseDomain, flags)
             .withHandler(Handler(Looper.getMainLooper()))
             .accept(
                 { onComplete(true) },
@@ -985,6 +1003,7 @@ private class GeckoViewBrowserSession(
     private var activeMediaSession: MediaSession? = null
     private var deactivatedMediaSession: MediaSession? = null
     private var videoAutoplayBlocked = false
+    private var currentCertificate: SiteCertificate? = null
     private var audioMuted = false
     private var httpPasswordManagerSelectionEnabled = false
     private var autoplayPolicyRevision = 0
@@ -1125,9 +1144,24 @@ private class GeckoViewBrowserSession(
             ): GeckoResult<String>? {
                 invalidateDomProbe()
                 uri?.let(::finishFailedNavigation)
+                if (BuildConfig.DEBUG) {
+                    // The emulator tour reads this to tell which failures reach the HTTPS-only page.
+                    Log.d(
+                        LOAD_ERROR_LOG_TAG,
+                        "onLoadError httpsOnly=${error.code == WebRequestError.ERROR_HTTPS_ONLY} " +
+                            "uri=$uri category=${error.category} code=${error.code}",
+                    )
+                }
                 if (error.code == WebRequestError.ERROR_HTTPS_ONLY) {
                     // Gecko shows this page in place of the site and lets it reload the request
-                    // over HTTP; it is not a failed load for the native error overlay.
+                    // over HTTP. The load still ends unsuccessfully, so the kind tells the native
+                    // error overlay to stay away from this page.
+                    updateState { current ->
+                        current.copy(
+                            failureDescription = null,
+                            failureKind = BrowserEngineFailureKind.HttpsOnly,
+                        )
+                    }
                     return GeckoResult.fromValue(httpsOnlyErrorPages.dataUri(uri))
                 }
                 updateState { current ->
@@ -1895,6 +1929,17 @@ private class GeckoViewBrowserSession(
             override fun onProgressChange(session: GeckoSession, progress: Int) =
                 updateState { current -> current.copy(progress = progress.coerceIn(0, 100)) }
 
+            override fun onSecurityChange(
+                session: GeckoSession,
+                securityInfo: GeckoSession.ProgressDelegate.SecurityInformation,
+            ) {
+                currentCertificate = if (securityInfo.isSecure) {
+                    SiteCertificateRules.fromX509(securityInfo.host, securityInfo.certificate)
+                } else {
+                    null
+                }
+            }
+
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 finishStartedNavigation()
                 updateState { current ->
@@ -2253,6 +2298,8 @@ private class GeckoViewBrowserSession(
     override fun setScrollListener(listener: BrowserEngineScrollListener?) {
         scrollListener = listener
     }
+
+    override fun siteCertificate(): SiteCertificate? = currentCertificate
 
     override fun setVideoAutoplayBlocked(blocked: Boolean) {
         if (videoAutoplayBlocked == blocked) return
@@ -3414,6 +3461,7 @@ private class GeckoViewBrowserSession(
 
     private companion object {
         const val GECKO_NAVIGATION_FAILURE = "Gecko navigation failed"
+        const val LOAD_ERROR_LOG_TAG = "VolaLoadError"
         const val CHOICE_VALUE_SEPARATOR = "\u001F"
         const val MAX_EXTENSION_URL_LENGTH = 4_096
         const val MAX_MEDIA_TIME_MILLIS = 604_800_000L

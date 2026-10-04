@@ -43,7 +43,31 @@ class GeckoHttpsOnlyErrorPageTest {
         assertTrue(html.contains("document.reloadWithHttpsOnlyException()"))
         assertTrue(html.contains(">Go back</button>"))
         assertTrue(html.contains(">Continue to HTTP site</button>"))
+        assertTrue(html.contains("<span>Others can read what you send.</span>"))
         assertTrue(html.startsWith("<!DOCTYPE html>"))
+    }
+
+    @Test
+    fun `page takes the v4 colors of the default workspace in both themes`() {
+        val light = GeckoHttpsOnlyErrorPage.Palette(
+            surface = "#FFFFFF",
+            onSurface = "#111111",
+            onSurfaceVariant = "#222222",
+            primary = "#333333",
+            onPrimary = "#444444",
+            warnContainer = "#555555",
+            onWarnContainer = "#666666",
+        )
+        val dark = light.copy(surface = "#000000", primary = "#777777")
+
+        val html = GeckoHttpsOnlyErrorPage.html(strings, host = "a.b", palettes = light to dark)
+
+        assertTrue(html.contains(":root { --sf: #FFFFFF;"))
+        assertTrue(html.contains("@media (prefers-color-scheme: dark) { :root { --sf: #000000;"))
+        assertTrue(html.contains("--pri: #777777;"))
+        val (defaultLight, defaultDark) = GeckoHttpsOnlyErrorPage.defaultPalettes
+        assertTrue(defaultLight.surface.matches(Regex("#[0-9A-F]{6}")))
+        assertEquals("#000000", defaultDark.surface)
     }
 
     @Test

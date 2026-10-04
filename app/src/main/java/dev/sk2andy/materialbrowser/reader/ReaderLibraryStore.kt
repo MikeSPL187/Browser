@@ -110,7 +110,9 @@ class ReaderLibraryStore(context: Context) {
             JSONObject()
                 .put("fontScale", state.settings.fontScale.toDouble())
                 .put("theme", state.settings.theme.name)
-                .put("textAlignment", state.settings.textAlignment.name),
+                .put("textAlignment", state.settings.textAlignment.name)
+                .put("serif", state.settings.serif)
+                .put("wideMargins", state.settings.wideMargins),
         )
         .put(
             "progress",
@@ -157,9 +159,9 @@ class ReaderLibraryStore(context: Context) {
         val settingsJson = root.optJSONObject("settings") ?: JSONObject()
         val settings = ReaderSettings(
             fontScale = settingsJson.optDouble("fontScale", 1.0).toFloat().coerceIn(0.8f, 1.6f),
-            theme = runCatching {
-                ReaderTheme.valueOf(settingsJson.optString("theme", ReaderTheme.System.name))
-            }.getOrDefault(ReaderTheme.System),
+            theme = ReaderTheme.fromStoredName(settingsJson.optString("theme")),
+            serif = settingsJson.optBoolean("serif", true),
+            wideMargins = settingsJson.optBoolean("wideMargins", false),
             textAlignment = runCatching {
                 ReaderTextAlignment.valueOf(
                     settingsJson.optString(

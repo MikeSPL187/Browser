@@ -18,7 +18,7 @@ class ReaderLibraryRulesTest {
             state,
             ReaderLibraryRules.updateSettings(
                 state,
-                ReaderSettings(1.6f, ReaderTheme.Night),
+                ReaderSettings(1.6f, ReaderTheme.Dark),
                 isPrivate = true,
             ),
         )
@@ -36,6 +36,37 @@ class ReaderLibraryRulesTest {
         )
         assertSame(state, ReaderLibraryRules.deleteSnapshot(state, "one", true))
         assertEquals(ReaderLibraryState(), ReaderLibraryRules.visibleState(state, true))
+    }
+
+    @Test
+    fun `reading themes follow the browser and keep earlier saved names`() {
+        assertEquals(ReaderTheme.Light, ReaderTheme.System.resolved(browserDark = false))
+        assertEquals(ReaderTheme.Dark, ReaderTheme.System.resolved(browserDark = true))
+        assertEquals(ReaderTheme.Paper, ReaderTheme.Paper.resolved(browserDark = true))
+        assertEquals(ReaderTheme.Light, ReaderTheme.Light.resolved(browserDark = true))
+
+        assertEquals(ReaderTheme.Dark, ReaderTheme.fromStoredName("Night"))
+        assertEquals(ReaderTheme.Paper, ReaderTheme.fromStoredName("Paper"))
+        assertEquals(ReaderTheme.System, ReaderTheme.fromStoredName("Sepia"))
+        assertEquals(ReaderTheme.System, ReaderTheme.fromStoredName(null))
+    }
+
+    @Test
+    fun `reading time rounds up at two hundred words a minute`() {
+        assertEquals(1, ReaderLibraryRules.readingMinutes(""))
+        assertEquals(1, ReaderLibraryRules.readingMinutes("word ".repeat(200)))
+        assertEquals(2, ReaderLibraryRules.readingMinutes("word ".repeat(201)))
+        assertEquals(12, ReaderLibraryRules.readingMinutes(" a\n\tb ".repeat(1_150)))
+    }
+
+    @Test
+    fun `text size stays on the slider range`() {
+        val state = ReaderLibraryRules.updateSettings(
+            ReaderLibraryState(),
+            ReaderSettings(fontScale = 3f),
+            isPrivate = false,
+        )
+        assertEquals(ReaderLibraryRules.MAX_FONT_SCALE, state.settings.fontScale)
     }
 
     @Test

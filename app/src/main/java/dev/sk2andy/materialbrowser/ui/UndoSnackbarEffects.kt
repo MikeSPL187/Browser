@@ -1,0 +1,80 @@
+package dev.sk2andy.materialbrowser.ui
+
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.stringResource
+import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.SiteDataDeletion
+
+/** Every «Undo» snackbar of the browser screen: closed tab, deleted site data, removed Essential. */
+@Composable
+internal fun BrowserUndoSnackbarEffects(
+    controller: BrowserController,
+    hostState: SnackbarHostState,
+) {
+    ClosedTabUndoSnackbarEffect(controller, hostState)
+    SiteDataDeletionSnackbarEffect(controller.siteDataDeletion, hostState)
+    EssentialRemovalSnackbarEffect(controller.essentials, hostState)
+}
+
+@Composable
+internal fun ClosedTabUndoSnackbarEffect(
+    controller: BrowserController,
+    hostState: SnackbarHostState,
+) {
+    UndoSnackbarEffect(
+        offer = controller.closedTabUndoOffer,
+        hostState = hostState,
+        message = stringResource(R.string.tab_closed),
+        onUndo = { token -> controller.undoClosedTab(token) },
+        onGone = { token -> controller.dismissClosedTabUndo(token) },
+    )
+}
+
+/** «Data of example.com deleted · Undo» while the deletion waits out its window. */
+@Composable
+private fun SiteDataDeletionSnackbarEffect(
+    deletion: SiteDataDeletion,
+    hostState: SnackbarHostState,
+) {
+    val pending = deletion.pending
+    UndoSnackbarEffect(
+        offer = pending,
+        hostState = hostState,
+        message = pending?.let { stringResource(R.string.site_data_deleted, it.baseDomain) }.orEmpty(),
+        onUndo = deletion::undo,
+    )
+}
+
+/**
+ * An «Undo» snackbar for as long as [offer] stands: the owner of the offer keeps its time, and the
+ * snackbar goes when the offer does.
+ */
+@Composable
+private fun <T : Any> UndoSnackbarEffect(
+    offer: T?,
+    hostState: SnackbarHostState,
+    message: String,
+    onUndo: (T) -> Unit,
+    onGone: (T) -> Unit = {},
+) {
+    val undoLabel = stringResource(R.string.action_undo)
+    LaunchedEffect(offer) {
+        val token = offer ?: return@LaunchedEffect
+        hostState.currentSnackbarData?.dismiss()
+        try {
+            val result = hostState.showSnackbar(
+                message = message,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Indefinite,
+            )
+            if (result == SnackbarResult.ActionPerformed) onUndo(token)
+        } finally {
+            onGone(token)
+        }
+    }
+}
