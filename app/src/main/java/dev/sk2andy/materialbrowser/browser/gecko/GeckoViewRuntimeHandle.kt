@@ -9,6 +9,7 @@ import android.graphics.Region
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.RoundedRectBlurRegion
@@ -1125,6 +1126,14 @@ private class GeckoViewBrowserSession(
             ): GeckoResult<String>? {
                 invalidateDomProbe()
                 uri?.let(::finishFailedNavigation)
+                if (BuildConfig.DEBUG) {
+                    // The emulator tour reads this to tell which failures reach the HTTPS-only page.
+                    Log.d(
+                        LOAD_ERROR_LOG_TAG,
+                        "onLoadError httpsOnly=${error.code == WebRequestError.ERROR_HTTPS_ONLY} " +
+                            "uri=$uri category=${error.category} code=${error.code}",
+                    )
+                }
                 if (error.code == WebRequestError.ERROR_HTTPS_ONLY) {
                     // Gecko shows this page in place of the site and lets it reload the request
                     // over HTTP; it is not a failed load for the native error overlay.
@@ -3414,6 +3423,7 @@ private class GeckoViewBrowserSession(
 
     private companion object {
         const val GECKO_NAVIGATION_FAILURE = "Gecko navigation failed"
+        const val LOAD_ERROR_LOG_TAG = "VolaLoadError"
         const val CHOICE_VALUE_SEPARATOR = "\u001F"
         const val MAX_EXTENSION_URL_LENGTH = 4_096
         const val MAX_MEDIA_TIME_MILLIS = 604_800_000L

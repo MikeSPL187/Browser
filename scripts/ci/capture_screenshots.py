@@ -30,6 +30,15 @@ LOG = []
 _counter = 0
 
 
+# Sites without working HTTPS, most dependable first (see https_only_warning in the tour).
+HTTP_ONLY_CANDIDATES = (
+    "http://info.cern.ch/",
+    "http://httpforever.com/",
+    "http://captive.apple.com/",
+    "http://http.badssl.com/",
+)
+
+
 def adb(*args, check=True, capture=False, timeout=60):
     result = subprocess.run(
         ["adb", *args],
@@ -288,12 +297,18 @@ def tour(suffix):
     step("https-upgrade", https_upgrade)
 
     def https_only_warning():
-        # httpforever.com deliberately has no HTTPS, so HTTPS-only mode ends on its warning page.
-        # (neverssl.com now redirects to subdomains that do serve HTTPS.)
-        open_url("http://httpforever.com/")
-        time.sleep(10)
-        shot(f"https-only-early-{suffix}")
-        time.sleep(30)
+        """The HTTPS-only warning on a site without working HTTPS. Gecko shows it only when the
+        upgraded request fails at the connection; a failed TLS handshake is a security error.
+        So the tour tries sites until the debug log reports the warning, and logs every result."""
+        for url in HTTP_ONLY_CANDIDATES:
+            open_url(url)
+            time.sleep(12)
+            host = re.sub(r"^https?://([^/:]+).*$", r"\1", url)
+            raw = adb("logcat", "-d", "-s", "VolaLoadError", capture=True, check=False) or b""
+            results = [line for line in raw.decode(errors="replace").splitlines() if host in line]
+            log(f"https-only probe {host}: {results[-1] if results else 'no load error'}")
+            if results and "httpsOnly=true" in results[-1]:
+                break
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
