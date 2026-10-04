@@ -1,30 +1,59 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeEntry
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeIcon
-import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeLabel
-import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeResources
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeItem
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsTileColors
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomePage as SharedSettingsHomePage
+import dev.sk2andy.materialbrowser.ui.theme.LocalVolaDarkTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsHomeTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+
+internal object SettingsHomeTestTags {
+    const val DefaultBrowserBanner = "settings_home_default_browser"
+}
 
 @Composable
 internal fun SettingsHomePage(
-    downloadSummary: String,
+    state: SettingsHomeState,
+    isDefaultBrowser: Boolean,
+    onOpenDefaultBrowserSettings: () -> Unit,
     onDestinationChanged: (SettingsDestination) -> Unit,
     onDismiss: () -> Unit,
     onOpenFirefoxExtensions: (() -> Unit)? = null,
@@ -42,24 +71,42 @@ internal fun SettingsHomePage(
         )
         return
     }
+    val items = SettingsHomeRules.items(
+        hasFirefoxExtensions = onOpenFirefoxExtensions != null,
+        hasDeveloperOptions = developerOptionsUnlocked,
+    )
+    val entries = items.map { item -> settingsHomeEntry(item, state) }
     SharedSettingsHomePage(
-        downloadSummary = downloadSummary,
-        resources = AndroidSettingsHomeResources,
-        linkContainerColor = browserChromeColor(
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        title = stringResource(R.string.settings_title),
+        backContentDescription = stringResource(R.string.action_back),
+        entries = entries,
+        cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
+        dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        tileColors = { accent -> settingsTileColors(accent) },
         icon = { icon, modifier, tint ->
-            AndroidSettingsHomeIcon(
-                icon = icon,
+            Icon(
+                imageVector = settingsHomeIcon(icon),
+                contentDescription = null,
                 modifier = modifier,
                 tint = tint,
             )
         },
-        onDestinationChanged = onDestinationChanged,
+        unlockDeveloperOptionsLabel = stringResource(R.string.developer_options_unlock_action),
+        onOpen = { item ->
+            if (item.isFirefoxExtensionsAction) {
+                onOpenFirefoxExtensions?.invoke()
+            } else {
+                item.destination?.let(onDestinationChanged)
+            }
+        },
         onDismiss = onDismiss,
-        onOpenFirefoxExtensions = onOpenFirefoxExtensions,
         developerOptionsUnlocked = developerOptionsUnlocked,
         onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+        header = {
+            if (!isDefaultBrowser) {
+                DefaultBrowserBanner(onMakeDefault = onOpenDefaultBrowserSettings)
+            }
+        },
         actions = {
             IconButton(
                 onClick = { searching = true },
@@ -74,74 +121,111 @@ internal fun SettingsHomePage(
     )
 }
 
-private object AndroidSettingsHomeResources : SettingsHomeResources {
-    @Composable
-    override fun text(label: SettingsHomeLabel): String = stringResource(
-        when (label) {
-            SettingsHomeLabel.Title -> R.string.settings_title
-            SettingsHomeLabel.Back -> R.string.action_back
-            SettingsHomeLabel.BrowsingGroup -> R.string.settings_home_group_browsing
-            SettingsHomeLabel.PersonalizationGroup ->
-                R.string.settings_home_group_personalization
-            SettingsHomeLabel.PrivacyDataGroup -> R.string.settings_home_group_privacy_data
-            SettingsHomeLabel.AboutGroup -> R.string.settings_home_group_about
-            SettingsHomeLabel.SearchTitle -> R.string.settings_section_search
-            SettingsHomeLabel.SearchSummary -> R.string.settings_home_search_summary
-            SettingsHomeLabel.SyncTitle -> R.string.sync_settings_title
-            SettingsHomeLabel.SyncSummary -> R.string.settings_home_sync_summary
-            SettingsHomeLabel.TabsAndGesturesTitle -> R.string.settings_tabs_gestures_title
-            SettingsHomeLabel.TabsAndGesturesSummary ->
-                R.string.settings_home_tabs_gestures_summary
-            SettingsHomeLabel.AppearanceTitle -> R.string.settings_appearance_title
-            SettingsHomeLabel.AppearanceSummary -> R.string.settings_home_appearance_summary
-            SettingsHomeLabel.BrowserTitle -> R.string.settings_section_browser
-            SettingsHomeLabel.BrowserSummary -> R.string.settings_home_browser_summary
-            SettingsHomeLabel.DownloadsTitle -> R.string.settings_downloads_title
-            SettingsHomeLabel.UserscriptsTitle -> R.string.userscript_title
-            SettingsHomeLabel.UserscriptsSummary -> R.string.settings_home_userscripts_summary
-            SettingsHomeLabel.FirefoxExtensionsTitle -> R.string.gecko_extensions_title
-            SettingsHomeLabel.FirefoxExtensionsSummary -> R.string.gecko_extensions_summary
-            SettingsHomeLabel.SiteCapsulesTitle -> R.string.capsule_settings_title
-            SettingsHomeLabel.SiteCapsulesSummary -> R.string.settings_home_capsules_summary
-            SettingsHomeLabel.ProtectionAndDataTitle ->
-                R.string.settings_protection_data_title
-            SettingsHomeLabel.ProtectionAndDataSummary ->
-                R.string.settings_home_protection_summary
-            SettingsHomeLabel.DeveloperOptionsTitle -> R.string.developer_options_title
-            SettingsHomeLabel.DeveloperOptionsSummary -> R.string.developer_options_summary
-            SettingsHomeLabel.UnlockDeveloperOptions ->
-                R.string.developer_options_unlock_action
-            SettingsHomeLabel.AboutLegalTitle -> R.string.settings_section_about_legal
-            SettingsHomeLabel.AboutLegalSummary -> R.string.settings_home_about_summary
-        },
+/** A row's words: a page's title and summary come from [SettingsRegistry]. */
+@Composable
+private fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState): SettingsHomeEntry {
+    val destination = item.destination
+    return when {
+        item.isFirefoxExtensionsAction -> SettingsHomeEntry(
+            item = item,
+            title = stringResource(R.string.gecko_extensions_title),
+            summary = stringResource(R.string.gecko_extensions_summary),
+        )
+        destination == SettingsDestination.DeveloperOptions -> SettingsHomeEntry(
+            item = item,
+            title = stringResource(R.string.developer_options_title),
+            summary = stringResource(R.string.developer_options_summary),
+        )
+        destination != null -> SettingsHomeEntry(
+            item = item,
+            title = SettingsRegistry.page(destination)?.title?.let { stringResource(it) }.orEmpty(),
+            summary = settingsHomeSummary(destination, state),
+        )
+        else -> SettingsHomeEntry(item = item, title = "", summary = null)
+    }
+}
+
+/** The tile in [accent]'s own container colors, as a workspace gem keeps its own color. */
+@Composable
+@ReadOnlyComposable
+private fun settingsTileColors(accent: WorkspaceAccent): SettingsTileColors {
+    val tokens = VolaColorRules.schemeSet(accent, privateMode = false)
+        .select(dark = LocalVolaDarkTheme.current, highContrast = false)
+    return SettingsTileColors(
+        container = Color(tokens.primaryContainer),
+        content = Color(tokens.onPrimaryContainer),
     )
 }
 
 @Composable
-private fun AndroidSettingsHomeIcon(
-    icon: SettingsHomeIcon,
-    modifier: Modifier,
-    tint: Color,
-) {
-    val vector = when (icon) {
-        SettingsHomeIcon.Search -> VolaIcons.Search
-        SettingsHomeIcon.Sync -> VolaIcons.Sync
-        SettingsHomeIcon.TabsAndGestures -> VolaIcons.Tab
-        SettingsHomeIcon.Appearance -> VolaIcons.Palette
-        SettingsHomeIcon.Browser -> VolaIcons.Settings
-        SettingsHomeIcon.Downloads -> ImageVector.vectorResource(R.drawable.ic_reader_download)
-        SettingsHomeIcon.Userscripts,
-        SettingsHomeIcon.FirefoxExtensions,
-        -> ImageVector.vectorResource(R.drawable.ic_symbol_extension)
-        SettingsHomeIcon.SiteCapsules -> VolaIcons.Favorite
-        SettingsHomeIcon.ProtectionAndData -> VolaIcons.Lock
-        SettingsHomeIcon.DeveloperOptions -> VolaIcons.Build
-        SettingsHomeIcon.AboutLegal -> VolaIcons.Info
+private fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) {
+    SettingsHomeIcon.Search -> VolaIcons.Search
+    SettingsHomeIcon.Sync -> VolaIcons.Sync
+    SettingsHomeIcon.TabsAndGestures -> VolaIcons.Tab
+    SettingsHomeIcon.Appearance -> VolaIcons.Palette
+    SettingsHomeIcon.Browser -> VolaIcons.Settings
+    SettingsHomeIcon.Downloads -> VolaIcons.Download
+    SettingsHomeIcon.Userscripts,
+    SettingsHomeIcon.FirefoxExtensions,
+    -> ImageVector.vectorResource(R.drawable.ic_symbol_extension)
+    SettingsHomeIcon.SiteCapsules -> VolaIcons.Favorite
+    SettingsHomeIcon.ProtectionAndData -> VolaIcons.Verified
+    SettingsHomeIcon.DeveloperOptions -> VolaIcons.Build
+    SettingsHomeIcon.AboutLegal -> VolaIcons.Info
+}
+
+/**
+ * «Make Vola your default» above the cards while Vola is not the default browser: the system's
+ * default-apps screen opens, since Android lets only the user pick.
+ */
+@Composable
+private fun DefaultBrowserBanner(onMakeDefault: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(SettingsHomeTestTags.DefaultBrowserBanner),
+        shape = VolaSettingsHomeTokens.bannerShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .heightIn(min = VolaSettingsHomeTokens.bannerMinHeight)
+                .padding(VolaSettingsHomeTokens.bannerPadding),
+            horizontalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(VolaSettingsHomeTokens.logoTileSize)
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerLowest,
+                        VolaSettingsHomeTokens.logoTileShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_launcher_foreground_art),
+                    contentDescription = null,
+                    modifier = Modifier.size(VolaSettingsHomeTokens.logoSize),
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerTextGap),
+            ) {
+                Text(
+                    stringResource(R.string.settings_home_default_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    stringResource(R.string.settings_home_default_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Button(onClick = onMakeDefault) {
+                Text(stringResource(R.string.settings_home_default_action))
+            }
+        }
     }
-    Icon(
-        imageVector = vector,
-        contentDescription = null,
-        modifier = modifier,
-        tint = tint,
-    )
 }

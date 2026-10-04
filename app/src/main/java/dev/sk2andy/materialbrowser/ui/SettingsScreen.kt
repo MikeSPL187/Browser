@@ -201,7 +201,16 @@ internal fun SettingsScreen(
     ) { currentDestination ->
             when (currentDestination) {
                 SettingsDestination.Home -> SettingsHomePage(
-                    downloadSummary = downloadSettings.displayName(externalDownloadManagers),
+                    state = SettingsHomeState(
+                        appearance = appearanceSettings,
+                        searchEngine = searchEngine,
+                        blocker = blockerSettings,
+                        httpsOnlyMode = httpsOnlyMode,
+                        isHttpsOnlySupported = isHttpsOnlySupported,
+                        downloadSummary = downloadSettings.displayName(externalDownloadManagers),
+                    ),
+                    isDefaultBrowser = isDefaultBrowser,
+                    onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,
                     onDestinationChanged = onDestinationChanged,
                     onDismiss = onDismiss,
                     onOpenFirefoxExtensions = onOpenFirefoxExtensions,
