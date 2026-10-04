@@ -114,6 +114,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.BrowserChromeSurfaceRole
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
@@ -195,6 +196,7 @@ internal fun BrowserBottomBar(
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
     onDesktopViewChange: (Boolean) -> Unit,
+    onCompactModeChange: ((Boolean) -> Unit)? = null,
     canToggleCookieBannerRemoval: Boolean,
     isCookieBannerRemovalEnabled: Boolean,
     canToggleForceVerticalScrolling: Boolean,
@@ -244,6 +246,8 @@ internal fun BrowserBottomBar(
     onBackdropBlurRegionChanged: (BrowserBackdropBlurRegion?) -> Unit = {},
     /** The Air layout rims the island with the workspace aura and lets it glow. */
     auraRim: Boolean = false,
+    /** Compact Mode (board W-Compact): collapsed, the island is a thin handle in the accent. */
+    handle: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val docked = dockState.placement != null
@@ -321,7 +325,8 @@ internal fun BrowserBottomBar(
             ),
         )
     }
-    val compactWidth = with(density) {
+    val handleShown = handle && presentation == AddressBarPresentation.Compact
+    val compactWidth = if (handle) VolaCompactMode.handleWidth else with(density) {
         textMeasurer.measure(
             text = domain,
             style = MaterialTheme.typography.labelMedium,
@@ -344,7 +349,7 @@ internal fun BrowserBottomBar(
             AddressCommandFeedbackTone.Confirm -> MaterialTheme.colorScheme.primaryContainer
             AddressCommandFeedbackTone.Reject -> MaterialTheme.colorScheme.errorContainer
             // The island lands on the tab overview's new-tab button, so it takes its color.
-            null -> if (presentation == AddressBarPresentation.Overview) {
+            null -> if (presentation == AddressBarPresentation.Overview || handleShown) {
                 MaterialTheme.colorScheme.primary
             } else {
                 chromeTokens.containerColor
@@ -353,6 +358,31 @@ internal fun BrowserBottomBar(
         animationSpec = tween(motionScheme.addressBarFeedbackColorMillis),
         label = "Address command feedback color",
     )
+    // The collapsed bar: a tap brings the bar back, a sideways swipe changes tabs, a swipe up
+    // opens the overview (proposal П5). In Compact Mode the same gestures sit on a touch area
+    // around the thin handle.
+    val compactGestures = Modifier
+        .addressBarVerticalGesture(
+            enabled = overviewGestureEnabled,
+            initialProgress = overviewGestureProgress,
+            onProgress = onOverviewGestureProgress,
+            onStarted = onOverviewGestureStarted,
+            onCancelled = onOverviewGestureCancelled,
+            onSwipeUp = onTabs,
+        )
+        .draggable(
+            state = tabDragState,
+            orientation = Orientation.Horizontal,
+            enabled = !editing && tabSwipeEnabled,
+            onDragStopped = { velocity -> onTabDragStopped(velocity) },
+        )
+        .addressBarPressActions(
+            longPressEnabled = addressBarLongPressEnabled,
+            onClick = onExpand,
+            onLongPress = onAddressBarLongPress,
+            longPressLabel = addressBarLongPressLabel,
+        )
+    val showBarLabel = stringResource(R.string.compact_mode_show_bar)
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -456,6 +486,7 @@ internal fun BrowserBottomBar(
             feedbackWidth = feedbackWidth,
             edgeTabWidth = edgeTabWidth,
             expandedHeight = addressBarExpandedHeight(addressBarStyle),
+            handle = handle,
             verticalTravel = verticalTravel,
             dockPosition = dockInteraction.position,
         )
@@ -476,7 +507,7 @@ internal fun BrowserBottomBar(
                     .width(animatedBarWidth)
                     .height(animatedBarHeight)
                     .then(
-                        if (auraRim && presentation != AddressBarPresentation.Docked) {
+                        if (auraRim && presentation != AddressBarPresentation.Docked && !handleShown) {
                             Modifier.islandAuraRim(RoundedCornerShape(barCornerRadius))
                         } else {
                             Modifier
@@ -527,6 +558,7 @@ internal fun BrowserBottomBar(
                     },
                 containerColor = barColor,
                 backdropBlurEnabled = commandFeedback == null &&
+                    !handleShown &&
                     blurSourceVisible &&
                     chromeTokens.backdropBlurEnabled,
             ) {
@@ -556,31 +588,12 @@ internal fun BrowserBottomBar(
                                 onOverviewGestureCancelled = onOverviewGestureCancelled,
                                 onSwipeUp = onTabs,
                             )
-                            AddressBarPresentation.Compact -> {
+                            AddressBarPresentation.Compact -> if (handle) {
+                                // The thin handle is the island itself; its touch area is laid
+                                // over it below, larger than the handle.
+                            } else {
                                 Surface(
-                                    modifier = Modifier
-                                        .addressBarVerticalGesture(
-                                            enabled = overviewGestureEnabled,
-                                            initialProgress = overviewGestureProgress,
-                                            onProgress = onOverviewGestureProgress,
-                                            onStarted = onOverviewGestureStarted,
-                                            onCancelled = onOverviewGestureCancelled,
-                                            onSwipeUp = onTabs,
-                                        )
-                                        .draggable(
-                                            state = tabDragState,
-                                            orientation = Orientation.Horizontal,
-                                            enabled = !editing && tabSwipeEnabled,
-                                            onDragStopped = { velocity ->
-                                                onTabDragStopped(velocity)
-                                            },
-                                        )
-                                        .addressBarPressActions(
-                                            longPressEnabled = addressBarLongPressEnabled,
-                                            onClick = onExpand,
-                                            onLongPress = onAddressBarLongPress,
-                                            longPressLabel = addressBarLongPressLabel,
-                                        ),
+                                    modifier = compactGestures,
                                     color = Color.Transparent,
                                 ) {
                                     AddressBarCompactContent(
@@ -662,6 +675,8 @@ internal fun BrowserBottomBar(
                                 canToggleDesktopView = canToggleDesktopView,
                                 isDesktopView = isDesktopView,
                                 onDesktopViewChange = onDesktopViewChange,
+                                compactMode = handle,
+                                onCompactModeChange = onCompactModeChange,
                                 canToggleCookieBannerRemoval =
                                     canToggleCookieBannerRemoval,
                                 isCookieBannerRemovalEnabled =
@@ -751,6 +766,19 @@ internal fun BrowserBottomBar(
                     }
                 }
             }
+            if (handleShown && !visualOnly) {
+                Box(
+                    modifier = Modifier
+                        .offset(x = dockOffset.x, y = dockOffset.y)
+                        .size(
+                            width = VolaCompactMode.handleTouchWidth,
+                            height = VolaCompactMode.handleTouchHeight,
+                        )
+                        .then(compactGestures)
+                        .semantics { contentDescription = showBarLabel }
+                        .testTag(AddressBarDockTestTags.CompactHandle),
+                )
+            }
         }
     }
 }
@@ -761,6 +789,7 @@ internal object AddressBarDockTestTags {
     const val ParkIcon = "address_bar_park_icon"
     const val CompactAddress = "address_bar_compact_address"
     const val CompactContent = "address_bar_compact_content"
+    const val CompactHandle = "address_bar_compact_handle"
 }
 
 @Composable

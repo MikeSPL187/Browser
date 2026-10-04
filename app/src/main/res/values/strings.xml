@@ -205,6 +205,10 @@
     <string name="action_desktop_view">Desktop view</string>
     <string name="action_mobile_view">Mobile view</string>
     <string name="action_desktop_view_description">Request the desktop version for this domain</string>
+    <string name="compact_mode_title">Compact mode</string>
+    <string name="compact_mode_description">The page fills the screen; the bar waits as a thin handle</string>
+    <string name="compact_mode_hint">Scroll up or tap the handle</string>
+    <string name="compact_mode_show_bar">Show the bar</string>
     <string name="action_always_block_popups">Always block pop-ups</string>
     <string name="action_always_block_popups_description">Silently block every pop-up opened by this domain</string>
     <string name="browser_menu_title">Menu</string>

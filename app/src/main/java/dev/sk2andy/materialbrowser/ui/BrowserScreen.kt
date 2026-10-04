@@ -6,7 +6,6 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-
 import android.view.HapticFeedbackConstants
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityManager
@@ -1194,7 +1193,6 @@ internal fun BrowserScreen(
         }
     }
 
-
     val currentBackTarget by rememberUpdatedState(
         when {
             readerStudioSession != null -> BrowserBackTarget.ReaderStudio
@@ -1381,6 +1379,7 @@ internal fun BrowserScreen(
             fullscreenVideoGestureState == null &&
             firefoxExtensionOptionsTitle == null,
         isBlankPage = selectedTab.url == BLANK_URL,
+        compactMode = controller.addressBar.compactMode,
     )
     val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
     fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(

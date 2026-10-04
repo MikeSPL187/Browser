@@ -490,3 +490,21 @@ internal object VolaSiteInfo {
     val dividerInset = 56.dp
     val dividerThickness = 1.dp
 }
+
+/** Compact Mode (board W-Compact): the page fills the screen, the bar waits as a thin handle. */
+internal object VolaCompactMode {
+    val handleWidth = 64.dp
+    val handleHeight = 8.dp
+
+    /** The handle is thin; this larger area around it takes the taps and swipes. */
+    val handleTouchWidth = 96.dp
+    val handleTouchHeight = 32.dp
+
+    /** The hint that shows how to bring the bar back, after Compact Mode is switched on. */
+    const val HINT_MILLIS = 4_000L
+    val hintIconContainerSize = 40.dp
+    val hintIconSize = 22.dp
+    val hintPadding = VolaSpacing.x4
+    val hintGap = VolaSpacing.x3
+    val hintBottomOffset = 56.dp
+}

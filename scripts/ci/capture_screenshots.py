@@ -208,6 +208,37 @@ def tour(suffix):
         shot(f"page-scrolled-{suffix}")
     step("page", page)
 
+    def compact_mode():
+        """Compact Mode (Q11, board W-Compact): on from the menu, the page fills the screen and
+        the bar waits as a handle; a tap on the handle brings it back; off again from the menu."""
+        open_url("https://en.wikipedia.org/wiki/Zen")
+        time.sleep(10)
+        if not tap("More options", "Другие действия"):
+            return
+        time.sleep(2)
+        if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-menu-{suffix}"):
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(2)
+        shot(f"compact-mode-{suffix}")
+        time.sleep(5)
+        if tap("Show the bar", "Показать панель"):
+            time.sleep(2)
+            shot(f"compact-mode-bar-{suffix}")
+        # Compact Mode is saved: it must be off again before the next step and pass.
+        if not find("More options", "Другие действия"):
+            if not tap("Show the bar", "Показать панель"):
+                adb("shell", "input", "tap", str(width // 2), str(int(height * 0.955)))
+            time.sleep(2)
+        if tap("More options", "Другие действия"):
+            time.sleep(2)
+            if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-off-{suffix}"):
+                adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        else:
+            log("compact mode: could not reach the menu to switch it off")
+    step("compact-mode", compact_mode)
+
     def find_in_page():
         if not find("More options", "Другие действия"):
             # The scrolled page left the compact capsule, which exposes no label: tap its spot.

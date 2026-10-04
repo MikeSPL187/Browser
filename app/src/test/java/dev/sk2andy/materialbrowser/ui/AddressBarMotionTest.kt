@@ -11,10 +11,42 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 
 class AddressBarMotionTest {
     private val materialMotion = CandyMotionSchemes.MaterialExpressive
+
+    @Test
+    fun `in compact mode the collapsed bar is the thin handle, other states are unchanged`() {
+        val handle = AddressBarMotion.widthTarget(
+            presentation = AddressBarPresentation.Compact,
+            compactWidth = 184.dp,
+            maxWidth = 328.dp,
+            feedbackWidth = 220.dp,
+            edgeTabWidth = 52.dp,
+            handle = true,
+        )
+        val expanded = AddressBarMotion.widthTarget(
+            presentation = AddressBarPresentation.Expanded,
+            compactWidth = 184.dp,
+            maxWidth = 328.dp,
+            feedbackWidth = 220.dp,
+            edgeTabWidth = 52.dp,
+            handle = true,
+        )
+
+        assertEquals(VolaCompactMode.handleWidth, handle)
+        assertEquals(328.dp, expanded)
+        assertEquals(
+            VolaCompactMode.handleHeight,
+            AddressBarMotion.heightTarget(AddressBarPresentation.Compact, handle = true),
+        )
+        assertEquals(
+            VolaIsland.compactHeight,
+            AddressBarMotion.heightTarget(AddressBarPresentation.Compact),
+        )
+    }
 
     @Test
     fun `compact and expanded width targets stay valid across viewport sizes`() {

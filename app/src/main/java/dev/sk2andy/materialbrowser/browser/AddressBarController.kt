@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
@@ -28,6 +29,8 @@ interface AddressBarPreferenceStore {
     fun saveAddressBarActionLayout(layout: AddressBarActionLayout)
     fun loadStartupAddressFocusMode(): StartupAddressFocusMode
     fun saveStartupAddressFocusMode(mode: StartupAddressFocusMode)
+    fun loadCompactMode(): Boolean = false
+    fun saveCompactMode(enabled: Boolean) = Unit
 }
 
 /** The library the address suggestions draw from, as the browser holds it right now. */
@@ -85,6 +88,17 @@ class AddressBarController internal constructor(
     var startupFocusMode by mutableStateOf(StartupAddressFocusMode.Default)
         private set
 
+    /** Compact Mode (board W-Compact): the page fills the screen, the bar waits as a handle. */
+    var compactMode by mutableStateOf(false)
+        private set
+
+    /** Shown right after Compact Mode is switched on: how to bring the bar back. */
+    var compactModeHintVisible by mutableStateOf(false)
+        private set
+
+    /** Bars collapsed by scrolling; a tab not listed follows [compactMode]. */
+    private val collapsedByTab = mutableStateMapOf<String, Boolean>()
+
     /** The last placement the bar was docked to; docking again returns there. */
     private var lastDockPlacement = AddressBarDockPlacement.Default
     val lastDockEdge: AddressBarDockEdge
@@ -111,6 +125,40 @@ class AddressBarController internal constructor(
         }
         actionLayout = store.loadAddressBarActionLayout()
         startupFocusMode = store.loadStartupAddressFocusMode()
+        compactMode = store.loadCompactMode()
+    }
+
+    /** Whether the bar of [tabId] is collapsed: scrolled away, or a handle in Compact Mode. */
+    fun isCollapsed(tabId: String): Boolean = collapsedByTab[tabId] ?: compactMode
+
+    fun setCollapsed(tabId: String, collapsed: Boolean) {
+        if (collapsedByTab[tabId] != collapsed) collapsedByTab[tabId] = collapsed
+    }
+
+    /** A new page or address: the bar comes back, unless Compact Mode keeps it a handle. */
+    fun resetCollapsed(tabId: String) {
+        collapsedByTab[tabId] = compactMode
+    }
+
+    fun forgetTab(tabId: String) {
+        collapsedByTab.remove(tabId)
+    }
+
+    fun clearCollapsed() {
+        collapsedByTab.clear()
+    }
+
+    fun updateCompactMode(enabled: Boolean) {
+        if (compactMode == enabled) return
+        compactMode = enabled
+        compactModeHintVisible = enabled
+        // Every tab takes the new default at once: a handle, or the full bar.
+        collapsedByTab.clear()
+        store.saveCompactMode(enabled)
+    }
+
+    fun dismissCompactModeHint() {
+        compactModeHintVisible = false
     }
 
     fun updateDocked(docked: Boolean) {
