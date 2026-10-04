@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -594,6 +596,66 @@ class LinkPeekOverlayInstrumentedTest {
         }
 
         composeRule.onNodeWithText("bücher.example").assertIsDisplayed()
+    }
+
+    @Test
+    fun glanceCardClosesNotesHistoryAndOpensFromHandle() {
+        val visible = mutableStateOf(true)
+        val commits = AtomicInteger()
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                if (visible.value) {
+                    LinkPeekOverlay(
+                        url = "https://example.com/glance",
+                        progress = 0f,
+                        armed = false,
+                        createPreviewView = ::previewWebView,
+                        releasePreviewView = WebView::destroy,
+                        onOpen = {},
+                        onCommitRequested = { commits.incrementAndGet() },
+                        onDismiss = { visible.value = false },
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(
+            composeRule.activity.getString(R.string.glance_not_in_history),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(LinkPeekTestTags.PullHandle)
+            .assertHasClickAction()
+            .performSemanticsAction(SemanticsActions.OnClick)
+            .performSemanticsAction(SemanticsActions.OnClick)
+        // A second pull while the card is already on its way opens nothing more.
+        assertEquals(1, commits.get())
+
+        composeRule.onNodeWithTag(LinkPeekTestTags.Close).performClick()
+        composeRule.waitForIdle()
+        assertFalse(visible.value)
+    }
+
+    @Test
+    fun privateGlanceSaysNothingIsSaved() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                LinkPeekOverlay(
+                    url = "https://example.com/private",
+                    progress = 0f,
+                    armed = false,
+                    createPreviewView = ::previewWebView,
+                    releasePreviewView = WebView::destroy,
+                    onOpen = {},
+                    isPrivate = true,
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.glance_private_note))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(
+            composeRule.activity.getString(R.string.glance_not_in_history),
+        ).assertDoesNotExist()
     }
 
     private fun previewWebView(

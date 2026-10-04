@@ -287,6 +287,23 @@ def tour(suffix):
         shot(f"https-upgrade-{suffix}")
     step("https-upgrade", https_upgrade)
 
+    def glance():
+        """Glance (board W-Glance): a long press on example.com's link opens the live preview
+        card with the link actions under it. Back closes it without opening the link."""
+        link = find("Learn more", "More information", contains=True)
+        if link is None:
+            save_ui(f"glance-page-{suffix}")
+            log("not found: link for glance")
+            return
+        x, y = link["center"]
+        adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "900")
+        time.sleep(6)
+        shot(f"glance-{suffix}")
+        save_ui(f"glance-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("glance", glance)
+
     def https_only_warning():
         # neverssl.com deliberately avoids HTTPS, so HTTPS-only mode ends on its warning page.
         open_url("http://neverssl.com/")
