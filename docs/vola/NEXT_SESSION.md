@@ -81,6 +81,7 @@ Safari (морфы и плавность), Arc и Zen (минимум интер
 - *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* — чтобы
   воркфлоу обновления GeckoView мог открывать PR.
 - Сказать «сливай» по #54–#58, #60, #61 и docs-PR (#59 закрыть — его правки вошли в новый).
-- Релизный ключ: положить секреты по `signing.md`, когда Claude передаст файлы.
+- Релизный ключ (файлы присланы 2026-10-04): 4 секрета и переменная по `signing.md`, резервная копия
+  `vola-release.jks` и пароля.
 - По желанию: секрет `VOLA_PREVIEW_KEYSTORE_BASE64` (*Settings → Secrets and variables → Actions*);
   удалить ветки слитых PR и включить *Settings → General → Automatically delete head branches*.
