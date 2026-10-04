@@ -1,0 +1,373 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1401
+screenshot 05-compact-mode-light.png
+tap 'Show the bar' at 540,2263
+screenshot 06-compact-mode-bar-light.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1401
+tap 'More options' at 964,2232
+tap 'Find on page' at 166,917
+screenshot 07-find-light.png
+find counter light: 1/541
+tap 'Open site information' at 711,2232
+screenshot 08-site-info-light.png
+saved ui-site-info-light.xml
+tap 'Certificate' at 288,1657
+screenshot 09-site-certificate-light.png
+tap 'Back' at 84,1390
+tap 'Privacy X-Ray' at 290,1860
+screenshot 10-site-info-xray-light.png
+tap 'Back' at 84,1621
+screenshot 11-site-info-data-light.png
+tap 'Delete data of' at 907,2195
+screenshot 12-site-data-undo-light.png
+tap 'Undo' at 907,2021
+screenshot 13-address-light.png
+tap 'More options' at 964,2232
+tap 'Open Reader Studio' at 414,675
+tap 'Reading view settings' at 838,223
+tap 'Light' at 211,1401
+screenshot 14-reader-settings-light.png
+saved ui-reader-settings-light.xml
+tap 'Paper' at 540,1401
+screenshot 15-reader-paper-light.png
+tap 'Light' at 211,1401
+screenshot 16-reader-light.png
+screenshot 17-https-upgrade-light.png
+screenshot 18-glance-light.png
+saved ui-glance-light.xml
+tap 'More options' at 964,2232
+tap 'Split View' at 912,675
+screenshot 19-split-view-light.png
+saved ui-split-view-light.xml
+tap 'Bottom tab' at 540,1645
+screenshot 20-split-view-bottom-active-light.png
+tap 'Close Split View' at 656,1133
+https-only probe httpforever.com: 10-04 12:53:12.836  4179  4179 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 21-https-only-light.png
+screenshot 22-page-unknown-host-light.png
+screenshot 23-page-insecure-light.png
+screenshot 24-dangerous-site-light.png
+tap 'Back to safety' at 540,1875
+screenshot 25-page-offline-light.png
+screenshot 26-page-back-online-light.png
+screenshot 27-workspace-locked-light.png
+tap 'Go to another workspace' at 540,2212
+screenshot 28-download-check-light.png
+tap 'Don’t download' at 309,2227
+screenshot 29-tab-overview-light.png
+saved ui-tab-overview-light.xml
+screenshot 30-workspace-options-light.png
+saved ui-workspace-options-light.xml
+tap 'Add workspace' at 465,2232
+screenshot 31-workspace-new-light.png
+tap 'All icons' at 540,1630
+screenshot 32-workspace-new-icons-light.png
+tap 'Add workspace' at 465,2232
+tap 'Work' at 456,1356
+tap 'Coral' at 728,1132
+tap 'Create workspace' at 540,2211
+screenshot 33-workspace-swipe-light.png
+tap 'Personal' at 106,2232
+tap 'New tab' at 974,2231
+screenshot 34-essentials-start-light.png
+tap 'Add a site' at 540,1043
+screenshot 35-essentials-add-light.png
+screenshot 36-essentials-light.png
+tap 'Edit' at 951,363
+screenshot 37-essentials-edit-light.png
+tap 'Done' at 930,280
+screenshot 38-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+tap 'Tab actions' at 996,202
+screenshot 39-tab-actions-light.png
+tap 'More' at 540,1604
+screenshot 40-tab-actions-more-light.png
+tap 'Search tabs' at 744,202
+screenshot 41-tab-search-light.png
+tap 'Close search' at 996,202
+screenshot 42-protection-card-light.png
+tap 'this week' at 428,1406
+screenshot 43-protection-report-light.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 44-private-new-tab-light.png
+screenshot 45-private-lock-row-light.png
+tap 'Close 1 private' at 282,1653
+screenshot 46-private-closed-light.png
+screenshot 47-private-locked-light.png
+screenshot 48-permission-prompt-light.png
+tap 'Don’t allow' at 540,2212
+tap 'More options' at 964,2232
+screenshot 49-menu-light.png
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 258,2234
+screenshot 50-settings-light.png
+tap 'Appearance' at 360,1494
+screenshot 51-appearance-light.png
+tap 'Tabs & gestures' at 393,662
+tap 'Automatically close tabs' at 321,1862
+tap 'After 7 days' at 195,1585
+screenshot 52-tabs-archive-light.png
+saved ui-tabs-archive-light.xml
+tap 'Automatically close tabs' at 321,1173
+tap 'Never' at 144,665
+not found: ('Protection & data', 'Защита и данные')
+tap 'Protection & data' at 407,1835
+screenshot 53-protection-private-lock-light.png
+screenshot 54-current-dark.png
+screenshot 55-new-tab-dark.png
+screenshot 56-page-dark.png
+screenshot 57-page-scrolled-dark.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1401
+screenshot 58-compact-mode-dark.png
+tap 'Show the bar' at 540,2263
+screenshot 59-compact-mode-bar-dark.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1401
+tap 'More options' at 964,2232
+tap 'Find on page' at 166,917
+screenshot 60-find-dark.png
+find counter dark: 1/541
+tap 'Open site information' at 711,2232
+screenshot 61-site-info-dark.png
+saved ui-site-info-dark.xml
+tap 'Certificate' at 288,1657
+screenshot 62-site-certificate-dark.png
+tap 'Back' at 84,1390
+tap 'Privacy X-Ray' at 290,1860
+screenshot 63-site-info-xray-dark.png
+tap 'Back' at 84,1621
+screenshot 64-site-info-data-dark.png
+tap 'Delete data of' at 907,2188
+screenshot 65-site-data-undo-dark.png
+tap 'Undo' at 907,2021
+screenshot 66-address-dark.png
+tap 'More options' at 964,2232
+tap 'Open Reader Studio' at 414,675
+tap 'Reading view settings' at 838,223
+tap 'Dark' at 868,1401
+screenshot 67-reader-settings-dark.png
+saved ui-reader-settings-dark.xml
+tap 'Paper' at 540,1401
+screenshot 68-reader-paper-dark.png
+tap 'Dark' at 868,1401
+screenshot 69-reader-dark.png
+screenshot 70-https-upgrade-dark.png
+screenshot 71-glance-dark.png
+saved ui-glance-dark.xml
+tap 'More options' at 964,2232
+tap 'Split View' at 912,675
+screenshot 72-split-view-dark.png
+saved ui-split-view-dark.xml
+tap 'Bottom tab' at 540,1645
+screenshot 73-split-view-bottom-active-dark.png
+tap 'Close Split View' at 656,1133
+https-only probe httpforever.com: 10-04 13:05:11.306  4179  4179 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 74-https-only-dark.png
+screenshot 75-page-unknown-host-dark.png
+screenshot 76-page-insecure-dark.png
+screenshot 77-dangerous-site-dark.png
+tap 'Back to safety' at 540,1875
+screenshot 78-page-offline-dark.png
+screenshot 79-page-back-online-dark.png
+screenshot 80-workspace-locked-dark.png
+tap 'Go to another workspace' at 540,2212
+screenshot 81-download-check-dark.png
+tap 'Don’t download' at 309,2227
+screenshot 82-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+screenshot 83-workspace-options-dark.png
+saved ui-workspace-options-dark.xml
+tap 'Add workspace' at 592,2232
+screenshot 84-workspace-new-dark.png
+tap 'All icons' at 540,1630
+screenshot 85-workspace-new-icons-dark.png
+screenshot 86-workspace-swipe-dark.png
+tap 'New tab' at 974,2231
+screenshot 87-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 88-essentials-dark.png
+tap 'Edit' at 951,363
+screenshot 89-essentials-edit-dark.png
+tap 'Done' at 930,280
+screenshot 90-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+tap 'Tab actions' at 996,202
+screenshot 91-tab-actions-dark.png
+tap 'More' at 540,1604
+screenshot 92-tab-actions-more-dark.png
+tap 'Search tabs' at 744,202
+screenshot 93-tab-search-dark.png
+tap 'Close search' at 996,202
+screenshot 94-protection-card-dark.png
+tap 'this week' at 428,1406
+screenshot 95-protection-report-dark.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 96-private-new-tab-dark.png
+screenshot 97-private-lock-row-dark.png
+tap 'Close 1 private' at 282,1653
+screenshot 98-private-closed-dark.png
+screenshot 99-private-locked-dark.png
+screenshot 100-permission-prompt-dark.png
+tap 'Don’t allow' at 540,2212
+tap 'More options' at 964,2232
+screenshot 101-menu-dark.png
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 258,2196
+screenshot 102-settings-dark.png
+tap 'Appearance' at 360,1494
+screenshot 103-appearance-dark.png
+tap 'Tabs & gestures' at 393,662
+tap 'Automatically close tabs' at 321,1862
+tap 'After 7 days' at 195,1585
+screenshot 104-tabs-archive-dark.png
+saved ui-tabs-archive-dark.xml
+tap 'Automatically close tabs' at 321,1257
+tap 'Never' at 144,224
+not found: ('Protection & data', 'Защита и данные')
+tap 'Protection & data' at 407,1822
+screenshot 105-protection-private-lock-dark.png
+screenshot 106-new-tab-a11y.png
+screenshot 107-page-a11y.png
+tap 'More options' at 964,2232
+screenshot 108-menu-a11y.png
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 318,2178
+screenshot 109-settings-a11y.png
+screenshot 110-page-unknown-host-a11y.png
+Cold start (am start -W, 5 runs): average 2940 ms, min 2766 ms, max 3080 ms
+screenshot 111-new-tab-ru.png
+screenshot 112-page-ru.png
+screenshot 113-page-scrolled-ru.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1456
+screenshot 114-compact-mode-ru.png
+tap 'Show the bar' at 540,2263
+screenshot 115-compact-mode-bar-ru.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 663,1456
+tap 'More options' at 964,2232
+tap 'Find on page' at 166,939
+screenshot 116-find-ru.png
+find counter ru: 1/541
+tap 'Open site information' at 711,2232
+screenshot 117-site-info-ru.png
+saved ui-site-info-ru.xml
+tap 'Certificate' at 304,1657
+screenshot 118-site-certificate-ru.png
+tap 'Back' at 84,1390
+tap 'Privacy X-Ray' at 355,1918
+screenshot 119-site-info-xray-ru.png
+tap 'Back' at 84,1563
+screenshot 120-site-info-data-ru.png
+tap 'Delete data of' at 891,2227
+screenshot 121-site-data-undo-ru.png
+tap 'Undo' at 865,2021
+screenshot 122-address-ru.png
+tap 'More options' at 964,2232
+tap 'Open Reader Studio' at 414,686
+tap 'Reading view settings' at 838,223
+tap 'Light' at 211,1401
+screenshot 123-reader-settings-ru.png
+saved ui-reader-settings-ru.xml
+tap 'Paper' at 539,1401
+screenshot 124-reader-paper-ru.png
+tap 'Light' at 211,1401
+screenshot 125-reader-ru.png
+screenshot 126-https-upgrade-ru.png
+screenshot 127-glance-ru.png
+saved ui-glance-ru.xml
+tap 'More options' at 964,2232
+tap 'Split View' at 912,686
+screenshot 128-split-view-ru.png
+saved ui-split-view-ru.xml
+tap 'Bottom tab' at 540,1645
+screenshot 129-split-view-bottom-active-ru.png
+tap 'Close Split View' at 656,1133
+https-only probe httpforever.com: 10-04 13:18:43.654 15345 15345 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 130-https-only-ru.png
+screenshot 131-page-unknown-host-ru.png
+screenshot 132-page-insecure-ru.png
+screenshot 133-dangerous-site-ru.png
+tap 'Back to safety' at 540,1875
+screenshot 134-page-offline-ru.png
+screenshot 135-page-back-online-ru.png
+screenshot 136-workspace-locked-ru.png
+tap 'Go to another workspace' at 540,2212
+screenshot 137-download-check-ru.png
+tap 'Don’t download' at 309,2227
+screenshot 138-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+screenshot 139-workspace-options-ru.png
+saved ui-workspace-options-ru.xml
+tap 'Add workspace' at 569,2232
+screenshot 140-workspace-new-ru.png
+tap 'All icons' at 540,1630
+screenshot 141-workspace-new-icons-ru.png
+screenshot 142-workspace-swipe-ru.png
+tap 'New tab' at 974,2231
+screenshot 143-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 144-essentials-ru.png
+tap 'Edit' at 908,363
+screenshot 145-essentials-edit-ru.png
+tap 'Done' at 914,280
+screenshot 146-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+tap 'Tab actions' at 996,202
+screenshot 147-tab-actions-ru.png
+tap 'More' at 540,1631
+screenshot 148-tab-actions-more-ru.png
+tap 'Search tabs' at 744,202
+screenshot 149-tab-search-ru.png
+tap 'Close search' at 996,202
+screenshot 150-protection-card-ru.png
+tap 'this week' at 491,1406
+screenshot 151-protection-report-ru.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 822,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 152-private-new-tab-ru.png
+screenshot 153-private-lock-row-ru.png
+tap 'Close 1 private' at 388,1653
+screenshot 154-private-closed-ru.png
+screenshot 155-private-locked-ru.png
+screenshot 156-permission-prompt-ru.png
+tap 'Don’t allow' at 540,2212
+tap 'More options' at 964,2232
+screenshot 157-menu-ru.png
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 281,2179
+screenshot 158-settings-ru.png
+tap 'Appearance' at 371,1494
+screenshot 159-appearance-ru.png
+tap 'Tabs & gestures' at 403,662
+tap 'Automatically close tabs' at 418,2099
+tap 'After 7 days' at 208,1822
+screenshot 160-tabs-archive-ru.png
+saved ui-tabs-archive-ru.xml
+tap 'Automatically close tabs' at 418,1525
+tap 'Never' at 169,492
+not found: ('Protection & data', 'Защита и данные')
+tap 'Protection & data' at 408,2086
+screenshot 161-protection-private-lock-ru.png
+tap 'More options' at 964,2232
+not found: ('Settings', 'Настройки')
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 281,2179
+tap 'Appearance' at 371,1494
+tap 'Browser layout' at 225,590
+tap 'Air' at 158,917
+screenshot 162-page-air-ru.png
