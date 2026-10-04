@@ -1,0 +1,2 @@
+--------- beginning of crash
+10-04 11:49:41.322  1417  1530 F libc    : Fatal signal 6 (SIGABRT), code -6 (SI_TKILL) in tid 1530 (aiai-sp-0), pid 1417 (ogle.android.as)
