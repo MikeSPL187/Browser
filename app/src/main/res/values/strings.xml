@@ -745,10 +745,10 @@
     <string name="settings_https_only_summary">Vola upgrades every connection to secure HTTPS and warns you before opening a site that only works over insecure HTTP.</string>
     <string name="settings_https_only_unavailable">Unavailable with System WebView</string>
     <string name="settings_https_only_system_webview_summary">Available only with GeckoView.</string>
-    <string name="https_only_error_title">Secure site not available</string>
-    <string name="https_only_error_body">Vola opens sites only over a secure HTTPS connection, but %1$s doesn’t support it. Most likely the site simply has no HTTPS, but someone could also be interfering with your connection.</string>
-    <string name="https_only_error_advice">If you continue, the data you send and receive on this site can be read and changed by others on the network.</string>
-    <string name="https_only_error_continue">Continue to HTTP site</string>
+    <string name="https_only_error_title">This site has no secure version</string>
+    <string name="https_only_error_body">Vola opens sites only over HTTPS. %1$s doesn’t support a secure connection: anything you see or enter can be read or changed on the way.</string>
+    <string name="https_only_error_advice">Don’t enter passwords or card details on this site.</string>
+    <string name="https_only_error_continue">Open over HTTP anyway</string>
     <string name="https_only_error_back">Go back</string>
     <string name="settings_dns_over_https_title">Encrypted DNS (DoH)</string>
     <string name="settings_dns_over_https_provider_system">System default</string>

@@ -30,6 +30,16 @@ LOG = []
 _counter = 0
 
 
+# Sites without working HTTPS, most dependable first (see https_only_warning in the tour).
+# httpforever.com reached the warning (ERROR_HTTPS_ONLY) in every pass of #61; info.cern.ch serves
+# HTTPS. The rest stay as fallbacks in case it ever gains HTTPS.
+HTTP_ONLY_CANDIDATES = (
+    "http://httpforever.com/",
+    "http://captive.apple.com/",
+    "http://http.badssl.com/",
+)
+
+
 def adb(*args, check=True, capture=False, timeout=60):
     result = subprocess.run(
         ["adb", *args],
@@ -317,11 +327,18 @@ def tour(suffix):
     step("https-upgrade", https_upgrade)
 
     def https_only_warning():
-        # neverssl.com deliberately avoids HTTPS, so HTTPS-only mode ends on its warning page.
-        open_url("http://neverssl.com/")
-        time.sleep(10)
-        shot(f"https-only-early-{suffix}")
-        time.sleep(30)
+        """The HTTPS-only warning on a site without working HTTPS. Gecko shows it only when the
+        upgraded request fails at the connection; a failed TLS handshake is a security error.
+        So the tour tries sites until the debug log reports the warning, and logs every result."""
+        for url in HTTP_ONLY_CANDIDATES:
+            open_url(url)
+            time.sleep(12)
+            host = re.sub(r"^https?://([^/:]+).*$", r"\1", url)
+            raw = adb("logcat", "-d", "-s", "VolaLoadError", capture=True, check=False) or b""
+            results = [line for line in raw.decode(errors="replace").splitlines() if host in line]
+            log(f"https-only probe {host}: {results[-1] if results else 'no load error'}")
+            if results and "httpsOnly=true" in results[-1]:
+                break
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
@@ -782,7 +799,7 @@ def main():
     gecko = (adb("logcat", "-d", check=False, capture=True) or b"").decode("utf-8", "replace")
     https_lines = [
         line for line in gecko.splitlines()
-        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl", line, re.I)
+        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl|httpforever", line, re.I)
     ]
     (OUT / "https-only-log.txt").write_text("\n".join(https_lines[-400:]) + "\n")
     (OUT / "tour-log.txt").write_text("\n".join(LOG) + "\n")
