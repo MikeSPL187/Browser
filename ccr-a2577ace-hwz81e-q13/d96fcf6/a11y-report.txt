@@ -1,0 +1,4 @@
+Vola controls in the tour: 3 accessibility finding(s).
+- [NEW] small | Pull up to open in a tab | 379x36 dp — glance-dark, glance-light
+- [NEW] small | Потяните вверх, чтобы открыть во вкладке | 379x36 dp — glance-ru
+- [NEW] unlabeled | Button | glance — glance-dark, glance-light, glance-ru
