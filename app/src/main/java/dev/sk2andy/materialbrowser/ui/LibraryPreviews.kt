@@ -65,6 +65,7 @@ private fun HistoryEmptyPreview() {
             onClearHistory = {},
             onOpenEntry = {},
             onBack = {},
+            onOpenNewTab = {},
         )
     }
 }
@@ -95,6 +96,23 @@ private fun FavoritesScreenPreview() {
             onUndoDelete = {},
             onOpenFavorite = {},
             onBack = {},
+        )
+    }
+}
+
+/** Board W-States: no favorites yet, with bookmarks from another browser one tap away. */
+@VolaPreviews
+@Composable
+private fun FavoritesEmptyPreview() {
+    MaterialBrowserTheme {
+        FavoritesScreen(
+            favorites = emptyList(),
+            onDeleteFavorite = { _, _ -> },
+            onUndoDelete = {},
+            onOpenFavorite = {},
+            onBack = {},
+            sort = FavoritesSort.Name,
+            onImportBookmarks = {},
         )
     }
 }

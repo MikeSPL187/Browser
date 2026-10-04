@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
@@ -263,5 +265,31 @@ class HistoryScreenInstrumentedTest {
         assertEquals(setOf("personal", "work"), request.get()?.profileIds)
         assertTrue(request.get()!!.sinceInclusiveMillis <= personalTime)
         assertTrue(request.get()!!.untilExclusiveMillis > workTime)
+    }
+
+    @Test
+    fun emptyHistoryOpensANewTabButAFruitlessSearchDoesNot() {
+        val action = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.history_empty_action)
+        var newTabs = 0
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                HistoryScreen(
+                    profiles = listOf(BrowserProfile(id = "personal", emoji = "🏠")),
+                    activeProfileId = "personal",
+                    history = emptyList(),
+                    onDeleteEntries = {},
+                    onClearHistory = {},
+                    onOpenEntry = {},
+                    onBack = {},
+                    onOpenNewTab = { newTabs++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(action).performClick()
+        assertEquals(1, newTabs)
+        composeRule.onNodeWithTag(HistoryScreenTestTags.SearchField).performTextInput("nothing")
+        composeRule.onNodeWithText(action).assertDoesNotExist()
     }
 }

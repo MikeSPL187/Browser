@@ -279,6 +279,7 @@
         <item quantity="other">Удалено %1$d страницы</item>
     </plurals>
     <string name="history_empty_message">Здесь появятся сайты, которые вы откроете. Приватные вкладки сюда не попадают.</string>
+    <string name="history_empty_action">Открыть новую вкладку</string>
     <string name="history_no_results_message">Попробуйте другое слово или выберите все пространства.</string>
     <string name="history_save_title">Сохранять историю</string>
     <string name="history_save_summary">Хранить посещения в обычных вкладках на этом устройстве</string>
@@ -490,6 +491,11 @@
         <item quantity="other">%1$d сайта</item>
     </plurals>
     <string name="favorites_empty_message">Нажмите звёздочку в меню страницы или перенесите закладки из другого браузера.</string>
+    <string name="favorites_empty_action">Перенести закладки</string>
+    <string name="favorites_sort">Сортировка</string>
+    <string name="favorites_sort_manual">Свой порядок</string>
+    <string name="favorites_sort_name">По имени</string>
+    <string name="favorites_sort_recent">Сначала новые</string>
     <string name="favorites_folder_empty_message">Перенесите сюда сайты через их меню.</string>
     <string name="favorites_no_matches_message">Попробуйте другое слово.</string>
     <string name="content_actions_title">Содержимое страницы</string>

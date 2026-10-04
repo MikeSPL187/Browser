@@ -468,6 +468,13 @@ object VolaIcons {
         )
     }
 
+    val Sort: ImageVector by lazy {
+        materialSymbol(
+            name = "Sort",
+            pathData = "M160 720 q-17 0 -28.5 -11.5 T120 680 q0 -17 11.5 -28.5 T160 640 h160 q17 0 28.5 11.5 T360 680 q0 17 -11.5 28.5 T320 720 H160 Z m0 -200 q-17 0 -28.5 -11.5 T120 480 q0 -17 11.5 -28.5 T160 440 h400 q17 0 28.5 11.5 T600 480 q0 17 -11.5 28.5 T560 520 H160 Z m0 -200 q-17 0 -28.5 -11.5 T120 280 q0 -17 11.5 -28.5 T160 240 h640 q17 0 28.5 11.5 T840 280 q0 17 -11.5 28.5 T800 320 H160 Z",
+        )
+    }
+
     val Star: ImageVector by lazy {
         materialSymbol(
             name = "Star",
@@ -627,6 +634,7 @@ object VolaIcons {
             Share,
             Snooze,
             Settings,
+            Sort,
             Star,
             StopFilled,
             SwapVert,

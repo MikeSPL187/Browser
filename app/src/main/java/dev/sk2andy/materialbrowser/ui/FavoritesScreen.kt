@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -69,6 +70,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
@@ -105,8 +107,12 @@ internal fun FavoritesScreen(
     onReorderEntry: (FavoriteLibraryEntry, Int) -> Unit = { _, _ -> },
     onFolderIconChange: (FavoriteFolder, FavoriteFolderIcon?) -> Unit = { _, _ -> },
     onUploadFolderIcon: (FavoriteFolder) -> Unit = {},
+    sort: FavoritesSort = FavoritesSort.Manual,
+    onSortChange: (FavoritesSort) -> Unit = {},
+    onImportBookmarks: (() -> Unit)? = null,
 ) {
     val source = library ?: FavoriteLibrary(favorites)
+    val locale = LocalConfiguration.current.locales[0]
     var query by rememberSaveable { mutableStateOf("") }
     var currentFolderId by rememberSaveable { mutableStateOf<String?>(null) }
     val currentFolder = currentFolderId?.let { BrowsingFavoritesRules.folder(source, it) }
@@ -180,6 +186,7 @@ internal fun FavoritesScreen(
                         Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
+                actions = { FavoritesSortButton(sort = sort, onSortChange = onSortChange) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -242,13 +249,16 @@ internal fun FavoritesScreen(
                     FavoritesEmptyState(
                         searching = query.isNotBlank(),
                         insideFolder = currentFolder != null,
+                        onImportBookmarks = onImportBookmarks,
                         modifier = Modifier
                             .padding(horizontal = VolaLibrary.sidePadding)
                             .padding(top = VolaLibrary.sectionGap),
                     )
                 }
             }
-            val level = LibraryRules.level(visibleEntries)
+            val level = LibraryRules.sorted(LibraryRules.level(visibleEntries), sort, locale)
+            // Moving by hand only makes sense in the user's own order.
+            val canReorder = query.isBlank() && sort == FavoritesSort.Manual
             // Folders first, two cards in a row (board W-Favorites).
             level.folders.chunked(VolaLibrary.FOLDER_COLUMNS).forEachIndexed { rowIndex, rowFolders ->
                 item(key = "folders:${rowFolders.first().id}") {
@@ -267,8 +277,8 @@ internal fun FavoritesScreen(
                                 customIcon = folderIcons[folder.id],
                                 modifier = Modifier.weight(1f),
                                 actions = FavoriteActions(
-                                    canMoveEarlier = query.isBlank() && index > 0,
-                                    canMoveLater = query.isBlank() && index in 0 until siblings.lastIndex,
+                                    canMoveEarlier = canReorder && index > 0,
+                                    canMoveLater = canReorder && index in 0 until siblings.lastIndex,
                                     onMoveEarlier = { onReorderEntry(folder, index - 1) },
                                     onMoveLater = { onReorderEntry(folder, index + 1) },
                                     onRename = { renameTarget = folder },
@@ -299,8 +309,8 @@ internal fun FavoritesScreen(
                 val lift by animateFloatAsState(if (dragging) 1.025f else 1f, spring(), label = "favorite lift")
                 val rowModifier = Modifier.animateItem().zIndex(if (dragging) 1f else 0f)
                     .graphicsLayer { translationY = if (dragging) dragOffset else 0f; scaleX = lift; scaleY = lift }
-                    .pointerInput(entry.id, query, siblings.map { it.id }) {
-                        if (query.isNotBlank()) return@pointerInput
+                    .pointerInput(entry.id, canReorder, siblings.map { it.id }) {
+                        if (!canReorder) return@pointerInput
                         var startCenter = 0f
                         detectDragGesturesAfterLongPress(
                             onDragStart = {
@@ -341,8 +351,8 @@ internal fun FavoritesScreen(
                         entry = entry,
                         favicon = favicons[entry.url],
                         actions = FavoriteActions(
-                            canMoveEarlier = query.isBlank() && index > 0,
-                            canMoveLater = query.isBlank() && index in 0 until siblings.lastIndex,
+                            canMoveEarlier = canReorder && index > 0,
+                            canMoveLater = canReorder && index in 0 until siblings.lastIndex,
                             onMoveEarlier = { onReorderEntry(entry, index - 1) },
                             onMoveLater = { onReorderEntry(entry, index + 1) },
                             onRename = { renameTarget = entry },
@@ -610,9 +620,53 @@ private fun FavoriteSymbolTile(
 internal fun favoriteInitial(favorite: FavoriteEntry): String =
     LibraryRules.initial(favorite.title.ifBlank { AddressResolver.displayText(favorite.url) })
 
+/** Board W-Favorites: the order of sites and folders — the user's own, by name, or newest first. */
+@Composable
+private fun FavoritesSortButton(sort: FavoritesSort, onSortChange: (FavoritesSort) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }, modifier = Modifier.testTag(FavoritesScreenTestTags.Sort)) {
+            Icon(VolaIcons.Sort, contentDescription = stringResource(R.string.favorites_sort))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            FavoritesSort.entries.forEach { option ->
+                val chosen = option == sort
+                DropdownMenuItem(
+                    text = { Text(stringResource(favoritesSortLabel(option))) },
+                    trailingIcon = if (chosen) {
+                        { Icon(VolaIcons.Check, contentDescription = null) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        open = false
+                        onSortChange(option)
+                    },
+                    modifier = Modifier
+                        .semantics { selected = chosen }
+                        .testTag(FavoritesScreenTestTags.sort(option)),
+                )
+            }
+        }
+    }
+}
+
+private fun favoritesSortLabel(sort: FavoritesSort): Int = when (sort) {
+    FavoritesSort.Manual -> R.string.favorites_sort_manual
+    FavoritesSort.Name -> R.string.favorites_sort_name
+    FavoritesSort.Recent -> R.string.favorites_sort_recent
+}
+
 /** Board W-States: no favorites yet, an empty folder, or a search that found nothing. */
 @Composable
-private fun FavoritesEmptyState(searching: Boolean, insideFolder: Boolean, modifier: Modifier = Modifier) {
+private fun FavoritesEmptyState(
+    searching: Boolean,
+    insideFolder: Boolean,
+    onImportBookmarks: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    // Only an empty library offers bookmarks from elsewhere; a folder or a search has its own way out.
+    val action = onImportBookmarks?.takeUnless { searching || insideFolder }
     VolaStateMessage(
         icon = rememberVectorPainter(VolaIcons.Bookmark),
         title = stringResource(
@@ -631,12 +685,17 @@ private fun FavoritesEmptyState(searching: Boolean, insideFolder: Boolean, modif
         ),
         modifier = modifier,
         tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+        actionLabel = action?.let { stringResource(R.string.favorites_empty_action) },
+        onAction = { action?.invoke() },
     )
 }
 
 internal object FavoritesScreenTestTags {
     const val List = "favorites_list"
     const val SearchField = "favorites_search_field"
+    const val Sort = "favorites_sort"
+
+    fun sort(option: FavoritesSort): String = "favorites_sort:$option"
 
     fun favorite(url: String): String = "favorite:$url"
 

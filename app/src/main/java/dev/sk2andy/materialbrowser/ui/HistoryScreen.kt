@@ -100,6 +100,7 @@ internal fun HistoryScreen(
     onClearHistory: (HistoryClearRequest) -> Unit,
     onOpenEntry: (HistoryEntry) -> Unit,
     onBack: () -> Unit,
+    onOpenNewTab: (() -> Unit)? = null,
 ) {
     val configuration = LocalConfiguration.current
     val locale = configuration.locales[0]
@@ -377,6 +378,7 @@ internal fun HistoryScreen(
                 item(key = "empty") {
                     HistoryEmptyState(
                         searching = query.isNotBlank(),
+                        onOpenNewTab = onOpenNewTab,
                         modifier = Modifier
                             .padding(horizontal = VolaLibrary.sidePadding)
                             .padding(top = VolaLibrary.sectionGap),
@@ -845,8 +847,11 @@ private fun HistoryEntryRow(
 @Composable
 private fun HistoryEmptyState(
     searching: Boolean,
+    onOpenNewTab: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    // A search that found nothing is answered by changing the search, not by leaving the screen.
+    val action = onOpenNewTab?.takeUnless { searching }
     VolaStateMessage(
         icon = painterResource(R.drawable.ic_history),
         title = stringResource(if (searching) R.string.history_no_results else R.string.history_empty),
@@ -855,6 +860,8 @@ private fun HistoryEmptyState(
         ),
         modifier = modifier,
         tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+        actionLabel = action?.let { stringResource(R.string.history_empty_action) },
+        onAction = { action?.invoke() },
     )
 }
 

@@ -174,6 +174,7 @@ COMPOSE_ICONS = [
     ("Share", "share", False, False),
     ("Snooze", "snooze", False, False),
     ("Settings", "settings", False, False),
+    ("Sort", "sort", False, False),
     ("Star", "star", False, False),
     ("StopFilled", "stop", True, False),
     ("SwapVert", "swap_vert", False, False),
