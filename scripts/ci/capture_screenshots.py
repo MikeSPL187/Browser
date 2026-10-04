@@ -792,9 +792,26 @@ def tour(suffix):
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
+                # Settings search (Q16a): the magnifier in the header, then «https».
+                if tap("Search settings", "Найти в настройках"):
+                    time.sleep(2)
+                    adb("shell", "input", "text", "https")
+                    time.sleep(2)
+                    shot(f"settings-search-{suffix}")
+                    save_ui(f"settings-search-{suffix}")
+                    # The first back hides the keyboard, the second leaves the search.
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                    if not find("Search settings", "Найти в настройках"):
+                        adb("shell", "input", "keyevent", "BACK")
+                        time.sleep(2)
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
+                    if tap_scrolling("More settings", "Дополнительно",
+                                     name=f"appearance-{suffix}"):
+                        time.sleep(2)
+                        shot(f"appearance-more-{suffix}", audit=False)
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
@@ -878,7 +895,7 @@ def measure_cold_start(runs=5):
 
 
 def air_layout(suffix):
-    """Switches Appearance → Browser layout to Air and shoots the edge-to-edge page."""
+    """Switches Appearance to the Air card and shoots the edge-to-edge page."""
     if not tap("More options", "Другие действия"):
         log("not found: menu for the Air layout")
         return
@@ -889,10 +906,7 @@ def air_layout(suffix):
     if not tap_scrolling("Appearance", "Внешний вид", name=f"air-settings-{suffix}"):
         return
     time.sleep(2)
-    if not tap("Browser layout", "Оформление"):
-        log("not found: browser layout choice")
-        return
-    time.sleep(1)
+    # The layout is a pair of cards at the top of the page (board W-SetAppearance).
     if not tap("Air", "Воздух"):
         log("not found: Air layout")
         return
