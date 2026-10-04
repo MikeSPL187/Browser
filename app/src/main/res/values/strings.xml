@@ -485,16 +485,36 @@
     <string name="settings_search_clear">Clear</string>
     <string name="settings_search_prompt">Find a setting by its name or description</string>
     <string name="settings_search_empty">Nothing found for «%1$s»</string>
-    <string name="settings_home_group_browsing">Browsing</string>
-    <string name="settings_home_group_personalization">Personalization</string>
-    <string name="settings_home_group_privacy_data">Privacy &amp; data</string>
-    <string name="settings_home_group_about">More information</string>
+    <string name="settings_home_default_title">Make Vola your default</string>
+    <string name="settings_home_default_summary">Open links in Vola</string>
+    <string name="settings_home_default_action">Make default</string>
+    <string name="settings_home_appearance_live">%1$s · %2$s</string>
+    <string name="settings_home_theme_auto">auto theme</string>
+    <string name="settings_home_theme_light">light theme</string>
+    <string name="settings_home_theme_dark">dark theme</string>
+    <string name="settings_home_protection_trackers_https">Blocks trackers · HTTPS only</string>
+    <string name="settings_home_protection_trackers">Blocks trackers</string>
+    <string name="settings_home_protection_https">HTTPS only</string>
+    <string name="settings_home_search_suggestions">suggestions</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d open tab</item>
+        <item quantity="other">%1$d open tabs</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d script</item>
+        <item quantity="other">%1$d scripts</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d capsule</item>
+        <item quantity="other">%1$d capsules</item>
+    </plurals>
     <string name="settings_browser_group_general">Browser setup</string>
     <string name="settings_browser_group_startup">Startup</string>
     <string name="settings_browser_group_favorites">Favorites</string>
     <string name="settings_browser_group_websites">Web pages</string>
     <string name="settings_browser_group_links">Links &amp; apps</string>
     <string name="settings_protection_group_tools">Privacy tools</string>
+    <string name="settings_protection_group_network">Network</string>
     <string name="settings_protection_group_app_data">App data</string>
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_home_appearance_summary">Colors, website text, surfaces, and shape</string>
@@ -594,6 +614,7 @@
     <string name="settings_download_one_dm_session_title">Share session data with 1DM</string>
     <string name="settings_download_one_dm_session_summary">Shares cookies, user agent, and referrer with 1DM so signed-in downloads can work. The app may use them to access your session. Session data is never shared in private browsing.</string>
     <string name="settings_section_tabs">Tabs</string>
+    <string name="settings_tabs_group_overview">Tab overview</string>
     <string name="settings_tab_overview_mode">Tab overview layout</string>
     <string name="settings_tab_stack_folder_mode">Stack folder layout</string>
     <string name="tab_overview_mode_hero">Cover flow</string>
@@ -627,6 +648,18 @@
     </plurals>
     <string name="settings_section_search">Search</string>
     <string name="settings_search_engine">Search engine</string>
+    <string name="search_engine_google_summary">The largest index</string>
+    <string name="search_engine_duckduckgo_summary">Doesn’t store your searches</string>
+    <string name="search_engine_bing_summary">Microsoft’s index</string>
+    <string name="search_engine_brave_summary">Its own index, no profiling</string>
+    <string name="search_engine_ecosia_summary">Plants trees with its ad income</string>
+    <string name="search_engine_startpage_summary">Google results without tracking</string>
+    <string name="search_engine_qwant_summary">European, doesn’t profile you</string>
+    <string name="search_engine_kagi_summary">Paid, no ads</string>
+    <string name="search_engine_perplexity_summary">AI answers with sources</string>
+    <string name="search_engine_chatgpt_summary">AI answers</string>
+    <string name="search_engine_searxng_summary">Your own server</string>
+    <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Show AI Mode logo</string>
     <string name="settings_ai_mode_toggle_subtitle">Tap the logo in the address bar to switch the current query between Google Search and AI Mode.</string>
     <string name="settings_history_suggestions_title">Show browsing history suggestions</string>

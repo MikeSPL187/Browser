@@ -1,11 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,12 +22,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
@@ -40,11 +39,15 @@ import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
-import androidx.compose.ui.res.painterResource
-import androidx.compose.material3.Icon
 
 internal object ProtectionSettingsTestTags {
     const val UserCaWarning = "protection_settings_user_ca_warning"
@@ -117,384 +120,388 @@ internal fun ProtectionAndDataSettingsPage(
             onDismiss = { customDnsDialogVisible = false },
         )
     }
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
         title = stringResource(R.string.settings_protection_data_title),
         onBack = onBack,
     ) {
-        SettingsSectionTitle(stringResource(R.string.settings_protection_group_tools))
-        Spacer(Modifier.height(8.dp))
-        Surface(
-            onClick = onPermissionRadar,
-            modifier = Modifier
-                .fillMaxWidth()
-                .sizeIn(minHeight = 48.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.tertiaryContainer,
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 13.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            PrivacyXRaySettingsCounter(
+                blockedCount = blockedCount,
+                onClick = onPrivacyXRay,
+            )
+            if (trustsUserCertificates) {
+                UserCaTrustWarning()
+            }
+            SettingsCardHeader(stringResource(R.string.settings_section_protection))
+            SettingsCard(containerColor = cardColor) {
+                Box {
+                    SettingsCardValueRow(
+                        title = stringResource(R.string.settings_https_only_title),
+                        value = if (isHttpsOnlySupported) {
+                            httpsOnlyMode.displayName()
+                        } else {
+                            stringResource(R.string.settings_https_only_unavailable)
+                        },
+                        summary = stringResource(
+                            if (isHttpsOnlySupported) {
+                                R.string.settings_https_only_summary
+                            } else {
+                                R.string.settings_https_only_system_webview_summary
+                            },
+                        ),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        enabled = isHttpsOnlySupported,
+                        onClick = { httpsOnlyMenuExpanded = true },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.HttpsOnly),
+                    )
+                    SettingsDropdown(
+                        expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
+                        onDismissRequest = { httpsOnlyMenuExpanded = false },
+                    ) {
+                        HttpsOnlyMode.entries.forEach { mode ->
+                            SettingsDropdownItem(
+                                label = mode.displayName(),
+                                selected = mode == httpsOnlyMode,
+                                onClick = {
+                                    httpsOnlyMenuExpanded = false
+                                    if (mode != httpsOnlyMode) onHttpsOnlyModeChanged(mode)
+                                },
+                            )
+                        }
+                    }
+                }
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_block_ads_title),
+                    summary = stringResource(R.string.settings_block_ads_subtitle),
+                    checked = blockerSettings.blockAdsAndTrackers,
+                    dividerColor = dividerColor,
+                    onCheckedChange = {
+                        onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
+                    },
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_hide_cookie_banners_title),
+                    summary = stringResource(R.string.settings_hide_cookie_banners_subtitle),
+                    checked = blockerSettings.hideCookieConsent,
+                    dividerColor = dividerColor,
+                    onCheckedChange = {
+                        onBlockerSettingsChanged(blockerSettings.copy(hideCookieConsent = it))
+                    },
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_block_third_party_cookies_title),
+                    summary = stringResource(
+                        R.string.settings_block_third_party_cookies_subtitle,
+                    ),
+                    checked = blockerSettings.blockThirdPartyCookies,
+                    dividerColor = dividerColor,
+                    onCheckedChange = {
+                        onBlockerSettingsChanged(blockerSettings.copy(blockThirdPartyCookies = it))
+                    },
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.filter_studio_title),
+                    summary = stringResource(R.string.filter_studio_settings_summary),
+                    dividerColor = dividerColor,
+                    onClick = onFilterStudio,
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_protection_group_network))
+            SettingsCard(containerColor = cardColor) {
+                Box {
+                    SettingsCardValueRow(
+                        title = stringResource(R.string.settings_dns_over_https_title),
+                        value = if (isDnsOverHttpsSupported) {
+                            dnsOverHttpsSettings.provider.displayName()
+                        } else {
+                            stringResource(R.string.settings_dns_over_https_unavailable)
+                        },
+                        summary = stringResource(
+                            if (!isDnsOverHttpsSupported) {
+                                R.string.settings_dns_over_https_system_webview_summary
+                            } else if (dnsOverHttpsSettings.provider == DnsOverHttpsProvider.System) {
+                                R.string.settings_dns_over_https_system_summary
+                            } else {
+                                R.string.settings_dns_over_https_gecko_summary
+                            },
+                        ),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        enabled = isDnsOverHttpsSupported,
+                        onClick = { dnsMenuExpanded = true },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.DnsOverHttps),
+                    )
+                    SettingsDropdown(
+                        expanded = isDnsOverHttpsSupported && dnsMenuExpanded,
+                        onDismissRequest = { dnsMenuExpanded = false },
+                    ) {
+                        DnsOverHttpsProvider.entries.forEach { provider ->
+                            SettingsDropdownItem(
+                                label = provider.displayName(),
+                                selected = provider == dnsOverHttpsSettings.provider,
+                                onClick = {
+                                    dnsMenuExpanded = false
+                                    if (provider == DnsOverHttpsProvider.Custom) {
+                                        customDnsDialogVisible = true
+                                    } else if (provider != dnsOverHttpsSettings.provider) {
+                                        onDnsOverHttpsSettingsChanged(
+                                            dnsOverHttpsSettings.copy(provider = provider),
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+                Box {
+                    SettingsCardValueRow(
+                        title = stringResource(R.string.settings_webrtc_protection_title),
+                        value = webRtcProtectionMode.displayName(),
+                        summary = stringResource(
+                            webRtcSummary(webRtcProtectionMode, browserEngineKind),
+                        ),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onClick = { webRtcMenuExpanded = true },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.WebRtcProtection),
+                    )
+                    SettingsDropdown(
+                        expanded = webRtcMenuExpanded,
+                        onDismissRequest = { webRtcMenuExpanded = false },
+                    ) {
+                        WebRtcProtectionMode.entries.forEach { mode ->
+                            SettingsDropdownItem(
+                                label = mode.displayName(),
+                                selected = mode == webRtcProtectionMode,
+                                onClick = {
+                                    webRtcMenuExpanded = false
+                                    if (mode != webRtcProtectionMode) {
+                                        onWebRtcProtectionModeChanged(mode)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_global_privacy_control_title),
+                    summary = stringResource(R.string.settings_global_privacy_control_summary),
+                    checked = privacySignalSettings.globalPrivacyControlEnabled,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        onPrivacySignalSettingsChanged(
+                            privacySignalSettings.copy(globalPrivacyControlEnabled = enabled),
+                        )
+                    },
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.GlobalPrivacyControl),
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_do_not_track_title),
+                    summary = stringResource(R.string.settings_do_not_track_summary),
+                    checked = privacySignalSettings.doNotTrackEnabled,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        onPrivacySignalSettingsChanged(
+                            privacySignalSettings.copy(doNotTrackEnabled = enabled),
+                        )
+                    },
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.DoNotTrack),
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_auto_de_amp_title),
+                    summary = stringResource(R.string.settings_auto_de_amp_summary),
+                    checked = isAutoDeAmpEnabled,
+                    dividerColor = dividerColor,
+                    divider = false,
+                    onCheckedChange = onAutoDeAmpEnabledChanged,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.AutoDeAmp),
+                )
+            }
+            Text(
+                stringResource(R.string.settings_protection_disclaimer),
+                modifier = Modifier.padding(SettingsCardTokens.headerPadding),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SettingsCardHeader(stringResource(R.string.settings_protection_group_tools))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.permission_radar_title),
+                    summary = stringResource(R.string.permission_radar_settings_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onPermissionRadar,
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_protection_card_title),
+                    summary = stringResource(R.string.settings_protection_card_subtitle),
+                    checked = isProtectionCardVisible,
+                    dividerColor = dividerColor,
+                    divider = false,
+                    onCheckedChange = onProtectionCardVisibleChanged,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ProtectionCard),
+                )
+            }
+            if (privateTabsLock != null) {
+                SettingsCardHeader(stringResource(R.string.settings_section_private_tabs))
+                SettingsCard(containerColor = cardColor) {
+                    ProtectionSwitch(
+                        title = stringResource(R.string.private_tabs_lock_settings_title),
+                        summary = stringResource(
+                            if (privateTabsLock.available) {
+                                R.string.private_tabs_lock_settings_summary
+                            } else {
+                                R.string.profile_protection_unavailable
+                            },
+                        ),
+                        checked = privateTabsLock.checked && privateTabsLock.available,
+                        enabled = privateTabsLock.available,
+                        dividerColor = dividerColor,
+                        divider = false,
+                        onCheckedChange = privateTabsLock.onCheckedChange,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.PrivateTabsLock),
+                    )
+                }
+            }
+            SettingsCardHeader(stringResource(R.string.history_title))
+            SettingsCard(containerColor = cardColor) {
+                ProtectionSwitch(
+                    title = stringResource(R.string.history_save_title),
+                    summary = stringResource(R.string.history_save_summary),
+                    checked = historyRecordingMode != HistoryRecordingMode.Disabled,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        onHistoryRecordingModeChanged(
+                            if (enabled) {
+                                HistoryRecordingMode.Enabled
+                            } else {
+                                HistoryRecordingMode.Disabled
+                            },
+                        )
+                    },
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.SaveHistory),
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.history_clear_on_exit_title),
+                    summary = stringResource(R.string.history_clear_on_exit_summary),
+                    checked = historyRecordingMode == HistoryRecordingMode.ClearOnExit,
+                    enabled = historyRecordingMode != HistoryRecordingMode.Disabled,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        onHistoryRecordingModeChanged(
+                            if (enabled) {
+                                HistoryRecordingMode.ClearOnExit
+                            } else {
+                                HistoryRecordingMode.Enabled
+                            },
+                        )
+                    },
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ClearHistoryOnExit),
+                )
+                ProtectionSwitch(
+                    title = stringResource(R.string.recall_settings_title),
+                    summary = stringResource(R.string.recall_settings_summary),
+                    checked = isRecallEnabled,
+                    dividerColor = dividerColor,
+                    divider = false,
+                    onCheckedChange = onRecallEnabledChanged,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.Recall),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_protection_group_app_data))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.data_archive_export_title),
+                    summary = stringResource(R.string.data_archive_export_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onExportAppData,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ExportAppData),
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.data_archive_import_title),
+                    summary = stringResource(R.string.data_archive_import_summary),
+                    dividerColor = dividerColor,
+                    onClick = onImportAppData,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ImportAppData),
+                )
+            }
+            Surface(
+                onClick = onClearData,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sizeIn(minHeight = SettingsCardTokens.rowMinHeight),
+                shape = SettingsCardTokens.shape,
+                color = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier.padding(SettingsCardTokens.rowPadding),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
                     Text(
-                        stringResource(R.string.permission_radar_title),
+                        stringResource(R.string.action_clear_browsing_data),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(
-                        stringResource(R.string.permission_radar_settings_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                }
-                Icon(
-                    painter = painterResource(R.drawable.ic_symbol_radar),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                )
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        PrivacyXRaySettingsCounter(
-            blockedCount = blockedCount,
-            onClick = onPrivacyXRay,
-        )
-        Spacer(Modifier.height(VolaSpacing.x2))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_protection_card_title),
-            subtitle = stringResource(R.string.settings_protection_card_subtitle),
-            checked = isProtectionCardVisible,
-            onCheckedChange = onProtectionCardVisibleChanged,
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.ProtectionCard),
-        )
-        Spacer(Modifier.height(8.dp))
-        Surface(
-            onClick = onFilterStudio,
-            modifier = Modifier
-                .fillMaxWidth()
-                .sizeIn(minHeight = 48.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.secondaryContainer,
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 13.dp)) {
-                Text(
-                    stringResource(R.string.filter_studio_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    stringResource(R.string.filter_studio_settings_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
-        }
-        if (trustsUserCertificates) {
-            Spacer(Modifier.height(18.dp))
-            UserCaTrustWarning()
-        }
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_section_protection))
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_https_only_title),
-                value = if (isHttpsOnlySupported) {
-                    httpsOnlyMode.displayName()
-                } else {
-                    stringResource(R.string.settings_https_only_unavailable)
-                },
-                expanded = httpsOnlyMenuExpanded,
-                onClick = { httpsOnlyMenuExpanded = true },
-                modifier = Modifier.testTag(ProtectionSettingsTestTags.HttpsOnly),
-                enabled = isHttpsOnlySupported,
-            )
-            SettingsDropdown(
-                expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
-                onDismissRequest = { httpsOnlyMenuExpanded = false },
-            ) {
-                HttpsOnlyMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == httpsOnlyMode,
-                        onClick = {
-                            httpsOnlyMenuExpanded = false
-                            if (mode != httpsOnlyMode) onHttpsOnlyModeChanged(mode)
-                        },
-                    )
                 }
             }
-        }
-        Text(
-            text = stringResource(
-                if (isHttpsOnlySupported) {
-                    R.string.settings_https_only_summary
-                } else {
-                    R.string.settings_https_only_system_webview_summary
-                },
-            ),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp, bottom = 8.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                alpha = if (isHttpsOnlySupported) 1f else 0.6f,
-            ),
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_block_ads_title),
-            subtitle = stringResource(R.string.settings_block_ads_subtitle),
-            checked = blockerSettings.blockAdsAndTrackers,
-            onCheckedChange = {
-                onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
-            },
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_hide_cookie_banners_title),
-            subtitle = stringResource(R.string.settings_hide_cookie_banners_subtitle),
-            checked = blockerSettings.hideCookieConsent,
-            onCheckedChange = {
-                onBlockerSettingsChanged(blockerSettings.copy(hideCookieConsent = it))
-            },
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_block_third_party_cookies_title),
-            subtitle = stringResource(R.string.settings_block_third_party_cookies_subtitle),
-            checked = blockerSettings.blockThirdPartyCookies,
-            onCheckedChange = {
-                onBlockerSettingsChanged(blockerSettings.copy(blockThirdPartyCookies = it))
-            },
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_do_not_track_title),
-            subtitle = stringResource(R.string.settings_do_not_track_summary),
-            checked = privacySignalSettings.doNotTrackEnabled,
-            onCheckedChange = { enabled ->
-                onPrivacySignalSettingsChanged(
-                    privacySignalSettings.copy(doNotTrackEnabled = enabled),
-                )
-            },
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.DoNotTrack),
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_global_privacy_control_title),
-            subtitle = stringResource(R.string.settings_global_privacy_control_summary),
-            checked = privacySignalSettings.globalPrivacyControlEnabled,
-            onCheckedChange = { enabled ->
-                onPrivacySignalSettingsChanged(
-                    privacySignalSettings.copy(globalPrivacyControlEnabled = enabled),
-                )
-            },
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.GlobalPrivacyControl),
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.settings_auto_de_amp_title),
-            subtitle = stringResource(R.string.settings_auto_de_amp_summary),
-            checked = isAutoDeAmpEnabled,
-            onCheckedChange = onAutoDeAmpEnabledChanged,
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.AutoDeAmp),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_dns_over_https_title),
-                value = if (isDnsOverHttpsSupported) {
-                    dnsOverHttpsSettings.provider.displayName()
-                } else {
-                    stringResource(R.string.settings_dns_over_https_unavailable)
-                },
-                expanded = dnsMenuExpanded,
-                onClick = { dnsMenuExpanded = true },
-                modifier = Modifier.testTag(ProtectionSettingsTestTags.DnsOverHttps),
-                enabled = isDnsOverHttpsSupported,
-            )
-            SettingsDropdown(
-                expanded = isDnsOverHttpsSupported && dnsMenuExpanded,
-                onDismissRequest = { dnsMenuExpanded = false },
-            ) {
-                DnsOverHttpsProvider.entries.forEach { provider ->
-                    SettingsDropdownItem(
-                        label = provider.displayName(),
-                        selected = provider == dnsOverHttpsSettings.provider,
-                        onClick = {
-                            dnsMenuExpanded = false
-                            if (provider == DnsOverHttpsProvider.Custom) {
-                                customDnsDialogVisible = true
-                            } else if (provider != dnsOverHttpsSettings.provider) {
-                                onDnsOverHttpsSettingsChanged(
-                                    dnsOverHttpsSettings.copy(provider = provider),
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Text(
-            text = stringResource(
-                if (!isDnsOverHttpsSupported) {
-                    R.string.settings_dns_over_https_system_webview_summary
-                } else if (dnsOverHttpsSettings.provider == DnsOverHttpsProvider.System) {
-                    R.string.settings_dns_over_https_system_summary
-                } else {
-                    R.string.settings_dns_over_https_gecko_summary
-                },
-            ),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                alpha = if (isDnsOverHttpsSupported) 1f else 0.6f,
-            ),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_webrtc_protection_title),
-                value = webRtcProtectionMode.displayName(),
-                expanded = webRtcMenuExpanded,
-                onClick = { webRtcMenuExpanded = true },
-                modifier = Modifier.testTag(ProtectionSettingsTestTags.WebRtcProtection),
-            )
-            SettingsDropdown(
-                expanded = webRtcMenuExpanded,
-                onDismissRequest = { webRtcMenuExpanded = false },
-            ) {
-                WebRtcProtectionMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == webRtcProtectionMode,
-                        onClick = {
-                            webRtcMenuExpanded = false
-                            if (mode != webRtcProtectionMode) {
-                                onWebRtcProtectionModeChanged(mode)
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Text(
-            text = stringResource(
-                when (webRtcProtectionMode) {
-                    WebRtcProtectionMode.Standard -> R.string.settings_webrtc_standard_summary
-                    WebRtcProtectionMode.HideLocalNetworkIp -> when (browserEngineKind) {
-                        AndroidBrowserEngineKind.GeckoView ->
-                            R.string.settings_webrtc_hide_local_ip_gecko_summary
-                        AndroidBrowserEngineKind.SystemWebView ->
-                            R.string.settings_webrtc_policy_system_summary
-                    }
-                    WebRtcProtectionMode.DisableNonProxiedUdp -> when (browserEngineKind) {
-                        AndroidBrowserEngineKind.GeckoView ->
-                            R.string.settings_webrtc_disable_non_proxied_udp_gecko_summary
-                        AndroidBrowserEngineKind.SystemWebView ->
-                            R.string.settings_webrtc_policy_system_summary
-                    }
-                    WebRtcProtectionMode.ProtectIpAddresses -> when (browserEngineKind) {
-                        AndroidBrowserEngineKind.GeckoView ->
-                            R.string.settings_webrtc_protect_gecko_summary
-                        AndroidBrowserEngineKind.SystemWebView ->
-                            R.string.settings_webrtc_protect_system_summary
-                    }
-                    WebRtcProtectionMode.Block -> R.string.settings_webrtc_block_summary
-                },
-            ),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.settings_protection_disclaimer),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (privateTabsLock != null) {
-            Spacer(Modifier.height(VolaSpacing.x4))
-            SettingsSectionTitle(stringResource(R.string.settings_section_private_tabs))
-            SettingsSwitch(
-                title = stringResource(R.string.private_tabs_lock_settings_title),
-                subtitle = stringResource(
-                    if (privateTabsLock.available) {
-                        R.string.private_tabs_lock_settings_summary
-                    } else {
-                        R.string.profile_protection_unavailable
-                    },
-                ),
-                checked = privateTabsLock.checked && privateTabsLock.available,
-                enabled = privateTabsLock.available,
-                onCheckedChange = privateTabsLock.onCheckedChange,
-                modifier = Modifier.testTag(ProtectionSettingsTestTags.PrivateTabsLock),
-            )
-        }
-        Spacer(Modifier.height(16.dp))
-        SettingsSectionTitle(stringResource(R.string.history_title))
-        SettingsSwitch(
-            title = stringResource(R.string.history_save_title),
-            subtitle = stringResource(R.string.history_save_summary),
-            checked = historyRecordingMode != HistoryRecordingMode.Disabled,
-            onCheckedChange = { enabled ->
-                onHistoryRecordingModeChanged(
-                    if (enabled) HistoryRecordingMode.Enabled else HistoryRecordingMode.Disabled,
-                )
-            },
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.SaveHistory),
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.history_clear_on_exit_title),
-            subtitle = stringResource(R.string.history_clear_on_exit_summary),
-            checked = historyRecordingMode == HistoryRecordingMode.ClearOnExit,
-            enabled = historyRecordingMode != HistoryRecordingMode.Disabled,
-            onCheckedChange = { enabled ->
-                onHistoryRecordingModeChanged(
-                    if (enabled) {
-                        HistoryRecordingMode.ClearOnExit
-                    } else {
-                        HistoryRecordingMode.Enabled
-                    },
-                )
-            },
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.ClearHistoryOnExit),
-        )
-        Spacer(Modifier.height(16.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.recall_settings_title),
-            subtitle = stringResource(R.string.recall_settings_summary),
-            checked = isRecallEnabled,
-            onCheckedChange = onRecallEnabledChanged,
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.Recall),
-        )
-        Spacer(Modifier.height(16.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_protection_group_app_data))
-        Spacer(Modifier.height(8.dp))
-        DataArchiveAction(
-            title = stringResource(R.string.data_archive_export_title),
-            summary = stringResource(R.string.data_archive_export_summary),
-            onClick = onExportAppData,
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.ExportAppData),
-        )
-        Spacer(Modifier.height(8.dp))
-        DataArchiveAction(
-            title = stringResource(R.string.data_archive_import_title),
-            summary = stringResource(R.string.data_archive_import_summary),
-            onClick = onImportAppData,
-            modifier = Modifier.testTag(ProtectionSettingsTestTags.ImportAppData),
-        )
-        Spacer(Modifier.height(16.dp))
-        Surface(
-            onClick = onClearData,
-            modifier = Modifier
-                .fillMaxWidth()
-                .sizeIn(minHeight = 48.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        ) {
-            Text(
-                stringResource(R.string.action_clear_browsing_data),
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
         }
     }
+}
+
+/**
+ * A protection switch on a card: its explanation is part of the setting, so it is shown whole,
+ * and a line follows it unless it closes the card.
+ */
+@Composable
+private fun ProtectionSwitch(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    dividerColor: Color,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    divider: Boolean = true,
+) {
+    SettingsCardSwitchRow(
+        title = title,
+        summary = summary,
+        checked = checked,
+        dividerColor = dividerColor,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        divider = divider,
+        enabled = enabled,
+        summaryMaxLines = Int.MAX_VALUE,
+    )
+}
+
+/** What the chosen WebRTC mode does, in the words of the engine that enforces it. */
+@StringRes
+private fun webRtcSummary(
+    mode: WebRtcProtectionMode,
+    engine: AndroidBrowserEngineKind,
+): Int = when (mode) {
+    WebRtcProtectionMode.Standard -> R.string.settings_webrtc_standard_summary
+    WebRtcProtectionMode.HideLocalNetworkIp -> when (engine) {
+        AndroidBrowserEngineKind.GeckoView -> R.string.settings_webrtc_hide_local_ip_gecko_summary
+        AndroidBrowserEngineKind.SystemWebView -> R.string.settings_webrtc_policy_system_summary
+    }
+    WebRtcProtectionMode.DisableNonProxiedUdp -> when (engine) {
+        AndroidBrowserEngineKind.GeckoView ->
+            R.string.settings_webrtc_disable_non_proxied_udp_gecko_summary
+        AndroidBrowserEngineKind.SystemWebView -> R.string.settings_webrtc_policy_system_summary
+    }
+    WebRtcProtectionMode.ProtectIpAddresses -> when (engine) {
+        AndroidBrowserEngineKind.GeckoView -> R.string.settings_webrtc_protect_gecko_summary
+        AndroidBrowserEngineKind.SystemWebView -> R.string.settings_webrtc_protect_system_summary
+    }
+    WebRtcProtectionMode.Block -> R.string.settings_webrtc_block_summary
 }
 
 @Composable
@@ -587,36 +594,6 @@ private fun DnsOverHttpsProvider.displayName(): String = stringResource(
 )
 
 @Composable
-private fun DataArchiveAction(
-    title: String,
-    summary: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .sizeIn(minHeight = 48.dp),
-        shape = MaterialTheme.shapes.large,
-        color = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 13.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
 private fun UserCaTrustWarning(
     modifier: Modifier = Modifier,
 ) {
@@ -642,7 +619,8 @@ private fun UserCaTrustWarning(
     }
 }
 
-@Preview(name = "Protection · HTTPS-only", widthDp = 360, heightDp = 900)
+/** Protection and data on cards (board W-SetPrivacy): protection, network, tools, history, data. */
+@VolaPreviews
 @Composable
 private fun ProtectionSettingsPagePreview() {
     MaterialBrowserTheme {
