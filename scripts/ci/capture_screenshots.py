@@ -589,14 +589,17 @@ def tour(suffix):
     step("download-check", download_check)
 
     def library():
-        """History and favorites (boards W-History, W-Favorites, W-States; Q18a), each opened
+        """History, favorites, downloads and snoozed tabs (boards W-History, W-Favorites,
+        W-Downloads, W-Snoozed, W-States; Q18a and Q18b), each opened
         from the menu in its own screen; Back returns to the page. Without the menu the step
         skips rather than tapping blindly, so a missed label cannot leave an editor open. Its own
         page first: the step before may leave the bar folded into the unlabeled capsule."""
         open_url("https://example.com/")
         time.sleep(6)
         for labels, name in ((("History", "История"), "history"),
-                             (("Favorites", "Избранное"), "favorites")):
+                             (("Favorites", "Избранное"), "favorites"),
+                             (("Downloads", "Загрузки"), "downloads"),
+                             (("Snoozed Tabs", "Отложенные вкладки"), "snoozed")):
             if not tap("More options", "Другие действия"):
                 log(f"not found: menu for {name}")
                 return

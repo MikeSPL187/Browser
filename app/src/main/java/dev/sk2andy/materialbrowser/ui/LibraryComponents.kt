@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
@@ -101,6 +102,8 @@ internal fun LibraryRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     extra: String? = null,
+    detailColor: Color? = null,
+    enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
     trailing: @Composable RowScope.() -> Unit = {},
@@ -110,6 +113,7 @@ internal fun LibraryRow(
             .fillMaxWidth()
             .heightIn(min = VolaLibrary.rowMinHeight)
             .combinedClickable(
+                enabled = enabled,
                 role = Role.Button,
                 onLongClickLabel = onLongClickLabel,
                 onLongClick = onLongClick,
@@ -133,7 +137,7 @@ internal fun LibraryRow(
             Text(
                 text = detail,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = detailColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

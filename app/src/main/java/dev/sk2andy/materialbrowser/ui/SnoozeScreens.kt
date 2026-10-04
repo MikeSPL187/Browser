@@ -2,27 +2,31 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +48,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,18 +60,19 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.data.SnoozePreset
 import dev.sk2andy.materialbrowser.data.SnoozeTimeRules
 import dev.sk2andy.materialbrowser.data.SnoozedTab
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import java.text.DateFormat
+import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.Date
-import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
-import androidx.compose.ui.unit.sp
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 internal suspend fun showSnoozeUndoFeedback(
     hostState: SnackbarHostState,
@@ -256,66 +263,62 @@ internal fun SnoozedTabsScreen(
     modifier: Modifier = Modifier,
 ) {
     var editingTab by remember { mutableStateOf<SnoozedTab?>(null) }
+    val profilesById = remember(profiles) { profiles.associateBy(BrowserProfile::id) }
     Surface(
         modifier = modifier
             .fillMaxSize()
             .testTag(SnoozeTestTags.Management),
         color = MaterialTheme.colorScheme.surface,
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
+                .navigationBarsPadding(),
+            contentPadding = PaddingValues(bottom = VolaLibrary.sectionGap),
         ) {
-            Row(
-                modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        VolaIcons.ArrowBack,
-                        contentDescription = stringResource(R.string.action_back),
+            item(key = "header") {
+                Column(Modifier.padding(horizontal = VolaSpacing.x2)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                VolaIcons.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
+                        Text(
+                            stringResource(R.string.snoozed_tabs_title),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.snoozed_tabs_subtitle),
+                        modifier = Modifier.padding(horizontal = VolaSpacing.x2),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Text(
-                    stringResource(R.string.snoozed_tabs_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
             }
             if (snoozedTabs.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 72.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        stringResource(R.string.snoozed_tabs_empty_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.snoozed_tabs_empty_body),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
+                item(key = "empty") {
+                    VolaStateMessage(
+                        icon = rememberVectorPainter(VolaIcons.Snooze),
+                        title = stringResource(R.string.snoozed_tabs_empty_title),
+                        message = stringResource(R.string.snoozed_tabs_empty_body),
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap),
                     )
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(snoozedTabs, key = { it.tab.id }) { snoozed ->
-                        val profileEmoji = profiles.firstOrNull {
-                            it.id == snoozed.tab.profileId
-                        }?.emoji.orEmpty()
-                        SnoozedTabCard(
+                itemsIndexed(snoozedTabs, key = { _, snoozed -> snoozed.tab.id }) { index, snoozed ->
+                    LibraryCardSlice(
+                        position = LibraryRules.position(index, snoozedTabs.size),
+                        modifier = if (index == 0) Modifier.padding(top = VolaLibrary.sectionGap) else Modifier,
+                    ) {
+                        SnoozedTabRow(
                             snoozed = snoozed,
-                            profileEmoji = profileEmoji,
+                            workspace = profilesById[snoozed.tab.profileId],
                             onReschedule = { editingTab = snoozed },
                             onOpenNow = {
                                 if (onOpenNow(snoozed.tab.id)) onBack()
@@ -323,7 +326,13 @@ internal fun SnoozedTabsScreen(
                             onDelete = { onDelete(snoozed.tab.id) },
                         )
                     }
-                    item { Spacer(Modifier.height(12.dp)) }
+                }
+                item(key = "hint") {
+                    SnoozedTabsHint(
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap),
+                    )
                 }
             }
         }
@@ -343,88 +352,145 @@ internal fun SnoozedTabsScreen(
     )
 }
 
+/**
+ * A snoozed tab on board W-Snoozed: the site's tile, its title and address, the workspace it
+ * returns to and when; «Open now» at the end, the rest in its «⋮» menu.
+ */
 @Composable
-private fun SnoozedTabCard(
+private fun SnoozedTabRow(
     snoozed: SnoozedTab,
-    profileEmoji: String,
+    workspace: BrowserProfile?,
     onReschedule: () -> Unit,
     onOpenNow: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Card(
+    val title = snoozeDisplayTitle(snoozed.tab)
+    val host = if (snoozed.tab.url == BLANK_URL) "" else BrowserUriPolicy.displayHttpHost(snoozed.tab.url)
+    var menuOpen by remember { mutableStateOf(false) }
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag(SnoozeTestTags.card(snoozed.tab.id)),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+            .heightIn(min = VolaLibrary.rowMinHeight)
+            .testTag(SnoozeTestTags.card(snoozed.tab.id))
+            .padding(VolaLibrary.rowPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(VolaLibrary.rowGap),
     ) {
-        Column(Modifier.padding(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (profileEmoji.isNotEmpty()) {
-                    PlatformProfileEmoji(
-                        emoji = profileEmoji,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .padding(end = 10.dp)
-                            .testTag(SnoozeTestTags.workspaceIcon(snoozed.tab.id)),
-                    )
-                }
-                Text(
-                    snoozeDisplayTitle(snoozed.tab),
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            if (snoozed.tab.url != BLANK_URL) {
-                Text(
-                    snoozed.tab.url,
-                    modifier = Modifier.padding(top = 4.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            // An archived tab has no wake time, so it tells when it was put away instead.
-            val archived = snoozed.isArchived
-            val shownAtMillis = if (archived) snoozed.createdAtMillis else snoozed.wakeAtMillis
+        LibrarySiteTile(label = title, colorKey = host.ifBlank { title })
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(VolaLibrary.textGap),
+        ) {
             Text(
-                stringResource(
-                    if (archived) R.string.snoozed_archived_at else R.string.snoozed_until,
-                    remember(shownAtMillis) {
-                        DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-                            .format(Date(shownAtMillis))
-                    },
-                ),
-                modifier = Modifier.padding(top = 10.dp),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+            if (host.isNotBlank()) {
+                Text(
+                    host,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x2),
             ) {
-                TextButton(onClick = onReschedule) {
-                    Text(stringResource(R.string.action_reschedule))
-                }
-                TextButton(onClick = onOpenNow) {
-                    Text(stringResource(R.string.action_open_now))
-                }
-                TextButton(onClick = onDelete) {
+                workspace?.let { profile ->
+                    WorkspaceGem(
+                        workspace = profile,
+                        size = VolaLibrary.gemSize,
+                        modifier = Modifier.testTag(SnoozeTestTags.workspaceIcon(snoozed.tab.id)),
+                    )
                     Text(
-                        stringResource(R.string.action_delete),
-                        color = MaterialTheme.colorScheme.error,
+                        profile.workspaceDisplayName(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
+                SnoozeWhenChip(snoozed = snoozed, onClick = onReschedule)
             }
         }
+        IconButton(onClick = onOpenNow) {
+            Icon(VolaIcons.OpenInNew, contentDescription = stringResource(R.string.action_open_now))
+        }
+        Box {
+            IconButton(
+                onClick = { menuOpen = true },
+                modifier = Modifier.testTag(SnoozeTestTags.more(snoozed.tab.id)),
+            ) {
+                Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.snoozed_tab_more, title))
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_reschedule)) },
+                    onClick = { menuOpen = false; onReschedule() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_delete)) },
+                    leadingIcon = { Icon(VolaIcons.Delete, contentDescription = null) },
+                    onClick = { menuOpen = false; onDelete() },
+                )
+            }
+        }
+    }
+}
+
+/** «Today, 18:00», «Saturday, 09:00», «6 October»; an archived tab tells when it was put away. */
+@Composable
+private fun SnoozeWhenChip(snoozed: SnoozedTab, onClick: () -> Unit) {
+    val locale = LocalConfiguration.current.locales[0]
+    val zoneId = remember { ZoneId.systemDefault() }
+    val label = if (snoozed.isArchived) {
+        stringResource(
+            R.string.snoozed_archived_at,
+            remember(snoozed.createdAtMillis, locale) {
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+                    .format(Instant.ofEpochMilli(snoozed.createdAtMillis).atZone(zoneId))
+            },
+        )
+    } else {
+        val wake = Instant.ofEpochMilli(snoozed.wakeAtMillis).atZone(zoneId)
+        val time = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(wake)
+        when (LibraryFileRules.wakeDay(snoozed.wakeAtMillis, System.currentTimeMillis(), zoneId)) {
+            SnoozeWakeDay.Today -> stringResource(R.string.snoozed_today_at, time)
+            SnoozeWakeDay.Tomorrow -> stringResource(R.string.snoozed_tomorrow_at, time)
+            SnoozeWakeDay.ThisWeek -> DateTimeFormatter.ofPattern("EEEE", locale).format(wake)
+                .replaceFirstChar { it.titlecase(locale) } + ", " + time
+            SnoozeWakeDay.Later -> DateTimeFormatter.ofPattern("d MMMM", locale).format(wake)
+        }
+    }
+    AssistChip(
+        onClick = onClick,
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        leadingIcon = { Icon(VolaIcons.Snooze, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize)) },
+    )
+}
+
+/** The footer of board W-Snoozed: how a tab gets here. */
+@Composable
+private fun SnoozedTabsHint(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            VolaIcons.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            stringResource(R.string.snoozed_tabs_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -553,4 +619,5 @@ internal object SnoozeTestTags {
     fun overviewClose(tabId: String) = "overview_close:$tabId"
     fun card(tabId: String) = "snoozed_tab:$tabId"
     fun workspaceIcon(tabId: String) = "snooze_workspace_icon:$tabId"
+    fun more(tabId: String) = "snoozed_tab_more:$tabId"
 }
