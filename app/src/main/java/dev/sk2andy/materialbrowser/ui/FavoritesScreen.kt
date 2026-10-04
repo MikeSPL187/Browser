@@ -5,12 +5,15 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,15 +22,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,19 +55,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -74,11 +79,12 @@ import dev.sk2andy.materialbrowser.data.FavoriteFolderIcon
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.FavoriteLibraryEntry
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
+import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,11 +173,6 @@ internal fun FavoritesScreen(
         topBar = {
             TopAppBar(
                 title = { Text(currentFolder?.title ?: stringResource(R.string.favorites_title)) },
-                actions = {
-                    IconButton(onClick = { creatingFolder = true }, modifier = Modifier.testTag("favorites_create_folder")) {
-                        Icon(VolaIcons.Add, contentDescription = stringResource(R.string.favorites_create_folder))
-                    }
-                },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
                         Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back))
@@ -180,11 +181,21 @@ internal fun FavoritesScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            // Board W-Favorites: «Folder» at the bottom, in thumb's reach.
+            ExtendedFloatingActionButton(
+                onClick = { creatingFolder = true },
+                icon = { Icon(VolaIcons.Folder, contentDescription = null) },
+                text = { Text(stringResource(R.string.favorites_folder_button)) },
+                modifier = Modifier.testTag("favorites_create_folder"),
+            )
+        },
     ) { contentPadding ->
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(contentPadding).navigationBarsPadding()
                 .testTag(FavoritesScreenTestTags.List),
+            contentPadding = PaddingValues(bottom = VolaLibrary.fabClearance),
         ) {
             item(key = "search") {
                 LibrarySearchBar(
@@ -197,20 +208,87 @@ internal fun FavoritesScreen(
             }
             if (currentFolder != null && query.isBlank()) {
                 item(key = "parent") {
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.favorites_parent)) },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_folder_arrow_up), null) },
-                        modifier = Modifier.clickable(role = Role.Button, onClick = navigateBack)
-                            .testTag("favorites_parent"),
-                    )
+                    LibraryCardSlice(
+                        position = LibraryRowPosition.Single,
+                        modifier = Modifier.padding(top = VolaLibrary.sectionGap),
+                    ) {
+                        LibraryRow(
+                            title = stringResource(R.string.favorites_parent),
+                            detail = BrowsingFavoritesRules.folder(source, currentFolder.parentFolderId.orEmpty())?.title
+                                ?: stringResource(R.string.favorites_title),
+                            onClick = navigateBack,
+                            modifier = Modifier.testTag("favorites_parent"),
+                            leading = {
+                                FavoriteSymbolTile(colorKey = currentFolder.id) {
+                                    Icon(
+                                        painterResource(R.drawable.ic_folder_arrow_up),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(VolaLibrary.tileIconSize),
+                                    )
+                                }
+                            },
+                        )
+                    }
                 }
             }
             if (visibleEntries.isEmpty()) {
                 item(key = "empty") {
-                    FavoritesEmptyState(searching = query.isNotBlank(), insideFolder = currentFolder != null)
+                    FavoritesEmptyState(
+                        searching = query.isNotBlank(),
+                        insideFolder = currentFolder != null,
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap),
+                    )
                 }
             }
-            itemsIndexed(visibleEntries, key = { _, entry -> entry.id }) { index, entry ->
+            val level = LibraryRules.level(visibleEntries)
+            // Folders first, two cards in a row (board W-Favorites).
+            level.folders.chunked(VolaLibrary.FOLDER_COLUMNS).forEachIndexed { rowIndex, rowFolders ->
+                item(key = "folders:${rowFolders.first().id}") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = if (rowIndex == 0) VolaLibrary.sectionGap else VolaLibrary.folderCardGap),
+                        horizontalArrangement = Arrangement.spacedBy(VolaLibrary.folderCardGap),
+                    ) {
+                        rowFolders.forEach { folder ->
+                            val index = siblings.indexOfFirst { it.id == folder.id }
+                            FavoriteFolderCard(
+                                folder = folder,
+                                siteCount = LibraryRules.siteCount(source, folder.id),
+                                customIcon = folderIcons[folder.id],
+                                modifier = Modifier.weight(1f),
+                                actions = FavoriteActions(
+                                    canMoveEarlier = query.isBlank() && index > 0,
+                                    canMoveLater = query.isBlank() && index in 0 until siblings.lastIndex,
+                                    onMoveEarlier = { onReorderEntry(folder, index - 1) },
+                                    onMoveLater = { onReorderEntry(folder, index + 1) },
+                                    onRename = { renameTarget = folder },
+                                    onMove = { moveTarget = folder },
+                                    onIcon = { iconTarget = folder },
+                                ),
+                                onOpen = { currentFolderId = folder.id; query = "" },
+                            )
+                        }
+                        repeat(VolaLibrary.FOLDER_COLUMNS - rowFolders.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+            if (level.favorites.isNotEmpty()) {
+                item(key = "sites") {
+                    LibrarySectionLabel(
+                        text = stringResource(
+                            if (currentFolder == null) R.string.favorites_section_no_folder
+                            else R.string.favorites_section_sites,
+                        ),
+                        modifier = Modifier.padding(top = VolaLibrary.sectionGap),
+                    )
+                }
+            }
+            itemsIndexed(level.favorites, key = { _, entry -> entry.id }) { position, entry ->
+                val index = siblings.indexOfFirst { it.id == entry.id }
                 val dragging = draggedId == entry.id
                 val lift by animateFloatAsState(if (dragging) 1.025f else 1f, spring(), label = "favorite lift")
                 val rowModifier = Modifier.animateItem().zIndex(if (dragging) 1f else 0f)
@@ -249,39 +327,37 @@ internal fun FavoritesScreen(
                             },
                         )
                     }
-                FavoriteLibraryRow(
-                    entry = entry,
-                    library = source,
-                    favicons = favicons,
-                    folderIcon = folderIcons[entry.id],
+                LibraryCardSlice(
+                    position = LibraryRules.position(position, level.favorites.size),
                     modifier = rowModifier,
-                    canMoveEarlier = query.isBlank() && index > 0,
-                    canMoveLater = query.isBlank() && index < siblings.lastIndex,
-                    onMoveEarlier = { onReorderEntry(entry, index - 1) },
-                    onMoveLater = { onReorderEntry(entry, index + 1) },
-                    onRename = { renameTarget = entry },
-                    onMove = { moveTarget = entry },
-                    onIcon = { iconTarget = entry as? FavoriteFolder },
-                    onOpen = {
-                        when (entry) {
-                            is FavoriteEntry -> onOpenFavorite(entry)
-                            is FavoriteFolder -> { currentFolderId = entry.id; query = "" }
-                        }
-                    },
-                    onDelete = {
-                        if (entry is FavoriteEntry) onDeleteFavorite(entry) { mutation ->
-                            if (mutation != null) {
-                                snackbarJob?.cancel()
-                                snackbarHostState.currentSnackbarData?.dismiss()
-                                snackbarJob = coroutineScope.launch {
-                                    if (snackbarHostState.showSnackbar(removedMessage, undoLabel, duration = SnackbarDuration.Long) == SnackbarResult.ActionPerformed) {
-                                        onUndoDelete(mutation)
+                ) {
+                    FavoriteRow(
+                        entry = entry,
+                        favicon = favicons[entry.url],
+                        actions = FavoriteActions(
+                            canMoveEarlier = query.isBlank() && index > 0,
+                            canMoveLater = query.isBlank() && index in 0 until siblings.lastIndex,
+                            onMoveEarlier = { onReorderEntry(entry, index - 1) },
+                            onMoveLater = { onReorderEntry(entry, index + 1) },
+                            onRename = { renameTarget = entry },
+                            onMove = { moveTarget = entry },
+                            onDelete = {
+                                onDeleteFavorite(entry) { mutation ->
+                                    if (mutation != null) {
+                                        snackbarJob?.cancel()
+                                        snackbarHostState.currentSnackbarData?.dismiss()
+                                        snackbarJob = coroutineScope.launch {
+                                            if (snackbarHostState.showSnackbar(removedMessage, undoLabel, duration = SnackbarDuration.Long) == SnackbarResult.ActionPerformed) {
+                                                onUndoDelete(mutation)
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        }
-                    },
-                )
+                            },
+                        ),
+                        onOpen = { onOpenFavorite(entry) },
+                    )
+                }
             }
         }
     }
@@ -329,19 +405,22 @@ private fun FavoriteMoveDialog(library: FavoriteLibrary, target: FavoriteLibrary
                     if (folder != null) {
                         item {
                             ListItem(
-                                headlineContent = { Text(stringResource(R.string.favorites_parent)) },
+                                onClick = { onMove(folder.parentFolderId) },
+                                modifier = Modifier.testTag("favorites_move_parent"),
                                 leadingContent = { Icon(painterResource(R.drawable.ic_folder_arrow_up), null) },
-                                modifier = Modifier.clickable(role = Role.Button) { onMove(folder.parentFolderId) }
-                                    .testTag("favorites_move_parent"),
-                            )
+                            ) {
+                                Text(stringResource(R.string.favorites_parent))
+                            }
                         }
                     }
                     itemsIndexed(eligible, key = { _, item -> item.id }) { _, item ->
                         ListItem(
-                            headlineContent = { Text(item.title) },
+                            onClick = { destination = item.id },
+                            modifier = Modifier.testTag("favorites_destination:${item.id}"),
                             leadingContent = { Icon(painterResource(R.drawable.ic_folder), null) },
-                            modifier = Modifier.clickable { destination = item.id }.testTag("favorites_destination:${item.id}"),
-                        )
+                        ) {
+                            Text(item.title)
+                        }
                     }
                 }
             }
@@ -382,156 +461,171 @@ private fun FavoriteIconDialog(folder: FavoriteFolder, onDismiss: () -> Unit, on
     )
 }
 
+/** What a favorite's or folder's «⋮» menu offers. */
+private class FavoriteActions(
+    val canMoveEarlier: Boolean,
+    val canMoveLater: Boolean,
+    val onMoveEarlier: () -> Unit,
+    val onMoveLater: () -> Unit,
+    val onRename: () -> Unit,
+    val onMove: () -> Unit,
+    val onIcon: (() -> Unit)? = null,
+    val onDelete: (() -> Unit)? = null,
+)
+
 @Composable
-private fun FavoriteLibraryRow(
-    entry: FavoriteLibraryEntry,
-    library: FavoriteLibrary,
-    favicons: Map<String, Bitmap>,
-    folderIcon: Bitmap?,
-    modifier: Modifier,
-    canMoveEarlier: Boolean,
-    canMoveLater: Boolean,
-    onMoveEarlier: () -> Unit,
-    onMoveLater: () -> Unit,
-    onRename: () -> Unit,
-    onMove: () -> Unit,
-    onIcon: () -> Unit,
-    onOpen: () -> Unit,
-    onDelete: () -> Unit,
+private fun FavoriteActionsButton(
+    entryId: String,
+    label: String,
+    actions: FavoriteActions,
+    deleteTag: String? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    ListItem(
-        headlineContent = { Text(entry.entryTitle(), maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium) },
-        supportingContent = if (entry is FavoriteEntry) ({ Text(AddressResolver.displayText(entry.url), maxLines = 1, overflow = TextOverflow.Ellipsis) }) else null,
-        leadingContent = {
-            when (entry) {
-                is FavoriteEntry -> FavoriteFavicon(entry, favicons[entry.url])
-                is FavoriteFolder -> FavoriteFolderThumbnail(entry, library, favicons, folderIcon)
+    Box {
+        IconButton(onClick = { menuOpen = true }, modifier = Modifier.testTag("favorites_actions:$entryId")) {
+            Icon(VolaIcons.MoreVert, stringResource(R.string.favorites_actions, label))
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorites_rename)) }, onClick = { menuOpen = false; actions.onRename() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move)) }, onClick = { menuOpen = false; actions.onMove() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move_up)) }, enabled = actions.canMoveEarlier, onClick = { menuOpen = false; actions.onMoveEarlier() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move_down)) }, enabled = actions.canMoveLater, onClick = { menuOpen = false; actions.onMoveLater() })
+            actions.onIcon?.let { onIcon ->
+                DropdownMenuItem(text = { Text(stringResource(R.string.favorites_folder_icon)) }, onClick = { menuOpen = false; onIcon() })
             }
-        },
-        trailingContent = {
-            Row {
-                if (entry is FavoriteEntry) {
-                    IconButton(onClick = onDelete, modifier = Modifier.testTag(FavoritesScreenTestTags.delete(entry.url))) {
-                        Icon(VolaIcons.Delete, stringResource(R.string.favorites_delete, entry.title))
-                    }
-                }
-                Box {
-                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.testTag("favorites_actions:${entry.id}")) {
-                        Icon(VolaIcons.MoreVert, stringResource(R.string.favorites_actions, entry.entryTitle()))
-                    }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.favorites_rename)) }, onClick = { menuOpen = false; onRename() })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move)) }, onClick = { menuOpen = false; onMove() })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move_up)) }, enabled = canMoveEarlier, onClick = { menuOpen = false; onMoveEarlier() })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.favorites_move_down)) }, enabled = canMoveLater, onClick = { menuOpen = false; onMoveLater() })
-                        if (entry is FavoriteFolder) {
-                            DropdownMenuItem(text = { Text(stringResource(R.string.favorites_folder_icon)) }, onClick = { menuOpen = false; onIcon() })
-                        }
-                    }
-                }
+            actions.onDelete?.let { onDelete ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.favorites_delete_action)) },
+                    leadingIcon = { Icon(VolaIcons.Delete, contentDescription = null) },
+                    onClick = { menuOpen = false; onDelete() },
+                    modifier = deleteTag?.let { Modifier.testTag(it) } ?: Modifier,
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun FavoriteRow(
+    entry: FavoriteEntry,
+    favicon: Bitmap?,
+    actions: FavoriteActions,
+    onOpen: () -> Unit,
+) {
+    val title = entry.entryTitle()
+    val host = AddressResolver.displayText(entry.url)
+    LibraryRow(
+        title = title,
+        detail = host,
+        onClick = onOpen,
+        modifier = Modifier.testTag(FavoritesScreenTestTags.favorite(entry.url)),
+        leading = { LibrarySiteTile(label = title, colorKey = host, favicon = favicon) },
+        trailing = {
+            FavoriteActionsButton(
+                entryId = entry.id,
+                label = title,
+                actions = actions,
+                deleteTag = FavoritesScreenTestTags.delete(entry.url),
+            )
         },
-        modifier = modifier.clickable(role = Role.Button, onClick = onOpen).testTag(
-            if (entry is FavoriteEntry) FavoritesScreenTestTags.favorite(entry.url) else "favorites_folder:${entry.id}",
-        ),
     )
 }
 
+/** A folder of board W-Favorites: its symbol on a soft tile, its name and how many sites it holds. */
 @Composable
-private fun FavoriteFolderThumbnail(folder: FavoriteFolder, library: FavoriteLibrary, favicons: Map<String, Bitmap>, customIcon: Bitmap?) {
-    Surface(Modifier.size(36.dp), shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
-        Box(contentAlignment = Alignment.Center) {
-            when {
-                folder.icon is FavoriteFolderIcon.Emoji -> PlatformProfileEmoji(emoji = folder.icon.value, fontSize = 20.sp)
-                folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
-                    Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                else -> {
-                    val children = favoriteFolderPreviewFavorites(library, folder.id)
-                    if (children.isEmpty()) Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(22.dp))
-                    else Column(Modifier.padding(3.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        children.chunked(2).forEach { row ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                row.forEach { child ->
-                                    val bitmap = favicons[child.url]
-                                    Box(Modifier.size(14.dp).clip(CircleShape), contentAlignment = Alignment.Center) {
-                                        if (bitmap != null && !bitmap.isRecycled) Image(bitmap.asImageBitmap(), null, Modifier.fillMaxSize())
-                                        else Text(child.entryTitle().take(1), style = MaterialTheme.typography.labelSmall)
-                                    }
-                                }
-                            }
-                        }
+private fun FavoriteFolderCard(
+    folder: FavoriteFolder,
+    siteCount: Int,
+    customIcon: Bitmap?,
+    actions: FavoriteActions,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .clip(VolaLibrary.folderCardShape)
+            .clickable(role = Role.Button, onClick = onOpen)
+            .testTag("favorites_folder:${folder.id}"),
+        shape = VolaLibrary.folderCardShape,
+        color = VolaTheme.extendedColors.card,
+    ) {
+        Column(
+            modifier = Modifier.padding(VolaLibrary.folderCardPadding),
+            verticalArrangement = Arrangement.spacedBy(VolaLibrary.folderCardGap),
+        ) {
+            Row(verticalAlignment = Alignment.Top) {
+                FavoriteSymbolTile(colorKey = folder.id, shape = VolaLibrary.folderTileShape) {
+                    when {
+                        folder.icon is FavoriteFolderIcon.Emoji ->
+                            PlatformProfileEmoji(emoji = folder.icon.value, fontSize = VolaLibrary.folderEmojiSize)
+                        folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
+                            Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                        else -> Icon(VolaIcons.Folder, contentDescription = null, modifier = Modifier.size(VolaLibrary.tileIconSize))
                     }
                 }
+                Spacer(Modifier.weight(1f))
+                FavoriteActionsButton(entryId = folder.id, label = folder.title, actions = actions)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(VolaLibrary.textGap)) {
+                Text(
+                    folder.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    pluralStringResource(R.plurals.favorites_folder_sites, siteCount, siteCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
+
 @Composable
-private fun FavoriteFavicon(
-    favorite: FavoriteEntry,
-    favicon: Bitmap?,
+private fun FavoriteSymbolTile(
+    colorKey: String,
+    shape: Shape = VolaLibrary.tileShape,
+    content: @Composable () -> Unit,
 ) {
-    if (favicon != null && !favicon.isRecycled) {
-        Image(
-            bitmap = favicon.asImageBitmap(),
-            contentDescription = null,
-            modifier = Modifier.size(32.dp).clip(CircleShape),
-            contentScale = ContentScale.Crop,
-        )
-        return
-    }
-    Surface(
-        modifier = Modifier.size(32.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = favoriteInitial(favorite),
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-    }
-}
-
-internal fun favoriteInitial(favorite: FavoriteEntry): String {
-    val label = favorite.title.ifBlank { AddressResolver.displayText(favorite.url) }.trim()
-    if (label.isEmpty()) return ""
-    return String(Character.toChars(label.codePointAt(0))).uppercase()
-}
-
-@Composable
-private fun FavoritesEmptyState(searching: Boolean, insideFolder: Boolean = false) {
+    val tile = VolaLibrary.tile(LibraryRules.tileIndex(colorKey, VolaLibrary.tileCount))
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 64.dp),
+            .size(VolaLibrary.tileSize)
+            .clip(shape)
+            .background(tile.container),
         contentAlignment = Alignment.Center,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                painter = painterResource(R.drawable.ic_symbol_favorite),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(
-                    when {
-                        searching -> R.string.favorites_no_matches
-                        insideFolder -> R.string.favorites_folder_empty
-                        else -> R.string.favorites_empty
-                    },
-                ),
-                modifier = Modifier.padding(top = 12.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        CompositionLocalProvider(LocalContentColor provides tile.content) { content() }
     }
+}
+
+internal fun favoriteInitial(favorite: FavoriteEntry): String =
+    LibraryRules.initial(favorite.title.ifBlank { AddressResolver.displayText(favorite.url) })
+
+/** Board W-States: no favorites yet, an empty folder, or a search that found nothing. */
+@Composable
+private fun FavoritesEmptyState(searching: Boolean, insideFolder: Boolean, modifier: Modifier = Modifier) {
+    VolaStateMessage(
+        icon = rememberVectorPainter(VolaIcons.Bookmark),
+        title = stringResource(
+            when {
+                searching -> R.string.favorites_no_matches
+                insideFolder -> R.string.favorites_folder_empty
+                else -> R.string.favorites_empty
+            },
+        ),
+        message = stringResource(
+            when {
+                searching -> R.string.favorites_no_matches_message
+                insideFolder -> R.string.favorites_folder_empty_message
+                else -> R.string.favorites_empty_message
+            },
+        ),
+        modifier = modifier,
+        tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+    )
 }
 
 internal object FavoritesScreenTestTags {

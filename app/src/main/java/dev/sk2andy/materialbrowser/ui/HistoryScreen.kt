@@ -4,38 +4,38 @@ import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -43,26 +43,28 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
@@ -72,7 +74,10 @@ import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecallRules
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.recall.RecallRules
+import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -81,8 +86,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
-import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.withTimeoutOrNull
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -114,6 +118,25 @@ internal fun HistoryScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var distinctEntries by rememberSaveable { mutableStateOf(false) }
     var clearConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
+    // Deleted history hides at once and waits behind «Undo» (board W-History).
+    var pending by remember { mutableStateOf<HistoryPendingDeletion?>(null) }
+    val currentDelete by rememberUpdatedState(onDeleteEntries)
+    val currentClear by rememberUpdatedState(onClearHistory)
+    fun commit(deletion: HistoryPendingDeletion) {
+        when (deletion) {
+            is HistoryPendingDeletion.Entries -> currentDelete(deletion.entries)
+            is HistoryPendingDeletion.Clear -> currentClear(deletion.request)
+        }
+    }
+    fun defer(deletion: HistoryPendingDeletion) {
+        pending?.let(::commit)
+        pending = deletion
+        selectedEntryKeys = arrayListOf()
+    }
+    DisposableEffect(Unit) {
+        onDispose { pending?.let(::commit) }
+    }
     val selectedProfiles = selectedProfileIds.toSet()
     LaunchedEffect(query, selectedProfiles) {
         onRecallCriteriaChanged(query, selectedProfiles)
@@ -121,12 +144,13 @@ internal fun HistoryScreen(
     val recallSnapshot = remember(history, selectedProfileIds, query, recallMatches) {
         HistoryRecallRules.merge(history, selectedProfiles, query, recallMatches)
     }
-    val visibleEntries = remember(recallSnapshot.entries, distinctEntries) {
-        if (distinctEntries) {
+    val visibleEntries = remember(recallSnapshot.entries, distinctEntries, pending) {
+        val entries = if (distinctEntries) {
             BrowsingHistoryRules.distinctEntries(recallSnapshot.entries)
         } else {
             recallSnapshot.entries
         }
+        LibraryRules.withoutPending(entries, pending, BrowsingHistoryRules::entryKey)
     }
     val clearableHistory = remember(history, recallMatches) {
         (history + recallMatches.map { match ->
@@ -145,22 +169,54 @@ internal fun HistoryScreen(
         val keys = selectedEntryKeys.toSet()
         visibleEntries.filter { entry -> BrowsingHistoryRules.entryKey(entry) in keys }
     }
+    val selecting = selectedEntries.isNotEmpty()
     val today = remember { LocalDate.now(zoneId) }
+    val profilesById = remember(profiles) { profiles.associateBy(BrowserProfile::id) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val clearedMessage = stringResource(R.string.history_cleared)
+    val deletedCount = (pending as? HistoryPendingDeletion.Entries)?.entries?.size ?: 0
+    val deletedMessage = pluralStringResource(
+        R.plurals.history_deleted_count,
+        deletedCount,
+        deletedCount,
+    )
+    val undoLabel = stringResource(R.string.action_undo)
+    LaunchedEffect(pending) {
+        val deletion = pending ?: return@LaunchedEffect
+        val message = if (deletion is HistoryPendingDeletion.Clear) clearedMessage else deletedMessage
+        val result = withTimeoutOrNull(LibraryRules.UNDO_WINDOW_MILLIS) {
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Indefinite,
+            )
+        }
+        snackbarHostState.currentSnackbarData?.dismiss()
+        if (result != SnackbarResult.ActionPerformed) commit(deletion)
+        pending = null
+    }
 
     fun handleBack() {
         when {
-            selectedEntries.isNotEmpty() -> selectedEntryKeys = arrayListOf()
+            selecting -> selectedEntryKeys = arrayListOf()
             else -> onBack()
         }
     }
     BackHandler(onBack = ::handleBack)
+
+    fun toggle(entryKey: String, selected: Boolean) {
+        val updated = ArrayList(selectedEntryKeys)
+        if (selected) updated.add(entryKey) else updated.remove(entryKey)
+        selectedEntryKeys = updated
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        if (selectedEntries.isEmpty()) {
+                        if (!selecting) {
                             stringResource(R.string.history_title)
                         } else {
                             stringResource(R.string.history_selected_count, selectedEntries.size)
@@ -168,9 +224,7 @@ internal fun HistoryScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = ::handleBack,
-                    ) {
+                    IconButton(onClick = ::handleBack) {
                         Icon(
                             VolaIcons.ArrowBack,
                             contentDescription = stringResource(R.string.history_back),
@@ -178,11 +232,17 @@ internal fun HistoryScreen(
                     }
                 },
                 actions = {
-                    if (selectedEntries.isNotEmpty()) {
+                    if (selecting) {
                         IconButton(
                             onClick = {
-                                onDeleteEntries(selectedEntries)
-                                selectedEntryKeys = arrayListOf()
+                                defer(
+                                    HistoryPendingDeletion.Entries(
+                                        entries = selectedEntries,
+                                        keys = selectedEntries
+                                            .map(BrowsingHistoryRules::entryKey)
+                                            .toSet(),
+                                    ),
+                                )
                             },
                             modifier = Modifier.testTag(HistoryScreenTestTags.DeleteSelected),
                         ) {
@@ -192,19 +252,55 @@ internal fun HistoryScreen(
                             )
                         }
                     } else {
-                        TextButton(
+                        IconButton(
                             onClick = { clearConfirmationVisible = true },
                             enabled = clearableHistory.any { entry ->
                                 entry.profileId in selectedProfiles
                             },
                             modifier = Modifier.testTag(HistoryScreenTestTags.Clear),
                         ) {
-                            Text(stringResource(R.string.history_clear))
+                            Icon(
+                                VolaIcons.DeleteSweep,
+                                contentDescription = stringResource(R.string.history_clear),
+                            )
+                        }
+                        Box {
+                            IconButton(
+                                onClick = { menuOpen = true },
+                                modifier = Modifier.testTag(HistoryScreenTestTags.More),
+                            ) {
+                                Icon(
+                                    VolaIcons.MoreVert,
+                                    contentDescription = stringResource(R.string.history_more),
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                            ) {
+                                // A switch: the menu stays open to show its new state.
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.history_distinct)) },
+                                    trailingIcon = if (distinctEntries) {
+                                        { Icon(VolaIcons.Check, contentDescription = null) }
+                                    } else {
+                                        null
+                                    },
+                                    onClick = {
+                                        distinctEntries = !distinctEntries
+                                        selectedEntryKeys = arrayListOf()
+                                    },
+                                    modifier = Modifier
+                                        .semantics { selected = distinctEntries }
+                                        .testTag(HistoryScreenTestTags.Distinct),
+                                )
+                            }
                         }
                     }
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { contentPadding ->
         LazyColumn(
             modifier = Modifier
@@ -212,6 +308,7 @@ internal fun HistoryScreen(
                 .padding(contentPadding)
                 .navigationBarsPadding()
                 .testTag(HistoryScreenTestTags.List),
+            verticalArrangement = Arrangement.Top,
         ) {
             item(key = "search") {
                 LibrarySearchBar(
@@ -225,71 +322,52 @@ internal fun HistoryScreen(
                 )
             }
 
-            item(key = "distinct") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                ) {
-                    FilterChip(
-                        selected = distinctEntries,
-                        onClick = {
-                            distinctEntries = !distinctEntries
-                            selectedEntryKeys = arrayListOf()
-                        },
-                        label = { Text(stringResource(R.string.history_distinct)) },
-                        modifier = Modifier.testTag(HistoryScreenTestTags.Distinct),
-                    )
-                }
-            }
-
             if (profiles.size > 1) {
                 item(key = "profiles") {
-                    Column(modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)) {
-                        Text(
-                            text = stringResource(R.string.history_profiles),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Row(
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap),
+                        horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x2),
+                    ) {
+                        val all = selectedProfileIds.size == profileIds.size
+                        FilterChip(
+                            selected = all,
+                            onClick = {
+                                selectedProfileIds = ArrayList(profileIds)
+                                selectedEntryKeys = arrayListOf()
+                            },
+                            label = { Text(stringResource(R.string.history_all_profiles)) },
+                            leadingIcon = if (all) {
+                                { Icon(VolaIcons.Check, contentDescription = null) }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.testTag(HistoryScreenTestTags.AllProfiles),
                         )
-                        Row(
-                            modifier = Modifier
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
+                        profiles.forEach { profile ->
+                            val selected = profile.id in selectedProfileIds
                             FilterChip(
-                                selected = selectedProfileIds.size == profileIds.size,
+                                selected = selected,
                                 onClick = {
-                                    selectedProfileIds = ArrayList(profileIds)
+                                    val updated = ArrayList(selectedProfileIds)
+                                    if (selected) {
+                                        if (updated.size > 1) updated.remove(profile.id)
+                                    } else {
+                                        updated.add(profile.id)
+                                    }
+                                    selectedProfileIds = updated
                                     selectedEntryKeys = arrayListOf()
                                 },
-                                label = { Text(stringResource(R.string.history_all_profiles)) },
-                                modifier = Modifier.testTag(HistoryScreenTestTags.AllProfiles),
+                                label = { Text(profile.workspaceDisplayName()) },
+                                leadingIcon = {
+                                    WorkspaceGem(workspace = profile, size = VolaLibrary.gemSize)
+                                },
+                                modifier = Modifier.testTag(
+                                    HistoryScreenTestTags.profile(profile.id),
+                                ),
                             )
-                            profiles.forEach { profile ->
-                                val selected = profile.id in selectedProfileIds
-                                FilterChip(
-                                    selected = selected,
-                                    onClick = {
-                                        val updated = ArrayList(selectedProfileIds)
-                                        if (selected) {
-                                            if (updated.size > 1) updated.remove(profile.id)
-                                        } else {
-                                            updated.add(profile.id)
-                                        }
-                                        selectedProfileIds = updated
-                                        selectedEntryKeys = arrayListOf()
-                                    },
-                                    label = { Text(profile.workspaceDisplayName()) },
-                                    leadingIcon = {
-                                        PlatformProfileEmoji(emoji = profile.emoji, fontSize = 18.sp)
-                                    },
-                                    modifier = Modifier.testTag(
-                                        HistoryScreenTestTags.profile(profile.id),
-                                    ),
-                                )
-                            }
                         }
                     }
                 }
@@ -299,52 +377,47 @@ internal fun HistoryScreen(
                 item(key = "empty") {
                     HistoryEmptyState(
                         searching = query.isNotBlank(),
-                        modifier = Modifier.fillParentMaxHeight(0.55f),
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap),
                     )
                 }
             } else {
                 sections.forEach { section ->
                     item(key = "day:${section.date}") {
-                        Text(
+                        LibrarySectionLabel(
                             text = when (section.date) {
                                 today -> stringResource(R.string.history_today)
                                 today.minusDays(1) -> stringResource(R.string.history_yesterday)
                                 else -> dateFormatter.format(section.date)
                             },
-                            modifier = Modifier.padding(
-                                start = 16.dp,
-                                end = 16.dp,
-                                top = 20.dp,
-                                bottom = 8.dp,
-                            ),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = VolaLibrary.sectionGap),
                         )
                     }
-                    items(
+                    itemsIndexed(
                         items = section.entries,
-                        key = BrowsingHistoryRules::entryKey,
-                    ) { entry ->
+                        key = { _, entry -> BrowsingHistoryRules.entryKey(entry) },
+                    ) { index, entry ->
                         val entryKey = BrowsingHistoryRules.entryKey(entry)
-                        val profileEmoji = profiles.firstOrNull { profile ->
-                            profile.id == entry.profileId
-                        }?.emoji
-                        HistoryEntryRow(
-                            entry = entry,
-                            time = timeFormatter.format(
-                                Instant.ofEpochMilli(entry.lastVisitedAt).atZone(zoneId),
-                            ),
-                            profileEmoji = profileEmoji.takeIf { selectedProfiles.size > 1 },
-                            excerpt = recallSnapshot.excerptsByEntryKey[entryKey],
-                            selected = entryKey in selectedEntryKeys,
-                            onSelectedChange = { selected ->
-                                val updated = ArrayList(selectedEntryKeys)
-                                if (selected) updated.add(entryKey) else updated.remove(entryKey)
-                                selectedEntryKeys = updated
-                            },
-                            onOpen = { onOpenEntry(entry) },
-                        )
+                        val selected = entryKey in selectedEntryKeys
+                        LibraryCardSlice(
+                            position = LibraryRules.position(index, section.entries.size),
+                        ) {
+                            HistoryEntryRow(
+                                entry = entry,
+                                time = timeFormatter.format(
+                                    Instant.ofEpochMilli(entry.lastVisitedAt).atZone(zoneId),
+                                ),
+                                workspace = profilesById[entry.profileId]
+                                    .takeIf { selectedProfiles.size > 1 },
+                                excerpt = recallSnapshot.excerptsByEntryKey[entryKey],
+                                selected = selected,
+                                onSelectedChange = { toggle(entryKey, it) },
+                                onOpen = {
+                                    if (selecting) toggle(entryKey, !selected) else onOpenEntry(entry)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -361,8 +434,7 @@ internal fun HistoryScreen(
             timeFormatter = timeFormatter,
             onDismiss = { clearConfirmationVisible = false },
             onConfirm = { request ->
-                onClearHistory(request)
-                selectedEntryKeys = arrayListOf()
+                defer(HistoryPendingDeletion.Clear(request))
                 clearConfirmationVisible = false
             },
         )
@@ -722,101 +794,68 @@ private fun historyClearBoundaryLabel(field: HistoryClearDateField): String = st
 private fun HistoryEntryRow(
     entry: HistoryEntry,
     time: String,
-    profileEmoji: String?,
+    workspace: BrowserProfile?,
     excerpt: String?,
     selected: Boolean,
     onSelectedChange: (Boolean) -> Unit,
     onOpen: () -> Unit,
 ) {
-    Surface(
+    val host = BrowserUriPolicy.displayHttpHost(entry.url)
+    val title = entry.title.ifBlank { host }
+    val selectLabel = stringResource(R.string.history_select_entry)
+    LibraryRow(
+        title = title,
+        detail = host,
+        extra = excerpt,
+        onClick = onOpen,
+        onLongClick = { onSelectedChange(!selected) },
+        onLongClickLabel = selectLabel,
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 2.dp)
             .semantics { this.selected = selected }
-            .clickable(onClick = onOpen)
             .testTag(HistoryScreenTestTags.entry(entry)),
-        shape = MaterialTheme.shapes.large,
-        color = if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            Color.Transparent
+        leading = {
+            LibrarySiteTile(
+                label = title,
+                colorKey = host,
+                selected = selected,
+                modifier = Modifier
+                    .clickable(
+                        role = Role.Checkbox,
+                        onClickLabel = selectLabel,
+                        onClick = { onSelectedChange(!selected) },
+                    )
+                    .testTag(HistoryScreenTestTags.select(entry)),
+            )
         },
-    ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = entry.title.ifBlank { BrowserUriPolicy.displayHttpHost(entry.url) },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            supportingContent = {
-                Column {
-                    Text(
-                        text = BrowserUriPolicy.displayHttpHost(entry.url),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    excerpt?.takeIf(String::isNotBlank)?.let { value ->
-                        Text(
-                            text = value,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            },
-            leadingContent = {
-                Checkbox(
-                    checked = selected,
-                    onCheckedChange = onSelectedChange,
-                    modifier = Modifier.testTag(HistoryScreenTestTags.select(entry)),
-                )
-            },
-            trailingContent = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    profileEmoji?.let { emoji ->
-                        PlatformProfileEmoji(
-                            emoji = emoji,
-                            fontSize = 18.sp,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(
-                        time,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        )
-    }
+        trailing = {
+            Text(
+                time,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            workspace?.let { profile ->
+                WorkspaceGem(workspace = profile, size = VolaLibrary.gemSize)
+            }
+        },
+    )
 }
 
+/** Board W-States: an empty history, or a search that found nothing. */
 @Composable
 private fun HistoryEmptyState(
     searching: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                painter = painterResource(R.drawable.ic_history),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = stringResource(
-                    if (searching) R.string.history_no_results else R.string.history_empty,
-                ),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    VolaStateMessage(
+        icon = painterResource(R.drawable.ic_history),
+        title = stringResource(if (searching) R.string.history_no_results else R.string.history_empty),
+        message = stringResource(
+            if (searching) R.string.history_no_results_message else R.string.history_empty_message,
+        ),
+        modifier = modifier,
+        tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+    )
 }
 
 internal object HistoryScreenTestTags {
@@ -832,6 +871,7 @@ internal object HistoryScreenTestTags {
     const val ClearAllProfiles = "history_clear_all_profiles"
     const val ClearConfirm = "history_clear_confirm"
     const val DeleteSelected = "history_delete_selected"
+    const val More = "history_more"
     const val AllProfiles = "history_all_profiles"
 
     fun profile(profileId: String): String = "history_profile:$profileId"
