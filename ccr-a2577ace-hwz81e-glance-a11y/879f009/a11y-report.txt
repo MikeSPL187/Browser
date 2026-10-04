@@ -1,0 +1,3 @@
+Vola controls in the tour: 2 accessibility finding(s).
+- [NEW] small | View | 48x46 dp — find-dark
+- [NEW] unlabeled | EditText | https-upgrade — https-upgrade-light
