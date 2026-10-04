@@ -128,6 +128,10 @@
 
 ![12-site-data-undo-light](12-site-data-undo-light.png)
 
+## 120-find-ru
+
+![120-find-ru](120-find-ru.png)
+
 ## 120-https-upgrade-ru
 
 ![120-https-upgrade-ru](120-https-upgrade-ru.png)
@@ -136,9 +140,21 @@
 
 ![121-glance-ru](121-glance-ru.png)
 
+## 121-site-info-ru
+
+![121-site-info-ru](121-site-info-ru.png)
+
+## 122-site-certificate-ru
+
+![122-site-certificate-ru](122-site-certificate-ru.png)
+
 ## 122-split-view-ru
 
 ![122-split-view-ru](122-split-view-ru.png)
+
+## 123-site-info-xray-ru
+
+![123-site-info-xray-ru](123-site-info-xray-ru.png)
 
 ## 123-split-view-bottom-active-ru
 
@@ -148,9 +164,21 @@
 
 ![124-https-only-ru](124-https-only-ru.png)
 
+## 124-site-info-data-ru
+
+![124-site-info-data-ru](124-site-info-data-ru.png)
+
 ## 125-page-unknown-host-ru
 
 ![125-page-unknown-host-ru](125-page-unknown-host-ru.png)
+
+## 125-site-data-undo-ru
+
+![125-site-data-undo-ru](125-site-data-undo-ru.png)
+
+## 126-address-ru
+
+![126-address-ru](126-address-ru.png)
 
 ## 126-page-insecure-ru
 
@@ -160,17 +188,33 @@
 
 ![127-dangerous-site-ru](127-dangerous-site-ru.png)
 
+## 127-reader-settings-ru
+
+![127-reader-settings-ru](127-reader-settings-ru.png)
+
 ## 128-page-offline-ru
 
 ![128-page-offline-ru](128-page-offline-ru.png)
+
+## 128-reader-paper-ru
+
+![128-reader-paper-ru](128-reader-paper-ru.png)
 
 ## 129-page-back-online-ru
 
 ![129-page-back-online-ru](129-page-back-online-ru.png)
 
+## 129-reader-ru
+
+![129-reader-ru](129-reader-ru.png)
+
 ## 13-address-light
 
 ![13-address-light](13-address-light.png)
+
+## 130-https-upgrade-ru
+
+![130-https-upgrade-ru](130-https-upgrade-ru.png)
 
 ## 130-workspace-locked-ru
 
@@ -180,25 +224,53 @@
 
 ![131-download-check-ru](131-download-check-ru.png)
 
+## 131-glance-ru
+
+![131-glance-ru](131-glance-ru.png)
+
+## 132-split-view-ru
+
+![132-split-view-ru](132-split-view-ru.png)
+
 ## 132-tab-overview-ru
 
 ![132-tab-overview-ru](132-tab-overview-ru.png)
+
+## 133-split-view-bottom-active-ru
+
+![133-split-view-bottom-active-ru](133-split-view-bottom-active-ru.png)
 
 ## 133-workspace-options-ru
 
 ![133-workspace-options-ru](133-workspace-options-ru.png)
 
+## 134-https-only-ru
+
+![134-https-only-ru](134-https-only-ru.png)
+
 ## 134-workspace-new-ru
 
 ![134-workspace-new-ru](134-workspace-new-ru.png)
+
+## 135-page-unknown-host-ru
+
+![135-page-unknown-host-ru](135-page-unknown-host-ru.png)
 
 ## 135-workspace-new-icons-ru
 
 ![135-workspace-new-icons-ru](135-workspace-new-icons-ru.png)
 
+## 136-page-insecure-ru
+
+![136-page-insecure-ru](136-page-insecure-ru.png)
+
 ## 136-workspace-swipe-ru
 
 ![136-workspace-swipe-ru](136-workspace-swipe-ru.png)
+
+## 137-dangerous-site-ru
+
+![137-dangerous-site-ru](137-dangerous-site-ru.png)
 
 ## 137-essentials-start-ru
 
@@ -208,9 +280,17 @@
 
 ![138-essentials-ru](138-essentials-ru.png)
 
+## 138-page-offline-ru
+
+![138-page-offline-ru](138-page-offline-ru.png)
+
 ## 139-essentials-edit-ru
 
 ![139-essentials-edit-ru](139-essentials-edit-ru.png)
+
+## 139-page-back-online-ru
+
+![139-page-back-online-ru](139-page-back-online-ru.png)
 
 ## 14-reader-settings-light
 
@@ -220,6 +300,14 @@
 
 ![140-tab-overview-essentials-ru](140-tab-overview-essentials-ru.png)
 
+## 140-workspace-locked-ru
+
+![140-workspace-locked-ru](140-workspace-locked-ru.png)
+
+## 141-download-check-ru
+
+![141-download-check-ru](141-download-check-ru.png)
+
 ## 141-tab-actions-ru
 
 ![141-tab-actions-ru](141-tab-actions-ru.png)
@@ -228,29 +316,61 @@
 
 ![142-tab-actions-more-ru](142-tab-actions-more-ru.png)
 
+## 142-tab-overview-ru
+
+![142-tab-overview-ru](142-tab-overview-ru.png)
+
 ## 143-tab-search-ru
 
 ![143-tab-search-ru](143-tab-search-ru.png)
+
+## 143-workspace-options-ru
+
+![143-workspace-options-ru](143-workspace-options-ru.png)
 
 ## 144-protection-card-ru
 
 ![144-protection-card-ru](144-protection-card-ru.png)
 
+## 144-workspace-new-ru
+
+![144-workspace-new-ru](144-workspace-new-ru.png)
+
 ## 145-protection-report-ru
 
 ![145-protection-report-ru](145-protection-report-ru.png)
+
+## 145-workspace-new-icons-ru
+
+![145-workspace-new-icons-ru](145-workspace-new-icons-ru.png)
 
 ## 146-private-new-tab-ru
 
 ![146-private-new-tab-ru](146-private-new-tab-ru.png)
 
+## 146-workspace-swipe-ru
+
+![146-workspace-swipe-ru](146-workspace-swipe-ru.png)
+
+## 147-essentials-start-ru
+
+![147-essentials-start-ru](147-essentials-start-ru.png)
+
 ## 147-private-lock-row-ru
 
 ![147-private-lock-row-ru](147-private-lock-row-ru.png)
 
+## 148-essentials-ru
+
+![148-essentials-ru](148-essentials-ru.png)
+
 ## 148-private-closed-ru
 
 ![148-private-closed-ru](148-private-closed-ru.png)
+
+## 149-essentials-edit-ru
+
+![149-essentials-edit-ru](149-essentials-edit-ru.png)
 
 ## 149-private-locked-ru
 
@@ -264,9 +384,85 @@
 
 ![150-permission-prompt-ru](150-permission-prompt-ru.png)
 
+## 150-tab-overview-essentials-ru
+
+![150-tab-overview-essentials-ru](150-tab-overview-essentials-ru.png)
+
+## 151-tab-actions-ru
+
+![151-tab-actions-ru](151-tab-actions-ru.png)
+
+## 152-tab-actions-more-ru
+
+![152-tab-actions-more-ru](152-tab-actions-more-ru.png)
+
+## 153-tab-search-ru
+
+![153-tab-search-ru](153-tab-search-ru.png)
+
+## 154-protection-card-ru
+
+![154-protection-card-ru](154-protection-card-ru.png)
+
+## 155-protection-report-ru
+
+![155-protection-report-ru](155-protection-report-ru.png)
+
+## 156-private-new-tab-ru
+
+![156-private-new-tab-ru](156-private-new-tab-ru.png)
+
+## 157-private-lock-row-ru
+
+![157-private-lock-row-ru](157-private-lock-row-ru.png)
+
+## 158-private-closed-ru
+
+![158-private-closed-ru](158-private-closed-ru.png)
+
+## 159-private-locked-ru
+
+![159-private-locked-ru](159-private-locked-ru.png)
+
 ## 16-reader-light
 
 ![16-reader-light](16-reader-light.png)
+
+## 160-permission-prompt-ru
+
+![160-permission-prompt-ru](160-permission-prompt-ru.png)
+
+## 161-menu-ru
+
+![161-menu-ru](161-menu-ru.png)
+
+## 162-settings-ru
+
+![162-settings-ru](162-settings-ru.png)
+
+## 163-settings-search-ru
+
+![163-settings-search-ru](163-settings-search-ru.png)
+
+## 164-appearance-ru
+
+![164-appearance-ru](164-appearance-ru.png)
+
+## 165-appearance-more-ru
+
+![165-appearance-more-ru](165-appearance-more-ru.png)
+
+## 166-tabs-archive-ru
+
+![166-tabs-archive-ru](166-tabs-archive-ru.png)
+
+## 167-protection-private-lock-ru
+
+![167-protection-private-lock-ru](167-protection-private-lock-ru.png)
+
+## 168-page-air-ru
+
+![168-page-air-ru](168-page-air-ru.png)
 
 ## 17-https-upgrade-light
 
