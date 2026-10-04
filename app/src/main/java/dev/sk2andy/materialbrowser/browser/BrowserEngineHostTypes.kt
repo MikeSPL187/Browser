@@ -1,61 +1,14 @@
 package dev.sk2andy.materialbrowser.browser
 
-import android.graphics.Rect
 import android.net.Uri
-import android.view.View
 import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
-import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
+import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoff
+import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrant
 
 /*
- * Bookkeeping types of BrowserController's engine hosts, kept apart so the controller stays
- * within its size budget (docs/vola/tech-plan.md, section 1).
+ * Bookkeeping types of BrowserController, kept apart so the controller stays within its size
+ * budget (docs/vola/tech-plan.md, section 1).
  */
-
-internal class PendingGeckoPreviewCapture(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val view: View,
-    val pageUrl: String,
-    val navigationGeneration: Int,
-    val previewEpoch: Int,
-    val sourceRect: Rect,
-    onComplete: () -> Unit,
-    var acceptAfterDeparture: Boolean,
-) {
-    val completionCallbacks = mutableListOf(onComplete)
-    var capture: BrowserEnginePreviewCapture? = null
-    var timeout: Runnable? = null
-    var uiCompleted = false
-    var expired = false
-}
-
-internal class PendingInitialBrowserEngineNavigation(
-    val session: AndroidBrowserEngineSessionPort,
-    val command: BrowserEngineCommand?,
-) {
-    private var observedView: View? = null
-    private var layoutListener: View.OnLayoutChangeListener? = null
-
-    fun observeLayout(view: View, onLayout: (View) -> Unit) {
-        stopObservingLayout()
-        val listener = View.OnLayoutChangeListener { changedView, _, _, _, _, _, _, _, _ ->
-            onLayout(changedView)
-        }
-        observedView = view
-        layoutListener = listener
-        view.addOnLayoutChangeListener(listener)
-        if (view.isLaidOut && !view.isLayoutRequested) onLayout(view)
-    }
-
-    fun stopObservingLayout() {
-        val view = observedView
-        val listener = layoutListener
-        if (view != null && listener != null) view.removeOnLayoutChangeListener(listener)
-        observedView = null
-        layoutListener = null
-    }
-}
 
 internal data class FirefoxExtensionOptionsTabChrome(
     val title: String,
@@ -84,4 +37,43 @@ internal data class FirefoxExtensionOptionsTabChrome(
             )
         }
     }
+}
+
+internal sealed interface ExternalAppHandoffSource {
+    data class Tab(
+        val tabId: String,
+        val profileId: String,
+        val isPrivate: Boolean,
+        val session: AndroidBrowserEngineSessionPort,
+    ) : ExternalAppHandoffSource
+
+    data class Preview(
+        val sessionId: Long,
+        val generation: Int,
+        val profileId: String,
+        val session: AndroidBrowserEngineSessionPort,
+    ) : ExternalAppHandoffSource
+}
+
+internal data class PendingExternalAppHandoff(
+    val match: ExternalAppHandoff,
+    val source: ExternalAppHandoffSource,
+)
+
+internal data class PendingExternalAppPrompt(
+    val prompt: ExternalAppPrompt,
+    val requestUrl: String,
+    val safeHttpUrl: String?,
+    val webTargetUrl: String?,
+    val source: ExternalAppHandoffSource,
+    val grant: ExternalNavigationGrant?,
+    val isRedirect: Boolean,
+    val sourceNavigationGeneration: Int,
+    val sourcePageUrl: String?,
+)
+
+internal enum class ExternalAppNavigationHandling {
+    Automatic,
+    Prompted,
+    Unavailable,
 }

@@ -163,7 +163,6 @@ import dev.sk2andy.materialbrowser.browser.integration.AssistantSummaryResult
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.browser.integration.DefaultBrowserRole
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppLauncher
-import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoff
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoffRules
 import dev.sk2andy.materialbrowser.browser.integration.ExternalLaunchResult
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrant
@@ -306,6 +305,24 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
 
+private class PendingGeckoPreviewCapture(
+    val tabId: String,
+    val session: AndroidBrowserEngineSessionPort,
+    val view: View,
+    val pageUrl: String,
+    val navigationGeneration: Int,
+    val previewEpoch: Int,
+    val sourceRect: Rect,
+    onComplete: () -> Unit,
+    var acceptAfterDeparture: Boolean,
+) {
+    val completionCallbacks = mutableListOf(onComplete)
+    var capture: BrowserEnginePreviewCapture? = null
+    var timeout: Runnable? = null
+    var uiCompleted = false
+    var expired = false
+}
+
 internal data class FullscreenVideoState(
     val tabId: String,
     val minimizedByUser: Boolean,
@@ -363,6 +380,33 @@ private data class GeckoViewBinding(
     val view: View,
 )
 
+private class PendingInitialBrowserEngineNavigation(
+    val session: AndroidBrowserEngineSessionPort,
+    val command: BrowserEngineCommand?,
+) {
+    private var observedView: View? = null
+    private var layoutListener: View.OnLayoutChangeListener? = null
+
+    fun observeLayout(view: View, onLayout: (View) -> Unit) {
+        stopObservingLayout()
+        val listener = View.OnLayoutChangeListener { changedView, _, _, _, _, _, _, _, _ ->
+            onLayout(changedView)
+        }
+        observedView = view
+        layoutListener = listener
+        view.addOnLayoutChangeListener(listener)
+        if (view.isLaidOut && !view.isLayoutRequested) onLayout(view)
+    }
+
+    fun stopObservingLayout() {
+        val view = observedView
+        val listener = layoutListener
+        if (view != null && listener != null) view.removeOnLayoutChangeListener(listener)
+        observedView = null
+        layoutListener = null
+    }
+}
+
 private data class TabFaviconFetchAttempt(
     val session: AndroidBrowserEngineSessionPort,
     val pageUrl: String,
@@ -376,7 +420,6 @@ private data class PendingGeckoViewAttach(
     val token: Any,
     val onContentPresented: ((String) -> Unit)?,
     val backdropCaptureEnabled: Boolean,
-    val companion: Boolean,
 )
 
 internal data class BrowserActivityResultIdentity(
@@ -416,45 +459,6 @@ private data class AutoDeAmpReplacementGuard(
     val publisherUrl: String,
     val expiresAtElapsedRealtime: Long,
 )
-
-private sealed interface ExternalAppHandoffSource {
-    data class Tab(
-        val tabId: String,
-        val profileId: String,
-        val isPrivate: Boolean,
-        val session: AndroidBrowserEngineSessionPort,
-    ) : ExternalAppHandoffSource
-
-    data class Preview(
-        val sessionId: Long,
-        val generation: Int,
-        val profileId: String,
-        val session: AndroidBrowserEngineSessionPort,
-    ) : ExternalAppHandoffSource
-}
-
-private data class PendingExternalAppHandoff(
-    val match: ExternalAppHandoff,
-    val source: ExternalAppHandoffSource,
-)
-
-private data class PendingExternalAppPrompt(
-    val prompt: ExternalAppPrompt,
-    val requestUrl: String,
-    val safeHttpUrl: String?,
-    val webTargetUrl: String?,
-    val source: ExternalAppHandoffSource,
-    val grant: ExternalNavigationGrant?,
-    val isRedirect: Boolean,
-    val sourceNavigationGeneration: Int,
-    val sourcePageUrl: String?,
-)
-
-private enum class ExternalAppNavigationHandling {
-    Automatic,
-    Prompted,
-    Unavailable,
-}
 
 enum class BrowserGestureHapticFeedback {
     RubberbandStart,
@@ -1396,6 +1400,7 @@ class BrowserController(
         if (tabId != selectedTabId) browserEngineSessions[tabId]?.setActive(false)
     }
     private var splitCompanionFrame = BrowserContentFrame.None
+    private var splitCompanionContainer: FrameLayout? = null
     val addressBar = AddressBarController(
         store = store,
         host = object : AddressBarController.Host {
@@ -2604,15 +2609,18 @@ class BrowserController(
             detachBrowserEngineView(container)
             return null
         }
+        splitCompanionContainer = container
         return attachSelectedGeckoView(
             container = container,
             onContentPresented = onContentPresented,
             backdropCaptureEnabled = false,
             companion = true,
-        )?.also {
-            splitView.companionTabId?.let { tabId -> browserEngineSessions[tabId] }
-                ?.setActive(isActivityResumed)
-        }
+        )?.also { setSplitCompanionActive(isActivityResumed) }
+    }
+
+    /** Follows the screen: the companion pane plays while the activity is in front. */
+    fun setSplitCompanionActive(active: Boolean) {
+        splitView.companionTabId?.let { tabId -> browserEngineSessions[tabId] }?.setActive(active)
     }
 
     /** Opens Split View next to [companionTabId], or the most recent other page. */
@@ -2710,7 +2718,6 @@ class BrowserController(
                     container = container,
                     onContentPresented = onContentPresented,
                     backdropCaptureEnabled = backdropCaptureEnabled,
-                    companion = companion,
                 )
             }
             val binding = geckoViewBindings[container]
@@ -2737,7 +2744,6 @@ class BrowserController(
         container: FrameLayout,
         onContentPresented: ((String) -> Unit)?,
         backdropCaptureEnabled: Boolean,
-        companion: Boolean,
     ) {
         val pending = pendingGeckoViewAttachRetries[container]
         val retryToken = pending?.token ?: Any()
@@ -2745,7 +2751,6 @@ class BrowserController(
             token = retryToken,
             onContentPresented = onContentPresented,
             backdropCaptureEnabled = backdropCaptureEnabled,
-            companion = companion,
         )
         if (pending != null) return
         container.post {
@@ -2758,7 +2763,7 @@ class BrowserController(
                     container = container,
                     onContentPresented = request.onContentPresented,
                     backdropCaptureEnabled = request.backdropCaptureEnabled,
-                    companion = request.companion,
+                    companion = container === splitCompanionContainer,
                 )
             }
         }
@@ -10075,7 +10080,6 @@ class BrowserController(
             ) {
                 browserEngineSessions[selectedTabId]?.setActive(false)
             }
-            splitView.companionTabId?.let { browserEngineSessions[it]?.setActive(false) }
             externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(false)
         }
         persist()
@@ -10133,7 +10137,6 @@ class BrowserController(
         if (!isActiveProfileLocked) {
             if (externalLinkPreviewState == null) {
                 browserEngineSessions[selectedTabId]?.setActive(true)
-                splitView.companionTabId?.let { browserEngineSessions[it]?.setActive(true) }
             }
             externalLinkPreviewRuntime?.geckoBinding
                 ?.takeIf { binding -> binding.view.isAttachedToWindow }
@@ -10149,7 +10152,6 @@ class BrowserController(
         if (usesGeckoEngine && !isActiveProfileLocked) {
             if (externalLinkPreviewState == null) {
                 browserEngineSessions[selectedTabId]?.setActive(true)
-                splitView.companionTabId?.let { browserEngineSessions[it]?.setActive(true) }
             }
             externalLinkPreviewRuntime?.geckoBinding
                 ?.takeIf { binding -> binding.view.isAttachedToWindow }
@@ -10186,7 +10188,6 @@ class BrowserController(
         )?.snapshot?.isPlaying == true
         if (usesGeckoEngine && !keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             browserEngineSessions[selectedTabId]?.setActive(false)
-            splitView.companionTabId?.let { browserEngineSessions[it]?.setActive(false) }
         }
         externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(false)
         if (!keepsPictureInPictureMedia && !keepsBackgroundMedia) {
