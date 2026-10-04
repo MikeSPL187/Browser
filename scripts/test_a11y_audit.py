@@ -63,6 +63,20 @@ class AuditTest(unittest.TestCase):
             [("unlabeled", "View", 220, 20), ("unlabeled", "View", 240, 200)],
         )
 
+    def test_a_sliver_at_the_screen_edge_is_cut_not_unlabeled(self):
+        dump = f"""<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="{PACKAGE}" clickable="false" bounds="[0,0][1080,2400]">
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[42,2361][1038,2400]" />
+    <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[42,2200][1038,2400]" />
+  </node>
+</hierarchy>
+"""
+        # The row whose label is below the screen is excused; a full-size one at the edge is not.
+        self.assertEqual(
+            audit.audit(dump, PACKAGE, density=320),
+            [("unlabeled", "View", 498, 100)],
+        )
+
     def test_broken_dump_has_no_findings(self):
         self.assertEqual(audit.audit("ERROR: could not get idle state.", PACKAGE, 420), [])
 

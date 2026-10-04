@@ -382,7 +382,11 @@ internal fun BrowserViewport(
                 selectedTab.url.startsWith("https://"),
         )
         pageErrorFeedback = observation.state
-        if (observation.shouldReload) onRetry()
+        // The connection came back: the page reloads by itself. Without a session to reload,
+        // the Retry button waits instead of a spinner that never ends.
+        if (observation.shouldReload && !onRetry()) {
+            pageErrorFeedback = PageErrorFeedbackState.Offline(isOnlineReady = true)
+        }
     }
     adjacentTab?.let { tab ->
         TabSwitchPreview(
@@ -528,6 +532,7 @@ internal fun BrowserViewport(
                             ),
                             count = controller.tabs.count(BrowserTab::isIncognito),
                             onCloseAll = { controller.closeAllPrivateTabs() },
+                            lock = controller.privateTabLockRow(),
                         ),
                         protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
                             NewTabProtection(
@@ -555,9 +560,24 @@ internal fun BrowserViewport(
             }
         }
 
+        val pageOverlayModifier = Modifier
+            .fillMaxSize()
+            .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
+            .padding(
+                bottom = with(density) {
+                    val bottomBarTop = bottomBarTopPx.floatValue
+                    if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) {
+                        (rootHeightPx - bottomBarTop).toDp()
+                    } else {
+                        0.dp
+                    }
+                },
+            )
         key(selectedTab.id, selectedTab.url) {
             PageErrorFeedback(
                 state = pageErrorFeedback,
+                url = selectedTab.url,
+                onBack = if (selectedTab.canGoBack) controller::goBack else null,
                 onRetry = retry@{
                     val transition = PageErrorFeedbackRules.requestRetry(pageErrorFeedback)
                     if (!transition.shouldReload) return@retry
@@ -577,19 +597,25 @@ internal fun BrowserViewport(
                         ).state
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
-                    .padding(
-                        bottom = with(density) {
-                            val bottomBarTop = bottomBarTopPx.floatValue
-                            if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) {
-                                (rootHeightPx - bottomBarTop).toDp()
-                            } else {
-                                0.dp
-                            }
-                        },
-                    ),
+                modifier = pageOverlayModifier,
+            )
+        }
+        controller.dangerousSites.blocked[selectedTab.id]?.let { site ->
+            DangerousSitePage(
+                site = site,
+                onBackToSafety = {
+                    controller.dangerousSites.dismiss(selectedTab.id)
+                    // A tab opened straight onto the fake site has nowhere safe to go back to.
+                    if (!selectedTab.canGoBack) controller.closeTab(selectedTab.id)
+                },
+                onOpenAnyway = {
+                    controller.dangerousSites.allow(selectedTab.id)?.let(controller::submitAddress)
+                },
+                onOpenRealSite = {
+                    controller.dangerousSites.dismiss(selectedTab.id)
+                    controller.submitAddress("https://${site.imitatedHost}/")
+                },
+                modifier = pageOverlayModifier,
             )
         }
 

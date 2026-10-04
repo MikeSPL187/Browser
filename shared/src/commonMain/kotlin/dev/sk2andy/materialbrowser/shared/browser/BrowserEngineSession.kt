@@ -77,7 +77,16 @@ enum class BrowserEngineEventType {
 enum class BrowserEngineFailureKind {
     Offline,
     UnknownHost,
+
+    /** The site's certificate or encryption failed, so the connection can't be trusted. */
+    InsecureConnection,
     Other,
+
+    /**
+     * HTTPS-only mode found no working HTTPS, and the engine shows its own warning page in place
+     * of the site, with the choice to continue over HTTP. The browser must not cover that page.
+     */
+    HttpsOnly,
 }
 
 data class BrowserEngineEvent(
