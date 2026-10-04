@@ -8,33 +8,26 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
-import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
-import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
-import dev.sk2andy.materialbrowser.data.BrowserColorPalette
-import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.shared.ui.settings.AppearanceSettingsStrings
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.shared.ui.settings.AppearanceSettingsPage as SharedAppearanceSettingsPage
 
 internal object AppearanceSettingsTestTags {
-    const val AppearanceMode = "appearance_settings_mode"
-    const val ChromeStyle = "appearance_settings_chrome_style"
     const val Animations = "appearance_settings_animations"
     const val ForceDarkWebsites = "appearance_settings_force_dark_websites"
     const val WebContentFontSize = "appearance_settings_web_content_font_size"
-    const val ColorPalette = "appearance_settings_palette"
     const val AddressBarColor = "appearance_settings_address_bar_color"
     const val AddressBarColorReset = "appearance_settings_address_bar_color_reset"
     const val AddressBarCustomColor = "appearance_settings_address_bar_custom_color"
     const val AddressBarCustomColorSave = "appearance_settings_address_bar_custom_color_save"
     const val SurfaceStyle = "appearance_settings_surface"
-    const val ShapeStyle = "appearance_settings_shape"
     const val AddressBarStyle = "appearance_settings_address_bar_style"
     const val FrostedTransparency = "appearance_settings_frosted_transparency"
     const val FrostedAddressBarTransparency =
         "appearance_settings_frosted_address_bar_transparency"
     const val FrostedBlur = "appearance_settings_frosted_blur"
+    const val Advanced = "appearance_settings_advanced"
 }
 
 @Composable
@@ -50,11 +43,7 @@ internal fun AppearanceSettingsPage(
         strings = AppearanceSettingsStrings(
             title = stringResource(R.string.settings_appearance_title),
             back = stringResource(R.string.action_back),
-            appearanceMode = stringResource(R.string.settings_appearance_mode),
-            appearanceModeNames = BrowserAppearanceMode.entries.associateWith { it.displayName() },
-            chromeStyle = stringResource(R.string.settings_chrome_style),
-            chromeStyleNames = BrowserChromeStyle.entries.associateWith { it.displayName() },
-            chromeStyleSummaries = BrowserChromeStyle.entries.associateWith { it.summary() },
+            advanced = stringResource(R.string.settings_appearance_advanced),
             animations = stringResource(R.string.settings_animations),
             animationsSummary = stringResource(R.string.settings_animations_summary),
             forceDarkWebsites = stringResource(R.string.settings_force_dark_websites),
@@ -66,8 +55,6 @@ internal fun AppearanceSettingsPage(
                 },
             ),
             webContentFontSize = stringResource(R.string.settings_web_content_font_size),
-            colorPalette = stringResource(R.string.settings_color_palette),
-            colorPaletteNames = BrowserColorPalette.entries.associateWith { it.displayName() },
             addressBarColor = stringResource(R.string.settings_address_bar_color),
             addressBarColorPresetNames = BrowserAddressBarColorPreset.entries.associateWith {
                 it.displayName()
@@ -100,8 +87,6 @@ internal fun AppearanceSettingsPage(
                         R.string.settings_frosted_blur_summary_system_webview
                 },
             ),
-            shapeStyle = stringResource(R.string.settings_shape_style),
-            shapeStyleNames = BrowserShapeStyle.entries.associateWith { it.displayName() },
             addressBarStyle = stringResource(R.string.settings_address_bar_style),
             addressBarStyleNames = BrowserAddressBarStyle.entries.associateWith {
                 it.displayName()
@@ -111,5 +96,6 @@ internal fun AppearanceSettingsPage(
         onSettingsChanged = onSettingsChanged,
         onBack = onBack,
         forceDarkWebsitesAvailable = forceDarkWebsitesAvailable,
+        main = { AppearanceMainSections(settings, onSettingsChanged) },
     )
 }

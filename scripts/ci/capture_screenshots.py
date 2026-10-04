@@ -808,6 +808,10 @@ def tour(suffix):
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
+                    if tap_scrolling("More settings", "Дополнительно",
+                                     name=f"appearance-{suffix}"):
+                        time.sleep(2)
+                        shot(f"appearance-more-{suffix}", audit=False)
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
@@ -891,7 +895,7 @@ def measure_cold_start(runs=5):
 
 
 def air_layout(suffix):
-    """Switches Appearance → Browser layout to Air and shoots the edge-to-edge page."""
+    """Switches Appearance to the Air card and shoots the edge-to-edge page."""
     if not tap("More options", "Другие действия"):
         log("not found: menu for the Air layout")
         return
@@ -902,10 +906,7 @@ def air_layout(suffix):
     if not tap_scrolling("Appearance", "Внешний вид", name=f"air-settings-{suffix}"):
         return
     time.sleep(2)
-    if not tap("Browser layout", "Оформление"):
-        log("not found: browser layout choice")
-        return
-    time.sleep(1)
+    # The layout is a pair of cards at the top of the page (board W-SetAppearance).
     if not tap("Air", "Воздух"):
         log("not found: Air layout")
         return
