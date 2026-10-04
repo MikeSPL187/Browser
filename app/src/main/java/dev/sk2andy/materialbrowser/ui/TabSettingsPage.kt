@@ -1,17 +1,14 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -26,7 +23,6 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSliderRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
-import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
@@ -106,12 +102,13 @@ internal fun TabsAndGesturesSettingsPage(
                     onClick = onAddressBarLongPressActions,
                     modifier = Modifier.testTag(TabSettingsTestTags.AddressBarLongPressAction),
                 )
-                DropdownValueRow(
+                SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_link_long_press_action),
                     selected = linkLongPressAction,
                     options = LinkLongPressAction.entries,
                     label = { action -> stringResource(action.labelRes()) },
                     dividerColor = dividerColor,
+                    divider = true,
                     onSelected = onLinkLongPressActionChanged,
                     modifier = Modifier.testTag(TabSettingsTestTags.LinkLongPressAction),
                 )
@@ -167,20 +164,22 @@ internal fun TabsAndGesturesSettingsPage(
             }
             SettingsCardHeader(stringResource(R.string.settings_tabs_group_overview))
             SettingsCard(containerColor = cardColor) {
-                DropdownValueRow(
+                SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_tab_overview_mode),
                     selected = tabOverviewMode,
                     options = TabOverviewMode.entries,
                     label = { mode -> mode.displayName() },
                     dividerColor = dividerColor,
+                    divider = true,
                     onSelected = onTabOverviewModeChanged,
                 )
-                DropdownValueRow(
+                SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_tab_stack_folder_mode),
                     selected = tabStackFolderMode,
                     options = TabOverviewMode.entries,
                     label = { mode -> mode.displayName() },
                     dividerColor = dividerColor,
+                    divider = true,
                     onSelected = onTabStackFolderModeChanged,
                     modifier = Modifier.testTag(TabSettingsTestTags.StackFolderMode),
                 )
@@ -238,12 +237,13 @@ internal fun TabsAndGesturesSettingsPage(
                         modifier = Modifier.testTag(TabSettingsTestTags.ResidentTabLimit),
                     )
                 }
-                DropdownValueRow(
+                SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_auto_close_tabs),
                     selected = inactiveTabLifetime,
                     options = InactiveTabLifetime.entries,
                     label = { lifetime -> lifetime.displayName() },
                     dividerColor = dividerColor,
+                    divider = true,
                     onSelected = onInactiveTabLifetimeChanged,
                 )
                 // Only the lifetimes counted in days can archive; the others close every tab on
@@ -267,45 +267,6 @@ internal fun TabsAndGesturesSettingsPage(
                     summaryMaxLines = Int.MAX_VALUE,
                     dividerColor = dividerColor,
                     onCheckedChange = onProfilesEnabledChanged,
-                )
-            }
-        }
-    }
-}
-
-/** A setting with a few values: the current one at the end of the row, the list under it. */
-@Composable
-private fun <T> DropdownValueRow(
-    title: String,
-    selected: T,
-    options: List<T>,
-    label: @Composable (T) -> String,
-    dividerColor: Color,
-    onSelected: (T) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        SettingsCardValueRow(
-            title = title,
-            value = label(selected),
-            summary = null,
-            dividerColor = dividerColor,
-            divider = true,
-            onClick = { expanded = true },
-        )
-        SettingsDropdown(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEach { option ->
-                SettingsDropdownItem(
-                    label = label(option),
-                    selected = option == selected,
-                    onClick = {
-                        expanded = false
-                        onSelected(option)
-                    },
                 )
             }
         }
