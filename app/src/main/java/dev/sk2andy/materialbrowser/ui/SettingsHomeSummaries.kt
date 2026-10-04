@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
@@ -20,6 +21,11 @@ internal data class SettingsHomeState(
     val httpsOnlyMode: HttpsOnlyMode,
     val isHttpsOnlySupported: Boolean,
     val downloadSummary: String,
+    val searchSuggestionsOn: Boolean = false,
+    val tabCount: Int = 0,
+    val userscriptCount: Int = 0,
+    val capsuleCount: Int = 0,
+    val isDefaultBrowser: Boolean = false,
 )
 
 /** The pure part of the home's summaries, string resources picked by the settings. */
@@ -50,6 +56,16 @@ internal object SettingsHomeSummaryRules {
             else -> null
         }
     }
+
+    /** Parts of a summary, the missing ones left out, joined the way the board joins them. */
+    fun join(parts: List<String?>): String? =
+        parts.filterNot { it.isNullOrBlank() }.joinToString(SEPARATOR).ifEmpty { null }
+
+    /** From a large font on, the «Make default» button goes under the text instead of beside it. */
+    fun stacksMakeDefault(fontScale: Float): Boolean = fontScale >= LARGE_FONT_SCALE
+
+    private const val SEPARATOR = " · "
+    private const val LARGE_FONT_SCALE = 1.3f
 }
 
 /** The line under [destination] on the settings home; the registry's description otherwise. */
@@ -63,8 +79,30 @@ internal fun settingsHomeSummary(
         stringResource(SettingsHomeSummaryRules.chromeStyle(state.appearance.chromeStyle)),
         stringResource(SettingsHomeSummaryRules.theme(state.appearance.appearanceMode)),
     )
-    SettingsDestination.Search -> state.searchEngine.displayName
+    SettingsDestination.Search -> SettingsHomeSummaryRules.join(
+        listOf(
+            state.searchEngine.displayName,
+            stringResource(R.string.settings_home_search_suggestions)
+                .takeIf { state.searchSuggestionsOn },
+        ),
+    )
     SettingsDestination.Downloads -> state.downloadSummary
+    SettingsDestination.TabsAndGestures -> state.tabCount.takeIf { it > 0 }
+        ?.let { count -> pluralStringResource(R.plurals.settings_home_open_tabs, count, count) }
+        ?: registrySummary(destination)
+    SettingsDestination.Userscripts -> state.userscriptCount.takeIf { it > 0 }
+        ?.let { count ->
+            pluralStringResource(R.plurals.settings_home_userscripts_count, count, count)
+        }
+        ?: registrySummary(destination)
+    SettingsDestination.SiteCapsules -> state.capsuleCount.takeIf { it > 0 }
+        ?.let { count -> pluralStringResource(R.plurals.settings_home_capsules_count, count, count) }
+        ?: registrySummary(destination)
+    SettingsDestination.Browser -> if (state.isDefaultBrowser) {
+        stringResource(R.string.settings_default_browser_active)
+    } else {
+        registrySummary(destination)
+    }
     SettingsDestination.ProtectionAndData ->
         SettingsHomeSummaryRules.protection(state)?.let { stringResource(it) }
             ?: registrySummary(destination)

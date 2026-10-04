@@ -495,6 +495,19 @@
     <string name="settings_home_protection_trackers_https">Blocks trackers · HTTPS only</string>
     <string name="settings_home_protection_trackers">Blocks trackers</string>
     <string name="settings_home_protection_https">HTTPS only</string>
+    <string name="settings_home_search_suggestions">suggestions</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d open tab</item>
+        <item quantity="other">%1$d open tabs</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d script</item>
+        <item quantity="other">%1$d scripts</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d capsule</item>
+        <item quantity="other">%1$d capsules</item>
+    </plurals>
     <string name="settings_browser_group_general">Browser setup</string>
     <string name="settings_browser_group_startup">Startup</string>
     <string name="settings_browser_group_favorites">Favorites</string>
