@@ -290,6 +290,9 @@ def tour(suffix):
     def glance():
         """Glance (board W-Glance): a long press on example.com's link opens the live preview
         card with the link actions under it. Back closes it without opening the link."""
+        # Its own page, so the step does not depend on where the one before left off.
+        open_url("https://example.com/")
+        time.sleep(10)
         link = find("Learn more", "More information", contains=True)
         for _ in range(3):
             if link is not None:
