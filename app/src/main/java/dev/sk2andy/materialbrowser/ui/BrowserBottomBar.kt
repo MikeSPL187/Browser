@@ -226,6 +226,8 @@ internal fun BrowserBottomBar(
     onShare: () -> Unit,
     onPrint: () -> Unit,
     onTranslate: () -> Unit,
+    splitView: Boolean = false,
+    onSplitViewChange: ((Boolean) -> Unit)? = null,
     onReaderStudio: () -> Unit,
     onOpenCandyTrail: () -> Unit,
     onSnooze: () -> Unit,
@@ -696,6 +698,14 @@ internal fun BrowserBottomBar(
                                 onShare = onShare,
                                 onPrint = onPrint,
                                 onTranslate = onTranslate,
+                                splitView = splitView,
+                                // The menu closes with the switch, so the two cards show at once.
+                                onSplitViewChange = onSplitViewChange?.let { change ->
+                                    { enabled: Boolean ->
+                                        menuExpanded = false
+                                        change(enabled)
+                                    }
+                                },
                                 onReaderStudio = onReaderStudio,
                                 onOpenCandyTrail = onOpenCandyTrail,
                                 onSnooze = onSnooze,

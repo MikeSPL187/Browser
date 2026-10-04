@@ -35,6 +35,7 @@ enum class BrowserFeatureMenuAction {
     ParkAddressBarRight,
     OpenReader,
     TranslatePage,
+    ToggleSplitView,
     FindInPage,
     Share,
     OpenExternal,
@@ -76,6 +77,7 @@ enum class BrowserFeatureMenuLabelKey {
     ParkAddressBarRight,
     Reader,
     Translate,
+    SplitView,
     FindInPage,
     Share,
     OpenExternal,
@@ -136,6 +138,8 @@ data class BrowserFeatureMenuState(
     val isPinned: Boolean = false,
     val canOpenReader: Boolean = false,
     val canTranslatePage: Boolean = false,
+    /** Split View open or not; null when the menu cannot switch it. */
+    val isSplitView: Boolean? = null,
     val canUseDocumentActions: Boolean = false,
     val canToggleCookieBannerRemoval: Boolean = false,
     val isCookieBannerRemovalEnabled: Boolean = false,
@@ -262,6 +266,16 @@ object BrowserFeatureMenuRules {
                 enabled = state.canTranslatePage,
             ),
         )
+        state.isSplitView?.let { split ->
+            add(
+                toggle(
+                    BrowserFeatureMenuAction.ToggleSplitView,
+                    BrowserFeatureMenuLabelKey.SplitView,
+                    true,
+                    split,
+                ),
+            )
+        }
         add(
             command(
                 BrowserFeatureMenuAction.FindInPage,

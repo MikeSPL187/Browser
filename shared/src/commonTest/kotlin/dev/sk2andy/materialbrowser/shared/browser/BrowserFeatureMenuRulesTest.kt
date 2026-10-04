@@ -166,4 +166,20 @@ class BrowserFeatureMenuRulesTest {
         assertTrue(items.any { it.action == BrowserFeatureMenuAction.ParkAddressBarRight })
         assertFalse(items.any { it.action == BrowserFeatureMenuAction.DockAddressBar })
     }
+
+    @Test
+    fun `split view is a tile only where the browser can open it`() {
+        assertTrue(
+            BrowserFeatureMenuRules.items(BrowserFeatureMenuState())
+                .none { it.action == BrowserFeatureMenuAction.ToggleSplitView },
+        )
+        val split = BrowserFeatureMenuRules.items(BrowserFeatureMenuState(isSplitView = false))
+            .single { it.action == BrowserFeatureMenuAction.ToggleSplitView }
+        assertFalse(split.checked == true)
+        assertTrue(split.enabled)
+        assertEquals(
+            BrowserMenuEntry.SplitView,
+            BrowserMenuLayoutRules.entryForAction(BrowserFeatureMenuAction.ToggleSplitView),
+        )
+    }
 }

@@ -490,6 +490,7 @@ private fun TabQuickAction.labelRes(): Int = when (this) {
 }
 
 private fun TabMoreAction.labelRes(): Int = when (this) {
+    TabMoreAction.SideBySide -> R.string.split_view_open_side_by_side
     TabMoreAction.AddBookmark -> R.string.action_add_favorite
     TabMoreAction.RemoveBookmark -> R.string.action_remove_favorite
     TabMoreAction.MuteSite -> R.string.action_mute_domain

@@ -47,6 +47,7 @@ enum class BrowserMenuEntry(
     DuplicateTab("duplicate_tab", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Reader("reader", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Translate("translate", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
+    SplitView("split_view", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     FindInPage("find_in_page", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Share("share", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
     OpenExternal("open_external", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
@@ -275,6 +276,7 @@ object BrowserMenuLayoutRules {
         -> BrowserMenuEntry.AddressBarDocking
         BrowserFeatureMenuAction.OpenReader -> BrowserMenuEntry.Reader
         BrowserFeatureMenuAction.TranslatePage -> BrowserMenuEntry.Translate
+        BrowserFeatureMenuAction.ToggleSplitView -> BrowserMenuEntry.SplitView
         BrowserFeatureMenuAction.FindInPage -> BrowserMenuEntry.FindInPage
         BrowserFeatureMenuAction.Share -> BrowserMenuEntry.Share
         BrowserFeatureMenuAction.OpenExternal -> BrowserMenuEntry.OpenExternal

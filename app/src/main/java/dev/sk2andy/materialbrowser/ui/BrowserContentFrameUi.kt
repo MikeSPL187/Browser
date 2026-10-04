@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import dev.sk2andy.materialbrowser.browser.BrowserContentFrame
 import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
+import dev.sk2andy.materialbrowser.ui.theme.VolaSplit
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
@@ -75,54 +77,79 @@ internal fun BrowserContentFrameMask(
     modifier: Modifier = Modifier,
     coveredBottomPx: () -> Float = { 0f },
 ) {
+    BrowserCardsMask(frames = listOf(frame), modifier = modifier, coveredBottomPx = coveredBottomPx)
+}
+
+/**
+ * The aura around several page cards (Split View's two). The card at [highlighted] is ringed in
+ * the accent instead of the hairline; [coveredBottomPx] lifts the last card's bottom edge.
+ */
+@Composable
+internal fun BrowserCardsMask(
+    frames: List<BrowserContentFrame>,
+    modifier: Modifier = Modifier,
+    highlighted: Int? = null,
+    coveredBottomPx: () -> Float = { 0f },
+) {
     val aura = VolaTheme.auraBrush
     val outlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = VolaFrame.OUTLINE_ALPHA)
+    val highlightColor = MaterialTheme.colorScheme.primary
     val shadowColor = VolaFrame.shadowColor.copy(alpha = VolaFrame.SHADOW_ALPHA).toArgb()
     Canvas(modifier = modifier.graphicsLayer()) {
-        val card = RoundRect(
-            left = frame.leftPx.toFloat(),
-            top = frame.topPx.toFloat(),
-            right = size.width - frame.rightPx,
-            bottom = size.height - frame.bottomPx - coveredBottomPx().coerceAtLeast(0f),
-            cornerRadius = CornerRadius(VolaFrame.pageRadius.toPx()),
-        )
-        if (card.width <= 0f || card.height <= 0f) return@Canvas
-        val cardPath = Path().apply { addRoundRect(card) }
+        val cards = frames.mapIndexedNotNull { index, frame ->
+            val covered = if (index == frames.lastIndex) coveredBottomPx().coerceAtLeast(0f) else 0f
+            RoundRect(
+                left = frame.leftPx.toFloat(),
+                top = frame.topPx.toFloat(),
+                right = size.width - frame.rightPx,
+                bottom = size.height - frame.bottomPx - covered,
+                cornerRadius = CornerRadius(VolaFrame.pageRadius.toPx()),
+            ).takeIf { card -> card.width > 0f && card.height > 0f }?.let { card -> index to card }
+        }
+        if (cards.isEmpty()) return@Canvas
+        val cardsPath = Path().apply { cards.forEach { (_, card) -> addRoundRect(card) } }
         val surround = Path().apply {
             fillType = PathFillType.EvenOdd
             addRect(Rect(Offset.Zero, size))
-            addRoundRect(card)
+            cards.forEach { (_, card) -> addRoundRect(card) }
         }
         drawPath(surround, aura)
-        clipPath(cardPath, clipOp = ClipOp.Difference) {
-            drawIntoCanvas { canvas ->
-                val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-                    color = shadowColor
-                    setShadowLayer(
-                        VolaFrame.shadowBlur.toPx() * CSS_BLUR_TO_SHADOW_RADIUS,
-                        0f,
-                        VolaFrame.shadowOffsetY.toPx(),
-                        shadowColor,
+        clipPath(cardsPath, clipOp = ClipOp.Difference) {
+            cards.forEach { (index, card) ->
+                drawIntoCanvas { canvas ->
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        color = shadowColor
+                        setShadowLayer(
+                            VolaFrame.shadowBlur.toPx() * CSS_BLUR_TO_SHADOW_RADIUS,
+                            0f,
+                            VolaFrame.shadowOffsetY.toPx(),
+                            shadowColor,
+                        )
+                    }
+                    canvas.nativeCanvas.drawRoundRect(
+                        card.left,
+                        card.top,
+                        card.right,
+                        card.bottom,
+                        card.topLeftCornerRadius.x,
+                        card.topLeftCornerRadius.y,
+                        paint,
                     )
                 }
-                canvas.nativeCanvas.drawRoundRect(
-                    card.left,
-                    card.top,
-                    card.right,
-                    card.bottom,
-                    card.topLeftCornerRadius.x,
-                    card.topLeftCornerRadius.y,
-                    paint,
+                val ringed = index == highlighted
+                val outline = if (ringed) {
+                    VolaSplit.activeOutlineWidth.toPx()
+                } else {
+                    VolaFrame.outlineWidth.toPx()
+                }
+                drawRoundRect(
+                    color = if (ringed) highlightColor else outlineColor,
+                    topLeft = Offset(card.left - outline / 2f, card.top - outline / 2f),
+                    size = Size(card.width + outline, card.height + outline),
+                    cornerRadius = CornerRadius(card.topLeftCornerRadius.x + outline / 2f),
+                    style = Stroke(width = outline),
                 )
             }
-            val outline = VolaFrame.outlineWidth.toPx()
-            drawRoundRect(
-                color = outlineColor,
-                topLeft = Offset(card.left - outline / 2f, card.top - outline / 2f),
-                size = Size(card.width + outline, card.height + outline),
-                cornerRadius = CornerRadius(card.topLeftCornerRadius.x + outline / 2f),
-                style = Stroke(width = outline),
-            )
         }
     }
 }
