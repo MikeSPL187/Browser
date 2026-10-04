@@ -127,6 +127,7 @@ class FavoritesActivityInstrumentedTest {
             ActivityScenario.launch(FavoritesActivity::class.java).use {
                 composeRule.onNodeWithTag("favorites_folder:${parent.id}").performClick()
                 composeRule.onNodeWithTag("favorites_folder:${child.id}").performClick()
+                composeRule.onNodeWithTag("favorites_actions:${first.id}").performClick()
                 composeRule.onNodeWithTag(FavoritesScreenTestTags.delete(first.url)).performClick()
                 composeRule.waitUntil(5_000) { store.loadFavoriteLibrary().favorites.size == 1 }
                 assertEquals(listOf(parent, child, second), store.loadFavoriteLibrary().entries)

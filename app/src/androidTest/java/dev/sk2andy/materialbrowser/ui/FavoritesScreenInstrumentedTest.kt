@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -79,6 +80,7 @@ class FavoritesScreenInstrumentedTest {
         composeRule.onNodeWithText(alpha.title).assertDoesNotExist()
         composeRule.onNodeWithText(beta.title).assertIsDisplayed()
 
+        composeRule.onNodeWithTag("favorites_actions:${beta.id}").performClick()
         composeRule.onNodeWithTag(FavoritesScreenTestTags.delete(beta.url)).performClick()
         composeRule.onNodeWithText(beta.title).assertDoesNotExist()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -194,9 +196,71 @@ class FavoritesScreenInstrumentedTest {
         composeRule.onNodeWithTag("favorites_destination:sibling").assertIsDisplayed()
     }
 
-    private fun favorite(url: String, title: String) = FavoriteEntry(
+    @Test
+    fun sortMenuOrdersSitesByNameOrNewestFirst() {
+        val beta = favorite("https://beta.example/", "Beta", addedAt = 1)
+        val alpha = favorite("https://alpha.example/", "Alpha", addedAt = 2)
+        val chosen = mutableListOf<FavoritesSort>()
+        composeRule.setContent {
+            var sort by remember { mutableStateOf(FavoritesSort.Manual) }
+            MaterialBrowserTheme {
+                FavoritesScreen(
+                    favorites = listOf(beta, alpha),
+                    onDeleteFavorite = { _, onComplete -> onComplete(null) },
+                    onUndoDelete = {},
+                    onOpenFavorite = {},
+                    onBack = {},
+                    sort = sort,
+                    onSortChange = { option ->
+                        chosen += option
+                        sort = option
+                    },
+                )
+            }
+        }
+
+        assertEquals(listOf("Beta", "Alpha"), siteOrder("Beta", "Alpha"))
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.Sort).performClick()
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.sort(FavoritesSort.Name)).performClick()
+        assertEquals(listOf("Alpha", "Beta"), siteOrder("Beta", "Alpha"))
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.Sort).performClick()
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.sort(FavoritesSort.Recent)).performClick()
+        assertEquals(listOf("Alpha", "Beta"), siteOrder("Beta", "Alpha"))
+        assertEquals(listOf(FavoritesSort.Name, FavoritesSort.Recent), chosen)
+    }
+
+    @Test
+    fun emptyLibraryOffersBookmarkImportButSearchDoesNot() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var imports = 0
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                FavoritesScreen(
+                    favorites = emptyList(),
+                    onDeleteFavorite = { _, onComplete -> onComplete(null) },
+                    onUndoDelete = {},
+                    onOpenFavorite = {},
+                    onBack = {},
+                    onImportBookmarks = { imports++ },
+                )
+            }
+        }
+
+        val action = context.getString(R.string.favorites_empty_action)
+        composeRule.onNodeWithText(action).performClick()
+        assertEquals(1, imports)
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.SearchField).performTextInput("nothing")
+        composeRule.onNodeWithText(action).assertDoesNotExist()
+    }
+
+    /** The given site titles, top to bottom as they sit on screen. */
+    private fun siteOrder(vararg titles: String): List<String> = titles.sortedBy { title ->
+        composeRule.onNodeWithText(title).getUnclippedBoundsInRoot().top.value
+    }
+
+    private fun favorite(url: String, title: String, addedAt: Long = System.currentTimeMillis()) = FavoriteEntry(
         url = url,
         title = title,
-        addedAt = System.currentTimeMillis(),
+        addedAt = addedAt,
     )
 }

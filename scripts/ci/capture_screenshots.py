@@ -611,6 +611,33 @@ def tour(suffix):
         time.sleep(2)
     step("download-check", download_check)
 
+    def library():
+        """History, favorites, downloads and snoozed tabs (boards W-History, W-Favorites,
+        W-Downloads, W-Snoozed, W-States; Q18a and Q18b), each opened
+        from the menu in its own screen; Back returns to the page. Without the menu the step
+        skips rather than tapping blindly, so a missed label cannot leave an editor open. Its own
+        page first: the step before may leave the bar folded into the unlabeled capsule."""
+        open_url("https://example.com/")
+        time.sleep(6)
+        for labels, name in ((("History", "История"), "history"),
+                             (("Favorites", "Избранное"), "favorites"),
+                             (("Downloads", "Загрузки"), "downloads"),
+                             (("Snoozed Tabs", "Отложенные вкладки"), "snoozed")):
+            if not tap("More options", "Другие действия"):
+                log(f"not found: menu for {name}")
+                return
+            time.sleep(2)
+            if not tap_scrolling(*labels, name=f"{name}-menu-{suffix}"):
+                adb("shell", "input", "keyevent", "BACK")
+                time.sleep(1)
+                continue
+            time.sleep(4)
+            shot(f"{name}-{suffix}")
+            save_ui(f"{name}-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+    step("library", library)
+
     def workspace_swipe():
         """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
         the next workspace's aura shows through. The light tour makes the second workspace."""

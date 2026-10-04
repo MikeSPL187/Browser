@@ -11,6 +11,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
@@ -63,6 +65,8 @@ class HistoryScreenInstrumentedTest {
         composeRule.onNodeWithText("Newest visit").assertIsDisplayed()
         composeRule.onNodeWithText("Older visit").assertIsDisplayed()
 
+        // «Distinct URLs» lives in the header's «⋮» menu, which stays open while it toggles.
+        composeRule.onNodeWithTag(HistoryScreenTestTags.More).performClick()
         composeRule.onNodeWithTag(HistoryScreenTestTags.Distinct)
             .assertIsNotSelected()
             .performClick()
@@ -254,9 +258,38 @@ class HistoryScreenInstrumentedTest {
             .performClick()
             .assertIsSelected()
         composeRule.onNodeWithTag(HistoryScreenTestTags.ClearConfirm).performClick()
+        // The history hides at once and is cleared when the «Undo» window closes.
+        composeRule.mainClock.advanceTimeBy(LibraryRules.UNDO_WINDOW_MILLIS + 1_000)
+        composeRule.waitForIdle()
 
         assertEquals(setOf("personal", "work"), request.get()?.profileIds)
         assertTrue(request.get()!!.sinceInclusiveMillis <= personalTime)
         assertTrue(request.get()!!.untilExclusiveMillis > workTime)
+    }
+
+    @Test
+    fun emptyHistoryOpensANewTabButAFruitlessSearchDoesNot() {
+        val action = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.history_empty_action)
+        var newTabs = 0
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                HistoryScreen(
+                    profiles = listOf(BrowserProfile(id = "personal", emoji = "🏠")),
+                    activeProfileId = "personal",
+                    history = emptyList(),
+                    onDeleteEntries = {},
+                    onClearHistory = {},
+                    onOpenEntry = {},
+                    onBack = {},
+                    onOpenNewTab = { newTabs++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(action).performClick()
+        assertEquals(1, newTabs)
+        composeRule.onNodeWithTag(HistoryScreenTestTags.SearchField).performTextInput("nothing")
+        composeRule.onNodeWithText(action).assertDoesNotExist()
     }
 }
