@@ -57,6 +57,16 @@
     <string name="cd_find_in_page_next">Следующее совпадение</string>
     <string name="cd_find_in_page_close">Закрыть поиск на странице</string>
     <string name="new_tab_title">Новая вкладка</string>
+    <string name="split_view_title">Split View</string>
+    <string name="split_view_description">Две вкладки одна над другой</string>
+    <string name="split_view_open_side_by_side">Открыть рядом</string>
+    <string name="split_view_close">Выйти из Split View</string>
+    <string name="split_view_swap">Поменять местами</string>
+    <string name="split_view_resize">Разделитель. Потяните, чтобы изменить размер, до края — чтобы закрыть</string>
+    <string name="split_view_activate">Перейти к этой вкладке</string>
+    <string name="split_view_pane_top">Верхняя вкладка: %1$s</string>
+    <string name="split_view_pane_bottom">Нижняя вкладка: %1$s</string>
+    <string name="split_view_no_companion">Откройте ещё одну страницу, чтобы показать две рядом</string>
     <string name="cd_new_tab">Новая вкладка</string>
     <plurals name="cd_open_tab_overview_count">
         <item quantity="one">Открыть обзор вкладок, %1$d вкладка</item>
@@ -464,6 +474,10 @@
     <string name="action_open_link_private_background_tab">Открыть в новой приватной фоновой вкладке</string>
     <string name="action_open_link_private_foreground_tab">Открыть в новой приватной вкладке и перейти</string>
     <string name="link_peek_title">Быстрый просмотр</string>
+    <string name="glance_close">Закрыть просмотр</string>
+    <string name="glance_not_in_history">Не попадёт в историю, пока не откроете</string>
+    <string name="glance_private_note">Приватный просмотр: из него ничего не сохранится</string>
+    <string name="glance_pull_to_open">Потяните вверх, чтобы открыть во вкладке</string>
     <string name="action_open_in_new_tab">Открыть в новой вкладке</string>
     <string name="action_open_in_new_tab_and_switch">Открыть в новой вкладке и перейти</string>
     <string name="action_open_link_in_private_tab">Открыть в приватной вкладке</string>

@@ -377,6 +377,13 @@ object VolaIcons {
         )
     }
 
+    val SwapVert: ImageVector by lazy {
+        materialSymbol(
+            name = "SwapVert",
+            pathData = "M360 520 q-17 0 -28.5 -11.5 T320 480 v-247 l-75 75 q-11 11 -27.5 11 T189 308 q-12 -12 -12 -28.5 t12 -28.5 l143 -143 q6 -6 13 -8.5 t15 -2.5 q8 0 15 2.5 t13 8.5 l144 144 q12 12 11.5 28 T531 308 q-12 11 -28 11.5 T475 308 l-75 -75 v247 q0 17 -11.5 28.5 T360 520 Z M600 863 q-8 0 -15 -2.5 t-13 -8.5 L428 708 q-12 -12 -11.5 -28 t12.5 -28 q12 -11 28 -11.5 t28 11.5 l75 75 v-247 q0 -17 11.5 -28.5 T600 440 q17 0 28.5 11.5 T640 480 v247 l75 -75 q11 -11 27.5 -11 t28.5 11 q12 12 12 28.5 T771 709 L628 852 q-6 6 -13 8.5 T600 863 Z",
+        )
+    }
+
     val Sync: ImageVector by lazy {
         materialSymbol(
             name = "Sync",
@@ -495,6 +502,7 @@ object VolaIcons {
             Settings,
             Star,
             StopFilled,
+            SwapVert,
             Sync,
             Tab,
             TabGroup,

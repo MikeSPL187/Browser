@@ -165,7 +165,6 @@ import dev.sk2andy.materialbrowser.browser.integration.AssistantSummaryResult
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.browser.integration.DefaultBrowserRole
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppLauncher
-import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoff
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoffRules
 import dev.sk2andy.materialbrowser.browser.integration.ExternalLaunchResult
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrant
@@ -342,35 +341,6 @@ internal data class BrowserActivityResultIdentity(
     val navigationGeneration: Int,
 )
 
-private data class FirefoxExtensionOptionsTabChrome(
-    val title: String,
-    val scheme: String,
-    val host: String,
-    val port: Int,
-) {
-    fun owns(url: String): Boolean {
-        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return false
-        return uri.scheme?.lowercase() == scheme &&
-            uri.host?.lowercase() == host &&
-            uri.port == port
-    }
-
-    companion object {
-        fun create(title: String, url: String): FirefoxExtensionOptionsTabChrome? {
-            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return null
-            val scheme = uri.scheme?.lowercase() ?: return null
-            val host = uri.host?.lowercase()?.takeIf(String::isNotBlank) ?: return null
-            if (scheme != "moz-extension") return null
-            return FirefoxExtensionOptionsTabChrome(
-                title = title,
-                scheme = scheme,
-                host = host,
-                port = uri.port,
-            )
-        }
-    }
-}
-
 private data class ExternalNavigationRollback(
     val tabId: String,
     val session: AndroidBrowserEngineSessionPort,
@@ -387,44 +357,10 @@ private data class ExternalAppNavigationRecovery(
     var restored: Boolean = false,
 )
 
-private sealed interface ExternalAppHandoffSource {
-    data class Tab(
-        val tabId: String,
-        val profileId: String,
-        val isPrivate: Boolean,
-        val session: AndroidBrowserEngineSessionPort,
-    ) : ExternalAppHandoffSource
-
-    data class Preview(
-        val sessionId: Long,
-        val generation: Int,
-        val profileId: String,
-        val session: AndroidBrowserEngineSessionPort,
-    ) : ExternalAppHandoffSource
-}
-
-private data class PendingExternalAppHandoff(
-    val match: ExternalAppHandoff,
-    val source: ExternalAppHandoffSource,
+private data class AutoDeAmpReplacementGuard(
+    val publisherUrl: String,
+    val expiresAtElapsedRealtime: Long,
 )
-
-private data class PendingExternalAppPrompt(
-    val prompt: ExternalAppPrompt,
-    val requestUrl: String,
-    val safeHttpUrl: String?,
-    val webTargetUrl: String?,
-    val source: ExternalAppHandoffSource,
-    val grant: ExternalNavigationGrant?,
-    val isRedirect: Boolean,
-    val sourceNavigationGeneration: Int,
-    val sourcePageUrl: String?,
-)
-
-private enum class ExternalAppNavigationHandling {
-    Automatic,
-    Prompted,
-    Unavailable,
-}
 
 enum class BrowserGestureHapticFeedback {
     RubberbandStart,
@@ -1367,6 +1303,12 @@ class BrowserController(
     private var isCandyTrailRestoreInProgress = false
     private var candyTrailEpoch = 0
     private val store = BrowserSessionStore(activity)
+    val splitView = SplitViewController { tabId ->
+        // The tab left Split View: it is in the background again, unless it is the selected one.
+        if (tabId != selectedTabId) browserEngineSessions[tabId]?.setActive(false)
+    }
+    private var splitCompanionFrame = BrowserContentFrame.None
+    private var splitCompanionContainer: FrameLayout? = null
     val addressBar = AddressBarController(
         store = store,
         host = object : AddressBarController.Host {
@@ -2588,6 +2530,51 @@ class BrowserController(
         }
     }
 
+    /** Split View's other tab in its own card; it stays active while the selected tab is too. */
+    fun attachSplitCompanionView(
+        container: FrameLayout,
+        onContentPresented: (String) -> Unit,
+    ): View? {
+        if (browsingDataClearPending || isActiveProfileLocked) {
+            detachBrowserEngineView(container)
+            return null
+        }
+        splitCompanionContainer = container
+        return attachSelectedGeckoView(
+            container = container,
+            onContentPresented = onContentPresented,
+            backdropCaptureEnabled = false,
+            companion = true,
+        )?.also { setSplitCompanionActive(isActivityResumed) }
+    }
+
+    /** Follows the screen: the companion pane plays while the activity is in front. */
+    fun setSplitCompanionActive(active: Boolean) {
+        splitView.companionTabId?.let { tabId -> browserEngineSessions[tabId] }?.setActive(active)
+    }
+
+    /** Opens Split View next to [companionTabId], or the most recent other page. */
+    fun openSplitView(companionTabId: String? = null): Boolean {
+        val companion = companionTabId
+            ?.takeIf { id -> id != selectedTabId && activeTabs.any { tab -> tab.id == id } }
+            ?: SplitViewRules.companionFor(activeTabs, selectedTabId)
+            ?: return false
+        markResidentSessionAccess(companion)
+        splitView.open(companion)
+        return true
+    }
+
+    fun activateSplitCompanion() = splitView.activateCompanion(selectedTabId, ::selectTab)
+
+    fun updateSplitCompanionFrame(frame: BrowserContentFrame) {
+        if (splitCompanionFrame == frame) return
+        splitCompanionFrame = frame
+        lastWindowInsets?.let(::dispatchWindowInsetsToAttachedEngineViews)
+    }
+
+    private fun backdropBlurRegionFor(tabId: String): BrowserBackdropBlurRegion? =
+        selectedBrowserBackdropBlurRegion.takeIf { tabId == selectedTabId }
+
     fun attachSelectedBrowserEngineView(
         container: FrameLayout,
         backdropCaptureEnabled: Boolean = false,
@@ -2638,13 +2625,20 @@ class BrowserController(
     private fun selectedAttachedBrowserEngineView(): View? =
         selectedAttachedBrowserEngineBinding()?.view
 
+    /** Attaches the selected tab, or with [companion] Split View's other tab, to [container]. */
     private fun attachSelectedGeckoView(
         container: FrameLayout,
         onContentPresented: ((String) -> Unit)?,
         backdropCaptureEnabled: Boolean,
+        companion: Boolean = false,
     ): View? {
+        val tabId = if (companion) {
+            splitView.companionTabId ?: return null.also { detachBrowserEngineView(container) }
+        } else {
+            selectedTabId
+        }
         val selectedSessionIsBeingReleased =
-            browserEngineSessions[selectedTabId] in geckoViewSessionsBeingReleased
+            browserEngineSessions[tabId] in geckoViewSessionsBeingReleased
         if (isGeckoViewBindingMutationInProgress || selectedSessionIsBeingReleased) {
             if (
                 !isGeckoViewBindingMutationInProgress ||
@@ -2658,7 +2652,7 @@ class BrowserController(
             }
             val binding = geckoViewBindings[container]
             return binding?.view?.takeIf { view ->
-                binding.tabId == selectedTabId && view.parent === container
+                binding.tabId == tabId && view.parent === container
             }
         }
         isGeckoViewBindingMutationInProgress = true
@@ -2668,6 +2662,7 @@ class BrowserController(
                 container = container,
                 onContentPresented = onContentPresented,
                 backdropCaptureEnabled = backdropCaptureEnabled,
+                tabId = tabId,
             )
         } finally {
             geckoViewMutationHosts.clear()
@@ -2698,6 +2693,7 @@ class BrowserController(
                     container = container,
                     onContentPresented = request.onContentPresented,
                     backdropCaptureEnabled = request.backdropCaptureEnabled,
+                    companion = container === splitCompanionContainer,
                 )
             }
         }
@@ -2707,6 +2703,7 @@ class BrowserController(
         container: FrameLayout,
         onContentPresented: ((String) -> Unit)?,
         backdropCaptureEnabled: Boolean,
+        tabId: String,
     ): View? {
         fun awaitContent(binding: GeckoViewBinding) {
             if (onContentPresented == null) return
@@ -2714,7 +2711,7 @@ class BrowserController(
                 container.post {
                     if (
                         geckoViewBindings[container] === binding &&
-                        binding.tabId == selectedTabId &&
+                        binding.tabId == tabId &&
                         binding.view.parent === container
                     ) {
                         onContentPresented(binding.tabId)
@@ -2725,13 +2722,13 @@ class BrowserController(
 
         val current = geckoViewBindings[container]
         current
-            ?.takeIf { binding -> binding.tabId == selectedTabId }
+            ?.takeIf { binding -> binding.tabId == tabId }
             ?.session
             ?.let { session ->
                 session.setBackdropCaptureEnabled(backdropCaptureEnabled)
-                session.setBackdropBlurRegion(selectedBrowserBackdropBlurRegion)
+                session.setBackdropBlurRegion(backdropBlurRegionFor(tabId))
             }
-        if (current?.tabId == selectedTabId && current.view.parent === container) {
+        if (current?.tabId == tabId && current.view.parent === container) {
             runPendingInitialNavigationWhenViewReady(current)
             awaitContent(current)
             return current.view
@@ -2745,18 +2742,18 @@ class BrowserController(
             return current?.view
         }
         if (
-            presentation?.tabId == selectedTabId &&
+            presentation?.tabId == tabId &&
             presentationHost == FullscreenVideoHost.Overlay
         ) {
             container.removeAllViews()
             return null
         }
         if (
-            presentation?.tabId == selectedTabId &&
+            presentation?.tabId == tabId &&
             presentationHost == FullscreenVideoHost.BrowserViewport
         ) {
             val transferablePresentation = geckoViewBindings.entries.firstOrNull { (_, binding) ->
-                binding.tabId == selectedTabId &&
+                binding.tabId == tabId &&
                     binding.session === presentation.session &&
                     binding.view === presentation.view
             }
@@ -2784,7 +2781,7 @@ class BrowserController(
                 return binding.view
             }
         }
-        if (current?.tabId == selectedTabId && current.view.parent == null) {
+        if (current?.tabId == tabId && current.view.parent == null) {
             container.removeAllViews()
             attachGeckoViewBinding(container, current)
             dispatchCurrentWindowInsets(current.view, current.tabId)
@@ -2797,10 +2794,9 @@ class BrowserController(
             geckoViewBindings.remove(container)
         }
         container.removeAllViews()
-        val tabId = selectedTabId
         val engineSession = browserEngineSessionFor(tabId)
         engineSession.setBackdropCaptureEnabled(backdropCaptureEnabled)
-        engineSession.setBackdropBlurRegion(selectedBrowserBackdropBlurRegion)
+        engineSession.setBackdropBlurRegion(backdropBlurRegionFor(tabId))
         val transferable = geckoViewBindings.entries.firstOrNull { (host, binding) ->
             host !== container &&
                 binding.tabId == tabId &&
@@ -4761,7 +4757,12 @@ class BrowserController(
             },
             nativeTopHeaderSafeArea = nativeTopHeaderSafeArea,
             hostFrame = if (tabId != null && view !== geckoMediaPresentation?.view) {
-                contentFrame.toGeckoViewInsets()
+                val frame = if (tabId == splitView.companionTabId) {
+                    splitCompanionFrame
+                } else {
+                    contentFrame
+                }
+                frame.toGeckoViewInsets()
             } else {
                 GeckoViewInsets.Zero
             },
@@ -12643,6 +12644,7 @@ class BrowserController(
 
     private fun protectedResidentTabIds(): Set<String> = buildSet {
         selectedTabId.takeIf(String::isNotBlank)?.let(::add)
+        splitView.companionTabId?.let(::add)
         geckoMediaPresentation?.tabId?.let(::add)
         pictureInPictureOwnerTabId?.let(::add)
         pendingPermissionAccess?.identity?.tabId?.let(::add)
@@ -15300,7 +15302,8 @@ class BrowserController(
         val previousTabId = selectedTabId
         if (
             previousTabId != tabId &&
-            geckoMediaPresentation?.tabId != previousTabId
+            geckoMediaPresentation?.tabId != previousTabId &&
+            previousTabId != splitView.companionTabId
         ) {
             browserEngineSessions[previousTabId]?.setActive(false)
         }

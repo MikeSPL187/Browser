@@ -402,6 +402,59 @@ def tour(suffix):
         shot(f"https-upgrade-{suffix}")
     step("https-upgrade", https_upgrade)
 
+    def glance():
+        """Glance (board W-Glance): a long press on example.com's link opens the live preview
+        card with the link actions under it. Back closes it without opening the link."""
+        # Its own page, so the step does not depend on where the one before left off.
+        open_url("https://example.com/")
+        time.sleep(10)
+        link = find("Learn more", "More information", contains=True)
+        for _ in range(3):
+            if link is not None:
+                break
+            # The link sits under the page's translations: scroll it into view.
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+                str(width // 2), str(int(height * 0.35)), "500")
+            time.sleep(2)
+            link = find("Learn more", "More information", contains=True)
+        if link is None:
+            save_ui(f"glance-page-{suffix}")
+            log("not found: link for glance")
+            return
+        x, y = link["center"]
+        adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "900")
+        time.sleep(6)
+        shot(f"glance-{suffix}")
+        save_ui(f"glance-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("glance", glance)
+
+    def split_view():
+        """Split View (board W-Split): example.com above, the Zen page from earlier below; a tap
+        on the lower card makes it the active one; the pill's close button ends it."""
+        if not find("More options", "Другие действия"):
+            # The scrolled page left the compact capsule, which exposes no label: tap its spot.
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
+            time.sleep(2)
+        if not tap("More options", "Другие действия"):
+            log("not found: menu for split view")
+            return
+        time.sleep(2)
+        if not tap_scrolling("Split View", name=f"split-menu-{suffix}"):
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(6)
+        shot(f"split-view-{suffix}")
+        save_ui(f"split-view-{suffix}")
+        if tap("Bottom tab", "Нижняя вкладка", contains=True):
+            time.sleep(4)
+            shot(f"split-view-bottom-active-{suffix}", audit=False)
+        if not tap("Close Split View", "Выйти из Split View"):
+            log("split view: could not close it")
+        time.sleep(2)
+    step("split-view", split_view)
+
     def https_only_warning():
         """The HTTPS-only warning on a site without working HTTPS. Gecko shows it only when the
         upgraded request fails at the connection; a failed TLS handshake is a security error.

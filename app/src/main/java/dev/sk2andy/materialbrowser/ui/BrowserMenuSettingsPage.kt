@@ -81,6 +81,7 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.DuplicateTab -> R.string.action_duplicate_tab
     BrowserMenuEntry.Reader -> R.string.reader_open_action
     BrowserMenuEntry.Translate -> R.string.action_translate_page
+    BrowserMenuEntry.SplitView -> R.string.split_view_title
     BrowserMenuEntry.FindInPage -> R.string.action_find_in_page
     BrowserMenuEntry.Share -> R.string.action_share
     BrowserMenuEntry.OpenExternal -> R.string.action_open_in_app

@@ -64,6 +64,9 @@ internal fun TabOverviewTabActions(
             canDelete = TabDeletionRules.canDelete(it),
             canCloseAll = controller.activeTabs.any(TabDeletionRules::canDelete),
             otherWorkspaceCount = workspaces.count { workspace -> workspace.id != it.profileId },
+            canOpenSideBySide = it.url != BLANK_URL &&
+                it.id != controller.selectedTabId &&
+                it.isIncognito == controller.selectedTab.isIncognito,
         )
     }
     // Closes the sheet, then runs [action] on its tab.
@@ -148,6 +151,8 @@ internal fun TabOverviewTabActions(
         },
         onMoreAction = { action ->
             when (action) {
+                TabMoreAction.SideBySide ->
+                    dismissThen { target -> controller.openSplitView(target.id) }
                 TabMoreAction.AddBookmark, TabMoreAction.RemoveBookmark ->
                     dismissThen { target -> onToggleBookmark(target.id) }
                 TabMoreAction.MuteSite, TabMoreAction.UnmuteSite -> tab?.let { target ->
