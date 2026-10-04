@@ -1,23 +1,14 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
@@ -25,9 +16,11 @@ import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.shared.ui.settings.TranslationProviderSettings
-import dev.sk2andy.materialbrowser.shared.ui.settings.TranslationProviderSettingsStrings
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object BrowserSettingsTestTags {
@@ -42,6 +35,7 @@ internal object BrowserSettingsTestTags {
     const val InlineMediaPlayer = "browser_settings_inline_media_player"
 }
 
+/** Browser settings on cards (board W-Settings): general, startup, favorites, sites, links. */
 @Composable
 internal fun BrowserSettingsPage(
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
@@ -73,288 +67,197 @@ internal fun BrowserSettingsPage(
     onOpenDefaultBrowserSettings: () -> Unit,
     onBack: () -> Unit,
 ) {
-    var engineMenuExpanded by remember { mutableStateOf(false) }
-    var startupAddressFocusMenuExpanded by remember { mutableStateOf(false) }
-    var externalAppLinksMenuExpanded by remember { mutableStateOf(false) }
-    var inlineMediaPlayerMenuExpanded by remember { mutableStateOf(false) }
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
         title = stringResource(R.string.settings_section_browser),
         onBack = onBack,
     ) {
-        SettingsSectionTitle(stringResource(R.string.settings_browser_group_general))
-        Spacer(Modifier.height(8.dp))
-        if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
-            Box {
-                SettingsChoice(
-                    title = stringResource(R.string.settings_browser_engine_title),
-                    value = browserEngineKind.displayName(),
-                    expanded = engineMenuExpanded,
-                    onClick = { engineMenuExpanded = true },
-                    modifier = Modifier.testTag(BrowserSettingsTestTags.BrowserEngine),
-                )
-                SettingsDropdown(
-                    expanded = engineMenuExpanded,
-                    onDismissRequest = { engineMenuExpanded = false },
-                ) {
-                    AndroidBrowserEngineKind.entries.forEach { kind ->
-                        SettingsDropdownItem(
-                            label = kind.displayName(),
-                            selected = kind == browserEngineKind,
-                            onClick = {
-                                engineMenuExpanded = false
-                                if (kind != browserEngineKind) onBrowserEngineKindChanged(kind)
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            SettingsCardHeader(stringResource(R.string.settings_browser_group_general))
+            SettingsCard(containerColor = cardColor) {
+                if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+                    SettingsCardDropdownRow(
+                        title = stringResource(R.string.settings_browser_engine_title),
+                        selected = browserEngineKind,
+                        options = AndroidBrowserEngineKind.entries,
+                        label = { kind -> kind.displayName() },
+                        summary = stringResource(
+                            when (browserEngineKind) {
+                                AndroidBrowserEngineKind.GeckoView ->
+                                    R.string.settings_browser_engine_gecko_summary
+                                AndroidBrowserEngineKind.SystemWebView ->
+                                    R.string.settings_browser_engine_system_summary
                             },
-                        )
-                    }
+                        ),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onSelected = onBrowserEngineKindChanged,
+                        modifier = Modifier.testTag(BrowserSettingsTestTags.BrowserEngine),
+                    )
                 }
-            }
-            Text(
-                text = stringResource(
-                    when (browserEngineKind) {
-                        AndroidBrowserEngineKind.GeckoView ->
-                            R.string.settings_browser_engine_gecko_summary
-                        AndroidBrowserEngineKind.SystemWebView ->
-                            R.string.settings_browser_engine_system_summary
-                    },
-                ),
-                modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.settings_browser_engine_restart_warning),
-                modifier = Modifier.padding(start = 18.dp, top = 4.dp, end = 18.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-        Surface(
-            onClick = onOpenDefaultBrowserSettings,
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-                Text(
-                    stringResource(R.string.settings_default_browser),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    stringResource(
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_default_browser),
+                    summary = stringResource(
                         if (isDefaultBrowser) {
                             R.string.settings_default_browser_active
                         } else {
                             R.string.settings_make_default_browser
                         },
                     ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isDefaultBrowser) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    dividerColor = dividerColor,
+                    onClick = onOpenDefaultBrowserSettings,
+                )
+            }
+            if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+                // Switching the engine restarts Vola; said under the card, in the error color.
+                Text(
+                    text = stringResource(R.string.settings_browser_engine_restart_warning),
+                    modifier = Modifier.padding(SettingsCardTokens.headerPadding),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_browser_group_startup))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_startup_animation_title),
+                    summary = stringResource(R.string.settings_startup_animation_subtitle),
+                    checked = isStartupAnimationEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onStartupAnimationEnabledChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAnimation),
+                )
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.settings_startup_address_focus_title),
+                    selected = startupAddressFocusMode,
+                    options = StartupAddressFocusMode.entries,
+                    label = { mode -> mode.displayName() },
+                    summary = stringResource(R.string.settings_startup_address_focus_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onSelected = onStartupAddressFocusModeChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAddressFocus),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_open_home_on_startup_title),
+                    summary = stringResource(R.string.settings_open_home_on_startup_subtitle),
+                    checked = isOpenHomeOnStartupEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    onCheckedChange = onOpenHomeOnStartupEnabledChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.OpenHomeOnStartup),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_browser_group_favorites))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_favorite_bookmark_import_title),
+                    summary = stringResource(R.string.settings_favorite_bookmark_import_summary),
+                    dividerColor = dividerColor,
+                    onClick = onImportFavoriteBookmarks,
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_browser_group_websites))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_full_immersive_mode_title),
+                    summary = stringResource(R.string.settings_full_immersive_mode_subtitle),
+                    checked = isFullImmersiveModeEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onFullImmersiveModeEnabledChanged,
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_scroll_bar_title),
+                    summary = stringResource(R.string.settings_scroll_bar_subtitle),
+                    checked = isScrollBarEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onScrollBarEnabledChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.ScrollBar),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_video_autoplay_title),
+                    summary = stringResource(
+                        if (isVideoAutoplayBlockingSupported) {
+                            R.string.settings_video_autoplay_subtitle
+                        } else {
+                            R.string.settings_video_autoplay_unsupported
+                        },
+                    ),
+                    checked = isVideoAutoplayBlocked,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    enabled = isVideoAutoplayBlockingSupported,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onVideoAutoplayBlockedChanged,
+                )
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.settings_inline_media_player_title),
+                    selected = inlineMediaPlayerMode,
+                    options = InlineMediaPlayerMode.entries,
+                    label = { mode -> mode.displayName() },
+                    summary = stringResource(
+                        if (isInlineMediaPlayerSupported) {
+                            R.string.settings_inline_media_player_subtitle
+                        } else {
+                            R.string.settings_inline_media_player_unsupported
+                        },
+                    ),
+                    enabled = isInlineMediaPlayerSupported,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onSelected = onInlineMediaPlayerModeChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.InlineMediaPlayer),
+                )
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.settings_translation_provider),
+                    selected = pageTranslationProvider,
+                    options = PageTranslationProvider.entries,
+                    label = { provider -> provider.displayName },
+                    summary = stringResource(translationSummary(pageTranslationProvider)),
+                    dividerColor = dividerColor,
+                    onSelected = onPageTranslationProviderChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.TranslationProvider),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_browser_group_links))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.settings_external_app_links_title),
+                    selected = externalAppLinkHandling,
+                    options = ExternalAppLinkHandling.entries,
+                    label = { handling -> handling.displayName() },
+                    summary = stringResource(R.string.settings_external_app_links_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onSelected = onExternalAppLinkHandlingChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalAppLinks),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_external_link_preview_title),
+                    summary = stringResource(R.string.settings_external_link_preview_subtitle),
+                    checked = isExternalLinkPreviewEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    onCheckedChange = onExternalLinkPreviewEnabledChanged,
+                    modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalLinkPreview),
                 )
             }
         }
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_browser_group_startup))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_startup_animation_title),
-            subtitle = stringResource(R.string.settings_startup_animation_subtitle),
-            checked = isStartupAnimationEnabled,
-            onCheckedChange = onStartupAnimationEnabledChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAnimation),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_startup_address_focus_title),
-                value = startupAddressFocusMode.displayName(),
-                expanded = startupAddressFocusMenuExpanded,
-                onClick = { startupAddressFocusMenuExpanded = true },
-                modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAddressFocus),
-            )
-            SettingsDropdown(
-                expanded = startupAddressFocusMenuExpanded,
-                onDismissRequest = { startupAddressFocusMenuExpanded = false },
-            ) {
-                StartupAddressFocusMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == startupAddressFocusMode,
-                        onClick = {
-                            startupAddressFocusMenuExpanded = false
-                            if (mode != startupAddressFocusMode) {
-                                onStartupAddressFocusModeChanged(mode)
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Text(
-            text = stringResource(R.string.settings_startup_address_focus_summary),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_open_home_on_startup_title),
-            subtitle = stringResource(R.string.settings_open_home_on_startup_subtitle),
-            checked = isOpenHomeOnStartupEnabled,
-            onCheckedChange = onOpenHomeOnStartupEnabledChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.OpenHomeOnStartup),
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_browser_group_favorites))
-        Spacer(Modifier.height(8.dp))
-        SettingsLink(
-            icon = VolaIcons.Favorite,
-            title = stringResource(R.string.settings_favorite_bookmark_import_title),
-            subtitle = stringResource(R.string.settings_favorite_bookmark_import_summary),
-            onClick = onImportFavoriteBookmarks,
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_browser_group_websites))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_full_immersive_mode_title),
-            subtitle = stringResource(R.string.settings_full_immersive_mode_subtitle),
-            checked = isFullImmersiveModeEnabled,
-            onCheckedChange = onFullImmersiveModeEnabledChanged,
-        )
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_scroll_bar_title),
-            subtitle = stringResource(R.string.settings_scroll_bar_subtitle),
-            checked = isScrollBarEnabled,
-            onCheckedChange = onScrollBarEnabledChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.ScrollBar),
-        )
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_video_autoplay_title),
-            subtitle = stringResource(
-                if (isVideoAutoplayBlockingSupported) {
-                    R.string.settings_video_autoplay_subtitle
-                } else {
-                    R.string.settings_video_autoplay_unsupported
-                },
-            ),
-            checked = isVideoAutoplayBlocked,
-            enabled = isVideoAutoplayBlockingSupported,
-            onCheckedChange = onVideoAutoplayBlockedChanged,
-        )
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_inline_media_player_title),
-                value = inlineMediaPlayerMode.displayName(),
-                expanded = inlineMediaPlayerMenuExpanded,
-                onClick = { inlineMediaPlayerMenuExpanded = true },
-                enabled = isInlineMediaPlayerSupported,
-                modifier = Modifier.testTag(BrowserSettingsTestTags.InlineMediaPlayer),
-            )
-            SettingsDropdown(
-                expanded = inlineMediaPlayerMenuExpanded,
-                onDismissRequest = { inlineMediaPlayerMenuExpanded = false },
-            ) {
-                InlineMediaPlayerMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == inlineMediaPlayerMode,
-                        onClick = {
-                            inlineMediaPlayerMenuExpanded = false
-                            if (mode != inlineMediaPlayerMode) {
-                                onInlineMediaPlayerModeChanged(mode)
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Text(
-            text = stringResource(
-                if (isInlineMediaPlayerSupported) {
-                    R.string.settings_inline_media_player_subtitle
-                } else {
-                    R.string.settings_inline_media_player_unsupported
-                },
-            ),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        TranslationProviderSettings(
-            provider = pageTranslationProvider,
-            strings = TranslationProviderSettingsStrings(
-                title = stringResource(R.string.settings_translation_provider),
-                providerNames = PageTranslationProvider.entries.associateWith { it.displayName },
-                providerSummaries = mapOf(
-                    PageTranslationProvider.Google to stringResource(
-                        R.string.settings_translation_provider_google_summary,
-                    ),
-                    PageTranslationProvider.Yandex to stringResource(
-                        R.string.settings_translation_provider_summary,
-                    ),
-                    PageTranslationProvider.Kagi to stringResource(
-                        R.string.settings_translation_provider_kagi_summary,
-                    ),
-                ),
-            ),
-            containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-            enabled = true,
-            onProviderChanged = onPageTranslationProviderChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.TranslationProvider),
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_browser_group_links))
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_external_app_links_title),
-                value = externalAppLinkHandling.displayName(),
-                expanded = externalAppLinksMenuExpanded,
-                onClick = { externalAppLinksMenuExpanded = true },
-                modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalAppLinks),
-            )
-            SettingsDropdown(
-                expanded = externalAppLinksMenuExpanded,
-                onDismissRequest = { externalAppLinksMenuExpanded = false },
-            ) {
-                ExternalAppLinkHandling.entries.forEach { handling ->
-                    SettingsDropdownItem(
-                        label = handling.displayName(),
-                        selected = handling == externalAppLinkHandling,
-                        onClick = {
-                            externalAppLinksMenuExpanded = false
-                            if (handling != externalAppLinkHandling) {
-                                onExternalAppLinkHandlingChanged(handling)
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Text(
-            text = stringResource(R.string.settings_external_app_links_summary),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_external_link_preview_title),
-            subtitle = stringResource(R.string.settings_external_link_preview_subtitle),
-            checked = isExternalLinkPreviewEnabled,
-            onCheckedChange = onExternalLinkPreviewEnabledChanged,
-            modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalLinkPreview),
-        )
     }
+}
+
+/** What the chosen translation service does with the page. */
+private fun translationSummary(provider: PageTranslationProvider): Int = when (provider) {
+    PageTranslationProvider.Google -> R.string.settings_translation_provider_google_summary
+    PageTranslationProvider.Yandex -> R.string.settings_translation_provider_summary
+    PageTranslationProvider.Kagi -> R.string.settings_translation_provider_kagi_summary
 }
 
 @Composable

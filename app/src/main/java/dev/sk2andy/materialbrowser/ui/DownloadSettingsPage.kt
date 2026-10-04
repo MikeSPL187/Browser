@@ -1,8 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -17,13 +16,54 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManagerApp
 import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
 import dev.sk2andy.materialbrowser.data.DownloadManagerMode
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
+import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
+/** Who downloads: the built-in downloader, a question every time, or one installed app. */
+internal data class DownloadManagerChoice(
+    val mode: DownloadManagerMode,
+    val managerId: String? = null,
+)
+
+internal object DownloadSettingsRules {
+    /** The built-in downloader and the question first, then every installed manager. */
+    fun choices(externalManagers: List<ExternalDownloadManagerApp>): List<DownloadManagerChoice> =
+        listOf(
+            DownloadManagerChoice(DownloadManagerMode.BuiltIn),
+            DownloadManagerChoice(DownloadManagerMode.AskEveryTime),
+        ) + externalManagers.map { DownloadManagerChoice(DownloadManagerMode.External, it.id) }
+
+    /** A manager id only counts with the external mode; the other modes keep none. */
+    fun selected(settings: BrowserDownloadSettings): DownloadManagerChoice = DownloadManagerChoice(
+        mode = settings.managerMode,
+        managerId = settings.externalManagerId
+            .takeIf { settings.managerMode == DownloadManagerMode.External },
+    )
+
+    fun apply(settings: BrowserDownloadSettings, choice: DownloadManagerChoice) =
+        settings.copy(managerMode = choice.mode, externalManagerId = choice.managerId)
+
+    /** 1DM can take the page's cookies only when it may be the one that downloads. */
+    fun oneDmRelevant(
+        settings: BrowserDownloadSettings,
+        externalManagers: List<ExternalDownloadManagerApp>,
+    ): Boolean = when (settings.managerMode) {
+        DownloadManagerMode.BuiltIn -> false
+        DownloadManagerMode.AskEveryTime -> externalManagers.any(ExternalDownloadManagerApp::isOneDm)
+        DownloadManagerMode.External ->
+            externalManagers.firstOrNull { it.id == settings.externalManagerId }?.isOneDm == true
+    }
+}
+
+/** Download settings on cards (board W-Settings): who downloads, then where the files go. */
 @Composable
 internal fun DownloadsSettingsPage(
     settings: BrowserDownloadSettings,
@@ -31,125 +71,81 @@ internal fun DownloadsSettingsPage(
     onSettingsChanged: (BrowserDownloadSettings) -> Unit,
     onBack: () -> Unit,
 ) {
-    var managerMenuExpanded by remember { mutableStateOf(false) }
     var directoryDialogVisible by remember { mutableStateOf(false) }
     var directoryDraft by remember { mutableStateOf("") }
-    val selectedExternalManager = externalManagers.firstOrNull {
-        it.id == settings.externalManagerId
-    }
-    val oneDmRelevant = when (settings.managerMode) {
-        DownloadManagerMode.BuiltIn -> false
-        DownloadManagerMode.AskEveryTime -> externalManagers.any(ExternalDownloadManagerApp::isOneDm)
-        DownloadManagerMode.External -> selectedExternalManager?.isOneDm == true
-    }
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val oneDmRelevant = DownloadSettingsRules.oneDmRelevant(settings, externalManagers)
     SettingsPage(
         title = stringResource(R.string.settings_downloads_title),
         onBack = onBack,
     ) {
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_download_manager_title),
-                value = settings.displayName(externalManagers),
-                expanded = managerMenuExpanded,
-                onClick = { managerMenuExpanded = true },
-            )
-            SettingsDropdown(
-                expanded = managerMenuExpanded,
-                onDismissRequest = { managerMenuExpanded = false },
-            ) {
-                SettingsDropdownItem(
-                    label = stringResource(R.string.settings_download_manager_builtin),
-                    selected = settings.managerMode == DownloadManagerMode.BuiltIn,
-                    onClick = {
-                        managerMenuExpanded = false
-                        onSettingsChanged(
-                            settings.copy(
-                                managerMode = DownloadManagerMode.BuiltIn,
-                                externalManagerId = null,
-                            ),
-                        )
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.settings_download_manager_title),
+                    selected = DownloadSettingsRules.selected(settings),
+                    options = DownloadSettingsRules.choices(externalManagers),
+                    label = { choice ->
+                        settings.copy(
+                            managerMode = choice.mode,
+                            externalManagerId = choice.managerId,
+                        ).displayName(externalManagers)
+                    },
+                    summary = stringResource(R.string.settings_download_no_external_managers)
+                        .takeIf { externalManagers.isEmpty() },
+                    dividerColor = dividerColor,
+                    divider = oneDmRelevant,
+                    onSelected = { choice ->
+                        onSettingsChanged(DownloadSettingsRules.apply(settings, choice))
                     },
                 )
-                SettingsDropdownItem(
-                    label = stringResource(R.string.settings_download_manager_ask),
-                    selected = settings.managerMode == DownloadManagerMode.AskEveryTime,
-                    onClick = {
-                        managerMenuExpanded = false
-                        onSettingsChanged(
-                            settings.copy(
-                                managerMode = DownloadManagerMode.AskEveryTime,
-                                externalManagerId = null,
-                            ),
-                        )
-                    },
-                )
-                externalManagers.forEach { manager ->
-                    SettingsDropdownItem(
-                        label = manager.label,
-                        selected = settings.managerMode == DownloadManagerMode.External &&
-                            settings.externalManagerId == manager.id,
-                        onClick = {
-                            managerMenuExpanded = false
-                            onSettingsChanged(
-                                settings.copy(
-                                    managerMode = DownloadManagerMode.External,
-                                    externalManagerId = manager.id,
-                                ),
-                            )
+                if (oneDmRelevant) {
+                    SettingsCardSwitchRow(
+                        title = stringResource(R.string.settings_download_one_dm_session_title),
+                        summary = stringResource(R.string.settings_download_one_dm_session_summary),
+                        checked = settings.shareSessionDataWithOneDm,
+                        summaryMaxLines = Int.MAX_VALUE,
+                        dividerColor = dividerColor,
+                        onCheckedChange = {
+                            onSettingsChanged(settings.copy(shareSessionDataWithOneDm = it))
                         },
                     )
                 }
             }
-        }
-        if (externalManagers.isEmpty()) {
-            Text(
-                stringResource(R.string.settings_download_no_external_managers),
-                modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (settings.managerMode == DownloadManagerMode.BuiltIn) {
-            Spacer(Modifier.height(18.dp))
-            SettingsChoice(
-                title = stringResource(R.string.settings_download_folder_title),
-                value = settings.downloadSubdirectory?.let { relativePath ->
-                    stringResource(R.string.settings_download_folder_path, relativePath)
-                } ?: stringResource(R.string.settings_download_folder_default),
-                expanded = false,
-                onClick = {
-                    directoryDraft = settings.downloadSubdirectory.orEmpty()
-                    directoryDialogVisible = true
-                },
-                modifier = Modifier.testTag(DownloadSettingsTestTags.Directory),
-            )
-            Text(
-                stringResource(R.string.settings_download_folder_summary),
-                modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (settings.downloadSubdirectory != null) {
-                TextButton(
-                    onClick = { onSettingsChanged(settings.copy(downloadSubdirectory = null)) },
-                    modifier = Modifier
-                        .padding(horizontal = 6.dp)
-                        .testTag(DownloadSettingsTestTags.DirectoryReset),
-                ) {
-                    Text(stringResource(R.string.settings_download_folder_reset))
+            if (settings.managerMode == DownloadManagerMode.BuiltIn) {
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.settings_download_folder_title),
+                        summary = settings.downloadSubdirectory?.let { relativePath ->
+                            stringResource(R.string.settings_download_folder_path, relativePath)
+                        } ?: stringResource(R.string.settings_download_folder_default),
+                        dividerColor = dividerColor,
+                        onClick = {
+                            directoryDraft = settings.downloadSubdirectory.orEmpty()
+                            directoryDialogVisible = true
+                        },
+                        modifier = Modifier.testTag(DownloadSettingsTestTags.Directory),
+                    )
+                }
+                Column(modifier = Modifier.padding(SettingsCardTokens.headerPadding)) {
+                    Text(
+                        stringResource(R.string.settings_download_folder_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (settings.downloadSubdirectory != null) {
+                        TextButton(
+                            onClick = {
+                                onSettingsChanged(settings.copy(downloadSubdirectory = null))
+                            },
+                            modifier = Modifier.testTag(DownloadSettingsTestTags.DirectoryReset),
+                        ) {
+                            Text(stringResource(R.string.settings_download_folder_reset))
+                        }
+                    }
                 }
             }
-        }
-        if (oneDmRelevant) {
-            Spacer(Modifier.height(18.dp))
-            SettingsSwitch(
-                title = stringResource(R.string.settings_download_one_dm_session_title),
-                subtitle = stringResource(R.string.settings_download_one_dm_session_summary),
-                checked = settings.shareSessionDataWithOneDm,
-                onCheckedChange = {
-                    onSettingsChanged(settings.copy(shareSessionDataWithOneDm = it))
-                },
-            )
         }
     }
     if (directoryDialogVisible) {

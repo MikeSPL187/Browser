@@ -1,12 +1,13 @@
 package dev.sk2andy.materialbrowser.shared.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.SettingsDestination
 
 enum class SettingsHomeIcon {
@@ -24,58 +25,34 @@ enum class SettingsHomeIcon {
     AboutLegal,
 }
 
-enum class SettingsHomeLabel {
-    Title,
-    Back,
-    BrowsingGroup,
-    PersonalizationGroup,
-    PrivacyDataGroup,
-    AboutGroup,
-    SearchTitle,
-    SearchSummary,
-    SyncTitle,
-    SyncSummary,
-    TabsAndGesturesTitle,
-    TabsAndGesturesSummary,
-    AppearanceTitle,
-    AppearanceSummary,
-    BrowserTitle,
-    BrowserSummary,
-    DownloadsTitle,
-    UserscriptsTitle,
-    UserscriptsSummary,
-    FirefoxExtensionsTitle,
-    FirefoxExtensionsSummary,
-    SiteCapsulesTitle,
-    SiteCapsulesSummary,
-    ProtectionAndDataTitle,
-    ProtectionAndDataSummary,
-    DeveloperOptionsTitle,
-    DeveloperOptionsSummary,
-    UnlockDeveloperOptions,
-    AboutLegalTitle,
-    AboutLegalSummary,
+/**
+ * The cards of the settings home, top to bottom (board W-Settings): protection and data first,
+ * then how Vola looks and behaves, then what extends it, and the rest last.
+ */
+enum class SettingsHomeCard {
+    Protection,
+    Personalization,
+    Features,
+    About,
 }
 
-enum class SettingsHomeGroup(val label: SettingsHomeLabel) {
-    Browsing(SettingsHomeLabel.BrowsingGroup),
-    Personalization(SettingsHomeLabel.PersonalizationGroup),
-    PrivacyData(SettingsHomeLabel.PrivacyDataGroup),
-    About(SettingsHomeLabel.AboutGroup),
-}
-
-interface SettingsHomeResources {
-    @Composable
-    fun text(label: SettingsHomeLabel): String
-}
-
+/**
+ * One row of the settings home. [accent] colors its icon tile, the way a workspace's accent
+ * colors its gem; each page keeps its own color so the eye finds it again.
+ */
 data class SettingsHomeItem(
-    val group: SettingsHomeGroup,
+    val card: SettingsHomeCard,
     val destination: SettingsDestination?,
     val icon: SettingsHomeIcon,
-    val title: SettingsHomeLabel,
-    val summary: SettingsHomeLabel?,
+    val accent: WorkspaceAccent,
     val isFirefoxExtensionsAction: Boolean = false,
+)
+
+/** A row with its words in the interface language: the page's title and what is set there. */
+data class SettingsHomeEntry(
+    val item: SettingsHomeItem,
+    val title: String,
+    val summary: String?,
 )
 
 object SettingsHomeRules {
@@ -83,110 +60,105 @@ object SettingsHomeRules {
         hasFirefoxExtensions: Boolean,
         hasDeveloperOptions: Boolean = false,
     ): List<SettingsHomeItem> = buildList {
-        add(item(SettingsHomeGroup.Browsing, SettingsDestination.Search, SettingsHomeIcon.Search, SettingsHomeLabel.SearchTitle, SettingsHomeLabel.SearchSummary))
-        add(item(SettingsHomeGroup.Browsing, SettingsDestination.TabsAndGestures, SettingsHomeIcon.TabsAndGestures, SettingsHomeLabel.TabsAndGesturesTitle, SettingsHomeLabel.TabsAndGesturesSummary))
-        add(item(SettingsHomeGroup.Browsing, SettingsDestination.Browser, SettingsHomeIcon.Browser, SettingsHomeLabel.BrowserTitle, SettingsHomeLabel.BrowserSummary))
-        add(item(SettingsHomeGroup.Browsing, SettingsDestination.Downloads, SettingsHomeIcon.Downloads, SettingsHomeLabel.DownloadsTitle, null))
-        add(item(SettingsHomeGroup.Personalization, SettingsDestination.Appearance, SettingsHomeIcon.Appearance, SettingsHomeLabel.AppearanceTitle, SettingsHomeLabel.AppearanceSummary))
-        add(item(SettingsHomeGroup.Personalization, SettingsDestination.SiteCapsules, SettingsHomeIcon.SiteCapsules, SettingsHomeLabel.SiteCapsulesTitle, SettingsHomeLabel.SiteCapsulesSummary))
-        add(item(SettingsHomeGroup.Personalization, SettingsDestination.Userscripts, SettingsHomeIcon.Userscripts, SettingsHomeLabel.UserscriptsTitle, SettingsHomeLabel.UserscriptsSummary))
+        add(item(SettingsHomeCard.Protection, SettingsDestination.ProtectionAndData, SettingsHomeIcon.ProtectionAndData, WorkspaceAccent.Green))
+        add(item(SettingsHomeCard.Protection, SettingsDestination.Sync, SettingsHomeIcon.Sync, WorkspaceAccent.Blue))
+        add(item(SettingsHomeCard.Personalization, SettingsDestination.Appearance, SettingsHomeIcon.Appearance, WorkspaceAccent.Rose))
+        add(item(SettingsHomeCard.Personalization, SettingsDestination.TabsAndGestures, SettingsHomeIcon.TabsAndGestures, WorkspaceAccent.Teal))
+        add(item(SettingsHomeCard.Personalization, SettingsDestination.Search, SettingsHomeIcon.Search, WorkspaceAccent.Violet))
+        add(item(SettingsHomeCard.Features, SettingsDestination.Userscripts, SettingsHomeIcon.Userscripts, WorkspaceAccent.Graphite))
         if (hasFirefoxExtensions) {
             add(
                 SettingsHomeItem(
-                    group = SettingsHomeGroup.Personalization,
+                    card = SettingsHomeCard.Features,
                     destination = null,
                     icon = SettingsHomeIcon.FirefoxExtensions,
-                    title = SettingsHomeLabel.FirefoxExtensionsTitle,
-                    summary = SettingsHomeLabel.FirefoxExtensionsSummary,
+                    accent = WorkspaceAccent.Graphite,
                     isFirefoxExtensionsAction = true,
                 ),
             )
         }
-        add(item(SettingsHomeGroup.PrivacyData, SettingsDestination.ProtectionAndData, SettingsHomeIcon.ProtectionAndData, SettingsHomeLabel.ProtectionAndDataTitle, SettingsHomeLabel.ProtectionAndDataSummary))
-        add(item(SettingsHomeGroup.PrivacyData, SettingsDestination.Sync, SettingsHomeIcon.Sync, SettingsHomeLabel.SyncTitle, SettingsHomeLabel.SyncSummary))
+        add(item(SettingsHomeCard.Features, SettingsDestination.SiteCapsules, SettingsHomeIcon.SiteCapsules, WorkspaceAccent.Amber))
+        add(item(SettingsHomeCard.Features, SettingsDestination.Downloads, SettingsHomeIcon.Downloads, WorkspaceAccent.Green))
+        add(item(SettingsHomeCard.About, SettingsDestination.Browser, SettingsHomeIcon.Browser, WorkspaceAccent.Coral))
         if (hasDeveloperOptions) {
-            add(item(SettingsHomeGroup.About, SettingsDestination.DeveloperOptions, SettingsHomeIcon.DeveloperOptions, SettingsHomeLabel.DeveloperOptionsTitle, SettingsHomeLabel.DeveloperOptionsSummary))
+            add(item(SettingsHomeCard.About, SettingsDestination.DeveloperOptions, SettingsHomeIcon.DeveloperOptions, WorkspaceAccent.Graphite))
         }
-        add(item(SettingsHomeGroup.About, SettingsDestination.AboutLegal, SettingsHomeIcon.AboutLegal, SettingsHomeLabel.AboutLegalTitle, SettingsHomeLabel.AboutLegalSummary))
+        add(item(SettingsHomeCard.About, SettingsDestination.AboutLegal, SettingsHomeIcon.AboutLegal, WorkspaceAccent.Blue))
     }
 
+    /** The items card by card, in order; no card is empty. */
+    fun cards(items: List<SettingsHomeItem>): List<List<SettingsHomeItem>> =
+        SettingsHomeCard.entries
+            .map { card -> items.filter { item -> item.card == card } }
+            .filter { rows -> rows.isNotEmpty() }
+
     private fun item(
-        group: SettingsHomeGroup,
+        card: SettingsHomeCard,
         destination: SettingsDestination,
         icon: SettingsHomeIcon,
-        title: SettingsHomeLabel,
-        summary: SettingsHomeLabel?,
+        accent: WorkspaceAccent,
     ): SettingsHomeItem = SettingsHomeItem(
-        group = group,
+        card = card,
         destination = destination,
         icon = icon,
-        title = title,
-        summary = summary,
+        accent = accent,
     )
 }
 
+/**
+ * The settings home (board W-Settings): [header] (such as «Make Vola your default»), then the
+ * pages on cards. A long press on «About» unlocks the developer options.
+ */
 @Composable
 fun SettingsHomePage(
-    downloadSummary: String,
-    resources: SettingsHomeResources,
-    linkContainerColor: Color,
+    title: String,
+    backContentDescription: String,
+    entries: List<SettingsHomeEntry>,
+    cardColor: Color,
+    dividerColor: Color,
+    tileColors: @Composable (WorkspaceAccent) -> SettingsTileColors,
     icon: @Composable (SettingsHomeIcon, Modifier, Color) -> Unit,
-    onDestinationChanged: (SettingsDestination) -> Unit,
+    unlockDeveloperOptionsLabel: String,
+    onOpen: (SettingsHomeItem) -> Unit,
     onDismiss: () -> Unit,
-    onOpenFirefoxExtensions: (() -> Unit)? = null,
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
     isDestinationEnabled: (SettingsDestination) -> Boolean = { true },
+    header: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     SettingsPage(
-        title = resources.text(SettingsHomeLabel.Title),
-        backContentDescription = resources.text(SettingsHomeLabel.Back),
+        title = title,
+        backContentDescription = backContentDescription,
         onBack = onDismiss,
         actions = actions,
     ) {
-        val items = SettingsHomeRules.items(
-            hasFirefoxExtensions = onOpenFirefoxExtensions != null,
-            hasDeveloperOptions = developerOptionsUnlocked,
-        )
-        items.forEachIndexed { index, item ->
-            if (index == 0 || item.group != items[index - 1].group) {
-                if (index != 0) Spacer(Modifier.height(20.dp))
-                SettingsSectionTitle(resources.text(item.group.label))
-                Spacer(Modifier.height(8.dp))
-            }
-            val summary = item.summary
-            val destination = item.destination
-            SettingsLink(
-                title = resources.text(item.title),
-                subtitle = if (summary == null) {
-                    downloadSummary
-                } else {
-                    resources.text(summary)
-                },
-                containerColor = linkContainerColor,
-                icon = { modifier, tint -> icon(item.icon, modifier, tint) },
-                enabled = item.isFirefoxExtensionsAction ||
-                    destination?.let(isDestinationEnabled) == true,
-                onLongClickLabel = resources.text(SettingsHomeLabel.UnlockDeveloperOptions)
-                    .takeIf {
-                        destination == SettingsDestination.AboutLegal &&
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            header()
+            val cards = SettingsHomeRules.cards(entries.map(SettingsHomeEntry::item))
+            cards.forEach { rows ->
+                SettingsCard(containerColor = cardColor) {
+                    rows.forEachIndexed { index, item ->
+                        val entry = entries.first { it.item == item }
+                        val destination = item.destination
+                        val unlocks = destination == SettingsDestination.AboutLegal &&
                             !developerOptionsUnlocked &&
                             onUnlockDeveloperOptions != null
-                    },
-                onLongClick = onUnlockDeveloperOptions.takeIf {
-                    destination == SettingsDestination.AboutLegal && !developerOptionsUnlocked
-                },
-                onClick = {
-                    if (item.isFirefoxExtensionsAction) {
-                        onOpenFirefoxExtensions?.invoke()
-                    } else {
-                        destination?.let(onDestinationChanged)
+                        SettingsCardRow(
+                            title = entry.title,
+                            summary = entry.summary,
+                            tileColors = tileColors(item.accent),
+                            icon = { modifier, tint -> icon(item.icon, modifier, tint) },
+                            dividerColor = dividerColor,
+                            divider = index != rows.lastIndex,
+                            enabled = item.isFirefoxExtensionsAction ||
+                                destination?.let(isDestinationEnabled) == true,
+                            onLongClickLabel = unlockDeveloperOptionsLabel.takeIf { unlocks },
+                            onLongClick = onUnlockDeveloperOptions.takeIf { unlocks },
+                            onClick = { onOpen(item) },
+                        )
                     }
-                },
-            )
-            if (index != items.lastIndex && item.group == items[index + 1].group) {
-                SettingsPageSpacer()
+                }
             }
         }
     }

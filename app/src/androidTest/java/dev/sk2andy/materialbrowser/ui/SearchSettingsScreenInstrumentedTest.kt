@@ -1,11 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isPopup
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -55,7 +57,7 @@ class SearchSettingsScreenInstrumentedTest {
         assertEquals("https://search.example/searxng", settings.instanceUrl)
 
         composeRule.onNodeWithTag(SearchSettingsTestTags.SearxngFallback).performClick()
-        composeRule.onNodeWithText("Brave Search").performClick()
+        composeRule.onNode(hasText("Brave Search") and hasAnyAncestor(isPopup())).performClick()
         assertEquals(SearchSuggestionProvider.Brave, settings.suggestionFallback)
     }
 
@@ -107,7 +109,7 @@ class SearchSettingsScreenInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(SearchSettingsTestTags.SuggestionProvider).performClick()
-        composeRule.onNodeWithText("Google").performClick()
+        composeRule.onNode(hasText("Google") and hasAnyAncestor(isPopup())).performClick()
 
         assertEquals(SearchSuggestionProvider.Google, provider)
     }
