@@ -237,6 +237,11 @@ def tour(suffix):
             time.sleep(2)
         else:
             log("compact mode: could not reach the menu to switch it off")
+        time.sleep(1)
+        if not find("More options", "Другие действия"):
+            # Still compact: the rest of the tour would run without the bar.
+            save_ui(f"compact-off-check-{suffix}")
+            log("compact mode: still on after switching it off")
     step("compact-mode", compact_mode)
 
     def find_in_page():

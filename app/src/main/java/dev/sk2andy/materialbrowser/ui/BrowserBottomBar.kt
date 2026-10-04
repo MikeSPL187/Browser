@@ -676,7 +676,14 @@ internal fun BrowserBottomBar(
                                 isDesktopView = isDesktopView,
                                 onDesktopViewChange = onDesktopViewChange,
                                 compactMode = handle,
-                                onCompactModeChange = onCompactModeChange,
+                                onCompactModeChange = onCompactModeChange?.let { change ->
+                                    { enabled: Boolean ->
+                                        // The menu closes with the switch, so the handle brings
+                                        // back the bar rather than the open menu.
+                                        menuExpanded = false
+                                        change(enabled)
+                                    }
+                                },
                                 canToggleCookieBannerRemoval =
                                     canToggleCookieBannerRemoval,
                                 isCookieBannerRemovalEnabled =
