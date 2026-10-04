@@ -89,7 +89,7 @@ internal fun DangerousSitePage(
                     ) {
                         Row(
                             modifier = Modifier
-                                .clickable(role = Role.Link, onClick = onOpenRealSite)
+                                .clickable(role = Role.Button, onClick = onOpenRealSite)
                                 .padding(VolaDangerousSite.cardPadding),
                             horizontalArrangement = Arrangement.spacedBy(VolaDangerousSite.rowGap),
                             verticalAlignment = Alignment.CenterVertically,
