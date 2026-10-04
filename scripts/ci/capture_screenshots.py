@@ -907,6 +907,13 @@ def tour(suffix):
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
                 settings_top()
+                # Download settings on cards (Q16c, board W-Settings).
+                if tap_scrolling("Downloads", "Загрузки", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"download-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)
