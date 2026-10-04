@@ -79,10 +79,8 @@ internal fun BrowserController.privateTabLockRow(): PrivateTabLock = PrivateTabL
 internal fun BrowserLockScreens(controller: BrowserController) {
     if (controller.isActiveProfileLocked) {
         ProfileLockedOverlay(
-            profileEmoji = controller.localBrowserProfiles
-                .firstOrNull { profile -> profile.id == controller.activeProfileId }
-                ?.emoji
-                .orEmpty(),
+            workspace = controller.localBrowserProfiles
+                .firstOrNull { profile -> profile.id == controller.activeProfileId },
             unlockAvailable = controller.isProfileProtectionSupported,
             canSwitchProfile = controller.canLeaveLockedProfile,
             onUnlock = controller::retryActiveProfileAuthentication,
