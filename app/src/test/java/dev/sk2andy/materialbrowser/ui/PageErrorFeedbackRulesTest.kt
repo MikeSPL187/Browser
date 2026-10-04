@@ -94,6 +94,21 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
+    fun `a certificate failure is an insecure connection, not a missing site`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.InsecureConnection,
+        )
+
+        assertEquals(PageErrorFeedbackState.InsecureConnection, observation.state)
+        assertFalse(observation.shouldReload)
+    }
+
+    @Test
     fun `unknown host gets its own page while online`() {
         val observation = PageErrorFeedbackRules.observe(
             current = PageErrorFeedbackState.Hidden,

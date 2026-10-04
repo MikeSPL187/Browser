@@ -532,6 +532,7 @@ internal fun BrowserViewport(
                             ),
                             count = controller.tabs.count(BrowserTab::isIncognito),
                             onCloseAll = { controller.closeAllPrivateTabs() },
+                            lock = controller.privateTabLockRow(),
                         ),
                         protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
                             NewTabProtection(
@@ -576,6 +577,7 @@ internal fun BrowserViewport(
             PageErrorFeedback(
                 state = pageErrorFeedback,
                 url = selectedTab.url,
+                onBack = if (selectedTab.canGoBack) controller::goBack else null,
                 onRetry = retry@{
                     val transition = PageErrorFeedbackRules.requestRetry(pageErrorFeedback)
                     if (!transition.shouldReload) return@retry

@@ -11,6 +11,9 @@ internal sealed interface PageErrorFeedbackState {
     /** The engine found no server for the address: most likely a typo. */
     data object UnknownHost : PageErrorFeedbackState
 
+    /** The site's certificate or encryption failed; nothing it shows can be trusted. */
+    data object InsecureConnection : PageErrorFeedbackState
+
     data class Error(val message: String) : PageErrorFeedbackState
 
     data object Retrying : PageErrorFeedbackState
@@ -60,6 +63,8 @@ internal object PageErrorFeedbackRules {
         failureKind == BrowserEngineFailureKind.Offline && error != null -> PageErrorObservation(
             state = PageErrorFeedbackState.Offline(isOnlineReady = isOnline),
         )
+        failureKind == BrowserEngineFailureKind.InsecureConnection && error != null ->
+            PageErrorObservation(PageErrorFeedbackState.InsecureConnection)
         failureKind == BrowserEngineFailureKind.UnknownHost && error != null ->
             PageErrorObservation(PageErrorFeedbackState.UnknownHost)
         httpStatusCode == HTTP_NOT_FOUND_STATUS && !isLoading ->
@@ -75,6 +80,7 @@ internal object PageErrorFeedbackRules {
     fun requestRetry(current: PageErrorFeedbackState): PageErrorRetryTransition = when (current) {
         PageErrorFeedbackState.NotFound,
         PageErrorFeedbackState.UnknownHost,
+        PageErrorFeedbackState.InsecureConnection,
         is PageErrorFeedbackState.Error,
         is PageErrorFeedbackState.Offline,
         -> PageErrorRetryTransition(

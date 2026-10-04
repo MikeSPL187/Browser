@@ -43,8 +43,8 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
-/** The color of a [VolaStatePageIcon]: plain, a warning, or the page's accent. */
-internal enum class VolaStatePageTone { Neutral, Warning, Accent }
+/** The color of a [VolaStatePageIcon]: plain, a warning, a danger, or the page's accent. */
+internal enum class VolaStatePageTone { Neutral, Warning, Error, Accent }
 
 /**
  * A whole page in one state (boards W-Offline, W-HttpsOnly, W-Locked), the full-screen sibling
@@ -161,6 +161,7 @@ private fun VolaStatePageIconContainer(
     val (container, contentColor) = when (tone) {
         VolaStatePageTone.Neutral -> colors.surfaceContainerHigh to colors.onSurfaceVariant
         VolaStatePageTone.Warning -> extended.warnContainer to extended.onWarnContainer
+        VolaStatePageTone.Error -> colors.errorContainer to colors.onErrorContainer
         VolaStatePageTone.Accent -> colors.primaryContainer to colors.onPrimaryContainer
     }
     Surface(
