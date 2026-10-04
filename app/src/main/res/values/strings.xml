@@ -501,6 +501,7 @@
     <string name="settings_browser_group_websites">Web pages</string>
     <string name="settings_browser_group_links">Links &amp; apps</string>
     <string name="settings_protection_group_tools">Privacy tools</string>
+    <string name="settings_protection_group_network">Network</string>
     <string name="settings_protection_group_app_data">App data</string>
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_home_appearance_summary">Colors, website text, surfaces, and shape</string>

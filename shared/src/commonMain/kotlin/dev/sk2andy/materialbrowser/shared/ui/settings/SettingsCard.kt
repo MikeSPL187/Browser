@@ -132,6 +132,36 @@ fun SettingsCardRow(
     )
 }
 
+/** A row that opens another screen, such as Filter Studio; no tile, a chevron at the end. */
+@Composable
+fun SettingsCardLinkRow(
+    title: String,
+    summary: String?,
+    dividerColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    divider: Boolean = false,
+    summaryMaxLines: Int = SUMMARY_MAX_LINES,
+) {
+    SettingsCardRowLayout(
+        title = title,
+        summary = summary,
+        dividerColor = dividerColor,
+        divider = divider,
+        modifier = modifier,
+        summaryMaxLines = summaryMaxLines,
+        interaction = Modifier.clickable(role = Role.Button, onClick = onClick),
+        trailing = {
+            Icon(
+                VolaIcons.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.size(SettingsCardTokens.chevronSize),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
+}
+
 /** One of several options on a card, such as a search engine; the chosen one has a check. */
 @Composable
 fun SettingsCardChoiceRow(
@@ -180,6 +210,7 @@ fun SettingsCardSwitchRow(
     modifier: Modifier = Modifier,
     divider: Boolean = false,
     enabled: Boolean = true,
+    summaryMaxLines: Int = SUMMARY_MAX_LINES,
     leading: (@Composable () -> Unit)? = null,
 ) {
     SettingsCardRowLayout(
@@ -189,6 +220,7 @@ fun SettingsCardSwitchRow(
         divider = divider,
         enabled = enabled,
         modifier = modifier,
+        summaryMaxLines = summaryMaxLines,
         interaction = Modifier.toggleable(
             value = checked,
             enabled = enabled,
@@ -212,14 +244,18 @@ fun SettingsCardValueRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     divider: Boolean = false,
+    enabled: Boolean = true,
 ) {
     SettingsCardRowLayout(
         title = title,
         summary = summary,
         dividerColor = dividerColor,
         divider = divider,
+        enabled = enabled,
         modifier = modifier,
-        interaction = Modifier.clickable(role = Role.Button, onClick = onClick),
+        // The summary explains the chosen value, so it is never cut short.
+        summaryMaxLines = Int.MAX_VALUE,
+        interaction = Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         trailing = {
             Text(
                 value,
@@ -246,12 +282,14 @@ private fun SettingsCardRowLayout(
     interaction: Modifier,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    summaryMaxLines: Int = SUMMARY_MAX_LINES,
     leading: (@Composable () -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // The caller's modifier (a test tag, say) lands on the row that holds the semantics.
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .heightIn(min = SettingsCardTokens.rowMinHeight)
                 .then(interaction)
@@ -275,7 +313,7 @@ private fun SettingsCardRowLayout(
                         summary,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = SUMMARY_MAX_LINES,
+                        maxLines = summaryMaxLines,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }

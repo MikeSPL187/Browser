@@ -849,6 +849,8 @@ def tour(suffix):
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Protection and data on cards (Q16c, board W-SetPrivacy).
+                    shot(f"protection-settings-{suffix}")
                     if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
                                  name=f"protection-private-lock-{suffix}", attempts=8):
                         shot(f"protection-private-lock-{suffix}")
