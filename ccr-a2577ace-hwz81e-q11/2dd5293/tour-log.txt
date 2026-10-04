@@ -1,0 +1,105 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 414,1444
+screenshot 05-compact-mode-light.png
+tap 'Show the bar' at 540,2263
+screenshot 06-compact-mode-bar-light.png
+not found: ('Show the bar', 'Показать панель')
+tap 'More options' at 964,2232
+tap 'Compact mode' at 414,1444
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+not found: address field
+screenshot 07-https-upgrade-light.png
+screenshot 08-https-only-early-light.png
+screenshot 09-https-only-light.png
+screenshot 10-tab-overview-light.png
+saved ui-tab-overview-light.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+not found: ('New tab', 'Новая вкладка')
+saved ui-essentials-overview-light.xml
+screenshot 11-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 12-protection-card-light.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-light.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-light.xml
+not found: ('More options', 'Другие действия')
+screenshot 13-current-dark.png
+screenshot 14-new-tab-dark.png
+screenshot 15-page-dark.png
+screenshot 16-page-scrolled-dark.png
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+not found: address field
+screenshot 17-https-upgrade-dark.png
+screenshot 18-https-only-early-dark.png
+screenshot 19-https-only-dark.png
+screenshot 20-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+not found: ('New tab', 'Новая вкладка')
+saved ui-essentials-overview-dark.xml
+screenshot 21-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 22-protection-card-dark.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-dark.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-dark.xml
+not found: ('More options', 'Другие действия')
+screenshot 23-new-tab-a11y.png
+screenshot 24-page-a11y.png
+not found: ('More options', 'Другие действия')
+Cold start (am start -W, 5 runs): average 3219 ms, min 3089 ms, max 3548 ms
+screenshot 25-new-tab-ru.png
+screenshot 26-page-ru.png
+screenshot 27-page-scrolled-ru.png
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+not found: address field
+screenshot 28-https-upgrade-ru.png
+screenshot 29-https-only-early-ru.png
+screenshot 30-https-only-ru.png
+screenshot 31-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+not found: ('New tab', 'Новая вкладка')
+saved ui-essentials-overview-ru.xml
+screenshot 32-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 33-protection-card-ru.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-ru.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-ru.xml
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for the Air layout
