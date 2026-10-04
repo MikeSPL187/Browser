@@ -1,0 +1,3 @@
+Vola controls in the tour: 2 accessibility finding(s).
+- [NEW] unlabeled | EditText | https-upgrade — https-upgrade-dark
+- [NEW] unlabeled | View | favorites — favorites-dark, favorites-light
