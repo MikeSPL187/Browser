@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 internal object VolaGlance {
     val handleWidth = 40.dp
     val handleHeight = 5.dp
-    val handleTouchHeight = 24.dp
+    val handleTouchHeight = 48.dp
     /** Light on the dark scrim in both themes, as on the board. */
     val handleColor = Color.White.copy(alpha = 0.9f)
 
