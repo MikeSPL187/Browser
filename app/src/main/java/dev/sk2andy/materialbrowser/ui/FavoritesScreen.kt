@@ -68,6 +68,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.R
@@ -183,11 +185,15 @@ internal fun FavoritesScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             // Board W-Favorites: «Folder» at the bottom, in thumb's reach.
+            val createFolderLabel = stringResource(R.string.favorites_create_folder)
             ExtendedFloatingActionButton(
                 onClick = { creatingFolder = true },
                 icon = { Icon(VolaIcons.Folder, contentDescription = null) },
                 text = { Text(stringResource(R.string.favorites_folder_button)) },
-                modifier = Modifier.testTag("favorites_create_folder"),
+                // The button's own label does not reach TalkBack's tree; name the button itself.
+                modifier = Modifier
+                    .semantics { contentDescription = createFolderLabel }
+                    .testTag("favorites_create_folder"),
             )
         },
     ) { contentPadding ->
