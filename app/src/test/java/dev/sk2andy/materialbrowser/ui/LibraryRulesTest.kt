@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.data.FavoriteFolder
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -85,10 +86,33 @@ class LibraryRulesTest {
         assertEquals(listOf("https://loose.example/"), level.favorites.map(FavoriteEntry::url))
     }
 
-    private fun favorite(name: String, parent: String?) = FavoriteEntry(
+    @Test
+    fun `favorites sort by name or newest first, folders by name only`() {
+        val ice = FavoriteFolder("ice", "лёд")
+        val routes = FavoriteFolder("routes", "Маршруты")
+        val level = FavoritesLevel(
+            folders = listOf(routes, ice),
+            favorites = listOf(
+                favorite("yandex", null, title = "яндекс", addedAt = 3),
+                favorite("baikal", null, title = "Байкал", addedAt = 1),
+                favorite("ozon", null, title = "ёлки", addedAt = 2),
+            ),
+        )
+        val ru = Locale.forLanguageTag("ru")
+
+        assertEquals(level, LibraryRules.sorted(level, FavoritesSort.Manual, ru))
+        val byName = LibraryRules.sorted(level, FavoritesSort.Name, ru)
+        assertEquals(listOf(ice, routes), byName.folders)
+        assertEquals(listOf("Байкал", "ёлки", "яндекс"), byName.favorites.map(FavoriteEntry::title))
+        val recent = LibraryRules.sorted(level, FavoritesSort.Recent, ru)
+        assertEquals(listOf(routes, ice), recent.folders)
+        assertEquals(listOf("яндекс", "ёлки", "Байкал"), recent.favorites.map(FavoriteEntry::title))
+    }
+
+    private fun favorite(name: String, parent: String?, title: String = name, addedAt: Long = 1) = FavoriteEntry(
         url = "https://$name.example/",
-        title = name,
-        addedAt = 1,
+        title = title,
+        addedAt = addedAt,
         parentFolderId = parent,
     )
 }

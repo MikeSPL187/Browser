@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -12,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import dev.sk2andy.materialbrowser.browser.integration.HistoryActivityContract
+import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutRules
 import dev.sk2andy.materialbrowser.browser.ProfileProtectionSession
 import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
@@ -195,6 +197,7 @@ class HistoryActivity : ComponentActivity() {
                     onBack = {
                         if (!isMutationInProgress) finishWithResult()
                     },
+                    onOpenNewTab = ::openNewTab,
                 )
             }
         }
@@ -242,6 +245,16 @@ class HistoryActivity : ComponentActivity() {
 
     private fun List<HistoryEntry>.filterAccessibleProfiles(): List<HistoryEntry> =
         filter { entry -> entry.profileId in accessibleProfileIds }
+
+    /** The empty history's way back to browsing: a fresh tab, as the launcher's shortcut opens it. */
+    private fun openNewTab() {
+        if (isMutationInProgress) return
+        finishWithResult()
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .setAction(LauncherShortcutRules.ACTION_NEW_TAB),
+        )
+    }
 
     private fun finishWithResult() {
         if (hasHistoryMutations || clearRequests.isNotEmpty()) {

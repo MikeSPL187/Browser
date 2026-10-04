@@ -7,6 +7,8 @@ import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.FavoriteLibraryEntry
 import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
+import java.text.Collator
+import java.util.Locale
 
 /** Where a row sits in its card: the card rounds only its outer corners. */
 internal enum class LibraryRowPosition {
@@ -35,6 +37,13 @@ internal data class FavoritesLevel(
     val folders: List<FavoriteFolder>,
     val favorites: List<FavoriteEntry>,
 )
+
+/** How a favorites level is ordered: the user's own order (the one dragging changes), by name, or newest first. */
+internal enum class FavoritesSort {
+    Manual,
+    Name,
+    Recent,
+}
 
 internal object LibraryRules {
     /** How long «Undo» stays on screen after deleting history. */
@@ -79,6 +88,26 @@ internal object LibraryRules {
         folders = entries.filterIsInstance<FavoriteFolder>(),
         favorites = entries.filterIsInstance<FavoriteEntry>(),
     )
+
+    /**
+     * The level in [sort] order. Folders follow names when sorting by name; they have no date, so by
+     * date they keep the user's order. Equal keys keep the user's order too.
+     */
+    fun sorted(level: FavoritesLevel, sort: FavoritesSort, locale: Locale): FavoritesLevel {
+        if (sort == FavoritesSort.Manual) return level
+        val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+        val byName = compareBy<String, String>(collator) { it.trim() }
+        return when (sort) {
+            FavoritesSort.Manual -> level
+            FavoritesSort.Name -> FavoritesLevel(
+                folders = level.folders.sortedWith(compareBy(byName, FavoriteFolder::title)),
+                favorites = level.favorites.sortedWith(compareBy(byName) { it.title.ifBlank { it.url } }),
+            )
+            FavoritesSort.Recent -> level.copy(
+                favorites = level.favorites.sortedByDescending(FavoriteEntry::addedAt),
+            )
+        }
+    }
 
     /** Sites in a folder and its subfolders, for «12 sites» under the folder's name. */
     fun siteCount(library: FavoriteLibrary, folderId: String): Int {
