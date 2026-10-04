@@ -142,14 +142,24 @@ internal fun BoxScope.BrowserAddressChrome(
     val wideTabStripEnabled = wideWindow && !linkPeekAddressBarExpanded
     val tabSwipeEnabled = !wideWindow
     val blankTabTitle = stringResource(R.string.new_tab_title)
+    val privateTabTitle = stringResource(R.string.private_tab_title)
     val wideTabs = if (wideTabStripEnabled) {
         controller.activeTabs.map { tab ->
+            val hidden = controller.privateTabsLock.hides(tab)
             WideAddressTabItem(
                 id = tab.id,
-                title = tab.title.ifBlank {
-                    if (tab.url == BLANK_URL) blankTabTitle else AddressResolver.displayText(tab.url)
+                title = if (hidden) {
+                    privateTabTitle
+                } else {
+                    tab.title.ifBlank {
+                        if (tab.url == BLANK_URL) {
+                            blankTabTitle
+                        } else {
+                            AddressResolver.displayText(tab.url)
+                        }
+                    }
                 },
-                favicon = controller.favicons[tab.id],
+                favicon = controller.favicons[tab.id]?.takeUnless { hidden },
                 canClose = TabDeletionRules.canDelete(tab),
             )
         }

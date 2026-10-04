@@ -931,13 +931,15 @@ internal fun TabStackCreateDialog(
 }
 
 @Composable
-private fun tabStackTabTitle(tab: BrowserTab): String =
-    tab.title.trim().takeIf(String::isNotEmpty)
-        ?: if (tab.url == BLANK_URL) {
-            stringResource(R.string.new_tab_title)
-        } else {
-            AddressResolver.displayText(tab.url)
-        }
+private fun tabStackTabTitle(tab: BrowserTab): String {
+    val title = tab.title.trim()
+    return when {
+        hidesPrivateTab(tab) -> stringResource(R.string.private_tab_title)
+        title.isNotEmpty() -> title
+        tab.url == BLANK_URL -> stringResource(R.string.new_tab_title)
+        else -> AddressResolver.displayText(tab.url)
+    }
+}
 
 private data class TabStackColors(
     val accent: Color,

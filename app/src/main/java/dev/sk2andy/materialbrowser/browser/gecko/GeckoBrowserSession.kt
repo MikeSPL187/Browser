@@ -16,6 +16,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
@@ -44,6 +45,9 @@ internal object GeckoNavigationFailureRules {
     fun kindForErrorCode(errorCode: Int): BrowserEngineFailureKind = when (errorCode) {
         WebRequestError.ERROR_OFFLINE -> BrowserEngineFailureKind.Offline
         WebRequestError.ERROR_UNKNOWN_HOST -> BrowserEngineFailureKind.UnknownHost
+        WebRequestError.ERROR_SECURITY_SSL,
+        WebRequestError.ERROR_SECURITY_BAD_CERT,
+        -> BrowserEngineFailureKind.InsecureConnection
         else -> BrowserEngineFailureKind.Other
     }
 }
@@ -304,6 +308,8 @@ internal interface GeckoBrowserSession {
     fun scrollByVerticalOffset(deltaPx: Int) = Unit
 
     fun setVideoAutoplayBlocked(blocked: Boolean)
+
+    fun siteCertificate(): SiteCertificate? = null
 
     /** Allows explicit Gecko login selection for cleartext HTTP origins. */
     fun setHttpPasswordManagerSelectionEnabled(enabled: Boolean) = Unit

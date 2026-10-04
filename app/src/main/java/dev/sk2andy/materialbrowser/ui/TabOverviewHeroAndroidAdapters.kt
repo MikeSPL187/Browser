@@ -36,7 +36,9 @@ internal fun tabOverviewHeroVisuals(
         ?.asImageBitmap()
     return TabOverviewHeroVisuals(
         title = title,
-        subtitle = if (tab.url == BLANK_URL) {
+        subtitle = if (hidesPrivateTab(tab)) {
+            stringResource(R.string.private_tab_locked_subtitle)
+        } else if (tab.url == BLANK_URL) {
             stringResource(R.string.new_tab_title)
         } else {
             AddressResolver.displayText(tab.url)
@@ -91,7 +93,10 @@ internal fun tabOverviewHeroVisuals(
 
 @Composable
 internal fun displayTabTitle(tab: BrowserTab): String =
-    if (tab.url == BLANK_URL || tab.title.isBlank()) {
+    if (hidesPrivateTab(tab)) {
+        // A locked private tab is only «Private tab» until it is unlocked.
+        stringResource(R.string.private_tab_title)
+    } else if (tab.url == BLANK_URL || tab.title.isBlank()) {
         stringResource(R.string.new_tab_title)
     } else {
         tab.title
