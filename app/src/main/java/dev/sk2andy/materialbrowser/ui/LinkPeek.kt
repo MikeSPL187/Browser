@@ -331,10 +331,7 @@ internal fun <T : View> LinkPeekOverlay(
                     modifier = Modifier
                         .size(VolaGlance.handleWidth, VolaGlance.handleHeight)
                         .graphicsLayer { alpha = 1f - flyProgress }
-                        .background(
-                            Color.White.copy(alpha = VolaGlance.handleAlpha),
-                            CircleShape,
-                        ),
+                        .background(VolaGlance.handleColor, CircleShape),
                 )
             }
             Surface(

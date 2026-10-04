@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -11,7 +12,8 @@ internal object VolaGlance {
     val handleWidth = 40.dp
     val handleHeight = 5.dp
     val handleTouchHeight = 24.dp
-    val handleAlpha = 0.9f
+    /** Light on the dark scrim in both themes, as on the board. */
+    val handleColor = Color.White.copy(alpha = 0.9f)
 
     /** How far the card goes up before letting go opens the link. */
     val pullOpenThreshold = 96.dp
