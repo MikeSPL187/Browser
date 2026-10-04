@@ -64,27 +64,37 @@ git; после добавления секрета его копия остаё
 
 ## Релизный ключ
 
-```bash
-keytool -genkeypair -keystore vola-release.jks -storetype PKCS12 \
-  -alias vola -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Vola"
-base64 -w0 vola-release.jks > vola-release.b64
-```
+**Создан 2026-10-04** (Claude, в своей временной папке; в git не попал) и передан владельцу файлами:
+`README.txt`, `VOLA_RELEASE_KEYSTORE_BASE64.txt`, `VOLA_RELEASE_STORE_PASSWORD.txt`,
+`VOLA_RELEASE_CERTIFICATE_SHA256.txt`, `vola-release.jks`. Сертификат `CN=Vola`, RSA 4096, PKCS12,
+алиас `vola`, срок 10 000 дней. Отпечаток SHA-256:
+`F4:6C:2E:D8:89:BB:C6:52:C6:57:B9:98:B0:17:5D:DF:8F:5D:2B:54:2D:99:F7:CE:ED:B0:E9:7B:74:B6:F4:FC`.
 
-`keytool` спросит пароль. У PKCS12 пароль хранилища и пароль ключа совпадают.
+Что делает владелец (с телефона, в браузере, как для Preview):
 
 | Секрет | Значение |
 | --- | --- |
-| `VOLA_RELEASE_KEYSTORE_BASE64` | содержимое `vola-release.b64` |
-| `VOLA_RELEASE_STORE_PASSWORD` | пароль |
+| `VOLA_RELEASE_KEYSTORE_BASE64` | содержимое `VOLA_RELEASE_KEYSTORE_BASE64.txt` |
+| `VOLA_RELEASE_STORE_PASSWORD` | содержимое `VOLA_RELEASE_STORE_PASSWORD.txt` |
 | `VOLA_RELEASE_KEY_ALIAS` | `vola` |
 | `VOLA_RELEASE_KEY_PASSWORD` | тот же пароль |
 
-Рекомендуется закрепить отпечаток сертификата: **Settings → Secrets and variables → Actions →
-Variables → New repository variable** `VOLA_RELEASE_CERTIFICATE_SHA256`. Точное значение первый
-релизный запуск напишет в предупреждении. Если ключ когда-нибудь подменят, сборка остановится.
+И переменная (*Variables → New repository variable*) `VOLA_RELEASE_CERTIFICATE_SHA256` — содержимое
+`VOLA_RELEASE_CERTIFICATE_SHA256.txt`: если ключ когда-нибудь подменят, релиз остановится.
 
-**Сделай резервную копию `vola-release.jks` и пароля** (например, в менеджере паролей). Если их
-потерять, обновить установленный Vola поверх станет невозможно.
+**Резервная копия `vola-release.jks` и пароля** — в менеджер паролей. Если их потерять, обновить
+установленный Vola поверх станет невозможно. Копии ключа в среде Claude временные и исчезают вместе
+с контейнером; файлы, присланные в чат, стоит удалить из «Загрузок» после сохранения.
+
+Как ключ сделан (для перевыпуска):
+
+```bash
+keytool -genkeypair -keystore vola-release.jks -storetype PKCS12 \
+  -alias vola -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Vola" \
+  -storepass:env PASS -keypass:env PASS
+base64 -w0 vola-release.jks > VOLA_RELEASE_KEYSTORE_BASE64.txt
+keytool -exportcert -keystore vola-release.jks -storepass:env PASS -alias vola | sha256sum
+```
 
 ## Как выпустить релиз
 
