@@ -53,6 +53,7 @@ internal fun BoxScope.BrowserModalSurfaces(
     snoozedTabsVisible: Boolean,
     visibleSnoozedTabs: List<SnoozedTab>,
     onOpenFilterStudio: (String?) -> Unit,
+    onOpenProtectionSettings: () -> Unit,
     onPrivacyXRayDismiss: () -> Unit,
     onPermissionOriginSelected: (String?) -> Unit,
     onPermissionRadarDismiss: () -> Unit,
@@ -85,7 +86,6 @@ internal fun BoxScope.BrowserModalSurfaces(
                     hasError = xRayTab.error != null || xRayTab.failureKind != null,
                 ),
                 snapshot = controller.privacySnapshot(tabId),
-                blockerSettings = controller.blockerSettings,
                 siteState = controller.siteProtectionState(tabId),
                 permissionSnapshot = permissionSnapshot,
                 workspaceName = workspaceName,
@@ -162,6 +162,8 @@ internal fun BoxScope.BrowserModalSurfaces(
                         )
                     },
                 certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
+                week = controller.protectionReport.week,
+                onOpenProtectionSettings = onOpenProtectionSettings,
             )
         }
     }

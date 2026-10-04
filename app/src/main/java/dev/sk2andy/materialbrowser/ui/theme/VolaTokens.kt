@@ -502,3 +502,19 @@ internal object VolaPermissionPrompt {
     val iconContainerSize = 56.dp
     val iconSize = 28.dp
 }
+
+/** Privacy X-Ray, the tracker page of Site info (board W-PrivacyXRay). */
+internal object VolaPrivacyXRay {
+    val sectionGap = VolaSpacing.x4
+    val heroPadding = VolaSpacing.x5
+    val heroShape = VolaShapes.card
+
+    /** One bar split by category, under a legend of colored dots. */
+    val categoryBarHeight = 10.dp
+    val categoryGap = 2.dp
+    val legendDotSize = 10.dp
+    val legendGap = VolaSpacing.x2
+
+    /** Trackers shown before «Show all». */
+    const val COLLAPSED_DOMAINS = 5
+}
