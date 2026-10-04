@@ -91,6 +91,7 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.ForceSafeArea -> R.string.compatibility_force_safe_area
     BrowserMenuEntry.AlwaysBlockPopups -> R.string.action_always_block_popups
     BrowserMenuEntry.DesktopView -> R.string.action_desktop_view
+    BrowserMenuEntry.CompactMode -> R.string.compact_mode_title
     BrowserMenuEntry.DomainMute -> R.string.action_mute_domain
     BrowserMenuEntry.ToppingCommands -> R.string.settings_menu_entry_topping_commands
     BrowserMenuEntry.FirefoxPageActions -> R.string.settings_menu_entry_firefox_page_actions

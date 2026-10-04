@@ -30,6 +30,16 @@ LOG = []
 _counter = 0
 
 
+# Sites without working HTTPS, most dependable first (see https_only_warning in the tour).
+# httpforever.com reached the warning (ERROR_HTTPS_ONLY) in every pass of #61; info.cern.ch serves
+# HTTPS. The rest stay as fallbacks in case it ever gains HTTPS.
+HTTP_ONLY_CANDIDATES = (
+    "http://httpforever.com/",
+    "http://captive.apple.com/",
+    "http://http.badssl.com/",
+)
+
+
 def adb(*args, check=True, capture=False, timeout=60):
     result = subprocess.run(
         ["adb", *args],
@@ -154,6 +164,19 @@ def tap_scrolling(*labels, name, attempts=7):
     return False
 
 
+def scroll_to(*labels, name, attempts=5):
+    """Scrolls the visible list up until a label (or a row containing it) is on screen."""
+    width, height = screen_size()
+    for _ in range(attempts):
+        if find(*labels, contains=True):
+            return True
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.45)), "300")
+        time.sleep(1)
+    save_ui(name)
+    return False
+
+
 def screen_size():
     output = (adb("shell", "wm", "size", capture=True) or b"").decode()
     match = re.search(r"(\d+)x(\d+)", output)
@@ -208,6 +231,43 @@ def tour(suffix):
         shot(f"page-scrolled-{suffix}")
     step("page", page)
 
+    def compact_mode():
+        """Compact Mode (Q11, board W-Compact): on from the menu, the page fills the screen and
+        the bar waits as a handle; a tap on the handle brings it back; off again from the menu."""
+        open_url("https://en.wikipedia.org/wiki/Zen")
+        time.sleep(10)
+        if not tap("More options", "Другие действия"):
+            return
+        time.sleep(2)
+        if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-menu-{suffix}"):
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        # The bar folds into the handle once the menu has closed; give it time on a slow emulator.
+        time.sleep(5)
+        shot(f"compact-mode-{suffix}")
+        time.sleep(5)
+        if tap("Show the bar", "Показать панель"):
+            time.sleep(2)
+            shot(f"compact-mode-bar-{suffix}")
+        # Compact Mode is saved: it must be off again before the next step and pass.
+        if not find("More options", "Другие действия"):
+            if not tap("Show the bar", "Показать панель"):
+                adb("shell", "input", "tap", str(width // 2), str(int(height * 0.955)))
+            time.sleep(2)
+        if tap("More options", "Другие действия"):
+            time.sleep(2)
+            if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-off-{suffix}"):
+                adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        else:
+            log("compact mode: could not reach the menu to switch it off")
+        time.sleep(1)
+        if not find("More options", "Другие действия"):
+            # Still compact: the rest of the tour would run without the bar.
+            save_ui(f"compact-off-check-{suffix}")
+            log("compact mode: still on after switching it off")
+    step("compact-mode", compact_mode)
+
     def find_in_page():
         if not find("More options", "Другие действия"):
             # The scrolled page left the compact capsule, which exposes no label: tap its spot.
@@ -247,12 +307,28 @@ def tour(suffix):
         time.sleep(3)
         shot(f"site-info-{suffix}")
         save_ui(f"site-info-{suffix}")
+        # «Certificate» under the connection row (Q10b): who issued it, dates, SHA-256.
+        if tap("Certificate", "Сертификат", contains=True):
+            time.sleep(2)
+            shot(f"site-certificate-{suffix}")
+            if tap("Back", "Назад"):
+                time.sleep(1)
         if tap("Privacy X-Ray", "Рентген приватности"):
             time.sleep(2)
             shot(f"site-info-xray-{suffix}")
             # The bar's Back returns to the overview; a missed tap must not leave the page.
             if tap("Back", "Назад"):
                 time.sleep(1)
+        # «Site data» at the end of the sheet (Q10b): «Delete» closes the sheet and waits behind
+        # «Undo»; the tour takes the deletion back.
+        if scroll_to("Site data", "Данные сайта", name=f"site-info-data-{suffix}"):
+            shot(f"site-info-data-{suffix}")
+            if tap("Delete data of", "Удалить данные", contains=True):
+                time.sleep(1)
+                shot(f"site-data-undo-{suffix}", audit=False)
+                tap("Undo", "Отменить")
+                time.sleep(1)
+                return
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("site-info", site_info)
@@ -327,13 +403,85 @@ def tour(suffix):
     step("https-upgrade", https_upgrade)
 
     def https_only_warning():
-        # neverssl.com deliberately avoids HTTPS, so HTTPS-only mode ends on its warning page.
-        open_url("http://neverssl.com/")
-        time.sleep(10)
-        shot(f"https-only-early-{suffix}")
-        time.sleep(30)
+        """The HTTPS-only warning on a site without working HTTPS. Gecko shows it only when the
+        upgraded request fails at the connection; a failed TLS handshake is a security error.
+        So the tour tries sites until the debug log reports the warning, and logs every result."""
+        for url in HTTP_ONLY_CANDIDATES:
+            open_url(url)
+            time.sleep(12)
+            host = re.sub(r"^https?://([^/:]+).*$", r"\1", url)
+            raw = adb("logcat", "-d", "-s", "VolaLoadError", capture=True, check=False) or b""
+            results = [line for line in raw.decode(errors="replace").splitlines() if host in line]
+            log(f"https-only probe {host}: {results[-1] if results else 'no load error'}")
+            if results and "httpsOnly=true" in results[-1]:
+                break
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
+
+    def unknown_host_page():
+        # The .invalid domain never resolves (RFC 6761): «Site not found» (Q15, board W-States).
+        open_url("https://vola-tour.invalid/")
+        time.sleep(8)
+        shot(f"page-unknown-host-{suffix}")
+    step("page-unknown-host", unknown_host_page)
+
+    def insecure_page():
+        # An expired certificate: «Insecure connection» (Q15d, board W-States).
+        open_url("https://expired.badssl.com/")
+        time.sleep(10)
+        shot(f"page-insecure-{suffix}")
+    step("page-insecure", insecure_page)
+
+    def dangerous_site():
+        # paypa1.com reads as paypal.com: the navigation stops before anything loads (Q15e,
+        # board W-DangerousSite), then the tour goes back to safety.
+        open_url("https://paypa1.com/")
+        time.sleep(6)
+        shot(f"dangerous-site-{suffix}")
+        if not tap("Back to safety", "Вернуться в безопасное место"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("dangerous-site", dangerous_site)
+
+    def offline_page():
+        """No connection (board W-Offline); then the page reloads by itself once it is back."""
+        airplane = ("shell", "cmd", "connectivity", "airplane-mode")
+        adb(*airplane, "enable", check=False, capture=True)
+        try:
+            time.sleep(5)
+            # A new address in every pass: Gecko would show an already visited page from cache.
+            open_url(f"https://example.org/?vola-offline-{suffix}")
+            time.sleep(8)
+            shot(f"page-offline-{suffix}")
+        finally:
+            adb(*airplane, "disable", check=False, capture=True)
+        time.sleep(20)
+        shot(f"page-back-online-{suffix}")
+    step("page-offline", offline_page)
+
+    def workspace_locked():
+        # «Workspace locked» (board W-Locked). The emulator has no biometrics to lock a workspace
+        # with, so a debug-only activity shows the screen itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.ProfileLockedPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"workspace-locked-{suffix}")
+        if not tap("Go to another workspace", "Перейти в другое пространство"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("workspace-locked", workspace_locked)
+
+    def download_check():
+        # An app download stops at «Check the file before saving» (Q15c, board W-DownloadCheck);
+        # the tour then declines, so nothing is saved.
+        open_url("https://f-droid.org/F-Droid.apk")
+        time.sleep(10)
+        shot(f"download-check-{suffix}")
+        if not tap("Don’t download", "Don't download", "Не скачивать"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("download-check", download_check)
 
     def workspace_swipe():
         """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
@@ -528,10 +676,39 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         shot(f"private-new-tab-{suffix}")
+        # «Lock on exit» (П9) under the facts; without a biometric on the emulator it is off and
+        # says why.
+        if scroll_to("Lock on exit", "Замок при выходе", name=f"private-lock-{suffix}"):
+            shot(f"private-lock-row-{suffix}")
         if tap("Close 1 private", "Close all", "Закрыть 1 приватную", "Закрыть все", contains=True):
             time.sleep(3)
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
+
+    def private_tabs_locked():
+        # Real private tabs cannot be locked without a biometric, so a debug-only activity shows
+        # the «Private tabs locked» screen itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PrivateTabsLockPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"private-locked-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("private-locked", private_tabs_locked)
+
+    def permission_prompt():
+        # The permission request sheet (Q10c, board W-Permission). The tour has no page that asks
+        # for a permission, so a debug-only activity shows the sheet itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PermissionPromptPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"permission-prompt-{suffix}")
+        if not tap("Don’t allow", "Don't allow", "Запретить"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("permission-prompt", permission_prompt)
 
     def tab_archive_setting():
         """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
@@ -572,6 +749,14 @@ def tour(suffix):
                     tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                if tap_scrolling("Protection & data", "Защита и данные",
+                                 name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
+                                 name=f"protection-private-lock-{suffix}", attempts=8):
+                        shot(f"protection-private-lock-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
     step("settings", menu_and_settings)
@@ -601,6 +786,13 @@ def accessibility_pass():
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(1)
     step("page-a11y", page_and_menu)
+
+    def unknown_host_a11y():
+        # The state page scrolls its text at 200 % and keeps the button on screen.
+        open_url("https://vola-tour.invalid/")
+        time.sleep(8)
+        shot("page-unknown-host-a11y")
+    step("page-unknown-host-a11y", unknown_host_a11y)
 
     adb("shell", "settings", "put", "system", "font_scale", "1.0", check=False)
 
@@ -694,7 +886,7 @@ def main():
     gecko = (adb("logcat", "-d", check=False, capture=True) or b"").decode("utf-8", "replace")
     https_lines = [
         line for line in gecko.splitlines()
-        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl", line, re.I)
+        if re.search(r"https.?only|HTTPS-Only|onLoadError|LoadURIDelegate|neverssl|httpforever", line, re.I)
     ]
     (OUT / "https-only-log.txt").write_text("\n".join(https_lines[-400:]) + "\n")
     (OUT / "tour-log.txt").write_text("\n".join(LOG) + "\n")

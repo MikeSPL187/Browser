@@ -87,6 +87,7 @@ enum class BrowserMenuEntry(
         false,
     ),
     DesktopView("desktop_view", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
+    CompactMode("compact_mode", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     DomainMute("domain_mute", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
 
     ToppingCommands(
@@ -285,6 +286,7 @@ object BrowserMenuLayoutRules {
         BrowserFeatureMenuAction.ToggleForceSafeArea -> BrowserMenuEntry.ForceSafeArea
         BrowserFeatureMenuAction.ToggleAlwaysBlockPopups -> BrowserMenuEntry.AlwaysBlockPopups
         BrowserFeatureMenuAction.ToggleDesktopView -> BrowserMenuEntry.DesktopView
+        BrowserFeatureMenuAction.ToggleCompactMode -> BrowserMenuEntry.CompactMode
         BrowserFeatureMenuAction.ToggleDomainMute -> BrowserMenuEntry.DomainMute
         BrowserFeatureMenuAction.OpenCandyTrail -> BrowserMenuEntry.CandyTrail
         BrowserFeatureMenuAction.AddSiteCapsule -> BrowserMenuEntry.AddSiteCapsule

@@ -271,6 +271,8 @@ class BrowserControllerDownloadRoutingInstrumentedTest {
             browser.updateDownloadSettings(BrowserDownloadSettings(managerMode = DownloadManagerMode.AskEveryTime))
             val sessionId = preparePreview(browser)
             browser.dispatchAuthorizedExternalPreviewDownloadForTesting(response("https://example.com/Candy.apk"))
+            // An app is checked first (Q15c); «Download» goes on to the manager choice.
+            browser.downloadSafety.save()
             assertNotNull(browser.pendingDownloadChoice)
 
             assertTrue(browser.dismissExternalLinkPreview(sessionId))
@@ -291,6 +293,8 @@ class BrowserControllerDownloadRoutingInstrumentedTest {
             browser.updateDownloadSettings(BrowserDownloadSettings(managerMode = DownloadManagerMode.AskEveryTime))
             preparePreview(browser)
             browser.dispatchAuthorizedExternalPreviewDownloadForTesting(response("https://example.com/Candy.apk"))
+            // An app is checked first (Q15c); «Download» goes on to the manager choice.
+            browser.downloadSafety.save()
             val choice = requireNotNull(browser.pendingDownloadChoice)
             assertTrue(requireNotNull(choice.isSourceCurrent).invoke())
 

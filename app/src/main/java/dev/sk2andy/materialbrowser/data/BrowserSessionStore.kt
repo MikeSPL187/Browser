@@ -716,6 +716,13 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_ARCHIVE_INACTIVE_TABS, enabled).apply()
     }
 
+    fun loadPrivateTabsLockEnabled(): Boolean =
+        preferences.getBoolean(KEY_PRIVATE_TABS_LOCK_ENABLED, false)
+
+    fun savePrivateTabsLockEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_PRIVATE_TABS_LOCK_ENABLED, enabled).apply()
+    }
+
     fun loadPendingTabClearOnTaskRemoval(): Boolean =
         preferences.getBoolean(KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL, false)
 
@@ -913,6 +920,12 @@ class BrowserSessionStore internal constructor(
 
     override fun saveAddressBarDockingEnabled(enabled: Boolean) {
         preferences.edit().putBoolean(KEY_ADDRESS_BAR_DOCKING_ENABLED, enabled).apply()
+    }
+
+    override fun loadCompactMode(): Boolean = preferences.getBoolean(KEY_COMPACT_MODE, false)
+
+    override fun saveCompactMode(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_COMPACT_MODE, enabled).apply()
     }
 
     fun loadExternalLinkPreviewEnabled(): Boolean =
@@ -1520,6 +1533,7 @@ class BrowserSessionStore internal constructor(
         private val FAVORITES_COMMIT_LOCK = Any()
         const val KEY_INACTIVE_TAB_LIFETIME = "inactive_tab_lifetime"
         const val KEY_ARCHIVE_INACTIVE_TABS = "archive_inactive_tabs"
+        const val KEY_PRIVATE_TABS_LOCK_ENABLED = "private_tabs_lock_enabled"
         const val KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL =
             "pending_tab_clear_on_task_removal"
         const val KEY_RESIDENT_TAB_LIMIT = "resident_tab_limit"
@@ -1542,6 +1556,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_ADDRESS_BAR_DOCK_VERTICAL_FRACTION =
             "address_bar_dock_vertical_fraction"
         const val KEY_ADDRESS_BAR_DOCKING_ENABLED = "address_bar_docking_enabled"
+        const val KEY_COMPACT_MODE = "compact_mode"
         const val KEY_EXTERNAL_LINK_PREVIEW_ENABLED = "external_link_preview_enabled"
         const val KEY_EXTERNAL_APP_LINK_HANDLING = "external_app_link_handling"
         const val KEY_LINK_LONG_PRESS_ACTION = "link_long_press_action"
