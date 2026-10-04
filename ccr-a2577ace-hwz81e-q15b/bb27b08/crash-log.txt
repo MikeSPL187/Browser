@@ -1,0 +1,2 @@
+--------- beginning of crash
+10-04 11:37:41.041  1397  1822 F libc    : Fatal signal 6 (SIGABRT), code -6 (SI_TKILL) in tid 1822 (aiai-brella-0), pid 1397 (ogle.android.as)
