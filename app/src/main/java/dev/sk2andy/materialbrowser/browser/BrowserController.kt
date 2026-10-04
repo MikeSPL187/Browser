@@ -4822,12 +4822,12 @@ class BrowserController(
             },
             nativeTopHeaderSafeArea = nativeTopHeaderSafeArea,
             hostFrame = if (tabId != null && view !== geckoMediaPresentation?.view) {
-                val hostFrame = if (tabId == splitView.companionTabId) {
+                val frame = if (tabId == splitView.companionTabId) {
                     splitCompanionFrame
                 } else {
                     contentFrame
                 }
-                hostFrame.toGeckoViewInsets()
+                frame.toGeckoViewInsets()
             } else {
                 GeckoViewInsets.Zero
             },
