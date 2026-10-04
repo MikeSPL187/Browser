@@ -1404,7 +1404,8 @@ internal fun BrowserScreen(
             .onGloballyPositioned { coordinates ->
                 browserRootBottomInWindowPx = coordinates.boundsInWindow().bottom.roundToInt()
             }
-            .background(VolaTheme.auraBrush),
+            .background(VolaTheme.auraBrush)
+            .hiddenUnderModal(controller.contentActions.isLinkPeekVisible),
     ) {
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -1890,7 +1891,6 @@ internal fun BrowserScreen(
             },
             onSnoozedTabsDismiss = { snoozedTabsVisible = false },
         )
-
     }
 
     BrowserTransientOverlays(
