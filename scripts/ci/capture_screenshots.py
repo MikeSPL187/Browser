@@ -523,6 +523,19 @@ def tour(suffix):
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
+                # Settings search (Q16a): the magnifier in the header, then «https».
+                if tap("Search settings", "Найти в настройках"):
+                    time.sleep(2)
+                    adb("shell", "input", "text", "https")
+                    time.sleep(2)
+                    shot(f"settings-search-{suffix}")
+                    save_ui(f"settings-search-{suffix}")
+                    # The first back hides the keyboard, the second leaves the search.
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                    if not find("Search settings", "Найти в настройках"):
+                        adb("shell", "input", "keyevent", "BACK")
+                        time.sleep(2)
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")

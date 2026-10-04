@@ -444,6 +444,11 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_search_open">Search settings</string>
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_search_clear">Clear</string>
+    <string name="settings_search_prompt">Find a setting by its name or description</string>
+    <string name="settings_search_empty">Nothing found for «%1$s»</string>
     <string name="settings_home_group_browsing">Browsing</string>
     <string name="settings_home_group_personalization">Personalization</string>
     <string name="settings_home_group_privacy_data">Privacy &amp; data</string>
