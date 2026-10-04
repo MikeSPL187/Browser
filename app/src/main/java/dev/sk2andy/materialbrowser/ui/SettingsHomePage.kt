@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -47,6 +48,7 @@ import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object SettingsHomeTestTags {
     const val DefaultBrowserBanner = "settings_home_default_browser"
+    const val MakeDefault = "settings_home_make_default"
 }
 
 @Composable
@@ -180,6 +182,15 @@ private fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) 
  */
 @Composable
 private fun DefaultBrowserBanner(onMakeDefault: () -> Unit) {
+    val stacked = SettingsHomeSummaryRules.stacksMakeDefault(LocalDensity.current.fontScale)
+    val button: @Composable () -> Unit = {
+        Button(
+            onClick = onMakeDefault,
+            modifier = Modifier.testTag(SettingsHomeTestTags.MakeDefault),
+        ) {
+            Text(stringResource(R.string.settings_home_default_action))
+        }
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -188,43 +199,52 @@ private fun DefaultBrowserBanner(onMakeDefault: () -> Unit) {
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .heightIn(min = VolaSettingsHomeTokens.bannerMinHeight)
                 .padding(VolaSettingsHomeTokens.bannerPadding),
-            horizontalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerGap),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerGap),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(VolaSettingsHomeTokens.logoTileSize)
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainerLowest,
-                        VolaSettingsHomeTokens.logoTileShape,
-                    ),
-                contentAlignment = Alignment.Center,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerGap),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_foreground_art),
-                    contentDescription = null,
-                    modifier = Modifier.size(VolaSettingsHomeTokens.logoSize),
-                )
+                Box(
+                    modifier = Modifier
+                        .size(VolaSettingsHomeTokens.logoTileSize)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerLowest,
+                            VolaSettingsHomeTokens.logoTileShape,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground_art),
+                        contentDescription = null,
+                        modifier = Modifier.size(VolaSettingsHomeTokens.logoSize),
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerTextGap),
+                ) {
+                    Text(
+                        stringResource(R.string.settings_home_default_title),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        stringResource(R.string.settings_home_default_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                // A large font leaves too little room beside the text: the button goes under it.
+                if (!stacked) button()
             }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(VolaSettingsHomeTokens.bannerTextGap),
-            ) {
-                Text(
-                    stringResource(R.string.settings_home_default_title),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    stringResource(R.string.settings_home_default_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Button(onClick = onMakeDefault) {
-                Text(stringResource(R.string.settings_home_default_action))
+            if (stacked) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterEnd,
+                ) { button() }
             }
         }
     }

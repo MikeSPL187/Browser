@@ -8,7 +8,9 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsHomeSummaryRulesTest {
@@ -69,5 +71,23 @@ class SettingsHomeSummaryRulesTest {
                 ),
             ),
         )
+    }
+
+    @Test
+    fun `summary parts join with a dot and skip what is missing`() {
+        assertEquals(
+            "DuckDuckGo · suggestions",
+            SettingsHomeSummaryRules.join(listOf("DuckDuckGo", "suggestions")),
+        )
+        assertEquals("DuckDuckGo", SettingsHomeSummaryRules.join(listOf("DuckDuckGo", null)))
+        assertNull(SettingsHomeSummaryRules.join(listOf(null, "")))
+    }
+
+    @Test
+    fun `a large font puts the make default button under the text`() {
+        assertFalse(SettingsHomeSummaryRules.stacksMakeDefault(1f))
+        assertFalse(SettingsHomeSummaryRules.stacksMakeDefault(1.15f))
+        assertTrue(SettingsHomeSummaryRules.stacksMakeDefault(1.3f))
+        assertTrue(SettingsHomeSummaryRules.stacksMakeDefault(2f))
     }
 }

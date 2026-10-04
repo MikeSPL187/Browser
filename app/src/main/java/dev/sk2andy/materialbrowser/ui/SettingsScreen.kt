@@ -208,6 +208,12 @@ internal fun SettingsScreen(
                         httpsOnlyMode = httpsOnlyMode,
                         isHttpsOnlySupported = isHttpsOnlySupported,
                         downloadSummary = downloadSettings.displayName(externalDownloadManagers),
+                        searchSuggestionsOn =
+                            searchSuggestionProvider != SearchSuggestionProvider.None,
+                        tabCount = tabCount,
+                        userscriptCount = userScripts.size,
+                        capsuleCount = siteCapsules.size,
+                        isDefaultBrowser = isDefaultBrowser,
                     ),
                     isDefaultBrowser = isDefaultBrowser,
                     onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,

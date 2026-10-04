@@ -507,6 +507,25 @@
     <string name="settings_home_protection_trackers_https">Блокировка трекеров · только HTTPS</string>
     <string name="settings_home_protection_trackers">Блокировка трекеров</string>
     <string name="settings_home_protection_https">Только HTTPS</string>
+    <string name="settings_home_search_suggestions">подсказки</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d открытая вкладка</item>
+        <item quantity="few">%1$d открытые вкладки</item>
+        <item quantity="many">%1$d открытых вкладок</item>
+        <item quantity="other">%1$d открытой вкладки</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d скрипт</item>
+        <item quantity="few">%1$d скрипта</item>
+        <item quantity="many">%1$d скриптов</item>
+        <item quantity="other">%1$d скрипта</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d капсула</item>
+        <item quantity="few">%1$d капсулы</item>
+        <item quantity="many">%1$d капсул</item>
+        <item quantity="other">%1$d капсулы</item>
+    </plurals>
     <string name="settings_browser_group_general">Основные параметры</string>
     <string name="settings_browser_group_startup">Запуск</string>
     <string name="settings_browser_group_favorites">Избранное</string>
