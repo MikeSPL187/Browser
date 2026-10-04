@@ -303,6 +303,13 @@ def tour(suffix):
         shot(f"page-unknown-host-{suffix}")
     step("page-unknown-host", unknown_host_page)
 
+    def insecure_page():
+        # An expired certificate: «Insecure connection» (Q15d, board W-States).
+        open_url("https://expired.badssl.com/")
+        time.sleep(10)
+        shot(f"page-insecure-{suffix}")
+    step("page-insecure", insecure_page)
+
     def offline_page():
         """No connection (board W-Offline); then the page reloads by itself once it is back."""
         airplane = ("shell", "cmd", "connectivity", "airplane-mode")

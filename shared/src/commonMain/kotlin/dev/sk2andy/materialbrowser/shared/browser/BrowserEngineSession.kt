@@ -77,6 +77,9 @@ enum class BrowserEngineEventType {
 enum class BrowserEngineFailureKind {
     Offline,
     UnknownHost,
+
+    /** The site's certificate or encryption failed, so the connection can't be trusted. */
+    InsecureConnection,
     Other,
 }
 

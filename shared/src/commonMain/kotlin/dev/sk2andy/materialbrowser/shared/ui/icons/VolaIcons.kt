@@ -123,6 +123,13 @@ object VolaIcons {
         )
     }
 
+    val GppBad: ImageVector by lazy {
+        materialSymbol(
+            name = "GppBad",
+            pathData = "M480 536 l56 56 q11 11 28 11 t28 -11 q11 -11 11 -28 t-11 -28 l-56 -56 l56 -56 q11 -11 11 -28 t-11 -28 q-11 -11 -28 -11 t-28 11 l-56 56 l-56 -56 q-11 -11 -28 -11 t-28 11 q-11 11 -11 28 t11 28 l56 56 l-56 56 q-11 11 -11 28 t11 28 q11 11 28 11 t28 -11 l56 -56 Z m0 340 q-7 0 -13 -1 t-12 -3 q-135 -45 -215 -166.5 T160 444 v-189 q0 -25 14.5 -45 t37.5 -29 l240 -90 q14 -5 28 -5 t28 5 l240 90 q23 9 37.5 29 t14.5 45 v189 q0 140 -80 261.5 T505 872 q-6 2 -12 3 t-13 1 Z m0 -80 q104 -33 172 -132 t68 -220 v-189 l-240 -90 l-240 90 v189 q0 121 68 220 t172 132 Z m0 -316 Z",
+        )
+    }
+
     val History: ImageVector by lazy {
         materialSymbol(
             name = "History",
@@ -382,6 +389,7 @@ object VolaIcons {
             Fingerprint,
             FormatAlignJustify,
             FormatAlignLeft,
+            GppBad,
             History,
             Home,
             Info,

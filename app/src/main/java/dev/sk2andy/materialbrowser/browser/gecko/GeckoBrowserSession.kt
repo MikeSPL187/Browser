@@ -44,6 +44,9 @@ internal object GeckoNavigationFailureRules {
     fun kindForErrorCode(errorCode: Int): BrowserEngineFailureKind = when (errorCode) {
         WebRequestError.ERROR_OFFLINE -> BrowserEngineFailureKind.Offline
         WebRequestError.ERROR_UNKNOWN_HOST -> BrowserEngineFailureKind.UnknownHost
+        WebRequestError.ERROR_SECURITY_SSL,
+        WebRequestError.ERROR_SECURITY_BAD_CERT,
+        -> BrowserEngineFailureKind.InsecureConnection
         else -> BrowserEngineFailureKind.Other
     }
 }

@@ -858,6 +858,9 @@
     <string name="page_error_unreachable_title">Сайт не отвечает</string>
     <string name="page_error_unreachable_message">%1$s не отвечает. Возможно, он перегружен или недоступен в вашей сети.</string>
     <string name="page_error_network_settings">Настройки сети</string>
+    <string name="page_error_insecure_title">Небезопасное соединение</string>
+    <string name="page_error_insecure_message">Сертификату сайта %1$s нельзя доверять. Всё, что вы отправите, могут прочитать по пути.</string>
+    <string name="page_error_go_back">Вернуться назад</string>
     <string name="action_save">Сохранить</string>
     <string name="capsule_add_action">Добавить как капсулу сайта</string>
     <string name="capsule_unavailable_private">Недоступно в приватном режиме: капсулы сохраняются</string>
