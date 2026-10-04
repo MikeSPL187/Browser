@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,9 +38,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
@@ -58,6 +63,8 @@ internal object SiteInfoTestTags {
     const val AllPermissions = "site_info_all_permissions"
     const val Protection = "site_info_protection"
     const val Popups = "site_info_popups"
+    const val DeleteSiteData = "site_info_delete_site_data"
+    const val Certificate = "site_info_certificate"
 
     fun permission(permission: SitePermission): String = "site_info_permission_${permission.name}"
 }
@@ -83,6 +90,9 @@ internal fun SiteInfoOverview(
     onProtectionChange: (Boolean) -> Unit,
     onPopupsBlockedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    siteData: SiteInfoSiteData? = null,
+    certificate: SiteCertificate? = null,
+    onOpenCertificate: () -> Unit = {},
 ) {
     val host = SiteConnectionRules.host(pageUrl)
     Column(
@@ -97,6 +107,17 @@ internal fun SiteInfoOverview(
                 icon = rememberVectorPainter(siteConnectionIcon(connectionKind)),
                 title = siteConnectionLabel(connectionKind),
             )
+            certificate?.let { cert ->
+                SiteInfoDivider()
+                SiteInfoRow(
+                    icon = painterResource(R.drawable.ic_symbol_verified),
+                    title = stringResource(R.string.site_info_certificate),
+                    supporting = siteCertificateSummary(cert),
+                    onClick = onOpenCertificate,
+                    modifier = Modifier.testTag(SiteInfoTestTags.Certificate),
+                    trailing = { SiteInfoChevron() },
+                )
+            }
             SiteInfoDivider()
             SiteInfoRow(
                 icon = painterResource(R.drawable.ic_symbol_shield),
@@ -159,6 +180,48 @@ internal fun SiteInfoOverview(
                 )
             }
         }
+        siteData?.let { data -> SiteDataCard(data) }
+    }
+}
+
+/**
+ * «Site data» with «Delete» (board W-SiteInfo). The engine reports no size or cookie count per
+ * site, so the row says what goes instead; deleting waits behind «Undo» ([SiteDataDeletion]).
+ */
+internal class SiteInfoSiteData(
+    val baseDomain: String,
+    val allWorkspaces: Boolean,
+    val onDelete: () -> Unit,
+)
+
+@Composable
+private fun SiteDataCard(data: SiteInfoSiteData) {
+    val deleteLabel = stringResource(R.string.site_info_delete_site_data_description, data.baseDomain)
+    SiteInfoCard {
+        SiteInfoRow(
+            icon = painterResource(R.drawable.ic_symbol_dns),
+            title = stringResource(R.string.site_info_site_data),
+            supporting = stringResource(
+                if (data.allWorkspaces) {
+                    R.string.site_info_site_data_summary_all_workspaces
+                } else {
+                    R.string.site_info_site_data_summary
+                },
+            ),
+            trailing = {
+                TextButton(
+                    onClick = data.onDelete,
+                    modifier = Modifier
+                        .testTag(SiteInfoTestTags.DeleteSiteData)
+                        .semantics { contentDescription = deleteLabel },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.site_info_delete_site_data))
+                }
+            },
+        )
     }
 }
 
@@ -193,7 +256,7 @@ private fun SiteInfoHeader(host: String, connectionKind: SiteConnectionKind) {
 }
 
 @Composable
-private fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = VolaSiteInfo.cardShape,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -204,7 +267,7 @@ private fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun SiteInfoDivider() {
+internal fun SiteInfoDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(
             start = VolaSiteInfo.dividerInset,
@@ -411,6 +474,11 @@ private fun SiteInfoOverviewPreview() {
                 onProtectionChange = {},
                 onPopupsBlockedChange = {},
                 modifier = Modifier.padding(VolaSiteInfo.sidePadding),
+                siteData = SiteInfoSiteData(
+                    baseDomain = "north-guide.ru",
+                    allWorkspaces = true,
+                    onDelete = {},
+                ),
             )
         }
     }

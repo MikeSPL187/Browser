@@ -47,6 +47,7 @@ enum class BrowserMenuEntry(
     DuplicateTab("duplicate_tab", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Reader("reader", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Translate("translate", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
+    SplitView("split_view", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     FindInPage("find_in_page", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     Share("share", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
     OpenExternal("open_external", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
@@ -87,6 +88,7 @@ enum class BrowserMenuEntry(
         false,
     ),
     DesktopView("desktop_view", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
+    CompactMode("compact_mode", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     DomainMute("domain_mute", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
 
     ToppingCommands(
@@ -275,6 +277,7 @@ object BrowserMenuLayoutRules {
         -> BrowserMenuEntry.AddressBarDocking
         BrowserFeatureMenuAction.OpenReader -> BrowserMenuEntry.Reader
         BrowserFeatureMenuAction.TranslatePage -> BrowserMenuEntry.Translate
+        BrowserFeatureMenuAction.ToggleSplitView -> BrowserMenuEntry.SplitView
         BrowserFeatureMenuAction.FindInPage -> BrowserMenuEntry.FindInPage
         BrowserFeatureMenuAction.Share -> BrowserMenuEntry.Share
         BrowserFeatureMenuAction.OpenExternal -> BrowserMenuEntry.OpenExternal
@@ -285,6 +288,7 @@ object BrowserMenuLayoutRules {
         BrowserFeatureMenuAction.ToggleForceSafeArea -> BrowserMenuEntry.ForceSafeArea
         BrowserFeatureMenuAction.ToggleAlwaysBlockPopups -> BrowserMenuEntry.AlwaysBlockPopups
         BrowserFeatureMenuAction.ToggleDesktopView -> BrowserMenuEntry.DesktopView
+        BrowserFeatureMenuAction.ToggleCompactMode -> BrowserMenuEntry.CompactMode
         BrowserFeatureMenuAction.ToggleDomainMute -> BrowserMenuEntry.DomainMute
         BrowserFeatureMenuAction.OpenCandyTrail -> BrowserMenuEntry.CandyTrail
         BrowserFeatureMenuAction.AddSiteCapsule -> BrowserMenuEntry.AddSiteCapsule

@@ -4,13 +4,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -24,7 +27,6 @@ import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import org.junit.After
 import org.junit.Rule
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -64,8 +66,13 @@ class ReaderStudioScreenInstrumentedTest {
 
         composeRule.onNodeWithTag(ReaderStudioTestTags.Screen).assertExists()
         composeRule.onNodeWithTag(ReaderStudioTestTags.Article).assertExists()
-        composeRule.onAllNodesWithText("Reader test article").assertCountEquals(2)
-        composeRule.onNodeWithTag(ReaderStudioTestTags.PrivateNotice).assertExists()
+        composeRule.onAllNodesWithText("Reader test article").assertCountEquals(1)
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsPanel).assertDoesNotExist()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsButton).performClick()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.PrivateNotice)
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.Original).assertExists()
         composeRule.onNodeWithTag(ReaderStudioTestTags.Save).assertDoesNotExist()
         composeRule.onNodeWithTag(ReaderStudioTestTags.Library).assertDoesNotExist()
     }
@@ -93,32 +100,38 @@ class ReaderStudioScreenInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(ReaderStudioTestTags.Save).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.FontSegmented).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.AlignmentSegmented).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.ThemeSegmented).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechTransport).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechPlay).assertIsDisplayed()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechPause).assertDoesNotExist()
-        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechStop).assertIsDisplayed()
-        val controlCenters = listOf(
+        val minutes = context.resources.getQuantityString(R.plurals.reader_reading_minutes, 1, 1)
+        composeRule.onNodeWithText("Example · $minutes").assertIsDisplayed()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsButton).performClick()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsPanel).assertIsDisplayed()
+        listOf(
+            ReaderStudioTestTags.SpeechTransport,
+            ReaderStudioTestTags.SpeechPlay,
+            ReaderStudioTestTags.ThemeSegmented,
             ReaderStudioTestTags.FontSegmented,
-            ReaderStudioTestTags.AlignmentSegmented,
+            ReaderStudioTestTags.FontFamily,
+            ReaderStudioTestTags.WideMargins,
             ReaderStudioTestTags.Save,
-        ).map { tag ->
-            composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.center.y
+            ReaderStudioTestTags.Library,
+            ReaderStudioTestTags.Original,
+        ).forEach { tag ->
+            composeRule.onNodeWithTag(tag).performScrollTo().assertIsDisplayed()
         }
-        assertTrue(controlCenters.max() - controlCenters.min() < 2f)
-        composeRule.onNodeWithText(context.getString(R.string.reader_theme_paper)).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.reader_theme_night)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.reader_alignment_start),
-        )
-            .assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.reader_alignment_justified),
-        )
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechPause).assertDoesNotExist()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.SpeechStop).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.reader_theme_paper))
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+        composeRule.onNodeWithText(context.getString(R.string.reader_theme_dark))
+            .assertIsNotSelected()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.WideMargins)
+            .performScrollTo()
+            .assertIsOff()
+            .performClick()
+            .assertIsOn()
+        composeRule.onNodeWithText(context.getString(R.string.reader_font_sans))
+            .performScrollTo()
             .performClick()
             .assertIsSelected()
     }

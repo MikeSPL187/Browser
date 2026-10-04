@@ -12,6 +12,7 @@ internal enum class TabQuickAction {
 
 /** Everything else Candy's tab menu offered, behind «More» so nothing is more than two taps away. */
 internal enum class TabMoreAction {
+    SideBySide,
     AddBookmark,
     RemoveBookmark,
     MuteSite,
@@ -40,6 +41,8 @@ internal data class TabActionsFacts(
     val canDelete: Boolean,
     val canCloseAll: Boolean,
     val otherWorkspaceCount: Int,
+    /** Another page than the selected one, which Split View can show next to it. */
+    val canOpenSideBySide: Boolean = false,
 )
 
 internal object TabActionsRules {
@@ -64,6 +67,7 @@ internal object TabActionsRules {
     fun canClose(facts: TabActionsFacts): Boolean = facts.canDelete
 
     fun moreActions(facts: TabActionsFacts): List<TabMoreAction> = buildList {
+        if (facts.canOpenSideBySide) add(TabMoreAction.SideBySide)
         if (facts.isWebPage && !facts.isIncognito) {
             add(if (facts.isBookmarked) TabMoreAction.RemoveBookmark else TabMoreAction.AddBookmark)
         }

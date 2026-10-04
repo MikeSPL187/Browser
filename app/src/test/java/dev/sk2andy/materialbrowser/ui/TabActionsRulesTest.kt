@@ -90,6 +90,15 @@ class TabActionsRulesTest {
     }
 
     @Test
+    fun `another page opens side by side first in more`() {
+        assertFalse(TabMoreAction.SideBySide in TabActionsRules.moreActions(page))
+        assertEquals(
+            TabMoreAction.SideBySide,
+            TabActionsRules.moreActions(page.copy(canOpenSideBySide = true)).first(),
+        )
+    }
+
+    @Test
     fun `move, snooze and close follow the tab`() {
         assertTrue(TabActionsRules.canMove(page))
         assertFalse(TabActionsRules.canMove(page.copy(otherWorkspaceCount = 0)))

@@ -33,6 +33,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -105,7 +106,8 @@ import dev.sk2andy.materialbrowser.ui.FirefoxExtensionManagerOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoSystemControls
 import dev.sk2andy.materialbrowser.ui.GestureOnboardingScreen
-import dev.sk2andy.materialbrowser.ui.ProfileLockedOverlay
+import dev.sk2andy.materialbrowser.ui.BrowserLockScreens
+import dev.sk2andy.materialbrowser.ui.LocalPrivateTabsLocked
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesScreen
 import dev.sk2andy.materialbrowser.ui.performConfirmHaptic
 import dev.sk2andy.materialbrowser.ui.rememberFullscreenVideoGestureState
@@ -451,6 +453,7 @@ class MainActivity : AppCompatActivity() {
                         requestNotificationPermission()
                     }
                     privateTabsNotifier.update(privateTabCount)
+                    browserController.privateTabsLock.onPrivateTabCountChanged(privateTabCount)
                 }
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(profileProcessLifecycleObserver)
@@ -643,98 +646,102 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         null
                     }
-                    BrowserScreen(
-                        controller = browserController,
-                        castUiState = castController?.state ?: CastUiState(),
-                        onToggleCastPlayback = { castController?.togglePlayback() },
-                        onSeekCast = { positionMillis -> castController?.seekTo(positionMillis) },
-                        onCastVolumeChange = { volume -> castController?.setDeviceVolume(volume) },
-                        onDisconnectCast = { castController?.disconnect() },
-                        webViewVideoOnlyPresentation = webViewVideoOnlyPresentation,
-                        videoOnlyPresentation = videoOnlyPresentation,
-                        fullscreenVideoGestureState = fullscreenVideoGestureState
-                            .takeIf { fullscreenVideoGesturesActive },
-                        incomingBrowserNavigationRequestId =
-                            incomingBrowserNavigationRequestId,
-                        externalLaunchTabId = externalLaunchTabId,
-                        onReturnToExternalApp = {
-                            browserController.dismissExternalLinkPreview()
-                            externalLaunchTabId = null
-                            moveTaskToBack(true)
-                        },
-                        onExternalPreviewCommitted = { tabId ->
-                            externalLaunchTabId = tabId
-                        },
-                        onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
-                        onOpenFavorites = {
-                            favoritesLauncher.launch(
-                                FavoritesActivityContract.launchIntent(this@MainActivity),
-                            )
-                        },
-                        onOpenDownloads = {
-                            startActivity(Intent(this@MainActivity, DownloadsActivity::class.java))
-                        },
-                        onOpenHistory = {
-                            historyLauncher.launch(
-                                HistoryActivityContract.launchIntent(this@MainActivity),
-                            )
-                        },
-                        onImportUserScript = {
-                            userScriptImportLauncher.launch(
-                                arrayOf(
-                                    "application/javascript",
-                                    "text/javascript",
-                                    "text/plain",
-                                ),
-                            )
-                        },
-                        onImportFavoriteBookmarks = {
-                            favoriteBookmarksImportLauncher.launch(
-                                arrayOf(
-                                    "text/html",
-                                    "application/xhtml+xml",
-                                    "text/plain",
-                                    "application/octet-stream",
-                                ),
-                            )
-                        },
-                        onExportAppData = {
-                            if (!browserController.canExportAppData()) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    R.string.data_archive_private_tabs_error,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                    CompositionLocalProvider(
+                        LocalPrivateTabsLocked provides browserController.privateTabsLock.isLocked,
+                    ) {
+                        BrowserScreen(
+                            controller = browserController,
+                            castUiState = castController?.state ?: CastUiState(),
+                            onToggleCastPlayback = { castController?.togglePlayback() },
+                            onSeekCast = { positionMillis -> castController?.seekTo(positionMillis) },
+                            onCastVolumeChange = { volume -> castController?.setDeviceVolume(volume) },
+                            onDisconnectCast = { castController?.disconnect() },
+                            webViewVideoOnlyPresentation = webViewVideoOnlyPresentation,
+                            videoOnlyPresentation = videoOnlyPresentation,
+                            fullscreenVideoGestureState = fullscreenVideoGestureState
+                                .takeIf { fullscreenVideoGesturesActive },
+                            incomingBrowserNavigationRequestId =
+                                incomingBrowserNavigationRequestId,
+                            externalLaunchTabId = externalLaunchTabId,
+                            onReturnToExternalApp = {
+                                browserController.dismissExternalLinkPreview()
+                                externalLaunchTabId = null
+                                moveTaskToBack(true)
+                            },
+                            onExternalPreviewCommitted = { tabId ->
+                                externalLaunchTabId = tabId
+                            },
+                            onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
+                            onOpenFavorites = {
+                                favoritesLauncher.launch(
+                                    FavoritesActivityContract.launchIntent(this@MainActivity),
+                                )
+                            },
+                            onOpenDownloads = {
+                                startActivity(Intent(this@MainActivity, DownloadsActivity::class.java))
+                            },
+                            onOpenHistory = {
+                                historyLauncher.launch(
+                                    HistoryActivityContract.launchIntent(this@MainActivity),
+                                )
+                            },
+                            onImportUserScript = {
+                                userScriptImportLauncher.launch(
+                                    arrayOf(
+                                        "application/javascript",
+                                        "text/javascript",
+                                        "text/plain",
+                                    ),
+                                )
+                            },
+                            onImportFavoriteBookmarks = {
+                                favoriteBookmarksImportLauncher.launch(
+                                    arrayOf(
+                                        "text/html",
+                                        "application/xhtml+xml",
+                                        "text/plain",
+                                        "application/octet-stream",
+                                    ),
+                                )
+                            },
+                            onExportAppData = {
+                                if (!browserController.canExportAppData()) {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        R.string.data_archive_private_tabs_error,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                } else {
+                                    appDataExportWarningVisible = true
+                                }
+                            },
+                            onImportAppData = {
+                                appDataImportLauncher.launch(
+                                    arrayOf("application/zip", "application/octet-stream"),
+                                )
+                            },
+                            onShowGestureOnboarding = {
+                                initialOnboardingRequired = false
+                                releaseNotesVisible = false
+                                onboardingVisible = true
+                            },
+                            onShowReleaseNotes = {
+                                loadReleaseNotesContent()
+                                releaseNotesVisible = releaseNotesContent != null
+                            },
+                            onManageFirefoxExtensions = if (browserController.usesGeckoEngine) {
+                                {
+                                    openFirefoxExtensions()
+                                }
                             } else {
-                                appDataExportWarningVisible = true
-                            }
-                        },
-                        onImportAppData = {
-                            appDataImportLauncher.launch(
-                                arrayOf("application/zip", "application/octet-stream"),
-                            )
-                        },
-                        onShowGestureOnboarding = {
-                            initialOnboardingRequired = false
-                            releaseNotesVisible = false
-                            onboardingVisible = true
-                        },
-                        onShowReleaseNotes = {
-                            loadReleaseNotesContent()
-                            releaseNotesVisible = releaseNotesContent != null
-                        },
-                        onManageFirefoxExtensions = if (browserController.usesGeckoEngine) {
-                            {
-                                openFirefoxExtensions()
-                            }
-                        } else {
-                            null
-                        },
-                        openAddressEditorOnLaunch = startupPresentation.openAddressEditor &&
-                            !startupPresentation.showSplash,
-                        launcherAddressEditorRequestId = launcherAddressEditorRequestId,
-                        hardwareTabChangeRequestId = hardwareTabChangeRequestId,
-                    )
+                                null
+                            },
+                            openAddressEditorOnLaunch = startupPresentation.openAddressEditor &&
+                                !startupPresentation.showSplash,
+                            launcherAddressEditorRequestId = launcherAddressEditorRequestId,
+                            hardwareTabChangeRequestId = hardwareTabChangeRequestId,
+                        )
+                    }
                     if (firefoxExtensionsVisible) {
                         firefoxExtensionManager?.let { manager ->
                             FirefoxExtensionManagerOverlay(
@@ -847,20 +854,7 @@ class MainActivity : AppCompatActivity() {
                         },
                     )
                 }
-                if (browserController.isActiveProfileLocked) {
-                    ProfileLockedOverlay(
-                        profileEmoji = browserController.localBrowserProfiles
-                            .firstOrNull { profile ->
-                                profile.id == browserController.activeProfileId
-                            }
-                            ?.emoji
-                            .orEmpty(),
-                        unlockAvailable = browserController.isProfileProtectionSupported,
-                        canSwitchProfile = browserController.canLeaveLockedProfile,
-                        onUnlock = browserController::retryActiveProfileAuthentication,
-                        onSwitchProfile = { browserController.leaveLockedProfile() },
-                    )
-                }
+                BrowserLockScreens(browserController)
             }
         }
         showAppDataTransferResult(intent)

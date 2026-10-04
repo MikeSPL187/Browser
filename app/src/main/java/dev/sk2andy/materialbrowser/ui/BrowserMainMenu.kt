@@ -105,6 +105,7 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
         )
         BrowserFeatureMenuAction.ToggleForceVerticalScrolling ->
             stringResource(R.string.privacy_force_vertical_scrolling_description)
+        BrowserFeatureMenuAction.ToggleSplitView -> stringResource(R.string.split_view_description)
         BrowserFeatureMenuAction.ToggleForcePageZooming ->
             stringResource(R.string.privacy_force_page_zooming_description)
         BrowserFeatureMenuAction.ToggleForceSafeArea ->
@@ -113,6 +114,8 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
             stringResource(R.string.action_always_block_popups_description)
         BrowserFeatureMenuAction.ToggleDesktopView ->
             stringResource(R.string.action_desktop_view_description)
+        BrowserFeatureMenuAction.ToggleCompactMode ->
+            stringResource(R.string.compact_mode_description)
         BrowserFeatureMenuAction.SnoozeTab -> if (item.enabled) {
             null
         } else {
@@ -268,10 +271,14 @@ internal fun BrowserMainMenu(
     onPrint: () -> Unit,
     onOpenReader: () -> Unit,
     onTranslate: () -> Unit,
+    splitView: Boolean? = null,
+    onSplitViewChange: (Boolean) -> Unit = {},
     onFindInPage: () -> Unit = {},
     onDomainMutedChange: (Boolean) -> Unit,
     onAlwaysBlockPopupsChange: (Boolean) -> Unit,
     onDesktopViewChange: (Boolean) -> Unit,
+    compactMode: Boolean? = null,
+    onCompactModeChange: (Boolean) -> Unit = {},
     onCookieBannerRemovalEnabledChange: (Boolean) -> Unit,
     onForceVerticalScrollingChange: (Boolean) -> Unit,
     onForcePageZoomingChange: (Boolean) -> Unit,
@@ -305,6 +312,7 @@ internal fun BrowserMainMenu(
         isPinned = isPinned,
         canOpenReader = canOpenReader,
         canTranslatePage = canTranslatePage,
+        isSplitView = splitView,
         canUseDocumentActions = canUseDocumentActions,
         canToggleCookieBannerRemoval = canToggleCookieBannerRemoval,
         isCookieBannerRemovalEnabled = isCookieBannerRemovalEnabled,
@@ -318,6 +326,7 @@ internal fun BrowserMainMenu(
         isAlwaysBlockPopupsEnabled = isAlwaysBlockPopupsEnabled,
         canToggleDesktopView = canToggleDesktopView,
         isDesktopView = isDesktopView,
+        isCompactMode = compactMode,
         canToggleDomainMute = canToggleDomainMute,
         isDomainMuted = isDomainMuted,
         canAddSiteCapsule = canAddSiteCapsule,
@@ -379,6 +388,7 @@ internal fun BrowserMainMenu(
                 BrowserFeatureMenuAction.ParkAddressBarRight -> onParkAddressBarRight()
                 BrowserFeatureMenuAction.OpenReader -> onOpenReader()
                 BrowserFeatureMenuAction.TranslatePage -> onTranslate()
+                BrowserFeatureMenuAction.ToggleSplitView -> onSplitViewChange(item.checked != true)
                 BrowserFeatureMenuAction.FindInPage -> onFindInPage()
                 BrowserFeatureMenuAction.Share -> onShare()
                 BrowserFeatureMenuAction.OpenExternal -> onOpenExternal()
@@ -395,6 +405,8 @@ internal fun BrowserMainMenu(
                     onAlwaysBlockPopupsChange(item.checked != true)
                 BrowserFeatureMenuAction.ToggleDesktopView ->
                     onDesktopViewChange(item.checked != true)
+                BrowserFeatureMenuAction.ToggleCompactMode ->
+                    onCompactModeChange(item.checked != true)
                 BrowserFeatureMenuAction.ToggleDomainMute ->
                     onDomainMutedChange(item.checked != true)
                 BrowserFeatureMenuAction.OpenCandyTrail -> onOpenCandyTrail()
@@ -460,6 +472,7 @@ private fun BrowserFeatureMenuLabelKey.androidStringResource(): Int = when (this
     BrowserFeatureMenuLabelKey.ParkAddressBarRight -> R.string.action_park_address_pill_right
     BrowserFeatureMenuLabelKey.Reader -> R.string.reader_open_action
     BrowserFeatureMenuLabelKey.Translate -> R.string.action_translate_page
+    BrowserFeatureMenuLabelKey.SplitView -> R.string.split_view_title
     BrowserFeatureMenuLabelKey.FindInPage -> R.string.action_find_in_page
     BrowserFeatureMenuLabelKey.Share -> R.string.action_share
     BrowserFeatureMenuLabelKey.OpenExternal -> R.string.action_open_in_app
@@ -470,6 +483,7 @@ private fun BrowserFeatureMenuLabelKey.androidStringResource(): Int = when (this
     BrowserFeatureMenuLabelKey.ForceSafeArea -> R.string.compatibility_force_safe_area
     BrowserFeatureMenuLabelKey.AlwaysBlockPopups -> R.string.action_always_block_popups
     BrowserFeatureMenuLabelKey.DesktopView -> R.string.action_desktop_view
+    BrowserFeatureMenuLabelKey.CompactMode -> R.string.compact_mode_title
     BrowserFeatureMenuLabelKey.MuteDomain,
     BrowserFeatureMenuLabelKey.UnmuteDomain,
     -> R.string.action_mute_domain
@@ -506,6 +520,7 @@ internal fun BrowserFeatureMenuItem.androidDrawableResource(): Int = when (actio
     BrowserFeatureMenuAction.ParkAddressBarRight -> R.drawable.ic_symbol_chevron_physical_right
     BrowserFeatureMenuAction.OpenReader -> R.drawable.ic_reader_align_start
     BrowserFeatureMenuAction.TranslatePage -> R.drawable.ic_symbol_translate
+    BrowserFeatureMenuAction.ToggleSplitView -> R.drawable.ic_symbol_split_view
     BrowserFeatureMenuAction.FindInPage -> R.drawable.ic_symbol_find_in_page
     BrowserFeatureMenuAction.Share -> R.drawable.ic_symbol_share
     BrowserFeatureMenuAction.OpenExternal -> R.drawable.ic_symbol_open_in_new
@@ -532,4 +547,5 @@ internal fun BrowserFeatureMenuItem.androidDrawableResource(): Int = when (actio
     BrowserFeatureMenuAction.ToggleForceSafeArea -> R.drawable.ic_symbol_fit_screen
     BrowserFeatureMenuAction.ToggleAlwaysBlockPopups -> R.drawable.ic_symbol_block
     BrowserFeatureMenuAction.ToggleDesktopView -> R.drawable.ic_symbol_desktop
+    BrowserFeatureMenuAction.ToggleCompactMode -> R.drawable.ic_symbol_compact_mode
 }

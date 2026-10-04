@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.blocking.BlockerSettings
 import dev.sk2andy.materialbrowser.blocking.PrivacyDomainSummary
 import dev.sk2andy.materialbrowser.blocking.PrivacyPartyRelation
 import dev.sk2andy.materialbrowser.blocking.PrivacyRequestCategory
@@ -82,43 +83,35 @@ class PrivacyXRaySheetInstrumentedTest {
     }
 
     @Test
-    fun xRayContentExpandsDomainsAndRoutesPauseAction() {
-        val pauses = AtomicInteger()
+    fun xRayContentExpandsDomainsAndOpensProtectionSettings() {
+        val settingsOpened = AtomicInteger()
         composeRule.setContent {
             MaterialBrowserTheme {
                 PrivacyXRayContent(
-                    pageUrl = "https://news.example/article",
-                    connectionKind = SiteConnectionKind.Https,
                     snapshot = sampleSnapshot(),
-                    blockerSettings = BlockerSettings(),
-                    siteState = SiteProtectionState(
-                        host = "news.example",
-                        canPersist = false,
-                    ),
-                    onPauseClick = pauses::incrementAndGet,
-                    onResumeClick = {},
+                    host = "news.example",
+                    siteState = SiteProtectionState(host = "news.example"),
+                    onOpenProtectionSettings = settingsOpened::incrementAndGet,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
                 )
             }
         }
 
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.Connection).assertExists()
-        composeRule.onNodeWithText(
-            InstrumentationRegistry.getInstrumentation().targetContext.getString(
-                R.string.site_connection_https,
-            ),
-        ).assertExists()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.Total).assertExists()
-        composeRule.onNodeWithText("four.example").assertDoesNotExist()
+        composeRule.onNodeWithText("six.example").assertDoesNotExist()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.ToggleDetails)
             .performScrollTo()
             .performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("four.example").performScrollTo().assertExists()
+        composeRule.onNodeWithText("six.example").performScrollTo().assertExists()
 
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.Pause).performScrollTo().performClick()
-        composeRule.waitForIdle()
+        composeRule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                R.string.settings_protection_data_title,
+            ),
+        ).performScrollTo().performClick()
 
-        assertEquals(1, pauses.get())
+        assertEquals(1, settingsOpened.get())
     }
 
     @Test
@@ -130,7 +123,6 @@ class PrivacyXRaySheetInstrumentedTest {
                     pageUrl = "https://news.example/article",
                     connectionKind = SiteConnectionKind.Https,
                     snapshot = sampleSnapshot(),
-                    blockerSettings = BlockerSettings(),
                     siteState = SiteProtectionState(host = "news.example"),
                     permissionSnapshot = PermissionRadarSnapshot(
                         site = PermissionSiteKey("personal", "https://news.example"),
@@ -191,8 +183,7 @@ class PrivacyXRaySheetInstrumentedTest {
                         pageUrl = "https://private.example",
                         connectionKind = SiteConnectionKind.Https,
                         snapshot = sampleSnapshot(),
-                        blockerSettings = BlockerSettings(),
-                        siteState = SiteProtectionState(
+                            siteState = SiteProtectionState(
                             host = "private.example",
                             canPersist = false,
                         ),
@@ -237,6 +228,8 @@ class PrivacyXRaySheetInstrumentedTest {
             domain("two.example", 3),
             domain("three.example", 2),
             domain("four.example", 1),
+            domain("five.example", 1),
+            domain("six.example", 1),
         ),
     )
 

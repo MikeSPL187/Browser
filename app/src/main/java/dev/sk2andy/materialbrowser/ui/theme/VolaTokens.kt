@@ -490,3 +490,105 @@ internal object VolaSiteInfo {
     val dividerInset = 56.dp
     val dividerThickness = 1.dp
 }
+
+/** The permission request sheet (board W-Permission). */
+internal object VolaPermissionPrompt {
+    val sidePadding = VolaSpacing.x6
+    val bottomPadding = VolaSpacing.x6
+    val contentGap = VolaSpacing.x3
+    val buttonGap = VolaSpacing.x2
+
+    /** The permission's icon in an accent circle above the question. */
+    val iconContainerSize = 56.dp
+    val iconSize = 28.dp
+}
+
+/** Privacy X-Ray, the tracker page of Site info (board W-PrivacyXRay). */
+internal object VolaPrivacyXRay {
+    val sectionGap = VolaSpacing.x4
+    val heroPadding = VolaSpacing.x5
+    val heroShape = VolaShapes.card
+
+    /** One bar split by category, under a legend of colored dots. */
+    val categoryBarHeight = 10.dp
+    val categoryGap = 2.dp
+    val legendDotSize = 10.dp
+    val legendGap = VolaSpacing.x2
+
+    /** Trackers shown before «Show all». */
+    const val COLLAPSED_DOMAINS = 5
+}
+
+/**
+ * A whole page in one state (boards W-Offline, W-HttpsOnly, W-Locked): the icon in a rounded
+ * square, a title and one sentence near the middle, the actions at the bottom under the thumb.
+ */
+internal object VolaStatePageTokens {
+    val maxContentWidth = 560.dp
+    val contentPaddingHorizontal = 28.dp
+    val contentPaddingVertical = VolaSpacing.x8
+    val contentGap = 14.dp
+
+    /** Extra room under the icon, on top of [contentGap]. */
+    val iconBottomGap = 6.dp
+    val iconContainerSize = 84.dp
+    val iconContainerShape = RoundedCornerShape(30.dp)
+    val iconSize = 44.dp
+
+    /** The small badge on the icon's corner, such as the lock on a locked workspace's gem. */
+    val badgeSize = 36.dp
+    val badgeIconSize = 20.dp
+    val badgeOffset = 8.dp
+
+    val actionsPaddingHorizontal = VolaSpacing.x5
+    val actionsPaddingBottom = VolaSpacing.x6
+    val actionGap = 10.dp
+    val buttonHeight = 52.dp
+    val buttonIconSize = 20.dp
+}
+
+/** «Dangerous site» (board W-DangerousSite): the whole page in the danger color. */
+internal object VolaDangerousSite {
+    /** Secondary text and the facts card, as shares of the content color. */
+    const val SECONDARY_TEXT_ALPHA = 0.86f
+    const val CARD_ALPHA = 0.14f
+    val cardShape = VolaShapes.card
+    val cardPadding = VolaSpacing.x4
+    val rowGap = VolaSpacing.x3
+    val rowIconSize = 20.dp
+}
+
+/** The download check (board W-DownloadCheck): what is odd about a file, before it is saved. */
+internal object VolaDownloadCheck {
+    val sidePadding = VolaSpacing.x4
+    val bottomPadding = VolaSpacing.x4
+    val sectionGap = VolaSpacing.x3
+    val headerGap = VolaSpacing.x3
+    val iconContainerSize = 40.dp
+    val iconContainerShape = RoundedCornerShape(VolaShapes.smallRadius)
+    val iconSize = 22.dp
+    val cardShape = VolaShapes.card
+    val rowPadding = VolaSpacing.x4
+    val rowGap = VolaSpacing.x4
+    val buttonHeight = 52.dp
+    val buttonGap = VolaSpacing.x3
+    val buttonIconSize = 20.dp
+}
+
+/** Compact Mode (board W-Compact): the page fills the screen, the bar waits as a thin handle. */
+internal object VolaCompactMode {
+    val handleWidth = 64.dp
+    val handleHeight = 8.dp
+
+    /** The handle is thin; this larger area around it takes the taps and swipes. */
+    val handleTouchWidth = 96.dp
+    val handleTouchHeight = 32.dp
+
+    /** The hint that shows how to bring the bar back, after Compact Mode is switched on. */
+    const val HINT_MILLIS = 4_000L
+    val hintIconContainerSize = 40.dp
+    val hintIconSize = 22.dp
+    val hintPadding = VolaSpacing.x4
+    val hintGap = VolaSpacing.x3
+    val hintBottomOffset = 56.dp
+}

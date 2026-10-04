@@ -950,6 +950,7 @@ internal fun BrowserFeatureMenuItem.testTagModifier(): Modifier = when (action) 
     BrowserFeatureMenuAction.ToggleFavorite -> Modifier.testTag(BrowserMainMenuTestTags.Favorite)
     BrowserFeatureMenuAction.TogglePinned -> Modifier.testTag(BrowserMainMenuTestTags.Pin)
     BrowserFeatureMenuAction.TranslatePage -> Modifier.testTag(BrowserMainMenuTestTags.Translate)
+    BrowserFeatureMenuAction.ToggleSplitView -> Modifier.testTag(BrowserMainMenuTestTags.SplitView)
     BrowserFeatureMenuAction.FindInPage -> Modifier.testTag(BrowserMainMenuTestTags.FindInPage)
     BrowserFeatureMenuAction.DuplicateTab -> Modifier.testTag(BrowserMainMenuTestTags.DuplicateTab)
     BrowserFeatureMenuAction.ToggleCookieBannerRemoval ->
@@ -985,6 +986,7 @@ object BrowserMainMenuTestTags {
     const val Pin = "browser_main_menu_pin"
     const val PageGroup = "browser_main_menu_page_group"
     const val Translate = "browser_main_menu_translate"
+    const val SplitView = "browser_main_menu_split_view"
     const val CandyGroup = "browser_main_menu_candy_group"
     const val ToppingsGroup = "browser_main_menu_toppings_group"
     const val BrowserGroup = "browser_main_menu_browser_group"

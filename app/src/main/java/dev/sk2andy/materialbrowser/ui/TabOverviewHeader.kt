@@ -261,8 +261,14 @@ internal class TabOverviewSearchState {
         null
     }
 
-    fun filter(tabs: List<BrowserTab>): List<BrowserTab> =
-        TabSearchRules.filter(tabs, query, BrowserTab::title, BrowserTab::url)
+    /** [hidden] tabs (locked private ones) never match a query: their text is not searchable. */
+    fun filter(tabs: List<BrowserTab>, hidden: (BrowserTab) -> Boolean = { false }): List<BrowserTab> =
+        TabSearchRules.filter(
+            items = tabs,
+            query = query,
+            title = { tab -> if (hidden(tab)) "" else tab.title },
+            url = { tab -> if (hidden(tab)) "" else tab.url },
+        )
 
     fun hasNoResults(results: List<BrowserTab>): Boolean =
         results.isEmpty() && !query.isNullOrBlank()

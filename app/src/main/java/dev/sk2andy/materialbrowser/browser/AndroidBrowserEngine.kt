@@ -20,6 +20,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val insecureHttpPasswordManagerSelection: Boolean,
     val dnsOverHttps: Boolean,
     val httpsOnly: Boolean,
+    /** Deleting one site's cookies, storage and caches; System WebView cannot do it per site. */
+    val siteDataDeletion: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -29,6 +31,7 @@ internal data class AndroidBrowserEngineCapabilities(
             insecureHttpPasswordManagerSelection = true,
             dnsOverHttps = true,
             httpsOnly = true,
+            siteDataDeletion = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -38,6 +41,7 @@ internal data class AndroidBrowserEngineCapabilities(
             insecureHttpPasswordManagerSelection = false,
             dnsOverHttps = false,
             httpsOnly = false,
+            siteDataDeletion = false,
         )
     }
 }
