@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
@@ -30,6 +31,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
+import dev.sk2andy.materialbrowser.browser.SiteDataDeletionRules
+import dev.sk2andy.materialbrowser.browser.SiteDomainRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginOffer
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityOffer
 import dev.sk2andy.materialbrowser.data.SnoozedTab
@@ -65,6 +68,7 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
+    val accessibilityManager = LocalAccessibilityManager.current
     privacyXRayTabId?.let { tabId ->
         val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
         if (xRayTab != null) {
@@ -127,6 +131,36 @@ internal fun BoxScope.BrowserModalSurfaces(
                 canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
                 popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
                 onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
+                siteData = SiteDomainRules.domainForUrl(xRayTab.url)
+                    ?.takeIf { domain ->
+                        SiteDataDeletionRules.offers(
+                            supported = controller.isSiteDataDeletionSupported,
+                            baseDomain = domain,
+                            isPrivate = xRayTab.isIncognito,
+                        )
+                    }
+                    ?.let { domain ->
+                        SiteInfoSiteData(
+                            baseDomain = domain,
+                            allWorkspaces = controller.profilesEnabled &&
+                                controller.localBrowserProfiles.size > 1,
+                            onDelete = {
+                                // TalkBack users get the longer window Android recommends.
+                                val window = SiteDataDeletionRules.UNDO_WINDOW_MILLIS
+                                controller.siteDataDeletion.request(
+                                    baseDomain = domain,
+                                    undoWindowMillis = accessibilityManager
+                                        ?.calculateRecommendedTimeoutMillis(
+                                            window,
+                                            containsText = true,
+                                            containsControls = true,
+                                        )
+                                        ?: window,
+                                )
+                                onPrivacyXRayDismiss()
+                            },
+                        )
+                    },
                 certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
             )
         }

@@ -137,6 +137,7 @@ internal fun PrivacyXRaySheet(
     canTogglePopups: Boolean = false,
     popupsBlocked: Boolean = false,
     onPopupsBlockedChange: (Boolean) -> Unit = {},
+    siteData: SiteInfoSiteData? = null,
     certificate: SiteCertificate? = null,
 ) {
     val title = stringResource(R.string.site_info_title)
@@ -220,6 +221,7 @@ internal fun PrivacyXRaySheet(
                             }
                         },
                         onPopupsBlockedChange = onPopupsBlockedChange,
+                        siteData = siteData,
                         certificate = certificate,
                         onOpenCertificate = { page = SiteInfoPage.Certificate },
                         modifier = Modifier

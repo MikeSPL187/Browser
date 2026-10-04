@@ -281,6 +281,9 @@ internal class GeckoBrowserEngineSessionFactory(
 
     override fun clearAllData(onComplete: (Boolean) -> Unit) = runtime.clearAllData(onComplete)
 
+    override fun clearSiteData(baseDomain: String, onComplete: (Boolean) -> Unit) =
+        runtime.clearSiteData(baseDomain, onComplete)
+
     override fun requestProfileDataDeletion(profileId: String): Boolean =
         runtime.requestProfileDataDeletion(profileId)
 

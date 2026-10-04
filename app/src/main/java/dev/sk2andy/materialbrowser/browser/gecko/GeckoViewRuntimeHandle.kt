@@ -199,6 +199,20 @@ internal class GeckoViewRuntimeHandle private constructor(
             )
     }
 
+    override fun clearSiteData(baseDomain: String, onComplete: (Boolean) -> Unit) {
+        // Site data, not site settings: permissions stay with Vola's own permission store.
+        val flags = StorageController.ClearFlags.COOKIES or
+            StorageController.ClearFlags.DOM_STORAGES or
+            StorageController.ClearFlags.AUTH_SESSIONS or
+            StorageController.ClearFlags.ALL_CACHES
+        runtime.storageController.clearDataFromBaseDomain(baseDomain, flags)
+            .withHandler(Handler(Looper.getMainLooper()))
+            .accept(
+                { onComplete(true) },
+                { onComplete(false) },
+            )
+    }
+
     override fun requestProfileDataDeletion(profileId: String): Boolean {
         if (profileId.isBlank()) return false
         return runCatching {

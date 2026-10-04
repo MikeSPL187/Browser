@@ -954,7 +954,7 @@ internal fun TabOverview(
         val pinnedTabsJumpVisible = destinationChromeVisible &&
             controller.activeTabs.any(BrowserTab::isPinned) &&
             !pinnedTabsVisible
-        val searchedTabs = tabSearch.filter(controller.activeTabs)
+        val searchedTabs = tabSearch.filter(controller.activeTabs, controller.privateTabsLock::hides)
         val activeWorkspace = controller.profiles
             .firstOrNull { profile -> profile.id == controller.activeProfileId }
         val overviewTitle = if (controller.profilesEnabled && activeWorkspace != null) {
