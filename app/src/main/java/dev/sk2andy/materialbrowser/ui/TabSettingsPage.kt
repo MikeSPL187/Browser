@@ -1,40 +1,34 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserSessionResidencyRules
 import dev.sk2andy.materialbrowser.browser.LinkLongPressAction
 import dev.sk2andy.materialbrowser.data.InactiveTabLifetime
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
-import dev.sk2andy.materialbrowser.shared.ui.settings.TabDismissResistanceSettings
-import dev.sk2andy.materialbrowser.shared.ui.settings.TabOverviewSettings
-import dev.sk2andy.materialbrowser.shared.ui.settings.TabOverviewSettingsStrings
-import dev.sk2andy.materialbrowser.ui.theme.VolaSettings
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSliderRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import kotlin.math.roundToInt
 
 internal object TabSettingsTestTags {
     const val StackFolderMode = "tab_settings_stack_folder_mode"
@@ -48,6 +42,16 @@ internal object TabSettingsTestTags {
     const val ArchiveInactiveTabs = "tab_settings_archive_inactive_tabs"
 }
 
+/** What the tabs and gestures page shows (board W-SetTabs). */
+internal object TabSettingsRules {
+    val DismissResistanceRange = 10..90
+    const val DISMISS_RESISTANCE_STEP = 10
+
+    /** The hero overview has no top or bottom to start from. */
+    fun listCanStartAtBottom(mode: TabOverviewMode): Boolean = mode != TabOverviewMode.Hero
+}
+
+/** Tabs and gestures (board W-SetTabs): gestures first, then the overview, then tabs in memory. */
 @Composable
 internal fun TabsAndGesturesSettingsPage(
     inactiveTabLifetime: InactiveTabLifetime,
@@ -81,229 +85,230 @@ internal fun TabsAndGesturesSettingsPage(
     onMenuActions: () -> Unit = {},
     onBack: () -> Unit,
 ) {
-    var lifetimeMenuExpanded by remember { mutableStateOf(false) }
-    var stackFolderModeMenuExpanded by remember { mutableStateOf(false) }
-    var linkLongPressActionMenuExpanded by remember { mutableStateOf(false) }
-    var residentLimit by remember(residentTabLimit) {
-        mutableFloatStateOf(residentTabLimit.toFloat())
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    var residentLimit by remember(residentTabLimit) { mutableIntStateOf(residentTabLimit) }
+    var dismissResistance by remember(dismissResistancePercent) {
+        mutableIntStateOf(dismissResistancePercent)
     }
     SettingsPage(
         title = stringResource(R.string.settings_tabs_gestures_title),
         onBack = onBack,
     ) {
-        SettingsSectionTitle(stringResource(R.string.settings_section_tabs))
-        Spacer(Modifier.height(8.dp))
-        TabOverviewSettings(
-            mode = tabOverviewMode,
-            listStartsAtBottom = tabListStartsAtBottom,
-            strings = TabOverviewSettingsStrings(
-                overviewMode = stringResource(R.string.settings_tab_overview_mode),
-                modeNames = TabOverviewMode.entries.associateWith { it.displayName() },
-                listStartsAtBottom = stringResource(
-                    R.string.settings_tab_list_starts_at_bottom_title,
-                ),
-                listStartsAtBottomSummary = stringResource(
-                    R.string.settings_tab_list_starts_at_bottom_subtitle,
-                ),
-            ),
-            containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-            onModeChanged = onTabOverviewModeChanged,
-            onListStartsAtBottomChanged = onTabListStartsAtBottomChanged,
-            listStartsAtBottomModifier = Modifier.testTag(
-                TabSettingsTestTags.ListStartsAtBottom,
-            ),
-        )
-        Spacer(Modifier.height(8.dp))
-        Box(modifier = Modifier.testTag(TabSettingsTestTags.StackFolderMode)) {
-            SettingsChoice(
-                title = stringResource(R.string.settings_tab_stack_folder_mode),
-                value = tabStackFolderMode.displayName(),
-                expanded = stackFolderModeMenuExpanded,
-                onClick = { stackFolderModeMenuExpanded = true },
-            )
-            SettingsDropdown(
-                expanded = stackFolderModeMenuExpanded,
-                onDismissRequest = { stackFolderModeMenuExpanded = false },
-            ) {
-                TabOverviewMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == tabStackFolderMode,
-                        onClick = {
-                            stackFolderModeMenuExpanded = false
-                            onTabStackFolderModeChanged(mode)
-                        },
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(2.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_automatic_tab_sorting_title),
-            subtitle = stringResource(R.string.settings_automatic_tab_sorting_subtitle),
-            checked = automaticTabSortingEnabled,
-            onCheckedChange = onAutomaticTabSortingEnabledChanged,
-            modifier = Modifier.testTag(TabSettingsTestTags.AutomaticSorting),
-        )
-        Spacer(Modifier.height(2.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_closed_tab_undo_title),
-            subtitle = stringResource(R.string.settings_closed_tab_undo_summary),
-            checked = isClosedTabUndoEnabled,
-            onCheckedChange = onClosedTabUndoEnabledChanged,
-            modifier = Modifier.testTag(TabSettingsTestTags.ClosedTabUndo),
-        )
-        SettingsPageSpacer()
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-                Text(
-                    stringResource(R.string.settings_resident_tab_limit),
-                    style = MaterialTheme.typography.titleSmall,
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            SettingsCardHeader(stringResource(R.string.settings_section_gestures))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_address_bar_long_press_title),
+                    summary = stringResource(addressBarLongPressAction.labelRes()),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onAddressBarLongPressActions,
+                    modifier = Modifier.testTag(TabSettingsTestTags.AddressBarLongPressAction),
                 )
-                Text(
-                    pluralStringResource(
-                        R.plurals.settings_resident_tab_limit_summary,
-                        residentLimit.roundToInt(),
-                        residentLimit.roundToInt(),
+                DropdownValueRow(
+                    title = stringResource(R.string.settings_link_long_press_action),
+                    selected = linkLongPressAction,
+                    options = LinkLongPressAction.entries,
+                    label = { action -> stringResource(action.labelRes()) },
+                    dividerColor = dividerColor,
+                    onSelected = onLinkLongPressActionChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.LinkLongPressAction),
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_link_peek_actions_title),
+                    summary = stringResource(R.string.settings_link_peek_actions_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onLinkPeekActions,
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_address_bar_actions_title),
+                    summary = stringResource(R.string.settings_address_bar_actions_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onAddressBarActions,
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.settings_menu_actions_title),
+                    summary = stringResource(R.string.settings_menu_actions_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onMenuActions,
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_address_bar_docking_title),
+                    summary = stringResource(R.string.settings_address_bar_docking_subtitle),
+                    checked = isAddressBarDockingEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onAddressBarDockingEnabledChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.AddressBarDocking),
+                )
+                val resistanceTitle = stringResource(R.string.settings_tab_dismiss_resistance)
+                SettingsCardSliderRow(
+                    title = resistanceTitle,
+                    summary = stringResource(
+                        R.string.settings_tab_dismiss_resistance_summary,
+                        dismissResistance,
                     ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    dividerColor = dividerColor,
+                ) {
+                    SettingsCardSlider(
+                        value = dismissResistancePercent,
+                        range = TabSettingsRules.DismissResistanceRange,
+                        step = TabSettingsRules.DISMISS_RESISTANCE_STEP,
+                        label = resistanceTitle,
+                        onValueChange = { dismissResistance = it },
+                        onValueChangeFinished = onDismissResistancePercentChanged,
+                    )
+                }
+            }
+            SettingsCardHeader(stringResource(R.string.settings_tabs_group_overview))
+            SettingsCard(containerColor = cardColor) {
+                DropdownValueRow(
+                    title = stringResource(R.string.settings_tab_overview_mode),
+                    selected = tabOverviewMode,
+                    options = TabOverviewMode.entries,
+                    label = { mode -> mode.displayName() },
+                    dividerColor = dividerColor,
+                    onSelected = onTabOverviewModeChanged,
                 )
-                Slider(
-                    value = residentLimit,
-                    onValueChange = { residentLimit = it },
-                    onValueChangeFinished = {
-                        onResidentTabLimitChanged(residentLimit.roundToInt())
+                DropdownValueRow(
+                    title = stringResource(R.string.settings_tab_stack_folder_mode),
+                    selected = tabStackFolderMode,
+                    options = TabOverviewMode.entries,
+                    label = { mode -> mode.displayName() },
+                    dividerColor = dividerColor,
+                    onSelected = onTabStackFolderModeChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.StackFolderMode),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_tab_list_starts_at_bottom_title),
+                    summary = stringResource(R.string.settings_tab_list_starts_at_bottom_subtitle),
+                    checked = tabListStartsAtBottom,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    enabled = TabSettingsRules.listCanStartAtBottom(tabOverviewMode),
+                    onCheckedChange = onTabListStartsAtBottomChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.ListStartsAtBottom),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_automatic_tab_sorting_title),
+                    summary = stringResource(R.string.settings_automatic_tab_sorting_subtitle),
+                    checked = automaticTabSortingEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onAutomaticTabSortingEnabledChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.AutomaticSorting),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_closed_tab_undo_title),
+                    summary = stringResource(R.string.settings_closed_tab_undo_summary),
+                    checked = isClosedTabUndoEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    onCheckedChange = onClosedTabUndoEnabledChanged,
+                    modifier = Modifier.testTag(TabSettingsTestTags.ClosedTabUndo),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.settings_section_tabs))
+            SettingsCard(containerColor = cardColor) {
+                val residentTitle = stringResource(R.string.settings_resident_tab_limit)
+                SettingsCardSliderRow(
+                    title = residentTitle,
+                    summary = pluralStringResource(
+                        R.plurals.settings_resident_tab_limit_summary,
+                        residentLimit,
+                        residentLimit,
+                    ),
+                    dividerColor = dividerColor,
+                    divider = true,
+                ) {
+                    SettingsCardSlider(
+                        value = residentTabLimit,
+                        range = BrowserSessionResidencyRules.MIN_LIMIT..
+                            BrowserSessionResidencyRules.MAX_LIMIT,
+                        label = residentTitle,
+                        onValueChange = { residentLimit = it },
+                        onValueChangeFinished = onResidentTabLimitChanged,
+                        modifier = Modifier.testTag(TabSettingsTestTags.ResidentTabLimit),
+                    )
+                }
+                DropdownValueRow(
+                    title = stringResource(R.string.settings_auto_close_tabs),
+                    selected = inactiveTabLifetime,
+                    options = InactiveTabLifetime.entries,
+                    label = { lifetime -> lifetime.displayName() },
+                    dividerColor = dividerColor,
+                    onSelected = onInactiveTabLifetimeChanged,
+                )
+                // Only the lifetimes counted in days can archive; the others close every tab on
+                // leaving.
+                if (inactiveTabLifetime.maxAgeMillis != null) {
+                    SettingsCardSwitchRow(
+                        title = stringResource(R.string.settings_archive_inactive_tabs_title),
+                        summary = stringResource(R.string.settings_archive_inactive_tabs_summary),
+                        checked = archiveInactiveTabs,
+                        summaryMaxLines = Int.MAX_VALUE,
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onCheckedChange = onArchiveInactiveTabsChanged,
+                        modifier = Modifier.testTag(TabSettingsTestTags.ArchiveInactiveTabs),
+                    )
+                }
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_profiles_title),
+                    summary = stringResource(R.string.settings_profiles_subtitle),
+                    checked = profilesEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    onCheckedChange = onProfilesEnabledChanged,
+                )
+            }
+        }
+    }
+}
+
+/** A setting with a few values: the current one at the end of the row, the list under it. */
+@Composable
+private fun <T> DropdownValueRow(
+    title: String,
+    selected: T,
+    options: List<T>,
+    label: @Composable (T) -> String,
+    dividerColor: Color,
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        SettingsCardValueRow(
+            title = title,
+            value = label(selected),
+            summary = null,
+            dividerColor = dividerColor,
+            divider = true,
+            onClick = { expanded = true },
+        )
+        SettingsDropdown(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { option ->
+                SettingsDropdownItem(
+                    label = label(option),
+                    selected = option == selected,
+                    onClick = {
+                        expanded = false
+                        onSelected(option)
                     },
-                    modifier = Modifier.testTag(TabSettingsTestTags.ResidentTabLimit),
-                    valueRange = BrowserSessionResidencyRules.MIN_LIMIT.toFloat()..
-                        BrowserSessionResidencyRules.MAX_LIMIT.toFloat(),
-                    steps = BrowserSessionResidencyRules.MAX_LIMIT -
-                        BrowserSessionResidencyRules.MIN_LIMIT - 1,
                 )
             }
         }
-        SettingsPageSpacer()
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.settings_auto_close_tabs),
-                value = inactiveTabLifetime.displayName(),
-                expanded = lifetimeMenuExpanded,
-                onClick = { lifetimeMenuExpanded = true },
-            )
-            SettingsDropdown(
-                expanded = lifetimeMenuExpanded,
-                onDismissRequest = { lifetimeMenuExpanded = false },
-            ) {
-                InactiveTabLifetime.entries.forEach { lifetime ->
-                    SettingsDropdownItem(
-                        label = lifetime.displayName(),
-                        selected = lifetime == inactiveTabLifetime,
-                        onClick = {
-                            lifetimeMenuExpanded = false
-                            onInactiveTabLifetimeChanged(lifetime)
-                        },
-                    )
-                }
-            }
-        }
-        // Only the lifetimes counted in days can archive; the others close every tab on leaving.
-        if (inactiveTabLifetime.maxAgeMillis != null) {
-            Spacer(Modifier.height(VolaSettings.rowGap))
-            SettingsSwitch(
-                title = stringResource(R.string.settings_archive_inactive_tabs_title),
-                subtitle = stringResource(R.string.settings_archive_inactive_tabs_summary),
-                checked = archiveInactiveTabs,
-                onCheckedChange = onArchiveInactiveTabsChanged,
-                modifier = Modifier.testTag(TabSettingsTestTags.ArchiveInactiveTabs),
-            )
-        }
-        SettingsPageSpacer()
-        SettingsSwitch(
-            title = stringResource(R.string.settings_profiles_title),
-            subtitle = stringResource(R.string.settings_profiles_subtitle),
-            checked = profilesEnabled,
-            onCheckedChange = onProfilesEnabledChanged,
-        )
-        Spacer(Modifier.height(14.dp))
-        SettingsSectionTitle(stringResource(R.string.settings_section_gestures))
-        Spacer(Modifier.height(2.dp))
-        Box(modifier = Modifier.testTag(TabSettingsTestTags.AddressBarLongPressAction)) {
-            SettingsLink(
-                icon = ImageVector.vectorResource(R.drawable.ic_symbol_route),
-                title = stringResource(R.string.settings_address_bar_long_press_title),
-                subtitle = stringResource(addressBarLongPressAction.labelRes()),
-                onClick = onAddressBarLongPressActions,
-            )
-        }
-        Spacer(Modifier.height(2.dp))
-        Box(modifier = Modifier.testTag(TabSettingsTestTags.LinkLongPressAction)) {
-            SettingsChoice(
-                title = stringResource(R.string.settings_link_long_press_action),
-                value = stringResource(linkLongPressAction.labelRes()),
-                expanded = linkLongPressActionMenuExpanded,
-                onClick = { linkLongPressActionMenuExpanded = true },
-            )
-            SettingsDropdown(
-                expanded = linkLongPressActionMenuExpanded,
-                onDismissRequest = { linkLongPressActionMenuExpanded = false },
-            ) {
-                LinkLongPressAction.entries.forEach { action ->
-                    SettingsDropdownItem(
-                        label = stringResource(action.labelRes()),
-                        selected = action == linkLongPressAction,
-                        onClick = {
-                            linkLongPressActionMenuExpanded = false
-                            onLinkLongPressActionChanged(action)
-                        },
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(2.dp))
-        SettingsLink(
-            icon = ImageVector.vectorResource(R.drawable.ic_symbol_open_in_new),
-            title = stringResource(R.string.settings_link_peek_actions_title),
-            subtitle = stringResource(R.string.settings_link_peek_actions_summary),
-            onClick = onLinkPeekActions,
-        )
-        Spacer(Modifier.height(2.dp))
-        SettingsLink(
-            icon = ImageVector.vectorResource(R.drawable.ic_switch_to_tab),
-            title = stringResource(R.string.settings_address_bar_actions_title),
-            subtitle = stringResource(R.string.settings_address_bar_actions_summary),
-            onClick = onAddressBarActions,
-        )
-        Spacer(Modifier.height(2.dp))
-        SettingsLink(
-            icon = ImageVector.vectorResource(R.drawable.ic_visibility),
-            title = stringResource(R.string.settings_menu_actions_title),
-            subtitle = stringResource(R.string.settings_menu_actions_summary),
-            onClick = onMenuActions,
-        )
-        Spacer(Modifier.height(2.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_address_bar_docking_title),
-            subtitle = stringResource(R.string.settings_address_bar_docking_subtitle),
-            checked = isAddressBarDockingEnabled,
-            onCheckedChange = onAddressBarDockingEnabledChanged,
-            modifier = Modifier.testTag(TabSettingsTestTags.AddressBarDocking),
-        )
-        Spacer(Modifier.height(2.dp))
-        TabDismissResistanceSettings(
-            valuePercent = dismissResistancePercent,
-            title = stringResource(R.string.settings_tab_dismiss_resistance),
-            summary = { value ->
-                stringResource(R.string.settings_tab_dismiss_resistance_summary, value)
-            },
-            containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-            enabled = true,
-            onValueChanged = onDismissResistancePercentChanged,
-        )
     }
 }
 

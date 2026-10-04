@@ -276,6 +276,62 @@ fun SettingsCardValueRow(
     )
 }
 
+/**
+ * A setting picked on a scale: the words (and the current [value], unless the summary names it)
+ * on top, [slider] under them. The slider comes from the caller, so each platform draws it with
+ * its own Material build.
+ */
+@Composable
+fun SettingsCardSliderRow(
+    title: String,
+    summary: String?,
+    dividerColor: Color,
+    modifier: Modifier = Modifier,
+    value: String? = null,
+    divider: Boolean = false,
+    slider: @Composable () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = SettingsCardTokens.rowMinHeight)
+                .padding(SettingsCardTokens.rowPadding),
+            verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.textGap),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SettingsCardTokens.rowGap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    title,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                if (value != null) {
+                    Text(
+                        value,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            if (!summary.isNullOrEmpty()) {
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            slider()
+        }
+        if (divider) {
+            SettingsCardDivider(color = dividerColor, underTile = false)
+        }
+    }
+}
+
 /** The shape every card row shares: leading tile, title and summary, trailing control. */
 @Composable
 private fun SettingsCardRowLayout(
@@ -325,22 +381,28 @@ private fun SettingsCardRowLayout(
             trailing()
         }
         if (divider) {
-            Box(
-                modifier = Modifier
-                    .padding(
-                        start = if (leading != null) {
-                            SettingsCardTokens.dividerStartInset
-                        } else {
-                            SettingsCardTokens.dividerEndInset
-                        },
-                        end = SettingsCardTokens.dividerEndInset,
-                    )
-                    .fillMaxWidth()
-                    .height(SettingsCardTokens.dividerThickness)
-                    .background(dividerColor),
-            )
+            SettingsCardDivider(color = dividerColor, underTile = leading != null)
         }
     }
+}
+
+/** The hairline between two rows; under a tile it starts where the words start. */
+@Composable
+private fun SettingsCardDivider(color: Color, underTile: Boolean) {
+    Box(
+        modifier = Modifier
+            .padding(
+                start = if (underTile) {
+                    SettingsCardTokens.dividerStartInset
+                } else {
+                    SettingsCardTokens.dividerEndInset
+                },
+                end = SettingsCardTokens.dividerEndInset,
+            )
+            .fillMaxWidth()
+            .height(SettingsCardTokens.dividerThickness)
+            .background(color),
+    )
 }
 
 private const val DISABLED_ALPHA = 0.38f
