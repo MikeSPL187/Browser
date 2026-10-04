@@ -792,6 +792,15 @@ def tour(suffix):
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
+                # The home's lower cards (Q16c, board W-Settings), then back to the top.
+                width, height = screen_size()
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.75)),
+                    str(width // 2), str(int(height * 0.3)), "400")
+                time.sleep(1)
+                shot(f"settings-more-{suffix}")
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                    str(width // 2), str(int(height * 0.75)), "400")
+                time.sleep(1)
                 # Settings search (Q16a): the magnifier in the header, then «https».
                 if tap("Search settings", "Найти в настройках"):
                     time.sleep(2)
