@@ -860,6 +860,14 @@ def tour(suffix):
             tap("Never", "Никогда")
             time.sleep(1)
 
+    def settings_top():
+        """Back to the top of the settings home: its rows are found by scrolling down."""
+        width, height = screen_size()
+        for _ in range(3):
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                str(width // 2), str(int(height * 0.8)), "200")
+        time.sleep(1)
+
     def menu_and_settings():
         if tap("More options", "Другие действия"):
             time.sleep(2)
@@ -867,6 +875,15 @@ def tour(suffix):
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")
+                # The home's lower cards (Q16c, board W-Settings), then back to the top.
+                width, height = screen_size()
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.75)),
+                    str(width // 2), str(int(height * 0.3)), "400")
+                time.sleep(1)
+                shot(f"settings-more-{suffix}")
+                adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.3)),
+                    str(width // 2), str(int(height * 0.75)), "400")
+                time.sleep(1)
                 # Settings search (Q16a): the magnifier in the header, then «https».
                 if tap("Search settings", "Найти в настройках"):
                     time.sleep(2)
@@ -880,6 +897,14 @@ def tour(suffix):
                     if not find("Search settings", "Найти в настройках"):
                         adb("shell", "input", "keyevent", "BACK")
                         time.sleep(2)
+                # Search settings (Q16c, board W-SetSearch): engines on a card, then suggestions.
+                settings_top()
+                if tap_scrolling("Search", "Поиск", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"search-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
@@ -889,14 +914,34 @@ def tour(suffix):
                         shot(f"appearance-more-{suffix}", audit=False)
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Tabs and gestures on cards (Q16c, board W-SetTabs).
+                    shot(f"tabs-settings-{suffix}")
                     tab_archive_setting()
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
+                settings_top()
+                # Browser settings on cards (Q16c, board W-Settings).
+                if tap_scrolling("Browser", "Браузер", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"browser-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
+                # Download settings on cards (Q16c, board W-Settings).
+                if tap_scrolling("Downloads", "Загрузки", name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"download-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)
+                    # Protection and data on cards (Q16c, board W-SetPrivacy).
+                    shot(f"protection-settings-{suffix}")
                     if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
                                  name=f"protection-private-lock-{suffix}", attempts=8):
                         shot(f"protection-private-lock-{suffix}")
