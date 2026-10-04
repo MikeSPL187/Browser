@@ -30,5 +30,9 @@
             android:name="dev.sk2andy.materialbrowser.ui.PrivateTabsLockPreviewActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.NoActionBar" />
+        <activity
+            android:name="dev.sk2andy.materialbrowser.ui.PermissionPromptPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 </manifest>
