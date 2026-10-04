@@ -33,6 +33,9 @@ object SettingsCardTokens {
     val tileIconSize = 22.dp
     val chevronSize = 20.dp
 
+    /** A value at the end of a row wraps past this width, so the row's title keeps its room. */
+    val valueMaxWidth = 128.dp
+
     /** Between two rows, from the tile's middle to the card's edge. */
     val dividerThickness = 1.dp
     val dividerStartInset = 56.dp
