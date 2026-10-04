@@ -129,12 +129,14 @@ internal fun SettingsSearchPage(
                     .testTag(SettingsSearchTestTags.Results),
             ) {
                 items(results, key = SettingSearchCandidate::key) { result ->
+                    // The page first, so a setting found by its description still says where.
+                    val supporting = listOfNotNull(
+                        result.page.takeIf(String::isNotEmpty),
+                        result.summary,
+                    ).joinToString(" · ")
                     ListItem(
                         headlineContent = { Text(result.title) },
-                        supportingContent = listOfNotNull(
-                            result.page.takeIf(String::isNotEmpty),
-                            result.summary,
-                        ).joinToString(" · ").takeIf(String::isNotEmpty)?.let { supporting ->
+                        supportingContent = if (supporting.isNotEmpty()) {
                             {
                                 Text(
                                     supporting,
@@ -142,6 +144,8 @@ internal fun SettingsSearchPage(
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
+                        } else {
+                            null
                         },
                         modifier = Modifier
                             .clickable { onOpen(result) }
