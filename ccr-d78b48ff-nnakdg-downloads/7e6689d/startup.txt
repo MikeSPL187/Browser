@@ -1,0 +1,1 @@
+Cold start (am start -W, 5 runs): average 2417 ms, min 2120 ms, max 2834 ms
