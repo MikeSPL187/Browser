@@ -296,6 +296,17 @@ def tour(suffix):
         shot(f"https-only-{suffix}")
     step("https-only", https_only_warning)
 
+    def download_check():
+        # An app download stops at «Check the file before saving» (Q15c, board W-DownloadCheck);
+        # the tour then declines, so nothing is saved.
+        open_url("https://f-droid.org/F-Droid.apk")
+        time.sleep(10)
+        shot(f"download-check-{suffix}")
+        if not tap("Don’t download", "Don't download", "Не скачивать"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("download-check", download_check)
+
     def workspace_swipe():
         """A swipe held halfway in the overview (board W-WorkspaceSwipe): the tabs slide aside and
         the next workspace's aura shows through. The light tour makes the second workspace."""

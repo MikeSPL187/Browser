@@ -490,3 +490,20 @@ internal object VolaSiteInfo {
     val dividerInset = 56.dp
     val dividerThickness = 1.dp
 }
+
+/** The download check (board W-DownloadCheck): what is odd about a file, before it is saved. */
+internal object VolaDownloadCheck {
+    val sidePadding = VolaSpacing.x4
+    val bottomPadding = VolaSpacing.x4
+    val sectionGap = VolaSpacing.x3
+    val headerGap = VolaSpacing.x3
+    val iconContainerSize = 40.dp
+    val iconContainerShape = RoundedCornerShape(VolaShapes.smallRadius)
+    val iconSize = 22.dp
+    val cardShape = VolaShapes.card
+    val rowPadding = VolaSpacing.x4
+    val rowGap = VolaSpacing.x4
+    val buttonHeight = 52.dp
+    val buttonGap = VolaSpacing.x3
+    val buttonIconSize = 20.dp
+}

@@ -16,6 +16,13 @@ object VolaIcons {
         )
     }
 
+    val Apps: ImageVector by lazy {
+        materialSymbol(
+            name = "Apps",
+            pathData = "M240 800 q-33 0 -56.5 -23.5 T160 720 q0 -33 23.5 -56.5 T240 640 q33 0 56.5 23.5 T320 720 q0 33 -23.5 56.5 T240 800 Z m240 0 q-33 0 -56.5 -23.5 T400 720 q0 -33 23.5 -56.5 T480 640 q33 0 56.5 23.5 T560 720 q0 33 -23.5 56.5 T480 800 Z m240 0 q-33 0 -56.5 -23.5 T640 720 q0 -33 23.5 -56.5 T720 640 q33 0 56.5 23.5 T800 720 q0 33 -23.5 56.5 T720 800 Z M240 560 q-33 0 -56.5 -23.5 T160 480 q0 -33 23.5 -56.5 T240 400 q33 0 56.5 23.5 T320 480 q0 33 -23.5 56.5 T240 560 Z m240 0 q-33 0 -56.5 -23.5 T400 480 q0 -33 23.5 -56.5 T480 400 q33 0 56.5 23.5 T560 480 q0 33 -23.5 56.5 T480 560 Z m240 0 q-33 0 -56.5 -23.5 T640 480 q0 -33 23.5 -56.5 T720 400 q33 0 56.5 23.5 T800 480 q0 33 -23.5 56.5 T720 560 Z M240 320 q-33 0 -56.5 -23.5 T160 240 q0 -33 23.5 -56.5 T240 160 q33 0 56.5 23.5 T320 240 q0 33 -23.5 56.5 T240 320 Z m240 0 q-33 0 -56.5 -23.5 T400 240 q0 -33 23.5 -56.5 T480 160 q33 0 56.5 23.5 T560 240 q0 33 -23.5 56.5 T480 320 Z m240 0 q-33 0 -56.5 -23.5 T640 240 q0 -33 23.5 -56.5 T720 160 q33 0 56.5 23.5 T800 240 q0 33 -23.5 56.5 T720 320 Z",
+        )
+    }
+
     val ArrowBack: ImageVector by lazy {
         materialSymbol(
             name = "ArrowBack",
@@ -74,6 +81,13 @@ object VolaIcons {
         )
     }
 
+    val DesktopWindows: ImageVector by lazy {
+        materialSymbol(
+            name = "DesktopWindows",
+            pathData = "M400 760 v-80 H160 q-33 0 -56.5 -23.5 T80 600 v-400 q0 -33 23.5 -56.5 T160 120 h640 q33 0 56.5 23.5 T880 200 v400 q0 33 -23.5 56.5 T800 680 H560 v80 h40 q17 0 28.5 11.5 T640 800 q0 17 -11.5 28.5 T600 840 H360 q-17 0 -28.5 -11.5 T320 800 q0 -17 11.5 -28.5 T360 760 h40 Z M160 600 h640 v-400 H160 v400 Z m0 0 v-400 v400 Z",
+        )
+    }
+
     val Delete: ImageVector by lazy {
         materialSymbol(
             name = "Delete",
@@ -95,6 +109,13 @@ object VolaIcons {
         )
     }
 
+    val Error: ImageVector by lazy {
+        materialSymbol(
+            name = "Error",
+            pathData = "M480 680 q17 0 28.5 -11.5 T520 640 q0 -17 -11.5 -28.5 T480 600 q-17 0 -28.5 11.5 T440 640 q0 17 11.5 28.5 T480 680 Z m0 -160 q17 0 28.5 -11.5 T520 480 v-160 q0 -17 -11.5 -28.5 T480 280 q-17 0 -28.5 11.5 T440 320 v160 q0 17 11.5 28.5 T480 520 Z m0 360 q-83 0 -156 -31.5 T197 763 q-54 -54 -85.5 -127 T80 480 q0 -83 31.5 -156 T197 197 q54 -54 127 -85.5 T480 80 q83 0 156 31.5 T763 197 q54 54 85.5 127 T880 480 q0 83 -31.5 156 T763 763 q-54 54 -127 85.5 T480 880 Z m0 -80 q134 0 227 -93 t93 -227 q0 -134 -93 -227 t-227 -93 q-134 0 -227 93 t-93 227 q0 134 93 227 t227 93 Z m0 -320 Z",
+        )
+    }
+
     val Favorite: ImageVector by lazy {
         materialSymbol(
             name = "Favorite",
@@ -113,6 +134,13 @@ object VolaIcons {
         materialSymbol(
             name = "FormatAlignLeft",
             pathData = "M160 840 q-17 0 -28.5 -11.5 T120 800 q0 -17 11.5 -28.5 T160 760 h640 q17 0 28.5 11.5 T840 800 q0 17 -11.5 28.5 T800 840 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 640 q0 -17 11.5 -28.5 T160 600 h400 q17 0 28.5 11.5 T600 640 q0 17 -11.5 28.5 T560 680 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 480 q0 -17 11.5 -28.5 T160 440 h640 q17 0 28.5 11.5 T840 480 q0 17 -11.5 28.5 T800 520 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 320 q0 -17 11.5 -28.5 T160 280 h400 q17 0 28.5 11.5 T600 320 q0 17 -11.5 28.5 T560 360 H160 Z m0 -160 q-17 0 -28.5 -11.5 T120 160 q0 -17 11.5 -28.5 T160 120 h640 q17 0 28.5 11.5 T840 160 q0 17 -11.5 28.5 T800 200 H160 Z",
+        )
+    }
+
+    val GppMaybe: ImageVector by lazy {
+        materialSymbol(
+            name = "GppMaybe",
+            pathData = "M480 640 q17 0 28.5 -11.5 T520 600 q0 -17 -11.5 -28.5 T480 560 q-17 0 -28.5 11.5 T440 600 q0 17 11.5 28.5 T480 640 Z m0 -160 q17 0 28.5 -11.5 T520 440 v-120 q0 -17 -11.5 -28.5 T480 280 q-17 0 -28.5 11.5 T440 320 v120 q0 17 11.5 28.5 T480 480 Z m0 396 q-7 0 -13 -1 t-12 -3 q-135 -45 -215 -166.5 T160 444 v-189 q0 -25 14.5 -45 t37.5 -29 l240 -90 q14 -5 28 -5 t28 5 l240 90 q23 9 37.5 29 t14.5 45 v189 q0 140 -80 261.5 T505 872 q-6 2 -12 3 t-13 1 Z m0 -80 q104 -33 172 -132 t68 -220 v-189 l-240 -90 l-240 90 v189 q0 121 68 220 t172 132 Z m0 -316 Z",
         )
     }
 
@@ -171,6 +199,13 @@ object VolaIcons {
         materialSymbol(
             name = "Lock",
             pathData = "M240 880 q-33 0 -56.5 -23.5 T160 800 v-400 q0 -33 23.5 -56.5 T240 320 h40 v-80 q0 -83 58.5 -141.5 T480 40 q83 0 141.5 58.5 T680 240 v80 h40 q33 0 56.5 23.5 T800 400 v400 q0 33 -23.5 56.5 T720 880 H240 Z m0 -80 h480 v-400 H240 v400 Z m240 -120 q33 0 56.5 -23.5 T560 600 q0 -33 -23.5 -56.5 T480 520 q-33 0 -56.5 23.5 T400 600 q0 33 23.5 56.5 T480 680 Z M360 320 h240 v-80 q0 -50 -35 -85 t-85 -35 q-50 0 -85 35 t-35 85 v80 Z M240 800 v-400 v400 Z",
+        )
+    }
+
+    val LockOpen: ImageVector by lazy {
+        materialSymbol(
+            name = "LockOpen",
+            pathData = "M240 880 q-33 0 -56.5 -23.5 T160 800 v-400 q0 -33 23.5 -56.5 T240 320 h360 v-80 q0 -50 -35 -85 t-85 -35 q-42 0 -73.5 25.5 T364 209 q-4 14 -16.5 22.5 T320 240 q-17 0 -28.5 -11 t-8.5 -26 q14 -69 69 -116 t128 -47 q83 0 141.5 58.5 T680 240 v80 h40 q33 0 56.5 23.5 T800 400 v400 q0 33 -23.5 56.5 T720 880 H240 Z m0 -80 h480 v-400 H240 v400 Z m240 -120 q33 0 56.5 -23.5 T560 600 q0 -33 -23.5 -56.5 T480 520 q-33 0 -56.5 23.5 T400 600 q0 33 23.5 56.5 T480 680 Z M240 800 v-400 v400 Z",
         )
     }
 
@@ -332,6 +367,7 @@ object VolaIcons {
     val all: List<ImageVector>
         get() = listOf(
             Add,
+            Apps,
             ArrowBack,
             ArrowDropDown,
             ArrowForward,
@@ -340,12 +376,15 @@ object VolaIcons {
             Close,
             ContentCopy,
             ContentPaste,
+            DesktopWindows,
             Delete,
             Download,
             Edit,
+            Error,
             Favorite,
             FormatAlignJustify,
             FormatAlignLeft,
+            GppMaybe,
             History,
             Home,
             Info,
@@ -354,6 +393,7 @@ object VolaIcons {
             KeyboardArrowRight,
             KeyboardArrowUp,
             Lock,
+            LockOpen,
             MoreHoriz,
             MoreVert,
             NorthWest,

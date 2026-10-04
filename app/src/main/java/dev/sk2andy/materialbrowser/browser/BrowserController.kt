@@ -88,7 +88,9 @@ import dev.sk2andy.materialbrowser.browser.actions.DownloadActionResult
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadLaunchResult
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManager
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManagerApp
+import dev.sk2andy.materialbrowser.browser.actions.DownloadChoiceQueue
 import dev.sk2andy.materialbrowser.browser.actions.PendingDownloadChoice
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyGate
 import dev.sk2andy.materialbrowser.browser.actions.WebContentActionState
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import dev.sk2andy.materialbrowser.browser.cast.CastMediaCandidate
@@ -773,8 +775,9 @@ class BrowserController(
         BrowserInputDiagnostics.isSessionEnabled,
     )
         private set
-    var pendingDownloadChoice by mutableStateOf<PendingDownloadChoice?>(null)
-        private set
+    private val downloadChoices = DownloadChoiceQueue()
+    val pendingDownloadChoice: PendingDownloadChoice? get() = downloadChoices.pending
+    val downloadSafety = DownloadSafetyGate()
     var isDefaultBrowser by mutableStateOf(false)
         private set
     var isOnline by mutableStateOf(true)
@@ -1576,7 +1579,6 @@ class BrowserController(
         onExternalLinkPreviewGeckoEvent(runtime.sessionId, runtime.generation, runtime.geckoBinding.session, event)
     }
 
-    private val queuedDownloadChoices = ArrayDeque<PendingDownloadChoice>()
     private val assistantSummary = AssistantSummaryLauncher(activity)
     private val pageShare = PageShareLauncher(activity)
     private val commandCatalog = AndroidCommandCatalog(activity)
@@ -6779,11 +6781,9 @@ class BrowserController(
     }
 
     fun confirmDownloadChoice(managerId: String?) {
-        val choice = pendingDownloadChoice ?: return
-        pendingDownloadChoice = null
+        val choice = downloadChoices.take() ?: return
         if (choice.isSourceCurrent?.invoke() == false) {
             choice.releaseResponse?.invoke()
-            showNextDownloadChoice()
             return
         }
         val builtInDownload = choice.builtInDownload ?: { downloadManager.enqueue(choice.request) }
@@ -6804,13 +6804,10 @@ class BrowserController(
             }
         }
         result?.let(::showDownloadResult)
-        showNextDownloadChoice()
     }
 
     fun dismissDownloadChoice() {
-        pendingDownloadChoice?.releaseResponse?.invoke()
-        pendingDownloadChoice = null
-        showNextDownloadChoice()
+        downloadChoices.take()?.releaseResponse?.invoke()
     }
 
     fun openContextLinkInBackground() {
@@ -10287,10 +10284,8 @@ class BrowserController(
             }
         }
         addressBar.cancelAutoDockProbe()
-        val downloadChoices = listOfNotNull(pendingDownloadChoice) + queuedDownloadChoices.toList()
-        pendingDownloadChoice = null
-        queuedDownloadChoices.clear()
-        downloadChoices.forEach { choice -> choice.releaseResponse?.invoke() }
+        downloadChoices.releaseAll()
+        downloadSafety.cancelAll()
         dismissClosedTabUndo()
         connectivityMonitor.close()
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY && usesGeckoEngine) {
@@ -13479,7 +13474,19 @@ class BrowserController(
         builtInDownload: () -> DownloadActionResult? = { downloadManager.enqueue(request) },
         releaseResponse: (() -> Unit)? = null,
         isSourceCurrent: (() -> Boolean)? = null,
+        safetyChecked: Boolean = false,
     ): DownloadActionResult? {
+        if (!safetyChecked && downloadSafety.hold(
+                request = request,
+                save = {
+                    routeDownload(
+                        request, tabId, builtInDownload, releaseResponse, isSourceCurrent,
+                        safetyChecked = true,
+                    )?.let(::showDownloadResult)
+                },
+                cancel = { releaseResponse?.invoke() },
+            )
+        ) return null
         val startBuiltInDownload = {
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
@@ -13491,7 +13498,7 @@ class BrowserController(
                 if (apps.isEmpty()) {
                     startBuiltInDownload()
                 } else {
-                    enqueueDownloadChoice(
+                    downloadChoices.enqueue(
                         PendingDownloadChoice(
                             request = request,
                             apps = apps,
@@ -13521,18 +13528,6 @@ class BrowserController(
                 }
             }
         }
-    }
-
-    private fun enqueueDownloadChoice(choice: PendingDownloadChoice) {
-        if (pendingDownloadChoice == null) {
-            pendingDownloadChoice = choice
-        } else {
-            queuedDownloadChoices.addLast(choice)
-        }
-    }
-
-    private fun showNextDownloadChoice() {
-        pendingDownloadChoice = queuedDownloadChoices.pollFirst()
     }
 
     private fun launchExternallyOrFallback(
