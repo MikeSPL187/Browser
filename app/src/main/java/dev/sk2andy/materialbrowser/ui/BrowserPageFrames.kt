@@ -80,6 +80,7 @@ internal fun rememberBrowserPageFrames(
         chromeStyle = controller.appearanceSettings.chromeStyle,
         browserChromeVisible = chromeVisible,
         isBlankPage = selectedTab.url == BLANK_URL,
+        compactMode = controller.addressBar.compactMode,
     )
     val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
     fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(
