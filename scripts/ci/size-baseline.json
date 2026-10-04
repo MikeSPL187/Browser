@@ -1,6 +1,6 @@
 {
-  "app/src/main/java/dev/sk2andy/materialbrowser/MainActivity.kt": 1856,
-  "app/src/main/java/dev/sk2andy/materialbrowser/browser/BrowserController.kt": 15685,
+  "app/src/main/java/dev/sk2andy/materialbrowser/MainActivity.kt": 1850,
+  "app/src/main/java/dev/sk2andy/materialbrowser/browser/BrowserController.kt": 15611,
   "app/src/main/java/dev/sk2andy/materialbrowser/ui/BrowserScreen.kt": 1970,
   "app/src/main/java/dev/sk2andy/materialbrowser/ui/TabOverview.kt": 1901
 }

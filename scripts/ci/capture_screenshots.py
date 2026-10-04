@@ -512,10 +512,26 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         shot(f"private-new-tab-{suffix}")
+        # «Lock on exit» (П9) under the facts; without a biometric on the emulator it is off and
+        # says why.
+        if scroll_to("Lock on exit", "Замок при выходе", name=f"private-lock-{suffix}"):
+            shot(f"private-lock-row-{suffix}")
         if tap("Close 1 private", "Close all", "Закрыть 1 приватную", "Закрыть все", contains=True):
             time.sleep(3)
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
+
+    def private_tabs_locked():
+        # Real private tabs cannot be locked without a biometric, so a debug-only activity shows
+        # the «Private tabs locked» screen itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PrivateTabsLockPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"private-locked-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("private-locked", private_tabs_locked)
 
     def tab_archive_setting():
         """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
@@ -554,6 +570,14 @@ def tour(suffix):
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
                     tab_archive_setting()
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                if tap_scrolling("Protection & data", "Защита и данные",
+                                 name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
+                                 name=f"protection-private-lock-{suffix}", attempts=8):
+                        shot(f"protection-private-lock-{suffix}")
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
             adb("shell", "input", "keyevent", "BACK")

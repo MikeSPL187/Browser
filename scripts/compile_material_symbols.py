@@ -81,6 +81,7 @@ DRAWABLES = [
     ("ic_symbol_favorite", "favorite", False, BLACK, False),
     ("ic_symbol_favorite_filled", "favorite", True, BLACK, False),
     ("ic_symbol_find_in_page", "find_in_page", False, WHITE, False),
+    ("ic_symbol_fingerprint", "fingerprint", False, WHITE, False),
     ("ic_symbol_fit_screen", "fit_screen", False, WHITE, False),
     ("ic_symbol_location_on", "location_on", False, WHITE, False),
     ("ic_symbol_mic", "mic", False, WHITE, False),
