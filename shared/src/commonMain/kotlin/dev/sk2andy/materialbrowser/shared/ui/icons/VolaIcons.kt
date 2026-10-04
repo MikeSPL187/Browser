@@ -23,6 +23,13 @@ object VolaIcons {
         )
     }
 
+    val Bookmark: ImageVector by lazy {
+        materialSymbol(
+            name = "Bookmark",
+            pathData = "M480 720 l-168 72 q-40 17 -76 -6.5 T200 719 v-519 q0 -33 23.5 -56.5 T280 120 h400 q33 0 56.5 23.5 T760 200 v519 q0 43 -36 66.5 t-76 6.5 l-168 -72 Z m0 -88 l200 86 v-518 H280 v518 l200 -86 Z m0 -432 H280 h400 h-200 Z",
+        )
+    }
+
     val ArrowBack: ImageVector by lazy {
         materialSymbol(
             name = "ArrowBack",
@@ -102,6 +109,13 @@ object VolaIcons {
         )
     }
 
+    val Description: ImageVector by lazy {
+        materialSymbol(
+            name = "Description",
+            pathData = "M360 720 h240 q17 0 28.5 -11.5 T640 680 q0 -17 -11.5 -28.5 T600 640 H360 q-17 0 -28.5 11.5 T320 680 q0 17 11.5 28.5 T360 720 Z m0 -160 h240 q17 0 28.5 -11.5 T640 520 q0 -17 -11.5 -28.5 T600 480 H360 q-17 0 -28.5 11.5 T320 520 q0 17 11.5 28.5 T360 560 Z M240 880 q-33 0 -56.5 -23.5 T160 800 v-640 q0 -33 23.5 -56.5 T240 80 h287 q16 0 30.5 6 t25.5 17 l194 194 q11 11 17 25.5 t6 30.5 v447 q0 33 -23.5 56.5 T720 880 H240 Z m280 -560 v-160 H240 v640 h480 v-440 H560 q-17 0 -28.5 -11.5 T520 320 Z M240 160 v200 v-200 v640 v-640 Z",
+        )
+    }
+
     val DesktopWindows: ImageVector by lazy {
         materialSymbol(
             name = "DesktopWindows",
@@ -127,6 +141,13 @@ object VolaIcons {
         materialSymbol(
             name = "Delete",
             pathData = "M280 840 q-33 0 -56.5 -23.5 T200 760 v-520 q-17 0 -28.5 -11.5 T160 200 q0 -17 11.5 -28.5 T200 160 h160 q0 -17 11.5 -28.5 T400 120 h160 q17 0 28.5 11.5 T600 160 h160 q17 0 28.5 11.5 T800 200 q0 17 -11.5 28.5 T760 240 v520 q0 33 -23.5 56.5 T680 840 H280 Z m400 -600 H280 v520 h400 v-520 Z M400 680 q17 0 28.5 -11.5 T440 640 v-280 q0 -17 -11.5 -28.5 T400 320 q-17 0 -28.5 11.5 T360 360 v280 q0 17 11.5 28.5 T400 680 Z m160 0 q17 0 28.5 -11.5 T600 640 v-280 q0 -17 -11.5 -28.5 T560 320 q-17 0 -28.5 11.5 T520 360 v280 q0 17 11.5 28.5 T560 680 Z M280 240 v520 v-520 Z",
+        )
+    }
+
+    val DeleteSweep: ImageVector by lazy {
+        materialSymbol(
+            name = "DeleteSweep",
+            pathData = "M200 760 q-33 0 -56.5 -23.5 T120 680 v-360 q-17 0 -28.5 -11.5 T80 280 q0 -17 11.5 -28.5 T120 240 h120 v-20 q0 -17 11.5 -28.5 T280 180 h80 q17 0 28.5 11.5 T400 220 v20 h120 q17 0 28.5 11.5 T560 280 q0 17 -11.5 28.5 T520 320 v360 q0 33 -23.5 56.5 T440 760 H200 Z m440 -40 q-17 0 -28.5 -11.5 T600 680 q0 -17 11.5 -28.5 T640 640 h80 q17 0 28.5 11.5 T760 680 q0 17 -11.5 28.5 T720 720 h-80 Z m0 -160 q-17 0 -28.5 -11.5 T600 520 q0 -17 11.5 -28.5 T640 480 h160 q17 0 28.5 11.5 T840 520 q0 17 -11.5 28.5 T800 560 H640 Z m0 -160 q-17 0 -28.5 -11.5 T600 360 q0 -17 11.5 -28.5 T640 320 h200 q17 0 28.5 11.5 T880 360 q0 17 -11.5 28.5 T840 400 H640 Z m-440 -80 v360 h240 v-360 H200 Z",
         )
     }
 
@@ -162,6 +183,13 @@ object VolaIcons {
         materialSymbol(
             name = "Fingerprint",
             pathData = "M481 179 q106 0 200 45.5 T838 356 q7 9 4.5 16 t-8.5 12 q-6 5 -14 4.5 t-14 -8.5 q-55 -78 -141.5 -119.5 T481 219 q-97 0 -182 41.5 T158 380 q-6 9 -14 10 t-14 -4 q-7 -5 -8.5 -12.5 T126 358 q62 -85 155.5 -132 T481 179 Z m0 94 q135 0 232 90 t97 223 q0 50 -35.5 83.5 T688 703 q-51 0 -87.5 -33.5 T564 586 q0 -33 -24.5 -55.5 T481 508 q-34 0 -58.5 22.5 T398 586 q0 97 57.5 162 T604 839 q9 3 12 10 t1 15 q-2 7 -8 12 t-15 3 q-104 -26 -170 -103.5 T358 586 q0 -50 36 -84 t87 -34 q51 0 87 34 t36 84 q0 33 25 55.5 t59 22.5 q34 0 58 -22.5 t24 -55.5 q0 -116 -85 -195 t-203 -79 q-118 0 -203 79 t-85 194 q0 24 4.5 60 t21.5 84 q3 9 -0.5 16 T208 755 q-8 3 -15.5 -0.5 T182 743 q-15 -39 -21.5 -77.5 T154 586 q0 -133 96.5 -223 T481 273 Z m0 -192 q64 0 125 15.5 T724 141 q9 5 10.5 12 t-1.5 14 q-3 7 -10 11 t-17 -1 q-53 -27 -109.5 -41.5 T481 121 q-58 0 -114 13.5 T260 177 q-8 5 -16 2.5 T232 169 q-4 -8 -2 -14.5 t10 -11.5 q56 -30 117 -46 t124 -16 Z m0 289 q93 0 160 62.5 T708 586 q0 9 -5.5 14.5 T688 606 q-8 0 -14 -5.5 t-6 -14.5 q0 -75 -55.5 -125.5 T481 410 q-76 0 -130.5 50.5 T296 586 q0 81 28 137.5 T406 837 q6 6 6 14 t-6 14 q-6 6 -14 6 t-14 -6 q-59 -62 -90.5 -126.5 T256 586 q0 -91 66 -153.5 T481 370 Z m-1 196 q9 0 14.5 6 t5.5 14 q0 75 54 123 t126 48 q6 0 17 -1 t23 -3 q9 -2 15.5 2.5 T744 769 q2 8 -3 14 t-13 8 q-18 5 -31.5 5.5 t-16.5 0.5 q-89 0 -154.5 -60 T460 586 q0 -8 5.5 -14 t14.5 -6 Z",
+        )
+    }
+
+    val Folder: ImageVector by lazy {
+        materialSymbol(
+            name = "Folder",
+            pathData = "M160 800 q-33 0 -56.5 -23.5 T80 720 v-480 q0 -33 23.5 -56.5 T160 160 h207 q16 0 30.5 6 t25.5 17 l57 57 h320 q33 0 56.5 23.5 T880 320 v400 q0 33 -23.5 56.5 T800 800 H160 Z m0 -80 h640 v-400 H447 l-80 -80 H160 v480 Z m0 0 v-480 v480 Z",
         )
     }
 
@@ -221,10 +249,24 @@ object VolaIcons {
         )
     }
 
+    val Image: ImageVector by lazy {
+        materialSymbol(
+            name = "Image",
+            pathData = "M200 840 q-33 0 -56.5 -23.5 T120 760 v-560 q0 -33 23.5 -56.5 T200 120 h560 q33 0 56.5 23.5 T840 200 v560 q0 33 -23.5 56.5 T760 840 H200 Z m0 -80 h560 v-560 H200 v560 Z m0 0 v-560 v560 Z m80 -80 h400 q12 0 18 -11 t-2 -21 L586 501 q-6 -8 -16 -8 t-16 8 L450 640 l-74 -99 q-6 -8 -16 -8 t-16 8 l-80 107 q-8 10 -2 21 t18 11 Z",
+        )
+    }
+
     val Info: ImageVector by lazy {
         materialSymbol(
             name = "Info",
             pathData = "M480 680 q17 0 28.5 -11.5 T520 640 v-160 q0 -17 -11.5 -28.5 T480 440 q-17 0 -28.5 11.5 T440 480 v160 q0 17 11.5 28.5 T480 680 Z m0 -320 q17 0 28.5 -11.5 T520 320 q0 -17 -11.5 -28.5 T480 280 q-17 0 -28.5 11.5 T440 320 q0 17 11.5 28.5 T480 360 Z m0 520 q-83 0 -156 -31.5 T197 763 q-54 -54 -85.5 -127 T80 480 q0 -83 31.5 -156 T197 197 q54 -54 127 -85.5 T480 80 q83 0 156 31.5 T763 197 q54 54 85.5 127 T880 480 q0 83 -31.5 156 T763 763 q-54 54 -127 85.5 T480 880 Z m0 -80 q134 0 227 -93 t93 -227 q0 -134 -93 -227 t-227 -93 q-134 0 -227 93 t-93 227 q0 134 93 227 t227 93 Z m0 -320 Z",
+        )
+    }
+
+    val Inventory2: ImageVector by lazy {
+        materialSymbol(
+            name = "Inventory2",
+            pathData = "M200 880 q-33 0 -56.5 -23.5 T120 800 v-451 q-18 -11 -29 -28.5 T80 280 v-120 q0 -33 23.5 -56.5 T160 80 h640 q33 0 56.5 23.5 T880 160 v120 q0 23 -11 40.5 T840 349 v451 q0 33 -23.5 56.5 T760 880 H200 Z m0 -520 v440 h560 v-440 H200 Z m-40 -80 h640 v-120 H160 v120 Z m240 280 h160 q17 0 28.5 -11.5 T600 520 q0 -17 -11.5 -28.5 T560 480 H400 q-17 0 -28.5 11.5 T360 520 q0 17 11.5 28.5 T400 560 Z m80 20 Z",
         )
     }
 
@@ -300,6 +342,13 @@ object VolaIcons {
         )
     }
 
+    val Movie: ImageVector by lazy {
+        materialSymbol(
+            name = "Movie",
+            pathData = "M160 160 l65 130 q7 14 20 22 t28 8 q30 0 46 -25.5 t2 -52.5 l-41 -82 h80 l65 130 q7 14 20 22 t28 8 q30 0 46 -25.5 t2 -52.5 l-41 -82 h80 l65 130 q7 14 20 22 t28 8 q30 0 46 -25.5 t2 -52.5 l-41 -82 h120 q33 0 56.5 23.5 T880 240 v480 q0 33 -23.5 56.5 T800 800 H160 q-33 0 -56.5 -23.5 T80 720 v-480 q0 -33 23.5 -56.5 T160 160 Z m0 240 v320 h640 v-320 H160 Z m0 0 v320 v-320 Z",
+        )
+    }
+
     val NorthWest: ImageVector by lazy {
         materialSymbol(
             name = "NorthWest",
@@ -307,10 +356,38 @@ object VolaIcons {
         )
     }
 
+    val OpenInNew: ImageVector by lazy {
+        materialSymbol(
+            name = "OpenInNew",
+            pathData = "M200 840 q-33 0 -56.5 -23.5 T120 760 v-560 q0 -33 23.5 -56.5 T200 120 h240 q17 0 28.5 11.5 T480 160 q0 17 -11.5 28.5 T440 200 H200 v560 h560 v-240 q0 -17 11.5 -28.5 T800 480 q17 0 28.5 11.5 T840 520 v240 q0 33 -23.5 56.5 T760 840 H200 Z m560 -584 L416 600 q-11 11 -28 11 t-28 -11 q-11 -11 -11 -28 t11 -28 l344 -344 H600 q-17 0 -28.5 -11.5 T560 160 q0 -17 11.5 -28.5 T600 120 h200 q17 0 28.5 11.5 T840 160 v200 q0 17 -11.5 28.5 T800 400 q-17 0 -28.5 -11.5 T760 360 v-104 Z",
+        )
+    }
+
     val Palette: ImageVector by lazy {
         materialSymbol(
             name = "Palette",
             pathData = "M480 880 q-82 0 -155 -31.5 t-127.5 -86 Q143 708 111.5 635 T80 480 q0 -83 32.5 -156 t88 -127 Q256 143 330 111.5 T488 80 q80 0 151 27.5 t124.5 76 q53.5 48.5 85 115 T880 442 q0 115 -70 176.5 T640 680 h-74 q-9 0 -12.5 5 t-3.5 11 q0 12 15 34.5 t15 51.5 q0 50 -27.5 74 T480 880 Z m0 -400 Z m-220 40 q26 0 43 -17 t17 -43 q0 -26 -17 -43 t-43 -17 q-26 0 -43 17 t-17 43 q0 26 17 43 t43 17 Z m120 -160 q26 0 43 -17 t17 -43 q0 -26 -17 -43 t-43 -17 q-26 0 -43 17 t-17 43 q0 26 17 43 t43 17 Z m200 0 q26 0 43 -17 t17 -43 q0 -26 -17 -43 t-43 -17 q-26 0 -43 17 t-17 43 q0 26 17 43 t43 17 Z m120 160 q26 0 43 -17 t17 -43 q0 -26 -17 -43 t-43 -17 q-26 0 -43 17 t-17 43 q0 26 17 43 t43 17 Z M480 800 q9 0 14.5 -5 t5.5 -13 q0 -14 -15 -33 t-15 -57 q0 -42 29 -67 t71 -25 h70 q66 0 113 -38.5 T800 442 q0 -121 -92.5 -201.5 T488 160 q-136 0 -232 93 t-96 227 q0 133 93.5 226.5 T480 800 Z",
+        )
+    }
+
+    val Pause: ImageVector by lazy {
+        materialSymbol(
+            name = "Pause",
+            pathData = "M600 760 q-33 0 -56.5 -23.5 T520 680 v-400 q0 -33 23.5 -56.5 T600 200 h80 q33 0 56.5 23.5 T760 280 v400 q0 33 -23.5 56.5 T680 760 h-80 Z m-320 0 q-33 0 -56.5 -23.5 T200 680 v-400 q0 -33 23.5 -56.5 T280 200 h80 q33 0 56.5 23.5 T440 280 v400 q0 33 -23.5 56.5 T360 760 h-80 Z m320 -80 h80 v-400 h-80 v400 Z m-320 0 h80 v-400 h-80 v400 Z m0 -400 v400 v-400 Z m320 0 v400 v-400 Z",
+        )
+    }
+
+    val PictureAsPdf: ImageVector by lazy {
+        materialSymbol(
+            name = "PictureAsPdf",
+            pathData = "M400 420 h40 q17 0 28.5 -11.5 T480 380 v-40 q0 -17 -11.5 -28.5 T440 300 h-60 q-8 0 -14 6 t-6 14 v160 q0 8 6 14 t14 6 q8 0 14 -6 t6 -14 v-60 Z m0 -40 v-40 h40 v40 h-40 Z m200 120 q17 0 28.5 -11.5 T640 460 v-120 q0 -17 -11.5 -28.5 T600 300 h-60 q-8 0 -14 6 t-6 14 v160 q0 8 6 14 t14 6 h60 Z m-40 -40 v-120 h40 v120 h-40 Z m160 -40 h20 q8 0 14 -6 t6 -14 q0 -8 -6 -14 t-14 -6 h-20 v-40 h20 q8 0 14 -6 t6 -14 q0 -8 -6 -14 t-14 -6 h-40 q-8 0 -14 6 t-6 14 v160 q0 8 6 14 t14 6 q8 0 14 -6 t6 -14 v-60 Z M320 720 q-33 0 -56.5 -23.5 T240 640 v-480 q0 -33 23.5 -56.5 T320 80 h480 q33 0 56.5 23.5 T880 160 v480 q0 33 -23.5 56.5 T800 720 H320 Z m0 -80 h480 v-480 H320 v480 Z M160 880 q-33 0 -56.5 -23.5 T80 800 v-520 q0 -17 11.5 -28.5 T120 240 q17 0 28.5 11.5 T160 280 v520 h520 q17 0 28.5 11.5 T720 840 q0 17 -11.5 28.5 T680 880 H160 Z m160 -720 v480 v-480 Z",
+        )
+    }
+
+    val PlayArrow: ImageVector by lazy {
+        materialSymbol(
+            name = "PlayArrow",
+            pathData = "M320 687 v-414 q0 -17 12 -28.5 t28 -11.5 q5 0 10.5 1.5 T381 239 l326 207 q9 6 13.5 15 t4.5 19 q0 10 -4.5 19 T707 514 L381 721 q-5 3 -10.5 4.5 T360 727 q-16 0 -28 -11.5 T320 687 Z m80 -207 Z m0 134 l210 -134 l-210 -134 v268 Z",
         )
     }
 
@@ -391,6 +468,13 @@ object VolaIcons {
         )
     }
 
+    val Sort: ImageVector by lazy {
+        materialSymbol(
+            name = "Sort",
+            pathData = "M160 720 q-17 0 -28.5 -11.5 T120 680 q0 -17 11.5 -28.5 T160 640 h160 q17 0 28.5 11.5 T360 680 q0 17 -11.5 28.5 T320 720 H160 Z m0 -200 q-17 0 -28.5 -11.5 T120 480 q0 -17 11.5 -28.5 T160 440 h400 q17 0 28.5 11.5 T600 480 q0 17 -11.5 28.5 T560 520 H160 Z m0 -200 q-17 0 -28.5 -11.5 T120 280 q0 -17 11.5 -28.5 T160 240 h640 q17 0 28.5 11.5 T840 280 q0 17 -11.5 28.5 T800 320 H160 Z",
+        )
+    }
+
     val Star: ImageVector by lazy {
         materialSymbol(
             name = "Star",
@@ -430,6 +514,13 @@ object VolaIcons {
         materialSymbol(
             name = "TabGroup",
             pathData = "M320 720 q-33 0 -56.5 -23.5 T240 640 v-480 q0 -33 23.5 -56.5 T320 80 h480 q33 0 56.5 23.5 T880 160 v480 q0 33 -23.5 56.5 T800 720 H320 Z m0 -80 h480 v-320 H560 q-17 0 -28.5 -11.5 T520 280 v-120 H320 v480 Z M160 880 q-33 0 -56.5 -23.5 T80 800 v-520 q0 -17 11.5 -28.5 T120 240 q17 0 28.5 11.5 T160 280 v520 h520 q17 0 28.5 11.5 T720 840 q0 17 -11.5 28.5 T680 880 H160 Z m160 -720 v480 v-480 Z",
+        )
+    }
+
+    val TableChart: ImageVector by lazy {
+        materialSymbol(
+            name = "TableChart",
+            pathData = "M760 840 H200 q-33 0 -56.5 -23.5 T120 760 v-560 q0 -33 23.5 -56.5 T200 120 h560 q33 0 56.5 23.5 T840 200 v560 q0 33 -23.5 56.5 T760 840 Z M200 320 h560 v-120 H200 v120 Z m100 80 H200 v360 h100 v-360 Z m360 0 v360 h100 v-360 H660 Z m-80 0 H380 v360 h200 v-360 Z",
         )
     }
 
@@ -480,6 +571,7 @@ object VolaIcons {
         get() = listOf(
             Add,
             Apps,
+            Bookmark,
             ArrowBack,
             ArrowDropDown,
             ArrowForward,
@@ -491,15 +583,18 @@ object VolaIcons {
             ContentCopy,
             ContentPaste,
             Dangerous,
+            Description,
             DesktopWindows,
             Contrast,
             DarkMode,
             Delete,
+            DeleteSweep,
             Download,
             Edit,
             Error,
             Favorite,
             Fingerprint,
+            Folder,
             FormatAlignJustify,
             FormatAlignLeft,
             GppBad,
@@ -508,7 +603,9 @@ object VolaIcons {
             Headphones,
             History,
             Home,
+            Image,
             Info,
+            Inventory2,
             KeyboardArrowDown,
             KeyboardArrowLeft,
             KeyboardArrowRight,
@@ -519,8 +616,13 @@ object VolaIcons {
             LockOpen,
             MoreHoriz,
             MoreVert,
+            Movie,
             NorthWest,
+            OpenInNew,
             Palette,
+            Pause,
+            PictureAsPdf,
+            PlayArrow,
             PublicOff,
             PushPin,
             PauseFilled,
@@ -532,12 +634,14 @@ object VolaIcons {
             Share,
             Snooze,
             Settings,
+            Sort,
             Star,
             StopFilled,
             SwapVert,
             Sync,
             Tab,
             TabGroup,
+            TableChart,
             Verified,
             Visibility,
             VisibilityOff,

@@ -268,6 +268,16 @@
     <string name="history_yesterday">Yesterday</string>
     <string name="history_empty">No history yet</string>
     <string name="history_no_results">No matching history</string>
+    <string name="history_more">More history options</string>
+    <string name="history_select_entry">Select</string>
+    <string name="history_cleared">History cleared</string>
+    <plurals name="history_deleted_count">
+        <item quantity="one">%1$d page deleted</item>
+        <item quantity="other">%1$d pages deleted</item>
+    </plurals>
+    <string name="history_empty_message">Sites you open will show up here. Private tabs never do.</string>
+    <string name="history_empty_action">Open a new tab</string>
+    <string name="history_no_results_message">Try another word or pick all workspaces.</string>
     <string name="history_save_title">Save history</string>
     <string name="history_save_summary">Keep regular browsing visits on this device</string>
     <string name="history_clear_on_exit_title">Clear when Vola closes</string>
@@ -453,6 +463,22 @@
     <string name="favorites_upload_icon">Choose image</string>
     <string name="favorites_reset_icon">Use favicon preview</string>
     <string name="favorites_icon_failed">This image couldn’t be loaded</string>
+    <string name="favorites_folder_button">Folder</string>
+    <string name="favorites_section_no_folder">No folder</string>
+    <string name="favorites_section_sites">Sites</string>
+    <string name="favorites_delete_action">Delete</string>
+    <plurals name="favorites_folder_sites">
+        <item quantity="one">%1$d site</item>
+        <item quantity="other">%1$d sites</item>
+    </plurals>
+    <string name="favorites_empty_message">Tap the star in the page menu, or bring bookmarks over from another browser.</string>
+    <string name="favorites_empty_action">Import bookmarks</string>
+    <string name="favorites_sort">Sort</string>
+    <string name="favorites_sort_manual">Your order</string>
+    <string name="favorites_sort_name">By name</string>
+    <string name="favorites_sort_recent">Newest first</string>
+    <string name="favorites_folder_empty_message">Move favorites here from their menu.</string>
+    <string name="favorites_no_matches_message">Try another word.</string>
 
     <string name="content_actions_title">Page content</string>
     <string name="action_open_link_background_tab">Open link in new background tab</string>
@@ -896,6 +922,22 @@
     <string name="downloads_status_successful">Finished · %1$s</string>
     <string name="downloads_status_failed">Failed · %1$s</string>
     <string name="downloads_status_cancelled">Cancelled · %1$s</string>
+    <string name="downloads_more">More download options</string>
+    <string name="downloads_yesterday">Yesterday</string>
+    <string name="downloads_progress_of">%1$s of %2$s</string>
+    <string name="downloads_kind_all">All</string>
+    <string name="downloads_kind_documents">Documents</string>
+    <string name="downloads_kind_images">Photos</string>
+    <string name="downloads_kind_videos">Videos</string>
+    <string name="downloads_kind_document">Document</string>
+    <string name="downloads_kind_spreadsheet">Spreadsheet</string>
+    <string name="downloads_kind_image">Photo</string>
+    <string name="downloads_kind_video">Video</string>
+    <string name="downloads_kind_audio">Audio</string>
+    <string name="downloads_kind_archive">Archive</string>
+    <string name="downloads_kind_app">App</string>
+    <string name="downloads_empty_message">Files are saved to your phone’s Downloads. Vola checks every file before it opens.</string>
+    <string name="downloads_no_results_message">Try another word, kind or period.</string>
     <string name="toast_download_handed_off">Sent to %1$s</string>
     <string name="download_manager_chooser_title">Download with</string>
     <string name="error_download_invalid_address">Invalid download address</string>
@@ -1232,6 +1274,11 @@
     <string name="snoozed_tabs_empty_body">Long-press a tab in the switcher or use its ⋮ menu to snooze it.</string>
     <string name="snoozed_until">Returns %1$s</string>
     <string name="snoozed_archived_at">Archived %1$s</string>
+    <string name="snoozed_tabs_subtitle">Tabs come back to their own workspace at the time you chose</string>
+    <string name="snoozed_tabs_hint">To snooze a tab, touch and hold it in the tab overview, then pick «Snooze».</string>
+    <string name="snoozed_today_at">Today, %1$s</string>
+    <string name="snoozed_tomorrow_at">Tomorrow, %1$s</string>
+    <string name="snoozed_tab_more">More actions for %1$s</string>
     <string name="action_reschedule">Change time</string>
     <string name="action_open_now">Open now</string>
     <string name="snooze_invalid_time">Choose a future date and time</string>

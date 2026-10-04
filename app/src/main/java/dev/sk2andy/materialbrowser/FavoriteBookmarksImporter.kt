@@ -11,6 +11,7 @@ import dev.sk2andy.materialbrowser.data.FavoriteBookmarkImportReader
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkImportRules
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkMergeResult
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkParseResult
+import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,8 +19,15 @@ import kotlinx.coroutines.withContext
 internal class FavoriteBookmarksImporter(
     private val context: Context,
     private val lifecycleScope: LifecycleCoroutineScope,
-    private val browserController: BrowserController,
+    /** Adds the parsed favorites to the library; answers with the result, or null if saving failed. */
+    private val merge: (List<FavoriteEntry>, (FavoriteBookmarkMergeResult?) -> Unit) -> Unit,
 ) {
+    constructor(
+        context: Context,
+        lifecycleScope: LifecycleCoroutineScope,
+        browserController: BrowserController,
+    ) : this(context, lifecycleScope, browserController::importFavoriteBookmarks)
+
     private var isImporting = false
 
     fun import(uri: Uri) {
@@ -63,7 +71,7 @@ internal class FavoriteBookmarksImporter(
             if (parsed.favorites.isEmpty()) {
                 finishImport(FavoriteBookmarkImportFeedback.NoBookmarks)
             } else {
-                browserController.importFavoriteBookmarks(parsed.favorites) { result ->
+                merge(parsed.favorites) { result ->
                     finishImport(
                         result?.let(FavoriteBookmarkImportFeedback::from)
                             ?: FavoriteBookmarkImportFeedback.SaveFailed,
@@ -71,6 +79,16 @@ internal class FavoriteBookmarksImporter(
                 }
             }
         }
+    }
+
+    internal companion object {
+        /** What the file picker offers: bookmark exports are HTML, but some browsers save them as text. */
+        val MIME_TYPES = arrayOf(
+            "text/html",
+            "application/xhtml+xml",
+            "text/plain",
+            "application/octet-stream",
+        )
     }
 
     private fun finishImport(feedback: FavoriteBookmarkImportFeedback) {

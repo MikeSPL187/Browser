@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
 import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
+import dev.sk2andy.materialbrowser.data.FavoriteBookmarkMergeResult
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteFaviconRepository
 import dev.sk2andy.materialbrowser.data.FavoriteFolder
@@ -27,6 +28,7 @@ import dev.sk2andy.materialbrowser.data.FavoriteLibrary
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import dev.sk2andy.materialbrowser.data.FavoriteUndoRules
 import dev.sk2andy.materialbrowser.ui.FavoritesScreen
+import dev.sk2andy.materialbrowser.ui.FavoritesSort
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import java.util.UUID
@@ -50,6 +52,13 @@ class FavoritesActivity : ComponentActivity() {
     private var isFullImmersiveModeEnabled = false
     private var isFavoriteMutationInFlight = false
     private var pendingIconFolderId: String? = null
+    private val bookmarksImporter by lazy {
+        FavoriteBookmarksImporter(this, lifecycleScope, ::mergeImportedFavorites)
+    }
+    private val chooseBookmarks = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) bookmarksImporter.import(uri)
+    }
+    private var favoritesSort by mutableStateOf(FavoritesSort.Manual)
     private val chooseFolderIcon = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val folderId = pendingIconFolderId
         pendingIconFolderId = null
@@ -114,6 +123,9 @@ class FavoritesActivity : ComponentActivity() {
         isFullImmersiveModeEnabled = store.loadFullImmersiveModeEnabled()
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         favoriteLibrary = store.loadFavoriteLibrary()
+        favoritesSort = getPreferences(MODE_PRIVATE).getString(KEY_SORT, null)
+            ?.let { saved -> FavoritesSort.entries.firstOrNull { it.name == saved } }
+            ?: FavoritesSort.Manual
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
@@ -146,6 +158,14 @@ class FavoritesActivity : ComponentActivity() {
                             pendingIconFolderId = folder.id
                             chooseFolderIcon.launch("image/*")
                         }
+                    },
+                    sort = favoritesSort,
+                    onSortChange = { sort ->
+                        favoritesSort = sort
+                        getPreferences(MODE_PRIVATE).edit().putString(KEY_SORT, sort.name).apply()
+                    },
+                    onImportBookmarks = {
+                        if (!isFavoriteMutationInFlight) chooseBookmarks.launch(FavoriteBookmarksImporter.MIME_TYPES)
                     },
                 )
             }
@@ -289,6 +309,33 @@ class FavoritesActivity : ComponentActivity() {
         }
     }
 
+    private fun mergeImportedFavorites(
+        imported: List<FavoriteEntry>,
+        onComplete: (FavoriteBookmarkMergeResult?) -> Unit,
+    ) {
+        if (isFavoriteMutationInFlight) {
+            onComplete(null)
+            return
+        }
+        isFavoriteMutationInFlight = true
+        lifecycleScope.launch {
+            try {
+                val (result, merged) = withContext(Dispatchers.IO) {
+                    val outcome = store.mergeImportedFavoritesCommitted(imported)
+                    outcome to outcome?.takeIf { it.importedCount > 0 }?.let { store.loadFavoriteLibrary() }
+                }
+                if (merged != null) {
+                    favoriteLibrary = merged
+                    favoriteRevision++
+                    undoLibrary = null
+                }
+                onComplete(result)
+            } finally {
+                isFavoriteMutationInFlight = false
+            }
+        }
+    }
+
     private fun withFolderIcon(library: FavoriteLibrary, folderId: String, icon: FavoriteFolderIcon?): FavoriteLibrary =
         BrowsingFavoritesRules.normalizeLibrary(
             library.copy(entries = library.entries.map { entry ->
@@ -302,5 +349,6 @@ class FavoritesActivity : ComponentActivity() {
 
     private companion object {
         const val STATE_ICON_FOLDER = "favorite_icon_folder"
+        const val KEY_SORT = "favorites_sort"
     }
 }
