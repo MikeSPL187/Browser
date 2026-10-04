@@ -527,16 +527,42 @@
     <string name="settings_search_clear">Очистить</string>
     <string name="settings_search_prompt">Найдите настройку по названию или описанию</string>
     <string name="settings_search_empty">Ничего не найдено по запросу «%1$s»</string>
-    <string name="settings_home_group_browsing">Просмотр</string>
-    <string name="settings_home_group_personalization">Персонализация</string>
-    <string name="settings_home_group_privacy_data">Приватность и данные</string>
-    <string name="settings_home_group_about">Дополнительно</string>
+    <string name="settings_home_default_title">Сделать Vola основным</string>
+    <string name="settings_home_default_summary">Открывать ссылки в Vola</string>
+    <string name="settings_home_default_action">Сделать</string>
+    <string name="settings_home_appearance_live">%1$s · %2$s</string>
+    <string name="settings_home_theme_auto">тема авто</string>
+    <string name="settings_home_theme_light">светлая тема</string>
+    <string name="settings_home_theme_dark">тёмная тема</string>
+    <string name="settings_home_protection_trackers_https">Блокировка трекеров · только HTTPS</string>
+    <string name="settings_home_protection_trackers">Блокировка трекеров</string>
+    <string name="settings_home_protection_https">Только HTTPS</string>
+    <string name="settings_home_search_suggestions">подсказки</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d открытая вкладка</item>
+        <item quantity="few">%1$d открытые вкладки</item>
+        <item quantity="many">%1$d открытых вкладок</item>
+        <item quantity="other">%1$d открытой вкладки</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d скрипт</item>
+        <item quantity="few">%1$d скрипта</item>
+        <item quantity="many">%1$d скриптов</item>
+        <item quantity="other">%1$d скрипта</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d капсула</item>
+        <item quantity="few">%1$d капсулы</item>
+        <item quantity="many">%1$d капсул</item>
+        <item quantity="other">%1$d капсулы</item>
+    </plurals>
     <string name="settings_browser_group_general">Основные параметры</string>
     <string name="settings_browser_group_startup">Запуск</string>
     <string name="settings_browser_group_favorites">Избранное</string>
     <string name="settings_browser_group_websites">Веб-страницы</string>
     <string name="settings_browser_group_links">Ссылки и приложения</string>
     <string name="settings_protection_group_tools">Инструменты приватности</string>
+    <string name="settings_protection_group_network">Сеть</string>
     <string name="settings_protection_group_app_data">Данные приложения</string>
     <string name="settings_appearance_title">Внешний вид</string>
     <string name="settings_home_appearance_summary">Цвета, текст сайтов, поверхности и форма</string>
@@ -636,6 +662,7 @@
     <string name="settings_download_one_dm_session_title">Передавать данные сеанса в 1DM</string>
     <string name="settings_download_one_dm_session_summary">Передаёт в 1DM куки, user agent и referrer, чтобы работали загрузки, требующие входа. Приложение может использовать их для доступа к вашему сеансу. В приватном режиме данные сеанса не передаются.</string>
     <string name="settings_section_tabs">Вкладки</string>
+    <string name="settings_tabs_group_overview">Обзор вкладок</string>
     <string name="settings_tab_overview_mode">Вид обзора вкладок</string>
     <string name="settings_tab_stack_folder_mode">Вид вкладок внутри стопки</string>
     <string name="tab_overview_mode_hero">Карусель</string>
@@ -675,6 +702,18 @@
     </plurals>
     <string name="settings_section_search">Поиск</string>
     <string name="settings_search_engine">Поисковая система</string>
+    <string name="search_engine_google_summary">Самый большой индекс</string>
+    <string name="search_engine_duckduckgo_summary">Не сохраняет запросы</string>
+    <string name="search_engine_bing_summary">Индекс Microsoft</string>
+    <string name="search_engine_brave_summary">Собственный индекс, без профилирования</string>
+    <string name="search_engine_ecosia_summary">Сажает деревья на доход от рекламы</string>
+    <string name="search_engine_startpage_summary">Результаты Google без слежки</string>
+    <string name="search_engine_qwant_summary">Европейский, не составляет профиль</string>
+    <string name="search_engine_kagi_summary">Платный, без рекламы</string>
+    <string name="search_engine_perplexity_summary">Ответы ИИ со ссылками на источники</string>
+    <string name="search_engine_chatgpt_summary">Ответы ИИ</string>
+    <string name="search_engine_searxng_summary">Свой сервер</string>
+    <string name="search_engine_searxng_server_summary">%1$s · %2$s</string>
     <string name="settings_ai_mode_toggle_title">Показывать логотип режима ИИ</string>
     <string name="settings_ai_mode_toggle_subtitle">Нажмите на логотип в адресной строке, чтобы переключить запрос между поиском Google и режимом ИИ.</string>
     <string name="settings_history_suggestions_title">Подсказки из истории</string>
