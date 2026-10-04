@@ -126,6 +126,7 @@ COMPOSE_ICONS = [
     ("Fingerprint", "fingerprint", False, False),
     ("FormatAlignJustify", "format_align_justify", False, False),
     ("FormatAlignLeft", "format_align_left", False, False),
+    ("GppBad", "gpp_bad", False, False),
     ("History", "history", False, False),
     ("Home", "home", False, False),
     ("Info", "info", False, False),

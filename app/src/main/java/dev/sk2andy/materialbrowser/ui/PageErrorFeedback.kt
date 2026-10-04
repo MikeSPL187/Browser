@@ -41,6 +41,7 @@ internal fun PageErrorFeedback(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     url: String = "",
+    onBack: (() -> Unit)? = null,
 ) {
     AnimatedVisibility(
         visible = state !is PageErrorFeedbackState.Hidden,
@@ -69,6 +70,11 @@ internal fun PageErrorFeedback(
                         icon = VolaIcons.LinkOff,
                         title = stringResource(R.string.page_error_not_found_title),
                         message = stringResource(R.string.page_error_not_found_message, host),
+                        onRetry = onRetry,
+                    )
+                    PageErrorFeedbackState.InsecureConnection -> InsecureConnectionPage(
+                        host = host,
+                        onBack = onBack,
                         onRetry = onRetry,
                     )
                     PageErrorFeedbackState.UnknownHost -> ProblemPage(
@@ -105,6 +111,34 @@ private fun ProblemPage(
         icon = { VolaStatePageIcon(icon = icon) },
     ) {
         RetryButton(onRetry = onRetry)
+    }
+}
+
+/**
+ * «Insecure connection» (board W-States): the way back comes first. There is deliberately no way
+ * past a bad certificate.
+ */
+@Composable
+private fun InsecureConnectionPage(host: String, onBack: (() -> Unit)?, onRetry: () -> Unit) {
+    VolaStatePage(
+        title = stringResource(R.string.page_error_insecure_title),
+        message = stringResource(R.string.page_error_insecure_message, host),
+        icon = { VolaStatePageIcon(icon = VolaIcons.GppBad, tone = VolaStatePageTone.Error) },
+    ) {
+        if (onBack == null) {
+            RetryButton(onRetry = onRetry)
+        } else {
+            VolaStatePagePrimaryButton(
+                text = stringResource(R.string.page_error_go_back),
+                onClick = onBack,
+                icon = VolaIcons.ArrowBack,
+            )
+            VolaStatePageTextButton(
+                text = stringResource(R.string.action_retry),
+                onClick = onRetry,
+                modifier = Modifier.testTag(PageErrorFeedbackTestTags.Retry),
+            )
+        }
     }
 }
 
@@ -161,6 +195,19 @@ private fun Context.openNetworkSettings() {
 private fun OfflinePagePreview() {
     MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
         PageErrorFeedback(state = PageErrorFeedbackState.Offline(), onRetry = {})
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun InsecureConnectionPagePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        PageErrorFeedback(
+            state = PageErrorFeedbackState.InsecureConnection,
+            onRetry = {},
+            url = "https://expired.badssl.com/",
+            onBack = {},
+        )
     }
 }
 
