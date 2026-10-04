@@ -528,6 +528,7 @@ internal fun BrowserViewport(
                             ),
                             count = controller.tabs.count(BrowserTab::isIncognito),
                             onCloseAll = { controller.closeAllPrivateTabs() },
+                            lock = controller.privateTabLockRow(),
                         ),
                         protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
                             NewTabProtection(

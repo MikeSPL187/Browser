@@ -164,6 +164,7 @@ internal fun BrowserSettingsOverlay(
             privacySignalSettings = controller.privacySignalSettings,
             isAutoDeAmpEnabled = controller.isAutoDeAmpEnabled,
             isProtectionCardVisible = controller.protectionReport.isCardVisible,
+            privateTabsLock = controller.privateTabLockRow(),
             dnsOverHttpsSettings = controller.dnsOverHttpsSettings,
             httpsOnlyMode = controller.httpsOnlyMode,
             inactiveTabLifetime = controller.inactiveTabLifetime,
