@@ -21,8 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,8 +47,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionPrompt
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionPromptChoice
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
@@ -426,83 +422,6 @@ internal fun PermissionRadarBadge(
             }
         }
     }
-}
-
-@Composable
-internal fun PermissionPromptDialog(
-    prompt: PermissionPrompt,
-    onChoice: (PermissionPromptChoice) -> Unit,
-    onShown: () -> Unit = {},
-) {
-    LaunchedEffect(prompt.id) { onShown() }
-    val persistentNotificationPermission = SitePermission.Notifications in prompt.permissions
-    val permissionNamesByType = mapOf(
-        SitePermission.Camera to stringResource(R.string.permission_camera),
-        SitePermission.Microphone to stringResource(R.string.permission_microphone),
-        SitePermission.Location to stringResource(R.string.permission_location),
-        SitePermission.Notifications to stringResource(R.string.permission_notifications),
-        SitePermission.MidiSysex to stringResource(R.string.permission_midi),
-        SitePermission.ProtectedMedia to stringResource(R.string.permission_protected_media),
-    )
-    val permissionNames = prompt.permissions.joinToString { permission ->
-        permissionNamesByType.getValue(permission)
-    }
-    AlertDialog(
-        onDismissRequest = { onChoice(PermissionPromptChoice.Block) },
-        modifier = Modifier.testTag(PermissionRadarTestTags.Prompt),
-        title = { Text(stringResource(R.string.permission_radar_request_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    stringResource(
-                        R.string.permission_radar_request_message,
-                        prompt.site.origin,
-                        permissionNames,
-                    ),
-                )
-                if (prompt.isPrivate) {
-                    Text(
-                        stringResource(R.string.permission_radar_private_request_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (!persistentNotificationPermission) {
-                    TextButton(onClick = { onChoice(PermissionPromptChoice.AllowAlways) }) {
-                        Text(
-                            stringResource(
-                                if (prompt.isPrivate) {
-                                    R.string.permission_radar_allow_private
-                                } else {
-                                    R.string.permission_radar_allow_always
-                                },
-                            ),
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                onChoice(
-                    if (persistentNotificationPermission) PermissionPromptChoice.AllowAlways
-                    else PermissionPromptChoice.AllowOnce,
-                )
-            }) {
-                Text(
-                    stringResource(
-                        if (persistentNotificationPermission) R.string.permission_radar_allow_always
-                        else R.string.permission_radar_allow_once,
-                    ),
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { onChoice(PermissionPromptChoice.Block) }) {
-                Text(stringResource(R.string.permission_radar_block))
-            }
-        },
-    )
 }
 
 @Composable

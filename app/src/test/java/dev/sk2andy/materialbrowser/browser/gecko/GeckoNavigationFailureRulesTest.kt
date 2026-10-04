@@ -19,6 +19,18 @@ class GeckoNavigationFailureRulesTest {
     }
 
     @Test
+    fun `certificate and TLS failures mean an insecure connection`() {
+        assertEquals(
+            BrowserEngineFailureKind.InsecureConnection,
+            GeckoNavigationFailureRules.kindForErrorCode(WebRequestError.ERROR_SECURITY_BAD_CERT),
+        )
+        assertEquals(
+            BrowserEngineFailureKind.InsecureConnection,
+            GeckoNavigationFailureRules.kindForErrorCode(WebRequestError.ERROR_SECURITY_SSL),
+        )
+    }
+
+    @Test
     fun `other transport errors remain generic`() {
         assertEquals(
             BrowserEngineFailureKind.Other,

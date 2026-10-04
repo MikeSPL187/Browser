@@ -81,6 +81,7 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.DuplicateTab -> R.string.action_duplicate_tab
     BrowserMenuEntry.Reader -> R.string.reader_open_action
     BrowserMenuEntry.Translate -> R.string.action_translate_page
+    BrowserMenuEntry.SplitView -> R.string.split_view_title
     BrowserMenuEntry.FindInPage -> R.string.action_find_in_page
     BrowserMenuEntry.Share -> R.string.action_share
     BrowserMenuEntry.OpenExternal -> R.string.action_open_in_app
@@ -91,6 +92,7 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.ForceSafeArea -> R.string.compatibility_force_safe_area
     BrowserMenuEntry.AlwaysBlockPopups -> R.string.action_always_block_popups
     BrowserMenuEntry.DesktopView -> R.string.action_desktop_view
+    BrowserMenuEntry.CompactMode -> R.string.compact_mode_title
     BrowserMenuEntry.DomainMute -> R.string.action_mute_domain
     BrowserMenuEntry.ToppingCommands -> R.string.settings_menu_entry_topping_commands
     BrowserMenuEntry.FirefoxPageActions -> R.string.settings_menu_entry_firefox_page_actions

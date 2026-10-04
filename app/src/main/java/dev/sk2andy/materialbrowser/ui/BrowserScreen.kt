@@ -6,7 +6,6 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-
 import android.view.HapticFeedbackConstants
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityManager
@@ -24,15 +23,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +51,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,8 +58,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -81,7 +74,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
-import dev.sk2andy.materialbrowser.browser.BrowserContentFrame
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
@@ -128,8 +120,6 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.recall.RecallMatch
-import dev.sk2andy.materialbrowser.ui.theme.VolaFrame
-import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
@@ -248,7 +238,7 @@ internal fun BrowserScreen(
     launcherAddressEditorRequestId: Int = 0,
     hardwareTabChangeRequestId: Int = 0,
 ) {
-    if (controller.isActiveProfileLocked) return
+    if (controller.isSelectedContentLocked) return
     val hideBrowserChrome = FullscreenVideoRules.hidesBrowserChrome(
         isWebContentFullscreen = controller.isSelectedWebContentFullscreen,
         placement = controller.fullscreenVideoPlacement(videoOnlyPresentation),
@@ -292,6 +282,10 @@ internal fun BrowserScreen(
     val aiModeSelectedState = remember { mutableStateOf(false) }
     var settingsVisible by remember { mutableStateOf(false) }
     var settingsDestination by rememberSaveable { mutableStateOf(SettingsDestination.Home) }
+    fun openSettings(destination: SettingsDestination) {
+        settingsDestination = destination
+        settingsVisible = true
+    }
     var snoozedTabsVisible by rememberSaveable { mutableStateOf(false) }
     var snoozeTabId by remember { mutableStateOf<String?>(null) }
     var moveTabToProfileId by remember { mutableStateOf<String?>(null) }
@@ -651,8 +645,7 @@ internal fun BrowserScreen(
         controller.toggleFavorite(tabId)?.let(showFavoriteMutation)
     }
     BrowserOfferSnackbarEffects(controller, feedbackSnackbarHostState)
-    ClosedTabUndoSnackbarEffect(controller, feedbackSnackbarHostState)
-    EssentialRemovalSnackbarEffect(controller.essentials, feedbackSnackbarHostState)
+    BrowserUndoSnackbarEffects(controller, feedbackSnackbarHostState)
     val tabSwitchGapPx = with(density) { 8.dp.toPx() }
     val tabSwitchTravelPx = browserWidthPx + tabSwitchGapPx
     val settleOverviewGesture: () -> Unit = {
@@ -698,6 +691,10 @@ internal fun BrowserScreen(
     }
     LaunchedEffect(incomingBrowserNavigationRequestId) {
         if (incomingBrowserNavigationRequestId != 0) closeTabOverview()
+    }
+    // «Open side by side» in the overview: the two cards show at once.
+    LaunchedEffect(controller.splitView.openRequests) {
+        if (controller.splitView.openRequests != 0) closeTabOverview()
     }
     val openAddressEditor: () -> Unit = {
         if (activeCommandExecutionId == null) {
@@ -945,8 +942,7 @@ internal fun BrowserScreen(
                 }
                 BrowserCommandKind.OpenSettings -> {
                     addressEditorVisible = false
-                    settingsDestination = SettingsDestination.Home
-                    settingsVisible = true
+                    openSettings(SettingsDestination.Home)
                 }
                 else -> addressEditorVisible = false
             }
@@ -1194,7 +1190,6 @@ internal fun BrowserScreen(
         }
     }
 
-
     val currentBackTarget by rememberUpdatedState(
         when {
             readerStudioSession != null -> BrowserBackTarget.ReaderStudio
@@ -1375,46 +1370,6 @@ internal fun BrowserScreen(
         !selectedTab.isIncognito &&
         controller.essentials.entriesFor(selectedTab.profileId).isNotEmpty()
     val addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled
-    val contentFramed = BrowserContentFrameRules.isFramed(
-        chromeStyle = controller.appearanceSettings.chromeStyle,
-        browserChromeVisible = !hideBrowserChrome &&
-            fullscreenVideoGestureState == null &&
-            firefoxExtensionOptionsTitle == null,
-        isBlankPage = selectedTab.url == BLANK_URL,
-    )
-    val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
-    fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(
-        framed = contentFramed,
-        safeLeftPx = frameSafeInsets.getLeft(density, LayoutDirection.Ltr),
-        safeTopPx = frameSafeInsets.getTop(density),
-        safeRightPx = frameSafeInsets.getRight(density, LayoutDirection.Ltr),
-        safeBottomPx = frameSafeInsets.getBottom(density),
-        sideGutterPx = with(density) { VolaFrame.sideGutter.toPx() },
-        barGapPx = with(density) { VolaFrame.barGap.toPx() },
-        addressBarReservePx = if (addressBarDocked) {
-            0f
-        } else {
-            with(density) { (addressBarHeight + ADDRESS_BAR_VERTICAL_MARGIN).toPx() }
-        },
-    )
-    val expandedContentFrame = framedContent(
-        addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
-    )
-    // With a dynamic toolbar the engine lays the page out for the compact capsule and the
-    // expanded bar only covers the card's bottom, so scrolling never resizes the page.
-    val dynamicContentFrame = contentFramed &&
-        !addressBarDocked &&
-        controller.supportsDynamicContentFrame
-    val contentFrame = if (dynamicContentFrame) {
-        framedContent(VolaIsland.compactHeight)
-    } else {
-        expandedContentFrame
-    }
-    val dynamicBottomMaxPx = if (dynamicContentFrame) {
-        (expandedContentFrame.bottomPx - contentFrame.bottomPx).coerceAtLeast(0)
-    } else {
-        0
-    }
     val addressBarCompactShown = controller.isBottomBarCompact &&
         controller.findInPageState == null &&
         !addressEditorVisible &&
@@ -1422,30 +1377,18 @@ internal fun BrowserScreen(
         commandFeedback == null &&
         !tabOverviewVisible &&
         !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp = browserWidthPx / density.density)
-    val coveredBottomPx = remember { Animatable(0f) }
-    var coveredBottomMaxPx by remember { mutableIntStateOf(0) }
-    LaunchedEffect(dynamicBottomMaxPx, addressBarCompactShown) {
-        val target = if (addressBarCompactShown) 0f else dynamicBottomMaxPx.toFloat()
-        if (coveredBottomMaxPx != dynamicBottomMaxPx) {
-            // A new card size is not a bar transition: settle at once.
-            coveredBottomMaxPx = dynamicBottomMaxPx
-            coveredBottomPx.snapTo(target)
-        } else {
-            coveredBottomPx.animateTo(target, VolaMotion.standard())
-        }
-    }
-    LaunchedEffect(controller, dynamicBottomMaxPx) {
-        snapshotFlow { coveredBottomPx.value.roundToInt() }.collect { coveredPx ->
-            controller.updateContentFrameCoveredBottom(dynamicBottomMaxPx, coveredPx)
-        }
-    }
-    SideEffect { controller.updateContentFrame(contentFrame) }
-    DisposableEffect(controller) {
-        onDispose {
-            controller.updateContentFrame(BrowserContentFrame.None)
-            controller.updateContentFrameCoveredBottom(maxPx = 0, coveredPx = 0)
-        }
-    }
+    val pageFrames = rememberBrowserPageFrames(
+        controller = controller,
+        selectedTab = selectedTab,
+        chromeVisible = !hideBrowserChrome &&
+            fullscreenVideoGestureState == null &&
+            firefoxExtensionOptionsTitle == null,
+        addressBarDocked = addressBarDocked,
+        addressBarCompactShown = addressBarCompactShown,
+        browserHeightPx = browserHeightPx,
+    )
+    val contentFramed = pageFrames.framed
+    val contentFrame = pageFrames.primary
     val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
     val fullWindowHeightPx = remember(context) {
         context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
@@ -1520,11 +1463,31 @@ internal fun BrowserScreen(
                 }
             }
         }
+        pageFrames.split?.let { split ->
+            if (!tabOverviewVisible) {
+                SplitCompanionPane(
+                    controller = controller,
+                    layout = split,
+                    onActivate = controller::activateSplitCompanion,
+                )
+            }
+        }
         if (contentFramed) {
-            BrowserContentFrameMask(
-                frame = contentFrame,
-                coveredBottomPx = { coveredBottomPx.value },
+            BrowserCardsMask(
+                frames = pageFrames.split?.frames?.let { listOf(it.top, it.bottom) }
+                    ?: listOf(contentFrame),
+                highlighted = pageFrames.split?.state?.activePane?.ordinal,
+                coveredBottomPx = pageFrames.coveredBottomPx,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+        pageFrames.split?.takeIf { !tabOverviewVisible }?.let { split ->
+            SplitViewDivider(
+                layout = split,
+                heightPx = browserHeightPx,
+                onRatioChange = controller.splitView::updateRatio,
+                onSwap = controller.splitView::swap,
+                onClose = controller.splitView::close,
             )
         }
 
@@ -1643,10 +1606,7 @@ internal fun BrowserScreen(
             onOpenFavorites = onOpenFavorites,
             onOpenDownloads = onOpenDownloads,
             onOpenHistory = onOpenHistory,
-            onSettings = {
-                settingsDestination = SettingsDestination.Home
-                settingsVisible = true
-            },
+            onSettings = { openSettings(SettingsDestination.Home) },
             onPrivacyXRay = {
                 privacyXRayTabId = selectedTab.id
                 permissionRadarOrigin = null
@@ -1728,14 +1688,8 @@ internal fun BrowserScreen(
                     openNewTabAndEdit()
                     if (controller.selectedTabId != previousTabId) closeTabOverview()
                 },
-                onOpenSettings = {
-                    settingsDestination = SettingsDestination.Home
-                    settingsVisible = true
-                },
-                onOpenSyncSettings = {
-                    settingsDestination = SettingsDestination.Sync
-                    settingsVisible = true
-                },
+                onOpenSettings = { openSettings(SettingsDestination.Home) },
+                onOpenSyncSettings = { openSettings(SettingsDestination.Sync) },
                 onEditProfileWallpaper = ::openProfileWallpaperEditor,
                 onConfigureCreatedProfile = { profileId, options ->
                     configureProfile(
@@ -1916,6 +1870,10 @@ internal fun BrowserScreen(
                 filterStudioSelectedRuleId = ruleId
                 privacyXRayTabId = null
                 filterStudioVisible = true
+            },
+            onOpenProtectionSettings = {
+                privacyXRayTabId = null
+                openSettings(SettingsDestination.ProtectionAndData)
             },
             onPrivacyXRayDismiss = { privacyXRayTabId = null },
             onPermissionOriginSelected = { permissionRadarOrigin = it },

@@ -14,22 +14,29 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -45,6 +52,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
@@ -60,6 +68,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -69,14 +81,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayoutRules as LinkPeekActionSelectionRules
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionSlot
+import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.VolaGlance
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import java.net.URI
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 internal object LinkPeekTestTags {
     const val Root = "link_peek"
@@ -95,6 +110,9 @@ internal object LinkPeekTestTags {
     const val OpenForeground = "link_peek_open_foreground"
     const val DownloadLink = "link_peek_download_link"
     const val DownloadImage = "link_peek_download_image"
+    const val PullHandle = "link_peek_pull_handle"
+    const val Close = "link_peek_close"
+    const val HistoryNote = "link_peek_history_note"
 }
 
 @Composable
@@ -124,6 +142,7 @@ internal fun <T : View> LinkPeekOverlay(
     canOpenInPrivate: Boolean = true,
     onDownloadLink: (() -> Unit)? = null,
     onDownloadImage: (() -> Unit)? = null,
+    isPrivate: Boolean = false,
     onDismiss: () -> Unit,
 ) {
     BackHandler {
@@ -137,6 +156,14 @@ internal fun <T : View> LinkPeekOverlay(
     var cardBounds by remember(url) { mutableStateOf<Rect?>(null) }
     var commitStartBounds by remember(url) { mutableStateOf<Rect?>(null) }
     val commitProgress = remember(url) { Animatable(0f) }
+    val pullOffset = remember(url) { Animatable(0f) }
+    val pullScope = rememberCoroutineScope()
+    val requestCommit = {
+        if (!commitRequested) {
+            commitRequested = true
+            onCommitRequested()
+        }
+    }
     val openOnce = {
         if (!opened) {
             opened = true
@@ -200,7 +227,26 @@ internal fun <T : View> LinkPeekOverlay(
     val copyLabel = stringResource(R.string.external_link_preview_copy_link)
     val openPrivateLabel = stringResource(R.string.action_open_link_in_private_tab)
     val shareLabel = stringResource(R.string.action_share)
-    val cancelLabel = stringResource(R.string.action_cancel)
+    val closeLabel = stringResource(R.string.glance_close)
+    val pullLabel = stringResource(R.string.glance_pull_to_open)
+    val pullThresholdPx = with(density) { VolaGlance.pullOpenThreshold.toPx() }
+    val pullState = rememberDraggableState { delta ->
+        pullScope.launch {
+            pullOffset.snapTo(GlancePullRules.offsetAfterDrag(pullOffset.value, delta))
+        }
+    }
+    val pullModifier = Modifier.draggable(
+        state = pullState,
+        orientation = Orientation.Vertical,
+        enabled = !committing,
+        onDragStopped = {
+            if (GlancePullRules.opensOnRelease(pullOffset.value, pullThresholdPx)) {
+                requestCommit()
+            } else {
+                pullOffset.animateTo(0f, VolaMotion.standard())
+            }
+        },
+    )
 
     LaunchedEffect(committing) {
         if (!committing) {
@@ -254,10 +300,11 @@ internal fun <T : View> LinkPeekOverlay(
                 .fillMaxSize()
                 .clickable(
                     enabled = !committing,
-                    onClickLabel = cancelLabel,
                     role = Role.Button,
                     onClick = onDismiss,
-                ),
+                )
+                // Named like a modal sheet's scrim; it also keeps the page beneath out of TalkBack's reach.
+                .semantics { contentDescription = closeLabel },
         )
         Column(
             modifier = Modifier
@@ -267,17 +314,42 @@ internal fun <T : View> LinkPeekOverlay(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(0, pullOffset.value.roundToInt()) }
+                    .fillMaxWidth()
+                    .height(VolaGlance.handleTouchHeight)
+                    .then(pullModifier)
+                    .clearAndSetSemantics {
+                        contentDescription = pullLabel
+                        onClick(label = openLabel) {
+                            requestCommit()
+                            true
+                        }
+                    }
+                    .testTag(LinkPeekTestTags.PullHandle),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(VolaGlance.handleWidth, VolaGlance.handleHeight)
+                        .graphicsLayer { alpha = 1f - flyProgress }
+                        .background(VolaGlance.handleColor, CircleShape),
+                )
+            }
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .offset { IntOffset(0, pullOffset.value.roundToInt()) }
                     .onGloballyPositioned { coordinates ->
                         if (!committing) cardBounds = coordinates.boundsInRoot()
                     }
                     .graphicsLayer {
                         val startBounds = commitStartBounds
                         val destination = actionTargetBounds
-                        val dragScale = 0.985f - motionProgress * 0.015f
+                        // Full size at rest, so the card's touch targets keep their 48 dp.
+                        val dragScale = 1f - motionProgress * 0.03f
                         if (startBounds != null && flyProgress > 0f) {
                             translationX =
                                 (destination.center.x - startBounds.center.x) * flyProgress
@@ -313,7 +385,14 @@ internal fun <T : View> LinkPeekOverlay(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 18.dp, vertical = 12.dp),
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                            .then(pullModifier)
+                            .heightIn(min = VolaGlance.headerMinHeight)
+                            .padding(
+                                start = VolaGlance.headerPaddingStart,
+                                end = VolaGlance.headerPaddingEnd,
+                            ),
+                        horizontalArrangement = Arrangement.spacedBy(VolaGlance.headerGap),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (isSecure) {
@@ -331,7 +410,6 @@ internal fun <T : View> LinkPeekOverlay(
                                 fontWeight = FontWeight.Bold,
                             )
                         }
-                        Spacer(Modifier.size(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
                                 host,
@@ -349,12 +427,16 @@ internal fun <T : View> LinkPeekOverlay(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        Text(
-                            stringResource(R.string.link_peek_title),
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        IconButton(
+                            onClick = onDismiss,
+                            enabled = !committing,
+                            modifier = Modifier.testTag(LinkPeekTestTags.Close),
+                        ) {
+                            Icon(
+                                VolaIcons.Close,
+                                contentDescription = stringResource(R.string.glance_close),
+                            )
+                        }
                     }
                     if (previewProgress < 100) {
                         LinearProgressIndicator(
@@ -380,12 +462,15 @@ internal fun <T : View> LinkPeekOverlay(
                             },
                         )
                     }
+                    GlanceHistoryNote(isPrivate = isPrivate)
                     if (onDownloadLink != null) {
                         Text(
                             stringResource(R.string.action_download_link),
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadLink)
                                 .clickable(onClick = onDownloadLink)
+                                .heightIn(min = VolaGlance.minTouchTarget)
+                                .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge,
@@ -397,6 +482,8 @@ internal fun <T : View> LinkPeekOverlay(
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadImage)
                                 .clickable(onClick = onDownloadImage)
+                                .heightIn(min = VolaGlance.minTouchTarget)
+                                .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge,
@@ -548,12 +635,7 @@ internal fun <T : View> LinkPeekOverlay(
                                 enabled = !committing,
                                 onClickLabel = openLabel,
                                 role = Role.Button,
-                                onClick = {
-                                    if (!commitRequested) {
-                                        commitRequested = true
-                                        onCommitRequested()
-                                    }
-                                },
+                                onClick = requestCommit,
                             )
                             .testTag(LinkPeekTestTags.OpenTarget),
                         contentAlignment = Alignment.Center,
@@ -667,4 +749,34 @@ private fun LinkPeekAction.testTag(): String = when (this) {
     LinkPeekAction.Favorite -> LinkPeekTestTags.Favorite
     LinkPeekAction.Snooze -> LinkPeekTestTags.Snooze
     LinkPeekAction.OpenForeground -> LinkPeekTestTags.OpenForeground
+}
+
+/** «Not added to history until you open it» under the live page (board W-Glance). */
+@Composable
+private fun GlanceHistoryNote(isPrivate: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(VolaGlance.noteMargin)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, VolaGlance.noteShape)
+            .heightIn(min = VolaGlance.noteMinHeight)
+            .padding(horizontal = VolaGlance.notePaddingHorizontal)
+            .testTag(LinkPeekTestTags.HistoryNote),
+        horizontalArrangement = Arrangement.spacedBy(VolaGlance.noteGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            VolaIcons.VisibilityOff,
+            contentDescription = null,
+            modifier = Modifier.size(VolaGlance.noteIconSize),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            stringResource(
+                if (isPrivate) R.string.glance_private_note else R.string.glance_not_in_history,
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
 }

@@ -97,7 +97,12 @@ def audit(xml_text, package, density):
                     findings.append(("small", describe(node), width, height))
                 # A list item scrolled partly out may keep its label in the part scrolled away.
                 cut_by_scrolling = scrolling and crosses(node, container)
-                if not has_label(node) and not cut_by_scrolling:
+                # A sliver at the screen's own edge (a sheet taller than the screen): the dump leaves
+                # out its children below the screen, label included. Not for scrolled lists above.
+                cut_by_screen = not scrolling and (
+                    (clipped_x and width < limit) or (clipped_y and height < limit)
+                )
+                if not has_label(node) and not cut_by_scrolling and not cut_by_screen:
                     findings.append(("unlabeled", describe(node), width, height))
         if bounds and node.get("scrollable") == "true":
             container = bounds

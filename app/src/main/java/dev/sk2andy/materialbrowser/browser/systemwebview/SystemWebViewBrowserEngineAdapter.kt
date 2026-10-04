@@ -7,6 +7,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
+import android.net.http.SslError
 import android.os.Environment
 import android.os.Message
 import android.os.Bundle
@@ -22,6 +23,7 @@ import android.webkit.JsPromptResult
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -61,9 +63,12 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.PrivacySignalDocumentScript
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
+import dev.sk2andy.materialbrowser.browser.SiteCertificate
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionScript
+import dev.sk2andy.materialbrowser.browser.TlsErrorRules
 import dev.sk2andy.materialbrowser.browser.BrowserEngineWebPromptRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineWebPromptResponse
 import dev.sk2andy.materialbrowser.browser.BrowserWebPromptKind
@@ -134,6 +139,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.io.ByteArrayInputStream
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -417,6 +423,7 @@ private class SystemWebViewBrowserEngineSession(
     private var cosmeticsReadyCallbackRegistered = false
     private var lastFindQuery: String? = null
     private var lastLoadFailed = false
+    private var lastLoadFailureKind: BrowserEngineFailureKind? = null
     private var lastMainFrameHttpResponse: Pair<String, Int>? = null
     @Volatile
     private var currentPageUrl: String? = initialPrivacyPolicy.pageHost
@@ -594,6 +601,15 @@ private class SystemWebViewBrowserEngineSession(
 
     override fun setWebPromptListener(listener: GeckoWebPromptListener?) {
         webPromptListener = listener
+    }
+
+    override fun siteCertificate(): SiteCertificate? {
+        if (closed) return null
+        val certificate = webView.certificate ?: return null
+        return SiteCertificateRules.fromX509(
+            host = webView.url?.let { url -> Uri.parse(url).host },
+            certificate = certificate.x509Certificate,
+        )
     }
 
     override fun setVideoAutoplayBlocked(blocked: Boolean) {
@@ -1126,6 +1142,7 @@ private class SystemWebViewBrowserEngineSession(
         override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
             blobDownloadTransfer.cancelAll()
             lastLoadFailed = false
+            lastLoadFailureKind = null
             lastMainFrameHttpResponse = null
             currentPageUrl = url
             toppingRuntime.clearMenuCommands(webView)
@@ -1171,6 +1188,7 @@ private class SystemWebViewBrowserEngineSession(
                 isLoading = false,
                 failureDescription = "System WebView navigation failed".takeIf { lastLoadFailed },
                 httpStatusCode = httpStatusCode,
+                failureKind = lastLoadFailureKind.takeIf { lastLoadFailed },
             )
         }
 
@@ -1179,7 +1197,23 @@ private class SystemWebViewBrowserEngineSession(
             request: WebResourceRequest,
             error: android.webkit.WebResourceError,
         ) {
-            if (request.isForMainFrame) lastLoadFailed = true
+            if (!request.isForMainFrame) return
+            lastLoadFailed = true
+            lastLoadFailureKind = when (error.errorCode) {
+                WebViewClient.ERROR_HOST_LOOKUP -> BrowserEngineFailureKind.UnknownHost
+                WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> BrowserEngineFailureKind.InsecureConnection
+                else -> BrowserEngineFailureKind.Other
+            }
+        }
+
+        override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
+            // Never proceed past a bad certificate. Only the page itself gets «Insecure
+            // connection»; a bad image or script on it is simply not loaded.
+            handler.cancel()
+            if (TlsErrorRules.isForMainFrame(error.url, listOf(currentPageUrl, view.url))) {
+                lastLoadFailed = true
+                lastLoadFailureKind = BrowserEngineFailureKind.InsecureConnection
+            }
         }
 
         override fun onReceivedHttpError(
@@ -1886,6 +1920,7 @@ private class SystemWebViewBrowserEngineSession(
         isLoading: Boolean? = null,
         failureDescription: String? = null,
         httpStatusCode: Int? = null,
+        failureKind: BrowserEngineFailureKind? = null,
     ) {
         eventSink.onEngineEvent(
             BrowserEngineEvent(
@@ -1898,6 +1933,7 @@ private class SystemWebViewBrowserEngineSession(
                 failureDescription = failureDescription,
                 isLoading = isLoading,
                 httpStatusCode = httpStatusCode,
+                failureKind = failureKind,
             ),
         )
     }
