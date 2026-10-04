@@ -142,6 +142,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoNewSessionRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEvent
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEventSink
@@ -382,11 +383,6 @@ private data class ExternalAppNavigationRecovery(
     val sourceTab: BrowserTab,
     val navigationGeneration: Int,
     var restored: Boolean = false,
-)
-
-private data class AutoDeAmpReplacementGuard(
-    val publisherUrl: String,
-    val expiresAtElapsedRealtime: Long,
 )
 
 private sealed interface ExternalAppHandoffSource {
@@ -1217,8 +1213,7 @@ class BrowserController(
     private var privacySignalRevision = PRIVACY_SIGNAL_REVISIONS.incrementAndGet()
     private var animationPolicyRevision = ANIMATION_POLICY_REVISIONS.incrementAndGet()
     private val navigationGenerations = mutableMapOf<String, Int>()
-    private val autoDeAmpNavigationRequestGenerations = mutableMapOf<String, Long>()
-    private val autoDeAmpReplacementGuards = mutableMapOf<String, AutoDeAmpReplacementGuard>()
+    private val autoDeAmp = AutoDeAmpTracker()
     private val pendingBrowserEngineLoadRequests = mutableMapOf<String, Long>()
     private var nextBrowserEngineLoadRequestId = 0L
     private val automaticNativeTopSafeAreaTabIds = mutableSetOf<String>()
@@ -1410,6 +1405,10 @@ class BrowserController(
         localProfileIds = { localProfiles.map(BrowserProfile::id) },
         favoriteLibrary = { favoriteLibrary },
     )
+    val dangerousSites = DangerousSiteGuard {
+        favorites.map(FavoriteEntry::url) +
+            localProfiles.flatMap { profile -> essentials.entriesFor(profile.id).map { it.url } }
+    }
     val protectionReport = androidProtectionReportController(activity, mainHandler)
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
@@ -10581,9 +10580,7 @@ class BrowserController(
         if (destroyed || browserEngineSessions[tabId] !== session) {
             return GeckoNavigationRequestDecision.Allow
         }
-        val autoDeAmpRequestGeneration =
-            autoDeAmpNavigationRequestGenerations.getOrDefault(tabId, 0L) + 1L
-        autoDeAmpNavigationRequestGenerations[tabId] = autoDeAmpRequestGeneration
+        val autoDeAmpRequestGeneration = autoDeAmp.nextRequest(tabId)
         if (request.hasUserGesture) pendingBrowserEngineLoadRequests.remove(tabId)
         val scheme = runCatching { Uri.parse(request.url).scheme }.getOrNull()?.lowercase()
         val safeHttpUrl = BrowserUriPolicy.normalizeHttpUrl(request.url)
@@ -10594,6 +10591,9 @@ class BrowserController(
         if (handlePendingPopunderOpenerNavigation(tabId, session, request.url)) {
             return GeckoNavigationRequestDecision.Deny
         }
+        if (safeHttpUrl != null && dangerousSites.intercept(tabId, safeHttpUrl)) {
+            return GeckoNavigationRequestDecision.Deny
+        }
         val publisherUrl = if (
             isAutoDeAmpEnabled && request.target == BrowserEngineNavigationTarget.Current
         ) {
@@ -10602,21 +10602,15 @@ class BrowserController(
             null
         }
         if (publisherUrl != null) {
-            val nowElapsedRealtime = SystemClock.elapsedRealtime()
-            val replacementGuard = autoDeAmpReplacementGuards[tabId]
-            if (
-                !request.hasUserGesture &&
-                replacementGuard?.publisherUrl == publisherUrl &&
-                replacementGuard.expiresAtElapsedRealtime >= nowElapsedRealtime
-            ) {
+            if (!request.hasUserGesture && autoDeAmp.isLooping(tabId, publisherUrl)) {
                 return GeckoNavigationRequestDecision.Deny
             }
-            rememberAutoDeAmpReplacement(tabId, publisherUrl, nowElapsedRealtime)
+            autoDeAmp.remember(tabId, publisherUrl)
             mainHandler.post {
                 if (
                     !destroyed &&
                     isAutoDeAmpEnabled &&
-                    autoDeAmpNavigationRequestGenerations[tabId] == autoDeAmpRequestGeneration &&
+                    autoDeAmp.isLatestRequest(tabId, autoDeAmpRequestGeneration) &&
                     browserEngineSessions[tabId] === session
                 ) {
                     session.execute(BrowserEngineCommands.load(publisherUrl))
@@ -11565,23 +11559,8 @@ class BrowserController(
     private fun autoDeAmpPublisherUrl(tabId: String, url: String?): String? {
         if (!isAutoDeAmpEnabled) return null
         val publisherUrl = AutoDeAmpRules.publisherUrlFor(url) ?: return null
-        rememberAutoDeAmpReplacement(
-            tabId = tabId,
-            publisherUrl = publisherUrl,
-            nowElapsedRealtime = SystemClock.elapsedRealtime(),
-        )
+        autoDeAmp.remember(tabId, publisherUrl)
         return publisherUrl
-    }
-
-    private fun rememberAutoDeAmpReplacement(
-        tabId: String,
-        publisherUrl: String,
-        nowElapsedRealtime: Long,
-    ) {
-        autoDeAmpReplacementGuards[tabId] = AutoDeAmpReplacementGuard(
-            publisherUrl = publisherUrl,
-            expiresAtElapsedRealtime = nowElapsedRealtime + AUTO_DE_AMP_LOOP_GUARD_MILLIS,
-        )
     }
 
     private fun loadGeckoWithPrivacy(
@@ -12535,8 +12514,8 @@ class BrowserController(
 
     private fun closeBrowserEngineSession(tabId: String) {
         removePendingInitialBrowserEngineNavigation(tabId)
-        autoDeAmpNavigationRequestGenerations.remove(tabId)
-        autoDeAmpReplacementGuards.remove(tabId)
+        autoDeAmp.forget(tabId)
+        dangerousSites.forgetTab(tabId)
         pendingBrowserEngineLoadRequests.remove(tabId)
         invalidateMedia3OwnerFor(tabId)
         addressBar.cancelAutoDockProbe(tabId)
@@ -15475,7 +15454,6 @@ class BrowserController(
         const val MAX_RETIRED_WEB_MEDIA_DOCUMENTS = 64
         const val MAX_WEB_MEDIA_MESSAGES_PER_WINDOW = 128
         const val WEB_MEDIA_RATE_WINDOW_MILLIS = 1_000L
-        const val AUTO_DE_AMP_LOOP_GUARD_MILLIS = 15_000L
         const val PICTURE_IN_PICTURE_FALLBACK_GRACE_MILLIS = 900L
         const val PICTURE_IN_PICTURE_EXIT_GUARD_DELAY_MILLIS = 350L
         const val MEDIA_LAYOUT_RESTORATION_INSET_TIMEOUT_MILLIS = 350L

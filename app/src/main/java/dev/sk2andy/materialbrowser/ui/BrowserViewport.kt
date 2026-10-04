@@ -560,6 +560,19 @@ internal fun BrowserViewport(
             }
         }
 
+        val pageOverlayModifier = Modifier
+            .fillMaxSize()
+            .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
+            .padding(
+                bottom = with(density) {
+                    val bottomBarTop = bottomBarTopPx.floatValue
+                    if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) {
+                        (rootHeightPx - bottomBarTop).toDp()
+                    } else {
+                        0.dp
+                    }
+                },
+            )
         key(selectedTab.id, selectedTab.url) {
             PageErrorFeedback(
                 state = pageErrorFeedback,
@@ -584,19 +597,25 @@ internal fun BrowserViewport(
                         ).state
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(if (contentFramed) Modifier else Modifier.statusBarsPadding())
-                    .padding(
-                        bottom = with(density) {
-                            val bottomBarTop = bottomBarTopPx.floatValue
-                            if (bottomBarTop > 0f && bottomBarTop < rootHeightPx) {
-                                (rootHeightPx - bottomBarTop).toDp()
-                            } else {
-                                0.dp
-                            }
-                        },
-                    ),
+                modifier = pageOverlayModifier,
+            )
+        }
+        controller.dangerousSites.blocked[selectedTab.id]?.let { site ->
+            DangerousSitePage(
+                site = site,
+                onBackToSafety = {
+                    controller.dangerousSites.dismiss(selectedTab.id)
+                    // A tab opened straight onto the fake site has nowhere safe to go back to.
+                    if (!selectedTab.canGoBack) controller.closeTab(selectedTab.id)
+                },
+                onOpenAnyway = {
+                    controller.dangerousSites.allow(selectedTab.id)?.let(controller::submitAddress)
+                },
+                onOpenRealSite = {
+                    controller.dangerousSites.dismiss(selectedTab.id)
+                    controller.submitAddress("https://${site.imitatedHost}/")
+                },
+                modifier = pageOverlayModifier,
             )
         }
 

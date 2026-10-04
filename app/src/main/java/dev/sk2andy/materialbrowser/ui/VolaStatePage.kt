@@ -52,7 +52,8 @@ internal enum class VolaStatePageTone { Neutral, Warning, Error, Accent }
  * bottom where the thumb is. The text scrolls when large fonts need more room; the actions stay.
  *
  * [announce] reads the title out when it changes, for states that change by themselves (the
- * connection coming back) rather than after a tap.
+ * connection coming back) rather than after a tap. [details] go under the sentence, such as a
+ * card of facts about the site.
  */
 @Composable
 internal fun VolaStatePage(
@@ -61,6 +62,7 @@ internal fun VolaStatePage(
     icon: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     announce: Boolean = false,
+    details: (@Composable ColumnScope.() -> Unit)? = null,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
@@ -102,6 +104,7 @@ internal fun VolaStatePage(
                         textAlign = TextAlign.Center,
                     )
                 }
+                details?.invoke(this)
             }
         }
         Column(
