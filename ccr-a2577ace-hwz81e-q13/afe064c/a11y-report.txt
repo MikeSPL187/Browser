@@ -1,0 +1,5 @@
+Vola controls in the tour: 4 accessibility finding(s).
+- [NEW] small | Download link | 125x47 dp — glance-light
+- [NEW] small | View | 47x47 dp — glance-light, glance-ru
+- [NEW] small | Скачать по ссылке | 159x47 dp — glance-ru
+- [NEW] unlabeled | Button | glance — glance-light, glance-ru
