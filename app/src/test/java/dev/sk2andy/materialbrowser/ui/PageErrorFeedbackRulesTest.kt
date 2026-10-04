@@ -49,6 +49,21 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
+    fun `engine HTTPS-only warning is never covered by the error page`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.HttpsOnly,
+        )
+
+        assertEquals(PageErrorFeedbackState.Hidden, observation.state)
+        assertFalse(observation.shouldReload)
+    }
+
+    @Test
     fun `connection loss does not cover an already loaded page`() {
         val observation = PageErrorFeedbackRules.observe(
             current = PageErrorFeedbackState.Hidden,

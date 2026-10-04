@@ -78,6 +78,12 @@ enum class BrowserEngineFailureKind {
     Offline,
     UnknownHost,
     Other,
+
+    /**
+     * HTTPS-only mode found no working HTTPS, and the engine shows its own warning page in place
+     * of the site, with the choice to continue over HTTP. The browser must not cover that page.
+     */
+    HttpsOnly,
 }
 
 data class BrowserEngineEvent(

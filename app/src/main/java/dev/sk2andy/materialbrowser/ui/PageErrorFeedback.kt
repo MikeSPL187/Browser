@@ -89,6 +89,10 @@ internal object PageErrorFeedbackRules {
         isWebPage: Boolean = true,
     ): PageErrorObservation = when {
         !isWebPage -> PageErrorObservation(PageErrorFeedbackState.Hidden)
+        // The engine's own HTTPS-only page offers to continue over HTTP; covering it would hide
+        // the only way to the site.
+        failureKind == BrowserEngineFailureKind.HttpsOnly ->
+            PageErrorObservation(PageErrorFeedbackState.Hidden)
         !isOnline && current is PageErrorFeedbackState.Offline -> PageErrorObservation(
             state = current.copy(isOnlineReady = false),
         )

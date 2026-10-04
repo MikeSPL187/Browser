@@ -75,6 +75,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.net.URI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -1136,7 +1137,14 @@ private class GeckoViewBrowserSession(
                 }
                 if (error.code == WebRequestError.ERROR_HTTPS_ONLY) {
                     // Gecko shows this page in place of the site and lets it reload the request
-                    // over HTTP; it is not a failed load for the native error overlay.
+                    // over HTTP. The load still ends unsuccessfully, so the kind tells the native
+                    // error overlay to stay away from this page.
+                    updateState { current ->
+                        current.copy(
+                            failureDescription = null,
+                            failureKind = BrowserEngineFailureKind.HttpsOnly,
+                        )
+                    }
                     return GeckoResult.fromValue(httpsOnlyErrorPages.dataUri(uri))
                 }
                 updateState { current ->

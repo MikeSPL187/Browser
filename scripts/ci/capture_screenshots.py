@@ -31,8 +31,9 @@ _counter = 0
 
 
 # Sites without working HTTPS, most dependable first (see https_only_warning in the tour).
+# httpforever.com reached the warning (ERROR_HTTPS_ONLY) in every pass of #61; info.cern.ch serves
+# HTTPS. The rest stay as fallbacks in case it ever gains HTTPS.
 HTTP_ONLY_CANDIDATES = (
-    "http://info.cern.ch/",
     "http://httpforever.com/",
     "http://captive.apple.com/",
     "http://http.badssl.com/",
