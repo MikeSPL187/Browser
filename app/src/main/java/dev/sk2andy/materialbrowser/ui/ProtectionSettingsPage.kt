@@ -60,6 +60,7 @@ internal object ProtectionSettingsTestTags {
     const val DnsOverHttps = "protection_settings_dns_over_https"
     const val HttpsOnly = "protection_settings_https_only"
     const val ProtectionCard = "protection_settings_protection_card"
+    const val PrivateTabsLock = "protection_settings_private_tabs_lock"
     const val CustomDnsEndpoint = "protection_settings_custom_dns_endpoint"
 }
 
@@ -74,6 +75,7 @@ internal fun ProtectionAndDataSettingsPage(
     privacySignalSettings: PrivacySignalSettings = PrivacySignalSettings.Default,
     isAutoDeAmpEnabled: Boolean = true,
     isProtectionCardVisible: Boolean = true,
+    privateTabsLock: PrivateTabLock? = null,
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
     httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
     isRecallEnabled: Boolean = false,
@@ -404,6 +406,24 @@ internal fun ProtectionAndDataSettingsPage(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (privateTabsLock != null) {
+            Spacer(Modifier.height(VolaSpacing.x4))
+            SettingsSectionTitle(stringResource(R.string.settings_section_private_tabs))
+            SettingsSwitch(
+                title = stringResource(R.string.private_tabs_lock_settings_title),
+                subtitle = stringResource(
+                    if (privateTabsLock.available) {
+                        R.string.private_tabs_lock_settings_summary
+                    } else {
+                        R.string.profile_protection_unavailable
+                    },
+                ),
+                checked = privateTabsLock.checked && privateTabsLock.available,
+                enabled = privateTabsLock.available,
+                onCheckedChange = privateTabsLock.onCheckedChange,
+                modifier = Modifier.testTag(ProtectionSettingsTestTags.PrivateTabsLock),
+            )
+        }
         Spacer(Modifier.height(16.dp))
         SettingsSectionTitle(stringResource(R.string.history_title))
         SettingsSwitch(
@@ -630,6 +650,7 @@ private fun ProtectionSettingsPagePreview() {
             blockerSettings = BlockerSettings(),
             blockedCount = 128,
             httpsOnlyMode = HttpsOnlyMode.Always,
+            privateTabsLock = PrivateTabLock(checked = true, available = true, onCheckedChange = {}),
             trustsUserCertificates = false,
             onBlockerSettingsChanged = {},
             onPrivacyXRay = {},

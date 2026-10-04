@@ -64,6 +64,12 @@ internal interface AndroidBrowserEngineFactory {
 
     fun clearAllData(onComplete: (Boolean) -> Unit = {})
 
+    /**
+     * Deletes the cookies, storage and caches of one site ([baseDomain] and its subdomains) in every
+     * workspace. Engines without it report `false`; the UI hides it through the capabilities.
+     */
+    fun clearSiteData(baseDomain: String, onComplete: (Boolean) -> Unit) = onComplete(false)
+
     fun requestProfileDataDeletion(profileId: String): Boolean
 
     fun setBlockThirdPartyCookies(blocked: Boolean)

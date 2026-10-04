@@ -107,7 +107,6 @@ import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowserEngineSessionFactory
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoProfileStorageRules
@@ -306,24 +305,6 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
 
-private class PendingGeckoPreviewCapture(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val view: View,
-    val pageUrl: String,
-    val navigationGeneration: Int,
-    val previewEpoch: Int,
-    val sourceRect: Rect,
-    onComplete: () -> Unit,
-    var acceptAfterDeparture: Boolean,
-) {
-    val completionCallbacks = mutableListOf(onComplete)
-    var capture: BrowserEnginePreviewCapture? = null
-    var timeout: Runnable? = null
-    var uiCompleted = false
-    var expired = false
-}
-
 internal data class FullscreenVideoState(
     val tabId: String,
     val minimizedByUser: Boolean,
@@ -351,77 +332,6 @@ internal sealed interface UserScriptSaveOutcome {
         val reason: UserScriptDependencyFailureReason,
     ) : UserScriptSaveOutcome
 }
-
-private class GeckoMediaPresentation(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val view: View,
-    val inlineVideoIdentity: GeckoInlineVideoIdentity?,
-    var minimizedByUser: Boolean,
-)
-
-private data class InlineVideoGestureHapticOwner(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val navigationGeneration: Int,
-    val identity: GeckoInlineVideoIdentity,
-)
-
-private class PendingMediaLayoutRestoration(
-    val request: MediaLayoutRestorationGate.Request,
-    val view: View,
-    val restore: (acceptCompletion: () -> Boolean) -> Unit,
-) {
-    var started = false
-}
-
-private data class GeckoViewBinding(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val view: View,
-)
-
-private class PendingInitialBrowserEngineNavigation(
-    val session: AndroidBrowserEngineSessionPort,
-    val command: BrowserEngineCommand?,
-) {
-    private var observedView: View? = null
-    private var layoutListener: View.OnLayoutChangeListener? = null
-
-    fun observeLayout(view: View, onLayout: (View) -> Unit) {
-        stopObservingLayout()
-        val listener = View.OnLayoutChangeListener { changedView, _, _, _, _, _, _, _, _ ->
-            onLayout(changedView)
-        }
-        observedView = view
-        layoutListener = listener
-        view.addOnLayoutChangeListener(listener)
-        if (view.isLaidOut && !view.isLayoutRequested) onLayout(view)
-    }
-
-    fun stopObservingLayout() {
-        val view = observedView
-        val listener = layoutListener
-        if (view != null && listener != null) view.removeOnLayoutChangeListener(listener)
-        observedView = null
-        layoutListener = null
-    }
-}
-
-private data class TabFaviconFetchAttempt(
-    val session: AndroidBrowserEngineSessionPort,
-    val pageUrl: String,
-    val navigationGeneration: Int,
-    val faviconEpoch: Int,
-) {
-    val cancelled = AtomicBoolean(false)
-}
-
-private data class PendingGeckoViewAttach(
-    val token: Any,
-    val onContentPresented: ((String) -> Unit)?,
-    val backdropCaptureEnabled: Boolean,
-)
 
 internal data class BrowserActivityResultIdentity(
     val tabId: String,
@@ -457,17 +367,6 @@ private data class FirefoxExtensionOptionsTabChrome(
         }
     }
 }
-
-private data class GeckoLinkPeekBinding(
-    val sourceTabId: String,
-    val contentRevision: Long,
-    val session: AndroidBrowserEngineSessionPort,
-    val view: View,
-    var committedUrl: String,
-    var title: String? = null,
-    var progress: Int = 0,
-    var isLoading: Boolean = true,
-)
 
 private data class ExternalNavigationRollback(
     val tabId: String,
@@ -574,6 +473,9 @@ class BrowserController(
     val isHttpsOnlySupported: Boolean
         get() = browserEngineCapabilities.httpsOnly
 
+    val isSiteDataDeletionSupported: Boolean
+        get() = browserEngineCapabilities.siteDataDeletion
+
     val supportsPageContentActions: Boolean
         get() = true
 
@@ -659,6 +561,10 @@ class BrowserController(
         private set
     val isActiveProfileLocked: Boolean
         get() = activeProfileId in lockedProfileIds
+
+    /** The selected page is hidden behind a lock: its workspace's or the private tabs'. */
+    val isSelectedContentLocked: Boolean
+        get() = isActiveProfileLocked || privateTabsLock.hides(selectedTab)
     val hasProtectedProfiles: Boolean
         get() = localBrowserProfiles.any { it.protection != null }
     val canLeaveLockedProfile: Boolean
@@ -1512,6 +1418,23 @@ class BrowserController(
     val inactiveTabArchive = InactiveTabArchive(store, snoozedTabStore, snoozedTabs) { tab ->
         !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id)
     }
+    val privateTabsLock = PrivateTabsLock(
+        loadEnabled = store::loadPrivateTabsLockEnabled,
+        saveEnabled = store::savePrivateTabsLockEnabled,
+        tabs = { tabs },
+        selectedTab = { selectedTab },
+        canAuthenticate = { isProfileProtectionSupported },
+        authenticate = ::requestProfileAuthentication,
+        suspendTabs = ::suspendLockedTabs,
+        resumeSelectedTab = ::resumeUnlockedSelectedTab,
+    )
+    val siteDataDeletion = SiteDataDeletion(
+        clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
+        selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        reloadSelected = ::reload,
+        postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
+    )
     private val snoozeRestoreCallback: (Long) -> Unit = { nowMillis ->
         mainHandler.post {
             if (!destroyed) restoreDueSnoozedTabs(nowMillis)
@@ -2013,6 +1936,8 @@ class BrowserController(
 
     fun privacySnapshot(tabId: String): PrivacyXRaySnapshot =
         privacySnapshots[tabId] ?: PrivacyXRaySnapshot.Empty
+
+    fun siteCertificate(tabId: String): SiteCertificate? = browserEngineSessions[tabId]?.siteCertificate()
 
     fun filterRule(ruleId: String): CandyRule? = filterRules.firstOrNull { it.id == ruleId }
 
@@ -4754,7 +4679,7 @@ class BrowserController(
             releaseGeckoView(binding.session, binding.view)
             binding.session.execute(BrowserEngineCommands.close())
         }
-        if (resumeSelectedTab && isActivityResumed) {
+        if (resumeSelectedTab && isActivityResumed && !isSelectedContentLocked) {
             browserEngineSessions[selectedTabId]?.setActive(true)
         }
     }
@@ -5844,16 +5769,7 @@ class BrowserController(
         if (!FederatedLoginRules.isProviderNavigation(offer.targetUrl)) {
             federatedLoginCompatibilityTabIds.remove(tab.id)
         }
-        updateTab(tab.id) { current ->
-            current.copy(
-                url = offer.targetUrl,
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(tab.id) { current -> current.startingLoad(url = offer.targetUrl) }
         tabs.firstOrNull { it.id == tab.id }?.let(::markSyncedTabPending)
         scheduleSyncedTabNavigation(tab.id)
         loadGeckoWithPrivacy(tab.id, view, offer.targetUrl)
@@ -6175,14 +6091,18 @@ class BrowserController(
         if (!isProtected) return
         ProfileProtectionSession.unlock(profileId)
         lockedProfileIds -= profileId
+        if (profileId == activeProfileId) resumeUnlockedSelectedTab() else engineViewRevision++
+    }
+
+    /** The selected page comes back after a lock: its view reattaches and, in front, it runs. */
+    private fun resumeUnlockedSelectedTab() {
         engineViewRevision++
-        if (profileId == activeProfileId && isActivityResumed) {
-            if (externalLinkPreviewState == null) {
-                browserEngineSessions[selectedTabId]?.setActive(true)
-            }
-            externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(true)
-            retryExternalNavigationRollbackAfterResume()
+        if (!isActivityResumed || isSelectedContentLocked) return
+        if (externalLinkPreviewState == null) {
+            browserEngineSessions[selectedTabId]?.setActive(true)
         }
+        externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(true)
+        retryExternalNavigationRollbackAfterResume()
     }
 
     fun updateProfileEmoji(profileId: String, emoji: String): Boolean {
@@ -7807,7 +7727,6 @@ class BrowserController(
         val generation = navigationGenerations.getOrDefault(tab.id, 0)
         findInPage.open(tab.id, session, generation, resetOptions = true)
         return true
-
     }
 
     private fun isFindInPageSessionCurrent(session: FindInPageSession): Boolean {
@@ -8627,7 +8546,6 @@ class BrowserController(
             loadGeckoWithPrivacy(tabId, existingSession, node.url)
         }
         return true
-
     }
 
     fun goBack() {
@@ -8661,15 +8579,7 @@ class BrowserController(
     }
     fun reload() {
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
-        updateTab(selectedTabId) {
-            it.copy(
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
         val pending = pendingInitialBrowserEngineNavigations[selectedTabId]
         if (pending?.session !== session) session.execute(BrowserEngineCommands.reload())
@@ -8686,15 +8596,7 @@ class BrowserController(
         val existingSession = browserEngineSessions[tabId]
         val failedTab = selectedTab
         val command = FailedPageRetryRules.commandFor(failedTab) ?: return false
-        updateTab(tabId) {
-            it.copy(
-                isLoading = true,
-                progress = 0,
-                error = null,
-                failureKind = null,
-                httpStatusCode = null,
-            )
-        }
+        updateTab(tabId) { it.startingLoad() }
         if (existingSession == null) {
             browserEngineSessionFor(tabId, commandOnCreate = command)
         } else {
@@ -8757,15 +8659,7 @@ class BrowserController(
                 sameSession = browserEngineSessions[tabId] === session,
             )
             if (unchanged) {
-                updateTab(tabId) { tab ->
-                    tab.copy(
-                        isLoading = true,
-                        progress = 0,
-                        error = null,
-                        failureKind = null,
-                        httpStatusCode = null,
-                    )
-                }
+                updateTab(tabId) { tab -> tab.startingLoad() }
                 session.execute(BrowserEngineCommands.reload())
             }
             onComplete(unchanged)
@@ -10138,7 +10032,7 @@ class BrowserController(
         pruneStaleTabs(nowMillis, persistChanges = false)
         touchTab(selectedTabId, nowMillis)
         persist()
-        if (!isActiveProfileLocked) {
+        if (!isSelectedContentLocked) {
             if (externalLinkPreviewState == null) {
                 browserEngineSessions[selectedTabId]?.setActive(true)
             }
@@ -10149,11 +10043,12 @@ class BrowserController(
             retryExternalNavigationRollbackAfterResume()
         }
         if (isActiveProfileLocked) retryActiveProfileAuthentication()
+        if (privateTabsLock.hides(selectedTab)) privateTabsLock.promptIfPending(resumed = true)
     }
 
     fun onStart() {
         isActivityStarted = true
-        if (usesGeckoEngine && !isActiveProfileLocked) {
+        if (usesGeckoEngine && !isSelectedContentLocked) {
             if (externalLinkPreviewState == null) {
                 browserEngineSessions[selectedTabId]?.setActive(true)
             }
@@ -10254,6 +10149,8 @@ class BrowserController(
         lockProtectedProfiles { protection ->
             protection.lockTrigger == ProfileLockTrigger.AppBackgrounded
         }
+        privateTabsLock.onAppBackgrounded()
+        siteDataDeletion.commit()
     }
 
     fun onAppForegrounded(nowElapsedRealtime: Long = SystemClock.elapsedRealtime()) {
@@ -10533,7 +10430,8 @@ class BrowserController(
                 session.setActive(
                     isActivityResumed &&
                         externalLinkPreviewState == null &&
-                        tab.id == selectedTabId,
+                        tab.id == selectedTabId &&
+                        !isSelectedContentLocked,
                 )
                 val replacesInitialAmpUrl = isAutoDeAmpEnabled &&
                     AutoDeAmpRules.publisherUrlFor(tab.url) != null
@@ -13455,14 +13353,7 @@ class BrowserController(
             if (opener?.isPinned == true) {
                 openerView?.let { view ->
                     updateTab(opener.id) { tab ->
-                        tab.copy(
-                            url = candidate.originalOpenerUrl,
-                            isLoading = true,
-                            progress = 0,
-                            error = null,
-                            failureKind = null,
-                            httpStatusCode = null,
-                        )
+                        tab.startingLoad(url = candidate.originalOpenerUrl)
                     }
                     loadGeckoWithPrivacy(opener.id, view, candidate.originalOpenerUrl)
                 }
@@ -14275,20 +14166,26 @@ class BrowserController(
         if (profileIds.isEmpty()) return
         ProfileProtectionSession.lock(profileIds)
         lockedProfileIds += profileIds
-        tabs.filter { tab -> tab.profileId in profileIds }
-            .forEach { tab -> invalidateMedia3OwnerFor(tab.id) }
-        tabs.asSequence()
-            .filter { tab -> tab.profileId in profileIds }
-            .mapNotNull { tab -> browserEngineSessions[tab.id] }
+        suspendLockedTabs(
+            tabIds = tabs.filter { tab -> tab.profileId in profileIds }
+                .mapTo(hashSetOf(), BrowserTab::id),
+            hidesSelectedTab = activeProfileId in profileIds,
+        )
+    }
+
+    /**
+     * What a lock does to the tabs it hides, for workspaces and private tabs alike: their media
+     * pauses and leaves the system controls, and the selected page loses its view and goes
+     * inactive, so neither the screen nor TalkBack can reach it.
+     */
+    private fun suspendLockedTabs(tabIds: Set<String>, hidesSelectedTab: Boolean) {
+        tabIds.forEach { tabId -> invalidateMedia3OwnerFor(tabId) }
+        tabIds.mapNotNull(browserEngineSessions::get)
             .forEach { session -> session.executeMediaCommand(GeckoMediaCommand.Pause) }
         geckoMediaPresentation
-            ?.takeIf { presentation ->
-                tabs.firstOrNull { tab -> tab.id == presentation.tabId }
-                    ?.profileId
-                    ?.let(profileIds::contains) == true
-            }
+            ?.takeIf { presentation -> presentation.tabId in tabIds }
             ?.let { clearGeckoMediaPresentation() }
-        if (activeProfileId in profileIds) {
+        if (hidesSelectedTab) {
             geckoViewBindings
                 .filterValues { binding -> binding.tabId == selectedTabId }
                 .keys
@@ -15443,7 +15340,7 @@ class BrowserController(
             refreshGeckoScrollMetricsPolicies(previousTabId, tabId)
             publishFullscreenVideoState()
             browserEngineSessions[tabId]?.setActive(
-                isActivityResumed && externalLinkPreviewState == null,
+                isActivityResumed && externalLinkPreviewState == null && !isSelectedContentLocked,
             )
             if (!BuildConfig.SYSTEM_WEBVIEW_ONLY && usesGeckoEngine) {
                 browserEngineSessionFactory.notifySelectedExtensionTabChanged()
