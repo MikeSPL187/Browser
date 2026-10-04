@@ -291,6 +291,14 @@ def tour(suffix):
         """Glance (board W-Glance): a long press on example.com's link opens the live preview
         card with the link actions under it. Back closes it without opening the link."""
         link = find("Learn more", "More information", contains=True)
+        for _ in range(3):
+            if link is not None:
+                break
+            # The link sits under the page's translations: scroll it into view.
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+                str(width // 2), str(int(height * 0.35)), "500")
+            time.sleep(2)
+            link = find("Learn more", "More information", contains=True)
         if link is None:
             save_ui(f"glance-page-{suffix}")
             log("not found: link for glance")
