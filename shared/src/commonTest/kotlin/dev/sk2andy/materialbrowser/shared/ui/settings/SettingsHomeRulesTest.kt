@@ -42,6 +42,14 @@ class SettingsHomeRulesTest {
     }
 
     @Test
+    fun largeTextMovesMakeDefaultUnderTheText() {
+        assertFalse(SettingsHomeRules.stacksMakeDefault(1f))
+        assertFalse(SettingsHomeRules.stacksMakeDefault(1.15f))
+        assertTrue(SettingsHomeRules.stacksMakeDefault(1.3f))
+        assertTrue(SettingsHomeRules.stacksMakeDefault(2f))
+    }
+
+    @Test
     fun unsupportedPlatformOmitsFirefoxExtensionAction() {
         val items = SettingsHomeRules.items(hasFirefoxExtensions = false)
 

@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -142,6 +143,11 @@ object SettingsHomeRules {
             ?.joinToString(SUMMARY_SEPARATOR)
 
     private const val SUMMARY_SEPARATOR = " · "
+
+    /** With large text the «Make default» button moves under the text instead of squeezing it. */
+    fun stacksMakeDefault(fontScale: Float): Boolean = fontScale >= LARGE_FONT_SCALE
+
+    private const val LARGE_FONT_SCALE = 1.3f
 
     private fun item(
         group: SettingsHomeGroup,
@@ -336,32 +342,8 @@ private fun SettingsHomeDefaultCard(
         color = style.defaultCardColor,
         contentColor = style.defaultCardContentColor,
     ) {
-        Row(
-            modifier = Modifier.padding(SettingsHomeTokens.defaultCardPadding),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(SettingsHomeTokens.defaultCardGap),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(SettingsHomeTokens.defaultMarkSize)
-                    .background(style.defaultMarkColor, SettingsHomeTokens.defaultMarkShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                brandMark(Modifier.size(SettingsHomeTokens.defaultMarkIconSize))
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(SettingsHomeTokens.textGap),
-            ) {
-                Text(
-                    resources.text(SettingsHomeLabel.MakeDefaultTitle),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    resources.text(SettingsHomeLabel.MakeDefaultSummary),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+        val stacked = SettingsHomeRules.stacksMakeDefault(LocalDensity.current.fontScale)
+        val button: @Composable () -> Unit = {
             Button(
                 onClick = onMakeDefault,
                 modifier = Modifier
@@ -370,6 +352,40 @@ private fun SettingsHomeDefaultCard(
             ) {
                 Text(resources.text(SettingsHomeLabel.MakeDefaultAction))
             }
+        }
+        Column(
+            modifier = Modifier.padding(SettingsHomeTokens.defaultCardPadding),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(SettingsHomeTokens.defaultCardGap),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SettingsHomeTokens.defaultCardGap),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(SettingsHomeTokens.defaultMarkSize)
+                        .background(style.defaultMarkColor, SettingsHomeTokens.defaultMarkShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    brandMark(Modifier.size(SettingsHomeTokens.defaultMarkIconSize))
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(SettingsHomeTokens.textGap),
+                ) {
+                    Text(
+                        resources.text(SettingsHomeLabel.MakeDefaultTitle),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        resources.text(SettingsHomeLabel.MakeDefaultSummary),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (!stacked) button()
+            }
+            if (stacked) button()
         }
     }
 }
