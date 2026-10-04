@@ -60,6 +60,16 @@
 
     <!-- Tabs -->
     <string name="new_tab_title">New tab</string>
+    <string name="split_view_title">Split View</string>
+    <string name="split_view_description">Two tabs, one above the other</string>
+    <string name="split_view_open_side_by_side">Open side by side</string>
+    <string name="split_view_close">Close Split View</string>
+    <string name="split_view_swap">Swap tabs</string>
+    <string name="split_view_resize">Divider. Drag to resize, to an edge to close</string>
+    <string name="split_view_activate">Switch to this tab</string>
+    <string name="split_view_pane_top">Top tab: %1$s</string>
+    <string name="split_view_pane_bottom">Bottom tab: %1$s</string>
+    <string name="split_view_no_companion">Open one more page to see two side by side</string>
     <string name="cd_new_tab">New tab</string>
     <plurals name="cd_open_tab_overview_count">
         <item quantity="one">Open tab overview, %1$d tab</item>

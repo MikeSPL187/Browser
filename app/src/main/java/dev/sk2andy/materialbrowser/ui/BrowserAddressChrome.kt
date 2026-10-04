@@ -625,6 +625,18 @@ internal fun BoxScope.BrowserAddressChrome(
         onShare = controller::shareSelectedPage,
         onPrint = controller::printSelectedPage,
         onTranslate = controller::translateSelectedPage,
+        splitView = controller.splitView.state != null,
+        onSplitViewChange = { enabled ->
+            if (!enabled) {
+                controller.splitView.close()
+            } else if (!controller.openSplitView()) {
+                Toast.makeText(
+                    rootView.context,
+                    R.string.split_view_no_companion,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        },
         onReaderStudio = onReaderStudio,
         onOpenCandyTrail = onOpenCandyTrail,
         onSnooze = onSnooze,

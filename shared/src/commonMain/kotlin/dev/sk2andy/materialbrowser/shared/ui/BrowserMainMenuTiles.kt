@@ -27,6 +27,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
@@ -169,6 +171,7 @@ private fun BrowserMainMenuTile(
     )
     val contentColor = if (checked) colors.onSecondaryContainer else colors.onSurface
     val shape = RoundedCornerShape(tiles.cornerRadius)
+    val label = resources.label(item)
     val interaction = if (toggle) {
         Modifier.toggleable(
             value = checked,
@@ -190,6 +193,8 @@ private fun BrowserMainMenuTile(
                 .clip(shape)
                 .background(containerColor)
                 .then(interaction)
+                // The tile carries its own name: a tile cut by the sheet's edge stays named for TalkBack.
+                .semantics { contentDescription = label }
                 .then(item.testTagModifier())
                 .alpha(if (item.enabled) 1f else tiles.disabledAlpha)
                 .padding(horizontal = tiles.horizontalPadding, vertical = tiles.iconLabelGap),
@@ -198,7 +203,7 @@ private fun BrowserMainMenuTile(
         ) {
             resources.icon(item, Modifier.size(tiles.iconSize))
             Text(
-                text = resources.label(item),
+                text = label,
                 textAlign = TextAlign.Center,
                 maxLines = tiles.labelMaxLines,
                 overflow = TextOverflow.Ellipsis,
