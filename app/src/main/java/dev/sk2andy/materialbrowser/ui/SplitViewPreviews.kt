@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaSplit
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
 /** The two cards with the active one ringed and the divider pill between them (board W-Split). */
 @Composable
