@@ -268,6 +268,15 @@
     <string name="history_yesterday">Yesterday</string>
     <string name="history_empty">No history yet</string>
     <string name="history_no_results">No matching history</string>
+    <string name="history_more">More history options</string>
+    <string name="history_select_entry">Select</string>
+    <string name="history_cleared">History cleared</string>
+    <plurals name="history_deleted_count">
+        <item quantity="one">%1$d page deleted</item>
+        <item quantity="other">%1$d pages deleted</item>
+    </plurals>
+    <string name="history_empty_message">Sites you open will show up here. Private tabs never do.</string>
+    <string name="history_no_results_message">Try another word or pick all workspaces.</string>
     <string name="history_save_title">Save history</string>
     <string name="history_save_summary">Keep regular browsing visits on this device</string>
     <string name="history_clear_on_exit_title">Clear when Vola closes</string>
@@ -453,6 +462,17 @@
     <string name="favorites_upload_icon">Choose image</string>
     <string name="favorites_reset_icon">Use favicon preview</string>
     <string name="favorites_icon_failed">This image couldn’t be loaded</string>
+    <string name="favorites_folder_button">Folder</string>
+    <string name="favorites_section_no_folder">No folder</string>
+    <string name="favorites_section_sites">Sites</string>
+    <string name="favorites_delete_action">Delete</string>
+    <plurals name="favorites_folder_sites">
+        <item quantity="one">%1$d site</item>
+        <item quantity="other">%1$d sites</item>
+    </plurals>
+    <string name="favorites_empty_message">Tap the star in the page menu, or bring bookmarks over from another browser.</string>
+    <string name="favorites_folder_empty_message">Move favorites here from their menu.</string>
+    <string name="favorites_no_matches_message">Try another word.</string>
 
     <string name="content_actions_title">Page content</string>
     <string name="action_open_link_background_tab">Open link in new background tab</string>

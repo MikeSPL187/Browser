@@ -79,6 +79,7 @@ class FavoritesScreenInstrumentedTest {
         composeRule.onNodeWithText(alpha.title).assertDoesNotExist()
         composeRule.onNodeWithText(beta.title).assertIsDisplayed()
 
+        composeRule.onNodeWithTag("favorites_actions:${beta.id}").performClick()
         composeRule.onNodeWithTag(FavoritesScreenTestTags.delete(beta.url)).performClick()
         composeRule.onNodeWithText(beta.title).assertDoesNotExist()
         val context = InstrumentationRegistry.getInstrumentation().targetContext

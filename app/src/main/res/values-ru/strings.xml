@@ -269,6 +269,17 @@
     <string name="history_yesterday">Вчера</string>
     <string name="history_empty">История пока пуста</string>
     <string name="history_no_results">Ничего не найдено</string>
+    <string name="history_more">Другие действия с историей</string>
+    <string name="history_select_entry">Выбрать</string>
+    <string name="history_cleared">История очищена</string>
+    <plurals name="history_deleted_count">
+        <item quantity="one">Удалена %1$d страница</item>
+        <item quantity="few">Удалено %1$d страницы</item>
+        <item quantity="many">Удалено %1$d страниц</item>
+        <item quantity="other">Удалено %1$d страницы</item>
+    </plurals>
+    <string name="history_empty_message">Здесь появятся сайты, которые вы откроете. Приватные вкладки сюда не попадают.</string>
+    <string name="history_no_results_message">Попробуйте другое слово или выберите все пространства.</string>
     <string name="history_save_title">Сохранять историю</string>
     <string name="history_save_summary">Хранить посещения в обычных вкладках на этом устройстве</string>
     <string name="history_clear_on_exit_title">Очищать при закрытии Vola</string>
@@ -468,6 +479,19 @@
     <string name="favorites_upload_icon">Выбрать изображение</string>
     <string name="favorites_reset_icon">Использовать значок сайта</string>
     <string name="favorites_icon_failed">Не удалось загрузить изображение</string>
+    <string name="favorites_folder_button">Папка</string>
+    <string name="favorites_section_no_folder">Без папки</string>
+    <string name="favorites_section_sites">Сайты</string>
+    <string name="favorites_delete_action">Удалить</string>
+    <plurals name="favorites_folder_sites">
+        <item quantity="one">%1$d сайт</item>
+        <item quantity="few">%1$d сайта</item>
+        <item quantity="many">%1$d сайтов</item>
+        <item quantity="other">%1$d сайта</item>
+    </plurals>
+    <string name="favorites_empty_message">Нажмите звёздочку в меню страницы или перенесите закладки из другого браузера.</string>
+    <string name="favorites_folder_empty_message">Перенесите сюда сайты через их меню.</string>
+    <string name="favorites_no_matches_message">Попробуйте другое слово.</string>
     <string name="content_actions_title">Содержимое страницы</string>
     <string name="action_open_link_background_tab">Открыть в новой фоновой вкладке</string>
     <string name="action_open_link_foreground_tab">Открыть в новой вкладке и перейти</string>
