@@ -6,7 +6,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 
 /** The pages of the site information sheet: the overview, then the details it links to. */
-internal enum class SiteInfoPage { Overview, PrivacyXRay, Permissions }
+internal enum class SiteInfoPage { Overview, PrivacyXRay, Permissions, Certificate }
 
 /** What the overview of the site information sheet (board W-SiteInfo) shows. */
 internal object SiteInfoRules {

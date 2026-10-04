@@ -154,6 +154,19 @@ def tap_scrolling(*labels, name, attempts=7):
     return False
 
 
+def scroll_to(*labels, name, attempts=5):
+    """Scrolls the visible list up until a label (or a row containing it) is on screen."""
+    width, height = screen_size()
+    for _ in range(attempts):
+        if find(*labels, contains=True):
+            return True
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.45)), "300")
+        time.sleep(1)
+    save_ui(name)
+    return False
+
+
 def screen_size():
     output = (adb("shell", "wm", "size", capture=True) or b"").decode()
     match = re.search(r"(\d+)x(\d+)", output)
@@ -247,12 +260,28 @@ def tour(suffix):
         time.sleep(3)
         shot(f"site-info-{suffix}")
         save_ui(f"site-info-{suffix}")
+        # «Certificate» under the connection row (Q10b): who issued it, dates, SHA-256.
+        if tap("Certificate", "Сертификат", contains=True):
+            time.sleep(2)
+            shot(f"site-certificate-{suffix}")
+            if tap("Back", "Назад"):
+                time.sleep(1)
         if tap("Privacy X-Ray", "Рентген приватности"):
             time.sleep(2)
             shot(f"site-info-xray-{suffix}")
             # The bar's Back returns to the overview; a missed tap must not leave the page.
             if tap("Back", "Назад"):
                 time.sleep(1)
+        # «Site data» at the end of the sheet (Q10b): «Delete» closes the sheet and waits behind
+        # «Undo»; the tour takes the deletion back.
+        if scroll_to("Site data", "Данные сайта", name=f"site-info-data-{suffix}"):
+            shot(f"site-info-data-{suffix}")
+            if tap("Delete data of", "Удалить данные", contains=True):
+                time.sleep(1)
+                shot(f"site-data-undo-{suffix}", audit=False)
+                tap("Undo", "Отменить")
+                time.sleep(1)
+                return
         adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("site-info", site_info)
@@ -489,10 +518,39 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
             time.sleep(2)
         shot(f"private-new-tab-{suffix}")
+        # «Lock on exit» (П9) under the facts; without a biometric on the emulator it is off and
+        # says why.
+        if scroll_to("Lock on exit", "Замок при выходе", name=f"private-lock-{suffix}"):
+            shot(f"private-lock-row-{suffix}")
         if tap("Close 1 private", "Close all", "Закрыть 1 приватную", "Закрыть все", contains=True):
             time.sleep(3)
             shot(f"private-closed-{suffix}")
     step("private-tab", private_tab)
+
+    def private_tabs_locked():
+        # Real private tabs cannot be locked without a biometric, so a debug-only activity shows
+        # the «Private tabs locked» screen itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PrivateTabsLockPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"private-locked-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("private-locked", private_tabs_locked)
+
+    def permission_prompt():
+        # The permission request sheet (Q10c, board W-Permission). The tour has no page that asks
+        # for a permission, so a debug-only activity shows the sheet itself.
+        adb("shell", "am", "start", "-n",
+            f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.PermissionPromptPreviewActivity",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"permission-prompt-{suffix}")
+        if not tap("Don’t allow", "Don't allow", "Запретить"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("permission-prompt", permission_prompt)
 
     def tab_archive_setting():
         """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
@@ -531,6 +589,14 @@ def tour(suffix):
                 if tap_scrolling("Tabs & gestures", "Вкладки и жесты", name=f"settings-{suffix}"):
                     time.sleep(2)
                     tab_archive_setting()
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                if tap_scrolling("Protection & data", "Защита и данные",
+                                 name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    if scroll_to("Lock private tabs on exit", "Запирать приватные вкладки",
+                                 name=f"protection-private-lock-{suffix}", attempts=8):
+                        shot(f"protection-private-lock-{suffix}")
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
             adb("shell", "input", "keyevent", "BACK")

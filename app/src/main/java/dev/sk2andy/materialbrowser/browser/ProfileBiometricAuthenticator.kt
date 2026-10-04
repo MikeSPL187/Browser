@@ -10,6 +10,8 @@ enum class ProfileAuthenticationPurpose {
     Unlock,
     Configure,
     Export,
+    UnlockPrivateTabs,
+    ConfigurePrivateTabsLock,
 }
 
 internal class ProfileBiometricAuthenticator(
@@ -47,7 +49,7 @@ internal class ProfileBiometricAuthenticator(
         )
         prompt.authenticate(
             BiometricPrompt.PromptInfo.Builder()
-                .setTitle(activity.getString(R.string.profile_biometric_prompt_title))
+                .setTitle(activity.getString(purpose.titleResource))
                 .setSubtitle(activity.getString(purpose.subtitleResource))
                 .setAllowedAuthenticators(AUTHENTICATORS)
                 .setNegativeButtonText(activity.getString(R.string.action_cancel))
@@ -61,11 +63,25 @@ internal class ProfileBiometricAuthenticator(
         result(success)
     }
 
+    private val ProfileAuthenticationPurpose.titleResource: Int
+        get() = when (this) {
+            ProfileAuthenticationPurpose.Unlock,
+            ProfileAuthenticationPurpose.Configure,
+            ProfileAuthenticationPurpose.Export,
+            -> R.string.profile_biometric_prompt_title
+            ProfileAuthenticationPurpose.UnlockPrivateTabs,
+            ProfileAuthenticationPurpose.ConfigurePrivateTabsLock,
+            -> R.string.private_tabs_lock_prompt_title
+        }
+
     private val ProfileAuthenticationPurpose.subtitleResource: Int
         get() = when (this) {
             ProfileAuthenticationPurpose.Unlock -> R.string.profile_biometric_prompt_unlock
             ProfileAuthenticationPurpose.Configure -> R.string.profile_biometric_prompt_configure
             ProfileAuthenticationPurpose.Export -> R.string.profile_biometric_prompt_export
+            ProfileAuthenticationPurpose.UnlockPrivateTabs -> R.string.private_tabs_lock_prompt_unlock
+            ProfileAuthenticationPurpose.ConfigurePrivateTabsLock ->
+                R.string.private_tabs_lock_prompt_configure
         }
 
     private companion object {
