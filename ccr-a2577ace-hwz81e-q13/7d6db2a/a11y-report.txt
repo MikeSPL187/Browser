@@ -1,0 +1,4 @@
+Vola controls in the tour: 3 accessibility finding(s).
+- [NEW] small | View | 3x48 dp — glance-light
+- [NEW] small | View | 4x48 dp — glance-dark, glance-light, glance-ru
+- [NEW] unlabeled | View | glance — glance-dark, glance-light, glance-ru
