@@ -29,4 +29,7 @@ internal object VolaGlance {
     val notePaddingHorizontal = VolaSpacing.x3
     val noteGap = VolaSpacing.x2
     val noteIconSize = 16.dp
+
+    /** The download rows under the note are text buttons; they still get a full touch target. */
+    val minTouchTarget = 48.dp
 }

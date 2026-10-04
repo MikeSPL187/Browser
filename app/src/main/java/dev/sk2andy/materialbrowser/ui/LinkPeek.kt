@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -301,7 +302,9 @@ internal fun <T : View> LinkPeekOverlay(
                     onClickLabel = cancelLabel,
                     role = Role.Button,
                     onClick = onDismiss,
-                ),
+                )
+                // The card's close button and back do this for TalkBack; the scrim stays silent.
+                .clearAndSetSemantics { },
         )
         Column(
             modifier = Modifier
@@ -345,7 +348,8 @@ internal fun <T : View> LinkPeekOverlay(
                     .graphicsLayer {
                         val startBounds = commitStartBounds
                         val destination = actionTargetBounds
-                        val dragScale = 0.985f - motionProgress * 0.015f
+                        // Full size at rest, so the card's touch targets keep their 48 dp.
+                        val dragScale = 1f - motionProgress * 0.03f
                         if (startBounds != null && flyProgress > 0f) {
                             translationX =
                                 (destination.center.x - startBounds.center.x) * flyProgress
@@ -465,6 +469,8 @@ internal fun <T : View> LinkPeekOverlay(
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadLink)
                                 .clickable(onClick = onDownloadLink)
+                                .heightIn(min = VolaGlance.minTouchTarget)
+                                .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge,
@@ -476,6 +482,8 @@ internal fun <T : View> LinkPeekOverlay(
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadImage)
                                 .clickable(onClick = onDownloadImage)
+                                .heightIn(min = VolaGlance.minTouchTarget)
+                                .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelLarge,
