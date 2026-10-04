@@ -260,6 +260,12 @@ def tour(suffix):
         time.sleep(3)
         shot(f"site-info-{suffix}")
         save_ui(f"site-info-{suffix}")
+        # «Certificate» under the connection row (Q10b): who issued it, dates, SHA-256.
+        if tap("Certificate", "Сертификат", contains=True):
+            time.sleep(2)
+            shot(f"site-certificate-{suffix}")
+            if tap("Back", "Назад"):
+                time.sleep(1)
         if tap("Privacy X-Ray", "Рентген приватности"):
             time.sleep(2)
             shot(f"site-info-xray-{suffix}")

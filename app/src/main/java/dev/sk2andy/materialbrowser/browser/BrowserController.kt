@@ -1937,6 +1937,8 @@ class BrowserController(
     fun privacySnapshot(tabId: String): PrivacyXRaySnapshot =
         privacySnapshots[tabId] ?: PrivacyXRaySnapshot.Empty
 
+    fun siteCertificate(tabId: String): SiteCertificate? = browserEngineSessions[tabId]?.siteCertificate()
+
     fun filterRule(ruleId: String): CandyRule? = filterRules.firstOrNull { it.id == ruleId }
 
     fun filterRulesFor(tabId: String): List<CandyRule> =
@@ -7725,7 +7727,6 @@ class BrowserController(
         val generation = navigationGenerations.getOrDefault(tab.id, 0)
         findInPage.open(tab.id, session, generation, resetOptions = true)
         return true
-
     }
 
     private fun isFindInPageSessionCurrent(session: FindInPageSession): Boolean {
@@ -8545,7 +8546,6 @@ class BrowserController(
             loadGeckoWithPrivacy(tabId, existingSession, node.url)
         }
         return true
-
     }
 
     fun goBack() {

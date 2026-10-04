@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
+import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.SiteDataDeletionRules
 import dev.sk2andy.materialbrowser.browser.SiteDomainRules
@@ -160,6 +161,7 @@ internal fun BoxScope.BrowserModalSurfaces(
                             },
                         )
                     },
+                certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
             )
         }
     }
