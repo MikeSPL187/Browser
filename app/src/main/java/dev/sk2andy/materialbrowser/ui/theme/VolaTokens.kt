@@ -518,3 +518,14 @@ internal object VolaStatePageTokens {
     val buttonHeight = 52.dp
     val buttonIconSize = 20.dp
 }
+
+/** «Dangerous site» (board W-DangerousSite): the whole page in the danger color. */
+internal object VolaDangerousSite {
+    /** Secondary text and the facts card, as shares of the content color. */
+    const val SECONDARY_TEXT_ALPHA = 0.86f
+    const val CARD_ALPHA = 0.14f
+    val cardShape = VolaShapes.card
+    val cardPadding = VolaSpacing.x4
+    val rowGap = VolaSpacing.x3
+    val rowIconSize = 20.dp
+}

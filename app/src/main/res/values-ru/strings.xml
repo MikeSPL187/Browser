@@ -858,6 +858,11 @@
     <string name="page_error_unreachable_title">Сайт не отвечает</string>
     <string name="page_error_unreachable_message">%1$s не отвечает. Возможно, он перегружен или недоступен в вашей сети.</string>
     <string name="page_error_network_settings">Настройки сети</string>
+    <string name="dangerous_site_title">Сайт выдаёт себя за другой</string>
+    <string name="dangerous_site_message">%1$s похож на %2$s, но это другой адрес. Такие страницы крадут пароли и данные карт.</string>
+    <string name="dangerous_site_real">Настоящий сайт: %1$s</string>
+    <string name="dangerous_site_back">Вернуться в безопасное место</string>
+    <string name="dangerous_site_open_anyway">Всё равно открыть</string>
     <string name="action_save">Сохранить</string>
     <string name="capsule_add_action">Добавить как капсулу сайта</string>
     <string name="capsule_unavailable_private">Недоступно в приватном режиме: капсулы сохраняются</string>

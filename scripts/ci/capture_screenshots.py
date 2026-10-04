@@ -303,6 +303,17 @@ def tour(suffix):
         shot(f"page-unknown-host-{suffix}")
     step("page-unknown-host", unknown_host_page)
 
+    def dangerous_site():
+        # paypa1.com reads as paypal.com: the navigation stops before anything loads (Q15e,
+        # board W-DangerousSite), then the tour goes back to safety.
+        open_url("https://paypa1.com/")
+        time.sleep(6)
+        shot(f"dangerous-site-{suffix}")
+        if not tap("Back to safety", "Вернуться в безопасное место"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("dangerous-site", dangerous_site)
+
     def offline_page():
         """No connection (board W-Offline); then the page reloads by itself once it is back."""
         airplane = ("shell", "cmd", "connectivity", "airplane-mode")

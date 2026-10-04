@@ -74,6 +74,13 @@ object VolaIcons {
         )
     }
 
+    val Dangerous: ImageVector by lazy {
+        materialSymbol(
+            name = "Dangerous",
+            pathData = "M363 840 q-16 0 -30.5 -6 T307 817 L143 653 q-11 -11 -17 -25.5 t-6 -30.5 v-234 q0 -16 6 -30.5 t17 -25.5 l164 -164 q11 -11 25.5 -17 t30.5 -6 h234 q16 0 30.5 6 t25.5 17 l164 164 q11 11 17 25.5 t6 30.5 v234 q0 16 -6 30.5 T817 653 L653 817 q-11 11 -25.5 17 t-30.5 6 H363 Z m1 -80 h232 l164 -164 v-232 L596 200 H364 L200 364 v232 l164 164 Z m116 -224 l86 86 q11 11 28 11 t28 -11 q11 -11 11 -28 t-11 -28 l-86 -86 l86 -86 q11 -11 11 -28 t-11 -28 q-11 -11 -28 -11 t-28 11 l-86 86 l-86 -86 q-11 -11 -28 -11 t-28 11 q-11 11 -11 28 t11 28 l86 86 l-86 86 q-11 11 -11 28 t11 28 q11 11 28 11 t28 -11 l86 -86 Z m0 -56 Z",
+        )
+    }
+
     val Delete: ImageVector by lazy {
         materialSymbol(
             name = "Delete",
@@ -328,6 +335,13 @@ object VolaIcons {
         )
     }
 
+    val Verified: ImageVector by lazy {
+        materialSymbol(
+            name = "Verified",
+            pathData = "M438 508 l-58 -57 q-11 -11 -27.5 -11 T324 452 q-11 11 -11 28 t11 28 l86 86 q12 12 28 12 t28 -12 l170 -170 q12 -12 11.5 -28 T636 368 q-12 -12 -28.5 -12.5 T579 367 L438 508 Z M326 870 l-58 -98 l-110 -24 q-15 -3 -24 -15.5 t-7 -27.5 l11 -113 l-75 -86 q-10 -11 -10 -26 t10 -26 l75 -86 l-11 -113 q-2 -15 7 -27.5 t24 -15.5 l110 -24 l58 -98 q8 -13 22 -17.5 t28 1.5 l104 44 l104 -44 q14 -6 28 -1.5 t22 17.5 l58 98 l110 24 q15 3 24 15.5 t7 27.5 l-11 113 l75 86 q10 11 10 26 t-10 26 l-75 86 l11 113 q2 15 -7 27.5 T802 748 l-110 24 l-58 98 q-8 13 -22 17.5 T584 886 l-104 -44 l-104 44 q-14 6 -28 1.5 T326 870 Z m52 -72 l102 -44 l104 44 l56 -96 l110 -26 l-10 -112 l74 -84 l-74 -86 l10 -112 l-110 -24 l-58 -96 l-102 44 l-104 -44 l-56 96 l-110 24 l10 112 l-74 86 l74 84 l-10 114 l110 24 l58 96 Z m102 -318 Z",
+        )
+    }
+
     val Visibility: ImageVector by lazy {
         materialSymbol(
             name = "Visibility",
@@ -375,6 +389,7 @@ object VolaIcons {
             Close,
             ContentCopy,
             ContentPaste,
+            Dangerous,
             Delete,
             Download,
             Edit,
@@ -411,6 +426,7 @@ object VolaIcons {
             Sync,
             Tab,
             TabGroup,
+            Verified,
             Visibility,
             VisibilityOff,
             WarningFilled,
