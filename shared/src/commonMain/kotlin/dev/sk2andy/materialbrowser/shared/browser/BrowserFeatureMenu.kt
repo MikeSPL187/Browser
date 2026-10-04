@@ -46,6 +46,7 @@ enum class BrowserFeatureMenuAction {
     ToggleForceSafeArea,
     ToggleAlwaysBlockPopups,
     ToggleDesktopView,
+    ToggleCompactMode,
     ToggleDomainMute,
     OpenCandyTrail,
     AddSiteCapsule,
@@ -88,6 +89,7 @@ enum class BrowserFeatureMenuLabelKey {
     ForceSafeArea,
     AlwaysBlockPopups,
     DesktopView,
+    CompactMode,
     MuteDomain,
     UnmuteDomain,
     CandyTrail,
@@ -152,6 +154,8 @@ data class BrowserFeatureMenuState(
     val canToggleAlwaysBlockPopups: Boolean = false,
     val isAlwaysBlockPopupsEnabled: Boolean = false,
     val canToggleDesktopView: Boolean = false,
+    /** Compact Mode on or off; null when the menu cannot switch it. */
+    val isCompactMode: Boolean? = null,
     val isDesktopView: Boolean = false,
     val canToggleDomainMute: Boolean = false,
     val isDomainMuted: Boolean = false,
@@ -358,6 +362,16 @@ object BrowserFeatureMenuRules {
                 state.isDesktopView,
             ),
         )
+        state.isCompactMode?.let { compact ->
+            add(
+                toggle(
+                    BrowserFeatureMenuAction.ToggleCompactMode,
+                    BrowserFeatureMenuLabelKey.CompactMode,
+                    true,
+                    compact,
+                ),
+            )
+        }
         add(
             toggle(
                 BrowserFeatureMenuAction.ToggleDomainMute,

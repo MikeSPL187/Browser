@@ -193,6 +193,7 @@ internal fun NewTabPage(
                     privateTabCount = privateTab.count,
                     enabled = interactive,
                     onCloseAll = privateTab.onCloseAll,
+                    lock = privateTab.lock,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .widthIn(max = VolaEssentials.maxContentWidth)
@@ -222,6 +223,7 @@ internal class NewTabPrivate(
     val storage: PrivateTabStorage,
     val count: Int,
     val onCloseAll: () -> Unit,
+    val lock: PrivateTabLock? = null,
 )
 
 /** The protection card's week and what its report can do. */

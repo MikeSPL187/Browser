@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.CandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import kotlin.math.PI
 import kotlin.math.sin
@@ -75,7 +76,10 @@ internal object AddressBarMotion {
         maxWidth: Dp,
         feedbackWidth: Dp,
         edgeTabWidth: Dp,
-    ): Dp = when (presentation) {
+        handle: Boolean = false,
+    ): Dp = if (handle && presentation == AddressBarPresentation.Compact) {
+        VolaCompactMode.handleWidth
+    } else when (presentation) {
         AddressBarPresentation.Docked -> edgeTabWidth.coerceAtMost(maxWidth)
         AddressBarPresentation.Compact -> compactWidth
             .coerceAtLeast(96.dp.coerceAtMost(maxWidth))
@@ -90,7 +94,10 @@ internal object AddressBarMotion {
     fun heightTarget(
         presentation: AddressBarPresentation,
         expandedHeight: Dp = EXPANDED_HEIGHT,
-    ): Dp = when (presentation) {
+        handle: Boolean = false,
+    ): Dp = if (handle && presentation == AddressBarPresentation.Compact) {
+        VolaCompactMode.handleHeight
+    } else when (presentation) {
         AddressBarPresentation.Docked -> 48.dp
         AddressBarPresentation.Compact -> VolaIsland.compactHeight
         AddressBarPresentation.Expanded -> expandedHeight
@@ -172,6 +179,7 @@ internal fun rememberAddressBarMotionState(
     expandedHeight: Dp = AddressBarMotion.EXPANDED_HEIGHT,
     verticalTravel: Dp,
     dockPosition: Offset,
+    handle: Boolean = false,
 ): AddressBarMotionState {
     val motionScheme = LocalCandyMotionScheme.current
     val width by animateDpAsState(
@@ -181,6 +189,7 @@ internal fun rememberAddressBarMotionState(
             maxWidth = maxWidth,
             feedbackWidth = feedbackWidth,
             edgeTabWidth = edgeTabWidth,
+            handle = handle,
         ),
         animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
         label = "Adressleistenbreite beim Scrollen und Parken",
@@ -189,6 +198,7 @@ internal fun rememberAddressBarMotionState(
         targetValue = AddressBarMotion.heightTarget(
             presentation = presentation,
             expandedHeight = expandedHeight,
+            handle = handle,
         ),
         animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
         label = "Adressleistenhöhe beim Parken",

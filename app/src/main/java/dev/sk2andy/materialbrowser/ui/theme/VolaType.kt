@@ -41,6 +41,7 @@ internal val ManropeFontFamily = FontFamily(
 internal val LiterataFontFamily = FontFamily(
     variableFont(R.font.literata, FontWeight.Normal),
     variableFont(R.font.literata, FontWeight.Medium),
+    variableFont(R.font.literata, FontWeight.SemiBold),
     variableFont(R.font.literata, FontWeight.Bold),
 )
 

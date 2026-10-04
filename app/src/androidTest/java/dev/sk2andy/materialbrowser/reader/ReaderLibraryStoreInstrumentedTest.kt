@@ -32,7 +32,13 @@ class ReaderLibraryStoreInstrumentedTest {
     fun snapshotSettingsAndProgressRoundTrip() {
         val document = document("https://example.com/article")
         store.updateSettings(
-            ReaderSettings(1.3f, ReaderTheme.Paper, ReaderTextAlignment.Justified),
+            ReaderSettings(
+                1.3f,
+                ReaderTheme.Paper,
+                ReaderTextAlignment.Justified,
+                serif = false,
+                wideMargins = true,
+            ),
             isPrivate = false,
         )
         store.updateProgress(document.sourceUrl, 0.42f, isPrivate = false)
@@ -41,7 +47,13 @@ class ReaderLibraryStoreInstrumentedTest {
         val restored = ReaderLibraryStore(context).load(isPrivate = false)
 
         assertEquals(
-            ReaderSettings(1.3f, ReaderTheme.Paper, ReaderTextAlignment.Justified),
+            ReaderSettings(
+                1.3f,
+                ReaderTheme.Paper,
+                ReaderTextAlignment.Justified,
+                serif = false,
+                wideMargins = true,
+            ),
             restored.settings,
         )
         assertEquals(0.42f, restored.progressByUrl[document.sourceUrl])
@@ -54,7 +66,7 @@ class ReaderLibraryStoreInstrumentedTest {
         store.saveSnapshot(initial, 0.2f, isPrivate = false)
 
         assertNull(store.saveSnapshot(document("https://private.example"), 0.8f, isPrivate = true))
-        store.updateSettings(ReaderSettings(1.6f, ReaderTheme.Night), isPrivate = true)
+        store.updateSettings(ReaderSettings(1.6f, ReaderTheme.Dark), isPrivate = true)
         store.updateProgress(initial.sourceUrl, 0.9f, isPrivate = true)
         assertTrue(store.load(isPrivate = true).snapshots.isEmpty())
 

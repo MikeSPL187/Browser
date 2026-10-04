@@ -209,6 +209,7 @@ internal fun BrowserTransientOverlays(
             onDownloadImage = linkTarget.takeIf { it?.canDownloadImage == true }?.let {
                 controller::downloadContextImage
             },
+            isPrivate = controller.selectedTab.isIncognito,
             onDismiss = controller.contentActions::dismiss,
         )
     } else if (controller.contentActions.isVisible) {
