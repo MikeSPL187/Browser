@@ -497,10 +497,6 @@
     <string name="settings_search_clear">Очистить</string>
     <string name="settings_search_prompt">Найдите настройку по названию или описанию</string>
     <string name="settings_search_empty">Ничего не найдено по запросу «%1$s»</string>
-    <string name="settings_home_group_browsing">Просмотр</string>
-    <string name="settings_home_group_personalization">Персонализация</string>
-    <string name="settings_home_group_privacy_data">Приватность и данные</string>
-    <string name="settings_home_group_about">Дополнительно</string>
     <string name="settings_browser_group_general">Основные параметры</string>
     <string name="settings_browser_group_startup">Запуск</string>
     <string name="settings_browser_group_favorites">Избранное</string>
@@ -591,6 +587,33 @@
     <string name="data_archive_export_progress">Экспорт данных Vola…</string>
     <string name="data_archive_private_tabs_error">Закройте все приватные вкладки и повторите экспорт</string>
     <string name="settings_home_about_summary">Версия, сведения о разработчике, лицензии и исходный код</string>
+    <string name="settings_home_make_default_title">Сделать Vola основным</string>
+    <string name="settings_home_make_default_summary">Открывать ссылки в Vola</string>
+    <string name="settings_home_make_default_action">Сделать</string>
+    <string name="settings_home_theme_auto">тема авто</string>
+    <string name="settings_home_theme_light">светлая тема</string>
+    <string name="settings_home_theme_dark">тёмная тема</string>
+    <string name="settings_home_https_always">Только HTTPS</string>
+    <string name="settings_home_https_private">Только HTTPS в приватных вкладках</string>
+    <string name="settings_home_search_suggestions">подсказки</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d открытая вкладка</item>
+        <item quantity="few">%1$d открытые вкладки</item>
+        <item quantity="many">%1$d открытых вкладок</item>
+        <item quantity="other">%1$d открытой вкладки</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d скрипт</item>
+        <item quantity="few">%1$d скрипта</item>
+        <item quantity="many">%1$d скриптов</item>
+        <item quantity="other">%1$d скрипта</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d капсула</item>
+        <item quantity="few">%1$d капсулы</item>
+        <item quantity="many">%1$d капсул</item>
+        <item quantity="other">%1$d капсулы</item>
+    </plurals>
     <string name="settings_download_manager_title">Менеджер загрузок</string>
     <string name="settings_download_manager_builtin">Встроенный загрузчик Vola</string>
     <string name="settings_download_manager_ask">Спрашивать каждый раз</string>

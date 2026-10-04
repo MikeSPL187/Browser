@@ -207,6 +207,17 @@ internal fun SettingsScreen(
                     onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                     developerOptionsUnlocked = isDeveloperOptionsUnlocked,
                     onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+                    live = SettingsHomeLiveState(
+                        appearance = appearanceSettings,
+                        searchEngine = searchEngine,
+                        searchSuggestionsOn = searchSuggestionProvider != SearchSuggestionProvider.None,
+                        httpsOnlyMode = httpsOnlyMode,
+                        tabCount = tabCount,
+                        userscriptCount = userScripts.size,
+                        capsuleCount = siteCapsules.size,
+                        isDefaultBrowser = isDefaultBrowser,
+                    ),
+                    onMakeDefault = onOpenDefaultBrowserSettings,
                 )
 
                 SettingsDestination.Search -> SearchSettingsPage(

@@ -9,35 +9,36 @@ import kotlin.test.assertTrue
 
 class SettingsHomeRulesTest {
     @Test
-    fun androidHomeGroupsDestinationsByTask() {
+    fun homeFollowsTheBoardsCards() {
         val items = SettingsHomeRules.items(hasFirefoxExtensions = true)
 
         assertEquals(
             listOf(
-                SettingsDestination.Search,
-                SettingsDestination.TabsAndGestures,
-                SettingsDestination.Browser,
-                SettingsDestination.Downloads,
-                SettingsDestination.Appearance,
-                SettingsDestination.SiteCapsules,
-                SettingsDestination.Userscripts,
-                null,
-                SettingsDestination.ProtectionAndData,
-                SettingsDestination.Sync,
-                SettingsDestination.AboutLegal,
+                listOf(SettingsDestination.ProtectionAndData, SettingsDestination.Sync),
+                listOf(
+                    SettingsDestination.Appearance,
+                    SettingsDestination.TabsAndGestures,
+                    SettingsDestination.Search,
+                ),
+                listOf(
+                    null,
+                    SettingsDestination.Userscripts,
+                    SettingsDestination.SiteCapsules,
+                    SettingsDestination.Downloads,
+                    SettingsDestination.Browser,
+                ),
+                listOf(SettingsDestination.AboutLegal),
             ),
-            items.map(SettingsHomeItem::destination),
-        )
-        assertEquals(
-            listOf(
-                SettingsHomeGroup.Browsing,
-                SettingsHomeGroup.Personalization,
-                SettingsHomeGroup.PrivacyData,
-                SettingsHomeGroup.About,
-            ),
-            items.map(SettingsHomeItem::group).distinct(),
+            SettingsHomeRules.cards(items).map { card -> card.map(SettingsHomeItem::destination) },
         )
         assertTrue(items.single { it.destination == null }.isFirefoxExtensionsAction)
+    }
+
+    @Test
+    fun liveSummaryJoinsKnownPartsOnly() {
+        assertEquals("Frame · theme auto", SettingsHomeRules.joinSummary(listOf("Frame", null, " theme auto ")))
+        assertNull(SettingsHomeRules.joinSummary(listOf(null, " ")))
+        assertNull(SettingsHomeRules.joinSummary(emptyList()))
     }
 
     @Test

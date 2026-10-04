@@ -1,8 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,15 +12,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.SearchEngine
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeIcon
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeItem
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeLabel
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeResources
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomePage as SharedSettingsHomePage
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsHome
+
+/** What the home's rows summarize live (board W-Settings); null falls back to the static text. */
+internal data class SettingsHomeLiveState(
+    val appearance: AppearanceSettings? = null,
+    val searchEngine: SearchEngine? = null,
+    val searchSuggestionsOn: Boolean = false,
+    val httpsOnlyMode: HttpsOnlyMode? = null,
+    val tabCount: Int = 0,
+    val userscriptCount: Int = 0,
+    val capsuleCount: Int = 0,
+    val isDefaultBrowser: Boolean = true,
+)
 
 @Composable
 internal fun SettingsHomePage(
@@ -30,6 +51,8 @@ internal fun SettingsHomePage(
     onOpenFirefoxExtensions: (() -> Unit)? = null,
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
+    live: SettingsHomeLiveState = SettingsHomeLiveState(),
+    onMakeDefault: (() -> Unit)? = null,
 ) {
     var searching by rememberSaveable { mutableStateOf(false) }
     if (searching) {
@@ -45,9 +68,7 @@ internal fun SettingsHomePage(
     SharedSettingsHomePage(
         downloadSummary = downloadSummary,
         resources = AndroidSettingsHomeResources,
-        linkContainerColor = browserChromeColor(
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        style = VolaSettingsHome.style(),
         icon = { icon, modifier, tint ->
             AndroidSettingsHomeIcon(
                 icon = icon,
@@ -60,6 +81,15 @@ internal fun SettingsHomePage(
         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
         developerOptionsUnlocked = developerOptionsUnlocked,
         onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+        liveSummary = { item -> liveSummary(item, live) },
+        onMakeDefault = onMakeDefault.takeIf { !live.isDefaultBrowser },
+        brandMark = { modifier ->
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground_art),
+                contentDescription = null,
+                modifier = modifier,
+            )
+        },
         actions = {
             IconButton(
                 onClick = { searching = true },
@@ -74,17 +104,63 @@ internal fun SettingsHomePage(
     )
 }
 
+@Composable
+private fun liveSummary(item: SettingsHomeItem, live: SettingsHomeLiveState): String? {
+    return when (item.destination) {
+        SettingsDestination.Appearance -> live.appearance?.let { appearance ->
+            SettingsHomeRules.joinSummary(
+                listOf(
+                    stringResource(
+                        when (appearance.chromeStyle) {
+                            BrowserChromeStyle.Frame -> R.string.settings_chrome_style_frame
+                            BrowserChromeStyle.Air -> R.string.settings_chrome_style_air
+                        },
+                    ),
+                    stringResource(
+                        when (appearance.appearanceMode) {
+                            BrowserAppearanceMode.System -> R.string.settings_home_theme_auto
+                            BrowserAppearanceMode.Light -> R.string.settings_home_theme_light
+                            BrowserAppearanceMode.Dark -> R.string.settings_home_theme_dark
+                        },
+                    ),
+                ),
+            )
+        }
+        SettingsDestination.ProtectionAndData -> when (live.httpsOnlyMode) {
+            HttpsOnlyMode.Always -> stringResource(R.string.settings_home_https_always)
+            HttpsOnlyMode.PrivateTabs -> stringResource(R.string.settings_home_https_private)
+            HttpsOnlyMode.Off, null -> null
+        }
+        SettingsDestination.Search -> live.searchEngine?.let { engine ->
+            SettingsHomeRules.joinSummary(
+                listOf(
+                    engine.displayName,
+                    stringResource(R.string.settings_home_search_suggestions)
+                        .takeIf { live.searchSuggestionsOn },
+                ),
+            )
+        }
+        SettingsDestination.TabsAndGestures -> live.tabCount.takeIf { it > 0 }?.let { count ->
+            pluralStringResource(R.plurals.settings_home_open_tabs, count, count)
+        }
+        SettingsDestination.Userscripts -> live.userscriptCount.takeIf { it > 0 }?.let { count ->
+            pluralStringResource(R.plurals.settings_home_userscripts_count, count, count)
+        }
+        SettingsDestination.SiteCapsules -> live.capsuleCount.takeIf { it > 0 }?.let { count ->
+            pluralStringResource(R.plurals.settings_home_capsules_count, count, count)
+        }
+        SettingsDestination.Browser -> stringResource(R.string.settings_default_browser_active)
+            .takeIf { live.isDefaultBrowser }
+        else -> null
+    }
+}
+
 private object AndroidSettingsHomeResources : SettingsHomeResources {
     @Composable
     override fun text(label: SettingsHomeLabel): String = stringResource(
         when (label) {
             SettingsHomeLabel.Title -> R.string.settings_title
             SettingsHomeLabel.Back -> R.string.action_back
-            SettingsHomeLabel.BrowsingGroup -> R.string.settings_home_group_browsing
-            SettingsHomeLabel.PersonalizationGroup ->
-                R.string.settings_home_group_personalization
-            SettingsHomeLabel.PrivacyDataGroup -> R.string.settings_home_group_privacy_data
-            SettingsHomeLabel.AboutGroup -> R.string.settings_home_group_about
             SettingsHomeLabel.SearchTitle -> R.string.settings_section_search
             SettingsHomeLabel.SearchSummary -> R.string.settings_home_search_summary
             SettingsHomeLabel.SyncTitle -> R.string.sync_settings_title
@@ -113,6 +189,9 @@ private object AndroidSettingsHomeResources : SettingsHomeResources {
                 R.string.developer_options_unlock_action
             SettingsHomeLabel.AboutLegalTitle -> R.string.settings_section_about_legal
             SettingsHomeLabel.AboutLegalSummary -> R.string.settings_home_about_summary
+            SettingsHomeLabel.MakeDefaultTitle -> R.string.settings_home_make_default_title
+            SettingsHomeLabel.MakeDefaultSummary -> R.string.settings_home_make_default_summary
+            SettingsHomeLabel.MakeDefaultAction -> R.string.settings_home_make_default_action
         },
     )
 }

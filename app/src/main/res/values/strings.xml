@@ -485,10 +485,6 @@
     <string name="settings_search_clear">Clear</string>
     <string name="settings_search_prompt">Find a setting by its name or description</string>
     <string name="settings_search_empty">Nothing found for «%1$s»</string>
-    <string name="settings_home_group_browsing">Browsing</string>
-    <string name="settings_home_group_personalization">Personalization</string>
-    <string name="settings_home_group_privacy_data">Privacy &amp; data</string>
-    <string name="settings_home_group_about">More information</string>
     <string name="settings_browser_group_general">Browser setup</string>
     <string name="settings_browser_group_startup">Startup</string>
     <string name="settings_browser_group_favorites">Favorites</string>
@@ -579,6 +575,27 @@
     <string name="data_archive_export_progress">Exporting Vola data…</string>
     <string name="data_archive_private_tabs_error">Close all private tabs, then try the export again</string>
     <string name="settings_home_about_summary">Version, imprint, licenses, and sources</string>
+    <string name="settings_home_make_default_title">Make Vola your default</string>
+    <string name="settings_home_make_default_summary">Open links in Vola</string>
+    <string name="settings_home_make_default_action">Make default</string>
+    <string name="settings_home_theme_auto">theme auto</string>
+    <string name="settings_home_theme_light">light theme</string>
+    <string name="settings_home_theme_dark">dark theme</string>
+    <string name="settings_home_https_always">HTTPS only</string>
+    <string name="settings_home_https_private">HTTPS only in private tabs</string>
+    <string name="settings_home_search_suggestions">suggestions</string>
+    <plurals name="settings_home_open_tabs">
+        <item quantity="one">%1$d open tab</item>
+        <item quantity="other">%1$d open tabs</item>
+    </plurals>
+    <plurals name="settings_home_userscripts_count">
+        <item quantity="one">%1$d script</item>
+        <item quantity="other">%1$d scripts</item>
+    </plurals>
+    <plurals name="settings_home_capsules_count">
+        <item quantity="one">%1$d capsule</item>
+        <item quantity="other">%1$d capsules</item>
+    </plurals>
     <string name="settings_download_manager_title">Download manager</string>
     <string name="settings_download_manager_builtin">Vola built-in downloader</string>
     <string name="settings_download_manager_ask">Ask every time</string>
