@@ -70,6 +70,14 @@ internal fun BoxScope.BrowserModalSurfaces(
     }
 
     val accessibilityManager = LocalAccessibilityManager.current
+    controller.downloadSafety.pending?.let { pending ->
+        DownloadSafetySheet(
+            pending = pending,
+            onDownload = controller.downloadSafety::save,
+            onCancel = controller.downloadSafety::cancel,
+        )
+    }
+
     privacyXRayTabId?.let { tabId ->
         val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
         if (xRayTab != null) {
