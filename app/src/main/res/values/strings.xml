@@ -450,6 +450,10 @@
     <string name="action_open_link_private_background_tab">Open link in new private background tab</string>
     <string name="action_open_link_private_foreground_tab">Open link in new private foreground tab</string>
     <string name="link_peek_title">Link Peek</string>
+    <string name="glance_close">Close preview</string>
+    <string name="glance_not_in_history">Not added to history until you open it</string>
+    <string name="glance_private_note">Private preview: nothing from it is saved</string>
+    <string name="glance_pull_to_open">Pull up to open in a tab</string>
     <string name="action_open_in_new_tab">Open in New Tab</string>
     <string name="action_open_in_new_tab_and_switch">Open in New Tab and Switch</string>
     <string name="action_open_link_in_private_tab">Open link in private tab</string>

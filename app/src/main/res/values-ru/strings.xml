@@ -464,6 +464,10 @@
     <string name="action_open_link_private_background_tab">Открыть в новой приватной фоновой вкладке</string>
     <string name="action_open_link_private_foreground_tab">Открыть в новой приватной вкладке и перейти</string>
     <string name="link_peek_title">Быстрый просмотр</string>
+    <string name="glance_close">Закрыть просмотр</string>
+    <string name="glance_not_in_history">Не попадёт в историю, пока не откроете</string>
+    <string name="glance_private_note">Приватный просмотр: из него ничего не сохранится</string>
+    <string name="glance_pull_to_open">Потяните вверх, чтобы открыть во вкладке</string>
     <string name="action_open_in_new_tab">Открыть в новой вкладке</string>
     <string name="action_open_in_new_tab_and_switch">Открыть в новой вкладке и перейти</string>
     <string name="action_open_link_in_private_tab">Открыть в приватной вкладке</string>
