@@ -217,15 +217,38 @@ def close_leftovers(name):
         current = nodes()
 
 
+def chrome_layout(raw):
+    """Vola's own controls with their bounds. A live page inside a WebView keeps changing its
+    accessibility tree, so its nodes are left out: only the chrome around it has to rest."""
+    try:
+        root = ElementTree.fromstring(raw.decode("utf-8", "replace"))
+    except ElementTree.ParseError:
+        return None
+    layout = []
+
+    def visit(node):
+        if node.get("class", "").endswith("WebView"):
+            return
+        layout.append((node.get("class"), node.get("text"), node.get("content-desc"),
+                       node.get("bounds")))
+        for child in node.findall("node"):
+            visit(child)
+
+    for node in root.findall("node"):
+        visit(node)
+    return layout
+
+
 def settle(attempts=6):
-    """Waits until the screen stops moving: two UI dumps in a row are the same. A frame caught
-    mid-animation shows controls half covered, which the audit reads as too small."""
+    """Waits until the screen stops moving: Vola's controls sit in the same place in two UI
+    dumps in a row. A frame caught mid-animation shows controls half covered, which the audit
+    reads as too small."""
     previous = None
     for _ in range(attempts):
-        raw = dump_ui()
-        if raw and raw == previous:
+        layout = chrome_layout(dump_ui())
+        if layout and layout == previous:
             return True
-        previous = raw
+        previous = layout
         time.sleep(1)
     log("screen did not settle")
     return False
