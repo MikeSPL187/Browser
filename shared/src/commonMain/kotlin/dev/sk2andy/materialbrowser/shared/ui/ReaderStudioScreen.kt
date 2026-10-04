@@ -1,20 +1,29 @@
 package dev.sk2andy.materialbrowser.shared.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +32,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -33,7 +41,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,20 +56,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.reader.ReaderBlock
@@ -67,17 +78,17 @@ import dev.sk2andy.materialbrowser.reader.ReaderBlockKind
 import dev.sk2andy.materialbrowser.reader.ReaderDocument
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
+import dev.sk2andy.materialbrowser.reader.ReaderLibraryDataSource
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRules
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryState
-import dev.sk2andy.materialbrowser.reader.ReaderLibraryDataSource
 import dev.sk2andy.materialbrowser.reader.ReaderSettings
 import dev.sk2andy.materialbrowser.reader.ReaderSnapshot
 import dev.sk2andy.materialbrowser.reader.ReaderSpeech
-import dev.sk2andy.materialbrowser.reader.ReaderSpeechState
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechRules
+import dev.sk2andy.materialbrowser.reader.ReaderSpeechState
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechStatus
-import dev.sk2andy.materialbrowser.reader.ReaderTheme
 import dev.sk2andy.materialbrowser.reader.ReaderTextAlignment
+import dev.sk2andy.materialbrowser.reader.ReaderTheme
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.delay
 
@@ -96,7 +107,11 @@ object ReaderStudioTestTags {
     const val SpeechTransport = "reader_studio_speech_transport"
     const val ThemeSegmented = "reader_studio_theme_segmented"
     const val FontSegmented = "reader_studio_font_segmented"
-    const val AlignmentSegmented = "reader_studio_alignment_segmented"
+    const val FontFamily = "reader_studio_font_family"
+    const val WideMargins = "reader_studio_wide_margins"
+    const val SettingsButton = "reader_studio_settings_button"
+    const val SettingsPanel = "reader_studio_settings_panel"
+    const val Original = "reader_studio_original"
 }
 
 enum class ReaderStudioLabel {
@@ -112,14 +127,17 @@ enum class ReaderStudioLabel {
     ExtractionInvalid,
     Retry,
     SaveOffline,
-    OfflineShort,
-    ThemeSystem,
+    ThemeLight,
     ThemePaper,
-    ThemeNight,
-    FontDecrease,
-    FontIncrease,
-    AlignmentStart,
-    AlignmentJustified,
+    ThemeDark,
+    ReadingView,
+    ReadingTime,
+    ReadingSettings,
+    TextSize,
+    FontSerif,
+    FontSans,
+    WideMargins,
+    Listen,
     SpeechStart,
     SpeechResume,
     SpeechPause,
@@ -133,10 +151,6 @@ enum class ReaderStudioLabel {
 
 enum class ReaderStudioIcon {
     Download,
-    FontDecrease,
-    FontIncrease,
-    AlignmentStart,
-    AlignmentJustified,
     Pause,
     Stop,
 }
@@ -171,14 +185,17 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
             "The page changed or returned invalid content. Try again or return to the original."
         ReaderStudioLabel.Retry -> "Try again"
         ReaderStudioLabel.SaveOffline -> "Save offline"
-        ReaderStudioLabel.OfflineShort -> "Offline"
-        ReaderStudioLabel.ThemeSystem -> "System"
+        ReaderStudioLabel.ThemeLight -> "Light"
         ReaderStudioLabel.ThemePaper -> "Paper"
-        ReaderStudioLabel.ThemeNight -> "Night"
-        ReaderStudioLabel.FontDecrease -> "Decrease text size"
-        ReaderStudioLabel.FontIncrease -> "Increase text size"
-        ReaderStudioLabel.AlignmentStart -> "Ragged"
-        ReaderStudioLabel.AlignmentJustified -> "Justified"
+        ReaderStudioLabel.ThemeDark -> "Dark"
+        ReaderStudioLabel.ReadingView -> "Reading view"
+        ReaderStudioLabel.ReadingTime -> "${requireNotNull(value)} min"
+        ReaderStudioLabel.ReadingSettings -> "Reading view settings"
+        ReaderStudioLabel.TextSize -> "Text size"
+        ReaderStudioLabel.FontSerif -> "Serif"
+        ReaderStudioLabel.FontSans -> "Sans serif"
+        ReaderStudioLabel.WideMargins -> "Wide margins"
+        ReaderStudioLabel.Listen -> "Listen"
         ReaderStudioLabel.SpeechStart -> "Read aloud"
         ReaderStudioLabel.SpeechResume -> "Resume"
         ReaderStudioLabel.SpeechPause -> "Pause"
@@ -200,10 +217,6 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
         Icon(
             imageVector = when (icon) {
                 ReaderStudioIcon.Download -> VolaIcons.Download
-                ReaderStudioIcon.FontDecrease -> VolaIcons.Remove
-                ReaderStudioIcon.FontIncrease -> VolaIcons.Add
-                ReaderStudioIcon.AlignmentStart -> VolaIcons.FormatAlignLeft
-                ReaderStudioIcon.AlignmentJustified -> VolaIcons.FormatAlignJustify
                 ReaderStudioIcon.Pause -> VolaIcons.PauseFilled
                 ReaderStudioIcon.Stop -> VolaIcons.StopFilled
             },
@@ -286,11 +299,16 @@ fun ReaderStudioScreen(
     isPrivate: Boolean,
     repository: ReaderLibraryDataSource,
     resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
     speechFactory: () -> ReaderSpeech,
+    /** Registers a system back handler; shared code has none of its own. */
+    backHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit,
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
     onOpenOriginal: (String) -> Unit,
     onOpenLink: (String) -> Unit,
+    /** Opens with «Reading view» shown, for previews. */
+    initialSettingsVisible: Boolean = false,
 ) {
     var library by remember(isPrivate) { mutableStateOf(ReaderLibraryState()) }
     var activeDocument by remember(result) {
@@ -298,11 +316,13 @@ fun ReaderStudioScreen(
     }
     var activeSnapshot by remember { mutableStateOf<ReaderSnapshot?>(null) }
     var libraryVisible by remember { mutableStateOf(false) }
+    var settingsVisible by remember { mutableStateOf(initialSettingsVisible) }
     var libraryLoaded by remember(isPrivate) { mutableStateOf(isPrivate) }
     var sessionSettings by remember(library.settings, isPrivate) {
         mutableStateOf(library.settings)
     }
-    val colors = readerColors(sessionSettings.theme)
+    val browserDark = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
+    val colors = style.palette(sessionSettings.theme, browserDark)
     LaunchedEffect(result, isPrivate) {
         libraryLoaded = false
         repository.load(isPrivate) { loaded ->
@@ -321,14 +341,14 @@ fun ReaderStudioScreen(
         Column(modifier = Modifier.safeDrawingPadding()) {
             ReaderStudioHeader(
                 resources = resources,
+                style = style,
+                colors = colors,
+                document = activeDocument,
+                settingsAvailable = activeDocument != null && !libraryVisible,
                 libraryVisible = libraryVisible,
-                isPrivate = isPrivate,
-                snapshotCount = library.snapshots.size,
+                onSettings = { settingsVisible = !settingsVisible },
+                onShowArticle = { libraryVisible = false },
                 onDismiss = onDismiss,
-                onOpenOriginal = {
-                    onOpenOriginal(activeDocument?.sourceUrl ?: sourceUrl)
-                },
-                onLibrary = { libraryVisible = !libraryVisible },
             )
             if (libraryVisible && !isPrivate) {
                 ReaderLibraryContent(
@@ -368,8 +388,12 @@ fun ReaderStudioScreen(
                         libraryLoaded = libraryLoaded,
                         repository = repository,
                         resources = resources,
+                        style = style,
+                        browserDark = browserDark,
                         speechFactory = speechFactory,
                         colors = colors,
+                        settingsVisible = settingsVisible,
+                        onSettingsDismiss = { settingsVisible = false },
                         onSettingsChanged = { settings ->
                             sessionSettings = settings
                             if (!isPrivate) {
@@ -387,58 +411,115 @@ fun ReaderStudioScreen(
                                 it.document.sourceUrl == activeDocument?.sourceUrl
                             }
                         },
+                        onShowLibrary = {
+                            settingsVisible = false
+                            libraryVisible = true
+                        },
+                        onOpenOriginal = {
+                            onOpenOriginal(activeDocument?.sourceUrl ?: sourceUrl)
+                        },
                         onOpenLink = onOpenLink,
                     )
                 }
             }
         }
     }
+    backHandler(settingsVisible || libraryVisible) {
+        if (settingsVisible) settingsVisible = false else libraryVisible = false
+    }
 }
 
+private const val DARK_LUMINANCE = 0.5f
+
+/**
+ * The site and how long the article takes to read on the left, «Aa» for the reading view and
+ * close on the right (board W-Reader).
+ */
 @Composable
 private fun ReaderStudioHeader(
     resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    colors: ReaderPalette,
+    document: ReaderDocument?,
+    settingsAvailable: Boolean,
     libraryVisible: Boolean,
-    isPrivate: Boolean,
-    snapshotCount: Int,
+    onSettings: () -> Unit,
+    onShowArticle: () -> Unit,
     onDismiss: () -> Unit,
-    onOpenOriginal: () -> Unit,
-    onLibrary: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(style.headerPadding),
+        horizontalArrangement = Arrangement.spacedBy(style.headerGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onDismiss) {
-            Icon(
-                VolaIcons.ArrowBack,
-                contentDescription = resources.text(ReaderStudioLabel.Close),
-            )
-        }
-        Text(
-            resources.text(ReaderStudioLabel.Title),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        if (!isPrivate) {
-            TextButton(
-                onClick = onLibrary,
-                modifier = Modifier.testTag(ReaderStudioTestTags.Library),
+        if (document != null) {
+            Box(
+                modifier = Modifier
+                    .size(style.siteGemSize)
+                    .background(colors.accent, style.siteGemShape),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    if (libraryVisible) {
-                        resources.text(ReaderStudioLabel.Article)
-                    } else {
-                        resources.text(ReaderStudioLabel.OfflineCount, snapshotCount)
+                    text = document.siteName.trim().take(1).uppercase(),
+                    color = colors.onAccent,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Text(
+                text = document.siteName + " · " + resources.text(
+                    ReaderStudioLabel.ReadingTime,
+                    remember(document) {
+                        ReaderLibraryRules.readingMinutes(document.speechText)
                     },
+                ),
+                modifier = Modifier.weight(1f),
+                color = colors.muted,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        } else {
+            Text(
+                text = resources.text(ReaderStudioLabel.Title),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        if (libraryVisible && document != null) {
+            TextButton(onClick = onShowArticle) {
+                Text(resources.text(ReaderStudioLabel.Article), color = colors.content)
+            }
+        }
+        if (settingsAvailable) {
+            val settingsDescription = resources.text(ReaderStudioLabel.ReadingSettings)
+            IconButton(
+                onClick = onSettings,
+                modifier = Modifier
+                    .testTag(ReaderStudioTestTags.SettingsButton)
+                    .semantics { contentDescription = settingsDescription },
+                colors = IconButtonDefaults.iconButtonColors(containerColor = colors.card),
+            ) {
+                Text(
+                    text = "Aa",
+                    modifier = Modifier.clearAndSetSemantics { },
+                    fontFamily = style.serifFontFamily,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }
-        TextButton(onClick = onOpenOriginal) {
-            Text(resources.text(ReaderStudioLabel.Original))
+        IconButton(
+            onClick = onDismiss,
+            colors = IconButtonDefaults.iconButtonColors(containerColor = colors.card),
+        ) {
+            Icon(
+                VolaIcons.Close,
+                contentDescription = resources.text(ReaderStudioLabel.Close),
+            )
         }
     }
 }
@@ -446,7 +527,7 @@ private fun ReaderStudioHeader(
 @Composable
 private fun ReaderLoading(
     resources: ReaderStudioResources,
-    colors: ReaderColors,
+    colors: ReaderPalette,
 ) {
     Box(
         modifier = Modifier
@@ -466,7 +547,7 @@ private fun ReaderLoading(
 private fun ReaderError(
     resources: ReaderStudioResources,
     failure: ReaderExtractionFailure,
-    colors: ReaderColors,
+    colors: ReaderPalette,
     onRetry: () -> Unit,
     onOpenOriginal: () -> Unit,
 ) {
@@ -523,16 +604,23 @@ private fun ReaderArticle(
     libraryLoaded: Boolean,
     repository: ReaderLibraryDataSource,
     resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    browserDark: Boolean,
     speechFactory: () -> ReaderSpeech,
-    colors: ReaderColors,
+    colors: ReaderPalette,
+    settingsVisible: Boolean,
+    onSettingsDismiss: () -> Unit,
     onSettingsChanged: (ReaderSettings) -> Unit,
     onLibraryChanged: (ReaderLibraryState) -> Unit,
+    onShowLibrary: () -> Unit,
+    onOpenOriginal: () -> Unit,
     onOpenLink: (String) -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val speech = remember(document.sourceUrl) { speechFactory() }
     var restored by remember(document.sourceUrl) { mutableStateOf(false) }
     val progress = ReaderLibraryRules.progress(scrollState.value, scrollState.maxValue)
+    val fontFamily = if (settings.serif) style.serifFontFamily else style.sansFontFamily
 
     DisposableEffect(speech) { onDispose(speech::close) }
     LaunchedEffect(document.sourceUrl, scrollState.maxValue, libraryLoaded) {
@@ -559,419 +647,507 @@ private fun ReaderArticle(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(colors.background, colors.card.copy(alpha = 0.34f)),
-                ),
-            ),
-    ) {
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .testTag(ReaderStudioTestTags.Progress),
-            color = colors.accent,
-            trackColor = colors.accent.copy(alpha = 0.16f),
-        )
-        ReaderControls(
-            resources = resources,
-            settings = settings,
-            isPrivate = isPrivate,
-            speechStatus = speech.state.status,
-            speechExcerpt = ReaderSpeechRules.currentExcerpt(
-                document.speechText,
-                speech.state.characterOffset,
-            ),
-            colors = colors,
-            onSettingsChanged = onSettingsChanged,
-            onPlay = { speech.play(document.speechText) },
-            onPause = speech::pause,
-            onStop = speech::stop,
-            onSave = {
-                repository.saveSnapshot(document, progress, isPrivate, onLibraryChanged)
-            },
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 14.dp, vertical = 8.dp)
-                .testTag(ReaderStudioTestTags.Article),
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = colors.article,
-                shape = RoundedCornerShape(32.dp),
-                tonalElevation = 2.dp,
-                shadowElevation = 2.dp,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(style.progressHeight)
+                    .testTag(ReaderStudioTestTags.Progress),
+                color = colors.accent,
+                trackColor = colors.card,
+                drawStopIndicator = {},
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(
+                        horizontal = if (settings.wideMargins) {
+                            style.wideArticlePadding
+                        } else {
+                            style.articlePadding
+                        },
+                    )
+                    .testTag(ReaderStudioTestTags.Article),
             ) {
-                Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 24.dp)) {
-                    Surface(
-                        color = colors.accent.copy(alpha = 0.12f),
-                        contentColor = colors.accent,
-                        shape = CircleShape,
-                    ) {
-                        Text(
-                            document.siteName,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        document.title,
-                        modifier = Modifier.semantics { heading() },
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontSize = 30.sp * settings.fontScale,
-                            lineHeight = 36.sp * settings.fontScale,
-                        ),
-                        fontWeight = FontWeight.Bold,
+                Spacer(Modifier.height(style.articleGap))
+                Text(
+                    document.title,
+                    modifier = Modifier.semantics { heading() },
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = style.titleFontSize * settings.fontScale,
+                        lineHeight = style.titleLineHeight * settings.fontScale,
+                    ),
+                    fontFamily = fontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(style.articleGap))
+                document.blocks.forEach { block ->
+                    ReaderBlockContent(
+                        block = block,
+                        fontScale = settings.fontScale,
+                        textAlignment = settings.textAlignment,
+                        fontFamily = fontFamily,
+                        colors = colors,
+                        onOpenLink = onOpenLink,
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        document.sourceUrl,
-                        color = colors.muted,
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(22.dp))
-                    document.blocks.forEach { block ->
-                        ReaderBlockContent(
-                            block = block,
-                            fontScale = settings.fontScale,
-                            textAlignment = settings.textAlignment,
-                            colors = colors,
-                            onOpenLink = onOpenLink,
-                        )
-                    }
                 }
+                Spacer(
+                    Modifier
+                        .navigationBarsPadding()
+                        .height(style.articleGap),
+                )
             }
-            Spacer(Modifier.height(36.dp))
+        }
+        if (settingsVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) { detectTapGestures { onSettingsDismiss() } },
+            )
+        }
+        AnimatedVisibility(
+            visible = settingsVisible,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+        ) {
+            ReaderSettingsPanel(
+                resources = resources,
+                style = style,
+                settings = settings,
+                browserDark = browserDark,
+                isPrivate = isPrivate,
+                snapshotCount = library.snapshots.size,
+                speechStatus = speech.state.status,
+                speechExcerpt = ReaderSpeechRules.currentExcerpt(
+                    document.speechText,
+                    speech.state.characterOffset,
+                ),
+                onSettingsChanged = onSettingsChanged,
+                onPlay = { speech.play(document.speechText) },
+                onPause = speech::pause,
+                onStop = speech::stop,
+                onSave = {
+                    repository.saveSnapshot(document, progress, isPrivate, onLibraryChanged)
+                },
+                onShowLibrary = onShowLibrary,
+                onOpenOriginal = onOpenOriginal,
+            )
         }
     }
 }
 
+/**
+ * «Reading view» (board W-Reader): listen, the reading theme, text size, the typeface, wide
+ * margins, and the offline copy. It sits on the browser's own surface, not the reading theme,
+ * so the swatches show each theme as it is.
+ */
 @Composable
-private fun ReaderControls(
+private fun ReaderSettingsPanel(
     resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
     settings: ReaderSettings,
+    browserDark: Boolean,
     isPrivate: Boolean,
+    snapshotCount: Int,
     speechStatus: ReaderSpeechStatus,
     speechExcerpt: String,
-    colors: ReaderColors,
     onSettingsChanged: (ReaderSettings) -> Unit,
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onStop: () -> Unit,
     onSave: () -> Unit,
+    onShowLibrary: () -> Unit,
+    onOpenOriginal: () -> Unit,
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        color = colors.card,
-        shape = RoundedCornerShape(28.dp),
-        tonalElevation = 5.dp,
-        shadowElevation = 2.dp,
+            .padding(style.panelMargin)
+            .testTag(ReaderStudioTestTags.SettingsPanel),
+        shape = style.panelShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shadowElevation = style.panelElevation,
     ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(style.panelPadding),
+            verticalArrangement = Arrangement.spacedBy(style.panelGap),
         ) {
-            ReaderFontSizeSegmented(
-                resources = resources,
-                settings = settings,
-                colors = colors,
-                onSettingsChanged = onSettingsChanged,
-                modifier = Modifier.weight(1f),
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .size(style.handleWidth, style.handleHeight)
+                    .background(MaterialTheme.colorScheme.outlineVariant, CircleShape),
             )
-            ReaderAlignmentSegmented(
-                resources = resources,
-                settings = settings,
-                colors = colors,
-                onSettingsChanged = onSettingsChanged,
-                modifier = Modifier.weight(1f),
-            )
-            if (!isPrivate) {
-                val saveDescription = resources.text(ReaderStudioLabel.SaveOffline)
-                val showSaveLabel = LocalDensity.current.fontScale < 1.6f
-                FilledTonalButton(
-                    onClick = onSave,
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    resources.text(ReaderStudioLabel.ReadingView),
                     modifier = Modifier
                         .weight(1f)
-                        .testTag(ReaderStudioTestTags.Save),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(horizontal = 12.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = colors.accent,
-                        contentColor = colors.onAccent,
-                    ),
-                ) {
-                    resources.icon(
-                        icon = ReaderStudioIcon.Download,
-                        modifier = Modifier.size(20.dp),
-                        contentDescription = saveDescription.takeUnless { showSaveLabel },
-                    )
-                    if (showSaveLabel) {
-                        Spacer(Modifier.size(6.dp))
-                        Text(resources.text(ReaderStudioLabel.OfflineShort))
-                    }
-                }
+                        .semantics { heading() },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                ReaderListenControl(
+                    resources = resources,
+                    style = style,
+                    status = speechStatus,
+                    onPlay = onPlay,
+                    onPause = onPause,
+                    onStop = onStop,
+                )
             }
-        }
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(ReaderStudioTestTags.ThemeSegmented),
-        ) {
-            ReaderTheme.entries.forEachIndexed { index, theme ->
-                SegmentedButton(
-                    modifier = Modifier.weight(1f),
-                    selected = settings.theme == theme,
-                    onClick = { onSettingsChanged(settings.copy(theme = theme)) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = ReaderTheme.entries.size,
-                    ),
-                    label = {
+            if (
+                speechStatus == ReaderSpeechStatus.Speaking ||
+                speechStatus == ReaderSpeechStatus.Paused
+            ) {
+                Text(
+                    speechExcerpt,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            ReaderThemeSwatches(
+                resources = resources,
+                style = style,
+                settings = settings,
+                browserDark = browserDark,
+                onSettingsChanged = onSettingsChanged,
+            )
+            ReaderTextSize(
+                resources = resources,
+                style = style,
+                settings = settings,
+                onSettingsChanged = onSettingsChanged,
+            )
+            ReaderFontFamilyChoice(
+                resources = resources,
+                style = style,
+                settings = settings,
+                onSettingsChanged = onSettingsChanged,
+            )
+            ReaderWideMargins(
+                resources = resources,
+                style = style,
+                settings = settings,
+                onSettingsChanged = onSettingsChanged,
+            )
+            if (!isPrivate) {
+                Row(horizontalArrangement = Arrangement.spacedBy(style.panelGap)) {
+                    FilledTonalButton(
+                        onClick = onSave,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = style.buttonHeight)
+                            .testTag(ReaderStudioTestTags.Save),
+                    ) {
+                        resources.icon(
+                            icon = ReaderStudioIcon.Download,
+                            modifier = Modifier.size(style.iconSize),
+                            contentDescription = null,
+                        )
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(
-                            resources.text(
-                                when (theme) {
-                                    ReaderTheme.System -> ReaderStudioLabel.ThemeSystem
-                                    ReaderTheme.Paper -> ReaderStudioLabel.ThemePaper
-                                    ReaderTheme.Night -> ReaderStudioLabel.ThemeNight
-                                },
-                            ),
+                            resources.text(ReaderStudioLabel.SaveOffline),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                    },
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = colors.accent,
-                        activeContentColor = colors.onAccent,
-                        activeBorderColor = colors.accent,
-                        inactiveContainerColor = Color.Transparent,
-                        inactiveContentColor = colors.content,
-                        inactiveBorderColor = colors.muted,
-                    ),
+                    }
+                    OutlinedButton(
+                        onClick = onShowLibrary,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = style.buttonHeight)
+                            .testTag(ReaderStudioTestTags.Library),
+                    ) {
+                        Text(
+                            resources.text(ReaderStudioLabel.OfflineCount, snapshotCount),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            TextButton(
+                onClick = onOpenOriginal,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .testTag(ReaderStudioTestTags.Original),
+            ) {
+                Text(resources.text(ReaderStudioLabel.Original))
+            }
+            if (isPrivate) {
+                Text(
+                    resources.text(ReaderStudioLabel.PrivateNotice),
+                    modifier = Modifier.testTag(ReaderStudioTestTags.PrivateNotice),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
         }
-        ReaderSpeechTransport(
-            resources = resources,
-            status = speechStatus,
-            excerpt = speechExcerpt,
-            colors = colors,
-            onPlay = onPlay,
-            onPause = onPause,
-            onStop = onStop,
-        )
-        if (isPrivate) {
-            Text(
-                resources.text(ReaderStudioLabel.PrivateNotice),
-                modifier = Modifier.testTag(ReaderStudioTestTags.PrivateNotice),
-                color = colors.muted,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        }
     }
 }
 
+/** «Listen» until speech starts, then pause or resume and stop. */
 @Composable
-private fun ReaderFontSizeSegmented(
+private fun ReaderListenControl(
     resources: ReaderStudioResources,
-    settings: ReaderSettings,
-    colors: ReaderColors,
-    onSettingsChanged: (ReaderSettings) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val decreaseDescription = resources.text(ReaderStudioLabel.FontDecrease)
-    val increaseDescription = resources.text(ReaderStudioLabel.FontIncrease)
-    val actions = listOf(
-        Triple(ReaderStudioIcon.FontDecrease, decreaseDescription) {
-            onSettingsChanged(settings.copy(fontScale = settings.fontScale - 0.1f))
-        },
-        Triple(ReaderStudioIcon.FontIncrease, increaseDescription) {
-            onSettingsChanged(settings.copy(fontScale = settings.fontScale + 0.1f))
-        },
-    )
-    SingleChoiceSegmentedButtonRow(
-        modifier = modifier.testTag(ReaderStudioTestTags.FontSegmented),
-    ) {
-        actions.forEachIndexed { index, (icon, description, action) ->
-            SegmentedButton(
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = description
-                    role = Role.Button
-                    onClick {
-                        action()
-                        true
-                    }
-                },
-                selected = false,
-                onClick = action,
-                shape = SegmentedButtonDefaults.itemShape(index, actions.size),
-                icon = {},
-                label = {
-                    resources.icon(
-                        icon = icon,
-                        modifier = Modifier.size(if (index == 0) 18.dp else 20.dp),
-                        contentDescription = null,
-                    )
-                },
-                colors = readerSegmentedColors(colors),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ReaderAlignmentSegmented(
-    resources: ReaderStudioResources,
-    settings: ReaderSettings,
-    colors: ReaderColors,
-    onSettingsChanged: (ReaderSettings) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SingleChoiceSegmentedButtonRow(
-        modifier = modifier.testTag(ReaderStudioTestTags.AlignmentSegmented),
-    ) {
-        ReaderTextAlignment.entries.forEachIndexed { index, alignment ->
-            val description = resources.text(
-                when (alignment) {
-                    ReaderTextAlignment.Start -> ReaderStudioLabel.AlignmentStart
-                    ReaderTextAlignment.Justified -> ReaderStudioLabel.AlignmentJustified
-                },
-            )
-            SegmentedButton(
-                selected = settings.textAlignment == alignment,
-                onClick = { onSettingsChanged(settings.copy(textAlignment = alignment)) },
-                shape = SegmentedButtonDefaults.itemShape(index, ReaderTextAlignment.entries.size),
-                icon = {},
-                label = {
-                    resources.icon(
-                        icon = when (alignment) {
-                            ReaderTextAlignment.Start -> ReaderStudioIcon.AlignmentStart
-                            ReaderTextAlignment.Justified -> ReaderStudioIcon.AlignmentJustified
-                        },
-                        contentDescription = description,
-                        modifier = Modifier.size(20.dp),
-                    )
-                },
-                colors = readerSegmentedColors(colors),
-            )
-        }
-    }
-}
-
-@Composable
-private fun readerSegmentedColors(colors: ReaderColors) = SegmentedButtonDefaults.colors(
-    activeContainerColor = colors.accent,
-    activeContentColor = colors.onAccent,
-    activeBorderColor = colors.accent,
-    inactiveContainerColor = Color.Transparent,
-    inactiveContentColor = colors.content,
-    inactiveBorderColor = colors.muted,
-)
-
-@Composable
-private fun ReaderSpeechTransport(
-    resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
     status: ReaderSpeechStatus,
-    excerpt: String,
-    colors: ReaderColors,
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onStop: () -> Unit,
 ) {
     val isSpeaking = status == ReaderSpeechStatus.Speaking
-    val canPlay = status == ReaderSpeechStatus.Ready || status == ReaderSpeechStatus.Paused
-    val canStop = isSpeaking || status == ReaderSpeechStatus.Paused
-    val primaryActionDescription = resources.text(
-        when {
-            isSpeaking -> ReaderStudioLabel.SpeechPause
-            status == ReaderSpeechStatus.Paused -> ReaderStudioLabel.SpeechResume
-            else -> ReaderStudioLabel.SpeechStart
-        },
-    )
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(ReaderStudioTestTags.SpeechTransport),
-        color = colors.article.copy(alpha = 0.82f),
-        contentColor = colors.content,
-        shape = CircleShape,
-        tonalElevation = 1.dp,
+    val isPaused = status == ReaderSpeechStatus.Paused
+    Row(
+        modifier = Modifier.testTag(ReaderStudioTestTags.SpeechTransport),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        if (isSpeaking || isPaused) {
             FilledIconButton(
                 onClick = if (isSpeaking) onPause else onPlay,
-                enabled = isSpeaking || canPlay,
-                modifier = Modifier
-                    .size(52.dp)
-                    .testTag(
-                        if (isSpeaking) {
-                            ReaderStudioTestTags.SpeechPause
-                        } else {
-                            ReaderStudioTestTags.SpeechPlay
-                        },
-                    ),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = colors.accent,
-                    contentColor = colors.onAccent,
-                    disabledContainerColor = colors.muted.copy(alpha = 0.18f),
-                    disabledContentColor = colors.muted,
+                modifier = Modifier.testTag(
+                    if (isSpeaking) {
+                        ReaderStudioTestTags.SpeechPause
+                    } else {
+                        ReaderStudioTestTags.SpeechPlay
+                    },
                 ),
             ) {
+                val description = resources.text(
+                    if (isSpeaking) {
+                        ReaderStudioLabel.SpeechPause
+                    } else {
+                        ReaderStudioLabel.SpeechResume
+                    },
+                )
                 if (isSpeaking) {
                     resources.icon(
                         icon = ReaderStudioIcon.Pause,
-                        modifier = Modifier.size(24.dp),
-                        contentDescription = primaryActionDescription,
+                        modifier = Modifier.size(style.iconSize),
+                        contentDescription = description,
                     )
                 } else {
-                    Icon(VolaIcons.PlayArrowFilled, contentDescription = primaryActionDescription)
+                    Icon(VolaIcons.PlayArrowFilled, contentDescription = description)
                 }
             }
-            Text(
-                excerpt,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 14.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
             IconButton(
                 onClick = onStop,
-                enabled = canStop,
-                modifier = Modifier
-                    .size(48.dp)
-                    .testTag(ReaderStudioTestTags.SpeechStop),
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = colors.accent,
-                    disabledContentColor = colors.muted.copy(alpha = 0.45f),
-                ),
+                modifier = Modifier.testTag(ReaderStudioTestTags.SpeechStop),
             ) {
                 resources.icon(
                     icon = ReaderStudioIcon.Stop,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(style.iconSize),
                     contentDescription = resources.text(ReaderStudioLabel.SpeechStop),
                 )
             }
+        } else {
+            FilledTonalButton(
+                onClick = onPlay,
+                enabled = status == ReaderSpeechStatus.Ready,
+                modifier = Modifier.testTag(ReaderStudioTestTags.SpeechPlay),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    VolaIcons.Headphones,
+                    contentDescription = null,
+                    modifier = Modifier.size(style.iconSize),
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(resources.text(ReaderStudioLabel.Listen))
+            }
+        }
+    }
+}
+
+/** Light, Paper and Dark, each drawn in its own colors; the one in use is outlined. */
+@Composable
+private fun ReaderThemeSwatches(
+    resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    settings: ReaderSettings,
+    browserDark: Boolean,
+    onSettingsChanged: (ReaderSettings) -> Unit,
+) {
+    val current = settings.theme.resolved(browserDark)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectableGroup()
+            .testTag(ReaderStudioTestTags.ThemeSegmented),
+        horizontalArrangement = Arrangement.spacedBy(style.panelGap),
+    ) {
+        READER_SWATCH_THEMES.forEach { theme ->
+            val palette = style.palette(theme, browserDark)
+            val selected = current == theme
+            Surface(
+                selected = selected,
+                onClick = { onSettingsChanged(settings.copy(theme = theme)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = style.swatchHeight)
+                    .semantics { role = Role.RadioButton },
+                shape = style.swatchShape,
+                color = palette.background,
+                contentColor = palette.content,
+                border = if (selected) {
+                    BorderStroke(style.swatchSelectedBorder, MaterialTheme.colorScheme.primary)
+                } else {
+                    BorderStroke(Dp.Hairline, MaterialTheme.colorScheme.outlineVariant)
+                },
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        "Aa",
+                        modifier = Modifier.clearAndSetSemantics { },
+                        fontFamily = style.serifFontFamily,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        resources.text(
+                            when (theme) {
+                                ReaderTheme.Paper -> ReaderStudioLabel.ThemePaper
+                                ReaderTheme.Dark -> ReaderStudioLabel.ThemeDark
+                                ReaderTheme.System,
+                                ReaderTheme.Light,
+                                -> ReaderStudioLabel.ThemeLight
+                            },
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val READER_SWATCH_THEMES = listOf(ReaderTheme.Light, ReaderTheme.Paper, ReaderTheme.Dark)
+
+@Composable
+private fun ReaderTextSize(
+    resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    settings: ReaderSettings,
+    onSettingsChanged: (ReaderSettings) -> Unit,
+) {
+    val description = resources.text(ReaderStudioLabel.TextSize)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(ReaderStudioTestTags.FontSegmented),
+        horizontalArrangement = Arrangement.spacedBy(style.panelGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "A",
+            modifier = Modifier.clearAndSetSemantics { },
+            fontFamily = style.serifFontFamily,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Slider(
+            value = settings.fontScale,
+            onValueChange = { scale ->
+                if (scale != settings.fontScale) onSettingsChanged(settings.copy(fontScale = scale))
+            },
+            modifier = Modifier
+                .weight(1f)
+                .semantics { contentDescription = description },
+            valueRange = ReaderLibraryRules.MIN_FONT_SCALE..ReaderLibraryRules.MAX_FONT_SCALE,
+            steps = ReaderLibraryRules.FONT_SCALE_STEPS,
+        )
+        Text(
+            "A",
+            modifier = Modifier.clearAndSetSemantics { },
+            fontFamily = style.serifFontFamily,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+    }
+}
+
+@Composable
+private fun ReaderFontFamilyChoice(
+    resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    settings: ReaderSettings,
+    onSettingsChanged: (ReaderSettings) -> Unit,
+) {
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(ReaderStudioTestTags.FontFamily),
+    ) {
+        listOf(true, false).forEachIndexed { index, serif ->
+            SegmentedButton(
+                selected = settings.serif == serif,
+                onClick = { onSettingsChanged(settings.copy(serif = serif)) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                label = {
+                    Text(
+                        resources.text(
+                            if (serif) ReaderStudioLabel.FontSerif else ReaderStudioLabel.FontSans,
+                        ),
+                        fontFamily = if (serif) style.serifFontFamily else style.sansFontFamily,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReaderWideMargins(
+    resources: ReaderStudioResources,
+    style: ReaderStudioStyle,
+    settings: ReaderSettings,
+    onSettingsChanged: (ReaderSettings) -> Unit,
+) {
+    Surface(
+        shape = style.cardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = style.buttonHeight)
+                .toggleable(
+                    value = settings.wideMargins,
+                    role = Role.Switch,
+                    onValueChange = { onSettingsChanged(settings.copy(wideMargins = it)) },
+                )
+                .padding(style.cardPadding)
+                .testTag(ReaderStudioTestTags.WideMargins),
+            horizontalArrangement = Arrangement.spacedBy(style.panelGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                VolaIcons.FormatSize,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                resources.text(ReaderStudioLabel.WideMargins),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Switch(checked = settings.wideMargins, onCheckedChange = null)
         }
     }
 }
@@ -981,7 +1157,8 @@ private fun ReaderBlockContent(
     block: ReaderBlock,
     fontScale: Float,
     textAlignment: ReaderTextAlignment,
-    colors: ReaderColors,
+    fontFamily: FontFamily,
+    colors: ReaderPalette,
     onOpenLink: (String) -> Unit,
 ) {
     val justify = ReaderLibraryRules.shouldJustify(block.kind, textAlignment)
@@ -1025,6 +1202,7 @@ private fun ReaderBlockContent(
                     Modifier
                 },
                 style = style.copy(
+                    fontFamily = fontFamily,
                     textAlign = if (justify) TextAlign.Justify else TextAlign.Start,
                     hyphens = if (justify) Hyphens.Auto else Hyphens.None,
                 ),
@@ -1056,7 +1234,7 @@ private fun ReaderLibraryContent(
     resources: ReaderStudioResources,
     snapshots: List<ReaderSnapshot>,
     progressByUrl: Map<String, Float>,
-    colors: ReaderColors,
+    colors: ReaderPalette,
     onOpen: (ReaderSnapshot) -> Unit,
     onDelete: (ReaderSnapshot) -> Unit,
 ) {
@@ -1114,45 +1292,4 @@ private fun ReaderLibraryContent(
         }
         Spacer(Modifier.navigationBarsPadding())
     }
-}
-
-private data class ReaderColors(
-    val background: Color,
-    val content: Color,
-    val muted: Color,
-    val card: Color,
-    val article: Color,
-    val accent: Color,
-    val onAccent: Color,
-)
-
-@Composable
-private fun readerColors(theme: ReaderTheme): ReaderColors = when (theme) {
-    ReaderTheme.System -> ReaderColors(
-        background = MaterialTheme.colorScheme.surfaceContainerLow,
-        content = MaterialTheme.colorScheme.onSurface,
-        muted = MaterialTheme.colorScheme.onSurfaceVariant,
-        card = MaterialTheme.colorScheme.surfaceContainerHigh,
-        article = MaterialTheme.colorScheme.surfaceContainerLowest,
-        accent = MaterialTheme.colorScheme.primary,
-        onAccent = MaterialTheme.colorScheme.onPrimary,
-    )
-    ReaderTheme.Paper -> ReaderColors(
-        background = Color(0xFFFFF4D6),
-        content = Color(0xFF322A1D),
-        muted = Color(0xFF736247),
-        card = Color(0xFFF5E3B7),
-        article = Color(0xFFFFFAEA),
-        accent = Color(0xFF85591A),
-        onAccent = Color.White,
-    )
-    ReaderTheme.Night -> ReaderColors(
-        background = Color(0xFF111317),
-        content = Color(0xFFE5E2E8),
-        muted = Color(0xFFAAA6B0),
-        card = Color(0xFF25272D),
-        article = Color(0xFF191B20),
-        accent = Color(0xFFD8B7FF),
-        onAccent = Color(0xFF281338),
-    )
 }

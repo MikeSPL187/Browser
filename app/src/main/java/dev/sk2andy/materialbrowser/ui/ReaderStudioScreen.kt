@@ -1,18 +1,29 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechController
+import dev.sk2andy.materialbrowser.shared.ui.ReaderPalette
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioIcon
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioLabel
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioResources
+import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioStyle
+import dev.sk2andy.materialbrowser.ui.theme.LiterataFontFamily
+import dev.sk2andy.materialbrowser.ui.theme.ManropeFontFamily
+import dev.sk2andy.materialbrowser.ui.theme.VolaReader
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioScreen as SharedReaderStudioScreen
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioTestTags as SharedReaderStudioTestTags
 
@@ -36,7 +47,9 @@ internal fun ReaderStudioScreen(
         isPrivate = isPrivate,
         repository = repository,
         resources = AndroidReaderStudioResources,
+        style = rememberReaderStudioStyle(),
         speechFactory = { ReaderSpeechController(context) },
+        backHandler = { enabled, onBack -> BackHandler(enabled = enabled, onBack = onBack) },
         onRetry = onRetry,
         onDismiss = onDismiss,
         onOpenOriginal = onOpenOriginal,
@@ -44,7 +57,7 @@ internal fun ReaderStudioScreen(
     )
 }
 
-private object AndroidReaderStudioResources : ReaderStudioResources {
+internal object AndroidReaderStudioResources : ReaderStudioResources {
     @Composable
     override fun text(label: ReaderStudioLabel, value: Int?): String = when (label) {
         ReaderStudioLabel.Close -> stringResource(R.string.reader_close)
@@ -62,15 +75,19 @@ private object AndroidReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.ExtractionInvalid -> stringResource(R.string.reader_extraction_invalid)
         ReaderStudioLabel.Retry -> stringResource(R.string.reader_retry)
         ReaderStudioLabel.SaveOffline -> stringResource(R.string.reader_save_offline)
-        ReaderStudioLabel.OfflineShort -> stringResource(R.string.reader_offline_short)
-        ReaderStudioLabel.ThemeSystem -> stringResource(R.string.reader_theme_system)
+        ReaderStudioLabel.ThemeLight -> stringResource(R.string.reader_theme_light)
         ReaderStudioLabel.ThemePaper -> stringResource(R.string.reader_theme_paper)
-        ReaderStudioLabel.ThemeNight -> stringResource(R.string.reader_theme_night)
-        ReaderStudioLabel.FontDecrease -> stringResource(R.string.reader_font_decrease)
-        ReaderStudioLabel.FontIncrease -> stringResource(R.string.reader_font_increase)
-        ReaderStudioLabel.AlignmentStart -> stringResource(R.string.reader_alignment_start)
-        ReaderStudioLabel.AlignmentJustified ->
-            stringResource(R.string.reader_alignment_justified)
+        ReaderStudioLabel.ThemeDark -> stringResource(R.string.reader_theme_dark)
+        ReaderStudioLabel.ReadingView -> stringResource(R.string.reader_reading_view)
+        ReaderStudioLabel.ReadingTime -> requireNotNull(value).let { minutes ->
+            pluralStringResource(R.plurals.reader_reading_minutes, minutes, minutes)
+        }
+        ReaderStudioLabel.ReadingSettings -> stringResource(R.string.reader_reading_settings)
+        ReaderStudioLabel.TextSize -> stringResource(R.string.reader_text_size)
+        ReaderStudioLabel.FontSerif -> stringResource(R.string.reader_font_serif)
+        ReaderStudioLabel.FontSans -> stringResource(R.string.reader_font_sans)
+        ReaderStudioLabel.WideMargins -> stringResource(R.string.reader_wide_margins)
+        ReaderStudioLabel.Listen -> stringResource(R.string.reader_listen)
         ReaderStudioLabel.SpeechStart -> stringResource(R.string.reader_speech_start)
         ReaderStudioLabel.SpeechResume -> stringResource(R.string.reader_speech_resume)
         ReaderStudioLabel.SpeechPause -> stringResource(R.string.reader_speech_pause)
@@ -93,16 +110,81 @@ private object AndroidReaderStudioResources : ReaderStudioResources {
             painter = painterResource(
                 when (icon) {
                     ReaderStudioIcon.Download -> R.drawable.ic_reader_download
-                    ReaderStudioIcon.FontDecrease -> R.drawable.ic_reader_font_decrease
-                    ReaderStudioIcon.FontIncrease -> R.drawable.ic_reader_font_increase
-                    ReaderStudioIcon.AlignmentStart -> R.drawable.ic_reader_align_start
-                    ReaderStudioIcon.AlignmentJustified -> R.drawable.ic_reader_align_justify
                     ReaderStudioIcon.Pause -> R.drawable.ic_reader_pause
                     ReaderStudioIcon.Stop -> R.drawable.ic_reader_stop
                 },
             ),
             contentDescription = contentDescription,
             modifier = modifier,
+        )
+    }
+}
+
+/** The reader's look from the design tokens (board W-Reader), with the browser's accent. */
+@Composable
+internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
+    val scheme = MaterialTheme.colorScheme
+    val browserDark = scheme.background.luminance() < 0.5f
+    // On a page of the other brightness than the browser, the inverse accent keeps its contrast.
+    val pageAccent = if (browserDark) scheme.inversePrimary else scheme.primary
+    val onPageAccent = if (browserDark) scheme.onPrimaryContainer else scheme.onPrimary
+    val darkAccent = if (browserDark) scheme.primary else scheme.inversePrimary
+    val onDarkAccent = if (browserDark) scheme.onPrimary else scheme.onPrimaryContainer
+    return remember(scheme) {
+        ReaderStudioStyle(
+            light = ReaderPalette(
+                background = VolaReader.lightBackground,
+                content = VolaReader.lightContent,
+                muted = VolaReader.lightMuted,
+                card = VolaReader.lightCard,
+                accent = pageAccent,
+                onAccent = onPageAccent,
+            ),
+            paper = ReaderPalette(
+                background = VolaReader.paperBackground,
+                content = VolaReader.paperContent,
+                muted = VolaReader.paperMuted,
+                card = VolaReader.paperCard,
+                accent = pageAccent,
+                onAccent = onPageAccent,
+            ),
+            dark = ReaderPalette(
+                background = VolaReader.darkBackground,
+                content = VolaReader.darkContent,
+                muted = VolaReader.darkMuted,
+                card = VolaReader.darkCard,
+                accent = darkAccent,
+                onAccent = onDarkAccent,
+            ),
+            serifFontFamily = LiterataFontFamily,
+            sansFontFamily = ManropeFontFamily,
+            titleFontSize = VolaReader.titleFontSize,
+            titleLineHeight = VolaReader.titleLineHeight,
+            progressHeight = VolaReader.progressHeight,
+            articlePadding = VolaReader.articlePadding,
+            wideArticlePadding = VolaReader.wideArticlePadding,
+            articleGap = VolaReader.articleGap,
+            headerPadding = VolaReader.headerPadding,
+            headerGap = VolaReader.headerGap,
+            siteGemSize = VolaReader.siteGemSize,
+            siteGemShape = VolaReader.siteGemShape,
+            panelMargin = VolaReader.panelMargin,
+            panelShape = VolaReader.panelShape,
+            panelElevation = VolaReader.panelElevation,
+            panelPadding = VolaReader.panelPadding,
+            panelGap = VolaReader.panelGap,
+            swatchHeight = VolaReader.swatchHeight,
+            swatchShape = VolaReader.swatchShape,
+            swatchSelectedBorder = VolaReader.swatchSelectedBorder,
+            cardShape = VolaReader.cardShape,
+            cardPadding = PaddingValues(
+                horizontal = VolaReader.cardPaddingHorizontal,
+                vertical = VolaReader.cardPaddingVertical,
+            ),
+            buttonHeight = VolaReader.buttonHeight,
+            iconSize = VolaReader.iconSize,
+            handleWidth = VolaReader.handleWidth,
+            handleHeight = VolaReader.handleHeight,
         )
     }
 }

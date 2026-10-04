@@ -25,7 +25,30 @@ interface ReaderLibraryDataSource {
     )
 }
 
-enum class ReaderTheme { System, Paper, Night }
+/**
+ * Reading themes (board W-Reader): light, paper and dark, which is pure black like the rest of
+ * Vola's dark theme. [System] is the default and follows the browser: light or dark.
+ */
+enum class ReaderTheme {
+    System,
+    Light,
+    Paper,
+    Dark,
+    ;
+
+    fun resolved(browserDark: Boolean): ReaderTheme = when (this) {
+        System -> if (browserDark) Dark else Light
+        else -> this
+    }
+
+    companion object {
+        /** A saved theme, including the names of earlier versions («Night» is now [Dark]). */
+        fun fromStoredName(name: String?): ReaderTheme = when (name) {
+            "Night" -> Dark
+            else -> entries.firstOrNull { it.name == name } ?: System
+        }
+    }
+}
 
 enum class ReaderTextAlignment { Start, Justified }
 
@@ -33,6 +56,10 @@ data class ReaderSettings(
     val fontScale: Float = 1f,
     val theme: ReaderTheme = ReaderTheme.System,
     val textAlignment: ReaderTextAlignment = ReaderTextAlignment.Start,
+    /** Literata (with serifs) or the interface font (without). */
+    val serif: Boolean = true,
+    /** Wider page margins: shorter lines on a wide or large screen. */
+    val wideMargins: Boolean = false,
 )
 
 data class ReaderSnapshot(
@@ -62,7 +89,9 @@ object ReaderLibraryRules {
         state
     } else {
         state.copy(
-            settings = settings.copy(fontScale = settings.fontScale.coerceIn(0.8f, 1.6f)),
+            settings = settings.copy(
+                fontScale = settings.fontScale.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE),
+            ),
         )
     }
 
@@ -108,6 +137,19 @@ object ReaderLibraryRules {
     } else {
         state.copy(snapshots = state.snapshots.filterNot { it.id == snapshotId })
     }
+
+    /** Minutes to read [text] at an unhurried pace, never less than one. */
+    fun readingMinutes(text: String): Int {
+        val words = text.split(Regex("\\s+")).count(String::isNotBlank)
+        return ((words + WORDS_PER_MINUTE - 1) / WORDS_PER_MINUTE).coerceAtLeast(1)
+    }
+
+    const val MIN_FONT_SCALE = 0.8f
+    const val MAX_FONT_SCALE = 1.6f
+
+    /** Stops between the ends of the text size slider, so sizes go 0.1 apart. */
+    const val FONT_SCALE_STEPS = 7
+    private const val WORDS_PER_MINUTE = 200
 
     fun progress(scrollValue: Int, maxScrollValue: Int): Float = when {
         maxScrollValue <= 0 -> 0f
