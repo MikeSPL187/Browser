@@ -47,7 +47,7 @@ saved ui-split-view-light.xml
 tap 'Bottom tab' at 540,1645
 screenshot 20-split-view-bottom-active-light.png
 tap 'Close Split View' at 656,1133
-https-only probe httpforever.com: 10-04 17:57:57.883  4449  4449 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 18:52:05.258  4377  4377 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 21-https-only-light.png
 screenshot 22-page-unknown-host-light.png
 screenshot 23-page-insecure-light.png
@@ -61,12 +61,12 @@ screenshot 28-download-check-light.png
 tap 'Don’t download' at 309,2227
 tap 'More options' at 964,2232
 not found: ('History', 'История')
-tap 'History' at 246,2248
+tap 'History' at 246,2121
 screenshot 29-history-light.png
 saved ui-history-light.xml
 tap 'More options' at 964,2232
 not found: ('Favorites', 'Избранное')
-tap 'Favorites' at 263,1824
+tap 'Favorites' at 263,1869
 screenshot 30-favorites-light.png
 saved ui-favorites-light.xml
 tap 'More options' at 964,2232
@@ -76,7 +76,7 @@ screenshot 31-downloads-light.png
 saved ui-downloads-light.xml
 tap 'More options' at 964,2232
 not found: ('Snoozed Tabs', 'Отложенные вкладки')
-tap 'Snoozed Tabs' at 307,1737
+tap 'Snoozed Tabs' at 307,1740
 screenshot 32-snoozed-light.png
 saved ui-snoozed-light.xml
 screenshot 33-tab-overview-light.png
@@ -126,7 +126,7 @@ tap 'Don’t allow' at 540,2212
 tap 'More options' at 964,2232
 screenshot 53-menu-light.png
 not found: ('Settings', 'Настройки')
-tap 'Settings' at 258,2222
+tap 'Settings' at 258,2179
 screenshot 54-settings-light.png
 tap 'Search settings' at 954,212
 screenshot 55-settings-search-light.png
@@ -140,10 +140,10 @@ tap 'Automatically close tabs' at 321,1862
 tap 'After 7 days' at 195,1585
 screenshot 58-tabs-archive-light.png
 saved ui-tabs-archive-light.xml
-tap 'Automatically close tabs' at 321,1283
-tap 'Never' at 144,250
+tap 'Automatically close tabs' at 321,1252
+tap 'Never' at 144,219
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 407,1784
+tap 'Protection & data' at 407,1739
 screenshot 59-protection-private-lock-light.png
 screenshot 60-current-dark.png
 screenshot 61-new-tab-dark.png
@@ -159,7 +159,7 @@ tap 'Compact mode' at 663,1401
 tap 'More options' at 964,2232
 tap 'Find on page' at 166,917
 screenshot 66-find-dark.png
-find counter dark: 400/400
+find counter dark: 500/500
 tap 'Open site information' at 711,2232
 screenshot 67-site-info-dark.png
 saved ui-site-info-dark.xml
@@ -194,7 +194,7 @@ saved ui-split-view-dark.xml
 tap 'Bottom tab' at 540,1645
 screenshot 79-split-view-bottom-active-dark.png
 tap 'Close Split View' at 656,1133
-https-only probe httpforever.com: 10-04 18:11:53.881  4449  4449 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 19:05:38.506  4377  4377 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 80-https-only-dark.png
 screenshot 81-page-unknown-host-dark.png
 screenshot 82-page-insecure-dark.png
@@ -213,7 +213,7 @@ screenshot 88-history-dark.png
 saved ui-history-dark.xml
 tap 'More options' at 964,2232
 not found: ('Favorites', 'Избранное')
-tap 'Favorites' at 263,1834
+tap 'Favorites' at 263,1753
 screenshot 89-favorites-dark.png
 saved ui-favorites-dark.xml
 tap 'More options' at 964,2232
@@ -223,7 +223,7 @@ screenshot 90-downloads-dark.png
 saved ui-downloads-dark.xml
 tap 'More options' at 964,2232
 not found: ('Snoozed Tabs', 'Отложенные вкладки')
-tap 'Snoozed Tabs' at 307,1667
+tap 'Snoozed Tabs' at 307,1589
 screenshot 91-snoozed-dark.png
 saved ui-snoozed-dark.xml
 screenshot 92-tab-overview-dark.png
@@ -267,7 +267,8 @@ tap 'Don’t allow' at 540,2212
 tap 'More options' at 964,2232
 screenshot 111-menu-dark.png
 not found: ('Settings', 'Настройки')
-tap 'Settings' at 258,2238
+not found: ('Settings', 'Настройки')
+tap 'Settings' at 258,2179
 screenshot 112-settings-dark.png
 tap 'Search settings' at 954,212
 screenshot 113-settings-search-dark.png
@@ -281,10 +282,10 @@ tap 'Automatically close tabs' at 321,1862
 tap 'After 7 days' at 195,1585
 screenshot 116-tabs-archive-dark.png
 saved ui-tabs-archive-dark.xml
-tap 'Automatically close tabs' at 321,1273
-tap 'Never' at 144,240
+tap 'Automatically close tabs' at 321,1225
+tap 'Never' at 144,717
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 407,1800
+tap 'Protection & data' at 407,1488
 screenshot 117-protection-private-lock-dark.png
 screenshot 118-new-tab-a11y.png
 screenshot 119-page-a11y.png
@@ -297,7 +298,7 @@ not found: ('Settings', 'Настройки')
 tap 'Settings' at 318,2178
 screenshot 121-settings-a11y.png
 screenshot 122-page-unknown-host-a11y.png
-Cold start (am start -W, 5 runs): average 3576 ms, min 3445 ms, max 3854 ms
+Cold start (am start -W, 5 runs): average 2910 ms, min 2689 ms, max 3420 ms
 screenshot 123-new-tab-ru.png
 screenshot 124-page-ru.png
 screenshot 125-page-scrolled-ru.png
@@ -346,7 +347,7 @@ saved ui-split-view-ru.xml
 tap 'Bottom tab' at 540,1645
 screenshot 141-split-view-bottom-active-ru.png
 tap 'Close Split View' at 656,1133
-https-only probe httpforever.com: 10-04 18:27:20.718 17046 17046 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+https-only probe httpforever.com: 10-04 19:20:48.723 17154 17154 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
 screenshot 142-https-only-ru.png
 screenshot 143-page-unknown-host-ru.png
 screenshot 144-page-insecure-ru.png
@@ -360,22 +361,22 @@ screenshot 149-download-check-ru.png
 tap 'Don’t download' at 309,2227
 tap 'More options' at 964,2232
 not found: ('History', 'История')
-tap 'History' at 260,2110
+tap 'History' at 260,2037
 screenshot 150-history-ru.png
 saved ui-history-ru.xml
 tap 'More options' at 964,2232
 not found: ('Favorites', 'Избранное')
-tap 'Favorites' at 283,1884
+tap 'Favorites' at 283,1778
 screenshot 151-favorites-ru.png
 saved ui-favorites-ru.xml
 tap 'More options' at 964,2232
 not found: ('Downloads', 'Загрузки')
-tap 'Downloads' at 265,2166
+tap 'Downloads' at 265,1962
 screenshot 152-downloads-ru.png
 saved ui-downloads-ru.xml
 tap 'More options' at 964,2232
 not found: ('Snoozed Tabs', 'Отложенные вкладки')
-tap 'Snoozed Tabs' at 380,1844
+tap 'Snoozed Tabs' at 380,1706
 screenshot 153-snoozed-ru.png
 saved ui-snoozed-ru.xml
 screenshot 154-tab-overview-ru.png
@@ -419,7 +420,6 @@ tap 'Don’t allow' at 540,2212
 tap 'More options' at 964,2232
 screenshot 173-menu-ru.png
 not found: ('Settings', 'Настройки')
-not found: ('Settings', 'Настройки')
 tap 'Settings' at 281,2179
 screenshot 174-settings-ru.png
 tap 'Search settings' at 954,212
@@ -434,15 +434,14 @@ tap 'Automatically close tabs' at 418,2099
 tap 'After 7 days' at 208,1822
 screenshot 178-tabs-archive-ru.png
 saved ui-tabs-archive-ru.xml
-tap 'Automatically close tabs' at 418,1486
-tap 'Never' at 169,453
+tap 'Automatically close tabs' at 418,1448
+tap 'Never' at 169,415
 not found: ('Protection & data', 'Защита и данные')
-tap 'Protection & data' at 408,1824
+tap 'Protection & data' at 408,1817
 screenshot 179-protection-private-lock-ru.png
 tap 'More options' at 964,2232
 not found: ('Settings', 'Настройки')
-not found: ('Settings', 'Настройки')
-tap 'Settings' at 281,2179
+tap 'Settings' at 281,2264
 tap 'Appearance' at 371,1494
 tap 'Air' at 787,776
 screenshot 180-page-air-ru.png
