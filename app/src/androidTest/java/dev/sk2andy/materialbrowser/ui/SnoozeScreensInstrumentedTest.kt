@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -217,7 +218,10 @@ class SnoozeScreensInstrumentedTest {
 
         composeRule.onNodeWithTag(SnoozeTestTags.card("saved")).assertIsDisplayed()
         composeRule.onNodeWithTag(SnoozeTestTags.workspaceIcon("saved")).assertIsDisplayed()
-        composeRule.onNodeWithText(context.getString(R.string.action_open_now)).performClick()
+        // «Open now» is the row's icon; Delete waits in its «⋮» menu (board W-Snoozed).
+        composeRule.onNodeWithContentDescription(context.getString(R.string.action_open_now))
+            .performClick()
+        composeRule.onNodeWithTag(SnoozeTestTags.more("saved")).performClick()
         composeRule.onNodeWithText(context.getString(R.string.action_delete)).performClick()
 
         assertEquals(1, openCalls.get())

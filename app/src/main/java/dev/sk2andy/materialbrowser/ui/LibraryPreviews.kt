@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.runtime.Composable
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.data.DownloadEntry
+import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteFolder
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
@@ -92,6 +94,27 @@ private fun FavoritesScreenPreview() {
             onDeleteFavorite = { _, _ -> },
             onUndoDelete = {},
             onOpenFavorite = {},
+            onBack = {},
+        )
+    }
+}
+
+/** Board W-Downloads: a file still downloading on top, then today's files by kind. */
+@VolaPreviews
+@Composable
+private fun DownloadsScreenPreview() {
+    val now = System.currentTimeMillis()
+    MaterialBrowserTheme {
+        DownloadsScreen(
+            downloads = listOf(
+                DownloadEntry(1, "Карта маршрутов Байкала.pdf", "https://north-guide.ru/map", DownloadStatus.Running, 18_600_000, 30_000_000, now, "application/pdf", supportsPause = true),
+                DownloadEntry(2, "Снаряжение для льда.pdf", "https://north-guide.ru/gear", DownloadStatus.Successful, 2_100_000, 2_100_000, now - PREVIEW_HOUR, "application/pdf"),
+                DownloadEntry(3, "olkhon-grotto.jpg", "", DownloadStatus.Successful, 3_400_000, 3_400_000, now - 2 * PREVIEW_HOUR, "image/jpeg"),
+                DownloadEntry(4, "Отчёт по метрикам.xlsx", "", DownloadStatus.Successful, 86_000, 86_000, now - 3 * PREVIEW_HOUR, ""),
+                DownloadEntry(5, "ice-report.exe", "https://ice.example/", DownloadStatus.Failed, 0, 0, now - 4 * PREVIEW_HOUR, ""),
+            ),
+            onClearFinished = {},
+            onOpenDownload = {},
             onBack = {},
         )
     }

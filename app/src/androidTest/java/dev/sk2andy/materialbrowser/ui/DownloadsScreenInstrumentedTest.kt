@@ -76,6 +76,8 @@ class DownloadsScreenInstrumentedTest {
         composeRule.onNodeWithTag(DownloadsScreenTestTags.download(running.id)).assertDoesNotExist()
 
         composeRule.onNodeWithTag(DownloadsScreenTestTags.SearchField).performTextReplacement("")
+        // The period waits in the header's «⋮» menu; the chips filter by kind.
+        composeRule.onNodeWithTag(DownloadsScreenTestTags.More).performClick()
         composeRule.onNodeWithTag(DownloadsScreenTestTags.timeFilter(DownloadTimeFilter.Today))
             .performClick()
         composeRule.onNodeWithTag(DownloadsScreenTestTags.download(failed.id)).assertDoesNotExist()
