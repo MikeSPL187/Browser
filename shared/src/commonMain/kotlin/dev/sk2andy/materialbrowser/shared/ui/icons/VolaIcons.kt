@@ -116,6 +116,20 @@ object VolaIcons {
         )
     }
 
+    val FormatSize: ImageVector by lazy {
+        materialSymbol(
+            name = "FormatSize",
+            pathData = "M560 280 H420 q-25 0 -42.5 -17.5 T360 220 q0 -25 17.5 -42.5 T420 160 h400 q25 0 42.5 17.5 T880 220 q0 25 -17.5 42.5 T820 280 H680 v460 q0 25 -17.5 42.5 T620 800 q-25 0 -42.5 -17.5 T560 740 v-460 Z M200 480 h-60 q-25 0 -42.5 -17.5 T80 420 q0 -25 17.5 -42.5 T140 360 h240 q25 0 42.5 17.5 T440 420 q0 25 -17.5 42.5 T380 480 h-60 v260 q0 25 -17.5 42.5 T260 800 q-25 0 -42.5 -17.5 T200 740 v-260 Z",
+        )
+    }
+
+    val Headphones: ImageVector by lazy {
+        materialSymbol(
+            name = "Headphones",
+            pathData = "M280 840 h-80 q-33 0 -56.5 -23.5 T120 760 v-280 q0 -75 28.5 -140.5 t77 -114 q48.5 -48.5 114 -77 T480 120 q75 0 140.5 28.5 t114 77 q48.5 48.5 77 114 T840 480 v280 q0 33 -23.5 56.5 T760 840 h-80 q-33 0 -56.5 -23.5 T600 760 v-160 q0 -33 23.5 -56.5 T680 520 h80 v-40 q0 -117 -81.5 -198.5 T480 200 q-117 0 -198.5 81.5 T200 480 v40 h80 q33 0 56.5 23.5 T360 600 v160 q0 33 -23.5 56.5 T280 840 Z m0 -240 h-80 v160 h80 v-160 Z m400 0 v160 h80 v-160 h-80 Z m-400 0 h-80 h80 Z m400 0 h80 h-80 Z",
+        )
+    }
+
     val History: ImageVector by lazy {
         materialSymbol(
             name = "History",
@@ -346,6 +360,8 @@ object VolaIcons {
             Favorite,
             FormatAlignJustify,
             FormatAlignLeft,
+            FormatSize,
+            Headphones,
             History,
             Home,
             Info,

@@ -280,6 +280,45 @@ def tour(suffix):
         time.sleep(1)
     step("address", address_editor)
 
+    def reader():
+        """Reader mode on the Zen article (board W-Reader): the article, «Reading view» over it,
+        and the paper theme. The tour's own theme is picked again before leaving, so the next
+        tour starts from it."""
+        if not find("More options", "Другие действия"):
+            # The scrolled page left the compact capsule, which exposes no label: tap its spot.
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.94)))
+            time.sleep(2)
+        if not tap("More options", "Другие действия"):
+            log("not found: menu for reader mode")
+            return
+        time.sleep(2)
+        if not tap_scrolling("Open Reader Studio", "Открыть режим чтения",
+                             name=f"reader-menu-{suffix}"):
+            return
+        time.sleep(8)
+        if not tap("Reading view settings", "Настройки вида для чтения"):
+            save_ui(f"reader-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            return
+        time.sleep(2)
+        own_theme = ("Dark", "Тёмный") if suffix == "dark" else ("Light", "Светлый")
+        tap(*own_theme)
+        time.sleep(2)
+        shot(f"reader-settings-{suffix}")
+        save_ui(f"reader-settings-{suffix}")
+        if tap("Paper", "Бумага"):
+            time.sleep(2)
+            shot(f"reader-paper-{suffix}", audit=False)
+            tap(*own_theme)
+            time.sleep(1)
+        # Back closes the panel first, then reader mode.
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+        shot(f"reader-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("reader", reader)
+
     def https_upgrade():
         # example.com serves HTTPS, so HTTPS-only mode must upgrade this link (lock in the bar).
         open_url("http://example.com/")

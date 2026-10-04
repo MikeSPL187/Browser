@@ -1182,14 +1182,20 @@
     <string name="reader_retry">Try again</string>
     <string name="reader_save_offline">Save offline</string>
     <string name="reader_saved_offline_confirmation">Saved for offline reading</string>
-    <string name="reader_offline_short">Offline</string>
-    <string name="reader_theme_system">System</string>
+    <string name="reader_theme_light">Light</string>
     <string name="reader_theme_paper">Paper</string>
-    <string name="reader_theme_night">Night</string>
-    <string name="reader_font_decrease">Decrease text size</string>
-    <string name="reader_font_increase">Increase text size</string>
-    <string name="reader_alignment_start">Ragged</string>
-    <string name="reader_alignment_justified">Justified</string>
+    <string name="reader_theme_dark">Dark</string>
+    <string name="reader_reading_view">Reading view</string>
+    <string name="reader_reading_settings">Reading view settings</string>
+    <plurals name="reader_reading_minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d min</item>
+    </plurals>
+    <string name="reader_text_size">Text size</string>
+    <string name="reader_font_serif">Serif</string>
+    <string name="reader_font_sans">Sans serif</string>
+    <string name="reader_wide_margins">Wide margins</string>
+    <string name="reader_listen">Listen</string>
     <string name="reader_speech_start">Read aloud</string>
     <string name="reader_speech_resume">Resume</string>
     <string name="reader_speech_pause">Pause</string>
