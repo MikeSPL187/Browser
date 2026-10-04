@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import dev.sk2andy.materialbrowser.R
@@ -41,6 +44,7 @@ import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 internal object PrivateTabTestTags {
     const val Page = "private_tab_page"
     const val CloseAll = "private_tab_close_all"
+    const val Lock = "private_tab_lock"
 }
 
 /** Where a private tab keeps cookies and site data, which decides what the page may promise. */
@@ -61,6 +65,16 @@ internal data class PrivateTabFact(
     @param:StringRes val title: Int,
     @param:StringRes val caption: Int,
     val warning: Boolean = false,
+)
+
+/**
+ * «Lock on exit» on the private page (board PrivateTab). [available] is false without a strong
+ * biometric: the row stays, switched off, and says why.
+ */
+internal class PrivateTabLock(
+    val checked: Boolean,
+    val available: Boolean,
+    val onCheckedChange: (Boolean) -> Unit,
 )
 
 /** What the private new tab may honestly say for each engine. */
@@ -108,6 +122,7 @@ internal fun PrivateTabPage(
     enabled: Boolean,
     onCloseAll: () -> Unit,
     modifier: Modifier = Modifier,
+    lock: PrivateTabLock? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     Column(
@@ -116,22 +131,7 @@ internal fun PrivateTabPage(
             .testTag(PrivateTabTestTags.Page),
         verticalArrangement = Arrangement.spacedBy(VolaSpacing.x5),
     ) {
-        Box(
-            modifier = Modifier
-                .size(VolaPrivateTab.gemSize)
-                .shadow(VolaPrivateTab.gemGlow, VolaPrivateTab.gemShape, spotColor = colors.primary)
-                .clip(VolaPrivateTab.gemShape)
-                // A deep private accent with a light mask, as on the board, in the always-dark scheme.
-                .background(colors.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_incognito_filled),
-                contentDescription = null,
-                modifier = Modifier.size(VolaPrivateTab.gemGlyphSize),
-                tint = colors.onPrimaryContainer,
-            )
-        }
+        PrivateTabGem()
         Text(
             text = stringResource(R.string.private_tab_title),
             modifier = Modifier.semantics { heading() },
@@ -145,6 +145,7 @@ internal fun PrivateTabPage(
         )
         Column(verticalArrangement = Arrangement.spacedBy(VolaPrivateTab.factGap)) {
             PrivateTabRules.facts(storage).forEach { fact -> PrivateTabFactRow(fact) }
+            lock?.let { PrivateTabLockRow(it, enabled) }
         }
         if (privateTabCount > 0) {
             FilledTonalButton(
@@ -162,12 +163,67 @@ internal fun PrivateTabPage(
     }
 }
 
+/** The private accent gem: the mask on the page, the fingerprint on the lock screen. */
 @Composable
-private fun PrivateTabFactRow(fact: PrivateTabFact) {
+internal fun PrivateTabGem(@DrawableRes icon: Int = R.drawable.ic_incognito_filled) {
+    val colors = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .size(VolaPrivateTab.gemSize)
+            .shadow(VolaPrivateTab.gemGlow, VolaPrivateTab.gemShape, spotColor = colors.primary)
+            .clip(VolaPrivateTab.gemShape)
+            // A deep private accent with a light glyph, as on the board, in the always-dark scheme.
+            .background(colors.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            modifier = Modifier.size(VolaPrivateTab.gemGlyphSize),
+            tint = colors.onPrimaryContainer,
+        )
+    }
+}
+
+@Composable
+private fun PrivateTabLockRow(lock: PrivateTabLock, enabled: Boolean) {
+    val active = enabled && lock.available
+    val checked = lock.checked && lock.available
+    PrivateTabFactRow(
+        fact = PrivateTabFact(
+            icon = R.drawable.ic_symbol_fingerprint,
+            title = R.string.private_tab_lock_title,
+            caption = if (lock.available) {
+                R.string.private_tab_lock_caption
+            } else {
+                R.string.profile_protection_unavailable
+            },
+        ),
+        modifier = Modifier
+            .toggleable(
+                value = checked,
+                enabled = active,
+                role = Role.Switch,
+                onValueChange = lock.onCheckedChange,
+            )
+            .testTag(PrivateTabTestTags.Lock),
+        trailing = { Switch(checked = checked, onCheckedChange = null, enabled = active) },
+    )
+}
+
+@Composable
+private fun PrivateTabFactRow(
+    fact: PrivateTabFact,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     val colors = MaterialTheme.colorScheme
     Row(
-        modifier = Modifier.semantics(mergeDescendants = true) {},
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(VolaPrivateTab.factGap),
+        verticalAlignment = if (trailing != null) Alignment.CenterVertically else Alignment.Top,
     ) {
         Box(
             modifier = Modifier
@@ -182,7 +238,11 @@ private fun PrivateTabFactRow(fact: PrivateTabFact) {
                 tint = if (fact.warning) colors.onErrorContainer else colors.primary,
             )
         }
-        Column(modifier = Modifier.padding(top = VolaSpacing.x1)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .then(if (trailing == null) Modifier.padding(top = VolaSpacing.x1) else Modifier),
+        ) {
             Text(
                 text = stringResource(fact.title),
                 style = MaterialTheme.typography.titleSmall,
@@ -194,6 +254,7 @@ private fun PrivateTabFactRow(fact: PrivateTabFact) {
                 color = colors.onSurfaceVariant,
             )
         }
+        trailing?.invoke()
     }
 }
 
@@ -214,6 +275,7 @@ private fun PrivateTabPagePreview() {
                 privateTabCount = 2,
                 enabled = true,
                 onCloseAll = {},
+                lock = PrivateTabLock(checked = true, available = true, onCheckedChange = {}),
             )
         }
     }
@@ -236,6 +298,7 @@ private fun PrivateTabPageSharedCookiesPreview() {
                 privateTabCount = 1,
                 enabled = true,
                 onCloseAll = {},
+                lock = PrivateTabLock(checked = false, available = false, onCheckedChange = {}),
             )
         }
     }

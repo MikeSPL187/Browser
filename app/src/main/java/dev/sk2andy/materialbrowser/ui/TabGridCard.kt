@@ -40,10 +40,16 @@ internal fun tabCardDescription(tab: BrowserTab, selected: Boolean): String {
     val title = displayTabTitle(tab)
     val current = stringResource(R.string.tab_card_current)
     val pinned = stringResource(R.string.cd_pinned_tab)
-    val url = if (tab.url == BLANK_URL) "" else tab.url
+    val hidden = hidesPrivateTab(tab)
+    val url = if (tab.url == BLANK_URL || hidden) "" else tab.url
+    val locked = stringResource(R.string.private_tab_locked_subtitle)
     return TabCardDescriptionRules.join(
         TabCardDescriptionRules.parts(title, url) +
-            listOfNotNull(current.takeIf { selected }, pinned.takeIf { tab.isPinned }),
+            listOfNotNull(
+                locked.takeIf { hidden },
+                current.takeIf { selected },
+                pinned.takeIf { tab.isPinned },
+            ),
     )
 }
 

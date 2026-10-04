@@ -471,5 +471,5 @@ private fun SiteLetter(entry: EssentialEntry, colorIndex: Int) {
     EssentialIcon(entry = entry, icon = null, colorIndex = colorIndex, size = VolaEssentials.sheetIconSize)
 }
 
-private fun formatCount(count: Int, locale: Locale): String =
+internal fun formatCount(count: Int, locale: Locale): String =
     NumberFormat.getIntegerInstance(locale).format(count)

@@ -716,6 +716,13 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_ARCHIVE_INACTIVE_TABS, enabled).apply()
     }
 
+    fun loadPrivateTabsLockEnabled(): Boolean =
+        preferences.getBoolean(KEY_PRIVATE_TABS_LOCK_ENABLED, false)
+
+    fun savePrivateTabsLockEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_PRIVATE_TABS_LOCK_ENABLED, enabled).apply()
+    }
+
     fun loadPendingTabClearOnTaskRemoval(): Boolean =
         preferences.getBoolean(KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL, false)
 
@@ -1520,6 +1527,7 @@ class BrowserSessionStore internal constructor(
         private val FAVORITES_COMMIT_LOCK = Any()
         const val KEY_INACTIVE_TAB_LIFETIME = "inactive_tab_lifetime"
         const val KEY_ARCHIVE_INACTIVE_TABS = "archive_inactive_tabs"
+        const val KEY_PRIVATE_TABS_LOCK_ENABLED = "private_tabs_lock_enabled"
         const val KEY_PENDING_TAB_CLEAR_ON_TASK_REMOVAL =
             "pending_tab_clear_on_task_removal"
         const val KEY_RESIDENT_TAB_LIMIT = "resident_tab_limit"
