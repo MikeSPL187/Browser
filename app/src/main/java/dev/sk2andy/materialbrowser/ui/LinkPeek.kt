@@ -15,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
@@ -54,7 +53,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
@@ -62,7 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -74,6 +71,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -229,7 +227,7 @@ internal fun <T : View> LinkPeekOverlay(
     val copyLabel = stringResource(R.string.external_link_preview_copy_link)
     val openPrivateLabel = stringResource(R.string.action_open_link_in_private_tab)
     val shareLabel = stringResource(R.string.action_share)
-    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val closeLabel = stringResource(R.string.glance_close)
     val pullLabel = stringResource(R.string.glance_pull_to_open)
     val pullThresholdPx = with(density) { VolaGlance.pullOpenThreshold.toPx() }
     val pullState = rememberDraggableState { delta ->
@@ -300,11 +298,13 @@ internal fun <T : View> LinkPeekOverlay(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // A bare tap gesture leaves the scrim out of the accessibility tree: the card's close
-                // button and back dismiss for TalkBack.
-                .pointerInput(committing) {
-                    if (!committing) detectTapGestures { currentOnDismiss() }
-                },
+                .clickable(
+                    enabled = !committing,
+                    role = Role.Button,
+                    onClick = onDismiss,
+                )
+                // Named like a modal sheet's scrim; it also keeps the page beneath out of TalkBack's reach.
+                .semantics { contentDescription = closeLabel },
         )
         Column(
             modifier = Modifier
