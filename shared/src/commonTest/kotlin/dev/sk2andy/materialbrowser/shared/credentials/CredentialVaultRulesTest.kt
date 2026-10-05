@@ -155,6 +155,23 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun aTwoFactorKeyIsKeptOnlyInItsCanonicalForm() {
+        val logins = listOf(login("1", "https://example.com"))
+        val key = TotpRules.canonical(TotpRules.parse("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")!!)
+
+        val withKey = CredentialVaultRules.setTotp(logins, "1", key, nowMillis = 7)
+        assertEquals(key, withKey?.single()?.totp)
+        assertEquals(7, withKey?.single()?.updatedAtMillis)
+        assertNull(CredentialVaultRules.setTotp(logins, "1", "otpauth://totp/Site:anna?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", 7))
+        assertNull(CredentialVaultRules.setTotp(logins, "missing", key, 7))
+        assertNull(CredentialVaultRules.setTotp(withKey!!, "1", null, 8)?.single()?.totp)
+
+        val edited = CredentialVaultRules.update(withKey, "1", draft(password = "changed"), 9)
+        assertEquals(key, edited.logins.single().totp)
+        assertFalse("JBSWY3DP" in withKey.single().toString())
+    }
+
+    @Test
     fun theLoginNeverPrintsItsSecrets() {
         val text = login("1", "https://example.com").toString() + draft().toString()
         assertFalse("hunter2" in text)

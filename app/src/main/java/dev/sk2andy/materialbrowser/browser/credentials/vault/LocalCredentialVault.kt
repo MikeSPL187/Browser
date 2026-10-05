@@ -196,6 +196,13 @@ internal class LocalCredentialVault(
     }
 
     @Synchronized
+    override fun setTotp(id: String, totp: String?, nowMillis: Long): Boolean {
+        val openKey = key ?: return false
+        val changed = CredentialVaultRules.setTotp(logins, id, totp, nowMillis) ?: return false
+        return persist(openKey, slots, changed).also { written -> if (written) logins = changed }
+    }
+
+    @Synchronized
     override fun delete(id: String): Boolean {
         val openKey = key ?: return false
         val changed = CredentialVaultRules.delete(logins, id) ?: return false

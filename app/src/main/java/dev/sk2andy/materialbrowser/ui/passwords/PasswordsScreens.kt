@@ -68,6 +68,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.delay
+import dev.sk2andy.materialbrowser.browser.credentials.TotpCodes
+import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 
 /** Why a hand-made or edited login was not saved. */
 internal enum class PasswordEditError { SiteInvalid, PasswordRequired, Duplicate, Failed }
@@ -216,9 +221,14 @@ internal fun PasswordDetailScreen(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
+    onCopyCode: (String) -> Unit = {},
+    onSetTotp: (String) -> Boolean = { false },
+    onRemoveTotp: () -> Unit = {},
 ) {
     // Shown only while this page is on screen: never restored after the app was in the background.
     var revealed by remember(login.id) { mutableStateOf(false) }
+    var addingTotp by remember { mutableStateOf(false) }
+    var confirmRemoveTotp by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val site = PasswordsRules.displaySite(login.origin)
     Scaffold(
@@ -289,6 +299,26 @@ internal fun PasswordDetailScreen(
                         }
                     }
                 }
+                LibraryCardSlice(position = LibraryRowPosition.Middle) {
+                    val totp = login.totp
+                    if (totp != null) {
+                        TotpField(totp = totp, onCopy = onCopyCode, onRemove = { confirmRemoveTotp = true })
+                    } else {
+                        TextButton(
+                            onClick = { addingTotp = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(VolaPasswords.fieldPadding)
+                                .testTag(PasswordsTestTags.AddTotp),
+                        ) {
+                            Icon(VolaIcons.Add, contentDescription = null)
+                            Text(
+                                text = stringResource(R.string.passwords_totp_add),
+                                modifier = Modifier.padding(start = VolaPasswords.buttonIconGap),
+                            )
+                        }
+                    }
+                }
                 LibraryCardSlice(position = LibraryRowPosition.Last) {
                     PasswordField(label = stringResource(R.string.passwords_site), value = login.origin)
                 }
@@ -305,6 +335,27 @@ internal fun PasswordDetailScreen(
                 )
             }
         }
+    }
+    if (addingTotp) {
+        TotpEntryDialog(
+            onSave = { input -> onSetTotp(input).also { saved -> if (saved) addingTotp = false } },
+            onDismiss = { addingTotp = false },
+        )
+    }
+    if (confirmRemoveTotp) {
+        AlertDialog(
+            onDismissRequest = { confirmRemoveTotp = false },
+            title = { Text(stringResource(R.string.passwords_totp_remove_title)) },
+            text = { Text(stringResource(R.string.passwords_totp_remove_body, site)) },
+            confirmButton = {
+                TextButton(onClick = { confirmRemoveTotp = false; onRemoveTotp() }) {
+                    Text(stringResource(R.string.passwords_delete_action), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRemoveTotp = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
     }
     if (confirmDelete) {
         AlertDialog(
@@ -346,6 +397,87 @@ private fun PasswordField(
         }
         actions()
     }
+}
+
+/** The two-factor code: grouped digits, seconds left, copy and remove. It renews every period. */
+@Composable
+private fun TotpField(totp: String, onCopy: (String) -> Unit, onRemove: () -> Unit) {
+    val config = remember(totp) { TotpRules.parse(totp) } ?: return
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(config) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(TICK_MILLIS - now % TICK_MILLIS)
+        }
+    }
+    val step = TotpRules.counter(now, config.period)
+    val code = remember(config, step) { TotpCodes.code(config, now) }
+    PasswordField(
+        label = stringResource(R.string.passwords_totp),
+        value = TotpRules.grouped(code),
+        monospace = true,
+        valueTag = PasswordsTestTags.TotpValue,
+    ) {
+        Text(
+            text = stringResource(R.string.passwords_totp_seconds_left, TotpRules.secondsLeft(now, config.period)),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        IconButton(onClick = { onCopy(code) }) {
+            Icon(painterResource(R.drawable.ic_content_copy), contentDescription = stringResource(R.string.passwords_totp_copy))
+        }
+        IconButton(onClick = onRemove, modifier = Modifier.testTag(PasswordsTestTags.RemoveTotp)) {
+            Icon(VolaIcons.Delete, contentDescription = stringResource(R.string.passwords_totp_remove))
+        }
+    }
+}
+
+/** A two-factor key from the site: its `otpauth://` link or the key shown under its QR code. */
+@Composable
+private fun TotpEntryDialog(onSave: (String) -> Boolean, onDismiss: () -> Unit) {
+    var input by remember { mutableStateOf("") }
+    var wrong by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.passwords_totp_add)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(VolaPasswords.formGap)) {
+                Text(
+                    text = stringResource(R.string.passwords_totp_add_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = {
+                        input = it.take(MAX_TOTP_INPUT_LENGTH)
+                        wrong = false
+                    },
+                    label = { Text(stringResource(R.string.passwords_totp_field)) },
+                    isError = wrong,
+                    supportingText = if (wrong) {
+                        { Text(stringResource(R.string.passwords_totp_wrong)) }
+                    } else {
+                        null
+                    },
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(PasswordsTestTags.TotpField),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { wrong = !onSave(input) },
+                modifier = Modifier.testTag(PasswordsTestTags.TotpSave),
+            ) {
+                Text(stringResource(R.string.passwords_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
 }
 
 /** Adds a login by hand, or edits one: site, user name and password. */
@@ -486,3 +618,5 @@ private const val MAX_QUERY_LENGTH = 200
 private const val MAX_SITE_LENGTH = 512
 private const val MAX_USERNAME_LENGTH = 1_024
 private const val MAX_PASSWORD_LENGTH = 4_096
+private const val MAX_TOTP_INPUT_LENGTH = 2_048
+private const val TICK_MILLIS = 1_000L

@@ -17,9 +17,11 @@ data class VaultLogin(
     val updatedAtMillis: Long,
     val lastUsedAtMillis: Long?,
     val timesUsed: Int,
+    /** The two-factor key as a canonical `otpauth://` link ([TotpRules.canonical]); null without one. */
+    val totp: String? = null,
 ) {
     override fun toString(): String =
-        "VaultLogin(id=$id, origin=$origin, username=<redacted>, password=<redacted>)"
+        "VaultLogin(id=$id, origin=$origin, username=<redacted>, password=<redacted>, totp=${if (totp == null) "none" else "<redacted>"})"
 }
 
 /**
@@ -94,6 +96,12 @@ interface CredentialVault {
 
     /** Edits login [id] by hand: its site, user name or password. Refused if it would duplicate another. */
     fun update(id: String, draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult
+
+    /**
+     * Gives login [id] a two-factor key, or removes it with null. [totp] must be a canonical link
+     * ([TotpRules.canonical]); false when it is not, the login is unknown, or the vault is locked.
+     */
+    fun setTotp(id: String, totp: String?, nowMillis: Long): Boolean
 
     /** Records that [id] filled a form; false if it is unknown, the vault is locked or the write failed. */
     fun markUsed(id: String, nowMillis: Long): Boolean
