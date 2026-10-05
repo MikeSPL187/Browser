@@ -1,0 +1,168 @@
+# Baseline profile (stage S3b): on an emulator, records the code a cold start and the first page
+# use, then measures cold start with and without it. Runs on manual dispatch and for pull requests
+# labelled "baseline-profile". The new profile is pushed to
+# the branch "baseline-profile/<branch>" and attached to the run; review it and commit it as
+# app/src/main/baseline-prof.txt in a pull request.
+
+name: Baseline profile
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: baseline-profile-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ANDROID_SERIAL: emulator-5554
+  GENERATOR: dev.sk2andy.materialbrowser.baselineprofile.BaselineProfileGenerator
+  BENCHMARK: dev.sk2andy.materialbrowser.baselineprofile.StartupBenchmark
+
+jobs:
+  baseline-profile:
+    name: Generate and measure
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'baseline-profile') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - name: Install emulator and system image
+        run: |
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          # The SDK mirror sometimes cuts a download short ("Error reading Zip content"):
+          # drop the partial file and try again before failing the job.
+          for attempt in 1 2 3; do
+            if sdkmanager \
+              "emulator" \
+              "platform-tools" \
+              "platforms;android-37.1" \
+              "system-images;android-35;google_apis;x86_64"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "sdkmanager failed (attempt $attempt), retrying"
+            rm -rf "$ANDROID_HOME/.temp" "$HOME/.android/cache"
+            sleep $((attempt * 15))
+          done
+          printf 'no\n' | avdmanager create avd \
+            --force \
+            --name vola_ci \
+            --package "system-images;android-35;google_apis;x86_64" \
+            --device pixel_6
+          sudo chmod 666 /dev/kvm
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+
+      - name: Start emulator
+        run: |
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd vola_ci \
+            -port 5554 \
+            -no-window \
+            -noaudio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            > "$RUNNER_TEMP/emulator.log" 2>&1 &
+
+      - name: Wait for emulator
+        run: |
+          timeout 300 adb wait-for-device
+          # shellcheck disable=SC2016 # expanded by the inner shell
+          timeout 300 bash -c '
+            until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do
+              sleep 2
+            done
+          '
+          adb shell settings put global hide_error_dialogs 1
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell input keyevent 82
+
+      - name: Generate baseline profile
+        run: |
+          ./gradlew --no-daemon --stacktrace :baselineprofile:connectedFullBenchmarkAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.class="$GENERATOR"
+          profile="$(find baselineprofile/build/outputs -name '*-baseline-prof.txt' | head -n 1)"
+          if [[ -z "$profile" ]]; then
+            echo "No baseline profile was written." >&2
+            exit 1
+          fi
+          cp "$profile" app/src/main/baseline-prof.txt
+          echo "Profile rules: $(wc -l < app/src/main/baseline-prof.txt)"
+
+      - name: Measure cold start
+        run: |
+          rm -rf baselineprofile/build/outputs/connected_android_test_additional_output
+          ./gradlew --no-daemon --stacktrace :baselineprofile:connectedFullBenchmarkAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.class="$BENCHMARK"
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          print("### Cold start on the emulator (median, ms)")
+          for path in pathlib.Path("baselineprofile/build/outputs").rglob("*benchmarkData.json"):
+              for benchmark in json.loads(path.read_text())["benchmarks"]:
+                  metrics = benchmark.get("metrics", {})
+                  initial = metrics.get("timeToInitialDisplayMs", {}).get("median")
+                  print(f"- {benchmark['name']}: {initial}")
+          PY
+
+      - name: Publish profile
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          branch="baseline-profile/${SOURCE_BRANCH//\//-}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add app/src/main/baseline-prof.txt
+          git commit --quiet -m "perf(startup): baseline profile from run ${{ github.run_id }}"
+          git push --quiet --force origin "$branch"
+          echo "### Profile" >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch \`$branch\`, $(wc -l < app/src/main/baseline-prof.txt) rules." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profile
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: baseline-profile
+          path: |
+            app/src/main/baseline-prof.txt
+            baselineprofile/build/outputs/connected_android_test_additional_output/
+          if-no-files-found: ignore
+
+      - name: Show emulator log after failure
+        if: ${{ failure() }}
+        run: sed -n '1,300p' "$RUNNER_TEMP/emulator.log" || true
+
+      - name: Stop emulator
+        if: ${{ always() }}
+        run: adb emu kill || true
