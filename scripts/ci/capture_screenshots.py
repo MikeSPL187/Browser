@@ -18,6 +18,8 @@ import time
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
+import startup_timeline
+
 PACKAGE = sys.argv[1]
 OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
@@ -1063,22 +1065,30 @@ def measure_cold_start(runs=5):
         log("cold start: launcher activity not found")
         return
     times = []
+    timelines = []
     for _ in range(runs):
         adb("shell", "am", "force-stop", PACKAGE, check=False)
         time.sleep(2)
+        adb("logcat", "-c", check=False)
         output = (adb("shell", "am", "start", "-W", "-n", component, check=False, capture=True,
                       timeout=90) or b"").decode()
         match = re.search(r"TotalTime:\s*(\d+)", output)
         if match:
             times.append(int(match.group(1)))
-        time.sleep(3)
+        # The page or home screen settles after the first frame; the timeline runs for 15 s.
+        time.sleep(8)
+        timelines.append((adb("logcat", "-d", "-s", "VolaStartup:I", check=False, capture=True)
+                          or b"").decode(errors="replace"))
     if times:
         summary = (f"Cold start (am start -W, {len(times)} runs): average {sum(times) // len(times)} ms, "
                    f"min {min(times)} ms, max {max(times)} ms")
     else:
         summary = "Cold start: no TotalTime reported"
-    (OUT / "startup.txt").write_text(summary + "\n")
+    details = startup_timeline.summarize(timelines)
+    (OUT / "startup.txt").write_text("\n".join([summary, *details]) + "\n")
     log(summary)
+    for line in details:
+        log(line)
 
 
 def air_layout(suffix):
