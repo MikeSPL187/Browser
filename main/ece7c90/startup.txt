@@ -1,0 +1,14 @@
+Cold start (am start -W, 5 runs): average 4009 ms, min 3845 ms, max 4217 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 334
+  ActivityCreateStart: 554
+  ActivityCreateEnd: 1026
+  ActivityResumed: 1112
+  FirstFrame: 2612
+Durations (median, ms):
+  GeckoRuntimeCreate (main): 49
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  2435: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  658: Handler (android.app.ActivityThread$H)  null: 159
+  130: Handler (android.app.ActivityThread$H)  android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0: 0
+  96: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
