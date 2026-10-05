@@ -454,7 +454,8 @@ class BrowserSessionStoreInstrumentedTest {
             animationsEnabled = false,
             forceDarkWebsites = true,
             webContentFontSizePercent = 155,
-            colorPalette = BrowserColorPalette.Neutral,
+            colorPalette = BrowserColorPalette.Dusk,
+            accentOverride = WorkspaceAccent.Coral,
             chromeStyle = BrowserChromeStyle.Air,
             surfaceStyle = BrowserSurfaceStyle.Frosted,
             shapeStyle = BrowserShapeStyle.Angular,
@@ -663,7 +664,7 @@ class BrowserSessionStoreInstrumentedTest {
             AppearanceSettings(
                 appearanceMode = BrowserAppearanceMode.System,
                 webContentFontSizePercent = 125,
-                colorPalette = BrowserColorPalette.Neutral,
+                colorPalette = BrowserColorPalette.Mono,
                 surfaceStyle = BrowserSurfaceStyle.Clear,
                 shapeStyle = BrowserShapeStyle.ExtraRounded,
                 addressBarStyle = BrowserAddressBarStyle.Classic,

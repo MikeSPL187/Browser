@@ -565,7 +565,10 @@
     <string name="settings_color_palette">Colors</string>
     <string name="color_palette_dynamic">Wallpaper</string>
     <string name="color_palette_vola">Vola</string>
-    <string name="color_palette_neutral">Mono</string>
+    <string name="color_palette_ice">Ice</string>
+    <string name="color_palette_dusk">Dusk</string>
+    <string name="color_palette_paper">Paper</string>
+    <string name="color_palette_mono">Mono</string>
     <string name="settings_address_bar_color">Address bar color</string>
     <string name="address_bar_color_theme">Theme</string>
     <string name="address_bar_color_dimmed">Dimmed</string>

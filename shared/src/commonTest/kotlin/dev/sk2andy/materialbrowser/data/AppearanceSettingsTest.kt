@@ -15,6 +15,7 @@ class AppearanceSettingsTest {
         assertFalse(settings.forceDarkWebsites)
         assertEquals(100, settings.webContentFontSizePercent)
         assertEquals(BrowserColorPalette.Vola, settings.colorPalette)
+        assertEquals(null, settings.accentOverride)
         assertEquals(BrowserChromeStyle.Frame, settings.chromeStyle)
         assertEquals(BrowserSurfaceStyle.Clear, settings.surfaceStyle)
         assertEquals(BrowserShapeStyle.Rounded, settings.shapeStyle)
@@ -52,6 +53,7 @@ class AppearanceSettingsTest {
 
         assertEquals(BrowserAppearanceMode.System, BrowserAppearanceMode.fromStableId("unknown"))
         assertEquals(BrowserColorPalette.Vola, BrowserColorPalette.fromStableId("unknown"))
+        assertEquals(BrowserColorPalette.Mono, BrowserColorPalette.fromStableId("neutral"))
         assertEquals(BrowserChromeStyle.Frame, BrowserChromeStyle.fromStableId("unknown"))
         assertEquals(BrowserSurfaceStyle.Clear, BrowserSurfaceStyle.fromStableId("unknown"))
         assertEquals(BrowserShapeStyle.Rounded, BrowserShapeStyle.fromStableId("unknown"))

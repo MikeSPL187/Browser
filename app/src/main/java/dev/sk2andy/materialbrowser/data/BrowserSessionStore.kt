@@ -1333,6 +1333,8 @@ class BrowserSessionStore internal constructor(
             colorPalette = BrowserColorPalette.fromStableId(
                 preferences.getString(KEY_COLOR_PALETTE, null),
             ),
+            accentOverride = preferences.getString(KEY_ACCENT_OVERRIDE, null)
+                ?.let { stored -> WorkspaceAccent.entries.firstOrNull { it.wireValue == stored } },
             chromeStyle = BrowserChromeStyle.fromStableId(
                 preferences.getString(KEY_CHROME_STYLE, null),
             ),
@@ -1376,6 +1378,7 @@ class BrowserSessionStore internal constructor(
             .putBoolean(KEY_FORCE_DARK_WEBSITES, normalized.forceDarkWebsites)
             .putInt(KEY_WEB_CONTENT_FONT_SIZE_PERCENT, normalized.webContentFontSizePercent)
             .putString(KEY_COLOR_PALETTE, normalized.colorPalette.stableId)
+            .putString(KEY_ACCENT_OVERRIDE, normalized.accentOverride?.wireValue)
             .putString(KEY_CHROME_STYLE, normalized.chromeStyle.stableId)
             .putString(KEY_SURFACE_STYLE, normalized.surfaceStyle.stableId)
             .putString(KEY_SHAPE_STYLE, normalized.shapeStyle.stableId)
@@ -1611,6 +1614,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_FORCE_DARK_WEBSITES = "force_dark_websites"
         const val KEY_WEB_CONTENT_FONT_SIZE_PERCENT = "web_content_font_size_percent"
         const val KEY_COLOR_PALETTE = "color_palette"
+        const val KEY_ACCENT_OVERRIDE = "accent_override"
         const val KEY_CHROME_STYLE = "chrome_style"
         const val KEY_SURFACE_STYLE = "surface_style"
         const val KEY_SHAPE_STYLE = "shape_style"
