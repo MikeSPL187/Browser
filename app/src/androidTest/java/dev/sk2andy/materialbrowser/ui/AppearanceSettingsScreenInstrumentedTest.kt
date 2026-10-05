@@ -27,6 +27,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
+import dev.sk2andy.materialbrowser.data.BrowserDensity
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
@@ -313,6 +314,11 @@ class AppearanceSettingsScreenInstrumentedTest {
             .performClick()
             .assertIsSelected()
 
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.density(BrowserDensity.Compact))
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+
         composeRule.onNodeWithTag(ThemesSettingsTestTags.AccentWorkspace)
             .performScrollTo()
             .performClick()
@@ -320,6 +326,7 @@ class AppearanceSettingsScreenInstrumentedTest {
             AppearanceSettings(
                 colorPalette = BrowserColorPalette.Paper,
                 shapeStyle = BrowserShapeStyle.Angular,
+                density = BrowserDensity.Compact,
             ),
             settings,
         )

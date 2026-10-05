@@ -41,6 +41,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.ui.CandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.ui.LocalCandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.ui.androidCandyChromeSurfaceRenderer
+import dev.sk2andy.materialbrowser.shared.ui.theme.LocalBrowserDensity
 
 private val LocalAppearanceSettings = staticCompositionLocalOf { AppearanceSettings() }
 
@@ -108,6 +109,7 @@ internal fun CandyTheme(
         CompositionLocalProvider(
             LocalContentColor provides colorScheme.onSurface,
             LocalAppearanceSettings provides settings,
+            LocalBrowserDensity provides settings.density,
             LocalVolaExtendedColors provides extendedColors,
             LocalVolaDarkTheme provides dark,
             LocalCandyDesignLanguage provides designLanguage,
