@@ -48,6 +48,11 @@ internal object VolaThemesTokens {
     val accentDotSelected = 26.dp
     val accentRing = 2.dp
     val accentCheckSize = 16.dp
+
+    /** The check on a chosen accent: white on deep colors, black from this luminance up. */
+    const val ACCENT_LIGHT_LUMINANCE = 0.4f
+    val checkOnDeep = Color(0xFFFFFFFF)
+    val checkOnLight = Color(0xFF000000)
     const val ACCENTS_PER_ROW = 5
 
     /** The tiles of the board: each theme's light end and deeper end. */

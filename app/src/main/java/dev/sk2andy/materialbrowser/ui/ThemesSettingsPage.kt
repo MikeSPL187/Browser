@@ -403,7 +403,13 @@ private fun AccentChoice(
                 VolaIcons.Check,
                 contentDescription = null,
                 modifier = Modifier.size(VolaThemesTokens.accentCheckSize),
-                tint = if (accent == null || color.luminance() <= 0.4f) Color.White else Color.Black,
+                tint = if (
+                    accent == null || color.luminance() <= VolaThemesTokens.ACCENT_LIGHT_LUMINANCE
+                ) {
+                    VolaThemesTokens.checkOnDeep
+                } else {
+                    VolaThemesTokens.checkOnLight
+                },
             )
         }
     }
