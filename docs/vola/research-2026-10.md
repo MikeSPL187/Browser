@@ -45,9 +45,9 @@ _Исследование · 2026-10-05 · `main` после #105. Интера�
 | Защита от bounce-трекинга | Firefox, Safari, Brave | `bounceTrackingProtectionMode` не задан (по умолчанию выключено) | пробел |
 | Фишинг и вредоносные сайты | Все крупные (Safe Browsing, Scam Blocker у DuckDuckGo) | Safe Browsing выключен по решению владельца. S2: в комплекте HaGeZi Threat Intelligence Feeds (mini, 203 тыс. доменов); адрес проверяется на телефоне до загрузки, показывается экран «Опасный сайт». Список обновляется только с версией приложения | на уровне, кроме свежести |
 | Обновление списков блокировки | uBlock, Brave, AdGuard — каждый день | Списки зашиты в APK и обновляются только с новой версией | слабее |
-| Certificate Transparency, CRLite | Chrome, Firefox (на компьютере — обязательно) | Не заданы явно — действует умолчание GeckoView | проверить |
-| Постквантовый обмен ключами TLS | Chrome, Firefox, Safari | Не задан явно | проверить |
-| Доступ сайтов к локальной сети (LNA) | Chrome 142+, Firefox (вводит) | `setLnaBlocking` и `setLnaBlockTrackers` не используются | слабее |
+| Certificate Transparency, CRLite | Chrome, Firefox (на компьютере — обязательно) | Проверено по исходникам: в GeckoView 157 оба включены в режиме «требовать» (`certificate_transparency.mode = 2`, `crlite_mode = 2`); S1 закрепляет CT явно | на уровне |
+| Постквантовый обмен ключами TLS | Chrome, Firefox, Safari | Проверено: в GeckoView 157 включён (TLS и HTTP/3); S1 закрепляет явно | на уровне |
+| Доступ сайтов к локальной сети (LNA) | Chrome 142+, Firefox (вводит) | Проверено: в GeckoView 157 включено с блокировкой; Vola не показывает запрос, поэтому доступ запрещён. S1 закрепляет явно | на уровне |
 | Изоляция сайтов по процессам | Chrome; у Firefox на Android включена в 147 и откатана в 147.0.2 | `fissionEnabled` и `isolatedProcessEnabled` не используются | ждём Mozilla |
 | Без JIT (защита от эксплойтов JS) | Vanadium (GrapheneOS), Cromite — по умолчанию, с исключениями по сайтам | Нет | идея |
 | GPC | Brave, DuckDuckGo, Firefox | Есть, через своё расширение. Встроенный `globalPrivacyControlEnabled` надёжнее (покрывает воркеры и все запросы) | есть |
