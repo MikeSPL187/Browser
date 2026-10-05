@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <!-- Cold-start timeline for the emulator tour (S3a); debug builds only. -->
+        <provider
+            android:name="dev.sk2andy.materialbrowser.browser.StartupTimelineProvider"
+            android:authorities="${applicationId}.startup-timeline"
+            android:exported="false"
+            android:initOrder="1000" />
         <activity
             android:name="dev.sk2andy.materialbrowser.browser.gecko.GeckoScrollTestActivity"
             android:exported="false"

@@ -25,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.FindInPageOptions
 import dev.sk2andy.materialbrowser.browser.BrowserPerformanceTrace
+import dev.sk2andy.materialbrowser.browser.StartupTimeline
 import dev.sk2andy.materialbrowser.browser.BrowserDynamicToolbarHost
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
@@ -325,7 +326,9 @@ internal class GeckoViewRuntimeHandle private constructor(
                 dnsOverHttpsSettings = store.loadDnsOverHttpsSettings(),
                 httpsOnlyMode = store.loadHttpsOnlyMode(),
             )
-            val runtime = GeckoRuntime.create(appContext, runtimeSettings)
+            val runtime = StartupTimeline.section("GeckoRuntimeCreate") {
+                GeckoRuntime.create(appContext, runtimeSettings)
+            }
             runtime.webNotificationDelegate = GeckoWebNotificationPresenter(appContext)
             if (CredentialVaultFeature.ENABLED) {
                 runtime.autocompleteStorageDelegate = GeckoLoginStorageDelegate(
@@ -1067,6 +1070,7 @@ private class GeckoViewBrowserSession(
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onFirstComposite(session: GeckoSession) {
                 BrowserPerformanceTrace.event(BrowserPerformanceTrace.Phase.GeckoFirstComposite)
+                StartupTimeline.mark("FirstPageComposite")
                 contentPresentationGate.onFirstComposite()
             }
 

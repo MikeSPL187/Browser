@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.blocking
 
 import android.content.Context
+import dev.sk2andy.materialbrowser.browser.StartupTimeline
 import java.util.concurrent.CompletableFuture
 
 internal data class BundledBlockingSnapshot(
@@ -12,6 +13,7 @@ internal data class BundledBlockingSnapshot(
 internal class BundledBlockingSnapshotProvider private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val requestBlockerFuture = CompletableFuture.supplyAsync {
+        StartupTimeline.mark("BlockingListsLoadStart")
         runCatching {
             RequestBlocker(
                 hostRules = loadLinesOrEmpty(
@@ -68,6 +70,7 @@ internal class BundledBlockingSnapshotProvider private constructor(context: Cont
         }
         .exceptionally { EMPTY_SNAPSHOT }
         .thenApply { snapshot ->
+            StartupTimeline.mark("BlockingListsReady")
             readySnapshot = snapshot
             snapshot
         }
@@ -75,7 +78,8 @@ internal class BundledBlockingSnapshotProvider private constructor(context: Cont
     val isReady: Boolean
         get() = readySnapshot != null
 
-    fun snapshot(): BundledBlockingSnapshot = readySnapshot ?: snapshotFuture.join()
+    fun snapshot(): BundledBlockingSnapshot = readySnapshot
+        ?: StartupTimeline.section("BlockingListsWait") { snapshotFuture.join() }
 
     fun snapshotIfReady(): BundledBlockingSnapshot? = readySnapshot
 
