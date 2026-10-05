@@ -1007,6 +1007,11 @@
     <string name="dangerous_site_real">The real site: %1$s</string>
     <string name="dangerous_site_back">Back to safety</string>
     <string name="dangerous_site_open_anyway">Open anyway</string>
+    <string name="dangerous_site_listed_title">Known dangerous site</string>
+    <string name="dangerous_site_listed_message">%1$s is on a list of phishing and malware sites. Pages like this steal passwords and card details or install harmful apps.</string>
+    <string name="dangerous_site_listed_local">Checked on this phone against a built-in list. The address wasn’t sent anywhere.</string>
+    <string name="dangerous_site_safe_browsing_message">Google Safe Browsing reports %1$s as phishing or malware. Pages like this steal passwords and card details or install harmful apps.</string>
+    <string name="dangerous_site_safe_browsing_source">Lists of dangerous addresses come from Google Safe Browsing. Only a short hash is checked with Google, never the address.</string>
     <string name="action_save">Save</string>
     <string name="capsule_add_action">Add as Site Capsule</string>
     <string name="capsule_unavailable_private">Unavailable in Incognito because Capsules persist</string>

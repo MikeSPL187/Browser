@@ -1186,10 +1186,15 @@ private class GeckoViewBrowserSession(
                     }
                     return GeckoResult.fromValue(httpsOnlyErrorPages.dataUri(uri))
                 }
+                val failureKind = GeckoNavigationFailureRules.kindForErrorCode(error.code)
                 updateState { current ->
                     current.copy(
-                        failureDescription = GECKO_NAVIGATION_FAILURE,
-                        failureKind = GeckoNavigationFailureRules.kindForErrorCode(error.code),
+                        // Safe Browsing halts the load before the tab moves, so the warning page
+                        // gets the stopped address from here.
+                        failureDescription = uri.takeIf {
+                            failureKind == BrowserEngineFailureKind.DangerousSite
+                        } ?: GECKO_NAVIGATION_FAILURE,
+                        failureKind = failureKind,
                     )
                 }
                 return null

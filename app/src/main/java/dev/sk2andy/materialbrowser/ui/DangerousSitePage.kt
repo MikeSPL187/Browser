@@ -34,9 +34,9 @@ internal object DangerousSiteTestTags {
 }
 
 /**
- * «This site pretends to be another» (board W-DangerousSite), in place of a navigation that
- * [dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard] stopped before anything loaded.
- * The page is in the danger color; «Back to safety» leaves the tab where it was.
+ * «This site pretends to be another» or «Known dangerous site» (board W-DangerousSite), in place of
+ * a navigation that [dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard] stopped before
+ * anything loaded. The page is in the danger color; «Back to safety» leaves the tab where it was.
  */
 @Composable
 internal fun DangerousSitePage(
@@ -70,13 +70,18 @@ internal fun DangerousSitePage(
             color = background,
             contentColor = content,
         ) {
+            val imitatedHost = site.imitatedHost
             VolaStatePage(
-                title = stringResource(R.string.dangerous_site_title),
-                message = stringResource(
-                    R.string.dangerous_site_message,
-                    site.host,
-                    site.imitatedHost,
+                title = stringResource(
+                    if (imitatedHost != null) R.string.dangerous_site_title else R.string.dangerous_site_listed_title,
                 ),
+                message = when {
+                    imitatedHost != null ->
+                        stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
+                    site.reportedBySafeBrowsing ->
+                        stringResource(R.string.dangerous_site_safe_browsing_message, site.host)
+                    else -> stringResource(R.string.dangerous_site_listed_message, site.host)
+                },
                 icon = {
                     VolaStatePageIcon(icon = VolaIcons.Dangerous, tone = VolaStatePageTone.Accent)
                 },
@@ -89,18 +94,30 @@ internal fun DangerousSitePage(
                     ) {
                         Row(
                             modifier = Modifier
-                                .clickable(role = Role.Button, onClick = onOpenRealSite)
+                                .then(
+                                    if (imitatedHost != null) {
+                                        Modifier.clickable(role = Role.Button, onClick = onOpenRealSite)
+                                    } else {
+                                        Modifier
+                                    },
+                                )
                                 .padding(VolaDangerousSite.cardPadding),
                             horizontalArrangement = Arrangement.spacedBy(VolaDangerousSite.rowGap),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = VolaIcons.Verified,
+                                imageVector = if (imitatedHost != null) VolaIcons.Verified else VolaIcons.ShieldLock,
                                 contentDescription = null,
                                 modifier = Modifier.size(VolaDangerousSite.rowIconSize),
                             )
                             Text(
-                                text = stringResource(R.string.dangerous_site_real, site.imitatedHost),
+                                text = when {
+                                    imitatedHost != null ->
+                                        stringResource(R.string.dangerous_site_real, imitatedHost)
+                                    site.reportedBySafeBrowsing ->
+                                        stringResource(R.string.dangerous_site_safe_browsing_source)
+                                    else -> stringResource(R.string.dangerous_site_listed_local)
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
@@ -112,11 +129,14 @@ internal fun DangerousSitePage(
                     onClick = onBackToSafety,
                     modifier = Modifier.testTag(DangerousSiteTestTags.Back),
                 )
-                VolaStatePageTextButton(
-                    text = stringResource(R.string.dangerous_site_open_anyway),
-                    onClick = onOpenAnyway,
-                    modifier = Modifier.testTag(DangerousSiteTestTags.OpenAnyway),
-                )
+                // The engine refuses a site Safe Browsing reported, so there is no way through.
+                if (!site.reportedBySafeBrowsing) {
+                    VolaStatePageTextButton(
+                        text = stringResource(R.string.dangerous_site_open_anyway),
+                        onClick = onOpenAnyway,
+                        modifier = Modifier.testTag(DangerousSiteTestTags.OpenAnyway),
+                    )
+                }
             }
         }
     }
@@ -133,6 +153,36 @@ private fun DangerousSitePagePreview() {
                 url = "https://bank-exarnple.ru/",
                 host = "bank-exarnple.ru",
                 imitatedHost = "bank.example.ru",
+            ),
+            onBackToSafety = {},
+            onOpenAnyway = {},
+            onOpenRealSite = {},
+        )
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun ListedDangerousSitePagePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        DangerousSitePage(
+            site = BlockedSite(url = "https://login-bank-help.top/", host = "login-bank-help.top"),
+            onBackToSafety = {},
+            onOpenAnyway = {},
+            onOpenRealSite = {},
+        )
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun SafeBrowsingDangerousSitePagePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        DangerousSitePage(
+            site = BlockedSite(
+                url = "https://login-bank-help.top/",
+                host = "login-bank-help.top",
+                reportedBySafeBrowsing = true,
             ),
             onBackToSafety = {},
             onOpenAnyway = {},
