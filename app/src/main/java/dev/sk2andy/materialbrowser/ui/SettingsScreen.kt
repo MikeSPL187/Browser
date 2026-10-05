@@ -511,10 +511,7 @@ internal fun SettingsScreen(
                     title = stringResource(R.string.settings_section_about_legal),
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 ) {
-                    AboutLegalSection(
-                        onOpenUrl = onOpenLegalUrl,
-                        showTitle = false,
-                    )
+                    AboutLegalSection(onOpenUrl = onOpenLegalUrl)
                 }
             }
         }
