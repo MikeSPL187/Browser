@@ -102,6 +102,12 @@ internal class VaultCredentialPromptHost(
             onComplete(false)
             return
         }
+        // The generator opened the vault and asked already; signing in names the saved login.
+        if (prompt.generated && vault.isUnlocked) {
+            CredentialVaultSession.touch(vault)
+            onComplete(true)
+            return
+        }
         val question = VaultPromptRules.saveQuestion(
             hints = vault.loginHints(),
             openLogins = vault.loginsFor(origin).takeIf { vault.isUnlocked },
@@ -155,6 +161,35 @@ internal class VaultCredentialPromptHost(
                 )
             } else {
                 done(null)
+            }
+        }
+    }
+
+    /**
+     * The generator, with or without a vault: with one, «Use and save» opens it first, so Gecko can
+     * save the password as it fills it; without one, «Use» only fills it and the system offers to
+     * save after the sign-up.
+     */
+    override fun generatePassword(prompt: CredentialPasswordGenerationPrompt, onComplete: (String?) -> Unit) {
+        val origin = CredentialPromptRules.canonicalHttpsOrigin(prompt.identity.origin)
+        if (closed || origin == null) {
+            onComplete(null)
+            return
+        }
+        val canSave = vault.exists
+        val done = once(onComplete)
+        val request = VaultLoginRequest.Generate(
+            id = VaultLoginPrompts.nextRequestId(),
+            windowId = windowId,
+            site = VaultPromptRules.displaySite(origin),
+            canSave = canSave,
+        )
+        show(request) { answer ->
+            val password = (answer as? VaultLoginAnswer.Use)?.password
+            when {
+                password == null -> done(null)
+                canSave -> openVault(onOpened = { done(password) }, onFailed = { done(null) })
+                else -> done(password)
             }
         }
     }

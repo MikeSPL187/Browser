@@ -118,6 +118,20 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun signingInWithAGeneratedPasswordNamesItsLogin() {
+        val generated = CredentialVaultRules.save(emptyList(), draft(username = "", password = "Gen3rated!"), 1) { "g" }
+        val logins = generated.logins
+
+        val named = CredentialVaultRules.save(logins, draft(username = "anna", password = "Gen3rated!"), 2) { "new" }
+        assertIs<VaultSaveResult.Updated>(named.result)
+        assertEquals(listOf("g" to "anna"), named.logins.map { it.id to it.username })
+
+        val other = CredentialVaultRules.save(logins, draft(username = "anna", password = "different"), 2) { "new" }
+        assertIs<VaultSaveResult.Added>(other.result)
+        assertEquals(2, other.logins.size)
+    }
+
+    @Test
     fun hintsCarryNoPasswordAndMatchLikeLogins() {
         val logins = listOf(
             login("1", "https://example.com", lastUsed = 10),

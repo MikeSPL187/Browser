@@ -34,6 +34,15 @@ internal sealed interface VaultLoginRequest {
         override fun toString(): String = "VaultLoginRequest.Save(id=$id, update=$update)"
     }
 
+    /** «Strong password» for a new-password field (board W-Generator). */
+    data class Generate(
+        override val id: Long,
+        override val windowId: Int,
+        override val site: String,
+        /** The vault is set up, so the password is saved as it is used. */
+        val canSave: Boolean,
+    ) : VaultLoginRequest
+
     /** «Sign in to …» with the accounts saved for exactly this site (board W-Autofill). */
     data class Select(
         override val id: Long,
@@ -50,6 +59,11 @@ internal sealed interface VaultLoginAnswer {
     /** An account was picked to fill. */
     data class Pick(val username: String) : VaultLoginAnswer {
         override fun toString(): String = "VaultLoginAnswer.Pick(username=<redacted>)"
+    }
+
+    /** A generated password to put in the field. */
+    class Use(val password: String) : VaultLoginAnswer {
+        override fun toString(): String = "VaultLoginAnswer.Use(password=<redacted>)"
     }
 
     /** «Not now», «Don't fill», back, or the page went away. */

@@ -47,6 +47,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -318,6 +320,17 @@ internal fun PasswordEditScreen(
     var username by remember(initial?.id) { mutableStateOf(initial?.username.orEmpty()) }
     var password by remember(initial?.id) { mutableStateOf(initial?.password.orEmpty()) }
     var visible by remember { mutableStateOf(false) }
+    var generating by remember { mutableStateOf(false) }
+    if (generating) {
+        GeneratorSheet(
+            onUse = { generated ->
+                password = generated
+                visible = true
+                generating = false
+            },
+            onDismiss = { generating = false },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -372,11 +385,19 @@ internal fun PasswordEditScreen(
                 visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                 trailingIcon = {
-                    IconButton(onClick = { visible = !visible }) {
-                        Icon(
-                            if (visible) VolaIcons.VisibilityOff else VolaIcons.Visibility,
-                            contentDescription = stringResource(if (visible) R.string.passwords_hide else R.string.passwords_show),
-                        )
+                    Row {
+                        IconButton(
+                            onClick = { generating = true },
+                            modifier = Modifier.testTag(PasswordsTestTags.Generate),
+                        ) {
+                            Icon(VolaIcons.Refresh, contentDescription = stringResource(R.string.passwords_generator_open))
+                        }
+                        IconButton(onClick = { visible = !visible }) {
+                            Icon(
+                                if (visible) VolaIcons.VisibilityOff else VolaIcons.Visibility,
+                                contentDescription = stringResource(if (visible) R.string.passwords_hide else R.string.passwords_show),
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -389,6 +410,24 @@ internal fun PasswordEditScreen(
                 tag = PasswordsTestTags.Save,
             )
         }
+    }
+}
+
+/** The generator over the edit screen; «Use» puts the password in the field. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GeneratorSheet(onUse: (String) -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        PasswordGeneratorContent(
+            subtitle = null,
+            useLabel = stringResource(R.string.passwords_generator_use),
+            useNeedsFingerprint = false,
+            onUse = onUse,
+        )
     }
 }
 

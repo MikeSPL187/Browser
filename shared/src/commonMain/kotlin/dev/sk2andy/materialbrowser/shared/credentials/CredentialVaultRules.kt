@@ -105,6 +105,16 @@ object CredentialVaultRules {
         val existing = logins.firstOrNull { login ->
             login.origin == draft.origin && login.httpRealm == draft.httpRealm && login.username == draft.username
         }
+        // A generated password is saved before the form is sent, without a user name; signing in with
+        // it then names that login instead of adding a second one.
+        val unnamed = logins.firstOrNull { login ->
+            existing == null && draft.username.isNotEmpty() && login.username.isEmpty() &&
+                login.origin == draft.origin && login.httpRealm == draft.httpRealm && login.password == draft.password
+        }
+        if (unnamed != null) {
+            val named = unnamed.copy(username = draft.username, updatedAtMillis = nowMillis)
+            return VaultChange(logins.map { if (it.id == unnamed.id) named else it }, VaultSaveResult.Updated(named))
+        }
         if (existing == null) {
             if (logins.size >= MAX_LOGINS) return VaultChange(logins, VaultSaveResult.Rejected)
             val added = VaultLogin(

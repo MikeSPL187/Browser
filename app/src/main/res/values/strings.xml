@@ -1720,4 +1720,19 @@
     <string name="passwords_sheet_not_now">Not now</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">With the System WebView engine, sites are filled by Android’s autofill service, not from this list.</string>
+    <string name="passwords_generator_title">Strong password</string>
+    <string name="passwords_generator_use_and_save">Use and save</string>
+    <string name="passwords_generator_use">Use</string>
+    <string name="passwords_generator_password">Password</string>
+    <string name="passwords_generator_phrase">Phrase</string>
+    <string name="passwords_generator_new">New password</string>
+    <string name="passwords_generator_length">Length</string>
+    <string name="passwords_generator_words">Words</string>
+    <string name="passwords_generator_digits_symbols">Digits and symbols</string>
+    <string name="passwords_generator_avoid_ambiguous">No look-alike characters (l, 1, O, 0)</string>
+    <string name="passwords_generator_open">Generate a password</string>
+    <string name="passwords_strength_weak">Weak · could be guessed in hours</string>
+    <string name="passwords_strength_fair">Fair · could be guessed in months</string>
+    <string name="passwords_strength_strong">Strong · guessing would take years</string>
+    <string name="passwords_strength_very_strong">Very strong · guessing would take centuries</string>
 </resources>
