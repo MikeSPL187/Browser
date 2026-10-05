@@ -1795,6 +1795,53 @@
     <string name="passwords_totp_remove">Убрать код 2FA</string>
     <string name="passwords_totp_remove_title">Убрать код 2FA?</string>
     <string name="passwords_totp_remove_body">Коды для %1$s больше не будут показываться здесь. Перед удалением убедитесь, что у вас есть другой способ входа.</string>
+    <string name="passwords_import_title">Перенести в Vola</string>
+    <string name="passwords_import_intro">Пароли переносятся на этом телефоне. Файл экспорта Vola предложит удалить сразу после импорта.</string>
+    <string name="passwords_import_from">Откуда</string>
+    <string name="passwords_import_chrome">Chrome</string>
+    <string name="passwords_import_chrome_detail">Пароли (CSV)</string>
+    <string name="passwords_import_firefox">Firefox</string>
+    <string name="passwords_import_firefox_detail">Пароли с компьютера (CSV)</string>
+    <string name="passwords_import_managers">Bitwarden, Proton Pass, 1Password</string>
+    <string name="passwords_import_managers_detail">Пароли и коды 2FA (CSV, JSON)</string>
+    <string name="passwords_import_file">У меня уже есть файл</string>
+    <string name="passwords_import_private">Файлы разбираются на телефоне и никуда не уходят</string>
+    <string name="passwords_import_entry">Перенести пароли в Vola</string>
+    <string name="passwords_import_chrome_title">Перенос из Chrome</string>
+    <string name="passwords_import_firefox_title">Перенос из Firefox</string>
+    <string name="passwords_import_managers_title">Перенос из менеджера паролей</string>
+    <string name="passwords_import_file_title">Импорт файла</string>
+    <string name="passwords_import_chrome_step1">Откройте Chrome → Менеджер паролей</string>
+    <string name="passwords_import_chrome_step1_detail">Настройки → Экспортировать пароли</string>
+    <string name="passwords_import_firefox_step1">На компьютере: Firefox → Пароли</string>
+    <string name="passwords_import_firefox_step1_detail">about:logins → ⋯ → Экспорт паролей</string>
+    <string name="passwords_import_firefox_step2">Перенесите файл на телефон</string>
+    <string name="passwords_import_firefox_step2_detail">Кабелем, через облако или мессенджер — и удалите его там</string>
+    <string name="passwords_import_managers_step1">Экспортируйте хранилище без шифрования</string>
+    <string name="passwords_import_managers_step1_detail">Bitwarden — .json или .csv, Proton Pass и 1Password — .csv</string>
+    <string name="passwords_import_step_save">Сохраните файл на телефон</string>
+    <string name="passwords_import_step_save_detail">Подойдут «Загрузки»</string>
+    <string name="passwords_import_step_pick">Вернитесь в Vola и выберите файл</string>
+    <string name="passwords_import_step_pick_detail">Дубликаты Vola пропустит сама</string>
+    <string name="passwords_import_file_step">Выберите файл экспорта</string>
+    <string name="passwords_import_file_step_detail">CSV из Chrome, Firefox, Bitwarden, Proton Pass или 1Password либо JSON из Bitwarden</string>
+    <string name="passwords_import_pick">Выбрать файл</string>
+    <string name="passwords_import_not_export">Это не экспорт паролей. Выберите файл CSV или JSON, который сохранило другое приложение.</string>
+    <string name="passwords_import_encrypted">Экспорт зашифрован. Экспортируйте ещё раз без пароля.</string>
+    <string name="passwords_import_too_large">Файл слишком большой для экспорта паролей.</string>
+    <string name="passwords_import_not_text">Файл не читается как текст (UTF-8).</string>
+    <string name="passwords_import_unreadable">Не удалось открыть файл.</string>
+    <string name="passwords_import_no_logins">В файле нет логинов для сайтов https.</string>
+    <string name="passwords_import_failed">Не удалось записать в хранилище. Ничего не перенесено.</string>
+    <string name="passwords_import_done">Готово</string>
+    <string name="passwords_import_file_line">%1$s · %2$s</string>
+    <string name="passwords_import_delete_warning">В файле пароли лежат открытым текстом. Удалите его.</string>
+    <string name="passwords_import_delete">Удалить файл</string>
+    <string name="passwords_import_deleted">Файл удалён</string>
+    <string name="passwords_import_delete_failed">Отсюда удалить не вышло. Удалите его в «Файлах» или «Загрузках».</string>
+    <string name="passwords_import_to_passwords">К паролям</string>
+    <string name="passwords_import_check">Проверить перенесённые</string>
+    <string name="settings_move_to_vola_summary">Пароли из Chrome, Firefox и менеджеров паролей</string>
     <string name="passwords_health_title">Проверка паролей</string>
     <string name="passwords_health_percent">%1$d%%</string>
     <string name="passwords_health_fine">в порядке</string>
@@ -1843,5 +1890,29 @@
         <item quantity="few">%d требуют внимания</item>
         <item quantity="many">%d требуют внимания</item>
         <item quantity="other">%d требуют внимания</item>
+    </plurals>
+    <plurals name="passwords_import_added">
+        <item quantity="one">Перенесён %d пароль</item>
+        <item quantity="few">Перенесено %d пароля</item>
+        <item quantity="many">Перенесено %d паролей</item>
+        <item quantity="other">Перенесено %d пароля</item>
+    </plurals>
+    <plurals name="passwords_import_with_totp">
+        <item quantity="one">%d с кодом 2FA</item>
+        <item quantity="few">%d с кодами 2FA</item>
+        <item quantity="many">%d с кодами 2FA</item>
+        <item quantity="other">%d с кодами 2FA</item>
+    </plurals>
+    <plurals name="passwords_import_duplicates">
+        <item quantity="one">%d уже был в Vola</item>
+        <item quantity="few">%d уже были в Vola</item>
+        <item quantity="many">%d уже были в Vola</item>
+        <item quantity="other">%d уже были в Vola</item>
+    </plurals>
+    <plurals name="passwords_import_skipped">
+        <item quantity="one">Пропущен %d: не сайт https или нет пароля</item>
+        <item quantity="few">Пропущено %d: не сайты https или нет пароля</item>
+        <item quantity="many">Пропущено %d: не сайты https или нет пароля</item>
+        <item quantity="other">Пропущено %d: не сайты https или нет пароля</item>
     </plurals>
 </resources>

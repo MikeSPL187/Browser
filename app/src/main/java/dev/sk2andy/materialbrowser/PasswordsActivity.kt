@@ -54,6 +54,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFile
+import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFiles
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportParse
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportRules
+import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportFileState
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportGuideScreen
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportProblem
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportReport
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportResultScreen
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportScreen
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportSource
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordsClient
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
@@ -82,8 +96,22 @@ internal sealed interface PasswordsRoute {
     /** The password check (board W-PasswordHealth). */
     data object Health : PasswordsRoute
 
-    /** Screens that show logins: they need the vault open. */
-    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit || this is Health
+    /** «Move to Vola» (board W-Import): where the passwords come from. */
+    data object Import : PasswordsRoute
+
+    /** How to get the export from [source], and why the last file brought nothing in. */
+    data class ImportGuide(val source: PasswordImportSource, val problem: PasswordImportProblem? = null) : PasswordsRoute
+
+    /** What the import did, and the picked file to delete. */
+    data class ImportDone(
+        val report: PasswordImportReport,
+        val file: Uri,
+        val fileState: PasswordImportFileState = PasswordImportFileState.Present,
+    ) : PasswordsRoute
+
+    /** Screens that show logins or write them: they need the vault open. */
+    val needsOpenVault: Boolean
+        get() = this is Logins || this is Detail || this is Edit || this is Health || this is Import || this is ImportGuide
 }
 
 /** Survives rotation, never the process: nothing here is written to a bundle or to disk. */
@@ -95,6 +123,15 @@ internal class PasswordsViewModel : ViewModel() {
 
     /** The device key did not open the vault; after the phrase opens it, the device gets a new key. */
     var deviceKeyLost = false
+
+    /** Where to go once the vault opens, when that is not the list: an import that was under way. */
+    var afterOpen: PasswordsRoute? = null
+
+    /** Opened from Settings to move passwords in: back from the sources leaves the window. */
+    var launchedForImport = false
+
+    /** The source whose steps the file picker was opened from. */
+    var importSource = PasswordImportSource.File
 
     /** The leak check's answers by login id, kept only while the screen lives. */
     var leakStatus by mutableStateOf(LeakCheckStatus.Off)
@@ -110,6 +147,9 @@ class PasswordsActivity : FragmentActivity() {
     private val model: PasswordsViewModel by viewModels()
     private val vault: LocalCredentialVault by lazy { AndroidCredentialVault.get(this) }
     private val random = SecureRandom()
+    private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(::importFrom)
+    }
 
     /** System WebView fills sites through Android's autofill service; the screen says so. */
     private val systemFillOnly: Boolean by lazy {
@@ -130,7 +170,13 @@ class PasswordsActivity : FragmentActivity() {
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
-        if (model.route == null) model.route = startRoute()
+        if (model.route == null) {
+            if (intent.getBooleanExtra(PasswordsActivityContract.EXTRA_IMPORT, false)) {
+                model.launchedForImport = true
+                model.afterOpen = PasswordsRoute.Import
+            }
+            model.route = startRoute()
+        }
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
@@ -152,7 +198,7 @@ class PasswordsActivity : FragmentActivity() {
 
     private fun startRoute(): PasswordsRoute = when {
         !vault.exists -> PasswordsRoute.Intro
-        vault.isUnlocked -> PasswordsRoute.Logins
+        vault.isUnlocked -> model.afterOpen?.also { model.afterOpen = null } ?: PasswordsRoute.Logins
         else -> PasswordsRoute.Locked
     }
 
@@ -161,7 +207,12 @@ class PasswordsActivity : FragmentActivity() {
         val route = model.route ?: return
         val lockGeneration = CredentialVaultSession.lockGeneration
         LaunchedEffect(lockGeneration) {
-            if (!vault.isUnlocked && model.route?.needsOpenVault == true) model.route = PasswordsRoute.Locked
+            val current = model.route
+            if (!vault.isUnlocked && current?.needsOpenVault == true) {
+                // An import picks up where it was once the vault is open again.
+                if (current is PasswordsRoute.Import || current is PasswordsRoute.ImportGuide) model.afterOpen = current
+                model.route = PasswordsRoute.Locked
+            }
         }
         val logins = remember(model.revision, lockGeneration, route) { vault.allLogins() }
         val message = model.message?.let { stringResource(it) }
@@ -199,6 +250,38 @@ class PasswordsActivity : FragmentActivity() {
                     PasswordHealthRules.report(logins, model.breaches).needsAttention
                 },
                 onHealth = { use { model.route = PasswordsRoute.Health } },
+                onImport = {
+                    use {
+                        model.launchedForImport = false
+                        model.route = PasswordsRoute.Import
+                    }
+                },
+            )
+            PasswordsRoute.Import -> PasswordImportScreen(
+                onSource = { source -> use { model.route = PasswordsRoute.ImportGuide(source) } },
+                onPickFile = { pickExport(PasswordImportSource.File) },
+                onBack = { back(route) },
+            )
+            is PasswordsRoute.ImportGuide -> PasswordImportGuideScreen(
+                source = route.source,
+                problem = route.problem,
+                busy = model.busy,
+                onPick = { pickExport(route.source) },
+                onBack = { back(route) },
+            )
+            is PasswordsRoute.ImportDone -> PasswordImportResultScreen(
+                report = route.report,
+                fileState = route.fileState,
+                healthIssues = remember(logins, model.breaches, route.report) {
+                    val added = route.report.addedIds.toSet()
+                    val report = PasswordHealthRules.report(logins, model.breaches)
+                    (report.breached.map { it.login.id } + report.reused.map { it.login.id } + report.weak.map { it.login.id })
+                        .distinct()
+                        .count { it in added }
+                },
+                onDeleteFile = { deleteExport(route) },
+                onCheck = { use { model.route = PasswordsRoute.Health } },
+                onDone = { back(route) },
             )
             PasswordsRoute.Health -> {
                 LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
@@ -247,6 +330,14 @@ class PasswordsActivity : FragmentActivity() {
             is PasswordsRoute.Recover -> PasswordsRoute.Locked
             is PasswordsRoute.Detail -> PasswordsRoute.Logins
             PasswordsRoute.Health -> PasswordsRoute.Logins
+            PasswordsRoute.Import -> if (model.launchedForImport) {
+                finish()
+                return
+            } else {
+                PasswordsRoute.Logins
+            }
+            is PasswordsRoute.ImportGuide -> PasswordsRoute.Import
+            is PasswordsRoute.ImportDone -> PasswordsRoute.Logins
             is PasswordsRoute.Edit -> route.id?.let(PasswordsRoute::Detail) ?: PasswordsRoute.Logins
             PasswordsRoute.Intro, PasswordsRoute.Locked, PasswordsRoute.Logins -> {
                 finish()
@@ -398,7 +489,67 @@ class PasswordsActivity : FragmentActivity() {
         CredentialVaultSession.touch(vault)
         model.message = null
         model.revision++
-        model.route = PasswordsRoute.Logins
+        model.route = model.afterOpen ?: PasswordsRoute.Logins
+        model.afterOpen = null
+    }
+
+    /** Opens the system file picker for an export; what it may show is kept to text and JSON. */
+    private fun pickExport(source: PasswordImportSource) = use {
+        if (model.busy) return@use
+        model.importSource = source
+        runCatching { exportPicker.launch(EXPORT_TYPES) }
+    }
+
+    private fun importFrom(uri: Uri) = use {
+        val source = model.importSource
+        runBusy {
+            model.route = withContext(Dispatchers.IO) { importRoute(uri, source) }
+            model.revision++
+        }
+    }
+
+    /** Reads, parses and imports [uri]; the route says what came of it. */
+    private fun importRoute(uri: Uri, source: PasswordImportSource): PasswordsRoute {
+        fun problem(problem: PasswordImportProblem) = PasswordsRoute.ImportGuide(source, problem)
+        val file = when (val read = PasswordImportFiles.read(contentResolver, uri)) {
+            is PasswordImportFile.Loaded -> read
+            PasswordImportFile.TooLarge -> return problem(PasswordImportProblem.TooLarge)
+            PasswordImportFile.NotText -> return problem(PasswordImportProblem.NotText)
+            PasswordImportFile.Unreadable -> return problem(PasswordImportProblem.Unreadable)
+        }
+        val parsed = when (val parse = PasswordImportRules.parse(file.text, PasswordsRules::manualOrigin)) {
+            is PasswordImportParse.Read -> parse
+            PasswordImportParse.Encrypted -> return problem(PasswordImportProblem.Encrypted)
+            PasswordImportParse.NotAnExport -> return problem(PasswordImportProblem.NotAnExport)
+        }
+        if (parsed.logins.isEmpty()) return problem(PasswordImportProblem.NoLogins)
+        val summary = when (val result = vault.importLogins(parsed.logins, System.currentTimeMillis())) {
+            is VaultImportResult.Imported -> result.summary
+            VaultImportResult.Locked -> return PasswordsRoute.Locked
+            VaultImportResult.Failed -> return problem(PasswordImportProblem.Failed)
+        }
+        val report = PasswordImportReport(
+            fileName = file.name,
+            fileSizeBytes = file.sizeBytes,
+            added = summary.added,
+            duplicates = summary.duplicates,
+            skipped = parsed.skipped + summary.rejected,
+            withTotp = summary.withTotp,
+            addedIds = summary.addedIds,
+        )
+        return PasswordsRoute.ImportDone(report, uri)
+    }
+
+    private fun deleteExport(route: PasswordsRoute.ImportDone) {
+        if (route.fileState != PasswordImportFileState.Present) return
+        model.route = route.copy(fileState = PasswordImportFileState.Deleting)
+        lifecycleScope.launch {
+            val deleted = withContext(Dispatchers.IO) { PasswordImportFiles.delete(contentResolver, route.file) }
+            val current = model.route as? PasswordsRoute.ImportDone ?: return@launch
+            model.route = current.copy(
+                fileState = if (deleted) PasswordImportFileState.Deleted else PasswordImportFileState.DeleteFailed,
+            )
+        }
     }
 
     private fun lockNow() {
@@ -512,6 +663,9 @@ class PasswordsActivity : FragmentActivity() {
     private companion object {
         const val PREFERENCES = "vola_passwords"
         const val KEY_LEAK_CHECK = "leak_check"
+
+        /** CSV comes as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
+        val EXPORT_TYPES = arrayOf("text/*", "application/json", "application/octet-stream", "application/vnd.ms-excel")
 
         /** The same pair the device key accepts: strong biometrics or the screen lock. */
         const val AUTHENTICATORS =

@@ -2,7 +2,9 @@ package dev.sk2andy.materialbrowser.browser.credentials.vault
 
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVault
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
+import dev.sk2andy.materialbrowser.shared.credentials.ImportedLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultChange
+import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginDraft
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginHint
@@ -200,6 +202,18 @@ internal class LocalCredentialVault(
         val openKey = key ?: return false
         val changed = CredentialVaultRules.setTotp(logins, id, totp, nowMillis) ?: return false
         return persist(openKey, slots, changed).also { written -> if (written) logins = changed }
+    }
+
+    @Synchronized
+    override fun importLogins(logins: List<ImportedLogin>, nowMillis: Long): VaultImportResult {
+        val openKey = key ?: return VaultImportResult.Locked
+        val (changed, summary) = CredentialVaultRules.import(this.logins, logins, nowMillis, newId)
+        if (changed != this.logins) {
+            if (!persist(openKey, slots, changed)) return VaultImportResult.Failed
+            this.logins = changed
+            syncIndex()
+        }
+        return VaultImportResult.Imported(summary)
     }
 
     @Synchronized

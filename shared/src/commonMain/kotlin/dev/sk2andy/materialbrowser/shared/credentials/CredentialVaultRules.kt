@@ -175,6 +175,63 @@ object CredentialVaultRules {
         return logins.map { login -> if (login.id == id) login.copy(totp = totp, updatedAtMillis = nowMillis) else login }
     }
 
+    /** [logins] with [imported] added; see [CredentialVault.importLogins]. */
+    fun import(
+        logins: List<VaultLogin>,
+        imported: List<ImportedLogin>,
+        nowMillis: Long,
+        newId: () -> String,
+    ): Pair<List<VaultLogin>, VaultImportSummary> {
+        val result = logins.toMutableList()
+        val positions = HashMap<Triple<String, String?, String>, Int>()
+        result.forEachIndexed { index, login -> positions[Triple(login.origin, login.httpRealm, login.username)] = index }
+        val addedIds = ArrayList<String>()
+        var duplicates = 0
+        var rejected = 0
+        var withTotp = 0
+        for (item in imported) {
+            val draft = item.draft
+            val totp = item.totp?.takeIf(::acceptsTotp)
+            if (!accepts(draft)) {
+                rejected++
+                continue
+            }
+            val key = Triple(draft.origin, draft.httpRealm, draft.username)
+            val position = positions[key]
+            if (position != null) {
+                duplicates++
+                val existing = result[position]
+                if (existing.totp == null && totp != null) {
+                    result[position] = existing.copy(totp = totp, updatedAtMillis = nowMillis)
+                    withTotp++
+                }
+                continue
+            }
+            if (result.size >= MAX_LOGINS) {
+                rejected++
+                continue
+            }
+            val added = VaultLogin(
+                id = newId(),
+                origin = draft.origin,
+                formActionOrigin = draft.formActionOrigin,
+                httpRealm = draft.httpRealm,
+                username = draft.username,
+                password = draft.password,
+                createdAtMillis = nowMillis,
+                updatedAtMillis = nowMillis,
+                lastUsedAtMillis = null,
+                timesUsed = 0,
+                totp = totp,
+            )
+            positions[key] = result.size
+            result += added
+            addedIds += added.id
+            if (totp != null) withTotp++
+        }
+        return result to VaultImportSummary(addedIds, duplicates, rejected, withTotp)
+    }
+
     /** [logins] with [id] marked as just used, or null if there is no such login. */
     fun markUsed(logins: List<VaultLogin>, id: String, nowMillis: Long): List<VaultLogin>? {
         if (logins.none { it.id == id }) return null
