@@ -322,11 +322,36 @@ jobs:
             fi
           done
 
+          # Say which secret is wrong without printing any of them.
+          for variable in VOLA_RELEASE_STORE_PASSWORD VOLA_RELEASE_KEY_ALIAS VOLA_RELEASE_KEY_PASSWORD; do
+            value="${!variable}"
+            if [[ "$value" != "${value#[[:space:]]}" || "$value" != "${value%[[:space:]]}" ]]; then
+              echo "::warning title=Release signing::${variable} starts or ends with a space or line break."
+            fi
+          done
+          if [[ "$VOLA_RELEASE_STORE_PASSWORD" != "$VOLA_RELEASE_KEY_PASSWORD" ]]; then
+            echo "::warning title=Release signing::VOLA_RELEASE_KEY_PASSWORD differs from VOLA_RELEASE_STORE_PASSWORD; a PKCS12 key uses the store password."
+          fi
+
           keystore="$RUNNER_TEMP/vola-release.jks"
-          printf '%s' "$VOLA_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          # Line breaks and spaces a paste may add are not part of base64.
+          if ! printf '%s' "$VOLA_RELEASE_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$keystore"; then
+            echo "::error title=Release signing::VOLA_RELEASE_KEYSTORE_BASE64 is not valid base64."
+            exit 1
+          fi
           chmod 600 "$keystore"
-          keytool -list -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD \
-            -alias "$VOLA_RELEASE_KEY_ALIAS" > /dev/null
+          echo "Decoded keystore: $(stat -c %s "$keystore") bytes."
+          if ! keytool -list -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD > /dev/null 2>&1; then
+            # keytool prints its error on stdout; it names the problem, never the password.
+            reason="$(keytool -list -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD 2>&1 | grep -m1 'keytool error' || true)"
+            echo "::error title=Release signing::Cannot open the keystore with VOLA_RELEASE_STORE_PASSWORD (wrong password or VOLA_RELEASE_KEYSTORE_BASE64 is not the keystore). ${reason}"
+            exit 1
+          fi
+          if ! keytool -list -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD \
+            -alias "$VOLA_RELEASE_KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error title=Release signing::The keystore has no key with the alias in VOLA_RELEASE_KEY_ALIAS (expected: vola)."
+            exit 1
+          fi
 
           actual_certificate="$(
             keytool -exportcert -keystore "$keystore" -storepass:env VOLA_RELEASE_STORE_PASSWORD \
