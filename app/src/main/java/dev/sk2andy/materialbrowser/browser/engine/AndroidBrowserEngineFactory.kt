@@ -80,6 +80,9 @@ internal interface AndroidBrowserEngineFactory {
 
     fun setHttpsOnlyMode(mode: HttpsOnlyMode) = Unit
 
+    /** Engine-native GPC (workers and every request); WebView keeps the page script and header. */
+    fun setGlobalPrivacyControl(enabled: Boolean) = Unit
+
     fun setWebContentFontSizeFactor(factor: Float)
 
     fun setWebContentColorScheme(colorScheme: BrowserWebContentColorScheme) = Unit
