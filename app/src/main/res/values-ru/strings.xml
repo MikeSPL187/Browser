@@ -1042,6 +1042,9 @@
     <string name="dangerous_site_real">Настоящий сайт: %1$s</string>
     <string name="dangerous_site_back">Вернуться в безопасное место</string>
     <string name="dangerous_site_open_anyway">Всё равно открыть</string>
+    <string name="dangerous_site_listed_title">Опасный сайт</string>
+    <string name="dangerous_site_listed_message">%1$s есть в списке фишинговых и вредоносных сайтов. Такие страницы крадут пароли и данные карт или подсовывают вредные приложения.</string>
+    <string name="dangerous_site_listed_local">Проверено на телефоне по встроенному списку. Адрес никуда не отправлялся.</string>
     <string name="action_save">Сохранить</string>
     <string name="capsule_add_action">Добавить как капсулу сайта</string>
     <string name="capsule_unavailable_private">Недоступно в приватном режиме: капсулы сохраняются</string>

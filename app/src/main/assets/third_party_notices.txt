@@ -29,6 +29,10 @@ complete GPL-3.0 license are provided in uassets.LICENSE.txt.
 HaGeZi Pro network-filter attribution, pinned source and revision, modification notice, and the
 complete GPL-3.0 license are provided in hagezi.LICENSE.txt.
 
+HaGeZi Threat Intelligence Feeds (mini) attribution for the dangerous-site warning, pinned source
+and revision, modification notice, and the complete GPL-3.0 license are provided in
+hagezi_tif.LICENSE.txt.
+
 Recovery phrase word list
 -------------------------
 
