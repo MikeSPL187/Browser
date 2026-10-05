@@ -1,16 +1,17 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,7 +19,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,9 +29,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.BuildConfig
@@ -41,6 +44,12 @@ import dev.sk2andy.materialbrowser.legal.CandyLegalSources
 import dev.sk2andy.materialbrowser.legal.ThirdPartyComponent
 import dev.sk2andy.materialbrowser.legal.ThirdPartyNotice
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsAboutTokens
+import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object AboutLegalTestTags {
     const val Section = "about_legal_section"
@@ -70,57 +79,49 @@ private enum class AboutLegalDialog {
     BundledNotices,
 }
 
+/**
+ * «About & legal» on cards (board W-Settings): the Vola mark with its version, then the legal
+ * rows. Each row opens its dialog over the page.
+ */
 @Composable
 internal fun AboutLegalSection(
     onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier,
-    showTitle: Boolean = true,
 ) {
     var dialog by rememberSaveable { mutableStateOf<AboutLegalDialog?>(null) }
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
 
-    Column(modifier = modifier.testTag(AboutLegalTestTags.Section)) {
-        if (showTitle) {
-            Text(
-                stringResource(R.string.settings_section_about_legal),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
+    Column(
+        modifier = modifier.testTag(AboutLegalTestTags.Section),
+        verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap),
+    ) {
+        AboutHero(containerColor = cardColor)
+        SettingsCardHeader(stringResource(R.string.settings_about_group_legal))
+        SettingsCard(containerColor = cardColor) {
+            SettingsCardLinkRow(
+                title = stringResource(R.string.settings_imprint_title),
+                summary = stringResource(R.string.settings_imprint_summary),
+                dividerColor = dividerColor,
+                divider = true,
+                onClick = { dialog = AboutLegalDialog.Imprint },
+                modifier = Modifier.testTag(AboutLegalTestTags.Imprint),
             )
-            Spacer(Modifier.height(8.dp))
-        }
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Column {
-                AboutLegalRow(
-                    title = stringResource(R.string.settings_imprint_title),
-                    summary = stringResource(R.string.settings_imprint_summary),
-                    tag = AboutLegalTestTags.Imprint,
-                    onClick = { dialog = AboutLegalDialog.Imprint },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 18.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-                AboutLegalRow(
-                    title = stringResource(R.string.settings_open_source_title),
-                    summary = stringResource(R.string.settings_open_source_summary),
-                    tag = AboutLegalTestTags.OpenSource,
-                    onClick = { dialog = AboutLegalDialog.OpenSource },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 18.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-                AboutLegalRow(
-                    title = stringResource(R.string.settings_uassets_source_title),
-                    summary = stringResource(R.string.settings_uassets_source_summary),
-                    tag = AboutLegalTestTags.Uassets,
-                    onClick = { dialog = AboutLegalDialog.Uassets },
-                )
-            }
+            SettingsCardLinkRow(
+                title = stringResource(R.string.settings_open_source_title),
+                summary = stringResource(R.string.settings_open_source_summary),
+                dividerColor = dividerColor,
+                divider = true,
+                onClick = { dialog = AboutLegalDialog.OpenSource },
+                modifier = Modifier.testTag(AboutLegalTestTags.OpenSource),
+            )
+            SettingsCardLinkRow(
+                title = stringResource(R.string.settings_uassets_source_title),
+                summary = stringResource(R.string.settings_uassets_source_summary),
+                dividerColor = dividerColor,
+                onClick = { dialog = AboutLegalDialog.Uassets },
+                modifier = Modifier.testTag(AboutLegalTestTags.Uassets),
+            )
         }
     }
 
@@ -154,45 +155,44 @@ internal fun AboutLegalSection(
     }
 }
 
+/** The Vola mark on a light tile, the name and the version this build carries. */
 @Composable
-private fun AboutLegalRow(
-    title: String,
-    summary: String,
-    tag: String,
-    onClick: () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .sizeIn(minHeight = 64.dp)
-            .testTag(tag),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+private fun AboutHero(containerColor: Color) {
+    SettingsCard(containerColor = containerColor) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(VolaSettingsAboutTokens.heroPadding)
+                .semantics(mergeDescendants = true) {},
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(VolaSettingsAboutTokens.heroGap),
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(12.dp))
             Box(
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier
+                    .size(VolaSettingsAboutTokens.logoTileSize)
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerLowest,
+                        VolaSettingsAboutTokens.logoTileShape,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    VolaIcons.ArrowForward,
+                Image(
+                    painter = painterResource(R.drawable.ic_launcher_foreground_art),
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(VolaSettingsAboutTokens.logoSize),
                 )
             }
+            Spacer(Modifier.height(VolaSettingsAboutTokens.logoGap))
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                stringResource(R.string.release_notes_version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

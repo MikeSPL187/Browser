@@ -890,6 +890,7 @@
     <string name="settings_user_ca_title">Доверие пользовательским CA-сертификатам</string>
     <string name="settings_user_ca_summary">Эта сборка позволяет любому CA, установленному вами или администратором устройства, просматривать и изменять HTTPS-трафик Vola. Используйте только сертификаты и инструменты фильтрации, которым доверяете.</string>
     <string name="settings_section_about_legal">О приложении и правовая информация</string>
+    <string name="settings_about_group_legal">Правовая информация</string>
     <string name="settings_imprint_title">Разработчик</string>
     <string name="settings_imprint_summary">Разработчик, исходный код и исходный проект</string>
     <string name="settings_open_source_title">Открытые и сторонние лицензии</string>

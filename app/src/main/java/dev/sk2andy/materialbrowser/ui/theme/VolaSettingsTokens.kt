@@ -18,3 +18,13 @@ internal object VolaSettingsHomeTokens {
     val logoTileShape = RoundedCornerShape(14.dp)
     val logoSize = 32.dp
 }
+
+/** «About & legal»: the Vola mark and version on a card of their own, above the legal rows. */
+internal object VolaSettingsAboutTokens {
+    val heroPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
+    val heroGap = 4.dp
+    val logoTileSize = 72.dp
+    val logoTileShape = RoundedCornerShape(22.dp)
+    val logoSize = 56.dp
+    val logoGap = 12.dp
+}
