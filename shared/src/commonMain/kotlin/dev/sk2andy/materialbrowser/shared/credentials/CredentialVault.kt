@@ -70,6 +70,9 @@ interface CredentialVault {
 
     fun save(draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult
 
+    /** Edits login [id] by hand: its site, user name or password. Refused if it would duplicate another. */
+    fun update(id: String, draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult
+
     /** Records that [id] filled a form; false if it is unknown, the vault is locked or the write failed. */
     fun markUsed(id: String, nowMillis: Long): Boolean
 

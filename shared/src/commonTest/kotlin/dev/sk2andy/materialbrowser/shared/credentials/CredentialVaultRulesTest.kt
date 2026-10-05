@@ -72,6 +72,26 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun aHandEditChangesTheLoginButNeverDuplicatesAnother() {
+        val alice = login("1", "https://example.com").copy(formActionOrigin = "https://example.com")
+        val bob = login("2", "https://example.com").copy(username = "bob")
+        val logins = listOf(alice, bob)
+
+        val renamed = CredentialVaultRules.update(logins, "1", draft(username = "carol"), nowMillis = 9)
+        val updated = assertIs<VaultSaveResult.Updated>(renamed.result).login
+        assertEquals("carol", updated.username)
+        assertEquals("https://example.com", updated.formActionOrigin)
+        assertEquals(9, updated.updatedAtMillis)
+
+        val moved = CredentialVaultRules.update(logins, "1", draft(origin = "https://other.example.com"), 9)
+        assertNull(assertIs<VaultSaveResult.Updated>(moved.result).login.formActionOrigin)
+
+        assertEquals(VaultSaveResult.Rejected, CredentialVaultRules.update(logins, "1", draft(username = "bob"), 9).result)
+        assertEquals(VaultSaveResult.Rejected, CredentialVaultRules.update(logins, "9", draft(), 9).result)
+        assertIs<VaultSaveResult.Unchanged>(CredentialVaultRules.update(logins, "1", draft(), 9).result)
+    }
+
+    @Test
     fun unsafeDraftsAreRejected() {
         fun rejected(draft: VaultLoginDraft) =
             CredentialVaultRules.save(emptyList(), draft, 1) { "x" }.result == VaultSaveResult.Rejected

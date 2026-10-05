@@ -135,6 +135,39 @@ internal class LocalCredentialVault(
     }
 
     @Synchronized
+    override fun update(id: String, draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult {
+        val openKey = key ?: return VaultSaveResult.Locked
+        val change = CredentialVaultRules.update(logins, id, draft, nowMillis)
+        if (change.logins === logins) return change.result
+        if (!persist(openKey, slots, change.logins)) return VaultSaveResult.Failed
+        logins = change.logins
+        return change.result
+    }
+
+    /**
+     * Gives the open vault a new slot for [way], replacing any slot of that kind: after recovering
+     * with the phrase, the device gets a fresh key; after showing a new phrase, the old one stops
+     * working. Needs the vault open, and [way] may first need the user (device key).
+     */
+    @Synchronized
+    fun replaceSlot(way: VaultKeyWrapper): VaultOpenResult {
+        val openKey = key ?: return VaultOpenResult.Refused
+        val payload = when (val wrapped = way.wrap(openKey)) {
+            is VaultKeyOutcome.Done -> wrapped.value
+            VaultKeyOutcome.NeedsAuthentication -> return VaultOpenResult.NeedsAuthentication
+            VaultKeyOutcome.Refused -> return VaultOpenResult.Failed
+        }
+        val newSlots = slots.filterNot { it.type == way.slotType } + VaultSlot(way.slotType, payload)
+        if (!persist(openKey, newSlots, logins)) return VaultOpenResult.Failed
+        slots = newSlots
+        return VaultOpenResult.Opened
+    }
+
+    /** Which ways in the vault file offers, or empty when there is none or it cannot be read. */
+    fun slotTypes(): Set<Int> =
+        storage.read()?.let(VaultEnvelope::decode)?.slots?.mapTo(mutableSetOf(), VaultSlot::type).orEmpty()
+
+    @Synchronized
     override fun markUsed(id: String, nowMillis: Long): Boolean {
         val openKey = key ?: return false
         val changed = CredentialVaultRules.markUsed(logins, id, nowMillis) ?: return false

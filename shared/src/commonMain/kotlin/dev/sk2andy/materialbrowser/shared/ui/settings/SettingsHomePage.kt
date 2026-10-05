@@ -11,6 +11,7 @@ import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.SettingsDestination
 
 enum class SettingsHomeIcon {
+    Passwords,
     Search,
     Sync,
     TabsAndGestures,
@@ -60,6 +61,7 @@ object SettingsHomeRules {
         hasFirefoxExtensions: Boolean,
         hasDeveloperOptions: Boolean = false,
     ): List<SettingsHomeItem> = buildList {
+        add(item(SettingsHomeCard.Protection, SettingsDestination.Passwords, SettingsHomeIcon.Passwords, WorkspaceAccent.Amber))
         add(item(SettingsHomeCard.Protection, SettingsDestination.ProtectionAndData, SettingsHomeIcon.ProtectionAndData, WorkspaceAccent.Green))
         add(item(SettingsHomeCard.Protection, SettingsDestination.Sync, SettingsHomeIcon.Sync, WorkspaceAccent.Blue))
         add(item(SettingsHomeCard.Personalization, SettingsDestination.Appearance, SettingsHomeIcon.Appearance, WorkspaceAccent.Rose))

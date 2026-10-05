@@ -95,6 +95,32 @@ class LocalCredentialVaultTest {
         assertFalse(vault.isUnlocked)
     }
 
+    @Test
+    fun `edits keep the login and a recovered vault gets a new device key`() {
+        val storage = MemoryStorage()
+        val vault = LocalCredentialVault(storage, random)
+        vault.create(listOf(FakeDeviceWrapper(), recovery()))
+        val login = (vault.save(draft("hunter2"), 1) as VaultSaveResult.Added).login
+        vault.save(VaultLoginDraft(ORIGIN, null, null, "bob", "pw"), 2)
+
+        val edited = vault.update(login.id, VaultLoginDraft(ORIGIN, null, null, "alice", "changed"), 3)
+        assertEquals("changed", (edited as VaultSaveResult.Updated).login.password)
+        assertEquals(VaultSaveResult.Rejected, vault.update(login.id, VaultLoginDraft(ORIGIN, null, null, "bob", "x"), 4))
+        assertEquals(VaultSaveResult.Rejected, vault.update("missing", draft("x"), 5))
+
+        // The device key is lost: open with the phrase, then wrap a fresh device key.
+        vault.lock()
+        val newDevice = FakeDeviceWrapper(seed = 9)
+        assertEquals(VaultOpenResult.Refused, vault.unlock(newDevice))
+        assertEquals(VaultOpenResult.Opened, vault.unlock(recovery()))
+        assertEquals(VaultOpenResult.Opened, vault.replaceSlot(newDevice))
+        assertEquals(setOf(VaultSlotType.DEVICE, VaultSlotType.RECOVERY_PHRASE), vault.slotTypes())
+        vault.lock()
+        assertEquals(VaultOpenResult.Opened, vault.unlock(newDevice))
+        assertEquals(VaultOpenResult.Refused, vault.unlock(FakeDeviceWrapper()))
+        assertEquals(VaultOpenResult.Opened, vault.unlock(recovery()))
+    }
+
     private fun recovery() = RecoveryPhraseKeyWrapper(phrase, random, iterations = 1_000)
 
     private fun draft(password: String) = VaultLoginDraft(ORIGIN, null, null, "alice", password)
@@ -125,8 +151,11 @@ class LocalCredentialVaultTest {
     }
 
     /** Stands in for the Keystore key: a fixed key that may demand the user first. */
-    private class FakeDeviceWrapper(private val authenticated: Boolean = true) : VaultKeyWrapper {
-        private val deviceKey = ByteArray(VaultCrypto.KEY_BYTES) { 7 }
+    private class FakeDeviceWrapper(
+        private val authenticated: Boolean = true,
+        seed: Byte = 7,
+    ) : VaultKeyWrapper {
+        private val deviceKey = ByteArray(VaultCrypto.KEY_BYTES) { seed }
         private val random = SecureRandom()
 
         override val slotType = VaultSlotType.DEVICE

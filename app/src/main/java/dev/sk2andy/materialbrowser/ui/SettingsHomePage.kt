@@ -145,6 +145,7 @@ private fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState):
 private fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) {
     SettingsHomeIcon.Search -> VolaIcons.Search
     SettingsHomeIcon.Sync -> VolaIcons.Sync
+    SettingsHomeIcon.Passwords -> VolaIcons.Key
     SettingsHomeIcon.TabsAndGestures -> VolaIcons.Tab
     SettingsHomeIcon.Appearance -> VolaIcons.Palette
     SettingsHomeIcon.Browser -> VolaIcons.Settings

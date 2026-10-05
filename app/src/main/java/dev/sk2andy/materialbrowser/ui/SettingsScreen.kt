@@ -1,8 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
@@ -13,6 +15,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
@@ -445,6 +448,15 @@ internal fun SettingsScreen(
                     onDeleteCapsule = onDeleteCapsule,
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 )
+
+                // Passwords have their own secure window: open it and come back to the home.
+                SettingsDestination.Passwords -> {
+                    val context = LocalContext.current
+                    LaunchedEffect(Unit) {
+                        context.startActivity(PasswordsActivityContract.launchIntent(context))
+                        onDestinationChanged(SettingsDestination.Home)
+                    }
+                }
 
                 SettingsDestination.Sync -> SyncSettingsPage(
                     state = syncState,

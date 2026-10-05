@@ -14,7 +14,7 @@ class SettingsHomeRulesTest {
 
         assertEquals(
             listOf(
-                listOf(SettingsDestination.ProtectionAndData, SettingsDestination.Sync),
+                listOf(SettingsDestination.Passwords, SettingsDestination.ProtectionAndData, SettingsDestination.Sync),
                 listOf(
                     SettingsDestination.Appearance,
                     SettingsDestination.TabsAndGestures,

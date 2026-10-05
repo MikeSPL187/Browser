@@ -102,6 +102,31 @@ object CredentialVaultRules {
         return VaultChange(logins.map { if (it.id == existing.id) updated else it }, VaultSaveResult.Updated(updated))
     }
 
+    /**
+     * [logins] with login [id] replaced by [draft]: the user edited it. Refused when the draft breaks
+     * a rule, the login is gone, or another login already has the same origin, realm and user name.
+     */
+    fun update(logins: List<VaultLogin>, id: String, draft: VaultLoginDraft, nowMillis: Long): VaultChange {
+        val existing = logins.firstOrNull { it.id == id }
+        if (existing == null || !accepts(draft)) return VaultChange(logins, VaultSaveResult.Rejected)
+        val clash = logins.any { login ->
+            login.id != id && login.origin == draft.origin &&
+                login.httpRealm == draft.httpRealm && login.username == draft.username
+        }
+        if (clash) return VaultChange(logins, VaultSaveResult.Rejected)
+        val updated = existing.copy(
+            origin = draft.origin,
+            // The form's action belonged to the old site; a hand edit to another site drops it.
+            formActionOrigin = existing.formActionOrigin.takeIf { draft.origin == existing.origin },
+            httpRealm = draft.httpRealm,
+            username = draft.username,
+            password = draft.password,
+        )
+        if (updated == existing) return VaultChange(logins, VaultSaveResult.Unchanged(existing))
+        val stamped = updated.copy(updatedAtMillis = nowMillis)
+        return VaultChange(logins.map { if (it.id == id) stamped else it }, VaultSaveResult.Updated(stamped))
+    }
+
     /** [logins] with [id] marked as just used, or null if there is no such login. */
     fun markUsed(logins: List<VaultLogin>, id: String, nowMillis: Long): List<VaultLogin>? {
         if (logins.none { it.id == id }) return null
