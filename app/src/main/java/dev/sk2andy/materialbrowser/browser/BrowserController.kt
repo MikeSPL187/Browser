@@ -1349,7 +1349,7 @@ class BrowserController(
         localProfileIds = { localProfiles.map(BrowserProfile::id) },
         favoriteLibrary = { favoriteLibrary },
     )
-    val dangerousSites = DangerousSiteGuard {
+    val dangerousSites = DangerousSiteGuard(activity) {
         favorites.map(FavoriteEntry::url) +
             localProfiles.flatMap { profile -> essentials.entriesFor(profile.id).map { it.url } }
     }

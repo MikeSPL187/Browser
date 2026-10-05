@@ -39,4 +39,29 @@ class DangerousSiteGuardTest {
         assertNull(guard.blocked["tab"])
         assertTrue(guard.intercept("tab", "https://paypa1.com/"))
     }
+
+    @Test
+    fun `a host on the threat list is stopped with no site to point to`() {
+        val listed = DangerousSiteGuard(listedHosts = { host -> host == "www.login-bank.top" }) {
+            emptyList()
+        }
+
+        assertTrue(listed.intercept("tab", "https://www.login-bank.top/sign-in"))
+        assertEquals(
+            BlockedSite("https://www.login-bank.top/sign-in", "login-bank.top", imitatedHost = null),
+            listed.blocked["tab"],
+        )
+        assertEquals("https://www.login-bank.top/sign-in", listed.allow("tab"))
+        assertFalse(listed.intercept("tab", "https://www.login-bank.top/"))
+    }
+
+    @Test
+    fun `a lookalike on the threat list still names the real site`() {
+        val listed = DangerousSiteGuard(listedHosts = { true }) {
+            listOf("https://bank.example.ru/")
+        }
+
+        assertTrue(listed.intercept("tab", "https://bank-exarnple.ru/"))
+        assertEquals("bank.example.ru", listed.blocked["tab"]?.imitatedHost)
+    }
 }

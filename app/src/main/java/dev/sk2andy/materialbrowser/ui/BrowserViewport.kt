@@ -613,7 +613,7 @@ internal fun BrowserViewport(
                 },
                 onOpenRealSite = {
                     controller.dangerousSites.dismiss(selectedTab.id)
-                    controller.submitAddress("https://${site.imitatedHost}/")
+                    site.imitatedHost?.let { host -> controller.submitAddress("https://$host/") }
                 },
                 modifier = pageOverlayModifier,
             )
