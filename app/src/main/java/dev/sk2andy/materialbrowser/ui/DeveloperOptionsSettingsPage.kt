@@ -1,37 +1,37 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSliderRow
+import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
+import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import kotlin.math.roundToInt
 
 internal object DeveloperOptionsTestTags {
     const val BrowserChromeScrollDispatchMode = "developer_options_scroll_dispatch_mode"
@@ -57,6 +57,7 @@ internal object DeveloperOptionsTestTags {
     const val GeckoReset = "developer_options_gecko_reset"
 }
 
+/** Developer options on cards (board W-Settings), unlocked by a long press on «About». */
 @Composable
 internal fun DeveloperOptionsSettingsPage(
     settings: DeveloperSettings,
@@ -72,184 +73,173 @@ internal fun DeveloperOptionsSettingsPage(
     onBack: () -> Unit,
 ) {
     var httpAutofillConfirmationVisible by rememberSaveable { mutableStateOf(false) }
-    var scrollDispatchMenuExpanded by remember { mutableStateOf(false) }
+    val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
+    val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
         title = stringResource(R.string.developer_options_title),
         onBack = onBack,
     ) {
-        SettingsSectionTitle(stringResource(R.string.developer_options_security_section))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_http_password_autofill_title),
-            subtitle = stringResource(
-                if (isHttpPasswordAutofillSupported) {
-                    R.string.settings_http_password_autofill_gecko_summary
-                } else {
-                    R.string.settings_http_password_autofill_system_webview_summary
-                },
-            ),
-            checked = isHttpPasswordAutofillSupported && isHttpPasswordAutofillEnabled,
-            enabled = isHttpPasswordAutofillSupported,
-            onCheckedChange = { enabled ->
-                if (enabled) httpAutofillConfirmationVisible = true
-                else onHttpPasswordAutofillEnabledChanged(false)
-            },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.HttpPasswordAutofill),
-        )
-        Text(
-            text = stringResource(R.string.settings_http_password_autofill_warning),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.developer_options_diagnostics_section))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_input_diagnostics),
-            subtitle = stringResource(R.string.developer_options_input_diagnostics_summary),
-            checked = isInputDiagnosticsEnabled,
-            onCheckedChange = onInputDiagnosticsEnabledChanged,
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.InputDiagnostics),
-        )
-        SettingsPageSpacer()
-        DeveloperAction(
-            title = stringResource(R.string.developer_options_copy_diagnostics),
-            summary = stringResource(R.string.developer_options_copy_diagnostics_summary),
-            onClick = onCopyDiagnostics,
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.CopyDiagnostics),
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.developer_options_presentations_section))
-        Spacer(Modifier.height(8.dp))
-        DeveloperAction(
-            title = stringResource(R.string.developer_options_show_onboarding),
-            summary = stringResource(R.string.developer_options_show_onboarding_summary),
-            onClick = onShowOnboarding,
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.ShowOnboarding),
-        )
-        SettingsPageSpacer()
-        DeveloperAction(
-            title = stringResource(R.string.developer_options_show_release_notes),
-            summary = stringResource(R.string.developer_options_show_release_notes_summary),
-            onClick = onShowReleaseNotes,
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.ShowReleaseNotes),
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.developer_options_experiments_section))
-        Spacer(Modifier.height(8.dp))
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_force_safe_area_fallback),
-            subtitle = stringResource(
-                R.string.developer_options_force_safe_area_fallback_summary,
-            ),
-            checked = settings.forceSafeAreaFallback,
-            onCheckedChange = { enabled ->
-                onSettingsChanged(settings.copy(forceSafeAreaFallback = enabled))
-            },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.ForceSafeAreaFallback),
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.developer_options_performance_section))
-        Spacer(Modifier.height(8.dp))
-        Box {
-            SettingsChoice(
-                title = stringResource(R.string.developer_options_scroll_dispatch_mode),
-                value = settings.browserChromeScrollDispatchMode.displayName(),
-                expanded = scrollDispatchMenuExpanded,
-                onClick = { scrollDispatchMenuExpanded = true },
-                modifier = Modifier.testTag(
-                    DeveloperOptionsTestTags.BrowserChromeScrollDispatchMode,
-                ),
-            )
-            SettingsDropdown(
-                expanded = scrollDispatchMenuExpanded,
-                onDismissRequest = { scrollDispatchMenuExpanded = false },
-            ) {
-                BrowserChromeScrollDispatchMode.entries.forEach { mode ->
-                    SettingsDropdownItem(
-                        label = mode.displayName(),
-                        selected = mode == settings.browserChromeScrollDispatchMode,
-                        onClick = {
-                            scrollDispatchMenuExpanded = false
-                            onSettingsChanged(
-                                settings.copy(browserChromeScrollDispatchMode = mode),
-                            )
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            SettingsCardHeader(stringResource(R.string.developer_options_security_section))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.settings_http_password_autofill_title),
+                    summary = stringResource(
+                        if (isHttpPasswordAutofillSupported) {
+                            R.string.settings_http_password_autofill_gecko_summary
+                        } else {
+                            R.string.settings_http_password_autofill_system_webview_summary
                         },
-                    )
-                }
+                    ),
+                    checked = isHttpPasswordAutofillSupported && isHttpPasswordAutofillEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    enabled = isHttpPasswordAutofillSupported,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        if (enabled) httpAutofillConfirmationVisible = true
+                        else onHttpPasswordAutofillEnabledChanged(false)
+                    },
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.HttpPasswordAutofill),
+                )
             }
-        }
-        Text(
-            text = stringResource(R.string.developer_options_scroll_dispatch_mode_summary),
-            modifier = Modifier.padding(start = 18.dp, top = 8.dp, end = 18.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(18.dp))
-        SettingsSectionTitle(stringResource(R.string.developer_options_safe_area_section))
-        Text(
-            stringResource(R.string.developer_options_safe_area_summary),
-            modifier = Modifier.padding(top = 6.dp, bottom = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_layout_quiet_period),
-            summary = stringResource(
-                R.string.developer_options_layout_quiet_period_summary,
-            ),
-            valueLabel = stringResource(
-                R.string.developer_options_milliseconds_value,
-                settings.safeAreaLayoutQuietPeriodMillis,
-            ),
-            value = settings.safeAreaLayoutQuietPeriodMillis,
-            range = DeveloperSettings.MIN_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS..
-                DeveloperSettings.MAX_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
-            step = DeveloperSettings.SAFE_AREA_LAYOUT_QUIET_PERIOD_STEP_MILLIS,
-            testTag = DeveloperOptionsTestTags.LayoutQuietPeriod,
-            onValueChanged = { value ->
-                onSettingsChanged(
-                    settings.copy(safeAreaLayoutQuietPeriodMillis = value),
+            CardFootnote(
+                stringResource(R.string.settings_http_password_autofill_warning),
+                color = MaterialTheme.colorScheme.error,
+            )
+            SettingsCardHeader(stringResource(R.string.developer_options_diagnostics_section))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.developer_options_input_diagnostics),
+                    summary = stringResource(R.string.developer_options_input_diagnostics_summary),
+                    checked = isInputDiagnosticsEnabled,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = onInputDiagnosticsEnabledChanged,
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.InputDiagnostics),
                 )
-            },
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_required_failures),
-            summary = stringResource(R.string.developer_options_required_failures_summary),
-            valueLabel = pluralStringResource(
-                R.plurals.developer_options_failed_checks_value,
-                settings.safeAreaRequiredFailureCount,
-                settings.safeAreaRequiredFailureCount,
-            ),
-            value = settings.safeAreaRequiredFailureCount,
-            range = DeveloperSettings.MIN_SAFE_AREA_REQUIRED_FAILURE_COUNT..
-                DeveloperSettings.MAX_SAFE_AREA_REQUIRED_FAILURE_COUNT,
-            step = 1,
-            testTag = DeveloperOptionsTestTags.RequiredFailures,
-            onValueChanged = { value ->
-                onSettingsChanged(
-                    settings.copy(safeAreaRequiredFailureCount = value),
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.developer_options_copy_diagnostics),
+                    summary = stringResource(R.string.developer_options_copy_diagnostics_summary),
+                    dividerColor = dividerColor,
+                    onClick = onCopyDiagnostics,
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.CopyDiagnostics),
                 )
-            },
-        )
-        TextButton(
-            onClick = { onSettingsChanged(settings.withDefaultSafeAreaSettings()) },
-            enabled = !settings.hasDefaultSafeAreaSettings,
-            modifier = Modifier
-                .align(Alignment.End)
-                .testTag(DeveloperOptionsTestTags.Reset),
-        ) {
-            Text(stringResource(R.string.developer_options_reset_safe_area))
+            }
+            SettingsCardHeader(stringResource(R.string.developer_options_presentations_section))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.developer_options_show_onboarding),
+                    summary = stringResource(R.string.developer_options_show_onboarding_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onShowOnboarding,
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.ShowOnboarding),
+                )
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.developer_options_show_release_notes),
+                    summary = stringResource(R.string.developer_options_show_release_notes_summary),
+                    dividerColor = dividerColor,
+                    onClick = onShowReleaseNotes,
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.ShowReleaseNotes),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.developer_options_experiments_section))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.developer_options_force_safe_area_fallback),
+                    summary = stringResource(
+                        R.string.developer_options_force_safe_area_fallback_summary,
+                    ),
+                    checked = settings.forceSafeAreaFallback,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    onCheckedChange = { enabled ->
+                        onSettingsChanged(settings.copy(forceSafeAreaFallback = enabled))
+                    },
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.ForceSafeAreaFallback),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.developer_options_performance_section))
+            SettingsCard(containerColor = cardColor) {
+                SettingsCardDropdownRow(
+                    title = stringResource(R.string.developer_options_scroll_dispatch_mode),
+                    selected = settings.browserChromeScrollDispatchMode,
+                    options = BrowserChromeScrollDispatchMode.entries,
+                    label = { mode -> mode.displayName() },
+                    summary = stringResource(R.string.developer_options_scroll_dispatch_mode_summary),
+                    dividerColor = dividerColor,
+                    onSelected = { mode ->
+                        onSettingsChanged(settings.copy(browserChromeScrollDispatchMode = mode))
+                    },
+                    modifier = Modifier.testTag(
+                        DeveloperOptionsTestTags.BrowserChromeScrollDispatchMode,
+                    ),
+                )
+            }
+            SettingsCardHeader(stringResource(R.string.developer_options_safe_area_section))
+            CardFootnote(stringResource(R.string.developer_options_safe_area_summary))
+            SettingsCard(containerColor = cardColor) {
+                DeveloperSliderRow(
+                    title = stringResource(R.string.developer_options_layout_quiet_period),
+                    summary = stringResource(
+                        R.string.developer_options_layout_quiet_period_summary,
+                    ),
+                    valueLabel = { value ->
+                        stringResource(R.string.developer_options_milliseconds_value, value)
+                    },
+                    value = settings.safeAreaLayoutQuietPeriodMillis,
+                    range = DeveloperSettings.MIN_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS..
+                        DeveloperSettings.MAX_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
+                    step = DeveloperSettings.SAFE_AREA_LAYOUT_QUIET_PERIOD_STEP_MILLIS,
+                    testTag = DeveloperOptionsTestTags.LayoutQuietPeriod,
+                    onValueChanged = { value ->
+                        onSettingsChanged(
+                            settings.copy(safeAreaLayoutQuietPeriodMillis = value),
+                        )
+                    },
+                    dividerColor = dividerColor,
+                    divider = true,
+                )
+                DeveloperSliderRow(
+                    title = stringResource(R.string.developer_options_required_failures),
+                    summary = stringResource(R.string.developer_options_required_failures_summary),
+                    valueLabel = { value ->
+                        pluralStringResource(R.plurals.developer_options_failed_checks_value, value, value)
+                    },
+                    value = settings.safeAreaRequiredFailureCount,
+                    range = DeveloperSettings.MIN_SAFE_AREA_REQUIRED_FAILURE_COUNT..
+                        DeveloperSettings.MAX_SAFE_AREA_REQUIRED_FAILURE_COUNT,
+                    step = 1,
+                    testTag = DeveloperOptionsTestTags.RequiredFailures,
+                    onValueChanged = { value ->
+                        onSettingsChanged(
+                            settings.copy(safeAreaRequiredFailureCount = value),
+                        )
+                    },
+                    dividerColor = dividerColor,
+                )
+            }
+            TextButton(
+                onClick = { onSettingsChanged(settings.withDefaultSafeAreaSettings()) },
+                enabled = !settings.hasDefaultSafeAreaSettings,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .testTag(DeveloperOptionsTestTags.Reset),
+            ) {
+                Text(stringResource(R.string.developer_options_reset_safe_area))
+            }
+            GeckoSafeAreaSettingsSection(
+                settings = settings.geckoSafeAreaSettings,
+                cardColor = cardColor,
+                dividerColor = dividerColor,
+                onSettingsChanged = { geckoSettings ->
+                    onSettingsChanged(
+                        settings.copy(geckoSafeAreaSettings = geckoSettings.normalized()),
+                    )
+                },
+            )
         }
-        Spacer(Modifier.height(18.dp))
-        GeckoSafeAreaSettingsSection(
-            settings = settings.geckoSafeAreaSettings,
-            onSettingsChanged = { geckoSettings ->
-                onSettingsChanged(settings.copy(geckoSafeAreaSettings = geckoSettings.normalized()))
-            },
-        )
     }
     if (httpAutofillConfirmationVisible) {
         AlertDialog(
@@ -278,141 +268,148 @@ internal fun DeveloperOptionsSettingsPage(
 @Composable
 private fun GeckoSafeAreaSettingsSection(
     settings: GeckoSafeAreaSettings,
+    cardColor: Color,
+    dividerColor: Color,
     onSettingsChanged: (GeckoSafeAreaSettings) -> Unit,
 ) {
-    Column {
-        SettingsSectionTitle(stringResource(R.string.developer_options_gecko_safe_area_section))
-        Text(
-            text = stringResource(R.string.developer_options_gecko_safe_area_summary),
-            modifier = Modifier.padding(top = 6.dp, bottom = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_gecko_safe_area_enabled),
-            subtitle = stringResource(R.string.developer_options_gecko_safe_area_enabled_summary),
-            checked = settings.enabled,
-            onCheckedChange = { onSettingsChanged(settings.copy(enabled = it)) },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoSafeAreaEnabled),
-        )
-        SettingsPageSpacer()
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_gecko_recheck_added_elements),
-            subtitle = stringResource(R.string.developer_options_gecko_recheck_added_elements_summary),
-            checked = settings.recheckAddedElements,
-            enabled = settings.enabled,
-            onCheckedChange = { onSettingsChanged(settings.copy(recheckAddedElements = it)) },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckAddedElements),
-        )
-        SettingsPageSpacer()
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_gecko_recheck_changed_elements),
-            subtitle = stringResource(R.string.developer_options_gecko_recheck_changed_elements_summary),
-            checked = settings.recheckChangedElements,
-            enabled = settings.enabled,
-            onCheckedChange = { onSettingsChanged(settings.copy(recheckChangedElements = it)) },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckChangedElements),
-        )
-        SettingsPageSpacer()
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_gecko_require_interaction),
-            subtitle = stringResource(R.string.developer_options_gecko_require_interaction_summary),
-            checked = settings.requireInteractionForUpdates,
-            enabled = settings.enabled,
-            onCheckedChange = { onSettingsChanged(settings.copy(requireInteractionForUpdates = it)) },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRequireInteraction),
-        )
-        SettingsPageSpacer()
-        SettingsSwitch(
-            title = stringResource(R.string.developer_options_gecko_recheck_on_resize),
-            subtitle = stringResource(R.string.developer_options_gecko_recheck_on_resize_summary),
-            checked = settings.recheckOnResize,
-            enabled = settings.enabled,
-            onCheckedChange = { onSettingsChanged(settings.copy(recheckOnResize = it)) },
-            modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckOnResize),
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_gecko_interaction_window),
-            summary = stringResource(R.string.developer_options_gecko_interaction_window_summary),
-            valueLabel = stringResource(
-                R.string.developer_options_milliseconds_value,
-                settings.interactionWindowMillis,
-            ),
-            value = settings.interactionWindowMillis,
-            range = GeckoSafeAreaSettings.MIN_INTERACTION_WINDOW_MILLIS..
-                GeckoSafeAreaSettings.MAX_INTERACTION_WINDOW_MILLIS,
-            step = GeckoSafeAreaSettings.INTERACTION_WINDOW_STEP_MILLIS,
-            testTag = DeveloperOptionsTestTags.GeckoInteractionWindow,
-            enabled = settings.enabled,
-            onValueChanged = { onSettingsChanged(settings.copy(interactionWindowMillis = it)) },
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_gecko_mutation_debounce),
-            summary = stringResource(R.string.developer_options_gecko_mutation_debounce_summary),
-            valueLabel = stringResource(
-                R.string.developer_options_milliseconds_value,
-                settings.mutationDebounceMillis,
-            ),
-            value = settings.mutationDebounceMillis,
-            range = GeckoSafeAreaSettings.MIN_MUTATION_DEBOUNCE_MILLIS..
-                GeckoSafeAreaSettings.MAX_MUTATION_DEBOUNCE_MILLIS,
-            step = GeckoSafeAreaSettings.MUTATION_DEBOUNCE_STEP_MILLIS,
-            testTag = DeveloperOptionsTestTags.GeckoMutationDebounce,
-            enabled = settings.enabled,
-            onValueChanged = { onSettingsChanged(settings.copy(mutationDebounceMillis = it)) },
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_gecko_max_elements_per_batch),
-            summary = stringResource(R.string.developer_options_gecko_max_elements_per_batch_summary),
-            valueLabel = pluralStringResource(
-                R.plurals.developer_options_gecko_elements_value,
-                settings.maxElementsPerBatch,
-                settings.maxElementsPerBatch,
-            ),
-            value = settings.maxElementsPerBatch,
-            range = GeckoSafeAreaSettings.MIN_MAX_ELEMENTS_PER_BATCH..
-                GeckoSafeAreaSettings.MAX_MAX_ELEMENTS_PER_BATCH,
-            step = GeckoSafeAreaSettings.MAX_ELEMENTS_PER_BATCH_STEP,
-            testTag = DeveloperOptionsTestTags.GeckoMaxElementsPerBatch,
-            enabled = settings.enabled,
-            onValueChanged = { onSettingsChanged(settings.copy(maxElementsPerBatch = it)) },
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_gecko_max_batch_duration),
-            summary = stringResource(R.string.developer_options_gecko_max_batch_duration_summary),
-            valueLabel = stringResource(
-                R.string.developer_options_milliseconds_value,
-                settings.maxBatchDurationMillis,
-            ),
-            value = settings.maxBatchDurationMillis,
-            range = GeckoSafeAreaSettings.MIN_MAX_BATCH_DURATION_MILLIS..
-                GeckoSafeAreaSettings.MAX_MAX_BATCH_DURATION_MILLIS,
-            step = GeckoSafeAreaSettings.MAX_BATCH_DURATION_STEP_MILLIS,
-            testTag = DeveloperOptionsTestTags.GeckoMaxBatchDuration,
-            enabled = settings.enabled,
-            onValueChanged = { onSettingsChanged(settings.copy(maxBatchDurationMillis = it)) },
-        )
-        SettingsPageSpacer()
-        DeveloperSettingsSlider(
-            title = stringResource(R.string.developer_options_gecko_max_initial_elements),
-            summary = stringResource(R.string.developer_options_gecko_max_initial_elements_summary),
-            valueLabel = pluralStringResource(
-                R.plurals.developer_options_gecko_elements_value,
-                settings.maxInitialElements,
-                settings.maxInitialElements,
-            ),
-            value = settings.maxInitialElements,
-            range = GeckoSafeAreaSettings.MIN_MAX_INITIAL_ELEMENTS..
-                GeckoSafeAreaSettings.MAX_MAX_INITIAL_ELEMENTS,
-            step = GeckoSafeAreaSettings.MAX_INITIAL_ELEMENTS_STEP,
-            testTag = DeveloperOptionsTestTags.GeckoMaxInitialElements,
-            enabled = settings.enabled,
-            onValueChanged = { onSettingsChanged(settings.copy(maxInitialElements = it)) },
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+        SettingsCardHeader(stringResource(R.string.developer_options_gecko_safe_area_section))
+        CardFootnote(stringResource(R.string.developer_options_gecko_safe_area_summary))
+        SettingsCard(containerColor = cardColor) {
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.developer_options_gecko_safe_area_enabled),
+                summary = stringResource(R.string.developer_options_gecko_safe_area_enabled_summary),
+                checked = settings.enabled,
+                summaryMaxLines = Int.MAX_VALUE,
+                dividerColor = dividerColor,
+                divider = true,
+                onCheckedChange = { onSettingsChanged(settings.copy(enabled = it)) },
+                modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoSafeAreaEnabled),
+            )
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.developer_options_gecko_recheck_added_elements),
+                summary = stringResource(R.string.developer_options_gecko_recheck_added_elements_summary),
+                checked = settings.recheckAddedElements,
+                summaryMaxLines = Int.MAX_VALUE,
+                enabled = settings.enabled,
+                dividerColor = dividerColor,
+                divider = true,
+                onCheckedChange = { onSettingsChanged(settings.copy(recheckAddedElements = it)) },
+                modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckAddedElements),
+            )
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.developer_options_gecko_recheck_changed_elements),
+                summary = stringResource(R.string.developer_options_gecko_recheck_changed_elements_summary),
+                checked = settings.recheckChangedElements,
+                summaryMaxLines = Int.MAX_VALUE,
+                enabled = settings.enabled,
+                dividerColor = dividerColor,
+                divider = true,
+                onCheckedChange = { onSettingsChanged(settings.copy(recheckChangedElements = it)) },
+                modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckChangedElements),
+            )
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.developer_options_gecko_require_interaction),
+                summary = stringResource(R.string.developer_options_gecko_require_interaction_summary),
+                checked = settings.requireInteractionForUpdates,
+                summaryMaxLines = Int.MAX_VALUE,
+                enabled = settings.enabled,
+                dividerColor = dividerColor,
+                divider = true,
+                onCheckedChange = { onSettingsChanged(settings.copy(requireInteractionForUpdates = it)) },
+                modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRequireInteraction),
+            )
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.developer_options_gecko_recheck_on_resize),
+                summary = stringResource(R.string.developer_options_gecko_recheck_on_resize_summary),
+                checked = settings.recheckOnResize,
+                summaryMaxLines = Int.MAX_VALUE,
+                enabled = settings.enabled,
+                dividerColor = dividerColor,
+                divider = true,
+                onCheckedChange = { onSettingsChanged(settings.copy(recheckOnResize = it)) },
+                modifier = Modifier.testTag(DeveloperOptionsTestTags.GeckoRecheckOnResize),
+            )
+            DeveloperSliderRow(
+                title = stringResource(R.string.developer_options_gecko_interaction_window),
+                summary = stringResource(R.string.developer_options_gecko_interaction_window_summary),
+                valueLabel = { value ->
+                    stringResource(R.string.developer_options_milliseconds_value, value)
+                },
+                value = settings.interactionWindowMillis,
+                range = GeckoSafeAreaSettings.MIN_INTERACTION_WINDOW_MILLIS..
+                    GeckoSafeAreaSettings.MAX_INTERACTION_WINDOW_MILLIS,
+                step = GeckoSafeAreaSettings.INTERACTION_WINDOW_STEP_MILLIS,
+                testTag = DeveloperOptionsTestTags.GeckoInteractionWindow,
+                enabled = settings.enabled,
+                onValueChanged = { onSettingsChanged(settings.copy(interactionWindowMillis = it)) },
+                dividerColor = dividerColor,
+                divider = true,
+            )
+            DeveloperSliderRow(
+                title = stringResource(R.string.developer_options_gecko_mutation_debounce),
+                summary = stringResource(R.string.developer_options_gecko_mutation_debounce_summary),
+                valueLabel = { value ->
+                    stringResource(R.string.developer_options_milliseconds_value, value)
+                },
+                value = settings.mutationDebounceMillis,
+                range = GeckoSafeAreaSettings.MIN_MUTATION_DEBOUNCE_MILLIS..
+                    GeckoSafeAreaSettings.MAX_MUTATION_DEBOUNCE_MILLIS,
+                step = GeckoSafeAreaSettings.MUTATION_DEBOUNCE_STEP_MILLIS,
+                testTag = DeveloperOptionsTestTags.GeckoMutationDebounce,
+                enabled = settings.enabled,
+                onValueChanged = { onSettingsChanged(settings.copy(mutationDebounceMillis = it)) },
+                dividerColor = dividerColor,
+                divider = true,
+            )
+            DeveloperSliderRow(
+                title = stringResource(R.string.developer_options_gecko_max_elements_per_batch),
+                summary = stringResource(R.string.developer_options_gecko_max_elements_per_batch_summary),
+                valueLabel = { value ->
+                    pluralStringResource(R.plurals.developer_options_gecko_elements_value, value, value)
+                },
+                value = settings.maxElementsPerBatch,
+                range = GeckoSafeAreaSettings.MIN_MAX_ELEMENTS_PER_BATCH..
+                    GeckoSafeAreaSettings.MAX_MAX_ELEMENTS_PER_BATCH,
+                step = GeckoSafeAreaSettings.MAX_ELEMENTS_PER_BATCH_STEP,
+                testTag = DeveloperOptionsTestTags.GeckoMaxElementsPerBatch,
+                enabled = settings.enabled,
+                onValueChanged = { onSettingsChanged(settings.copy(maxElementsPerBatch = it)) },
+                dividerColor = dividerColor,
+                divider = true,
+            )
+            DeveloperSliderRow(
+                title = stringResource(R.string.developer_options_gecko_max_batch_duration),
+                summary = stringResource(R.string.developer_options_gecko_max_batch_duration_summary),
+                valueLabel = { value ->
+                    stringResource(R.string.developer_options_milliseconds_value, value)
+                },
+                value = settings.maxBatchDurationMillis,
+                range = GeckoSafeAreaSettings.MIN_MAX_BATCH_DURATION_MILLIS..
+                    GeckoSafeAreaSettings.MAX_MAX_BATCH_DURATION_MILLIS,
+                step = GeckoSafeAreaSettings.MAX_BATCH_DURATION_STEP_MILLIS,
+                testTag = DeveloperOptionsTestTags.GeckoMaxBatchDuration,
+                enabled = settings.enabled,
+                onValueChanged = { onSettingsChanged(settings.copy(maxBatchDurationMillis = it)) },
+                dividerColor = dividerColor,
+                divider = true,
+            )
+            DeveloperSliderRow(
+                title = stringResource(R.string.developer_options_gecko_max_initial_elements),
+                summary = stringResource(R.string.developer_options_gecko_max_initial_elements_summary),
+                valueLabel = { value ->
+                    pluralStringResource(R.plurals.developer_options_gecko_elements_value, value, value)
+                },
+                value = settings.maxInitialElements,
+                range = GeckoSafeAreaSettings.MIN_MAX_INITIAL_ELEMENTS..
+                    GeckoSafeAreaSettings.MAX_MAX_INITIAL_ELEMENTS,
+                step = GeckoSafeAreaSettings.MAX_INITIAL_ELEMENTS_STEP,
+                testTag = DeveloperOptionsTestTags.GeckoMaxInitialElements,
+                enabled = settings.enabled,
+                onValueChanged = { onSettingsChanged(settings.copy(maxInitialElements = it)) },
+                dividerColor = dividerColor,
+            )
+        }
         TextButton(
             onClick = { onSettingsChanged(settings.withDefaults()) },
             enabled = !settings.hasDefaultSettings,
@@ -454,77 +451,52 @@ private fun DeveloperSettings.withDefaultSafeAreaSettings(): DeveloperSettings =
     forceSafeAreaFallback = false,
 )
 
+/** A line under a header or a card that explains the card, not one of its rows. */
 @Composable
-private fun DeveloperAction(
-    title: String,
-    summary: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
-            Text(
-                summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+private fun CardFootnote(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    Text(
+        text = text,
+        modifier = Modifier.padding(SettingsCardTokens.headerPadding),
+        style = MaterialTheme.typography.bodySmall,
+        color = color,
+    )
 }
 
+/**
+ * A whole-number setting on a slider: the value at the end of the row follows the finger, the
+ * setting changes once the finger lifts.
+ */
 @Composable
-private fun DeveloperSettingsSlider(
+private fun DeveloperSliderRow(
     title: String,
     summary: String,
-    valueLabel: String,
+    valueLabel: @Composable (Int) -> String,
     value: Int,
     range: IntRange,
     step: Int,
     testTag: String,
-    enabled: Boolean = true,
+    dividerColor: Color,
     onValueChanged: (Int) -> Unit,
+    divider: Boolean = false,
+    enabled: Boolean = true,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
+    var live by remember(value) { mutableIntStateOf(value) }
+    SettingsCardSliderRow(
+        title = title,
+        summary = summary,
+        value = valueLabel(live),
+        dividerColor = dividerColor,
+        divider = divider,
     ) {
-        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    title,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    valueLabel,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Text(
-                summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Slider(
-                enabled = enabled,
-                value = value.toFloat(),
-                onValueChange = { candidate ->
-                    val snapped = range.first +
-                        ((candidate - range.first) / step).roundToInt() * step
-                    onValueChanged(snapped.coerceIn(range))
-                },
-                modifier = Modifier.testTag(testTag),
-                valueRange = range.first.toFloat()..range.last.toFloat(),
-                steps = ((range.last - range.first) / step - 1).coerceAtLeast(0),
-            )
-        }
+        SettingsCardSlider(
+            value = value,
+            range = range,
+            label = title,
+            step = step,
+            enabled = enabled,
+            onValueChange = { live = it },
+            onValueChangeFinished = onValueChanged,
+            modifier = Modifier.testTag(testTag),
+        )
     }
 }
