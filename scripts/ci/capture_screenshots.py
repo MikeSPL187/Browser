@@ -68,7 +68,12 @@ def dump_ui():
     """The current UI hierarchy as raw XML, after closing a system "not responding" dialog."""
     raw = b""
     for _ in range(3):
-        adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False, capture=True)
+        # A failed dump leaves the previous file behind; remove it so a stale screen never answers.
+        adb("shell", "rm", "-f", "/sdcard/vola-ui.xml", check=False, capture=True)
+        result = adb("shell", "uiautomator", "dump", "/sdcard/vola-ui.xml", check=False,
+                     capture=True) or b""
+        if b"dumped to" not in result:
+            log(f"ui dump failed: {result.decode('utf-8', 'replace').strip()[:160]}")
         raw = adb("exec-out", "cat", "/sdcard/vola-ui.xml", check=False, capture=True) or b""
         if not dismiss_not_responding_dialog(raw):
             break
@@ -335,6 +340,12 @@ def tour(suffix):
         open_url("https://en.wikipedia.org/wiki/Zen")
         time.sleep(10)
         if not tap("More options", "Другие действия"):
+            shot(f"compact-no-menu-{suffix}", audit=False)
+            save_ui(f"compact-no-menu-{suffix}")
+            focus = adb("shell", "dumpsys", "window", "displays", check=False, capture=True) or b""
+            for line in focus.decode("utf-8", "replace").splitlines():
+                if "mCurrentFocus" in line or "mFocusedApp" in line:
+                    log(f"window focus: {line.strip()}")
             return
         time.sleep(2)
         if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-menu-{suffix}"):
