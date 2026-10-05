@@ -9,6 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesTestTags
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,12 +39,15 @@ class InitialOnboardingPresentationInstrumentedTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.setReleaseNotesVisible(true)
         }
-        composeRule.onNodeWithTag("gesture_onboarding_welcome").assertExists()
+        composeRule.onNodeWithTag(FirstRunTestTags.Welcome).assertExists()
         composeRule.onNodeWithTag(ReleaseNotesTestTags.Screen).assertDoesNotExist()
 
-        composeRule.onNodeWithTag("gesture_onboarding_skip").performClick()
+        // A new install: welcome, then setup without the gesture lesson.
+        composeRule.onNodeWithTag(FirstRunTestTags.Start).performClick()
+        composeRule.onNodeWithTag(FirstRunTestTags.Gestures).performClick()
+        composeRule.onNodeWithTag(FirstRunTestTags.Next).performClick()
 
-        composeRule.onNodeWithTag("gesture_onboarding_welcome").assertDoesNotExist()
+        composeRule.onNodeWithTag(FirstRunTestTags.Setup).assertDoesNotExist()
         composeRule.onNodeWithTag(ReleaseNotesTestTags.Screen).assertDoesNotExist()
         assertEquals(
             BuildConfig.VERSION_CODE.toLong(),

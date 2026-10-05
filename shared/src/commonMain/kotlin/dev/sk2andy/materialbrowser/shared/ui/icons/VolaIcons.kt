@@ -214,6 +214,13 @@ object VolaIcons {
         )
     }
 
+    val VerifiedUser: ImageVector by lazy {
+        materialSymbol(
+            name = "VerifiedUser",
+            pathData = "M438 508 l-56 -56 q-12 -12 -28 -12 t-28 12 q-12 12 -12 28.5 t12 28.5 l84 85 q12 12 28 12 t28 -12 l170 -170 q12 -12 12 -28.5 T636 367 q-12 -12 -28.5 -12 T579 367 L438 508 Z m42 368 q-7 0 -13 -1 t-12 -3 q-135 -45 -215 -166.5 T160 444 v-189 q0 -25 14.5 -45 t37.5 -29 l240 -90 q14 -5 28 -5 t28 5 l240 90 q23 9 37.5 29 t14.5 45 v189 q0 140 -80 261.5 T505 872 q-6 2 -12 3 t-13 1 Z m0 -80 q104 -33 172 -132 t68 -220 v-189 l-240 -90 l-240 90 v189 q0 121 68 220 t172 132 Z m0 -316 Z",
+        )
+    }
+
     val GppMaybe: ImageVector by lazy {
         materialSymbol(
             name = "GppMaybe",
@@ -531,6 +538,13 @@ object VolaIcons {
         )
     }
 
+    val Swipe: ImageVector by lazy {
+        materialSymbol(
+            name = "Swipe",
+            pathData = "M480 100 q-88 0 -169 31 t-147 89 h86 q13 0 21.5 8.5 T280 250 q0 13 -8.5 21.5 T250 280 H120 q-17 0 -28.5 -11.5 T80 240 v-130 q0 -13 8.5 -21.5 T110 80 q13 0 21.5 8.5 T140 110 v51 q72 -59 159 -90 t181 -31 q94 0 181 31 t159 90 v-51 q0 -13 8.5 -21.5 T850 80 q13 0 21.5 8.5 T880 110 v130 q0 17 -11.5 28.5 T840 280 H710 q-13 0 -21.5 -8.5 T680 250 q0 -13 8.5 -21.5 T710 220 h86 q-66 -58 -147 -89 t-169 -31 Z m-7 780 q-24 0 -46 -9 t-39 -26 L212 668 q-11 -11 -11.5 -27.5 T211 612 l3 -3 q16 -16 37.5 -21.5 t42.5 0.5 l66 19 v-327 q0 -17 11.5 -28.5 T400 240 q17 0 28.5 11.5 T440 280 v380 q0 20 -16 32 t-35 7 l-46 -13 l102 102 q5 5 12.5 8.5 T473 800 h167 q33 0 56.5 -23.5 T720 720 v-160 q0 -17 11.5 -28.5 T760 520 q17 0 28.5 11.5 T800 560 v160 q0 66 -47 113 T640 880 H473 Z m47 -480 q17 0 28.5 11.5 T560 440 v120 q0 17 -11.5 28.5 T520 600 q-17 0 -28.5 -11.5 T480 560 v-120 q0 -17 11.5 -28.5 T520 400 Z m120 40 q17 0 28.5 11.5 T680 480 v80 q0 17 -11.5 28.5 T640 600 q-17 0 -28.5 -11.5 T600 560 v-80 q0 -17 11.5 -28.5 T640 440 Z m-69 240 Z",
+        )
+    }
+
     val Sync: ImageVector by lazy {
         materialSymbol(
             name = "Sync",
@@ -647,6 +661,7 @@ object VolaIcons {
             FormatAlignJustify,
             FormatAlignLeft,
             GppBad,
+            VerifiedUser,
             GppMaybe,
             HealthAndSafety,
             FormatSize,
@@ -692,6 +707,7 @@ object VolaIcons {
             Star,
             StopFilled,
             SwapVert,
+            Swipe,
             Sync,
             Tab,
             TabGroup,
