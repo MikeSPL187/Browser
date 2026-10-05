@@ -1,0 +1,245 @@
+screenshot 01-launch.png
+screenshot 02-new-tab-light.png
+screenshot 03-page-light.png
+screenshot 04-page-scrolled-light.png
+not found: ('More options', 'Другие действия')
+screenshot 05-compact-no-menu-light.png
+saved ui-compact-no-menu-light.xml
+window focus: mCurrentFocus=Window{50d25e2 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{cf6d95e u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t8}
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+step find: closed a leftover 'Close address input'
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+screenshot 06-address-light.png
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+step reader: closed a leftover 'Close address input'
+screenshot 07-https-upgrade-light.png
+screen did not settle
+screenshot 08-glance-light.png
+saved ui-glance-light.xml
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+step split-view: closed a leftover 'Close address input'
+https-only probe httpforever.com: 10-05 20:48:32.140  4453  4453 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 09-https-only-light.png
+screenshot 10-page-unknown-host-light.png
+screenshot 11-page-insecure-light.png
+screenshot 12-dangerous-site-light.png
+tap 'Back to safety' at 540,1875
+screenshot 13-page-offline-light.png
+screenshot 14-page-back-online-light.png
+screenshot 15-workspace-locked-light.png
+tap 'Go to another workspace' at 540,2212
+screenshot 16-download-check-light.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 17-tab-overview-light.png
+saved ui-tab-overview-light.xml
+screenshot 18-workspace-options-light.png
+saved ui-workspace-options-light.xml
+tap 'Add workspace' at 465,2232
+screenshot 19-workspace-new-light.png
+tap 'All icons' at 540,1630
+screenshot 20-workspace-new-icons-light.png
+tap 'Add workspace' at 465,2232
+tap 'Work' at 456,1356
+tap 'Coral' at 728,1132
+tap 'Create workspace' at 540,2211
+screenshot 21-workspace-swipe-light.png
+tap 'Personal' at 106,2232
+tap 'New tab' at 974,2231
+screenshot 22-essentials-start-light.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 23-essentials-light.png
+not found: ('Edit', 'Изменить')
+step essentials: closed a leftover 'Close address input'
+screenshot 24-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+tap 'Tab actions' at 996,202
+screenshot 25-tab-actions-light.png
+tap 'More' at 540,1604
+screenshot 26-tab-actions-more-light.png
+tap 'Search tabs' at 744,202
+screenshot 27-tab-search-light.png
+tap 'Close search' at 996,202
+screenshot 28-protection-card-light.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-light.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-light.xml
+screenshot 29-private-locked-light.png
+screenshot 30-permission-prompt-light.png
+tap 'Don’t allow' at 540,2212
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+screenshot 31-current-dark.png
+screenshot 32-new-tab-dark.png
+screenshot 33-page-dark.png
+screenshot 34-page-scrolled-dark.png
+not found: ('More options', 'Другие действия')
+screenshot 35-compact-no-menu-dark.png
+saved ui-compact-no-menu-dark.xml
+window focus: mCurrentFocus=Window{50d25e2 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{cf6d95e u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t8}
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+step find: closed a leftover 'Close address input'
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+screenshot 36-address-dark.png
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+step reader: closed a leftover 'Close address input'
+screenshot 37-https-upgrade-dark.png
+screen did not settle
+screenshot 38-glance-dark.png
+saved ui-glance-dark.xml
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 10-05 20:58:34.542  4453  4453 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 39-https-only-dark.png
+screenshot 40-page-unknown-host-dark.png
+screenshot 41-page-insecure-dark.png
+screenshot 42-dangerous-site-dark.png
+tap 'Back to safety' at 540,1875
+screenshot 43-page-offline-dark.png
+screenshot 44-page-back-online-dark.png
+screenshot 45-workspace-locked-dark.png
+tap 'Go to another workspace' at 540,2212
+screenshot 46-download-check-dark.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 47-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+screenshot 48-workspace-options-dark.png
+saved ui-workspace-options-dark.xml
+tap 'Add workspace' at 592,2232
+screenshot 49-workspace-new-dark.png
+tap 'All icons' at 540,1630
+screenshot 50-workspace-new-icons-dark.png
+screenshot 51-workspace-swipe-dark.png
+tap 'New tab' at 974,2231
+screenshot 52-essentials-start-dark.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 53-essentials-dark.png
+not found: ('Edit', 'Изменить')
+step essentials: closed a leftover 'Close address input'
+screenshot 54-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+tap 'Tab actions' at 996,202
+screenshot 55-tab-actions-dark.png
+tap 'More' at 540,1604
+screenshot 56-tab-actions-more-dark.png
+tap 'Search tabs' at 744,202
+screenshot 57-tab-search-dark.png
+tap 'Close search' at 996,202
+screenshot 58-protection-card-dark.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-dark.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-dark.xml
+screenshot 59-private-locked-dark.png
+screenshot 60-permission-prompt-dark.png
+tap 'Don’t allow' at 540,2212
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+screenshot 61-new-tab-a11y.png
+screenshot 62-page-a11y.png
+not found: ('More options', 'Другие действия')
+screenshot 63-page-unknown-host-a11y.png
+Cold start (am start -W, 5 runs): average 3973 ms, min 3767 ms, max 4498 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 535
+  ActivityCreateStart: 719
+  ActivityCreateEnd: 1134
+  ActivityResumed: 1254
+  FirstFrame: 2644
+Durations (median, ms):
+  GeckoRuntimeCreate (main): 42
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  3636: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  691: Handler (android.app.ActivityThread$H)  null: 159
+  84: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
+  73: Handler (android.os.Handler)  org.mozilla.gecko.GeckoThread$1: 0
+  66: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda7: 0
+  64: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda8: 0
+  54: Handler (android.os.Handler)  org.mozilla.gecko.EventDispatcher$2: 0
+  50: Handler (android.app.ActivityThread$H)  null: 113
+screenshot 64-new-tab-ru.png
+screenshot 65-page-ru.png
+screenshot 66-page-scrolled-ru.png
+not found: ('More options', 'Другие действия')
+screenshot 67-compact-no-menu-ru.png
+saved ui-compact-no-menu-ru.xml
+window focus: mCurrentFocus=Window{6935b41 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{82f4e05 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t15}
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+step find: closed a leftover 'Close address input'
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+screenshot 68-address-ru.png
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+step reader: closed a leftover 'Close address input'
+screenshot 69-https-upgrade-ru.png
+screen did not settle
+screenshot 70-glance-ru.png
+saved ui-glance-ru.xml
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 10-05 21:10:36.130 14337 14337 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 71-https-only-ru.png
+screenshot 72-page-unknown-host-ru.png
+screenshot 73-page-insecure-ru.png
+screenshot 74-dangerous-site-ru.png
+tap 'Back to safety' at 540,1875
+screenshot 75-page-offline-ru.png
+screenshot 76-page-back-online-ru.png
+screenshot 77-workspace-locked-ru.png
+tap 'Go to another workspace' at 540,2212
+screenshot 78-download-check-ru.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 79-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+screenshot 80-workspace-options-ru.png
+saved ui-workspace-options-ru.xml
+tap 'Add workspace' at 569,2232
+screenshot 81-workspace-new-ru.png
+tap 'All icons' at 540,1630
+screenshot 82-workspace-new-icons-ru.png
+screenshot 83-workspace-swipe-ru.png
+tap 'New tab' at 974,2231
+screenshot 84-essentials-start-ru.png
+not found: ('Add a site', 'Добавить сайт')
+screenshot 85-essentials-ru.png
+not found: ('Edit', 'Изменить')
+step essentials: closed a leftover 'Close address input'
+screenshot 86-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+tap 'Tab actions' at 996,202
+screenshot 87-tab-actions-ru.png
+tap 'More' at 540,1631
+screenshot 88-tab-actions-more-ru.png
+tap 'Search tabs' at 744,202
+screenshot 89-tab-search-ru.png
+tap 'Close search' at 996,202
+screenshot 90-protection-card-ru.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-ru.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-ru.xml
+screenshot 91-private-locked-ru.png
+screenshot 92-permission-prompt-ru.png
+tap 'Don’t allow' at 540,2212
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for the Air layout
