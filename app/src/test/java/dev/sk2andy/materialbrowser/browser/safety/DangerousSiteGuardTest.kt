@@ -64,15 +64,4 @@ class DangerousSiteGuardTest {
         assertTrue(listed.intercept("tab", "https://bank-exarnple.ru/"))
         assertEquals("bank.example.ru", listed.blocked["tab"]?.imitatedHost)
     }
-
-    @Test
-    fun `nothing is stopped while warnings are off`() {
-        val off = DangerousSiteGuard(listedHosts = { true }, enabled = { false }) {
-            listOf("https://bank.example.ru/")
-        }
-
-        assertFalse(off.intercept("tab", "https://bank-exarnple.ru/"))
-        assertFalse(off.intercept("tab", "https://www.login-bank.top/"))
-        assertNull(off.blocked["tab"])
-    }
 }

@@ -875,8 +875,6 @@
     <string name="settings_global_privacy_control_summary">Сообщать сайтам, что вы не разрешаете продавать или передавать ваши данные</string>
     <string name="settings_auto_de_amp_title">Обход AMP</string>
     <string name="settings_auto_de_amp_summary">Открывать исходную страницу издателя вместо просмотрщика и кэша Google AMP</string>
-    <string name="settings_dangerous_site_warnings_title">Предупреждать об опасных сайтах</string>
-    <string name="settings_dangerous_site_warnings_summary">Известные фишинговые и вредоносные сайты, подделки знакомых адресов. Проверка на телефоне, ничего не отправляется</string>
     <string name="settings_webrtc_protection_title">Соединения WebRTC</string>
     <string name="settings_webrtc_mode_standard">Показывать IP-адрес</string>
     <string name="settings_webrtc_mode_hide_local_network_ip">Скрывать локальный IP</string>

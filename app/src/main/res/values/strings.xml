@@ -841,8 +841,6 @@
     <string name="settings_global_privacy_control_summary">Tell websites not to sell or share your personal data</string>
     <string name="settings_auto_de_amp_title">Auto De-AMP</string>
     <string name="settings_auto_de_amp_summary">Open the original publisher page instead of trusted Google AMP viewer and cache URLs</string>
-    <string name="settings_dangerous_site_warnings_title">Warn about dangerous sites</string>
-    <string name="settings_dangerous_site_warnings_summary">Known phishing and malware sites and fakes of familiar addresses. Checked on this phone, nothing is sent</string>
     <string name="settings_webrtc_protection_title">WebRTC connections</string>
     <string name="settings_webrtc_mode_standard">Expose IP address</string>
     <string name="settings_webrtc_mode_hide_local_network_ip">Hide local network IP</string>

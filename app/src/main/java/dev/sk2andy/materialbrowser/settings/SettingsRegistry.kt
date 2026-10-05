@@ -142,12 +142,6 @@ internal object SettingsRegistry {
         ),
         setting("https_only", ProtectionAndData, R.string.settings_https_only_title, null),
         setting(
-            "dangerous_site_warnings",
-            ProtectionAndData,
-            R.string.settings_dangerous_site_warnings_title,
-            R.string.settings_dangerous_site_warnings_summary,
-        ),
-        setting(
             "block_ads",
             ProtectionAndData,
             R.string.settings_block_ads_title,

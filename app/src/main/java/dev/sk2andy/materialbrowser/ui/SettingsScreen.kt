@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -12,7 +11,6 @@ import dev.sk2andy.materialbrowser.blocking.BlockerSettings
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
-import dev.sk2andy.materialbrowser.browser.safety.DangerousSiteWarnings
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
@@ -474,7 +472,6 @@ internal fun SettingsScreen(
 
                 SettingsDestination.ProtectionAndData -> {
                     val context = LocalContext.current
-                    val dangerousSiteWarnings = remember(context) { DangerousSiteWarnings.get(context) }
                     ProtectionAndDataSettingsPage(
                         blockerSettings = blockerSettings,
                         blockedCount = blockedCount,
@@ -484,7 +481,6 @@ internal fun SettingsScreen(
                         webRtcProtectionMode = webRtcProtectionMode,
                         privacySignalSettings = privacySignalSettings,
                         isAutoDeAmpEnabled = isAutoDeAmpEnabled,
-                        isDangerousSiteWarningsEnabled = dangerousSiteWarnings.enabled,
                         isProtectionCardVisible = isProtectionCardVisible,
                         privateTabsLock = privateTabsLock,
                         dnsOverHttpsSettings = dnsOverHttpsSettings,
@@ -496,7 +492,6 @@ internal fun SettingsScreen(
                         onWebRtcProtectionModeChanged = onWebRtcProtectionModeChanged,
                         onPrivacySignalSettingsChanged = onPrivacySignalSettingsChanged,
                         onAutoDeAmpEnabledChanged = onAutoDeAmpEnabledChanged,
-                        onDangerousSiteWarningsEnabledChanged = dangerousSiteWarnings::updateEnabled,
                         onProtectionCardVisibleChanged = onProtectionCardVisibleChanged,
                         onDnsOverHttpsSettingsChanged = onDnsOverHttpsSettingsChanged,
                         onHttpsOnlyModeChanged = onHttpsOnlyModeChanged,
