@@ -60,6 +60,7 @@ internal object ProtectionSettingsTestTags {
     const val DoNotTrack = "protection_settings_do_not_track"
     const val GlobalPrivacyControl = "protection_settings_global_privacy_control"
     const val AutoDeAmp = "protection_settings_auto_de_amp"
+    const val DangerousSiteWarnings = "protection_settings_dangerous_site_warnings"
     const val WebRtcProtection = "protection_settings_webrtc_protection"
     const val DnsOverHttps = "protection_settings_dns_over_https"
     const val HttpsOnly = "protection_settings_https_only"
@@ -78,6 +79,7 @@ internal fun ProtectionAndDataSettingsPage(
     webRtcProtectionMode: WebRtcProtectionMode = WebRtcProtectionMode.Default,
     privacySignalSettings: PrivacySignalSettings = PrivacySignalSettings.Default,
     isAutoDeAmpEnabled: Boolean = true,
+    isDangerousSiteWarningsEnabled: Boolean = true,
     isProtectionCardVisible: Boolean = true,
     privateTabsLock: PrivateTabLock? = null,
     dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
@@ -89,6 +91,7 @@ internal fun ProtectionAndDataSettingsPage(
     onWebRtcProtectionModeChanged: (WebRtcProtectionMode) -> Unit = {},
     onPrivacySignalSettingsChanged: (PrivacySignalSettings) -> Unit = {},
     onAutoDeAmpEnabledChanged: (Boolean) -> Unit = {},
+    onDangerousSiteWarningsEnabledChanged: (Boolean) -> Unit = {},
     onProtectionCardVisibleChanged: (Boolean) -> Unit = {},
     onDnsOverHttpsSettingsChanged: (DnsOverHttpsSettings) -> Unit = {},
     onHttpsOnlyModeChanged: (HttpsOnlyMode) -> Unit = {},
@@ -175,6 +178,14 @@ internal fun ProtectionAndDataSettingsPage(
                         }
                     }
                 }
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_dangerous_site_warnings_title),
+                    summary = stringResource(R.string.settings_dangerous_site_warnings_summary),
+                    checked = isDangerousSiteWarningsEnabled,
+                    dividerColor = dividerColor,
+                    onCheckedChange = onDangerousSiteWarningsEnabledChanged,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.DangerousSiteWarnings),
+                )
                 ProtectionSwitch(
                     title = stringResource(R.string.settings_block_ads_title),
                     summary = stringResource(R.string.settings_block_ads_subtitle),

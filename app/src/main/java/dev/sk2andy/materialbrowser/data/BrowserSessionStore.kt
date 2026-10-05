@@ -1267,6 +1267,13 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putBoolean(KEY_AUTO_DE_AMP_ENABLED, enabled).apply()
     }
 
+    fun loadDangerousSiteWarningsEnabled(): Boolean =
+        preferences.getBoolean(KEY_DANGEROUS_SITE_WARNINGS_ENABLED, true)
+
+    fun saveDangerousSiteWarningsEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_DANGEROUS_SITE_WARNINGS_ENABLED, enabled).apply()
+    }
+
     fun loadDnsOverHttpsSettings(): DnsOverHttpsSettings = DnsOverHttpsRules.sanitize(
         DnsOverHttpsSettings(
             provider = DnsOverHttpsProvider.fromStableId(
@@ -1607,6 +1614,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_DO_NOT_TRACK_ENABLED = "do_not_track_enabled"
         const val KEY_GLOBAL_PRIVACY_CONTROL_ENABLED = "global_privacy_control_enabled"
         const val KEY_AUTO_DE_AMP_ENABLED = "auto_de_amp_enabled"
+        const val KEY_DANGEROUS_SITE_WARNINGS_ENABLED = "dangerous_site_warnings_enabled"
         const val KEY_DNS_OVER_HTTPS_PROVIDER = "dns_over_https_provider"
         const val KEY_DNS_OVER_HTTPS_CUSTOM_ENDPOINT = "dns_over_https_custom_endpoint"
         const val KEY_HTTPS_ONLY_MODE = "https_only_mode"

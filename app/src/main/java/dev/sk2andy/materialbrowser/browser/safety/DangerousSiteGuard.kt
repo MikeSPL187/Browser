@@ -17,16 +17,23 @@ data class BlockedSite(val url: String, val host: String, val imitatedHost: Stri
  */
 class DangerousSiteGuard(
     private val listedHosts: (String) -> Boolean = { false },
+    private val enabled: () -> Boolean = { true },
     private val knownHosts: () -> Collection<String>,
 ) {
-    constructor(context: Context, knownHosts: () -> Collection<String>) :
-        this(ThreatHostList.get(context)::contains, knownHosts)
+    constructor(context: Context, knownHosts: () -> Collection<String>) : this(
+        DangerousSiteWarnings.get(context),
+        knownHosts,
+    )
+
+    private constructor(warnings: DangerousSiteWarnings, knownHosts: () -> Collection<String>) :
+        this(warnings::isListed, { warnings.enabled }, knownHosts)
 
     val blocked = mutableStateMapOf<String, BlockedSite>()
     private val allowedHosts = mutableSetOf<String>()
 
     /** True when [url] must not load in [tabId]; the tab then shows the warning. */
     fun intercept(tabId: String, url: String): Boolean {
+        if (!enabled()) return false
         val host = readableHost(url)
         val key = host?.removePrefix("www.") ?: url
         if (key in allowedHosts) return false
