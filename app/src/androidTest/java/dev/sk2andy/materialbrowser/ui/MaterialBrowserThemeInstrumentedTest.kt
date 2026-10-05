@@ -26,6 +26,7 @@ import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyDesignLanguage
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaSchemes
+import dev.sk2andy.materialbrowser.ui.theme.VolaThemeSchemes
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
@@ -119,9 +120,33 @@ class MaterialBrowserThemeInstrumentedTest {
     }
 
     @Test
+    fun themeLaysTheChosenAccentOnItsNeutrals() {
+        val primary = AtomicReference<Color>()
+        val surface = AtomicReference<Color>()
+
+        composeRule.setContent {
+            MaterialBrowserTheme(
+                settings = AppearanceSettings(
+                    appearanceMode = BrowserAppearanceMode.Light,
+                    colorPalette = BrowserColorPalette.Ice,
+                    accentOverride = WorkspaceAccent.Coral,
+                ),
+                workspaceAccent = WorkspaceAccent.Teal,
+            ) {
+                primary.set(MaterialTheme.colorScheme.primary)
+                surface.set(MaterialTheme.colorScheme.surfaceContainer)
+            }
+        }
+        composeRule.waitForIdle()
+
+        assertEquals(Color(VolaSchemes.Coral.light.primary), primary.get())
+        assertEquals(Color(VolaThemeSchemes.Ice.light.surfaceContainer), surface.get())
+    }
+
+    @Test
     fun palettesAndShapesProduceDistinctThemeTokens() {
-        val volaPrimary = AtomicReference<Color>()
-        val neutralPrimary = AtomicReference<Color>()
+        val volaSurface = AtomicReference<Color>()
+        val monoSurface = AtomicReference<Color>()
         val angularShape = AtomicReference<Any>()
         val extraRoundedShape = AtomicReference<Any>()
 
@@ -133,23 +158,23 @@ class MaterialBrowserThemeInstrumentedTest {
                     shapeStyle = BrowserShapeStyle.Angular,
                 ),
             ) {
-                volaPrimary.set(MaterialTheme.colorScheme.primary)
+                volaSurface.set(MaterialTheme.colorScheme.surfaceContainer)
                 angularShape.set(MaterialTheme.shapes.large)
             }
             MaterialBrowserTheme(
                 settings = AppearanceSettings(
                     appearanceMode = BrowserAppearanceMode.Light,
-                    colorPalette = BrowserColorPalette.Neutral,
+                    colorPalette = BrowserColorPalette.Mono,
                     shapeStyle = BrowserShapeStyle.ExtraRounded,
                 ),
             ) {
-                neutralPrimary.set(MaterialTheme.colorScheme.primary)
+                monoSurface.set(MaterialTheme.colorScheme.surfaceContainer)
                 extraRoundedShape.set(MaterialTheme.shapes.large)
             }
         }
         composeRule.waitForIdle()
 
-        assertNotEquals(volaPrimary.get(), neutralPrimary.get())
+        assertNotEquals(volaSurface.get(), monoSurface.get())
         assertNotEquals(angularShape.get(), extraRoundedShape.get())
     }
 

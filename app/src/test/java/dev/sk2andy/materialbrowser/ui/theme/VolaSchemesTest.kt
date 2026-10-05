@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.ui.theme
 import androidx.compose.ui.graphics.Color
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
-import dev.sk2andy.materialbrowser.shared.ui.theme.NeutralDarkColors
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -116,37 +115,123 @@ class VolaSchemesTest {
     }
 
     @Test
-    fun `extended colors follow the workspace in the Vola palette`() {
-        val tokens = VolaSchemes.Coral.dark
-        val colorScheme = tokens.toColorScheme(dark = true)
+    fun `every accent on every theme reaches 4_5 to 1`() {
+        val failures = THEMES.flatMap { (themeName, theme) ->
+            WorkspaceAccent.entries.flatMap { accent ->
+                val accentSet = VolaSchemes.forAccent(accent)
+                listOf(false, true).flatMap { dark ->
+                    listOf(false, true).flatMap { highContrast ->
+                        val tokens = accentSet.select(dark, highContrast)
+                            .withTheme(theme.select(dark, highContrast))
+                        TEXT_ON_BACKGROUND.mapNotNull { (text, background) ->
+                            val ratio = contrastRatio(text.get(tokens), background.get(tokens))
+                            if (ratio < MINIMUM_CONTRAST) {
+                                "$themeName/${accent.name} dark=$dark hc=$highContrast " +
+                                    "${text.name}/${background.name} %.2f".format(ratio)
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        val vola = VolaColorRules.extendedColors(
-            palette = BrowserColorPalette.Vola,
-            colorScheme = colorScheme,
-            workspaceTokens = tokens,
-            dark = true,
-        )
-        val neutral = VolaColorRules.extendedColors(
-            palette = BrowserColorPalette.Neutral,
-            colorScheme = NeutralDarkColors.withPureBlackSurfaces(),
-            workspaceTokens = tokens,
-            dark = true,
-        )
-
-        assertEquals(tokens.toExtendedColors(), vola)
-        assertEquals(Color(tokens.ok), neutral.ok)
-        assertEquals(NeutralDarkColors.primaryContainer, neutral.aura1)
-        assertEquals(NeutralDarkColors.surfaceContainer, neutral.card)
+        assertTrue(failures.joinToString(separator = "\n"), failures.isEmpty())
     }
 
     @Test
-    fun `other palettes also turn pure black in the dark theme`() {
-        val colorScheme = NeutralDarkColors.withPureBlackSurfaces()
+    fun `dark themes sit on pure black and keep their cards raised`() {
+        THEMES.forEach { (name, theme) ->
+            listOf(theme.dark, theme.darkHighContrast).forEach { tokens ->
+                assertEquals(name, BLACK, tokens.surface)
+                assertEquals(name, BLACK, tokens.surfaceDim)
+                assertEquals(name, BLACK, tokens.surfaceContainerLowest)
+                assertEquals(name, tokens.surfaceContainer, tokens.card)
+                assertNotEquals(name, BLACK, tokens.card)
+            }
+            assertEquals(name, theme.light.surfaceContainerLowest, theme.light.card)
+        }
+    }
+
+    @Test
+    fun `a theme keeps the accent and replaces the neutrals`() {
+        val accent = VolaSchemes.Coral.dark
+        val theme = VolaThemeSchemes.Dusk.dark
+
+        val tokens = accent.withTheme(theme)
+
+        assertEquals(accent.primary, tokens.primary)
+        assertEquals(accent.tertiaryContainer, tokens.tertiaryContainer)
+        assertEquals(accent.ok, tokens.ok)
+        assertEquals(theme.surfaceContainer, tokens.surfaceContainer)
+        assertEquals(theme.onSurfaceVariant, tokens.onSurfaceVariant)
+        assertEquals(theme.aura1, tokens.aura1)
+        assertEquals(theme.card, tokens.card)
+    }
+
+    @Test
+    fun `palettes resolve to the accent, a theme over it, or the system`() {
+        val accent = VolaSchemes.Teal.light
+
+        assertSame(accent, VolaColorRules.tokens(BrowserColorPalette.Vola, accent, false, false))
+        assertEquals(
+            accent.withTheme(VolaThemeSchemes.Ice.light),
+            VolaColorRules.tokens(BrowserColorPalette.Ice, accent, false, false),
+        )
+        assertEquals(
+            accent.withTheme(VolaThemeSchemes.Mono.darkHighContrast),
+            VolaColorRules.tokens(BrowserColorPalette.Mono, accent, true, true),
+        )
+        assertEquals(null, VolaColorRules.tokens(BrowserColorPalette.Dynamic, accent, false, false))
+    }
+
+    @Test
+    fun `one accent can stand in for every workspace`() {
+        assertEquals(
+            WorkspaceAccent.Coral,
+            VolaColorRules.accent(WorkspaceAccent.Coral, override = null),
+        )
+        assertEquals(
+            WorkspaceAccent.Violet,
+            VolaColorRules.accent(WorkspaceAccent.Coral, override = WorkspaceAccent.Violet),
+        )
+    }
+
+    @Test
+    fun `extended colors follow the tokens except for the system palette`() {
+        val tokens = VolaSchemes.Coral.dark.withTheme(VolaThemeSchemes.Ice.dark)
+        val colorScheme = tokens.toColorScheme(dark = true)
+
+        val ice = VolaColorRules.extendedColors(
+            palette = BrowserColorPalette.Ice,
+            colorScheme = colorScheme,
+            tokens = tokens,
+            dark = true,
+        )
+        val system = VolaColorRules.extendedColors(
+            palette = BrowserColorPalette.Dynamic,
+            colorScheme = colorScheme,
+            tokens = tokens,
+            dark = true,
+        )
+
+        assertEquals(tokens.toExtendedColors(), ice)
+        assertEquals(Color(tokens.ok), system.ok)
+        assertEquals(colorScheme.primaryContainer, system.aura1)
+        assertEquals(colorScheme.surfaceContainer, system.card)
+    }
+
+    @Test
+    fun `the system palette also turns pure black in the dark theme`() {
+        val dark = VolaSchemes.Teal.dark.copy(surface = 0xFF101010, surfaceDim = 0xFF101010)
+            .toColorScheme(dark = true)
+        val colorScheme = dark.withPureBlackSurfaces()
 
         assertEquals(Color.Black, colorScheme.background)
         assertEquals(Color.Black, colorScheme.surface)
         assertEquals(Color.Black, colorScheme.surfaceContainerLowest)
-        assertEquals(NeutralDarkColors.surfaceContainer, colorScheme.surfaceContainer)
+        assertEquals(dark.surfaceContainer, colorScheme.surfaceContainer)
     }
 
     private fun contrastRatio(first: Long, second: Long): Double {
@@ -167,6 +252,13 @@ class VolaSchemesTest {
     private companion object {
         const val MINIMUM_CONTRAST = 4.5
         const val BLACK = 0xFF000000
+
+        val THEMES = listOf(
+            "Ice" to VolaThemeSchemes.Ice,
+            "Dusk" to VolaThemeSchemes.Dusk,
+            "Paper" to VolaThemeSchemes.Paper,
+            "Mono" to VolaThemeSchemes.Mono,
+        )
 
         private fun onSurfaceOver(
             background: KProperty1<VolaSchemeTokens, Long>,
