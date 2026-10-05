@@ -1,8 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.os.Build
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,24 +18,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -51,21 +42,18 @@ import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
-import dev.sk2andy.materialbrowser.data.BrowserColorPalette
-import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaAppearance
 import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaThemesTokens
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
-import dev.sk2andy.materialbrowser.ui.theme.color
 
 internal object AppearanceMainTestTags {
     fun chromeStyle(style: BrowserChromeStyle) =
         "appearance_settings_chrome_style:${style.stableId}"
     fun mode(mode: BrowserAppearanceMode) = "appearance_settings_mode:${mode.stableId}"
-    fun palette(palette: BrowserColorPalette) = "appearance_settings_palette:${palette.stableId}"
-    fun shape(shape: BrowserShapeStyle) = "appearance_settings_shape:${shape.stableId}"
+    const val Themes = "appearance_settings_themes"
 }
 
 /** The board's order for the theme: light, dark, then following the system («Auto»). */
@@ -77,12 +65,14 @@ private val MODE_ORDER = listOf(
 
 /**
  * The main part of «Appearance» (board W-SetAppearance): the shell's style as two cards with a
- * small phone each, then the theme, the colors and the corners as rows of choices.
+ * small phone each, the light or dark theme as a row of choices, then the way into «Themes».
  */
 @Composable
 internal fun ColumnScope.AppearanceMainSections(
     settings: AppearanceSettings,
+    workspaceAccent: WorkspaceAccent,
     onSettingsChanged: (AppearanceSettings) -> Unit,
+    onOpenThemes: () -> Unit,
 ) {
     Text(
         stringResource(R.string.settings_chrome_style).uppercase(),
@@ -114,8 +104,8 @@ internal fun ColumnScope.AppearanceMainSections(
     }
     Spacer(Modifier.height(VolaAppearance.sectionGap))
     AppearanceGroup {
-        GroupTitle(stringResource(R.string.settings_appearance_mode))
-        ChoiceRow(
+        AppearanceGroupTitle(stringResource(R.string.settings_appearance_mode))
+        AppearanceChoiceRow(
             options = MODE_ORDER,
             selected = settings.appearanceMode,
             label = { mode ->
@@ -137,30 +127,56 @@ internal fun ColumnScope.AppearanceMainSections(
         )
     }
     Spacer(Modifier.height(VolaAppearance.sectionGap))
-    AppearanceGroup {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            GroupTitle(stringResource(R.string.settings_color_palette), Modifier.weight(1f))
-            if (settings.colorPalette == BrowserColorPalette.Vola && settings.accentOverride == null) {
+    ThemesEntry(settings, workspaceAccent, onOpenThemes)
+}
+
+/** The way into «Themes»: the current theme's tile, its name, the accent and the corners. */
+@Composable
+private fun ThemesEntry(
+    settings: AppearanceSettings,
+    workspaceAccent: WorkspaceAccent,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = VolaThemesTokens.entryMinHeight)
+            .testTag(AppearanceMainTestTags.Themes),
+        shape = VolaAppearance.groupShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(
+            modifier = Modifier.padding(VolaAppearance.groupPadding),
+            horizontalArrangement = Arrangement.spacedBy(VolaThemesTokens.entryGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ThemeTile(
+                palette = settings.colorPalette,
+                accent = VolaColorRules.accent(workspaceAccent, settings.accentOverride),
+                size = VolaThemesTokens.entryTileSize,
+                shape = VolaThemesTokens.entryTileShape,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                AppearanceGroupTitle(stringResource(R.string.settings_themes_title))
                 Text(
-                    stringResource(R.string.settings_color_palette_per_space),
-                    style = MaterialTheme.typography.labelMedium,
+                    SettingsHomeSummaryRules.join(
+                        listOf(
+                            settings.colorPalette.displayName(),
+                            settings.accentOverride?.displayName(),
+                            settings.shapeStyle.displayName(),
+                        ),
+                    ).orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Icon(
+                VolaIcons.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        PaletteSwatches(
-            selected = settings.colorPalette,
-            onSelect = { palette -> onSettingsChanged(settings.copy(colorPalette = palette)) },
-        )
-        GroupTitle(stringResource(R.string.settings_shape_style))
-        ChoiceRow(
-            options = BrowserShapeStyle.entries,
-            selected = settings.shapeStyle,
-            label = { shape -> shape.displayName() },
-            icon = null,
-            testTag = AppearanceMainTestTags::shape,
-            onSelect = { shape -> onSettingsChanged(settings.copy(shapeStyle = shape)) },
-        )
     }
 }
 
@@ -180,7 +196,7 @@ private fun AppearanceGroup(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun GroupTitle(text: String, modifier: Modifier = Modifier) {
+internal fun AppearanceGroupTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text,
         modifier = modifier,
@@ -328,7 +344,7 @@ private fun PhoneLine(fraction: Float, strong: Boolean) {
 
 /** Choices in a row; the chosen one is a filled pill (board: a connected button group). */
 @Composable
-private fun <T> ChoiceRow(
+internal fun <T> AppearanceChoiceRow(
     options: List<T>,
     selected: T,
     label: @Composable (T) -> String,
@@ -391,103 +407,4 @@ private fun <T> ChoiceRow(
             }
         }
     }
-}
-
-/** Palettes as round swatches in their own colors, in rows of three; the chosen one is ringed. */
-@Composable
-private fun PaletteSwatches(
-    selected: BrowserColorPalette,
-    onSelect: (BrowserColorPalette) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectableGroup(),
-        verticalArrangement = Arrangement.spacedBy(VolaAppearance.swatchRowGap),
-    ) {
-        BrowserColorPalette.entries.chunked(VolaAppearance.SWATCHES_PER_ROW).forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth()) {
-                row.forEach { palette ->
-                    val isSelected = palette == selected
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .selectable(
-                                selected = isSelected,
-                                onClick = { onSelect(palette) },
-                                role = Role.RadioButton,
-                            )
-                            .testTag(AppearanceMainTestTags.palette(palette)),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(VolaAppearance.swatchLabelGap),
-                    ) {
-                        PaletteSwatch(palette, isSelected)
-                        Text(
-                            palette.displayName(),
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PaletteSwatch(palette: BrowserColorPalette, selected: Boolean) {
-    val colors = paletteColors(palette)
-    val ring = MaterialTheme.colorScheme.primary
-    Canvas(
-        modifier = Modifier.size(
-            VolaAppearance.swatchSize +
-                (VolaAppearance.swatchRing + VolaAppearance.swatchRingGap) * 2,
-        ),
-    ) {
-        val ringWidth = VolaAppearance.swatchRing.toPx()
-        val inset = ringWidth + VolaAppearance.swatchRingGap.toPx()
-        if (selected) {
-            drawCircle(
-                color = ring,
-                radius = size.minDimension / 2f - ringWidth / 2f,
-                style = Stroke(width = ringWidth),
-            )
-        }
-        val diameter = size.minDimension - inset * 2f
-        val sweep = 360f / colors.size
-        colors.forEachIndexed { index, color ->
-            drawArc(
-                color = color,
-                startAngle = -90f + sweep * index,
-                sweepAngle = sweep,
-                useCenter = true,
-                topLeft = Offset(inset, inset),
-                size = Size(diameter, diameter),
-            )
-        }
-    }
-}
-
-/** What each palette brings: workspace accents, the wallpaper's colors, or a theme's light and dark aura. */
-@Composable
-private fun paletteColors(palette: BrowserColorPalette): List<Color> = when (palette) {
-    BrowserColorPalette.Vola -> listOf(
-        WorkspaceAccent.Violet.color(),
-        WorkspaceAccent.Teal.color(),
-        WorkspaceAccent.Coral.color(),
-    )
-    BrowserColorPalette.Dynamic -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val wallpaper = dynamicLightColorScheme(LocalContext.current)
-        listOf(wallpaper.primaryContainer, wallpaper.tertiary)
-    } else {
-        listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiary)
-    }
-    BrowserColorPalette.Ice,
-    BrowserColorPalette.Dusk,
-    BrowserColorPalette.Paper,
-    BrowserColorPalette.Mono,
-    -> VolaColorRules.themeSet(palette)
-        ?.let { theme -> listOf(Color(theme.light.aura1), Color(theme.dark.aura1)) }
-        .orEmpty()
 }

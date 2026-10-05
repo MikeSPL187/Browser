@@ -569,7 +569,6 @@
     <string name="settings_appearance_mode">Тема</string>
     <string name="settings_appearance_advanced">Дополнительно</string>
     <string name="appearance_mode_auto">Авто</string>
-    <string name="settings_color_palette_per_space">Свои у каждого пространства</string>
     <string name="settings_chrome_style">Оформление</string>
     <string name="settings_chrome_style_frame">Рама</string>
     <string name="settings_chrome_style_air">Воздух</string>
@@ -591,6 +590,11 @@
     <string name="color_palette_dusk">Сумерки</string>
     <string name="color_palette_paper">Бумага</string>
     <string name="color_palette_mono">Моно</string>
+    <string name="settings_themes_title">Темы</string>
+    <string name="settings_themes_summary">Цвета, акцент и скругления</string>
+    <string name="settings_themes_accent">Акцент</string>
+    <string name="settings_themes_accent_workspace">Как у пространства</string>
+    <string name="settings_themes_preview">Предпросмотр: %1$s</string>
     <string name="settings_address_bar_color">Цвет адресной строки</string>
     <string name="address_bar_color_theme">Как в теме</string>
     <string name="address_bar_color_dimmed">Приглушённый</string>

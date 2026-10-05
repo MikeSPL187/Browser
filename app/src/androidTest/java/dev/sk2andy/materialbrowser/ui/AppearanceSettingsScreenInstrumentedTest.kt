@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -19,6 +20,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
@@ -49,7 +51,9 @@ class AppearanceSettingsScreenInstrumentedTest {
             MaterialBrowserTheme(settings = settings) {
                 AppearanceSettingsPage(
                     settings = settings,
+                    workspaceAccent = WorkspaceAccent.Default,
                     onSettingsChanged = { settings = it },
+                    onOpenThemes = {},
                     onBack = {},
                 )
             }
@@ -64,16 +68,6 @@ class AppearanceSettingsScreenInstrumentedTest {
             .performClick()
             .assertIsSelected()
         assertEquals(BrowserChromeStyle.Air, settings.chromeStyle)
-
-        composeRule.onNodeWithTag(AppearanceMainTestTags.palette(BrowserColorPalette.Mono))
-            .performScrollTo()
-            .performClick()
-        assertEquals(BrowserColorPalette.Mono, settings.colorPalette)
-
-        composeRule.onNodeWithTag(AppearanceMainTestTags.shape(BrowserShapeStyle.Angular))
-            .performScrollTo()
-            .performClick()
-        assertEquals(BrowserShapeStyle.Angular, settings.shapeStyle)
 
         // The rest folds away under «More settings».
         composeRule.onNodeWithTag(AppearanceSettingsTestTags.Animations).assertDoesNotExist()
@@ -135,9 +129,7 @@ class AppearanceSettingsScreenInstrumentedTest {
                 animationsEnabled = false,
                 forceDarkWebsites = true,
                 webContentFontSizePercent = 150,
-                colorPalette = BrowserColorPalette.Mono,
                 surfaceStyle = BrowserSurfaceStyle.Frosted,
-                shapeStyle = BrowserShapeStyle.Angular,
                 addressBarStyle = BrowserAddressBarStyle.Segmented,
                 frostedTransparencyPercent = 70,
                 frostedAddressBarTransparencyPercent = 50,
@@ -153,7 +145,9 @@ class AppearanceSettingsScreenInstrumentedTest {
             MaterialBrowserTheme(settings = AppearanceSettings()) {
                 AppearanceSettingsPage(
                     settings = AppearanceSettings(),
+                    workspaceAccent = WorkspaceAccent.Default,
                     onSettingsChanged = {},
+                    onOpenThemes = {},
                     onBack = {},
                     forceDarkWebsitesAvailable = false,
                 )
@@ -176,7 +170,9 @@ class AppearanceSettingsScreenInstrumentedTest {
             ) {
                 AppearanceSettingsPage(
                     settings = AppearanceSettings(surfaceStyle = BrowserSurfaceStyle.Frosted),
+                    workspaceAccent = WorkspaceAccent.Default,
                     onSettingsChanged = {},
+                    onOpenThemes = {},
                     onBack = {},
                     browserEngineKind = AndroidBrowserEngineKind.SystemWebView,
                 )
@@ -196,7 +192,9 @@ class AppearanceSettingsScreenInstrumentedTest {
             MaterialBrowserTheme(settings = settings) {
                 AppearanceSettingsPage(
                     settings = settings,
+                    workspaceAccent = WorkspaceAccent.Default,
                     onSettingsChanged = { settings = it },
+                    onOpenThemes = {},
                     onBack = {},
                 )
             }
@@ -226,7 +224,9 @@ class AppearanceSettingsScreenInstrumentedTest {
             MaterialBrowserTheme(settings = settings) {
                 AppearanceSettingsPage(
                     settings = settings,
+                    workspaceAccent = WorkspaceAccent.Default,
                     onSettingsChanged = { settings = it },
+                    onOpenThemes = {},
                     onBack = {},
                 )
             }
@@ -254,6 +254,75 @@ class AppearanceSettingsScreenInstrumentedTest {
 
         assertEquals(BrowserAddressBarColorPreset.Custom, settings.addressBarColorPreset)
         assertEquals("#1A2B3C", settings.addressBarCustomColorHex)
+    }
+
+    @Test
+    fun themesEntryOpensThemes() {
+        var opened = false
+        composeRule.setContent {
+            MaterialBrowserTheme(settings = AppearanceSettings()) {
+                AppearanceSettingsPage(
+                    settings = AppearanceSettings(colorPalette = BrowserColorPalette.Dusk),
+                    workspaceAccent = WorkspaceAccent.Default,
+                    onSettingsChanged = {},
+                    onOpenThemes = { opened = true },
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(AppearanceMainTestTags.Themes)
+            .performScrollTo()
+            .assertTextContains(context.getString(R.string.color_palette_dusk), substring = true)
+            .performClick()
+        assertTrue(opened)
+    }
+
+    @Test
+    fun themesChoicesUpdateOnlyTheirSettings() {
+        var settings by mutableStateOf(AppearanceSettings())
+        composeRule.setContent {
+            MaterialBrowserTheme(settings = settings) {
+                ThemesSettingsPage(
+                    settings = settings,
+                    workspaceAccent = WorkspaceAccent.Teal,
+                    onSettingsChanged = { settings = it },
+                    onBack = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.Preview).assertExists()
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.theme(BrowserColorPalette.Paper))
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+        assertEquals(BrowserColorPalette.Paper, settings.colorPalette)
+
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.AccentWorkspace)
+            .performScrollTo()
+            .assertIsSelected()
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.accent(WorkspaceAccent.Coral))
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+        assertEquals(WorkspaceAccent.Coral, settings.accentOverride)
+
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.shape(BrowserShapeStyle.Angular))
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+
+        composeRule.onNodeWithTag(ThemesSettingsTestTags.AccentWorkspace)
+            .performScrollTo()
+            .performClick()
+        assertEquals(
+            AppearanceSettings(
+                colorPalette = BrowserColorPalette.Paper,
+                shapeStyle = BrowserShapeStyle.Angular,
+            ),
+            settings,
+        )
     }
 
     private fun openMoreSettings() {
