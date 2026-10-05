@@ -547,7 +547,6 @@
     <string name="settings_appearance_mode">Theme</string>
     <string name="settings_appearance_advanced">More settings</string>
     <string name="appearance_mode_auto">Auto</string>
-    <string name="settings_color_palette_per_space">Each space has its own</string>
     <string name="settings_chrome_style">Browser layout</string>
     <string name="settings_chrome_style_frame">Frame</string>
     <string name="settings_chrome_style_air">Air</string>
@@ -565,7 +564,15 @@
     <string name="settings_color_palette">Colors</string>
     <string name="color_palette_dynamic">Wallpaper</string>
     <string name="color_palette_vola">Vola</string>
-    <string name="color_palette_neutral">Mono</string>
+    <string name="color_palette_ice">Ice</string>
+    <string name="color_palette_dusk">Dusk</string>
+    <string name="color_palette_paper">Paper</string>
+    <string name="color_palette_mono">Mono</string>
+    <string name="settings_themes_title">Themes</string>
+    <string name="settings_themes_summary">Colors, accent and corners</string>
+    <string name="settings_themes_accent">Accent</string>
+    <string name="settings_themes_accent_workspace">Same as space</string>
+    <string name="settings_themes_preview">Preview: %1$s</string>
     <string name="settings_address_bar_color">Address bar color</string>
     <string name="address_bar_color_theme">Theme</string>
     <string name="address_bar_color_dimmed">Dimmed</string>
@@ -853,6 +860,7 @@
     <string name="settings_user_ca_title">User-installed CA certificates trusted</string>
     <string name="settings_user_ca_summary">This build lets every CA installed by you or your device administrator inspect and modify Vola’s HTTPS traffic. Only use certificates and filtering tools you trust.</string>
     <string name="settings_section_about_legal">About &amp; legal</string>
+    <string name="settings_about_group_legal">Legal</string>
     <string name="settings_imprint_title">Developer &amp; imprint</string>
     <string name="settings_imprint_summary">Developer, source code and upstream project</string>
     <string name="settings_open_source_title">Open-source &amp; third-party licenses</string>

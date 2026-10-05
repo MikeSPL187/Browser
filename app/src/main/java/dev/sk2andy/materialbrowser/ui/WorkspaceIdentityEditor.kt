@@ -182,7 +182,7 @@ private fun WorkspaceAccentSwatch(
 }
 
 @Composable
-private fun WorkspaceAccent.displayName(): String = stringResource(
+internal fun WorkspaceAccent.displayName(): String = stringResource(
     when (this) {
         WorkspaceAccent.Violet -> R.string.workspace_accent_violet
         WorkspaceAccent.Blue -> R.string.workspace_accent_blue

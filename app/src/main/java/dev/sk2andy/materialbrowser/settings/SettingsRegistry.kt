@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.ui.SettingsDestination.Search
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.SiteCapsules
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Sync
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.TabsAndGestures
+import dev.sk2andy.materialbrowser.ui.SettingsDestination.Themes
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Userscripts
 
 /** A setting described once, with the words the interface shows for it. */
@@ -54,6 +55,7 @@ internal object SettingsRegistry {
             R.string.settings_appearance_title,
             R.string.settings_home_appearance_summary,
         ),
+        page(Themes, R.string.settings_themes_title, R.string.settings_themes_summary),
         page(
             SiteCapsules,
             R.string.capsule_settings_title,
@@ -335,8 +337,9 @@ internal object SettingsRegistry {
 
         setting("chrome_style", Appearance, R.string.settings_chrome_style, null),
         setting("appearance_mode", Appearance, R.string.settings_appearance_mode, null),
-        setting("color_palette", Appearance, R.string.settings_color_palette, null),
-        setting("shape_style", Appearance, R.string.settings_shape_style, null),
+        setting("color_palette", Themes, R.string.settings_color_palette, null),
+        setting("accent_override", Themes, R.string.settings_themes_accent, null),
+        setting("shape_style", Themes, R.string.settings_shape_style, null),
         setting(
             "animations",
             Appearance,

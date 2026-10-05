@@ -25,4 +25,12 @@ class SettingsRegistryTest {
         assertTrue(advanced.isNotEmpty())
         assertTrue(main.none { setting -> setting in advanced })
     }
+
+    @Test
+    fun `themes holds the palette, the accent and the corners`() {
+        val keys = SettingsRegistry.settingsOn(SettingsDestination.Themes, SettingLevel.Main)
+            .map { setting -> setting.spec.key }
+        assertEquals(listOf("color_palette", "accent_override", "shape_style"), keys)
+        assertTrue(SettingsRegistry.page(SettingsDestination.Themes) != null)
+    }
 }

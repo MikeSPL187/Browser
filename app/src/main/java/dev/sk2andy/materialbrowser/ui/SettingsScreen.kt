@@ -12,6 +12,7 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
@@ -198,6 +199,9 @@ internal fun SettingsScreen(
     onOpenFirefoxExtensions: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
+        ?.accent
+        ?: WorkspaceAccent.Default
     SettingsRouter(
         destination = destination,
         modifier = modifier,
@@ -362,11 +366,20 @@ internal fun SettingsScreen(
 
                 SettingsDestination.Appearance -> AppearanceSettingsPage(
                     settings = appearanceSettings,
+                    workspaceAccent = workspaceAccent,
                     onSettingsChanged = onAppearanceSettingsChanged,
+                    onOpenThemes = { onDestinationChanged(SettingsDestination.Themes) },
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                     forceDarkWebsitesAvailable =
                         browserEngineKind == AndroidBrowserEngineKind.SystemWebView,
                     browserEngineKind = browserEngineKind,
+                )
+
+                SettingsDestination.Themes -> ThemesSettingsPage(
+                    settings = appearanceSettings,
+                    workspaceAccent = workspaceAccent,
+                    onSettingsChanged = onAppearanceSettingsChanged,
+                    onBack = { onDestinationChanged(SettingsDestination.Appearance) },
                 )
 
                 SettingsDestination.Browser -> BrowserSettingsPage(
@@ -510,10 +523,7 @@ internal fun SettingsScreen(
                     title = stringResource(R.string.settings_section_about_legal),
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 ) {
-                    AboutLegalSection(
-                        onOpenUrl = onOpenLegalUrl,
-                        showTitle = false,
-                    )
+                    AboutLegalSection(onOpenUrl = onOpenLegalUrl)
                 }
             }
         }

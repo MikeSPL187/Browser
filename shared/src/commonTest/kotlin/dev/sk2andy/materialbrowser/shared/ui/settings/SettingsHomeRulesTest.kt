@@ -47,6 +47,7 @@ class SettingsHomeRulesTest {
             SettingsDestination.AddressBarActions,
             SettingsDestination.MenuActions,
             SettingsDestination.LinkPeekActions,
+            SettingsDestination.Themes,
             SettingsDestination.ToppingCatalog,
         )
         assertEquals(pagesOfTheHome, destinations)

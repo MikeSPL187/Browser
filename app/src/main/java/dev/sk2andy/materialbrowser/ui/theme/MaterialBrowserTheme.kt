@@ -41,8 +41,6 @@ import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.ui.CandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.ui.LocalCandyChromeSurfaceRenderer
 import dev.sk2andy.materialbrowser.ui.androidCandyChromeSurfaceRenderer
-import dev.sk2andy.materialbrowser.shared.ui.theme.NeutralDarkColors
-import dev.sk2andy.materialbrowser.shared.ui.theme.NeutralLightColors
 
 private val LocalAppearanceSettings = staticCompositionLocalOf { AppearanceSettings() }
 
@@ -73,24 +71,22 @@ internal fun CandyTheme(
     // A private tab is always dark, on the purple private scheme (board PrivateTab).
     val dark = privateMode || settings.usesDarkColors(systemDark)
     val highContrast = rememberSystemHighContrast()
-    val workspaceTokens = VolaColorRules.schemeSet(workspaceAccent, privateMode)
-        .select(dark = dark, highContrast = highContrast)
-    // The private scheme wins over Dynamic and Neutral too: the color says «private».
+    // A private tab keeps the purple private scheme on every palette: the color says «private».
     val palette = if (privateMode) BrowserColorPalette.Vola else settings.colorPalette
-    val baseColors = when (palette) {
-        BrowserColorPalette.Vola -> remember(workspaceTokens, dark) {
-            workspaceTokens.toColorScheme(dark)
-        }
-        BrowserColorPalette.Dynamic -> if (dark) {
-            dynamicDarkColorScheme(context).withPureBlackSurfaces()
-        } else {
-            dynamicLightColorScheme(context)
-        }
-        BrowserColorPalette.Neutral -> if (dark) {
-            NeutralDarkColors.withPureBlackSurfaces()
-        } else {
-            NeutralLightColors
-        }
+    val accent = if (privateMode) {
+        workspaceAccent
+    } else {
+        VolaColorRules.accent(workspaceAccent, settings.accentOverride)
+    }
+    val accentTokens = VolaColorRules.schemeSet(accent, privateMode)
+        .select(dark = dark, highContrast = highContrast)
+    val tokens = VolaColorRules.tokens(palette, accentTokens, dark, highContrast)
+    val baseColors = if (tokens != null) {
+        remember(tokens, dark) { tokens.toColorScheme(dark) }
+    } else if (dark) {
+        dynamicDarkColorScheme(context).withPureBlackSurfaces()
+    } else {
+        dynamicLightColorScheme(context)
     }
     val targetColorScheme = baseColors.withSurfaceStyle(settings.surfaceStyle)
     val colorScheme = animateColorScheme(targetColorScheme, animate = settings.animationsEnabled)
@@ -98,7 +94,7 @@ internal fun CandyTheme(
         VolaColorRules.extendedColors(
             palette = palette,
             colorScheme = targetColorScheme,
-            workspaceTokens = workspaceTokens,
+            tokens = tokens ?: accentTokens,
             dark = dark,
         ),
         animate = settings.animationsEnabled,
@@ -614,11 +610,14 @@ private fun ColorScheme.withSurfaceStyle(style: BrowserSurfaceStyle): ColorSchem
 
 /**
  * The aura the workspace in [accent] would show, so a workspace swipe can let it through under the
- * finger. Null when the palette paints every workspace alike or a private tab sets the colors.
+ * finger. Null when the theme or one accent paints every workspace alike.
  */
 @Composable
 internal fun workspaceAuraBrush(accent: WorkspaceAccent): ShaderBrush? {
-    if (LocalAppearanceSettings.current.colorPalette != BrowserColorPalette.Vola) return null
+    val settings = LocalAppearanceSettings.current
+    if (settings.colorPalette != BrowserColorPalette.Vola || settings.accentOverride != null) {
+        return null
+    }
     val dark = LocalVolaDarkTheme.current
     val tokens = VolaColorRules.schemeSet(accent, privateMode = false)
         .select(dark = dark, highContrast = rememberSystemHighContrast())

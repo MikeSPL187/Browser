@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarColorPreset
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
@@ -33,7 +34,9 @@ internal object AppearanceSettingsTestTags {
 @Composable
 internal fun AppearanceSettingsPage(
     settings: AppearanceSettings,
+    workspaceAccent: WorkspaceAccent,
     onSettingsChanged: (AppearanceSettings) -> Unit,
+    onOpenThemes: () -> Unit,
     onBack: () -> Unit,
     forceDarkWebsitesAvailable: Boolean = true,
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
@@ -96,6 +99,8 @@ internal fun AppearanceSettingsPage(
         onSettingsChanged = onSettingsChanged,
         onBack = onBack,
         forceDarkWebsitesAvailable = forceDarkWebsitesAvailable,
-        main = { AppearanceMainSections(settings, onSettingsChanged) },
+        main = {
+            AppearanceMainSections(settings, workspaceAccent, onSettingsChanged, onOpenThemes)
+        },
     )
 }

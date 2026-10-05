@@ -9,6 +9,7 @@ enum class SettingsDestination {
     MenuActions,
     LinkPeekActions,
     Appearance,
+    Themes,
     Browser,
     Downloads,
     Userscripts,
@@ -19,4 +20,18 @@ enum class SettingsDestination {
     ProtectionAndData,
     DeveloperOptions,
     AboutLegal,
+    ;
+
+    /** The page that back returns to: the page a subpage opens from, the home for the rest. */
+    val parent: SettingsDestination
+        get() = when (this) {
+            AddressBarLongPressActions,
+            AddressBarActions,
+            MenuActions,
+            LinkPeekActions,
+            -> TabsAndGestures
+            Themes -> Appearance
+            ToppingCatalog -> Userscripts
+            else -> Home
+        }
 }
