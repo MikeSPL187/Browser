@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialLoginSavePrompt
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialLoginSelectPrompt
+import dev.sk2andy.materialbrowser.browser.credentials.CredentialPasswordGenerationPrompt
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
@@ -31,8 +32,9 @@ internal class GeckoCredentialPromptBridge(
         val login = CredentialPromptRules.login(option.value.username, option.value.password)
             ?: return dismissed(request)
         val host = currentHost() ?: return dismissed(request)
+        val generated = (option.hint and Autocomplete.SaveOption.Hint.GENERATED) != 0
         return pending(request) { complete ->
-            host.saveLogin(CredentialLoginSavePrompt(identity, login)) { accepted ->
+            host.saveLogin(CredentialLoginSavePrompt(identity, login, generated)) { accepted ->
                 complete(
                     Unit.takeIf {
                         accepted && CredentialPromptRules.remainsCurrent(
@@ -48,9 +50,14 @@ internal class GeckoCredentialPromptBridge(
     fun onLoginSelect(
         request: GeckoSession.PromptDelegate.AutocompleteRequest<Autocomplete.LoginSelectOption>,
     ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
+        val logins = request.options.filter { option -> (option.hint and GENERATED) == 0 }
+        // A new-password field: Gecko offers its own generated password; Vola offers its generator.
+        if (logins.isEmpty() && request.options.any { option -> (option.hint and GENERATED) != 0 }) {
+            return onPasswordGeneration(request)
+        }
         val identity = currentLoginSelectionIdentity() ?: return dismissed(request)
         val allowedUserIds = CredentialPromptRules.allowedUserIds(
-            request.options.map { option -> option.value.username },
+            logins.map { option -> option.value.username },
         ) ?: return dismissed(request)
         val host = currentHost() ?: return dismissed(request)
         return pending(request) { complete ->
@@ -71,6 +78,35 @@ internal class GeckoCredentialPromptBridge(
                                 .username(selected.username)
                                 .password(selected.password)
                                 .build(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun onPasswordGeneration(
+        request: GeckoSession.PromptDelegate.AutocompleteRequest<Autocomplete.LoginSelectOption>,
+    ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse> {
+        val identity = currentSecureIdentity() ?: return dismissed(request)
+        val host = currentHost() ?: return dismissed(request)
+        return pending(request) { complete ->
+            host.generatePassword(CredentialPasswordGenerationPrompt(identity)) { password ->
+                val accepted = password?.takeIf { value ->
+                    CredentialPromptRules.login(username = "", password = value) != null &&
+                        CredentialPromptRules.remainsCurrent(identity, currentSecureIdentity())
+                }
+                complete(accepted) { value ->
+                    // Gecko fills the field as a generated password and saves it through the vault.
+                    request.confirm(
+                        Autocomplete.LoginSelectOption(
+                            Autocomplete.LoginEntry.Builder()
+                                .origin(identity.origin)
+                                .formActionOrigin(identity.origin)
+                                .username("")
+                                .password(value)
+                                .build(),
+                            GENERATED,
                         ),
                     )
                 }
@@ -159,6 +195,10 @@ internal class GeckoCredentialPromptBridge(
                 complete(safeAccepted) { value -> prompt.confirm(value) }
             }
         }
+    }
+
+    private companion object {
+        const val GENERATED = Autocomplete.SelectOption.Hint.GENERATED
     }
 
     private fun <T : GeckoSession.PromptDelegate.BasePrompt> dismissed(

@@ -118,6 +118,60 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun signingInWithAGeneratedPasswordNamesItsLogin() {
+        val generated = CredentialVaultRules.save(emptyList(), draft(username = "", password = "Gen3rated!"), 1) { "g" }
+        val logins = generated.logins
+
+        val named = CredentialVaultRules.save(logins, draft(username = "anna", password = "Gen3rated!"), 2) { "new" }
+        assertIs<VaultSaveResult.Updated>(named.result)
+        assertEquals(listOf("g" to "anna"), named.logins.map { it.id to it.username })
+
+        val other = CredentialVaultRules.save(logins, draft(username = "anna", password = "different"), 2) { "new" }
+        assertIs<VaultSaveResult.Added>(other.result)
+        assertEquals(2, other.logins.size)
+    }
+
+    @Test
+    fun hintsCarryNoPasswordAndMatchLikeLogins() {
+        val logins = listOf(
+            login("1", "https://example.com", lastUsed = 10),
+            login("2", "https://accounts.example.com"),
+            login("3", "https://example.com", lastUsed = 20),
+            login("4", "https://other.org"),
+        )
+        val hints = CredentialVaultRules.hints(logins)
+
+        assertFalse("hunter2" in hints.joinToString { it.username + it.origin + it.id })
+        assertEquals(listOf("3", "1"), CredentialVaultRules.hintsFor(hints, "https://example.com").map { it.id })
+        assertEquals(
+            setOf("1", "2", "3"),
+            CredentialVaultRules.hintsUnderDomain(hints, "example.com").map { it.id }.toSet(),
+        )
+        assertEquals(emptyList(), CredentialVaultRules.hintsUnderDomain(hints, "not a host"))
+        assertTrue(hints.all(CredentialVaultRules::accepts))
+        assertFalse(CredentialVaultRules.accepts(hints.first().copy(id = " ")))
+        assertFalse(CredentialVaultRules.accepts(hints.first().copy(origin = "https://Example.com")))
+        assertFalse("alice" in hints.first().toString())
+    }
+
+    @Test
+    fun aTwoFactorKeyIsKeptOnlyInItsCanonicalForm() {
+        val logins = listOf(login("1", "https://example.com"))
+        val key = TotpRules.canonical(TotpRules.parse("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")!!)
+
+        val withKey = CredentialVaultRules.setTotp(logins, "1", key, nowMillis = 7)
+        assertEquals(key, withKey?.single()?.totp)
+        assertEquals(7, withKey?.single()?.updatedAtMillis)
+        assertNull(CredentialVaultRules.setTotp(logins, "1", "otpauth://totp/Site:anna?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", 7))
+        assertNull(CredentialVaultRules.setTotp(logins, "missing", key, 7))
+        assertNull(CredentialVaultRules.setTotp(withKey!!, "1", null, 8)?.single()?.totp)
+
+        val edited = CredentialVaultRules.update(withKey, "1", draft(password = "changed"), 9)
+        assertEquals(key, edited.logins.single().totp)
+        assertFalse("JBSWY3DP" in withKey.single().toString())
+    }
+
+    @Test
     fun theLoginNeverPrintsItsSecrets() {
         val text = login("1", "https://example.com").toString() + draft().toString()
         assertFalse("hunter2" in text)

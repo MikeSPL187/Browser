@@ -36,6 +36,7 @@ import dev.sk2andy.materialbrowser.browser.SiteDomainRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginOffer
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityOffer
 import dev.sk2andy.materialbrowser.data.SnoozedTab
+import dev.sk2andy.materialbrowser.ui.passwords.VaultLoginPromptSheets
 import eightbitlab.com.blurview.BlurTarget
 
 @Composable
@@ -227,6 +228,9 @@ internal fun BoxScope.BrowserModalSurfaces(
             onCancel = { controller.cancelHttpAuthPrompt(prompt.id) },
         )
     }
+
+    // Vola's own «Save password?» and «Sign in to …» sheets (Q20b).
+    VaultLoginPromptSheets()
 
     controller.webPrompt?.let { prompt ->
         BrowserWebPromptDialog(

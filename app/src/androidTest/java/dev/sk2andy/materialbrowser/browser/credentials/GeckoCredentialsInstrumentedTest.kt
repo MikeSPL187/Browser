@@ -447,6 +447,11 @@ private class RecordingCredentialPromptHost : CredentialPromptHost {
         onComplete(null)
     }
 
+    override fun generatePassword(
+        prompt: CredentialPasswordGenerationPrompt,
+        onComplete: (String?) -> Unit,
+    ) = onComplete(null)
+
     override fun selectIdentityProvider(
         prompt: IdentityCredentialProviderPrompt,
         onComplete: (Int?) -> Unit,

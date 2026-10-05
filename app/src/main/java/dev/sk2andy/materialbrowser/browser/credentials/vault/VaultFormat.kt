@@ -79,9 +79,13 @@ internal class VaultEnvelope(val slots: List<VaultSlot>, val body: ByteArray) {
     }
 }
 
-/** The plaintext inside the seal: the saved logins, each checked again on the way in. */
+/**
+ * The plaintext inside the seal: the saved logins, each checked again on the way in. Version 2 adds
+ * the two-factor key (Q21c); version 1 files still open, with no keys.
+ */
 internal object VaultDocumentCodec {
-    private const val VERSION = 1
+    private const val VERSION = 2
+    private const val VERSION_WITHOUT_TOTP = 1
 
     fun encode(logins: List<VaultLogin>): ByteArray {
         val bytes = ByteArrayOutputStream()
@@ -99,6 +103,7 @@ internal object VaultDocumentCodec {
                 output.writeLong(login.updatedAtMillis)
                 output.writeLong(login.lastUsedAtMillis ?: NEVER)
                 output.writeInt(login.timesUsed)
+                output.writeOptional(login.totp)
             }
         }
         return bytes.toByteArray()
@@ -111,7 +116,8 @@ internal object VaultDocumentCodec {
     }
 
     private fun read(input: DataInputStream): List<VaultLogin>? {
-        if (input.readInt() != VERSION) return null
+        val version = input.readInt()
+        if (version != VERSION && version != VERSION_WITHOUT_TOTP) return null
         val count = input.readInt()
         if (count !in 0..CredentialVaultRules.MAX_LOGINS) return null
         val logins = List(count) {
@@ -126,9 +132,11 @@ internal object VaultDocumentCodec {
                 updatedAtMillis = input.readLong(),
                 lastUsedAtMillis = input.readLong().takeIf { it != NEVER },
                 timesUsed = input.readInt(),
+                totp = if (version == VERSION) input.readOptional() else null,
             )
             val draft = VaultLoginDraft(login.origin, login.formActionOrigin, login.httpRealm, login.username, login.password)
             if (login.id.isBlank() || login.timesUsed < 0 || !CredentialVaultRules.accepts(draft)) return null
+            if (!CredentialVaultRules.acceptsTotp(login.totp)) return null
             login
         }
         return if (input.read() != -1 || logins.map(VaultLogin::id).distinct().size != logins.size) null else logins

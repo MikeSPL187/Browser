@@ -47,6 +47,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -61,6 +63,16 @@ import dev.sk2andy.materialbrowser.ui.VolaStateMessage
 import dev.sk2andy.materialbrowser.ui.VolaStateTone
 import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaPasswords
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.delay
+import dev.sk2andy.materialbrowser.browser.credentials.TotpCodes
+import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 
 /** Why a hand-made or edited login was not saved. */
 internal enum class PasswordEditError { SiteInvalid, PasswordRequired, Duplicate, Failed }
@@ -74,6 +86,10 @@ internal fun PasswordsListScreen(
     onAdd: () -> Unit,
     onLock: () -> Unit,
     onBack: () -> Unit,
+    systemFillNote: Boolean = false,
+    healthIssues: Int? = null,
+    onHealth: () -> Unit = {},
+    onImport: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
@@ -87,6 +103,11 @@ internal fun PasswordsListScreen(
                     }
                 },
                 actions = {
+                    if (onImport != null) {
+                        IconButton(onClick = onImport, modifier = Modifier.testTag(PasswordsTestTags.Import)) {
+                            Icon(VolaIcons.UploadFile, contentDescription = stringResource(R.string.passwords_import_entry))
+                        }
+                    }
                     IconButton(onClick = onLock, modifier = Modifier.testTag(PasswordsTestTags.Lock)) {
                         Icon(VolaIcons.Lock, contentDescription = stringResource(R.string.passwords_lock))
                     }
@@ -112,6 +133,55 @@ internal fun PasswordsListScreen(
                     onQueryChange = { query = it.take(MAX_QUERY_LENGTH) },
                 )
             }
+            if (healthIssues != null && logins.isNotEmpty()) {
+                item(key = "health") {
+                    LibraryCardSlice(
+                        position = LibraryRules.position(0, 1),
+                        modifier = Modifier.padding(top = VolaLibrary.sectionGap),
+                    ) {
+                        LibraryRow(
+                            title = stringResource(R.string.passwords_health_entry),
+                            detail = if (healthIssues > 0) {
+                                pluralStringResource(R.plurals.passwords_health_entry_issues, healthIssues, healthIssues)
+                            } else {
+                                stringResource(R.string.passwords_health_entry_fine)
+                            },
+                            detailColor = if (healthIssues > 0) MaterialTheme.colorScheme.error else null,
+                            leading = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(VolaLibrary.tileSize)
+                                        .clip(VolaLibrary.tileShape)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        VolaIcons.GppMaybe,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                }
+                            },
+                            onClick = onHealth,
+                            modifier = Modifier.testTag(PasswordsTestTags.Health),
+                        )
+                    }
+                }
+            }
+            if (systemFillNote) {
+                // System WebView fills sites through Android's autofill service, not through this vault.
+                item(key = "system-fill-note") {
+                    Text(
+                        text = stringResource(R.string.passwords_webview_note),
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap)
+                            .testTag(PasswordsTestTags.SystemFillNote),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             if (visible.isEmpty()) {
                 item(key = "empty") {
                     val searching = query.isNotBlank()
@@ -120,6 +190,8 @@ internal fun PasswordsListScreen(
                         title = stringResource(if (searching) R.string.passwords_no_results else R.string.passwords_empty_title),
                         message = stringResource(if (searching) R.string.passwords_no_results_body else R.string.passwords_empty_body),
                         tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+                        actionLabel = stringResource(R.string.passwords_import_entry).takeIf { !searching && onImport != null },
+                        onAction = { onImport?.invoke() },
                         modifier = Modifier.padding(horizontal = VolaLibrary.sidePadding).padding(top = VolaLibrary.sectionGap),
                     )
                 }
@@ -157,9 +229,14 @@ internal fun PasswordDetailScreen(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
+    onCopyCode: (String) -> Unit = {},
+    onSetTotp: (String) -> Boolean = { false },
+    onRemoveTotp: () -> Unit = {},
 ) {
     // Shown only while this page is on screen: never restored after the app was in the background.
     var revealed by remember(login.id) { mutableStateOf(false) }
+    var addingTotp by remember { mutableStateOf(false) }
+    var confirmRemoveTotp by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val site = PasswordsRules.displaySite(login.origin)
     Scaffold(
@@ -230,6 +307,26 @@ internal fun PasswordDetailScreen(
                         }
                     }
                 }
+                LibraryCardSlice(position = LibraryRowPosition.Middle) {
+                    val totp = login.totp
+                    if (totp != null) {
+                        TotpField(totp = totp, onCopy = onCopyCode, onRemove = { confirmRemoveTotp = true })
+                    } else {
+                        TextButton(
+                            onClick = { addingTotp = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(VolaPasswords.fieldPadding)
+                                .testTag(PasswordsTestTags.AddTotp),
+                        ) {
+                            Icon(VolaIcons.Add, contentDescription = null)
+                            Text(
+                                text = stringResource(R.string.passwords_totp_add),
+                                modifier = Modifier.padding(start = VolaPasswords.buttonIconGap),
+                            )
+                        }
+                    }
+                }
                 LibraryCardSlice(position = LibraryRowPosition.Last) {
                     PasswordField(label = stringResource(R.string.passwords_site), value = login.origin)
                 }
@@ -246,6 +343,27 @@ internal fun PasswordDetailScreen(
                 )
             }
         }
+    }
+    if (addingTotp) {
+        TotpEntryDialog(
+            onSave = { input -> onSetTotp(input).also { saved -> if (saved) addingTotp = false } },
+            onDismiss = { addingTotp = false },
+        )
+    }
+    if (confirmRemoveTotp) {
+        AlertDialog(
+            onDismissRequest = { confirmRemoveTotp = false },
+            title = { Text(stringResource(R.string.passwords_totp_remove_title)) },
+            text = { Text(stringResource(R.string.passwords_totp_remove_body, site)) },
+            confirmButton = {
+                TextButton(onClick = { confirmRemoveTotp = false; onRemoveTotp() }) {
+                    Text(stringResource(R.string.passwords_delete_action), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRemoveTotp = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
     }
     if (confirmDelete) {
         AlertDialog(
@@ -289,6 +407,87 @@ private fun PasswordField(
     }
 }
 
+/** The two-factor code: grouped digits, seconds left, copy and remove. It renews every period. */
+@Composable
+private fun TotpField(totp: String, onCopy: (String) -> Unit, onRemove: () -> Unit) {
+    val config = remember(totp) { TotpRules.parse(totp) } ?: return
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(config) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(TICK_MILLIS - now % TICK_MILLIS)
+        }
+    }
+    val step = TotpRules.counter(now, config.period)
+    val code = remember(config, step) { TotpCodes.code(config, now) }
+    PasswordField(
+        label = stringResource(R.string.passwords_totp),
+        value = TotpRules.grouped(code),
+        monospace = true,
+        valueTag = PasswordsTestTags.TotpValue,
+    ) {
+        Text(
+            text = stringResource(R.string.passwords_totp_seconds_left, TotpRules.secondsLeft(now, config.period)),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        IconButton(onClick = { onCopy(code) }) {
+            Icon(painterResource(R.drawable.ic_content_copy), contentDescription = stringResource(R.string.passwords_totp_copy))
+        }
+        IconButton(onClick = onRemove, modifier = Modifier.testTag(PasswordsTestTags.RemoveTotp)) {
+            Icon(VolaIcons.Delete, contentDescription = stringResource(R.string.passwords_totp_remove))
+        }
+    }
+}
+
+/** A two-factor key from the site: its `otpauth://` link or the key shown under its QR code. */
+@Composable
+private fun TotpEntryDialog(onSave: (String) -> Boolean, onDismiss: () -> Unit) {
+    var input by remember { mutableStateOf("") }
+    var wrong by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.passwords_totp_add)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(VolaPasswords.formGap)) {
+                Text(
+                    text = stringResource(R.string.passwords_totp_add_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = {
+                        input = it.take(MAX_TOTP_INPUT_LENGTH)
+                        wrong = false
+                    },
+                    label = { Text(stringResource(R.string.passwords_totp_field)) },
+                    isError = wrong,
+                    supportingText = if (wrong) {
+                        { Text(stringResource(R.string.passwords_totp_wrong)) }
+                    } else {
+                        null
+                    },
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(PasswordsTestTags.TotpField),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { wrong = !onSave(input) },
+                modifier = Modifier.testTag(PasswordsTestTags.TotpSave),
+            ) {
+                Text(stringResource(R.string.passwords_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
 /** Adds a login by hand, or edits one: site, user name and password. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -303,6 +502,17 @@ internal fun PasswordEditScreen(
     var username by remember(initial?.id) { mutableStateOf(initial?.username.orEmpty()) }
     var password by remember(initial?.id) { mutableStateOf(initial?.password.orEmpty()) }
     var visible by remember { mutableStateOf(false) }
+    var generating by remember { mutableStateOf(false) }
+    if (generating) {
+        GeneratorSheet(
+            onUse = { generated ->
+                password = generated
+                visible = true
+                generating = false
+            },
+            onDismiss = { generating = false },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -357,11 +567,19 @@ internal fun PasswordEditScreen(
                 visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                 trailingIcon = {
-                    IconButton(onClick = { visible = !visible }) {
-                        Icon(
-                            if (visible) VolaIcons.VisibilityOff else VolaIcons.Visibility,
-                            contentDescription = stringResource(if (visible) R.string.passwords_hide else R.string.passwords_show),
-                        )
+                    Row {
+                        IconButton(
+                            onClick = { generating = true },
+                            modifier = Modifier.testTag(PasswordsTestTags.Generate),
+                        ) {
+                            Icon(VolaIcons.Refresh, contentDescription = stringResource(R.string.passwords_generator_open))
+                        }
+                        IconButton(onClick = { visible = !visible }) {
+                            Icon(
+                                if (visible) VolaIcons.VisibilityOff else VolaIcons.Visibility,
+                                contentDescription = stringResource(if (visible) R.string.passwords_hide else R.string.passwords_show),
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -374,6 +592,24 @@ internal fun PasswordEditScreen(
                 tag = PasswordsTestTags.Save,
             )
         }
+    }
+}
+
+/** The generator over the edit screen; «Use» puts the password in the field. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GeneratorSheet(onUse: (String) -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        PasswordGeneratorContent(
+            subtitle = null,
+            useLabel = stringResource(R.string.passwords_generator_use),
+            useNeedsFingerprint = false,
+            onUse = onUse,
+        )
     }
 }
 
@@ -390,3 +626,5 @@ private const val MAX_QUERY_LENGTH = 200
 private const val MAX_SITE_LENGTH = 512
 private const val MAX_USERNAME_LENGTH = 1_024
 private const val MAX_PASSWORD_LENGTH = 4_096
+private const val MAX_TOTP_INPUT_LENGTH = 2_048
+private const val TICK_MILLIS = 1_000L

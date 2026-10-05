@@ -78,6 +78,8 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerCoordinato
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineProcessRestart
 import dev.sk2andy.materialbrowser.browser.integration.CandySearchWidgetRules
 import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
+import dev.sk2andy.materialbrowser.data.FavoriteLibrarySignal
 import dev.sk2andy.materialbrowser.browser.integration.HistoryActivityContract
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserIntent
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserRequestKind
@@ -131,7 +133,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var releaseNotesStore: ReleaseNotesStore
     private lateinit var pictureInPictureController: MainActivityPictureInPictureController
     private lateinit var userScriptImporter: UserScriptImporter
-    private lateinit var favoriteBookmarksImporter: FavoriteBookmarksImporter
     private lateinit var launcherShortcutIntentHandler: LauncherShortcutIntentHandler
     private var geckoActivityIntegration: GeckoActivityIntegration? = null
     private lateinit var profileBiometricAuthenticator: ProfileBiometricAuthenticator
@@ -204,13 +205,6 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri != null && ::userScriptImporter.isInitialized) userScriptImporter.import(uri)
-    }
-    private val favoriteBookmarksImportLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null && ::favoriteBookmarksImporter.isInitialized) {
-            favoriteBookmarksImporter.import(uri)
-        }
     }
     private val appDataExportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip"),
@@ -472,11 +466,6 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope = lifecycleScope,
             browserController = browserController,
         )
-        favoriteBookmarksImporter = FavoriteBookmarksImporter(
-            context = this,
-            lifecycleScope = lifecycleScope,
-            browserController = browserController,
-        )
         launcherShortcutIntentHandler = LauncherShortcutIntentHandler(
             context = this,
             browserController = browserController,
@@ -695,14 +684,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             },
                             onImportFavoriteBookmarks = {
-                                favoriteBookmarksImportLauncher.launch(
-                                    arrayOf(
-                                        "text/html",
-                                        "application/xhtml+xml",
-                                        "text/plain",
-                                        "application/octet-stream",
-                                    ),
-                                )
+                                startActivity(PasswordsActivityContract.importIntent(this@MainActivity))
                             },
                             onExportAppData = {
                                 if (!browserController.canExportAppData()) {
@@ -1205,6 +1187,8 @@ class MainActivity : AppCompatActivity() {
             pictureInPictureController.reconcileStateOnResume()
         }
         if (::browserController.isInitialized) browserController.onResume()
+        // «Move to Vola» may have added bookmarks from the Passwords window.
+        if (::browserController.isInitialized && FavoriteLibrarySignal.consumeChanged()) browserController.reloadFavorites()
         if (::browserController.isInitialized) {
             privateTabsNotifier.update(browserController.tabs.count { it.isIncognito })
         }

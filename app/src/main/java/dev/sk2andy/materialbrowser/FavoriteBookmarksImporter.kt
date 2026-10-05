@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.LifecycleCoroutineScope
-import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.data.BrowsingLibraryRules
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkFileResult
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkImportReader
@@ -22,12 +21,6 @@ internal class FavoriteBookmarksImporter(
     /** Adds the parsed favorites to the library; answers with the result, or null if saving failed. */
     private val merge: (List<FavoriteEntry>, (FavoriteBookmarkMergeResult?) -> Unit) -> Unit,
 ) {
-    constructor(
-        context: Context,
-        lifecycleScope: LifecycleCoroutineScope,
-        browserController: BrowserController,
-    ) : this(context, lifecycleScope, browserController::importFavoriteBookmarks)
-
     private var isImporting = false
 
     fun import(uri: Uri) {

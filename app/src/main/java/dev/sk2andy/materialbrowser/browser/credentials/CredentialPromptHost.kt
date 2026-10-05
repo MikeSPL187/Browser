@@ -22,6 +22,13 @@ internal class CredentialLogin(
 internal class CredentialLoginSavePrompt(
     val identity: CredentialPromptIdentity,
     val login: CredentialLogin,
+    /** The password came from the generator, which already asked to save it. */
+    val generated: Boolean = false,
+)
+
+/** A new-password field asks for a strong password (board W-Generator). */
+internal data class CredentialPasswordGenerationPrompt(
+    val identity: CredentialPromptIdentity,
 )
 
 internal data class CredentialLoginSelectPrompt(
@@ -69,6 +76,9 @@ internal interface CredentialPromptHost : AutoCloseable {
     fun saveLogin(prompt: CredentialLoginSavePrompt, onComplete: (Boolean) -> Unit)
 
     fun selectLogin(prompt: CredentialLoginSelectPrompt, onComplete: (CredentialLogin?) -> Unit)
+
+    /** Offers a generated password for a new-password field; null leaves the field as it is. */
+    fun generatePassword(prompt: CredentialPasswordGenerationPrompt, onComplete: (String?) -> Unit)
 
     fun selectIdentityProvider(
         prompt: IdentityCredentialProviderPrompt,

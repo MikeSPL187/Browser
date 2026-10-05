@@ -28,7 +28,7 @@ private fun PasswordsListPreview() {
 @Composable
 private fun PasswordsEmptyPreview() {
     MaterialBrowserTheme {
-        PasswordsListScreen(logins = emptyList(), onOpen = {}, onAdd = {}, onLock = {}, onBack = {})
+        PasswordsListScreen(logins = emptyList(), onOpen = {}, onAdd = {}, onLock = {}, onBack = {}, systemFillNote = true)
     }
 }
 
@@ -39,6 +39,22 @@ private fun PasswordDetailPreview() {
     MaterialBrowserTheme {
         PasswordDetailScreen(
             login = previewLogins.first(),
+            onCopyUsername = {},
+            onCopyPassword = {},
+            onEdit = {},
+            onDelete = {},
+            onBack = {},
+        )
+    }
+}
+
+/** Board W-PasswordDetail with a two-factor code. */
+@VolaPreviews
+@Composable
+private fun PasswordDetailTotpPreview() {
+    MaterialBrowserTheme {
+        PasswordDetailScreen(
+            login = previewLogins[1].copy(totp = "otpauth://totp/?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=6&period=30"),
             onCopyUsername = {},
             onCopyPassword = {},
             onEdit = {},

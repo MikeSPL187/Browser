@@ -15,6 +15,7 @@ object CredentialVaultRules {
     const val MAX_USERNAME_LENGTH = 1_024
     const val MAX_PASSWORD_LENGTH = 4_096
     const val MAX_REALM_LENGTH = 512
+    const val MAX_ID_LENGTH = 128
     private const val MAX_HOST_LENGTH = 253
     private const val MAX_LABEL_LENGTH = 63
     private const val HTTPS_PREFIX = "https://"
@@ -59,10 +60,37 @@ object CredentialVaultRules {
     fun loginsUnderDomain(logins: List<VaultLogin>, domain: String): List<VaultLogin> {
         val wanted = domain.trim().trimEnd('.').lowercase()
         if (!isHost(wanted)) return emptyList()
-        return logins.filter { login ->
-            val host = login.origin.removePrefix(HTTPS_PREFIX).substringBefore(':')
-            host == wanted || host.endsWith(".$wanted")
+        return logins.filter { login -> hostOf(login.origin).let { host -> host == wanted || host.endsWith(".$wanted") } }
+    }
+
+    /** The login index of [logins]: what may stay readable while the vault is locked. */
+    fun hints(logins: List<VaultLogin>): List<VaultLoginHint> =
+        sortedForList(logins).map { login ->
+            VaultLoginHint(
+                id = login.id,
+                origin = login.origin,
+                formActionOrigin = login.formActionOrigin,
+                httpRealm = login.httpRealm,
+                username = login.username,
+                lastUsedAtMillis = login.lastUsedAtMillis,
+            )
         }
+
+    /** Whether [hint] could stand for a real login: the same checks a saved login passes. */
+    fun accepts(hint: VaultLoginHint): Boolean =
+        hint.id.isNotBlank() && hint.id.length <= MAX_ID_LENGTH && hint.id.isPlainText() &&
+            accepts(VaultLoginDraft(hint.origin, hint.formActionOrigin, hint.httpRealm, hint.username, password = "-"))
+
+    /** Hints for exactly [origin], most recently used first; the same rule as [loginsFor]. */
+    fun hintsFor(hints: List<VaultLoginHint>, origin: String): List<VaultLoginHint> =
+        hints.filter { hint -> hint.origin == origin }
+            .sortedByDescending { it.lastUsedAtMillis ?: Long.MIN_VALUE }
+
+    /** Hints whose host is [domain] or one of its subdomains; the same rule as [loginsUnderDomain]. */
+    fun hintsUnderDomain(hints: List<VaultLoginHint>, domain: String): List<VaultLoginHint> {
+        val wanted = domain.trim().trimEnd('.').lowercase()
+        if (!isHost(wanted)) return emptyList()
+        return hints.filter { hint -> hostOf(hint.origin).let { host -> host == wanted || host.endsWith(".$wanted") } }
     }
 
     fun sortedForList(logins: List<VaultLogin>): List<VaultLogin> =
@@ -76,6 +104,16 @@ object CredentialVaultRules {
         if (!accepts(draft)) return VaultChange(logins, VaultSaveResult.Rejected)
         val existing = logins.firstOrNull { login ->
             login.origin == draft.origin && login.httpRealm == draft.httpRealm && login.username == draft.username
+        }
+        // A generated password is saved before the form is sent, without a user name; signing in with
+        // it then names that login instead of adding a second one.
+        val unnamed = logins.firstOrNull { login ->
+            existing == null && draft.username.isNotEmpty() && login.username.isEmpty() &&
+                login.origin == draft.origin && login.httpRealm == draft.httpRealm && login.password == draft.password
+        }
+        if (unnamed != null) {
+            val named = unnamed.copy(username = draft.username, updatedAtMillis = nowMillis)
+            return VaultChange(logins.map { if (it.id == unnamed.id) named else it }, VaultSaveResult.Updated(named))
         }
         if (existing == null) {
             if (logins.size >= MAX_LOGINS) return VaultChange(logins, VaultSaveResult.Rejected)
@@ -127,6 +165,73 @@ object CredentialVaultRules {
         return VaultChange(logins.map { if (it.id == id) stamped else it }, VaultSaveResult.Updated(stamped))
     }
 
+    /** Whether [totp] is a key the vault keeps: a canonical link, or none. */
+    fun acceptsTotp(totp: String?): Boolean =
+        totp == null || TotpRules.parse(totp)?.let(TotpRules::canonical) == totp
+
+    /** [logins] with [id]'s two-factor key set or removed, or null if there is no such login or key. */
+    fun setTotp(logins: List<VaultLogin>, id: String, totp: String?, nowMillis: Long): List<VaultLogin>? {
+        if (!acceptsTotp(totp) || logins.none { it.id == id }) return null
+        return logins.map { login -> if (login.id == id) login.copy(totp = totp, updatedAtMillis = nowMillis) else login }
+    }
+
+    /** [logins] with [imported] added; see [CredentialVault.importLogins]. */
+    fun import(
+        logins: List<VaultLogin>,
+        imported: List<ImportedLogin>,
+        nowMillis: Long,
+        newId: () -> String,
+    ): Pair<List<VaultLogin>, VaultImportSummary> {
+        val result = logins.toMutableList()
+        val positions = HashMap<Triple<String, String?, String>, Int>()
+        result.forEachIndexed { index, login -> positions[Triple(login.origin, login.httpRealm, login.username)] = index }
+        val addedIds = ArrayList<String>()
+        var duplicates = 0
+        var rejected = 0
+        var withTotp = 0
+        for (item in imported) {
+            val draft = item.draft
+            val totp = item.totp?.takeIf(::acceptsTotp)
+            if (!accepts(draft)) {
+                rejected++
+                continue
+            }
+            val key = Triple(draft.origin, draft.httpRealm, draft.username)
+            val position = positions[key]
+            if (position != null) {
+                duplicates++
+                val existing = result[position]
+                if (existing.totp == null && totp != null) {
+                    result[position] = existing.copy(totp = totp, updatedAtMillis = nowMillis)
+                    withTotp++
+                }
+                continue
+            }
+            if (result.size >= MAX_LOGINS) {
+                rejected++
+                continue
+            }
+            val added = VaultLogin(
+                id = newId(),
+                origin = draft.origin,
+                formActionOrigin = draft.formActionOrigin,
+                httpRealm = draft.httpRealm,
+                username = draft.username,
+                password = draft.password,
+                createdAtMillis = nowMillis,
+                updatedAtMillis = nowMillis,
+                lastUsedAtMillis = null,
+                timesUsed = 0,
+                totp = totp,
+            )
+            positions[key] = result.size
+            result += added
+            addedIds += added.id
+            if (totp != null) withTotp++
+        }
+        return result to VaultImportSummary(addedIds, duplicates, rejected, withTotp)
+    }
+
     /** [logins] with [id] marked as just used, or null if there is no such login. */
     fun markUsed(logins: List<VaultLogin>, id: String, nowMillis: Long): List<VaultLogin>? {
         if (logins.none { it.id == id }) return null
@@ -142,6 +247,8 @@ object CredentialVaultRules {
     /** [logins] without [id], or null if there is no such login. */
     fun delete(logins: List<VaultLogin>, id: String): List<VaultLogin>? =
         logins.filterNot { it.id == id }.takeIf { it.size != logins.size }
+
+    private fun hostOf(origin: String): String = origin.removePrefix(HTTPS_PREFIX).substringBefore(':')
 
     private fun isExplicitPort(port: String): Boolean {
         if (port.isEmpty() || port.length > 5 || port.startsWith('0') || port.any { it !in '0'..'9' }) return false

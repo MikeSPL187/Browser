@@ -99,8 +99,8 @@ internal object SettingsRegistry {
         setting(
             "favorite_bookmark_import",
             Browser,
-            R.string.settings_favorite_bookmark_import_title,
-            R.string.settings_favorite_bookmark_import_summary,
+            R.string.passwords_import_title,
+            R.string.settings_move_to_vola_summary,
         ),
         setting(
             "full_immersive_mode",

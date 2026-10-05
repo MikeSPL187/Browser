@@ -37,4 +37,34 @@ internal object VolaPasswords {
     val buttonHeight = 52.dp
     val buttonIconGap = VolaSpacing.x2
     val formGap = VolaSpacing.x3
+
+    /** Sheets over a page: «Save password?» and «Sign in to …» (board W-Autofill). */
+    val sheetPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)
+    val sheetGap = VolaSpacing.x3
+    val sheetHeaderPadding = PaddingValues(horizontal = 4.dp)
+    val sheetHeaderGap = VolaSpacing.x3
+    val sheetIconSize = 40.dp
+    val sheetIconShape = RoundedCornerShape(14.dp)
+    val sheetIconGlyph = 22.dp
+    val sheetVerifiedIcon = 15.dp
+    val sheetVerifiedGap = VolaSpacing.x1
+    val sheetCardShape = RoundedCornerShape(24.dp)
+    val sheetActionSize = 40.dp
+    val sheetActionIcon = 22.dp
+    val sheetButtonHeight = 48.dp
+    val sheetButtonGap = VolaSpacing.x2
+
+    /** The generator (board W-Generator): the value on a card, then length and switches. */
+    val generatorValuePadding = PaddingValues(start = 16.dp, top = 8.dp, end = 4.dp, bottom = 8.dp)
+    val generatorOptionsPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+    val generatorSwitchHeight = 48.dp
+
+    /** The password check (board W-PasswordHealth). */
+    val healthSummaryGap = VolaSpacing.x2
+
+    /** Moving passwords in (boards W-Import, W-ImportChrome): numbered steps and the result card. */
+    val importStepBadge = 28.dp
+    val importStepGap = VolaSpacing.x3
+    val importCardPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
+    val importLineGap = VolaSpacing.x1
 }
