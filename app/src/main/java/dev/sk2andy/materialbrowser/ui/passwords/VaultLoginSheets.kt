@@ -82,6 +82,14 @@ internal fun VaultLoginPromptSheets() {
                 onSave = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Save) },
                 onDismiss = dismiss,
             )
+            is VaultLoginRequest.Generate -> PasswordGeneratorContent(
+                subtitle = request.site,
+                useLabel = stringResource(
+                    if (request.canSave) R.string.passwords_generator_use_and_save else R.string.passwords_generator_use,
+                ),
+                useNeedsFingerprint = request.canSave,
+                onUse = { password -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Use(password)) },
+            )
             is VaultLoginRequest.Select -> VaultSelectSheetContent(
                 request = request,
                 onPick = { username -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Pick(username)) },
@@ -97,8 +105,8 @@ internal fun VaultSaveSheetContent(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    SheetColumn(modifier = Modifier.testTag(VaultLoginSheetTestTags.Save)) {
-        SheetHeader(
+    VaultSheetColumn(modifier = Modifier.testTag(VaultLoginSheetTestTags.Save)) {
+        VaultSheetHeader(
             title = stringResource(
                 if (request.update) R.string.passwords_sheet_update_title else R.string.passwords_sheet_save_title,
                 request.site,
@@ -110,7 +118,7 @@ internal fun VaultSaveSheetContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        SheetCard {
+        VaultSheetCard {
             val username = request.username.ifEmpty { stringResource(R.string.passwords_no_username) }
             LibraryRow(
                 title = username,
@@ -141,7 +149,7 @@ internal fun VaultSaveSheetContent(
                     .testTag(VaultLoginSheetTestTags.SaveConfirm),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
-                ButtonIcon(VolaIcons.Fingerprint)
+                VaultButtonIcon(VolaIcons.Fingerprint)
                 Text(
                     stringResource(if (request.update) R.string.passwords_sheet_update else R.string.passwords_save),
                     maxLines = 1,
@@ -159,8 +167,8 @@ internal fun VaultSelectSheetContent(
     onDismiss: () -> Unit,
     nowMillis: Long = System.currentTimeMillis(),
 ) {
-    SheetColumn(modifier = Modifier.testTag(VaultLoginSheetTestTags.Select)) {
-        SheetHeader(title = stringResource(R.string.passwords_sheet_signin_title, request.site)) {
+    VaultSheetColumn(modifier = Modifier.testTag(VaultLoginSheetTestTags.Select)) {
+        VaultSheetHeader(title = stringResource(R.string.passwords_sheet_signin_title, request.site)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(VolaPasswords.sheetVerifiedGap),
                 verticalAlignment = Alignment.CenterVertically,
@@ -178,7 +186,7 @@ internal fun VaultSelectSheetContent(
                 )
             }
         }
-        SheetCard {
+        VaultSheetCard {
             request.accounts.forEachIndexed { index, account ->
                 if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHigh)
                 AccountRow(
@@ -198,7 +206,7 @@ internal fun VaultSelectSheetContent(
                 .testTag(VaultLoginSheetTestTags.SelectDismiss),
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
         ) {
-            ButtonIcon(VolaIcons.Close)
+            VaultButtonIcon(VolaIcons.Close)
             Text(stringResource(R.string.passwords_sheet_dont_fill))
         }
     }
@@ -242,7 +250,7 @@ private fun AccountRow(
 }
 
 @Composable
-private fun SheetColumn(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun VaultSheetColumn(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -256,7 +264,7 @@ private fun SheetColumn(modifier: Modifier = Modifier, content: @Composable () -
 }
 
 @Composable
-private fun SheetHeader(title: String, subtitle: @Composable () -> Unit) {
+internal fun VaultSheetHeader(title: String, subtitle: @Composable () -> Unit) {
     Row(
         modifier = Modifier.padding(VolaPasswords.sheetHeaderPadding),
         horizontalArrangement = Arrangement.spacedBy(VolaPasswords.sheetHeaderGap),
@@ -287,7 +295,7 @@ private fun SheetHeader(title: String, subtitle: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SheetCard(content: @Composable () -> Unit) {
+internal fun VaultSheetCard(content: @Composable () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = VolaPasswords.sheetCardShape,
@@ -298,7 +306,7 @@ private fun SheetCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ButtonIcon(icon: ImageVector) {
+internal fun VaultButtonIcon(icon: ImageVector) {
     Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
 }

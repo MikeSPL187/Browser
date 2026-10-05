@@ -53,4 +53,9 @@ internal object VolaPasswords {
     val sheetActionIcon = 22.dp
     val sheetButtonHeight = 48.dp
     val sheetButtonGap = VolaSpacing.x2
+
+    /** The generator (board W-Generator): the value on a card, then length and switches. */
+    val generatorValuePadding = PaddingValues(start = 16.dp, top = 8.dp, end = 4.dp, bottom = 8.dp)
+    val generatorOptionsPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+    val generatorSwitchHeight = 48.dp
 }

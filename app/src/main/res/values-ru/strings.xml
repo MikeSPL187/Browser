@@ -1770,4 +1770,19 @@
     <string name="passwords_sheet_not_now">Не сейчас</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">С движком System WebView сайты заполняет служба автозаполнения Android, а не этот список.</string>
+    <string name="passwords_generator_title">Надёжный пароль</string>
+    <string name="passwords_generator_use_and_save">Использовать и сохранить</string>
+    <string name="passwords_generator_use">Использовать</string>
+    <string name="passwords_generator_password">Пароль</string>
+    <string name="passwords_generator_phrase">Фраза</string>
+    <string name="passwords_generator_new">Новый пароль</string>
+    <string name="passwords_generator_length">Длина</string>
+    <string name="passwords_generator_words">Слова</string>
+    <string name="passwords_generator_digits_symbols">Цифры и символы</string>
+    <string name="passwords_generator_avoid_ambiguous">Без похожих знаков (l, 1, O, 0)</string>
+    <string name="passwords_generator_open">Сгенерировать пароль</string>
+    <string name="passwords_strength_weak">Слабый · подберут за часы</string>
+    <string name="passwords_strength_fair">Средний · подберут за месяцы</string>
+    <string name="passwords_strength_strong">Надёжный · подбор займёт годы</string>
+    <string name="passwords_strength_very_strong">Очень надёжный · подбор займёт века</string>
 </resources>

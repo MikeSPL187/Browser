@@ -99,6 +99,12 @@ internal class AndroidCredentialPromptHost private constructor(
         )
     }
 
+    /** The system has no generator to offer; Vola's own host does ([VaultCredentialPromptHost]). */
+    override fun generatePassword(
+        prompt: CredentialPasswordGenerationPrompt,
+        onComplete: (String?) -> Unit,
+    ) = onComplete(null)
+
     override fun selectIdentityProvider(
         prompt: IdentityCredentialProviderPrompt,
         onComplete: (Int?) -> Unit,
