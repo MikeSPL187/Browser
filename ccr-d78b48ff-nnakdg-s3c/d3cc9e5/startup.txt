@@ -1,0 +1,33 @@
+Cold start (am start -W, 5 runs): average 3847 ms, min 3643 ms, max 3955 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 331
+  ActivityCreateStart: 534
+  ActivityCreateEnd: 967
+  ActivityResumed: 1095
+  FirstFrame: 2548
+  FirstPageComposite: 6730
+  Composed.AddressChrome: 1860
+  Composed.FirefoxExtensionChrome: 1860
+  Composed.ModalSurfaces: 1860
+  Composed.SettingsOverlay: 1860
+  Composed.TabOverview: 1860
+  Composed.TransientOverlays: 1860
+  Composed.Viewport: 1859
+Durations (median, ms):
+  Compose.AddressChrome (main): 65
+  Compose.FirefoxExtensionChrome (main): 1
+  Compose.ModalSurfaces (main): 11
+  Compose.SettingsOverlay (main): 6
+  Compose.TabOverview (main): 61
+  Compose.TransientOverlays (main): 8
+  Compose.Viewport (main): 147
+  GeckoRuntimeCreate (main): 38
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  3601: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  706: Handler (android.app.ActivityThread$H)  null: 159
+  111: Handler (android.os.Handler)  dev.sk2andy.materialbrowser.browser.gecko.GeckoViewToppingHostRuntime$$ExternalSyntheticLambda0: 0
+  109: Handler (android.os.Handler)  org.mozilla.gecko.GeckoThread$1: 0
+  86: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
+  77: Handler (android.app.ActivityThread$H)  android.app.LoadedApk$ServiceDispatcher$RunConnection: 0
+  61: Handler (android.app.ActivityThread$H)  null: 113
+  51: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda7: 0
