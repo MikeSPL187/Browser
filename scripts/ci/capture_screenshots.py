@@ -151,6 +151,28 @@ def save_ui(name):
     log(f"saved ui-{name}.xml")
 
 
+def themes(suffix):
+    """Themes (Q17b, board W-Themes): the page, one other theme tried, then Vola again."""
+    if not tap_scrolling("Themes", "Темы", name=f"appearance-{suffix}"):
+        return
+    time.sleep(2)
+    shot(f"themes-{suffix}")
+    # Ice shows off the light pass, Dusk the dark one; Vola comes back for the later shots.
+    tried = ("Ice", "Лёд") if suffix == "light" else ("Dusk", "Сумерки")
+    if tap(*tried):
+        time.sleep(2)
+        shot(f"themes-{tried[0].lower()}-{suffix}")
+        tap("Vola")
+        time.sleep(1)
+    width, height = screen_size()
+    adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.75)),
+        str(width // 2), str(int(height * 0.3)), "400")
+    time.sleep(1)
+    shot(f"themes-more-{suffix}")
+    adb("shell", "input", "keyevent", "BACK")
+    time.sleep(2)
+
+
 def tap_scrolling(*labels, name, attempts=7):
     """Taps a label, scrolling the visible list up between attempts when it is off screen."""
     width, height = screen_size()
@@ -935,6 +957,7 @@ def tour(suffix):
                 if tap_scrolling("Appearance", "Внешний вид", name=f"settings-{suffix}"):
                     time.sleep(2)
                     shot(f"appearance-{suffix}")
+                    themes(suffix)
                     if tap_scrolling("More settings", "Дополнительно",
                                      name=f"appearance-{suffix}"):
                         time.sleep(2)

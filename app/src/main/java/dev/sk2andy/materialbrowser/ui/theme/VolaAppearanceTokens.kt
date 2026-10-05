@@ -26,7 +26,7 @@ internal object VolaAppearance {
     val phoneContentPadding = 7.dp
     val styleCardTextGap = VolaSpacing.x1
 
-    /** A card of rows: theme and corners, colors. */
+    /** A card of rows: the light or dark theme. */
     val groupShape = RoundedCornerShape(VolaShapes.cardRadius)
     val groupPadding = VolaSpacing.x4
     val groupGap = VolaSpacing.x3
@@ -38,11 +38,4 @@ internal object VolaAppearance {
     val choiceSelectedShape = RoundedCornerShape(50)
     val choiceIconSize = 18.dp
     val choiceIconGap = 6.dp
-
-    val swatchSize = 48.dp
-    val swatchRing = 2.5.dp
-    val swatchRingGap = 3.dp
-    val swatchLabelGap = VolaSpacing.x1
-    val swatchRowGap = VolaSpacing.x3
-    const val SWATCHES_PER_ROW = 3
 }

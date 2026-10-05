@@ -30,18 +30,10 @@ fun SettingsRouter(
             targetState = destination,
             modifier = Modifier.fillMaxSize(),
             transitionSpec = {
+                // Back to the home or to the page a subpage opened from slides the other way.
                 if (
                     targetState == SettingsDestination.Home ||
-                    initialState == SettingsDestination.ToppingCatalog &&
-                    targetState == SettingsDestination.Userscripts ||
-                    initialState == SettingsDestination.AddressBarLongPressActions &&
-                    targetState == SettingsDestination.TabsAndGestures ||
-                    initialState == SettingsDestination.AddressBarActions &&
-                    targetState == SettingsDestination.TabsAndGestures ||
-                    initialState == SettingsDestination.MenuActions &&
-                    targetState == SettingsDestination.TabsAndGestures ||
-                    initialState == SettingsDestination.LinkPeekActions &&
-                    targetState == SettingsDestination.TabsAndGestures
+                    initialState.parent == targetState
                 ) {
                     (slideInHorizontally { width -> -width / 3 } + fadeIn()) togetherWith
                         (slideOutHorizontally { width -> width } + fadeOut())
