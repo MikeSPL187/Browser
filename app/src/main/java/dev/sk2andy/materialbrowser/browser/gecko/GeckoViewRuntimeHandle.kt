@@ -247,6 +247,11 @@ internal class GeckoViewRuntimeHandle private constructor(
     }
 
     @UiThread
+    override fun setGlobalPrivacyControl(enabled: Boolean) {
+        runtime.settings.setGlobalPrivacyControl(enabled)
+    }
+
+    @UiThread
     override fun setWebContentFontSizeFactor(factor: Float) {
         runtime.settings.automaticFontSizeAdjustment = false
         runtime.settings.fontSizeFactor = factor
@@ -324,6 +329,7 @@ internal class GeckoViewRuntimeHandle private constructor(
                 contentBlocking = contentBlocking,
                 dnsOverHttpsSettings = store.loadDnsOverHttpsSettings(),
                 httpsOnlyMode = store.loadHttpsOnlyMode(),
+                globalPrivacyControl = store.loadPrivacySignalSettings().globalPrivacyControlEnabled,
             )
             val runtime = GeckoRuntime.create(appContext, runtimeSettings)
             runtime.webNotificationDelegate = GeckoWebNotificationPresenter(appContext)
@@ -381,6 +387,8 @@ internal class GeckoViewRuntimeHandle private constructor(
 /**
  * GeckoView 155 exposes cookie behavior only on the shared runtime. Keep that runtime strict unless
  * an active session or queued navigation has a confirmed, host-matched compatibility exception.
+ * Even then third-party cookies stay partitioned per site (Total Cookie Protection); the excepted
+ * site itself is unpartitioned through its tracking permission.
  */
 private class GeckoCookieBehaviorCoordinator(
     private val settings: ContentBlocking.Settings,
@@ -434,7 +442,7 @@ private class GeckoCookieBehaviorCoordinator(
                 claim.active && claim.allow && claim.privateMode == privateMode
             }
         ) {
-            ContentBlocking.CookieBehavior.ACCEPT_ALL
+            ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS
         } else {
             ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY
         }

@@ -84,6 +84,16 @@ class GeckoRuntimeOwnerTest {
     }
 
     @Test
+    fun `session factory forwards Global Privacy Control`() {
+        val runtime = FakeRuntimeHandle()
+        val factory = GeckoBrowserEngineSessionFactory(runtime)
+
+        factory.setGlobalPrivacyControl(false)
+
+        assertEquals(false, runtime.recordedGlobalPrivacyControl)
+    }
+
+    @Test
     fun `session factory forwards web content color scheme`() {
         val runtime = FakeRuntimeHandle()
         val factory = GeckoBrowserEngineSessionFactory(runtime)
@@ -110,6 +120,7 @@ class GeckoRuntimeOwnerTest {
         var thirdPartyCookiesBlocked = true
         var recordedDnsOverHttpsSettings = DnsOverHttpsSettings()
         var recordedHttpsOnlyMode: HttpsOnlyMode? = null
+        var recordedGlobalPrivacyControl: Boolean? = null
         var recordedWebContentFontSizeFactor = 1f
         var recordedWebContentColorScheme = BrowserWebContentColorScheme.System
         var recordedConfiguration: Configuration? = null
@@ -141,6 +152,10 @@ class GeckoRuntimeOwnerTest {
 
         override fun setHttpsOnlyMode(mode: HttpsOnlyMode) {
             recordedHttpsOnlyMode = mode
+        }
+
+        override fun setGlobalPrivacyControl(enabled: Boolean) {
+            recordedGlobalPrivacyControl = enabled
         }
 
         override fun setWebContentFontSizeFactor(factor: Float) {

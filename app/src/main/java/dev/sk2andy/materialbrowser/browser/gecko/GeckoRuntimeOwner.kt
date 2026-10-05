@@ -63,6 +63,9 @@ internal interface GeckoRuntimeHandle {
     fun setHttpsOnlyMode(mode: HttpsOnlyMode)
 
     @UiThread
+    fun setGlobalPrivacyControl(enabled: Boolean)
+
+    @UiThread
     fun setWebContentFontSizeFactor(factor: Float)
 
     @UiThread

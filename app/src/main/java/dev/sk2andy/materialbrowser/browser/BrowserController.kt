@@ -2183,9 +2183,7 @@ class BrowserController(
         fileChooserValidationExecutor.execute(geckoFileUploadStager::clearOrphans)
         filterRules += candyRuleRepository.load()
         userScripts += userScriptRepository.load()
-        browserEngineSessionFactory.setBlockThirdPartyCookies(
-            workerSettings.blockThirdPartyCookies,
-        )
+        browserEngineSessionFactory.setBlockThirdPartyCookies(workerSettings.blockThirdPartyCookies)
         webRtcProtectionMode = store.loadWebRtcProtectionMode()
         browserEngineSessionFactory.setWebRtcProtectionMode(webRtcProtectionMode)
         privacySignalSettings = store.loadPrivacySignalSettings()
@@ -9107,6 +9105,7 @@ class BrowserController(
         privacySignalRevision = PRIVACY_SIGNAL_REVISIONS.incrementAndGet()
         privacySignalSettings = settings
         store.savePrivacySignalSettings(settings)
+        browserEngineSessionFactory.setGlobalPrivacyControl(settings.globalPrivacyControlEnabled)
         browserEngineSessions.forEach { (tabId, session) ->
             val policy = geckoPrivacyPolicyFor(tabId) ?: return@forEach
             session.updatePrivacyPolicy(policy) {

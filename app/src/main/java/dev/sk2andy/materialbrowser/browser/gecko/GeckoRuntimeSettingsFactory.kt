@@ -19,6 +19,7 @@ internal object GeckoRuntimeSettingsFactory {
         // With Vola's vault as Gecko's login storage, a login is filled only from the login prompt,
         // never silently on page load.
         loginAutofillEnabled: Boolean = !CredentialVaultFeature.ENABLED,
+        globalPrivacyControl: Boolean = true,
     ): GeckoRuntimeSettings = GeckoRuntimeSettings.Builder()
         .contentBlocking(contentBlocking)
         .loginAutofillEnabled(loginAutofillEnabled)
@@ -29,9 +30,49 @@ internal object GeckoRuntimeSettingsFactory {
         .apply {
             setFingerprintingProtection(true)
             setFingerprintingProtectionPrivateBrowsing(true)
+            setGlobalPrivacyControl(globalPrivacyControl)
+            applyEngineProtections()
             applyDnsOverHttpsSettings(dnsOverHttpsSettings)
             applyHttpsOnlyMode(httpsOnlyMode)
         }
+}
+
+/**
+ * Protections Gecko ships but leaves off or on trial (stage S1, `docs/vola/research-2026-10.md`).
+ * Those GeckoView 157 already enforces are pinned, so a later default cannot quietly drop them.
+ */
+@UiThread
+internal fun GeckoRuntimeSettings.applyEngineProtections() {
+    contentBlocking
+        .setQueryParameterStrippingEnabled(true)
+        .setQueryParameterStrippingPrivateBrowsingEnabled(true)
+        .setQueryParameterStrippingStripList(*GeckoEngineProtections.strippedQueryParameters.toTypedArray())
+        .setBounceTrackingProtectionMode(
+            ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_ENABLED,
+        )
+    setCertificateTransparencyMode(GeckoEngineProtections.CERTIFICATE_TRANSPARENCY_ENFORCE)
+    setPostQuantumKeyExchangeEnabled(true)
+    // Public sites may not reach the local network or this device; Gecko denies unless allowed.
+    setLnaEnabled(true)
+    setLnaBlocking(true)
+}
+
+internal object GeckoEngineProtections {
+    /** security.pki.certificate_transparency.mode: 2 rejects certificates without CT proofs. */
+    const val CERTIFICATE_TRANSPARENCY_ENFORCE = 2
+
+    /**
+     * Click and campaign identifiers removed from links before a page loads, after the lists of
+     * Firefox and Brave. Analytics tags such as utm_* stay: they do not identify the person.
+     */
+    val strippedQueryParameters = listOf(
+        "__hsfp", "__hssc", "__hstc", "__s", "_hsenc", "_openstat",
+        "dclid", "fbclid", "gbraid", "gclid", "hsctatracking", "igshid",
+        "li_fat_id", "mc_eid", "mkt_tok", "ml_subscriber", "ml_subscriber_hash", "msclkid",
+        "oft_c", "oft_ck", "oft_d", "oft_id", "oft_ids", "oft_k", "oft_lk", "oft_sk",
+        "oly_anon_id", "oly_enc_id", "rb_clickid", "s_cid", "ttclid", "twclid",
+        "vero_conv", "vero_id", "wbraid", "wickedid", "yclid", "ysclid",
+    )
 }
 
 @UiThread

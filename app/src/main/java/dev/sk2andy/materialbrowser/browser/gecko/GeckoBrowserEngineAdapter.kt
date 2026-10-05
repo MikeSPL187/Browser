@@ -313,6 +313,11 @@ internal class GeckoBrowserEngineSessionFactory(
     }
 
     @UiThread
+    override fun setGlobalPrivacyControl(enabled: Boolean) {
+        runtime.setGlobalPrivacyControl(enabled)
+    }
+
+    @UiThread
     override fun setWebContentFontSizeFactor(factor: Float) {
         runtime.setWebContentFontSizeFactor(factor)
     }
