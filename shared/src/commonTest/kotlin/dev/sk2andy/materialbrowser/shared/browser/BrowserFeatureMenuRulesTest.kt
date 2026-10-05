@@ -13,9 +13,6 @@ class BrowserFeatureMenuRulesTest {
             state = BrowserFeatureMenuState(
                 hasPage = true,
                 canDockAddressBar = true,
-                canToggleForceVerticalScrolling = true,
-                canToggleForcePageZooming = true,
-                canToggleForceSafeArea = true,
                 overflowPageActions = listOf(
                     BrowserFeatureMenuAction.ShowTabs,
                     BrowserFeatureMenuAction.NewTab,
@@ -30,36 +27,71 @@ class BrowserFeatureMenuRulesTest {
                 BrowserFeatureMenuAction.Forward,
                 BrowserFeatureMenuAction.Reload,
                 BrowserFeatureMenuAction.ToggleFavorite,
-                BrowserFeatureMenuAction.TogglePinned,
+                BrowserFeatureMenuAction.Share,
                 BrowserFeatureMenuAction.ShowTabs,
                 BrowserFeatureMenuAction.NewTab,
-                BrowserFeatureMenuAction.CloseTab,
-                BrowserFeatureMenuAction.DuplicateTab,
+                BrowserFeatureMenuAction.FindInPage,
                 BrowserFeatureMenuAction.OpenReader,
                 BrowserFeatureMenuAction.TranslatePage,
-                BrowserFeatureMenuAction.FindInPage,
-                BrowserFeatureMenuAction.Share,
-                BrowserFeatureMenuAction.OpenExternal,
-                BrowserFeatureMenuAction.Print,
-                BrowserFeatureMenuAction.ToggleCookieBannerRemoval,
-                BrowserFeatureMenuAction.ToggleForceVerticalScrolling,
-                BrowserFeatureMenuAction.ToggleForcePageZooming,
-                BrowserFeatureMenuAction.ToggleForceSafeArea,
-                BrowserFeatureMenuAction.ToggleAlwaysBlockPopups,
                 BrowserFeatureMenuAction.ToggleDesktopView,
-                BrowserFeatureMenuAction.ToggleDomainMute,
+                BrowserFeatureMenuAction.Print,
+                BrowserFeatureMenuAction.OpenMore,
+                BrowserFeatureMenuAction.DuplicateTab,
+                BrowserFeatureMenuAction.TogglePinned,
+                BrowserFeatureMenuAction.CloseTab,
+                BrowserFeatureMenuAction.OpenExternal,
+                BrowserFeatureMenuAction.SnoozeTab,
                 BrowserFeatureMenuAction.OpenCandyTrail,
                 BrowserFeatureMenuAction.AddSiteCapsule,
                 BrowserFeatureMenuAction.Summarize,
-                BrowserFeatureMenuAction.SnoozeTab,
+                BrowserFeatureMenuAction.ToggleDomainMute,
                 BrowserFeatureMenuAction.DockAddressBar,
                 BrowserFeatureMenuAction.OpenSnoozedTabs,
-                BrowserFeatureMenuAction.OpenFavorites,
                 BrowserFeatureMenuAction.OpenDownloads,
                 BrowserFeatureMenuAction.OpenHistory,
+                BrowserFeatureMenuAction.OpenFavorites,
+                BrowserFeatureMenuAction.OpenPasswords,
                 BrowserFeatureMenuAction.OpenSettings,
             ),
             items.map(BrowserFeatureMenuItem::action),
+        )
+    }
+
+    @Test
+    fun `first view stays short and the rest waits behind More`() {
+        val items = BrowserFeatureMenuRules.items(
+            BrowserFeatureMenuState(hasPage = true, isSplitView = false, isCompactMode = false),
+        )
+        val tiles = items.filter { it.section == BrowserFeatureMenuSection.Page }
+
+        // Up to nine tiles plus «More»: three rows of four at most.
+        assertTrue(tiles.size <= 10)
+        assertEquals(BrowserFeatureMenuAction.NewTab, tiles.first().action)
+        assertEquals(BrowserFeatureMenuAction.OpenMore, tiles.last().action)
+        assertEquals(BrowserFeatureMenuLabelKey.More, tiles.last().labelKey)
+        assertEquals(5, items.count { it.section == BrowserFeatureMenuSection.Toolbar })
+        assertTrue(
+            items.single { it.action == BrowserFeatureMenuAction.TogglePinned }.section ==
+                BrowserFeatureMenuSection.More,
+        )
+    }
+
+    @Test
+    fun `More is kept whatever the layout hides`() {
+        val layout = BrowserMenuLayout(
+            BrowserMenuEntry.entries.associateWith { BrowserMenuLocation.Nowhere },
+        )
+        val visible = BrowserMenuLayoutRules.visibleItems(
+            items = BrowserFeatureMenuRules.items(BrowserFeatureMenuState()),
+            layout = layout,
+            surface = BrowserMenuSurface.Tab,
+        )
+
+        assertEquals(listOf(BrowserFeatureMenuAction.OpenMore), visible.map(BrowserFeatureMenuItem::action))
+        assertNull(BrowserMenuLayoutRules.entryForAction(BrowserFeatureMenuAction.OpenMore))
+        assertEquals(
+            BrowserMenuEntry.OpenPasswords,
+            BrowserMenuLayoutRules.entryForAction(BrowserFeatureMenuAction.OpenPasswords),
         )
     }
 
@@ -119,18 +151,6 @@ class BrowserFeatureMenuRulesTest {
             BrowserMenuEntry.CompactMode,
             BrowserMenuLayoutRules.entryForAction(BrowserFeatureMenuAction.ToggleCompactMode),
         )
-    }
-
-    @Test
-    fun `site compatibility group follows current Android presentation rule`() {
-        val hidden = BrowserFeatureMenuRules.items(BrowserFeatureMenuState())
-        val visible = BrowserFeatureMenuRules.items(
-            BrowserFeatureMenuState(canToggleForcePageZooming = true),
-        )
-
-        assertFalse(hidden.any { it.action == BrowserFeatureMenuAction.ToggleCookieBannerRemoval })
-        assertTrue(visible.any { it.action == BrowserFeatureMenuAction.ToggleCookieBannerRemoval })
-        assertTrue(visible.any { it.action == BrowserFeatureMenuAction.ToggleForcePageZooming })
     }
 
     @Test

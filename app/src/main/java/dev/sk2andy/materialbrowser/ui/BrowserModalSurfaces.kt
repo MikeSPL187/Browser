@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
@@ -71,6 +72,7 @@ internal fun BoxScope.BrowserModalSurfaces(
     }
 
     val accessibilityManager = LocalAccessibilityManager.current
+    val rootView = LocalView.current
     controller.downloadSafety.pending?.let { pending ->
         DownloadSafetySheet(
             pending = pending,
@@ -140,6 +142,29 @@ internal fun BoxScope.BrowserModalSurfaces(
                 canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
                 popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
                 onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
+                pageFixes = controller.siteProtectionState(tabId)
+                    .takeIf { site -> controller.supportsPageContentActions && site.host != null }
+                    ?.let { site ->
+                        SiteInfoPageFixes(
+                            cookieBannersHidden = (!site.cookieBannerRemovalDisabled).takeIf {
+                                controller.blockerSettings.hideCookieConsent && !site.isPaused
+                            },
+                            forceVerticalScrolling = site.forceVerticalScrolling,
+                            forcePageZooming = site.forcePageZooming,
+                            forceSafeArea = site.forceSafeArea,
+                            onChange = { fix, on ->
+                                val changed = when (fix) {
+                                    SiteInfoPageFix.CookieBanners ->
+                                        controller.setCookieBannerRemovalDisabled(tabId, !on)
+                                    SiteInfoPageFix.VerticalScrolling ->
+                                        controller.setForceVerticalScrolling(tabId, on)
+                                    SiteInfoPageFix.PageZooming -> controller.setForcePageZooming(tabId, on)
+                                    SiteInfoPageFix.SafeArea -> controller.setForceSafeArea(tabId, on)
+                                }
+                                if (changed) rootView.performConfirmHaptic()
+                            },
+                        )
+                    },
                 siteData = SiteDomainRules.domainForUrl(xRayTab.url)
                     ?.takeIf { domain ->
                         SiteDataDeletionRules.offers(

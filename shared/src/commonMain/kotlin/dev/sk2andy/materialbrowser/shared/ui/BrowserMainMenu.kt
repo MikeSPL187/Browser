@@ -1,10 +1,17 @@
 package dev.sk2andy.materialbrowser.shared.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -12,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,6 +51,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
@@ -187,6 +196,13 @@ interface BrowserMainMenuResources {
 
     @Composable
     fun trailingIcon(modifier: Modifier)
+
+    /** The way back from «More» to the first view. */
+    @Composable
+    fun backLabel(): String
+
+    @Composable
+    fun backIcon(modifier: Modifier)
 }
 
 interface BrowserMainMenuEffects {
@@ -328,6 +344,7 @@ fun BrowserMainMenu(
     }
     var popupVisible by remember { mutableStateOf(expanded) }
     var actionCommitted by remember { mutableStateOf(false) }
+    var moreOpen by remember { mutableStateOf(false) }
     val spatialProgress = remember { Animatable(if (expanded) 1f else 0f) }
     val effectsProgress = remember { Animatable(if (expanded) 1f else 0f) }
     val openingSpatialAnimationSpec = effects.spatialAnimationSpec(expanding = true)
@@ -345,6 +362,7 @@ fun BrowserMainMenu(
             val reversingExit = popupVisible
             popupVisible = true
             if (!reversingExit) {
+                moreOpen = false
                 menuScrollState.scrollTo(0)
                 spatialProgress.snapTo(0f)
                 effectsProgress.snapTo(0f)
@@ -392,6 +410,12 @@ fun BrowserMainMenu(
     }
 
     fun dismissThen(item: BrowserFeatureMenuItem) = commit { onAction(item) }
+
+    // «More» turns the sheet's page in place; every other command runs and closes the menu.
+    fun onCommand(item: BrowserFeatureMenuItem) {
+        if (item.action == BrowserFeatureMenuAction.OpenMore) moreOpen = true else dismissThen(item)
+    }
+    LaunchedEffect(moreOpen) { menuScrollState.scrollTo(0) }
 
     if (popupVisible) {
         val currentSpatialProgress = morphProgress ?: spatialProgress.value
@@ -477,14 +501,16 @@ fun BrowserMainMenu(
             ) {
                 BrowserMainMenuContent(
                     snapshot = snapshot,
+                    moreOpen = moreOpen,
                     compactToolbar = compactToolbar,
                     resources = resources,
                     effects = effects,
                     firstItemShape = firstItemShape,
                     innerCorners = innerCorners,
                     lastItemShape = lastItemShape,
-                    onCommand = ::dismissThen,
+                    onCommand = ::onCommand,
                     onToggle = onAction,
+                    onCloseMore = { moreOpen = false },
                     extensionContent = extensionContent,
                     onExtensionCommit = ::commit,
                     modifier = Modifier
@@ -554,6 +580,7 @@ private fun BrowserMainMenuPopup(
 @Composable
 private fun BrowserMainMenuContent(
     snapshot: BrowserMainMenuSnapshot,
+    moreOpen: Boolean,
     compactToolbar: Boolean,
     resources: BrowserMainMenuResources,
     effects: BrowserMainMenuEffects,
@@ -562,16 +589,44 @@ private fun BrowserMainMenuContent(
     lastItemShape: Shape,
     onCommand: (BrowserFeatureMenuItem) -> Unit,
     onToggle: (BrowserFeatureMenuItem) -> Unit,
+    onCloseMore: () -> Unit,
     extensionContent: @Composable ColumnScope.((() -> Unit) -> Unit) -> Unit,
     onExtensionCommit: (() -> Unit) -> Unit,
     modifier: Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     val groupedItems = snapshot.items.groupBy(BrowserFeatureMenuItem::section)
-    val toolbarItems = groupedItems[BrowserFeatureMenuSection.Toolbar].orEmpty()
-    val pageItems = groupedItems[BrowserFeatureMenuSection.Page].orEmpty()
-    val candyItems = groupedItems[BrowserFeatureMenuSection.Candy].orEmpty()
     val tiles = effects.style.tiles
+    @Composable
+    fun group(
+        section: BrowserFeatureMenuSection,
+        tag: String,
+        titled: Boolean = true,
+    ) {
+        val items = groupedItems[section].orEmpty()
+        if (items.isEmpty()) return
+        if (titled) {
+            BrowserMainMenuSectionTitle(
+                title = resources.sectionTitle(section),
+                topPadding = 8,
+                effects = effects,
+            )
+        } else {
+            Spacer(Modifier.height(8.dp))
+        }
+        BrowserMainMenuItemGroup(
+            items = items,
+            resources = resources,
+            effects = effects,
+            snoozedTabCount = snapshot.snoozedTabCount,
+            firstItemShape = firstItemShape,
+            innerCorners = innerCorners,
+            lastItemShape = lastItemShape,
+            onCommand = onCommand,
+            onToggle = onToggle,
+            modifier = Modifier.testTag(tag),
+        )
+    }
     Column(modifier = modifier) {
         tiles?.let { BrowserMainMenuHandle(it) }
         if (effects.style.showHeader) {
@@ -590,121 +645,80 @@ private fun BrowserMainMenuContent(
             )
             Spacer(Modifier.height(10.dp))
         }
-        if (toolbarItems.isNotEmpty()) {
-            BrowserMainMenuToolbar(
-                items = toolbarItems,
-                compact = compactToolbar,
-                resources = resources,
-                effects = effects,
-                onClick = onCommand,
-            )
-        }
-
-        if (tiles != null) {
-            if (pageItems.isNotEmpty()) {
-                Spacer(Modifier.height(tiles.spacing))
-                BrowserMainMenuTileGrid(
-                    items = pageItems,
-                    tiles = tiles,
-                    resources = resources,
-                    effects = effects,
-                    onCommand = onCommand,
-                    onToggle = onToggle,
-                    modifier = Modifier.testTag(BrowserMainMenuTestTags.PageGroup),
-                )
+        // «More» slides in over the short first view and back out; both keep the sheet's size.
+        AnimatedContent(
+            targetState = moreOpen,
+            transitionSpec = {
+                val direction = if (targetState) 1 else -1
+                (slideInHorizontally { width -> direction * width / 4 } + fadeIn())
+                    .togetherWith(slideOutHorizontally { width -> -direction * width / 4 } + fadeOut())
+            },
+            label = "browserMainMenuMore",
+        ) { more ->
+            Column {
+                if (more) {
+                    BrowserMainMenuMoreHeader(resources = resources, effects = effects, onBack = onCloseMore)
+                    group(BrowserFeatureMenuSection.More, BrowserMainMenuTestTags.MoreGroup, titled = false)
+                    group(BrowserFeatureMenuSection.Toppings, BrowserMainMenuTestTags.ToppingsGroup)
+                    extensionContent(onExtensionCommit)
+                } else {
+                    val toolbarItems = groupedItems[BrowserFeatureMenuSection.Toolbar].orEmpty()
+                    if (toolbarItems.isNotEmpty()) {
+                        BrowserMainMenuToolbar(
+                            items = toolbarItems,
+                            compact = compactToolbar,
+                            resources = resources,
+                            effects = effects,
+                            onClick = onCommand,
+                        )
+                    }
+                    val pageItems = groupedItems[BrowserFeatureMenuSection.Page].orEmpty()
+                    if (tiles != null && pageItems.isNotEmpty()) {
+                        Spacer(Modifier.height(tiles.spacing))
+                        BrowserMainMenuTileGrid(
+                            items = pageItems,
+                            tiles = tiles,
+                            resources = resources,
+                            effects = effects,
+                            onCommand = onCommand,
+                            onToggle = onToggle,
+                            modifier = Modifier.testTag(BrowserMainMenuTestTags.PageGroup),
+                        )
+                    } else {
+                        group(BrowserFeatureMenuSection.Page, BrowserMainMenuTestTags.PageGroup)
+                    }
+                    group(BrowserFeatureMenuSection.Browser, BrowserMainMenuTestTags.BrowserGroup)
+                }
             }
-        } else if (pageItems.isNotEmpty()) {
-            BrowserMainMenuSectionTitle(
-                title = resources.sectionTitle(BrowserFeatureMenuSection.Page),
-                topPadding = 12,
-                effects = effects,
-            )
-            BrowserMainMenuItemGroup(
-                items = pageItems,
-                resources = resources,
-                effects = effects,
-                snoozedTabCount = snapshot.snoozedTabCount,
-                firstItemShape = firstItemShape,
-                innerCorners = innerCorners,
-                lastItemShape = lastItemShape,
-                onCommand = onCommand,
-                onToggle = onToggle,
-                modifier = Modifier.testTag(BrowserMainMenuTestTags.PageGroup),
-            )
         }
+    }
+}
 
-        val toppingItems = groupedItems[BrowserFeatureMenuSection.Toppings].orEmpty()
-        if (toppingItems.isNotEmpty()) {
-            BrowserMainMenuSectionTitle(
-                title = resources.sectionTitle(BrowserFeatureMenuSection.Toppings),
-                topPadding = 8,
-                effects = effects,
-            )
-            BrowserMainMenuItemGroup(
-                items = toppingItems,
-                resources = resources,
-                effects = effects,
-                snoozedTabCount = snapshot.snoozedTabCount,
-                firstItemShape = firstItemShape,
-                innerCorners = innerCorners,
-                lastItemShape = lastItemShape,
-                onCommand = onCommand,
-                onToggle = onToggle,
-                modifier = Modifier.testTag(BrowserMainMenuTestTags.ToppingsGroup),
-            )
-        }
-
-        if (tiles != null && candyItems.isNotEmpty()) {
-            Spacer(Modifier.height(tiles.spacing))
-            BrowserMainMenuTileGrid(
-                items = candyItems,
-                tiles = tiles,
-                resources = resources,
-                effects = effects,
-                onCommand = onCommand,
-                onToggle = onToggle,
-                modifier = Modifier.testTag(BrowserMainMenuTestTags.CandyGroup),
-            )
-        } else if (candyItems.isNotEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            BrowserMainMenuItemGroup(
-                items = candyItems,
-                resources = resources,
-                effects = effects,
-                snoozedTabCount = snapshot.snoozedTabCount,
-                firstItemShape = firstItemShape,
-                innerCorners = innerCorners,
-                lastItemShape = lastItemShape,
-                onCommand = onCommand,
-                onToggle = onToggle,
-                containerColor = colors.tertiaryContainer,
-                contentColor = colors.onTertiaryContainer,
-                modifier = Modifier.testTag(BrowserMainMenuTestTags.CandyGroup),
-            )
-        }
-
-        extensionContent(onExtensionCommit)
-
-        val browserItems = groupedItems[BrowserFeatureMenuSection.Browser].orEmpty()
-        if (browserItems.isNotEmpty()) {
-            BrowserMainMenuSectionTitle(
-                title = resources.sectionTitle(BrowserFeatureMenuSection.Browser),
-                topPadding = 8,
-                effects = effects,
-            )
-            BrowserMainMenuItemGroup(
-                items = browserItems,
-                resources = resources,
-                effects = effects,
-                snoozedTabCount = snapshot.snoozedTabCount,
-                firstItemShape = firstItemShape,
-                innerCorners = innerCorners,
-                lastItemShape = lastItemShape,
-                onCommand = onCommand,
-                onToggle = onToggle,
-                modifier = Modifier.testTag(BrowserMainMenuTestTags.BrowserGroup),
-            )
-        }
+@Composable
+private fun BrowserMainMenuMoreHeader(
+    resources: BrowserMainMenuResources,
+    effects: BrowserMainMenuEffects,
+    onBack: () -> Unit,
+) {
+    val style = effects.style
+    val backLabel = resources.backLabel()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = style.toolbarMinHeight)
+            .clip(RoundedCornerShape(style.groupCornerRadius))
+            .clickable(onClickLabel = backLabel, role = Role.Button, onClick = onBack)
+            .testTag(BrowserMainMenuTestTags.MoreBack)
+            .padding(horizontal = style.rowHorizontalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(style.rowHorizontalPadding),
+    ) {
+        resources.backIcon(Modifier.size(style.toolbarIconSize))
+        Text(
+            text = resources.sectionTitle(BrowserFeatureMenuSection.More),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -945,6 +959,7 @@ private fun BrowserFeatureMenuItem.hasTrailingIcon(): Boolean = action in setOf(
     BrowserFeatureMenuAction.OpenDownloads,
     BrowserFeatureMenuAction.OpenHistory,
     BrowserFeatureMenuAction.OpenFirefoxExtensions,
+    BrowserFeatureMenuAction.OpenPasswords,
     BrowserFeatureMenuAction.OpenSettings,
 )
 
@@ -955,16 +970,6 @@ internal fun BrowserFeatureMenuItem.testTagModifier(): Modifier = when (action) 
     BrowserFeatureMenuAction.ToggleSplitView -> Modifier.testTag(BrowserMainMenuTestTags.SplitView)
     BrowserFeatureMenuAction.FindInPage -> Modifier.testTag(BrowserMainMenuTestTags.FindInPage)
     BrowserFeatureMenuAction.DuplicateTab -> Modifier.testTag(BrowserMainMenuTestTags.DuplicateTab)
-    BrowserFeatureMenuAction.ToggleCookieBannerRemoval ->
-        Modifier.testTag(BrowserMainMenuTestTags.CookieBannerRemoval)
-    BrowserFeatureMenuAction.ToggleForceVerticalScrolling ->
-        Modifier.testTag(BrowserMainMenuTestTags.ForceVerticalScrolling)
-    BrowserFeatureMenuAction.ToggleForcePageZooming ->
-        Modifier.testTag(BrowserMainMenuTestTags.ForcePageZooming)
-    BrowserFeatureMenuAction.ToggleForceSafeArea ->
-        Modifier.testTag(BrowserMainMenuTestTags.ForceSafeArea)
-    BrowserFeatureMenuAction.ToggleAlwaysBlockPopups ->
-        Modifier.testTag(BrowserMainMenuTestTags.AlwaysBlockPopups)
     BrowserFeatureMenuAction.ToggleDesktopView -> Modifier.testTag(BrowserMainMenuTestTags.DesktopView)
     BrowserFeatureMenuAction.ToggleDomainMute -> Modifier.testTag(DomainMuteMenuTestTags.Item)
     BrowserFeatureMenuAction.SnoozeTab -> Modifier.testTag(BrowserMainMenuTestTags.Snooze)
@@ -976,6 +981,9 @@ internal fun BrowserFeatureMenuItem.testTagModifier(): Modifier = when (action) 
     BrowserFeatureMenuAction.OpenFirefoxExtensions ->
         Modifier.testTag(BrowserMainMenuTestTags.FirefoxExtensions)
     BrowserFeatureMenuAction.OpenSettings -> Modifier.testTag(BrowserMainMenuTestTags.Settings)
+    BrowserFeatureMenuAction.OpenPasswords -> Modifier.testTag(BrowserMainMenuTestTags.Passwords)
+    BrowserFeatureMenuAction.OpenMore -> Modifier.testTag(BrowserMainMenuTestTags.More)
+    BrowserFeatureMenuAction.CloseTab -> Modifier.testTag(BrowserMainMenuTestTags.CloseTab)
     BrowserFeatureMenuAction.InvokeToppingCommand ->
         Modifier.testTag(BrowserMainMenuTestTags.userScriptCommand(toppingCommandId.orEmpty()))
     else -> Modifier
@@ -989,7 +997,11 @@ object BrowserMainMenuTestTags {
     const val PageGroup = "browser_main_menu_page_group"
     const val Translate = "browser_main_menu_translate"
     const val SplitView = "browser_main_menu_split_view"
-    const val CandyGroup = "browser_main_menu_candy_group"
+    const val More = "browser_main_menu_more"
+    const val MoreBack = "browser_main_menu_more_back"
+    const val MoreGroup = "browser_main_menu_more_group"
+    const val CloseTab = "browser_main_menu_close_tab"
+    const val Passwords = "browser_main_menu_passwords"
     const val ToppingsGroup = "browser_main_menu_toppings_group"
     const val BrowserGroup = "browser_main_menu_browser_group"
     const val Favorites = "browser_main_menu_favorites"
@@ -1000,14 +1012,9 @@ object BrowserMainMenuTestTags {
     const val Snooze = "browser_main_menu_snooze"
     const val SnoozedTabs = "browser_main_menu_snoozed_tabs"
     const val DockAddressBar = "browser_main_menu_dock_address_bar"
-    const val CookieBannerRemoval = "browser_main_menu_cookie_banner_removal"
-    const val AlwaysBlockPopups = "browser_main_menu_always_block_popups"
-    const val ForceVerticalScrolling = "browser_main_menu_force_vertical_scrolling"
     const val DesktopView = "browser_main_menu_desktop_view"
     const val FindInPage = "browser_main_menu_find_in_page"
     const val DuplicateTab = "browser_main_menu_duplicate_tab"
-    const val ForcePageZooming = "browser_main_menu_force_page_zooming"
-    const val ForceSafeArea = "browser_main_menu_force_safe_area"
 
     fun userScriptCommand(commandId: String): String =
         "browser_main_menu_topping_command_$commandId"

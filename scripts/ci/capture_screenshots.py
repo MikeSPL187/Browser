@@ -417,6 +417,10 @@ def tour(suffix):
             # The bar's Back returns to the overview; a missed tap must not leave the page.
             if tap("Back", "Назад"):
                 time.sleep(1)
+        # The per-site page fixes that left the menu (S4a), above «Site data».
+        if scroll_to("Force page zooming", "Принудительное масштабирование",
+                     name=f"site-info-fixes-{suffix}"):
+            shot(f"site-info-fixes-{suffix}")
         # «Site data» at the end of the sheet (Q10b): «Delete» closes the sheet and waits behind
         # «Undo»; the tour takes the deletion back.
         if scroll_to("Site data", "Данные сайта", name=f"site-info-data-{suffix}"):
@@ -652,6 +656,7 @@ def tour(suffix):
         page first: the step before may leave the bar folded into the unlabeled capsule."""
         open_url("https://example.com/")
         time.sleep(6)
+        # Snoozed tabs wait behind the menu's «More» (S4a).
         for labels, name in ((("History", "История"), "history"),
                              (("Favorites", "Избранное"), "favorites"),
                              (("Downloads", "Загрузки"), "downloads"),
@@ -660,6 +665,8 @@ def tour(suffix):
                 log(f"not found: menu for {name}")
                 return
             time.sleep(2)
+            if name == "snoozed" and tap_scrolling("More", "Ещё", name=f"more-menu-{suffix}"):
+                time.sleep(2)
             if not tap_scrolling(*labels, name=f"{name}-menu-{suffix}"):
                 adb("shell", "input", "keyevent", "BACK")
                 time.sleep(1)
@@ -929,9 +936,17 @@ def tour(suffix):
         time.sleep(1)
 
     def menu_and_settings():
+        # The short menu, then its «More» page (S4a), then settings from a fresh menu.
         if tap("More options", "Другие действия"):
             time.sleep(2)
             shot(f"menu-{suffix}")
+            if tap_scrolling("More", "Ещё", name=f"menu-more-{suffix}"):
+                time.sleep(2)
+                shot(f"menu-more-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        if tap("More options", "Другие действия"):
+            time.sleep(2)
             if tap_scrolling("Settings", "Настройки", name=f"menu-{suffix}"):
                 time.sleep(3)
                 shot(f"settings-{suffix}")

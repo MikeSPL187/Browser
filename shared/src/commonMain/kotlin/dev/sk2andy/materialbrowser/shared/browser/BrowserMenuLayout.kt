@@ -52,41 +52,6 @@ enum class BrowserMenuEntry(
     Share("share", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
     OpenExternal("open_external", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
     Print("print", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
-    CookieBannerRemoval(
-        "cookie_banner_removal",
-        BrowserMenuConfigurationSection.Page,
-        BrowserMenuLocation.Tab,
-        true,
-        false,
-    ),
-    ForceVerticalScrolling(
-        "force_vertical_scrolling",
-        BrowserMenuConfigurationSection.Page,
-        BrowserMenuLocation.Tab,
-        true,
-        false,
-    ),
-    ForcePageZooming(
-        "force_page_zooming",
-        BrowserMenuConfigurationSection.Page,
-        BrowserMenuLocation.Tab,
-        true,
-        false,
-    ),
-    ForceSafeArea(
-        "force_safe_area",
-        BrowserMenuConfigurationSection.Page,
-        BrowserMenuLocation.Tab,
-        true,
-        false,
-    ),
-    AlwaysBlockPopups(
-        "always_block_popups",
-        BrowserMenuConfigurationSection.Page,
-        BrowserMenuLocation.Tab,
-        true,
-        false,
-    ),
     DesktopView("desktop_view", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     CompactMode("compact_mode", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Tab, true, false),
     DomainMute("domain_mute", BrowserMenuConfigurationSection.Page, BrowserMenuLocation.Both, true, true),
@@ -154,6 +119,13 @@ enum class BrowserMenuEntry(
     ),
     OpenFirefoxExtensions(
         "open_firefox_extensions",
+        BrowserMenuConfigurationSection.Browser,
+        BrowserMenuLocation.Tab,
+        true,
+        false,
+    ),
+    OpenPasswords(
+        "open_passwords",
         BrowserMenuConfigurationSection.Browser,
         BrowserMenuLocation.Tab,
         true,
@@ -260,7 +232,8 @@ object BrowserMenuLayoutRules {
             entry.stableId to location(layout, entry).stableId
         }
 
-    fun entryForAction(action: BrowserFeatureMenuAction): BrowserMenuEntry = when (action) {
+    /** The entry a menu item belongs to; null for «More», which the menu always keeps. */
+    fun entryForAction(action: BrowserFeatureMenuAction): BrowserMenuEntry? = when (action) {
         BrowserFeatureMenuAction.Back -> BrowserMenuEntry.Back
         BrowserFeatureMenuAction.Forward -> BrowserMenuEntry.Forward
         BrowserFeatureMenuAction.Reload,
@@ -282,11 +255,6 @@ object BrowserMenuLayoutRules {
         BrowserFeatureMenuAction.Share -> BrowserMenuEntry.Share
         BrowserFeatureMenuAction.OpenExternal -> BrowserMenuEntry.OpenExternal
         BrowserFeatureMenuAction.Print -> BrowserMenuEntry.Print
-        BrowserFeatureMenuAction.ToggleCookieBannerRemoval -> BrowserMenuEntry.CookieBannerRemoval
-        BrowserFeatureMenuAction.ToggleForceVerticalScrolling -> BrowserMenuEntry.ForceVerticalScrolling
-        BrowserFeatureMenuAction.ToggleForcePageZooming -> BrowserMenuEntry.ForcePageZooming
-        BrowserFeatureMenuAction.ToggleForceSafeArea -> BrowserMenuEntry.ForceSafeArea
-        BrowserFeatureMenuAction.ToggleAlwaysBlockPopups -> BrowserMenuEntry.AlwaysBlockPopups
         BrowserFeatureMenuAction.ToggleDesktopView -> BrowserMenuEntry.DesktopView
         BrowserFeatureMenuAction.ToggleCompactMode -> BrowserMenuEntry.CompactMode
         BrowserFeatureMenuAction.ToggleDomainMute -> BrowserMenuEntry.DomainMute
@@ -300,6 +268,8 @@ object BrowserMenuLayoutRules {
         BrowserFeatureMenuAction.OpenHistory -> BrowserMenuEntry.OpenHistory
         BrowserFeatureMenuAction.OpenSettings -> BrowserMenuEntry.OpenSettings
         BrowserFeatureMenuAction.OpenFirefoxExtensions -> BrowserMenuEntry.OpenFirefoxExtensions
+        BrowserFeatureMenuAction.OpenPasswords -> BrowserMenuEntry.OpenPasswords
+        BrowserFeatureMenuAction.OpenMore -> null
         BrowserFeatureMenuAction.InvokeToppingCommand -> BrowserMenuEntry.ToppingCommands
     }
 
@@ -308,6 +278,6 @@ object BrowserMenuLayoutRules {
         layout: BrowserMenuLayout,
         surface: BrowserMenuSurface,
     ): List<BrowserFeatureMenuItem> = items.filter { item ->
-        isVisible(layout, entryForAction(item.action), surface)
+        entryForAction(item.action)?.let { entry -> isVisible(layout, entry, surface) } ?: true
     }
 }

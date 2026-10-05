@@ -86,11 +86,6 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.Share -> R.string.action_share
     BrowserMenuEntry.OpenExternal -> R.string.action_open_in_app
     BrowserMenuEntry.Print -> R.string.action_print
-    BrowserMenuEntry.CookieBannerRemoval -> R.string.privacy_cookie_banner_remove
-    BrowserMenuEntry.ForceVerticalScrolling -> R.string.privacy_force_vertical_scrolling
-    BrowserMenuEntry.ForcePageZooming -> R.string.privacy_force_page_zooming
-    BrowserMenuEntry.ForceSafeArea -> R.string.compatibility_force_safe_area
-    BrowserMenuEntry.AlwaysBlockPopups -> R.string.action_always_block_popups
     BrowserMenuEntry.DesktopView -> R.string.action_desktop_view
     BrowserMenuEntry.CompactMode -> R.string.compact_mode_title
     BrowserMenuEntry.DomainMute -> R.string.action_mute_domain
@@ -106,6 +101,7 @@ private fun BrowserMenuEntry.labelResource(): Int = when (this) {
     BrowserMenuEntry.OpenDownloads -> R.string.downloads_title
     BrowserMenuEntry.OpenHistory -> R.string.action_history
     BrowserMenuEntry.OpenFirefoxExtensions -> R.string.gecko_extensions_title
+    BrowserMenuEntry.OpenPasswords -> R.string.passwords_title
     BrowserMenuEntry.OpenSettings -> R.string.action_settings
     BrowserMenuEntry.MoveToProfile -> R.string.action_move_tab_to_profile
     BrowserMenuEntry.TabStacks -> R.string.tab_stacks_title

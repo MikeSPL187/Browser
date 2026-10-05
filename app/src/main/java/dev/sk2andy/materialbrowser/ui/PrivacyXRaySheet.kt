@@ -90,6 +90,7 @@ internal fun PrivacyXRaySheet(
     canTogglePopups: Boolean = false,
     popupsBlocked: Boolean = false,
     onPopupsBlockedChange: (Boolean) -> Unit = {},
+    pageFixes: SiteInfoPageFixes? = null,
     siteData: SiteInfoSiteData? = null,
     certificate: SiteCertificate? = null,
     week: ProtectionWeek? = null,
@@ -176,6 +177,7 @@ internal fun PrivacyXRaySheet(
                             }
                         },
                         onPopupsBlockedChange = onPopupsBlockedChange,
+                        pageFixes = pageFixes,
                         siteData = siteData,
                         certificate = certificate,
                         onOpenCertificate = { page = SiteInfoPage.Certificate },
