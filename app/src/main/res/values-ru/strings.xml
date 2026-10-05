@@ -1785,4 +1785,53 @@
     <string name="passwords_strength_fair">Средний · подберут за месяцы</string>
     <string name="passwords_strength_strong">Надёжный · подбор займёт годы</string>
     <string name="passwords_strength_very_strong">Очень надёжный · подбор займёт века</string>
+    <string name="passwords_health_title">Проверка паролей</string>
+    <string name="passwords_health_percent">%1$d%%</string>
+    <string name="passwords_health_fine">в порядке</string>
+    <string name="passwords_health_start_breached">Начните с утечек: эти пароли уже есть у злоумышленников.</string>
+    <string name="passwords_health_start_reused">Начните с повторов: одна утечка открывает все сайты с этим паролем.</string>
+    <string name="passwords_health_start_weak">Начните со слабых: их быстро подбирают.</string>
+    <string name="passwords_health_all_fine">Все пароли в порядке.</string>
+    <string name="passwords_health_breached">Найдены в утечках</string>
+    <string name="passwords_health_reused">Повторяются</string>
+    <string name="passwords_health_weak">Слабые</string>
+    <string name="passwords_health_change">Сменить</string>
+    <string name="passwords_health_leak_check">Проверять утечки</string>
+    <string name="passwords_health_leak_note">Проверка анонимна: с телефона уходят только первые 5 символов хеша пароля. Её можно выключить.</string>
+    <string name="passwords_health_check_failed">Не удалось проверить. Есть ли сеть?</string>
+    <string name="passwords_health_letters_only">%1$s, только буквы</string>
+    <string name="passwords_health_digits_only">%1$s, только цифры</string>
+    <string name="passwords_health_easy_to_guess">%1$s, легко подобрать</string>
+    <string name="passwords_health_entry">Проверка паролей</string>
+    <string name="passwords_health_entry_fine">Всё в порядке</string>
+    <plurals name="passwords_health_seen_in_leaks">
+        <item quantity="one">в утечках %d раз</item>
+        <item quantity="few">в утечках %d раза</item>
+        <item quantity="many">в утечках %d раз</item>
+        <item quantity="other">в утечках %d раза</item>
+    </plurals>
+    <plurals name="passwords_health_same_as">
+        <item quantity="one">такой же, как ещё на %d сайте</item>
+        <item quantity="few">такой же, как ещё на %d сайтах</item>
+        <item quantity="many">такой же, как ещё на %d сайтах</item>
+        <item quantity="other">такой же, как ещё на %d сайта</item>
+    </plurals>
+    <plurals name="passwords_health_characters">
+        <item quantity="one">%d символ</item>
+        <item quantity="few">%d символа</item>
+        <item quantity="many">%d символов</item>
+        <item quantity="other">%d символа</item>
+    </plurals>
+    <plurals name="passwords_health_rest_fine">
+        <item quantity="one">Остальная %d запись в порядке.</item>
+        <item quantity="few">Остальные %d записи в порядке.</item>
+        <item quantity="many">Остальные %d записей в порядке.</item>
+        <item quantity="other">Остальные %d записи в порядке.</item>
+    </plurals>
+    <plurals name="passwords_health_entry_issues">
+        <item quantity="one">%d требует внимания</item>
+        <item quantity="few">%d требуют внимания</item>
+        <item quantity="many">%d требуют внимания</item>
+        <item quantity="other">%d требуют внимания</item>
+    </plurals>
 </resources>

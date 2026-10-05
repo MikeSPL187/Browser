@@ -63,6 +63,11 @@ import dev.sk2andy.materialbrowser.ui.VolaStateMessage
 import dev.sk2andy.materialbrowser.ui.VolaStateTone
 import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaPasswords
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 
 /** Why a hand-made or edited login was not saved. */
 internal enum class PasswordEditError { SiteInvalid, PasswordRequired, Duplicate, Failed }
@@ -77,6 +82,8 @@ internal fun PasswordsListScreen(
     onLock: () -> Unit,
     onBack: () -> Unit,
     systemFillNote: Boolean = false,
+    healthIssues: Int? = null,
+    onHealth: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
@@ -114,6 +121,41 @@ internal fun PasswordsListScreen(
                     testTag = PasswordsTestTags.Search,
                     onQueryChange = { query = it.take(MAX_QUERY_LENGTH) },
                 )
+            }
+            if (healthIssues != null && logins.isNotEmpty()) {
+                item(key = "health") {
+                    LibraryCardSlice(
+                        position = LibraryRules.position(0, 1),
+                        modifier = Modifier.padding(top = VolaLibrary.sectionGap),
+                    ) {
+                        LibraryRow(
+                            title = stringResource(R.string.passwords_health_entry),
+                            detail = if (healthIssues > 0) {
+                                pluralStringResource(R.plurals.passwords_health_entry_issues, healthIssues, healthIssues)
+                            } else {
+                                stringResource(R.string.passwords_health_entry_fine)
+                            },
+                            detailColor = if (healthIssues > 0) MaterialTheme.colorScheme.error else null,
+                            leading = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(VolaLibrary.tileSize)
+                                        .clip(VolaLibrary.tileShape)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        VolaIcons.GppMaybe,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                }
+                            },
+                            onClick = onHealth,
+                            modifier = Modifier.testTag(PasswordsTestTags.Health),
+                        )
+                    }
+                }
             }
             if (systemFillNote) {
                 // System WebView fills sites through Android's autofill service, not through this vault.

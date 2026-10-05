@@ -1735,4 +1735,43 @@
     <string name="passwords_strength_fair">Fair · could be guessed in months</string>
     <string name="passwords_strength_strong">Strong · guessing would take years</string>
     <string name="passwords_strength_very_strong">Very strong · guessing would take centuries</string>
+    <string name="passwords_health_title">Password check</string>
+    <string name="passwords_health_percent">%1$d%%</string>
+    <string name="passwords_health_fine">fine</string>
+    <string name="passwords_health_start_breached">Start with leaks: attackers already have these passwords.</string>
+    <string name="passwords_health_start_reused">Start with repeats: one leak opens every site with the same password.</string>
+    <string name="passwords_health_start_weak">Start with weak passwords: they are quick to guess.</string>
+    <string name="passwords_health_all_fine">Every password is fine.</string>
+    <string name="passwords_health_breached">Found in leaks</string>
+    <string name="passwords_health_reused">Repeated</string>
+    <string name="passwords_health_weak">Weak</string>
+    <string name="passwords_health_change">Change</string>
+    <string name="passwords_health_leak_check">Check for leaks</string>
+    <string name="passwords_health_leak_note">The check is anonymous: only the first 5 characters of a password’s hash leave the phone. You can turn it off.</string>
+    <string name="passwords_health_check_failed">Couldn’t check. Is the phone online?</string>
+    <string name="passwords_health_letters_only">%1$s, letters only</string>
+    <string name="passwords_health_digits_only">%1$s, digits only</string>
+    <string name="passwords_health_easy_to_guess">%1$s, easy to guess</string>
+    <string name="passwords_health_entry">Password check</string>
+    <string name="passwords_health_entry_fine">All fine</string>
+    <plurals name="passwords_health_seen_in_leaks">
+        <item quantity="one">seen in leaks %d time</item>
+        <item quantity="other">seen in leaks %d times</item>
+    </plurals>
+    <plurals name="passwords_health_same_as">
+        <item quantity="one">same as on %d other site</item>
+        <item quantity="other">same as on %d other sites</item>
+    </plurals>
+    <plurals name="passwords_health_characters">
+        <item quantity="one">%d character</item>
+        <item quantity="other">%d characters</item>
+    </plurals>
+    <plurals name="passwords_health_rest_fine">
+        <item quantity="one">The other %d login is fine.</item>
+        <item quantity="other">The other %d logins are fine.</item>
+    </plurals>
+    <plurals name="passwords_health_entry_issues">
+        <item quantity="one">%d needs attention</item>
+        <item quantity="other">%d need attention</item>
+    </plurals>
 </resources>
