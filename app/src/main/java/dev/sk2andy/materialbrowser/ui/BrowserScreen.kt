@@ -114,7 +114,6 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorRequest
 import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
-import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
@@ -271,6 +270,7 @@ internal fun BrowserScreen(
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var tabOverviewVisible by rememberSaveable { mutableStateOf(false) }
+    val afterFirstFrame = rememberAfterFirstFrame()
     var candyTrailTabId by rememberSaveable { mutableStateOf<String?>(null) }
     var candyTrailSourceBounds by remember { mutableStateOf<Rect?>(null) }
     val addressEditor = controller.addressBar.editor
@@ -1662,7 +1662,7 @@ internal fun BrowserScreen(
         }
 
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
-            StartupComposition("TabOverview") { TabOverview(
+            if (afterFirstFrame || tabOverviewVisible) StartupComposition("TabOverview") { TabOverview(
                 controller = controller,
                 backgroundWallpaper = tabSwitcherWallpaperRuntime,
                 visible = tabOverviewVisible,
@@ -1796,7 +1796,7 @@ internal fun BrowserScreen(
             onDismiss = { moveTabToProfileId = null },
         )
 
-        StartupComposition("SettingsOverlay") { BrowserSettingsOverlay(
+        if (afterFirstFrame || settingsVisible) StartupComposition("SettingsOverlay") { BrowserSettingsOverlay(
             controller = controller,
             visible = settingsVisible,
             destination = settingsDestination,
@@ -1844,7 +1844,7 @@ internal fun BrowserScreen(
             onDismiss = { settingsVisible = false },
         ) }
 
-        StartupComposition("ModalSurfaces") { BrowserModalSurfaces(
+        if (afterFirstFrame) StartupComposition("ModalSurfaces") { BrowserModalSurfaces(
             controller = controller,
             privacyXRayTabId = privacyXRayTabId,
             permissionRadarTabId = permissionRadarTabId,
@@ -1883,7 +1883,7 @@ internal fun BrowserScreen(
         ) }
     }
 
-    StartupComposition("TransientOverlays") { BrowserTransientOverlays(
+    if (afterFirstFrame) StartupComposition("TransientOverlays") { BrowserTransientOverlays(
         controller = controller,
         clearDialogVisible = clearDialogVisible,
         onClearDialogDismiss = { clearDialogVisible = false },
@@ -1907,13 +1907,4 @@ internal fun BrowserScreen(
         },
     ) }
     StartupComposition("FirefoxExtensionChrome") { FirefoxExtensionChrome(controller) }
-}
-
-private fun ReaderExtractionResult.readerActionMessageRes(): Int = when (this) {
-    is ReaderExtractionResult.Success -> R.string.reader_saved_offline_confirmation
-    is ReaderExtractionResult.Failure -> when (reason) {
-        ReaderExtractionFailure.UnsupportedPage -> R.string.reader_extraction_unsupported
-        ReaderExtractionFailure.EmptyArticle -> R.string.reader_extraction_empty
-        ReaderExtractionFailure.InvalidResponse -> R.string.reader_extraction_invalid
-    }
 }
