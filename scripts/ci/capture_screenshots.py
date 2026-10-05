@@ -339,10 +339,6 @@ def tour(suffix):
         the bar waits as a handle; a tap on the handle brings it back; off again from the menu."""
         open_url("https://en.wikipedia.org/wiki/Zen")
         time.sleep(10)
-        # TEMP(S4a): the bar's accessibility flags so far, found or not.
-        diag = adb("logcat", "-d", "-s", "VolaDiag:I", check=False, capture=True) or b""
-        for line in diag.decode("utf-8", "replace").splitlines()[-40:]:
-            log(f"diag: {line.strip()}")
         if not tap("More options", "Другие действия"):
             shot(f"compact-no-menu-{suffix}", audit=False)
             save_ui(f"compact-no-menu-{suffix}")

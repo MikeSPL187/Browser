@@ -85,7 +85,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -243,10 +242,6 @@ internal fun BrowserBottomBar(
     val docked = dockState.placement != null
     val dockingEnabled = dockState.enabled
     var menuExpanded by remember { mutableStateOf(false) }
-    // TEMP(S4a tour): why the bar leaves the accessibility tree.
-    LaunchedEffect(visualOnly, menuExpanded, compact, editing) {
-        android.util.Log.i("VolaDiag", "bar visualOnly=$visualOnly menu=$menuExpanded compact=$compact editing=$editing")
-    }
     val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val presentation = AddressBarPresentationRules.resolve(
         docked = docked,
@@ -390,7 +385,7 @@ internal fun BrowserBottomBar(
                 horizontal = ADDRESS_BAR_HORIZONTAL_MARGIN,
                 vertical = ADDRESS_BAR_VERTICAL_MARGIN,
             )
-            .then(if (visualOnly) Modifier.clearAndSetSemantics { } else Modifier),
+            .clearSemanticsWhen(visualOnly),
         contentAlignment = Alignment.BottomCenter,
     ) {
         val edgeTabWidth = 52.dp
