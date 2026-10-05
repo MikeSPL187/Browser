@@ -346,9 +346,6 @@ def tour(suffix):
             for line in focus.decode("utf-8", "replace").splitlines():
                 if "mCurrentFocus" in line or "mFocusedApp" in line:
                     log(f"window focus: {line.strip()}")
-            diag = adb("logcat", "-d", "-s", "VolaDiag:I", check=False, capture=True) or b""
-            for line in diag.decode("utf-8", "replace").splitlines()[-30:]:
-                log(f"diag: {line.strip()}")
             return
         time.sleep(2)
         if not tap_scrolling("Compact mode", "Компактный режим", name=f"compact-menu-{suffix}"):
