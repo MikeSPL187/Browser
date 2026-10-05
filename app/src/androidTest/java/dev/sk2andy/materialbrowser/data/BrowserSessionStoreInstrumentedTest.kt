@@ -459,6 +459,7 @@ class BrowserSessionStoreInstrumentedTest {
             chromeStyle = BrowserChromeStyle.Air,
             surfaceStyle = BrowserSurfaceStyle.Frosted,
             shapeStyle = BrowserShapeStyle.Angular,
+            density = BrowserDensity.Compact,
             addressBarStyle = BrowserAddressBarStyle.Segmented,
             frostedTransparencyPercent = 70,
             frostedAddressBarTransparencyPercent = 50,
