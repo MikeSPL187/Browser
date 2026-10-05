@@ -15,6 +15,7 @@ object CredentialVaultRules {
     const val MAX_USERNAME_LENGTH = 1_024
     const val MAX_PASSWORD_LENGTH = 4_096
     const val MAX_REALM_LENGTH = 512
+    const val MAX_ID_LENGTH = 128
     private const val MAX_HOST_LENGTH = 253
     private const val MAX_LABEL_LENGTH = 63
     private const val HTTPS_PREFIX = "https://"
@@ -59,10 +60,37 @@ object CredentialVaultRules {
     fun loginsUnderDomain(logins: List<VaultLogin>, domain: String): List<VaultLogin> {
         val wanted = domain.trim().trimEnd('.').lowercase()
         if (!isHost(wanted)) return emptyList()
-        return logins.filter { login ->
-            val host = login.origin.removePrefix(HTTPS_PREFIX).substringBefore(':')
-            host == wanted || host.endsWith(".$wanted")
+        return logins.filter { login -> hostOf(login.origin).let { host -> host == wanted || host.endsWith(".$wanted") } }
+    }
+
+    /** The login index of [logins]: what may stay readable while the vault is locked. */
+    fun hints(logins: List<VaultLogin>): List<VaultLoginHint> =
+        sortedForList(logins).map { login ->
+            VaultLoginHint(
+                id = login.id,
+                origin = login.origin,
+                formActionOrigin = login.formActionOrigin,
+                httpRealm = login.httpRealm,
+                username = login.username,
+                lastUsedAtMillis = login.lastUsedAtMillis,
+            )
         }
+
+    /** Whether [hint] could stand for a real login: the same checks a saved login passes. */
+    fun accepts(hint: VaultLoginHint): Boolean =
+        hint.id.isNotBlank() && hint.id.length <= MAX_ID_LENGTH && hint.id.isPlainText() &&
+            accepts(VaultLoginDraft(hint.origin, hint.formActionOrigin, hint.httpRealm, hint.username, password = "-"))
+
+    /** Hints for exactly [origin], most recently used first; the same rule as [loginsFor]. */
+    fun hintsFor(hints: List<VaultLoginHint>, origin: String): List<VaultLoginHint> =
+        hints.filter { hint -> hint.origin == origin }
+            .sortedByDescending { it.lastUsedAtMillis ?: Long.MIN_VALUE }
+
+    /** Hints whose host is [domain] or one of its subdomains; the same rule as [loginsUnderDomain]. */
+    fun hintsUnderDomain(hints: List<VaultLoginHint>, domain: String): List<VaultLoginHint> {
+        val wanted = domain.trim().trimEnd('.').lowercase()
+        if (!isHost(wanted)) return emptyList()
+        return hints.filter { hint -> hostOf(hint.origin).let { host -> host == wanted || host.endsWith(".$wanted") } }
     }
 
     fun sortedForList(logins: List<VaultLogin>): List<VaultLogin> =
@@ -142,6 +170,8 @@ object CredentialVaultRules {
     /** [logins] without [id], or null if there is no such login. */
     fun delete(logins: List<VaultLogin>, id: String): List<VaultLogin>? =
         logins.filterNot { it.id == id }.takeIf { it.size != logins.size }
+
+    private fun hostOf(origin: String): String = origin.removePrefix(HTTPS_PREFIX).substringBefore(':')
 
     private fun isExplicitPort(port: String): Boolean {
         if (port.isEmpty() || port.length > 5 || port.startsWith('0') || port.any { it !in '0'..'9' }) return false

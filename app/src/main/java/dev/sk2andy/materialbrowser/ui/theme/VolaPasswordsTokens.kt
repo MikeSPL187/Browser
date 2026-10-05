@@ -37,4 +37,20 @@ internal object VolaPasswords {
     val buttonHeight = 52.dp
     val buttonIconGap = VolaSpacing.x2
     val formGap = VolaSpacing.x3
+
+    /** Sheets over a page: «Save password?» and «Sign in to …» (board W-Autofill). */
+    val sheetPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)
+    val sheetGap = VolaSpacing.x3
+    val sheetHeaderPadding = PaddingValues(horizontal = 4.dp)
+    val sheetHeaderGap = VolaSpacing.x3
+    val sheetIconSize = 40.dp
+    val sheetIconShape = RoundedCornerShape(14.dp)
+    val sheetIconGlyph = 22.dp
+    val sheetVerifiedIcon = 15.dp
+    val sheetVerifiedGap = VolaSpacing.x1
+    val sheetCardShape = RoundedCornerShape(24.dp)
+    val sheetActionSize = 40.dp
+    val sheetActionIcon = 22.dp
+    val sheetButtonHeight = 48.dp
+    val sheetButtonGap = VolaSpacing.x2
 }

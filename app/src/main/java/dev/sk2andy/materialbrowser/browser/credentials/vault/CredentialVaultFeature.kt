@@ -1,10 +1,11 @@
 package dev.sk2andy.materialbrowser.browser.credentials.vault
 
 /**
- * Whether the browser saves and offers logins from its own vault. Off until the Passwords screen
- * lands (Q20): a vault nobody can open, browse or move logins out of would only hide passwords.
- * Until then logins keep going to the system Credential Manager, as before.
+ * Whether GeckoView keeps logins in the browser's own vault (Q20b). On: Gecko's login storage is the
+ * vault and its silent autofill is off. Until someone sets up Passwords, the vault is empty and the
+ * prompts still go to the system Credential Manager ([dev.sk2andy.materialbrowser.browser
+ * .credentials.VaultCredentialPromptHost]), so nothing changes for them.
  */
 internal object CredentialVaultFeature {
-    const val ENABLED = false
+    const val ENABLED = true
 }

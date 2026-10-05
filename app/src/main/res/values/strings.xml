@@ -1708,4 +1708,16 @@
     <string name="passwords_site_invalid">Enter an https site, like example.com.</string>
     <string name="passwords_password_required">Enter a password.</string>
     <string name="passwords_duplicate">This login is already saved for this site.</string>
+    <string name="passwords_sheet_signin_title">Sign in to %1$s</string>
+    <string name="passwords_sheet_verified">Address checked: it’s the same site</string>
+    <string name="passwords_sheet_last_used">Last used %1$s</string>
+    <string name="passwords_sheet_never_used">Not used yet</string>
+    <string name="passwords_sheet_dont_fill">Don’t fill</string>
+    <string name="passwords_sheet_save_title">Save password for %1$s?</string>
+    <string name="passwords_sheet_update_title">Update password for %1$s?</string>
+    <string name="passwords_sheet_save_body">It stays encrypted on this phone. Confirm with your fingerprint or screen lock.</string>
+    <string name="passwords_sheet_update">Update</string>
+    <string name="passwords_sheet_not_now">Not now</string>
+    <string name="passwords_sheet_hidden_password">••••••••</string>
+    <string name="passwords_webview_note">With the System WebView engine, sites are filled by Android’s autofill service, not from this list.</string>
 </resources>

@@ -1758,4 +1758,16 @@
     <string name="passwords_site_invalid">Укажите сайт с https, например example.com.</string>
     <string name="passwords_password_required">Введите пароль.</string>
     <string name="passwords_duplicate">Такой логин для этого сайта уже сохранён.</string>
+    <string name="passwords_sheet_signin_title">Войти на %1$s</string>
+    <string name="passwords_sheet_verified">Адрес проверен: это тот же сайт</string>
+    <string name="passwords_sheet_last_used">Последний вход %1$s</string>
+    <string name="passwords_sheet_never_used">Ещё не использовался</string>
+    <string name="passwords_sheet_dont_fill">Не заполнять</string>
+    <string name="passwords_sheet_save_title">Сохранить пароль для %1$s?</string>
+    <string name="passwords_sheet_update_title">Обновить пароль для %1$s?</string>
+    <string name="passwords_sheet_save_body">Он хранится зашифрованным на этом телефоне. Подтвердите отпечатком или блокировкой экрана.</string>
+    <string name="passwords_sheet_update">Обновить</string>
+    <string name="passwords_sheet_not_now">Не сейчас</string>
+    <string name="passwords_sheet_hidden_password">••••••••</string>
+    <string name="passwords_webview_note">С движком System WebView сайты заполняет служба автозаполнения Android, а не этот список.</string>
 </resources>

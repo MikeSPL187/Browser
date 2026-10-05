@@ -28,7 +28,7 @@ private fun PasswordsListPreview() {
 @Composable
 private fun PasswordsEmptyPreview() {
     MaterialBrowserTheme {
-        PasswordsListScreen(logins = emptyList(), onOpen = {}, onAdd = {}, onLock = {}, onBack = {})
+        PasswordsListScreen(logins = emptyList(), onOpen = {}, onAdd = {}, onLock = {}, onBack = {}, systemFillNote = true)
     }
 }
 
