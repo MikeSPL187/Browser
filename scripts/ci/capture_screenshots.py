@@ -964,6 +964,14 @@ def tour(suffix):
                     adb("shell", "input", "keyevent", "BACK")
                     time.sleep(1)
                 settings_top()
+                # About & legal on cards (Q16c, board W-Settings).
+                if tap_scrolling("About & legal", "О приложении и правовая информация",
+                                 name=f"settings-{suffix}"):
+                    time.sleep(2)
+                    shot(f"about-settings-{suffix}")
+                    adb("shell", "input", "keyevent", "BACK")
+                    time.sleep(1)
+                settings_top()
                 if tap_scrolling("Protection & data", "Защита и данные",
                                  name=f"settings-{suffix}"):
                     time.sleep(2)
