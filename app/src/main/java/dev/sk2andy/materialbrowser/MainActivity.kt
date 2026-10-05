@@ -25,10 +25,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
@@ -103,7 +98,7 @@ import dev.sk2andy.materialbrowser.ui.AppDataImportConfirmationDialog
 import dev.sk2andy.materialbrowser.ui.AppDataImportPreview
 import dev.sk2andy.materialbrowser.ui.BrowserScreen
 import dev.sk2andy.materialbrowser.ui.CandyAnimationRules
-import dev.sk2andy.materialbrowser.ui.CandySplashScreen
+import dev.sk2andy.materialbrowser.ui.LaunchScreen
 import dev.sk2andy.materialbrowser.ui.FirefoxExtensionManagerOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoSystemControls
@@ -118,7 +113,6 @@ import dev.sk2andy.materialbrowser.ui.stopRubberbandHaptic
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -251,10 +245,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowsingHistoryLifecycle.install(application)
-        applyAppearanceNightMode(
-            BrowserSessionStore(this).loadAppearanceSettings().appearanceMode,
-        )
+        val launchStore = BrowserSessionStore(this)
+        val launchAppearance = launchStore.loadAppearanceSettings()
+        applyAppearanceNightMode(launchAppearance.appearanceMode)
         super.onCreate(savedInstanceState)
+        LaunchScreen.installExit(this, launchStore, launchAppearance)
         appliedNightConfiguration = resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK
         if (AppDataArchiveRestore.hasInterruptedRestore(appDataRestoreRecoveryMarker())) {
@@ -552,9 +547,6 @@ class MainActivity : AppCompatActivity() {
                     profiles = browserController.localBrowserProfiles,
                     profilesEnabled = browserController.profilesEnabled,
                 )
-                var splashVisible by remember {
-                    mutableStateOf(startupPresentation.showSplash)
-                }
                 val fullscreenVideoState = browserController.fullscreenVideoState
                 val webContentFullscreen = browserController.isSelectedWebContentFullscreen
                 val landscapeWebContentVideo =
@@ -581,17 +573,7 @@ class MainActivity : AppCompatActivity() {
                 val showReleaseNotes = releaseNotesVisible &&
                     releaseNotesContent != null &&
                     !onboardingVisible &&
-                    !splashVisible &&
                     !videoOnlyPresentation
-                LaunchedEffect(Unit) {
-                    if (splashVisible) {
-                        delay(SPLASH_DURATION_MILLIS)
-                        splashVisible = false
-                        if (startupPresentation.openAddressEditor) {
-                            launcherAddressEditorRequestId++
-                        }
-                    }
-                }
                 LaunchedEffect(launcherShortcutState) {
                     launcherShortcutPublisher.publishSerially(launcherShortcutState)
                 }
@@ -718,8 +700,7 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 null
                             },
-                            openAddressEditorOnLaunch = startupPresentation.openAddressEditor &&
-                                !startupPresentation.showSplash,
+                            openAddressEditorOnLaunch = startupPresentation.openAddressEditor,
                             launcherAddressEditorRequestId = launcherAddressEditorRequestId,
                             hardwareTabChangeRequestId = hardwareTabChangeRequestId,
                         )
@@ -777,12 +758,6 @@ class MainActivity : AppCompatActivity() {
                             },
                         )
                     }
-                    AnimatedVisibility(
-                        visible = splashVisible && !videoOnlyPresentation,
-                        exit = fadeOut(tween(260)) + scaleOut(targetScale = 0.96f),
-                    ) {
-                        CandySplashScreen()
-                    }
                     releaseNotesContent?.takeIf { showReleaseNotes }?.let { content ->
                         ReleaseNotesScreen(
                             versionName = content.versionName,
@@ -800,7 +775,6 @@ class MainActivity : AppCompatActivity() {
                     context = this,
                     visible = !onboardingVisible &&
                         !releaseNotesVisible &&
-                        !splashVisible &&
                         !videoOnlyPresentation,
                     onOpenReleaseNotes = { url ->
                         browserController.openUrl(url, inNewTab = true)
@@ -1736,7 +1710,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val SPLASH_DURATION_MILLIS = 1_050L
         const val STATE_CAPSULE_ID = "active_site_capsule_id"
         const val STATE_CAPSULE_TAB_ID = "active_site_capsule_tab_id"
         const val STATE_EXTERNAL_LINK_PREVIEW_ACTIVE = "external_link_preview_active"

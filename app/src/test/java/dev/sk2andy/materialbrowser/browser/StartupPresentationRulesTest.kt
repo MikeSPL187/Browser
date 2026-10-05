@@ -7,9 +7,9 @@ import org.junit.Test
 
 class StartupPresentationRulesTest {
     @Test
-    fun `enabled animation shows splash without opening editor`() {
+    fun `enabled animation does not open the editor`() {
         assertEquals(
-            StartupPresentation(showSplash = true, openAddressEditor = false),
+            StartupPresentation(openAddressEditor = false),
             StartupPresentationRules.resolve(
                 isColdStart = true,
                 isLauncherLaunch = true,
@@ -20,9 +20,9 @@ class StartupPresentationRulesTest {
     }
 
     @Test
-    fun `disabled animation skips splash and opens editor`() {
+    fun `disabled animation opens the editor`() {
         assertEquals(
-            StartupPresentation(showSplash = false, openAddressEditor = true),
+            StartupPresentation(openAddressEditor = true),
             StartupPresentationRules.resolve(
                 isColdStart = true,
                 isLauncherLaunch = true,
@@ -35,7 +35,7 @@ class StartupPresentationRulesTest {
     @Test
     fun `onboarding keeps editor closed when animation is disabled`() {
         assertEquals(
-            StartupPresentation(showSplash = false, openAddressEditor = false),
+            StartupPresentation(openAddressEditor = false),
             StartupPresentationRules.resolve(
                 isColdStart = true,
                 isLauncherLaunch = true,
@@ -48,7 +48,7 @@ class StartupPresentationRulesTest {
     @Test
     fun `release notes keep editor closed when animation is disabled`() {
         assertEquals(
-            StartupPresentation(showSplash = false, openAddressEditor = false),
+            StartupPresentation(openAddressEditor = false),
             StartupPresentationRules.resolve(
                 isColdStart = true,
                 isLauncherLaunch = true,
@@ -76,7 +76,7 @@ class StartupPresentationRulesTest {
             ),
         ).forEach { presentation ->
             assertEquals(
-                StartupPresentation(showSplash = false, openAddressEditor = false),
+                StartupPresentation(openAddressEditor = false),
                 presentation,
             )
         }

@@ -5,6 +5,8 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowSplashScreenBackground">@color/vola_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_art</item>
         <item name="colorPrimary">#D0BCFF</item>
         <item name="colorPrimaryDark">#D0BCFF</item>
         <item name="colorAccent">#D0BCFF</item>

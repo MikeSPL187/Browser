@@ -5,6 +5,8 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowSplashScreenBackground">@color/vola_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_art</item>
         <item name="colorPrimary">#6750A4</item>
         <item name="colorPrimaryDark">#6750A4</item>
         <item name="colorAccent">#6750A4</item>
@@ -12,5 +14,16 @@
 
     <style name="Theme.MaterialBrowser.MediaRouteButton" parent="Theme.MaterialBrowser">
         <item name="android:colorBackground">@android:color/white</item>
+    </style>
+
+    <!-- The launch screen when the app's own theme is fixed (Android 13+ remembers it per app). -->
+    <style name="Theme.Vola.LaunchLight" parent="Theme.MaterialBrowser">
+        <item name="android:windowSplashScreenBackground">#FFFFFFFF</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_art</item>
+    </style>
+
+    <style name="Theme.Vola.LaunchDark" parent="Theme.MaterialBrowser">
+        <item name="android:windowSplashScreenBackground">#FF000000</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_art</item>
     </style>
 </resources>

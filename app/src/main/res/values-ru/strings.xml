@@ -760,7 +760,7 @@
     <string name="settings_http_password_autofill_system_webview_summary">Android System WebView: не поддерживается. Его публичный API не позволяет выбирать менеджер паролей на сайтах HTTP. Переключитесь на GeckoView или используйте HTTPS.</string>
     <string name="settings_http_password_autofill_warning">По HTTP логины и пароли передаются без шифрования. Любой, кто может перехватить соединение, их прочитает.</string>
     <string name="settings_startup_animation_title">Анимация запуска</string>
-    <string name="settings_startup_animation_subtitle">Показывать анимацию Vola при обычном запуске приложения.</string>
+    <string name="settings_startup_animation_subtitle">Знак Vola плавно растворяется в браузере при запуске.</string>
     <string name="settings_startup_address_focus_title">Фокус на адресной строке при запуске</string>
     <string name="settings_startup_address_focus_summary">Открывать ли адресную строку и клавиатуру при обычном запуске. Нажатие на адресную строку всегда активирует её.</string>
     <string name="settings_startup_address_focus_current">Когда анимация выключена</string>

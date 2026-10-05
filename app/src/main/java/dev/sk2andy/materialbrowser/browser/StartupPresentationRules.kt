@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
+/** What a start shows first. The splash is the system launch screen; it needs no decision here. */
 internal data class StartupPresentation(
-    val showSplash: Boolean,
     val openAddressEditor: Boolean,
 )
 
@@ -14,9 +14,7 @@ internal object StartupPresentationRules {
         isOnboardingRequired: Boolean,
         isReleaseNotesRequired: Boolean = false,
     ): StartupPresentation {
-        val isRegularLauncherStart = isColdStart && isLauncherLaunch
         return StartupPresentation(
-            showSplash = isRegularLauncherStart && isStartupAnimationEnabled,
             openAddressEditor = isColdStart && shouldOpenAddressEditor(
                 isLauncherLaunch = isLauncherLaunch,
                 isStartupAnimationEnabled = isStartupAnimationEnabled,

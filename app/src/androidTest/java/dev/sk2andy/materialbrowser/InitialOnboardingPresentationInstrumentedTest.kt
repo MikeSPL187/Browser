@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser
 
 import android.content.Context
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,9 +35,6 @@ class InitialOnboardingPresentationInstrumentedTest {
 
     @Test
     fun completingInitialOnboardingDoesNotOpenReleaseNotes() {
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
-            composeRule.onAllNodesWithTag("candy_splash").fetchSemanticsNodes().isEmpty()
-        }
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.setReleaseNotesVisible(true)
         }
