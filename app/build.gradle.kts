@@ -293,6 +293,21 @@ android {
             matchingFallbacks += listOf("release")
         }
 
+        // Release code without R8 renaming, debug-signed and profileable by the shell: the baseline
+        // profile generator and the startup benchmark (:baselineprofile) run against it. Release
+        // builds map src/main/baseline-prof.txt through R8 themselves.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            applicationIdSuffix = ".benchmark"
+            versionNameSuffix = "-benchmark"
+            manifestPlaceholders["appLabel"] = "Vola Benchmark"
+            manifestPlaceholders["performanceDiagnosticsEnabled"] = "true"
+            buildConfigField("boolean", "ENABLE_GITHUB_UPDATES", "false")
+            matchingFallbacks += listOf("release")
+        }
+
         create("userCaDebug") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".ca.debug"
@@ -633,6 +648,8 @@ tasks.matching { task ->
 
 dependencies {
     implementation(project(":shared"))
+    // Installs the bundled baseline profile on devices without Play, such as GitHub installs.
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.biometric)
