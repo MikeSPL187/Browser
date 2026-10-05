@@ -51,6 +51,20 @@ object CredentialVaultRules {
                     .thenByDescending(VaultLogin::updatedAtMillis),
             )
 
+    /**
+     * Logins whose host is [domain] or one of its subdomains. Gecko asks by registrable domain
+     * («example.com») so it can tell a page that a login exists; offering one to fill still goes
+     * through [loginsFor] with the page's exact origin.
+     */
+    fun loginsUnderDomain(logins: List<VaultLogin>, domain: String): List<VaultLogin> {
+        val wanted = domain.trim().trimEnd('.').lowercase()
+        if (!isHost(wanted)) return emptyList()
+        return logins.filter { login ->
+            val host = login.origin.removePrefix(HTTPS_PREFIX).substringBefore(':')
+            host == wanted || host.endsWith(".$wanted")
+        }
+    }
+
     fun sortedForList(logins: List<VaultLogin>): List<VaultLogin> =
         logins.sortedWith(compareBy(VaultLogin::origin, VaultLogin::username, VaultLogin::id))
 

@@ -68,6 +68,8 @@ import dev.sk2andy.materialbrowser.browser.credentials.AndroidCredentialPromptHo
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
+import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
+import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
@@ -79,6 +81,7 @@ import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.net.URI
+import java.util.concurrent.Executors
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -323,6 +326,12 @@ internal class GeckoViewRuntimeHandle private constructor(
             )
             val runtime = GeckoRuntime.create(appContext, runtimeSettings)
             runtime.webNotificationDelegate = GeckoWebNotificationPresenter(appContext)
+            if (CredentialVaultFeature.ENABLED) {
+                runtime.autocompleteStorageDelegate = GeckoLoginStorageDelegate(
+                    vault = AndroidCredentialVault.get(appContext),
+                    io = Executors.newSingleThreadExecutor(),
+                )
+            }
             GeckoWebPushCoordinator.attach(appContext, runtime)
             val extensionController = runtime.webExtensionController
             val toppingHost = GeckoViewToppingHostRuntime(

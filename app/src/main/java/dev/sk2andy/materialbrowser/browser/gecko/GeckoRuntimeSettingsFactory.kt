@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
 import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoRuntimeSettings
 
@@ -15,9 +16,12 @@ internal object GeckoRuntimeSettingsFactory {
         trustUserCertificates: Boolean = BuildConfig.TRUST_USER_CERTIFICATES,
         dnsOverHttpsSettings: DnsOverHttpsSettings = DnsOverHttpsRules.Default,
         httpsOnlyMode: HttpsOnlyMode = HttpsOnlyMode.Default,
+        // With Vola's vault as Gecko's login storage, a login is filled only from the login prompt,
+        // never silently on page load.
+        loginAutofillEnabled: Boolean = !CredentialVaultFeature.ENABLED,
     ): GeckoRuntimeSettings = GeckoRuntimeSettings.Builder()
         .contentBlocking(contentBlocking)
-        .loginAutofillEnabled(true)
+        .loginAutofillEnabled(loginAutofillEnabled)
         .automaticFontSizeAdjustment(false)
         // Gecko owns its CA store; Android Network Security Config alone cannot opt it in.
         .enterpriseRootsEnabled(trustUserCertificates)

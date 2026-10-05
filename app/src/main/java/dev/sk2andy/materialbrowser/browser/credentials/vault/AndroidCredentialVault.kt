@@ -29,8 +29,15 @@ import javax.crypto.spec.GCMParameterSpec
 internal object AndroidCredentialVault {
     private const val FILE_NAME = "credential_vault_v1.bin"
 
-    fun open(context: Context): LocalCredentialVault =
-        LocalCredentialVault(AtomicFileVaultStorage(File(context.applicationContext.noBackupFilesDir, FILE_NAME)))
+    @Volatile
+    private var instance: LocalCredentialVault? = null
+
+    /** The one vault of this app process: the engine and the Passwords screen share its open state. */
+    fun get(context: Context): LocalCredentialVault = instance ?: synchronized(this) {
+        instance ?: LocalCredentialVault(
+            AtomicFileVaultStorage(File(context.applicationContext.noBackupFilesDir, FILE_NAME)),
+        ).also { instance = it }
+    }
 
     fun wordlist(context: Context): RecoveryWordlist? = runCatching {
         context.assets.open(RecoveryWordlist.ASSET).use { it.readBytes() }

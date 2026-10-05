@@ -36,6 +36,19 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun geckosDomainQueryFindsTheDomainAndItsSubdomainsOnly() {
+        val logins = listOf(
+            login("1", "https://example.com"),
+            login("2", "https://accounts.example.com:8443"),
+            login("3", "https://notexample.com"),
+            login("4", "https://example.com.evil.net"),
+        )
+
+        assertEquals(listOf("1", "2"), CredentialVaultRules.loginsUnderDomain(logins, "Example.com.").map(VaultLogin::id))
+        assertEquals(emptyList(), CredentialVaultRules.loginsUnderDomain(logins, "com/../x"))
+    }
+
+    @Test
     fun savingAddsUpdatesOrLeavesAlone() {
         val draft = draft(password = "first")
         val added = CredentialVaultRules.save(emptyList(), draft, nowMillis = 1) { "new" }

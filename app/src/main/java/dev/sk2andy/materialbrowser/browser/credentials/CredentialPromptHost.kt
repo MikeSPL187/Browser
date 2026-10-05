@@ -190,6 +190,10 @@ internal object CredentialPromptRules {
     fun matchesHttpsOrigin(candidate: String?, expected: String): Boolean =
         credentialOrigin(candidate, allowHttp = false) == expected
 
+    /** [value] as the password vault keys it: `https://host` in ASCII, with a port only when not 443. */
+    fun canonicalHttpsOrigin(value: String?): String? =
+        credentialOrigin(value, allowHttp = false)?.removeSuffix(":443")
+
     fun displayLabel(value: String?): String? = boundedText(value, MAX_LABEL_LENGTH)
 
     fun providerDomain(value: String?): String? = canonicalDomain(value)
