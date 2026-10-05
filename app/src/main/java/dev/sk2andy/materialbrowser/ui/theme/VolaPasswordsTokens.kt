@@ -61,4 +61,10 @@ internal object VolaPasswords {
 
     /** The password check (board W-PasswordHealth). */
     val healthSummaryGap = VolaSpacing.x2
+
+    /** Moving passwords in (boards W-Import, W-ImportChrome): numbered steps and the result card. */
+    val importStepBadge = 28.dp
+    val importStepGap = VolaSpacing.x3
+    val importCardPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
+    val importLineGap = VolaSpacing.x1
 }

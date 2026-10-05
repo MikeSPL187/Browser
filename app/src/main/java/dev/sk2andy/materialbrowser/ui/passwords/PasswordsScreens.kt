@@ -89,6 +89,7 @@ internal fun PasswordsListScreen(
     systemFillNote: Boolean = false,
     healthIssues: Int? = null,
     onHealth: () -> Unit = {},
+    onImport: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
@@ -102,6 +103,11 @@ internal fun PasswordsListScreen(
                     }
                 },
                 actions = {
+                    if (onImport != null) {
+                        IconButton(onClick = onImport, modifier = Modifier.testTag(PasswordsTestTags.Import)) {
+                            Icon(VolaIcons.UploadFile, contentDescription = stringResource(R.string.passwords_import_entry))
+                        }
+                    }
                     IconButton(onClick = onLock, modifier = Modifier.testTag(PasswordsTestTags.Lock)) {
                         Icon(VolaIcons.Lock, contentDescription = stringResource(R.string.passwords_lock))
                     }
@@ -184,6 +190,8 @@ internal fun PasswordsListScreen(
                         title = stringResource(if (searching) R.string.passwords_no_results else R.string.passwords_empty_title),
                         message = stringResource(if (searching) R.string.passwords_no_results_body else R.string.passwords_empty_body),
                         tone = if (searching) VolaStateTone.Neutral else VolaStateTone.Empty,
+                        actionLabel = stringResource(R.string.passwords_import_entry).takeIf { !searching && onImport != null },
+                        onAction = { onImport?.invoke() },
                         modifier = Modifier.padding(horizontal = VolaLibrary.sidePadding).padding(top = VolaLibrary.sectionGap),
                     )
                 }

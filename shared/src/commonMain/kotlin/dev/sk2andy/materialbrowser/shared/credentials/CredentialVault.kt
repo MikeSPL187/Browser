@@ -70,6 +70,28 @@ sealed interface VaultSaveResult {
     data object Failed : VaultSaveResult
 }
 
+/** What an import did: the logins it added, and what it left alone. */
+data class VaultImportSummary(
+    val addedIds: List<String>,
+    /** Already in the vault (same site, realm and user name); the saved password was kept. */
+    val duplicates: Int,
+    /** Refused by the vault's rules or over its size limit. */
+    val rejected: Int,
+    /** Logins that came with a two-factor key, new ones and ones that had none yet. */
+    val withTotp: Int,
+) {
+    val added: Int get() = addedIds.size
+}
+
+sealed interface VaultImportResult {
+    data class Imported(val summary: VaultImportSummary) : VaultImportResult
+
+    data object Locked : VaultImportResult
+
+    /** The vault could not be written; nothing was imported. */
+    data object Failed : VaultImportResult
+}
+
 /**
  * The browser's own password vault, independent of any engine: GeckoView and WebView adapters
  * talk to this port, never to the storage behind it.
@@ -102,6 +124,12 @@ interface CredentialVault {
      * ([TotpRules.canonical]); false when it is not, the login is unknown, or the vault is locked.
      */
     fun setTotp(id: String, totp: String?, nowMillis: Long): Boolean
+
+    /**
+     * Adds [logins] from another manager's export in one write. A login the vault already has keeps
+     * its password; it only gains a two-factor key when it had none.
+     */
+    fun importLogins(logins: List<ImportedLogin>, nowMillis: Long): VaultImportResult
 
     /** Records that [id] filled a form; false if it is unknown, the vault is locked or the write failed. */
     fun markUsed(id: String, nowMillis: Long): Boolean

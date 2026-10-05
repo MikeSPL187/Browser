@@ -65,6 +65,7 @@ internal object PasswordsTestTags {
     const val SystemFillNote = "passwords_system_fill_note"
     const val Generate = "passwords_generate"
     const val Health = "passwords_health"
+    const val Import = "passwords_import"
     const val AddTotp = "passwords_totp_add"
     const val RemoveTotp = "passwords_totp_remove"
     const val TotpField = "passwords_totp_field"

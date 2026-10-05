@@ -1745,6 +1745,53 @@
     <string name="passwords_totp_remove">Remove 2FA code</string>
     <string name="passwords_totp_remove_title">Remove the 2FA code?</string>
     <string name="passwords_totp_remove_body">Codes for %1$s will no longer be shown here. Keep another way to sign in before removing it.</string>
+    <string name="passwords_import_title">Move to Vola</string>
+    <string name="passwords_import_intro">Passwords move on this phone. Vola offers to delete the export file right after the import.</string>
+    <string name="passwords_import_from">From</string>
+    <string name="passwords_import_chrome">Chrome</string>
+    <string name="passwords_import_chrome_detail">Passwords (CSV)</string>
+    <string name="passwords_import_firefox">Firefox</string>
+    <string name="passwords_import_firefox_detail">Passwords from a computer (CSV)</string>
+    <string name="passwords_import_managers">Bitwarden, Proton Pass, 1Password</string>
+    <string name="passwords_import_managers_detail">Passwords and 2FA codes (CSV, JSON)</string>
+    <string name="passwords_import_file">I already have a file</string>
+    <string name="passwords_import_private">Files are read on this phone and go nowhere</string>
+    <string name="passwords_import_entry">Move passwords to Vola</string>
+    <string name="passwords_import_chrome_title">Move from Chrome</string>
+    <string name="passwords_import_firefox_title">Move from Firefox</string>
+    <string name="passwords_import_managers_title">Move from a password manager</string>
+    <string name="passwords_import_file_title">Import a file</string>
+    <string name="passwords_import_chrome_step1">Open Chrome → Password Manager</string>
+    <string name="passwords_import_chrome_step1_detail">Settings → Export passwords</string>
+    <string name="passwords_import_firefox_step1">On a computer: Firefox → Passwords</string>
+    <string name="passwords_import_firefox_step1_detail">about:logins → ⋯ → Export passwords</string>
+    <string name="passwords_import_firefox_step2">Move the file to this phone</string>
+    <string name="passwords_import_firefox_step2_detail">By cable, cloud or messenger, then delete it there</string>
+    <string name="passwords_import_managers_step1">Export the vault without encryption</string>
+    <string name="passwords_import_managers_step1_detail">Bitwarden: .json or .csv. Proton Pass and 1Password: .csv</string>
+    <string name="passwords_import_step_save">Save the file on this phone</string>
+    <string name="passwords_import_step_save_detail">Downloads is fine</string>
+    <string name="passwords_import_step_pick">Come back to Vola and choose the file</string>
+    <string name="passwords_import_step_pick_detail">Vola skips duplicates itself</string>
+    <string name="passwords_import_file_step">Choose an export file</string>
+    <string name="passwords_import_file_step_detail">CSV from Chrome, Firefox, Bitwarden, Proton Pass or 1Password, or Bitwarden JSON</string>
+    <string name="passwords_import_pick">Choose file</string>
+    <string name="passwords_import_not_export">This file isn’t a password export. Choose the CSV or JSON file the other app saved.</string>
+    <string name="passwords_import_encrypted">The export is encrypted. Export again without a password.</string>
+    <string name="passwords_import_too_large">The file is too large for a password export.</string>
+    <string name="passwords_import_not_text">The file can’t be read as text (UTF-8).</string>
+    <string name="passwords_import_unreadable">The file couldn’t be opened.</string>
+    <string name="passwords_import_no_logins">The file has no logins for https sites.</string>
+    <string name="passwords_import_failed">Couldn’t write to the vault. Nothing was moved.</string>
+    <string name="passwords_import_done">Done</string>
+    <string name="passwords_import_file_line">%1$s · %2$s</string>
+    <string name="passwords_import_delete_warning">Passwords sit in this file as plain text. Delete it.</string>
+    <string name="passwords_import_delete">Delete file</string>
+    <string name="passwords_import_deleted">File deleted</string>
+    <string name="passwords_import_delete_failed">Couldn’t delete it from here. Delete it in Files or Downloads.</string>
+    <string name="passwords_import_to_passwords">To passwords</string>
+    <string name="passwords_import_check">Check moved passwords</string>
+    <string name="settings_move_to_vola_summary">Passwords from Chrome, Firefox and password managers</string>
     <string name="passwords_health_title">Password check</string>
     <string name="passwords_health_percent">%1$d%%</string>
     <string name="passwords_health_fine">fine</string>
@@ -1783,5 +1830,21 @@
     <plurals name="passwords_health_entry_issues">
         <item quantity="one">%d needs attention</item>
         <item quantity="other">%d need attention</item>
+    </plurals>
+    <plurals name="passwords_import_added">
+        <item quantity="one">%d password moved</item>
+        <item quantity="other">%d passwords moved</item>
+    </plurals>
+    <plurals name="passwords_import_with_totp">
+        <item quantity="one">%d with a 2FA code</item>
+        <item quantity="other">%d with 2FA codes</item>
+    </plurals>
+    <plurals name="passwords_import_duplicates">
+        <item quantity="one">%d was already in Vola</item>
+        <item quantity="other">%d were already in Vola</item>
+    </plurals>
+    <plurals name="passwords_import_skipped">
+        <item quantity="one">%d skipped: not an https site or no password</item>
+        <item quantity="other">%d skipped: not https sites or no password</item>
     </plurals>
 </resources>

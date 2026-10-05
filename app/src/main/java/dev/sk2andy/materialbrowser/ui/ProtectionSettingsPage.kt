@@ -51,6 +51,7 @@ import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object ProtectionSettingsTestTags {
     const val UserCaWarning = "protection_settings_user_ca_warning"
+    const val MoveToVola = "protection_settings_move_to_vola"
     const val ExportAppData = "protection_settings_export_app_data"
     const val ImportAppData = "protection_settings_import_app_data"
     const val Recall = "protection_settings_recall"
@@ -98,6 +99,7 @@ internal fun ProtectionAndDataSettingsPage(
     onFilterStudio: () -> Unit,
     onExportAppData: () -> Unit = {},
     onImportAppData: () -> Unit = {},
+    onMoveToVola: () -> Unit = {},
     onClearData: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -413,6 +415,14 @@ internal fun ProtectionAndDataSettingsPage(
             }
             SettingsCardHeader(stringResource(R.string.settings_protection_group_app_data))
             SettingsCard(containerColor = cardColor) {
+                SettingsCardLinkRow(
+                    title = stringResource(R.string.passwords_import_title),
+                    summary = stringResource(R.string.settings_move_to_vola_summary),
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onClick = onMoveToVola,
+                    modifier = Modifier.testTag(ProtectionSettingsTestTags.MoveToVola),
+                )
                 SettingsCardLinkRow(
                     title = stringResource(R.string.data_archive_export_title),
                     summary = stringResource(R.string.data_archive_export_summary),
