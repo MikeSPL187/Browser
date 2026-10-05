@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
 /** The tile behind a row's icon, in the colors of the row's own accent. */
 @Immutable
@@ -295,8 +297,8 @@ fun SettingsCardSliderRow(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = SettingsCardTokens.rowMinHeight)
-                .padding(SettingsCardTokens.rowPadding),
+                .heightIn(min = densityRowMinHeight(SettingsCardTokens.rowMinHeight))
+                .padding(densityRowPadding(SettingsCardTokens.rowPadding)),
             verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.textGap),
         ) {
             Row(
@@ -351,10 +353,10 @@ private fun SettingsCardRowLayout(
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .heightIn(min = SettingsCardTokens.rowMinHeight)
+                .heightIn(min = densityRowMinHeight(SettingsCardTokens.rowMinHeight))
                 .then(interaction)
                 .graphicsLayer { alpha = if (enabled) 1f else DISABLED_ALPHA }
-                .padding(SettingsCardTokens.rowPadding),
+                .padding(densityRowPadding(SettingsCardTokens.rowPadding)),
             horizontalArrangement = Arrangement.spacedBy(SettingsCardTokens.rowGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {

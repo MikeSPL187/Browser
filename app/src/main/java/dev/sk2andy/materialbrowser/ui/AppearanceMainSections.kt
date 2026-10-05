@@ -42,6 +42,7 @@ import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
+import dev.sk2andy.materialbrowser.data.BrowserDensity
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaAppearance
 import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
@@ -165,6 +166,8 @@ private fun ThemesEntry(
                             settings.colorPalette.displayName(),
                             settings.accentOverride?.displayName(),
                             settings.shapeStyle.displayName(),
+                            settings.density.takeIf { it != BrowserDensity.Normal }
+                                ?.displayName(),
                         ),
                     ).orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
