@@ -32,6 +32,7 @@ internal inline fun StartupComposition(name: String, content: @Composable () -> 
  */
 @Composable
 internal fun rememberAfterFirstFrame(): Boolean {
+    StartupTimeline.mark("BrowserScreenComposeStart")
     var after by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withFrameNanos { }
