@@ -243,6 +243,10 @@ internal fun BrowserBottomBar(
     val docked = dockState.placement != null
     val dockingEnabled = dockState.enabled
     var menuExpanded by remember { mutableStateOf(false) }
+    // TEMP(S4a tour): why the bar leaves the accessibility tree.
+    LaunchedEffect(visualOnly, menuExpanded, compact, editing) {
+        android.util.Log.i("VolaDiag", "bar visualOnly=$visualOnly menu=$menuExpanded compact=$compact editing=$editing")
+    }
     val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val presentation = AddressBarPresentationRules.resolve(
         docked = docked,
