@@ -612,7 +612,7 @@ private fun BrowserMainMenuContent(
                 effects = effects,
             )
         } else {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(effects.style.contentVerticalPadding))
         }
         BrowserMainMenuItemGroup(
             items = items,
