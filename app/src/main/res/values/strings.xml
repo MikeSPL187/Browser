@@ -738,8 +738,6 @@
     <string name="settings_startup_address_focus_current">When animation is off</string>
     <string name="settings_startup_address_focus_always">On every launch</string>
     <string name="settings_startup_address_focus_never">Never</string>
-    <string name="settings_favorite_bookmark_import_title">Import bookmark HTML</string>
-    <string name="settings_favorite_bookmark_import_summary">Add bookmarks exported by another browser to Favorites.</string>
     <plurals name="favorite_bookmark_import_success">
         <item quantity="one">Imported %d favorite</item>
         <item quantity="other">Imported %d favorites</item>
@@ -1746,12 +1744,12 @@
     <string name="passwords_totp_remove_title">Remove the 2FA code?</string>
     <string name="passwords_totp_remove_body">Codes for %1$s will no longer be shown here. Keep another way to sign in before removing it.</string>
     <string name="passwords_import_title">Move to Vola</string>
-    <string name="passwords_import_intro">Passwords move on this phone. Vola offers to delete the export file right after the import.</string>
+    <string name="passwords_import_intro">Passwords and bookmarks move on this phone. Vola offers to delete the password file right after the import.</string>
     <string name="passwords_import_from">From</string>
     <string name="passwords_import_chrome">Chrome</string>
-    <string name="passwords_import_chrome_detail">Passwords (CSV)</string>
+    <string name="passwords_import_chrome_detail">Passwords (CSV) and bookmarks (HTML)</string>
     <string name="passwords_import_firefox">Firefox</string>
-    <string name="passwords_import_firefox_detail">Passwords from a computer (CSV)</string>
+    <string name="passwords_import_firefox_detail">Passwords and bookmarks from a computer</string>
     <string name="passwords_import_managers">Bitwarden, Proton Pass, 1Password</string>
     <string name="passwords_import_managers_detail">Passwords and 2FA codes (CSV, JSON)</string>
     <string name="passwords_import_file">I already have a file</string>
@@ -1765,23 +1763,23 @@
     <string name="passwords_import_chrome_step1_detail">Settings → Export passwords</string>
     <string name="passwords_import_firefox_step1">On a computer: Firefox → Passwords</string>
     <string name="passwords_import_firefox_step1_detail">about:logins → ⋯ → Export passwords</string>
-    <string name="passwords_import_firefox_step2">Move the file to this phone</string>
-    <string name="passwords_import_firefox_step2_detail">By cable, cloud or messenger, then delete it there</string>
+    <string name="passwords_import_firefox_step2">Move the files to this phone</string>
+    <string name="passwords_import_firefox_step2_detail">By cable, cloud or messenger, then delete them there</string>
     <string name="passwords_import_managers_step1">Export the vault without encryption</string>
     <string name="passwords_import_managers_step1_detail">Bitwarden: .json or .csv. Proton Pass and 1Password: .csv</string>
     <string name="passwords_import_step_save">Save the file on this phone</string>
     <string name="passwords_import_step_save_detail">Downloads is fine</string>
-    <string name="passwords_import_step_pick">Come back to Vola and choose the file</string>
+    <string name="passwords_import_step_pick">Come back to Vola and choose the files</string>
     <string name="passwords_import_step_pick_detail">Vola skips duplicates itself</string>
     <string name="passwords_import_file_step">Choose an export file</string>
-    <string name="passwords_import_file_step_detail">CSV from Chrome, Firefox, Bitwarden, Proton Pass or 1Password, or Bitwarden JSON</string>
+    <string name="passwords_import_file_step_detail">Passwords: CSV from Chrome, Firefox, Bitwarden, Proton Pass or 1Password, or Bitwarden JSON. Bookmarks: HTML</string>
     <string name="passwords_import_pick">Choose file</string>
-    <string name="passwords_import_not_export">This file isn’t a password export. Choose the CSV or JSON file the other app saved.</string>
+    <string name="passwords_import_not_export">This file isn’t a password or bookmark export. Choose the file the other app saved.</string>
     <string name="passwords_import_encrypted">The export is encrypted. Export again without a password.</string>
     <string name="passwords_import_too_large">The file is too large for a password export.</string>
     <string name="passwords_import_not_text">The file can’t be read as text (UTF-8).</string>
     <string name="passwords_import_unreadable">The file couldn’t be opened.</string>
-    <string name="passwords_import_no_logins">The file has no logins for https sites.</string>
+    <string name="passwords_import_no_logins">The file has no logins for https sites and no bookmarks.</string>
     <string name="passwords_import_failed">Couldn’t write to the vault. Nothing was moved.</string>
     <string name="passwords_import_done">Done</string>
     <string name="passwords_import_file_line">%1$s · %2$s</string>
@@ -1791,7 +1789,17 @@
     <string name="passwords_import_delete_failed">Couldn’t delete it from here. Delete it in Files or Downloads.</string>
     <string name="passwords_import_to_passwords">To passwords</string>
     <string name="passwords_import_check">Check moved passwords</string>
-    <string name="settings_move_to_vola_summary">Passwords from Chrome, Firefox and password managers</string>
+    <string name="passwords_import_samsung">Samsung Internet</string>
+    <string name="passwords_import_samsung_detail">Bookmarks (HTML)</string>
+    <string name="passwords_import_samsung_title">Move from Samsung Internet</string>
+    <string name="passwords_import_samsung_step1">Samsung Internet → Bookmarks</string>
+    <string name="passwords_import_samsung_step1_detail">⋮ → Export bookmarks, save to Downloads</string>
+    <string name="passwords_import_chrome_bookmarks">Bookmarks: on a computer</string>
+    <string name="passwords_import_chrome_bookmarks_detail">chrome://bookmarks → ⋮ → Export bookmarks (HTML)</string>
+    <string name="passwords_import_firefox_bookmarks">Bookmarks: Firefox → Bookmarks → Manage bookmarks</string>
+    <string name="passwords_import_firefox_bookmarks_detail">Import and Backup → Export Bookmarks to HTML</string>
+    <string name="passwords_import_bookmarks_limit">Favorites are full: some bookmarks didn’t fit.</string>
+    <string name="settings_move_to_vola_summary">Passwords and bookmarks from Chrome, Firefox and other apps</string>
     <string name="passwords_health_title">Password check</string>
     <string name="passwords_health_percent">%1$d%%</string>
     <string name="passwords_health_fine">fine</string>
@@ -1846,5 +1854,13 @@
     <plurals name="passwords_import_skipped">
         <item quantity="one">%d skipped: not an https site or no password</item>
         <item quantity="other">%d skipped: not https sites or no password</item>
+    </plurals>
+    <plurals name="passwords_import_bookmarks">
+        <item quantity="one">%d bookmark moved</item>
+        <item quantity="other">%d bookmarks moved</item>
+    </plurals>
+    <plurals name="passwords_import_bookmarks_skipped">
+        <item quantity="one">%d bookmark skipped: already in Vola or not a web page</item>
+        <item quantity="other">%d bookmarks skipped: already in Vola or not web pages</item>
     </plurals>
 </resources>

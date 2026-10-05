@@ -58,6 +58,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFile
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFiles
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
+import dev.sk2andy.materialbrowser.data.FavoriteBookmarkImportRules
+import dev.sk2andy.materialbrowser.data.FavoriteBookmarkParseResult
+import dev.sk2andy.materialbrowser.data.FavoriteEntry
+import dev.sk2andy.materialbrowser.data.FavoriteLibrarySignal
+import dev.sk2andy.materialbrowser.shared.credentials.ImportedLogin
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportParse
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
@@ -102,17 +107,19 @@ internal sealed interface PasswordsRoute {
     /** How to get the export from [source], and why the last file brought nothing in. */
     data class ImportGuide(val source: PasswordImportSource, val problem: PasswordImportProblem? = null) : PasswordsRoute
 
-    /** What the import did, and the picked file to delete. */
+    /** What the import did, and the picked password files to delete. */
     data class ImportDone(
         val report: PasswordImportReport,
-        val file: Uri,
+        val files: List<Uri>,
         val fileState: PasswordImportFileState = PasswordImportFileState.Present,
     ) : PasswordsRoute
 
-    /** Screens that show logins or write them: they need the vault open. */
-    val needsOpenVault: Boolean
-        get() = this is Logins || this is Detail || this is Edit || this is Health || this is Import || this is ImportGuide
+    /** Screens that show logins: they need the vault open. Moving bookmarks in does not. */
+    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit || this is Health
 }
+
+/** Files picked for «Move to Vola» that hold passwords, waiting for the vault to be set up or opened. */
+internal data class PendingImport(val source: PasswordImportSource, val files: List<Uri>)
 
 /** Survives rotation, never the process: nothing here is written to a bundle or to disk. */
 internal class PasswordsViewModel : ViewModel() {
@@ -124,8 +131,9 @@ internal class PasswordsViewModel : ViewModel() {
     /** The device key did not open the vault; after the phrase opens it, the device gets a new key. */
     var deviceKeyLost = false
 
-    /** Where to go once the vault opens, when that is not the list: an import that was under way. */
-    var afterOpen: PasswordsRoute? = null
+    /** Picked files with passwords, kept while the vault is set up or opened; then imported. */
+    var pendingImport: PendingImport? = null
+    var resumeImport by mutableStateOf<PendingImport?>(null)
 
     /** Opened from Settings to move passwords in: back from the sources leaves the window. */
     var launchedForImport = false
@@ -147,8 +155,8 @@ class PasswordsActivity : FragmentActivity() {
     private val model: PasswordsViewModel by viewModels()
     private val vault: LocalCredentialVault by lazy { AndroidCredentialVault.get(this) }
     private val random = SecureRandom()
-    private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(::importFrom)
+    private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        importFrom(uris)
     }
 
     /** System WebView fills sites through Android's autofill service; the screen says so. */
@@ -171,11 +179,8 @@ class PasswordsActivity : FragmentActivity() {
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
         if (model.route == null) {
-            if (intent.getBooleanExtra(PasswordsActivityContract.EXTRA_IMPORT, false)) {
-                model.launchedForImport = true
-                model.afterOpen = PasswordsRoute.Import
-            }
-            model.route = startRoute()
+            model.launchedForImport = intent.getBooleanExtra(PasswordsActivityContract.EXTRA_IMPORT, false)
+            model.route = if (model.launchedForImport) PasswordsRoute.Import else startRoute()
         }
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
@@ -198,7 +203,7 @@ class PasswordsActivity : FragmentActivity() {
 
     private fun startRoute(): PasswordsRoute = when {
         !vault.exists -> PasswordsRoute.Intro
-        vault.isUnlocked -> model.afterOpen?.also { model.afterOpen = null } ?: PasswordsRoute.Logins
+        vault.isUnlocked -> PasswordsRoute.Logins
         else -> PasswordsRoute.Locked
     }
 
@@ -207,12 +212,15 @@ class PasswordsActivity : FragmentActivity() {
         val route = model.route ?: return
         val lockGeneration = CredentialVaultSession.lockGeneration
         LaunchedEffect(lockGeneration) {
-            val current = model.route
-            if (!vault.isUnlocked && current?.needsOpenVault == true) {
-                // An import picks up where it was once the vault is open again.
-                if (current is PasswordsRoute.Import || current is PasswordsRoute.ImportGuide) model.afterOpen = current
-                model.route = PasswordsRoute.Locked
-            }
+            if (!vault.isUnlocked && model.route?.needsOpenVault == true) model.route = PasswordsRoute.Locked
+        }
+        // Files that waited for the vault come in as soon as it is open and nothing else runs.
+        LaunchedEffect(model.resumeImport, model.busy) {
+            val pending = model.resumeImport ?: return@LaunchedEffect
+            if (model.busy) return@LaunchedEffect
+            model.resumeImport = null
+            model.importSource = pending.source
+            importFrom(pending.files)
         }
         val logins = remember(model.revision, lockGeneration, route) { vault.allLogins() }
         val message = model.message?.let { stringResource(it) }
@@ -258,7 +266,7 @@ class PasswordsActivity : FragmentActivity() {
                 },
             )
             PasswordsRoute.Import -> PasswordImportScreen(
-                onSource = { source -> use { model.route = PasswordsRoute.ImportGuide(source) } },
+                onSource = { source -> model.route = PasswordsRoute.ImportGuide(source) },
                 onPickFile = { pickExport(PasswordImportSource.File) },
                 onBack = { back(route) },
             )
@@ -337,9 +345,23 @@ class PasswordsActivity : FragmentActivity() {
                 PasswordsRoute.Logins
             }
             is PasswordsRoute.ImportGuide -> PasswordsRoute.Import
-            is PasswordsRoute.ImportDone -> PasswordsRoute.Logins
+            // Bookmarks alone, or no open vault: nothing to show here, back to where the user came from.
+            is PasswordsRoute.ImportDone -> if (vault.isUnlocked && (route.report.hadPasswords || !model.launchedForImport)) {
+                PasswordsRoute.Logins
+            } else {
+                finish()
+                return
+            }
             is PasswordsRoute.Edit -> route.id?.let(PasswordsRoute::Detail) ?: PasswordsRoute.Logins
-            PasswordsRoute.Intro, PasswordsRoute.Locked, PasswordsRoute.Logins -> {
+            PasswordsRoute.Intro, PasswordsRoute.Locked -> model.pendingImport?.let { pending ->
+                // Passwords waited for the vault; going back drops them and returns to their steps.
+                model.pendingImport = null
+                PasswordsRoute.ImportGuide(pending.source)
+            } ?: run {
+                finish()
+                return
+            }
+            PasswordsRoute.Logins -> {
                 finish()
                 return
             }
@@ -489,62 +511,120 @@ class PasswordsActivity : FragmentActivity() {
         CredentialVaultSession.touch(vault)
         model.message = null
         model.revision++
-        model.route = model.afterOpen ?: PasswordsRoute.Logins
-        model.afterOpen = null
+        val pending = model.pendingImport
+        model.pendingImport = null
+        model.route = pending?.let { PasswordsRoute.ImportGuide(it.source) } ?: PasswordsRoute.Logins
+        model.resumeImport = pending
     }
 
-    /** Opens the system file picker for an export; what it may show is kept to text and JSON. */
-    private fun pickExport(source: PasswordImportSource) = use {
-        if (model.busy) return@use
+    /** Opens the system file picker for exports; what it may show is kept to text, HTML and JSON. */
+    private fun pickExport(source: PasswordImportSource) {
+        if (model.busy) return
         model.importSource = source
         runCatching { exportPicker.launch(EXPORT_TYPES) }
     }
 
-    private fun importFrom(uri: Uri) = use {
+    private fun importFrom(files: List<Uri>) {
+        if (files.isEmpty() || model.busy) return
         val source = model.importSource
+        if (vault.isUnlocked) CredentialVaultSession.touch(vault)
         runBusy {
-            model.route = withContext(Dispatchers.IO) { importRoute(uri, source) }
+            when (val outcome = withContext(Dispatchers.IO) { importFiles(files, source) }) {
+                is ImportOutcome.Done -> model.route = outcome.route
+                ImportOutcome.NeedsVault -> {
+                    model.pendingImport = PendingImport(source, files)
+                    model.route = if (vault.exists) PasswordsRoute.Locked else PasswordsRoute.Intro
+                }
+            }
             model.revision++
         }
     }
 
-    /** Reads, parses and imports [uri]; the route says what came of it. */
-    private fun importRoute(uri: Uri, source: PasswordImportSource): PasswordsRoute {
-        fun problem(problem: PasswordImportProblem) = PasswordsRoute.ImportGuide(source, problem)
-        val file = when (val read = PasswordImportFiles.read(contentResolver, uri)) {
-            is PasswordImportFile.Loaded -> read
-            PasswordImportFile.TooLarge -> return problem(PasswordImportProblem.TooLarge)
-            PasswordImportFile.NotText -> return problem(PasswordImportProblem.NotText)
-            PasswordImportFile.Unreadable -> return problem(PasswordImportProblem.Unreadable)
+    private sealed interface ImportOutcome {
+        data class Done(val route: PasswordsRoute) : ImportOutcome
+
+        /** Passwords are among the files and the vault is not open yet. */
+        data object NeedsVault : ImportOutcome
+    }
+
+    /**
+     * Reads [files], tells bookmark exports (HTML) from password exports, and brings both in:
+     * bookmarks into favorites, passwords into the vault in one write.
+     */
+    private fun importFiles(files: List<Uri>, source: PasswordImportSource): ImportOutcome {
+        val now = System.currentTimeMillis()
+        var problem: PasswordImportProblem? = null
+        val loaded = files.mapNotNull { uri ->
+            when (val file = PasswordImportFiles.read(contentResolver, uri)) {
+                is PasswordImportFile.Loaded -> uri to file
+                PasswordImportFile.TooLarge -> null.also { problem = problem ?: PasswordImportProblem.TooLarge }
+                PasswordImportFile.NotText -> null.also { problem = problem ?: PasswordImportProblem.NotText }
+                PasswordImportFile.Unreadable -> null.also { problem = problem ?: PasswordImportProblem.Unreadable }
+            }
         }
-        val parsed = when (val parse = PasswordImportRules.parse(file.text, PasswordsRules::manualOrigin)) {
-            is PasswordImportParse.Read -> parse
-            PasswordImportParse.Encrypted -> return problem(PasswordImportProblem.Encrypted)
-            PasswordImportParse.NotAnExport -> return problem(PasswordImportProblem.NotAnExport)
+        val favorites = ArrayList<FavoriteEntry>()
+        var bookmarkFiles = 0
+        val passwordFiles = ArrayList<Uri>()
+        val logins = ArrayList<ImportedLogin>()
+        var passwordsSkipped = 0
+        for ((uri, file) in loaded) {
+            val bookmarks = FavoriteBookmarkImportRules.parse(file.text, now)
+            if (bookmarks is FavoriteBookmarkParseResult.Parsed) {
+                bookmarkFiles++
+                favorites += bookmarks.favorites
+                continue
+            }
+            when (val parsed = PasswordImportRules.parse(file.text, PasswordsRules::manualOrigin)) {
+                is PasswordImportParse.Read -> {
+                    passwordFiles += uri
+                    logins += parsed.logins
+                    passwordsSkipped += parsed.skipped
+                }
+                PasswordImportParse.Encrypted -> problem = problem ?: PasswordImportProblem.Encrypted
+                PasswordImportParse.NotAnExport -> problem = problem ?: PasswordImportProblem.NotAnExport
+            }
         }
-        if (parsed.logins.isEmpty()) return problem(PasswordImportProblem.NoLogins)
-        val summary = when (val result = vault.importLogins(parsed.logins, System.currentTimeMillis())) {
-            is VaultImportResult.Imported -> result.summary
-            VaultImportResult.Locked -> return PasswordsRoute.Locked
-            VaultImportResult.Failed -> return problem(PasswordImportProblem.Failed)
+        if (logins.isNotEmpty() && !vault.isUnlocked) return ImportOutcome.NeedsVault
+        fun problem(fallback: PasswordImportProblem) =
+            ImportOutcome.Done(PasswordsRoute.ImportGuide(source, problem ?: fallback))
+        if (logins.isEmpty() && favorites.isEmpty()) return problem(PasswordImportProblem.NoLogins)
+
+        val merged = if (favorites.isEmpty()) null else BrowserSessionStore(this).mergeImportedFavoritesCommitted(favorites)
+        if (merged != null && merged.importedCount > 0) FavoriteLibrarySignal.markChanged()
+        val summary = if (logins.isEmpty()) {
+            null
+        } else {
+            (vault.importLogins(logins, now) as? VaultImportResult.Imported)?.summary
         }
+        val passwordsFailed = logins.isNotEmpty() && summary == null
+        val bookmarksFailed = favorites.isNotEmpty() && merged == null
+        if ((passwordsFailed || logins.isEmpty()) && (bookmarksFailed || favorites.isEmpty())) {
+            return problem(PasswordImportProblem.Failed)
+        }
+        val shown = loaded.filter { (uri, _) -> uri in passwordFiles }.ifEmpty { loaded }.map { it.second }
         val report = PasswordImportReport(
-            fileName = file.name,
-            fileSizeBytes = file.sizeBytes,
-            added = summary.added,
-            duplicates = summary.duplicates,
-            skipped = parsed.skipped + summary.rejected,
-            withTotp = summary.withTotp,
-            addedIds = summary.addedIds,
+            fileName = shown.mapNotNull(PasswordImportFile.Loaded::name).joinToString(", ").ifEmpty { null },
+            fileSizeBytes = shown.sumOf(PasswordImportFile.Loaded::sizeBytes),
+            added = summary?.added ?: 0,
+            duplicates = summary?.duplicates ?: 0,
+            skipped = passwordsSkipped + (summary?.rejected ?: 0),
+            withTotp = summary?.withTotp ?: 0,
+            addedIds = summary?.addedIds.orEmpty(),
+            hadPasswords = summary != null,
+            bookmarks = merged?.importedCount ?: 0,
+            bookmarksSkipped = merged?.skippedCount ?: 0,
+            bookmarksLimitReached = merged?.limitReached == true,
         )
-        return PasswordsRoute.ImportDone(report, uri)
+        return ImportOutcome.Done(PasswordsRoute.ImportDone(report, passwordFiles))
     }
 
     private fun deleteExport(route: PasswordsRoute.ImportDone) {
         if (route.fileState != PasswordImportFileState.Present) return
         model.route = route.copy(fileState = PasswordImportFileState.Deleting)
         lifecycleScope.launch {
-            val deleted = withContext(Dispatchers.IO) { PasswordImportFiles.delete(contentResolver, route.file) }
+            val deleted = withContext(Dispatchers.IO) {
+                route.files.map { file -> PasswordImportFiles.delete(contentResolver, file) }.all { it }
+            }
             val current = model.route as? PasswordsRoute.ImportDone ?: return@launch
             model.route = current.copy(
                 fileState = if (deleted) PasswordImportFileState.Deleted else PasswordImportFileState.DeleteFailed,
@@ -664,8 +744,14 @@ class PasswordsActivity : FragmentActivity() {
         const val PREFERENCES = "vola_passwords"
         const val KEY_LEAK_CHECK = "leak_check"
 
-        /** CSV comes as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
-        val EXPORT_TYPES = arrayOf("text/*", "application/json", "application/octet-stream", "application/vnd.ms-excel")
+        /** CSV and HTML come as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
+        val EXPORT_TYPES = arrayOf(
+            "text/*",
+            "application/json",
+            "application/xhtml+xml",
+            "application/octet-stream",
+            "application/vnd.ms-excel",
+        )
 
         /** The same pair the device key accepts: strong biometrics or the screen lock. */
         const val AUTHENTICATORS =

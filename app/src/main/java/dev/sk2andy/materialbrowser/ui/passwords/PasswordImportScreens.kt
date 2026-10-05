@@ -52,8 +52,8 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaPasswords
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 
-/** Where the passwords come from; each but [File] has its own steps (board W-ImportChrome). */
-internal enum class PasswordImportSource { Chrome, Firefox, Managers, File }
+/** Where passwords and bookmarks come from; each but [File] has its own steps (board W-ImportChrome). */
+internal enum class PasswordImportSource { Chrome, Firefox, Samsung, Managers, File }
 
 /** Why a picked file brought nothing in. */
 internal enum class PasswordImportProblem { NotAnExport, Encrypted, TooLarge, NotText, Unreadable, NoLogins, Failed }
@@ -67,6 +67,11 @@ internal data class PasswordImportReport(
     val skipped: Int,
     val withTotp: Int,
     val addedIds: List<String>,
+    /** Whether a password export was among the files: only then is there one to delete. */
+    val hadPasswords: Boolean = true,
+    val bookmarks: Int = 0,
+    val bookmarksSkipped: Int = 0,
+    val bookmarksLimitReached: Boolean = false,
 )
 
 /** The picked file after the import: still there, being deleted, gone, or refused to go. */
@@ -89,6 +94,7 @@ private class ImportStep(val title: Int, val detail: Int)
 private fun PasswordImportSource.title(): Int = when (this) {
     PasswordImportSource.Chrome -> R.string.passwords_import_chrome_title
     PasswordImportSource.Firefox -> R.string.passwords_import_firefox_title
+    PasswordImportSource.Samsung -> R.string.passwords_import_samsung_title
     PasswordImportSource.Managers -> R.string.passwords_import_managers_title
     PasswordImportSource.File -> R.string.passwords_import_file_title
 }
@@ -98,12 +104,17 @@ private fun PasswordImportSource.steps(): List<ImportStep> {
     return when (this) {
         PasswordImportSource.Chrome -> listOf(
             ImportStep(R.string.passwords_import_chrome_step1, R.string.passwords_import_chrome_step1_detail),
-            ImportStep(R.string.passwords_import_step_save, R.string.passwords_import_step_save_detail),
+            ImportStep(R.string.passwords_import_chrome_bookmarks, R.string.passwords_import_chrome_bookmarks_detail),
             pick,
         )
         PasswordImportSource.Firefox -> listOf(
             ImportStep(R.string.passwords_import_firefox_step1, R.string.passwords_import_firefox_step1_detail),
+            ImportStep(R.string.passwords_import_firefox_bookmarks, R.string.passwords_import_firefox_bookmarks_detail),
             ImportStep(R.string.passwords_import_firefox_step2, R.string.passwords_import_firefox_step2_detail),
+            pick,
+        )
+        PasswordImportSource.Samsung -> listOf(
+            ImportStep(R.string.passwords_import_samsung_step1, R.string.passwords_import_samsung_step1_detail),
             pick,
         )
         PasswordImportSource.Managers -> listOf(
@@ -141,6 +152,7 @@ internal fun PasswordImportScreen(
     val sources = listOf(
         Triple(PasswordImportSource.Chrome, VolaIcons.Language, R.string.passwords_import_chrome_detail),
         Triple(PasswordImportSource.Firefox, VolaIcons.Public, R.string.passwords_import_firefox_detail),
+        Triple(PasswordImportSource.Samsung, VolaIcons.TravelExplore, R.string.passwords_import_samsung_detail),
         Triple(PasswordImportSource.Managers, VolaIcons.ShieldLock, R.string.passwords_import_managers_detail),
     )
     ImportScaffold(title = stringResource(R.string.passwords_import_title), onBack = onBack) { padding ->
@@ -233,6 +245,7 @@ internal fun PasswordImportScreen(
 private fun PasswordImportSource.label(): Int = when (this) {
     PasswordImportSource.Chrome -> R.string.passwords_import_chrome
     PasswordImportSource.Firefox -> R.string.passwords_import_firefox
+    PasswordImportSource.Samsung -> R.string.passwords_import_samsung
     PasswordImportSource.Managers -> R.string.passwords_import_managers
     PasswordImportSource.File -> R.string.passwords_import_file
 }
@@ -360,18 +373,35 @@ internal fun PasswordImportResultScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(
-                            text = pluralStringResource(R.plurals.passwords_import_added, report.added, report.added),
-                            modifier = Modifier.padding(top = VolaPasswords.importLineGap),
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                        CountLine(R.plurals.passwords_import_with_totp, report.withTotp)
-                        CountLine(R.plurals.passwords_import_duplicates, report.duplicates)
-                        CountLine(R.plurals.passwords_import_skipped, report.skipped)
+                        if (report.hadPasswords) {
+                            Text(
+                                text = pluralStringResource(R.plurals.passwords_import_added, report.added, report.added),
+                                modifier = Modifier.padding(top = VolaPasswords.importLineGap),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            CountLine(R.plurals.passwords_import_with_totp, report.withTotp)
+                            CountLine(R.plurals.passwords_import_duplicates, report.duplicates)
+                            CountLine(R.plurals.passwords_import_skipped, report.skipped)
+                        }
+                        if (report.bookmarks > 0 || report.bookmarksSkipped > 0) {
+                            Text(
+                                text = pluralStringResource(R.plurals.passwords_import_bookmarks, report.bookmarks, report.bookmarks),
+                                modifier = Modifier.padding(top = VolaPasswords.importLineGap),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            CountLine(R.plurals.passwords_import_bookmarks_skipped, report.bookmarksSkipped)
+                            if (report.bookmarksLimitReached) {
+                                Text(
+                                    text = stringResource(R.string.passwords_import_bookmarks_limit),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
                     }
                 }
             }
-            item(key = "file") { FileCard(fileState, onDeleteFile) }
+            if (report.hadPasswords) item(key = "file") { FileCard(fileState, onDeleteFile) }
             if (report.added > 0) {
                 item(key = "check") {
                     LibraryCardSlice(position = LibraryRules.position(0, 1)) {
@@ -406,7 +436,7 @@ internal fun PasswordImportResultScreen(
                         .height(VolaPasswords.buttonHeight)
                         .testTag(PasswordImportTestTags.ToPasswords),
                 ) {
-                    Text(stringResource(R.string.passwords_import_to_passwords))
+                    Text(stringResource(if (report.hadPasswords) R.string.passwords_import_to_passwords else R.string.passwords_import_done))
                 }
             }
         }
@@ -581,6 +611,8 @@ private fun PasswordImportResultPreview() {
                 skipped = 2,
                 withTotp = 4,
                 addedIds = emptyList(),
+                bookmarks = 214,
+                bookmarksSkipped = 5,
             ),
             fileState = PasswordImportFileState.Present,
             healthIssues = 8,
