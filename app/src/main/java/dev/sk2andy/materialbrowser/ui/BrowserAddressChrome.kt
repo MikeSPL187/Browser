@@ -171,6 +171,10 @@ internal fun BoxScope.BrowserAddressChrome(
         if (!tabSwipeEnabled) browserDragOffset.floatValue = 0f
     }
     val rootView = LocalView.current
+    // TEMP(S4a tour): why the bar leaves the accessibility tree.
+    LaunchedEffect(tabOverviewVisible, addressBarMorphInFront) {
+        android.util.Log.i("VolaDiag", "chrome overview=$tabOverviewVisible morphInFront=$addressBarMorphInFront")
+    }
     val longPressActionHapticNonce = controller.contentActions.longPressActionHapticNonce
     LaunchedEffect(longPressActionHapticNonce) {
         if (longPressActionHapticNonce != 0) {
