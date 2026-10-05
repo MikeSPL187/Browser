@@ -55,8 +55,8 @@ internal enum class VaultOpenResult {
 internal class LocalCredentialVault(
     private val storage: VaultStorage,
     private val random: SecureRandom = SecureRandom(),
-    private val newId: () -> String = { UUID.randomUUID().toString() },
     private val index: LoginIndex? = null,
+    private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : CredentialVault {
     private var key: ByteArray? = null
     private var slots: List<VaultSlot> = emptyList()
