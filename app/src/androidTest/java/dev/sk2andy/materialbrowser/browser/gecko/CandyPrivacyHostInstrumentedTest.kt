@@ -195,7 +195,7 @@ class CandyPrivacyHostInstrumentedTest {
                 )
                 assertTrue(session.loadUrl(server.cookiePageUrl()))
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
                 session.stop()
@@ -232,7 +232,7 @@ class CandyPrivacyHostInstrumentedTest {
                 }
                 assertTrue(session.loadUrl(server.slowCookiePageUrl()))
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
                 session.setActive(true)
@@ -244,7 +244,7 @@ class CandyPrivacyHostInstrumentedTest {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 session.setActive(false)
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
             }
@@ -356,13 +356,13 @@ class CandyPrivacyHostInstrumentedTest {
                 restoreGate = server.blockNextCookiePage()
                 assertTrue(session.restoreSessionState(snapshot))
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
             }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
                 session.setActive(true)
@@ -378,7 +378,7 @@ class CandyPrivacyHostInstrumentedTest {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 session.setActive(false)
                 assertEquals(
-                    ContentBlocking.CookieBehavior.ACCEPT_ALL,
+                    ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS,
                     runtime.normalCookieBehaviorForTesting(),
                 )
             }
