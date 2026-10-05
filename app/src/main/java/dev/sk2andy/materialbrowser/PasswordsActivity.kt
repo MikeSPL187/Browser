@@ -52,6 +52,13 @@ import java.security.SecureRandom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.Intent
+import android.net.Uri
+import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordsClient
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
+import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
+import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
 
 /** Where the Passwords screen is. A recovery phrase lives only here, in memory, while it is shown. */
 internal sealed interface PasswordsRoute {
@@ -71,8 +78,11 @@ internal sealed interface PasswordsRoute {
 
     data class Edit(val id: String?, val error: PasswordEditError? = null) : PasswordsRoute
 
+    /** The password check (board W-PasswordHealth). */
+    data object Health : PasswordsRoute
+
     /** Screens that show logins: they need the vault open. */
-    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit
+    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit || this is Health
 }
 
 /** Survives rotation, never the process: nothing here is written to a bundle or to disk. */
@@ -84,6 +94,10 @@ internal class PasswordsViewModel : ViewModel() {
 
     /** The device key did not open the vault; after the phrase opens it, the device gets a new key. */
     var deviceKeyLost = false
+
+    /** The leak check's answers by login id, kept only while the screen lives. */
+    var leakStatus by mutableStateOf(LeakCheckStatus.Off)
+    var breaches by mutableStateOf<Map<String, Int>>(emptyMap())
 }
 
 /**
@@ -180,7 +194,22 @@ class PasswordsActivity : FragmentActivity() {
                 onLock = ::lockNow,
                 onBack = ::finish,
                 systemFillNote = systemFillOnly,
+                healthIssues = remember(logins, model.breaches) {
+                    PasswordHealthRules.report(logins, model.breaches).needsAttention
+                },
+                onHealth = { use { model.route = PasswordsRoute.Health } },
             )
+            PasswordsRoute.Health -> {
+                LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
+                PasswordHealthScreen(
+                    report = remember(logins, model.breaches) { PasswordHealthRules.report(logins, model.breaches) },
+                    leakCheck = model.leakStatus,
+                    onLeakCheckChange = { on -> setLeakCheck(on, logins) },
+                    onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
+                    onChange = { login -> use { openChangePassword(login.origin) } },
+                    onBack = { back(route) },
+                )
+            }
             is PasswordsRoute.Detail -> {
                 val login = logins.firstOrNull { it.id == route.id }
                 if (login == null) {
@@ -213,12 +242,50 @@ class PasswordsActivity : FragmentActivity() {
             is PasswordsRoute.Phrase, is PasswordsRoute.Confirm -> PasswordsRoute.Intro
             is PasswordsRoute.Recover -> PasswordsRoute.Locked
             is PasswordsRoute.Detail -> PasswordsRoute.Logins
+            PasswordsRoute.Health -> PasswordsRoute.Logins
             is PasswordsRoute.Edit -> route.id?.let(PasswordsRoute::Detail) ?: PasswordsRoute.Logins
             PasswordsRoute.Intro, PasswordsRoute.Locked, PasswordsRoute.Logins -> {
                 finish()
                 return
             }
         }
+    }
+
+    /** Whether the leak check is on; off until the user turns it on (Q21b). */
+    private val leakCheckOn: Boolean
+        get() = getSharedPreferences(PREFERENCES, MODE_PRIVATE).getBoolean(KEY_LEAK_CHECK, false)
+
+    private fun setLeakCheck(on: Boolean, logins: List<VaultLogin>) {
+        getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit().putBoolean(KEY_LEAK_CHECK, on).apply()
+        if (on) {
+            checkLeaks(logins)
+        } else {
+            model.leakStatus = LeakCheckStatus.Off
+            model.breaches = emptyMap()
+        }
+    }
+
+    /** Asks Pwned Passwords about each distinct password, sending only a hash prefix for each. */
+    private fun checkLeaks(logins: List<VaultLogin>) {
+        if (model.leakStatus == LeakCheckStatus.Checking) return
+        model.leakStatus = LeakCheckStatus.Checking
+        lifecycleScope.launch {
+            val answers = withContext(Dispatchers.IO) {
+                val client = PwnedPasswordsClient()
+                val byPassword = logins.map(VaultLogin::password).distinct().associateWith(client::timesSeen)
+                logins.associate { login -> login.id to byPassword[login.password] }
+            }
+            if (model.leakStatus != LeakCheckStatus.Checking) return@launch
+            model.breaches = answers.mapNotNull { (id, seen) -> seen?.let { id to it } }.toMap()
+            model.leakStatus = if (answers.values.any { it == null }) LeakCheckStatus.Failed else LeakCheckStatus.Done
+        }
+    }
+
+    /** The site's own change-password page, in Vola. */
+    private fun openChangePassword(origin: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(PasswordHealthRules.changePasswordUrl(origin)))
+            .setPackage(packageName)
+        runCatching { startActivity(intent) }
     }
 
     /** Runs a screen action on the open vault and keeps it open for another five minutes. */
@@ -422,6 +489,9 @@ class PasswordsActivity : FragmentActivity() {
     }
 
     private companion object {
+        const val PREFERENCES = "vola_passwords"
+        const val KEY_LEAK_CHECK = "leak_check"
+
         /** The same pair the device key accepts: strong biometrics or the screen lock. */
         const val AUTHENTICATORS =
             BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL

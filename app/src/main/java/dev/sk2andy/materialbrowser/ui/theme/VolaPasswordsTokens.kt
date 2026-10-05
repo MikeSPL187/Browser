@@ -58,4 +58,7 @@ internal object VolaPasswords {
     val generatorValuePadding = PaddingValues(start = 16.dp, top = 8.dp, end = 4.dp, bottom = 8.dp)
     val generatorOptionsPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     val generatorSwitchHeight = 48.dp
+
+    /** The password check (board W-PasswordHealth). */
+    val healthSummaryGap = VolaSpacing.x2
 }
