@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="candy_notification_accent">#FF6750A4</color>
+    <!-- The launch screen (board W-Splash): the app background, so the first frame does not flash. -->
+    <color name="vola_splash_background">#FFFFFFFF</color>
     <color name="candy_widget_surface">#FFF8FC</color>
     <color name="candy_widget_divider">#FFD9E0</color>
     <color name="candy_widget_on_surface">#FF24212A</color>

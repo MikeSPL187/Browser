@@ -732,7 +732,7 @@
     <string name="settings_http_password_autofill_system_webview_summary">Android System WebView: Unsupported. Its public API cannot enable password-manager selection on HTTP sites. Switch to GeckoView or use HTTPS.</string>
     <string name="settings_http_password_autofill_warning">HTTP sends usernames and passwords without transport encryption. Anyone able to intercept the connection can read them.</string>
     <string name="settings_startup_animation_title">Startup animation</string>
-    <string name="settings_startup_animation_subtitle">Shows the Vola animation on regular app launches.</string>
+    <string name="settings_startup_animation_subtitle">The Vola mark melts into the browser on launch.</string>
     <string name="settings_startup_address_focus_title">Focus address bar on launch</string>
     <string name="settings_startup_address_focus_summary">Controls whether regular app and home launches open the address bar and keyboard. Tapping the address bar always focuses it.</string>
     <string name="settings_startup_address_focus_current">When animation is off</string>

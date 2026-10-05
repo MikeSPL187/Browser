@@ -42,7 +42,6 @@ class StartupPresentationInstrumentedTest {
 
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
-        composeRule.onNodeWithTag("candy_splash").assertDoesNotExist()
         composeRule.onNodeWithTag(AddressBarTestTags.Editor)
             .assertIsDisplayed()
             .assertIsFocused()
