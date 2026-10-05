@@ -125,7 +125,7 @@ jobs:
           rm -rf baselineprofile/build/outputs/connected_android_test_additional_output
           ./gradlew --no-daemon --stacktrace :baselineprofile:connectedFullBenchmarkAndroidTest \
             -Pandroid.testInstrumentationRunnerArguments.class="$BENCHMARK"
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
           import json, pathlib
           print("### Cold start on the emulator (median, ms)")
           for path in pathlib.Path("baselineprofile/build/outputs").rglob("*benchmarkData.json"):
