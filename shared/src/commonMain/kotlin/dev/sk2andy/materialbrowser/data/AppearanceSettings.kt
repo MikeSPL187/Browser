@@ -1,11 +1,15 @@
 package dev.sk2andy.materialbrowser.data
 
+import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+
 data class AppearanceSettings(
     val appearanceMode: BrowserAppearanceMode = BrowserAppearanceMode.System,
     val animationsEnabled: Boolean = true,
     val forceDarkWebsites: Boolean = false,
     val webContentFontSizePercent: Int = DEFAULT_WEB_CONTENT_FONT_SIZE_PERCENT,
     val colorPalette: BrowserColorPalette = BrowserColorPalette.Vola,
+    /** One accent for every workspace; null keeps each workspace's own color. */
+    val accentOverride: WorkspaceAccent? = null,
     val chromeStyle: BrowserChromeStyle = BrowserChromeStyle.Frame,
     val surfaceStyle: BrowserSurfaceStyle = BrowserSurfaceStyle.Clear,
     val shapeStyle: BrowserShapeStyle = BrowserShapeStyle.Rounded,
@@ -96,14 +100,26 @@ enum class BrowserAppearanceMode(val stableId: String) {
     }
 }
 
+/**
+ * The theme of the shell (board W-Themes). Vola takes every color from the accent; Ice, Dusk,
+ * Paper and Mono lay the accent on their own neutrals; Dynamic follows the wallpaper.
+ */
 enum class BrowserColorPalette(val stableId: String) {
     Vola("vola"),
-    Dynamic("dynamic"),
-    Neutral("neutral");
+    Ice("ice"),
+    Dusk("dusk"),
+    Paper("paper"),
+    Mono("mono"),
+    Dynamic("dynamic");
 
     companion object {
-        fun fromStableId(value: String?): BrowserColorPalette =
-            entries.firstOrNull { it.stableId == value } ?: Vola
+        /** Stored by versions that offered a neutral palette; Mono took its place. */
+        const val LEGACY_NEUTRAL_STABLE_ID = "neutral"
+
+        fun fromStableId(value: String?): BrowserColorPalette = when (value) {
+            LEGACY_NEUTRAL_STABLE_ID -> Mono
+            else -> entries.firstOrNull { it.stableId == value } ?: Vola
+        }
     }
 }
 

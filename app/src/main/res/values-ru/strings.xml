@@ -569,7 +569,6 @@
     <string name="settings_appearance_mode">Тема</string>
     <string name="settings_appearance_advanced">Дополнительно</string>
     <string name="appearance_mode_auto">Авто</string>
-    <string name="settings_color_palette_per_space">Свои у каждого пространства</string>
     <string name="settings_chrome_style">Оформление</string>
     <string name="settings_chrome_style_frame">Рама</string>
     <string name="settings_chrome_style_air">Воздух</string>
@@ -587,7 +586,15 @@
     <string name="settings_color_palette">Цвета</string>
     <string name="color_palette_dynamic">Обои</string>
     <string name="color_palette_vola">Vola</string>
-    <string name="color_palette_neutral">Моно</string>
+    <string name="color_palette_ice">Лёд</string>
+    <string name="color_palette_dusk">Сумерки</string>
+    <string name="color_palette_paper">Бумага</string>
+    <string name="color_palette_mono">Моно</string>
+    <string name="settings_themes_title">Темы</string>
+    <string name="settings_themes_summary">Цвета, акцент и скругления</string>
+    <string name="settings_themes_accent">Акцент</string>
+    <string name="settings_themes_accent_workspace">Как у пространства</string>
+    <string name="settings_themes_preview">Предпросмотр: %1$s</string>
     <string name="settings_address_bar_color">Цвет адресной строки</string>
     <string name="address_bar_color_theme">Как в теме</string>
     <string name="address_bar_color_dimmed">Приглушённый</string>
@@ -887,6 +894,7 @@
     <string name="settings_user_ca_title">Доверие пользовательским CA-сертификатам</string>
     <string name="settings_user_ca_summary">Эта сборка позволяет любому CA, установленному вами или администратором устройства, просматривать и изменять HTTPS-трафик Vola. Используйте только сертификаты и инструменты фильтрации, которым доверяете.</string>
     <string name="settings_section_about_legal">О приложении и правовая информация</string>
+    <string name="settings_about_group_legal">Правовая информация</string>
     <string name="settings_imprint_title">Разработчик</string>
     <string name="settings_imprint_summary">Разработчик, исходный код и исходный проект</string>
     <string name="settings_open_source_title">Открытые и сторонние лицензии</string>

@@ -178,8 +178,11 @@ internal fun BrowserChromeStyle.summary(): String = when (this) {
 @Composable
 internal fun BrowserColorPalette.displayName(): String = when (this) {
     BrowserColorPalette.Vola -> stringResource(R.string.color_palette_vola)
+    BrowserColorPalette.Ice -> stringResource(R.string.color_palette_ice)
+    BrowserColorPalette.Dusk -> stringResource(R.string.color_palette_dusk)
+    BrowserColorPalette.Paper -> stringResource(R.string.color_palette_paper)
+    BrowserColorPalette.Mono -> stringResource(R.string.color_palette_mono)
     BrowserColorPalette.Dynamic -> stringResource(R.string.color_palette_dynamic)
-    BrowserColorPalette.Neutral -> stringResource(R.string.color_palette_neutral)
 }
 
 @Composable
