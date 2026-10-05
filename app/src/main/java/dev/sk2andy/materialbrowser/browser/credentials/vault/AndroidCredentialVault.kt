@@ -28,15 +28,20 @@ import javax.crypto.spec.GCMParameterSpec
  */
 internal object AndroidCredentialVault {
     private const val FILE_NAME = "credential_vault_v1.bin"
+    private const val INDEX_FILE_NAME = "credential_index_v1.bin"
 
     @Volatile
     private var instance: LocalCredentialVault? = null
 
     /** The one vault of this app process: the engine and the Passwords screen share its open state. */
     fun get(context: Context): LocalCredentialVault = instance ?: synchronized(this) {
-        instance ?: LocalCredentialVault(
-            AtomicFileVaultStorage(File(context.applicationContext.noBackupFilesDir, FILE_NAME)),
-        ).also { instance = it }
+        instance ?: run {
+            val directory = context.applicationContext.noBackupFilesDir
+            LocalCredentialVault(
+                storage = AtomicFileVaultStorage(File(directory, FILE_NAME)),
+                index = LoginIndex(AtomicFileVaultStorage(File(directory, INDEX_FILE_NAME)), KeystoreLoginIndexKey()),
+            )
+        }.also { instance = it }
     }
 
     fun wordlist(context: Context): RecoveryWordlist? = runCatching {

@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultChange
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginDraft
+import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginHint
 import dev.sk2andy.materialbrowser.shared.credentials.VaultSaveResult
 import java.security.SecureRandom
 import java.util.UUID
@@ -47,10 +48,14 @@ internal enum class VaultOpenResult {
  * The vault on this device. One random 256-bit key seals all logins; each slot in the file holds
  * that key wrapped by one way in ([VaultKeyWrapper]). The key and the logins exist in memory only
  * while the vault is open, and every change rewrites the sealed file before it is shown.
+ *
+ * [index] mirrors the sites and user names, never the passwords, so a locked vault can still say
+ * which logins a page has ([loginHints]). It is rewritten after every change and every opening.
  */
 internal class LocalCredentialVault(
     private val storage: VaultStorage,
     private val random: SecureRandom = SecureRandom(),
+    private val index: LoginIndex? = null,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : CredentialVault {
     private var key: ByteArray? = null
@@ -82,6 +87,7 @@ internal class LocalCredentialVault(
         lock()
         key = newKey
         slots = newSlots
+        syncIndex()
         return VaultOpenResult.Opened
     }
 
@@ -113,6 +119,7 @@ internal class LocalCredentialVault(
         key = openedKey
         slots = envelope.slots
         logins = opened
+        syncIndex()
         return VaultOpenResult.Opened
     }
 
@@ -125,12 +132,20 @@ internal class LocalCredentialVault(
         if (key == null) emptyList() else CredentialVaultRules.sortedForList(logins)
 
     @Synchronized
+    override fun loginHints(): List<VaultLoginHint> = when {
+        key != null -> CredentialVaultRules.hints(logins)
+        storage.exists() -> index?.hints().orEmpty()
+        else -> emptyList()
+    }
+
+    @Synchronized
     override fun save(draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult {
         val openKey = key ?: return VaultSaveResult.Locked
         val change: VaultChange = CredentialVaultRules.save(logins, draft, nowMillis, newId)
         if (change.logins === logins) return change.result
         if (!persist(openKey, slots, change.logins)) return VaultSaveResult.Failed
         logins = change.logins
+        syncIndex()
         return change.result
     }
 
@@ -141,6 +156,7 @@ internal class LocalCredentialVault(
         if (change.logins === logins) return change.result
         if (!persist(openKey, slots, change.logins)) return VaultSaveResult.Failed
         logins = change.logins
+        syncIndex()
         return change.result
     }
 
@@ -171,14 +187,24 @@ internal class LocalCredentialVault(
     override fun markUsed(id: String, nowMillis: Long): Boolean {
         val openKey = key ?: return false
         val changed = CredentialVaultRules.markUsed(logins, id, nowMillis) ?: return false
-        return persist(openKey, slots, changed).also { written -> if (written) logins = changed }
+        return persist(openKey, slots, changed).also { written ->
+            if (written) {
+                logins = changed
+                syncIndex()
+            }
+        }
     }
 
     @Synchronized
     override fun delete(id: String): Boolean {
         val openKey = key ?: return false
         val changed = CredentialVaultRules.delete(logins, id) ?: return false
-        return persist(openKey, slots, changed).also { written -> if (written) logins = changed }
+        return persist(openKey, slots, changed).also { written ->
+            if (written) {
+                logins = changed
+                syncIndex()
+            }
+        }
     }
 
     @Synchronized
@@ -193,7 +219,13 @@ internal class LocalCredentialVault(
     @Synchronized
     fun destroy(): Boolean {
         lock()
+        index?.clear()
         return storage.delete()
+    }
+
+    /** The index follows the open vault; a failed index write leaves the vault as it is. */
+    private fun syncIndex() {
+        index?.replace(CredentialVaultRules.hints(logins))
     }
 
     private fun persist(vaultKey: ByteArray, vaultSlots: List<VaultSlot>, content: List<VaultLogin>): Boolean {

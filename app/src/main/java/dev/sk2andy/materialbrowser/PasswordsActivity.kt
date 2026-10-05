@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
+import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
 import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultSession
 import dev.sk2andy.materialbrowser.browser.credentials.vault.KeystoreVaultKeyWrapper
@@ -94,6 +95,11 @@ class PasswordsActivity : FragmentActivity() {
     private val model: PasswordsViewModel by viewModels()
     private val vault: LocalCredentialVault by lazy { AndroidCredentialVault.get(this) }
     private val random = SecureRandom()
+
+    /** System WebView fills sites through Android's autofill service; the screen says so. */
+    private val systemFillOnly: Boolean by lazy {
+        BrowserSessionStore(this).loadAndroidBrowserEngineKind() == AndroidBrowserEngineKind.SystemWebView
+    }
     private var isFullImmersiveModeEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,6 +179,7 @@ class PasswordsActivity : FragmentActivity() {
                 onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
                 onLock = ::lockNow,
                 onBack = ::finish,
+                systemFillNote = systemFillOnly,
             )
             is PasswordsRoute.Detail -> {
                 val login = logins.firstOrNull { it.id == route.id }

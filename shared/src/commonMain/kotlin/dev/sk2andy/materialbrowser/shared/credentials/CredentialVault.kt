@@ -22,6 +22,22 @@ data class VaultLogin(
         "VaultLogin(id=$id, origin=$origin, username=<redacted>, password=<redacted>)"
 }
 
+/**
+ * What the browser may know about a login while the vault is locked: its site and user name, never
+ * its password. The login index keeps these under a device key that needs no fingerprint, so a page
+ * can offer «Sign in as …» at once and ask for the fingerprint only when a login is picked.
+ */
+data class VaultLoginHint(
+    val id: String,
+    val origin: String,
+    val formActionOrigin: String?,
+    val httpRealm: String?,
+    val username: String,
+    val lastUsedAtMillis: Long?,
+) {
+    override fun toString(): String = "VaultLoginHint(id=$id, origin=$origin, username=<redacted>)"
+}
+
 /** A sign-in a page asks to save: what the engine saw, before the vault gives it an identity. */
 data class VaultLoginDraft(
     val origin: String,
@@ -67,6 +83,12 @@ interface CredentialVault {
 
     /** Every saved login, by origin; empty while locked. */
     fun allLogins(): List<VaultLogin>
+
+    /**
+     * Site and user name of every saved login, open or locked (from the login index); never a
+     * password. Empty when there is no vault.
+     */
+    fun loginHints(): List<VaultLoginHint>
 
     fun save(draft: VaultLoginDraft, nowMillis: Long): VaultSaveResult
 

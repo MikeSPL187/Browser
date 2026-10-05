@@ -74,6 +74,7 @@ internal fun PasswordsListScreen(
     onAdd: () -> Unit,
     onLock: () -> Unit,
     onBack: () -> Unit,
+    systemFillNote: Boolean = false,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
@@ -111,6 +112,20 @@ internal fun PasswordsListScreen(
                     testTag = PasswordsTestTags.Search,
                     onQueryChange = { query = it.take(MAX_QUERY_LENGTH) },
                 )
+            }
+            if (systemFillNote) {
+                // System WebView fills sites through Android's autofill service, not through this vault.
+                item(key = "system-fill-note") {
+                    Text(
+                        text = stringResource(R.string.passwords_webview_note),
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap)
+                            .testTag(PasswordsTestTags.SystemFillNote),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             if (visible.isEmpty()) {
                 item(key = "empty") {

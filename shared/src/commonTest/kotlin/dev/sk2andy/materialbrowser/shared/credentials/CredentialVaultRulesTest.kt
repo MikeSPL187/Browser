@@ -118,6 +118,29 @@ class CredentialVaultRulesTest {
     }
 
     @Test
+    fun hintsCarryNoPasswordAndMatchLikeLogins() {
+        val logins = listOf(
+            login("1", "https://example.com", lastUsed = 10),
+            login("2", "https://accounts.example.com"),
+            login("3", "https://example.com", lastUsed = 20),
+            login("4", "https://other.org"),
+        )
+        val hints = CredentialVaultRules.hints(logins)
+
+        assertFalse("hunter2" in hints.joinToString { it.username + it.origin + it.id })
+        assertEquals(listOf("3", "1"), CredentialVaultRules.hintsFor(hints, "https://example.com").map { it.id })
+        assertEquals(
+            setOf("1", "2", "3"),
+            CredentialVaultRules.hintsUnderDomain(hints, "example.com").map { it.id }.toSet(),
+        )
+        assertEquals(emptyList(), CredentialVaultRules.hintsUnderDomain(hints, "not a host"))
+        assertTrue(hints.all(CredentialVaultRules::accepts))
+        assertFalse(CredentialVaultRules.accepts(hints.first().copy(id = " ")))
+        assertFalse(CredentialVaultRules.accepts(hints.first().copy(origin = "https://Example.com")))
+        assertFalse("alice" in hints.first().toString())
+    }
+
+    @Test
     fun theLoginNeverPrintsItsSecrets() {
         val text = login("1", "https://example.com").toString() + draft().toString()
         assertFalse("hunter2" in text)

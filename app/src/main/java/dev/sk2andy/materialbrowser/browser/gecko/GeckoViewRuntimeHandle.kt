@@ -66,6 +66,7 @@ import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetRules
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import dev.sk2andy.materialbrowser.browser.credentials.AndroidCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
+import dev.sk2andy.materialbrowser.browser.credentials.VaultCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
 import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
@@ -2257,7 +2258,7 @@ private class GeckoViewBrowserSession(
         credentialNavigationGeneration++
         credentialPromptHost?.close()
         credentialPromptHost = if (recreateHost && active && !isPrivate) {
-            boundView?.context?.let(AndroidCredentialPromptHost::create)
+            boundView?.context?.let(VaultCredentialPromptHost::create)
         } else {
             null
         }
@@ -2265,7 +2266,7 @@ private class GeckoViewBrowserSession(
 
     private fun ensureCredentialPromptHost() {
         if (credentialPromptHost == null && active && !closed && !isPrivate) {
-            credentialPromptHost = boundView?.context?.let(AndroidCredentialPromptHost::create)
+            credentialPromptHost = boundView?.context?.let(VaultCredentialPromptHost::create)
         }
     }
 
@@ -2752,7 +2753,7 @@ private class GeckoViewBrowserSession(
             }
             view.setSession(session)
             boundView = view
-            if (active) credentialPromptHost = AndroidCredentialPromptHost.create(context)
+            if (active) credentialPromptHost = VaultCredentialPromptHost.create(context)
         }
     }
 
