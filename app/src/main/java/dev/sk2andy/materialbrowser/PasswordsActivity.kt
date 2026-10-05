@@ -56,6 +56,7 @@ import android.content.Intent
 import android.net.Uri
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordsClient
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
+import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
@@ -222,6 +223,9 @@ class PasswordsActivity : FragmentActivity() {
                         onEdit = { use { model.route = PasswordsRoute.Edit(login.id) } },
                         onDelete = { delete(login.id) },
                         onBack = { back(route) },
+                        onCopyCode = { code -> use { copy(code) } },
+                        onSetTotp = { input -> setTotp(login.id, input) },
+                        onRemoveTotp = { writeTotp(login.id, null) },
                     )
                 }
             }
@@ -418,6 +422,23 @@ class PasswordsActivity : FragmentActivity() {
             } else {
                 Toast.makeText(this@PasswordsActivity, R.string.passwords_failed, Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    /** Keeps the 2FA key in [input] for the login; false when it is not one, so the dialog stays. */
+    private fun setTotp(id: String, input: String): Boolean {
+        val config = TotpRules.parse(input) ?: return false
+        writeTotp(id, TotpRules.canonical(config))
+        return true
+    }
+
+    private fun writeTotp(id: String, totp: String?) = use {
+        runBusy {
+            val now = System.currentTimeMillis()
+            if (!withContext(Dispatchers.IO) { vault.setTotp(id, totp, now) }) {
+                Toast.makeText(this@PasswordsActivity, R.string.passwords_failed, Toast.LENGTH_SHORT).show()
+            }
+            model.revision++
         }
     }
 

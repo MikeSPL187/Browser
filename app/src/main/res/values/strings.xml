@@ -1735,6 +1735,16 @@
     <string name="passwords_strength_fair">Fair · could be guessed in months</string>
     <string name="passwords_strength_strong">Strong · guessing would take years</string>
     <string name="passwords_strength_very_strong">Very strong · guessing would take centuries</string>
+    <string name="passwords_totp">2FA code</string>
+    <string name="passwords_totp_add">Add 2FA code</string>
+    <string name="passwords_totp_add_body">Paste the otpauth:// link or the key the site shows under its QR code.</string>
+    <string name="passwords_totp_field">otpauth:// link or key</string>
+    <string name="passwords_totp_wrong">This isn’t a 2FA key</string>
+    <string name="passwords_totp_seconds_left">%1$d s</string>
+    <string name="passwords_totp_copy">Copy code</string>
+    <string name="passwords_totp_remove">Remove 2FA code</string>
+    <string name="passwords_totp_remove_title">Remove the 2FA code?</string>
+    <string name="passwords_totp_remove_body">Codes for %1$s will no longer be shown here. Keep another way to sign in before removing it.</string>
     <string name="passwords_health_title">Password check</string>
     <string name="passwords_health_percent">%1$d%%</string>
     <string name="passwords_health_fine">fine</string>

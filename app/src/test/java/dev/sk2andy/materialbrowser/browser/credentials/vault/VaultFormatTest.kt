@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.browser.credentials.vault
 
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.security.SecureRandom
 import org.junit.Assert.assertArrayEquals
@@ -60,6 +62,34 @@ class VaultFormatTest {
         assertNull(VaultDocumentCodec.decode(VaultDocumentCodec.encode(listOf(login("1", "http://example.com")))))
         assertNull(VaultDocumentCodec.decode(VaultDocumentCodec.encode(logins + logins.first())))
         assertNull(VaultDocumentCodec.decode(VaultDocumentCodec.encode(logins) + 0))
+    }
+
+    @Test
+    fun `a two-factor key round-trips and a version 1 file still opens`() {
+        val key = "otpauth://totp/?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=6&period=30"
+        val withKey = listOf(login("1", "https://example.com").copy(totp = key))
+        assertEquals(withKey, VaultDocumentCodec.decode(VaultDocumentCodec.encode(withKey)))
+        assertNull(VaultDocumentCodec.decode(VaultDocumentCodec.encode(listOf(login("1", "https://example.com").copy(totp = "otpauth://totp/?secret=bad")))))
+
+        val versionOne = ByteArrayOutputStream().also { bytes ->
+            DataOutputStream(bytes).use { output ->
+                output.writeInt(1)
+                output.writeInt(1)
+                output.writeUTF("1")
+                output.writeUTF("https://example.com")
+                output.writeBoolean(false)
+                output.writeBoolean(false)
+                output.writeUTF("alice")
+                output.writeUTF("hunter2")
+                output.writeLong(1)
+                output.writeLong(2)
+                output.writeLong(Long.MIN_VALUE)
+                output.writeInt(0)
+            }
+        }.toByteArray()
+        val opened = requireNotNull(VaultDocumentCodec.decode(versionOne)).single()
+        assertEquals("hunter2", opened.password)
+        assertNull(opened.totp)
     }
 
     @Test

@@ -1785,6 +1785,16 @@
     <string name="passwords_strength_fair">Средний · подберут за месяцы</string>
     <string name="passwords_strength_strong">Надёжный · подбор займёт годы</string>
     <string name="passwords_strength_very_strong">Очень надёжный · подбор займёт века</string>
+    <string name="passwords_totp">Код 2FA</string>
+    <string name="passwords_totp_add">Добавить код 2FA</string>
+    <string name="passwords_totp_add_body">Вставьте ссылку otpauth:// или ключ, который сайт показывает под QR-кодом.</string>
+    <string name="passwords_totp_field">Ссылка otpauth:// или ключ</string>
+    <string name="passwords_totp_wrong">Это не ключ 2FA</string>
+    <string name="passwords_totp_seconds_left">%1$d с</string>
+    <string name="passwords_totp_copy">Копировать код</string>
+    <string name="passwords_totp_remove">Убрать код 2FA</string>
+    <string name="passwords_totp_remove_title">Убрать код 2FA?</string>
+    <string name="passwords_totp_remove_body">Коды для %1$s больше не будут показываться здесь. Перед удалением убедитесь, что у вас есть другой способ входа.</string>
     <string name="passwords_health_title">Проверка паролей</string>
     <string name="passwords_health_percent">%1$d%%</string>
     <string name="passwords_health_fine">в порядке</string>

@@ -165,6 +165,16 @@ object CredentialVaultRules {
         return VaultChange(logins.map { if (it.id == id) stamped else it }, VaultSaveResult.Updated(stamped))
     }
 
+    /** Whether [totp] is a key the vault keeps: a canonical link, or none. */
+    fun acceptsTotp(totp: String?): Boolean =
+        totp == null || TotpRules.parse(totp)?.let(TotpRules::canonical) == totp
+
+    /** [logins] with [id]'s two-factor key set or removed, or null if there is no such login or key. */
+    fun setTotp(logins: List<VaultLogin>, id: String, totp: String?, nowMillis: Long): List<VaultLogin>? {
+        if (!acceptsTotp(totp) || logins.none { it.id == id }) return null
+        return logins.map { login -> if (login.id == id) login.copy(totp = totp, updatedAtMillis = nowMillis) else login }
+    }
+
     /** [logins] with [id] marked as just used, or null if there is no such login. */
     fun markUsed(logins: List<VaultLogin>, id: String, nowMillis: Long): List<VaultLogin>? {
         if (logins.none { it.id == id }) return null

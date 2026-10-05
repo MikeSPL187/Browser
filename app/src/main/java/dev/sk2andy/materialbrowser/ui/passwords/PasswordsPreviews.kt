@@ -48,6 +48,22 @@ private fun PasswordDetailPreview() {
     }
 }
 
+/** Board W-PasswordDetail with a two-factor code. */
+@VolaPreviews
+@Composable
+private fun PasswordDetailTotpPreview() {
+    MaterialBrowserTheme {
+        PasswordDetailScreen(
+            login = previewLogins[1].copy(totp = "otpauth://totp/?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=6&period=30"),
+            onCopyUsername = {},
+            onCopyPassword = {},
+            onEdit = {},
+            onDelete = {},
+            onBack = {},
+        )
+    }
+}
+
 @VolaPreviews
 @Composable
 private fun PasswordEditPreview() {
