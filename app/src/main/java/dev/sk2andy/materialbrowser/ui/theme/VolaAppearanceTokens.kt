@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /** «Appearance» settings (board W-SetAppearance). */
@@ -44,8 +43,6 @@ internal object VolaAppearance {
     val swatchRing = 2.5.dp
     val swatchRingGap = 3.dp
     val swatchLabelGap = VolaSpacing.x1
-
-    /** «Mono»: half white, half black, whatever the theme. */
-    val monoLight = Color(0xFFF2F2F2)
-    val monoDark = Color(0xFF1C1B1F)
+    val swatchRowGap = VolaSpacing.x3
+    const val SWATCHES_PER_ROW = 3
 }

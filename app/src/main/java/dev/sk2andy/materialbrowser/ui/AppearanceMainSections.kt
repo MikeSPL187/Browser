@@ -55,6 +55,7 @@ import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaAppearance
+import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import dev.sk2andy.materialbrowser.ui.theme.color
@@ -139,7 +140,7 @@ internal fun ColumnScope.AppearanceMainSections(
     AppearanceGroup {
         Row(verticalAlignment = Alignment.CenterVertically) {
             GroupTitle(stringResource(R.string.settings_color_palette), Modifier.weight(1f))
-            if (settings.colorPalette == BrowserColorPalette.Vola) {
+            if (settings.colorPalette == BrowserColorPalette.Vola && settings.accentOverride == null) {
                 Text(
                     stringResource(R.string.settings_color_palette_per_space),
                     style = MaterialTheme.typography.labelMedium,
@@ -392,36 +393,43 @@ private fun <T> ChoiceRow(
     }
 }
 
-/** Palettes as round swatches in their own colors; the chosen one is ringed. */
+/** Palettes as round swatches in their own colors, in rows of three; the chosen one is ringed. */
 @Composable
 private fun PaletteSwatches(
     selected: BrowserColorPalette,
     onSelect: (BrowserColorPalette) -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .selectableGroup(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalArrangement = Arrangement.spacedBy(VolaAppearance.swatchRowGap),
     ) {
-        BrowserColorPalette.entries.forEach { palette ->
-            val isSelected = palette == selected
-            Column(
-                modifier = Modifier
-                    .selectable(
-                        selected = isSelected,
-                        onClick = { onSelect(palette) },
-                        role = Role.RadioButton,
-                    )
-                    .testTag(AppearanceMainTestTags.palette(palette)),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(VolaAppearance.swatchLabelGap),
-            ) {
-                PaletteSwatch(palette, isSelected)
-                Text(
-                    palette.displayName(),
-                    style = MaterialTheme.typography.labelMedium,
-                )
+        BrowserColorPalette.entries.chunked(VolaAppearance.SWATCHES_PER_ROW).forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                row.forEach { palette ->
+                    val isSelected = palette == selected
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .selectable(
+                                selected = isSelected,
+                                onClick = { onSelect(palette) },
+                                role = Role.RadioButton,
+                            )
+                            .testTag(AppearanceMainTestTags.palette(palette)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(VolaAppearance.swatchLabelGap),
+                    ) {
+                        PaletteSwatch(palette, isSelected)
+                        Text(
+                            palette.displayName(),
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
         }
     }
@@ -461,7 +469,7 @@ private fun PaletteSwatch(palette: BrowserColorPalette, selected: Boolean) {
     }
 }
 
-/** What each palette brings: workspace accents, the wallpaper's colors, or black and white. */
+/** What each palette brings: workspace accents, the wallpaper's colors, or a theme's light and dark aura. */
 @Composable
 private fun paletteColors(palette: BrowserColorPalette): List<Color> = when (palette) {
     BrowserColorPalette.Vola -> listOf(
@@ -475,5 +483,11 @@ private fun paletteColors(palette: BrowserColorPalette): List<Color> = when (pal
     } else {
         listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiary)
     }
-    BrowserColorPalette.Neutral -> listOf(VolaAppearance.monoLight, VolaAppearance.monoDark)
+    BrowserColorPalette.Ice,
+    BrowserColorPalette.Dusk,
+    BrowserColorPalette.Paper,
+    BrowserColorPalette.Mono,
+    -> VolaColorRules.themeSet(palette)
+        ?.let { theme -> listOf(Color(theme.light.aura1), Color(theme.dark.aura1)) }
+        .orEmpty()
 }

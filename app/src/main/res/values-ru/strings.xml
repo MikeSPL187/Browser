@@ -587,7 +587,10 @@
     <string name="settings_color_palette">Цвета</string>
     <string name="color_palette_dynamic">Обои</string>
     <string name="color_palette_vola">Vola</string>
-    <string name="color_palette_neutral">Моно</string>
+    <string name="color_palette_ice">Лёд</string>
+    <string name="color_palette_dusk">Сумерки</string>
+    <string name="color_palette_paper">Бумага</string>
+    <string name="color_palette_mono">Моно</string>
     <string name="settings_address_bar_color">Цвет адресной строки</string>
     <string name="address_bar_color_theme">Как в теме</string>
     <string name="address_bar_color_dimmed">Приглушённый</string>

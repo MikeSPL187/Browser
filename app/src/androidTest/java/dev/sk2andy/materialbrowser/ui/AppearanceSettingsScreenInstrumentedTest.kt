@@ -65,10 +65,10 @@ class AppearanceSettingsScreenInstrumentedTest {
             .assertIsSelected()
         assertEquals(BrowserChromeStyle.Air, settings.chromeStyle)
 
-        composeRule.onNodeWithTag(AppearanceMainTestTags.palette(BrowserColorPalette.Neutral))
+        composeRule.onNodeWithTag(AppearanceMainTestTags.palette(BrowserColorPalette.Mono))
             .performScrollTo()
             .performClick()
-        assertEquals(BrowserColorPalette.Neutral, settings.colorPalette)
+        assertEquals(BrowserColorPalette.Mono, settings.colorPalette)
 
         composeRule.onNodeWithTag(AppearanceMainTestTags.shape(BrowserShapeStyle.Angular))
             .performScrollTo()
@@ -135,7 +135,7 @@ class AppearanceSettingsScreenInstrumentedTest {
                 animationsEnabled = false,
                 forceDarkWebsites = true,
                 webContentFontSizePercent = 150,
-                colorPalette = BrowserColorPalette.Neutral,
+                colorPalette = BrowserColorPalette.Mono,
                 surfaceStyle = BrowserSurfaceStyle.Frosted,
                 shapeStyle = BrowserShapeStyle.Angular,
                 addressBarStyle = BrowserAddressBarStyle.Segmented,
