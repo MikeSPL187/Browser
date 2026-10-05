@@ -146,6 +146,7 @@ COMPOSE_ICONS = [
     ("Image", "image", False, False),
     ("Info", "info", False, False),
     ("Inventory2", "inventory_2", False, False),
+    ("Key", "key", False, False),
     ("KeyboardArrowDown", "keyboard_arrow_down", False, False),
     ("KeyboardArrowLeft", "keyboard_arrow_left", False, True),
     ("KeyboardArrowRight", "keyboard_arrow_right", False, True),

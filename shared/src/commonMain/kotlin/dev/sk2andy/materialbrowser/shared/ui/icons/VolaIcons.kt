@@ -270,6 +270,13 @@ object VolaIcons {
         )
     }
 
+    val Key: ImageVector by lazy {
+        materialSymbol(
+            name = "Key",
+            pathData = "M280 560 q-33 0 -56.5 -23.5 T200 480 q0 -33 23.5 -56.5 T280 400 q33 0 56.5 23.5 T360 480 q0 33 -23.5 56.5 T280 560 Z m0 160 q-100 0 -170 -70 T40 480 q0 -100 70 -170 t170 -70 q67 0 121.5 33 t86.5 87 h335 q8 0 15.5 3 t13.5 9 l80 80 q6 6 8.5 13 t2.5 15 q0 8 -2.5 15 t-8.5 13 L805 635 q-5 5 -12 8 t-14 4 q-7 1 -14 -1 t-13 -7 l-52 -39 l-57 43 q-5 4 -11 6 t-12 2 q-6 0 -12.5 -2 t-11.5 -6 l-61 -43 h-47 q-32 54 -86.5 87 T280 720 Z m0 -80 q56 0 98.5 -34 t56.5 -86 h125 l58 41 v0.5 v-0.5 l82 -61 l71 55 l75 -75 h-0.5 h0.5 l-40 -40 v-0.5 v0.5 H435 q-14 -52 -56.5 -86 T280 320 q-66 0 -113 47 t-47 113 q0 66 47 113 t113 47 Z",
+        )
+    }
+
     val KeyboardArrowDown: ImageVector by lazy {
         materialSymbol(
             name = "KeyboardArrowDown",
@@ -606,6 +613,7 @@ object VolaIcons {
             Image,
             Info,
             Inventory2,
+            Key,
             KeyboardArrowDown,
             KeyboardArrowLeft,
             KeyboardArrowRight,

@@ -15,6 +15,7 @@ enum class SettingsDestination {
     ToppingCatalog,
     SiteCapsules,
     Sync,
+    Passwords,
     ProtectionAndData,
     DeveloperOptions,
     AboutLegal,

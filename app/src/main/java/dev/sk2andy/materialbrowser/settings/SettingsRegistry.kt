@@ -12,6 +12,7 @@ import dev.sk2andy.materialbrowser.ui.SettingsDestination.AboutLegal
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Appearance
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Browser
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Downloads
+import dev.sk2andy.materialbrowser.ui.SettingsDestination.Passwords
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.ProtectionAndData
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.Search
 import dev.sk2andy.materialbrowser.ui.SettingsDestination.SiteCapsules
@@ -59,6 +60,7 @@ internal object SettingsRegistry {
             R.string.settings_home_capsules_summary,
         ),
         page(Userscripts, R.string.userscript_title, R.string.settings_home_userscripts_summary),
+        page(Passwords, R.string.passwords_title, R.string.settings_home_passwords_summary),
         page(
             ProtectionAndData,
             R.string.settings_protection_data_title,
