@@ -29,6 +29,13 @@ complete GPL-3.0 license are provided in uassets.LICENSE.txt.
 HaGeZi Pro network-filter attribution, pinned source and revision, modification notice, and the
 complete GPL-3.0 license are provided in hagezi.LICENSE.txt.
 
+Recovery phrase word list
+-------------------------
+
+eff_short_wordlist_1.txt holds the words of EFF's Short Wordlist #1 by the Electronic Frontier
+Foundation (https://www.eff.org/dice), with the dice-roll numbers removed, under CC BY 3.0 US
+(https://creativecommons.org/licenses/by/3.0/us/).
+
 Gecko default extensions
 ------------------------
 
