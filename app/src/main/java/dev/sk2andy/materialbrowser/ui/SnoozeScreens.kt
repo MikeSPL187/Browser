@@ -73,6 +73,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
 internal suspend fun showSnoozeUndoFeedback(
     hostState: SnackbarHostState,
@@ -370,9 +372,9 @@ private fun SnoozedTabRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = VolaLibrary.rowMinHeight)
+            .heightIn(min = densityRowMinHeight(VolaLibrary.rowMinHeight))
             .testTag(SnoozeTestTags.card(snoozed.tab.id))
-            .padding(VolaLibrary.rowPadding),
+            .padding(densityRowPadding(VolaLibrary.rowPadding)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(VolaLibrary.rowGap),
     ) {

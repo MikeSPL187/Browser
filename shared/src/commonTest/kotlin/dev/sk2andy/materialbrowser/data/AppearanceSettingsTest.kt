@@ -19,6 +19,7 @@ class AppearanceSettingsTest {
         assertEquals(BrowserChromeStyle.Frame, settings.chromeStyle)
         assertEquals(BrowserSurfaceStyle.Clear, settings.surfaceStyle)
         assertEquals(BrowserShapeStyle.Rounded, settings.shapeStyle)
+        assertEquals(BrowserDensity.Normal, settings.density)
         assertEquals(BrowserAddressBarStyle.Classic, settings.addressBarStyle)
         assertEquals(BrowserAddressBarColorPreset.Theme, settings.addressBarColorPreset)
         assertEquals("", settings.addressBarCustomColorHex)
@@ -44,6 +45,9 @@ class AppearanceSettingsTest {
         BrowserShapeStyle.entries.forEach { style ->
             assertEquals(style, BrowserShapeStyle.fromStableId(style.stableId))
         }
+        BrowserDensity.entries.forEach { density ->
+            assertEquals(density, BrowserDensity.fromStableId(density.stableId))
+        }
         BrowserAddressBarStyle.entries.forEach { style ->
             assertEquals(style, BrowserAddressBarStyle.fromStableId(style.stableId))
         }
@@ -57,6 +61,7 @@ class AppearanceSettingsTest {
         assertEquals(BrowserChromeStyle.Frame, BrowserChromeStyle.fromStableId("unknown"))
         assertEquals(BrowserSurfaceStyle.Clear, BrowserSurfaceStyle.fromStableId("unknown"))
         assertEquals(BrowserShapeStyle.Rounded, BrowserShapeStyle.fromStableId("unknown"))
+        assertEquals(BrowserDensity.Normal, BrowserDensity.fromStableId("unknown"))
         assertEquals(
             BrowserAddressBarStyle.Classic,
             BrowserAddressBarStyle.fromStableId("unknown"),

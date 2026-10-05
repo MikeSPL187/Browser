@@ -595,6 +595,10 @@
     <string name="settings_themes_accent">Акцент</string>
     <string name="settings_themes_accent_workspace">Как у пространства</string>
     <string name="settings_themes_preview">Предпросмотр: %1$s</string>
+    <string name="settings_density">Плотность</string>
+    <string name="density_compact">Плотно</string>
+    <string name="density_normal">Обычно</string>
+    <string name="density_comfortable">Просторно</string>
     <string name="settings_address_bar_color">Цвет адресной строки</string>
     <string name="address_bar_color_theme">Как в теме</string>
     <string name="address_bar_color_dimmed">Приглушённый</string>

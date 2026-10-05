@@ -60,6 +60,8 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuAction
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuItem
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuItemKind
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuSection
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityVerticalPadding
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -849,9 +851,9 @@ private fun BrowserMainMenuItemGroup(
                         enabled = item.enabled,
                         onCheckedChange = { onToggle(item) },
                         modifier = itemModifier,
-                        minHeight = effects.style.rowMinHeight,
+                        minHeight = densityRowMinHeight(effects.style.rowMinHeight),
                         horizontalPadding = effects.style.rowHorizontalPadding,
-                        verticalPadding = effects.style.rowVerticalPadding,
+                        verticalPadding = densityVerticalPadding(effects.style.rowVerticalPadding),
                         labelFontSize = effects.style.rowLabelFontSize,
                         uncheckedContainerColor = effects.containerColor(
                             color = MaterialTheme.colorScheme.secondaryContainer,
@@ -876,9 +878,9 @@ private fun BrowserMainMenuItemGroup(
                         modifier = itemModifier,
                         shape = shape,
                         containerColor = effects.containerColor(containerColor),
-                        minHeight = effects.style.rowMinHeight,
+                        minHeight = densityRowMinHeight(effects.style.rowMinHeight),
                         horizontalPadding = effects.style.rowHorizontalPadding,
-                        verticalPadding = effects.style.rowVerticalPadding,
+                        verticalPadding = densityVerticalPadding(effects.style.rowVerticalPadding),
                         labelFontSize = effects.style.rowLabelFontSize,
                         checkedTrackColor = effects.style.toggleTrackColor,
                     )
@@ -893,9 +895,9 @@ private fun BrowserMainMenuItemGroup(
                         modifier = itemModifier,
                         shape = shape,
                         containerColor = effects.containerColor(containerColor),
-                        minHeight = effects.style.rowMinHeight,
+                        minHeight = densityRowMinHeight(effects.style.rowMinHeight),
                         horizontalPadding = effects.style.rowHorizontalPadding,
-                        verticalPadding = effects.style.rowVerticalPadding,
+                        verticalPadding = densityVerticalPadding(effects.style.rowVerticalPadding),
                         labelFontSize = effects.style.rowLabelFontSize,
                         supportingTextFontSize = effects.style.rowSupportingTextFontSize,
                         checkedTrackColor = effects.style.toggleTrackColor,
@@ -925,9 +927,9 @@ private fun BrowserMainMenuItemGroup(
                         } else {
                             null
                         },
-                        minHeight = effects.style.rowMinHeight,
+                        minHeight = densityRowMinHeight(effects.style.rowMinHeight),
                         horizontalPadding = effects.style.rowHorizontalPadding,
-                        verticalPadding = effects.style.rowVerticalPadding,
+                        verticalPadding = densityVerticalPadding(effects.style.rowVerticalPadding),
                         labelFontSize = effects.style.rowLabelFontSize,
                         supportingTextFontSize = effects.style.rowSupportingTextFontSize,
                     )

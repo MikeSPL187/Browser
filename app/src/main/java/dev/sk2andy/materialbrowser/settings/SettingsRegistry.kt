@@ -340,6 +340,7 @@ internal object SettingsRegistry {
         setting("color_palette", Themes, R.string.settings_color_palette, null),
         setting("accent_override", Themes, R.string.settings_themes_accent, null),
         setting("shape_style", Themes, R.string.settings_shape_style, null),
+        setting("density", Themes, R.string.settings_density, null),
         setting(
             "animations",
             Appearance,
