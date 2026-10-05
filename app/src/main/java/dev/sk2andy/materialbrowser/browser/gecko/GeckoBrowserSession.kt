@@ -48,6 +48,11 @@ internal object GeckoNavigationFailureRules {
         WebRequestError.ERROR_SECURITY_SSL,
         WebRequestError.ERROR_SECURITY_BAD_CERT,
         -> BrowserEngineFailureKind.InsecureConnection
+        WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI,
+        WebRequestError.ERROR_SAFEBROWSING_MALWARE_URI,
+        WebRequestError.ERROR_SAFEBROWSING_UNWANTED_URI,
+        WebRequestError.ERROR_SAFEBROWSING_HARMFUL_URI,
+        -> BrowserEngineFailureKind.DangerousSite
         else -> BrowserEngineFailureKind.Other
     }
 }

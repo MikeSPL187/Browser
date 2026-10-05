@@ -1045,6 +1045,8 @@
     <string name="dangerous_site_listed_title">Опасный сайт</string>
     <string name="dangerous_site_listed_message">%1$s есть в списке фишинговых и вредоносных сайтов. Такие страницы крадут пароли и данные карт или подсовывают вредные приложения.</string>
     <string name="dangerous_site_listed_local">Проверено на телефоне по встроенному списку. Адрес никуда не отправлялся.</string>
+    <string name="dangerous_site_safe_browsing_message">Google Safe Browsing отмечает %1$s как фишинговый или вредоносный сайт. Такие страницы крадут пароли и данные карт или подсовывают вредные приложения.</string>
+    <string name="dangerous_site_safe_browsing_source">Списки опасных адресов приходят от Google Safe Browsing. С Google сверяется только короткий хеш, а не адрес.</string>
     <string name="action_save">Сохранить</string>
     <string name="capsule_add_action">Добавить как капсулу сайта</string>
     <string name="capsule_unavailable_private">Недоступно в приватном режиме: капсулы сохраняются</string>

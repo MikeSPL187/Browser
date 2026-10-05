@@ -7,6 +7,8 @@
 package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.browser.EssentialsController
+import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewHeroRules
 import dev.sk2andy.materialbrowser.shared.ui.TabSwitchPreviewLayoutRules
 
@@ -615,6 +617,33 @@ internal fun BrowserViewport(
                     controller.dangerousSites.dismiss(selectedTab.id)
                     site.imitatedHost?.let { host -> controller.submitAddress("https://$host/") }
                 },
+                modifier = pageOverlayModifier,
+            )
+        }
+        // Safe Browsing halts the load before the tab moves: the page it came from is still there.
+        val safeBrowsingUrl = selectedTab.error
+            .takeIf { selectedTab.failureKind == BrowserEngineFailureKind.DangerousSite }
+        var safeBrowsingDismissed by remember(selectedTab.id, safeBrowsingUrl) { mutableStateOf(false) }
+        if (
+            safeBrowsingUrl != null && !safeBrowsingDismissed &&
+            controller.dangerousSites.blocked[selectedTab.id] == null
+        ) {
+            DangerousSitePage(
+                site = BlockedSite(
+                    url = safeBrowsingUrl,
+                    host = PageErrorFeedbackRules.displayHost(safeBrowsingUrl),
+                    reportedBySafeBrowsing = true,
+                ),
+                onBackToSafety = {
+                    val hasPage = selectedTab.url.startsWith("https://") || selectedTab.url.startsWith("http://")
+                    if (hasPage && selectedTab.url != safeBrowsingUrl) {
+                        safeBrowsingDismissed = true
+                    } else {
+                        controller.closeTab(selectedTab.id)
+                    }
+                },
+                onOpenAnyway = {},
+                onOpenRealSite = {},
                 modifier = pageOverlayModifier,
             )
         }

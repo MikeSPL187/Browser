@@ -87,6 +87,12 @@ enum class BrowserEngineFailureKind {
      * of the site, with the choice to continue over HTTP. The browser must not cover that page.
      */
     HttpsOnly,
+
+    /**
+     * The engine's own reputation check (Safe Browsing) stopped the load as phishing or malware.
+     * The failure description holds the stopped address; the browser shows its dangerous-site page.
+     */
+    DangerousSite,
 }
 
 data class BrowserEngineEvent(

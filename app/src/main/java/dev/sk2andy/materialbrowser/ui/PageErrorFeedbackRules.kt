@@ -53,6 +53,9 @@ internal object PageErrorFeedbackRules {
         // the only way to the site.
         failureKind == BrowserEngineFailureKind.HttpsOnly ->
             PageErrorObservation(PageErrorFeedbackState.Hidden)
+        // Safe Browsing stopped the site: the dangerous-site page takes the place of the error.
+        failureKind == BrowserEngineFailureKind.DangerousSite ->
+            PageErrorObservation(PageErrorFeedbackState.Hidden)
         !isOnline && current is PageErrorFeedbackState.Offline -> PageErrorObservation(
             state = current.copy(isOnlineReady = false),
         )
