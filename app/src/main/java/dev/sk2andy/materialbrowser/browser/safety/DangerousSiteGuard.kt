@@ -6,9 +6,15 @@ import java.net.URI
 
 /**
  * A navigation stopped before anything loaded: the address imitates [imitatedHost], or, when that
- * is null, the host is on the list of known phishing and malware sites.
+ * is null, the host is on the list of known phishing and malware sites, or Safe Browsing
+ * [reported][reportedBySafeBrowsing] it. A reported site has no way through: the engine refuses it.
  */
-data class BlockedSite(val url: String, val host: String, val imitatedHost: String? = null)
+data class BlockedSite(
+    val url: String,
+    val host: String,
+    val imitatedHost: String? = null,
+    val reportedBySafeBrowsing: Boolean = false,
+)
 
 /**
  * Stops navigations to sites that pretend to be another or are known to be dangerous (board

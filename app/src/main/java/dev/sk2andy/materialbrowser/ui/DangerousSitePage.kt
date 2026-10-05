@@ -75,10 +75,12 @@ internal fun DangerousSitePage(
                 title = stringResource(
                     if (imitatedHost != null) R.string.dangerous_site_title else R.string.dangerous_site_listed_title,
                 ),
-                message = if (imitatedHost != null) {
-                    stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
-                } else {
-                    stringResource(R.string.dangerous_site_listed_message, site.host)
+                message = when {
+                    imitatedHost != null ->
+                        stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
+                    site.reportedBySafeBrowsing ->
+                        stringResource(R.string.dangerous_site_safe_browsing_message, site.host)
+                    else -> stringResource(R.string.dangerous_site_listed_message, site.host)
                 },
                 icon = {
                     VolaStatePageIcon(icon = VolaIcons.Dangerous, tone = VolaStatePageTone.Accent)
@@ -109,10 +111,12 @@ internal fun DangerousSitePage(
                                 modifier = Modifier.size(VolaDangerousSite.rowIconSize),
                             )
                             Text(
-                                text = if (imitatedHost != null) {
-                                    stringResource(R.string.dangerous_site_real, imitatedHost)
-                                } else {
-                                    stringResource(R.string.dangerous_site_listed_local)
+                                text = when {
+                                    imitatedHost != null ->
+                                        stringResource(R.string.dangerous_site_real, imitatedHost)
+                                    site.reportedBySafeBrowsing ->
+                                        stringResource(R.string.dangerous_site_safe_browsing_source)
+                                    else -> stringResource(R.string.dangerous_site_listed_local)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                             )
@@ -125,11 +129,14 @@ internal fun DangerousSitePage(
                     onClick = onBackToSafety,
                     modifier = Modifier.testTag(DangerousSiteTestTags.Back),
                 )
-                VolaStatePageTextButton(
-                    text = stringResource(R.string.dangerous_site_open_anyway),
-                    onClick = onOpenAnyway,
-                    modifier = Modifier.testTag(DangerousSiteTestTags.OpenAnyway),
-                )
+                // The engine refuses a site Safe Browsing reported, so there is no way through.
+                if (!site.reportedBySafeBrowsing) {
+                    VolaStatePageTextButton(
+                        text = stringResource(R.string.dangerous_site_open_anyway),
+                        onClick = onOpenAnyway,
+                        modifier = Modifier.testTag(DangerousSiteTestTags.OpenAnyway),
+                    )
+                }
             }
         }
     }
@@ -160,6 +167,23 @@ private fun ListedDangerousSitePagePreview() {
     MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
         DangerousSitePage(
             site = BlockedSite(url = "https://login-bank-help.top/", host = "login-bank-help.top"),
+            onBackToSafety = {},
+            onOpenAnyway = {},
+            onOpenRealSite = {},
+        )
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun SafeBrowsingDangerousSitePagePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        DangerousSitePage(
+            site = BlockedSite(
+                url = "https://login-bank-help.top/",
+                host = "login-bank-help.top",
+                reportedBySafeBrowsing = true,
+            ),
             onBackToSafety = {},
             onOpenAnyway = {},
             onOpenRealSite = {},

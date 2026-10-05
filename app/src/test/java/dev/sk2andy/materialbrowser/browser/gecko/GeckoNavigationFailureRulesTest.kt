@@ -31,6 +31,21 @@ class GeckoNavigationFailureRulesTest {
     }
 
     @Test
+    fun `safe browsing blocks mean a dangerous site`() {
+        listOf(
+            WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI,
+            WebRequestError.ERROR_SAFEBROWSING_MALWARE_URI,
+            WebRequestError.ERROR_SAFEBROWSING_UNWANTED_URI,
+            WebRequestError.ERROR_SAFEBROWSING_HARMFUL_URI,
+        ).forEach { code ->
+            assertEquals(
+                BrowserEngineFailureKind.DangerousSite,
+                GeckoNavigationFailureRules.kindForErrorCode(code),
+            )
+        }
+    }
+
+    @Test
     fun `other transport errors remain generic`() {
         assertEquals(
             BrowserEngineFailureKind.Other,

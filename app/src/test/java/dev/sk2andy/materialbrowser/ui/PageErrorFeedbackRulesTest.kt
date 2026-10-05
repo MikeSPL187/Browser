@@ -64,6 +64,21 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
+    fun `a site stopped by safe browsing gets the dangerous-site page, not an error`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = "https://login-bank-help.top/",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.DangerousSite,
+        )
+
+        assertEquals(PageErrorFeedbackState.Hidden, observation.state)
+        assertFalse(observation.shouldReload)
+    }
+
+    @Test
     fun `connection loss does not cover an already loaded page`() {
         val observation = PageErrorFeedbackRules.observe(
             current = PageErrorFeedbackState.Hidden,
