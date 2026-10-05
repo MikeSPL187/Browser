@@ -154,8 +154,9 @@ internal fun BrowserSettingsPage(
             SettingsCardHeader(stringResource(R.string.settings_browser_group_favorites))
             SettingsCard(containerColor = cardColor) {
                 SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_favorite_bookmark_import_title),
-                    summary = stringResource(R.string.settings_favorite_bookmark_import_summary),
+                    // Bookmarks come in through «Move to Vola», with passwords (Q22b).
+                    title = stringResource(R.string.passwords_import_title),
+                    summary = stringResource(R.string.settings_move_to_vola_summary),
                     dividerColor = dividerColor,
                     onClick = onImportFavoriteBookmarks,
                 )

@@ -187,6 +187,7 @@ COMPOSE_ICONS = [
     ("Tab", "tab", False, False),
     ("TabGroup", "tab_group", False, False),
     ("TableChart", "table_chart", False, False),
+    ("TravelExplore", "travel_explore", False, False),
     ("UploadFile", "upload_file", False, False),
     ("Verified", "verified", False, False),
     ("Visibility", "visibility", False, False),

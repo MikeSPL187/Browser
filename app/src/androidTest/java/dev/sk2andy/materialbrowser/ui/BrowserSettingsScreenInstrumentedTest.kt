@@ -237,7 +237,7 @@ class BrowserSettingsScreenInstrumentedTest {
         }
 
         composeRule.onNodeWithText(
-            context.getString(R.string.settings_favorite_bookmark_import_title),
+            context.getString(R.string.passwords_import_title),
         ).performScrollTo().performClick()
 
         assertTrue(importRequested)

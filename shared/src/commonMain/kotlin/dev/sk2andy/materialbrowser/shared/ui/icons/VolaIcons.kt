@@ -559,6 +559,13 @@ object VolaIcons {
         )
     }
 
+    val TravelExplore: ImageVector by lazy {
+        materialSymbol(
+            name = "TravelExplore",
+            pathData = "M80 480 q0 -83 31.5 -156 T197 197 q54 -54 127 -85.5 T480 80 q127 0 226.5 70 T851 331 q7 17 0.5 34 T828 388 q-16 5 -30.5 -3 T777 361 q-24 -60 -69 -106 t-108 -71 v16 q0 33 -23.5 56.5 T520 280 h-80 v80 q0 17 -11.5 28.5 T400 400 h-80 v80 h40 q17 0 28.5 11.5 T400 520 v80 h-40 L168 408 q-3 18 -5.5 36 t-2.5 36 q0 122 80.5 213 T443 798 q16 2 26.5 13.5 T480 840 q0 17 -11.5 28.5 T441 878 Q288 863 184 750 T80 480 Z m736 352 L716 732 q-21 12 -45 20 t-51 8 q-75 0 -127.5 -52.5 T440 580 q0 -75 52.5 -127.5 T620 400 q75 0 127.5 52.5 T800 580 q0 27 -8 51 t-20 45 l100 100 q11 11 11 28 t-11 28 q-11 11 -28 11 t-28 -11 Z M620 680 q42 0 71 -29 t29 -71 q0 -42 -29 -71 t-71 -29 q-42 0 -71 29 t-29 71 q0 42 29 71 t71 29 Z",
+        )
+    }
+
     val UploadFile: ImageVector by lazy {
         materialSymbol(
             name = "UploadFile",
@@ -689,6 +696,7 @@ object VolaIcons {
             Tab,
             TabGroup,
             TableChart,
+            TravelExplore,
             UploadFile,
             Verified,
             Visibility,
