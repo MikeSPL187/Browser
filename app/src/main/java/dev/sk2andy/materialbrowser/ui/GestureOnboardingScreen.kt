@@ -138,6 +138,8 @@ internal object GestureOnboardingRules {
 internal fun GestureOnboardingScreen(
     onCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    /** The lesson's own welcome page; the first run already said hello and skips it. */
+    showWelcome: Boolean = true,
 ) {
     val wideTabStripEnabled = AddressBarWideLayoutRules.usesTabStrip(
         LocalConfiguration.current.screenWidthDp.toFloat(),
@@ -147,7 +149,7 @@ internal fun GestureOnboardingScreen(
     } else {
         GestureOnboardingStep.entries
     }
-    var welcomeVisible by rememberSaveable { mutableStateOf(true) }
+    var welcomeVisible by rememberSaveable { mutableStateOf(showWelcome) }
     var celebrationVisible by rememberSaveable { mutableStateOf(false) }
     var stepIndex by rememberSaveable { mutableIntStateOf(0) }
     var dragX by remember { mutableFloatStateOf(0f) }

@@ -102,7 +102,7 @@ import dev.sk2andy.materialbrowser.ui.LaunchScreen
 import dev.sk2andy.materialbrowser.ui.FirefoxExtensionManagerOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoSystemControls
-import dev.sk2andy.materialbrowser.ui.GestureOnboardingScreen
+import dev.sk2andy.materialbrowser.ui.FirstRunOverlay
 import dev.sk2andy.materialbrowser.ui.BrowserLockScreens
 import dev.sk2andy.materialbrowser.ui.LocalPrivateTabsLocked
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesScreen
@@ -744,13 +744,13 @@ class MainActivity : AppCompatActivity() {
                         Box(modifier = Modifier.fillMaxSize().background(Color.Black))
                     }
                     if (!videoOnlyPresentation && onboardingVisible) {
-                        GestureOnboardingScreen(
+                        FirstRunOverlay(
+                            controller = browserController,
+                            showIntro = initialOnboardingRequired,
                             onCompleted = {
                                 onboardingStore.markCompleted()
                                 if (initialOnboardingRequired) {
-                                    releaseNotesStore.markHandled(
-                                        BuildConfig.VERSION_CODE.toLong(),
-                                    )
+                                    releaseNotesStore.markHandled(BuildConfig.VERSION_CODE.toLong())
                                     releaseNotesVisible = false
                                 }
                                 initialOnboardingRequired = false

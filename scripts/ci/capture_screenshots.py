@@ -289,7 +289,16 @@ def step(name, action):
 
 def dismiss_first_run():
     for _ in range(6):
-        if find("Skip", "Пропустить"):
+        if find("Get started", "Начать"):
+            # Q23b: the welcome (W-Welcome), then setup (W-Setup) without the gesture lesson.
+            shot("first-run-welcome")
+            tap("Get started", "Начать")
+            time.sleep(2)
+            shot("first-run-setup")
+            tap("Show gestures", "Показать жесты")
+            time.sleep(1)
+            tap("Next", "Далее")
+        elif find("Skip", "Пропустить"):
             shot("onboarding")
             tap("Skip", "Пропустить")
         elif find("Explore Vola", "К браузеру"):
