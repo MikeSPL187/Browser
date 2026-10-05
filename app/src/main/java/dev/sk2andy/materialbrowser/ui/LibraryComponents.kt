@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
+import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
 /** «Today», «Yesterday», «No folder»: the small title over a card of rows. */
 @Composable
@@ -111,7 +113,7 @@ internal fun LibraryRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = VolaLibrary.rowMinHeight)
+            .heightIn(min = densityRowMinHeight(VolaLibrary.rowMinHeight))
             .combinedClickable(
                 enabled = enabled,
                 role = Role.Button,
@@ -119,7 +121,7 @@ internal fun LibraryRow(
                 onLongClick = onLongClick,
                 onClick = onClick,
             )
-            .padding(VolaLibrary.rowPadding),
+            .padding(densityRowPadding(VolaLibrary.rowPadding)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(VolaLibrary.rowGap),
     ) {

@@ -13,6 +13,7 @@ data class AppearanceSettings(
     val chromeStyle: BrowserChromeStyle = BrowserChromeStyle.Frame,
     val surfaceStyle: BrowserSurfaceStyle = BrowserSurfaceStyle.Clear,
     val shapeStyle: BrowserShapeStyle = BrowserShapeStyle.Rounded,
+    val density: BrowserDensity = BrowserDensity.Normal,
     val addressBarStyle: BrowserAddressBarStyle = BrowserAddressBarStyle.Classic,
     val addressBarColorPreset: BrowserAddressBarColorPreset = BrowserAddressBarColorPreset.Theme,
     val addressBarCustomColorHex: String = "",
@@ -156,6 +157,18 @@ enum class BrowserShapeStyle(val stableId: String) {
     companion object {
         fun fromStableId(value: String?): BrowserShapeStyle =
             entries.firstOrNull { it.stableId == value } ?: Rounded
+    }
+}
+
+/** How tight the rows of lists and settings sit (board W-Themes); touch targets stay 48 dp. */
+enum class BrowserDensity(val stableId: String) {
+    Compact("compact"),
+    Normal("normal"),
+    Comfortable("comfortable");
+
+    companion object {
+        fun fromStableId(value: String?): BrowserDensity =
+            entries.firstOrNull { it.stableId == value } ?: Normal
     }
 }
 

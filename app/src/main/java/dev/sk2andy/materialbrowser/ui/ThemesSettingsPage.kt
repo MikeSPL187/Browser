@@ -46,8 +46,11 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
+import dev.sk2andy.materialbrowser.data.BrowserDensity
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.shared.ui.theme.ListDensityRules
+import dev.sk2andy.materialbrowser.shared.ui.theme.LocalBrowserDensity
 import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaSchemes
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
@@ -62,7 +65,11 @@ internal object ThemesSettingsTestTags {
     fun theme(palette: BrowserColorPalette) = "themes_settings_theme:${palette.stableId}"
     fun accent(accent: WorkspaceAccent) = "themes_settings_accent:${accent.wireValue}"
     fun shape(shape: BrowserShapeStyle) = "themes_settings_shape:${shape.stableId}"
+    fun density(density: BrowserDensity) = "themes_settings_density:${density.stableId}"
 }
+
+/** The small page shows a quarter of a row's density step between its lines. */
+private const val PREVIEW_DENSITY_SCALE = 4
 
 /** The accent choices: the space's own first, then every workspace accent. */
 internal object ThemesSettingsRules {
@@ -127,6 +134,17 @@ internal fun ThemesSettingsPage(
                         testTag = ThemesSettingsTestTags::shape,
                         onSelect = { shape -> onSettingsChanged(settings.copy(shapeStyle = shape)) },
                     )
+                    AppearanceGroupTitle(stringResource(R.string.settings_density))
+                    AppearanceChoiceRow(
+                        options = BrowserDensity.entries,
+                        selected = settings.density,
+                        label = { density -> density.displayName() },
+                        icon = null,
+                        testTag = ThemesSettingsTestTags::density,
+                        onSelect = { density ->
+                            onSettingsChanged(settings.copy(density = density))
+                        },
+                    )
                 }
             }
         }
@@ -163,7 +181,11 @@ private fun ThemePreview(palette: BrowserColorPalette) {
                     ),
                 )
                 .padding(VolaThemesTokens.previewPhonePadding),
-            verticalArrangement = Arrangement.spacedBy(VolaThemesTokens.previewPhoneGap),
+            // The rows of the small page move apart or together with the density.
+            verticalArrangement = Arrangement.spacedBy(
+                VolaThemesTokens.previewPhoneGap +
+                    ListDensityRules.step(LocalBrowserDensity.current) / PREVIEW_DENSITY_SCALE,
+            ),
         ) {
             PreviewLine(
                 fraction = 0.7f,

@@ -27,10 +27,10 @@ class SettingsRegistryTest {
     }
 
     @Test
-    fun `themes holds the palette, the accent and the corners`() {
+    fun `themes holds the palette, the accent, the corners and the density`() {
         val keys = SettingsRegistry.settingsOn(SettingsDestination.Themes, SettingLevel.Main)
             .map { setting -> setting.spec.key }
-        assertEquals(listOf("color_palette", "accent_override", "shape_style"), keys)
+        assertEquals(listOf("color_palette", "accent_override", "shape_style", "density"), keys)
         assertTrue(SettingsRegistry.page(SettingsDestination.Themes) != null)
     }
 }

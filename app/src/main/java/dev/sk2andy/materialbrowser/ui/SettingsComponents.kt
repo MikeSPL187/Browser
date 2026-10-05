@@ -50,6 +50,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserAddressBarStyle
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserColorPalette
+import dev.sk2andy.materialbrowser.data.BrowserDensity
 import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
 import dev.sk2andy.materialbrowser.data.BrowserShapeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
@@ -183,6 +184,13 @@ internal fun BrowserColorPalette.displayName(): String = when (this) {
     BrowserColorPalette.Paper -> stringResource(R.string.color_palette_paper)
     BrowserColorPalette.Mono -> stringResource(R.string.color_palette_mono)
     BrowserColorPalette.Dynamic -> stringResource(R.string.color_palette_dynamic)
+}
+
+@Composable
+internal fun BrowserDensity.displayName(): String = when (this) {
+    BrowserDensity.Compact -> stringResource(R.string.density_compact)
+    BrowserDensity.Normal -> stringResource(R.string.density_normal)
+    BrowserDensity.Comfortable -> stringResource(R.string.density_comfortable)
 }
 
 @Composable
