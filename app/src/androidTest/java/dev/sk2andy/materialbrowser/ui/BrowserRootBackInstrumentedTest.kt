@@ -177,8 +177,9 @@ class BrowserRootBackInstrumentedTest {
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow
+        // The v4 overview ends in the workspace dock; its new-tab button is the lowest control.
         val clearBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.Bar)
+            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow
@@ -198,7 +199,7 @@ class BrowserRootBackInstrumentedTest {
             .fetchSemanticsNode()
             .boundsInWindow
         val frostedBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.Bar)
+            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow

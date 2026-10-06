@@ -27,6 +27,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoViewRuntimeHandle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -45,6 +46,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     init {
         clearPreferences()
+        grantNotificationPermissionForTests()
         GestureOnboardingStore(context).markCompleted()
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
         BrowserSessionStore(context).saveStartupAnimationEnabled(false)

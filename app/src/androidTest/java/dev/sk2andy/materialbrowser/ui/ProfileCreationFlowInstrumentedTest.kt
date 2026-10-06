@@ -40,23 +40,19 @@ class ProfileCreationFlowInstrumentedTest {
     }
 
     @Test
-    fun addButtonCreatesProfileDuringOverviewEntry() {
+    fun addButtonCreatesProfileFromOverviewDock() {
         lateinit var browserController: BrowserController
         composeRule.runOnIdle {
             clearSession()
             browserController = BrowserController(composeRule.activity)
             controller = browserController
         }
-        composeRule.mainClock.autoAdvance = false
-        try {
-            setOverviewContent(browserController)
-            composeRule.mainClock.advanceTimeBy(96L)
-            composeRule.onNodeWithTag(ProfileSwitcherTestTags.Add)
-                .assertIsEnabled()
-                .performTouchInput { click() }
-        } finally {
-            composeRule.mainClock.autoAdvance = true
-        }
+        // The v4 overview keeps workspaces in the bottom dock, which takes taps once the entry
+        // morph has settled (setOverviewContent waits for idle).
+        setOverviewContent(browserController)
+        composeRule.onNodeWithTag(ProfileSwitcherTestTags.Add)
+            .assertIsEnabled()
+            .performTouchInput { click() }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(ProfileCreationTestTags.Sheet).assertExists()
         composeRule.onNodeWithContentDescription(

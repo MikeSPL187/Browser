@@ -40,6 +40,7 @@ import dev.sk2andy.materialbrowser.data.TabPreviewRepository
 import dev.sk2andy.materialbrowser.data.TabPreviewStore
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -800,7 +801,9 @@ class TabOverviewReorderInstrumentedTest {
         val density = composeRule.activity.resources.displayMetrics.density
         val isLandscape = rootBounds.width > rootBounds.height
         val expectedPreviewAspectRatio = if (isLandscape) 1.6f else 0.72f
-        val expectedCardHeight = cardBounds.first().width / expectedPreviewAspectRatio
+        // A v4 card is its title row above the page preview.
+        val expectedCardHeight = cardBounds.first().width / expectedPreviewAspectRatio +
+            VolaTabOverview.cardTitleRowHeight.value * density
         val expectedColumns = if (isLandscape && rootBounds.width / density >= 900f) 3 else 2
         val firstRowCount = cardBounds.count { bounds ->
             kotlin.math.abs(bounds.top - cardBounds.first().top) < 2f

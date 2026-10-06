@@ -14,16 +14,10 @@ dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#gridStackColla
 dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#heroStackCollapseExpandOpensConfiguredFolder
 
 # Menu, address bar and tabs still open (S5 follow-up, not yet understood).
-dev.sk2andy.materialbrowser.ui.BrowserRootBackInstrumentedTest#frostedTabOverviewKeepsClearSystemBarSpacing -- overview address bar tag not displayed (v4 overview, to check)
-dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#gridCardsMatchAdaptivePreviewProportions -- grid card height differs from the old preview ratio (v4, to check)
 dev.sk2andy.materialbrowser.MainActivityIncomingNavigationInstrumentedTest#coldIncomingViewLoadsExternalPreviewPage -- flaky
 dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#configuredRightParkActionMovesRememberedLeftPlacementToRight -- flaky
 dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#videoOnlyPresentationKeepsParkedPillHiddenUntilReturnCompletes
-dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#privateMainMenuDoesNotExposeFirefoxExtensionActions
 dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#settingsExtensionBackReturnsToSettingsHome -- flaky
-dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea
-dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredDismissAnchorAttachesGeckoOnlyAfterOverviewCloses
-dev.sk2andy.materialbrowser.ui.ProfileCreationFlowInstrumentedTest#addButtonCreatesProfileDuringOverviewEntry
 
 # Gecko engine: page insets, CSS safe area, keyboard, prompts, extensions, media.
 dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest#videoOnlyPresentationAlignsAnOffsetInlineVideoWithTheViewport -- flaky

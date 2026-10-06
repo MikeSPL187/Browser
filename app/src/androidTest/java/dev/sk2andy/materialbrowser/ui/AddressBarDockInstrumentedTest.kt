@@ -23,6 +23,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
@@ -610,8 +611,24 @@ class AddressBarDockInstrumentedTest {
 
         composeRule.runOnIdle { videoOnlyPresentation.value = false }
 
+        // The pill comes back with the chrome's return motion; say where it is if it does not.
+        val returned = runCatching {
+            composeRule.waitUntil(timeoutMillis = 5_000L) {
+                runCatching {
+                    composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab).assertIsDisplayed()
+                }.isSuccess
+            }
+        }.isSuccess
+        if (!returned) {
+            val node = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
+                .fetchSemanticsNode()
+            val root = composeRule.onRoot().fetchSemanticsNode()
+            throw AssertionError(
+                "Parked pill did not return: bounds=${node.boundsInRoot}, " +
+                    "size=${node.size}, root=${root.size}, initial=$initialBounds",
+            )
+        }
         val returnedBounds = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
-            .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInRoot
         assertEquals(initialBounds, returnedBounds)
@@ -656,7 +673,8 @@ class AddressBarDockInstrumentedTest {
             AddressBarActionTestTags.action(AddressBarAction.ParkRight),
         ).performClick()
 
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
                 .fetchSemanticsNodes().isNotEmpty()
         }
