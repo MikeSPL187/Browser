@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Hand this session's work over to another Claude session (limit running out, owner reassigns, session ends) - a handoff comment in issue #80 with what was done, why, current state and exact next steps per task, plus board rows and STATUS.md updated. Use when the user types /handoff or asks to pass work to the other session.
+description: "Hand this session's work over to another Claude session (limit running out, owner reassigns, session ends) - a handoff comment in issue #80 with what was done, why, current state and exact next steps per task, plus board rows and STATUS.md updated. Use when the user types /handoff or asks to pass work to the other session."
 ---
 
 # Передача работы другой сессии

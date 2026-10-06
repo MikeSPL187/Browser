@@ -1,6 +1,6 @@
 ---
 name: claim
-description: Claim a task for this Claude session on the coordination board in the description of issue #80 before the first commit, or change the status of the session's row (in progress, PR opened, done, dropped). Use whenever a new task, branch or PR starts or its state changes, and when the user types /claim.
+description: "Claim a task for this Claude session on the coordination board in the description of issue #80 before the first commit, or change the status of the session's row (in progress, PR opened, done, dropped). Use whenever a new task, branch or PR starts or its state changes, and when the user types /claim."
 ---
 
 # Заявка на доске #80
