@@ -20,17 +20,11 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
-import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
 import dev.sk2andy.materialbrowser.browser.DomainMuteRules
 import dev.sk2andy.materialbrowser.browser.ExternalAppLinkHandling
 import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
 import dev.sk2andy.materialbrowser.browser.PopupSiteRules
-import dev.sk2andy.materialbrowser.browser.ProfileWallpaper
-import dev.sk2andy.materialbrowser.browser.ProfileWallpaperRules
-import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
-import dev.sk2andy.materialbrowser.browser.ProfileProtection
-import dev.sk2andy.materialbrowser.browser.ProfileProtectionRules
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
 import dev.sk2andy.materialbrowser.browser.SearchEngine
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
@@ -215,59 +209,17 @@ class BrowserSessionStore internal constructor(
         preferences.edit().putString(KEY_TAB_STACKS, array.toString()).apply()
     }
 
-    fun loadProfiles(): Pair<List<BrowserProfile>, String> {
-        val profiles = preferences.getString(KEY_PROFILES, null)
-            ?.let { raw ->
-                runCatching {
-                    val array = JSONArray(raw)
-                    buildList<BrowserProfile> {
-                        for (index in 0 until array.length()) {
-                            val item = array.getJSONObject(index)
-                            val id = item.optString("id").trim()
-                            val emoji = item.optString("emoji").trim()
-                            if (id.isNotEmpty() && emoji.isNotEmpty() && none { it.id == id }) {
-                                val legacyWallpaper = item.optJSONObject("wallpaper")
-                                    ?.toProfileWallpaper()
-                                val hasTargetWallpapers = item.has("newTabWallpaper") ||
-                                    item.has("tabSwitcherWallpaper")
-                                add(
-                                    BrowserProfile(
-                                        id = id,
-                                        emoji = emoji,
-                                        name = WorkspaceNameRules.normalize(item.optString("name")),
-                                        accent = WorkspaceAccent.fromWireValue(
-                                            item.optString("accent").takeIf(String::isNotBlank),
-                                        ),
-                                        selectedTabId = item.optString("selectedTabId")
-                                            .takeIf(String::isNotBlank),
-                                        isolationEnabled = item.optBoolean("isolationEnabled", false),
-                                        protection = item.optJSONObject("protection")
-                                            ?.toProfileProtection(),
-                                        newTabWallpaper = if (hasTargetWallpapers) {
-                                            item.optJSONObject("newTabWallpaper")
-                                                ?.toProfileWallpaper()
-                                        } else {
-                                            legacyWallpaper
-                                        },
-                                        tabSwitcherWallpaper = if (hasTargetWallpapers) {
-                                            item.optJSONObject("tabSwitcherWallpaper")
-                                                ?.toProfileWallpaper()
-                                        } else {
-                                            legacyWallpaper
-                                        },
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }.getOrNull()
-            }
-            .orEmpty()
-            .ifEmpty { listOf(DEFAULT_BROWSER_PROFILE) }
+    fun loadProfiles(): Pair<List<BrowserProfile>, String> =
+        loadStoredProfiles().let { stored -> stored.profiles to stored.activeProfileId }
+
+    /** The stored workspaces; a damaged entry is skipped and reported, never fatal to the rest. */
+    fun loadStoredProfiles(): StoredProfiles {
+        val decoded = WorkspaceProfilesCodec.decode(preferences.getString(KEY_PROFILES, null))
+        val profiles = decoded.profiles.ifEmpty { listOf(DEFAULT_BROWSER_PROFILE) }
         val activeProfileId = preferences.getString(KEY_ACTIVE_PROFILE, null)
             ?.takeIf { candidate -> profiles.any { it.id == candidate } }
             ?: profiles.first().id
-        return profiles to activeProfileId
+        return StoredProfiles(profiles, activeProfileId, decoded.hasUnreadableEntries)
     }
 
     /** Accent of the active workspace: screens outside the browser take their colors from it. */
@@ -279,29 +231,12 @@ class BrowserSessionStore internal constructor(
 
     fun saveProfiles(profiles: List<BrowserProfile>, activeProfileId: String) {
         val safeProfiles = profiles.ifEmpty { listOf(DEFAULT_BROWSER_PROFILE) }
-        val array = JSONArray()
-        safeProfiles.forEach { profile ->
-            array.put(
-                JSONObject()
-                    .put("id", profile.id)
-                    .put("emoji", profile.emoji)
-                    .put("name", profile.name)
-                    .put("accent", profile.accent.wireValue)
-                    .put("selectedTabId", profile.selectedTabId)
-                    .put("isolationEnabled", profile.isolationEnabled)
-                    .put("protection", profile.protection.toJson())
-                    .put(
-                        "newTabWallpaper",
-                        profile.newTabWallpaper.toJson(),
-                    )
-                    .put(
-                        "tabSwitcherWallpaper",
-                        profile.tabSwitcherWallpaper.toJson(),
-                    ),
-            )
-        }
+        // Entries this version could not read stay as they were instead of being dropped.
+        val unreadableEntries = WorkspaceProfilesCodec
+            .decode(preferences.getString(KEY_PROFILES, null))
+            .unreadableEntries
         preferences.edit()
-            .putString(KEY_PROFILES, array.toString())
+            .putString(KEY_PROFILES, WorkspaceProfilesCodec.encode(safeProfiles, unreadableEntries))
             .putString(
                 KEY_ACTIVE_PROFILE,
                 activeProfileId.takeIf { id -> safeProfiles.any { it.id == id } }
@@ -1639,46 +1574,6 @@ class BrowserSessionStore internal constructor(
         private const val MAX_TAB_STACKS_JSON_LENGTH = 256 * 1024
     }
 }
-
-private fun JSONObject.toProfileWallpaper(): ProfileWallpaper = ProfileWallpaperRules.sanitize(
-    ProfileWallpaper(
-        zoom = optDouble("zoom", 1.0).toFloat(),
-        normalizedPanX = optDouble("normalizedPanX", 0.0).toFloat(),
-        normalizedPanY = optDouble("normalizedPanY", 0.0).toFloat(),
-    ),
-)
-
-private fun ProfileWallpaper?.toJson(): Any = this
-    ?.let(ProfileWallpaperRules::sanitize)
-    ?.let { wallpaper ->
-        JSONObject()
-            .put("zoom", wallpaper.zoom.toDouble())
-            .put("normalizedPanX", wallpaper.normalizedPanX.toDouble())
-            .put("normalizedPanY", wallpaper.normalizedPanY.toDouble())
-    }
-    ?: JSONObject.NULL
-
-private fun JSONObject.toProfileProtection(): ProfileProtection? {
-    val trigger = ProfileLockTrigger.fromWireValue(optString("lockTrigger")) ?: return null
-    return ProfileProtectionRules.normalize(
-        ProfileProtection(
-            lockTrigger = trigger,
-            cooldownMinutes = optInt(
-                "cooldownMinutes",
-                ProfileProtectionRules.DEFAULT_COOLDOWN_MINUTES,
-            ),
-        ),
-    )
-}
-
-private fun ProfileProtection?.toJson(): Any = this
-    ?.let(ProfileProtectionRules::normalize)
-    ?.let { protection ->
-        JSONObject()
-            .put("lockTrigger", protection.lockTrigger.wireValue)
-            .put("cooldownMinutes", protection.cooldownMinutes)
-    }
-    ?: JSONObject.NULL
 
 private fun writeFavoriteLibraryEntry(entry: FavoriteLibraryEntry): JSONObject = when (entry) {
     is FavoriteEntry -> JSONObject()

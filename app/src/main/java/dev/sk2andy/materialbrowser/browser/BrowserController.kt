@@ -1295,6 +1295,9 @@ class BrowserController(
     private val capsuleTabIds = mutableMapOf<String, String>()
     private val pendingRecallProfileDeletions = mutableSetOf<String>()
 
+    /** Restored tabs of workspaces whose stored entry is unreadable: saved back, never shown. */
+    private var unreadableWorkspaceTabs = emptyList<BrowserTab>()
+
     /** Bumps when a workspace deletion fails; the browser screen answers with a snackbar. */
     var workspaceDeletionFailures by mutableIntStateOf(0)
         private set
@@ -2379,8 +2382,9 @@ class BrowserController(
         store.clearLegacyWebContentEdgeToEdgePreference()
         profilesEnabled = store.loadProfilesEnabled()
         isDefaultBrowser = DefaultBrowserRole.isHeld(activity)
-        val (restoredProfiles, restoredActiveProfileId) = StartupTimeline.section("LoadProfiles") { store.loadProfiles() }
-        profiles += restoredProfiles.take(MAX_PROFILES)
+        val storedProfiles = StartupTimeline.section("LoadProfiles") { store.loadStoredProfiles() }
+        val restoredActiveProfileId = storedProfiles.activeProfileId
+        profiles += storedProfiles.profiles.take(MAX_PROFILES)
         lockedProfileIds = profiles.asSequence()
             .filter { profile ->
                 profile.protection != null && !ProfileProtectionSession.isUnlocked(profile.id)
@@ -2437,9 +2441,14 @@ class BrowserController(
         StartupTimeline.section("RestoreEssentials") { essentials.restore() }
         StartupTimeline.section("RestoreProtectionReport") { protectionReport.restore() }
         val profileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
-        tabs += restoredTabs.take(MAX_TABS).map { tab ->
-            if (tab.profileId in profileIds) tab else tab.copy(profileId = profiles.first().id)
-        }
+        val restoredOwners = WorkspaceRestoreRules.assignOwners(
+            tabs = restoredTabs.take(MAX_TABS),
+            profileIds = profileIds,
+            fallbackProfileId = profiles.first().id,
+            storedProfilesUnreadable = storedProfiles.hasUnreadableEntries,
+        )
+        tabs += restoredOwners.live
+        unreadableWorkspaceTabs = restoredOwners.held
         val tabsBeforeInitialSnoozeRestore = tabs.toList()
         val snoozedBeforeInitialRestore = snoozedTabs.toList()
         val initialSnoozeRestore = SnoozeRestoreRules.restoreDue(
@@ -2505,12 +2514,12 @@ class BrowserController(
         tabStacks += store.loadTabStacks(tabs)
         persist()
         geckoSessionStateStore.prune(
-            (tabs.asSequence() + snoozedTabs.asSequence().map(SnoozedTab::tab))
+            (tabs.asSequence() + unreadableWorkspaceTabs + snoozedTabs.asSequence().map(SnoozedTab::tab))
                 .filterNot(BrowserTab::isIncognito)
                 .mapTo(linkedSetOf(), BrowserTab::id),
         )
         webViewStateRepository.prune(
-            (tabs.asSequence() + snoozedTabs.asSequence().map(SnoozedTab::tab))
+            (tabs.asSequence() + unreadableWorkspaceTabs + snoozedTabs.asSequence().map(SnoozedTab::tab))
                 .filterNot(BrowserTab::isIncognito)
                 .mapTo(linkedSetOf(), BrowserTab::id),
         )
@@ -14182,7 +14191,7 @@ class BrowserController(
     private fun persistableTabs(source: Collection<BrowserTab>): List<BrowserTab> =
         source.filterNot { tab ->
             isSessionEphemeralTab(tab.id) || isSyncedProfile(tab.profileId)
-        }
+        } + unreadableWorkspaceTabs
 
     private fun isSessionEphemeralTab(tabId: String): Boolean =
         tabId in transientPopupTabIds ||
