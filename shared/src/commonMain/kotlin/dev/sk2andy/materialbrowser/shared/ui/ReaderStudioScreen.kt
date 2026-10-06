@@ -153,6 +153,7 @@ enum class ReaderStudioLabel {
 
 enum class ReaderStudioIcon {
     Download,
+    Library,
     Pause,
     Stop,
 }
@@ -219,6 +220,7 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
         Icon(
             imageVector = when (icon) {
                 ReaderStudioIcon.Download -> VolaIcons.Download
+                ReaderStudioIcon.Library -> VolaIcons.Folder
                 ReaderStudioIcon.Pause -> VolaIcons.PauseFilled
                 ReaderStudioIcon.Stop -> VolaIcons.StopFilled
             },
@@ -515,7 +517,7 @@ private fun ReaderStudioHeader(
                 colors = IconButtonDefaults.iconButtonColors(containerColor = colors.card),
             ) {
                 resources.icon(
-                    icon = ReaderStudioIcon.Download,
+                    icon = ReaderStudioIcon.Library,
                     modifier = Modifier.size(style.iconSize),
                     contentDescription = resources.text(ReaderStudioLabel.OfflineLibrary),
                 )
