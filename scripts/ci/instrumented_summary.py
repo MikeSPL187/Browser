@@ -18,8 +18,12 @@ import xml.etree.ElementTree as ElementTree
 from dataclasses import dataclass
 from pathlib import Path
 
-MAX_LISTED_FAILURES = 60
+MAX_LISTED_FAILURES = 200
 STACK_LINES = 8
+ASSUMPTION_FAILURES = (
+    "org.junit.AssumptionViolatedException",
+    "org.junit.internal.AssumptionViolatedException",
+)
 
 
 @dataclass(frozen=True)
@@ -52,7 +56,9 @@ def read_results(path: Path) -> list:
             failure = case.find("failure")
             if failure is None:
                 failure = case.find("error")
-            if failure is not None:
+            if failure is not None and is_assumption_failure(failure):
+                outcome, message, details = "skipped", "", ""
+            elif failure is not None:
                 text = (failure.text or "").strip()
                 message = (failure.get("message") or "").strip()
                 if not message:
@@ -73,6 +79,14 @@ def read_results(path: Path) -> list:
                 )
             )
     return results
+
+
+def is_assumption_failure(failure) -> bool:
+    """A test that skipped itself (assumeTrue) is reported by the test platform as a failure."""
+    text = ((failure.get("message") or "") + " " + (failure.text or "")).lstrip()
+    return text.startswith(ASSUMPTION_FAILURES) or (failure.get("type") or "").endswith(
+        "AssumptionViolatedException"
+    )
 
 
 def collect(shard_dirs: list) -> Summary:

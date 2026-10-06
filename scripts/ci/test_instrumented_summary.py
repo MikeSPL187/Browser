@@ -17,6 +17,9 @@ SHARD_0 = """\
   <testcase name="onApi37" classname="dev.sk2andy.materialbrowser.ui.MenuTest" time="0">
     <skipped />
   </testcase>
+  <testcase name="onTablet" classname="dev.sk2andy.materialbrowser.ui.MenuTest" time="0.5">
+    <failure>org.junit.AssumptionViolatedException: got: &lt;false&gt;, expected: is &lt;true&gt;</failure>
+  </testcase>
 </testsuite>
 """
 
@@ -53,7 +56,7 @@ class InstrumentedSummaryTest(unittest.TestCase):
         text = "\n".join(lines)
 
         self.assertEqual(1, status)
-        self.assertIn("| 5 | 2 | 2 | 0 | 1 | 0 min 12 s |", text)
+        self.assertIn("| 6 | 2 | 2 | 0 | 2 | 0 min 13 s |", text)
         self.assertIn("<code>TabsTest#closesTab</code> — Expected &lt;1&gt; tabs", text)
         self.assertIn("<code>GeckoTest#loadsPage</code> — java.lang.IllegalStateException", text)
         self.assertIn("TabsTest.kt:42", text)

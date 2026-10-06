@@ -110,7 +110,10 @@ jobs:
 
       # Compiles while the emulator boots.
       - name: Build app and test APKs
-        run: ./gradlew --no-daemon --stacktrace assembleFullDebug assembleFullDebugAndroidTest
+        run: |
+          ./gradlew --no-daemon --stacktrace assembleFullDebug assembleFullDebugAndroidTest
+          # The Kotlin compile daemon outlives the build; free its memory for the emulator.
+          pkill -f KotlinCompileDaemon || true
 
       - name: Wait for emulator
         run: |
@@ -149,10 +152,22 @@ jobs:
           fi
           adb logcat -c || true
           nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 &
+          # Gradle prints nothing until the shard ends. Show each test as it starts and ends, and
+          # the runner's memory and disk, so a shard that dies still says where and why.
+          adb logcat -v brief -s TestRunner:I | grep --line-buffered -E 'started|failed|finished' &
+          progress=$!
+          while sleep 300; do
+            echo "[monitor] $(free -m | awk '/Mem/ {print "mem used " $3 " of " $2 " MB"}');" \
+              "$(df -h / | awk 'NR==2 {print "disk free " $4}')"
+          done &
+          monitor=$!
           started=$(date +%s)
           # Failing tests are judged by the Report job against the baseline; this step fails only
           # when the shard produced no results at all.
           ./gradlew --no-daemon --stacktrace connectedFullDebugAndroidTest "${args[@]}" || true
+          kill "$progress" "$monitor" 2>/dev/null || true
+          pkill -f "logcat -v brief" || true
+          pkill -x -f "sleep 300" || true
           echo "Shard $SHARD took $(( ($(date +%s) - started) / 60 )) min."
           if [[ -z "$(find app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null)" ]]; then
             echo "::error::Shard $SHARD produced no test results."
