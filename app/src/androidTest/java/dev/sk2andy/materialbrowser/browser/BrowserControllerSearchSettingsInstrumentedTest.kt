@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import org.junit.After
@@ -47,14 +48,17 @@ class BrowserControllerSearchSettingsInstrumentedTest {
                 ),
             )
             controller = BrowserController(activity).also { browserController ->
-                assertTrue(browserController.addressSuggestions("history").isNotEmpty())
+                assertTrue(browserController.historySuggestions("history").isNotEmpty())
 
                 browserController.updateHistorySuggestionsEnabled(false)
 
                 assertFalse(browserController.isHistorySuggestionsEnabled)
-                assertTrue(browserController.addressSuggestions("history").isEmpty())
+                assertTrue(browserController.historySuggestions("history").isEmpty())
                 assertFalse(BrowserSessionStore(activity).loadHistorySuggestionsEnabled())
             }
         }
     }
+
+    private fun BrowserController.historySuggestions(query: String) =
+        addressSuggestionItems(query).filterIsInstance<AddressSuggestionItem.Navigation>()
 }
