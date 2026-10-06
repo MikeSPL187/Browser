@@ -243,6 +243,7 @@ import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SiteCapsuleIconStore
 import dev.sk2andy.materialbrowser.data.SiteCapsuleStore
+import dev.sk2andy.materialbrowser.data.SnoozeRestoreCoordinator
 import dev.sk2andy.materialbrowser.data.SnoozeRestoreRules
 import dev.sk2andy.materialbrowser.data.SnoozeRules
 import dev.sk2andy.materialbrowser.data.SnoozeMutationRules
@@ -2479,10 +2480,9 @@ class BrowserController(
             )
             if (snapshotPersisted) {
                 SnoozeWakeNotifier(activity).notifyRestored(
-                    tabs.filter {
-                        it.id in initialSnoozeRestore.restoredTabIds &&
-                            (profilesEnabled || it.profileId == profiles.first().id)
-                    },
+                    SnoozeRestoreCoordinator.restoredNotificationTabs(
+                        tabs, initialSnoozeRestore.restoredTabIds, profiles, profilesEnabled,
+                    ),
                 )
             } else {
                 tabs.clear()
@@ -14832,11 +14832,11 @@ class BrowserController(
             }
         persist()
         snoozeScheduler.schedule(remaining, nowMillis)
-        val restoredTabs = result.tabs.filter { it.id in result.restoredTabIds }
-        SnoozeWakeNotifier(activity).notifyRestored(
-            restoredTabs.filter { profilesEnabled || it.profileId == profiles.first().id },
+        val notificationTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            result.tabs, result.restoredTabIds, profiles, profilesEnabled,
         )
-        return restoredTabs.size
+        SnoozeWakeNotifier(activity).notifyRestored(notificationTabs)
+        return result.restoredTabIds.size
     }
 
     private fun restoreSnoozedCandyTrail(tab: BrowserTab) {
