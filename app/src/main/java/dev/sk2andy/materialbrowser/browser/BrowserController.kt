@@ -7983,8 +7983,8 @@ class BrowserController(
         if (index < 0) return
         val closingTab = tabs[index]
         if (!TabDeletionRules.canDelete(closingTab)) return
-        val canUndo = offerUndo && isClosedTabUndoEnabled &&
-            !isSessionEphemeralTab(tabId) && !isSyncedProfile(closingTab.profileId)
+        val canUndo = ClosedTabUndoRules.canOffer(offerUndo, isClosedTabUndoEnabled, isSessionEphemeralTab(tabId),
+            isSyncedProfile(closingTab.profileId), hiddenByLock = privateTabsLock.hides(closingTab))
         if (offerUndo) dismissClosedTabUndo()
         val closedAtMillis = android.os.SystemClock.elapsedRealtime()
         val originalTrail = candyTrails[tabId]
