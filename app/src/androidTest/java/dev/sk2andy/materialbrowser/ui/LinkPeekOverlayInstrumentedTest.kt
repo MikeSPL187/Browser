@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -547,6 +548,48 @@ class LinkPeekOverlayInstrumentedTest {
         composeRule.waitForIdle()
 
         assertEquals(1, releases.get())
+    }
+
+    @Test
+    fun previewIsNamedByItsPageTitleForTalkBack() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                LinkPeekOverlay(
+                    url = "https://example.com/article",
+                    progress = 0f,
+                    armed = false,
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also { callbacks.onTitleChanged("Ice forecast") }
+                    },
+                    releasePreviewView = WebView::destroy,
+                    onOpen = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(LinkPeekTestTags.Preview)
+            .assertContentDescriptionEquals("Ice forecast")
+    }
+
+    @Test
+    fun untitledPreviewIsNamedByItsHost() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                LinkPeekOverlay(
+                    url = "https://example.com/untitled",
+                    progress = 0f,
+                    armed = false,
+                    createPreviewView = ::previewWebView,
+                    releasePreviewView = WebView::destroy,
+                    onOpen = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(LinkPeekTestTags.Preview)
+            .assertContentDescriptionEquals("example.com")
     }
 
     @Test

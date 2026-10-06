@@ -3808,6 +3808,7 @@ class BrowserController(
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
         onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
+        onTitleChanged: (String?) -> Unit = {},
     ): View {
         val safeUrl = requireNotNull(BrowserUriPolicy.normalizeHttpUrl(url))
         val sourceTab = tabs.first { it.id == selectedTabId }
@@ -3823,6 +3824,7 @@ class BrowserController(
             onProgressChanged = onProgressChanged,
             onCommittedUrlChanged = onCommittedUrlChanged,
             onStatusChanged = onStatusChanged,
+            onTitleChanged = onTitleChanged,
         )
     }
 
@@ -3840,6 +3842,7 @@ class BrowserController(
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
         onStatusChanged: (LinkPeekPreviewStatus) -> Unit,
+        onTitleChanged: (String?) -> Unit,
     ): View {
         val previewTabId = "link-peek-${++nextGeckoLinkPeekId}"
         var binding: GeckoLinkPeekBinding? = null
@@ -3910,6 +3913,7 @@ class BrowserController(
             view = view,
             committedUrl = url,
             onStatusChanged = onStatusChanged,
+            onTitleChanged = onTitleChanged,
         ).also { created ->
             session.setNavigationRequestListener { request ->
                 created.navigationRequest(request.url, dangerousSites::check)

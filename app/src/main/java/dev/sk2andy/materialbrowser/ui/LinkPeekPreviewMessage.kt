@@ -23,6 +23,7 @@ internal class LinkPeekPreviewCallbacks(
     val onProgressChanged: (Int) -> Unit,
     val onCommittedUrlChanged: (String) -> Unit,
     val onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
+    val onTitleChanged: (String?) -> Unit = {},
 )
 
 /** True when the card shows a message in place of the page. */

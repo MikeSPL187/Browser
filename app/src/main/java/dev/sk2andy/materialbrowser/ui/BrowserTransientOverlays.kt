@@ -154,6 +154,7 @@ internal fun BrowserTransientOverlays(
                     onProgressChanged = callbacks.onProgressChanged,
                     onCommittedUrlChanged = callbacks.onCommittedUrlChanged,
                     onStatusChanged = callbacks.onStatusChanged,
+                    onTitleChanged = callbacks.onTitleChanged,
                 )
             },
             releasePreviewView = controller::releaseLinkPeekPreviewView,

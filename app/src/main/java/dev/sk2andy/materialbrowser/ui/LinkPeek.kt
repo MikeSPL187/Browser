@@ -158,6 +158,7 @@ internal fun <T : View> LinkPeekOverlay(
         mutableStateOf<LinkPeekPreviewStatus>(LinkPeekPreviewStatus.Loading)
     }
     val previewBlocked = previewStatus is LinkPeekPreviewStatus.Blocked
+    var previewTitle by remember(url) { mutableStateOf<String?>(null) }
     // Retry builds a fresh preview; a released one must not report into it.
     var previewAttempt by remember(url) { mutableIntStateOf(0) }
     var cardBounds by remember(url) { mutableStateOf<Rect?>(null) }
@@ -472,12 +473,20 @@ internal fun <T : View> LinkPeekOverlay(
                                             onStatusChanged = { status ->
                                                 if (current()) previewStatus = status
                                             },
+                                            onTitleChanged = { title ->
+                                                if (current()) previewTitle = title
+                                            },
                                         ),
                                     ).also { previewView = it }
                                 },
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .testTag(LinkPeekTestTags.Preview),
+                                    .testTag(LinkPeekTestTags.Preview)
+                                    // The engine's own tree stays hidden (the preview takes no
+                                    // input); TalkBack reads which page it shows. A message over
+                                    // the page speaks for it instead.
+                                    .clearSemanticsWhen(previewStatus.coversPage)
+                                    .semantics { contentDescription = previewTitle ?: host },
                                 onRelease = { view ->
                                     if (previewView === view) previewView = null
                                     releasePreviewView(view)

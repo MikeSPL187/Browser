@@ -108,11 +108,19 @@ internal data class GeckoLinkPeekBinding(
     val session: AndroidBrowserEngineSessionPort,
     val view: View,
     var committedUrl: String,
-    var title: String? = null,
     var progress: Int = 0,
     var isLoading: Boolean = true,
     val onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
+    val onTitleChanged: (String?) -> Unit = {},
 ) {
+    /** The committed page's title; Glance names the preview with it for TalkBack. */
+    var title: String? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            onTitleChanged(value)
+        }
+
     var status: LinkPeekPreviewStatus = LinkPeekPreviewStatus.Loading
         private set
 
