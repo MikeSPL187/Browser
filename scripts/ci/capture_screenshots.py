@@ -922,7 +922,14 @@ def tour(suffix):
         speech model; the tour logs whether this emulator has one and, if so, opens the
         explanation in front of the system prompt. A debug-only activity shows the listening
         field and the explanation either way, since the emulator has no voice."""
-        if tap("Search or enter an address", "Поиск или адрес"):
+        opened = tap("Search or enter an address", "Поиск или адрес")
+        if not opened:
+            # A page is open: its address sits in the bar left of the menu button.
+            menu = find("More options", "Другие действия")
+            if menu is not None:
+                adb("shell", "input", "tap", str(int(width * 0.45)), str(menu["center"][1]))
+                opened = True
+        if opened:
             time.sleep(2)
             microphone = ("Search by voice", "Голосовой поиск")
             if find(*microphone):
@@ -933,8 +940,11 @@ def tour(suffix):
                 if not tap("Not now", "Не сейчас"):
                     adb("shell", "input", "keyevent", "BACK")
                 time.sleep(1)
-            else:
+            elif find("Close address input", "Закрыть ввод адреса"):
                 log(f"voice search {suffix}: no microphone (no on-device recognizer)")
+            else:
+                save_ui(f"voice-editor-{suffix}")
+                log(f"voice search {suffix}: the address editor did not open")
             for _ in range(2):
                 if not find("Close address input", "Закрыть ввод адреса"):
                     break
