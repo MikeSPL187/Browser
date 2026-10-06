@@ -498,6 +498,12 @@
     <string name="glance_not_in_history">Not added to history until you open it</string>
     <string name="glance_private_note">Private preview: nothing from it is saved</string>
     <string name="glance_pull_to_open">Pull up to open in a tab</string>
+    <string name="glance_failed_title">Couldn’t load the preview</string>
+    <string name="glance_failed_message">%1$s didn’t open. Check the connection and try again.</string>
+    <string name="glance_crashed_title">The preview stopped</string>
+    <string name="glance_crashed_message">The page stopped working. Try again to load it afresh.</string>
+    <string name="glance_https_only_title">No secure connection</string>
+    <string name="glance_https_only_message">%1$s doesn’t open over HTTPS. Open it in a tab to decide what to do.</string>
     <string name="action_open_in_new_tab">Open in New Tab</string>
     <string name="action_open_in_new_tab_and_switch">Open in New Tab and Switch</string>
     <string name="action_open_link_in_private_tab">Open link in private tab</string>

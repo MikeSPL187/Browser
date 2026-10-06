@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.actions.WebContentActionState
+
 internal enum class BrowserHardwareInputAction {
     FocusAddress,
     NewTab,
@@ -40,7 +42,36 @@ internal data class BrowserHardwareKeyStroke(
     val repeatCount: Int = 0,
 )
 
+/** What a hardware command does while Glance is open over the page. */
+internal enum class LinkPeekHardwareInput {
+    /** Glance is closed: the command acts as usual. */
+    Run,
+
+    /** The command means the browser itself, so Glance closes first. */
+    DismissLinkPeekThenRun,
+
+    /** Glance is modal: nothing reaches the hidden page beneath. */
+    Blocked,
+}
+
 internal object BrowserHardwareInputRules {
+    /**
+     * Glance owns input while it is open: no shortcut, mouse button, wheel, engine focus or first
+     * key reaches the hidden source page. Ctrl+L and Ctrl+F close Glance and then act; every
+     * other command waits. Glance flying into a tab is left alone.
+     */
+    fun overLinkPeek(
+        action: BrowserHardwareInputAction?,
+        isLinkPeekVisible: Boolean,
+        isLinkPeekCommitting: Boolean,
+    ): LinkPeekHardwareInput = when {
+        !isLinkPeekVisible -> LinkPeekHardwareInput.Run
+        isLinkPeekCommitting -> LinkPeekHardwareInput.Blocked
+        action == BrowserHardwareInputAction.FocusAddress ||
+            action == BrowserHardwareInputAction.FindInPage -> LinkPeekHardwareInput.DismissLinkPeekThenRun
+        else -> LinkPeekHardwareInput.Blocked
+    }
+
     fun keyboardAction(stroke: BrowserHardwareKeyStroke): BrowserHardwareInputAction? {
         if (stroke.repeatCount != 0) return null
 
@@ -98,3 +129,8 @@ internal object BrowserHardwareInputRules {
         return tabIds[targetIndex]
     }
 }
+
+/** False while Glance keeps [action] (or plain key, focus and wheel input) off the hidden page. */
+internal fun WebContentActionState.allowsHardwareInput(action: BrowserHardwareInputAction?): Boolean =
+    BrowserHardwareInputRules.overLinkPeek(action, isLinkPeekVisible, isLinkPeekCommitting) !=
+        LinkPeekHardwareInput.Blocked
