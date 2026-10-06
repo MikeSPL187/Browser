@@ -14,6 +14,7 @@ import dev.sk2andy.materialbrowser.legal.CandyLegalSources
 import dev.sk2andy.materialbrowser.legal.ThirdPartyComponent
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -121,11 +122,16 @@ class AboutLegalSectionInstrumentedTest {
             .use { it.readText() }
 
         assertTrue(notices.contains(CandyLegalSources.UBLOCK_ORIGIN_REVISION))
-        assertTrue(
-            notices.contains(
-                "175756d74468c9ba45863f7fc333d3be670f82d5b066314e915814dd547d1652",
-            ),
-        )
+        // Every bundled Gecko extension is named with the SHA-256 of the XPI that ships.
+        val catalog = context.assets.open("gecko_default_extensions/catalog.json")
+            .bufferedReader()
+            .use { JSONObject(it.readText()) }
+            .getJSONArray("extensions")
+        assertTrue(catalog.length() > 0)
+        for (index in 0 until catalog.length()) {
+            val sha256 = catalog.getJSONObject(index).getString("sha256")
+            assertTrue("Notices miss the SHA-256 $sha256", notices.contains(sha256))
+        }
 
         assertTrue(notices.contains("release runtime classpath for Vola"))
         assertFalse(notices.contains("Google Code Scanner"))

@@ -46,6 +46,14 @@ class InstrumentedSummaryTest(unittest.TestCase):
             shard.mkdir(parents=True)
             (shard / "TEST-emulator.xml").write_text(xml, encoding="utf-8")
             self.shards.append(str(root / f"shard-{index}"))
+        log_name = "logcat-dev.sk2andy.materialbrowser.ui.TabsTest-closesTab.txt"
+        log = root / "shard-0" / "connected" / "full" / log_name
+        log.write_text(
+            "10-06 05:20:00.000  1234  1234 I TestRunner: started: closesTab\n"
+            "10-06 05:20:01.000  1234  1240 E AndroidRuntime: FATAL EXCEPTION: main\n"
+            "10-06 05:20:01.001  1234  1240 D Vola: noise\n",
+            encoding="utf-8",
+        )
         self.root = root
 
     def tearDown(self):
@@ -60,6 +68,9 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertIn("<code>TabsTest#closesTab</code> — Expected &lt;1&gt; tabs", text)
         self.assertIn("<code>GeckoTest#loadsPage</code> — java.lang.IllegalStateException", text)
         self.assertIn("TabsTest.kt:42", text)
+        self.assertIn("E AndroidRuntime: FATAL EXCEPTION: main", text)
+        self.assertNotIn("noise", text)
+        self.assertNotIn("TestRunner: started", text)
 
     def test_baseline_entries_by_method_or_class_are_known_failures(self):
         baseline_file = self.root / "baseline.txt"

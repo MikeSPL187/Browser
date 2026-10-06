@@ -111,6 +111,8 @@ class BrowserRootBackInstrumentedTest {
     @Test
     fun tabOverviewRequestsPortraitUntilClosed() {
         val browserController = createController()
+        // Back on a lone root tab goes to the system; with a sibling it opens the overview.
+        browserController.createTab()
         val portraitLocked = AtomicBoolean(false)
         setBrowserContent(
             browserController = browserController,

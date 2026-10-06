@@ -16,6 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.closeAddressInputButton
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -47,9 +48,7 @@ class StartupPresentationInstrumentedTest {
             .assertIsFocused()
         assertImeVisible()
 
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.cd_close_address_input),
-        ).performClick()
+        composeRule.onNode(closeAddressInputButton(context)).performClick()
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertDoesNotExist()
 
         composeRule.activityRule.scenario.onActivity { activity ->

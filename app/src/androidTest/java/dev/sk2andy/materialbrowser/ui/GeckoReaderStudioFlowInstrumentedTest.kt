@@ -52,9 +52,7 @@ class GeckoReaderStudioFlowInstrumentedTest {
     @Test
     fun geckoReaderMenuActionIsEnabledAndOpensExtractedArticle() {
         ReaderStudioFixtureServer().use { server ->
-            composeRule.onNodeWithContentDescription(
-                context.getString(R.string.cd_close_address_input),
-            ).performClick()
+            composeRule.onNode(closeAddressInputButton(context)).performClick()
             composeRule.activityRule.scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 assertTrue(controller.usesGeckoEngine)

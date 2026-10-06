@@ -7,7 +7,6 @@ import android.os.Looper
 import android.view.ViewGroup
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -272,12 +271,9 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
     }
 
     private fun openBrowserMenu() {
-        val closeAddressDescription = context.getString(R.string.cd_close_address_input)
-        if (
-            composeRule.onAllNodesWithContentDescription(closeAddressDescription)
-                .fetchSemanticsNodes().isNotEmpty()
-        ) {
-            composeRule.onNodeWithContentDescription(closeAddressDescription).performClick()
+        val closeAddressButton = closeAddressInputButton(context)
+        if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNode(closeAddressButton).performClick()
         }
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),

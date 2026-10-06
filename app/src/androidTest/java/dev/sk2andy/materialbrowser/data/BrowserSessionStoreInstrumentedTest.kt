@@ -1036,7 +1036,8 @@ class BrowserSessionStoreInstrumentedTest {
     @Test
     fun tabOverviewAndStackFolderModesRoundTripIndependently() {
         val store = BrowserSessionStore(context)
-        assertEquals(TabOverviewMode.Hero, store.loadTabOverviewMode())
+        // The v4 overview (Q7a) opens as a grid by default.
+        assertEquals(TabOverviewMode.Grid, store.loadTabOverviewMode())
         assertEquals(TabOverviewMode.Grid, store.loadTabStackFolderMode())
 
         store.saveTabOverviewMode(TabOverviewMode.Hero)
@@ -1048,7 +1049,7 @@ class BrowserSessionStoreInstrumentedTest {
         assertEquals(TabOverviewMode.Hero, store.loadTabStackFolderMode())
 
         preferences.edit().putString("tab_overview_mode", "unknown").commit()
-        assertEquals(TabOverviewMode.Hero, store.loadTabOverviewMode())
+        assertEquals(TabOverviewMode.Grid, store.loadTabOverviewMode())
 
         preferences.edit().putString("tab_stack_folder_mode", "unknown").commit()
         assertEquals(TabOverviewMode.Grid, store.loadTabStackFolderMode())

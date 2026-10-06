@@ -254,6 +254,8 @@ class CandyTrailStoreInstrumentedTest {
         val baseFile = store.fileFor(tabId)!!
         val newFile = java.io.File("${baseFile.path}.new")
         val backupFile = java.io.File("${baseFile.path}.bak")
+        // The orchestrator clears app data before each test, so the store's folder may not exist.
+        baseFile.parentFile?.mkdirs()
         baseFile.writeText("base")
         newFile.writeText("new")
         backupFile.writeText("backup")

@@ -13,13 +13,18 @@ text after " -- " is a note, lines starting with "#" are comments.
 """
 
 import argparse
+import dataclasses
+import re
 import sys
 import xml.etree.ElementTree as ElementTree
 from dataclasses import dataclass
 from pathlib import Path
 
 MAX_LISTED_FAILURES = 200
-STACK_LINES = 8
+STACK_LINES = 12
+LOG_LINES = 20
+# Errors and crashes in a logcat line: "10-06 05:20:00.000  1234  1240 E Tag: message".
+LOG_ERROR = re.compile(r"^\S+ \S+\s+\d+\s+\d+ [EF] |FATAL EXCEPTION")
 ASSUMPTION_FAILURES = (
     "org.junit.AssumptionViolatedException",
     "org.junit.internal.AssumptionViolatedException",
@@ -34,6 +39,7 @@ class TestResult:
     outcome: str  # "passed", "failed" or "skipped"
     message: str = ""
     details: str = ""
+    log: str = ""
 
     @property
     def test_id(self) -> str:
@@ -101,9 +107,23 @@ def collect(shard_dirs: list) -> Summary:
                 continue
         if not shard_results:
             empty_shards.append(str(shard))
+        shard_results = [attach_log(result, Path(shard)) for result in shard_results]
         shard_seconds[str(shard)] = sum(result.seconds for result in shard_results)
         results.extend(shard_results)
     return Summary(results=results, empty_shards=empty_shards, shard_seconds=shard_seconds)
+
+
+def attach_log(result: TestResult, shard: Path) -> TestResult:
+    """Adds the errors from the failed test's own logcat (logcat-<class>-<method>.txt)."""
+    if result.outcome != "failed":
+        return result
+    name = f"{result.class_name}-{result.method}"
+    for file in shard.rglob("logcat-*.txt"):
+        if file.name.endswith(f"{name}.txt"):
+            lines = file.read_text(encoding="utf-8", errors="replace").splitlines()
+            errors = [line[:240] for line in lines if LOG_ERROR.search(line)]
+            return dataclasses.replace(result, log="\n".join(errors[-LOG_LINES:]))
+    return result
 
 
 def read_baseline(path) -> set:
@@ -196,6 +216,8 @@ def render_failures(failures: list) -> list:
         lines.append(result.test_id)
         lines.extend(result.details.splitlines()[:STACK_LINES])
         lines.append("```")
+        if result.log:
+            lines.extend(["", "Logcat errors:", "```", result.log, "```"])
         lines.append("</details>")
     if len(failures) > MAX_LISTED_FAILURES:
         lines.append(f"- … and {len(failures) - MAX_LISTED_FAILURES} more (see the report artifacts).")

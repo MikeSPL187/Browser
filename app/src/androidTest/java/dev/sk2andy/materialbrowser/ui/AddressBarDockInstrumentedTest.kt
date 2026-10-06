@@ -529,9 +529,7 @@ class AddressBarDockInstrumentedTest {
             composeRule.onNodeWithText("example.test").performClick()
         }
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
-        composeRule.onNodeWithContentDescription(
-            composeRule.activity.getString(R.string.cd_close_address_input),
-        ).assertIsDisplayed()
+        composeRule.onNode(closeAddressInputButton(composeRule.activity)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.cd_more_options),
         ).assertDoesNotExist()

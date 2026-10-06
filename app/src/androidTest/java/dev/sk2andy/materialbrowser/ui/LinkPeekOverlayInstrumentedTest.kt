@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -622,7 +623,11 @@ class LinkPeekOverlayInstrumentedTest {
         composeRule.onNodeWithText(
             composeRule.activity.getString(R.string.glance_not_in_history),
         ).assertIsDisplayed()
-        composeRule.onNodeWithTag(LinkPeekTestTags.PullHandle)
+        // The handle clears its semantics for TalkBack, which drops the test tag after it; find
+        // it by what TalkBack reads instead.
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.glance_pull_to_open),
+        )
             .assertHasClickAction()
             .performSemanticsAction(SemanticsActions.OnClick)
             .performSemanticsAction(SemanticsActions.OnClick)
