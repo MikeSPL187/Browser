@@ -31,6 +31,11 @@ internal data class CredentialPasswordGenerationPrompt(
     val identity: CredentialPromptIdentity,
 )
 
+/** A sign-in field got focus on a page; Vola may offer its own vault (#123, H2). */
+internal data class CredentialVaultOfferPrompt(
+    val identity: CredentialPromptIdentity,
+)
+
 internal data class CredentialLoginSelectPrompt(
     val identity: CredentialPromptIdentity,
     val allowedUserIds: Set<String>,
@@ -79,6 +84,9 @@ internal interface CredentialPromptHost : AutoCloseable {
 
     /** Offers a generated password for a new-password field; null leaves the field as it is. */
     fun generatePassword(prompt: CredentialPasswordGenerationPrompt, onComplete: (String?) -> Unit)
+
+    /** May offer to set up a password vault; nothing comes back to the page. */
+    fun offerVault(prompt: CredentialVaultOfferPrompt) = Unit
 
     fun selectIdentityProvider(
         prompt: IdentityCredentialProviderPrompt,

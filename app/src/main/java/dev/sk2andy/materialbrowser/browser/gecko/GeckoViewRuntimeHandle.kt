@@ -2011,6 +2011,7 @@ private class GeckoViewBrowserSession(
             onInlineVideoGestureHaptic = { haptic ->
                 inlineVideoGestureHapticListener?.onHapticRequested(haptic)
             },
+            onLoginFieldFocus = credentialPromptBridge::onLoginFieldFocus,
             onBound = {
                 privacyBound = true
                 loadPendingUrlIfReady()

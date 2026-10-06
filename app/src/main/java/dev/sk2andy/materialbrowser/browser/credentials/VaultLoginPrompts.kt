@@ -43,6 +43,13 @@ internal sealed interface VaultLoginRequest {
         val canSave: Boolean,
     ) : VaultLoginRequest
 
+    /** «Keep passwords in Vola» when a sign-in field is touched and the vault is not set up. */
+    data class Offer(
+        override val id: Long,
+        override val windowId: Int,
+        override val site: String,
+    ) : VaultLoginRequest
+
     /** «Sign in to …» with the accounts saved for exactly this site (board W-Autofill). */
     data class Select(
         override val id: Long,
@@ -65,6 +72,9 @@ internal sealed interface VaultLoginAnswer {
     class Use(val password: String) : VaultLoginAnswer {
         override fun toString(): String = "VaultLoginAnswer.Use(password=<redacted>)"
     }
+
+    /** «Set up» on the vault offer. */
+    data object SetUp : VaultLoginAnswer
 
     /** «Not now», «Don't fill», back, or the page went away. */
     data object Dismiss : VaultLoginAnswer
