@@ -371,11 +371,16 @@ class TabSettingsScreenInstrumentedTest {
         composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_list))
             .assertExists()
             .performClick()
-        composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_grid))
-            .performClick()
-        composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_hero))
-            .assertExists()
-            .performClick()
+        if (TabStacksFeature.ENABLED) {
+            composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_grid))
+                .performClick()
+            composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_hero))
+                .assertExists()
+                .performClick()
+        } else {
+            // Stacks are hidden until the overview draws them, and their folder setting with them.
+            composeRule.onNodeWithTag(TabSettingsTestTags.StackFolderMode).assertDoesNotExist()
+        }
         composeRule.onNodeWithTag(TabSettingsTestTags.ListStartsAtBottom)
             .assertIsEnabled()
             .performClick()
@@ -386,7 +391,7 @@ class TabSettingsScreenInstrumentedTest {
         assertTrue(automaticSorting.get())
         assertTrue(listStartsAtBottom.get())
         assertTrue(overviewMode.get() == TabOverviewMode.List)
-        assertTrue(stackFolderMode.get() == TabOverviewMode.Hero)
+        if (TabStacksFeature.ENABLED) assertTrue(stackFolderMode.get() == TabOverviewMode.Hero)
     }
 
     @Test

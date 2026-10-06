@@ -125,7 +125,7 @@ internal fun TabOverviewTabActions(
             ?.let { it.syncedDisplayName ?: it.workspaceDisplayName() }
             .orEmpty(),
         otherWorkspaces = moveTargets,
-        canGroup = !locked && (canCreateStack || otherStacks.isNotEmpty()),
+        canGroup = TabStacksFeature.ENABLED && !locked && (canCreateStack || otherStacks.isNotEmpty()),
         preview = { target ->
             TabPreviewContent(
                 tab = target,
