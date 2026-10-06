@@ -64,16 +64,17 @@ class SiteResult:
         return not self.alive or bool(self.crash_log.strip())
 
 
+class EmulatorStuck(Exception):
+    """adb got no answer: the emulator, not the browser, stopped working."""
+
+
 def adb(*args, check=False, timeout=120):
-    """adb's output; a hung command (a busy emulator) gives "" unless [check] asks for it to fail."""
+    # A hang is never read as empty output: an empty pidof would look like a crash.
     try:
         result = subprocess.run(["adb", *args], capture_output=True, text=True, errors="replace",
                                 timeout=timeout, check=check)
     except subprocess.TimeoutExpired:
-        if check:
-            raise
-        print(f"adb {' '.join(args)}: no answer in {timeout} s", flush=True)
-        return ""
+        raise EmulatorStuck(f"adb {' '.join(args)}: no answer in {timeout} s") from None
     return result.stdout
 
 
@@ -97,18 +98,7 @@ def newest_tombstone(since):
     return ""
 
 
-def screenshot(path):
-    """Best effort: screencap can hang while the emulator's software GPU plays video."""
-    try:
-        shot = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=30).stdout
-    except subprocess.TimeoutExpired:
-        print(f"no screenshot for {Path(path).name}: screencap did not answer", flush=True)
-        return
-    if shot:
-        Path(path).write_bytes(shot)
-
-
-def check_site(package, name, url, settle, shot=None):
+def check_site(package, name, url, settle):
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
     before = set(adb("shell", "ls", "/data/tombstones").split())
@@ -116,9 +106,8 @@ def check_site(package, name, url, settle, shot=None):
     time.sleep(settle)
     alive = bool(adb("shell", "pidof", package).strip())
     # Gecko renders pages in "<package>:tabN"; without one the page never started loading.
+    # No screencap here: on the emulator's software GPU it hangs the system while a video plays.
     loaded = f"{package}:tab" in adb("shell", "ps", "-A", "-o", "NAME")
-    if shot:
-        screenshot(shot)
     crash_log = adb("logcat", "-d", "-b", "crash")
     tombstone = newest_tombstone(before) if not alive or crash_log.strip() else ""
     result = SiteResult(name, url, alive, crash_log, tombstone, loaded=loaded)
@@ -167,7 +156,6 @@ def main(argv):
     parser.add_argument("--report", required=True)
     parser.add_argument("--version", default=os.environ.get("GITHUB_SHA", "")[:7] or "local")
     parser.add_argument("--settle", type=int, default=35, help="seconds a page gets to load")
-    parser.add_argument("--screenshots", help="directory for a screenshot of each site")
     args = parser.parse_args(argv)
 
     wait_for_boot()
@@ -177,15 +165,15 @@ def main(argv):
     adb("shell", "pm", "grant", args.package, "android.permission.POST_NOTIFICATIONS")
 
     results = []
-    shots = Path(args.screenshots) if args.screenshots else None
-    if shots:
-        shots.mkdir(parents=True, exist_ok=True)
     aborted = ""
-    for number, (name, url) in enumerate(SITES, start=1):
-        shot = shots / f"{number:02d}.png" if shots else None
+    for name, url in SITES:
         try:
-            result = check_site(args.package, name, url, args.settle, shot)
-        except Exception as error:  # the sites checked so far still make the report
+            result = check_site(args.package, name, url, args.settle)
+        except EmulatorStuck as error:  # the sites checked so far still make the report
+            aborted = f"{name}: эмулятор перестал отвечать ({error})"
+            print(f"ABORT {aborted}", flush=True)
+            break
+        except Exception as error:
             aborted = f"{name}: {type(error).__name__}: {error}"
             print(f"ABORT {aborted}", flush=True)
             break

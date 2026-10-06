@@ -86,7 +86,6 @@ jobs:
           --apk app/build/outputs/apk/full/localRelease/app-full-localRelease.apk
           --package "$SMOKE_PACKAGE"
           --report "$RUNNER_TEMP/smoke.md"
-          --screenshots "$RUNNER_TEMP/screens"
           --version "${SMOKE_SHA::7}"
 
       - name: Post the night's result
@@ -102,10 +101,10 @@ jobs:
             printf '## Ночной smoke-тест release · %s · ⚠️ не дошёл до сайтов (%s)\n' \
               "${SMOKE_SHA::7}" "$SMOKE_OUTCOME" > "$report"
           fi
-          printf '\n[Лог прогона](%s) · снимки экрана — в артефакте nightly-smoke\n' "$RUN_URL" >> "$report"
+          printf '\n[Лог прогона](%s)\n' "$RUN_URL" >> "$report"
           gh issue comment "$SMOKE_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$report"
 
-      - name: Upload screenshots and logs
+      - name: Upload the logs
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -113,5 +112,4 @@ jobs:
           path: |
             ${{ runner.temp }}/smoke.md
             ${{ runner.temp }}/emulator.log
-            ${{ runner.temp }}/screens/
           if-no-files-found: ignore

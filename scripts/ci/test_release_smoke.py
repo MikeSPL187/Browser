@@ -54,15 +54,14 @@ class ReportTest(unittest.TestCase):
         self.assertIn("Прерван: `YouTube: TimeoutExpired: adb`", text)
         self.assertIn("| [VK](https://vk.com/) | ✅ жив |", text)
 
-    def test_a_hung_adb_command_reads_as_empty(self):
+    def test_a_hung_adb_command_is_a_stuck_emulator_not_a_crash(self):
         real = smoke.subprocess.run
         def hang(*args, **kwargs):
             raise smoke.subprocess.TimeoutExpired(args[0], kwargs.get("timeout"))
         smoke.subprocess.run = hang
         try:
-            self.assertEqual(smoke.adb("shell", "pidof", "x"), "")
-            with self.assertRaises(smoke.subprocess.TimeoutExpired):
-                smoke.adb("install", "x.apk", check=True)
+            with self.assertRaisesRegex(smoke.EmulatorStuck, "adb shell pidof x: no answer"):
+                smoke.adb("shell", "pidof", "x")
         finally:
             smoke.subprocess.run = real
 
