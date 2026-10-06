@@ -28,10 +28,12 @@ object WebViewProfileRules {
         tab: BrowserTab,
         profiles: List<BrowserProfile>,
         multiProfileSupported: Boolean,
-        incognitoProfileName: String = "${INCOGNITO_WEBVIEW_PROFILE_PREFIX}test",
+        privateGeneration: String = "test",
     ): WebViewProfileAssignment {
         if (!multiProfileSupported) return WebViewProfileAssignment.Default
-        if (tab.isIncognito) return WebViewProfileAssignment.Incognito(incognitoProfileName)
+        if (tab.isIncognito) {
+            return WebViewProfileAssignment.Incognito(privateProfileName(privateGeneration, tab.profileId))
+        }
         val profile = profiles.firstOrNull { it.id == tab.profileId }
         return if (profile?.isolationEnabled == true) {
             WebViewProfileAssignment.Isolated(isolatedProfileName(profile.id))
@@ -42,14 +44,7 @@ object WebViewProfileRules {
 
     fun isolatedProfileName(profileId: String): String {
         require(profileId.isNotBlank())
-        return buildString(ISOLATED_PROFILE_PREFIX.length + profileId.length * 2) {
-            append(ISOLATED_PROFILE_PREFIX)
-            profileId.encodeToByteArray().forEach { byte ->
-                val value = byte.toInt() and 0xff
-                append(HEX_DIGITS[value ushr 4])
-                append(HEX_DIGITS[value and 0x0f])
-            }
-        }
+        return ISOLATED_PROFILE_PREFIX + hex(profileId)
     }
 
     fun isManagedIsolatedProfileName(profileName: String): Boolean =
@@ -61,9 +56,14 @@ object WebViewProfileRules {
      */
     fun newPrivateGeneration(): String = UUID.randomUUID().toString().replace("-", "")
 
-    fun privateProfileName(generation: String): String {
+    /**
+     * Private storage of one workspace in one generation, as Gecko keeps `private:<profileId>`:
+     * private tabs of different workspaces never share cookies or site data. The workspace ID is
+     * hex-encoded, so the name stays within WebView's profile-name characters and is injective.
+     */
+    fun privateProfileName(generation: String, profileId: String): String {
         require(generation.isNotBlank() && generation.all { it.isLetterOrDigit() })
-        return "$INCOGNITO_WEBVIEW_PROFILE_PREFIX$generation"
+        return "$INCOGNITO_WEBVIEW_PROFILE_PREFIX${generation}_${hex(profileId)}"
     }
 
     /** Every private profile, of any generation and of the legacy scheme, is left to delete. */
@@ -94,7 +94,7 @@ object WebViewProfileRules {
         after: List<BrowserTab>,
         profiles: List<BrowserProfile>,
         multiProfileSupported: Boolean,
-        incognitoProfileName: String,
+        privateGeneration: String,
     ): Set<String> {
         val afterById = after.associateBy(BrowserTab::id)
         return before.asSequence()
@@ -104,12 +104,12 @@ object WebViewProfileRules {
                     beforeTab,
                     profiles,
                     multiProfileSupported,
-                    incognitoProfileName,
+                    privateGeneration,
                 ) != assignment(
                     afterTab,
                     profiles,
                     multiProfileSupported,
-                    incognitoProfileName,
+                    privateGeneration,
                 )
             }
             .mapTo(linkedSetOf(), BrowserTab::id)
@@ -132,6 +132,14 @@ object WebViewProfileRules {
             .mapNotNull(assignments::get)
             .filter { it != DEFAULT_STORAGE_KEY && it !in remainingKeys }
             .toCollection(linkedSetOf())
+    }
+
+    private fun hex(value: String): String = buildString(value.length * 2) {
+        value.encodeToByteArray().forEach { byte ->
+            val unsigned = byte.toInt() and 0xff
+            append(HEX_DIGITS[unsigned ushr 4])
+            append(HEX_DIGITS[unsigned and 0x0f])
+        }
     }
 
     private const val HEX_DIGITS = "0123456789abcdef"

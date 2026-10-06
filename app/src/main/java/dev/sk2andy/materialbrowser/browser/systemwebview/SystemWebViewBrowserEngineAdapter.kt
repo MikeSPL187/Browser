@@ -169,7 +169,7 @@ internal class SystemWebViewBrowserEngineFactory(
     private var forceDarkWebsites = false
     private val sessions = mutableSetOf<SystemWebViewBrowserEngineSession>()
     private val knownCookieManagers = mutableListOf<CookieManager>()
-    private var incognitoProfileName = newIncognitoProfileName()
+    private var privateGeneration = WebViewProfileRules.newPrivateGeneration()
     private val toppingRuntime = UserScriptRuntime(
         valueStore = UserScriptValueStore(context.applicationContext),
         onMenuCommandsChanged = { tabId, commands ->
@@ -258,9 +258,9 @@ internal class SystemWebViewBrowserEngineFactory(
     override fun clearPrivateData() {
         if (!supportsMultiProfile()) return
         deletePrivateProfiles()
-        // Whether or not WebView let the old profile go, the next private session starts in a new
-        // one; a profile left behind is retried on the next clear and on the next start.
-        incognitoProfileName = newIncognitoProfileName()
+        // Whether or not WebView let the old profiles go, the next private session starts in a new
+        // generation; a profile left behind is retried on the next clear and on the next start.
+        privateGeneration = WebViewProfileRules.newPrivateGeneration()
     }
 
     override fun shutdown() {
@@ -285,7 +285,7 @@ internal class SystemWebViewBrowserEngineFactory(
         isolationEnabled = isolationEnabled,
         isPrivate = isPrivate,
         allowsToppings = contentKind != BrowserEngineContentKind.LinkPeek,
-        incognitoProfileName = incognitoProfileName,
+        incognitoProfileName = WebViewProfileRules.privateProfileName(privateGeneration, profileId),
         multiProfileSupported = supportsMultiProfile(),
         contentBlocker = contentBlocker,
         toppingRuntime = toppingRuntime,
@@ -323,9 +323,6 @@ internal class SystemWebViewBrowserEngineFactory(
 
         fun supportsMultiProfile(): Boolean =
             WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)
-
-        private fun newIncognitoProfileName(): String =
-            WebViewProfileRules.privateProfileName(WebViewProfileRules.newPrivateGeneration())
 
         private fun cleanupStalePrivateProfiles() {
             if (!supportsMultiProfile()) return

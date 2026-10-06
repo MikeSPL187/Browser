@@ -60,7 +60,24 @@ while `BrowserController.closeAllPrivateTabs` owns tab cleanup and regular-tab r
 - Gecko dispatches context deletion without exposing a completion callback; do not report a verified completion from that API.
 - Move/delete tabs and side data as one controller operation; preserve private/non-private boundary.
 
-## Profiles and WebKit storage
+## Profiles and Android System WebView storage
+
+Applies when the WebView provider supports `MULTI_PROFILE`. Without it every tab would share the default profile,
+so private tabs are not offered (`BrowserController.canOpenLinkInPrivate`).
+
+| Case | WebView profile |
+| --- | --- |
+| Regular non-isolated tab | Shared default profile |
+| Regular isolated tab | `candy_profile_v1_<hex profile ID>` |
+| Private tab | `candy_incognito_v2_<generation>_<hex profile ID>`: one private profile per workspace, regardless of regular-profile isolation, matching Gecko's `private:<profileId>` |
+
+- The private generation is random per process and rotates every time private data is cleared, whether or not
+  WebView deleted the old profiles, so a profile WebView refused to delete never reaches the next private session.
+- Clearing private data, shutdown and startup delete every `candy_incognito_` profile of any generation; failures are
+  logged and retried on the next clear or start.
+- `WebViewProfileRules` owns the naming; the adapter only creates and deletes profiles.
+
+## Profiles and WebKit storage (iOS)
 
 | Case | WebKit data store |
 | --- | --- |
