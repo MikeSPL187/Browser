@@ -6,6 +6,7 @@ import dev.sk2andy.materialbrowser.browser.DnsOverHttpsRules
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
+import org.mozilla.geckoview.CandyGeckoPrefsBridge
 import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoRuntimeSettings
 
@@ -34,7 +35,22 @@ internal object GeckoRuntimeSettingsFactory {
             applyEngineProtections()
             applyDnsOverHttpsSettings(dnsOverHttpsSettings)
             applyHttpsOnlyMode(httpsOnlyMode)
+            disableWebAuthn()
         }
+}
+
+/** The Gecko preference that exposes the Web Authentication API (passkeys, security keys). */
+internal const val WEB_AUTHN_PREF = "security.webauth.webauthn"
+
+/**
+ * GeckoView reaches WebAuthn through Google Play services FIDO, which Vola does not ship: always to
+ * ask whether a platform authenticator exists, and for a passkey whenever the system Credential
+ * Manager has none. accounts.google.com asks on load, and the missing Play services classes crashed
+ * Gecko on every visit (#123, H1). Without the API, sites fall back to their password sign-in.
+ */
+@UiThread
+internal fun GeckoRuntimeSettings.disableWebAuthn() {
+    CandyGeckoPrefsBridge.setStartupPref(this, WEB_AUTHN_PREF, false)
 }
 
 /**

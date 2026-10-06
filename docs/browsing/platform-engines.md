@@ -404,7 +404,8 @@ Camera and microphone permissions remain separate and continue through Candy's p
   lifecycle exit or session replacement denies the pending request. File results accept only bounded
   readable `content://` URIs. Private permission decisions remain memory-only, and authentication
   credentials are neither stored nor logged.
-- Gecko WebAuthn launches Android's passkey provider through the resumed `MainActivity`. Candy accepts
+- Gecko WebAuthn is off in Vola (#123, H1); the delegate is kept. It launches Android's passkey
+  provider through the resumed `MainActivity`. Candy accepts
   `RESULT_OK` even when the provider returns no `Intent`, but completes Gecko's pending result only
   after the host resumes with the initiating tab, Gecko session and navigation generation unchanged.
   The source tab is exempt from immediate background eviction for that round trip; a stale or destroyed
