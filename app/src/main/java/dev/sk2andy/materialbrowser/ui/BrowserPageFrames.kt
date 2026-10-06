@@ -83,7 +83,11 @@ internal fun rememberBrowserPageFrames(
         compactMode = controller.addressBar.compactMode,
     )
     val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
-    fun framedContent(addressBarHeight: Dp): BrowserContentFrame = BrowserContentFrameRules.resolve(
+    val unframedGeckoPage = !contentFramed && chromeVisible && controller.usesGeckoEngine &&
+        selectedTab.url != BLANK_URL
+    fun framedContent(addressBarHeight: Dp): BrowserContentFrame = if (unframedGeckoPage) {
+        BrowserContentFrameRules.belowStatusBar(frameSafeInsets.getTop(density))
+    } else BrowserContentFrameRules.resolve(
         framed = contentFramed,
         safeLeftPx = frameSafeInsets.getLeft(density, LayoutDirection.Ltr),
         safeTopPx = frameSafeInsets.getTop(density),

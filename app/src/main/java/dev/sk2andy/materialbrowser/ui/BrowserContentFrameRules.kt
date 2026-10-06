@@ -21,6 +21,15 @@ internal object BrowserContentFrameRules {
         !compactMode
 
     /**
+     * The unframed Gecko page (the Air style, Compact Mode) starts below the status bar. The window
+     * layout moves the whole engine host there, as the framed card does: a native margin inside the
+     * host, or a renderer safe area, left the page drawn right but its taps a status bar higher
+     * (#123, H4).
+     */
+    fun belowStatusBar(safeTopPx: Int): BrowserContentFrame =
+        if (safeTopPx > 0) BrowserContentFrame.None.copy(topPx = safeTopPx) else BrowserContentFrame.None
+
+    /**
      * @param safeLeftPx … [safeBottomPx] the window's safe drawing insets (system bars and cutouts).
      * @param addressBarReservePx the height of the address bar and its own bottom margin, or 0 when
      *   the bar does not sit under the page (docked to a side edge).

@@ -28,7 +28,8 @@
   const edges = () => " safe " + Math.round(parseFloat(getComputedStyle(safeTop).paddingTop) * ratio) +
     " inner " + Math.round(window.innerHeight * ratio) +
     " vv " + Math.round((window.visualViewport ? window.visualViewport.offsetTop : 0) * ratio) +
-    " client " + Math.round(document.documentElement.clientHeight * ratio);
+    " client " + Math.round(document.documentElement.clientHeight * ratio) +
+    " screenY " + Math.round((window.mozInnerScreenY || 0) * ratio);
   for (let index = 0; index < 40; index++) {
     const band = document.createElement("button");
     band.className = "band";
