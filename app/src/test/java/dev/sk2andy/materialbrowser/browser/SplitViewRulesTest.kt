@@ -116,4 +116,23 @@ class SplitViewRulesTest {
         split.reconcile(activeTabs = listOf(b), selectedTab = b)
         assertNull(split.state)
     }
+
+    @Test
+    fun `a replaced companion leaves its pane`() {
+        val left = mutableListOf<String>()
+        val split = SplitViewController(onCompanionLeft = left::add)
+
+        split.open("b")
+        split.open("b")
+        assertEquals(emptyList<String>(), left)
+
+        // «Side by side» on C while A and B share the screen: B goes to the background.
+        split.open("c")
+        assertEquals(listOf("b"), left)
+        assertEquals("c", split.companionTabId)
+        assertEquals(3, split.openRequests)
+
+        split.close()
+        assertEquals(listOf("b", "c"), left)
+    }
 }

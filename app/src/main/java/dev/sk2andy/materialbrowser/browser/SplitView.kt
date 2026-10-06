@@ -125,7 +125,7 @@ object SplitViewRules {
  * work on; the companion is the tab in the other pane, kept visible and active.
  */
 class SplitViewController(
-    /** A tab left the companion pane because Split View closed. */
+    /** A tab left the companion pane: Split View closed, or another tab took its place. */
     private val onCompanionLeft: (String) -> Unit = {},
 ) {
     var state by mutableStateOf<SplitViewState?>(null)
@@ -137,9 +137,12 @@ class SplitViewController(
     var openRequests by mutableIntStateOf(0)
         private set
 
+    /** Opens Split View next to [companionTabId]; a companion it replaces leaves its pane. */
     fun open(companionTabId: String) {
+        val previous = this.companionTabId
         state = SplitViewState(companionTabId = companionTabId)
         openRequests++
+        if (previous != null && previous != companionTabId) onCompanionLeft(previous)
     }
 
     fun close() {
