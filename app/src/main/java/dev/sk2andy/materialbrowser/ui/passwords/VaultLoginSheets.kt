@@ -57,6 +57,9 @@ internal object VaultLoginSheetTestTags {
     const val SaveDismiss = "vault_login_sheet_save_dismiss"
     const val Select = "vault_login_sheet_select"
     const val SelectDismiss = "vault_login_sheet_select_dismiss"
+    const val Offer = "vault_login_sheet_offer"
+    const val OfferSetUp = "vault_login_sheet_offer_set_up"
+    const val OfferDismiss = "vault_login_sheet_offer_dismiss"
     fun account(index: Int) = "vault_login_sheet_account:$index"
 }
 
@@ -89,6 +92,11 @@ internal fun VaultLoginPromptSheets() {
                 ),
                 useNeedsFingerprint = request.canSave,
                 onUse = { password -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Use(password)) },
+            )
+            is VaultLoginRequest.Offer -> VaultOfferSheetContent(
+                request = request,
+                onSetUp = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.SetUp) },
+                onDismiss = dismiss,
             )
             is VaultLoginRequest.Select -> VaultSelectSheetContent(
                 request = request,
@@ -212,6 +220,50 @@ internal fun VaultSelectSheetContent(
     }
 }
 
+/**
+ * «Sign in faster with Vola» on a sign-in field while the vault is not set up (#123, H2): the
+ * system password manager fills only browsers it trusts, so the passwords have to move here.
+ */
+@Composable
+internal fun VaultOfferSheetContent(
+    request: VaultLoginRequest.Offer,
+    onSetUp: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    VaultSheetColumn(modifier = Modifier.testTag(VaultLoginSheetTestTags.Offer)) {
+        VaultSheetHeader(title = stringResource(R.string.passwords_offer_title)) {
+            Text(
+                text = stringResource(R.string.passwords_offer_body, request.site),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(VolaPasswords.sheetButtonGap),
+        ) {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(VolaPasswords.sheetButtonHeight)
+                    .testTag(VaultLoginSheetTestTags.OfferDismiss),
+            ) {
+                Text(stringResource(R.string.passwords_sheet_not_now), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Button(
+                onClick = onSetUp,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(VolaPasswords.sheetButtonHeight)
+                    .testTag(VaultLoginSheetTestTags.OfferSetUp),
+            ) {
+                Text(stringResource(R.string.passwords_offer_set_up), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
 @Composable
 private fun AccountRow(
     account: VaultLoginAccount,
@@ -311,7 +363,7 @@ internal fun VaultButtonIcon(icon: ImageVector) {
     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
 }
 
-/** «Sign in to …» with two accounts and «Save password?» on one sheet each (board W-Autofill). */
+/** «Sign in to …», the vault offer and «Save password?» on one sheet each (board W-Autofill). */
 @VolaPreviews
 @Composable
 private fun VaultLoginSheetsPreview() {
@@ -331,6 +383,11 @@ private fun VaultLoginSheetsPreview() {
                     onPick = {},
                     onDismiss = {},
                     nowMillis = PREVIEW_NOW,
+                )
+                VaultOfferSheetContent(
+                    request = VaultLoginRequest.Offer(id = 3, windowId = 0, site = "id.vk.ru"),
+                    onSetUp = {},
+                    onDismiss = {},
                 )
                 VaultSaveSheetContent(
                     request = VaultLoginRequest.Save(

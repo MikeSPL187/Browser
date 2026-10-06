@@ -1744,6 +1744,9 @@
     <string name="passwords_sheet_update_title">Update password for %1$s?</string>
     <string name="passwords_sheet_save_body">It stays encrypted on this phone. Confirm with your fingerprint or screen lock.</string>
     <string name="passwords_sheet_update">Update</string>
+    <string name="passwords_offer_title">Sign in faster with Vola</string>
+    <string name="passwords_offer_body">Vola fills passwords on %1$s and other sites once you move them here from Google or another password manager. They stay encrypted on this phone.</string>
+    <string name="passwords_offer_set_up">Move passwords</string>
     <string name="passwords_sheet_not_now">Not now</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">With the System WebView engine, sites are filled by Android’s autofill service, not from this list.</string>

@@ -4804,11 +4804,13 @@ class BrowserController(
     fun submitAddress(
         input: String,
         searchMode: SearchMode = SearchMode.Web,
+        // A search suggestion stays a search: a server's «intent://…» never opens an app.
+        forceSearch: Boolean = false,
     ) {
         addressBar.resetCollapsed(selectedTabId)
         pendingExternalAppHandoff = null
         clearExternalNavigationAuthorization(selectedTabId)
-        val externalUri = BrowserUriPolicy.normalizeExternalUri(input)?.let(Uri::parse)
+        val externalUri = BrowserUriPolicy.normalizeExternalUri(input)?.takeUnless { forceSearch }?.let(Uri::parse)
         val externalResult = externalUri?.let { uri ->
             val tab = selectedTab
             val source = browserEngineSessions[tab.id]?.let { session ->
@@ -4844,17 +4846,13 @@ class BrowserController(
             ExternalLaunchResult.AppChooserShown -> return
             is ExternalLaunchResult.OpenInBrowser -> result.url
             ExternalLaunchResult.Unsupported -> {
-                Toast.makeText(
-                    activity,
-                    activity.getString(R.string.toast_no_matching_app),
-                    Toast.LENGTH_SHORT,
-                ).show()
+                Toast.makeText(activity, activity.getString(R.string.toast_no_matching_app), Toast.LENGTH_SHORT).show()
                 return
             }
             null -> {
                 if (
                     searchEngine == SearchEngine.SearXNG &&
-                    AddressResolver.isSearchQuery(input) &&
+                    (forceSearch || AddressResolver.isSearchQuery(input)) &&
                     SearxngRules.normalizedInstanceUrl(searxngSettings.instanceUrl) == null
                 ) {
                     Toast.makeText(
@@ -4869,6 +4867,7 @@ class BrowserController(
                     searchEngine = searchEngine,
                     searchMode = searchMode,
                     searxngInstanceUrl = searxngSettings.instanceUrl,
+                    forceSearch = forceSearch,
                 )
             }
         }

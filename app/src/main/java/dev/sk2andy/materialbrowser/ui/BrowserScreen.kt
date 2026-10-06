@@ -1039,7 +1039,7 @@ internal fun BrowserScreen(
             is AddressSuggestionItem.Command -> selectCommand(item.suggestion)
             is AddressSuggestionItem.Search -> {
                 rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                controller.submitAddress(item.query, searchModeFor(item.query))
+                controller.submitAddress(item.query, searchModeFor(item.query), forceSearch = true)
                 addressEditorVisible = false
             }
             is AddressSuggestionItem.Recall -> selectNavigation(
