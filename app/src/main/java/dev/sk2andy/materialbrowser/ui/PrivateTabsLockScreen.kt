@@ -70,7 +70,7 @@ internal fun hidesPrivateTab(tab: BrowserTab): Boolean =
 /** The «Lock on exit» row, the same on the private page and in Protection and data. */
 internal fun BrowserController.privateTabLockRow(): PrivateTabLock = PrivateTabLock(
     checked = privateTabsLock.enabled,
-    available = isProfileProtectionSupported,
+    available = isProfileProtectionSupported || privateTabsLock.canTurnOffWithoutBiometric,
     onCheckedChange = privateTabsLock::requestEnabled,
 )
 

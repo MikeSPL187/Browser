@@ -15,6 +15,13 @@ internal object PrivateTabsLockRules {
     fun locksOnLeave(enabled: Boolean, privateTabCount: Int): Boolean =
         enabled && privateTabCount > 0
 
+    /**
+     * Without a biometric the lock can still be turned off once no private tab is left: there is
+     * nothing for it to reveal, and a lock that can never be turned off would outlive the sensor.
+     */
+    fun turnsOffWithoutBiometric(enabled: Boolean, privateTabCount: Int): Boolean =
+        enabled && privateTabCount == 0
+
     /** While locked, every private tab is hidden: its page, its title, its address and its icon. */
     fun hides(locked: Boolean, tab: BrowserTab?): Boolean = locked && tab?.isIncognito == true
 
@@ -62,12 +69,21 @@ class PrivateTabsLock internal constructor(
 
     fun hides(tab: BrowserTab?): Boolean = PrivateTabsLockRules.hides(isLocked, tab)
 
+    val canTurnOffWithoutBiometric: Boolean
+        get() = PrivateTabsLockRules.turnsOffWithoutBiometric(enabled, tabs().count(BrowserTab::isIncognito))
+
     /**
      * Turning the lock on or off asks for the fingerprint first: on, to prove it works before it can
      * shut the owner out; off, so whoever holds an unlocked phone cannot simply drop it.
      */
     fun requestEnabled(value: Boolean) {
-        if (value == enabled || !canAuthenticate()) return
+        if (value == enabled) return
+        if (!value && !canAuthenticate() && canTurnOffWithoutBiometric) {
+            enabled = false
+            saveEnabled(false)
+            return
+        }
+        if (!canAuthenticate()) return
         authenticate(ProfileAuthenticationPurpose.ConfigurePrivateTabsLock) { authenticated ->
             if (!authenticated) return@authenticate
             enabled = value

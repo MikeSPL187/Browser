@@ -120,6 +120,20 @@ class PrivateTabsLockTest {
     }
 
     @Test
+    fun `without a biometric the lock turns off only once no private tab is left`() {
+        canAuthenticate = false
+        val lock = lock()
+        lock.requestEnabled(false)
+        assertTrue(lock.enabled)
+        tabs.removeAll { it.isIncognito }
+        assertTrue(lock.canTurnOffWithoutBiometric)
+        lock.requestEnabled(false)
+        assertFalse(lock.enabled)
+        assertEquals(false, saved)
+        assertTrue(prompts.isEmpty())
+    }
+
+    @Test
     fun `unlocking takes the fingerprint and brings the page back`() {
         val lock = lock()
         lock.onAppBackgrounded()
