@@ -31,18 +31,26 @@ class DangerousSiteGuard(
     val blocked = mutableStateMapOf<String, BlockedSite>()
     private val allowedHosts = mutableSetOf<String>()
 
-    /** True when [url] must not load in [tabId]; the tab then shows the warning. */
+    /**
+     * True when the main-frame [url] must not load in [tabId]; the tab then shows the warning.
+     * A navigation that may load leaves the warning behind: the tab is going somewhere else.
+     */
     fun intercept(tabId: String, url: String): Boolean {
+        val site = dangerousSite(url)
+        if (site == null) blocked.remove(tabId) else blocked[tabId] = site
+        return site != null
+    }
+
+    private fun dangerousSite(url: String): BlockedSite? {
         val host = readableHost(url)
         val key = host?.removePrefix("www.") ?: url
-        if (key in allowedHosts) return false
+        if (key in allowedHosts) return null
         val imitated = LookalikeSiteRules.imitatedHost(
             url = url,
             knownHosts = LookalikeSiteRules.WELL_KNOWN_HOSTS + knownHosts(),
         )
-        if (imitated == null && (host == null || !listedHosts(host))) return false
-        blocked[tabId] = BlockedSite(url = url, host = key, imitatedHost = imitated)
-        return true
+        if (imitated == null && (host == null || !listedHosts(host))) return null
+        return BlockedSite(url = url, host = key, imitatedHost = imitated)
     }
 
     /** The host as the user reads it; URI gives none for a non-ASCII host, the authority does. */

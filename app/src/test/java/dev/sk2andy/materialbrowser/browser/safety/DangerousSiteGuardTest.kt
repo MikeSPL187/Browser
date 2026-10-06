@@ -33,6 +33,25 @@ class DangerousSiteGuardTest {
     }
 
     @Test
+    fun `a safe address after the warning takes the warning away`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+
+        assertFalse(guard.intercept("tab", "https://en.wikipedia.org/"))
+
+        assertNull(guard.blocked["tab"])
+        assertNull(guard.allow("tab"))
+    }
+
+    @Test
+    fun `a safe address in another tab leaves this tab's warning`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+
+        assertFalse(guard.intercept("other", "https://en.wikipedia.org/"))
+
+        assertEquals("paypa1.com", guard.blocked["tab"]?.host)
+    }
+
+    @Test
     fun `back to safety forgets the warning but not the danger`() {
         assertTrue(guard.intercept("tab", "https://paypa1.com/"))
         guard.dismiss("tab")

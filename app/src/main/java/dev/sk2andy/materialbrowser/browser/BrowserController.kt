@@ -4883,6 +4883,8 @@ class BrowserController(
         }
         val tabId = selectedTabId
         val existingSession = browserEngineSessions[tabId]
+        // WebView loads a typed address without asking the guard: the old warning goes here.
+        dangerousSites.dismiss(tabId)
         updateTab(tabId) {
             it.copy(
                 url = target,
