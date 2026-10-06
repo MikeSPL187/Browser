@@ -27,6 +27,22 @@ class AddressResolverTest {
     }
 
     @Test
+    fun `opens sites under international top-level domains`() {
+        assertEquals("https://xn--c1aapkosapc.xn--p1ai", AddressResolver.resolve("госуслуги.рф"))
+        assertEquals("https://xn--e1afmkfd.xn--80asehdb/news", AddressResolver.resolve("пример.онлайн/news"))
+        assertFalse(AddressResolver.isSearchQuery("xn--c1aapkosapc.xn--p1ai"))
+    }
+
+    @Test
+    fun `a search suggestion stays a search whatever it looks like`() {
+        val forced = { input: String -> AddressResolver.resolve(input, SearchEngine.Google, forceSearch = true) }
+        assertEquals("https://www.google.com/search?q=example.com", forced(" example.com "))
+        assertTrue(forced("intent://x#Intent;end").startsWith("https://www.google.com/search?q=intent"))
+        assertTrue(forced("https://evil.example").startsWith("https://www.google.com/search?q="))
+        assertEquals(BLANK_URL, forced("   "))
+    }
+
+    @Test
     fun `uses google for plain text and forbidden schemes`() {
         assertEquals(
             "https://www.google.com/search?q=material%20browser",
