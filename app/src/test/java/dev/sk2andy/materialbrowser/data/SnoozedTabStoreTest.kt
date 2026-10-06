@@ -29,6 +29,28 @@ class SnoozedTabStoreTest {
         assertFalse(preferences.contains(SnoozedTabStore.KEY_TABS))
     }
 
+    @Test
+    fun `a malformed entry hides only itself`() {
+        val raw = """
+            [
+              {"id": "first", "url": "https://example.com/", "wakeAtMillis": 2000},
+              "broken",
+              null,
+              {"id": "second", "wakeAtMillis": 1000}
+            ]
+        """.trimIndent()
+
+        val tabs = SnoozedTabStore.decodeTabs(raw)
+
+        assertEquals(listOf("second", "first"), tabs.map { it.tab.id })
+        assertEquals("https://example.com/", tabs.last().tab.url)
+    }
+
+    @Test
+    fun `an unreadable list decodes as empty`() {
+        assertTrue(SnoozedTabStore.decodeTabs("{not json").isEmpty())
+    }
+
     private fun snoozed(id: String) = SnoozedTab(
         tab = BrowserTab(id, 1L, url = "https://example.com/$id"),
         wakeAtMillis = 1_000L,
