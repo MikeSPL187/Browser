@@ -114,7 +114,6 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleEditorRequest
 import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
-import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
@@ -271,6 +270,7 @@ internal fun BrowserScreen(
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var tabOverviewVisible by rememberSaveable { mutableStateOf(false) }
+    val afterFirstFrame = rememberAfterFirstFrame()
     var candyTrailTabId by rememberSaveable { mutableStateOf<String?>(null) }
     var candyTrailSourceBounds by remember { mutableStateOf<Rect?>(null) }
     val addressEditor = controller.addressBar.editor
@@ -1417,7 +1417,7 @@ internal fun BrowserScreen(
                         )
                         .contentFramePadding(contentFrame),
                 ) {
-                    BrowserViewport(
+                    StartupComposition("Viewport") { BrowserViewport(
                         controller = controller,
                         fullscreenVideoGestureState = fullscreenVideoGestureState,
                         webViewVideoOnlyPresentation = webViewVideoOnlyPresentation,
@@ -1450,7 +1450,7 @@ internal fun BrowserScreen(
                         onBlurTargetReleased = { target ->
                             if (browserContentBlurTarget === target) browserContentBlurTarget = null
                         },
-                    )
+                    ) }
                 }
             }
         }
@@ -1529,7 +1529,7 @@ internal fun BrowserScreen(
             !hideBrowserChrome &&
             controller.findInPageState == null
         ) {
-            BrowserAddressChrome(
+            StartupComposition("AddressChrome") { BrowserAddressChrome(
             controller = controller,
             selectedTab = selectedTab,
             addressEditorVisible = addressEditorVisible,
@@ -1612,7 +1612,7 @@ internal fun BrowserScreen(
                 performAddressBarLongPress(AddressBarLongPressAction.CreateSiteCapsule)
             },
             onAddressBarLongPressAction = ::performAddressBarLongPress,
-            )
+            ) }
         }
 
         readerStudioSession?.let { session ->
@@ -1662,7 +1662,7 @@ internal fun BrowserScreen(
         }
 
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
-            TabOverview(
+            if (afterFirstFrame || tabOverviewVisible) StartupComposition("TabOverview") { TabOverview(
                 controller = controller,
                 backgroundWallpaper = tabSwitcherWallpaperRuntime,
                 visible = tabOverviewVisible,
@@ -1729,7 +1729,7 @@ internal fun BrowserScreen(
                     )
                 },
                 onSnoozeTab = { tabId -> snoozeTabId = tabId },
-            )
+            ) }
         }
 
         SnoozeTabDialog(
@@ -1796,7 +1796,7 @@ internal fun BrowserScreen(
             onDismiss = { moveTabToProfileId = null },
         )
 
-        BrowserSettingsOverlay(
+        if (afterFirstFrame || settingsVisible) StartupComposition("SettingsOverlay") { BrowserSettingsOverlay(
             controller = controller,
             visible = settingsVisible,
             destination = settingsDestination,
@@ -1842,9 +1842,9 @@ internal fun BrowserScreen(
             },
             onOpenFirefoxExtensions = onManageFirefoxExtensions,
             onDismiss = { settingsVisible = false },
-        )
+        ) }
 
-        BrowserModalSurfaces(
+        if (afterFirstFrame) StartupComposition("ModalSurfaces") { BrowserModalSurfaces(
             controller = controller,
             privacyXRayTabId = privacyXRayTabId,
             permissionRadarTabId = permissionRadarTabId,
@@ -1880,10 +1880,10 @@ internal fun BrowserScreen(
                 if (favoriteFeedbackEvent?.id == completedId) favoriteFeedbackEvent = null
             },
             onSnoozedTabsDismiss = { snoozedTabsVisible = false },
-        )
+        ) }
     }
 
-    BrowserTransientOverlays(
+    if (afterFirstFrame) StartupComposition("TransientOverlays") { BrowserTransientOverlays(
         controller = controller,
         clearDialogVisible = clearDialogVisible,
         onClearDialogDismiss = { clearDialogVisible = false },
@@ -1905,15 +1905,6 @@ internal fun BrowserScreen(
         onSnoozeLink = { url, title, sourceTabId ->
             pendingLinkSnooze = PendingLinkSnooze(url, title, sourceTabId)
         },
-    )
-    FirefoxExtensionChrome(controller)
-}
-
-private fun ReaderExtractionResult.readerActionMessageRes(): Int = when (this) {
-    is ReaderExtractionResult.Success -> R.string.reader_saved_offline_confirmation
-    is ReaderExtractionResult.Failure -> when (reason) {
-        ReaderExtractionFailure.UnsupportedPage -> R.string.reader_extraction_unsupported
-        ReaderExtractionFailure.EmptyArticle -> R.string.reader_extraction_empty
-        ReaderExtractionFailure.InvalidResponse -> R.string.reader_extraction_invalid
-    }
+    ) }
+    StartupComposition("FirefoxExtensionChrome") { FirefoxExtensionChrome(controller) }
 }

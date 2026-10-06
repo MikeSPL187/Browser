@@ -351,7 +351,7 @@ class MainActivity : AppCompatActivity() {
             )
         }
         profileBiometricAuthenticator = ProfileBiometricAuthenticator(this)
-        browserController = BrowserController(
+        browserController = dev.sk2andy.materialbrowser.browser.StartupTimeline.section("ControllerCreate") { BrowserController(
             activity = this,
             requestRuntimePermissions = { permissions ->
                 webPermissionLauncher.launch(permissions.toTypedArray())
@@ -427,7 +427,7 @@ class MainActivity : AppCompatActivity() {
             },
             profileProtectionSupported = { profileBiometricAuthenticator.isAvailable },
             authenticateProfile = profileBiometricAuthenticator::authenticate,
-        )
+        ) }
         browserController.reconcilePendingTaskRemoval(
             isRestoredTask = savedInstanceState != null,
         )
@@ -521,7 +521,7 @@ class MainActivity : AppCompatActivity() {
         )
         setCandyContent(
             animationsEnabled = browserController.appearanceSettings.animationsEnabled,
-        ) {
+        ) { dev.sk2andy.materialbrowser.browser.StartupTimeline.mark("ContentComposeStart")
             val appearanceSettings = browserController.appearanceSettings
             val privateMode = browserController.selectedTab.isIncognito
             val appearanceDark = privateMode || appearanceSettings.usesDarkColors(isSystemInDarkTheme())

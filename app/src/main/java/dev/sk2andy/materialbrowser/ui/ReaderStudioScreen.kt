@@ -13,6 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechController
@@ -186,5 +187,15 @@ internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
             handleWidth = VolaReader.handleWidth,
             handleHeight = VolaReader.handleHeight,
         )
+    }
+}
+
+/** The snackbar line after saving a page for offline reading. */
+internal fun ReaderExtractionResult.readerActionMessageRes(): Int = when (this) {
+    is ReaderExtractionResult.Success -> R.string.reader_saved_offline_confirmation
+    is ReaderExtractionResult.Failure -> when (reason) {
+        ReaderExtractionFailure.UnsupportedPage -> R.string.reader_extraction_unsupported
+        ReaderExtractionFailure.EmptyArticle -> R.string.reader_extraction_empty
+        ReaderExtractionFailure.InvalidResponse -> R.string.reader_extraction_invalid
     }
 }

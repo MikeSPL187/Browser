@@ -2175,8 +2175,8 @@ class BrowserController(
 
     init {
         fileChooserValidationExecutor.execute(geckoFileUploadStager::clearOrphans)
-        filterRules += candyRuleRepository.load()
-        userScripts += userScriptRepository.load()
+        filterRules += StartupTimeline.section("LoadFilterRules") { candyRuleRepository.load() }
+        userScripts += StartupTimeline.section("LoadUserScripts") { userScriptRepository.load() }
         browserEngineSessionFactory.setBlockThirdPartyCookies(workerSettings.blockThirdPartyCookies)
         webRtcProtectionMode = store.loadWebRtcProtectionMode()
         browserEngineSessionFactory.setWebRtcProtectionMode(webRtcProtectionMode)
@@ -2321,8 +2321,8 @@ class BrowserController(
         browserEngineSessionFactory.reconcileToppings(userScripts)
         rebuildCandyMatcher()
         val nowMillis = System.currentTimeMillis()
-        snoozedTabs += snoozedTabStore.load()
-        candyTrailRepository.processPendingRedactions()
+        snoozedTabs += StartupTimeline.section("LoadSnoozedTabs") { snoozedTabStore.load() }
+        StartupTimeline.section("TrailRedactions") { candyTrailRepository.processPendingRedactions() }
         blockerSettings = workerSettings
         inactiveTabLifetime = store.loadInactiveTabLifetime()
         searxngSettings = store.loadSearxngSettings()
@@ -2374,7 +2374,7 @@ class BrowserController(
         store.clearLegacyWebContentEdgeToEdgePreference()
         profilesEnabled = store.loadProfilesEnabled()
         isDefaultBrowser = DefaultBrowserRole.isHeld(activity)
-        val (restoredProfiles, restoredActiveProfileId) = store.loadProfiles()
+        val (restoredProfiles, restoredActiveProfileId) = StartupTimeline.section("LoadProfiles") { store.loadProfiles() }
         profiles += restoredProfiles.take(MAX_PROFILES)
         lockedProfileIds = profiles.asSequence()
             .filter { profile ->
@@ -2426,11 +2426,11 @@ class BrowserController(
             profileWallpaperStore.cleanup(configuredWallpapers)
         }
         refreshActiveProfileWallpaper()
-        val (restoredTabs, restoredSelection) = store.loadTabs(nowMillis)
-        history += historyRepository.snapshot()
-        applyFavoriteLibrary(store.loadFavoriteLibrary())
-        essentials.restore()
-        protectionReport.restore()
+        val (restoredTabs, restoredSelection) = StartupTimeline.section("LoadTabs") { store.loadTabs(nowMillis) }
+        history += StartupTimeline.section("LoadHistory") { historyRepository.snapshot() }
+        StartupTimeline.section("LoadFavorites") { applyFavoriteLibrary(store.loadFavoriteLibrary()) }
+        StartupTimeline.section("RestoreEssentials") { essentials.restore() }
+        StartupTimeline.section("RestoreProtectionReport") { protectionReport.restore() }
         val profileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
         tabs += restoredTabs.take(MAX_TABS).map { tab ->
             if (tab.profileId in profileIds) tab else tab.copy(profileId = profiles.first().id)
