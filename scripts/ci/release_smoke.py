@@ -65,8 +65,15 @@ class SiteResult:
 
 
 def adb(*args, check=False, timeout=120):
-    result = subprocess.run(["adb", *args], capture_output=True, text=True, errors="replace",
-                            timeout=timeout, check=check)
+    """adb's output; a hung command (a busy emulator) gives "" unless [check] asks for it to fail."""
+    try:
+        result = subprocess.run(["adb", *args], capture_output=True, text=True, errors="replace",
+                                timeout=timeout, check=check)
+    except subprocess.TimeoutExpired:
+        if check:
+            raise
+        print(f"adb {' '.join(args)}: no answer in {timeout} s", flush=True)
+        return ""
     return result.stdout
 
 
@@ -91,7 +98,12 @@ def newest_tombstone(since):
 
 
 def screenshot(path):
-    shot = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+    """Best effort: screencap can hang while the emulator's software GPU plays video."""
+    try:
+        shot = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=30).stdout
+    except subprocess.TimeoutExpired:
+        print(f"no screenshot for {Path(path).name}: screencap did not answer", flush=True)
+        return
     if shot:
         Path(path).write_bytes(shot)
 
@@ -115,13 +127,18 @@ def check_site(package, name, url, settle, shot=None):
     return result
 
 
-def report(results, version):
+def report(results, version, aborted=""):
     crashed = [result for result in results if result.crashed]
     unopened = [result for result in results if result.unopened]
     verdict = "✅ без вылетов" if not crashed else f"❌ вылетов: {len(crashed)} из {len(results)}"
     if unopened:
         verdict += f" · ⚠️ не открылись: {len(unopened)}"
-    lines = [f"## Ночной smoke-тест release · {version} · {verdict}", "", "| Сайт | Результат |", "|---|---|"]
+    if aborted:
+        verdict += f" · ⚠️ прогон прерван: проверено {len(results)} из {len(SITES)}"
+    lines = [f"## Ночной smoke-тест release · {version} · {verdict}", ""]
+    if aborted:
+        lines += [f"Прерван: `{aborted}`", ""]
+    lines += ["| Сайт | Результат |", "|---|---|"]
     for result in results:
         if result.unopened:
             status = "⚠️ страница не открылась (нет процесса вкладки)"
@@ -163,21 +180,27 @@ def main(argv):
     shots = Path(args.screenshots) if args.screenshots else None
     if shots:
         shots.mkdir(parents=True, exist_ok=True)
+    aborted = ""
     for number, (name, url) in enumerate(SITES, start=1):
         shot = shots / f"{number:02d}.png" if shots else None
-        result = check_site(args.package, name, url, args.settle, shot)
+        try:
+            result = check_site(args.package, name, url, args.settle, shot)
+        except Exception as error:  # the sites checked so far still make the report
+            aborted = f"{name}: {type(error).__name__}: {error}"
+            print(f"ABORT {aborted}", flush=True)
+            break
         label = "CRASH" if result.crashed else "EMPTY" if result.unopened else "ok"
         print(f"{label:5} {name} {url}", flush=True)
         results.append(result)
 
-    text = report(results, args.version)
+    text = report(results, args.version, aborted)
     Path(args.report).write_text(text, encoding="utf-8")
     print(text, flush=True)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write(text)
-    return 1 if any(result.crashed for result in results) else 0
+    return 1 if aborted or any(result.crashed for result in results) else 0
 
 
 if __name__ == "__main__":

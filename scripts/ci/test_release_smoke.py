@@ -47,6 +47,25 @@ class ReportTest(unittest.TestCase):
         self.assertIn("✅ без вылетов · ⚠️ не открылись: 1", text)
         self.assertIn("| [VK](https://vk.com/) | ⚠️ страница не открылась (нет процесса вкладки) |", text)
 
+    def test_an_aborted_run_keeps_the_sites_it_checked(self):
+        text = smoke.report([smoke.SiteResult("VK", "https://vk.com/", alive=True)], "x",
+                            aborted="YouTube: TimeoutExpired: adb")
+        self.assertIn(f"⚠️ прогон прерван: проверено 1 из {len(smoke.SITES)}", text)
+        self.assertIn("Прерван: `YouTube: TimeoutExpired: adb`", text)
+        self.assertIn("| [VK](https://vk.com/) | ✅ жив |", text)
+
+    def test_a_hung_adb_command_reads_as_empty(self):
+        real = smoke.subprocess.run
+        def hang(*args, **kwargs):
+            raise smoke.subprocess.TimeoutExpired(args[0], kwargs.get("timeout"))
+        smoke.subprocess.run = hang
+        try:
+            self.assertEqual(smoke.adb("shell", "pidof", "x"), "")
+            with self.assertRaises(smoke.subprocess.TimeoutExpired):
+                smoke.adb("install", "x.apk", check=True)
+        finally:
+            smoke.subprocess.run = real
+
     def test_every_site_is_an_https_page(self):
         self.assertTrue(all(url.startswith("https://") for _, url in smoke.SITES))
         self.assertEqual(len({url for _, url in smoke.SITES}), len(smoke.SITES))
