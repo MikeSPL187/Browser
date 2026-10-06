@@ -83,10 +83,14 @@ class FindInPageController internal constructor(
         }
     }
 
+    /**
+     * Steps to the next or previous match. With nothing to step to, the current query is searched
+     * again: the keyboard's Search action is the way to retry after the engine gave no answer.
+     */
     fun findNext(forward: Boolean): Boolean {
         val session = session ?: return false
         val current = state ?: return false
-        if (!FindInPageRules.canNavigate(current)) return false
+        if (!FindInPageRules.canNavigate(current)) return searchAgain(session, current)
         dropRequests()
         search(session, current.query, forward, recountsLeft = FindInPageRules.MAX_RECOUNTS)
         return true
@@ -123,6 +127,15 @@ class FindInPageController internal constructor(
         }
     }
 
+    private fun searchAgain(session: FindInPageSession, current: FindInPageState): Boolean {
+        val query = current.query
+        if (query.isEmpty()) return false
+        dropRequests()
+        state = FindInPageRules.withQuery(FindInPageRules.withQuery(current, query = ""), query)
+        search(session, query, forward = true, recountsLeft = FindInPageRules.MAX_RECOUNTS)
+        return true
+    }
+
     fun close() {
         dropRequests()
         val closing = session
@@ -141,15 +154,14 @@ class FindInPageController internal constructor(
         val request = ++requestSeq
         session.engineSession.findInPage(query = query, forward = forward) { result ->
             val current = state
-            if (
-                result == null ||
-                current == null ||
-                request != requestSeq ||
-                !isSearching(session, query)
-            ) {
+            if (current == null || request != requestSeq || !isSearching(session, query)) {
                 return@findInPage
             }
             cancelRecount()
+            if (result == null) {
+                state = FindInPageRules.withoutResult(current)
+                return@findInPage
+            }
             val updated = FindInPageRules.withResult(
                 state = current,
                 activeMatchOrdinal = result.activeMatchOrdinal,
@@ -176,7 +188,9 @@ class FindInPageController internal constructor(
             if (!isSearching(session, query)) return@Runnable
             val request = ++requestSeq
             session.engineSession.findInPage(query = query, forward = false) { back ->
-                if (back == null || request != requestSeq || !isSearching(session, query)) {
+                if (request != requestSeq || !isSearching(session, query)) return@findInPage
+                if (back == null) {
+                    state = state?.let(FindInPageRules::withoutCount)
                     return@findInPage
                 }
                 search(session, query, forward = true, recountsLeft = recountsLeft)

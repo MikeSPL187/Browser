@@ -201,6 +201,66 @@ class FindInPageControllerTest {
         assertTrue(controller.state!!.isDoneCounting)
     }
 
+    @Test
+    fun `no answer for a new query stops counting and search tries again`() {
+        val engine = DeferredFindPort()
+        val controller = controller(engine, mutableListOf())
+
+        controller.updateQuery("Zen")
+        engine.complete(0, null)
+
+        assertTrue(controller.state!!.isDoneCounting)
+        assertEquals(0, FindInPageRules.displayPosition(controller.state!!).matchCount)
+
+        assertTrue(controller.findNext(forward = true))
+        assertFalse(controller.state!!.isDoneCounting)
+        assertEquals(listOf("Zen", "Zen"), engine.requests.map { it.first })
+        engine.complete(1, counted)
+
+        assertEquals(541, controller.state!!.matchCount)
+    }
+
+    @Test
+    fun `no answer while recounting shows the match without a total`() {
+        val engine = DeferredFindPort()
+        val scheduled = mutableListOf<Runnable>()
+        val controller = controller(engine, scheduled)
+        controller.updateQuery("Zen")
+        engine.complete(0, uncounted)
+
+        scheduled.removeAt(0).run()
+        engine.complete(1, null)
+
+        val position = FindInPageRules.displayPosition(controller.state!!)
+        assertTrue(controller.state!!.isDoneCounting)
+        assertFalse(position.isCountKnown)
+        assertEquals(1, position.activeMatchNumber)
+        assertTrue(scheduled.isEmpty())
+    }
+
+    @Test
+    fun `no answer for a step keeps the count`() {
+        val engine = DeferredFindPort()
+        val controller = controller(engine, mutableListOf())
+        controller.updateQuery("Zen")
+        engine.complete(0, counted)
+
+        controller.findNext(forward = true)
+        engine.complete(1, null)
+
+        assertEquals(541, controller.state!!.matchCount)
+        assertTrue(controller.state!!.isDoneCounting)
+    }
+
+    @Test
+    fun `search again needs a query`() {
+        val engine = DeferredFindPort()
+        val controller = controller(engine, mutableListOf())
+
+        assertFalse(controller.findNext(forward = true))
+        assertTrue(engine.requests.isEmpty())
+    }
+
     private fun controller(
         engine: BrowserEngineFindPort,
         scheduled: MutableList<Runnable>,

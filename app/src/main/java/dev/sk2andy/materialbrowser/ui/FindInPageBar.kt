@@ -163,7 +163,8 @@ internal fun FindInPageBar(
                     cursorBrush = SolidColor(colors.primary),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
-                        onSearch = { if (canNavigate) onNextMatch() },
+                        // Steps to the next match, or searches again when there is none.
+                        onSearch = { onNextMatch() },
                     ),
                     decorationBox = { innerTextField ->
                         Box(contentAlignment = Alignment.CenterStart) {
