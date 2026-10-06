@@ -1,7 +1,9 @@
 package dev.sk2andy.materialbrowser.browser
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SplitViewRulesTest {
@@ -52,16 +54,47 @@ class SplitViewRulesTest {
         assertEquals("recent", SplitViewRules.companionFor(tabs, "selected"))
         assertNull(SplitViewRules.companionFor(tabs, "private"))
         assertNull(SplitViewRules.companionFor(tabs, "missing"))
+        // A requested tab wins over the most recent one, but only of the same kind.
+        assertEquals("old", SplitViewRules.companionFor(tabs, "selected", requestedTabId = "old"))
+        assertNull(SplitViewRules.companionFor(tabs, "selected", requestedTabId = "private"))
+        assertNull(SplitViewRules.companionFor(tabs, "private", requestedTabId = "recent"))
+        assertEquals(
+            "recent",
+            SplitViewRules.companionFor(tabs, "selected", requestedTabId = "selected"),
+        )
     }
 
     @Test
     fun `split view closes when its tabs go`() {
         val state = SplitViewState(companionTabId = "b")
+        val a = BrowserTab(id = "a", lastAccessedAt = 0)
+        val b = BrowserTab(id = "b", lastAccessedAt = 0)
 
-        assertEquals(state, SplitViewRules.reconcile(state, listOf("a", "b"), "a"))
-        assertNull(SplitViewRules.reconcile(state, listOf("a"), "a"))
-        assertNull(SplitViewRules.reconcile(state, listOf("a", "b"), "b"))
-        assertNull(SplitViewRules.reconcile(null, listOf("a", "b"), "a"))
+        assertEquals(state, SplitViewRules.reconcile(state, listOf(a, b), a))
+        assertNull(SplitViewRules.reconcile(state, listOf(a), a))
+        assertNull(SplitViewRules.reconcile(state, listOf(a, b), b))
+        assertNull(SplitViewRules.reconcile(null, listOf(a, b), a))
+    }
+
+    @Test
+    fun `split view closes when the selected tab is of another kind than the companion`() {
+        val regular = BrowserTab(id = "regular", lastAccessedAt = 0)
+        val private = BrowserTab(id = "private", lastAccessedAt = 0, isIncognito = true)
+        val otherPrivate = BrowserTab(id = "other", lastAccessedAt = 0, isIncognito = true)
+        val tabs = listOf(regular, private, otherPrivate)
+        val privateCompanion = SplitViewState(companionTabId = "private")
+
+        // «Regular tabs» on the lock screen selects a regular tab: the private pair closes.
+        assertNull(SplitViewRules.reconcile(privateCompanion, tabs, regular))
+        assertEquals(
+            privateCompanion,
+            SplitViewRules.reconcile(privateCompanion, tabs, otherPrivate),
+        )
+        val regularCompanion = SplitViewState(companionTabId = "regular")
+        assertNull(SplitViewRules.reconcile(regularCompanion, tabs, private))
+        assertTrue(SplitViewRules.pairs(private, otherPrivate))
+        assertFalse(SplitViewRules.pairs(regular, private))
+        assertFalse(SplitViewRules.pairs(regular, regular))
     }
 
     @Test
@@ -79,7 +112,8 @@ class SplitViewRulesTest {
         assertEquals(SplitPane.Top, split.state?.activePane)
         split.updateRatio(SplitViewRules.THIRD)
         assertEquals(SplitViewRules.THIRD, split.state?.topRatio)
-        split.reconcile(activeTabIds = listOf("b"), selectedTabId = "b")
+        val b = BrowserTab(id = "b", lastAccessedAt = 0)
+        split.reconcile(activeTabs = listOf(b), selectedTab = b)
         assertNull(split.state)
     }
 }

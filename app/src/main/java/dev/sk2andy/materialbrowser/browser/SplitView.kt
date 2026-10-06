@@ -81,28 +81,42 @@ object SplitViewRules {
     }
 
     /**
-     * The tab to put next to [selectedTabId] when Split View opens from the menu: the most
-     * recently used other tab with a page, from the same kind (private or not).
+     * Whether [companion] may share the screen with [selected]: another tab of the same kind, so a
+     * private page never sits next to a regular one, where «Lock on exit» would not hide it.
      */
-    fun companionFor(tabs: List<BrowserTab>, selectedTabId: String): String? {
+    fun pairs(selected: BrowserTab, companion: BrowserTab): Boolean =
+        companion.id != selected.id && companion.isIncognito == selected.isIncognito
+
+    /**
+     * The tab to put next to [selectedTabId] when Split View opens: [requestedTabId] when it is
+     * another tab, or else the most recently used other tab with a page. Either way it is of the
+     * same kind (private or not); a requested tab of the other kind opens nothing.
+     */
+    fun companionFor(
+        tabs: List<BrowserTab>,
+        selectedTabId: String,
+        requestedTabId: String? = null,
+    ): String? {
         val selected = tabs.firstOrNull { tab -> tab.id == selectedTabId } ?: return null
+        tabs.firstOrNull { tab -> tab.id == requestedTabId && tab.id != selectedTabId }
+            ?.let { requested -> return requested.id.takeIf { pairs(selected, requested) } }
         return tabs
-            .filter { tab ->
-                tab.id != selectedTabId &&
-                    tab.url != BLANK_URL &&
-                    tab.isIncognito == selected.isIncognito
-            }
+            .filter { tab -> tab.url != BLANK_URL && pairs(selected, tab) }
             .maxByOrNull(BrowserTab::lastAccessedAt)
             ?.id
     }
 
-    /** The state that still holds after the tabs changed, or null when Split View must close. */
+    /**
+     * The state that still holds after the tabs changed, or null when Split View must close: its
+     * companion went, became the selected tab, or is of another kind than [selectedTab].
+     */
     fun reconcile(
         state: SplitViewState?,
-        activeTabIds: Collection<String>,
-        selectedTabId: String,
+        activeTabs: List<BrowserTab>,
+        selectedTab: BrowserTab,
     ): SplitViewState? = state?.takeIf { current ->
-        current.companionTabId != selectedTabId && current.companionTabId in activeTabIds
+        activeTabs.firstOrNull { tab -> tab.id == current.companionTabId }
+            ?.let { companion -> pairs(selectedTab, companion) } == true
     }
 }
 
@@ -153,7 +167,7 @@ class SplitViewController(
         select(current.companionTabId)
     }
 
-    fun reconcile(activeTabIds: Collection<String>, selectedTabId: String) {
-        if (SplitViewRules.reconcile(state, activeTabIds, selectedTabId) == null) close()
+    fun reconcile(activeTabs: List<BrowserTab>, selectedTab: BrowserTab) {
+        if (SplitViewRules.reconcile(state, activeTabs, selectedTab) == null) close()
     }
 }
