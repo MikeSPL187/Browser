@@ -215,6 +215,11 @@ internal interface AndroidBrowserEngineSessionPort :
 
     fun historyUrlAtOffset(offset: Int): String?
 
+    /**
+     * Runs the bounded article extraction and returns the raw JSON object text (as read by
+     * `ReaderExtractionParser.parseJson`), or null. Every engine decodes its own transport
+     * encoding first, so callers never see a JSON-encoded string.
+     */
     fun extractPageForReader(onComplete: (String?) -> Unit)
 
     fun probeTextInputOcclusion(

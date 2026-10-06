@@ -135,6 +135,7 @@ import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
@@ -836,8 +837,15 @@ private class SystemWebViewBrowserEngineSession(
     }
 
     override fun extractPageForReader(onComplete: (String?) -> Unit) {
-        if (closed) onComplete(null)
-        else webView.evaluateJavascript(ReaderExtractionScript.javascript, onComplete)
+        if (closed) {
+            onComplete(null)
+            return
+        }
+        // evaluateJavascript returns the script's string JSON-encoded; the port hands back
+        // the raw JSON object text, the same as Gecko.
+        webView.evaluateJavascript(ReaderExtractionScript.javascript) { result ->
+            onComplete(ReaderExtractionParser.decodeJavascriptString(result))
+        }
     }
 
     override fun probeTextInputOcclusion(
