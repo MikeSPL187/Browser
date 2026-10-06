@@ -363,6 +363,13 @@ android {
         buildConfig = true
     }
 
+    // .github/workflows/instrumented.yml: every androidTest runs in its own instrumentation
+    // process, so a crash or state left behind by one test does not fail the tests after it.
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
         jniLibs.useLegacyPackaging = compressNativeLibs.get()
@@ -695,6 +702,8 @@ dependencies {
     androidTestImplementation(libs.geckoview)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestUtil(libs.androidx.test.orchestrator)
+    androidTestUtil(libs.androidx.test.services)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

@@ -1,0 +1,5 @@
+# Known androidTest failures (.github/workflows/instrumented.yml, scripts/ci/instrumented_summary.py).
+#
+# One test per line: package.Class#method, or package.Class for every method of the class;
+# text after " -- " says why. A failing test that is not listed here fails the run. Fix tests
+# and remove their lines; do not add new ones to get a pull request green.
