@@ -307,6 +307,8 @@ jobs:
 
       - name: Open sign-in pages
         run: |
+          # Empty greps and a dead process are results here, not errors.
+          set +e +o pipefail
           timeout 300 adb wait-for-device
           # shellcheck disable=SC2016
           timeout 300 bash -c 'until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done'
