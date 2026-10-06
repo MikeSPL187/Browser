@@ -154,3 +154,21 @@ def describe_frames(stats):
         f"{name} {stats[name]} ms" for name in ("p50", "p90", "p99") if name in stats
     )
     return f"{frames} frames, {janky} janky ({share}%), {percentiles}"
+
+
+def card_spread(width, height, pixels, step=16):
+    """Brightness spread (standard deviation, 0–255) of the page card area: about 0 for an
+    empty card, tens for a page with text (#123, H7: a loaded page showed an empty card)."""
+    top, bottom = int(height * 0.08), int(height * 0.85)
+    left, right = min(40, width // 4), max(width - 40, width * 3 // 4)
+    values = []
+    for y in range(top, bottom, step):
+        row = y * width
+        for x in range(left, right, step):
+            offset = (row + x) * 4
+            red, green, blue = pixels[offset], pixels[offset + 1], pixels[offset + 2]
+            values.append(0.299 * red + 0.587 * green + 0.114 * blue)
+    if not values:
+        return 0.0
+    mean = sum(values) / len(values)
+    return round((sum((value - mean) ** 2 for value in values) / len(values)) ** 0.5, 1)

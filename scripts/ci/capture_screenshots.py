@@ -404,6 +404,38 @@ def probe_open_site(label, address):
     log(f"open site {label}: {page_probe.describe_frames(page_probe.parse_gfxinfo(frames))}")
 
 
+def card_spread_now():
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    try:
+        return page_probe.card_spread(*page_probe.parse_raw_screencap(data))
+    except ValueError:
+        return None
+
+
+def probe_first_paint(label):
+    """Opens a site in a new tab, as a link from another app does, and logs whether the page
+    card shows it: brightness spread at 5, 10, 15 and 20 s, whether the page text is in the
+    accessibility tree (Gecko has the page) and the spread after a small scroll (#123, H7: an
+    empty card until the first scroll in a third of the tours)."""
+    open_url("https://en.wikipedia.org/wiki/Zen")
+    spreads = []
+    for _ in range(4):
+        time.sleep(5)
+        spreads.append(card_spread_now())
+    page_text = find("Zen originated", "Mahayana", contains=True) is not None
+    save_ui(f"first-paint-{label}")
+    shot(f"first-paint-{label}", audit=False)
+    width, height = screen_size()
+    adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.6)),
+        str(width // 2), str(int(height * 0.5)), "400")
+    time.sleep(2)
+    after = card_spread_now()
+    empty = [spread is not None and spread < 3 for spread in spreads]
+    verdict = "EMPTY" if empty[-1] else "OK"
+    log(f"first paint {label}: {verdict}: card spread at 5/10/15/20 s {spreads}, "
+        f"page text in tree {page_text}, after a small scroll {after}")
+
+
 def probe_page(label):
     """Opening a site, touch accuracy at the top of the page and after scrolling, then the
     keyboard."""
@@ -465,6 +497,8 @@ def tour(suffix):
         shot(f"page-scrolled-{suffix}")
     step("page", page)
     if suffix == "light":
+        step("probe-first-paint-1", lambda: probe_first_paint("frame-1"))
+        step("probe-first-paint-2", lambda: probe_first_paint("frame-2"))
         step("probe-frame", lambda: probe_page("frame"))
         step("probe-compact", lambda: probe_compact(suffix))
 

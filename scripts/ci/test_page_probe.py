@@ -96,6 +96,14 @@ Janky frames (legacy): 20 (16.67%)
                          page_probe.describe_frames(stats))
         self.assertEqual("no frame statistics", page_probe.describe_frames({}))
 
+    def test_card_spread_tells_an_empty_card_from_a_page(self):
+        empty = page_probe.parse_raw_screencap(screencap(200, [(400, (250, 250, 250))]))
+        self.assertEqual(0.0, page_probe.card_spread(*empty))
+        striped = [(8, (250, 250, 250)) if index % 2 == 0 else (8, (20, 20, 20))
+                   for index in range(50)]
+        page = page_probe.parse_raw_screencap(screencap(200, striped))
+        self.assertGreater(page_probe.card_spread(*page, step=4), 50)
+
 
 if __name__ == "__main__":
     unittest.main()
