@@ -830,7 +830,9 @@ class TabOverviewReorderInstrumentedTest {
         assertTrue(titleBounds.top >= cardBounds.first().top)
         assertTrue(closeBounds.right <= cardBounds.first().right)
         assertTrue(closeBounds.top >= cardBounds.first().top)
-        assertTrue(titleBounds.right <= closeBounds.left + 1f)
+        // The v4 close button floats over the card's corner; its 48 dp target may reach over
+        // the title row, so the title ends before the button's visible centre.
+        assertTrue(titleBounds.right <= closeBounds.center.x)
         assertTrue(closeBounds.width >= 48f * density)
         assertTrue(closeBounds.height >= 48f * density)
     }

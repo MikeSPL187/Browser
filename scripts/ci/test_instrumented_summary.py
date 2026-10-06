@@ -88,6 +88,7 @@ class InstrumentedSummaryTest(unittest.TestCase):
 
         self.assertEqual(0, status)
         self.assertIn("Known failures (2)", text)
+        self.assertIn("`TabsTest#closesTab` — Expected &lt;1&gt; tabs", text)
         self.assertIn("- `dev.sk2andy.materialbrowser.ui.MenuTest#opensMenu`", text)
         self.assertNotIn("#### New failures", text)
 

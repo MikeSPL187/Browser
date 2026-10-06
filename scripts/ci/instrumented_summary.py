@@ -190,12 +190,10 @@ def render(summary: Summary, baseline: set) -> tuple:
         lines.extend([f"#### New failures ({len(new_failures)})", ""])
         lines.extend(render_failures(new_failures))
     if known_failures:
-        by_class = {}
-        for result in known_failures:
-            by_class.setdefault(result.class_name, []).append(result.method)
         lines.extend([f"<details><summary>Known failures ({len(known_failures)})</summary>", ""])
-        for class_name in sorted(by_class):
-            lines.append(f"- `{short_name(class_name)}`: {len(by_class[class_name])}")
+        for result in sorted(known_failures, key=lambda item: item.test_id):
+            message = escape_html(result.message[:160])
+            lines.append(f"- `{short_name(result.class_name)}#{result.method}` — {message}")
         lines.extend(["", "</details>", ""])
     if fixed:
         lines.extend([f"#### Fixed — remove from the baseline ({len(fixed)})", ""])
