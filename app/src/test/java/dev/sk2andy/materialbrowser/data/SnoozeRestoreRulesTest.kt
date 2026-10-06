@@ -48,6 +48,43 @@ class SnoozeRestoreRulesTest {
     }
 
     @Test
+    fun `notification never names a tab of a protected workspace`() {
+        val protectedProfiles = profiles.map { profile ->
+            if (profile.id == "work") {
+                profile.copy(protection = ProfileProtection(ProfileLockTrigger.AppBackgrounded))
+            } else {
+                profile
+            }
+        }
+        val workTab = BrowserTab("work-tab", 1L, profileId = "work", title = "Payroll")
+
+        val visibleTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            tabs = listOf(workTab),
+            restoredTabIds = setOf(workTab.id),
+            profiles = protectedProfiles,
+            profilesEnabled = true,
+        )
+
+        assertTrue(visibleTabs.isEmpty())
+    }
+
+    @Test
+    fun `notification with workspaces off names only restored first workspace tabs`() {
+        val candyTab = BrowserTab("candy-tab", 1L, profileId = "candy")
+        val workTab = BrowserTab("work-tab", 1L, profileId = "work")
+        val openTab = BrowserTab("open-tab", 1L, profileId = "candy")
+
+        val visibleTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            tabs = listOf(openTab, candyTab, workTab),
+            restoredTabIds = setOf(candyTab.id, workTab.id),
+            profiles = profiles,
+            profilesEnabled = false,
+        )
+
+        assertEquals(listOf(candyTab), visibleTabs)
+    }
+
+    @Test
     fun `due tab restores once with profile and pin metadata`() {
         val snoozed = snoozedTab("due", wakeAt = 90L, profileId = "work", pinned = true)
 
