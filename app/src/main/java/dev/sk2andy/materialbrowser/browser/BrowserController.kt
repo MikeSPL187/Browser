@@ -1516,12 +1516,6 @@ class BrowserController(
     val isSelectedDomainMuted: Boolean
         get() = isDomainMuted(selectedTabId)
 
-    val canToggleSelectedAlwaysBlockPopups: Boolean
-        get() = supportsPageContentActions && canToggleAlwaysBlockPopups(selectedTabId)
-
-    val isSelectedAlwaysBlockPopups: Boolean
-        get() = isAlwaysBlockPopupsEnabled(selectedTabId)
-
     val canToggleSelectedDesktopView: Boolean
         get() = canToggleDesktopView(selectedTabId)
 
@@ -9728,9 +9722,6 @@ class BrowserController(
     }
 
     fun setSelectedDomainMuted(muted: Boolean): Boolean = setDomainMuted(selectedTabId, muted)
-
-    fun setSelectedAlwaysBlockPopups(enabled: Boolean): Boolean =
-        setAlwaysBlockPopups(selectedTabId, enabled)
 
     fun setAlwaysBlockPopups(tabId: String, enabled: Boolean): Boolean {
         val tab = tabs.firstOrNull { it.id == tabId } ?: return false

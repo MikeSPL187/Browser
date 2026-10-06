@@ -63,6 +63,7 @@ internal object SiteInfoTestTags {
     const val AllPermissions = "site_info_all_permissions"
     const val Protection = "site_info_protection"
     const val Popups = "site_info_popups"
+    const val PageFixes = "site_info_page_fixes"
     const val DeleteSiteData = "site_info_delete_site_data"
     const val Certificate = "site_info_certificate"
 
@@ -93,6 +94,7 @@ internal fun SiteInfoOverview(
     siteData: SiteInfoSiteData? = null,
     certificate: SiteCertificate? = null,
     onOpenCertificate: () -> Unit = {},
+    pageFixes: SiteInfoPageFixes? = null,
 ) {
     val host = SiteConnectionRules.host(pageUrl)
     Column(
@@ -180,7 +182,62 @@ internal fun SiteInfoOverview(
                 )
             }
         }
+        pageFixes?.let { fixes -> SitePageFixesCard(fixes) }
         siteData?.let { data -> SiteDataCard(data) }
+    }
+}
+
+internal enum class SiteInfoPageFix { CookieBanners, VerticalScrolling, PageZooming, SafeArea }
+
+/**
+ * The per-site fixes a page may need, moved here from the main menu (S4a): they belong to the
+ * site, not to the moment. [cookieBannersHidden] is null while cookie-banner protection is off
+ * everywhere or paused for this site.
+ */
+internal class SiteInfoPageFixes(
+    val cookieBannersHidden: Boolean?,
+    val forceVerticalScrolling: Boolean,
+    val forcePageZooming: Boolean,
+    val forceSafeArea: Boolean,
+    val onChange: (SiteInfoPageFix, Boolean) -> Unit,
+)
+
+@Composable
+private fun SitePageFixesCard(fixes: SiteInfoPageFixes) {
+    SiteInfoCard(modifier = Modifier.testTag(SiteInfoTestTags.PageFixes)) {
+        fixes.cookieBannersHidden?.let { hidden ->
+            SiteInfoSwitchRow(
+                icon = painterResource(R.drawable.ic_symbol_cookie),
+                title = stringResource(R.string.privacy_cookie_banner_remove),
+                supporting = stringResource(R.string.privacy_cookie_banner_remove_description),
+                checked = hidden,
+                onCheckedChange = { fixes.onChange(SiteInfoPageFix.CookieBanners, it) },
+            )
+            SiteInfoDivider()
+        }
+        SiteInfoSwitchRow(
+            icon = painterResource(R.drawable.ic_symbol_vertical_scroll),
+            title = stringResource(R.string.privacy_force_vertical_scrolling),
+            supporting = stringResource(R.string.privacy_force_vertical_scrolling_description),
+            checked = fixes.forceVerticalScrolling,
+            onCheckedChange = { fixes.onChange(SiteInfoPageFix.VerticalScrolling, it) },
+        )
+        SiteInfoDivider()
+        SiteInfoSwitchRow(
+            icon = painterResource(R.drawable.ic_symbol_zoom_in),
+            title = stringResource(R.string.privacy_force_page_zooming),
+            supporting = stringResource(R.string.privacy_force_page_zooming_description),
+            checked = fixes.forcePageZooming,
+            onCheckedChange = { fixes.onChange(SiteInfoPageFix.PageZooming, it) },
+        )
+        SiteInfoDivider()
+        SiteInfoSwitchRow(
+            icon = painterResource(R.drawable.ic_symbol_fit_screen),
+            title = stringResource(R.string.compatibility_force_safe_area),
+            supporting = stringResource(R.string.compatibility_force_safe_area_description),
+            checked = fixes.forceSafeArea,
+            onCheckedChange = { fixes.onChange(SiteInfoPageFix.SafeArea, it) },
+        )
     }
 }
 
@@ -256,11 +313,14 @@ private fun SiteInfoHeader(host: String, connectionKind: SiteConnectionKind) {
 }
 
 @Composable
-internal fun SiteInfoCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun SiteInfoCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Surface(
         shape = VolaSiteInfo.cardShape,
         color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(content = content)
     }
@@ -473,6 +533,13 @@ private fun SiteInfoOverviewPreview() {
                 onPermissionDecisionChanged = { _, _ -> },
                 onProtectionChange = {},
                 onPopupsBlockedChange = {},
+                pageFixes = SiteInfoPageFixes(
+                    cookieBannersHidden = true,
+                    forceVerticalScrolling = false,
+                    forcePageZooming = true,
+                    forceSafeArea = false,
+                    onChange = { _, _ -> },
+                ),
                 modifier = Modifier.padding(VolaSiteInfo.sidePadding),
                 siteData = SiteInfoSiteData(
                     baseDomain = "north-guide.ru",

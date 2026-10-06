@@ -45,6 +45,7 @@ class AuditTest(unittest.TestCase):
 
     def test_a_list_item_scrolled_past_the_edge_is_cut_not_small_or_unlabeled(self):
         dump = f"""<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="{PACKAGE}" clickable="false" bounds="[0,0][1080,2400]">
   <node class="android.view.View" package="{PACKAGE}" scrollable="true" clickable="false" bounds="[0,500][1080,2000]">
     <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[40,420][520,560]">
       <node class="android.view.View" package="{PACKAGE}" content-desc="Mail, mail.example.com" clickable="false" bounds="[40,500][520,560]" />
@@ -54,6 +55,7 @@ class AuditTest(unittest.TestCase):
     </node>
     <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[600,1960][1040,2000]" />
     <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[40,1000][520,1400]" />
+  </node>
   </node>
 </hierarchy>
 """
@@ -75,6 +77,22 @@ class AuditTest(unittest.TestCase):
         self.assertEqual(
             audit.audit(dump, PACKAGE, density=320),
             [("unlabeled", "View", 498, 100)],
+        )
+
+    def test_a_sliver_of_a_scrolling_sheet_at_the_screen_edge_is_cut_not_unlabeled(self):
+        # A sheet's list ends at the screen's bottom: the row there shows 15 dp, its label below.
+        dump = f"""<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="{PACKAGE}" clickable="false" bounds="[0,0][1080,2400]">
+    <node class="android.widget.ScrollView" package="{PACKAGE}" scrollable="true" clickable="false" bounds="[0,1327][1080,2400]">
+      <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[42,2361][1038,2400]" />
+      <node class="android.view.View" package="{PACKAGE}" clickable="true" bounds="[42,2221][1038,2358]" />
+    </node>
+  </node>
+</hierarchy>
+"""
+        self.assertEqual(
+            audit.audit(dump, PACKAGE, density=320),
+            [("unlabeled", "View", 498, 68)],
         )
 
     def test_broken_dump_has_no_findings(self):

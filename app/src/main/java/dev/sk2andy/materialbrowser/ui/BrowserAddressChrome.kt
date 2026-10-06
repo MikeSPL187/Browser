@@ -184,9 +184,6 @@ internal fun BoxScope.BrowserAddressChrome(
     val selectedSiteState = controller.siteProtectionState(selectedTab.id)
     val selectedSiteHasHost = controller.supportsPageContentActions &&
         selectedSiteState.host != null
-    val canToggleSelectedCookieBannerRemoval = selectedSiteHasHost &&
-        controller.blockerSettings.hideCookieConsent &&
-        !selectedSiteState.isPaused
     val permissionActivityVisible = controller.hasPermissionActivity(selectedTab.id)
     val imeBottomPx = WindowInsets.ime.getBottom(density)
     val fullWindowHeightPx = context
@@ -549,39 +546,14 @@ internal fun BoxScope.BrowserAddressChrome(
         canToggleDomainMute = controller.canToggleSelectedDomainMute,
         isDomainMuted = controller.isSelectedDomainMuted,
         onDomainMutedChange = controller::setSelectedDomainMuted,
-        canToggleAlwaysBlockPopups = controller.canToggleSelectedAlwaysBlockPopups,
-        isAlwaysBlockPopupsEnabled = controller.isSelectedAlwaysBlockPopups,
-        onAlwaysBlockPopupsChange = controller::setSelectedAlwaysBlockPopups,
         canToggleDesktopView = controller.canToggleSelectedDesktopView,
         isDesktopView = controller.isSelectedDesktopView,
         onDesktopViewChange = controller::setSelectedDesktopView,
         onCompactModeChange = controller.addressBar::updateCompactMode,
-        canToggleCookieBannerRemoval = canToggleSelectedCookieBannerRemoval,
-        isCookieBannerRemovalEnabled = canToggleSelectedCookieBannerRemoval &&
-            !selectedSiteState.cookieBannerRemovalDisabled,
         canToggleForceVerticalScrolling = selectedSiteHasHost,
         isForceVerticalScrollingEnabled = selectedSiteState.forceVerticalScrolling,
-        canToggleForcePageZooming = selectedSiteHasHost,
-        isForcePageZoomingEnabled = selectedSiteState.forcePageZooming,
-        canToggleForceSafeArea = selectedSiteHasHost,
-        isForceSafeAreaEnabled = selectedSiteState.forceSafeArea,
-        onCookieBannerRemovalEnabledChange = { enabled ->
-            if (controller.setCookieBannerRemovalDisabled(selectedTab.id, !enabled)) {
-                rootView.performConfirmHaptic()
-            }
-        },
         onForceVerticalScrollingChange = { enabled ->
             if (controller.setForceVerticalScrolling(selectedTab.id, enabled)) {
-                rootView.performConfirmHaptic()
-            }
-        },
-        onForcePageZoomingChange = { enabled ->
-            if (controller.setForcePageZooming(selectedTab.id, enabled)) {
-                rootView.performConfirmHaptic()
-            }
-        },
-        onForceSafeAreaChange = { enabled ->
-            if (controller.setForceSafeArea(selectedTab.id, enabled)) {
                 rootView.performConfirmHaptic()
             }
         },

@@ -41,7 +41,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuItemKind
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuSection
 
 /**
- * The tile grid of the v4 main menu (board W-Menu): page and Vola actions as square tiles, an
+ * The tile grid of the v4 main menu (board W-Menu): page actions as square tiles, an
  * icon over a short label; toggles keep their state in the tile color. The platform supplies the
  * measures from its theme tokens.
  */
@@ -63,13 +63,8 @@ data class BrowserMainMenuTileStyle(
 )
 
 object BrowserMainMenuTileRules {
-    private val TILE_SECTIONS = setOf(
-        BrowserFeatureMenuSection.Page,
-        BrowserFeatureMenuSection.Candy,
-    )
-
-    /** Page and Vola actions become tiles; toolbar, user-script commands and the library stay. */
-    fun isTile(item: BrowserFeatureMenuItem): Boolean = item.section in TILE_SECTIONS
+    /** Page actions become tiles; the toolbar, «More» and the library stay rows. */
+    fun isTile(item: BrowserFeatureMenuItem): Boolean = item.section == BrowserFeatureMenuSection.Page
 
     /** Font scales at which the grid drops to three and then two columns. */
     const val THREE_COLUMN_FONT_SCALE = 1.3f

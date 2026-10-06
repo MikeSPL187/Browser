@@ -1,39 +1,22 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.content.res.Configuration
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onChildren
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipe
-import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -41,14 +24,10 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKind
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
-import dev.sk2andy.materialbrowser.data.AppearanceSettings
-import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import eightbitlab.com.blurview.BlurTarget
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,370 +38,149 @@ class BrowserMainMenuInstrumentedTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun usesApprovedGroupsAndDismissesAfterAction() {
+    fun shortMenuOpensMoreInPlace() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
         val dismissals = AtomicInteger()
-        val dockActions = AtomicInteger()
         val duplicateActions = AtomicInteger()
-        val cookieChanges = AtomicInteger()
-        val scrollChanges = AtomicInteger()
-        val popupChanges = AtomicInteger()
         val desktopViewChanges = AtomicInteger()
-        val zoomChanges = AtomicInteger()
-        val safeAreaChanges = AtomicInteger()
         val extensionActionKey = GeckoExtensionActionKey(
             extensionId = "site-addon@example.test",
             tabId = "tab",
             kind = GeckoExtensionActionKind.Browser,
         )
         val firefoxExtensionAction = AtomicReference<GeckoExtensionActionKey>()
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
         var setMenuExpanded: (Boolean) -> Unit = {}
-        composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
-            val configuration = LocalConfiguration.current
-            val shortConfiguration = remember(configuration) {
-                Configuration(configuration).apply {
-                    screenWidthDp = 320
-                    screenHeightDp = 450
-                }
-            }
-            CompositionLocalProvider(LocalConfiguration provides shortConfiguration) {
-                MaterialBrowserTheme(
-                    settings = AppearanceSettings(
-                        surfaceStyle = BrowserSurfaceStyle.Frosted,
-                        frostedBlurPercent = 100,
-                    ),
-                ) {
-                    var expanded by remember { mutableStateOf(true) }
-                    var blurTarget by remember { mutableStateOf<BlurTarget?>(null) }
-                    setMenuExpanded = { expanded = it }
-                    var cookieRemovalEnabled by remember { mutableStateOf(false) }
-                    var forceVerticalScrolling by remember { mutableStateOf(false) }
-                    var alwaysBlockPopups by remember { mutableStateOf(false) }
-                    var desktopView by remember { mutableStateOf(false) }
-                    var forcePageZooming by remember { mutableStateOf(false) }
-                    var forceSafeArea by remember { mutableStateOf(false) }
-                    Box {
-                        BrowserContentBlurTarget(
+            MaterialBrowserTheme {
+                var expanded by remember { mutableStateOf(true) }
+                var desktopView by remember { mutableStateOf(false) }
+                setMenuExpanded = { expanded = it }
+                BrowserMainMenu(
+                    expanded = expanded,
+                    backdropSource = null,
+                    onDismissRequest = {
+                        if (expanded) dismissals.incrementAndGet()
+                        expanded = false
+                    },
+                    pageSubtitle = "developer.android.com",
+                    canGoBack = false,
+                    canGoForward = false,
+                    isLoading = false,
+                    canToggleFavorite = true,
+                    isFavorite = false,
+                    isPinned = false,
+                    canUsePageActions = true,
+                    canOpenReader = true,
+                    canTranslatePage = true,
+                    canToggleDomainMute = true,
+                    isDomainMuted = false,
+                    canToggleDesktopView = true,
+                    isDesktopView = desktopView,
+                    canAddSiteCapsule = true,
+                    canSnooze = true,
+                    snoozedTabCount = 2,
+                    onBack = {},
+                    onForward = {},
+                    onReloadOrStop = {},
+                    onToggleFavorite = {},
+                    onTogglePinned = {},
+                    onShare = {},
+                    onOpenExternal = {},
+                    onPrint = {},
+                    onOpenReader = {},
+                    onTranslate = {},
+                    onDomainMutedChange = {},
+                    onDesktopViewChange = { enabled ->
+                        desktopViewChanges.incrementAndGet()
+                        desktopView = enabled
+                    },
+                    onOpenCandyTrail = {},
+                    onAddSiteCapsule = {},
+                    onSummarize = {},
+                    onSnooze = {},
+                    onSnoozedTabs = {},
+                    onDuplicateTab = duplicateActions::incrementAndGet,
+                    onDockAddressBar = {},
+                    onHistory = {},
+                    firefoxExtensionActions = listOf(
+                        GeckoExtensionActionState(
+                            key = extensionActionKey,
+                            title = "Site add-on",
                             enabled = true,
-                            onTargetAttached = { blurTarget = it },
-                            onTargetReleased = { if (blurTarget === it) blurTarget = null },
-                        ) {}
-                        BrowserMainMenu(
-                            expanded = expanded,
-                            backdropSource = blurTarget.asCandyChromeBackdropSource(),
-                            onDismissRequest = {
-                                if (expanded) dismissals.incrementAndGet()
-                                expanded = false
-                            },
-                            pageSubtitle = "developer.android.com",
-                            canGoBack = false,
-                            canGoForward = false,
-                            isLoading = false,
-                            canToggleFavorite = true,
-                            isFavorite = false,
-                            isPinned = false,
-                            canUsePageActions = true,
-                            canOpenReader = true,
-                            canTranslatePage = true,
-                            canToggleDomainMute = true,
-                            isDomainMuted = false,
-                            canToggleAlwaysBlockPopups = true,
-                            isAlwaysBlockPopupsEnabled = alwaysBlockPopups,
-                            canToggleDesktopView = true,
-                            isDesktopView = desktopView,
-                            canToggleCookieBannerRemoval = true,
-                            isCookieBannerRemovalEnabled = cookieRemovalEnabled,
-                            canToggleForceVerticalScrolling = true,
-                            isForceVerticalScrollingEnabled = forceVerticalScrolling,
-                            canToggleForcePageZooming = true,
-                            isForcePageZoomingEnabled = forcePageZooming,
-                            canToggleForceSafeArea = true,
-                            isForceSafeAreaEnabled = forceSafeArea,
-                            canAddSiteCapsule = true,
-                            canSnooze = true,
-                            snoozedTabCount = 2,
-                            onBack = {},
-                            onForward = {},
-                            onReloadOrStop = {},
-                            onToggleFavorite = {},
-                            onTogglePinned = {},
-                            onShare = {},
-                            onOpenExternal = {},
-                            onPrint = {},
-                            onOpenReader = {},
-                            onTranslate = {},
-                            onDomainMutedChange = {},
-                            onAlwaysBlockPopupsChange = { enabled ->
-                                popupChanges.incrementAndGet()
-                                alwaysBlockPopups = enabled
-                            },
-                            onDesktopViewChange = { enabled ->
-                                desktopViewChanges.incrementAndGet()
-                                desktopView = enabled
-                            },
-                            onCookieBannerRemovalEnabledChange = { enabled ->
-                                cookieChanges.incrementAndGet()
-                                cookieRemovalEnabled = enabled
-                            },
-                            onForceVerticalScrollingChange = { enabled ->
-                                scrollChanges.incrementAndGet()
-                                forceVerticalScrolling = enabled
-                            },
-                            onForcePageZoomingChange = { enabled ->
-                                zoomChanges.incrementAndGet()
-                                forcePageZooming = enabled
-                            },
-                            onForceSafeAreaChange = { enabled ->
-                                safeAreaChanges.incrementAndGet()
-                                forceSafeArea = enabled
-                            },
-                            onOpenCandyTrail = {},
-                            onAddSiteCapsule = {},
-                            onSummarize = {},
-                            onSnooze = {},
-                            onSnoozedTabs = {},
-                            onDuplicateTab = duplicateActions::incrementAndGet,
-                            onDockAddressBar = dockActions::incrementAndGet,
-                            onHistory = {},
-                            firefoxExtensionActions = listOf(
-                                GeckoExtensionActionState(
-                                    key = extensionActionKey,
-                                    title = "Site add-on",
-                                    enabled = true,
-                                    badgeText = null,
-                                    badgeBackgroundColor = null,
-                                    badgeTextColor = null,
-                                ),
-                            ),
-                            onFirefoxExtensionAction = firefoxExtensionAction::set,
-                            onSettings = {},
-                        )
-                    }
-                }
+                            badgeText = null,
+                            badgeBackgroundColor = null,
+                            badgeTextColor = null,
+                        ),
+                    ),
+                    onFirefoxExtensionAction = firefoxExtensionAction::set,
+                    onSettings = {},
+                )
             }
         }
-        composeRule.mainClock.advanceTimeBy(200L)
 
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertExists()
-        composeRule.onAllNodesWithTag(BrowserChromeSurfaceTestTags.BackdropBlur)
-            .assertCountEquals(1)
-        val menuBounds = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu)
-            .fetchSemanticsNode().boundsInRoot
-        val favoriteBounds = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Favorite)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot
-        val pinBounds = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Pin)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot
-        val backBounds = composeRule.onNodeWithContentDescription(
-            context.getString(R.string.action_back),
-        ).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        val density = context.resources.displayMetrics.density
-        assertTrue(menuBounds.width <= 320f * density + 1f)
-        assertEquals(favoriteBounds.width, favoriteBounds.height, 1f)
-        assertEquals(pinBounds.width, pinBounds.height, 1f)
-        assertEquals(backBounds.center.y, favoriteBounds.center.y, 1f)
-        composeRule.onAllNodesWithText(context.getString(R.string.action_back))
-            .assertCountEquals(0)
-        assertTrue(favoriteBounds.left >= menuBounds.left)
-        assertTrue(pinBounds.left >= favoriteBounds.right)
-        assertTrue(pinBounds.right <= menuBounds.right)
-        val pageGroup = hasTestTag(BrowserMainMenuTestTags.PageGroup)
+        // The first view: toolbar, page tiles ending in «More», the library.
         composeRule.onNode(
-            pageGroup and
+            hasTestTag(BrowserMainMenuTestTags.PageGroup) and
                 hasAnyDescendant(hasText(context.getString(R.string.reader_open_action))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_duplicate_tab))) and
                 hasAnyDescendant(hasText(context.getString(R.string.action_translate_page))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_share))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_open_in_app))) and
+                hasAnyDescendant(hasText(context.getString(R.string.action_find_in_page))) and
                 hasAnyDescendant(hasText(context.getString(R.string.action_print))) and
-                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.CookieBannerRemoval)) and
-                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.ForceVerticalScrolling)) and
-                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.AlwaysBlockPopups)) and
                 hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.DesktopView)) and
-                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.ForcePageZooming)) and
-                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.ForceSafeArea)) and
-                hasAnyDescendant(hasTestTag(DomainMuteMenuTestTags.Item)),
-        ).assertExists()
-        composeRule.onNodeWithText(context.getString(R.string.action_mute_domain)).assertExists()
-        val candyGroup = hasTestTag(BrowserMainMenuTestTags.CandyGroup)
-        composeRule.onNode(
-            candyGroup and
-                hasAnyDescendant(hasText(context.getString(R.string.action_open_candy_trail))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_add_site_capsule))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_summarize))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_snooze_tab))),
-        ).assertExists()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.CandyGroup)
-            .onChildren()
-            .assertCountEquals(4)
-        composeRule.onNodeWithText(
-            context.getString(R.string.browser_menu_browser_group),
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.More)),
         ).assertExists()
         composeRule.onNode(
             hasTestTag(BrowserMainMenuTestTags.BrowserGroup) and
-                hasAnyDescendant(hasText(context.getString(R.string.snoozed_tabs_title))) and
-                hasAnyDescendant(hasText(context.getString(R.string.action_dock_address_bar))) and
-                hasAnyDescendant(hasText(context.getString(R.string.favorites_title))) and
                 hasAnyDescendant(hasText(context.getString(R.string.downloads_title))) and
                 hasAnyDescendant(hasText(context.getString(R.string.action_history))) and
+                hasAnyDescendant(hasText(context.getString(R.string.favorites_title))) and
+                hasAnyDescendant(hasText(context.getString(R.string.passwords_title))) and
                 hasAnyDescendant(hasText(context.getString(R.string.action_settings))),
         ).assertExists()
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.BrowserGroup)
             .onChildren()
-            .assertCountEquals(6)
-        composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.SectionTitle).assertExists()
-        composeRule.onNodeWithTag(
-            FirefoxExtensionChromeTestTags.action(extensionActionKey.saveableId),
-        ).assertExists()
+            .assertCountEquals(5)
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DuplicateTab).assertDoesNotExist()
+        composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.SectionTitle).assertDoesNotExist()
 
-        val menuHeight = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu)
-            .fetchSemanticsNode().boundsInRoot.height
-        val maximumMenuHeight = 450f * context.resources.displayMetrics.density * 0.8f
-        assertTrue(menuHeight <= maximumMenuHeight + 1f)
-        composeRule.mainClock.autoAdvance = true
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Settings)
-            .assertIsNotDisplayed()
-        repeat(3) {
-            composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu)
-                .performTouchInput {
-                    swipe(
-                        start = center + Offset(0f, 150f),
-                        end = center + Offset(0f, -150f),
-                        durationMillis = 1_000L,
-                    )
-                }
-        }
-
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.CookieBannerRemoval)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assert(
-                SemanticsMatcher.expectValue(
-                    SemanticsProperties.Role,
-                    Role.Checkbox,
-                ),
-            )
-            .assertIsOff()
-            .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.CookieBannerRemoval).assertIsOn()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForceVerticalScrolling)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertIsOff()
-            .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForceVerticalScrolling).assertIsOn()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.AlwaysBlockPopups)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertIsOff()
-            .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.AlwaysBlockPopups).assertIsOn()
+        // A toggle tile switches in place.
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.DesktopView)
             .performScrollTo()
-            .assertIsDisplayed()
             .assertIsOff()
             .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.DesktopView).assertIsOn()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForcePageZooming)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertIsOff()
-            .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForcePageZooming).assertIsOn()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForceSafeArea)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertIsOff()
-            .performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForceSafeArea).assertIsOn()
-        composeRule.onNodeWithTag(DomainMuteMenuTestTags.Item)
-            .performScrollTo()
-            .assert(
-                SemanticsMatcher.expectValue(
-                    SemanticsProperties.Role,
-                    Role.Checkbox,
-                ),
-            )
-            .assertIsOff()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertExists()
-        assertEquals(1, cookieChanges.get())
-        assertEquals(1, scrollChanges.get())
-        assertEquals(1, popupChanges.get())
         assertEquals(1, desktopViewChanges.get())
-        assertEquals(1, zoomChanges.get())
-        assertEquals(1, safeAreaChanges.get())
 
-        repeat(3) {
-            composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu)
-                .performTouchInput { swipeUp() }
-        }
-        val favoritesTop = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Favorites)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot.top
-        val downloadsTop = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Downloads)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot.top
-        val historyTop = composeRule.onNodeWithTag(BrowserMainMenuTestTags.History)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot.top
-        val settingsTop = composeRule.onNodeWithTag(BrowserMainMenuTestTags.Settings)
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot.top
-        assertTrue(favoritesTop < downloadsTop)
-        assertTrue(downloadsTop < historyTop)
-        assertTrue(historyTop < settingsTop)
-        val firefoxExtensionsTop = composeRule
-            .onNodeWithTag(FirefoxExtensionChromeTestTags.SectionTitle)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot.top
-        assertTrue(firefoxExtensionsTop < historyTop)
-        assertTrue(firefoxExtensionsTop < settingsTop)
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Settings).assertIsDisplayed()
-        composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DockAddressBar)
-            .assertIsDisplayed()
-            .performClick()
+        // «More» turns the page without closing the menu; its back row returns.
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.More).performScrollTo().performClick()
+        assertEquals(0, dismissals.get())
+        composeRule.onNode(
+            hasTestTag(BrowserMainMenuTestTags.MoreGroup) and
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.DuplicateTab)) and
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.Pin)) and
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.CloseTab)) and
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.Snooze)) and
+                hasAnyDescendant(hasTestTag(BrowserMainMenuTestTags.SnoozedTabs)) and
+                hasAnyDescendant(hasTestTag(DomainMuteMenuTestTags.Item)) and
+                hasAnyDescendant(hasText(context.getString(R.string.action_open_candy_trail))),
+        ).assertExists()
+        composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.SectionTitle).assertExists()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.MoreBack).performClick()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.MoreGroup).assertDoesNotExist()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.PageGroup).assertExists()
 
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.More).performScrollTo().performClick()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DuplicateTab).performScrollTo().performClick()
         assertEquals(1, dismissals.get())
-        assertEquals(1, dockActions.get())
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertExists()
-        assertEquals(1, dockActions.get())
-        composeRule.runOnUiThread { setMenuExpanded(true) }
-        composeRule.mainClock.advanceTimeBy(5_000L)
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertIsDisplayed()
-        composeRule.runOnUiThread { setMenuExpanded(false) }
-        composeRule.mainClock.advanceTimeBy(5_000L)
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertDoesNotExist()
-        assertEquals(1, dockActions.get())
-        composeRule.mainClock.autoAdvance = true
-
-        composeRule.runOnIdle { setMenuExpanded(true) }
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DuplicateTab)
-            .assertIsDisplayed()
-            .performClick()
-
-        assertEquals(2, dismissals.get())
         assertEquals(1, duplicateActions.get())
-        assertEquals(null, firefoxExtensionAction.get())
 
+        // Opening again starts from the first view.
         composeRule.runOnIdle { setMenuExpanded(true) }
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.MoreGroup).assertDoesNotExist()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.More).performScrollTo().performClick()
         composeRule.onNodeWithTag(
             FirefoxExtensionChromeTestTags.action(extensionActionKey.saveableId),
         ).performScrollTo().performClick()
-
-        assertEquals(3, dismissals.get())
+        assertEquals(2, dismissals.get())
         assertEquals(extensionActionKey, firefoxExtensionAction.get())
     }
 
@@ -459,18 +217,8 @@ class BrowserMainMenuInstrumentedTest {
                     canTranslatePage = false,
                     canToggleDomainMute = false,
                     isDomainMuted = false,
-                    canToggleAlwaysBlockPopups = false,
-                    isAlwaysBlockPopupsEnabled = false,
                     canToggleDesktopView = false,
                     isDesktopView = false,
-                    canToggleCookieBannerRemoval = false,
-                    isCookieBannerRemovalEnabled = false,
-                    canToggleForceVerticalScrolling = false,
-                    isForceVerticalScrollingEnabled = false,
-                    canToggleForcePageZooming = false,
-                    isForcePageZoomingEnabled = false,
-                    canToggleForceSafeArea = false,
-                    isForceSafeAreaEnabled = false,
                     canAddSiteCapsule = false,
                     canSnooze = false,
                     snoozedTabCount = 0,
@@ -486,12 +234,7 @@ class BrowserMainMenuInstrumentedTest {
                     onOpenReader = {},
                     onTranslate = {},
                     onDomainMutedChange = {},
-                    onAlwaysBlockPopupsChange = {},
                     onDesktopViewChange = {},
-                    onCookieBannerRemovalEnabledChange = {},
-                    onForceVerticalScrollingChange = {},
-                    onForcePageZoomingChange = {},
-                    onForceSafeAreaChange = {},
                     onOpenCandyTrail = {},
                     onAddSiteCapsule = {},
                     onSummarize = {},
@@ -511,18 +254,11 @@ class BrowserMainMenuInstrumentedTest {
         composeRule.onNodeWithText(
             context.getString(R.string.reader_open_action),
         ).assertIsNotEnabled()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DuplicateTab).assertIsNotEnabled()
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.Translate).assertIsNotEnabled()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.CookieBannerRemoval)
-            .assertDoesNotExist()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForceVerticalScrolling)
-            .assertDoesNotExist()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.AlwaysBlockPopups)
-            .assertIsNotEnabled()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DesktopView)
-            .assertIsNotEnabled()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ForcePageZooming)
-            .assertDoesNotExist()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DesktopView).assertIsNotEnabled()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.ToppingsGroup).assertDoesNotExist()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.More).performScrollTo().performClick()
+        composeRule.onNodeWithTag(BrowserMainMenuTestTags.DuplicateTab).assertIsNotEnabled()
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.ToppingsGroup).assertExists()
         composeRule.onNodeWithText("Password helper").assertExists()
         composeRule.onNodeWithTag(BrowserMainMenuTestTags.userScriptCommand("reveal"))

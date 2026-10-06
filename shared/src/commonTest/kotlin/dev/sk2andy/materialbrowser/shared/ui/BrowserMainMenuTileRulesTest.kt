@@ -30,11 +30,11 @@ class BrowserMainMenuTileRulesTest {
     )
 
     @Test
-    fun `page and Vola actions become tiles, the rest keeps its rows`() {
+    fun `page actions become tiles, the rest keeps its rows`() {
         val tiles = items.filter(BrowserMainMenuTileRules::isTile)
 
         assertEquals(
-            setOf(BrowserFeatureMenuSection.Page, BrowserFeatureMenuSection.Candy),
+            setOf(BrowserFeatureMenuSection.Page),
             tiles.map { item -> item.section }.toSet(),
         )
         val rest = items.filterNot(BrowserMainMenuTileRules::isTile).map { item -> item.section }.toSet()
@@ -42,6 +42,7 @@ class BrowserMainMenuTileRulesTest {
             setOf(
                 BrowserFeatureMenuSection.Toolbar,
                 BrowserFeatureMenuSection.Toppings,
+                BrowserFeatureMenuSection.More,
                 BrowserFeatureMenuSection.Browser,
             ),
             rest,
