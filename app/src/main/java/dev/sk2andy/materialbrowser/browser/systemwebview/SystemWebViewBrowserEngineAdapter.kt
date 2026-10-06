@@ -13,6 +13,7 @@ import android.os.Message
 import android.os.Bundle
 import android.print.PrintAttributes
 import android.print.PrintManager
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -168,7 +169,7 @@ internal class SystemWebViewBrowserEngineFactory(
     private var forceDarkWebsites = false
     private val sessions = mutableSetOf<SystemWebViewBrowserEngineSession>()
     private val knownCookieManagers = mutableListOf<CookieManager>()
-    private val incognitoProfileName = INCOGNITO_PROFILE_NAME
+    private var privateGeneration = WebViewProfileRules.newPrivateGeneration()
     private val toppingRuntime = UserScriptRuntime(
         valueStore = UserScriptValueStore(context.applicationContext),
         onMenuCommandsChanged = { tabId, commands ->
@@ -256,11 +257,14 @@ internal class SystemWebViewBrowserEngineFactory(
 
     override fun clearPrivateData() {
         if (!supportsMultiProfile()) return
-        deleteProfileIfPresent(incognitoProfileName)
+        deletePrivateProfiles()
+        // Whether or not WebView let the old profiles go, the next private session starts in a new
+        // generation; a profile left behind is retried on the next clear and on the next start.
+        privateGeneration = WebViewProfileRules.newPrivateGeneration()
     }
 
     override fun shutdown() {
-        if (supportsMultiProfile()) deleteProfileIfPresent(incognitoProfileName)
+        if (supportsMultiProfile()) deletePrivateProfiles()
         knownCookieManagers.clear()
     }
 
@@ -281,7 +285,7 @@ internal class SystemWebViewBrowserEngineFactory(
         isolationEnabled = isolationEnabled,
         isPrivate = isPrivate,
         allowsToppings = contentKind != BrowserEngineContentKind.LinkPeek,
-        incognitoProfileName = incognitoProfileName,
+        incognitoProfileName = WebViewProfileRules.privateProfileName(privateGeneration, profileId),
         multiProfileSupported = supportsMultiProfile(),
         contentBlocker = contentBlocker,
         toppingRuntime = toppingRuntime,
@@ -315,32 +319,31 @@ internal class SystemWebViewBrowserEngineFactory(
     }
 
     companion object {
-        private const val LEGACY_INCOGNITO_PROFILE_PREFIX = "candy_incognito_v1_"
-        private const val INCOGNITO_PROFILE_PREFIX = "candy_incognito_v2_"
-        private const val INCOGNITO_PROFILE_NAME = "${INCOGNITO_PROFILE_PREFIX}runtime"
+        private const val LOG_TAG = "VolaWebViewProfiles"
 
         fun supportsMultiProfile(): Boolean =
             WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)
 
         private fun cleanupStalePrivateProfiles() {
             if (!supportsMultiProfile()) return
+            deletePrivateProfiles()
+        }
+
+        private fun deletePrivateProfiles() {
             runCatching {
                 ProfileStore.getInstance().allProfileNames
-                    .filter { profileName ->
-                        profileName.startsWith(INCOGNITO_PROFILE_PREFIX) ||
-                            profileName.startsWith(LEGACY_INCOGNITO_PROFILE_PREFIX)
-                    }
+                    .filter(WebViewProfileRules::isPrivateProfileName)
                     .forEach(::deleteProfileIfPresent)
-            }
+            }.onFailure { error -> Log.w(LOG_TAG, "Listing private WebView profiles failed", error) }
         }
 
         private fun deleteProfileIfPresent(profileName: String) {
             runCatching {
                 val profileStore = ProfileStore.getInstance()
-                if (profileName in profileStore.allProfileNames) {
-                    profileStore.deleteProfile(profileName)
-                }
-            }
+                profileName !in profileStore.allProfileNames || profileStore.deleteProfile(profileName)
+            }.onSuccess { deleted ->
+                if (!deleted) Log.w(LOG_TAG, "A private WebView profile was not deleted")
+            }.onFailure { error -> Log.w(LOG_TAG, "Deleting a private WebView profile failed", error) }
         }
     }
 

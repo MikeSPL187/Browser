@@ -239,6 +239,7 @@ import dev.sk2andy.materialbrowser.data.DownloadManagerMode
 import dev.sk2andy.materialbrowser.data.PermissionRadarStore
 import dev.sk2andy.materialbrowser.data.PendingCandyTrailRedaction
 import dev.sk2andy.materialbrowser.data.ProfileWallpaperStore
+import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SiteCapsuleIconStore
 import dev.sk2andy.materialbrowser.data.SiteCapsuleStore
@@ -1523,7 +1524,7 @@ class BrowserController(
         get() = isDesktopView(selectedTabId)
 
     val canCreatePrivateTabInActiveProfile: Boolean
-        get() = !isSyncedProfile(activeProfileId)
+        get() = canOpenLinkInPrivate
 
     val canSnoozeSelectedTab: Boolean
         get() = selectedTab.let { tab ->
@@ -6058,6 +6059,7 @@ class BrowserController(
                 return@requestProfileAuthentication
             }
             profiles[currentIndex] = candidate
+            protectionReport.onWorkspaceProtectionChanged(current.protection != null, candidate.protection != null)
             if (candidate.protection == null) {
                 lockedProfileIds -= profileId
                 ProfileProtectionSession.forget(profileId)
@@ -8002,8 +8004,8 @@ class BrowserController(
         if (index < 0) return
         val closingTab = tabs[index]
         if (!TabDeletionRules.canDelete(closingTab)) return
-        val canUndo = offerUndo && isClosedTabUndoEnabled &&
-            !isSessionEphemeralTab(tabId) && !isSyncedProfile(closingTab.profileId)
+        val canUndo = ClosedTabUndoRules.canOffer(offerUndo, isClosedTabUndoEnabled, isSessionEphemeralTab(tabId),
+            isSyncedProfile(closingTab.profileId), hiddenByLock = privateTabsLock.hides(closingTab))
         if (offerUndo) dismissClosedTabUndo()
         val closedAtMillis = android.os.SystemClock.elapsedRealtime()
         val originalTrail = candyTrails[tabId]
@@ -14055,8 +14057,9 @@ class BrowserController(
                 val tab = tabs.firstOrNull { it.id == tabId }
                 if (delta > 0 && tab != null) {
                     updateTab(tabId) { it.copy(blockedCount = it.blockedCount + delta) }
-                    // The weekly report counts regular tabs only (П7).
-                    if (!tab.isIncognito && !isSessionEphemeralTab(tabId)) {
+                    // The weekly report counts regular tabs of unlocked workspaces only (П7).
+                    val isPrivate = tab.isIncognito || isSessionEphemeralTab(tabId)
+                    if (ProtectionReportRules.countsTab(isPrivate, profileForId(tab.profileId)?.protection != null)) {
                         protectionReport.record(tab.url, delta)
                     }
                     privacySnapshots[tabId] = privacyXRayRepository.snapshot(tabId)
