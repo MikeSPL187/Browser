@@ -326,7 +326,8 @@ def probe_touch(label):
     except ValueError as error:
         log(f"touch {label}: no screenshot: {error}")
         return
-    runs = page_probe.band_runs(width, height, pixels, x=min(10, width - 1))
+    # An eighth in: inside the framed card, clear of its rounded corners and the band labels.
+    runs = page_probe.band_runs(width, height, pixels, x=width // 8)
     target = page_probe.target_band(runs, height)
     if target is None:
         log(f"touch {label}: no probe bands on screen")
@@ -362,7 +363,7 @@ def probe_keyboard(label):
     page while the keyboard is up (#123, H3)."""
     open_url(f"{page_probe.BASE_URL}/form.html")
     time.sleep(6)
-    field = find("Probe login")
+    field = find("probe-login")
     if field is None:
         log(f"keyboard {label}: form probe not found")
         shot(f"keyboard-none-{label}", audit=False)
@@ -374,7 +375,7 @@ def probe_keyboard(label):
         "utf-8", "replace")
     shown = "mInputShown=true" in ime
     bar = find("More options", "Другие действия")
-    field = find("Probe login")
+    field = find("probe-login")
     log(f"keyboard {label}: keyboard shown={shown}, address bar "
         f"{'visible at y=' + str(bar['center'][1]) if bar else 'hidden'}, "
         f"field at y={field['center'][1] if field else 'gone'}")
