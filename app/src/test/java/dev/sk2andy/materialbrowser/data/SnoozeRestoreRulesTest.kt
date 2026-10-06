@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.ProfileProtectionSession
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -316,6 +317,38 @@ class SnoozeRestoreRulesTest {
         assertEquals(null, result)
     }
 
+    @Test
+    fun `restore and undo drop the stale load failure`() {
+        val failed = snoozedTab("failed", wakeAt = 90L).let { snoozed ->
+            snoozed.copy(tab = snoozed.tab.withStaleFailure())
+        }
+        val token = SnoozeUndoToken(
+            tabId = failed.tab.id,
+            appliedSnoozedTab = failed,
+            originalIndex = 0,
+            originalSelectedTabId = "active",
+            selectedTabIdAfterSnooze = "active",
+            replacementTabId = null,
+            touchedTabBefore = null,
+            touchedTabAfter = null,
+        )
+
+        val restored = restore(emptyList(), listOf(failed), now = 100L).tabs.single()
+        val undone = SnoozeUndoRules.undo(
+            tabs = listOf(BrowserTab("active", 1L)),
+            selectedTabId = "active",
+            snoozedTabs = listOf(failed),
+            token = token,
+            maxTabs = 12,
+        )?.restoredTab
+
+        listOf(restored, undone).forEach { tab ->
+            assertEquals(null, tab?.error)
+            assertEquals(null, tab?.httpStatusCode)
+            assertEquals(null, tab?.failureKind)
+        }
+    }
+
     private fun restore(
         tabs: List<BrowserTab>,
         snoozed: List<SnoozedTab>,
@@ -338,5 +371,11 @@ class SnoozeRestoreRulesTest {
         tab = BrowserTab(id, 1L, profileId = profileId, isPinned = pinned),
         wakeAtMillis = wakeAt,
         createdAtMillis = 1L,
+    )
+
+    private fun BrowserTab.withStaleFailure() = copy(
+        error = "Server error",
+        httpStatusCode = 503,
+        failureKind = BrowserEngineFailureKind.Other,
     )
 }

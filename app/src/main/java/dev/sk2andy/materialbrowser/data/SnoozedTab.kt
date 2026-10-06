@@ -141,6 +141,8 @@ internal object SnoozeUndoRules {
             canGoForward = false,
             blockedCount = 0,
             error = null,
+            httpStatusCode = null,
+            failureKind = null,
         )
         updatedTabs.add(token.originalIndex.coerceIn(0, updatedTabs.size), restoredTab)
         val orderedTabs = TabPinningRules.orderedTabs(updatedTabs)
@@ -224,6 +226,8 @@ internal object SnoozeRestoreRules {
                             canGoForward = false,
                             blockedCount = 0,
                             error = null,
+                            httpStatusCode = null,
+                            failureKind = null,
                         )
                         completedIds += tab.id
                         restoredIds += tab.id
