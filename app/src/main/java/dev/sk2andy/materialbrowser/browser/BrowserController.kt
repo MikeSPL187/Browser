@@ -6333,7 +6333,8 @@ class BrowserController(
             isBoundSyncProfile(profileId) ||
             profileId in lockedProfileIds ||
             profileId in pendingProfileIsolationChanges ||
-            profiles.none { it.id == profileId }
+            profiles.none { it.id == profileId } ||
+            deletionFallbackProfile(profileId) == null
         ) {
             onComplete(false)
             return
@@ -6383,6 +6384,13 @@ class BrowserController(
         }
     }
 
+    private fun deletionFallbackProfile(profileId: String): BrowserProfile? =
+        WorkspaceDeletionRules.fallbackProfileId(
+            localProfileIds = localProfiles.map(BrowserProfile::id),
+            activeProfileId = activeProfileId,
+            deletedProfileId = profileId,
+        )?.let { id -> localProfiles.firstOrNull { it.id == id } }
+
     private fun deleteProfileInternal(
         profileId: String,
         excludedCapsuleId: String?,
@@ -6399,12 +6407,7 @@ class BrowserController(
         val profileIndex = profiles.indexOfFirst { it.id == profileId }
         if (profileIndex < 0) return false
         if (closedTabUndoOffer?.tab?.profileId == profileId) dismissClosedTabUndo()
-        val remainingLocalProfiles = localProfiles.filterNot { it.id == profileId }
-        val fallbackProfile = if (profileId == activeProfileId) {
-            remainingLocalProfiles.first()
-        } else {
-            localProfiles.first { it.id == activeProfileId }
-        }
+        val fallbackProfile = deletionFallbackProfile(profileId) ?: return false
         val removedProfileTrailTabIds = (
             tabs.asSequence() + snoozedTabs.asSequence().map { snoozed -> snoozed.tab }
         )
@@ -6512,12 +6515,15 @@ class BrowserController(
         }
         val fallbackTabs = tabs.filter { it.profileId == fallbackProfile.id }
         tabOrder.replaceProfileTabs(fallbackProfile.id, TabPinningRules.orderedTabs(fallbackTabs))
-        val fallbackSelection = selectedTabId.takeIf { selectedId ->
-            tabs.any { it.id == selectedId && it.profileId == fallbackProfile.id }
-        } ?: fallbackProfile.selectedTabId?.takeIf { selectedId ->
-            tabs.any { it.id == selectedId && it.profileId == fallbackProfile.id }
-        } ?: activeTabs.first().id
-        if (activeProfileId == fallbackProfile.id) {
+        // A remote active workspace stays active; only a local fallback takes over the selection.
+        val fallbackSelection = if (activeProfileId != fallbackProfile.id) null else {
+            selectedTabId.takeIf { selectedId ->
+                tabs.any { it.id == selectedId && it.profileId == fallbackProfile.id }
+            } ?: fallbackProfile.selectedTabId?.takeIf { selectedId ->
+                tabs.any { it.id == selectedId && it.profileId == fallbackProfile.id }
+            } ?: activeTabs.firstOrNull()?.id
+        }
+        if (fallbackSelection != null) {
             updateSelectedTabId(fallbackSelection)
             rememberSelectedTab(fallbackProfile.id, fallbackSelection)
         }
