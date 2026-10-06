@@ -1376,6 +1376,9 @@ class BrowserController(
     val siteDataDeletion = SiteDataDeletion(
         clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
         selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        selectedPageReloadable = {
+            SiteDataDeletionRules.pageReloadable(destroyed, isSelectedContentLocked, isActivityStarted)
+        },
         reloadSelected = ::reload,
         postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
         removeCallbacks = { task -> mainHandler.removeCallbacks(task) },

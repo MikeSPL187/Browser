@@ -24,6 +24,13 @@ internal object SiteDataDeletionRules {
     /** After the deletion the selected page reloads, but only if it still shows that site. */
     fun reloadsSelected(baseDomain: String, selectedBaseDomain: String?): Boolean =
         selectedBaseDomain == baseDomain
+
+    /**
+     * The engine answers later, so the reload must not wake a page nobody can see: after teardown,
+     * behind a workspace or private tabs lock, or with the app in the background.
+     */
+    fun pageReloadable(destroyed: Boolean, locked: Boolean, started: Boolean): Boolean =
+        !destroyed && !locked && started
 }
 
 /**
@@ -35,6 +42,7 @@ internal object SiteDataDeletionRules {
 class SiteDataDeletion internal constructor(
     private val clearSiteData: (baseDomain: String, onComplete: (Boolean) -> Unit) -> Unit,
     private val selectedBaseDomain: () -> String?,
+    private val selectedPageReloadable: () -> Boolean,
     private val reloadSelected: () -> Unit,
     private val postDelayed: (Runnable, Long) -> Unit,
     private val removeCallbacks: (Runnable) -> Unit,
@@ -96,7 +104,7 @@ class SiteDataDeletion internal constructor(
                 baseDomain = baseDomain,
                 selectedBaseDomain = selectedBaseDomain(),
             )
-            if (reloads) reloadSelected()
+            if (reloads && selectedPageReloadable()) reloadSelected()
         }
     }
 }

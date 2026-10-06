@@ -24,6 +24,14 @@ class SiteDataDeletionRulesTest {
     }
 
     @Test
+    fun `a late completion reloads only a visible, unlocked page`() {
+        assertTrue(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = false, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = true, locked = false, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = true, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = false, started = false))
+    }
+
+    @Test
     fun `a new load starts from zero with the last failure cleared`() {
         val failed = BrowserTab(
             id = "tab",
@@ -47,6 +55,7 @@ class SiteDataDeletionTest {
     private var clearResult = true
     private var selectedDomain: String? = "example.com"
     private var reloads = 0
+    private var pageReloadable = true
     private val scheduled = mutableListOf<Pair<Runnable, Long>>()
 
     private val deletion = SiteDataDeletion(
@@ -55,6 +64,7 @@ class SiteDataDeletionTest {
             done(clearResult)
         },
         selectedBaseDomain = { selectedDomain },
+        selectedPageReloadable = { pageReloadable },
         reloadSelected = { reloads++ },
         postDelayed = { task, delay -> scheduled += task to delay },
         removeCallbacks = { task -> scheduled.removeAll { it.first === task } },
@@ -147,5 +157,14 @@ class SiteDataDeletionTest {
         assertNull(deletion.failed)
         deletion.retry(second)
         assertEquals(2, cleared.size)
+    }
+
+    @Test
+    fun `a deletion finishing in the background or behind a lock does not reload`() {
+        pageReloadable = false
+        deletion.request("example.com")
+        deletion.commit()
+        assertEquals(listOf("example.com"), cleared)
+        assertEquals(0, reloads)
     }
 }
