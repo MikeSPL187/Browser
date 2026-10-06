@@ -1,0 +1,40 @@
+Cold start (am start -W, 5 runs): average 2807 ms, min 2443 ms, max 3527 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 308
+  ActivityCreateStart: 460
+  ActivityCreateEnd: 805
+  ActivityResumed: 871
+  FirstFrame: 1698
+  BrowserScreenComposeStart: 1186
+  Composed.AddressChrome: 1456
+  Composed.FirefoxExtensionChrome: 1456
+  Composed.ModalSurfaces: 2868
+  Composed.SettingsOverlay: 2868
+  Composed.TabOverview: 2868
+  Composed.TransientOverlays: 2868
+  Composed.Viewport: 1456
+  ContentComposeStart: 1088
+Durations (median, ms):
+  Compose.AddressChrome (main): 48
+  Compose.FirefoxExtensionChrome (main): 1
+  Compose.ModalSurfaces (main): 13
+  Compose.SettingsOverlay (main): 5
+  Compose.TabOverview (main): 101
+  Compose.TransientOverlays (main): 2
+  Compose.Viewport (main): 125
+  ControllerCreate (main): 211
+  GeckoRuntimeCreate (main): 33
+  LoadFavorites (main): 1
+  LoadFilterRules (main): 0
+  LoadHistory (main): 3
+  LoadProfiles (main): 1
+  LoadSnoozedTabs (main): 0
+  LoadTabs (main): 6
+  LoadUserScripts (main): 7
+  RestoreEssentials (main): 2
+  RestoreProtectionReport (main): 2
+  TrailRedactions (main): 1
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  2217: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  878: Handler (android.app.ActivityThread$H)  null: 159
+  66: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
