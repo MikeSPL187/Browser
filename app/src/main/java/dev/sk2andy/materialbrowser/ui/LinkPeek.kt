@@ -85,6 +85,7 @@ import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayoutRules as LinkPeekActionSelectionRules
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionSlot
+import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaGlance
@@ -122,7 +123,7 @@ internal fun <T : View> LinkPeekOverlay(
     armed: Boolean,
     committing: Boolean = false,
     newTabTargetBounds: Rect? = null,
-    createPreviewView: ((Int) -> Unit, (String) -> Unit) -> T,
+    createPreviewView: (LinkPeekPreviewCallbacks) -> T,
     releasePreviewView: (T) -> Unit,
     onOpen: () -> Unit,
     onOpenUrl: (String) -> Unit = { onOpen() },
@@ -153,13 +154,17 @@ internal fun <T : View> LinkPeekOverlay(
     var previewProgress by remember(url) { mutableIntStateOf(0) }
     var committedUrl by remember(url) { mutableStateOf(url) }
     var previewView by remember(url) { mutableStateOf<T?>(null) }
+    var previewStatus by remember(url) {
+        mutableStateOf<LinkPeekPreviewStatus>(LinkPeekPreviewStatus.Loading)
+    }
+    val previewBlocked = previewStatus is LinkPeekPreviewStatus.Blocked
     var cardBounds by remember(url) { mutableStateOf<Rect?>(null) }
     var commitStartBounds by remember(url) { mutableStateOf<Rect?>(null) }
     val commitProgress = remember(url) { Animatable(0f) }
     val pullOffset = remember(url) { Animatable(0f) }
     val pullScope = rememberCoroutineScope()
     val requestCommit = {
-        if (!commitRequested) {
+        if (!commitRequested && !previewBlocked) {
             commitRequested = true
             onCommitRequested()
         }
@@ -438,29 +443,44 @@ internal fun <T : View> LinkPeekOverlay(
                             )
                         }
                     }
-                    if (previewProgress < 100) {
+                    if (previewStatus == LinkPeekPreviewStatus.Loading && previewProgress < 100) {
                         LinearProgressIndicator(
                             progress = { previewProgress / 100f },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    key(url) {
-                        AndroidView(
-                            factory = {
-                                createPreviewView(
-                                    { loaded -> previewProgress = loaded },
-                                    { committed -> committedUrl = committed },
-                                ).also { previewView = it }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .testTag(LinkPeekTestTags.Preview),
-                            onRelease = { view ->
-                                if (previewView === view) previewView = null
-                                releasePreviewView(view)
-                            },
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    ) {
+                        key(url) {
+                            AndroidView(
+                                factory = {
+                                    createPreviewView(
+                                        LinkPeekPreviewCallbacks(
+                                            onProgressChanged = { loaded -> previewProgress = loaded },
+                                            onCommittedUrlChanged = { committed -> committedUrl = committed },
+                                            onStatusChanged = { status -> previewStatus = status },
+                                        ),
+                                    ).also { previewView = it }
+                                },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .testTag(LinkPeekTestTags.Preview),
+                                onRelease = { view ->
+                                    if (previewView === view) previewView = null
+                                    releasePreviewView(view)
+                                },
+                            )
+                        }
+                        if (previewStatus.coversPage) {
+                            LinkPeekPreviewMessage(
+                                status = previewStatus,
+                                onClose = onDismiss,
+                                modifier = Modifier.matchParentSize(),
+                            )
+                        }
                     }
                     GlanceHistoryNote(isPrivate = isPrivate)
                     if (onDownloadLink != null) {
@@ -524,7 +544,7 @@ internal fun <T : View> LinkPeekOverlay(
                             isFavorite = favoriteSelected,
                         ),
                         testTag = action.testTag(),
-                        enabled = !committing && when (action) {
+                        enabled = !committing && !previewBlocked && when (action) {
                             LinkPeekAction.ReaderLater ->
                                 canSaveReaderOffline && previewProgress >= 100 && previewView != null
                             LinkPeekAction.OpenPrivate -> canOpenInPrivate
@@ -632,7 +652,7 @@ internal fun <T : View> LinkPeekOverlay(
                         modifier = Modifier
                             .fillMaxSize()
                             .clickable(
-                                enabled = !committing,
+                                enabled = !committing && !previewBlocked,
                                 onClickLabel = openLabel,
                                 role = Role.Button,
                                 onClick = requestCommit,

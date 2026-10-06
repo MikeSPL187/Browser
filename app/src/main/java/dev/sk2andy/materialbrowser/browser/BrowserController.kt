@@ -3803,18 +3803,26 @@ class BrowserController(
     }
 
     /** Builds an ephemeral Gecko renderer without registering a tab or writing history. */
-    fun createLinkPeekPreviewView(
+    internal fun createLinkPeekPreviewView(
         url: String,
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
+        onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
     ): View {
         val safeUrl = requireNotNull(BrowserUriPolicy.normalizeHttpUrl(url))
         val sourceTab = tabs.first { it.id == selectedTabId }
+        val decision = LinkPeekPreviewRules.navigationDecision(safeUrl, dangerousSites::check)
+        if (decision is LinkPeekNavigationDecision.Block) {
+            // Nothing loads: no engine session, only the card's warning.
+            mainHandler.post { onStatusChanged(LinkPeekPreviewStatus.Blocked(decision.site)) }
+            return View(activity)
+        }
         return createGeckoLinkPeekPreview(
             sourceTab = sourceTab,
             url = safeUrl,
             onProgressChanged = onProgressChanged,
             onCommittedUrlChanged = onCommittedUrlChanged,
+            onStatusChanged = onStatusChanged,
         )
     }
 
@@ -3831,6 +3839,7 @@ class BrowserController(
         url: String,
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
+        onStatusChanged: (LinkPeekPreviewStatus) -> Unit,
     ): View {
         val previewTabId = "link-peek-${++nextGeckoLinkPeekId}"
         var binding: GeckoLinkPeekBinding? = null
@@ -3864,6 +3873,7 @@ class BrowserController(
                     )
                     onCommittedUrlChanged(committedUrl)
                 }
+                binding?.let { it.moveTo(LinkPeekPreviewRules.statusAfter(it.status, event.type)) }
                 when (event.type) {
                     BrowserEngineEventType.NavigationStarted -> {
                         binding?.isLoading = true
@@ -3899,7 +3909,12 @@ class BrowserController(
             session = session,
             view = view,
             committedUrl = url,
-        )
+            onStatusChanged = onStatusChanged,
+        ).also { created ->
+            session.setNavigationRequestListener { request ->
+                created.navigationRequest(request.url, dangerousSites::check)
+            }
+        }
         geckoLinkPeekBindings[view] = binding
         dispatchCurrentWindowInsets(view, tabId = null, isInsideSafeDrawingHost = true)
         session.execute(BrowserEngineCommands.load(url))

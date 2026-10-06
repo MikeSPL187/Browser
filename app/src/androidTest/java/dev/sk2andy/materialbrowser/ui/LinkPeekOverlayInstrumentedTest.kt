@@ -557,9 +557,9 @@ class LinkPeekOverlayInstrumentedTest {
                     url = "https://redirect.example/start",
                     progress = 0f,
                     armed = false,
-                    createPreviewView = { onProgressChanged, onCommittedUrlChanged ->
-                        previewWebView(onProgressChanged, onCommittedUrlChanged).also {
-                            onCommittedUrlChanged("http://destination.example/article")
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also {
+                            callbacks.onCommittedUrlChanged("http://destination.example/article")
                         }
                     },
                     releasePreviewView = WebView::destroy,
@@ -583,9 +583,9 @@ class LinkPeekOverlayInstrumentedTest {
                     url = "https://start.example",
                     progress = 0f,
                     armed = false,
-                    createPreviewView = { onProgressChanged, onCommittedUrlChanged ->
-                        previewWebView(onProgressChanged, onCommittedUrlChanged).also {
-                            onCommittedUrlChanged("https://bücher.example/article")
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also {
+                            callbacks.onCommittedUrlChanged("https://bücher.example/article")
                         }
                     },
                     releasePreviewView = WebView::destroy,
@@ -658,13 +658,10 @@ class LinkPeekOverlayInstrumentedTest {
         ).assertDoesNotExist()
     }
 
-    private fun previewWebView(
-        onProgressChanged: (Int) -> Unit,
-        onCommittedUrlChanged: (String) -> Unit,
-    ): WebView =
+    private fun previewWebView(callbacks: LinkPeekPreviewCallbacks): WebView =
         WebView(composeRule.activity).apply {
             loadData("<html><body>Preview</body></html>", "text/html", "UTF-8")
-            onProgressChanged(100)
-            onCommittedUrlChanged("https://example.com/preview")
+            callbacks.onProgressChanged(100)
+            callbacks.onCommittedUrlChanged("https://example.com/preview")
         }
 }

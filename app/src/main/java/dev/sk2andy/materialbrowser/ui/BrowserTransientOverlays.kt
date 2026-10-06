@@ -148,11 +148,12 @@ internal fun BrowserTransientOverlays(
             armed = controller.contentActions.isLinkPeekArmed,
             committing = controller.contentActions.isLinkPeekCommitting,
             newTabTargetBounds = addressNewTabButtonBounds,
-            createPreviewView = { onProgressChanged, onCommittedUrlChanged ->
+            createPreviewView = { callbacks ->
                 controller.createLinkPeekPreviewView(
                     url = requireNotNull(linkTarget?.linkUrl),
-                    onProgressChanged = onProgressChanged,
-                    onCommittedUrlChanged = onCommittedUrlChanged,
+                    onProgressChanged = callbacks.onProgressChanged,
+                    onCommittedUrlChanged = callbacks.onCommittedUrlChanged,
+                    onStatusChanged = callbacks.onStatusChanged,
                 )
             },
             releasePreviewView = controller::releaseLinkPeekPreviewView,

@@ -5,6 +5,8 @@ import android.view.View
 import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -109,4 +111,25 @@ internal data class GeckoLinkPeekBinding(
     var title: String? = null,
     var progress: Int = 0,
     var isLoading: Boolean = true,
-)
+    val onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
+) {
+    var status: LinkPeekPreviewStatus = LinkPeekPreviewStatus.Loading
+        private set
+
+    fun moveTo(next: LinkPeekPreviewStatus) {
+        if (status == next) return
+        status = next
+        onStatusChanged(next)
+    }
+
+    /** Every main-frame navigation and redirect of the preview passes the dangerous-site guard. */
+    fun navigationRequest(url: String, check: (String) -> BlockedSite?): GeckoNavigationRequestDecision =
+        when (val decision = LinkPeekPreviewRules.navigationDecision(url, check)) {
+            LinkPeekNavigationDecision.Allow -> GeckoNavigationRequestDecision.Allow
+            LinkPeekNavigationDecision.Deny -> GeckoNavigationRequestDecision.Deny
+            is LinkPeekNavigationDecision.Block -> {
+                moveTo(LinkPeekPreviewStatus.Blocked(decision.site))
+                GeckoNavigationRequestDecision.Deny
+            }
+        }
+}
