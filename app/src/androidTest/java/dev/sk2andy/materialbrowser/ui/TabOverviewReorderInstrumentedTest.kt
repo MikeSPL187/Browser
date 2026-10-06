@@ -20,7 +20,6 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.moveTo
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -791,17 +790,6 @@ class TabOverviewReorderInstrumentedTest {
         }
         setOverviewContent(browserController)
         composeRule.waitForIdle()
-        // The cards scale in when the overview opens; measure them once the entry has settled.
-        val minimumTargetPx = 48f * composeRule.activity.resources.displayMetrics.density
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
-            composeRule
-                .onAllNodesWithTag(SnoozeTestTags.overviewClose(tabIds.first()), useUnmergedTree = true)
-                .fetchSemanticsNodes()
-                .firstOrNull()
-                ?.boundsInRoot
-                ?.let { it.width >= minimumTargetPx && it.height >= minimumTargetPx } == true
-        }
-
         val rootBounds = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         val cardBounds = tabIds.map { tabId ->
             composeRule
@@ -826,13 +814,13 @@ class TabOverviewReorderInstrumentedTest {
             )
             .fetchSemanticsNode()
             .boundsInRoot
-        val closeBounds = composeRule
+        val closeNode = composeRule
             .onNodeWithTag(
                 SnoozeTestTags.overviewClose(tabIds.first()),
                 useUnmergedTree = true,
             )
             .fetchSemanticsNode()
-            .boundsInRoot
+        val closeBounds = closeNode.boundsInRoot
 
         assertEquals(expectedCardHeight, cardBounds.first().height, 8f)
         assertEquals(expectedColumns, firstRowCount)
@@ -844,8 +832,10 @@ class TabOverviewReorderInstrumentedTest {
         // The v4 close button floats over the card's corner; its 48 dp target may reach over
         // the title row, so the title ends before the button's visible centre.
         assertTrue(titleBounds.right <= closeBounds.center.x)
-        assertTrue(closeBounds.width >= 48f * density)
-        assertTrue(closeBounds.height >= 48f * density)
+        // The touch target is the button's own size: its bounds in the root are clipped where the
+        // floating button reaches past the card or the grid's edge.
+        assertTrue(closeNode.size.width >= 48f * density)
+        assertTrue(closeNode.size.height >= 48f * density)
     }
 
     @Test
