@@ -383,8 +383,32 @@ def probe_keyboard(label):
     time.sleep(1)
 
 
+def probe_open_site(label, address):
+    """Frame statistics while a site opens from the address bar, as a person opens it: tap the
+    bar, type, Enter (#123, H5: the opening looked jerky)."""
+    width, _ = screen_size()
+    if not tap("Search or enter an address", "Поиск или адрес"):
+        menu = find("More options", "Другие действия")
+        if menu is None:
+            log(f"open site {label}: address bar not found")
+            return
+        adb("shell", "input", "tap", str(int(width * 0.45)), str(menu["center"][1]))
+    time.sleep(2)
+    adb("shell", "input", "text", address)
+    time.sleep(2)
+    adb("shell", "dumpsys", "gfxinfo", PACKAGE, "reset", check=False, capture=True)
+    adb("shell", "input", "keyevent", "ENTER")
+    time.sleep(5)
+    frames = (adb("shell", "dumpsys", "gfxinfo", PACKAGE, check=False, capture=True) or b"").decode(
+        "utf-8", "replace")
+    log(f"open site {label}: {page_probe.describe_frames(page_probe.parse_gfxinfo(frames))}")
+
+
 def probe_page(label):
-    """Touch accuracy at the top of the page and after scrolling, then the keyboard."""
+    """Opening a site, touch accuracy at the top of the page and after scrolling, then the
+    keyboard."""
+    probe_open_site(f"{label}-wikipedia", "en.wikipedia.org/wiki/Zen")
+    probe_open_site(f"{label}-local", f"localhost:{page_probe.PORT}/touch.html")
     open_url(f"{page_probe.BASE_URL}/touch.html")
     time.sleep(6)
     probe_touch(f"{label}-top")

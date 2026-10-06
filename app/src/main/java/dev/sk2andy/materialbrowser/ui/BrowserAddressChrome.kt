@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +68,8 @@ import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressContext
 import eightbitlab.com.blurview.BlurTarget
 import kotlin.math.absoluteValue
 import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
+import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
+import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 
 @Composable
 internal fun BoxScope.BrowserAddressChrome(
@@ -319,6 +323,16 @@ internal fun BoxScope.BrowserAddressChrome(
     }
     DisposableEffect(controller) {
         onDispose(controller.addressBar::clearBoundsInViewport)
+    }
+    // A form on the page has the keyboard: the bar slides under it instead of riding on top of
+    // the keyboard over the form (#123, H3), and comes back when the keyboard closes.
+    val hiddenByPageKeyboard = AddressBarInsetRules.hiddenByPageKeyboard(
+        imeVisible = WindowInsets.isImeVisible,
+        browserChromeOwnsIme = addressEditorVisible || controller.findInPageState != null,
+    )
+    val pageKeyboardHide = remember { Animatable(0f) }
+    LaunchedEffect(hiddenByPageKeyboard) {
+        pageKeyboardHide.animateTo(if (hiddenByPageKeyboard) 1f else 0f, VolaMotion.standard())
     }
     BrowserBottomBar(
         tab = selectedTab,
@@ -641,7 +655,13 @@ internal fun BoxScope.BrowserAddressChrome(
                     addressBarMorphInFront -> 20f
                     else -> 0f
                 },
-            ),
+            )
+            .graphicsLayer {
+                val hide = pageKeyboardHide.value
+                translationY = hide * VolaIsland.pageKeyboardTravel.toPx()
+                alpha = 1f - hide
+            }
+            .clearSemanticsWhen(hiddenByPageKeyboard),
     )
     CompactModeHint(
         visible = controller.addressBar.compactModeHintVisible && !tabOverviewVisible,

@@ -94,4 +94,20 @@ class AddressBarInsetRulesTest {
             ),
         )
     }
+
+    @Test
+    fun `only the keyboard of a page form hides the address bar`() {
+        assertEquals(
+            true,
+            AddressBarInsetRules.hiddenByPageKeyboard(imeVisible = true, browserChromeOwnsIme = false),
+        )
+        assertEquals(
+            false,
+            AddressBarInsetRules.hiddenByPageKeyboard(imeVisible = true, browserChromeOwnsIme = true),
+        )
+        assertEquals(
+            false,
+            AddressBarInsetRules.hiddenByPageKeyboard(imeVisible = false, browserChromeOwnsIme = false),
+        )
+    }
 }

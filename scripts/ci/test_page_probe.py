@@ -78,6 +78,24 @@ class PageProbeTest(unittest.TestCase):
         self.assertEqual(0, page_probe.touch_offset(300, 5, 200, 399, (5, 50, 100)))
         self.assertIsNone(page_probe.touch_offset(300, 5, 200, 399, None))
 
+    def test_gfxinfo_summary_is_parsed(self):
+        text = """Applications Graphics Acceleration Info:
+Stats since: 1ns
+Total frames rendered: 120
+Janky frames: 18 (15.00%)
+Janky frames (legacy): 20 (16.67%)
+50th percentile: 9ms
+90th percentile: 21ms
+95th percentile: 30ms
+99th percentile: 48ms
+"""
+        stats = page_probe.parse_gfxinfo(text)
+        self.assertEqual({"frames": 120, "janky": 18, "p50": 9, "p90": 21, "p95": 30, "p99": 48},
+                         stats)
+        self.assertEqual("120 frames, 18 janky (15%), p50 9 ms, p90 21 ms, p99 48 ms",
+                         page_probe.describe_frames(stats))
+        self.assertEqual("no frame statistics", page_probe.describe_frames({}))
+
 
 if __name__ == "__main__":
     unittest.main()

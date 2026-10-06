@@ -121,3 +121,36 @@ def touch_offset(tap_y, band, first_y, last_y, reported):
     finger = band * page_band_height + (tap_y - first_y) * scale
     page = got * page_band_height + y_in_band
     return round(page - finger)
+
+
+GFXINFO_FIELDS = {
+    "frames": re.compile(r"Total frames rendered:\s*(\d+)"),
+    "janky": re.compile(r"Janky frames:\s*(\d+)"),
+    "p50": re.compile(r"50th percentile:\s*(\d+)ms"),
+    "p90": re.compile(r"90th percentile:\s*(\d+)ms"),
+    "p95": re.compile(r"95th percentile:\s*(\d+)ms"),
+    "p99": re.compile(r"99th percentile:\s*(\d+)ms"),
+}
+
+
+def parse_gfxinfo(text):
+    """Frame statistics of `dumpsys gfxinfo <package>`: the first (app-wide) summary only."""
+    stats = {}
+    for name, pattern in GFXINFO_FIELDS.items():
+        match = pattern.search(text or "")
+        if match is not None:
+            stats[name] = int(match.group(1))
+    return stats
+
+
+def describe_frames(stats):
+    """One log line: '42 frames, 7 janky (17%), p50 9 ms, p90 21 ms, p99 48 ms'."""
+    if "frames" not in stats:
+        return "no frame statistics"
+    frames = stats["frames"]
+    janky = stats.get("janky", 0)
+    share = round(100 * janky / frames) if frames else 0
+    percentiles = ", ".join(
+        f"{name} {stats[name]} ms" for name in ("p50", "p90", "p99") if name in stats
+    )
+    return f"{frames} frames, {janky} janky ({share}%), {percentiles}"
