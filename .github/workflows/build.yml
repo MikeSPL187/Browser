@@ -87,7 +87,7 @@ jobs:
           for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py \
             scripts/test_translations.py scripts/test_geckoview_latest.py \
             scripts/test_quality_gates.py scripts/test_a11y_audit.py \
-            scripts/ci/test_startup_timeline.py; do
+            scripts/ci/test_startup_timeline.py scripts/ci/test_page_probe.py; do
             echo "::group::${test}"
             python3 "$test"
             echo "::endgroup::"
