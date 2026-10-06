@@ -132,6 +132,27 @@ class BrowserControllerClosedTabUndoInstrumentedTest {
     }
 
     @Test
+    fun closingLockedPrivateTabOffersNoUndo() {
+        activityRule.scenario.onActivity { activity ->
+            activity.getSharedPreferences(
+                BrowserSessionStore.PREFERENCES_NAME, Context.MODE_PRIVATE,
+            ).edit().clear().commit()
+            BrowserSessionStore(activity).savePrivateTabsLockEnabled(true)
+            val browser = BrowserController(activity).also { controller = it }
+            browser.updateClosedTabUndoEnabled(true)
+            val privateTabId = browser.createTab(isIncognito = true)
+            browser.onAppBackgrounded()
+            assertTrue(browser.privateTabsLock.isLocked)
+
+            browser.closeTabFromUser(privateTabId)
+            // MainActivity releases the lock once the private tab count drops to zero; undo would
+            // then bring the page back without a fingerprint.
+            assertFalse(browser.tabs.any { it.id == privateTabId })
+            assertNull(browser.closedTabUndoOffer)
+        }
+    }
+
+    @Test
     fun newCloseDisableAndAutomaticCloseRejectStaleUndo() {
         activityRule.scenario.onActivity { activity ->
             val browser = freshController(activity)

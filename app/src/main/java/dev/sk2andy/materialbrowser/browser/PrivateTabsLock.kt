@@ -7,11 +7,20 @@ import androidx.compose.runtime.setValue
 /** The decisions of «Lock on exit» for private tabs, kept apart so each one has a test. */
 internal object PrivateTabsLockRules {
     /**
-     * Leaving the app locks private tabs only when the lock is on, there is a private tab to hide
-     * and a strong biometric to open it again; without one the owner could never get back in.
+     * Leaving the app locks private tabs whenever the lock is on and there is a private tab to hide,
+     * even with no strong biometric at hand: a lock that silently stops locking would show private
+     * pages to whoever picks the phone up. The biometric only gates unlocking and turning the lock
+     * on; without one the lock screen still leaves for regular tabs or closes every private tab.
      */
-    fun locksOnLeave(enabled: Boolean, privateTabCount: Int, canAuthenticate: Boolean): Boolean =
-        enabled && privateTabCount > 0 && canAuthenticate
+    fun locksOnLeave(enabled: Boolean, privateTabCount: Int): Boolean =
+        enabled && privateTabCount > 0
+
+    /**
+     * Without a biometric the lock can still be turned off once no private tab is left: there is
+     * nothing for it to reveal, and a lock that can never be turned off would outlive the sensor.
+     */
+    fun turnsOffWithoutBiometric(enabled: Boolean, privateTabCount: Int): Boolean =
+        enabled && privateTabCount == 0
 
     /** While locked, every private tab is hidden: its page, its title, its address and its icon. */
     fun hides(locked: Boolean, tab: BrowserTab?): Boolean = locked && tab?.isIncognito == true
@@ -60,12 +69,21 @@ class PrivateTabsLock internal constructor(
 
     fun hides(tab: BrowserTab?): Boolean = PrivateTabsLockRules.hides(isLocked, tab)
 
+    val canTurnOffWithoutBiometric: Boolean
+        get() = PrivateTabsLockRules.turnsOffWithoutBiometric(enabled, tabs().count(BrowserTab::isIncognito))
+
     /**
      * Turning the lock on or off asks for the fingerprint first: on, to prove it works before it can
      * shut the owner out; off, so whoever holds an unlocked phone cannot simply drop it.
      */
     fun requestEnabled(value: Boolean) {
-        if (value == enabled || !canAuthenticate()) return
+        if (value == enabled) return
+        if (!value && !canAuthenticate() && canTurnOffWithoutBiometric) {
+            enabled = false
+            saveEnabled(false)
+            return
+        }
+        if (!canAuthenticate()) return
         authenticate(ProfileAuthenticationPurpose.ConfigurePrivateTabsLock) { authenticated ->
             if (!authenticated) return@authenticate
             enabled = value
@@ -77,7 +95,7 @@ class PrivateTabsLock internal constructor(
     fun onAppBackgrounded() {
         if (isLocked) return
         val privateTabIds = tabs().filter(BrowserTab::isIncognito).mapTo(hashSetOf(), BrowserTab::id)
-        if (!PrivateTabsLockRules.locksOnLeave(enabled, privateTabIds.size, canAuthenticate())) return
+        if (!PrivateTabsLockRules.locksOnLeave(enabled, privateTabIds.size)) return
         isLocked = true
         promptPending = true
         suspendTabs(privateTabIds, selectedTab()?.isIncognito == true)
