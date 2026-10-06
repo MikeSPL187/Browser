@@ -6,6 +6,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -73,7 +75,8 @@ class GeckoReaderStudioFlowInstrumentedTest {
                     .fetchSemanticsNodes()
                     .isNotEmpty()
             }
-            composeRule.onNodeWithText("Gecko Reader Story").assertIsDisplayed()
+            // The story title shows in the reader's header and as the article's heading.
+            composeRule.onAllNodesWithText("Gecko Reader Story").onFirst().assertIsDisplayed()
             composeRule.onNodeWithTag(ReaderStudioTestTags.Article).assertIsDisplayed()
         }
     }

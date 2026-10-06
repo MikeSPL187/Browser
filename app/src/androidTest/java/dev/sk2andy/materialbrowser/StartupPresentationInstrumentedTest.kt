@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.core.view.ViewCompat
@@ -61,6 +61,10 @@ class StartupPresentationInstrumentedTest {
         composeRule.waitUntil(timeoutMillis = 5_000L) {
             composeRule.activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                 composeRule.activity.window.decorView.hasWindowFocus()
+        }
+        // The launcher intent asks for the editor through a request id; it opens a frame later.
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            composeRule.onAllNodesWithTag(AddressBarTestTags.Editor).fetchSemanticsNodes().isNotEmpty()
         }
 
         composeRule.onNodeWithTag(AddressBarTestTags.Editor)

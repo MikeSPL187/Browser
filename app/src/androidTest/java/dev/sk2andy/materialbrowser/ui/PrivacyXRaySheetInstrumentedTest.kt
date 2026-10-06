@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -151,8 +152,8 @@ class PrivacyXRaySheetInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.Total).assertExists()
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.PermissionsTab).performClick()
+        // The sheet opens on the site's overview; X-Ray and permissions are its pages (W-SiteInfo).
+        composeRule.onNodeWithTag(SiteInfoTestTags.AllPermissions).performScrollTo().performClick()
         composeRule.onNodeWithText("https://news.example").assertExists()
         composeRule.onNodeWithText(
             InstrumentationRegistry.getInstrumentation().targetContext.getString(
@@ -160,7 +161,8 @@ class PrivacyXRaySheetInstrumentedTest {
             ),
         ).performScrollTo().performClick()
         assertEquals(SitePermission.Camera to SitePermissionDecision.Allow, changed.get())
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.XRayTab).performClick()
+        Espresso.pressBack()
+        composeRule.onNodeWithTag(SiteInfoTestTags.Trackers).performScrollTo().performClick()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.Total).assertExists()
     }
 

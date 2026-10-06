@@ -320,14 +320,15 @@ internal fun <T : View> LinkPeekOverlay(
                     .fillMaxWidth()
                     .height(VolaGlance.handleTouchHeight)
                     .then(pullModifier)
+                    // A test tag after clearAndSetSemantics is cleared with the rest.
+                    .testTag(LinkPeekTestTags.PullHandle)
                     .clearAndSetSemantics {
                         contentDescription = pullLabel
                         onClick(label = openLabel) {
                             requestCommit()
                             true
                         }
-                    }
-                    .testTag(LinkPeekTestTags.PullHandle),
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
