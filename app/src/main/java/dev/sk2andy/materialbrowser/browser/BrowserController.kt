@@ -1294,6 +1294,10 @@ class BrowserController(
     private val candyTrailGenerations = mutableMapOf<String, Int>()
     private val capsuleTabIds = mutableMapOf<String, String>()
     private val pendingRecallProfileDeletions = mutableSetOf<String>()
+
+    /** Bumps when a workspace deletion fails; the browser screen answers with a snackbar. */
+    var workspaceDeletionFailures by mutableIntStateOf(0)
+        private set
     private val pendingProfileIsolationChanges = mutableSetOf<String>()
     var activeCapsuleTabId: String? = null
         private set
@@ -6328,52 +6332,60 @@ class BrowserController(
         excludedCapsuleId: String? = null,
         onComplete: (Boolean) -> Unit,
     ) {
-        if (!canDeleteProfile(profileId) || profileId in pendingProfileIsolationChanges) {
-            onComplete(false)
+        val complete: (Boolean) -> Unit = { deleted ->
+            if (!deleted) workspaceDeletionFailures++
+            onComplete(deleted)
+        }
+        if (!canDeleteProfile(profileId) || profileId in pendingProfileIsolationChanges ||
+            !pendingRecallProfileDeletions.add(profileId)
+        ) {
+            complete(false)
             return
         }
-        if (!pendingRecallProfileDeletions.add(profileId)) {
-            onComplete(false)
+        val finish: (Boolean) -> Unit = { deleted ->
+            pendingRecallProfileDeletions.remove(profileId)
+            complete(deleted)
+        }
+        val isolated = profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true
+        if (!isolated || BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+            deleteProfileRecallThenCommit(profileId, excludedCapsuleId, finish)
             return
         }
-        recallRepository.deleteProfilesAsync(setOf(profileId)) { deleted ->
-            if (!deleted || destroyed) {
-                pendingRecallProfileDeletions.remove(profileId)
-                onComplete(false)
-                return@deleteProfilesAsync
+        // Steps that can still fail run before Recall, which can't be restored once deleted.
+        historyMutationExecutor.execute {
+            val pushCleared = runCatching {
+                runBlocking {
+                    GeckoWebPushCoordinator.removeProfileSubscriptions(
+                        activity.applicationContext,
+                        profileId,
+                    )
+                }
+            }.getOrDefault(false)
+            mainHandler.post {
+                if (pushCleared && !destroyed && canDeleteProfile(profileId) &&
+                    profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true
+                ) {
+                    deleteProfileRecallThenCommit(profileId, excludedCapsuleId, finish)
+                } else {
+                    finish(false)
+                }
             }
-            val isolated = profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true
-            if (!isolated || BuildConfig.SYSTEM_WEBVIEW_ONLY) {
-                val result = deleteProfileInternal(
+        }
+    }
+
+    private fun deleteProfileRecallThenCommit(
+        profileId: String,
+        excludedCapsuleId: String?,
+        finish: (Boolean) -> Unit,
+    ) {
+        recallRepository.deleteProfilesAsync(setOf(profileId)) { deleted ->
+            finish(
+                deleted && !destroyed && deleteProfileInternal(
                     profileId = profileId,
                     excludedCapsuleId = excludedCapsuleId,
                     recallAlreadyDeleted = true,
-                )
-                pendingRecallProfileDeletions.remove(profileId)
-                onComplete(result)
-                return@deleteProfilesAsync
-            }
-            historyMutationExecutor.execute {
-                val pushCleared = runCatching {
-                    runBlocking {
-                        GeckoWebPushCoordinator.removeProfileSubscriptions(
-                            activity.applicationContext,
-                            profileId,
-                        )
-                    }
-                }.getOrDefault(false)
-                mainHandler.post {
-                    val result = pushCleared && !destroyed &&
-                        profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true &&
-                        deleteProfileInternal(
-                            profileId = profileId,
-                            excludedCapsuleId = excludedCapsuleId,
-                            recallAlreadyDeleted = true,
-                        )
-                    pendingRecallProfileDeletions.remove(profileId)
-                    onComplete(result)
-                }
-            }
+                ),
+            )
         }
     }
 

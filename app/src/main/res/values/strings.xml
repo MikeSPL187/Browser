@@ -156,6 +156,7 @@
     <string name="workspace_delete_confirm_title">Delete «%1$s»?</string>
     <string name="workspace_delete_confirm_message">Its tabs stay in another workspace. Its history and, with separate storage, its cookies and sign-ins are deleted.</string>
     <string name="workspace_delete_blocked_by_sync">This workspace is linked to Sync and can’t be deleted here</string>
+    <string name="workspace_delete_failed">Couldn’t delete the workspace — try again</string>
     <string name="workspace_name_label">Name</string>
     <string name="workspace_accent_label">Color</string>
     <string name="workspace_accent_violet">Violet</string>
