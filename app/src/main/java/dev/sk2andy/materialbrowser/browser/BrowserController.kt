@@ -2632,10 +2632,7 @@ class BrowserController(
         val selectedSessionIsBeingReleased =
             browserEngineSessions[tabId] in geckoViewSessionsBeingReleased
         if (isGeckoViewBindingMutationInProgress || selectedSessionIsBeingReleased) {
-            if (
-                !isGeckoViewBindingMutationInProgress ||
-                container !in geckoViewMutationHosts
-            ) {
+            if (!isGeckoViewBindingMutationInProgress || container !in geckoViewMutationHosts) {
                 scheduleGeckoViewAttachRetry(
                     container = container,
                     onContentPresented = onContentPresented,
@@ -2643,9 +2640,7 @@ class BrowserController(
                 )
             }
             val binding = geckoViewBindings[container]
-            return binding?.view?.takeIf { view ->
-                binding.tabId == tabId && view.parent === container
-            }
+            return binding?.view?.takeIf { view -> binding.tabId == tabId && view.parent === container }
         }
         isGeckoViewBindingMutationInProgress = true
         geckoViewMutationHosts += container
@@ -2655,7 +2650,12 @@ class BrowserController(
                 onContentPresented = onContentPresented,
                 backdropCaptureEnabled = backdropCaptureEnabled,
                 tabId = tabId,
-            )
+            )?.also {
+                // A session made at attach starts inactive: run it as tab selection does (#123, H7).
+                if (isActivityResumed && (companion || externalLinkPreviewState == null && !isSelectedContentLocked)) {
+                    browserEngineSessions[tabId]?.setActive(true)
+                }
+            }
         } finally {
             geckoViewMutationHosts.clear()
             isGeckoViewBindingMutationInProgress = false
