@@ -348,6 +348,38 @@ def probe_touch(label):
     shot(f"touch-{label}", audit=False)
 
 
+def probe_tap_feedback(label):
+    """Holds a finger on a probe band and compares its colour mid-press with the colour before:
+    the tap highlight should tint it (#123, H6: no sign that a site's button was pressed)."""
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    try:
+        width, height, pixels = page_probe.parse_raw_screencap(data)
+    except ValueError as error:
+        log(f"tap feedback {label}: no screenshot: {error}")
+        return
+    x = width // 8
+    target = page_probe.target_band(page_probe.band_runs(width, height, pixels, x=x), height)
+    if target is None:
+        log(f"tap feedback {label}: no probe bands on screen")
+        return
+    _, first, last = target
+    y = (first + last) // 2
+    before = tuple(pixels[(y * width + x) * 4:(y * width + x) * 4 + 3])
+    press = subprocess.Popen(["adb", "shell", "input", "swipe", str(width // 4), str(y),
+                              str(width // 4), str(y), "1200"])
+    time.sleep(0.5)
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    press.wait(timeout=30)
+    try:
+        width, height, pixels = page_probe.parse_raw_screencap(data)
+        during = tuple(pixels[(y * width + x) * 4:(y * width + x) * 4 + 3])
+    except ValueError:
+        during = None
+    shown = during is not None and sum(abs(a - b) for a, b in zip(before, during)) >= 12
+    log(f"tap feedback {label}: {'shown' if shown else 'NONE'}: band colour {before} -> {during}")
+    time.sleep(1)
+
+
 def probe_scroll_down():
     """Two slow swipes up: the page scrolls and the address bar compacts."""
     width, height = screen_size()
@@ -447,6 +479,7 @@ def probe_page(label):
     probe_touch(f"{label}-top")
     probe_scroll_down()
     probe_touch(f"{label}-scrolled")
+    probe_tap_feedback(label)
     probe_keyboard(label)
 
 
