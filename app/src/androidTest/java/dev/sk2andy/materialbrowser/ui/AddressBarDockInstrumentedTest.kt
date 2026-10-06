@@ -533,7 +533,12 @@ class AddressBarDockInstrumentedTest {
             }
             composeRule.onNodeWithText("example.test").performClick()
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
+        // The editor takes focus once its expand motion has started, not on the tap's frame.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
+            }.isSuccess
+        }
         composeRule.onNode(closeAddressInputButton(composeRule.activity)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.cd_more_options),

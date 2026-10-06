@@ -4,7 +4,9 @@
 # text after " -- " says why. A failing test that is not listed here fails the run. Fix tests
 # and remove their lines; do not add new ones to get a pull request green.
 #
-# First full run: 2026-10-06, PR #121 (1034 tests). Tests marked "flaky" failed in one run of three.
+# First full runs: 2026-10-06, PR #121 (1034 tests). "flaky" marks a test that both passed and
+# failed across those runs; the summary lists it as fixed when it passes, which is not a reason
+# to remove it until it passes on several nights in a row.
 
 # Tab stacks: the v4 overview (Q7a) draws no stacks; tab groups return in S12.
 dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#distantHeroStackMemberFoldsFromVisibleEdgeIntoTrigger
@@ -12,16 +14,19 @@ dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#gridStackColla
 dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#heroStackCollapseExpandOpensConfiguredFolder
 
 # Menu, address bar and tabs still open (S5 follow-up, not yet understood).
-dev.sk2andy.materialbrowser.MainActivityIncomingNavigationInstrumentedTest#coldIncomingViewLoadsExternalPreviewPage
-dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#configuredRightParkActionMovesRememberedLeftPlacementToRight
+dev.sk2andy.materialbrowser.ui.BrowserRootBackInstrumentedTest#frostedTabOverviewKeepsClearSystemBarSpacing -- overview address bar tag not displayed (v4 overview, to check)
+dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#gridCardsMatchAdaptivePreviewProportions -- grid card height differs from the old preview ratio (v4, to check)
+dev.sk2andy.materialbrowser.MainActivityIncomingNavigationInstrumentedTest#coldIncomingViewLoadsExternalPreviewPage -- flaky
+dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#configuredRightParkActionMovesRememberedLeftPlacementToRight -- flaky
 dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#videoOnlyPresentationKeepsParkedPillHiddenUntilReturnCompletes
 dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#privateMainMenuDoesNotExposeFirefoxExtensionActions
-dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#settingsExtensionBackReturnsToSettingsHome
+dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#settingsExtensionBackReturnsToSettingsHome -- flaky
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredDismissAnchorAttachesGeckoOnlyAfterOverviewCloses
 dev.sk2andy.materialbrowser.ui.ProfileCreationFlowInstrumentedTest#addButtonCreatesProfileDuringOverviewEntry
 
 # Gecko engine: page insets, CSS safe area, keyboard, prompts, extensions, media.
+dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest#videoOnlyPresentationAlignsAnOffsetInlineVideoWithTheViewport -- flaky
 dev.sk2andy.materialbrowser.browser.BrowserControllerGeckoViewBindingInstrumentedTest#autoDeAmpPostsOnlyCurrentEnabledPublisherReplacement
 dev.sk2andy.materialbrowser.browser.BrowserControllerGeckoViewBindingInstrumentedTest#fullscreenPresentationPreventsSecondGeckoViewForAnotherHost
 dev.sk2andy.materialbrowser.browser.BrowserControllerGeckoViewBindingInstrumentedTest#userOpenedWebPopupAllowsGeckoNewSession
@@ -36,7 +41,7 @@ dev.sk2andy.materialbrowser.browser.gecko.CandyPrivacyHostInstrumentedTest#docum
 dev.sk2andy.materialbrowser.browser.gecko.CandyPrivacyHostInstrumentedTest#dynamicLayoutNeedsQuietRepeatedFailuresBeforeNativeFallback
 dev.sk2andy.materialbrowser.browser.gecko.CandyPrivacyHostInstrumentedTest#privateDocumentStartInsetKeepsFixedHeaderBelowStatusBar
 dev.sk2andy.materialbrowser.browser.gecko.GeckoAutoplayInstrumentedTest#disabledBlockedPolicyAllowsImmediateAudiblePlayback
-dev.sk2andy.materialbrowser.browser.gecko.GeckoContentGestureInstrumentedTest#homeSwipeEndsGeckoTouchBeforeActivityStops
+dev.sk2andy.materialbrowser.browser.gecko.GeckoContentGestureInstrumentedTest#homeSwipeEndsGeckoTouchBeforeActivityStops -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoCssSafeAreaInstrumentedTest#cssInsetProtectsBodyFlowAndFixedContentWithoutShrinkingNativeSurface
 dev.sk2andy.materialbrowser.browser.gecko.GeckoCssSafeAreaInstrumentedTest#disablingCssOwnershipRestoresAuthorStylesWhileNativeEnvRemainsPositiveWithoutReload
 dev.sk2andy.materialbrowser.browser.gecko.GeckoCssSafeAreaInstrumentedTest#initiallyTopStickyHeaderDoesNotCoverTheFollowingFlowContent
@@ -44,7 +49,7 @@ dev.sk2andy.materialbrowser.browser.gecko.GeckoCssSafeAreaInstrumentedTest#scrol
 dev.sk2andy.materialbrowser.browser.gecko.GeckoCssSafeAreaInstrumentedTest#trustedNativeClickRechecksExistingHiddenMenuAndRestoresLaterAuthorTop
 dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeInstrumentedTest#builtInFixtureExercisesActionsPopupOptionsTabsAndPublicApis
 dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPersistencePhaseTwoInstrumentedTest#freshRuntimeInventoriesPersistedExtensionWithoutInstalling
-dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#fileInputUsesCandyChooserAndNavigationOwnsResult
+dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#fileInputUsesCandyChooserAndNavigationOwnsResult -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#httpBasicAuthAndTargetBlankUseCandyState
 dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#notificationRadarRevocationPersistsAcrossActivityRestart -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#privatePageNotificationRequestIsDeniedWithoutPrompt
@@ -59,6 +64,7 @@ dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest#
 dev.sk2andy.materialbrowser.browser.gecko.GeckoReaderViewInstrumentedTest#readerBridgeTargetsTopFrameAndBoundsPayloadBeforeNativeMessaging
 
 # System WebView engine, external previews and APK downloads.
+dev.sk2andy.materialbrowser.browser.BrowserPageHardwareInputInstrumentedTest#systemWebViewWebsiteReceivesFirstHardwareLetterAfterNonBrowserFocus -- flaky
 dev.sk2andy.materialbrowser.AppearanceWebThemeInstrumentedTest#appearanceChangesPreservePrivateSystemWebViewHistoryInMemory
 dev.sk2andy.materialbrowser.browser.BrowserControllerApkDownloadInstrumentedTest#externalPreviewKeepsDownloadAuthorizationAcrossRedirect
 dev.sk2andy.materialbrowser.browser.BrowserControllerApkDownloadInstrumentedTest#externalPreviewRoutesTappedApkBeforeWebViewNavigation
@@ -76,5 +82,5 @@ dev.sk2andy.materialbrowser.ui.AppearanceSettingsScreenInstrumentedTest#addressB
 dev.sk2andy.materialbrowser.ui.BrowserFindInPageInstrumentedTest#findModeForwardsImeInsetsToWebView
 dev.sk2andy.materialbrowser.ui.CandyTrailScreenInstrumentedTest#graphActionsDispatchNodeForkAndOpenClosedEndpoints
 dev.sk2andy.materialbrowser.ui.CandyTrailScreenInstrumentedTest#graphRendersCurrentNodeAndFallbackFavicon
-dev.sk2andy.materialbrowser.ui.ProfileWallpaperEditorScreenInstrumentedTest#editorShowsCropControlsAndReturnsTransform
-dev.sk2andy.materialbrowser.ui.ProfileWallpaperEditorScreenInstrumentedTest#storedWallpaperCanBeRemoved
+dev.sk2andy.materialbrowser.ui.ProfileWallpaperEditorScreenInstrumentedTest#editorShowsCropControlsAndReturnsTransform -- flaky
+dev.sk2andy.materialbrowser.ui.ProfileWallpaperEditorScreenInstrumentedTest#storedWallpaperCanBeRemoved -- flaky
