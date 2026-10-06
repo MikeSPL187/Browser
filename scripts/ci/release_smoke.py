@@ -49,6 +49,11 @@ class SiteResult:
     crash_log: str = ""
     tombstone: str = ""
     symbolicated: list = dataclasses.field(default_factory=list)
+    loaded: bool = True  # Gecko started a content process for the page
+
+    @property
+    def unopened(self):
+        return not self.crashed and not self.loaded
 
     @property
     def java_crash(self):
@@ -85,16 +90,26 @@ def newest_tombstone(since):
     return ""
 
 
-def check_site(package, name, url, settle):
+def screenshot(path):
+    shot = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+    if shot:
+        Path(path).write_bytes(shot)
+
+
+def check_site(package, name, url, settle, shot=None):
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
     before = set(adb("shell", "ls", "/data/tombstones").split())
     adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", f"'{url}'", "-p", package)
     time.sleep(settle)
     alive = bool(adb("shell", "pidof", package).strip())
+    # Gecko renders pages in "<package>:tabN"; without one the page never started loading.
+    loaded = f"{package}:tab" in adb("shell", "ps", "-A", "-o", "NAME")
+    if shot:
+        screenshot(shot)
     crash_log = adb("logcat", "-d", "-b", "crash")
     tombstone = newest_tombstone(before) if not alive or crash_log.strip() else ""
-    result = SiteResult(name, url, alive, crash_log, tombstone)
+    result = SiteResult(name, url, alive, crash_log, tombstone, loaded=loaded)
     if result.crashed:
         result.symbolicated = symbolicate.symbolicate(crash_log + "\n" + tombstone)
     return result
@@ -102,10 +117,15 @@ def check_site(package, name, url, settle):
 
 def report(results, version):
     crashed = [result for result in results if result.crashed]
+    unopened = [result for result in results if result.unopened]
     verdict = "✅ без вылетов" if not crashed else f"❌ вылетов: {len(crashed)} из {len(results)}"
+    if unopened:
+        verdict += f" · ⚠️ не открылись: {len(unopened)}"
     lines = [f"## Ночной smoke-тест release · {version} · {verdict}", "", "| Сайт | Результат |", "|---|---|"]
     for result in results:
-        if not result.crashed:
+        if result.unopened:
+            status = "⚠️ страница не открылась (нет процесса вкладки)"
+        elif not result.crashed:
             status = "✅ жив"
         elif result.java_crash:
             status = "❌ вылет (Java)"
@@ -130,6 +150,7 @@ def main(argv):
     parser.add_argument("--report", required=True)
     parser.add_argument("--version", default=os.environ.get("GITHUB_SHA", "")[:7] or "local")
     parser.add_argument("--settle", type=int, default=35, help="seconds a page gets to load")
+    parser.add_argument("--screenshots", help="directory for a screenshot of each site")
     args = parser.parse_args(argv)
 
     wait_for_boot()
@@ -139,9 +160,14 @@ def main(argv):
     adb("shell", "pm", "grant", args.package, "android.permission.POST_NOTIFICATIONS")
 
     results = []
-    for name, url in SITES:
-        result = check_site(args.package, name, url, args.settle)
-        print(f"{'CRASH' if result.crashed else 'ok':5} {name} {url}", flush=True)
+    shots = Path(args.screenshots) if args.screenshots else None
+    if shots:
+        shots.mkdir(parents=True, exist_ok=True)
+    for number, (name, url) in enumerate(SITES, start=1):
+        shot = shots / f"{number:02d}.png" if shots else None
+        result = check_site(args.package, name, url, args.settle, shot)
+        label = "CRASH" if result.crashed else "EMPTY" if result.unopened else "ok"
+        print(f"{label:5} {name} {url}", flush=True)
         results.append(result)
 
     text = report(results, args.version)

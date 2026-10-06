@@ -39,6 +39,14 @@ class ReportTest(unittest.TestCase):
         self.assertIn("❌ вылет (Java)", text)
         self.assertIn("⚠️ сбой в журнале, процесс жив", text)
 
+    def test_a_page_without_a_content_process_is_flagged_not_failed(self):
+        empty = smoke.SiteResult("VK", "https://vk.com/", alive=True, loaded=False)
+        self.assertTrue(empty.unopened)
+        self.assertFalse(empty.crashed)
+        text = smoke.report([empty, smoke.SiteResult("Яндекс", "https://ya.ru/", alive=True)], "x")
+        self.assertIn("✅ без вылетов · ⚠️ не открылись: 1", text)
+        self.assertIn("| [VK](https://vk.com/) | ⚠️ страница не открылась (нет процесса вкладки) |", text)
+
     def test_every_site_is_an_https_page(self):
         self.assertTrue(all(url.startswith("https://") for _, url in smoke.SITES))
         self.assertEqual(len({url for _, url in smoke.SITES}), len(smoke.SITES))

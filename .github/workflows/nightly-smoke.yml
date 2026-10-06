@@ -79,11 +79,15 @@ jobs:
 
       - name: Open the sites
         id: smoke
+        env:
+          SMOKE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: >-
           python3 scripts/ci/release_smoke.py
           --apk app/build/outputs/apk/full/localRelease/app-full-localRelease.apk
           --package "$SMOKE_PACKAGE"
           --report "$RUNNER_TEMP/smoke.md"
+          --screenshots "$RUNNER_TEMP/screens"
+          --version "${SMOKE_SHA::7}"
 
       - name: Post the night's result
         if: ${{ always() }}
@@ -91,21 +95,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          SMOKE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           report="$RUNNER_TEMP/smoke.md"
           if [ ! -s "$report" ]; then
             printf '## Ночной smoke-тест release · %s · ⚠️ не дошёл до сайтов (%s)\n' \
-              "${GITHUB_SHA::7}" "$SMOKE_OUTCOME" > "$report"
+              "${SMOKE_SHA::7}" "$SMOKE_OUTCOME" > "$report"
           fi
-          printf '\n[Лог прогона](%s)\n' "$RUN_URL" >> "$report"
+          printf '\n[Лог прогона](%s) · снимки экрана — в артефакте nightly-smoke\n' "$RUN_URL" >> "$report"
           gh issue comment "$SMOKE_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$report"
 
-      - name: Upload the crash logs
-        if: ${{ failure() }}
+      - name: Upload screenshots and logs
+        if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nightly-smoke
           path: |
             ${{ runner.temp }}/smoke.md
             ${{ runner.temp }}/emulator.log
+            ${{ runner.temp }}/screens/
           if-no-files-found: ignore
