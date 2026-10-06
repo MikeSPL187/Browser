@@ -568,8 +568,8 @@ internal fun ExpandedBottomBarContent(
                                             VolaIcons.Search,
                                             contentDescription = null,
                                             modifier = Modifier
-                                                .padding(start = 8.dp)
-                                                .size(24.dp),
+                                                .padding(start = VolaAddressEditor.fieldSearchIconStartPadding)
+                                                .size(VolaAddressEditor.fieldSearchIconSize),
                                             tint = addressChromeTokens.accentColor,
                                         )
                                     }
