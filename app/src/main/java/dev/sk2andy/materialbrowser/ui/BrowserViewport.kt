@@ -514,7 +514,9 @@ internal fun BrowserViewport(
                     val essentials = controller.essentials
                     val profileId = selectedTab.profileId
                     if (!selectedTab.isIncognito) {
-                        LaunchedEffect(profileId) {
+                        // A new tab left open past midnight moves the report's week on as well.
+                        val today = rememberLocalToday()
+                        LaunchedEffect(profileId, today) {
                             essentials.materialize(profileId)
                             controller.protectionReport.refresh()
                         }

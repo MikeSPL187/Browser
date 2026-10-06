@@ -320,9 +320,10 @@ internal object NewTabContinueRules {
 @Composable
 private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
     val locale = LocalConfiguration.current.locales[0]
-    val date = remember(locale) {
+    val today = rememberLocalToday()
+    val date = remember(locale, today) {
         val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
-        java.time.LocalDate.now()
+        today
             .format(java.time.format.DateTimeFormatter.ofPattern(pattern, locale))
             .replaceFirstChar { it.titlecase(locale) }
     }
