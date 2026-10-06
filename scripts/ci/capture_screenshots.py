@@ -344,7 +344,14 @@ def probe_touch(label):
     offset = page_probe.touch_offset(tap_y, band, first, last, reported)
     verdict = "OK" if offset is not None and abs(offset) <= 4 else "MISMATCH"
     log(f"touch {label}: {verdict}: finger on band {band} at y={tap_y} (band drawn {first}-{last}), "
-        f"page got {reported}, offset {offset} px")
+        f"page got {reported}, offset {offset} px; page says: {node['text'] if node else None}")
+    if verdict == "MISMATCH":
+        # Where the engine view and its surface sit, to tell a native margin from a renderer inset.
+        views = (adb("shell", "dumpsys", "activity", "top", check=False, capture=True) or b"").decode(
+            "utf-8", "replace")
+        for line in views.splitlines():
+            if "Gecko" in line or "SurfaceView" in line:
+                log(f"touch {label} view: {line.strip()}")
     shot(f"touch-{label}", audit=False)
 
 
@@ -419,7 +426,13 @@ def probe_keyboard(label):
 def probe_open_site(label, address):
     """Frame statistics while a site opens from the address bar, as a person opens it: tap the
     bar, type, Enter (#123, H5: the opening looked jerky)."""
-    width, _ = screen_size()
+    width, height = screen_size()
+    menu = find("More options", "Другие действия")
+    if menu is None:
+        # A scrolled page hides the bar; scrolling back up brings it back.
+        adb("shell", "input", "swipe", str(width // 2), str(height // 3), str(width // 2),
+            str(height * 2 // 3), "300")
+        time.sleep(1)
     if not tap("Search or enter an address", "Поиск или адрес"):
         menu = find("More options", "Другие действия")
         if menu is None:
