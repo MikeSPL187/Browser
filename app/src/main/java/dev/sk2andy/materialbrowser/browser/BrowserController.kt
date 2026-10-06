@@ -11937,6 +11937,7 @@ class BrowserController(
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
+        findInPage.onNavigation(session, nextNavigationGeneration, sameDocument = true)
         updateProtectionRequestContext(tabId, pageUrls[tabId])
         fun isCurrentNavigation(): Boolean = !destroyed &&
             browserEngineSessions[tabId] === session &&
@@ -12037,6 +12038,7 @@ class BrowserController(
                 if (contentActions.sourceTabId == event.tabId) contentActions.dismiss()
                 resetBrowserChromeScroll(event.tabId)
                 navigationGenerations[event.tabId] = nextNavigationGeneration
+                findInPage.onNavigation(navigatingSession, nextNavigationGeneration, sameDocument = false)
                 invalidateMedia3OwnerFor(
                     event.tabId,
                     replaceForNavigation = replaceActiveMediaOwner,

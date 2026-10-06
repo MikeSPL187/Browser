@@ -84,6 +84,61 @@ class FindInPageControllerTest {
         assertTrue(engine.cleared)
     }
 
+    @Test
+    fun `a new document closes find on that page`() {
+        val engine = FakeFindPort(counted)
+        val controller = controller(engine, mutableListOf())
+        controller.updateQuery("Zen")
+
+        controller.onNavigation(FakeFindPort(counted), navigationGeneration = 1, sameDocument = false)
+        assertEquals(541, controller.state!!.matchCount)
+
+        controller.onNavigation(engine, navigationGeneration = 1, sameDocument = false)
+
+        assertNull(controller.state)
+        assertTrue(engine.cleared)
+    }
+
+    @Test
+    fun `a url change in the same document keeps find working on the new generation`() {
+        var generation = 7
+        val engine = FakeFindPort(counted, counted.copy(matchCount = 8))
+        val controller = FindInPageController(
+            host = { session -> session.navigationGeneration == generation },
+            postDelayed = { _, _ -> },
+            removeCallbacks = {},
+        ).apply { open("tab", engine, navigationGeneration = generation, resetOptions = true) }
+        controller.updateQuery("alpha")
+
+        generation = 8
+        controller.onNavigation(engine, navigationGeneration = generation, sameDocument = true)
+        controller.updateQuery("beta")
+
+        assertEquals("beta", controller.state!!.query)
+        assertEquals(8, controller.state!!.matchCount)
+        assertTrue(controller.state!!.isDoneCounting)
+        assertFalse(engine.cleared)
+    }
+
+    @Test
+    fun `a search in flight across a url change in the same document still lands`() {
+        var generation = 7
+        val engine = DeferredFindPort()
+        val controller = FindInPageController(
+            host = { session -> session.navigationGeneration == generation },
+            postDelayed = { _, _ -> },
+            removeCallbacks = {},
+        ).apply { open("tab", engine, navigationGeneration = generation, resetOptions = true) }
+        controller.updateQuery("alpha")
+
+        generation = 8
+        controller.onNavigation(engine, navigationGeneration = generation, sameDocument = true)
+        engine.complete(0, counted)
+
+        assertEquals(541, controller.state!!.matchCount)
+        assertEquals(1, engine.requests.size)
+    }
+
     private fun controller(
         engine: FakeFindPort,
         scheduled: MutableList<Runnable>,
@@ -107,6 +162,26 @@ class FindInPageControllerTest {
             directions += forward
             onComplete(results[minOf(directions.size, results.size) - 1])
         }
+
+        override fun clearFindInPage() {
+            cleared = true
+        }
+    }
+
+    /** Holds each search until the test completes it, in any order. */
+    private class DeferredFindPort : BrowserEngineFindPort {
+        val requests = mutableListOf<Pair<String, (GeckoFindResult?) -> Unit>>()
+        var cleared = false
+
+        override fun findInPage(
+            query: String,
+            forward: Boolean,
+            onComplete: (GeckoFindResult?) -> Unit,
+        ) {
+            requests += query to onComplete
+        }
+
+        fun complete(index: Int, result: GeckoFindResult?) = requests[index].second(result)
 
         override fun clearFindInPage() {
             cleared = true

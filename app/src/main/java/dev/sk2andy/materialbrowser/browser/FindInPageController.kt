@@ -96,6 +96,25 @@ class FindInPageController internal constructor(
         if (query.isNotEmpty()) updateQuery(query)
     }
 
+    /**
+     * Follows a navigation of [engineSession], now at [navigationGeneration]. A new document closes
+     * find: its matches belong to the page that is going away. A URL change within the same document
+     * (pushState, replaceState, a fragment) keeps find open on the new generation; sites change the
+     * URL while scrolling, and searching again would move the user to another match each time.
+     */
+    internal fun onNavigation(
+        engineSession: BrowserEngineFindPort,
+        navigationGeneration: Int,
+        sameDocument: Boolean,
+    ) {
+        val session = session?.takeIf { it.engineSession === engineSession } ?: return
+        if (sameDocument) {
+            this.session = session.copy(navigationGeneration = navigationGeneration)
+        } else {
+            close()
+        }
+    }
+
     fun close() {
         cancelRecount()
         val closing = session
@@ -158,11 +177,17 @@ class FindInPageController internal constructor(
         pendingRecount = null
     }
 
+    /**
+     * Whether a request made in [session] for [query] still belongs to the open find. The page is
+     * checked against the session as it is now, so a request in flight survives [onNavigation]
+     * rebinding it to a new URL of the same document.
+     */
     private fun isSearching(session: FindInPageSession, query: String): Boolean {
         val current = state ?: return false
-        return this.session?.id == session.id &&
-            current.tabId == session.tabId &&
+        val active = this.session ?: return false
+        return active.id == session.id &&
+            current.tabId == active.tabId &&
             current.query == query &&
-            host.isCurrent(session)
+            host.isCurrent(active)
     }
 }
