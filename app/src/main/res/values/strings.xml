@@ -43,6 +43,24 @@
     <string name="cd_more_options">More options</string>
     <string name="cd_restore_address_bar">Restore address bar to center</string>
     <string name="cd_scan_qr_code">Scan QR code</string>
+    <!-- Voice search in the address field (S7): recognised on the phone only. -->
+    <string name="voice_search_start">Search by voice</string>
+    <string name="voice_search_listening">Listening…</string>
+    <string name="voice_search_recognizing">Recognizing…</string>
+    <string name="voice_search_stop">Done speaking, search</string>
+    <string name="voice_search_cancel">Cancel voice search</string>
+    <string name="voice_search_permission_title">Search by voice</string>
+    <string name="voice_search_permission_message">Vola needs the microphone to hear your search. Speech is recognized right on this phone: the sound is not sent anywhere and is not saved.</string>
+    <string name="voice_search_permission_blocked">Microphone access is off for Vola. Turn it on in the app settings to search by voice.</string>
+    <string name="voice_search_permission_continue">Continue</string>
+    <string name="voice_search_permission_settings">Open settings</string>
+    <string name="voice_search_permission_not_now">Not now</string>
+    <string name="voice_search_permission_needed">Voice search needs the microphone</string>
+    <string name="voice_search_error_no_speech">Didn’t hear anything. Try again</string>
+    <string name="voice_search_error_no_match">Couldn’t make that out. Try again</string>
+    <string name="voice_search_error_language">This phone has no offline speech model for the language yet. The system may offer to download it.</string>
+    <string name="voice_search_error_busy">Speech recognition is busy in another app</string>
+    <string name="voice_search_error_failed">Voice search didn’t work. Try again</string>
     <string name="action_back">Back</string>
     <string name="action_forward">Forward</string>
     <string name="action_find_in_page">Find on page</string>

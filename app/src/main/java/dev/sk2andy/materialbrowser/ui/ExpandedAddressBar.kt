@@ -281,6 +281,12 @@ internal fun ExpandedBottomBarContent(
     val tabDragState = rememberDraggableState(onTabDrag)
     val keyboard = LocalSoftwareKeyboardController.current
     val windowInfo = LocalWindowInfo.current
+    val voiceSearch = rememberAddressVoiceSearch(
+        editing = editing,
+        editValue = editValue,
+        onEditValueChange = onEditValueChange,
+        onSubmit = onSubmitAddress,
+    )
     var addressFieldFocused by remember(tab.id) { mutableStateOf(false) }
     val editorUsesFullWidth = AddressBarControlRules.editorUsesFullWidth(
         editing = editing,
@@ -492,7 +498,8 @@ internal fun ExpandedBottomBarContent(
                             editValue = editValue,
                             onEditValueChange = onEditValueChange,
                             ghostCompletion = ghostCompletion,
-                            placeholder = stringResource(R.string.search_or_enter_url),
+                            placeholder = voiceSearch.placeholder()
+                                ?: stringResource(R.string.search_or_enter_url),
                             displayText = if (tab.url == BLANK_URL) {
                                 stringResource(
                                     if (tab.isIncognito) R.string.address_private_hint else R.string.address_empty_hint,
@@ -570,28 +577,40 @@ internal fun ExpandedBottomBarContent(
                                 }
                             },
                             editorTrailingContent = {
-                                if (tab.url == BLANK_URL) {
-                                    BlankTabIncognitoModeButton(
-                                        enabled = tab.isIncognito,
-                                        progress = blankTabModeProgress,
-                                        onCenterChanged = onIncognitoControlCenterChanged,
-                                        onClick = onToggleIncognito,
+                                if (voiceSearch.active) {
+                                    AddressVoiceListeningControls(
+                                        status = voiceSearch.status,
+                                        level = voiceSearch::level,
+                                        accentColor = addressChromeTokens.accentColor,
+                                        onAccentColor = addressChromeTokens.onAccentColor,
+                                        onStop = voiceSearch::stop,
+                                        onCancel = voiceSearch::cancel,
                                     )
-                                }
-                                if (showAiModeToggle) {
-                                    AddressAiModeToggle(
-                                        selected = aiModeSelected,
-                                        onSelectedChange = onAiModeSelectedChange,
-                                    )
-                                }
-                                if (!segmentedAddressBar) {
-                                    IconButton(onClick = onDismissEditor) {
-                                        Icon(
-                                            VolaIcons.Close,
-                                            contentDescription = stringResource(
-                                                R.string.cd_close_address_input,
-                                            ),
+                                } else {
+                                    if (tab.url == BLANK_URL) {
+                                        BlankTabIncognitoModeButton(
+                                            enabled = tab.isIncognito,
+                                            progress = blankTabModeProgress,
+                                            onCenterChanged = onIncognitoControlCenterChanged,
+                                            onClick = onToggleIncognito,
                                         )
+                                    }
+                                    if (showAiModeToggle) {
+                                        AddressAiModeToggle(
+                                            selected = aiModeSelected,
+                                            onSelectedChange = onAiModeSelectedChange,
+                                        )
+                                    }
+                                    AddressVoiceSearchButton(voiceSearch)
+                                    if (!segmentedAddressBar) {
+                                        IconButton(onClick = onDismissEditor) {
+                                            Icon(
+                                                VolaIcons.Close,
+                                                contentDescription = stringResource(
+                                                    R.string.cd_close_address_input,
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             },

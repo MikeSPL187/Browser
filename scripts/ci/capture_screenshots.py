@@ -226,6 +226,7 @@ def open_url(url):
 # shoot that surface instead of its own screen, and the audit would count its controls against
 # the wrong frame, so every step closes what is left over.
 LEFTOVER_SURFACES = (
+    ("Cancel voice search", "Отменить голосовой поиск"),
     ("Close address input", "Закрыть ввод адреса"),
     ("Close Split View", "Выйти из Split View"),
 )
@@ -915,6 +916,46 @@ def tour(suffix):
             adb("shell", "input", "keyevent", "BACK")
         time.sleep(2)
     step("permission-prompt", permission_prompt)
+
+    def voice_search():
+        """Voice search (S7) in the address editor. The microphone shows only with an on-device
+        speech model; the tour logs whether this emulator has one and, if so, opens the
+        explanation in front of the system prompt. A debug-only activity shows the listening
+        field and the explanation either way, since the emulator has no voice."""
+        if tap("Search or enter an address", "Поиск или адрес"):
+            time.sleep(2)
+            microphone = ("Search by voice", "Голосовой поиск")
+            if find(*microphone):
+                log(f"voice search {suffix}: microphone shown (on-device recognizer present)")
+                tap(*microphone)
+                time.sleep(2)
+                shot(f"voice-explain-live-{suffix}")
+                if not tap("Not now", "Не сейчас"):
+                    adb("shell", "input", "keyevent", "BACK")
+                time.sleep(1)
+            else:
+                log(f"voice search {suffix}: no microphone (no on-device recognizer)")
+            for _ in range(2):
+                if not find("Close address input", "Закрыть ввод адреса"):
+                    break
+                adb("shell", "input", "keyevent", "BACK")
+                time.sleep(2)
+        else:
+            log("not found: address bar for voice search")
+        activity = f"{PACKAGE}/dev.sk2andy.materialbrowser.ui.VoiceSearchPreviewActivity"
+        adb("shell", "am", "start", "-n", activity, check=False, capture=True)
+        time.sleep(3)
+        shot(f"voice-listening-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+        adb("shell", "am", "start", "-n", activity, "--es", "screen", "explain",
+            check=False, capture=True)
+        time.sleep(3)
+        shot(f"voice-explain-{suffix}")
+        if not tap("Not now", "Не сейчас"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("voice-search", voice_search)
 
     def tab_archive_setting():
         """A lifetime in days brings up «Archive instead of closing»; the tour then sets it back."""
