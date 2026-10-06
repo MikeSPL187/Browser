@@ -15,7 +15,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -26,6 +29,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserInputDiagnostics
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 import dev.sk2andy.materialbrowser.data.AddressBarAction
 import dev.sk2andy.materialbrowser.shared.browser.BrowserFeatureMenuAction
@@ -43,6 +47,7 @@ import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuEffects
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuContainerRole
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuResources
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuStyle
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaMenu
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeSurfaceTokens
@@ -65,9 +70,8 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
             BrowserFeatureMenuSection.Page -> R.string.browser_menu_page_group
             BrowserFeatureMenuSection.Toppings -> R.string.browser_menu_toppings_group
             BrowserFeatureMenuSection.Browser -> R.string.browser_menu_browser_group
-            BrowserFeatureMenuSection.Toolbar,
-            BrowserFeatureMenuSection.Candy,
-            -> R.string.browser_menu_title
+            BrowserFeatureMenuSection.More -> R.string.tab_actions_more
+            BrowserFeatureMenuSection.Toolbar -> R.string.browser_menu_title
         },
     )
 
@@ -96,22 +100,7 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
         item: BrowserFeatureMenuItem,
         snoozedTabCount: Int,
     ): String? = when (item.action) {
-        BrowserFeatureMenuAction.ToggleCookieBannerRemoval -> stringResource(
-            if (item.enabled) {
-                R.string.privacy_cookie_banner_remove_description
-            } else {
-                R.string.privacy_cookie_banner_remove_unavailable
-            },
-        )
-        BrowserFeatureMenuAction.ToggleForceVerticalScrolling ->
-            stringResource(R.string.privacy_force_vertical_scrolling_description)
         BrowserFeatureMenuAction.ToggleSplitView -> stringResource(R.string.split_view_description)
-        BrowserFeatureMenuAction.ToggleForcePageZooming ->
-            stringResource(R.string.privacy_force_page_zooming_description)
-        BrowserFeatureMenuAction.ToggleForceSafeArea ->
-            stringResource(R.string.compatibility_force_safe_area_description)
-        BrowserFeatureMenuAction.ToggleAlwaysBlockPopups ->
-            stringResource(R.string.action_always_block_popups_description)
         BrowserFeatureMenuAction.ToggleDesktopView ->
             stringResource(R.string.action_desktop_view_description)
         BrowserFeatureMenuAction.ToggleCompactMode ->
@@ -137,7 +126,8 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
     @Composable
     override fun icon(item: BrowserFeatureMenuItem, modifier: Modifier) {
         Icon(
-            painter = painterResource(item.androidDrawableResource()),
+            painter = item.androidDrawableResource()?.let { painterResource(it) }
+                ?: rememberVectorPainter(item.vectorIcon()),
             contentDescription = null,
             modifier = modifier,
         )
@@ -147,6 +137,18 @@ internal val AndroidBrowserMainMenuResources = object : BrowserMainMenuResources
     override fun trailingIcon(modifier: Modifier) {
         Icon(
             painter = painterResource(R.drawable.ic_symbol_chevron_right),
+            contentDescription = null,
+            modifier = modifier,
+        )
+    }
+
+    @Composable
+    override fun backLabel(): String = stringResource(R.string.action_back)
+
+    @Composable
+    override fun backIcon(modifier: Modifier) {
+        Icon(
+            painter = painterResource(R.drawable.ic_symbol_arrow_back),
             contentDescription = null,
             modifier = modifier,
         )
@@ -239,18 +241,8 @@ internal fun BrowserMainMenu(
     canTranslatePage: Boolean,
     canToggleDomainMute: Boolean,
     isDomainMuted: Boolean,
-    canToggleAlwaysBlockPopups: Boolean,
-    isAlwaysBlockPopupsEnabled: Boolean,
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
-    canToggleCookieBannerRemoval: Boolean,
-    isCookieBannerRemovalEnabled: Boolean,
-    canToggleForceVerticalScrolling: Boolean,
-    isForceVerticalScrollingEnabled: Boolean,
-    canToggleForcePageZooming: Boolean,
-    isForcePageZoomingEnabled: Boolean,
-    canToggleForceSafeArea: Boolean,
-    isForceSafeAreaEnabled: Boolean,
     canAddSiteCapsule: Boolean,
     canSnooze: Boolean,
     snoozedTabCount: Int,
@@ -275,14 +267,9 @@ internal fun BrowserMainMenu(
     onSplitViewChange: (Boolean) -> Unit = {},
     onFindInPage: () -> Unit = {},
     onDomainMutedChange: (Boolean) -> Unit,
-    onAlwaysBlockPopupsChange: (Boolean) -> Unit,
     onDesktopViewChange: (Boolean) -> Unit,
     compactMode: Boolean? = null,
     onCompactModeChange: (Boolean) -> Unit = {},
-    onCookieBannerRemovalEnabledChange: (Boolean) -> Unit,
-    onForceVerticalScrollingChange: (Boolean) -> Unit,
-    onForcePageZoomingChange: (Boolean) -> Unit,
-    onForceSafeAreaChange: (Boolean) -> Unit,
     onOpenCandyTrail: () -> Unit,
     onAddSiteCapsule: () -> Unit,
     onSummarize: () -> Unit,
@@ -301,6 +288,7 @@ internal fun BrowserMainMenu(
     onSettings: () -> Unit,
 ) {
     val configuration = LocalConfiguration.current
+    val context = LocalContext.current
     val menuState = BrowserFeatureMenuState(
         canGoBack = canGoBack,
         canGoForward = canGoForward,
@@ -314,16 +302,6 @@ internal fun BrowserMainMenu(
         canTranslatePage = canTranslatePage,
         isSplitView = splitView,
         canUseDocumentActions = canUseDocumentActions,
-        canToggleCookieBannerRemoval = canToggleCookieBannerRemoval,
-        isCookieBannerRemovalEnabled = isCookieBannerRemovalEnabled,
-        canToggleForceVerticalScrolling = canToggleForceVerticalScrolling,
-        isForceVerticalScrollingEnabled = isForceVerticalScrollingEnabled,
-        canToggleForcePageZooming = canToggleForcePageZooming,
-        isForcePageZoomingEnabled = isForcePageZoomingEnabled,
-        canToggleForceSafeArea = canToggleForceSafeArea,
-        isForceSafeAreaEnabled = isForceSafeAreaEnabled,
-        canToggleAlwaysBlockPopups = canToggleAlwaysBlockPopups,
-        isAlwaysBlockPopupsEnabled = isAlwaysBlockPopupsEnabled,
         canToggleDesktopView = canToggleDesktopView,
         isDesktopView = isDesktopView,
         isCompactMode = compactMode,
@@ -393,16 +371,6 @@ internal fun BrowserMainMenu(
                 BrowserFeatureMenuAction.Share -> onShare()
                 BrowserFeatureMenuAction.OpenExternal -> onOpenExternal()
                 BrowserFeatureMenuAction.Print -> onPrint()
-                BrowserFeatureMenuAction.ToggleCookieBannerRemoval ->
-                    onCookieBannerRemovalEnabledChange(item.checked != true)
-                BrowserFeatureMenuAction.ToggleForceVerticalScrolling ->
-                    onForceVerticalScrollingChange(item.checked != true)
-                BrowserFeatureMenuAction.ToggleForcePageZooming ->
-                    onForcePageZoomingChange(item.checked != true)
-                BrowserFeatureMenuAction.ToggleForceSafeArea ->
-                    onForceSafeAreaChange(item.checked != true)
-                BrowserFeatureMenuAction.ToggleAlwaysBlockPopups ->
-                    onAlwaysBlockPopupsChange(item.checked != true)
                 BrowserFeatureMenuAction.ToggleDesktopView ->
                     onDesktopViewChange(item.checked != true)
                 BrowserFeatureMenuAction.ToggleCompactMode ->
@@ -420,6 +388,9 @@ internal fun BrowserMainMenu(
                 BrowserFeatureMenuAction.OpenHistory -> onHistory()
                 BrowserFeatureMenuAction.OpenFirefoxExtensions -> Unit
                 BrowserFeatureMenuAction.OpenSettings -> onSettings()
+                BrowserFeatureMenuAction.OpenPasswords ->
+                    context.startActivity(PasswordsActivityContract.launchIntent(context))
+                BrowserFeatureMenuAction.OpenMore -> Unit
                 BrowserFeatureMenuAction.InvokeToppingCommand -> {
                     userScriptMenuCommands.firstOrNull { command ->
                         command.scriptId == item.toppingScriptId &&
@@ -477,11 +448,6 @@ private fun BrowserFeatureMenuLabelKey.androidStringResource(): Int = when (this
     BrowserFeatureMenuLabelKey.Share -> R.string.action_share
     BrowserFeatureMenuLabelKey.OpenExternal -> R.string.action_open_in_app
     BrowserFeatureMenuLabelKey.Print -> R.string.action_print
-    BrowserFeatureMenuLabelKey.CookieBannerRemoval -> R.string.privacy_cookie_banner_remove
-    BrowserFeatureMenuLabelKey.ForceVerticalScrolling -> R.string.privacy_force_vertical_scrolling
-    BrowserFeatureMenuLabelKey.ForcePageZooming -> R.string.privacy_force_page_zooming
-    BrowserFeatureMenuLabelKey.ForceSafeArea -> R.string.compatibility_force_safe_area
-    BrowserFeatureMenuLabelKey.AlwaysBlockPopups -> R.string.action_always_block_popups
     BrowserFeatureMenuLabelKey.DesktopView -> R.string.action_desktop_view
     BrowserFeatureMenuLabelKey.CompactMode -> R.string.compact_mode_title
     BrowserFeatureMenuLabelKey.MuteDomain,
@@ -498,11 +464,20 @@ private fun BrowserFeatureMenuLabelKey.androidStringResource(): Int = when (this
     BrowserFeatureMenuLabelKey.History -> R.string.action_history
     BrowserFeatureMenuLabelKey.Settings -> R.string.action_settings
     BrowserFeatureMenuLabelKey.FirefoxExtensions -> R.string.gecko_extensions_title
+    BrowserFeatureMenuLabelKey.Passwords -> R.string.passwords_title
+    BrowserFeatureMenuLabelKey.More -> R.string.tab_actions_more
     BrowserFeatureMenuLabelKey.ToppingsCommand -> R.string.browser_menu_toppings_group
 }
 
+/** Icons drawn from [VolaIcons] rather than a drawable. */
+private fun BrowserFeatureMenuItem.vectorIcon(): ImageVector = when (action) {
+    BrowserFeatureMenuAction.OpenPasswords -> VolaIcons.Key
+    else -> VolaIcons.MoreHoriz
+}
+
+/** The drawable for an item; null for the few drawn from [vectorIcon]. */
 @DrawableRes
-internal fun BrowserFeatureMenuItem.androidDrawableResource(): Int = when (action) {
+internal fun BrowserFeatureMenuItem.androidDrawableResource(): Int? = when (action) {
     BrowserFeatureMenuAction.Back -> R.drawable.ic_symbol_arrow_back
     BrowserFeatureMenuAction.Forward -> R.drawable.ic_symbol_arrow_forward
     BrowserFeatureMenuAction.Reload -> R.drawable.ic_symbol_refresh
@@ -540,12 +515,9 @@ internal fun BrowserFeatureMenuItem.androidDrawableResource(): Int = when (actio
     BrowserFeatureMenuAction.OpenFirefoxExtensions,
     BrowserFeatureMenuAction.InvokeToppingCommand,
     -> R.drawable.ic_symbol_extension
-    BrowserFeatureMenuAction.ToggleCookieBannerRemoval -> R.drawable.ic_symbol_cookie
-    BrowserFeatureMenuAction.ToggleForceVerticalScrolling ->
-        R.drawable.ic_symbol_vertical_scroll
-    BrowserFeatureMenuAction.ToggleForcePageZooming -> R.drawable.ic_symbol_zoom_in
-    BrowserFeatureMenuAction.ToggleForceSafeArea -> R.drawable.ic_symbol_fit_screen
-    BrowserFeatureMenuAction.ToggleAlwaysBlockPopups -> R.drawable.ic_symbol_block
     BrowserFeatureMenuAction.ToggleDesktopView -> R.drawable.ic_symbol_desktop
     BrowserFeatureMenuAction.ToggleCompactMode -> R.drawable.ic_symbol_compact_mode
+    BrowserFeatureMenuAction.OpenPasswords,
+    BrowserFeatureMenuAction.OpenMore,
+    -> null
 }

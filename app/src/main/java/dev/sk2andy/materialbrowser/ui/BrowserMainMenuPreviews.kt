@@ -27,7 +27,6 @@ private val previewMenuState = BrowserFeatureMenuState(
     canUseDocumentActions = true,
     canToggleDesktopView = true,
     isDesktopView = true,
-    canToggleAlwaysBlockPopups = true,
     canAddSiteCapsule = true,
     canSnooze = true,
 )

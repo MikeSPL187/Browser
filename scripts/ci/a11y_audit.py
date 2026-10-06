@@ -82,7 +82,7 @@ def audit(xml_text, package, density):
     scale = density / 160
     findings = []
 
-    def visit(node, in_web_content, container, scrolling):
+    def visit(node, in_web_content, container, scrolling, screen):
         node_class = node.get("class") or ""
         in_web_content = in_web_content or any(name in node_class for name in WEB_CONTENT_CLASSES)
         bounds = parse_bounds(node.get("bounds"))
@@ -97,21 +97,22 @@ def audit(xml_text, package, density):
                     findings.append(("small", describe(node), width, height))
                 # A list item scrolled partly out may keep its label in the part scrolled away.
                 cut_by_scrolling = scrolling and crosses(node, container)
-                # A sliver at the screen's own edge (a sheet taller than the screen): the dump leaves
-                # out its children below the screen, label included. Not for scrolled lists above.
-                cut_by_screen = not scrolling and (
-                    (clipped_x and width < limit) or (clipped_y and height < limit)
-                )
+                # A sliver at the screen's own edge (a sheet taller than the screen, scrolling or not):
+                # the dump leaves out its children below the screen, label included. A list edge
+                # inside the screen is not the screen's.
+                screen_x, screen_y = clipped_axes(bounds, screen)
+                cut_by_screen = (screen_x and width < limit) or (screen_y and height < limit)
                 if not has_label(node) and not cut_by_scrolling and not cut_by_screen:
                     findings.append(("unlabeled", describe(node), width, height))
         if bounds and node.get("scrollable") == "true":
             container = bounds
             scrolling = True
         for child in node.findall("node"):
-            visit(child, in_web_content, container, scrolling)
+            visit(child, in_web_content, container, scrolling, screen)
 
     for top in root.findall("node"):
-        visit(top, False, parse_bounds(top.get("bounds")) or [0, 0, 0, 0], False)
+        screen = parse_bounds(top.get("bounds")) or [0, 0, 0, 0]
+        visit(top, False, screen, False, screen)
     return findings
 
 

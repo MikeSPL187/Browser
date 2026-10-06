@@ -1,7 +1,11 @@
 package dev.sk2andy.materialbrowser.shared.browser
 
 /**
- * Platform-neutral identity and ordering for Candy's complete browser menu.
+ * Platform-neutral identity and ordering for the browser menu.
+ *
+ * The first view stays short (S4a): a toolbar, the page tiles ending in «More», then the library.
+ * «More» opens the rest of the tab and Vola actions, plus user-script commands, in the same
+ * sheet. Per-site switches live in the site information sheet, not here.
  *
  * Android renders these ordered sections with the commonMain menu composable. iOS projects the
  * same state and actions into its native Liquid Glass menu so the Apple chrome can morph without
@@ -11,7 +15,7 @@ enum class BrowserFeatureMenuSection {
     Toolbar,
     Page,
     Toppings,
-    Candy,
+    More,
     Browser,
 }
 
@@ -40,11 +44,6 @@ enum class BrowserFeatureMenuAction {
     Share,
     OpenExternal,
     Print,
-    ToggleCookieBannerRemoval,
-    ToggleForceVerticalScrolling,
-    ToggleForcePageZooming,
-    ToggleForceSafeArea,
-    ToggleAlwaysBlockPopups,
     ToggleDesktopView,
     ToggleCompactMode,
     ToggleDomainMute,
@@ -59,6 +58,8 @@ enum class BrowserFeatureMenuAction {
     OpenHistory,
     OpenSettings,
     OpenFirefoxExtensions,
+    OpenPasswords,
+    OpenMore,
     InvokeToppingCommand,
 }
 
@@ -83,11 +84,6 @@ enum class BrowserFeatureMenuLabelKey {
     Share,
     OpenExternal,
     Print,
-    CookieBannerRemoval,
-    ForceVerticalScrolling,
-    ForcePageZooming,
-    ForceSafeArea,
-    AlwaysBlockPopups,
     DesktopView,
     CompactMode,
     MuteDomain,
@@ -103,6 +99,8 @@ enum class BrowserFeatureMenuLabelKey {
     History,
     Settings,
     FirefoxExtensions,
+    Passwords,
+    More,
     ToppingsCommand,
 }
 
@@ -143,16 +141,6 @@ data class BrowserFeatureMenuState(
     /** Split View open or not; null when the menu cannot switch it. */
     val isSplitView: Boolean? = null,
     val canUseDocumentActions: Boolean = false,
-    val canToggleCookieBannerRemoval: Boolean = false,
-    val isCookieBannerRemovalEnabled: Boolean = false,
-    val canToggleForceVerticalScrolling: Boolean = false,
-    val isForceVerticalScrollingEnabled: Boolean = false,
-    val canToggleForcePageZooming: Boolean = false,
-    val isForcePageZoomingEnabled: Boolean = false,
-    val canToggleForceSafeArea: Boolean = false,
-    val isForceSafeAreaEnabled: Boolean = false,
-    val canToggleAlwaysBlockPopups: Boolean = false,
-    val isAlwaysBlockPopupsEnabled: Boolean = false,
     val canToggleDesktopView: Boolean = false,
     /** Compact Mode on or off; null when the menu cannot switch it. */
     val isCompactMode: Boolean? = null,
@@ -178,8 +166,8 @@ object BrowserFeatureMenuRules {
         toolbarItems(state).forEach(::add)
         pageItems(state).forEach(::add)
         toppingItems(state).forEach(::add)
-        candyItems(state).forEach(::add)
-        browserItems(state, capabilities).forEach(::add)
+        moreItems(state).forEach(::add)
+        browserItems(capabilities).forEach(::add)
     }
 
     private fun toolbarItems(state: BrowserFeatureMenuState) = listOf(
@@ -217,43 +205,24 @@ object BrowserFeatureMenuRules {
             checked = state.isFavorite,
         ),
         command(
-            BrowserFeatureMenuAction.TogglePinned,
-            if (state.isPinned) {
-                BrowserFeatureMenuLabelKey.UnpinTab
-            } else {
-                BrowserFeatureMenuLabelKey.PinTab
-            },
+            BrowserFeatureMenuAction.Share,
+            BrowserFeatureMenuLabelKey.Share,
             BrowserFeatureMenuSection.Toolbar,
-            true,
-            checked = state.isPinned,
+            state.hasPage,
         ),
     )
 
+    /** The tiles: what a page is opened for, ending in «More». */
     private fun pageItems(state: BrowserFeatureMenuState) = buildList {
-        state.overflowPageActions.forEach { action ->
-            when (action) {
-                BrowserFeatureMenuAction.ShowTabs ->
-                    add(command(action, BrowserFeatureMenuLabelKey.Tabs))
-                BrowserFeatureMenuAction.NewTab ->
-                    add(command(action, BrowserFeatureMenuLabelKey.NewTab))
-                BrowserFeatureMenuAction.CloseTab ->
-                    add(command(action, BrowserFeatureMenuLabelKey.CloseTab, enabled = state.canCloseTab))
-                BrowserFeatureMenuAction.ParkAddressBarRight ->
-                    add(
-                        command(
-                            action,
-                            BrowserFeatureMenuLabelKey.ParkAddressBarRight,
-                            enabled = state.canDockAddressBar,
-                        ),
-                    )
-                else -> Unit
-            }
+        if (BrowserFeatureMenuAction.ShowTabs in state.overflowPageActions) {
+            add(command(BrowserFeatureMenuAction.ShowTabs, BrowserFeatureMenuLabelKey.Tabs))
         }
+        add(command(BrowserFeatureMenuAction.NewTab, BrowserFeatureMenuLabelKey.NewTab))
         add(
             command(
-                BrowserFeatureMenuAction.DuplicateTab,
-                BrowserFeatureMenuLabelKey.DuplicateTab,
-                enabled = state.hasPage,
+                BrowserFeatureMenuAction.FindInPage,
+                BrowserFeatureMenuLabelKey.FindInPage,
+                enabled = state.canUseDocumentActions,
             ),
         )
         add(
@@ -280,88 +249,6 @@ object BrowserFeatureMenuRules {
                 ),
             )
         }
-        add(
-            command(
-                BrowserFeatureMenuAction.FindInPage,
-                BrowserFeatureMenuLabelKey.FindInPage,
-                enabled = state.canUseDocumentActions,
-            ),
-        )
-        add(command(BrowserFeatureMenuAction.Share, BrowserFeatureMenuLabelKey.Share, enabled = state.hasPage))
-        add(
-            command(
-                BrowserFeatureMenuAction.OpenExternal,
-                BrowserFeatureMenuLabelKey.OpenExternal,
-                enabled = state.hasPage,
-            ),
-        )
-        add(
-            command(
-                BrowserFeatureMenuAction.Print,
-                BrowserFeatureMenuLabelKey.Print,
-                enabled = state.canUseDocumentActions,
-            ),
-        )
-        if (
-            state.canToggleForceVerticalScrolling ||
-            state.canToggleForcePageZooming ||
-            state.canToggleForceSafeArea
-        ) {
-            add(
-                toggle(
-                    BrowserFeatureMenuAction.ToggleCookieBannerRemoval,
-                    BrowserFeatureMenuLabelKey.CookieBannerRemoval,
-                    state.canToggleCookieBannerRemoval,
-                    state.isCookieBannerRemovalEnabled,
-                ),
-            )
-        }
-        if (state.canToggleForceVerticalScrolling) {
-            add(
-                toggle(
-                    BrowserFeatureMenuAction.ToggleForceVerticalScrolling,
-                    BrowserFeatureMenuLabelKey.ForceVerticalScrolling,
-                    state.canToggleForceVerticalScrolling,
-                    state.isForceVerticalScrollingEnabled,
-                ),
-            )
-        }
-        if (state.canToggleForcePageZooming) {
-            add(
-                toggle(
-                    BrowserFeatureMenuAction.ToggleForcePageZooming,
-                    BrowserFeatureMenuLabelKey.ForcePageZooming,
-                    state.canToggleForcePageZooming,
-                    state.isForcePageZoomingEnabled,
-                ),
-            )
-        }
-        if (state.canToggleForceSafeArea) {
-            add(
-                toggle(
-                    BrowserFeatureMenuAction.ToggleForceSafeArea,
-                    BrowserFeatureMenuLabelKey.ForceSafeArea,
-                    state.canToggleForceSafeArea,
-                    state.isForceSafeAreaEnabled,
-                ),
-            )
-        }
-        add(
-            toggle(
-                BrowserFeatureMenuAction.ToggleAlwaysBlockPopups,
-                BrowserFeatureMenuLabelKey.AlwaysBlockPopups,
-                state.canToggleAlwaysBlockPopups,
-                state.isAlwaysBlockPopupsEnabled,
-            ),
-        )
-        add(
-            toggle(
-                BrowserFeatureMenuAction.ToggleDesktopView,
-                BrowserFeatureMenuLabelKey.DesktopView,
-                state.canToggleDesktopView,
-                state.isDesktopView,
-            ),
-        )
         state.isCompactMode?.let { compact ->
             add(
                 toggle(
@@ -374,16 +261,20 @@ object BrowserFeatureMenuRules {
         }
         add(
             toggle(
-                BrowserFeatureMenuAction.ToggleDomainMute,
-                if (state.isDomainMuted) {
-                    BrowserFeatureMenuLabelKey.UnmuteDomain
-                } else {
-                    BrowserFeatureMenuLabelKey.MuteDomain
-                },
-                state.canToggleDomainMute,
-                state.isDomainMuted,
+                BrowserFeatureMenuAction.ToggleDesktopView,
+                BrowserFeatureMenuLabelKey.DesktopView,
+                state.canToggleDesktopView,
+                state.isDesktopView,
             ),
         )
+        add(
+            command(
+                BrowserFeatureMenuAction.Print,
+                BrowserFeatureMenuLabelKey.Print,
+                enabled = state.canUseDocumentActions,
+            ),
+        )
+        add(command(BrowserFeatureMenuAction.OpenMore, BrowserFeatureMenuLabelKey.More))
     }
 
     private fun toppingItems(state: BrowserFeatureMenuState) = state.toppingCommands.map { command ->
@@ -405,58 +296,106 @@ object BrowserFeatureMenuRules {
         )
     }
 
-    private fun candyItems(state: BrowserFeatureMenuState) = listOf(
-        command(
-            BrowserFeatureMenuAction.OpenCandyTrail,
-            BrowserFeatureMenuLabelKey.CandyTrail,
-            BrowserFeatureMenuSection.Candy,
-            state.hasPage,
-        ),
-        command(
-            BrowserFeatureMenuAction.AddSiteCapsule,
-            BrowserFeatureMenuLabelKey.AddSiteCapsule,
-            BrowserFeatureMenuSection.Candy,
-            state.canAddSiteCapsule,
-        ),
-        command(
-            BrowserFeatureMenuAction.Summarize,
-            BrowserFeatureMenuLabelKey.Summarize,
-            BrowserFeatureMenuSection.Candy,
-            state.hasPage,
-        ),
-        command(
-            BrowserFeatureMenuAction.SnoozeTab,
-            BrowserFeatureMenuLabelKey.SnoozeTab,
-            BrowserFeatureMenuSection.Candy,
-            state.canSnooze,
-        ),
-    )
-
-    private fun browserItems(
-        state: BrowserFeatureMenuState,
-        capabilities: BrowserFeatureMenuCapabilities,
-    ) = buildList {
-        if (
-            state.canDockAddressBar &&
-            BrowserFeatureMenuAction.ParkAddressBarRight !in state.overflowPageActions
-        ) {
-            add(
-                command(
-                    BrowserFeatureMenuAction.DockAddressBar,
-                    BrowserFeatureMenuLabelKey.DockAddressBar,
-                    BrowserFeatureMenuSection.Browser,
-                ),
-            )
-        }
+    /** The «More» view: the rest of the tab and Vola actions. */
+    private fun moreItems(state: BrowserFeatureMenuState) = buildList {
+        val more = BrowserFeatureMenuSection.More
         add(
-            navigation(
-                BrowserFeatureMenuAction.OpenSnoozedTabs,
-                BrowserFeatureMenuLabelKey.SnoozedTabs,
+            command(
+                BrowserFeatureMenuAction.DuplicateTab,
+                BrowserFeatureMenuLabelKey.DuplicateTab,
+                more,
+                state.hasPage,
             ),
         )
-        add(navigation(BrowserFeatureMenuAction.OpenFavorites, BrowserFeatureMenuLabelKey.Favorites))
+        add(
+            command(
+                BrowserFeatureMenuAction.TogglePinned,
+                if (state.isPinned) BrowserFeatureMenuLabelKey.UnpinTab else BrowserFeatureMenuLabelKey.PinTab,
+                more,
+                checked = state.isPinned,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.CloseTab,
+                BrowserFeatureMenuLabelKey.CloseTab,
+                more,
+                state.canCloseTab,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.OpenExternal,
+                BrowserFeatureMenuLabelKey.OpenExternal,
+                more,
+                state.hasPage,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.SnoozeTab,
+                BrowserFeatureMenuLabelKey.SnoozeTab,
+                more,
+                state.canSnooze,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.OpenCandyTrail,
+                BrowserFeatureMenuLabelKey.CandyTrail,
+                more,
+                state.hasPage,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.AddSiteCapsule,
+                BrowserFeatureMenuLabelKey.AddSiteCapsule,
+                more,
+                state.canAddSiteCapsule,
+            ),
+        )
+        add(
+            command(
+                BrowserFeatureMenuAction.Summarize,
+                BrowserFeatureMenuLabelKey.Summarize,
+                more,
+                state.hasPage,
+            ),
+        )
+        add(
+            toggle(
+                BrowserFeatureMenuAction.ToggleDomainMute,
+                if (state.isDomainMuted) {
+                    BrowserFeatureMenuLabelKey.UnmuteDomain
+                } else {
+                    BrowserFeatureMenuLabelKey.MuteDomain
+                },
+                state.canToggleDomainMute,
+                state.isDomainMuted,
+                more,
+            ),
+        )
+        if (BrowserFeatureMenuAction.ParkAddressBarRight in state.overflowPageActions) {
+            add(
+                command(
+                    BrowserFeatureMenuAction.ParkAddressBarRight,
+                    BrowserFeatureMenuLabelKey.ParkAddressBarRight,
+                    more,
+                    state.canDockAddressBar,
+                ),
+            )
+        } else if (state.canDockAddressBar) {
+            add(command(BrowserFeatureMenuAction.DockAddressBar, BrowserFeatureMenuLabelKey.DockAddressBar, more))
+        }
+        add(navigation(BrowserFeatureMenuAction.OpenSnoozedTabs, BrowserFeatureMenuLabelKey.SnoozedTabs, more))
+    }
+
+    private fun browserItems(capabilities: BrowserFeatureMenuCapabilities) = buildList {
         add(navigation(BrowserFeatureMenuAction.OpenDownloads, BrowserFeatureMenuLabelKey.Downloads))
         add(navigation(BrowserFeatureMenuAction.OpenHistory, BrowserFeatureMenuLabelKey.History))
+        add(navigation(BrowserFeatureMenuAction.OpenFavorites, BrowserFeatureMenuLabelKey.Favorites))
+        add(navigation(BrowserFeatureMenuAction.OpenPasswords, BrowserFeatureMenuLabelKey.Passwords))
         if (capabilities.supportsFirefoxExtensions) {
             add(
                 navigation(
@@ -489,11 +428,12 @@ object BrowserFeatureMenuRules {
         labelKey: BrowserFeatureMenuLabelKey,
         enabled: Boolean,
         checked: Boolean,
+        section: BrowserFeatureMenuSection = BrowserFeatureMenuSection.Page,
     ) = BrowserFeatureMenuItem(
         stableId = action.name,
         action = action,
         labelKey = labelKey,
-        section = BrowserFeatureMenuSection.Page,
+        section = section,
         kind = BrowserFeatureMenuItemKind.Toggle,
         enabled = enabled,
         checked = checked,
@@ -502,11 +442,12 @@ object BrowserFeatureMenuRules {
     private fun navigation(
         action: BrowserFeatureMenuAction,
         labelKey: BrowserFeatureMenuLabelKey,
+        section: BrowserFeatureMenuSection = BrowserFeatureMenuSection.Browser,
     ) = BrowserFeatureMenuItem(
         stableId = action.name,
         action = action,
         labelKey = labelKey,
-        section = BrowserFeatureMenuSection.Browser,
+        section = section,
         kind = BrowserFeatureMenuItemKind.Navigation,
         enabled = true,
     )

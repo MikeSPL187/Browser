@@ -85,7 +85,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -190,25 +189,13 @@ internal fun BrowserBottomBar(
     canToggleDomainMute: Boolean,
     isDomainMuted: Boolean,
     onDomainMutedChange: (Boolean) -> Unit,
-    canToggleAlwaysBlockPopups: Boolean,
-    isAlwaysBlockPopupsEnabled: Boolean,
-    onAlwaysBlockPopupsChange: (Boolean) -> Unit,
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
     onDesktopViewChange: (Boolean) -> Unit,
     onCompactModeChange: ((Boolean) -> Unit)? = null,
-    canToggleCookieBannerRemoval: Boolean,
-    isCookieBannerRemovalEnabled: Boolean,
     canToggleForceVerticalScrolling: Boolean,
     isForceVerticalScrollingEnabled: Boolean,
-    canToggleForcePageZooming: Boolean,
-    isForcePageZoomingEnabled: Boolean,
-    canToggleForceSafeArea: Boolean,
-    isForceSafeAreaEnabled: Boolean,
-    onCookieBannerRemovalEnabledChange: (Boolean) -> Unit,
     onForceVerticalScrollingChange: (Boolean) -> Unit,
-    onForcePageZoomingChange: (Boolean) -> Unit,
-    onForceSafeAreaChange: (Boolean) -> Unit,
     snoozedTabCount: Int,
     onSnoozedTabs: () -> Unit,
     onFavorites: () -> Unit,
@@ -398,7 +385,7 @@ internal fun BrowserBottomBar(
                 horizontal = ADDRESS_BAR_HORIZONTAL_MARGIN,
                 vertical = ADDRESS_BAR_VERTICAL_MARGIN,
             )
-            .then(if (visualOnly) Modifier.clearAndSetSemantics { } else Modifier),
+            .clearSemanticsWhen(visualOnly),
         contentAlignment = Alignment.BottomCenter,
     ) {
         val edgeTabWidth = 52.dp
@@ -671,9 +658,6 @@ internal fun BrowserBottomBar(
                                 canToggleDomainMute = canToggleDomainMute,
                                 isDomainMuted = isDomainMuted,
                                 onDomainMutedChange = onDomainMutedChange,
-                                canToggleAlwaysBlockPopups = canToggleAlwaysBlockPopups,
-                                isAlwaysBlockPopupsEnabled = isAlwaysBlockPopupsEnabled,
-                                onAlwaysBlockPopupsChange = onAlwaysBlockPopupsChange,
                                 canToggleDesktopView = canToggleDesktopView,
                                 isDesktopView = isDesktopView,
                                 onDesktopViewChange = onDesktopViewChange,
@@ -686,24 +670,12 @@ internal fun BrowserBottomBar(
                                         change(enabled)
                                     }
                                 },
-                                canToggleCookieBannerRemoval =
-                                    canToggleCookieBannerRemoval,
-                                isCookieBannerRemovalEnabled =
-                                    isCookieBannerRemovalEnabled,
                                 canToggleForceVerticalScrolling =
                                     canToggleForceVerticalScrolling,
                                 isForceVerticalScrollingEnabled =
                                     isForceVerticalScrollingEnabled,
-                                canToggleForcePageZooming = canToggleForcePageZooming,
-                                isForcePageZoomingEnabled = isForcePageZoomingEnabled,
-                                canToggleForceSafeArea = canToggleForceSafeArea,
-                                isForceSafeAreaEnabled = isForceSafeAreaEnabled,
-                                onCookieBannerRemovalEnabledChange =
-                                    onCookieBannerRemovalEnabledChange,
                                 onForceVerticalScrollingChange =
                                     onForceVerticalScrollingChange,
-                                onForcePageZoomingChange = onForcePageZoomingChange,
-                                onForceSafeAreaChange = onForceSafeAreaChange,
                                 snoozedTabCount = snoozedTabCount,
                                 onSnoozedTabs = onSnoozedTabs,
                                 onFavorites = onFavorites,
