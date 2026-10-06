@@ -39,12 +39,19 @@ object ReaderSpeechRules {
         if (content.isBlank()) return ""
         val offset = characterOffset.coerceIn(0, content.lastIndex)
         val boundaries = charArrayOf('\n', '.', '!', '?')
-        var start = content.lastIndexOfAny(
-            boundaries,
-            startIndex = (offset - 1).coerceAtLeast(0),
-        ).let { if (it >= 0) it + 1 else 0 }
+        // At offset 0 there is no previous boundary: searching from index 0 would find a
+        // boundary at 0 itself (a title such as "!" or ". Article") and skip past the sentence.
+        var start = if (offset == 0) {
+            0
+        } else {
+            content.lastIndexOfAny(boundaries, startIndex = offset - 1)
+                .let { if (it >= 0) it + 1 else 0 }
+        }
         while (start < content.length && content[start].isWhitespace()) start++
-        val naturalEnd = content.indexOfAny(boundaries, startIndex = offset)
+        if (start >= content.length) return ""
+        // Search the end from start, so skipped whitespace (for example "\n\n" after a
+        // period) can never place the end before the start.
+        val naturalEnd = content.indexOfAny(boundaries, startIndex = start)
             .let { if (it >= 0) it + 1 else content.length }
         val hardEnd = minOf(start + maxChars.coerceAtLeast(1), naturalEnd)
         val end = if (hardEnd < naturalEnd) {
@@ -52,7 +59,7 @@ object ReaderSpeechRules {
         } else {
             hardEnd
         }
-        return content.substring(start, end)
+        return content.substring(start, end.coerceAtLeast(start))
             .replace(Regex("\\s+"), " ")
             .trim()
     }

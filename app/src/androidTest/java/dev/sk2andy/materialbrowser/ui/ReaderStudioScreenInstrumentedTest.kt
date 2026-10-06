@@ -1,6 +1,9 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +24,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.reader.ReaderBlock
 import dev.sk2andy.materialbrowser.reader.ReaderBlockKind
 import dev.sk2andy.materialbrowser.reader.ReaderDocument
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryStore
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
@@ -75,6 +79,41 @@ class ReaderStudioScreenInstrumentedTest {
         composeRule.onNodeWithTag(ReaderStudioTestTags.Original).assertExists()
         composeRule.onNodeWithTag(ReaderStudioTestTags.Save).assertDoesNotExist()
         composeRule.onNodeWithTag(ReaderStudioTestTags.Library).assertDoesNotExist()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.HeaderLibrary).assertDoesNotExist()
+    }
+
+    @Test
+    fun failedExtractionStillOpensOfflineArticlesOutsidePrivateMode() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        var isPrivate by mutableStateOf(false)
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                ReaderStudioScreen(
+                    result = ReaderExtractionResult.Failure(ReaderExtractionFailure.EmptyArticle),
+                    sourceUrl = "https://example.com/article",
+                    isPrivate = isPrivate,
+                    repository = repository,
+                    onRetry = {},
+                    onDismiss = {},
+                    onOpenOriginal = {},
+                    onOpenLink = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(ReaderStudioTestTags.Error).assertExists()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.HeaderLibrary).assertIsDisplayed()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.StateLibrary).performClick()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.Error).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.reader_offline_library))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.HeaderLibrary).assertDoesNotExist()
+
+        isPrivate = true
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.Error).assertExists()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.StateLibrary).assertDoesNotExist()
+        composeRule.onNodeWithTag(ReaderStudioTestTags.HeaderLibrary).assertDoesNotExist()
     }
 
     @Test

@@ -17,6 +17,12 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
     private val handler = Handler(Looper.getMainLooper())
     private var engine: TextToSpeech? = null
     private var text: String = ""
+
+    /** Bumped on every play, pause, stop and close; callbacks of older queues are ignored. */
+    private var generation = 0
+
+    /** Read on the TTS binder thread. */
+    @Volatile
     private var chunkStarts: Map<String, Int> = emptyMap()
 
     init {
@@ -40,7 +46,13 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
         if (start >= text.length) dispatch(ReaderSpeechEvent.Stop)
         if (text.isBlank() || start >= text.length) return
         val tts = engine ?: return
-        val chunks = chunks(text, start, TextToSpeech.getMaxSpeechInputLength().coerceAtMost(3_500))
+        val playGeneration = ++generation
+        val chunks = chunks(
+            text,
+            start,
+            TextToSpeech.getMaxSpeechInputLength().coerceAtMost(3_500),
+            playGeneration,
+        )
         chunkStarts = chunks.associate { it.first to it.second }
         chunks.forEachIndexed { index, (id, _, chunk) ->
             val result = tts.speak(
@@ -59,16 +71,19 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
 
     override fun pause() {
         if (state.status != ReaderSpeechStatus.Speaking) return
+        generation++
         engine?.stop()
         dispatch(ReaderSpeechEvent.Pause)
     }
 
     override fun stop() {
+        generation++
         engine?.stop()
         dispatch(ReaderSpeechEvent.Stop)
     }
 
     override fun close() {
+        generation++
         engine?.stop()
         engine?.shutdown()
         engine = null
@@ -79,13 +94,17 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
         override fun onStart(utteranceId: String?) = Unit
 
         override fun onDone(utteranceId: String?) {
-            val finalId = chunkStarts.keys.lastOrNull()
-            if (utteranceId == finalId) handler.post { dispatch(ReaderSpeechEvent.Completed) }
+            if (utteranceId == null || utteranceId != chunkStarts.keys.lastOrNull()) return
+            postIfCurrent(utteranceId) { dispatch(ReaderSpeechEvent.Completed) }
         }
 
         @Deprecated("Deprecated in Android")
         override fun onError(utteranceId: String?) {
-            handler.post { dispatch(ReaderSpeechEvent.InitializationFailed) }
+            postIfCurrent(utteranceId) { dispatch(ReaderSpeechEvent.InitializationFailed) }
+        }
+
+        override fun onError(utteranceId: String?, errorCode: Int) {
+            postIfCurrent(utteranceId) { dispatch(ReaderSpeechEvent.InitializationFailed) }
         }
 
         override fun onRangeStart(
@@ -95,7 +114,18 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
             frame: Int,
         ) {
             val base = chunkStarts[utteranceId] ?: return
-            handler.post { dispatch(ReaderSpeechEvent.RangeStarted(base + start)) }
+            postIfCurrent(utteranceId) { dispatch(ReaderSpeechEvent.RangeStarted(base + start)) }
+        }
+    }
+
+    /**
+     * Runs [action] on the main thread only while [utteranceId] belongs to the current queue;
+     * the check repeats inside the posted runnable, after any stop or new play queued before it.
+     */
+    private fun postIfCurrent(utteranceId: String?, action: () -> Unit) {
+        val utteranceGeneration = ReaderUtteranceIds.generationOf(utteranceId) ?: return
+        handler.post {
+            if (ReaderUtteranceIds.isCurrent(utteranceGeneration, generation)) action()
         }
     }
 
@@ -103,7 +133,12 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
         state = ReaderSpeechRules.reduce(state, event, text.length)
     }
 
-    private fun chunks(content: String, startOffset: Int, maxLength: Int): List<Triple<String, Int, String>> {
+    private fun chunks(
+        content: String,
+        startOffset: Int,
+        maxLength: Int,
+        generation: Int,
+    ): List<Triple<String, Int, String>> {
         val result = mutableListOf<Triple<String, Int, String>>()
         var cursor = startOffset
         var ordinal = 0
@@ -117,10 +152,34 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
                     ?.plus(1)
                     ?: hardEnd
             }
-            result += Triple("reader-$ordinal-$cursor", cursor, content.substring(cursor, split))
+            result += Triple(
+                ReaderUtteranceIds.id(generation, ordinal, cursor),
+                cursor,
+                content.substring(cursor, split),
+            )
             cursor = split
             ordinal++
         }
         return result
     }
+}
+
+/**
+ * Utterance ids carry the playback generation, so a late callback from a stopped or replaced
+ * queue (the same chunk ordinal and offset as the new one) cannot change the new playback.
+ */
+internal object ReaderUtteranceIds {
+    private const val PREFIX = "reader"
+
+    fun id(generation: Int, ordinal: Int, cursor: Int): String =
+        "$PREFIX-$generation-$ordinal-$cursor"
+
+    fun generationOf(utteranceId: String?): Int? {
+        val parts = utteranceId?.split('-') ?: return null
+        if (parts.size != 4 || parts[0] != PREFIX) return null
+        return parts[1].toIntOrNull()
+    }
+
+    fun isCurrent(utteranceGeneration: Int, currentGeneration: Int): Boolean =
+        utteranceGeneration == currentGeneration
 }
