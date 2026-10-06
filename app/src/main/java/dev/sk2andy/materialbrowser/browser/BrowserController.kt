@@ -1523,7 +1523,7 @@ class BrowserController(
         get() = isDesktopView(selectedTabId)
 
     val canCreatePrivateTabInActiveProfile: Boolean
-        get() = !isSyncedProfile(activeProfileId)
+        get() = canOpenLinkInPrivate
 
     val canSnoozeSelectedTab: Boolean
         get() = selectedTab.let { tab ->
