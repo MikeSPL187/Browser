@@ -51,10 +51,10 @@ internal object DownloadHistoryRules {
         val earliestMillis = earliestMillis(timeFilter, nowMillis, zoneId)
         return entries.asSequence()
             .filter { entry -> earliestMillis == null || entry.lastModified >= earliestMillis }
+            // By file name only: finished engine transfers deliberately keep no source address,
+            // so matching on it would find a file while it downloads and lose it once it is done.
             .filter { entry ->
-                normalizedQuery.isEmpty() ||
-                    entry.name.lowercase(Locale.ROOT).contains(normalizedQuery) ||
-                    entry.source.lowercase(Locale.ROOT).contains(normalizedQuery)
+                normalizedQuery.isEmpty() || entry.name.lowercase(Locale.ROOT).contains(normalizedQuery)
             }
             .sortedWith(
                 compareByDescending(DownloadEntry::lastModified)
