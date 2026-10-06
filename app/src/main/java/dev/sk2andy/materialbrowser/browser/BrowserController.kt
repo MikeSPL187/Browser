@@ -1507,7 +1507,8 @@ class BrowserController(
     private fun isSyncTargetProfile(profileId: String): Boolean =
         syncTargetDeviceId(profileId) != null
 
-    private fun isBoundSyncProfile(profileId: String): Boolean =
+    /** A local workspace this device syncs as; it can't be deleted while it is bound. */
+    fun isBoundSyncProfile(profileId: String): Boolean =
         !isSyncedProfile(profileId) && syncTargetDeviceId(profileId) != null
 
     val canToggleSelectedDomainMute: Boolean
@@ -6327,15 +6328,7 @@ class BrowserController(
         excludedCapsuleId: String? = null,
         onComplete: (Boolean) -> Unit,
     ) {
-        if (
-            localProfiles.size <= 1 ||
-            isSyncedProfile(profileId) ||
-            isBoundSyncProfile(profileId) ||
-            profileId in lockedProfileIds ||
-            profileId in pendingProfileIsolationChanges ||
-            profiles.none { it.id == profileId } ||
-            deletionFallbackProfile(profileId) == null
-        ) {
+        if (!canDeleteProfile(profileId) || profileId in pendingProfileIsolationChanges) {
             onComplete(false)
             return
         }
@@ -6383,6 +6376,12 @@ class BrowserController(
             }
         }
     }
+
+    /** The settings sheet offers «Delete» on the same terms [deleteProfileAsync] accepts it. */
+    fun canDeleteProfile(profileId: String): Boolean =
+        profiles.any { it.id == profileId } && !isSyncedProfile(profileId) &&
+            !isBoundSyncProfile(profileId) && profileId !in lockedProfileIds &&
+            deletionFallbackProfile(profileId) != null
 
     private fun deletionFallbackProfile(profileId: String): BrowserProfile? =
         WorkspaceDeletionRules.fallbackProfileId(

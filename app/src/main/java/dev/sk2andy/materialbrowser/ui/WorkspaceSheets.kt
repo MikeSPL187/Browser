@@ -95,6 +95,7 @@ internal object WorkspaceSheetTestTags {
     const val Storage = "workspace_settings_storage"
     const val Biometric = "workspace_settings_biometric"
     const val Delete = "workspace_settings_delete"
+    const val DeleteBlockedBySync = "workspace_settings_delete_blocked_by_sync"
 
     fun icon(emoji: String): String = "workspace_icon:$emoji"
 }
@@ -249,6 +250,7 @@ internal fun WorkspaceSettingsSheet(
     onDisableProtection: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    deleteBlockedBySync: Boolean = false,
 ) {
     val workspace = profile ?: return
     val editable = !workspace.isSyncLinked
@@ -388,7 +390,18 @@ internal fun WorkspaceSettingsSheet(
                 isolationModifier = Modifier.testTag(WorkspaceSheetTestTags.Storage),
                 protectionModifier = Modifier.testTag(WorkspaceSheetTestTags.Biometric),
             )
-            if (canDelete) {
+            if (deleteBlockedBySync) {
+                Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
+                Text(
+                    text = stringResource(R.string.workspace_delete_blocked_by_sync),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = VolaWorkspaceSheet.rowPadding)
+                        .testTag(WorkspaceSheetTestTags.DeleteBlockedBySync),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (canDelete) {
                 Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
                 OutlinedButton(
                     onClick = { confirmingDelete = true },

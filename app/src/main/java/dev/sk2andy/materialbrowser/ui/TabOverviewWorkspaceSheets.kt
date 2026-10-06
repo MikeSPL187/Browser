@@ -70,7 +70,8 @@ internal fun TabOverviewWorkspaceSheets(
         tabCount = actionProfile?.let { WorkspaceSheetRules.tabCount(controller.tabs, it.id) } ?: 0,
         essentialsCount = actionProfile?.let { controller.essentials.entriesFor(it.id).size } ?: 0,
         icons = icons,
-        canDelete = controller.localBrowserProfiles.size > 1,
+        canDelete = actionProfile?.let { controller.canDeleteProfile(it.id) } == true,
+        deleteBlockedBySync = actionProfile?.let { controller.isBoundSyncProfile(it.id) } == true,
         isolationSupported = controller.isProfileIsolationSupported,
         profileProtectionSupported = controller.isProfileProtectionSupported,
         onRename = { name ->

@@ -160,6 +160,7 @@
     <string name="workspace_sheet_delete">Удалить пространство</string>
     <string name="workspace_delete_confirm_title">Удалить «%1$s»?</string>
     <string name="workspace_delete_confirm_message">Вкладки останутся в другом пространстве. Удалятся его история, а при отдельном хранилище — cookie и входы.</string>
+    <string name="workspace_delete_blocked_by_sync">Это пространство связано с синхронизацией, удалить его здесь нельзя</string>
     <string name="workspace_name_label">Название</string>
     <string name="workspace_accent_label">Цвет</string>
     <string name="workspace_accent_violet">Фиолетовый</string>
