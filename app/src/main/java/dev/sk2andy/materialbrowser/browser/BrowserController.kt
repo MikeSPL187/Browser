@@ -8015,9 +8015,8 @@ class BrowserController(
             rememberSelectedTab(activeProfileId, selectedTabId)
             markSyncedTabPending(selectedTab)
         }
-        if (closingTab.isIncognito && tabs.none(BrowserTab::isIncognito)) {
-            clearIncognitoProfile()
-        }
+        // Also when a fresh private tab replaced the last one: the closed session's data must go.
+        if (closesLastIncognitoTab) clearIncognitoProfile()
         reconcileCandyTrailForks(nowMillis)
         persist()
         if (canUndo) {

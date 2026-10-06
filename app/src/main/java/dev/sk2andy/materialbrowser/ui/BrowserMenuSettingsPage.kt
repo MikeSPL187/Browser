@@ -61,7 +61,8 @@ internal fun BrowserMenuSettingsPage(
         resources = AndroidBrowserMenuSettingsResources,
         containerColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh),
         availableEntries = BrowserMenuEntry.entries.filterNot { entry ->
-            entry == BrowserMenuEntry.OpenFirefoxExtensions
+            entry == BrowserMenuEntry.OpenFirefoxExtensions ||
+                !TabStacksFeature.ENABLED && entry == BrowserMenuEntry.TabStacks
         },
         onLocationChanged = onLocationChanged,
         onBack = onBack,

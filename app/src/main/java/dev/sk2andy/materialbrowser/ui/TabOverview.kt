@@ -236,9 +236,7 @@ internal fun TabOverview(
     var heroCompleted by remember { mutableStateOf(false) }
     var heroVisible by remember { mutableStateOf(true) }
     var exitHero by remember { mutableStateOf<TabExitHero?>(null) }
-    val currentOnExitHeroVisibilityChanged by rememberUpdatedState(
-        onExitHeroVisibilityChanged,
-    )
+    val currentOnExitHeroVisibilityChanged by rememberUpdatedState(onExitHeroVisibilityChanged)
     fun updateExitHero(hero: TabExitHero?) {
         exitHero = hero
         currentOnExitHeroVisibilityChanged(hero != null)
@@ -826,6 +824,9 @@ internal fun TabOverview(
                 tabReorderSettleJob?.cancel()
                 activeTabReorder = null
                 heroReorderDropAnimating = false
+                // A sheet left open when the overview closed must not catch Back on the page.
+                tabActionsTabId = null
+                tabStackEditorTabId = null
                 return@LaunchedEffect
             }
 
@@ -1515,9 +1516,7 @@ internal fun TabOverview(
                 squareTopTarget = controller.tabOverviewMode == TabOverviewMode.Grid,
                 modifier = if (initialTab.isIncognito) {
                     Modifier.graphicsLayer {
-                        alpha = TabOverviewHeroRules.incognitoVeilAlpha(
-                            heroProgress.value,
-                        )
+                        alpha = TabOverviewHeroRules.incognitoVeilAlpha(heroProgress.value)
                     }
                 } else {
                     Modifier
@@ -1738,9 +1737,7 @@ internal fun TabOverview(
                                     preview,
                                     bounds,
                                     candyTrailTab.isIncognito,
-                                    previewTopInsetPx = controller.previewTopInsetPx(
-                                        candyTrailTab.id,
-                                    ),
+                                    previewTopInsetPx = controller.previewTopInsetPx(candyTrailTab.id),
                                     mode = controller.tabOverviewMode,
                                 ),
                             )
