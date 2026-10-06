@@ -9,9 +9,10 @@ import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 
 /**
- * The weekly protection report (ROADMAP Q5b, П7): trackers the blocker stopped, by site and day,
- * counted on the device for the new tab card and its report. [BrowserController] reports the
- * blocked trackers of regular tabs; private tabs are never recorded.
+ * The weekly protection report (ROADMAP Q5b, П7): requests the blocker stopped, by site and day,
+ * counted on the device for the new tab card and its report. The blocker does not tell ads from
+ * trackers or from the user's own block rules, so the report names them together. [BrowserController]
+ * reports the blocks of regular tabs; private tabs are never recorded.
  */
 class ProtectionReportController internal constructor(
     private val store: ProtectionReportPersistence,
@@ -41,7 +42,7 @@ class ProtectionReportController internal constructor(
         refresh()
     }
 
-    /** Counts [blocked] trackers on the page at [pageUrl]; pages that are not on the web are skipped. */
+    /** Counts [blocked] requests on the page at [pageUrl]; pages that are not on the web are skipped. */
     fun record(pageUrl: String, blocked: Int) {
         val site = ProtectionReportRules.site(pageUrl) ?: return
         if (blocked <= 0) return

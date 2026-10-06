@@ -20,7 +20,7 @@ data class ProtectionWeek(
     val siteCount: Int,
     /** Seven days, the oldest first and today last. */
     val daily: List<Int>,
-    /** Sites with the most blocked trackers, most first. */
+    /** Sites with the most blocked requests, most first. */
     val topSites: List<ProtectionSite>,
     val firstEpochDay: Long,
     val lastEpochDay: Long,
@@ -63,7 +63,7 @@ object ProtectionReportRules {
         return uri.host?.lowercase(Locale.ROOT)?.removePrefix("www.")?.takeIf(String::isNotBlank)
     }
 
-    /** Adds [blocked] trackers on [site] today and drops days that left the week. */
+    /** Adds [blocked] requests on [site] today and drops days that left the week. */
     fun record(
         days: List<ProtectionDay>,
         today: Long,
