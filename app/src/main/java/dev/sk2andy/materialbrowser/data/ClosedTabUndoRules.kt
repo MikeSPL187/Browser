@@ -21,6 +21,19 @@ internal data class ClosedTabUndoResult(
 internal object ClosedTabUndoRules {
     const val DURATION_MILLIS = 3_000L
 
+    /**
+     * Undo is offered only for a tab the user closed by hand, with undo on, that may outlive its
+     * session. A tab hidden by the private tabs lock never gets one: closing the last of them
+     * releases the lock, and undo would bring the page back without a fingerprint.
+     */
+    fun canOffer(
+        requestedByUser: Boolean,
+        enabled: Boolean,
+        sessionEphemeral: Boolean,
+        syncedProfile: Boolean,
+        hiddenByLock: Boolean,
+    ): Boolean = requestedByUser && enabled && !sessionEphemeral && !syncedProfile && !hiddenByLock
+
     fun restore(
         tabs: List<BrowserTab>,
         selectedTabId: String,

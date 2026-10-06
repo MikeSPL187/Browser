@@ -385,31 +385,31 @@
     <string name="essentials_empty_body">Essentials open in one tap. Each workspace keeps its own.</string>
     <string name="essentials_empty_action">Add a site</string>
     <plurals name="protection_card_title">
-        <item quantity="one">%1$s tracker this week</item>
-        <item quantity="other">%1$s trackers this week</item>
+        <item quantity="one">%1$s ad or tracker blocked this week</item>
+        <item quantity="other">%1$s ads and trackers blocked this week</item>
     </plurals>
     <plurals name="protection_card_sites">
         <item quantity="one">Blocked on %1$d site</item>
         <item quantity="other">Blocked on %1$d sites</item>
     </plurals>
-    <string name="protection_card_empty_title">Tracker protection is on</string>
-    <string name="protection_card_empty_body">Trackers blocked this week will be counted here</string>
+    <string name="protection_card_empty_title">Ad and tracker blocking is on</string>
+    <string name="protection_card_empty_body">Ads and trackers blocked this week will be counted here</string>
     <string name="protection_card_open">Open the weekly report</string>
     <string name="protection_report_title">Protection this week</string>
     <plurals name="protection_report_total">
-        <item quantity="one">%1$s tracker blocked</item>
-        <item quantity="other">%1$s trackers blocked</item>
+        <item quantity="one">%1$s ad or tracker blocked</item>
+        <item quantity="other">%1$s ads and trackers blocked</item>
     </plurals>
-    <string name="protection_report_chart">Blocked trackers by day: %1$s</string>
-    <string name="protection_report_top_sites">Tried to track you most</string>
-    <string name="protection_report_empty">No trackers blocked yet this week.</string>
+    <string name="protection_report_chart">Ads and trackers blocked by day: %1$s</string>
+    <string name="protection_report_top_sites">Sites with the most blocks</string>
+    <string name="protection_report_empty">No ads or trackers blocked yet this week.</string>
     <string name="protection_report_device_only">Counted on this phone only. Private tabs are not counted.</string>
     <string name="protection_report_clear">Clear report</string>
     <string name="protection_report_hide">Hide card</string>
     <string name="protection_report_clear_title">Clear the report?</string>
     <string name="protection_report_clear_body">This week\'s counts are deleted from this phone. Protection keeps working.</string>
     <string name="settings_protection_card_title">Weekly report on the new tab</string>
-    <string name="settings_protection_card_subtitle">Trackers blocked in the last 7 days</string>
+    <string name="settings_protection_card_subtitle">Ads and trackers blocked in the last 7 days</string>
     <string name="private_tab_title">Private tab</string>
     <string name="private_tab_body">Vola keeps no history of what you do here.</string>
     <string name="private_tab_fact_history">No history</string>

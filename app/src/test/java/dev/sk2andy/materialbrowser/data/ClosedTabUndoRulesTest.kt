@@ -4,6 +4,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClosedTabUndoRulesTest {
@@ -112,6 +113,34 @@ class ClosedTabUndoRulesTest {
         ), result.tabs.first())
         assertFalse(result.tabs.first().isLoading)
     }
+
+    @Test
+    fun `undo is offered only for a user close of a tab that may outlive its session`() {
+        assertTrue(canOffer())
+        assertFalse(canOffer(requestedByUser = false))
+        assertFalse(canOffer(enabled = false))
+        assertFalse(canOffer(sessionEphemeral = true))
+        assertFalse(canOffer(syncedProfile = true))
+    }
+
+    @Test
+    fun `a tab hidden by the private tabs lock never offers undo`() {
+        assertFalse(canOffer(hiddenByLock = true))
+    }
+
+    private fun canOffer(
+        requestedByUser: Boolean = true,
+        enabled: Boolean = true,
+        sessionEphemeral: Boolean = false,
+        syncedProfile: Boolean = false,
+        hiddenByLock: Boolean = false,
+    ) = ClosedTabUndoRules.canOffer(
+        requestedByUser = requestedByUser,
+        enabled = enabled,
+        sessionEphemeral = sessionEphemeral,
+        syncedProfile = syncedProfile,
+        hiddenByLock = hiddenByLock,
+    )
 
     private fun tab(id: String) = BrowserTab(id = id, lastAccessedAt = 100)
 
