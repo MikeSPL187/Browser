@@ -113,6 +113,9 @@ class ReaderExtractionContractTest {
         assertTrue(script.contains("hasVisibleContent"))
         assertTrue(script.contains("visibleText"))
         assertTrue(script.contains("gt-nvframe"))
+        // Nested blocks are emitted once; DOM behavior is covered by scripts/reader_extraction.test.mjs.
+        assertTrue(script.contains("if (!isOwnBlock(node)) return;"))
+        assertTrue(script.contains("item.querySelectorAll('ul,ol').forEach(list => list.remove())"))
         assertTrue(script.contains("replace(/[\\u0000-\\u001f\\u007f]+/g"))
         assertTrue(script.contains("replace(/\\s+/g"))
         assertFalse(script.contains("\\\\u0000"))
