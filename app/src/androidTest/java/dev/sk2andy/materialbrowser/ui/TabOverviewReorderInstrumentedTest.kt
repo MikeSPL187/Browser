@@ -21,6 +21,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -29,6 +30,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.TabStackColor
@@ -393,6 +395,10 @@ class TabOverviewReorderInstrumentedTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
+        // Stack actions live in the sheet's folded "Add to group" section.
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.tab_actions_add_to_group))
+            .performScrollTo()
+            .performClick()
         composeRule.onNodeWithTag(TabStackTestTags.Create)
             .performScrollTo()
             .performClick()

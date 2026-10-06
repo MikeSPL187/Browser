@@ -376,10 +376,13 @@ class TabSettingsScreenInstrumentedTest {
         composeRule.onNodeWithText(context.getString(R.string.tab_overview_mode_hero))
             .assertExists()
             .performClick()
+        // The card rows below the overview modes start off screen; a click there misses.
         composeRule.onNodeWithTag(TabSettingsTestTags.ListStartsAtBottom)
+            .performScrollTo()
             .assertIsEnabled()
             .performClick()
         composeRule.onNodeWithTag(TabSettingsTestTags.AutomaticSorting)
+            .performScrollTo()
             .assertIsEnabled()
             .performClick()
 

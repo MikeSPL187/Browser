@@ -208,7 +208,8 @@ class PrivacyXRaySheetInstrumentedTest {
             .assertCountEquals(2)
         composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
             .assertCountEquals(1)
-        composeRule.onNodeWithTag(PrivacyXRayTestTags.Pause).performScrollTo().performClick()
+        // Pausing is the site's protection switch on the sheet's first page.
+        composeRule.onNodeWithTag(SiteInfoTestTags.Protection).performScrollTo().performClick()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.Warning).assertExists()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.PausePersistent).assertDoesNotExist()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.PauseTemporary).performClick()

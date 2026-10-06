@@ -336,7 +336,7 @@ class SnoozeScreensInstrumentedTest {
         composeRule.runOnIdle {
             assertTrue(browserController.isDomainMuted(tabId))
         }
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.More).performClick()
+        // Muting keeps the sheet and its More section open; another tap would fold it.
         composeRule.onNodeWithTag(TabActionsSheetTestTags.more(TabMoreAction.AddBookmark)).performClick()
         composeRule.runOnIdle {
             assertEquals(tabId, favoriteTarget.get())

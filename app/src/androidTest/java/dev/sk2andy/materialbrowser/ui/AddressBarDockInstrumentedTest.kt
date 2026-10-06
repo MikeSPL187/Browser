@@ -19,6 +19,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -526,6 +527,10 @@ class AddressBarDockInstrumentedTest {
                 WideAddressTabStripTestTags.TabPrefix + "segmented-address-tab",
             ).performClick()
         } else {
+            // The restored tab's address reaches the bar a moment after the first frame.
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithText("example.test").fetchSemanticsNodes().isNotEmpty()
+            }
             composeRule.onNodeWithText("example.test").performClick()
         }
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()

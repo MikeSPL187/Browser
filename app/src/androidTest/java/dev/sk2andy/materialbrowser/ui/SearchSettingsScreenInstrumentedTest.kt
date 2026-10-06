@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.browser.SearchEngine
@@ -56,7 +57,10 @@ class SearchSettingsScreenInstrumentedTest {
             .performTextReplacement("https://alice:secret@search.example?token=secret")
         assertEquals("https://search.example/searxng", settings.instanceUrl)
 
-        composeRule.onNodeWithTag(SearchSettingsTestTags.SearxngFallback).performClick()
+        composeRule.onNodeWithTag(SearchSettingsTestTags.SearxngFallback)
+            // The card rows sit below the first screen.
+            .performScrollTo()
+            .performClick()
         composeRule.onNode(hasText("Brave Search") and hasAnyAncestor(isPopup())).performClick()
         assertEquals(SearchSuggestionProvider.Brave, settings.suggestionFallback)
     }
@@ -82,7 +86,9 @@ class SearchSettingsScreenInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(SearchSettingsTestTags.HistorySuggestions).performClick()
+        composeRule.onNodeWithTag(SearchSettingsTestTags.HistorySuggestions)
+            .performScrollTo()
+            .performClick()
 
         assertFalse(enabled)
     }
@@ -108,7 +114,9 @@ class SearchSettingsScreenInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(SearchSettingsTestTags.SuggestionProvider).performClick()
+        composeRule.onNodeWithTag(SearchSettingsTestTags.SuggestionProvider)
+            .performScrollTo()
+            .performClick()
         composeRule.onNode(hasText("Google") and hasAnyAncestor(isPopup())).performClick()
 
         assertEquals(SearchSuggestionProvider.Google, provider)
