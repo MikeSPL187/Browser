@@ -101,14 +101,15 @@ internal fun SnoozeTabDialog(
     onDismiss: () -> Unit,
 ) {
     if (tab == null) return
-    val zoneId = remember { ZoneId.systemDefault() }
     var customEditorVisible by remember(tab.id) { mutableStateOf(false) }
     val customInitialMillis = remember(tab.id) {
         System.currentTimeMillis() + 24 * 60 * 60 * 1_000L
     }
     val enabled = !tab.isIncognito
     val applyPreset: (SnoozePreset) -> Unit = { preset ->
+        // The zone is read on each tap: the person may have travelled while the dialog was open.
         val nowMillis = System.currentTimeMillis()
+        val zoneId = ZoneId.systemDefault()
         if (onSnooze(SnoozeTimeRules.wakeAtMillis(preset, nowMillis, zoneId))) onDismiss()
     }
 
@@ -464,11 +465,11 @@ private fun SnoozedTabRow(
 @Composable
 private fun SnoozeWhenChip(snoozed: SnoozedTab, onClick: () -> Unit) {
     val locale = LocalConfiguration.current.locales[0]
-    val zoneId = remember { ZoneId.systemDefault() }
+    val zoneId = ZoneId.systemDefault()
     val label = if (snoozed.isArchived) {
         stringResource(
             R.string.snoozed_archived_at,
-            remember(snoozed.createdAtMillis, locale) {
+            remember(snoozed.createdAtMillis, locale, zoneId) {
                 DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
                     .format(Instant.ofEpochMilli(snoozed.createdAtMillis).atZone(zoneId))
             },
@@ -522,9 +523,8 @@ private fun SnoozeDateTimeDialogs(
     onConfirm: (Long) -> Unit,
 ) {
     if (!visible) return
-    val zoneId = remember { ZoneId.systemDefault() }
-    val initialLocal = remember(initialMillis, zoneId) {
-        Instant.ofEpochMilli(initialMillis).atZone(zoneId)
+    val initialLocal = remember(initialMillis) {
+        Instant.ofEpochMilli(initialMillis).atZone(ZoneId.systemDefault())
     }
     var step by remember(initialMillis) { mutableStateOf(SnoozeDateTimeStep.Date) }
     var selectedDate by remember(initialMillis) { mutableStateOf(initialLocal.toLocalDate()) }
@@ -595,7 +595,7 @@ private fun SnoozeDateTimeDialogs(
                             val wakeAtMillis = SnoozeTimeRules.customWakeAtMillis(
                                 selectedDate,
                                 LocalTime.of(timeState.hour, timeState.minute),
-                                zoneId,
+                                ZoneId.systemDefault(),
                             )
                             invalidTime = wakeAtMillis <= System.currentTimeMillis()
                             if (!invalidTime) onConfirm(wakeAtMillis)
