@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.data
 
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -32,6 +33,23 @@ class InactiveTabArchiveRulesTest {
         assertEquals("https://example.com/", archived.tab.url)
         assertFalse(archived.tab.isLoading)
         assertFalse(waking.isArchived)
+    }
+
+    @Test
+    fun `an archived tab forgets its last load failure`() {
+        val failed = BrowserTab(
+            "failed",
+            2L,
+            error = "Not found",
+            httpStatusCode = 404,
+            failureKind = BrowserEngineFailureKind.Other,
+        )
+
+        val archived = InactiveTabArchiveRules.archived(listOf(failed), emptyList(), 900L).single()
+
+        assertNull(archived.tab.error)
+        assertNull(archived.tab.httpStatusCode)
+        assertNull(archived.tab.failureKind)
     }
 
     @Test

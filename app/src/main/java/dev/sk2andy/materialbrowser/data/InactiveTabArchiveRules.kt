@@ -22,7 +22,13 @@ internal object InactiveTabArchiveRules {
         val staleIds = stale.mapTo(hashSetOf(), BrowserTab::id)
         val added = stale.filter(::canArchive).map { tab ->
             SnoozedTab(
-                tab = tab.copy(progress = 0, isLoading = false, error = null),
+                tab = tab.copy(
+                    progress = 0,
+                    isLoading = false,
+                    error = null,
+                    httpStatusCode = null,
+                    failureKind = null,
+                ),
                 wakeAtMillis = SnoozedTab.ARCHIVED_WAKE_AT_MILLIS,
                 createdAtMillis = nowMillis,
             )

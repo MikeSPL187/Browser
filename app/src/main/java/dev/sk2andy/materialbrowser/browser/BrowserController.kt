@@ -243,6 +243,7 @@ import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SiteCapsuleIconStore
 import dev.sk2andy.materialbrowser.data.SiteCapsuleStore
+import dev.sk2andy.materialbrowser.data.SnoozeRestoreCoordinator
 import dev.sk2andy.materialbrowser.data.SnoozeRestoreRules
 import dev.sk2andy.materialbrowser.data.SnoozeRules
 import dev.sk2andy.materialbrowser.data.SnoozeMutationRules
@@ -2493,10 +2494,9 @@ class BrowserController(
             )
             if (snapshotPersisted) {
                 SnoozeWakeNotifier(activity).notifyRestored(
-                    tabs.filter {
-                        it.id in initialSnoozeRestore.restoredTabIds &&
-                            (profilesEnabled || it.profileId == profiles.first().id)
-                    },
+                    SnoozeRestoreCoordinator.restoredNotificationTabs(
+                        tabs, initialSnoozeRestore.restoredTabIds, profiles, profilesEnabled,
+                    ),
                 )
             } else {
                 tabs.clear()
@@ -2542,7 +2542,7 @@ class BrowserController(
         container: FrameLayout,
         onContentPresented: (String) -> Unit,
     ): View? {
-        if (browsingDataClearPending || isActiveProfileLocked) {
+        if (browsingDataClearPending || isActiveProfileLocked || isSplitCompanionLocked) {
             detachBrowserEngineView(container)
             return null
         }
@@ -2557,16 +2557,19 @@ class BrowserController(
 
     /** Follows the screen: the companion pane plays while the activity is in front. */
     fun setSplitCompanionActive(active: Boolean) {
-        splitView.companionTabId?.let { tabId -> browserEngineSessions[tabId] }?.setActive(active)
+        splitView.companionTabId?.let { tabId -> browserEngineSessions[tabId] }
+            ?.setActive(active && !isSplitCompanionLocked)
     }
+
+    private val isSplitCompanionLocked: Boolean
+        get() = privateTabsLock.hides(tabs.firstOrNull { it.id == splitView.companionTabId })
 
     /** Opens Split View next to [companionTabId], or the most recent other page. */
     fun openSplitView(companionTabId: String? = null): Boolean {
-        val companion = companionTabId
-            ?.takeIf { id -> id != selectedTabId && activeTabs.any { tab -> tab.id == id } }
-            ?: SplitViewRules.companionFor(activeTabs, selectedTabId)
+        val companion = SplitViewRules.companionFor(activeTabs, selectedTabId, companionTabId)
             ?: return false
         markResidentSessionAccess(companion)
+        touchTab(companion, System.currentTimeMillis())
         splitView.open(companion)
         return true
     }
@@ -3818,18 +3821,28 @@ class BrowserController(
     }
 
     /** Builds an ephemeral Gecko renderer without registering a tab or writing history. */
-    fun createLinkPeekPreviewView(
+    internal fun createLinkPeekPreviewView(
         url: String,
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
+        onStatusChanged: (LinkPeekPreviewStatus) -> Unit = {},
+        onTitleChanged: (String?) -> Unit = {},
     ): View {
         val safeUrl = requireNotNull(BrowserUriPolicy.normalizeHttpUrl(url))
         val sourceTab = tabs.first { it.id == selectedTabId }
+        val decision = LinkPeekPreviewRules.navigationDecision(safeUrl, dangerousSites::check)
+        if (decision is LinkPeekNavigationDecision.Block) {
+            // Nothing loads: no engine session, only the card's warning.
+            mainHandler.post { onStatusChanged(LinkPeekPreviewStatus.Blocked(decision.site)) }
+            return View(activity)
+        }
         return createGeckoLinkPeekPreview(
             sourceTab = sourceTab,
             url = safeUrl,
             onProgressChanged = onProgressChanged,
             onCommittedUrlChanged = onCommittedUrlChanged,
+            onStatusChanged = onStatusChanged,
+            onTitleChanged = onTitleChanged,
         )
     }
 
@@ -3846,6 +3859,8 @@ class BrowserController(
         url: String,
         onProgressChanged: (Int) -> Unit,
         onCommittedUrlChanged: (String) -> Unit,
+        onStatusChanged: (LinkPeekPreviewStatus) -> Unit,
+        onTitleChanged: (String?) -> Unit,
     ): View {
         val previewTabId = "link-peek-${++nextGeckoLinkPeekId}"
         var binding: GeckoLinkPeekBinding? = null
@@ -3879,6 +3894,7 @@ class BrowserController(
                     )
                     onCommittedUrlChanged(committedUrl)
                 }
+                binding?.let { it.moveTo(LinkPeekPreviewRules.statusAfter(it.status, event, it.committedUrl)) }
                 when (event.type) {
                     BrowserEngineEventType.NavigationStarted -> {
                         binding?.isLoading = true
@@ -3914,7 +3930,13 @@ class BrowserController(
             session = session,
             view = view,
             committedUrl = url,
-        )
+            onStatusChanged = onStatusChanged,
+            onTitleChanged = onTitleChanged,
+        ).also { created ->
+            session.setNavigationRequestListener { request ->
+                created.navigationRequest(request.url, dangerousSites::check)
+            }
+        }
         geckoLinkPeekBindings[view] = binding
         dispatchCurrentWindowInsets(view, tabId = null, isInsideSafeDrawingHost = true)
         session.execute(BrowserEngineCommands.load(url))
@@ -9978,7 +10000,8 @@ class BrowserController(
                 tabs.firstOrNull { it.id == presentation.tabId }?.isIncognito == true
             }
             ?.let { clearGeckoMediaPresentation() }
-        touchTab(selectedTabId, System.currentTimeMillis())
+        listOfNotNull(selectedTabId, splitView.companionTabId)
+            .forEach { tabId -> touchTab(tabId, System.currentTimeMillis()) }
         browserEngineSessions.forEach(::persistBrowserEngineSessionState)
         // Gecko active state represents visibility, while System WebView maps this call to
         // WebView.onPause(). A paused Activity can remain visible behind Android Sharesheet.
@@ -14663,6 +14686,7 @@ class BrowserController(
             selectedTabId = selectedTabId,
             lifetime = inactiveTabLifetime,
             nowMillis = nowMillis,
+            companionTabId = splitView.companionTabId,
         ) - activeFederatedLoginFlowTabIds()
 
     private fun closeTabsOnBackground(
@@ -14858,11 +14882,11 @@ class BrowserController(
             }
         persist()
         snoozeScheduler.schedule(remaining, nowMillis)
-        val restoredTabs = result.tabs.filter { it.id in result.restoredTabIds }
-        SnoozeWakeNotifier(activity).notifyRestored(
-            restoredTabs.filter { profilesEnabled || it.profileId == profiles.first().id },
+        val notificationTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            result.tabs, result.restoredTabIds, profiles, profilesEnabled,
         )
-        return restoredTabs.size
+        SnoozeWakeNotifier(activity).notifyRestored(notificationTabs)
+        return result.restoredTabIds.size
     }
 
     private fun restoreSnoozedCandyTrail(tab: BrowserTab) {

@@ -88,6 +88,24 @@ class TabRetentionRulesTest {
     }
 
     @Test
+    fun splitViewCompanionNeverExpires() {
+        val selected = oldTab("selected")
+        val companion = oldTab("companion")
+        val other = oldTab("other")
+
+        assertEquals(
+            setOf("other"),
+            TabRetentionRules.expiredTabIds(
+                tabs = listOf(selected, companion, other),
+                selectedTabId = selected.id,
+                lifetime = InactiveTabLifetime.SixHours,
+                nowMillis = now,
+                companionTabId = companion.id,
+            ),
+        )
+    }
+
+    @Test
     fun invalidSelectionProtectsFreshestTab() {
         val older = oldTab("older")
         val fresher = tab("fresher", older.lastAccessedAt + 1)
