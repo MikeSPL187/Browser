@@ -1,0 +1,46 @@
+Cold start (am start -W, 5 runs): average 3255 ms, min 2993 ms, max 3588 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 432
+  ActivityCreateStart: 619
+  ActivityCreateEnd: 1006
+  ActivityResumed: 1122
+  FirstFrame: 2057
+  FirstPageComposite: 6049
+  BrowserScreenComposeStart: 1416
+  Composed.AddressChrome: 1773
+  Composed.FirefoxExtensionChrome: 1773
+  Composed.ModalSurfaces: 3654
+  Composed.SettingsOverlay: 3653
+  Composed.TabOverview: 3653
+  Composed.TransientOverlays: 3654
+  Composed.Viewport: 1773
+  ContentComposeStart: 1305
+Durations (median, ms):
+  Compose.AddressChrome (main): 59
+  Compose.FirefoxExtensionChrome (main): 1
+  Compose.ModalSurfaces (main): 9
+  Compose.SettingsOverlay (main): 7
+  Compose.TabOverview (main): 140
+  Compose.TransientOverlays (main): 3
+  Compose.Viewport (main): 155
+  ControllerCreate (main): 205
+  GeckoRuntimeCreate (main): 39
+  LoadFavorites (main): 1
+  LoadFilterRules (main): 0
+  LoadHistory (main): 5
+  LoadProfiles (main): 1
+  LoadSnoozedTabs (main): 0
+  LoadTabs (main): 12
+  LoadUserScripts (main): 1
+  RestoreEssentials (main): 2
+  RestoreProtectionReport (main): 2
+  TrailRedactions (main): 0
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  2836: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  724: Handler (android.app.ActivityThread$H)  null: 159
+  101: Handler (android.os.Handler)  org.mozilla.geckoview.GeckoResult$$ExternalSyntheticLambda8: 0
+  70: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
+  65: Handler (android.app.ActivityThread$H)  null: 113
+  58: Handler (android.os.Handler)  dev.sk2andy.materialbrowser.browser.BrowserController$$ExternalSyntheticLambda186: 0
+  54: Handler (android.os.Handler)  dev.sk2andy.materialbrowser.browser.gecko.GeckoViewToppingHostRuntime$$ExternalSyntheticLambda0: 0
+  52: Handler (android.os.Handler)  org.mozilla.gecko.GeckoThread$1: 0
