@@ -47,6 +47,20 @@ class ProtectionReportRulesTest {
     }
 
     @Test
+    fun `the day total keeps counting blocks of sites dropped past the limit`() {
+        var days = emptyList<ProtectionDay>()
+        (1..ProtectionReportRules.MAX_SITES_PER_DAY + 1).forEach { index ->
+            days = ProtectionReportRules.record(days, today, "s$index.com", 1)
+        }
+        days = ProtectionReportRules.record(days, today, "s1.com", 1)
+        val week = ProtectionReportRules.week(days, today)
+
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, days.single().total)
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, week.total)
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, week.daily.last())
+    }
+
+    @Test
     fun `week sums days, counts sites and orders the top sites`() {
         val days = listOf(
             ProtectionDay(today - 6, mapOf("a.com" to 4, "b.com" to 1)),

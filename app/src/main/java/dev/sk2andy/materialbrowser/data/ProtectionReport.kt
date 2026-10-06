@@ -4,16 +4,15 @@ import java.net.URI
 import java.util.Locale
 
 /**
- * Trackers blocked on one day, by the site the user was on. Kept only on the device; private
- * tabs never reach it.
+ * Requests blocked on one day, by the site the user was on. Kept only on the device; private
+ * tabs never reach it. [total] counts every block of the day, also those of sites dropped past
+ * [ProtectionReportRules.MAX_SITES_PER_DAY], so it is never less than the sum of [blockedBySite].
  */
 data class ProtectionDay(
     val epochDay: Long,
     val blockedBySite: Map<String, Int>,
-) {
-    val total: Int
-        get() = blockedBySite.values.fold(0) { sum, count -> sum.saturatedPlus(count) }
-}
+    val total: Int = blockedBySite.values.fold(0) { sum, count -> sum.saturatedPlus(count) },
+)
 
 /** What the new tab card and the weekly report show. */
 data class ProtectionWeek(
@@ -64,7 +63,8 @@ object ProtectionReportRules {
         blocked: Int,
     ): List<ProtectionDay> {
         if (blocked <= 0) return prune(days, today)
-        val current = days.firstOrNull { it.epochDay == today }?.blockedBySite.orEmpty()
+        val day = days.firstOrNull { it.epochDay == today }
+        val current = day?.blockedBySite.orEmpty()
         var updated = current + (site to (current[site] ?: 0).saturatedPlus(blocked))
         if (updated.size > MAX_SITES_PER_DAY) {
             updated = updated.entries
@@ -72,7 +72,8 @@ object ProtectionReportRules {
                 .take(MAX_SITES_PER_DAY)
                 .associate { it.key to it.value }
         }
-        return prune(days.filterNot { it.epochDay == today } + ProtectionDay(today, updated), today)
+        val total = (day?.total ?: 0).saturatedPlus(blocked)
+        return prune(days.filterNot { it.epochDay == today } + ProtectionDay(today, updated, total), today)
     }
 
     /** Keeps the last [DAYS] days up to today, oldest first. A clock moved back keeps nothing newer. */
