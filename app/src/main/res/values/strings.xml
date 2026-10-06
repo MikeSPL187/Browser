@@ -1310,11 +1310,11 @@
     <string name="snoozed_tabs_title">Snoozed Tabs</string>
     <string name="snoozed_tabs_settings_summary">Manage tabs that will return later</string>
     <string name="snoozed_tabs_empty_title">No snoozed tabs</string>
-    <string name="snoozed_tabs_empty_body">Long-press a tab in the switcher or use its ⋮ menu to snooze it.</string>
+    <string name="snoozed_tabs_empty_body">To snooze a tab, open the tab overview, tap ⋮ and pick «Snooze tab».</string>
     <string name="snoozed_until">Returns %1$s</string>
     <string name="snoozed_archived_at">Archived %1$s</string>
     <string name="snoozed_tabs_subtitle">Tabs come back to their own workspace at the time you chose</string>
-    <string name="snoozed_tabs_hint">To snooze a tab, touch and hold it in the tab overview, then pick «Snooze».</string>
+    <string name="snoozed_tabs_hint">Snooze the current tab from the tab overview: tap ⋮, then «Snooze tab».</string>
     <string name="snoozed_today_at">Today, %1$s</string>
     <string name="snoozed_tomorrow_at">Tomorrow, %1$s</string>
     <string name="snoozed_tab_more">More actions for %1$s</string>

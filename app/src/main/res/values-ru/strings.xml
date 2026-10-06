@@ -1346,11 +1346,11 @@
     <string name="snoozed_tabs_title">Отложенные вкладки</string>
     <string name="snoozed_tabs_settings_summary">Вкладки, которые вернутся позже</string>
     <string name="snoozed_tabs_empty_title">Отложенных вкладок нет</string>
-    <string name="snoozed_tabs_empty_body">Нажмите и удерживайте вкладку в обзоре или откройте её меню ⋮, чтобы отложить.</string>
+    <string name="snoozed_tabs_empty_body">Чтобы отложить вкладку, откройте обзор вкладок, нажмите ⋮ и выберите «Отложить вкладку».</string>
     <string name="snoozed_until">Вернётся %1$s</string>
     <string name="snoozed_archived_at">В архиве с %1$s</string>
     <string name="snoozed_tabs_subtitle">Вкладки вернутся в своё пространство в выбранное время</string>
-    <string name="snoozed_tabs_hint">Чтобы отложить вкладку, нажмите на неё в обзоре вкладок и держите, затем выберите «Отложить».</string>
+    <string name="snoozed_tabs_hint">Текущую вкладку можно отложить из обзора вкладок: нажмите ⋮, затем «Отложить вкладку».</string>
     <string name="snoozed_today_at">Сегодня, %1$s</string>
     <string name="snoozed_tomorrow_at">Завтра, %1$s</string>
     <string name="snoozed_tab_more">Другие действия: %1$s</string>
