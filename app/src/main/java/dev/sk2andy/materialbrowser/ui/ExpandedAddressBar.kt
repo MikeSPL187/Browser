@@ -91,7 +91,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
@@ -904,25 +903,23 @@ private fun Modifier.segmentedAddressBarBackground(
     }
 }
 
-private fun Modifier.blockExitingAddressEditor(blocked: Boolean): Modifier = if (!blocked) {
-    this
-} else {
-    this
-        .clearAndSetSemantics { }
-        .pointerInput(Unit) {
-            awaitEachGesture {
-                val down = awaitFirstDown(
-                    requireUnconsumed = false,
-                    pass = PointerEventPass.Initial,
-                )
-                down.consume()
-                while (true) {
-                    val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                    event.changes.forEach { it.consume() }
-                    if (event.changes.none { it.pressed }) break
-                }
-            }
+// The semantics node stays in the chain whether or not it clears; only the gesture sink comes and goes.
+private fun Modifier.blockExitingAddressEditor(blocked: Boolean): Modifier =
+    clearSemanticsWhen(blocked).then(if (blocked) Modifier.consumeAllPointerInput() else Modifier)
+
+private fun Modifier.consumeAllPointerInput(): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial,
+        )
+        down.consume()
+        while (true) {
+            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+            event.changes.forEach { it.consume() }
+            if (event.changes.none { it.pressed }) break
         }
+    }
 }
 
 @Composable

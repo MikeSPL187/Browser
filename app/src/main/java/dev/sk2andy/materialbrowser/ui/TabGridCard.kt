@@ -114,8 +114,9 @@ internal fun TabGridCardTitleRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = VolaTabOverview.cardTitleGap)
-                .clearAndSetSemantics { }
-                .testTag(SnoozeTestTags.overviewTitle(tab.id)),
+                // A test tag after clearAndSetSemantics is cleared with the rest.
+                .testTag(SnoozeTestTags.overviewTitle(tab.id))
+                .clearAndSetSemantics { },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = colors.onSurface,

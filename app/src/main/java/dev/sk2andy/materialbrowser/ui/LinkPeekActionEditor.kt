@@ -770,8 +770,8 @@ internal fun LinkPeekActionEditorPage(
                         elevation = (2f + lift * 7f).dp,
                         shape = MaterialTheme.shapes.large,
                     )
-                    .clearAndSetSemantics { }
-                    .testTag(LinkPeekActionEditorTestTags.DragOverlay),
+                    .testTag(LinkPeekActionEditorTestTags.DragOverlay)
+                    .clearAndSetSemantics { },
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
@@ -943,8 +943,8 @@ private fun LinkPeekActionDropIndicators(
                             shape = RoundedCornerShape(cornerRadius),
                         )
                         .zIndex(20f)
-                        .clearAndSetSemantics { }
-                        .testTag(LinkPeekActionEditorTestTags.dropIndicator(slot.target)),
+                        .testTag(LinkPeekActionEditorTestTags.dropIndicator(slot.target))
+                        .clearAndSetSemantics { },
                     shape = RoundedCornerShape(cornerRadius),
                     color = if (slot.target == currentTarget) {
                         MaterialTheme.colorScheme.primaryContainer
@@ -986,21 +986,18 @@ private fun LinkPeekActionEditorItem(
     onDragCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val semanticsModifier = if (dragged) {
-        Modifier.clearAndSetSemantics { }
-    } else {
-        Modifier.semantics {
-            contentDescription = label
-            this.customActions = customActions
-        }
-    }
     Surface(
         modifier = modifier
             .heightIn(min = 48.dp)
             .then(if (compact) Modifier.width(48.dp) else Modifier)
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
-            .then(semanticsModifier)
             .testTag(LinkPeekActionEditorTestTags.action(action))
+            // While dragged, the row is the drag overlay's to announce.
+            .clearSemanticsWhen(dragged)
+            .semantics {
+                contentDescription = label
+                this.customActions = customActions
+            }
             .linkPeekActionEditorDragSource(
                 action = action,
                 sourceBounds = sourceBounds,
