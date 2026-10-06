@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.data
 import android.content.Context
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionDecisionPersistence
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
+import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarRepository
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionSiteKey
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
@@ -18,7 +19,8 @@ class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
         return runCatching {
             val values = JSONArray(raw)
             buildMap {
-                for (index in 0 until values.length().coerceAtMost(MAX_SITES)) {
+                // Sites are written oldest first; the newest MAX_SITES are the ones kept.
+                for (index in (values.length() - MAX_SITES).coerceAtLeast(0) until values.length()) {
                     val item = values.getJSONObject(index)
                     val profileId = item.optString("profileId").trim()
                     val origin = PermissionOrigin.normalize(item.optString("origin"))
@@ -53,8 +55,8 @@ class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
                     PermissionOrigin.normalize(site.origin) == site.origin &&
                     permissions.any { it.value != SitePermissionDecision.Ask }
             }
-            .sortedWith(compareBy({ it.key.profileId }, { it.key.origin }))
-            .take(MAX_SITES)
+            .toList()
+            .takeLast(MAX_SITES)
             .forEach { (site, permissions) ->
                 val encodedPermissions = JSONObject()
                 permissions.forEach { (permission, decision) ->
@@ -77,6 +79,6 @@ class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
     internal companion object {
         const val PREFERENCES_NAME = "permission_radar_v1"
         const val KEY_DECISIONS = "decisions"
-        const val MAX_SITES = 512
+        const val MAX_SITES = PermissionRadarRepository.MAX_SITES
     }
 }

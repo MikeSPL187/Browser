@@ -75,6 +75,62 @@ class PermissionRadarRepositoryTest {
             repository.decision(site, SitePermission.Location, false),
         )
     }
+
+    @Test
+    fun newestDecisionSurvivesRestartWhenTheStoreIsFull() {
+        val persistence = RecordingPersistence()
+        val repository = PermissionRadarRepository(persistence)
+        val sites = (0 until PermissionRadarRepository.MAX_SITES).map { index ->
+            PermissionSiteKey("personal", "https://s%03d.example".format(index))
+        }
+        sites.forEach { full ->
+            repository.setDecision(full, SitePermission.Camera, SitePermissionDecision.Block, false)
+        }
+        val newest = PermissionSiteKey("personal", "https://zzz.example")
+
+        repository.setDecision(newest, SitePermission.Camera, SitePermissionDecision.Block, false)
+        val restored = PermissionRadarRepository(persistence)
+
+        assertEquals(PermissionRadarRepository.MAX_SITES, persistence.saved.size)
+        assertEquals(
+            SitePermissionDecision.Block,
+            restored.decision(newest, SitePermission.Camera, false),
+        )
+        assertEquals(
+            SitePermissionDecision.Ask,
+            restored.decision(sites.first(), SitePermission.Camera, false),
+        )
+        assertEquals(
+            SitePermissionDecision.Ask,
+            repository.decision(sites.first(), SitePermission.Camera, false),
+        )
+    }
+
+    @Test
+    fun changingASiteMovesItAwayFromEviction() {
+        val persistence = RecordingPersistence()
+        val repository = PermissionRadarRepository(persistence)
+        val sites = (0 until PermissionRadarRepository.MAX_SITES).map { index ->
+            PermissionSiteKey("personal", "https://s%03d.example".format(index))
+        }
+        sites.forEach { full ->
+            repository.setDecision(full, SitePermission.Camera, SitePermissionDecision.Block, false)
+        }
+
+        repository.setDecision(sites.first(), SitePermission.Location, SitePermissionDecision.Allow, false)
+        repository.setDecision(site, SitePermission.Camera, SitePermissionDecision.Allow, false)
+
+        assertEquals(
+            SitePermissionDecision.Block,
+            repository.decision(sites.first(), SitePermission.Camera, false),
+        )
+        assertEquals(
+            SitePermissionDecision.Ask,
+            repository.decision(sites[1], SitePermission.Camera, false),
+        )
+        assertEquals(sites.first(), persistence.saved.keys.elementAt(persistence.saved.size - 2))
+        assertEquals(site, persistence.saved.keys.last())
+    }
 }
 
 private class RecordingPersistence : PermissionDecisionPersistence {

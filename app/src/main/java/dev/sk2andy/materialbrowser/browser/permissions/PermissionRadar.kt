@@ -231,10 +231,13 @@ class PermissionRadarRepository(
     ) {
         sessionAllows.remove(PermissionSessionKey(site, permission, isPrivate))
         val target = decisions(isPrivate)
-        val siteDecisions = target.getOrPut(site) { linkedMapOf() }
+        // Least recently changed first: re-inserting moves the site to the end, and the oldest
+        // sites beyond MAX_SITES are evicted the same way the store trims what it writes.
+        val siteDecisions = target.remove(site) ?: linkedMapOf()
         if (decision == SitePermissionDecision.Ask) siteDecisions.remove(permission)
         else siteDecisions[permission] = decision
-        if (siteDecisions.isEmpty()) target.remove(site)
+        if (siteDecisions.isNotEmpty()) target[site] = siteDecisions
+        while (target.size > MAX_SITES) target.remove(target.keys.first())
         if (!isPrivate) persist()
     }
 
@@ -291,6 +294,11 @@ class PermissionRadarRepository(
         persistence.save(
             persistentDecisions.mapValues { (_, decisions) -> decisions.toMap() },
         )
+    }
+
+    companion object {
+        /** Sites kept per store; the least recently changed site is evicted first. */
+        const val MAX_SITES = 512
     }
 }
 
