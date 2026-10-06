@@ -299,11 +299,11 @@ jobs:
             -no-boot-anim -no-snapshot -gpu swiftshader_indirect \
             > "$RUNNER_TEMP/emulator.log" 2>&1 &
 
-      - name: Build debug and minified preview APKs
+      - name: Build debug, minified preview and unminified benchmark APKs
         run: >-
           ./gradlew --no-daemon --stacktrace --max-workers=2
           "-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8"
-          assembleFullDebug assembleFullLocalRelease
+          assembleFullDebug assembleFullLocalRelease assembleFullBenchmark
 
       - name: Open sign-in pages
         run: |
@@ -315,7 +315,9 @@ jobs:
           adb shell input keyevent 82
           adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
           adb install -r app/build/outputs/apk/full/localRelease/app-full-localRelease.apk
-          for pkg in io.github.mikespl187.vola.debug io.github.mikespl187.vola.preview; do
+          adb install -r app/build/outputs/apk/full/benchmark/app-full-benchmark.apk
+          for pkg in io.github.mikespl187.vola.debug io.github.mikespl187.vola.preview \
+            io.github.mikespl187.vola.benchmark; do
             adb shell pm grant "$pkg" android.permission.POST_NOTIFICATIONS || true
             for url in https://accounts.google.com/ \
               "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2F" \
@@ -327,6 +329,7 @@ jobs:
               pid="$(adb shell pidof "$pkg" | tr -d '\r')"
               top="$(adb shell dumpsys activity activities | grep -m1 'topResumedActivity' | tr -d '\r')"
               crash="$(adb logcat -d -b crash | tail -n 60)"
+              adb logcat -d -b crash > "$RUNNER_TEMP/crash-$(echo "$pkg-$url" | tr -c 'A-Za-z0-9' '_').txt"
               fatal="$(adb logcat -d | grep -E 'FATAL|AndroidRuntime|F libc|F DEBUG|Abort message|GeckoCrash|MOZ_CRASH|crash' | tail -n 40)"
               {
                 echo "### $pkg — $url"
@@ -341,6 +344,52 @@ jobs:
                 "$RUNNER_TEMP/$(echo "$pkg-$url" | tr -c 'A-Za-z0-9' '_').png" > /dev/null || true
             done
           done
+
+      - name: Symbolicate native crashes
+        if: ${{ always() }}
+        shell: python3 {0}
+        run: |
+          import glob, json, os, re, urllib.request
+
+          frame = re.compile(r"#(\d+) pc ([0-9a-f]+)\s+\S*?(lib\w+\.so).*?\(BuildId: ([0-9a-f]+)\)")
+          out = open(os.environ["GITHUB_STEP_SUMMARY"], "a")
+          for path in sorted(glob.glob(os.path.join(os.environ["RUNNER_TEMP"], "crash-*.txt"))):
+              frames, seen = [], set()
+              for line in open(path, errors="replace"):
+                  match = frame.search(line)
+                  if match and match.group(1) not in seen:
+                      seen.add(match.group(1))
+                      frames.append(match.groups())
+              if not frames:
+                  continue
+              def debug_id(build_id):
+                  # Breakpad's id: the GUID-ordered first 16 bytes of the ELF build id, then "0".
+                  raw = bytes.fromhex(build_id.ljust(32, "0")[:32])
+                  return (raw[3::-1] + raw[5:3:-1] + raw[7:5:-1] + raw[8:]).hex().upper() + "0"
+
+              modules = {}
+              stack = []
+              for _, pc, lib, build_id in frames:
+                  index = modules.setdefault((lib, debug_id(build_id)), len(modules))
+                  stack.append([index, int(pc, 16)])
+              body = {"jobs": [{"memoryMap": [list(key) for key in sorted(modules, key=modules.get)], "stacks": [stack]}]}
+              out.write(f"### Symbolicated: {os.path.basename(path)}\n```\n")
+              try:
+                  request = urllib.request.Request(
+                      "https://symbolication.services.mozilla.com/symbolicate/v5",
+                      data=json.dumps(body).encode(),
+                      headers={"Content-Type": "application/json"},
+                  )
+                  result = json.load(urllib.request.urlopen(request, timeout=120))["results"][0]
+                  out.write(f"found modules: {result.get('found_modules')}\n")
+                  for item in result["stacks"][0]:
+                      out.write(
+                          f"#{item.get('frame')} {item.get('module', '?')} {item.get('function', '??')}"
+                          f"+{item.get('function_offset', '')} {item.get('file', '')}:{item.get('line', '')}\n"
+                      )
+              except Exception as error:  # report, do not fail the job
+                  out.write(f"symbolication failed: {error}\n")
+              out.write("```\n")
 
       - name: Upload screenshots
         if: ${{ always() }}
