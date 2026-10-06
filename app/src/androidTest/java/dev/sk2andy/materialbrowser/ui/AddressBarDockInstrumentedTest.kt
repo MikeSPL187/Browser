@@ -730,7 +730,7 @@ class AddressBarDockInstrumentedTest {
             composeRule.onAllNodesWithTag(AddressBarTestTags.Editor)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
         val editorBounds = composeRule.onNodeWithTag(AddressBarTestTags.Editor)
@@ -926,7 +926,8 @@ class AddressBarDockInstrumentedTest {
     }
 
     private fun assertImeVisible() {
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        // The keyboard can take several seconds to show on a loaded emulator.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }

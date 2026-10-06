@@ -6,7 +6,8 @@
 #
 # First full runs: 2026-10-06, PR #121 (1034 tests). "flaky" marks a test that both passed and
 # failed across those runs; the summary lists it as fixed when it passes, which is not a reason
-# to remove it until it passes on several nights in a row.
+# to remove it until it passes on several nights in a row. Tests outside this list get one rerun
+# instead: a new failure that passes on it is reported as flaky and does not fail the run.
 
 # Tab stacks: the v4 overview (Q7a) draws no stacks; tab groups return in S12.
 dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#distantHeroStackMemberFoldsFromVisibleEdgeIntoTrigger

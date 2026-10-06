@@ -20,6 +20,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -790,6 +791,16 @@ class TabOverviewReorderInstrumentedTest {
         }
         setOverviewContent(browserController)
         composeRule.waitForIdle()
+        // The cards scale in when the overview opens; measure them once the entry has settled.
+        val minimumTargetPx = 48f * composeRule.activity.resources.displayMetrics.density
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            composeRule
+                .onAllNodesWithTag(SnoozeTestTags.overviewClose(tabIds.first()), useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .firstOrNull()
+                ?.boundsInRoot
+                ?.let { it.width >= minimumTargetPx && it.height >= minimumTargetPx } == true
+        }
 
         val rootBounds = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         val cardBounds = tabIds.map { tabId ->

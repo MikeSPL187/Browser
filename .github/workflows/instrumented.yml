@@ -38,6 +38,8 @@ env:
   # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
   # eight shards keep each one well under the 16 GB a hosted runner has.
   SHARDS: 8
+  # New failures a shard reruns once; more than this is a breakage, not flakiness.
+  RERUN_LIMIT: 15
 
 jobs:
   android-test:
@@ -179,11 +181,31 @@ jobs:
           # Failing tests are judged by the Report job against the baseline; this step fails only
           # when the shard produced no results at all.
           ./gradlew --no-daemon --stacktrace connectedFullDebugAndroidTest "${args[@]}" || true
+          first="$RUNNER_TEMP/first-results"
+          rm -rf "$first"
+          cp -r app/build/outputs/androidTest-results "$first" 2>/dev/null || true
+          # A new failure gets one rerun on its own; the Report job lists it as flaky when the
+          # rerun passes. Known failures are not rerun, and a long list means a real breakage.
+          python3 scripts/ci/instrumented_summary.py "$first" \
+            --baseline scripts/ci/instrumented-baseline.txt \
+            --new-failures "$RUNNER_TEMP/rerun.txt" > /dev/null || true
+          rerun_count=$(grep -c . "$RUNNER_TEMP/rerun.txt" 2>/dev/null || true)
+          if (( ${rerun_count:-0} > 0 && ${rerun_count:-0} <= RERUN_LIMIT )); then
+            echo "Rerunning $rerun_count new failure(s) once:"
+            cat "$RUNNER_TEMP/rerun.txt"
+            rm -rf app/build/outputs/androidTest-results
+            ./gradlew --no-daemon connectedFullDebugAndroidTest \
+              -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
+              -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
+              -Pandroid.testInstrumentationRunnerArguments.class="$(paste -sd, "$RUNNER_TEMP/rerun.txt")" \
+              || true
+            cp -r app/build/outputs/androidTest-results "$RUNNER_TEMP/rerun-results" 2>/dev/null || true
+          fi
           kill "$progress" "$monitor" 2>/dev/null || true
           pkill -f "logcat -v brief" || true
           pkill -x -f "sleep 300" || true
           echo "Shard $SHARD took $(( ($(date +%s) - started) / 60 )) min."
-          if [[ -z "$(find app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null)" ]]; then
+          if [[ -z "$(find "$first" -name '*.xml' 2>/dev/null)" ]]; then
             echo "::error::Shard $SHARD produced no test results."
             exit 1
           fi
@@ -193,7 +215,10 @@ jobs:
         run: |
           out="$RUNNER_TEMP/shard-${{ matrix.shard }}"
           mkdir -p "$out"
-          cp -r app/build/outputs/androidTest-results "$out/results" 2>/dev/null || true
+          cp -r "$RUNNER_TEMP/first-results" "$out/results" 2>/dev/null || \
+            cp -r app/build/outputs/androidTest-results "$out/results" 2>/dev/null || true
+          # instrumented_summary.py reads a shard's rerun from its "retry" directory.
+          cp -r "$RUNNER_TEMP/rerun-results" "$out/retry" 2>/dev/null || true
           cp -r app/build/reports/androidTests "$out/report" 2>/dev/null || true
           pkill -f "adb logcat" || true
           gzip -c "$RUNNER_TEMP/logcat.txt" > "$out/logcat.txt.gz" 2>/dev/null || true

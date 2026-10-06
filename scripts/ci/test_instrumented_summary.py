@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from instrumented_summary import collect, read_baseline, render
+from instrumented_summary import collect, main, read_baseline, render
 
 SHARD_0 = """\
 <?xml version='1.0' encoding='UTF-8' ?>
@@ -65,7 +65,7 @@ class InstrumentedSummaryTest(unittest.TestCase):
         text = "\n".join(lines)
 
         self.assertEqual(1, status)
-        self.assertIn("| 6 | 2 | 2 | 0 | 2 | 0 min 13 s |", text)
+        self.assertIn("| 6 | 2 | 0 | 2 | 0 | 2 | 0 min 13 s |", text)
         self.assertIn("<code>TabsTest#closesTab</code> — Expected &lt;1&gt; tabs", text)
         self.assertIn("<code>GeckoTest#loadsPage</code> — java.lang.IllegalStateException", text)
         self.assertIn("TabsTest.kt:42", text)
@@ -102,6 +102,44 @@ class InstrumentedSummaryTest(unittest.TestCase):
 
         self.assertEqual(1, status)
         self.assertIn("**shard-2: no test results**", "\n".join(lines))
+
+    def test_a_failure_that_passes_on_the_rerun_is_flaky(self):
+        retry = self.root / "shard-0" / "retry" / "connected"
+        retry.mkdir(parents=True)
+        (retry / "TEST-emulator.xml").write_text(
+            "<testsuite><testcase name=\"closesTab\" "
+            "classname=\"dev.sk2andy.materialbrowser.ui.TabsTest\" time=\"3.0\" /></testsuite>",
+            encoding="utf-8",
+        )
+        retry_1 = self.root / "shard-1" / "retry"
+        retry_1.mkdir()
+        (retry_1 / "TEST-emulator.xml").write_text(
+            "<testsuite><testcase name=\"loadsPage\" "
+            "classname=\"dev.sk2andy.materialbrowser.browser.gecko.GeckoTest\" time=\"5.0\">"
+            "<failure message=\"again\">again</failure></testcase></testsuite>",
+            encoding="utf-8",
+        )
+        lines, status = render(collect(self.shards), set())
+        text = "\n".join(lines)
+
+        self.assertEqual(1, status)
+        self.assertIn("| 6 | 2 | 1 | 1 | 0 | 2 | 0 min 13 s |", text)
+        self.assertIn("Flaky — failed, then passed on the rerun (1)", text)
+        self.assertIn("- `TabsTest#closesTab` — Expected &lt;1&gt; tabs", text)
+        # The test that failed twice keeps its first failure's details.
+        self.assertIn("<code>GeckoTest#loadsPage</code> — java.lang.IllegalStateException", text)
+
+    def test_new_failures_lists_only_unlisted_failing_tests(self):
+        baseline_file = self.root / "baseline.txt"
+        baseline_file.write_text("dev.sk2andy.materialbrowser.ui.TabsTest#closesTab\n", encoding="utf-8")
+        output = self.root / "retry.txt"
+
+        main(self.shards + ["--baseline", str(baseline_file), "--new-failures", str(output)])
+
+        self.assertEqual(
+            "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest#loadsPage\n",
+            output.read_text(encoding="utf-8"),
+        )
 
     def test_no_results_at_all_fails(self):
         empty = self.root / "nothing"

@@ -2,11 +2,16 @@
 """Summarizes androidTest JUnit XML from the instrumented.yml shards for the run page.
 
 Usage: instrumented_summary.py SHARD_DIR [SHARD_DIR ...] [--baseline FILE] [--markdown FILE]
+       [--failures FILE] [--new-failures FILE]
 
 Every SHARD_DIR is searched for JUnit XML. A shard without any XML failed before its tests ran,
 which fails the run. A failing test that is not listed in the baseline fails the run too; listed
 tests are reported as known failures, and listed tests that passed are reported as fixed so their
 entries can be removed (docs/vola/ci-instrumented-tests.md).
+
+A shard reruns its new failures once (--new-failures lists them) and keeps those results in its
+"retry" directory. A new failure that passed on the rerun is reported as flaky and does not fail
+the run; one that failed again stays a new failure.
 
 Baseline lines are "package.Class#method" or "package.Class" (every method of the class);
 text after " -- " is a note, lines starting with "#" are comments.
@@ -36,7 +41,7 @@ class TestResult:
     class_name: str
     method: str
     seconds: float
-    outcome: str  # "passed", "failed" or "skipped"
+    outcome: str  # "passed", "failed", "skipped" or "flaky" (failed, then passed on the rerun)
     message: str = ""
     details: str = ""
     log: str = ""
@@ -95,19 +100,45 @@ def is_assumption_failure(failure) -> bool:
     )
 
 
+RETRY_DIR = "retry"
+
+
+def first_run_files(shard: Path, pattern: str) -> list:
+    return sorted(
+        file
+        for file in shard.rglob(pattern)
+        if RETRY_DIR not in file.relative_to(shard).parts[:-1]
+    )
+
+
+def read_all(files: list) -> list:
+    results = []
+    for file in files:
+        try:
+            results.extend(read_results(file))
+        except ElementTree.ParseError:
+            continue
+    return results
+
+
 def collect(shard_dirs: list) -> Summary:
     results, empty_shards, shard_seconds = [], [], {}
-    for shard in shard_dirs:
-        files = sorted(Path(shard).rglob("*.xml"))
-        shard_results = []
-        for file in files:
-            try:
-                shard_results.extend(read_results(file))
-            except ElementTree.ParseError:
-                continue
+    for shard in map(Path, shard_dirs):
+        shard_results = read_all(first_run_files(shard, "*.xml"))
         if not shard_results:
             empty_shards.append(str(shard))
-        shard_results = [attach_log(result, Path(shard)) for result in shard_results]
+        passed_on_retry = {
+            result.test_id
+            for result in read_all(sorted((shard / RETRY_DIR).rglob("*.xml")))
+            if result.outcome == "passed"
+        }
+        shard_results = [
+            dataclasses.replace(result, outcome="flaky")
+            if result.outcome == "failed" and result.test_id in passed_on_retry
+            else result
+            for result in shard_results
+        ]
+        shard_results = [attach_log(result, shard) for result in shard_results]
         shard_seconds[str(shard)] = sum(result.seconds for result in shard_results)
         results.extend(shard_results)
     return Summary(results=results, empty_shards=empty_shards, shard_seconds=shard_seconds)
@@ -118,7 +149,7 @@ def attach_log(result: TestResult, shard: Path) -> TestResult:
     if result.outcome != "failed":
         return result
     name = f"{result.class_name}-{result.method}"
-    for file in shard.rglob("logcat-*.txt"):
+    for file in first_run_files(shard, "logcat-*.txt"):
         if file.name.endswith(f"{name}.txt"):
             lines = file.read_text(encoding="utf-8", errors="replace").splitlines()
             # The runner's own report repeats the stack shown above.
@@ -165,16 +196,20 @@ def render(summary: Summary, baseline: set) -> tuple:
         for result in results
         if result.outcome == "passed" and result.test_id in baseline
     )
+    flaky = [result for result in results if result.outcome == "flaky"]
     passed = sum(1 for result in results if result.outcome == "passed")
     skipped = sum(1 for result in results if result.outcome == "skipped")
     total_seconds = sum(result.seconds for result in results)
 
     lines = ["### Instrumented tests", ""]
-    lines.append("| Tests | Passed | Failed (new) | Failed (known) | Skipped | Test time |")
-    lines.append("|---|---|---|---|---|---|")
     lines.append(
-        f"| {len(results)} | {passed} | {len(new_failures)} | {len(known_failures)} | "
-        f"{skipped} | {format_minutes(total_seconds)} |"
+        "| Tests | Passed | Flaky (passed on rerun) | Failed (new) | Failed (known) | Skipped "
+        "| Test time |"
+    )
+    lines.append("|---|---|---|---|---|---|---|")
+    lines.append(
+        f"| {len(results)} | {passed} | {len(flaky)} | {len(new_failures)} | "
+        f"{len(known_failures)} | {skipped} | {format_minutes(total_seconds)} |"
     )
     lines.append("")
     if len(summary.shard_seconds) > 1:
@@ -189,6 +224,12 @@ def render(summary: Summary, baseline: set) -> tuple:
     if new_failures:
         lines.extend([f"#### New failures ({len(new_failures)})", ""])
         lines.extend(render_failures(new_failures))
+    if flaky:
+        lines.extend([f"<details><summary>Flaky — failed, then passed on the rerun ({len(flaky)})</summary>", ""])
+        for result in sorted(flaky, key=lambda item: item.test_id):
+            message = escape_html(result.message[:160])
+            lines.append(f"- `{short_name(result.class_name)}#{result.method}` — {message}")
+        lines.extend(["", "</details>", ""])
     if known_failures:
         lines.extend([f"<details><summary>Known failures ({len(known_failures)})</summary>", ""])
         for result in sorted(known_failures, key=lambda item: item.test_id):
@@ -238,6 +279,10 @@ def main(argv=None) -> int:
     parser.add_argument("--baseline", help="known failures, one test per line")
     parser.add_argument("--markdown", help="append the summary to this file (e.g. $GITHUB_STEP_SUMMARY)")
     parser.add_argument("--failures", help="write every failing test id to this file")
+    parser.add_argument(
+        "--new-failures",
+        help="write the failing test ids that the baseline does not list to this file",
+    )
     args = parser.parse_args(argv)
 
     summary = collect(args.shards)
@@ -251,6 +296,17 @@ def main(argv=None) -> int:
     if args.failures:
         failing = sorted({result.test_id for result in summary.results if result.outcome == "failed"})
         Path(args.failures).write_text("".join(f"{test_id}\n" for test_id in failing), encoding="utf-8")
+    if args.new_failures:
+        failing = sorted(
+            {
+                result.test_id
+                for result in summary.results
+                if result.outcome == "failed" and not is_known(result, baseline)
+            }
+        )
+        Path(args.new_failures).write_text(
+            "".join(f"{test_id}\n" for test_id in failing), encoding="utf-8"
+        )
     return status
 
 

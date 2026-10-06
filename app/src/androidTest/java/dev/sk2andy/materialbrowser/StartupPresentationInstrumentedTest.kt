@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser
 import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -16,6 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.awaitAddressEditorFocused
 import dev.sk2andy.materialbrowser.ui.closeAddressInputButton
 import org.junit.After
 import org.junit.Rule
@@ -43,9 +43,8 @@ class StartupPresentationInstrumentedTest {
 
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
         composeRule.onNode(closeAddressInputButton(context)).performClick()
@@ -67,14 +66,13 @@ class StartupPresentationInstrumentedTest {
             composeRule.onAllNodesWithTag(AddressBarTestTags.Editor).fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
     }
 
     private fun assertImeVisible() {
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }
