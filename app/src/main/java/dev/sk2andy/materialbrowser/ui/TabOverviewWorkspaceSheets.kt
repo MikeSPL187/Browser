@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -38,6 +40,17 @@ internal class WorkspaceSheetsState {
         creating = true
     }
 
+    companion object {
+        /**
+         * Only «New workspace» outlives recreation: the sheets of an existing workspace close, so
+         * a workspace that is locked again after process death never shows its settings.
+         */
+        val Saver: Saver<WorkspaceSheetsState, Boolean> = Saver(
+            save = { state -> state.creating },
+            restore = { creating -> WorkspaceSheetsState().apply { this.creating = creating } },
+        )
+    }
+
     /** A workspace that just locked takes its open sheets with it. */
     fun forgetLocked(lockedProfileIds: Set<String>) {
         if (actionsProfileId in lockedProfileIds) actionsProfileId = null
@@ -45,6 +58,10 @@ internal class WorkspaceSheetsState {
         if (protectionTargetId in lockedProfileIds) protectionTargetId = null
     }
 }
+
+@Composable
+internal fun rememberWorkspaceSheetsState(): WorkspaceSheetsState =
+    rememberSaveable(saver = WorkspaceSheetsState.Saver) { WorkspaceSheetsState() }
 
 /** The workspace sheets of the tab overview: new workspace, its settings, protection, storage. */
 @Composable

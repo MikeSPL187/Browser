@@ -245,7 +245,7 @@ internal fun TabOverview(
     var pagerSessionEndJob by remember { mutableStateOf<Job?>(null) }
     var tabActionsTabId by remember { mutableStateOf<String?>(null) }
     var tabStackEditorTabId by remember { mutableStateOf<String?>(null) }
-    val workspaceSheets = remember { WorkspaceSheetsState() }
+    val workspaceSheets = rememberWorkspaceSheetsState()
     val tabSearch = rememberTabOverviewSearchState(visible)
     var movingTabId by remember { mutableStateOf<String?>(null) }
     var reorderAnimation by remember { mutableStateOf<TabReorderAnimation?>(null) }
