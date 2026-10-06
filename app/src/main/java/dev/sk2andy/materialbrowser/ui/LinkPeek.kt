@@ -158,6 +158,8 @@ internal fun <T : View> LinkPeekOverlay(
         mutableStateOf<LinkPeekPreviewStatus>(LinkPeekPreviewStatus.Loading)
     }
     val previewBlocked = previewStatus is LinkPeekPreviewStatus.Blocked
+    // Retry builds a fresh preview; a released one must not report into it.
+    var previewAttempt by remember(url) { mutableIntStateOf(0) }
     var cardBounds by remember(url) { mutableStateOf<Rect?>(null) }
     var commitStartBounds by remember(url) { mutableStateOf<Rect?>(null) }
     val commitProgress = remember(url) { Animatable(0f) }
@@ -454,14 +456,22 @@ internal fun <T : View> LinkPeekOverlay(
                             .fillMaxWidth()
                             .weight(1f),
                     ) {
-                        key(url) {
+                        key(url, previewAttempt) {
                             AndroidView(
                                 factory = {
+                                    val attempt = previewAttempt
+                                    val current = { attempt == previewAttempt }
                                     createPreviewView(
                                         LinkPeekPreviewCallbacks(
-                                            onProgressChanged = { loaded -> previewProgress = loaded },
-                                            onCommittedUrlChanged = { committed -> committedUrl = committed },
-                                            onStatusChanged = { status -> previewStatus = status },
+                                            onProgressChanged = { loaded ->
+                                                if (current()) previewProgress = loaded
+                                            },
+                                            onCommittedUrlChanged = { committed ->
+                                                if (current()) committedUrl = committed
+                                            },
+                                            onStatusChanged = { status ->
+                                                if (current()) previewStatus = status
+                                            },
                                         ),
                                     ).also { previewView = it }
                                 },
@@ -477,6 +487,12 @@ internal fun <T : View> LinkPeekOverlay(
                         if (previewStatus.coversPage) {
                             LinkPeekPreviewMessage(
                                 status = previewStatus,
+                                host = host,
+                                onRetry = {
+                                    previewStatus = LinkPeekPreviewStatus.Loading
+                                    previewProgress = 0
+                                    previewAttempt++
+                                },
                                 onClose = onDismiss,
                                 modifier = Modifier.matchParentSize(),
                             )

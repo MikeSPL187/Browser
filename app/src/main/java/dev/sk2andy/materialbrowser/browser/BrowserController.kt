@@ -3873,7 +3873,7 @@ class BrowserController(
                     )
                     onCommittedUrlChanged(committedUrl)
                 }
-                binding?.let { it.moveTo(LinkPeekPreviewRules.statusAfter(it.status, event.type)) }
+                binding?.let { it.moveTo(LinkPeekPreviewRules.statusAfter(it.status, event, it.committedUrl)) }
                 when (event.type) {
                     BrowserEngineEventType.NavigationStarted -> {
                         binding?.isLoading = true

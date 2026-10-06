@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
 import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 
@@ -58,4 +59,21 @@ private fun GlanceBlockedPreview() {
             BlockedSite(url = "https://paypa1.com/login", host = "paypa1.com", imitatedHost = "paypal.com"),
         ),
     )
+}
+
+/** The site isn't there: what went wrong, Retry and Close in place of the page. */
+@VolaPreviews
+@Composable
+private fun GlanceFailedPreview() {
+    GlancePreview(
+        isPrivate = false,
+        status = LinkPeekPreviewStatus.Failed(BrowserEngineFailureKind.UnknownHost),
+    )
+}
+
+/** The preview's renderer stopped: Retry builds a fresh one. */
+@VolaPreviews
+@Composable
+private fun GlanceCrashedPreview() {
+    GlancePreview(isPrivate = false, status = LinkPeekPreviewStatus.Crashed)
 }

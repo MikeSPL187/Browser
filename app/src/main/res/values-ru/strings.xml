@@ -513,6 +513,12 @@
     <string name="glance_not_in_history">Не попадёт в историю, пока не откроете</string>
     <string name="glance_private_note">Приватный просмотр: из него ничего не сохранится</string>
     <string name="glance_pull_to_open">Потяните вверх, чтобы открыть во вкладке</string>
+    <string name="glance_failed_title">Не удалось загрузить просмотр</string>
+    <string name="glance_failed_message">%1$s не открылся. Проверьте подключение и попробуйте ещё раз.</string>
+    <string name="glance_crashed_title">Просмотр остановился</string>
+    <string name="glance_crashed_message">Страница перестала работать. Повторите, чтобы загрузить её заново.</string>
+    <string name="glance_https_only_title">Нет защищённого соединения</string>
+    <string name="glance_https_only_message">%1$s не открывается по HTTPS. Откройте его во вкладке, чтобы решить, что делать.</string>
     <string name="action_open_in_new_tab">Открыть в новой вкладке</string>
     <string name="action_open_in_new_tab_and_switch">Открыть в новой вкладке и перейти</string>
     <string name="action_open_link_in_private_tab">Открыть в приватной вкладке</string>
