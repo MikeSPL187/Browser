@@ -51,7 +51,8 @@ class InstrumentedSummaryTest(unittest.TestCase):
         log.write_text(
             "10-06 05:20:00.000  1234  1234 I TestRunner: started: closesTab\n"
             "10-06 05:20:01.000  1234  1240 E AndroidRuntime: FATAL EXCEPTION: main\n"
-            "10-06 05:20:01.001  1234  1240 D Vola: noise\n",
+            "10-06 05:20:01.001  1234  1240 D Vola: noise\n"
+            "10-06 05:20:02.000  1234  1240 E TestRunner: failed: closesTab\n",
             encoding="utf-8",
         )
         self.root = root
@@ -71,6 +72,7 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertIn("E AndroidRuntime: FATAL EXCEPTION: main", text)
         self.assertNotIn("noise", text)
         self.assertNotIn("TestRunner: started", text)
+        self.assertNotIn("TestRunner: failed", text)
 
     def test_baseline_entries_by_method_or_class_are_known_failures(self):
         baseline_file = self.root / "baseline.txt"

@@ -35,7 +35,9 @@ defaults:
 
 env:
   ANDROID_SERIAL: emulator-5554
-  SHARDS: 4
+  # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
+  # eight shards keep each one well under the 16 GB a hosted runner has.
+  SHARDS: 8
 
 jobs:
   android-test:
@@ -49,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
 
     steps:
       - name: Check out source
@@ -95,6 +97,16 @@ jobs:
             --device pixel_6
           sudo chmod 666 /dev/kvm
           echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+
+      # Headroom if memory still runs out: without swap the kernel kills the runner and the
+      # shard loses every result.
+      - name: Add swap
+        run: |
+          sudo fallocate -l 8G /vola-swap
+          sudo chmod 600 /vola-swap
+          sudo mkswap /vola-swap > /dev/null
+          sudo swapon /vola-swap
+          free -m
 
       - name: Start emulator
         run: |
@@ -158,7 +170,9 @@ jobs:
           progress=$!
           while sleep 300; do
             echo "[monitor] $(free -m | awk '/Mem/ {print "mem used " $3 " of " $2 " MB"}');" \
-              "$(df -h / | awk 'NR==2 {print "disk free " $4}')"
+              "$(free -m | awk '/Swap/ {print "swap used " $3 " MB"}');" \
+              "$(df -h / | awk 'NR==2 {print "disk free " $4}');" \
+              "top: $(ps -eo rss=,comm= --sort=-rss | head -3 | awk '{printf "%s %d MB, ", $2, $1/1024}')"
           done &
           monitor=$!
           started=$(date +%s)

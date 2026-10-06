@@ -121,7 +121,12 @@ def attach_log(result: TestResult, shard: Path) -> TestResult:
     for file in shard.rglob("logcat-*.txt"):
         if file.name.endswith(f"{name}.txt"):
             lines = file.read_text(encoding="utf-8", errors="replace").splitlines()
-            errors = [line[:240] for line in lines if LOG_ERROR.search(line)]
+            # The runner's own report repeats the stack shown above.
+            errors = [
+                line[:240]
+                for line in lines
+                if LOG_ERROR.search(line) and " TestRunner: " not in line
+            ]
             return dataclasses.replace(result, log="\n".join(errors[-LOG_LINES:]))
     return result
 
