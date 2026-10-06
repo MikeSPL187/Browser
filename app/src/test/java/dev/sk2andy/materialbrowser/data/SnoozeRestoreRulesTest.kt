@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.ProfileProtectionSession
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,6 +46,43 @@ class SnoozeRestoreRulesTest {
         } finally {
             ProfileProtectionSession.forget("work")
         }
+    }
+
+    @Test
+    fun `notification never names a tab of a protected workspace`() {
+        val protectedProfiles = profiles.map { profile ->
+            if (profile.id == "work") {
+                profile.copy(protection = ProfileProtection(ProfileLockTrigger.AppBackgrounded))
+            } else {
+                profile
+            }
+        }
+        val workTab = BrowserTab("work-tab", 1L, profileId = "work", title = "Payroll")
+
+        val visibleTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            tabs = listOf(workTab),
+            restoredTabIds = setOf(workTab.id),
+            profiles = protectedProfiles,
+            profilesEnabled = true,
+        )
+
+        assertTrue(visibleTabs.isEmpty())
+    }
+
+    @Test
+    fun `notification with workspaces off names only restored first workspace tabs`() {
+        val candyTab = BrowserTab("candy-tab", 1L, profileId = "candy")
+        val workTab = BrowserTab("work-tab", 1L, profileId = "work")
+        val openTab = BrowserTab("open-tab", 1L, profileId = "candy")
+
+        val visibleTabs = SnoozeRestoreCoordinator.restoredNotificationTabs(
+            tabs = listOf(openTab, candyTab, workTab),
+            restoredTabIds = setOf(candyTab.id, workTab.id),
+            profiles = profiles,
+            profilesEnabled = false,
+        )
+
+        assertEquals(listOf(candyTab), visibleTabs)
     }
 
     @Test
@@ -279,6 +317,38 @@ class SnoozeRestoreRulesTest {
         assertEquals(null, result)
     }
 
+    @Test
+    fun `restore and undo drop the stale load failure`() {
+        val failed = snoozedTab("failed", wakeAt = 90L).let { snoozed ->
+            snoozed.copy(tab = snoozed.tab.withStaleFailure())
+        }
+        val token = SnoozeUndoToken(
+            tabId = failed.tab.id,
+            appliedSnoozedTab = failed,
+            originalIndex = 0,
+            originalSelectedTabId = "active",
+            selectedTabIdAfterSnooze = "active",
+            replacementTabId = null,
+            touchedTabBefore = null,
+            touchedTabAfter = null,
+        )
+
+        val restored = restore(emptyList(), listOf(failed), now = 100L).tabs.single()
+        val undone = SnoozeUndoRules.undo(
+            tabs = listOf(BrowserTab("active", 1L)),
+            selectedTabId = "active",
+            snoozedTabs = listOf(failed),
+            token = token,
+            maxTabs = 12,
+        )?.restoredTab
+
+        listOf(restored, undone).forEach { tab ->
+            assertEquals(null, tab?.error)
+            assertEquals(null, tab?.httpStatusCode)
+            assertEquals(null, tab?.failureKind)
+        }
+    }
+
     private fun restore(
         tabs: List<BrowserTab>,
         snoozed: List<SnoozedTab>,
@@ -301,5 +371,11 @@ class SnoozeRestoreRulesTest {
         tab = BrowserTab(id, 1L, profileId = profileId, isPinned = pinned),
         wakeAtMillis = wakeAt,
         createdAtMillis = 1L,
+    )
+
+    private fun BrowserTab.withStaleFailure() = copy(
+        error = "Server error",
+        httpStatusCode = 503,
+        failureKind = BrowserEngineFailureKind.Other,
     )
 }
