@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
@@ -45,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +75,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.coroutines.launch
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
@@ -190,11 +193,9 @@ internal fun SnoozeTabDialog(
         initialMillis = customInitialMillis,
         onDismiss = { customEditorVisible = false },
         onConfirm = { wakeAtMillis ->
-            onSnooze(wakeAtMillis).also { accepted ->
-                if (accepted) {
-                    customEditorVisible = false
-                    onDismiss()
-                }
+            if (onSnooze(wakeAtMillis)) {
+                customEditorVisible = false
+                onDismiss()
             }
         },
     )
@@ -265,6 +266,13 @@ internal fun SnoozedTabsScreen(
     modifier: Modifier = Modifier,
 ) {
     var editingTab by remember { mutableStateOf<SnoozedTab?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val feedbackScope = rememberCoroutineScope()
+    val updateFailedMessage = stringResource(R.string.snoozed_tab_update_failed)
+    // The tab may have woken or been changed elsewhere while this screen was open.
+    val showUpdateFailed: () -> Unit = {
+        feedbackScope.launch { snackbarHostState.showSnackbar(updateFailedMessage) }
+    }
     val profilesById = remember(profiles) { profiles.associateBy(BrowserProfile::id) }
     Surface(
         modifier = modifier
@@ -272,71 +280,80 @@ internal fun SnoozedTabsScreen(
             .testTag(SnoozeTestTags.Management),
         color = MaterialTheme.colorScheme.surface,
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
-            contentPadding = PaddingValues(bottom = VolaLibrary.sectionGap),
-        ) {
-            item(key = "header") {
-                Column(Modifier.padding(horizontal = VolaSpacing.x2)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                VolaIcons.ArrowBack,
-                                contentDescription = stringResource(R.string.action_back),
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding(),
+                contentPadding = PaddingValues(bottom = VolaLibrary.sectionGap),
+            ) {
+                item(key = "header") {
+                    Column(Modifier.padding(horizontal = VolaSpacing.x2)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    VolaIcons.ArrowBack,
+                                    contentDescription = stringResource(R.string.action_back),
+                                )
+                            }
+                            Text(
+                                stringResource(R.string.snoozed_tabs_title),
+                                style = MaterialTheme.typography.titleLarge,
                             )
                         }
                         Text(
-                            stringResource(R.string.snoozed_tabs_title),
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                    }
-                    Text(
-                        stringResource(R.string.snoozed_tabs_subtitle),
-                        modifier = Modifier.padding(horizontal = VolaSpacing.x2),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            if (snoozedTabs.isEmpty()) {
-                item(key = "empty") {
-                    VolaStateMessage(
-                        icon = rememberVectorPainter(VolaIcons.Snooze),
-                        title = stringResource(R.string.snoozed_tabs_empty_title),
-                        message = stringResource(R.string.snoozed_tabs_empty_body),
-                        modifier = Modifier
-                            .padding(horizontal = VolaLibrary.sidePadding)
-                            .padding(top = VolaLibrary.sectionGap),
-                    )
-                }
-            } else {
-                itemsIndexed(snoozedTabs, key = { _, snoozed -> snoozed.tab.id }) { index, snoozed ->
-                    LibraryCardSlice(
-                        position = LibraryRules.position(index, snoozedTabs.size),
-                        modifier = if (index == 0) Modifier.padding(top = VolaLibrary.sectionGap) else Modifier,
-                    ) {
-                        SnoozedTabRow(
-                            snoozed = snoozed,
-                            workspace = profilesById[snoozed.tab.profileId],
-                            onReschedule = { editingTab = snoozed },
-                            onOpenNow = {
-                                if (onOpenNow(snoozed.tab.id)) onBack()
-                            },
-                            onDelete = { onDelete(snoozed.tab.id) },
+                            stringResource(R.string.snoozed_tabs_subtitle),
+                            modifier = Modifier.padding(horizontal = VolaSpacing.x2),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
-                item(key = "hint") {
-                    SnoozedTabsHint(
-                        modifier = Modifier
-                            .padding(horizontal = VolaLibrary.sidePadding)
-                            .padding(top = VolaLibrary.sectionGap),
-                    )
+                if (snoozedTabs.isEmpty()) {
+                    item(key = "empty") {
+                        VolaStateMessage(
+                            icon = rememberVectorPainter(VolaIcons.Snooze),
+                            title = stringResource(R.string.snoozed_tabs_empty_title),
+                            message = stringResource(R.string.snoozed_tabs_empty_body),
+                            modifier = Modifier
+                                .padding(horizontal = VolaLibrary.sidePadding)
+                                .padding(top = VolaLibrary.sectionGap),
+                        )
+                    }
+                } else {
+                    itemsIndexed(snoozedTabs, key = { _, snoozed -> snoozed.tab.id }) { index, snoozed ->
+                        LibraryCardSlice(
+                            position = LibraryRules.position(index, snoozedTabs.size),
+                            modifier = if (index == 0) Modifier.padding(top = VolaLibrary.sectionGap) else Modifier,
+                        ) {
+                            SnoozedTabRow(
+                                snoozed = snoozed,
+                                workspace = profilesById[snoozed.tab.profileId],
+                                onReschedule = { editingTab = snoozed },
+                                onOpenNow = {
+                                    if (onOpenNow(snoozed.tab.id)) onBack() else showUpdateFailed()
+                                },
+                                onDelete = { if (!onDelete(snoozed.tab.id)) showUpdateFailed() },
+                            )
+                        }
+                    }
+                    item(key = "hint") {
+                        SnoozedTabsHint(
+                            modifier = Modifier
+                                .padding(horizontal = VolaLibrary.sidePadding)
+                                .padding(top = VolaLibrary.sectionGap),
+                        )
+                    }
                 }
             }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(VolaLibrary.sidePadding),
+            )
         }
     }
 
@@ -347,9 +364,8 @@ internal fun SnoozedTabsScreen(
             ?: System.currentTimeMillis(),
         onDismiss = { editingTab = null },
         onConfirm = { wakeAtMillis ->
-            val accepted = editing != null && onReschedule(editing.tab.id, wakeAtMillis)
-            if (accepted) editingTab = null
-            accepted
+            editingTab = null
+            if (editing == null || !onReschedule(editing.tab.id, wakeAtMillis)) showUpdateFailed()
         },
     )
 }
@@ -503,7 +519,7 @@ private fun SnoozeDateTimeDialogs(
     visible: Boolean,
     initialMillis: Long,
     onDismiss: () -> Unit,
-    onConfirm: (Long) -> Boolean,
+    onConfirm: (Long) -> Unit,
 ) {
     if (!visible) return
     val zoneId = remember { ZoneId.systemDefault() }
@@ -581,8 +597,8 @@ private fun SnoozeDateTimeDialogs(
                                 LocalTime.of(timeState.hour, timeState.minute),
                                 zoneId,
                             )
-                            invalidTime = wakeAtMillis <= System.currentTimeMillis() ||
-                                !onConfirm(wakeAtMillis)
+                            invalidTime = wakeAtMillis <= System.currentTimeMillis()
+                            if (!invalidTime) onConfirm(wakeAtMillis)
                         },
                     ) {
                         Text(stringResource(R.string.action_save))
