@@ -2554,6 +2554,7 @@ class BrowserController(
         val companion = SplitViewRules.companionFor(activeTabs, selectedTabId, companionTabId)
             ?: return false
         markResidentSessionAccess(companion)
+        touchTab(companion, System.currentTimeMillis())
         splitView.open(companion)
         return true
     }
@@ -9952,7 +9953,8 @@ class BrowserController(
                 tabs.firstOrNull { it.id == presentation.tabId }?.isIncognito == true
             }
             ?.let { clearGeckoMediaPresentation() }
-        touchTab(selectedTabId, System.currentTimeMillis())
+        listOfNotNull(selectedTabId, splitView.companionTabId)
+            .forEach { tabId -> touchTab(tabId, System.currentTimeMillis()) }
         browserEngineSessions.forEach(::persistBrowserEngineSessionState)
         // Gecko active state represents visibility, while System WebView maps this call to
         // WebView.onPause(). A paused Activity can remain visible behind Android Sharesheet.
@@ -14636,6 +14638,7 @@ class BrowserController(
             selectedTabId = selectedTabId,
             lifetime = inactiveTabLifetime,
             nowMillis = nowMillis,
+            companionTabId = splitView.companionTabId,
         ) - activeFederatedLoginFlowTabIds()
 
     private fun closeTabsOnBackground(
