@@ -96,7 +96,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
@@ -1050,16 +1049,10 @@ internal fun TabOverview(
                 )
                 .windowInsetsPadding(statusBarInsets)
                 .windowInsetsPadding(navigationBarInsets)
-                .then(
-                    if (
-                        candyTrailTransition.currentState != null ||
+                .clearSemanticsWhen(
+                    candyTrailTransition.currentState != null ||
                         candyTrailTransition.targetState != null ||
-                        tabActionsTabId != null
-                    ) {
-                        Modifier.clearAndSetSemantics { }
-                    } else {
-                        Modifier
-                    },
+                        tabActionsTabId != null,
                 ),
         ) {
             // A site already open in this workspace morphs out of its card, not opened twice.
@@ -1478,13 +1471,7 @@ internal fun TabOverview(
                 onNewTab = onNewTab,
                 modifier = Modifier
                     .graphicsLayer { alpha = dockAlpha }
-                    .then(
-                        if (destinationChromeVisible) {
-                            Modifier
-                        } else {
-                            Modifier.clearAndSetSemantics { }
-                        },
-                    ),
+                    .clearSemanticsWhen(!destinationChromeVisible),
             )
         }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for ci/quality_gates.py: size ratchet, token rules, engine boundary and brand check."""
+"""Tests for ci/quality_gates.py: size ratchet, token rules, engine boundary, brand and semantics checks."""
 
 import sys
 import tempfile
@@ -126,6 +126,52 @@ class BrandTest(unittest.TestCase):
 
     def test_repository_strings_have_no_candy(self):
         self.assertEqual(gates.check_brand(), [])
+
+
+class SemanticsTest(unittest.TestCase):
+    def findings(self, kotlin):
+        return [(line, message.split(" ")[0]) for _, line, message in
+                gates.semantics_findings_in_text(kotlin, "Ui.kt")]
+
+    def test_clearing_switched_by_a_condition_is_a_finding(self):
+        cases = [
+            "val m = Modifier.then(if (on) Modifier else Modifier.clearAndSetSemantics { })",
+            "val m = if (dragged) {\n    Modifier.clearAndSetSemantics { }\n} else {\n    Modifier.semantics { }\n}",
+            "fun Modifier.hide(b: Boolean) = if (b) clearAndSetSemantics { } else this",
+            "fun Modifier.block(b: Boolean) = if (!b) {\n    this\n} else {\n    this\n        .clearAndSetSemantics { }\n}",
+            "val m = Modifier.then(\n    if (a ||\n        b\n    ) {\n        Modifier.clearAndSetSemantics { }\n    } else {\n        Modifier\n    },\n)",
+        ]
+        for kotlin in cases:
+            with self.subTest(kotlin=kotlin):
+                self.assertEqual([kind for _, kind in self.findings(kotlin)], ["clearAndSetSemantics"])
+
+    def test_steady_clearing_and_the_stable_helper_are_not(self):
+        cases = [
+            "val m = Modifier.padding(4.dp).clearAndSetSemantics { contentDescription = label }",
+            "val m = if (empty) Modifier.clearAndSetSemantics { } else Modifier.clearAndSetSemantics { selected = true }",
+            "val m = Modifier.clearSemanticsWhen(hidden)",
+            "val size = if (big) 2 else 1\nval m = Modifier.clearAndSetSemantics { }",
+            "Box(Modifier.size(if (big) 2.dp else 1.dp), modifier = Modifier.clearAndSetSemantics { })",
+            "// semantics-exempt: fixed for the card's life\nval m = Modifier.then(if (row) Modifier.clearAndSetSemantics { } else Modifier)",
+            "import androidx.compose.ui.semantics.clearAndSetSemantics",
+            'val text = "if (x) clearAndSetSemantics { }" // if clearAndSetSemantics { }',
+        ]
+        for kotlin in cases:
+            with self.subTest(kotlin=kotlin):
+                self.assertEqual(self.findings(kotlin), [])
+
+    def test_a_test_tag_after_clearing_in_the_same_chain_is_a_finding(self):
+        hidden = "val m = Modifier\n    .clearAndSetSemantics { }\n    .padding(2.dp)\n    .testTag(\"title\")"
+        self.assertEqual(self.findings(hidden), [(4, "testTag")])
+        through_then = "val m = Modifier.then(Modifier.clearAndSetSemantics { }).testTag(\"x\")"
+        self.assertEqual(self.findings(through_then), [(1, "testTag")])
+        before = "val m = Modifier\n    .testTag(\"title\")\n    .clearAndSetSemantics { }"
+        self.assertEqual(self.findings(before), [])
+        other_statement = "val a = Modifier.clearAndSetSemantics { }\nval b = Modifier.testTag(\"x\")"
+        self.assertEqual(self.findings(other_statement), [])
+
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.semantics_findings(gates.source_files()), [])
 
 
 if __name__ == "__main__":
