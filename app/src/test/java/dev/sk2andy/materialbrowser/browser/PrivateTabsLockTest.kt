@@ -8,11 +8,11 @@ import org.junit.Test
 
 class PrivateTabsLockRulesTest {
     @Test
-    fun `leaving locks only when on, with a private tab and a biometric to come back with`() {
-        assertTrue(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 1, canAuthenticate = true))
-        assertFalse(PrivateTabsLockRules.locksOnLeave(enabled = false, privateTabCount = 1, canAuthenticate = true))
-        assertFalse(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 0, canAuthenticate = true))
-        assertFalse(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 2, canAuthenticate = false))
+    fun `leaving locks whenever on with a private tab to hide`() {
+        assertTrue(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 1))
+        assertTrue(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 2))
+        assertFalse(PrivateTabsLockRules.locksOnLeave(enabled = false, privateTabCount = 1))
+        assertFalse(PrivateTabsLockRules.locksOnLeave(enabled = true, privateTabCount = 0))
     }
 
     @Test
@@ -98,14 +98,25 @@ class PrivateTabsLockTest {
     }
 
     @Test
-    fun `nothing locks when off, without private tabs or without a biometric`() {
+    fun `nothing locks when off or without private tabs`() {
         lock(enabled = false).apply { onAppBackgrounded() }.also { assertFalse(it.isLocked) }
-        canAuthenticate = false
-        lock().apply { onAppBackgrounded() }.also { assertFalse(it.isLocked) }
-        canAuthenticate = true
         tabs.removeAll(BrowserTab::isIncognito)
         lock().apply { onAppBackgrounded() }.also { assertFalse(it.isLocked) }
         assertTrue(suspended.isEmpty())
+    }
+
+    @Test
+    fun `a saved lock still locks after the biometric goes away`() {
+        canAuthenticate = false
+        val lock = lock()
+        lock.onAppBackgrounded()
+        assertTrue(lock.isLocked)
+        assertTrue(lock.hides(tabs[1]))
+        assertEquals(listOf(setOf("private") to true), suspended)
+        // The way out without a fingerprint: closing every private tab.
+        lock.onPrivateTabCountChanged(0)
+        assertFalse(lock.isLocked)
+        assertTrue(prompts.isEmpty())
     }
 
     @Test
