@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.systemwebview
 
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import java.util.UUID
 
 sealed interface WebViewProfileAssignment {
     val storageKey: String
@@ -53,6 +54,22 @@ object WebViewProfileRules {
 
     fun isManagedIsolatedProfileName(profileName: String): Boolean =
         profileName.startsWith(ISOLATED_PROFILE_PREFIX)
+
+    /**
+     * A fresh generation for private WebView storage. Every clear moves to a new one, so a profile
+     * WebView refused to delete is never handed to the next private session.
+     */
+    fun newPrivateGeneration(): String = UUID.randomUUID().toString().replace("-", "")
+
+    fun privateProfileName(generation: String): String {
+        require(generation.isNotBlank() && generation.all { it.isLetterOrDigit() })
+        return "$INCOGNITO_WEBVIEW_PROFILE_PREFIX$generation"
+    }
+
+    /** Every private profile, of any generation and of the legacy scheme, is left to delete. */
+    fun isPrivateProfileName(profileName: String): Boolean =
+        profileName.startsWith(INCOGNITO_WEBVIEW_PROFILE_PREFIX) ||
+            profileName.startsWith(LEGACY_INCOGNITO_WEBVIEW_PROFILE_PREFIX)
 
     fun regularTabIdsForStorageChange(tabs: List<BrowserTab>, profileId: String): Set<String> =
         tabs.asSequence()
@@ -121,5 +138,6 @@ object WebViewProfileRules {
 }
 
 internal const val DEFAULT_STORAGE_KEY = "Default"
-internal const val INCOGNITO_WEBVIEW_PROFILE_PREFIX = "candy_incognito_v1_"
+internal const val INCOGNITO_WEBVIEW_PROFILE_PREFIX = "candy_incognito_v2_"
+internal const val LEGACY_INCOGNITO_WEBVIEW_PROFILE_PREFIX = "candy_incognito_v1_"
 internal const val ISOLATED_PROFILE_PREFIX = "candy_profile_v1_"

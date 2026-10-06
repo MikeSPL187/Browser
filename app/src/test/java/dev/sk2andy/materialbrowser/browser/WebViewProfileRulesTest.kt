@@ -41,6 +41,24 @@ class WebViewProfileRulesTest {
     }
 
     @Test
+    fun `every private clear moves to a new profile generation`() {
+        val first = WebViewProfileRules.newPrivateGeneration()
+        val second = WebViewProfileRules.newPrivateGeneration()
+        val name = WebViewProfileRules.privateProfileName(first)
+
+        assertNotEquals(first, second)
+        assertNotEquals(name, WebViewProfileRules.privateProfileName(second))
+        assertTrue(name.matches(Regex("candy_incognito_v2_[0-9a-f]{32}")))
+        assertTrue(WebViewProfileRules.isPrivateProfileName(name))
+        assertTrue(WebViewProfileRules.isPrivateProfileName("candy_incognito_v2_runtime"))
+        assertTrue(WebViewProfileRules.isPrivateProfileName("candy_incognito_v1_old"))
+        assertFalse(WebViewProfileRules.isPrivateProfileName(
+            WebViewProfileRules.isolatedProfileName(isolated.id),
+        ))
+        assertFalse(WebViewProfileRules.isPrivateProfileName(DEFAULT_STORAGE_KEY))
+    }
+
+    @Test
     fun `assignment gates isolation on provider support`() {
         val tab = BrowserTab(id = "tab", lastAccessedAt = 1L, profileId = isolated.id)
 
