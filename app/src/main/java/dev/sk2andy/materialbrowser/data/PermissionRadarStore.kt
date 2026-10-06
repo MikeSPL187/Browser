@@ -2,13 +2,10 @@ package dev.sk2andy.materialbrowser.data
 
 import android.content.Context
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionDecisionPersistence
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarRepository
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionSiteKey
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
-import org.json.JSONArray
-import org.json.JSONObject
 
 class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -16,62 +13,20 @@ class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
     @Synchronized
     override fun load(): Map<PermissionSiteKey, Map<SitePermission, SitePermissionDecision>> {
         val raw = preferences.getString(KEY_DECISIONS, null) ?: return emptyMap()
-        return runCatching {
-            val values = JSONArray(raw)
-            buildMap {
-                // Sites are written oldest first; the newest MAX_SITES are the ones kept.
-                for (index in (values.length() - MAX_SITES).coerceAtLeast(0) until values.length()) {
-                    val item = values.getJSONObject(index)
-                    val profileId = item.optString("profileId").trim()
-                    val origin = PermissionOrigin.normalize(item.optString("origin"))
-                    if (profileId.isEmpty() || origin == null) continue
-                    val permissions = item.optJSONObject("permissions") ?: continue
-                    val decisions = buildMap {
-                        SitePermission.entries.forEach { permission ->
-                            val decision = runCatching {
-                                SitePermissionDecision.valueOf(
-                                    permissions.optString(permission.name),
-                                )
-                            }.getOrNull()
-                            if (decision != null && decision != SitePermissionDecision.Ask) {
-                                put(permission, decision)
-                            }
-                        }
-                    }
-                    if (decisions.isNotEmpty()) put(PermissionSiteKey(profileId, origin), decisions)
-                }
-            }
-        }.getOrDefault(emptyMap())
+        return PermissionRadarCodec.decode(raw, MAX_SITES) ?: run {
+            // The next save replaces what could not be read; keep the original to recover from.
+            preferences.edit().putString(KEY_UNREADABLE_BACKUP, raw).apply()
+            emptyMap()
+        }
     }
 
     @Synchronized
     override fun save(
         decisions: Map<PermissionSiteKey, Map<SitePermission, SitePermissionDecision>>,
     ) {
-        val values = JSONArray()
-        decisions.asSequence()
-            .filter { (site, permissions) ->
-                site.profileId.isNotBlank() &&
-                    PermissionOrigin.normalize(site.origin) == site.origin &&
-                    permissions.any { it.value != SitePermissionDecision.Ask }
-            }
-            .toList()
-            .takeLast(MAX_SITES)
-            .forEach { (site, permissions) ->
-                val encodedPermissions = JSONObject()
-                permissions.forEach { (permission, decision) ->
-                    if (decision != SitePermissionDecision.Ask) {
-                        encodedPermissions.put(permission.name, decision.name)
-                    }
-                }
-                values.put(
-                    JSONObject()
-                        .put("profileId", site.profileId)
-                        .put("origin", site.origin)
-                        .put("permissions", encodedPermissions),
-                )
-            }
-        preferences.edit().putString(KEY_DECISIONS, values.toString()).apply()
+        preferences.edit()
+            .putString(KEY_DECISIONS, PermissionRadarCodec.encode(decisions, MAX_SITES))
+            .apply()
     }
 
     fun flush(): Boolean = preferences.edit().commit()
@@ -79,6 +34,7 @@ class PermissionRadarStore(context: Context) : PermissionDecisionPersistence {
     internal companion object {
         const val PREFERENCES_NAME = "permission_radar_v1"
         const val KEY_DECISIONS = "decisions"
+        const val KEY_UNREADABLE_BACKUP = "decisions_unreadable_backup"
         const val MAX_SITES = PermissionRadarRepository.MAX_SITES
     }
 }
