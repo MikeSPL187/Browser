@@ -832,10 +832,14 @@ class TabOverviewReorderInstrumentedTest {
         // The v4 close button floats over the card's corner; its 48 dp target may reach over
         // the title row, so the title ends before the button's visible centre.
         assertTrue(titleBounds.right <= closeBounds.center.x)
-        // The touch target is the button's own size: its bounds in the root are clipped where the
-        // floating button reaches past the card or the grid's edge.
-        assertTrue(closeNode.size.width >= 48f * density)
-        assertTrue(closeNode.size.height >= 48f * density)
+        // The touch target is the layout node's own size, which includes the minimum interactive
+        // size: the semantics bounds are the 40 dp visual button, and its bounds in the root are
+        // clipped where the button reaches past the card or the grid's edge.
+        val closeLayout = closeNode.layoutInfo
+        val closeTarget = "close target ${closeLayout.width}x${closeLayout.height} px, " +
+            "semantics ${closeNode.size}, density $density"
+        assertTrue(closeTarget, closeLayout.width >= 48f * density - 1f)
+        assertTrue(closeTarget, closeLayout.height >= 48f * density - 1f)
     }
 
     @Test
