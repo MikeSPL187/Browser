@@ -114,4 +114,38 @@ class SiteDataDeletionTest {
         deletion.commit()
         assertEquals(0, reloads)
     }
+
+    @Test
+    fun `a failed deletion is kept for retry, and retry asks the engine again`() {
+        clearResult = false
+        deletion.request("example.com")
+        deletion.commit()
+        val failure = deletion.failed!!
+        assertEquals("example.com", failure.baseDomain)
+        assertEquals(0, reloads)
+        clearResult = true
+        deletion.retry(failure)
+        assertEquals(listOf("example.com", "example.com"), cleared)
+        assertNull(deletion.failed)
+        assertEquals(1, reloads)
+        deletion.retry(failure)
+        assertEquals(2, cleared.size)
+    }
+
+    @Test
+    fun `a dismissed or stale failure does nothing`() {
+        clearResult = false
+        deletion.request("example.com")
+        deletion.commit()
+        val first = deletion.failed!!
+        deletion.retry(first)
+        val second = deletion.failed!!
+        assertTrue(second != first)
+        deletion.dismissFailure(first)
+        assertEquals(second, deletion.failed)
+        deletion.dismissFailure(second)
+        assertNull(deletion.failed)
+        deletion.retry(second)
+        assertEquals(2, cleared.size)
+    }
 }
