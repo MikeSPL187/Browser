@@ -5,15 +5,13 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.SemanticsModifierNode
 import androidx.compose.ui.node.invalidateSemantics
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
-import androidx.compose.ui.semantics.clearAndSetSemantics
 
 /**
  * Under a modal overlay, such as Glance, the browser beneath leaves the accessibility tree, as it
  * would under a dialog. Being covered by the overlay's scrim is not enough: while the overlay
  * animates, parts of the bars beneath show through and TalkBack could still reach them.
  */
-internal fun Modifier.hiddenUnderModal(modalVisible: Boolean): Modifier =
-    if (modalVisible) clearAndSetSemantics { } else this
+internal fun Modifier.hiddenUnderModal(modalVisible: Boolean): Modifier = clearSemanticsWhen(modalVisible)
 
 /**
  * Clears the subtree's semantics while [hidden], keeping one stable node in the chain. Adding and

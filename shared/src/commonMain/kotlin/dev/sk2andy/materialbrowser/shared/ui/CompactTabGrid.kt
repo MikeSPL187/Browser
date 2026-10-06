@@ -580,6 +580,7 @@ private fun CompactGridTabItem(
                 // A blank tab's preview is drawn from the full screen and cropped: keep it
                 // below the title row. The card is the control; the picture says nothing.
                 .clipToBounds()
+                // semantics-exempt: the grid's caller fixes titleRow for the card's whole life
                 .then(if (titleRow != null) Modifier.clearAndSetSemantics { } else Modifier)
                 .graphicsLayer {
                     alpha = if (

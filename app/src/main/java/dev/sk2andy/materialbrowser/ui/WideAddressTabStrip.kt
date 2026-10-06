@@ -44,7 +44,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -120,7 +119,7 @@ internal fun WideAddressTabStrip(
         modifier = modifier
             .fillMaxSize()
             .testTag(WideAddressTabStripTestTags.Strip)
-            .then(if (interactionEnabled) Modifier else Modifier.clearAndSetSemantics { }),
+            .clearSemanticsWhen(!interactionEnabled),
         userScrollEnabled = interactionEnabled,
         contentPadding = PaddingValues(horizontal = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),

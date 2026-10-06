@@ -102,7 +102,7 @@ jobs:
         run: |
           # Run every gate, then fail once, so one finding does not hide the others.
           status=0
-          gates=(size engine brand)
+          gates=(size engine brand semantics)
           if [ "$EVENT_NAME" = pull_request ]; then
             gates+=("tokens --base HEAD^1")
           fi
