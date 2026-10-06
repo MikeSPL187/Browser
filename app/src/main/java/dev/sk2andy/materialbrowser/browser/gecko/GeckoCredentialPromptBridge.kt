@@ -6,6 +6,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.CredentialPasswordGenerat
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
+import dev.sk2andy.materialbrowser.browser.credentials.CredentialVaultOfferPrompt
 import dev.sk2andy.materialbrowser.browser.credentials.IdentityCredentialAccount
 import dev.sk2andy.materialbrowser.browser.credentials.IdentityCredentialAccountPrompt
 import dev.sk2andy.materialbrowser.browser.credentials.IdentityCredentialProvider
@@ -83,6 +84,12 @@ internal class GeckoCredentialPromptBridge(
                 }
             }
         }
+    }
+
+    /** A sign-in field got focus on the current page (the privacy host's page script reports it). */
+    fun onLoginFieldFocus() {
+        val identity = currentSecureIdentity() ?: return
+        currentHost()?.offerVault(CredentialVaultOfferPrompt(identity))
     }
 
     private fun onPasswordGeneration(

@@ -99,6 +99,7 @@ internal class GeckoViewPrivacyHostRuntime(
         val onInlineVideoState: (GeckoInlineVideoState) -> Unit,
         val onInlineVideoOpenRequest: (GeckoInlineVideoOpenRequest) -> Unit,
         val onInlineVideoGestureHaptic: (GeckoInlineVideoGestureHaptic) -> Unit,
+        val onLoginFieldFocus: () -> Unit,
     )
 
     private val bindings = linkedMapOf<String, Binding>()
@@ -202,6 +203,7 @@ internal class GeckoViewPrivacyHostRuntime(
         onInlineVideoState: (GeckoInlineVideoState) -> Unit,
         onInlineVideoOpenRequest: (GeckoInlineVideoOpenRequest) -> Unit,
         onInlineVideoGestureHaptic: (GeckoInlineVideoGestureHaptic) -> Unit,
+        onLoginFieldFocus: () -> Unit = {},
         onBound: () -> Unit,
         onFailure: (String) -> Unit,
     ): GeckoPrivacyBinding {
@@ -217,6 +219,7 @@ internal class GeckoViewPrivacyHostRuntime(
             onInlineVideoState = onInlineVideoState,
             onInlineVideoOpenRequest = onInlineVideoOpenRequest,
             onInlineVideoGestureHaptic = onInlineVideoGestureHaptic,
+            onLoginFieldFocus = onLoginFieldFocus,
             bound = onBound,
             failed = onFailure,
         )
@@ -560,6 +563,18 @@ internal class GeckoViewPrivacyHostRuntime(
             "picture-in-picture-playback-result" ->
                 acceptPictureInPicturePlaybackResult(value)
             "reader-result" -> acceptReaderResult(value)
+            "login-field-focus" -> {
+                val binding = bindings[value.optString("token")] ?: return
+                // Private tabs never offer the vault; a message from an older page is stale.
+                if (
+                    binding.session.settings.usePrivateMode ||
+                    binding.handshake.publishedRevision != value.optLong("revision", -1) ||
+                    binding.policy.navigationGeneration != value.optInt("navigationGeneration", -1)
+                ) {
+                    return
+                }
+                binding.onLoginFieldFocus()
+            }
             "text-input-occlusion-result" -> {
                 val binding = bindings[value.optString("token")] ?: return
                 if (

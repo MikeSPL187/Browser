@@ -1790,6 +1790,9 @@
     <string name="passwords_sheet_update_title">Обновить пароль для %1$s?</string>
     <string name="passwords_sheet_save_body">Он хранится зашифрованным на этом телефоне. Подтвердите отпечатком или блокировкой экрана.</string>
     <string name="passwords_sheet_update">Обновить</string>
+    <string name="passwords_offer_title">Входите быстрее с Vola</string>
+    <string name="passwords_offer_body">Vola подставит пароли на %1$s и других сайтах, когда вы перенесёте их сюда из Google или другого менеджера паролей. Они хранятся зашифрованными на этом телефоне.</string>
+    <string name="passwords_offer_set_up">Перенести пароли</string>
     <string name="passwords_sheet_not_now">Не сейчас</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">С движком System WebView сайты заполняет служба автозаполнения Android, а не этот список.</string>

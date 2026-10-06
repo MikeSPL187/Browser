@@ -210,7 +210,12 @@
   declared for GeckoView's passkey lookup, origin-bound WebAuthn, and Candy's password Credential
   Manager bridge. GeckoView 155 uses Android's framework Credential Manager for passkeys on API 34+
   when `android.software.credentials` exists. Regular HTTPS Gecko views expose
-  native virtual Autofill nodes; private views do not. Developer options provide a default-off
+  native virtual Autofill nodes; private views do not. Without Vola's vault, the system password
+  manager fills only browsers it trusts, so the first touch of a sign-in field on a regular HTTPS
+  Gecko page offers «Sign in faster with Vola», which opens the vault setup and the import (#123,
+  H2). The privacy host's page script reports that touch once per document and nothing about the
+  page; the offer appears at most three times, once per run, never after it was taken and never in
+  private tabs. Developer options provide a default-off
   **Password manager on HTTP sites** override only when GeckoView is selected. Enabling it requires
   an explicit cleartext-HTTP warning confirmation. Once enabled, an
   explicit tap on an HTTP login field may open the default Android password manager for login
