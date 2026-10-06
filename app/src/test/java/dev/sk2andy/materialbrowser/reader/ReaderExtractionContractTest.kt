@@ -1,7 +1,10 @@
 package dev.sk2andy.materialbrowser.reader
 
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -59,6 +62,43 @@ class ReaderExtractionContractTest {
             ReaderExtractionResult.Failure(ReaderExtractionFailure.EmptyArticle),
             thin,
         )
+    }
+
+    @Test
+    fun `webview string result decodes to the raw json object the port returns`() {
+        val payload = JSONObject()
+            .put("title", "Example \"quoted\" story")
+            .put("sourceUrl", "https://news.example/story")
+            .put("siteName", "Example News")
+            .put(
+                "blocks",
+                JSONArray().put(
+                    JSONObject()
+                        .put("kind", "paragraph")
+                        .put(
+                            "text",
+                            "A long readable paragraph with enough useful article text " +
+                                "to satisfy the extraction contract and stay pleasant.",
+                        )
+                        .put("level", 0)
+                        .put("links", JSONArray()),
+                ),
+            )
+            .toString()
+        // evaluateJavascript hands back the script's JSON.stringify result JSON-encoded again.
+        val webViewResult = JSONObject.quote(payload)
+
+        val raw = ReaderExtractionParser.decodeJavascriptString(webViewResult)
+
+        assertEquals(payload, raw)
+        val success = ReaderExtractionParser.parseJson(raw) as ReaderExtractionResult.Success
+        assertEquals("Example \"quoted\" story", success.document.title)
+        assertEquals(
+            ReaderExtractionResult.Failure(ReaderExtractionFailure.InvalidResponse),
+            ReaderExtractionParser.parseJson(webViewResult),
+        )
+        assertNull(ReaderExtractionParser.decodeJavascriptString(null))
+        assertNull(ReaderExtractionParser.decodeJavascriptString("null"))
     }
 
     @Test

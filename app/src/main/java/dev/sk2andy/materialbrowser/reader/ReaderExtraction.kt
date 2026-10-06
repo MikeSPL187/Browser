@@ -118,7 +118,11 @@ object ReaderExtractionParser {
         }
     }
 
-    private fun decodeJavascriptString(result: String?): String? {
+    /**
+     * Decodes the JSON-encoded string that `WebView.evaluateJavascript` hands back for
+     * [ReaderExtractionScript] into the raw JSON object text that [parseJson] reads.
+     */
+    fun decodeJavascriptString(result: String?): String? {
         val value = result?.takeIf { it != "null" && it.length <= MAX_JSON_CHARS } ?: return null
         return runCatching { JSONArray("[$value]").getString(0) }.getOrNull()
     }
