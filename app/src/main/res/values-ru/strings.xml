@@ -1306,10 +1306,10 @@
     <string name="permission_radar_sites">Сайты в этом пространстве</string>
     <string name="permission_radar_no_site">Откройте защищённый сайт, чтобы управлять его разрешениями.</string>
     <string name="permission_radar_reset_site">Сбросить для сайта</string>
-    <string name="permission_radar_active">Используется сейчас</string>
+    <string name="permission_radar_active">Доступ выдан</string>
     <string name="permission_radar_pending">Ожидает ответа</string>
     <string name="permission_radar_session_allowed">Разрешено на этот сеанс</string>
-    <string name="permission_radar_activity_cd">Разрешение сайта используется или ожидает ответа</string>
+    <string name="permission_radar_activity_cd">У сайта есть доступ или запрос ждёт ответа</string>
     <string name="permission_prompt_question_location">Показать сайту, где вы?</string>
     <string name="permission_prompt_question_camera">Дать сайту доступ к камере?</string>
     <string name="permission_prompt_question_microphone">Дать сайту доступ к микрофону?</string>

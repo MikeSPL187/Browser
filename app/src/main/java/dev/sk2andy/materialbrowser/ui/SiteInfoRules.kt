@@ -39,7 +39,7 @@ internal object SiteInfoRules {
             CORE_PERMISSIONS.indexOf(entry.permission).takeIf { it >= 0 } ?: CORE_PERMISSIONS.size
         }
 
-    /** The site has a decision of its own or is using the permission right now. */
+    /** The site has a decision of its own, holds granted access or has a request waiting. */
     fun isCustomized(entry: PermissionRadarEntry): Boolean =
         entry.decision != SitePermissionDecision.Ask ||
             entry.allowedForSession ||
