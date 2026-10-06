@@ -352,7 +352,15 @@ jobs:
           import glob, json, os, re, urllib.request
 
           frame = re.compile(r"#(\d+) pc ([0-9a-f]+)\s+\S*?(lib\w+\.so).*?\(BuildId: ([0-9a-f]+)\)")
-          out = open(os.environ["GITHUB_STEP_SUMMARY"], "a")
+          class Tee:
+              """The summary, and the log too: the log is what a cloud session can read."""
+              def __init__(self, path):
+                  self.file = open(path, "a")
+              def write(self, text):
+                  self.file.write(text)
+                  print(text, end="", flush=True)
+
+          out = Tee(os.environ["GITHUB_STEP_SUMMARY"])
           for path in sorted(glob.glob(os.path.join(os.environ["RUNNER_TEMP"], "crash-*.txt"))):
               frames, seen = [], set()
               for line in open(path, errors="replace"):
