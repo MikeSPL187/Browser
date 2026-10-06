@@ -553,10 +553,11 @@ internal fun BrowserViewport(
                             .take(NEW_TAB_RECENT_TAB_COUNT),
                         recentTabFavicons = controller.favicons,
                         onRecentTab = controller::selectTab,
-                        title = controller.localBrowserProfiles
-                            .firstOrNull { profile -> profile.id == controller.activeProfileId }
-                            ?.name
-                            ?.takeIf(String::isNotBlank),
+                        // The tab's own workspace, synced ones included; a workspace without a
+                        // name of its own shows its localized default.
+                        title = controller.profiles
+                            .firstOrNull { profile -> profile.id == profileId }
+                            ?.workspaceDisplayName(),
                     )
                 }
             }

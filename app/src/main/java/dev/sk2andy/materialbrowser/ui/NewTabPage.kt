@@ -330,6 +330,7 @@ private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = date,
