@@ -77,6 +77,15 @@ class ProtectionReportController internal constructor(
         refresh()
     }
 
+    /**
+     * A workspace lock was turned on or off. Turning one on clears the report: the days so far do
+     * not say which workspace a site was opened in, so the locked one's sites cannot be told
+     * apart and removed alone.
+     */
+    fun onWorkspaceProtectionChanged(wasProtected: Boolean, isProtected: Boolean) {
+        if (!wasProtected && isProtected) clear()
+    }
+
     fun updateCardVisible(visible: Boolean) {
         if (isCardVisible == visible) return
         isCardVisible = visible

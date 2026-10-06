@@ -103,6 +103,21 @@ class ProtectionReportControllerTest {
     }
 
     @Test
+    fun `turning a workspace lock on clears the report, changing or removing it does not`() {
+        val store = FakeStore(days = listOf(ProtectionDay(today, mapOf("locked.example.com" to 2))))
+        val controller = controller(store)
+        controller.restore()
+
+        controller.onWorkspaceProtectionChanged(wasProtected = true, isProtected = true)
+        controller.onWorkspaceProtectionChanged(wasProtected = true, isProtected = false)
+        assertEquals(2, controller.week.total)
+
+        controller.onWorkspaceProtectionChanged(wasProtected = false, isProtected = true)
+        assertEquals(0, controller.week.total)
+        assertTrue(store.days.isEmpty())
+    }
+
+    @Test
     fun `hiding the card is saved`() {
         val store = FakeStore()
         val controller = controller(store)

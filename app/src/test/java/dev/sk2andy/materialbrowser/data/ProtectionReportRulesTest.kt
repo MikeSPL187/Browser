@@ -1,7 +1,9 @@
 package dev.sk2andy.materialbrowser.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProtectionReportRulesTest {
@@ -13,6 +15,13 @@ class ProtectionReportRulesTest {
         assertEquals("news.example.com", ProtectionReportRules.site("http://news.example.com"))
         assertNull(ProtectionReportRules.site("about:blank"))
         assertNull(ProtectionReportRules.site("file:///sdcard/page.html"))
+    }
+
+    @Test
+    fun `only regular tabs of unlocked workspaces are counted`() {
+        assertTrue(ProtectionReportRules.countsTab(isPrivate = false, workspaceProtected = false))
+        assertFalse(ProtectionReportRules.countsTab(isPrivate = true, workspaceProtected = false))
+        assertFalse(ProtectionReportRules.countsTab(isPrivate = false, workspaceProtected = true))
     }
 
     @Test

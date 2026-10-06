@@ -47,6 +47,14 @@ object ProtectionReportRules {
     const val MAX_SITES_PER_DAY = 200
     const val TOP_SITES = 5
 
+    /**
+     * Whether blocks on a tab reach the report. Private tabs never do, and neither do tabs of a
+     * workspace behind a lock: the report is shared by every workspace and lists sites, so it
+     * would show what the locked one visited.
+     */
+    fun countsTab(isPrivate: Boolean, workspaceProtected: Boolean): Boolean =
+        !isPrivate && !workspaceProtected
+
     /** The site a tab is on, without `www.`; `null` for pages that are not on the web. */
     fun site(url: String): String? {
         val uri = runCatching { URI(url.trim()) }.getOrNull() ?: return null
