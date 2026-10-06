@@ -36,7 +36,7 @@ class ProtectionReportController internal constructor(
         private set
 
     fun restore() {
-        days = ProtectionReportRules.prune(store.loadDays(), host.today())
+        days = store.loadDays()
         isCardVisible = store.loadCardVisible()
         refresh()
     }
@@ -53,9 +53,20 @@ class ProtectionReportController internal constructor(
         }
     }
 
-    /** Recomputes the week, for example when the new tab opens on a later day. */
+    /**
+     * Recomputes the week, for example when the new tab opens on a later day. Days that left the
+     * week are dropped from the saved report too, so it never keeps more than seven days.
+     */
     fun refresh() {
-        week = ProtectionReportRules.week(days, host.today())
+        val today = host.today()
+        val kept = ProtectionReportRules.prune(days, today)
+        if (kept != days) {
+            days = kept
+            host.removeCallbacks(saveDays)
+            dirty = false
+            store.saveDays(days)
+        }
+        week = ProtectionReportRules.week(days, today)
     }
 
     fun clear() {

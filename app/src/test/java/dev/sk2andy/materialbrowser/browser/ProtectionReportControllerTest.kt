@@ -23,6 +23,45 @@ class ProtectionReportControllerTest {
     }
 
     @Test
+    fun `restore removes expired days from the store as well`() {
+        val store = FakeStore(days = listOf(ProtectionDay(today - 10, mapOf("old.example.com" to 5))))
+        val controller = controller(store)
+
+        controller.restore()
+        controller.flush()
+
+        assertEquals(1, store.saves)
+        assertTrue(store.days.isEmpty())
+    }
+
+    @Test
+    fun `restore does not rewrite a report that is still current`() {
+        val store = FakeStore(days = listOf(ProtectionDay(today, mapOf("a.com" to 2))))
+        val controller = controller(store)
+
+        controller.restore()
+        controller.refresh()
+
+        assertEquals(0, store.saves)
+    }
+
+    @Test
+    fun `a new day drops the days that left the week from the store`() {
+        val store = FakeStore(
+            days = listOf(ProtectionDay(today - 6, mapOf("old.com" to 4)), ProtectionDay(today, mapOf("a.com" to 2))),
+        )
+        val controller = controller(store)
+        controller.restore()
+
+        today += 1
+        controller.refresh()
+
+        assertEquals(1, store.saves)
+        assertEquals(listOf(ProtectionDay(today - 1, mapOf("a.com" to 2))), store.days)
+        assertEquals(2, controller.week.total)
+    }
+
+    @Test
     fun `record counts web pages only and saves once per burst`() {
         val store = FakeStore()
         val controller = controller(store)
