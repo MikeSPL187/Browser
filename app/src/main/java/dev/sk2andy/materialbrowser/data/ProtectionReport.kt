@@ -4,16 +4,15 @@ import java.net.URI
 import java.util.Locale
 
 /**
- * Trackers blocked on one day, by the site the user was on. Kept only on the device; private
- * tabs never reach it.
+ * Requests blocked on one day, by the site the user was on. Kept only on the device; private
+ * tabs never reach it. [total] counts every block of the day, also those of sites dropped past
+ * [ProtectionReportRules.MAX_SITES_PER_DAY], so it is never less than the sum of [blockedBySite].
  */
 data class ProtectionDay(
     val epochDay: Long,
     val blockedBySite: Map<String, Int>,
-) {
-    val total: Int
-        get() = blockedBySite.values.fold(0) { sum, count -> sum.saturatedPlus(count) }
-}
+    val total: Int = blockedBySite.values.fold(0) { sum, count -> sum.saturatedPlus(count) },
+)
 
 /** What the new tab card and the weekly report show. */
 data class ProtectionWeek(
@@ -21,7 +20,7 @@ data class ProtectionWeek(
     val siteCount: Int,
     /** Seven days, the oldest first and today last. */
     val daily: List<Int>,
-    /** Sites with the most blocked trackers, most first. */
+    /** Sites with the most blocked requests, most first. */
     val topSites: List<ProtectionSite>,
     val firstEpochDay: Long,
     val lastEpochDay: Long,
@@ -48,6 +47,14 @@ object ProtectionReportRules {
     const val MAX_SITES_PER_DAY = 200
     const val TOP_SITES = 5
 
+    /**
+     * Whether blocks on a tab reach the report. Private tabs never do, and neither do tabs of a
+     * workspace behind a lock: the report is shared by every workspace and lists sites, so it
+     * would show what the locked one visited.
+     */
+    fun countsTab(isPrivate: Boolean, workspaceProtected: Boolean): Boolean =
+        !isPrivate && !workspaceProtected
+
     /** The site a tab is on, without `www.`; `null` for pages that are not on the web. */
     fun site(url: String): String? {
         val uri = runCatching { URI(url.trim()) }.getOrNull() ?: return null
@@ -56,7 +63,7 @@ object ProtectionReportRules {
         return uri.host?.lowercase(Locale.ROOT)?.removePrefix("www.")?.takeIf(String::isNotBlank)
     }
 
-    /** Adds [blocked] trackers on [site] today and drops days that left the week. */
+    /** Adds [blocked] requests on [site] today and drops days that left the week. */
     fun record(
         days: List<ProtectionDay>,
         today: Long,
@@ -64,7 +71,8 @@ object ProtectionReportRules {
         blocked: Int,
     ): List<ProtectionDay> {
         if (blocked <= 0) return prune(days, today)
-        val current = days.firstOrNull { it.epochDay == today }?.blockedBySite.orEmpty()
+        val day = days.firstOrNull { it.epochDay == today }
+        val current = day?.blockedBySite.orEmpty()
         var updated = current + (site to (current[site] ?: 0).saturatedPlus(blocked))
         if (updated.size > MAX_SITES_PER_DAY) {
             updated = updated.entries
@@ -72,7 +80,8 @@ object ProtectionReportRules {
                 .take(MAX_SITES_PER_DAY)
                 .associate { it.key to it.value }
         }
-        return prune(days.filterNot { it.epochDay == today } + ProtectionDay(today, updated), today)
+        val total = (day?.total ?: 0).saturatedPlus(blocked)
+        return prune(days.filterNot { it.epochDay == today } + ProtectionDay(today, updated, total), today)
     }
 
     /** Keeps the last [DAYS] days up to today, oldest first. A clock moved back keeps nothing newer. */
