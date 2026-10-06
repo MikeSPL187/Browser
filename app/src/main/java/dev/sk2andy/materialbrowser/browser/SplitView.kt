@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -28,6 +29,15 @@ data class SplitViewState(
     val topRatio: Float = SplitViewRules.HALF,
 ) {
     val companionPane: SplitPane get() = activePane.other
+}
+
+/**
+ * What the companion pane says over its page when something stopped it. The full error or warning,
+ * with its actions, shows once the pane is made active.
+ */
+enum class SplitCompanionStatus {
+    PageFailed,
+    SiteBlocked,
 }
 
 /** Where the two cards sit inside the single page card, as page-host frames. */
@@ -105,6 +115,20 @@ object SplitViewRules {
             .maxByOrNull(BrowserTab::lastAccessedAt)
             ?.id
     }
+
+    /**
+     * The status the companion pane shows for [companion], or null for its live page: a site the
+     * dangerous-site guard [blocked] or Safe Browsing stopped, or a page that failed to load.
+     * HTTPS-only failures are left alone: the engine shows its own page for them.
+     */
+    fun companionStatus(companion: BrowserTab, blocked: Boolean): SplitCompanionStatus? =
+        when {
+            blocked || companion.failureKind == BrowserEngineFailureKind.DangerousSite ->
+                SplitCompanionStatus.SiteBlocked
+            companion.failureKind == null ||
+                companion.failureKind == BrowserEngineFailureKind.HttpsOnly -> null
+            else -> SplitCompanionStatus.PageFailed
+        }
 
     /**
      * The state that still holds after the tabs changed, or null when Split View must close: its

@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -134,5 +135,39 @@ class SplitViewRulesTest {
 
         split.close()
         assertEquals(listOf("b", "c"), left)
+    }
+
+    @Test
+    fun `companion pane shows a stopped page and leaves a live one alone`() {
+        val live = BrowserTab(id = "b", lastAccessedAt = 0, url = "https://b.example/")
+        fun failed(kind: BrowserEngineFailureKind) = live.copy(failureKind = kind)
+
+        assertNull(SplitViewRules.companionStatus(live, blocked = false))
+        assertEquals(
+            SplitCompanionStatus.SiteBlocked,
+            SplitViewRules.companionStatus(live, blocked = true),
+        )
+        assertEquals(
+            SplitCompanionStatus.SiteBlocked,
+            SplitViewRules.companionStatus(
+                failed(BrowserEngineFailureKind.DangerousSite),
+                blocked = false,
+            ),
+        )
+        listOf(
+            BrowserEngineFailureKind.Offline,
+            BrowserEngineFailureKind.UnknownHost,
+            BrowserEngineFailureKind.InsecureConnection,
+            BrowserEngineFailureKind.Other,
+        ).forEach { kind ->
+            assertEquals(
+                SplitCompanionStatus.PageFailed,
+                SplitViewRules.companionStatus(failed(kind), blocked = false),
+            )
+        }
+        // The engine's own HTTPS-only page stays visible.
+        assertNull(
+            SplitViewRules.companionStatus(failed(BrowserEngineFailureKind.HttpsOnly), false),
+        )
     }
 }
