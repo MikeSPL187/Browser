@@ -58,6 +58,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.EssentialEntry
+import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
@@ -286,7 +287,7 @@ private fun NewTabContinueCard(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = displayTabTitle(tab),
+                                text = NewTabContinueRules.title(tab),
                                 style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -306,13 +307,23 @@ private fun NewTabContinueCard(
     }
 }
 
+/** What the «Continue» rows say about the regular, non-blank tabs they list. */
+internal object NewTabContinueRules {
+    /**
+     * The page title, or the site while the page has none (still loading, failed, or untitled):
+     * every row is a real page, so it is never «New tab».
+     */
+    fun title(tab: BrowserTab): String = tab.title.ifBlank { EssentialsRules.host(tab.url) }
+}
+
 /** Workspace name and today's date, as on the NewTab board. */
 @Composable
 private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
     val locale = LocalConfiguration.current.locales[0]
-    val date = remember(locale) {
+    val today = rememberLocalToday()
+    val date = remember(locale, today) {
         val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMM")
-        java.time.LocalDate.now()
+        today
             .format(java.time.format.DateTimeFormatter.ofPattern(pattern, locale))
             .replaceFirstChar { it.titlecase(locale) }
     }
@@ -330,6 +341,7 @@ private fun NewTabHeader(title: String?, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = date,

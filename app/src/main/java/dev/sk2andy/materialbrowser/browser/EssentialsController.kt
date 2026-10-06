@@ -94,6 +94,13 @@ class EssentialsController internal constructor(
         if (result is EssentialsRules.AddResult.Added) {
             update(profileId, result.entries)
             icons.capture(result.entries.last().url, icon)
+            // The site took the last free cell: the removed one has nowhere to go back to, so
+            // its Undo ends here instead of failing silently later.
+            val pending = removal
+            if (pending?.profileId == profileId && result.entries.size >= EssentialsRules.MAX_ENTRIES) {
+                removal = null
+                pruneIcons()
+            }
             host.post(::refreshIcons)
         }
         return result
@@ -112,7 +119,10 @@ class EssentialsController internal constructor(
         if (removal != token) return false
         removal = null
         val restored = EssentialsRules.restore(entriesFor(token.profileId), token.entry, token.index)
-            ?: return false
+        if (restored == null) {
+            pruneIcons()
+            return false
+        }
         update(token.profileId, restored)
         return true
     }
