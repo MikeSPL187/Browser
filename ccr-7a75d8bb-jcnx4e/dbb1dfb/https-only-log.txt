@@ -1,0 +1,2 @@
+10-06 06:04:05.333 21522 21547 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv4” because it is exempt."]
+10-06 06:04:05.333 21522 21547 I GeckoConsole: [JavaScript Error: "HTTPS-Only Mode: Not upgrading insecure request “http://firefox-portal-detection.com/success.txt?ipv6” because it is exempt."]
