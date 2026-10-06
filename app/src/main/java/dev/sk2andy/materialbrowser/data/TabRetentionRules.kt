@@ -26,11 +26,16 @@ internal object TabRetentionRules {
             .mapTo(linkedSetOf(), BrowserTab::id)
     }
 
+    /**
+     * The tabs not used for longer than [lifetime]. The selected tab and Split View's
+     * [companionTabId], both on screen, never count as inactive.
+     */
     fun expiredTabIds(
         tabs: List<BrowserTab>,
         selectedTabId: String?,
         lifetime: InactiveTabLifetime,
         nowMillis: Long,
+        companionTabId: String? = null,
     ): Set<String> {
         val maxAgeMillis = lifetime.maxAgeMillis ?: return emptySet()
         if (tabs.size <= 1) return emptySet()
@@ -39,7 +44,7 @@ internal object TabRetentionRules {
             ?: tabs.maxByOrNull(BrowserTab::lastAccessedAt)?.id
         val cutoff = nowMillis - maxAgeMillis
         return tabs.asSequence()
-            .filter { it.id != protectedTabId }
+            .filter { it.id != protectedTabId && it.id != companionTabId }
             .filter(TabDeletionRules::canDelete)
             .filter { it.lastAccessedAt > 0L && it.lastAccessedAt < cutoff }
             .map(BrowserTab::id)

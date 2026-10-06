@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -46,9 +49,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.SplitCompanionStatus
 import dev.sk2andy.materialbrowser.browser.SplitPane
 import dev.sk2andy.materialbrowser.browser.SplitViewRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaSplit
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import kotlin.math.roundToInt
@@ -58,6 +63,7 @@ internal object SplitViewTestTags {
     const val Divider = "split_view_divider"
     const val Swap = "split_view_swap"
     const val Close = "split_view_close"
+    const val CompanionStatus = "split_view_companion_status"
 }
 
 /**
@@ -128,6 +134,57 @@ internal fun SplitCompanionPane(
                 )
                 .semantics { contentDescription = description }
                 .testTag(SplitViewTestTags.CompanionPane),
+        )
+        SplitViewRules.companionStatus(
+            companion = companion,
+            blocked = controller.dangerousSites.blocked[companion.id] != null,
+        )?.let { status ->
+            SplitCompanionStatusCard(status = status, onActivate = onActivate)
+        }
+    }
+}
+
+/**
+ * A failed or stopped page in the companion pane: a quiet card over it, whose one action makes
+ * the pane active, where the full error or warning and its actions show.
+ */
+@Composable
+internal fun SplitCompanionStatusCard(
+    status: SplitCompanionStatus,
+    onActivate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val blocked = status == SplitCompanionStatus.SiteBlocked
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(VolaTheme.extendedColors.card)
+            .testTag(SplitViewTestTags.CompanionStatus),
+        contentAlignment = Alignment.Center,
+    ) {
+        // A third of the screen is short: the card scrolls when large fonts need more room.
+        VolaStateMessage(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(VolaSpacing.x4),
+            icon = rememberVectorPainter(if (blocked) VolaIcons.GppBad else VolaIcons.Error),
+            title = stringResource(
+                if (blocked) {
+                    R.string.split_view_status_blocked_title
+                } else {
+                    R.string.split_view_status_failed_title
+                },
+            ),
+            message = stringResource(
+                if (blocked) {
+                    R.string.split_view_status_blocked_body
+                } else {
+                    R.string.split_view_status_failed_body
+                },
+            ),
+            tone = VolaStateTone.Error,
+            actionLabel = stringResource(R.string.split_view_make_active),
+            onAction = onActivate,
         )
     }
 }
