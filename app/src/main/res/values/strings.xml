@@ -304,6 +304,11 @@
     <string name="action_download_update">Download update</string>
     <string name="action_view_release_notes">Release notes</string>
     <string name="action_later">Later</string>
+    <string name="crash_report_title">Vola closed with an error</string>
+    <string name="crash_report_message">A report is saved on this device: the error and the device model, without pages or web addresses. It leaves the device only if you copy or share it.</string>
+    <string name="crash_report_copy">Copy report</string>
+    <string name="crash_report_copied">Report copied</string>
+    <string name="crash_report_close">Close</string>
 
     <!-- Address commands -->
     <string name="command_clear_cache_reload_name">Clear cache &amp; reload</string>

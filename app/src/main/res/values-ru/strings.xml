@@ -307,6 +307,11 @@
     <string name="action_download_update">Скачать обновление</string>
     <string name="action_view_release_notes">Что нового</string>
     <string name="action_later">Позже</string>
+    <string name="crash_report_title">Vola закрылась с ошибкой</string>
+    <string name="crash_report_message">На устройстве сохранён отчёт: ошибка и модель устройства, без страниц и адресов. Он покинет устройство, только если вы его скопируете или отправите.</string>
+    <string name="crash_report_copy">Копировать отчёт</string>
+    <string name="crash_report_copied">Отчёт скопирован</string>
+    <string name="crash_report_close">Закрыть</string>
     <string name="command_clear_cache_reload_name">Очистить кэш и обновить</string>
     <string name="command_clear_cache_reload_effect">Очищает общий кэш браузера Vola и обновляет вкладку</string>
     <string name="command_delete_cookies_reload_name">Удалить куки и обновить</string>
