@@ -100,6 +100,8 @@ object ReaderStudioTestTags {
     const val Progress = "reader_studio_progress"
     const val Save = "reader_studio_save"
     const val Library = "reader_studio_library"
+    const val HeaderLibrary = "reader_studio_header_library"
+    const val StateLibrary = "reader_studio_state_library"
     const val PrivateNotice = "reader_studio_private_notice"
     const val SpeechPlay = "reader_studio_speech_play"
     const val SpeechPause = "reader_studio_speech_pause"
@@ -323,6 +325,16 @@ fun ReaderStudioScreen(
     }
     val browserDark = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val colors = style.palette(sessionSettings.theme, browserDark)
+    // Offline copies are never shown in private mode; elsewhere they stay reachable even when
+    // the current page is still loading or could not be prepared.
+    val showLibrary: (() -> Unit)? = if (isPrivate) {
+        null
+    } else {
+        {
+            settingsVisible = false
+            libraryVisible = true
+        }
+    }
     LaunchedEffect(result, isPrivate) {
         libraryLoaded = false
         repository.load(isPrivate) { loaded ->
@@ -346,6 +358,7 @@ fun ReaderStudioScreen(
                 document = activeDocument,
                 settingsAvailable = activeDocument != null && !libraryVisible,
                 libraryVisible = libraryVisible,
+                onShowLibrary = showLibrary,
                 onSettings = { settingsVisible = !settingsVisible },
                 onShowArticle = { libraryVisible = false },
                 onDismiss = onDismiss,
@@ -370,7 +383,8 @@ fun ReaderStudioScreen(
                 )
             } else {
                 when {
-                    result == null && activeDocument == null -> ReaderLoading(resources, colors)
+                    result == null && activeDocument == null ->
+                        ReaderLoading(resources, colors, onShowLibrary = showLibrary)
                     result is ReaderExtractionResult.Failure && activeDocument == null ->
                         ReaderError(
                             resources,
@@ -378,6 +392,7 @@ fun ReaderStudioScreen(
                             colors,
                             onRetry,
                             onOpenOriginal = { onOpenOriginal(sourceUrl) },
+                            onShowLibrary = showLibrary,
                         )
                     activeDocument != null -> ReaderArticle(
                         document = checkNotNull(activeDocument),
@@ -411,10 +426,7 @@ fun ReaderStudioScreen(
                                 it.document.sourceUrl == activeDocument?.sourceUrl
                             }
                         },
-                        onShowLibrary = {
-                            settingsVisible = false
-                            libraryVisible = true
-                        },
+                        onShowLibrary = { showLibrary?.invoke() },
                         onOpenOriginal = {
                             onOpenOriginal(activeDocument?.sourceUrl ?: sourceUrl)
                         },
@@ -443,6 +455,8 @@ private fun ReaderStudioHeader(
     document: ReaderDocument?,
     settingsAvailable: Boolean,
     libraryVisible: Boolean,
+    /** Opens the offline articles; null in private mode. */
+    onShowLibrary: (() -> Unit)?,
     onSettings: () -> Unit,
     onShowArticle: () -> Unit,
     onDismiss: () -> Unit,
@@ -494,6 +508,19 @@ private fun ReaderStudioHeader(
                 Text(resources.text(ReaderStudioLabel.Article), color = colors.content)
             }
         }
+        if (onShowLibrary != null && !libraryVisible) {
+            IconButton(
+                onClick = onShowLibrary,
+                modifier = Modifier.testTag(ReaderStudioTestTags.HeaderLibrary),
+                colors = IconButtonDefaults.iconButtonColors(containerColor = colors.card),
+            ) {
+                resources.icon(
+                    icon = ReaderStudioIcon.Download,
+                    modifier = Modifier.size(style.iconSize),
+                    contentDescription = resources.text(ReaderStudioLabel.OfflineLibrary),
+                )
+            }
+        }
         if (settingsAvailable) {
             val settingsDescription = resources.text(ReaderStudioLabel.ReadingSettings)
             IconButton(
@@ -528,6 +555,7 @@ private fun ReaderStudioHeader(
 private fun ReaderLoading(
     resources: ReaderStudioResources,
     colors: ReaderPalette,
+    onShowLibrary: (() -> Unit)?,
 ) {
     Box(
         modifier = Modifier
@@ -539,6 +567,7 @@ private fun ReaderLoading(
             CircularProgressIndicator(color = colors.accent)
             Spacer(Modifier.height(16.dp))
             Text(resources.text(ReaderStudioLabel.Extracting))
+            if (onShowLibrary != null) ReaderStateLibraryButton(resources, onShowLibrary)
         }
     }
 }
@@ -550,6 +579,7 @@ private fun ReaderError(
     colors: ReaderPalette,
     onRetry: () -> Unit,
     onOpenOriginal: () -> Unit,
+    onShowLibrary: (() -> Unit)?,
 ) {
     Box(
         modifier = Modifier
@@ -589,8 +619,23 @@ private fun ReaderError(
                         Text(resources.text(ReaderStudioLabel.Retry))
                     }
                 }
+                if (onShowLibrary != null) ReaderStateLibraryButton(resources, onShowLibrary)
             }
         }
+    }
+}
+
+/** «Offline articles» under the loading and error states, so saved copies stay reachable. */
+@Composable
+private fun ReaderStateLibraryButton(
+    resources: ReaderStudioResources,
+    onShowLibrary: () -> Unit,
+) {
+    TextButton(
+        onClick = onShowLibrary,
+        modifier = Modifier.testTag(ReaderStudioTestTags.StateLibrary),
+    ) {
+        Text(resources.text(ReaderStudioLabel.OfflineLibrary))
     }
 }
 

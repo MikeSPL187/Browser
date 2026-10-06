@@ -6,6 +6,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.reader.ReaderBlock
 import dev.sk2andy.materialbrowser.reader.ReaderBlockKind
 import dev.sk2andy.materialbrowser.reader.ReaderDocument
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryDataSource
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryState
@@ -79,12 +80,16 @@ private object PreviewReaderSpeech : ReaderSpeech {
 }
 
 @Composable
-private fun ReaderPreview(settings: ReaderSettings, settingsVisible: Boolean) {
+private fun ReaderPreview(
+    settings: ReaderSettings,
+    settingsVisible: Boolean,
+    result: ReaderExtractionResult = ReaderExtractionResult.Success(previewArticle),
+) {
     MaterialBrowserTheme(
         settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System),
     ) {
         SharedReaderStudioScreen(
-            result = ReaderExtractionResult.Success(previewArticle),
+            result = result,
             sourceUrl = previewArticle.sourceUrl,
             isPrivate = false,
             repository = PreviewReaderLibrary(settings),
@@ -113,4 +118,15 @@ private fun ReaderArticlePreview() {
 @Composable
 private fun ReaderSettingsPaperPreview() {
     ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper), settingsVisible = true)
+}
+
+/** A page that could not be prepared still offers the offline articles (REA-03). */
+@VolaPreviews
+@Composable
+private fun ReaderErrorPreview() {
+    ReaderPreview(
+        ReaderSettings(),
+        settingsVisible = false,
+        result = ReaderExtractionResult.Failure(ReaderExtractionFailure.EmptyArticle),
+    )
 }
