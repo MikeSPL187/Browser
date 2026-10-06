@@ -22,7 +22,7 @@ from pathlib import Path
 
 MAX_LISTED_FAILURES = 200
 STACK_LINES = 12
-LOG_LINES = 20
+LOG_LINES = 80
 # Errors and crashes in a logcat line: "10-06 05:20:00.000  1234  1240 E Tag: message".
 LOG_ERROR = re.compile(r"^\S+ \S+\s+\d+\s+\d+ [EF] |FATAL EXCEPTION")
 ASSUMPTION_FAILURES = (

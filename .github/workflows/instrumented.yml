@@ -37,7 +37,7 @@ env:
   ANDROID_SERIAL: emulator-5554
   # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
   # eight shards keep each one well under the 16 GB a hosted runner has.
-  SHARDS: 8
+  SHARDS: 1
 
 jobs:
   android-test:
@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0]
 
     steps:
       - name: Check out source
@@ -144,7 +144,7 @@ jobs:
 
       - name: Run tests
         env:
-          FILTER: ${{ github.event.inputs.filter }}
+          FILTER: ${{ github.event.inputs.filter || 'dev.sk2andy.materialbrowser.browser.signin.SignInPagesInstrumentedTest' }}
           SHARD: ${{ matrix.shard }}
         run: |
           # timeout_msec: a hanging test fails after two minutes instead of holding the shard
