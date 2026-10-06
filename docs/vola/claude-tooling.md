@@ -14,6 +14,8 @@
 | Навык `/claim` | `.claude/skills/claim/` | заявка и смена статуса строкой на доске без потери чужих правок |
 | Навык `/handoff` | `.claude/skills/handoff/` | передача работы другой сессии по единому шаблону |
 | Предохранители | `.claude/settings.json` | слияние PR через GitHub-инструмент спрашивает подтверждение владельца; пуш в `main` запрещён |
+| Хук старта сессии | `.claude/hooks/session-start.sh` | в облаке включает `.githooks`, задаёт Gradle больше повторов (Maven Central отвечает 429 на общий адрес облака) и в фоне ставит Android SDK (`$HOME/android-sdk`, около 15 с; лог — `.vola-sdk-install.log`) |
+| Проверка перед пушем | `scripts/ci/preflight.sh`, `.githooks/pre-push`, навык `/preflight` | гейты, тесты скриптов из `build.yml`, node-тесты; при готовом SDK — `compileFullDebugKotlin` и `testFullDebugUnitTest`. `--fast` — без Gradle |
 
 Навыки вызывает владелец (`/claim`, `/handoff`) или Claude сам, когда задача подходит под описание навыка.
 
