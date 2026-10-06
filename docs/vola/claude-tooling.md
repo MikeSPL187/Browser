@@ -16,6 +16,10 @@
 | Предохранители | `.claude/settings.json` | слияние PR через GitHub-инструмент спрашивает подтверждение владельца; пуш в `main` запрещён |
 | Хук старта сессии | `.claude/hooks/session-start.sh` | в облаке включает `.githooks`, задаёт Gradle больше повторов (Maven Central отвечает 429 на общий адрес облака) и в фоне ставит Android SDK (`$HOME/android-sdk`, около 15 с; лог — `.vola-sdk-install.log`) |
 | Проверка перед пушем | `scripts/ci/preflight.sh`, `.githooks/pre-push`, навык `/preflight` | гейты, тесты скриптов из `build.yml`, node-тесты; при готовом SDK — `compileFullDebugKotlin` и `testFullDebugUnitTest`. `--fast` — без Gradle |
+| Ночной smoke-тест release | `.github/workflows/nightly-smoke.yml`, `scripts/ci/release_smoke.py` | каждую ночь (03:23 МСК) и по кнопке: `localRelease` на эмуляторе открывает вход Google и VK, YouTube, банки, Госуслуги; вылет → журнал сбоев, tombstone и стек, расшифрованный сервером символов Mozilla, прямо в логе задачи. Итог ночи — комментарием в issue #134 |
+| Расшифровка стеков | `scripts/ci/symbolicate.py` | кадры `libxul.so (BuildId: …)` из logcat, tombstone или отчёта журнала сбоев → функция, файл, строка; наружу уходят только имена библиотек, build id и смещения |
+| Навык `/ci` и агент `ci-log-reader` | `.claude/skills/ci/`, `.claude/agents/ci-log-reader.md` | красный CI: лог читает агент на дешёвой модели (haiku) и отдаёт выжимку — шаг, ошибки с файлом и строкой, упавшие тесты |
+| Навык `/crash` | `.claude/skills/crash/` | разбор отчёта о сбое (журнал Vola #126, logcat, tombstone, ночной smoke): тип сбоя, расшифровка, место в коде |
 
 Навыки вызывает владелец (`/claim`, `/handoff`) или Claude сам, когда задача подходит под описание навыка.
 
@@ -28,11 +32,12 @@
    заголовке сессии → Edit → Network access → Custom, список менеджеров пакетов оставить) хосты
    `dl.google.com`, `maven.mozilla.org`, `jitpack.io`, `symbolication.services.mozilla.com`.
    Инструкция: https://code.claude.com/docs/en/cloud-environments#network-access
-3. **Ночной smoke-тест release-сборки** (популярные сайты, вылет → стек в логе), итоги ночи —
-   комментарием в issue, навыки `/ci` и `/crash`, помощник для логов на дешёвой модели.
 
 ## Проверка, что работает
 - Новая сессия: на вопрос «что сейчас открыто?» отвечает по короткому `STATUS.md`, не открывая историю.
 - `/claim` в новой сессии добавляет строку в описание #80, чужие строки не пропадают.
 - Просьба «слей PR #N» вызывает запрос подтверждения в приложении (если в режиме Auto запроса нет —
   записать сюда и заменить правило на хук `PreToolUse`).
+- Actions → Nightly smoke → Run workflow: в #134 появляется комментарий с таблицей сайтов; при вылете в логе
+  шага «Open the sites» есть расшифрованный стек.
+- «Почему упал CI в PR #N?» — сессия вызывает агента `ci-log-reader`, а не читает лог сама.
