@@ -140,11 +140,12 @@ fun CompactTabGrid(
         columnCount = layout.columnCount,
         startsAtBottom = startsAtBottom,
     )
+    // Not on every count change: closing a tab further down must not jump back to the selected one.
     LaunchedEffect(
         visible,
         initialTabId,
         selectedTabId,
-        tabs.size,
+        tabs.isEmpty(),
         startsAtBottom,
         layout.columnCount,
     ) {

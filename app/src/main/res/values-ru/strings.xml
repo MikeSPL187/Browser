@@ -107,6 +107,12 @@
     <string name="action_pin_tab">Закрепить вкладку</string>
     <string name="action_remove_pin">Открепить</string>
     <string name="action_close_all_tabs">Закрыть все вкладки</string>
+    <plurals name="close_all_tabs_title">
+        <item quantity="one">Закрыть %1$d вкладку?</item>
+        <item quantity="few">Закрыть %1$d вкладки?</item>
+        <item quantity="many">Закрыть %1$d вкладок?</item>
+        <item quantity="other">Закрыть %1$d вкладки?</item>
+    </plurals>
     <string name="close_all_tabs_pinned_supporting_text">Закреплённые вкладки останутся открытыми</string>
     <string name="candy_trail_title">Маршрут</string>
     <string name="action_open_candy_trail">Открыть маршрут</string>
