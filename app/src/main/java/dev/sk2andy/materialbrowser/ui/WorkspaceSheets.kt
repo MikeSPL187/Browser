@@ -538,7 +538,7 @@ private fun WorkspaceNameField(
     val focusManager = LocalFocusManager.current
     OutlinedTextField(
         value = name,
-        onValueChange = { value -> onNameChange(value.take(WorkspaceNameRules.MAX_LENGTH)) },
+        onValueChange = { value -> onNameChange(WorkspaceNameRules.cap(value)) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = VolaWorkspaceSheet.sectionGap)
