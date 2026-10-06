@@ -18,7 +18,8 @@ internal data class FindInPageSession(
  * the page to search and answers through [Host] whether that page is still the one on screen.
  *
  * When the engine finds the query but has not counted the matches, it asks again a little later
- * (see [FindInPageRules.withResult]) instead of showing "0/0".
+ * (see [FindInPageRules.withResult]) instead of showing "0/0". Only the answer to the latest
+ * request to the engine is applied.
  */
 class FindInPageController internal constructor(
     private val host: Host,
@@ -36,6 +37,12 @@ class FindInPageController internal constructor(
     private var session: FindInPageSession? = null
     private var nextSessionId = 0L
     private var pendingRecount: Runnable? = null
+
+    /**
+     * The latest request to the engine. Engines may answer out of order, so only the answer to this
+     * request counts: an older one carries a previous query, options or step.
+     */
+    private var requestSeq = 0L
 
     /** The engine session being searched, if any. */
     internal val engineSession: BrowserEngineFindPort?
@@ -67,7 +74,7 @@ class FindInPageController internal constructor(
         val current = state?.takeIf { it.tabId == session.tabId } ?: return
         val updated = FindInPageRules.withQuery(current, query)
         if (updated === current) return
-        cancelRecount()
+        dropRequests()
         state = updated
         if (query.isEmpty()) {
             session.engineSession.clearFindInPage()
@@ -80,7 +87,7 @@ class FindInPageController internal constructor(
         val session = session ?: return false
         val current = state ?: return false
         if (!FindInPageRules.canNavigate(current)) return false
-        cancelRecount()
+        dropRequests()
         search(session, current.query, forward, recountsLeft = FindInPageRules.MAX_RECOUNTS)
         return true
     }
@@ -90,6 +97,7 @@ class FindInPageController internal constructor(
         val session = session ?: return
         val current = state?.takeIf { it.tabId == session.tabId } ?: return
         if (current.options == options) return
+        dropRequests()
         session.engineSession.setFindInPageOptions(options)
         val query = current.query
         state = FindInPageRules.withQuery(current.copy(options = options), query = "")
@@ -116,7 +124,7 @@ class FindInPageController internal constructor(
     }
 
     fun close() {
-        cancelRecount()
+        dropRequests()
         val closing = session
         session = null
         state = null
@@ -130,15 +138,18 @@ class FindInPageController internal constructor(
         forward: Boolean,
         recountsLeft: Int,
     ) {
+        val request = ++requestSeq
         session.engineSession.findInPage(query = query, forward = forward) { result ->
             val current = state
             if (
                 result == null ||
                 current == null ||
+                request != requestSeq ||
                 !isSearching(session, query)
             ) {
                 return@findInPage
             }
+            cancelRecount()
             val updated = FindInPageRules.withResult(
                 state = current,
                 activeMatchOrdinal = result.activeMatchOrdinal,
@@ -163,13 +174,22 @@ class FindInPageController internal constructor(
         val recount = Runnable {
             pendingRecount = null
             if (!isSearching(session, query)) return@Runnable
+            val request = ++requestSeq
             session.engineSession.findInPage(query = query, forward = false) { back ->
-                if (back == null || !isSearching(session, query)) return@findInPage
+                if (back == null || request != requestSeq || !isSearching(session, query)) {
+                    return@findInPage
+                }
                 search(session, query, forward = true, recountsLeft = recountsLeft)
             }
         }
         pendingRecount = recount
         postDelayed(recount, FindInPageRules.RECOUNT_DELAY_MILLIS)
+    }
+
+    /** Forgets the pending recount and every request still waiting for the engine. */
+    private fun dropRequests() {
+        cancelRecount()
+        requestSeq++
     }
 
     private fun cancelRecount() {

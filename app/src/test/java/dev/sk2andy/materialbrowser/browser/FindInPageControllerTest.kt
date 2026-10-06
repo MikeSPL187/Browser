@@ -139,8 +139,70 @@ class FindInPageControllerTest {
         assertEquals(1, engine.requests.size)
     }
 
+    @Test
+    fun `an answer to an older request does not replace the latest one`() {
+        val engine = DeferredFindPort()
+        val scheduled = mutableListOf<Runnable>()
+        val controller = controller(engine, scheduled)
+
+        controller.updateQuery("a")
+        controller.updateQuery("ab")
+        controller.updateQuery("a")
+        engine.complete(2, counted.copy(matchCount = 4))
+        engine.complete(0, uncounted)
+
+        assertEquals(4, controller.state!!.matchCount)
+        assertTrue(controller.state!!.isDoneCounting)
+        assertTrue(scheduled.isEmpty())
+    }
+
+    @Test
+    fun `an answer searched with the previous options is dropped`() {
+        val engine = DeferredFindPort()
+        val controller = controller(engine, mutableListOf())
+
+        controller.updateQuery("Alpha")
+        controller.updateOptions(FindInPageOptions(matchCase = true))
+        engine.complete(1, counted.copy(matchCount = 1))
+        engine.complete(0, counted.copy(matchCount = 7))
+
+        assertEquals(1, controller.state!!.matchCount)
+        assertTrue(controller.state!!.options.matchCase)
+    }
+
+    @Test
+    fun `steps answered out of order keep the latest match`() {
+        val engine = DeferredFindPort()
+        val controller = controller(engine, mutableListOf())
+        controller.updateQuery("Zen")
+        engine.complete(0, counted)
+
+        controller.findNext(forward = true)
+        controller.findNext(forward = true)
+        engine.complete(2, counted.copy(activeMatchOrdinal = 2))
+        engine.complete(1, counted.copy(activeMatchOrdinal = 1))
+
+        assertEquals(2, controller.state!!.activeMatchOrdinal)
+    }
+
+    @Test
+    fun `a counted answer cancels the recount an earlier answer scheduled`() {
+        val engine = DeferredFindPort()
+        val scheduled = mutableListOf<Runnable>()
+        val removed = mutableListOf<Runnable>()
+        val controller = controller(engine, scheduled, removed)
+
+        controller.updateQuery("Zen")
+        engine.complete(0, uncounted)
+        engine.complete(0, counted)
+
+        assertEquals(scheduled, removed)
+        assertEquals(541, controller.state!!.matchCount)
+        assertTrue(controller.state!!.isDoneCounting)
+    }
+
     private fun controller(
-        engine: FakeFindPort,
+        engine: BrowserEngineFindPort,
         scheduled: MutableList<Runnable>,
         removed: MutableList<Runnable> = mutableListOf(),
     ) = FindInPageController(
