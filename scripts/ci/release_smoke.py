@@ -31,13 +31,14 @@ SITES = (
     ("VK", "https://vk.com/"),
     ("Почта Mail", "https://account.mail.ru/login"),
     ("YouTube", "https://m.youtube.com/"),
-    ("YouTube: видео", "https://www.youtube.com/watch?v=jNQXAC9IVRw"),
     ("Сбербанк Онлайн", "https://online.sberbank.ru/"),
     ("Т-Банк", "https://www.tbank.ru/login/"),
     ("ВТБ Онлайн", "https://online.vtb.ru/"),
     ("Госуслуги", "https://www.gosuslugi.ru/"),
     ("Яндекс", "https://ya.ru/"),
     ("Википедия", "https://ru.wikipedia.org/"),
+    # Last: video on the emulator's software GPU is the heaviest page and has stalled the emulator.
+    ("YouTube: видео", "https://www.youtube.com/watch?v=jNQXAC9IVRw"),
 )
 
 
@@ -96,6 +97,21 @@ def newest_tombstone(since):
         if name not in since and not name.endswith(".pb"):
             return adb("shell", "cat", f"/data/tombstones/{name}")[:20000]
     return ""
+
+
+def stuck_diagnostics():
+    """What the emulator was doing when adb stopped answering, for the job log; each probe may hang too."""
+    for title, command in (
+        ("memory", ["shell", "cat", "/proc/meminfo"]),
+        ("load", ["shell", "top", "-b", "-n", "1", "-m", "15"]),
+        ("logcat (last 150 lines)", ["logcat", "-d", "-t", "150"]),
+    ):
+        print(f"::group::stuck emulator: {title}", flush=True)
+        try:
+            print(adb(*command, timeout=30)[:20000], flush=True)
+        except EmulatorStuck as error:
+            print(error, flush=True)
+        print("::endgroup::", flush=True)
 
 
 def check_site(package, name, url, settle):
@@ -172,6 +188,7 @@ def main(argv):
         except EmulatorStuck as error:  # the sites checked so far still make the report
             aborted = f"{name}: эмулятор перестал отвечать ({error})"
             print(f"ABORT {aborted}", flush=True)
+            stuck_diagnostics()
             break
         except Exception as error:
             aborted = f"{name}: {type(error).__name__}: {error}"

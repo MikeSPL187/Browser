@@ -67,8 +67,9 @@ jobs:
 
       - name: Start emulator
         run: |
+          # 4 GB and every runner core: a release Gecko playing video on a software GPU is heavy.
           nohup "$ANDROID_HOME/emulator/emulator" -avd vola_smoke -port 5554 -no-window -noaudio \
-            -no-boot-anim -no-snapshot -gpu swiftshader_indirect \
+            -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores "$(nproc)" \
             > "$RUNNER_TEMP/emulator.log" 2>&1 &
 
       - name: Build the release APK
@@ -103,6 +104,11 @@ jobs:
           fi
           printf '\n[Лог прогона](%s)\n' "$RUN_URL" >> "$report"
           gh issue comment "$SMOKE_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$report"
+
+      # Artifacts are not readable from a cloud session; the emulator's own log goes to the job log.
+      - name: Show the emulator log
+        if: ${{ failure() }}
+        run: tail -n 200 "$RUNNER_TEMP/emulator.log" || true
 
       - name: Upload the logs
         if: ${{ always() }}
