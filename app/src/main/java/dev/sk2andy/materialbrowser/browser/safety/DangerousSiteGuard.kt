@@ -48,14 +48,18 @@ class DangerousSiteGuard(
      * [shownPageUrl] is the page the engine shows in the tab now, null without one.
      */
     fun intercept(tabId: String, url: String, shownPageUrl: String? = null): Boolean {
-        val site = dangerousSite(url)?.let { site ->
+        val site = check(url)?.let { site ->
             site.copy(shownPageUrl = shownPageUrl?.takeIf { page -> isSafePage(page, site.host) })
         }
         if (site == null) blocked.remove(tabId) else blocked[tabId] = site
         return site != null
     }
 
-    private fun dangerousSite(url: String): BlockedSite? {
+    /**
+     * What would stop [url], without remembering it for any tab: Glance asks before it loads and
+     * shows its own warning, with no way through.
+     */
+    fun check(url: String): BlockedSite? {
         val host = readableHost(url)
         val key = host?.removePrefix("www.") ?: url
         if (key in allowedHosts) return null

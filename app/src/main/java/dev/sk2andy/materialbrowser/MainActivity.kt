@@ -64,6 +64,7 @@ import dev.sk2andy.materialbrowser.browser.ProfileBiometricAuthenticator
 import dev.sk2andy.materialbrowser.browser.PrivateTabsNotifier
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesPresentationRules
 import dev.sk2andy.materialbrowser.browser.StartupPresentationRules
+import dev.sk2andy.materialbrowser.browser.allowsHardwareInput
 import dev.sk2andy.materialbrowser.browser.cast.CastSessionController
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
@@ -905,8 +906,9 @@ class MainActivity : AppCompatActivity() {
             .takeIf { keyEvent -> keyEvent.action == KeyEvent.ACTION_DOWN }
             ?.toBrowserHardwareKeyStroke()
             ?.let(BrowserHardwareInputRules::keyboardAction)
-        if (action != null && isBrowserHardwareInputAvailable()) {
+        if (action != null && isBrowserHardwareInputAvailable(action)) {
             consumedHardwareShortcutKeys += event.keyCode
+            if (browserController.contentActions.isLinkPeekVisible) browserController.contentActions.dismiss()
             performBrowserHardwareInput(action)
             return true
         }
@@ -1552,13 +1554,14 @@ class MainActivity : AppCompatActivity() {
         if (!duplicate) performBrowserHardwareInput(action)
     }
 
-    private fun isBrowserHardwareInputAvailable(): Boolean =
+    private fun isBrowserHardwareInputAvailable(action: BrowserHardwareInputAction? = null): Boolean =
         ::browserController.isInitialized &&
             !onboardingVisible &&
             !releaseNotesVisible &&
             !firefoxExtensionsVisible &&
             !appDataExportWarningVisible &&
-            pendingAppDataImport == null
+            pendingAppDataImport == null &&
+            browserController.contentActions.allowsHardwareInput(action)
 
     private fun requestBrowserEngineFocusForHardwareInput(): Boolean =
         isBrowserHardwareInputAvailable() && browserController.requestSelectedBrowserEngineFocus()

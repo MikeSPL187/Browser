@@ -1,6 +1,9 @@
 package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
+import dev.sk2andy.materialbrowser.browser.ProfileProtection
+import dev.sk2andy.materialbrowser.browser.ProfileProtectionRules
 
 /** What the workspace sheets show (boards W-WorkspaceSheet, W-WorkspaceSettings). */
 internal object WorkspaceSheetRules {
@@ -24,4 +27,15 @@ internal object WorkspaceSheetRules {
 
     /** A new workspace starts with the first icon chosen, so «Create» works at once. */
     fun defaultIcon(icons: List<String>): String? = icons.firstOrNull()
+
+    /** The protection draft of «New workspace» as saved instance state: «trigger:minutes». */
+    fun savedProtectionDraft(protection: ProfileProtection?): String? =
+        protection?.let { "${it.lockTrigger.wireValue}:${it.cooldownMinutes}" }
+
+    fun restoredProtectionDraft(saved: String?): ProfileProtection? {
+        val parts = saved?.split(':', limit = 2)?.takeIf { it.size == 2 } ?: return null
+        val trigger = ProfileLockTrigger.fromWireValue(parts[0]) ?: return null
+        val minutes = parts[1].toIntOrNull() ?: ProfileProtectionRules.DEFAULT_COOLDOWN_MINUTES
+        return ProfileProtectionRules.normalize(ProfileProtection(trigger, minutes))
+    }
 }

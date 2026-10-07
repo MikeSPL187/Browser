@@ -108,4 +108,21 @@ class DangerousSiteGuardTest {
         assertTrue(listed.intercept("tab", "https://bank-exarnple.ru/"))
         assertEquals("bank.example.ru", listed.blocked["tab"]?.imitatedHost)
     }
+
+    @Test
+    fun `check names the danger without remembering it for any tab`() {
+        assertEquals(
+            BlockedSite("https://paypa1.com/login", "paypa1.com", "paypal.com"),
+            guard.check("https://paypa1.com/login"),
+        )
+        assertNull(guard.check("https://en.wikipedia.org/"))
+        assertTrue(guard.blocked.isEmpty())
+    }
+
+    @Test
+    fun `check follows open anyway like the tab does`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+        guard.allow("tab")
+        assertNull(guard.check("https://paypa1.com/other"))
+    }
 }
