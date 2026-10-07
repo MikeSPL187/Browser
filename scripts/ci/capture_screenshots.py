@@ -302,9 +302,11 @@ def dismiss_first_run():
             # Q23b: the welcome (W-Welcome), setup (W-Setup), then the first lesson step with its
             # pretend address bar, which is skipped.
             shot("first-run-welcome")
+            save_ui("first-run-welcome")
             tap("Get started", "Начать")
             time.sleep(2)
             shot("first-run-setup")
+            save_ui("first-run-setup")
             tap("Next", "Далее")
             time.sleep(2)
             shot("first-run-lesson")
