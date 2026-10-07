@@ -1,13 +1,23 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyCheck
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyFinding
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
+import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 
 internal data class BrowserEngineDownloadResponse(
     val url: String,
     val contentDisposition: String?,
     val mimeType: String?,
+)
+
+/** A file that only the engine can read (a blob or data URL), as it will be saved. */
+internal data class BrowserEngineLocalDownload(
+    val fileName: String,
+    val mimeType: String,
+    val findings: List<DownloadSafetyFinding>,
 )
 
 internal object BrowserEngineDownloadRules {
@@ -20,6 +30,22 @@ internal object BrowserEngineDownloadRules {
         mimeType = response.mimeType,
         referrer = referrer,
     )
+
+    /**
+     * The name and type a response without an HTTP request is saved under, the same way the
+     * engine's transfer names it, and what the file check finds in them. Such a file never leaves
+     * the engine, but a program in it deserves the same question as one from the network.
+     */
+    fun localDownload(response: BrowserEngineDownloadResponse): BrowserEngineLocalDownload {
+        val candidateMimeType = SafeDownloadValues.mimeType(response.mimeType, response.url)
+        val fileName = SafeDownloadValues.fileName(response.url, response.contentDisposition, candidateMimeType)
+        val mimeType = SafeDownloadValues.finalMimeType(fileName, candidateMimeType)
+        return BrowserEngineLocalDownload(
+            fileName = fileName,
+            mimeType = mimeType,
+            findings = DownloadSafetyCheck.findings(response.url, fileName, mimeType),
+        )
+    }
 }
 
 internal enum class BrowserEngineFileCapture {

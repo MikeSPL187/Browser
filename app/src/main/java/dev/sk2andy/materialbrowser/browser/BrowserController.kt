@@ -10819,8 +10819,12 @@ class BrowserController(
         }
         val request = BrowserEngineDownloadRules.request(response.metadata, referrerFor(tabId))
         if (request == null) {
-            runCatching(requestDownloadNotificationPermission)
-            startBuiltInDownloadResponse(response)
+            // Blob and data files stay in the engine (never an external manager) but get the file check.
+            val local = BrowserEngineDownloadRules.localDownload(response.metadata)
+            val start = { runCatching(requestDownloadNotificationPermission); startBuiltInDownloadResponse(response) }
+            val save = { if (isSourceCurrent()) start() else response.close() }
+            val sourceHost = DownloadSafetyGate.hostOf(sourceUrl)
+            if (!downloadSafety.hold(local.fileName, sourceHost, local.findings, save, response::close)) start()
             return
         }
         routeDownload(

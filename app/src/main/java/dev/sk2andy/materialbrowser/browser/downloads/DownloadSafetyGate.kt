@@ -25,12 +25,29 @@ class DownloadSafetyGate {
     private val queue = ArrayDeque<PendingDownloadSafety>()
 
     /** True when [request] now waits for the user: [save] runs on «Download», [cancel] otherwise. */
-    fun hold(request: BrowserDownloadRequest, save: () -> Unit, cancel: () -> Unit): Boolean {
-        val findings = DownloadSafetyCheck.findings(request.url, request.fileName, request.mimeType)
+    fun hold(request: BrowserDownloadRequest, save: () -> Unit, cancel: () -> Unit): Boolean = hold(
+        fileName = request.fileName,
+        sourceHost = hostOf(request.url),
+        findings = DownloadSafetyCheck.findings(request.url, request.fileName, request.mimeType),
+        save = save,
+        cancel = cancel,
+    )
+
+    /**
+     * As [hold] for a file already checked by its caller, such as one that stays inside the engine
+     * (a blob or data URL) and is named by the page it came from.
+     */
+    fun hold(
+        fileName: String,
+        sourceHost: String?,
+        findings: List<DownloadSafetyFinding>,
+        save: () -> Unit,
+        cancel: () -> Unit,
+    ): Boolean {
         if (findings.isEmpty()) return false
         val item = PendingDownloadSafety(
-            fileName = request.fileName,
-            sourceHost = runCatching { URI(request.url).host }.getOrNull()?.removePrefix("www."),
+            fileName = fileName,
+            sourceHost = sourceHost,
             findings = findings,
             onSave = save,
             onCancel = cancel,
@@ -57,5 +74,11 @@ class DownloadSafetyGate {
         pending = null
         queue.clear()
         items.forEach { it.onCancel() }
+    }
+
+    companion object {
+        /** The host a sheet names for [url], without `www.`; null when it has none. */
+        fun hostOf(url: String?): String? =
+            runCatching { URI(url ?: return null).host }.getOrNull()?.removePrefix("www.")
     }
 }
