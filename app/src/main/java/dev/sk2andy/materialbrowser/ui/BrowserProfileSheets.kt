@@ -17,7 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,10 +56,10 @@ internal fun ProfileProtectionDialog(
     onSave: (ProfileProtection) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var trigger by remember(current) {
+    var trigger by rememberSaveable(current) {
         mutableStateOf(current?.lockTrigger ?: ProfileLockTrigger.AppBackgrounded)
     }
-    var cooldownInput by remember(current) {
+    var cooldownInput by rememberSaveable(current) {
         mutableStateOf(
             (current?.cooldownMinutes ?: ProfileProtectionRules.DEFAULT_COOLDOWN_MINUTES)
                 .toString(),

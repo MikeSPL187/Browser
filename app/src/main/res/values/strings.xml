@@ -160,6 +160,8 @@
     <string name="workspace_sheet_delete">Delete workspace</string>
     <string name="workspace_delete_confirm_title">Delete «%1$s»?</string>
     <string name="workspace_delete_confirm_message">Its tabs stay in another workspace. Its history and, with separate storage, its cookies and sign-ins are deleted.</string>
+    <string name="workspace_delete_blocked_by_sync">This workspace is linked to Sync and can’t be deleted here</string>
+    <string name="workspace_delete_failed">Couldn’t delete the workspace — try again</string>
     <string name="workspace_name_label">Name</string>
     <string name="workspace_accent_label">Color</string>
     <string name="workspace_accent_violet">Violet</string>
@@ -498,6 +500,12 @@
     <string name="glance_not_in_history">Not added to history until you open it</string>
     <string name="glance_private_note">Private preview: nothing from it is saved</string>
     <string name="glance_pull_to_open">Pull up to open in a tab</string>
+    <string name="glance_failed_title">Couldn’t load the preview</string>
+    <string name="glance_failed_message">%1$s didn’t open. Check the connection and try again.</string>
+    <string name="glance_crashed_title">The preview stopped</string>
+    <string name="glance_crashed_message">The page stopped working. Try again to load it afresh.</string>
+    <string name="glance_https_only_title">No secure connection</string>
+    <string name="glance_https_only_message">%1$s doesn’t open over HTTPS. Open it in a tab to decide what to do.</string>
     <string name="action_open_in_new_tab">Open in New Tab</string>
     <string name="action_open_in_new_tab_and_switch">Open in New Tab and Switch</string>
     <string name="action_open_link_in_private_tab">Open link in private tab</string>

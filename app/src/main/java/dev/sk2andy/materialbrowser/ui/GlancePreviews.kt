@@ -3,19 +3,27 @@ package dev.sk2andy.materialbrowser.ui
 import android.view.View
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
+import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
+import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 
 @Composable
-private fun GlancePreview(isPrivate: Boolean) {
+private fun GlancePreview(
+    isPrivate: Boolean,
+    url: String = "https://ice-forecast.example/south",
+    status: LinkPeekPreviewStatus = LinkPeekPreviewStatus.Loaded,
+) {
     val context = LocalContext.current
     MaterialBrowserTheme {
         LinkPeekOverlay(
-            url = "https://ice-forecast.example/south",
+            url = url,
             progress = 0f,
             armed = false,
-            createPreviewView = { onProgressChanged, _ ->
-                onProgressChanged(100)
+            createPreviewView = { callbacks ->
+                callbacks.onProgressChanged(100)
+                callbacks.onStatusChanged(status)
                 View(context)
             },
             releasePreviewView = {},
@@ -38,4 +46,34 @@ private fun GlanceCardPreview() {
 @Composable
 private fun GlancePrivatePreview() {
     GlancePreview(isPrivate = true)
+}
+
+/** A lookalike link: nothing loads, the card warns and offers only a way back. */
+@VolaPreviews
+@Composable
+private fun GlanceBlockedPreview() {
+    GlancePreview(
+        isPrivate = false,
+        url = "https://paypa1.com/login",
+        status = LinkPeekPreviewStatus.Blocked(
+            BlockedSite(url = "https://paypa1.com/login", host = "paypa1.com", imitatedHost = "paypal.com"),
+        ),
+    )
+}
+
+/** The site isn't there: what went wrong, Retry and Close in place of the page. */
+@VolaPreviews
+@Composable
+private fun GlanceFailedPreview() {
+    GlancePreview(
+        isPrivate = false,
+        status = LinkPeekPreviewStatus.Failed(BrowserEngineFailureKind.UnknownHost),
+    )
+}
+
+/** The preview's renderer stopped: Retry builds a fresh one. */
+@VolaPreviews
+@Composable
+private fun GlanceCrashedPreview() {
+    GlancePreview(isPrivate = false, status = LinkPeekPreviewStatus.Crashed)
 }
