@@ -33,6 +33,13 @@ internal object FirstRunRules {
         FirstRunStage.Gestures -> FirstRunStage.Setup.takeIf { showIntro }
     }
 
+    /**
+     * How many steps the first run counts: the welcome, setup and, while it is switched on, the
+     * gesture lesson. The welcome counts with the switch as it stands, on at first, so the
+     * welcome and setup always agree.
+     */
+    fun stepCount(showGestures: Boolean): Int = if (showGestures) 3 else 2
+
     /** The overlay catches «Back» only on setup: the welcome lets it through, the lesson has its own. */
     fun handlesBack(stage: FirstRunStage): Boolean = stage == FirstRunStage.Setup
 }
@@ -57,6 +64,7 @@ internal fun FirstRunOverlay(
     AnimatedContent(targetState = stage, label = "first_run") { current ->
         when (current) {
             FirstRunStage.Welcome -> FirstRunWelcomeScreen(
+                stepCount = FirstRunRules.stepCount(showGestures),
                 onStart = { stage = FirstRunStage.Setup },
                 // «Move to Vola» opens over the welcome, which waits for the user to come back.
                 onImport = { context.startActivity(PasswordsActivityContract.importIntent(context)) },

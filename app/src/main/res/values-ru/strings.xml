@@ -9,7 +9,12 @@
     <string name="widget_open_profile_tab">Открыть новую вкладку в пространстве %1$s</string>
     <string name="onboarding_welcome_title">Знакомьтесь, Vola</string>
     <string name="onboarding_welcome_body">Браузер, которым управляют жестами: вкладки, маршруты и настройки приватности всегда под рукой.</string>
-    <string name="onboarding_welcome_card_title">Три жеста. Один плавный сценарий.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d жест. Один плавный сценарий.</item>
+        <item quantity="few">%1$d жеста. Один плавный сценарий.</item>
+        <item quantity="many">%1$d жестов. Один плавный сценарий.</item>
+        <item quantity="other">%1$d жеста. Один плавный сценарий.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Изучить жесты</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_completion_title">Всё готово!</string>
@@ -17,7 +22,7 @@
     <string name="onboarding_completion_cta">Начать</string>
     <string name="onboarding_follow_pointer">Следуйте пальцем за точкой касания</string>
     <string name="onboarding_title">Жесты Vola</string>
-    <string name="onboarding_progress">%1$d из %2$d</string>
+    <string name="onboarding_progress">Жест %1$d из %2$d</string>
     <string name="onboarding_try_here">Попробуйте жест на карточке</string>
     <string name="onboarding_required_hint">Выполните жест или нажмите «Пропустить».</string>
     <string name="onboarding_accessibility_complete_action">Отметить жест как выполненный</string>

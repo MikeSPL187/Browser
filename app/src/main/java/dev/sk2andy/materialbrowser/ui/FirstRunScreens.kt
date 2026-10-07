@@ -81,15 +81,14 @@ internal data class FirstRunSetup(
     val isDefaultBrowser: Boolean,
 )
 
-/** How many steps the first run has: welcome, setup and, when chosen, the gesture lesson. */
-private const val FIRST_RUN_STEPS = 3
-
 /**
  * Board W-Welcome: three pages of three spaces, what Vola is in one sentence, «Get started», and a
  * way to bring passwords and bookmarks over first.
  */
 @Composable
 internal fun FirstRunWelcomeScreen(
+    /** Steps in the whole first run ([FirstRunRules.stepCount]). */
+    stepCount: Int,
     onStart: () -> Unit,
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
@@ -116,7 +115,7 @@ internal fun FirstRunWelcomeScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                StepDots(current = 0)
+                StepDots(current = 0, count = stepCount)
             }
             Button(
                 onClick = onStart,
@@ -169,7 +168,7 @@ internal fun FirstRunSetupScreen(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.sectionGap),
             ) {
-                StepProgress(current = 1)
+                StepProgress(current = 1, count = FirstRunRules.stepCount(setup.showGestures))
                 Text(
                     text = stringResource(R.string.first_run_setup_title),
                     modifier = Modifier.semantics { heading() },
@@ -363,13 +362,13 @@ private fun HeroPage(accent: WorkspaceAccent, offset: Dp?, rotation: Float) {
 }
 
 @Composable
-private fun StepDots(current: Int) {
-    val description = stringResource(R.string.first_run_step, current + 1, FIRST_RUN_STEPS)
+private fun StepDots(current: Int, count: Int) {
+    val description = stringResource(R.string.first_run_step, current + 1, count)
     Row(
         modifier = Modifier.semantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.dotGap),
     ) {
-        repeat(FIRST_RUN_STEPS) { index ->
+        repeat(count) { index ->
             Box(
                 modifier = Modifier
                     .size(
@@ -386,13 +385,13 @@ private fun StepDots(current: Int) {
 }
 
 @Composable
-private fun StepProgress(current: Int) {
-    val description = stringResource(R.string.first_run_step, current + 1, FIRST_RUN_STEPS)
+private fun StepProgress(current: Int, count: Int) {
+    val description = stringResource(R.string.first_run_step, current + 1, count)
     Row(
         modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.progressGap),
     ) {
-        repeat(FIRST_RUN_STEPS) { index ->
+        repeat(count) { index ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -516,7 +515,7 @@ private fun SwitchRow(
 @Composable
 private fun FirstRunWelcomePreview() {
     MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
-        FirstRunWelcomeScreen(onStart = {}, onImport = {})
+        FirstRunWelcomeScreen(stepCount = FirstRunRules.stepCount(showGestures = true), onStart = {}, onImport = {})
     }
 }
 

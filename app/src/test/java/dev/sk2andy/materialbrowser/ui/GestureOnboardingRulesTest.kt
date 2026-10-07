@@ -66,6 +66,15 @@ class GestureOnboardingRulesTest {
     }
 
     @Test
+    fun `a tab strip leaves the tab switch out of the lesson`() {
+        assertEquals(GestureOnboardingStep.entries, GestureOnboardingRules.steps(usesTabStrip = false))
+        assertEquals(
+            listOf(GestureOnboardingStep.OpenTabOverview, GestureOnboardingStep.CloseTab),
+            GestureOnboardingRules.steps(usesTabStrip = true),
+        )
+    }
+
+    @Test
     fun `the practice card takes the room left between its smallest and largest size`() {
         assertEquals(300, GestureOnboardingRules.practiceHeight(available = 300, min = 240, max = 390))
         assertEquals(390, GestureOnboardingRules.practiceHeight(available = 900, min = 240, max = 390))

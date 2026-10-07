@@ -89,6 +89,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -125,6 +126,13 @@ internal enum class GestureOnboardingStep {
 }
 
 internal object GestureOnboardingRules {
+    /** What the lesson teaches; beside a tab strip tabs are switched there, not on the address bar. */
+    fun steps(usesTabStrip: Boolean): List<GestureOnboardingStep> = if (usesTabStrip) {
+        GestureOnboardingStep.entries.filterNot { it == GestureOnboardingStep.SwitchTabs }
+    } else {
+        GestureOnboardingStep.entries
+    }
+
     fun isCompleted(
         step: GestureOnboardingStep,
         dragX: Float,
@@ -161,11 +169,7 @@ internal fun GestureOnboardingScreen(
     val wideTabStripEnabled = AddressBarWideLayoutRules.usesTabStrip(
         LocalConfiguration.current.screenWidthDp.toFloat(),
     )
-    val steps = if (wideTabStripEnabled) {
-        GestureOnboardingStep.entries.filterNot { it == GestureOnboardingStep.SwitchTabs }
-    } else {
-        GestureOnboardingStep.entries
-    }
+    val steps = GestureOnboardingRules.steps(usesTabStrip = wideTabStripEnabled)
     var welcomeVisible by rememberSaveable { mutableStateOf(showWelcome) }
     var celebrationVisible by rememberSaveable { mutableStateOf(false) }
     var stepIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -302,6 +306,7 @@ internal fun GestureOnboardingScreen(
     ) {
         if (welcomeVisible) {
             GestureOnboardingWelcome(
+                steps = steps,
                 onStart = { welcomeVisible = false },
                 onSkip = onCompleted,
             )
@@ -513,6 +518,8 @@ private fun LessonHints(step: GestureOnboardingStep) {
 
 @Composable
 private fun GestureOnboardingWelcome(
+    /** The steps this screen will teach; the tab switch is left out beside a tab strip. */
+    steps: List<GestureOnboardingStep>,
     onStart: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
@@ -556,12 +563,12 @@ private fun GestureOnboardingWelcome(
         ) {
             Column(modifier = Modifier.padding(VolaGestureLessonTokens.welcomeCardPadding)) {
                 Text(
-                    text = stringResource(R.string.onboarding_welcome_card_title),
+                    text = pluralStringResource(R.plurals.onboarding_welcome_card_title, steps.size, steps.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(VolaGestureLessonTokens.welcomeCardTitleGap))
-                GestureOnboardingStep.entries.forEach { step -> WelcomeGestureRow(step) }
+                steps.forEach { step -> WelcomeGestureRow(step) }
             }
         }
         Spacer(Modifier.height(VolaGestureLessonTokens.welcomeSectionGap))

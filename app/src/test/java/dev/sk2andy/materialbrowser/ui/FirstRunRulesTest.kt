@@ -20,6 +20,12 @@ class FirstRunRulesTest {
     }
 
     @Test
+    fun `the first run counts the lesson only while it is switched on`() {
+        assertEquals(3, FirstRunRules.stepCount(showGestures = true))
+        assertEquals(2, FirstRunRules.stepCount(showGestures = false))
+    }
+
+    @Test
     fun `back from setup returns to the welcome and from the lesson to setup`() {
         assertEquals(FirstRunStage.Welcome, FirstRunRules.back(FirstRunStage.Setup, showIntro = true))
         assertEquals(FirstRunStage.Setup, FirstRunRules.back(FirstRunStage.Gestures, showIntro = true))
