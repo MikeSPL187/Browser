@@ -191,6 +191,13 @@ internal object FullscreenVideoRules {
             height >= targetHeight - safeTolerance
     }
 
+    /**
+     * The mini player sits at the layout End and its horizontal offset is layout-direction aware,
+     * so in RTL a positive logical x moves it left. Map the physical drag to that logical axis so
+     * the player follows the finger in both directions.
+     */
+    fun miniPlayerDragDeltaX(dragX: Float, isRtl: Boolean): Float = if (isRtl) -dragX else dragX
+
     fun clampMiniPlayerOffset(
         proposedX: Float,
         proposedY: Float,

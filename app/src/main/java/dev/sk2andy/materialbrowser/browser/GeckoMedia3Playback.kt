@@ -206,7 +206,12 @@ internal class GeckoMediaSessionIdentityRegistry {
 internal object GeckoMediaPlaybackRules {
     private const val MAX_TITLE_LENGTH = 160
     private const val MAX_ORIGIN_LENGTH = 160
-    private const val MAX_MEDIA_DURATION_MILLIS = Long.MAX_VALUE / C.MICROS_PER_SECOND
+    private const val MICROS_PER_MILLI = 1_000L
+    private const val MAX_MEDIA_DURATION_MILLIS = Long.MAX_VALUE / MICROS_PER_MILLI
+
+    /** Media3 timelines take microseconds; snapshots carry milliseconds already bounded above. */
+    fun durationUs(durationMillis: Long?): Long =
+        durationMillis?.times(MICROS_PER_MILLI) ?: C.TIME_UNSET
 
     fun snapshot(
         state: BrowserMediaState,
@@ -461,7 +466,7 @@ internal open class GeckoMedia3Player(
             .setMediaId(MEDIA_ITEM_ID)
             .setMediaMetadata(metadata)
             .build()
-        val durationUs = durationMillis?.times(C.MICROS_PER_SECOND) ?: C.TIME_UNSET
+        val durationUs = GeckoMediaPlaybackRules.durationUs(durationMillis)
         val period = PeriodData.Builder(snapshot.owner)
             .setDurationUs(durationUs)
             .build()

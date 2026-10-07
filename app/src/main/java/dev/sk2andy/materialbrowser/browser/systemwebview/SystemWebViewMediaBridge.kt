@@ -67,8 +67,24 @@ internal object SystemWebViewMediaBridge {
               const token = '$token';
               let active = null;
               let lastTimeReport = 0;
-              const report = (media, force = false) => {
+              const inFullscreen = media => {
+                const element = document.fullscreenElement;
+                return !!element && (element === media || element.contains(media));
+              };
+              const isLive = media => media.isConnected && !media.ended &&
+                (!media.paused || inFullscreen(media));
+              // One media element owns the published state. Passive events of other media
+              // (metadata, pause, volume) must not replace a playing or fullscreen owner; only a
+              // fullscreen element, or a new play outside an owner's fullscreen, takes over.
+              const owns = (media, takeover) => {
+                if (media === active || !active || !isLive(active) || inFullscreen(media)) {
+                  return true;
+                }
+                return takeover && !inFullscreen(active);
+              };
+              const report = (media, force = false, takeover = false) => {
                 if (!(media instanceof HTMLMediaElement)) return;
+                if (!owns(media, takeover)) return;
                 const now = performance.now();
                 if (!force && now - lastTimeReport < 500) return;
                 lastTimeReport = now;
@@ -79,8 +95,7 @@ internal object SystemWebViewMediaBridge {
                   token,
                   active: !media.ended,
                   playing: !media.paused && !media.ended,
-                  fullscreen: document.fullscreenElement === media ||
-                    (document.fullscreenElement && document.fullscreenElement.contains(media)),
+                  fullscreen: inFullscreen(media),
                   title: document.title || '',
                   position: Number.isFinite(media.currentTime) ? media.currentTime : 0,
                   duration: Number.isFinite(media.duration) ? media.duration : null,
@@ -91,13 +106,24 @@ internal object SystemWebViewMediaBridge {
                   video: isVideo
                 }));
               };
-              for (const event of ['play', 'pause', 'ended', 'loadedmetadata', 'durationchange',
+              const fullscreenMedia = () => {
+                const element = document.fullscreenElement;
+                if (!element) return null;
+                if (element instanceof HTMLMediaElement) return element;
+                if (active && element.contains(active)) return active;
+                const candidates = Array.from(element.querySelectorAll('video, audio'));
+                return candidates.find(media => !media.paused && !media.ended) ||
+                  candidates[0] || null;
+              };
+              document.addEventListener('play', e => report(e.target, true, true), true);
+              for (const event of ['pause', 'ended', 'loadedmetadata', 'durationchange',
                                    'ratechange', 'volumechange']) {
                 document.addEventListener(event, e => report(e.target, true), true);
               }
               document.addEventListener('timeupdate', e => report(e.target), true);
               document.addEventListener('fullscreenchange', () => {
-                if (active) report(active, true);
+                const media = fullscreenMedia() || active;
+                if (media) report(media, true);
               }, true);
             })();
         """.trimIndent()

@@ -38,12 +38,14 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
@@ -171,6 +173,7 @@ private fun StableFullscreenVideoHost(
             .zIndex(FULLSCREEN_VIDEO_Z_INDEX),
     ) {
         val density = androidx.compose.ui.platform.LocalDensity.current
+        val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
         val miniPlayerWidth = (maxWidth - MINI_PLAYER_HORIZONTAL_MARGIN * 2)
             .coerceAtMost(MINI_PLAYER_MAX_WIDTH)
         var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -310,12 +313,16 @@ private fun StableFullscreenVideoHost(
                             modifier = Modifier
                                 .align(Alignment.TopStart)
                                 .padding(4.dp)
-                                .pointerInput(rootSize, playerSize) {
+                                .pointerInput(rootSize, playerSize, isRtl) {
                                     detectDragGestures { change, dragAmount ->
                                         change.consume()
                                         offset = clampedMiniPlayerOffset(
                                             offset = FullscreenVideoOffset(
-                                                x = offset.x + dragAmount.x,
+                                                x = offset.x +
+                                                    FullscreenVideoRules.miniPlayerDragDeltaX(
+                                                        dragX = dragAmount.x,
+                                                        isRtl = isRtl,
+                                                    ),
                                                 y = offset.y + dragAmount.y,
                                             ),
                                             rootSize = rootSize,

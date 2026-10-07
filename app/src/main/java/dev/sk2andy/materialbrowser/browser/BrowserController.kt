@@ -10117,16 +10117,23 @@ class BrowserController(
         val keepsPictureInPictureMedia = isInPictureInPictureMode ||
             isInPictureInPicture ||
             pictureInPictureTransitionPending
-        val keepsBackgroundMedia = media3Publication(
+        // A playing eligible publication keeps its Gecko session alive after Home or screen lock;
+        // only a PiP transition that actually started is bounded by the transition timeout.
+        val backgroundMediaTabId = media3Publication(
             traceSource = "BrowserController.onStop",
-        )?.snapshot?.isPlaying == true
+        )?.snapshot?.takeIf { snapshot -> snapshot.isPlaying }?.owner?.tabId
+        val keepsBackgroundMedia = backgroundMediaTabId != null
         if (usesGeckoEngine && !keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             browserEngineSessions[selectedTabId]?.setActive(false)
         }
         externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(false)
         if (!keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             stopPictureInPictureMedia()
-        } else if (!isInPictureInPictureMode && !isInPictureInPicture) {
+        } else if (
+            pictureInPictureTransitionPending &&
+            !isInPictureInPictureMode &&
+            !isInPictureInPicture
+        ) {
             val transitionGeneration = pictureInPictureTransitionGeneration
             mainHandler.postDelayed(
                 {
@@ -10146,12 +10153,10 @@ class BrowserController(
                 PICTURE_IN_PICTURE_TRANSITION_TIMEOUT_MILLIS,
             )
         }
-        if (
-            shouldCloseTabsWhenHidden &&
-            !keepsPictureInPictureMedia &&
-            !keepsBackgroundMedia
-        ) {
-            closeTabsOnBackground(protectedTabIds = protectedTabIds)
+        if (shouldCloseTabsWhenHidden && !keepsPictureInPictureMedia) {
+            closeTabsOnBackground(
+                protectedTabIds = protectedTabIds + setOfNotNull(backgroundMediaTabId),
+            )
         }
         if (pendingPermissionAccess?.awaitingRuntime != true) cancelPendingPermissionAccess()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
