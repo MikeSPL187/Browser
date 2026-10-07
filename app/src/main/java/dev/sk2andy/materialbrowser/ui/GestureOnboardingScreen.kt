@@ -138,6 +138,8 @@ internal object GestureOnboardingRules {
 internal fun GestureOnboardingScreen(
     onCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    /** «Back» in the lesson; on its own it skips, like the Skip button. */
+    onBack: () -> Unit = onCompleted,
     /** The lesson's own welcome page; the first run already said hello and skips it. */
     showWelcome: Boolean = true,
 ) {
@@ -183,7 +185,7 @@ internal fun GestureOnboardingScreen(
     val stepAccessibilityDescription = stepDescription(step)
     val completeActionLabel = stringResource(R.string.onboarding_accessibility_complete_action)
 
-    BackHandler(enabled = true) { }
+    BackHandler(onBack = onBack)
     LaunchedEffect(welcomeVisible, celebrationVisible, step) {
         if (!welcomeVisible) lessonScrollState.scrollTo(0)
     }
