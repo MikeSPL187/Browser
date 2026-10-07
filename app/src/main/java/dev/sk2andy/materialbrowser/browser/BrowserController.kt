@@ -6922,7 +6922,7 @@ class BrowserController(
     }
 
     fun openDefaultBrowserSettings() {
-        if (!DefaultBrowserRole.openSettings(activity)) {
+        if (!DefaultBrowserRole.request(activity)) {
             Toast.makeText(
                 activity,
                 activity.getString(R.string.toast_default_browser_selection_unavailable),

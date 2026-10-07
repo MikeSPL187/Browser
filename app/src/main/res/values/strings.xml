@@ -8,7 +8,10 @@
     <string name="widget_open_profile_tab">Open a new tab in workspace %1$s</string>
     <string name="onboarding_welcome_title">Meet Vola</string>
     <string name="onboarding_welcome_body">A gesture-first browser that keeps tabs, journeys and privacy controls close at hand.</string>
-    <string name="onboarding_welcome_card_title">Three gestures. One fluid workflow.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d gesture. One fluid workflow.</item>
+        <item quantity="other">%1$d gestures. One fluid workflow.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Learn the gestures</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_completion_title">You’re ready to go!</string>
@@ -16,9 +19,9 @@
     <string name="onboarding_completion_cta">Start browsing</string>
     <string name="onboarding_follow_pointer">Follow the touch point with your finger</string>
     <string name="onboarding_title">Learn Vola gestures</string>
-    <string name="onboarding_progress">%1$d of %2$d</string>
+    <string name="onboarding_progress">Gesture %1$d of %2$d</string>
     <string name="onboarding_try_here">Try the gesture in the card</string>
-    <string name="onboarding_required_hint">All three gestures are required to continue.</string>
+    <string name="onboarding_required_hint">Do the gesture, or tap Skip.</string>
     <string name="onboarding_accessibility_complete_action">Mark this gesture as completed</string>
     <string name="onboarding_switch_tabs_title">Switch tabs</string>
     <string name="onboarding_switch_tabs_description">Swipe the address bar left or right.</string>
@@ -752,14 +755,14 @@
     <string name="settings_startup_animation_title">Startup animation</string>
     <string name="settings_startup_animation_subtitle">The Vola mark melts into the browser on launch.</string>
     <string name="first_run_welcome_title">A browser that stays out of the way</string>
-    <string name="first_run_welcome_body">Pages edge to edge, spaces for work and for rest, and tracking protection with no setup.</string>
+    <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
     <string name="first_run_setup_title">Make it yours</string>
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
     <string name="first_run_theme_auto">Auto</string>
-    <string name="first_run_trackers">Strict tracker protection</string>
+    <string name="first_run_trackers">Block ads and trackers</string>
     <string name="first_run_trackers_on">On</string>
     <string name="first_run_trackers_off">Off</string>
     <string name="first_run_https">HTTPS only</string>

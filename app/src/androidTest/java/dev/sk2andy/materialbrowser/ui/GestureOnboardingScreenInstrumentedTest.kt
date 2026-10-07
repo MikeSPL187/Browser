@@ -16,9 +16,11 @@ import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -137,6 +139,35 @@ class GestureOnboardingScreenInstrumentedTest {
 
         composeRule.waitUntil(timeoutMillis = 2_000) { completed.get() }
         assertTrue(completed.get())
+    }
+
+    @Test
+    fun backCallsTheBackHandlerInsteadOfBeingSwallowed() {
+        val backs = AtomicInteger(0)
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                GestureOnboardingScreen(onCompleted = {}, onBack = { backs.incrementAndGet() })
+            }
+        }
+
+        startTutorial()
+        Espresso.pressBack()
+
+        composeRule.waitUntil(timeoutMillis = 2_000) { backs.get() == 1 }
+    }
+
+    @Test
+    fun backSkipsTheLessonOnItsOwn() {
+        val completed = AtomicBoolean(false)
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                GestureOnboardingScreen(onCompleted = { completed.set(true) })
+            }
+        }
+
+        Espresso.pressBack()
+
+        composeRule.waitUntil(timeoutMillis = 2_000) { completed.get() }
     }
 
     private fun startTutorial() {
