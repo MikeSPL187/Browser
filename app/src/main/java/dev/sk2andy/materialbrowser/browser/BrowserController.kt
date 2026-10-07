@@ -1763,11 +1763,8 @@ class BrowserController(
         pendingWebPrompt = null
         webPrompt = null
         val shareLaunched = if (prompt?.kind == BrowserWebPromptKind.Share) {
-            PageShareRequest.createWebShare(
-                url = prompt.shareUri,
-                title = prompt.title,
-                text = prompt.message,
-            )?.let(PageShareLauncher(activity)::launch) == PageShareResult.Launched
+            PageShareRequest.createWebShare(prompt.shareUri, prompt.title, prompt.message)
+                ?.let(PageShareLauncher(activity)::launch) == PageShareResult.Launched
         } else true
         val responseValue = if (prompt?.kind == BrowserWebPromptKind.Share) {
             null
@@ -10118,12 +10115,10 @@ class BrowserController(
         val keepsPictureInPictureMedia = isInPictureInPictureMode ||
             isInPictureInPicture ||
             pictureInPictureTransitionPending
-        // A playing eligible publication keeps its Gecko session alive after Home or screen lock;
-        // only a PiP transition that actually started is bounded by the transition timeout.
-        val backgroundMediaTabId = media3Publication(
-            traceSource = "BrowserController.onStop",
-        )?.snapshot?.takeIf { snapshot -> snapshot.isPlaying }?.owner?.tabId
-        val keepsBackgroundMedia = backgroundMediaTabId != null
+        // Playing media survives Home; only a PiP transition that started has the timeout below.
+        val playingTabId = media3Publication(traceSource = "BrowserController.onStop")
+            ?.snapshot?.takeIf { snapshot -> snapshot.isPlaying }?.owner?.tabId
+        val keepsBackgroundMedia = playingTabId != null
         if (usesGeckoEngine && !keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             browserEngineSessions[selectedTabId]?.setActive(false)
         }
@@ -10131,9 +10126,7 @@ class BrowserController(
         if (!keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             stopPictureInPictureMedia()
         } else if (
-            pictureInPictureTransitionPending &&
-            !isInPictureInPictureMode &&
-            !isInPictureInPicture
+            pictureInPictureTransitionPending && !isInPictureInPictureMode && !isInPictureInPicture
         ) {
             val transitionGeneration = pictureInPictureTransitionGeneration
             mainHandler.postDelayed(
@@ -10155,9 +10148,7 @@ class BrowserController(
             )
         }
         if (shouldCloseTabsWhenHidden && !keepsPictureInPictureMedia) {
-            closeTabsOnBackground(
-                protectedTabIds = protectedTabIds + setOfNotNull(backgroundMediaTabId),
-            )
+            closeTabsOnBackground(protectedTabIds = protectedTabIds + setOfNotNull(playingTabId))
         }
         if (pendingPermissionAccess?.awaitingRuntime != true) cancelPendingPermissionAccess()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
@@ -12465,9 +12456,8 @@ class BrowserController(
         navigationGeneration: Int,
     ) {
         if (pageTranslationAttempts.remove(attempt.tabId) != attempt) return
-        // The single recovery Snackbar belongs to the selected tab: a late failure of a background
-        // tab must not replace the offer of the tab on screen. The failed provider page stays
-        // visible in that tab, and translating again there starts a fresh attempt.
+        // The one recovery Snackbar belongs to the selected tab; a late background failure must
+        // not replace it. That tab keeps the provider page, and translating again starts afresh.
         if (selectedTabId != attempt.tabId) return
         pageTranslationRecoveryOfferSequence++
         pageTranslationRecoveryOffer = PageTranslationRecoveryOffer(
