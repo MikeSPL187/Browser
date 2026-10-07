@@ -53,8 +53,11 @@ class FirstRunExternalLinkInstrumentedTest {
                 onboarding.getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
             )
 
+            // MainActivity is singleTask, so a launcher tap reaches it as a new intent. Starting it
+            // again from the test left the scenario unable to close the activity.
             scenario.onActivity { activity ->
-                activity.startActivity(
+                InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(
+                    activity,
                     Intent(Intent.ACTION_MAIN)
                         .addCategory(Intent.CATEGORY_LAUNCHER)
                         .setClass(activity, MainActivity::class.java),

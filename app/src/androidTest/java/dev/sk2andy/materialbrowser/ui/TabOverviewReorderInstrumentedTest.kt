@@ -1020,7 +1020,8 @@ class TabOverviewReorderInstrumentedTest {
 
         val density = composeRule.activity.resources.displayMetrics.density
         val sourceX = cardBounds.center.x
-        val sourceY = cardBounds.top + 12f * density
+        // Close to the card's top, so reaching behind the header stays short of the dismiss point.
+        val sourceY = cardBounds.top + 4f * density
         val requestedTargetY = profileBounds.bottom - 32f * density
         val requiredVisualDistance = sourceY - requestedTargetY
         assertTrue(requiredVisualDistance > 0f)

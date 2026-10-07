@@ -122,7 +122,7 @@ class GeckoIoPromptsInstrumentedTest {
             seedSelectedTab("about:blank")
             launchMainActivity().use { scenario ->
                 navigateAndAwaitView(scenario, server.localhostUrl("/media"))
-                tapAttachedGeckoView()
+                tapUntilPageLeaves(scenario, "media-ready")
 
                 val promptOrFailure = awaitValue<Any>("Gecko camera/microphone prompt") {
                     scenario.value { controller ->
