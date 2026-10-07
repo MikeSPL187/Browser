@@ -53,9 +53,10 @@ class FirstRunExternalLinkInstrumentedTest {
                 onboarding.getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
             )
 
-            // MainActivity is singleTask, so a launcher tap reaches it as a new intent. Starting it
-            // again from the test left the scenario unable to close the activity.
+            // MainActivity is singleTask, so a launcher tap reaches it as a new intent.
+            lateinit var originalIntent: Intent
             scenario.onActivity { activity ->
+                originalIntent = activity.intent
                 InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(
                     activity,
                     Intent(Intent.ACTION_MAIN)
@@ -63,8 +64,13 @@ class FirstRunExternalLinkInstrumentedTest {
                         .setClass(activity, MainActivity::class.java),
                 )
             }
-            composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag(FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
+            try {
+                composeRule.waitUntil(timeoutMillis = 5_000) {
+                    composeRule.onAllNodesWithTag(FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
+                }
+            } finally {
+                // ActivityScenario matches lifecycle events against its original launch intent.
+                scenario.onActivity { activity -> activity.intent = originalIntent }
             }
         }
     }

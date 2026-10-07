@@ -106,8 +106,12 @@ class BrowserPageHardwareInputInstrumentedTest {
             SystemClock.sleep(PAGE_LAYOUT_SETTLE_MILLIS)
             focusNonBrowserView(scenario)
             injectHeldHardwareKey(KeyEvent.KEYCODE_A)
-            awaitCondition("$engineKind page did not receive the first hardware letter") {
-                selectedTitle(scenario) == KEY_ROUTE_TITLE
+            try {
+                awaitCondition("$engineKind page did not receive the first hardware letter") {
+                    selectedTitle(scenario) == KEY_ROUTE_TITLE
+                }
+            } catch (error: AssertionError) {
+                throw AssertionError("${error.message}; title=${selectedTitle(scenario)}", error)
             }
         }
     }
@@ -343,7 +347,7 @@ class BrowserPageHardwareInputInstrumentedTest {
         const val SCROLLED_TITLE_PREFIX = "scrolled:"
         const val TIMEOUT_MILLIS = 15_000L
         const val POLL_MILLIS = 100L
-        const val PAGE_LAYOUT_SETTLE_MILLIS = 500L
+        const val PAGE_LAYOUT_SETTLE_MILLIS = 1_500L
         const val KEYBOARD_HTML = """
             <!doctype html>
             <meta name="viewport" content="width=device-width, initial-scale=1">
