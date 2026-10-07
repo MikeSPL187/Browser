@@ -545,6 +545,7 @@ internal fun BoxScope.BrowserAddressChrome(
         },
         canToggleDomainMute = controller.canToggleSelectedDomainMute,
         isDomainMuted = controller.isSelectedDomainMuted,
+        canSnooze = controller.canSnoozeSelectedTab,
         onDomainMutedChange = controller::setSelectedDomainMuted,
         canToggleDesktopView = controller.canToggleSelectedDesktopView,
         isDesktopView = controller.isSelectedDesktopView,

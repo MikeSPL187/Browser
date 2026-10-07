@@ -18,7 +18,8 @@ internal data class FindInPageSession(
  * the page to search and answers through [Host] whether that page is still the one on screen.
  *
  * When the engine finds the query but has not counted the matches, it asks again a little later
- * (see [FindInPageRules.withResult]) instead of showing "0/0".
+ * (see [FindInPageRules.withResult]) instead of showing "0/0". Only the answer to the latest
+ * request to the engine is applied.
  */
 class FindInPageController internal constructor(
     private val host: Host,
@@ -36,6 +37,12 @@ class FindInPageController internal constructor(
     private var session: FindInPageSession? = null
     private var nextSessionId = 0L
     private var pendingRecount: Runnable? = null
+
+    /**
+     * The latest request to the engine. Engines may answer out of order, so only the answer to this
+     * request counts: an older one carries a previous query, options or step.
+     */
+    private var requestSeq = 0L
 
     /** The engine session being searched, if any. */
     internal val engineSession: BrowserEngineFindPort?
@@ -67,7 +74,7 @@ class FindInPageController internal constructor(
         val current = state?.takeIf { it.tabId == session.tabId } ?: return
         val updated = FindInPageRules.withQuery(current, query)
         if (updated === current) return
-        cancelRecount()
+        dropRequests()
         state = updated
         if (query.isEmpty()) {
             session.engineSession.clearFindInPage()
@@ -76,11 +83,15 @@ class FindInPageController internal constructor(
         }
     }
 
+    /**
+     * Steps to the next or previous match. With nothing to step to, the current query is searched
+     * again: the keyboard's Search action is the way to retry after the engine gave no answer.
+     */
     fun findNext(forward: Boolean): Boolean {
         val session = session ?: return false
         val current = state ?: return false
-        if (!FindInPageRules.canNavigate(current)) return false
-        cancelRecount()
+        if (!FindInPageRules.canNavigate(current)) return searchAgain(session, current)
+        dropRequests()
         search(session, current.query, forward, recountsLeft = FindInPageRules.MAX_RECOUNTS)
         return true
     }
@@ -90,14 +101,43 @@ class FindInPageController internal constructor(
         val session = session ?: return
         val current = state?.takeIf { it.tabId == session.tabId } ?: return
         if (current.options == options) return
+        dropRequests()
         session.engineSession.setFindInPageOptions(options)
         val query = current.query
         state = FindInPageRules.withQuery(current.copy(options = options), query = "")
         if (query.isNotEmpty()) updateQuery(query)
     }
 
+    /**
+     * Follows a navigation of [engineSession], now at [navigationGeneration]. A new document closes
+     * find: its matches belong to the page that is going away. A URL change within the same document
+     * (pushState, replaceState, a fragment) keeps find open on the new generation; sites change the
+     * URL while scrolling, and searching again would move the user to another match each time.
+     */
+    internal fun onNavigation(
+        engineSession: BrowserEngineFindPort,
+        navigationGeneration: Int,
+        sameDocument: Boolean,
+    ) {
+        val session = session?.takeIf { it.engineSession === engineSession } ?: return
+        if (sameDocument) {
+            this.session = session.copy(navigationGeneration = navigationGeneration)
+        } else {
+            close()
+        }
+    }
+
+    private fun searchAgain(session: FindInPageSession, current: FindInPageState): Boolean {
+        val query = current.query
+        if (query.isEmpty()) return false
+        dropRequests()
+        state = FindInPageRules.withQuery(FindInPageRules.withQuery(current, query = ""), query)
+        search(session, query, forward = true, recountsLeft = FindInPageRules.MAX_RECOUNTS)
+        return true
+    }
+
     fun close() {
-        cancelRecount()
+        dropRequests()
         val closing = session
         session = null
         state = null
@@ -111,13 +151,15 @@ class FindInPageController internal constructor(
         forward: Boolean,
         recountsLeft: Int,
     ) {
+        val request = ++requestSeq
         session.engineSession.findInPage(query = query, forward = forward) { result ->
             val current = state
-            if (
-                result == null ||
-                current == null ||
-                !isSearching(session, query)
-            ) {
+            if (current == null || request != requestSeq || !isSearching(session, query)) {
+                return@findInPage
+            }
+            cancelRecount()
+            if (result == null) {
+                state = FindInPageRules.withoutResult(current)
                 return@findInPage
             }
             val updated = FindInPageRules.withResult(
@@ -144,8 +186,13 @@ class FindInPageController internal constructor(
         val recount = Runnable {
             pendingRecount = null
             if (!isSearching(session, query)) return@Runnable
+            val request = ++requestSeq
             session.engineSession.findInPage(query = query, forward = false) { back ->
-                if (back == null || !isSearching(session, query)) return@findInPage
+                if (request != requestSeq || !isSearching(session, query)) return@findInPage
+                if (back == null) {
+                    state = state?.let(FindInPageRules::withoutCount)
+                    return@findInPage
+                }
                 search(session, query, forward = true, recountsLeft = recountsLeft)
             }
         }
@@ -153,16 +200,28 @@ class FindInPageController internal constructor(
         postDelayed(recount, FindInPageRules.RECOUNT_DELAY_MILLIS)
     }
 
+    /** Forgets the pending recount and every request still waiting for the engine. */
+    private fun dropRequests() {
+        cancelRecount()
+        requestSeq++
+    }
+
     private fun cancelRecount() {
         pendingRecount?.let(removeCallbacks)
         pendingRecount = null
     }
 
+    /**
+     * Whether a request made in [session] for [query] still belongs to the open find. The page is
+     * checked against the session as it is now, so a request in flight survives [onNavigation]
+     * rebinding it to a new URL of the same document.
+     */
     private fun isSearching(session: FindInPageSession, query: String): Boolean {
         val current = state ?: return false
-        return this.session?.id == session.id &&
-            current.tabId == session.tabId &&
+        val active = this.session ?: return false
+        return active.id == session.id &&
+            current.tabId == active.tabId &&
             current.query == query &&
-            host.isCurrent(session)
+            host.isCurrent(active)
     }
 }

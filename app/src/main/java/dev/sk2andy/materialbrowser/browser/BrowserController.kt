@@ -63,6 +63,7 @@ import dev.sk2andy.materialbrowser.blocking.PrivacyRequestSanitizer
 import dev.sk2andy.materialbrowser.blocking.PrivacyPolicyRules
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionAction
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionSummary
+import dev.sk2andy.materialbrowser.blocking.PrivacyRetention
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRayRepository
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRaySnapshot
 import dev.sk2andy.materialbrowser.blocking.SiteExceptionRules
@@ -144,6 +145,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoNewSessionRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.safety.BackToSafety
 import dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEvent
@@ -1383,6 +1385,9 @@ class BrowserController(
     val siteDataDeletion = SiteDataDeletion(
         clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
         selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        selectedPageReloadable = {
+            SiteDataDeletionRules.pageReloadable(destroyed, isSelectedContentLocked, isActivityStarted)
+        },
         reloadSelected = ::reload,
         postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
         removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
@@ -1536,12 +1541,11 @@ class BrowserController(
         get() = canOpenLinkInPrivate
 
     val canSnoozeSelectedTab: Boolean
-        get() = selectedTab.let { tab ->
-            tab.url != BLANK_URL &&
-                !tab.isIncognito &&
-                !isSyncedProfile(tab.profileId) &&
-                !isSessionEphemeralTab(tab.id)
-        }
+        get() = selectedTab.url != BLANK_URL && canSnoozeTab(selectedTab.id)
+
+    /** Whether [snoozeTab] may store the tab at all: not private, synced or session-only. */
+    fun canSnoozeTab(tabId: String): Boolean = tabs.firstOrNull { it.id == tabId }
+        ?.let { tab -> !tab.isIncognito && !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id) } == true
 
     fun canToggleDomainMute(tabId: String): Boolean {
         val tab = tabs.firstOrNull { it.id == tabId } ?: return false
@@ -4932,6 +4936,8 @@ class BrowserController(
         }
         val tabId = selectedTabId
         val existingSession = browserEngineSessions[tabId]
+        // WebView loads a typed address without asking the guard: the old warning goes here.
+        dangerousSites.dismiss(tabId)
         updateTab(tabId) {
             it.copy(
                 url = target,
@@ -4951,6 +4957,24 @@ class BrowserController(
         } else {
             loadGeckoWithPrivacy(tabId, existingSession, target)
         }
+    }
+
+    /** «Back to safety» on the warning: the page the engine still shows, or no tab without one. */
+    fun backToSafety(tabId: String) {
+        val page = when (val next = dangerousSites.backToSafety(tabId)) {
+            BackToSafety.CloseTab -> return closeTab(tabId)
+            is BackToSafety.ShowPage -> next.url
+            null -> return
+        }
+        if (tabs.firstOrNull { tab -> tab.id == tabId }?.url == page) return
+        // A typed address took the tab before the engine was asked; the engine never left [page].
+        pageUrls[tabId] = page
+        pendingLocalSyncNavigationUrls.remove(tabId)
+        updateProtectionRequestContext(tabId, page)
+        updateTab(tabId) { tab ->
+            tab.copy(url = page, isLoading = false, progress = 100, error = null, failureKind = null)
+        }
+        persist()
     }
 
     fun openUrl(
@@ -8627,6 +8651,7 @@ class BrowserController(
         browserEngineSessions[selectedTabId]?.execute(BrowserEngineCommands.forward())
     }
     fun reload() {
+        if (selectedTab.url == BLANK_URL) return // A new tab has no page; reloading would only start a session.
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
         updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
@@ -10638,7 +10663,10 @@ class BrowserController(
         if (handlePendingPopunderOpenerNavigation(tabId, session, request.url)) {
             return GeckoNavigationRequestDecision.Deny
         }
-        if (safeHttpUrl != null && dangerousSites.intercept(tabId, safeHttpUrl)) {
+        if (
+            safeHttpUrl != null &&
+            dangerousSites.intercept(tabId, safeHttpUrl, session.historyUrlAtOffset(0))
+        ) {
             return GeckoNavigationRequestDecision.Deny
         }
         val publisherUrl = if (
@@ -12001,6 +12029,7 @@ class BrowserController(
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
+        findInPage.onNavigation(session, nextNavigationGeneration, sameDocument = true)
         updateProtectionRequestContext(tabId, pageUrls[tabId])
         fun isCurrentNavigation(): Boolean = !destroyed &&
             browserEngineSessions[tabId] === session &&
@@ -12064,6 +12093,8 @@ class BrowserController(
                 }
                 externalAppNavigationRecoveries.remove(event.tabId)
                 val previousUrl = previousTab?.url
+                val resetsPrivacyXRay =
+                    PrivacyRetention.resetsOnNavigation(pageUrls[event.tabId] ?: previousUrl, event.address)
                 event.address?.let { address ->
                     if (previousUrl != null && FaviconRules.changedSite(previousUrl, address)) {
                         invalidateFavicon(event.tabId)
@@ -12101,6 +12132,7 @@ class BrowserController(
                 if (contentActions.sourceTabId == event.tabId) contentActions.dismiss()
                 resetBrowserChromeScroll(event.tabId)
                 navigationGenerations[event.tabId] = nextNavigationGeneration
+                findInPage.onNavigation(navigatingSession, nextNavigationGeneration, sameDocument = false)
                 invalidateMedia3OwnerFor(
                     event.tabId,
                     replaceForNavigation = replaceActiveMediaOwner,
@@ -12109,6 +12141,7 @@ class BrowserController(
                 event.address?.let { address -> pageUrls[event.tabId] = address }
                 refreshDomainMuteForTab(event.tabId)
                 updateProtectionRequestContext(event.tabId, event.address)
+                if (resetsPrivacyXRay) resetPrivacyXRay(event.tabId)
                 val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
                     if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
                 } else {
@@ -14957,22 +14990,25 @@ class BrowserController(
         tabId: String,
         clearTemporarySiteOverrides: Boolean = true,
     ) {
-        synchronized(privacyEventLock) {
-            protectionRequestContexts.remove(tabId)
-            pendingBlockedCounts.remove(tabId)
-            privacyXRayRepository.remove(tabId)
-        }
-        privacySnapshots.remove(tabId)
-        reportedAllowedDecisions.remove(tabId)
+        synchronized(privacyEventLock) { protectionRequestContexts.remove(tabId) }
+        resetPrivacyXRay(tabId)
         pendingConsentCssUrls.remove(tabId)
         temporarySiteExceptions.remove(tabId)
         if (clearTemporarySiteOverrides) temporarySitePrivacyOverrides.remove(tabId)
         federatedLoginOfferKeys.remove(tabId)
         captchaCompatibilityOfferKeys.remove(tabId)
-        updateTab(tabId) { tab ->
-            if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0)
-        }
         siteExceptionRevision++
+    }
+
+    /** The tab's X-Ray record and blocked count start over: the tab closed or left the site. */
+    private fun resetPrivacyXRay(tabId: String) {
+        synchronized(privacyEventLock) {
+            pendingBlockedCounts.remove(tabId)
+            privacyXRayRepository.remove(tabId)
+            privacySnapshots.remove(tabId)
+            reportedAllowedDecisions.remove(tabId)
+        }
+        updateTab(tabId) { tab -> if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0) }
     }
 
     private fun detectFederatedLoginRequest(

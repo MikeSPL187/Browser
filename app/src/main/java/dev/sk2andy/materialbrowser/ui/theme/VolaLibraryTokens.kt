@@ -49,6 +49,12 @@ internal object VolaLibrary {
     val folderEmojiSize = 20.sp
     const val FOLDER_COLUMNS = 2
 
+    /** A folder without its own icon shows its first four sites' favicons, two by two. */
+    val folderMosaicPadding = 5.dp
+    val folderMosaicGap = 2.dp
+    val folderMosaicCellShape = RoundedCornerShape(4.dp)
+    const val FOLDER_MOSAIC_COLUMNS = 2
+
     /** Room under the list for the «Folder» button. */
     val fabClearance = 96.dp
 

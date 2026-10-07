@@ -766,7 +766,7 @@ private fun BrowserMainMenuToolbarRow(
             BrowserMenuToolbarAction(
                 label = label,
                 icon = { resources.icon(item, Modifier.size(style.toolbarIconSize)) },
-                enabled = item.enabled || item.action in RELOAD_ACTIONS,
+                enabled = item.enabled,
                 selected = item.checked == true,
                 accessibilityLabel = resources.accessibilityLabel(item) ?: label.takeUnless {
                     style.showToolbarLabels
@@ -805,11 +805,6 @@ private fun BrowserMainMenuToolbarRow(
         }
     }
 }
-
-private val RELOAD_ACTIONS = setOf(
-    BrowserFeatureMenuAction.Reload,
-    BrowserFeatureMenuAction.Stop,
-)
 
 @Composable
 private fun BrowserMainMenuSectionTitle(

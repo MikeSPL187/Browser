@@ -1372,6 +1372,7 @@
     <string name="snooze_invalid_time">Выберите дату и время в будущем</string>
     <string name="snoozed_tab_update_failed">Не удалось изменить вкладку — возможно, она уже открылась</string>
     <string name="snooze_confirmation">Вкладка отложена</string>
+    <string name="snooze_failed">Не удалось отложить вкладку</string>
     <string name="snooze_notification_channel_name">Отложенные вкладки</string>
     <string name="snooze_notification_channel_description">Сообщает, когда отложенные вкладки готовы</string>
     <string name="snooze_notification_title">Отложенная вкладка готова</string>
@@ -1729,6 +1730,7 @@
     <string name="site_info_delete_site_data">Удалить</string>
     <string name="site_info_delete_site_data_description">Удалить данные %1$s</string>
     <string name="site_data_deleted">Данные %1$s удалены</string>
+    <string name="site_data_delete_failed">Не удалось удалить данные %1$s</string>
     <string name="site_info_certificate">Сертификат</string>
     <string name="site_info_certificate_summary">%1$s · до %2$s</string>
     <string name="site_info_certificate_expired">%1$s · истёк %2$s</string>
