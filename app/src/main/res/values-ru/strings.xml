@@ -304,6 +304,7 @@
     <string name="action_clear_browsing_data">Очистить данные браузера</string>
     <string name="clear_data_title">Очистить данные браузера?</string>
     <string name="clear_data_message">Будут удалены куки, хранилище сайтов, кэш и история этого сеанса.</string>
+    <string name="clear_data_scope_message">Будут удалены куки, хранилище сайтов, кэш и вся сохранённая история во всех пространствах. Также очистятся отложенные вкладки, превью страниц, значки сайтов, разрешения и исключения для сайтов. Избранное и пароли сохранятся.</string>
     <string name="action_delete">Удалить</string>
     <string name="action_cancel">Отмена</string>
     <string name="web_prompt_title">Сообщение сайта</string>

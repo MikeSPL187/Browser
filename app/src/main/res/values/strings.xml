@@ -299,6 +299,7 @@
     <string name="action_clear_browsing_data">Clear browsing data</string>
     <string name="clear_data_title">Clear browsing data?</string>
     <string name="clear_data_message">Cookies, site storage, cache, and this session’s history will be deleted.</string>
+    <string name="clear_data_scope_message">Deletes cookies, site storage and cache, and all saved browsing history in every workspace. Snoozed tabs, page previews, site icons, site permissions and site exceptions are cleared too. Favorites and passwords stay.</string>
     <string name="action_delete">Delete</string>
     <string name="action_cancel">Cancel</string>
     <string name="web_prompt_title">Website message</string>

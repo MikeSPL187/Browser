@@ -9445,12 +9445,12 @@ class BrowserController(
     fun updateBlockerSettings(settings: BlockerSettings) {
         val thirdPartyCookieSettingChanged =
             workerSettings.blockThirdPartyCookies != settings.blockThirdPartyCookies
-        val cookieConsentSettingChanged =
-            workerSettings.hideCookieConsent != settings.hideCookieConsent
+        val refreshesSessionPolicy =
+            BlockerSettingsRules.refreshesSessionPolicy(workerSettings, settings, !usesGeckoEngine)
         blockerSettings = settings
         workerSettings = settings
         store.saveBlockerSettings(settings)
-        if (!thirdPartyCookieSettingChanged && !cookieConsentSettingChanged) return
+        if (!refreshesSessionPolicy) return
         if (thirdPartyCookieSettingChanged) {
             browserEngineSessionFactory.setBlockThirdPartyCookies(settings.blockThirdPartyCookies)
         }
