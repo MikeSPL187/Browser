@@ -473,6 +473,7 @@ internal fun SettingsScreen(
                 SettingsDestination.ProtectionAndData -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
+                        onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,
                         blockedCount = blockedCount,
                         browserEngineKind = browserEngineKind,

@@ -1784,10 +1784,8 @@ class BrowserController(
         pendingWebPrompt = null
         webPrompt = null
         val shareLaunched = if (prompt?.kind == BrowserWebPromptKind.Share) {
-            prompt.shareUri?.let { uri ->
-                PageShareRequest.create(uri, prompt.title.orEmpty())
-                    ?.let(PageShareLauncher(activity)::launch)
-            } == PageShareResult.Launched
+            PageShareRequest.createWebShare(prompt.shareUri, prompt.title, prompt.message)
+                ?.let(PageShareLauncher(activity)::launch) == PageShareResult.Launched
         } else true
         val responseValue = if (prompt?.kind == BrowserWebPromptKind.Share) {
             null
@@ -9528,12 +9526,12 @@ class BrowserController(
     fun updateBlockerSettings(settings: BlockerSettings) {
         val thirdPartyCookieSettingChanged =
             workerSettings.blockThirdPartyCookies != settings.blockThirdPartyCookies
-        val cookieConsentSettingChanged =
-            workerSettings.hideCookieConsent != settings.hideCookieConsent
+        val refreshesSessionPolicy =
+            BlockerSettingsRules.refreshesSessionPolicy(workerSettings, settings, !usesGeckoEngine)
         blockerSettings = settings
         workerSettings = settings
         store.saveBlockerSettings(settings)
-        if (!thirdPartyCookieSettingChanged && !cookieConsentSettingChanged) return
+        if (!refreshesSessionPolicy) return
         if (thirdPartyCookieSettingChanged) {
             browserEngineSessionFactory.setBlockThirdPartyCookies(settings.blockThirdPartyCookies)
         }
@@ -10198,16 +10196,19 @@ class BrowserController(
         val keepsPictureInPictureMedia = isInPictureInPictureMode ||
             isInPictureInPicture ||
             pictureInPictureTransitionPending
-        val keepsBackgroundMedia = media3Publication(
-            traceSource = "BrowserController.onStop",
-        )?.snapshot?.isPlaying == true
+        // Playing media survives Home; only a PiP transition that started has the timeout below.
+        val playingTabId = media3Publication(traceSource = "BrowserController.onStop")
+            ?.snapshot?.takeIf { snapshot -> snapshot.isPlaying }?.owner?.tabId
+        val keepsBackgroundMedia = playingTabId != null
         if (usesGeckoEngine && !keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             browserEngineSessions[selectedTabId]?.setActive(false)
         }
         externalLinkPreviewRuntime?.geckoBinding?.session?.setActive(false)
         if (!keepsPictureInPictureMedia && !keepsBackgroundMedia) {
             stopPictureInPictureMedia()
-        } else if (!isInPictureInPictureMode && !isInPictureInPicture) {
+        } else if (
+            pictureInPictureTransitionPending && !isInPictureInPictureMode && !isInPictureInPicture
+        ) {
             val transitionGeneration = pictureInPictureTransitionGeneration
             mainHandler.postDelayed(
                 {
@@ -10227,12 +10228,8 @@ class BrowserController(
                 PICTURE_IN_PICTURE_TRANSITION_TIMEOUT_MILLIS,
             )
         }
-        if (
-            shouldCloseTabsWhenHidden &&
-            !keepsPictureInPictureMedia &&
-            !keepsBackgroundMedia
-        ) {
-            closeTabsOnBackground(protectedTabIds = protectedTabIds)
+        if (shouldCloseTabsWhenHidden && !keepsPictureInPictureMedia) {
+            closeTabsOnBackground(protectedTabIds = protectedTabIds + setOfNotNull(playingTabId))
         }
         if (pendingPermissionAccess?.awaitingRuntime != true) cancelPendingPermissionAccess()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
@@ -12559,6 +12556,9 @@ class BrowserController(
         navigationGeneration: Int,
     ) {
         if (pageTranslationAttempts.remove(attempt.tabId) != attempt) return
+        // The one recovery Snackbar belongs to the selected tab; a late background failure must
+        // not replace it. That tab keeps the provider page, and translating again starts afresh.
+        if (selectedTabId != attempt.tabId) return
         pageTranslationRecoveryOfferSequence++
         pageTranslationRecoveryOffer = PageTranslationRecoveryOffer(
             token = pageTranslationRecoveryOfferSequence,
