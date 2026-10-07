@@ -133,10 +133,20 @@ internal fun FavoritesScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var snackbarJob by remember { mutableStateOf<Job?>(null) }
-    var renameTarget by remember { mutableStateOf<FavoriteLibraryEntry?>(null) }
+    // Dialogs keep only their target's id, so they survive recreation and always act on the current entry.
+    var renameTargetId by rememberSaveable { mutableStateOf<String?>(null) }
     var creatingFolder by rememberSaveable { mutableStateOf(false) }
-    var moveTarget by remember { mutableStateOf<FavoriteLibraryEntry?>(null) }
-    var iconTarget by remember { mutableStateOf<FavoriteFolder?>(null) }
+    var moveTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var iconTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    val renameTarget = renameTargetId?.let { id -> source.entries.firstOrNull { it.id == id } }
+    val moveTarget = moveTargetId?.let { id -> source.entries.firstOrNull { it.id == id } }
+    val iconTarget = iconTargetId?.let { id -> source.entries.firstOrNull { it.id == id } as? FavoriteFolder }
+    // An entry deleted meanwhile closes its dialog for good instead of reopening it should it come back.
+    LaunchedEffect(renameTarget, moveTarget, iconTarget) {
+        if (renameTarget == null) renameTargetId = null
+        if (moveTarget == null) moveTargetId = null
+        if (iconTarget == null) iconTargetId = null
+    }
     val removedMessage = stringResource(R.string.favorite_removed_confirmation)
     val undoLabel = stringResource(R.string.action_undo)
     // An «Undo» whose snapshot a later change replaced would do nothing; take it off screen.
@@ -158,11 +168,11 @@ internal fun FavoritesScreen(
         FavoriteNameDialog(
             initialName = renameTarget?.entryTitle().orEmpty(),
             creating = creatingFolder,
-            onDismiss = { creatingFolder = false; renameTarget = null },
+            onDismiss = { creatingFolder = false; renameTargetId = null },
             onConfirm = { name ->
                 renameTarget?.let { onRenameEntry(it, name) } ?: onCreateFolder(parentId, name)
                 creatingFolder = false
-                renameTarget = null
+                renameTargetId = null
             },
         )
     }
@@ -170,16 +180,16 @@ internal fun FavoritesScreen(
         FavoriteMoveDialog(
             library = source,
             target = target,
-            onDismiss = { moveTarget = null },
-            onMove = { destination -> onMoveEntry(target, destination); moveTarget = null },
+            onDismiss = { moveTargetId = null },
+            onMove = { destination -> onMoveEntry(target, destination); moveTargetId = null },
         )
     }
     iconTarget?.let { folder ->
         FavoriteIconDialog(
             folder = folder,
-            onDismiss = { iconTarget = null },
-            onConfirm = { icon -> onFolderIconChange(folder, icon); iconTarget = null },
-            onUpload = { onUploadFolderIcon(folder); iconTarget = null },
+            onDismiss = { iconTargetId = null },
+            onConfirm = { icon -> onFolderIconChange(folder, icon); iconTargetId = null },
+            onUpload = { onUploadFolderIcon(folder); iconTargetId = null },
         )
     }
     val listState = rememberLazyListState()
@@ -296,9 +306,9 @@ internal fun FavoritesScreen(
                                     canMoveLater = canReorder && later != null,
                                     onMoveEarlier = { earlier?.let { onReorderEntry(folder, it) } },
                                     onMoveLater = { later?.let { onReorderEntry(folder, it) } },
-                                    onRename = { renameTarget = folder },
-                                    onMove = { moveTarget = folder },
-                                    onIcon = { iconTarget = folder },
+                                    onRename = { renameTargetId = folder.id },
+                                    onMove = { moveTargetId = folder.id },
+                                    onIcon = { iconTargetId = folder.id },
                                 ),
                                 onOpen = { currentFolderId = folder.id; query = "" },
                             )
@@ -372,8 +382,8 @@ internal fun FavoritesScreen(
                             canMoveLater = canReorder && later != null,
                             onMoveEarlier = { earlier?.let { onReorderEntry(entry, it) } },
                             onMoveLater = { later?.let { onReorderEntry(entry, it) } },
-                            onRename = { renameTarget = entry },
-                            onMove = { moveTarget = entry },
+                            onRename = { renameTargetId = entry.id },
+                            onMove = { moveTargetId = entry.id },
                             onDelete = {
                                 onDeleteFavorite(entry) { mutation ->
                                     if (mutation != null) {
