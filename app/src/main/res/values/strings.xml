@@ -850,6 +850,8 @@
     <string name="settings_block_ads_subtitle">Local domain list, including service workers</string>
     <string name="settings_hide_cookie_banners_title">Hide cookie banners</string>
     <string name="settings_hide_cookie_banners_subtitle">Known consent overlays are removed</string>
+    <string name="settings_block_ads_extension_summary">The uBlock Origin extension blocks ads here. Open Firefox extensions to turn it off or change its filters.</string>
+    <string name="settings_hide_cookie_banners_extension_summary">Known consent overlays are removed. The I still don\'t care about cookies extension covers more sites; manage it in Firefox extensions.</string>
     <string name="settings_block_third_party_cookies_title">Block third-party cookies</string>
     <string name="settings_block_third_party_cookies_subtitle">First-party cookies remain enabled for sign-ins</string>
     <string name="settings_do_not_track_title">Do Not Track</string>

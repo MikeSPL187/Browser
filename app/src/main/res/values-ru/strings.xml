@@ -886,6 +886,8 @@
     <string name="settings_block_ads_subtitle">Локальный список доменов, включая service workers</string>
     <string name="settings_hide_cookie_banners_title">Скрывать баннеры о куки</string>
     <string name="settings_hide_cookie_banners_subtitle">Известные окна согласия удаляются</string>
+    <string name="settings_block_ads_extension_summary">Рекламу здесь блокирует расширение uBlock Origin. Откройте «Расширения Firefox», чтобы выключить его или изменить фильтры.</string>
+    <string name="settings_hide_cookie_banners_extension_summary">Известные окна согласия удаляются. Расширение I still don\'t care about cookies покрывает больше сайтов, управлять им можно в «Расширениях Firefox».</string>
     <string name="settings_block_third_party_cookies_title">Блокировать сторонние куки</string>
     <string name="settings_block_third_party_cookies_subtitle">Собственные куки сайтов остаются включёнными для входа в аккаунты</string>
     <string name="settings_do_not_track_title">Не отслеживать (DNT)</string>
