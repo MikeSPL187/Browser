@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,6 +78,8 @@ internal object PasswordsTestTags {
     const val Reveal = "passwords_reveal"
     const val PasswordValue = "passwords_password_value"
     const val Delete = "passwords_delete"
+    const val Erase = "passwords_erase"
+    const val EraseConfirm = "passwords_erase_confirm"
     const val Save = "passwords_save"
 
     fun confirmWord(position: Int) = "passwords_confirm_word:$position"
@@ -274,7 +277,10 @@ internal fun RecoveryConfirmScreen(
     }
 }
 
-/** The vault is closed: open it as the device's owner, or with the phrase when the device key is gone. */
+/**
+ * The vault is closed: open it as the device's owner, or with the phrase when the device key is
+ * gone. When both are lost, [onErase] deletes it, so the phone is not stuck with a vault nobody opens.
+ */
 @Composable
 internal fun PasswordsLockedScreen(
     busy: Boolean,
@@ -282,6 +288,7 @@ internal fun PasswordsLockedScreen(
     onUnlock: () -> Unit,
     onRecover: () -> Unit,
     onBack: () -> Unit,
+    onErase: () -> Unit = {},
 ) {
     PasswordsHeroScaffold(
         icon = VolaIcons.Lock,
@@ -298,6 +305,41 @@ internal fun PasswordsLockedScreen(
         ) {
             Text(stringResource(R.string.passwords_recover))
         }
+        EraseVaultButton(label = stringResource(R.string.passwords_erase_locked), busy = busy, onConfirm = onErase)
+    }
+}
+
+/**
+ * «Delete passwords» / «Turn off passwords»: erases the vault, its index and its keys after a
+ * confirmation; afterwards sites go back to the system password manager.
+ */
+@Composable
+internal fun EraseVaultButton(label: String, busy: Boolean, onConfirm: () -> Unit, modifier: Modifier = Modifier) {
+    var confirming by remember { mutableStateOf(false) }
+    TextButton(
+        onClick = { confirming = true },
+        enabled = !busy,
+        modifier = modifier.fillMaxWidth().testTag(PasswordsTestTags.Erase),
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.error)
+    }
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text(stringResource(R.string.passwords_erase_title)) },
+            text = { Text(stringResource(R.string.passwords_erase_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { confirming = false; onConfirm() },
+                    modifier = Modifier.testTag(PasswordsTestTags.EraseConfirm),
+                ) {
+                    Text(stringResource(R.string.passwords_erase_action), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
     }
 }
 

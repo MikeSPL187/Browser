@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,9 @@ import dev.sk2andy.materialbrowser.ui.passwords.SensitiveClipboard
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import java.security.SecureRandom
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,6 +70,7 @@ import dev.sk2andy.materialbrowser.shared.credentials.ImportedLogin
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportParse
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportConflictState
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportFileState
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportGuideScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportProblem
@@ -112,6 +117,7 @@ internal sealed interface PasswordsRoute {
         val report: PasswordImportReport,
         val files: List<Uri>,
         val fileState: PasswordImportFileState = PasswordImportFileState.Present,
+        val conflictState: PasswordImportConflictState = PasswordImportConflictState.Offered,
     ) : PasswordsRoute
 
     /** Screens that show logins: they need the vault open. Moving bookmarks in does not. */
@@ -143,6 +149,9 @@ internal class PasswordsViewModel : ViewModel() {
 
     /** The leak check's answers by login id, kept only while the screen lives. */
     var leakStatus by mutableStateOf(LeakCheckStatus.Off)
+
+    /** Share of distinct passwords the running leak check has answered, 0 to 1. */
+    var leakProgress by mutableFloatStateOf(0f)
     var breaches by mutableStateOf<Map<String, Int>>(emptyMap())
 }
 
@@ -194,6 +203,7 @@ class PasswordsActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
         CredentialVaultSession.lockIfExpired()
+        SensitiveClipboard.clearIfExpired(this)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -245,6 +255,7 @@ class PasswordsActivity : FragmentActivity() {
                 onUnlock = ::unlock,
                 onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
                 onBack = ::finish,
+                onErase = ::eraseVault,
             )
             is PasswordsRoute.Recover -> RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
             PasswordsRoute.Logins -> PasswordsListScreen(
@@ -264,6 +275,8 @@ class PasswordsActivity : FragmentActivity() {
                         model.route = PasswordsRoute.Import
                     }
                 },
+                busy = model.busy,
+                onTurnOff = ::eraseVault,
             )
             PasswordsRoute.Import -> PasswordImportScreen(
                 onSource = { source -> model.route = PasswordsRoute.ImportGuide(source) },
@@ -290,12 +303,15 @@ class PasswordsActivity : FragmentActivity() {
                 onDeleteFile = { deleteExport(route) },
                 onCheck = { use { model.route = PasswordsRoute.Health } },
                 onDone = { back(route) },
+                conflictState = route.conflictState,
+                onUseFilePasswords = { useFilePasswords(route) },
             )
             PasswordsRoute.Health -> {
                 LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
                 PasswordHealthScreen(
                     report = remember(logins, model.breaches) { PasswordHealthRules.report(logins, model.breaches) },
                     leakCheck = model.leakStatus,
+                    leakProgress = model.leakProgress,
                     onLeakCheckChange = { on -> setLeakCheck(on, logins) },
                     onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
                     onChange = { login -> use { openChangePassword(login.origin) } },
@@ -382,14 +398,33 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
-    /** Asks Pwned Passwords about each distinct password, sending only a hash prefix for each. */
+    /**
+     * Asks Pwned Passwords about each distinct password, sending only a hash prefix for each. A few
+     * requests run at once, so hundreds of passwords take seconds, and the screen shows how far it is.
+     */
     private fun checkLeaks(logins: List<VaultLogin>) {
         if (model.leakStatus == LeakCheckStatus.Checking) return
         model.leakStatus = LeakCheckStatus.Checking
+        model.leakProgress = 0f
         lifecycleScope.launch {
             val answers = withContext(Dispatchers.IO) {
                 val client = PwnedPasswordsClient()
-                val byPassword = logins.map(VaultLogin::password).distinct().associateWith(client::timesSeen)
+                val passwords = logins.map(VaultLogin::password).distinct()
+                val answered = AtomicInteger()
+                val pool = Executors.newFixedThreadPool(LEAK_CHECK_REQUESTS)
+                val byPassword = try {
+                    pool.invokeAll(
+                        passwords.map { password ->
+                            Callable {
+                                client.timesSeen(password).also {
+                                    model.leakProgress = answered.incrementAndGet().toFloat() / passwords.size
+                                }
+                            }
+                        },
+                    ).mapIndexed { index, answer -> passwords[index] to answer.get() }.toMap()
+                } finally {
+                    pool.shutdownNow()
+                }
                 logins.associate { login -> login.id to byPassword[login.password] }
             }
             if (model.leakStatus != LeakCheckStatus.Checking) return@launch
@@ -582,6 +617,7 @@ class PasswordsActivity : FragmentActivity() {
                 }
                 PasswordImportParse.Encrypted -> problem = problem ?: PasswordImportProblem.Encrypted
                 PasswordImportParse.NotAnExport -> problem = problem ?: PasswordImportProblem.NotAnExport
+                PasswordImportParse.TooLarge -> problem = problem ?: PasswordImportProblem.TooLarge
             }
         }
         if (logins.isNotEmpty() && !vault.isUnlocked) return ImportOutcome.NeedsVault
@@ -614,8 +650,25 @@ class PasswordsActivity : FragmentActivity() {
             bookmarks = merged?.importedCount ?: 0,
             bookmarksSkipped = merged?.skippedCount ?: 0,
             bookmarksLimitReached = merged?.limitReached == true,
+            conflicts = summary?.conflicts.orEmpty(),
+            full = summary?.full ?: 0,
         )
         return ImportOutcome.Done(PasswordsRoute.ImportDone(report, passwordFiles))
+    }
+
+    /** The user takes the file's passwords for the logins Vola kept its own for (E18-04). */
+    private fun useFilePasswords(route: PasswordsRoute.ImportDone) = use {
+        if (route.conflictState == PasswordImportConflictState.Replacing) return@use
+        model.route = route.copy(conflictState = PasswordImportConflictState.Replacing)
+        lifecycleScope.launch {
+            val now = System.currentTimeMillis()
+            val replaced = withContext(Dispatchers.IO) { vault.replacePasswords(route.report.conflicts, now) }
+            if (replaced) model.revision++
+            val current = model.route as? PasswordsRoute.ImportDone ?: return@launch
+            model.route = current.copy(
+                conflictState = if (replaced) PasswordImportConflictState.Replaced else PasswordImportConflictState.Failed,
+            )
+        }
     }
 
     private fun deleteExport(route: PasswordsRoute.ImportDone) {
@@ -629,6 +682,34 @@ class PasswordsActivity : FragmentActivity() {
             model.route = current.copy(
                 fileState = if (deleted) PasswordImportFileState.Deleted else PasswordImportFileState.DeleteFailed,
             )
+        }
+    }
+
+    /**
+     * Deletes the vault, its login index and the device key: the way out when the key and the phrase
+     * are both lost, or when the user goes back to the system password manager. The owner of the
+     * screen lock confirms first; a phone without one has nothing stronger to ask for.
+     */
+    private fun eraseVault() {
+        if (model.busy) return
+        if (canAuthenticate()) authenticate(::erase) else erase()
+    }
+
+    private fun erase() = runBusy {
+        val erased = withContext(Dispatchers.IO) {
+            vault.destroy().also { done -> if (done) KeystoreVaultKeyWrapper().deleteKey() }
+        }
+        if (erased) {
+            CredentialVaultSession.lockNow()
+            model.deviceKeyLost = false
+            model.pendingImport = null
+            model.leakStatus = LeakCheckStatus.Off
+            model.breaches = emptyMap()
+            model.message = null
+            model.revision++
+            model.route = PasswordsRoute.Intro
+        } else {
+            model.message = R.string.passwords_failed
         }
     }
 
@@ -743,6 +824,9 @@ class PasswordsActivity : FragmentActivity() {
     private companion object {
         const val PREFERENCES = "vola_passwords"
         const val KEY_LEAK_CHECK = "leak_check"
+
+        /** Requests to Pwned Passwords at once: quick for hundreds of passwords, gentle on the service. */
+        const val LEAK_CHECK_REQUESTS = 4
 
         /** CSV and HTML come as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
         val EXPORT_TYPES = arrayOf(

@@ -20,7 +20,7 @@ private val previewLogins = listOf(
 @Composable
 private fun PasswordsListPreview() {
     MaterialBrowserTheme {
-        PasswordsListScreen(logins = previewLogins, onOpen = {}, onAdd = {}, onLock = {}, onBack = {})
+        PasswordsListScreen(logins = previewLogins, onOpen = {}, onAdd = {}, onLock = {}, onBack = {}, onTurnOff = {})
     }
 }
 

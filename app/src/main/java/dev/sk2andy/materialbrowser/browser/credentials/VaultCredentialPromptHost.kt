@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.browser.credentials
 
 import android.content.Context
+import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -105,14 +107,14 @@ internal class VaultCredentialPromptHost(
             return
         }
         // The generator opened the vault and asked already; signing in names the saved login.
-        if (prompt.generated && vault.isUnlocked) {
+        if (prompt.generated && CredentialVaultSession.isOpen(vault)) {
             CredentialVaultSession.touch(vault)
             onComplete(true)
             return
         }
         val question = VaultPromptRules.saveQuestion(
             hints = vault.loginHints(),
-            openLogins = vault.loginsFor(origin).takeIf { vault.isUnlocked },
+            openLogins = vault.loginsFor(origin).takeIf { CredentialVaultSession.isOpen(vault) },
             origin = origin,
             login = prompt.login,
         )
@@ -265,7 +267,7 @@ internal class VaultCredentialPromptHost(
             onFailed()
             return
         }
-        if (vault.isUnlocked) {
+        if (CredentialVaultSession.isOpen(vault)) {
             CredentialVaultSession.touch(vault)
             onOpened()
             return
@@ -273,6 +275,7 @@ internal class VaultCredentialPromptHost(
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
             BiometricManager.Authenticators.DEVICE_CREDENTIAL
         if (BiometricManager.from(activity).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
+            tell(R.string.passwords_no_screen_lock)
             onFailed()
             return
         }
@@ -283,14 +286,18 @@ internal class VaultCredentialPromptHost(
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     activity.lifecycleScope.launch {
-                        val opened = withContext(Dispatchers.IO) {
-                            vault.unlock(KeystoreVaultKeyWrapper()) == VaultOpenResult.Opened
-                        }
+                        val outcome = withContext(Dispatchers.IO) { vault.unlock(KeystoreVaultKeyWrapper()) }
                         if (!finished.compareAndSet(false, true)) return@launch
-                        if (opened && !closed) {
+                        if (outcome == VaultOpenResult.Opened && !closed) {
                             CredentialVaultSession.touch(vault)
                             onOpened()
                         } else {
+                            // The Passwords screen says the same; here the sheet is gone, so a toast says it.
+                            when (outcome) {
+                                VaultOpenResult.Opened -> Unit
+                                VaultOpenResult.Refused, VaultOpenResult.NoSlot -> tell(R.string.passwords_device_key_lost)
+                                else -> tell(R.string.passwords_failed)
+                            }
                             onFailed()
                         }
                     }
@@ -310,6 +317,11 @@ internal class VaultCredentialPromptHost(
                     .build(),
             )
         }.onFailure { if (finished.compareAndSet(false, true)) onFailed() }
+    }
+
+    /** Why picking an account or saving did nothing: without it the page would just stay empty. */
+    private fun tell(@StringRes message: Int) {
+        if (!closed) Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
     private fun <T> once(onComplete: (T) -> Unit): (T) -> Unit {

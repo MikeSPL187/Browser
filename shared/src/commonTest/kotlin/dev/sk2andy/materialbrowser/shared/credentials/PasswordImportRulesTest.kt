@@ -132,5 +132,59 @@ class PasswordImportRulesTest {
         assertEquals(key, logins.first { it.id == "1" }.totp)
         assertEquals("new", logins.first { it.id == "n0" }.password)
         assertFalse("again" in imported[2].toString())
+        // Both repeats have another password: one offer per login, the first the export has.
+        assertEquals(listOf(ImportConflict("1", "other"), ImportConflict("n0", "again")), summary.conflicts)
+        assertFalse("other" in summary.toString())
+    }
+
+    @Test
+    fun oversizedExportsAreTooLargeAndDashlaneKeysComeAlong() {
+        val rows = buildString {
+            append("url,username,password\n")
+            repeat(50_001) { append("https://s$it.com,u,p\n") }
+        }
+        assertEquals(PasswordImportParse.TooLarge, PasswordImportRules.parse(rows, origin))
+        val items = (0..50_000).joinToString(",") { "{\"type\":1}" }
+        assertEquals(PasswordImportParse.TooLarge, PasswordImportRules.parse("{\"items\":[$items]}", origin))
+
+        val dashlane = "username,title,password,note,url,category,otpSecret\nanna,A,secret,,https://a.com,,JBSWY3DPEHPK3PXP\n"
+        val parsed = assertIs<PasswordImportParse.Read>(PasswordImportRules.parse(dashlane, origin))
+        assertEquals(TotpRules.canonical(TotpRules.parse("JBSWY3DPEHPK3PXP")!!), parsed.logins.single().totp)
+    }
+
+    @Test
+    fun aFullVaultCountsWhatDidNotFit() {
+        val saved = List(CredentialVaultRules.MAX_LOGINS) { index ->
+            VaultLogin("$index", "https://s$index.com", null, null, "anna", "p", 0, 0, null, 0)
+        }
+        val imported = listOf(ImportedLogin(VaultLoginDraft("https://new.com", null, null, "anna", "p")))
+        val (_, summary) = CredentialVaultRules.import(saved, imported, nowMillis = 1) { "new" }
+        assertEquals(1, summary.full)
+        assertEquals(0, summary.rejected)
+    }
+
+    @Test
+    fun firefoxScriptFormsHaveNoActionOrigin() {
+        val csv = "url,username,password,httpRealm,formActionOrigin\n" +
+            "https://a.com,anna,secret,,javascript:\n" +
+            "https://b.com,anna,secret,,https://login.b.com\n"
+        val parsed = assertIs<PasswordImportParse.Read>(PasswordImportRules.parse(csv, origin))
+        assertEquals(listOf(null, "https://login.b.com"), parsed.logins.map { it.draft.formActionOrigin })
+    }
+
+    @Test
+    fun takingTheFilePasswordsReplacesOnlyTheConflicts() {
+        val saved = VaultLogin("1", "https://example.com", null, null, "anna", "saved", 0, 0, null, 0)
+        val same = VaultLogin("2", "https://example.org", null, null, "anna", "same", 0, 0, null, 0)
+        val replaced = CredentialVaultRules.replacePasswords(
+            listOf(saved, same),
+            listOf(ImportConflict("1", "from-file"), ImportConflict("2", "same"), ImportConflict("3", "gone")),
+            nowMillis = 9,
+        )!!
+        assertEquals("from-file", replaced[0].password)
+        assertEquals(9, replaced[0].updatedAtMillis)
+        assertEquals(same, replaced[1])
+        assertNull(CredentialVaultRules.replacePasswords(listOf(same), listOf(ImportConflict("2", "same")), 9))
+        assertNull(CredentialVaultRules.replacePasswords(listOf(saved), listOf(ImportConflict("1", "")), 9))
     }
 }

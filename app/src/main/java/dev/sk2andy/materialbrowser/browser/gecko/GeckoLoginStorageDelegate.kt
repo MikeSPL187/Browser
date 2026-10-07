@@ -60,10 +60,12 @@ internal class GeckoLoginStorageDelegate(
     private val vault: CredentialVault,
     private val io: Executor,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Whether the vault is open now; an expired session locks first ([CredentialVaultSession.isOpen]). */
+    private val isOpen: () -> Boolean = { CredentialVaultSession.isOpen(vault) },
 ) : Autocomplete.StorageDelegate {
     @UiThread
     override fun onLoginFetch(domain: String): GeckoResult<Array<Autocomplete.LoginEntry>> {
-        val entries = if (vault.isUnlocked) {
+        val entries = if (isOpen()) {
             CredentialVaultRules.loginsUnderDomain(vault.allLogins(), domain).map(::entry)
         } else {
             CredentialVaultRules.hintsUnderDomain(vault.loginHints(), domain).map(::lockedEntry)
@@ -90,7 +92,7 @@ internal class GeckoLoginStorageDelegate(
     @UiThread
     override fun onLoginUsed(login: Autocomplete.LoginEntry, usedFields: Int) {
         val id = login.guid ?: return
-        if (!vault.isUnlocked) return
+        if (!isOpen()) return
         // A login in use keeps the vault open for the next page of the same sign-in.
         CredentialVaultSession.touch(vault)
         val now = clock()

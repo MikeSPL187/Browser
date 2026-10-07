@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.credentials.vault
 
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVault
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
+import dev.sk2andy.materialbrowser.shared.credentials.ImportConflict
 import dev.sk2andy.materialbrowser.shared.credentials.ImportedLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultChange
 import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
@@ -214,6 +215,15 @@ internal class LocalCredentialVault(
             syncIndex()
         }
         return VaultImportResult.Imported(summary)
+    }
+
+    @Synchronized
+    override fun replacePasswords(conflicts: List<ImportConflict>, nowMillis: Long): Boolean {
+        val openKey = key ?: return false
+        val changed = CredentialVaultRules.replacePasswords(logins, conflicts, nowMillis) ?: return true
+        if (!persist(openKey, slots, changed)) return false
+        logins = changed
+        return true
     }
 
     @Synchronized

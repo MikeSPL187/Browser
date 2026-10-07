@@ -138,6 +138,7 @@
     <uses-permission android:name="${applicationId}.permission.PROFILER_INTERNAL" />
 
     <application
+        android:name=".diagnostics.VolaApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -271,6 +272,7 @@
 
         <activity
             android:name=".PasswordsActivity"
+            android:configChanges="density|keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

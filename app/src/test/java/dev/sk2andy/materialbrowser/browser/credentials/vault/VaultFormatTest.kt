@@ -102,6 +102,13 @@ class VaultFormatTest {
         val phrase = RecoveryPhrase.generate(wordlist, random)
         assertEquals(RecoveryPhrase.WORD_COUNT, phrase.split(' ').size)
         assertEquals(phrase, RecoveryPhrase.normalize("  ${phrase.uppercase().replace(" ", ",\n ")} ", wordlist))
+        // Pasted from a notes app: no-break, narrow and ideographic spaces, numbered lines.
+        assertEquals(phrase, RecoveryPhrase.normalize(phrase.replace(" ", "\u00A0"), wordlist))
+        assertEquals(phrase, RecoveryPhrase.normalize(phrase.replace(" ", "\u202F"), wordlist))
+        assertEquals(phrase, RecoveryPhrase.normalize(phrase.replace(" ", "\u3000"), wordlist))
+        val numbered = phrase.split(' ').mapIndexed { index, word -> "${index + 1}. $word" }.joinToString("\n")
+        assertEquals(phrase, RecoveryPhrase.normalize(numbered, wordlist))
+        assertEquals(phrase, RecoveryPhrase.normalize(phrase.split(' ').mapIndexed { index, word -> "${index + 1})$word" }.joinToString(" "), wordlist))
         assertNull(RecoveryPhrase.normalize(phrase.substringBeforeLast(' '), wordlist))
         assertNull(RecoveryPhrase.normalize(phrase.substringBeforeLast(' ') + " zzzzz", wordlist))
     }
