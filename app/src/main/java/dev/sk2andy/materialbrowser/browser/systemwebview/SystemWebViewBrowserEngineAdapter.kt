@@ -720,6 +720,13 @@ private class SystemWebViewBrowserEngineSession(
         onComplete: (GeckoFindResult?) -> Unit,
     ) {
         if (closed) return onComplete(null)
+        if (query.isBlank()) {
+            // Nothing to search for: clearMatches() reports nothing, so answer "no matches" here.
+            lastFindQuery = null
+            webView.setFindListener(null)
+            webView.clearMatches()
+            return onComplete(GeckoFindResult(activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = true))
+        }
         webView.setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
             onComplete(
                 GeckoFindResult(
@@ -729,16 +736,11 @@ private class SystemWebViewBrowserEngineSession(
                 ),
             )
         }
-        when {
-            query.isBlank() -> {
-                lastFindQuery = null
-                webView.clearMatches()
-            }
-            query != lastFindQuery -> {
-                lastFindQuery = query
-                webView.findAllAsync(query)
-            }
-            else -> webView.findNext(forward)
+        if (query != lastFindQuery) {
+            lastFindQuery = query
+            webView.findAllAsync(query)
+        } else {
+            webView.findNext(forward)
         }
     }
 

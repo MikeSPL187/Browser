@@ -144,6 +144,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoNewSessionRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.safety.BackToSafety
 import dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEvent
@@ -4918,6 +4919,8 @@ class BrowserController(
         }
         val tabId = selectedTabId
         val existingSession = browserEngineSessions[tabId]
+        // WebView loads a typed address without asking the guard: the old warning goes here.
+        dangerousSites.dismiss(tabId)
         updateTab(tabId) {
             it.copy(
                 url = target,
@@ -4937,6 +4940,24 @@ class BrowserController(
         } else {
             loadGeckoWithPrivacy(tabId, existingSession, target)
         }
+    }
+
+    /** «Back to safety» on the warning: the page the engine still shows, or no tab without one. */
+    fun backToSafety(tabId: String) {
+        val page = when (val next = dangerousSites.backToSafety(tabId)) {
+            BackToSafety.CloseTab -> return closeTab(tabId)
+            is BackToSafety.ShowPage -> next.url
+            null -> return
+        }
+        if (tabs.firstOrNull { tab -> tab.id == tabId }?.url == page) return
+        // A typed address took the tab before the engine was asked; the engine never left [page].
+        pageUrls[tabId] = page
+        pendingLocalSyncNavigationUrls.remove(tabId)
+        updateProtectionRequestContext(tabId, page)
+        updateTab(tabId) { tab ->
+            tab.copy(url = page, isLoading = false, progress = 100, error = null, failureKind = null)
+        }
+        persist()
     }
 
     fun openUrl(
@@ -10625,7 +10646,10 @@ class BrowserController(
         if (handlePendingPopunderOpenerNavigation(tabId, session, request.url)) {
             return GeckoNavigationRequestDecision.Deny
         }
-        if (safeHttpUrl != null && dangerousSites.intercept(tabId, safeHttpUrl)) {
+        if (
+            safeHttpUrl != null &&
+            dangerousSites.intercept(tabId, safeHttpUrl, session.historyUrlAtOffset(0))
+        ) {
             return GeckoNavigationRequestDecision.Deny
         }
         val publisherUrl = if (
@@ -11986,6 +12010,7 @@ class BrowserController(
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
+        findInPage.onNavigation(session, nextNavigationGeneration, sameDocument = true)
         updateProtectionRequestContext(tabId, pageUrls[tabId])
         fun isCurrentNavigation(): Boolean = !destroyed &&
             browserEngineSessions[tabId] === session &&
@@ -12086,6 +12111,7 @@ class BrowserController(
                 if (contentActions.sourceTabId == event.tabId) contentActions.dismiss()
                 resetBrowserChromeScroll(event.tabId)
                 navigationGenerations[event.tabId] = nextNavigationGeneration
+                findInPage.onNavigation(navigatingSession, nextNavigationGeneration, sameDocument = false)
                 invalidateMedia3OwnerFor(
                     event.tabId,
                     replaceForNavigation = replaceActiveMediaOwner,

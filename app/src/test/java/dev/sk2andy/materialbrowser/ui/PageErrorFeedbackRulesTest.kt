@@ -229,4 +229,33 @@ class PageErrorFeedbackRulesTest {
         assertTrue(transition.shouldReload)
         assertTrue(transition.emitConfirmHaptic)
     }
+
+    @Test
+    fun `a page that loads after the offline retry hides the offline page`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Offline(isOnlineReady = true),
+            error = null,
+            httpStatusCode = 200,
+            isLoading = false,
+            isOnline = true,
+        )
+
+        assertEquals(PageErrorFeedbackState.Hidden, observation.state)
+        assertFalse(observation.shouldReload)
+    }
+
+    @Test
+    fun `a certificate failure after the offline retry shows the insecure connection page`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Offline(isOnlineReady = true),
+            error = "Gecko navigation failed",
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.InsecureConnection,
+        )
+
+        assertEquals(PageErrorFeedbackState.InsecureConnection, observation.state)
+        assertFalse(observation.shouldReload)
+    }
 }
