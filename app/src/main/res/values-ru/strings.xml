@@ -765,6 +765,8 @@
     <string name="settings_browser_engine_gecko_summary">Скрипты и расширения Firefox, например uBlock Origin. Использует больше памяти.</string>
     <string name="settings_browser_engine_system_summary">Меньше расходует память и поддерживает скрипты, но не расширения Firefox. Защита Vola остаётся.</string>
     <string name="settings_browser_engine_restart_warning">Смена движка перезапустит Vola. Входы, куки и история страниц у каждого движка свои.</string>
+    <string name="settings_browser_engine_change_blocked_by_downloads">Дождитесь окончания загрузок или отмените их, прежде чем менять движок: перезапуск их прервёт.</string>
+    <string name="settings_browser_engine_change_save_failed">Не удалось сохранить вкладки, поэтому движок не сменился. Попробуйте ещё раз.</string>
     <string name="settings_external_app_links_title">Открывать ссылки в приложениях</string>
     <string name="settings_external_app_links_summary">Открывать поддерживаемые ссылки в других приложениях сразу или сначала спрашивать.</string>
     <string name="settings_external_app_links_automatic">Автоматически</string>
@@ -1609,7 +1611,7 @@
     <string name="developer_options_experiments_section">Экспериментальные функции</string>
     <string name="developer_options_performance_section">Производительность</string>
     <string name="developer_options_scroll_dispatch_mode">Обновление панелей при прокрутке</string>
-    <string name="developer_options_scroll_dispatch_mode_summary">«Оптимально» начинает с 60 Гц и снижается до 30 или 15 Гц только при длительной нагрузке на главный поток. Фиксированные режимы не меняются.</string>
+    <string name="developer_options_scroll_dispatch_mode_summary">«Оптимально» начинает с 30 Гц и снижается до 15 Гц только при длительной нагрузке на главный поток. Фиксированные режимы не меняются.</string>
     <string name="developer_options_scroll_dispatch_optimized">Оптимально</string>
     <string name="developer_options_scroll_dispatch_120_hz">Всегда 120 Гц</string>
     <string name="developer_options_scroll_dispatch_60_hz">Всегда 60 Гц</string>

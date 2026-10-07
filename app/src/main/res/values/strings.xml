@@ -735,6 +735,8 @@
     <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as uBlock Origin. Uses more memory.</string>
     <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
+    <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
+    <string name="settings_browser_engine_change_save_failed">Couldn\'t save your tabs, so the engine wasn\'t changed. Try again.</string>
     <string name="settings_external_app_links_title">Open links in apps</string>
     <string name="settings_external_app_links_summary">Controls whether Vola opens supported links in other apps immediately or asks first.</string>
     <string name="settings_external_app_links_automatic">Automatically</string>
@@ -1565,7 +1567,7 @@
     <string name="developer_options_experiments_section">Experimental features</string>
     <string name="developer_options_performance_section">Performance</string>
     <string name="developer_options_scroll_dispatch_mode">Browser chrome scroll updates</string>
-    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 60 Hz and steps down to 30 or 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
+    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 30 Hz and steps down to 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
     <string name="developer_options_scroll_dispatch_optimized">Optimized</string>
     <string name="developer_options_scroll_dispatch_120_hz">Fixed 120 Hz</string>
     <string name="developer_options_scroll_dispatch_60_hz">Fixed 60 Hz</string>

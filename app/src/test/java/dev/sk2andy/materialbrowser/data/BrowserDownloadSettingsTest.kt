@@ -62,4 +62,12 @@ class BrowserDownloadSettingsTest {
             DownloadDirectoryRules.downloadManagerFilePath("Candy/Images", "file.pdf"),
         )
     }
+
+    @Test
+    fun `subdirectory segments stay within the storage byte limit`() {
+        assertTrue(DownloadDirectoryRules.isValidSubdirectoryInput("я".repeat(127)))
+        assertFalse(DownloadDirectoryRules.isValidSubdirectoryInput("я".repeat(128)))
+        assertTrue(DownloadDirectoryRules.isValidSubdirectoryInput("a".repeat(200)))
+        assertEquals("Download", DownloadDirectoryRules.mediaStoreRelativePath("я".repeat(128)))
+    }
 }
