@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.passwords
 
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
+import java.net.IDN
 import java.security.SecureRandom
 import java.util.Locale
 
@@ -47,25 +48,49 @@ internal object PasswordsRules {
     }
 
     /**
-     * The origin for a login typed in by hand: «example.com», «https://example.com/login» and
-     * «Example.COM:8443» all work; a plain-http site does not, because the vault fills only https.
+     * The origin for a login typed in by hand: «example.com», «https://example.com/login»,
+     * «Example.COM:8443» and «пример.рф» (kept as punycode) all work; a plain-http site does not,
+     * because the vault fills only https.
      */
     fun manualOrigin(input: String): String? {
         val trimmed = input.trim()
         if (trimmed.isEmpty() || trimmed.startsWith("http://", ignoreCase = true)) return null
         val withScheme = if (trimmed.contains("://")) trimmed else "https://$trimmed"
-        return CredentialPromptRules.canonicalHttpsOrigin(withScheme)
+        return CredentialPromptRules.canonicalHttpsOrigin(withAsciiHost(withScheme))
+    }
+
+    /** [url] with an international host name in punycode, which is what the origin check reads. */
+    private fun withAsciiHost(url: String): String {
+        val start = url.indexOf("://") + SCHEME_SEPARATOR.length
+        val end = url.indexOfAny(charArrayOf('/', '?', '#'), start).takeIf { it >= 0 } ?: url.length
+        val authority = url.substring(start, end)
+        if (authority.all { it.code < ASCII_LIMIT }) return url
+        val host = authority.substringAfterLast('@').substringBefore(':')
+        val ascii = runCatching { IDN.toASCII(host) }.getOrNull() ?: return url
+        return url.substring(0, start) + authority.replace(host, ascii) + url.substring(end)
     }
 
     /** «accounts.example.com» for `https://accounts.example.com`, with the port when there is one. */
     fun displaySite(origin: String): String = origin.removePrefix("https://")
 
-    /** Logins whose site or user name contains [query], ignoring case; all of them for a blank query. */
+    /**
+     * Logins whose site or user name contains [query], ignoring case; all of them for a blank query.
+     * A site shown in punycode is also found by its own spelling («пример» finds `xn--e1afmkfd.xn--p1ai`).
+     */
     fun filter(logins: List<VaultLogin>, query: String): List<VaultLogin> {
         val needle = query.trim().lowercase(Locale.ROOT)
         if (needle.isEmpty()) return logins
         return logins.filter { login ->
-            displaySite(login.origin).contains(needle) || login.username.lowercase(Locale.ROOT).contains(needle)
+            val site = displaySite(login.origin)
+            site.contains(needle) ||
+                (PUNYCODE in site && unicodeSite(site).contains(needle)) ||
+                login.username.lowercase(Locale.ROOT).contains(needle)
         }
     }
+
+    private fun unicodeSite(site: String): String = runCatching { IDN.toUnicode(site).lowercase(Locale.ROOT) }.getOrDefault(site)
+
+    private const val SCHEME_SEPARATOR = "://"
+    private const val ASCII_LIMIT = 128
+    private const val PUNYCODE = "xn--"
 }

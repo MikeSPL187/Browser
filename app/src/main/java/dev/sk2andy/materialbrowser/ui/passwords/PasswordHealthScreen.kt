@@ -75,6 +75,7 @@ internal fun PasswordHealthScreen(
     onOpen: (VaultLogin) -> Unit,
     onChange: (VaultLogin) -> Unit,
     onBack: () -> Unit,
+    leakProgress: Float = 0f,
 ) {
     Scaffold(
         topBar = {
@@ -97,7 +98,7 @@ internal fun PasswordHealthScreen(
             contentPadding = PaddingValues(bottom = VolaPasswords.sectionGap),
         ) {
             item(key = "summary") { Summary(report) }
-            item(key = "leak-check") { LeakCheckCard(leakCheck, onLeakCheckChange) }
+            item(key = "leak-check") { LeakCheckCard(leakCheck, leakProgress, onLeakCheckChange) }
             section(
                 key = "breached",
                 icon = VolaIcons.WarningFilled,
@@ -186,7 +187,7 @@ private fun Summary(report: PasswordHealthReport) {
 }
 
 @Composable
-private fun LeakCheckCard(status: LeakCheckStatus, onChange: (Boolean) -> Unit) {
+private fun LeakCheckCard(status: LeakCheckStatus, progress: Float, onChange: (Boolean) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -213,7 +214,7 @@ private fun LeakCheckCard(status: LeakCheckStatus, onChange: (Boolean) -> Unit) 
                 Switch(checked = on, onCheckedChange = null)
             }
             when (status) {
-                LeakCheckStatus.Checking -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                LeakCheckStatus.Checking -> LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
                 LeakCheckStatus.Failed -> Text(
                     text = stringResource(R.string.passwords_health_check_failed),
                     style = MaterialTheme.typography.bodySmall,

@@ -102,7 +102,11 @@ internal fun ProtectionAndDataSettingsPage(
     onMoveToVola: () -> Unit = {},
     onClearData: () -> Unit,
     onBack: () -> Unit,
+    onOpenFirefoxExtensions: (() -> Unit)? = null,
 ) {
+    // In Gecko the default extensions own ad and consent filtering; Vola's switch has no say there.
+    val openExtensions = onOpenFirefoxExtensions
+        ?.takeIf { browserEngineKind == AndroidBrowserEngineKind.GeckoView }
     var webRtcMenuExpanded by remember { mutableStateOf(false) }
     var dnsMenuExpanded by remember { mutableStateOf(false) }
     var httpsOnlyMenuExpanded by remember { mutableStateOf(false) }
@@ -175,18 +179,35 @@ internal fun ProtectionAndDataSettingsPage(
                         }
                     }
                 }
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_block_ads_title),
-                    summary = stringResource(R.string.settings_block_ads_subtitle),
-                    checked = blockerSettings.blockAdsAndTrackers,
-                    dividerColor = dividerColor,
-                    onCheckedChange = {
-                        onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
-                    },
-                )
+                if (openExtensions != null) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.settings_block_ads_title),
+                        summary = stringResource(R.string.settings_block_ads_extension_summary),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        summaryMaxLines = Int.MAX_VALUE,
+                        onClick = openExtensions,
+                    )
+                } else {
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_block_ads_title),
+                        summary = stringResource(R.string.settings_block_ads_subtitle),
+                        checked = blockerSettings.blockAdsAndTrackers,
+                        dividerColor = dividerColor,
+                        onCheckedChange = {
+                            onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
+                        },
+                    )
+                }
                 ProtectionSwitch(
                     title = stringResource(R.string.settings_hide_cookie_banners_title),
-                    summary = stringResource(R.string.settings_hide_cookie_banners_subtitle),
+                    summary = stringResource(
+                        if (openExtensions != null) {
+                            R.string.settings_hide_cookie_banners_extension_summary
+                        } else {
+                            R.string.settings_hide_cookie_banners_subtitle
+                        },
+                    ),
                     checked = blockerSettings.hideCookieConsent,
                     dividerColor = dividerColor,
                     onCheckedChange = {
@@ -637,6 +658,29 @@ private fun ProtectionSettingsPagePreview() {
         ProtectionAndDataSettingsPage(
             blockerSettings = BlockerSettings(),
             blockedCount = 128,
+            httpsOnlyMode = HttpsOnlyMode.Always,
+            privateTabsLock = PrivateTabLock(checked = true, available = true, onCheckedChange = {}),
+            trustsUserCertificates = false,
+            onBlockerSettingsChanged = {},
+            onPrivacyXRay = {},
+            onPermissionRadar = {},
+            onFilterStudio = {},
+            onClearData = {},
+            onBack = {},
+            onOpenFirefoxExtensions = {},
+        )
+    }
+}
+
+/** The System WebView build: Vola's own ad list, with its switch. */
+@VolaPreviews
+@Composable
+private fun ProtectionSettingsPageSystemWebViewPreview() {
+    MaterialBrowserTheme {
+        ProtectionAndDataSettingsPage(
+            blockerSettings = BlockerSettings(),
+            blockedCount = 128,
+            browserEngineKind = AndroidBrowserEngineKind.SystemWebView,
             httpsOnlyMode = HttpsOnlyMode.Always,
             privateTabsLock = PrivateTabLock(checked = true, available = true, onCheckedChange = {}),
             trustsUserCertificates = false,
