@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -286,6 +287,9 @@ internal fun FavoritesScreen(
                                 folder = folder,
                                 siteCount = LibraryRules.siteCount(source, folder.id),
                                 customIcon = folderIcons[folder.id],
+                                mosaic = favoriteFolderMosaic(source, folder.id) { url ->
+                                    favicons[url]?.takeUnless(Bitmap::isRecycled)
+                                },
                                 modifier = Modifier.weight(1f),
                                 actions = FavoriteActions(
                                     canMoveEarlier = canReorder && earlier != null,
@@ -569,6 +573,7 @@ private fun FavoriteFolderCard(
     actions: FavoriteActions,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    mosaic: List<Bitmap> = emptyList(),
 ) {
     Surface(
         modifier = modifier
@@ -589,6 +594,7 @@ private fun FavoriteFolderCard(
                             PlatformProfileEmoji(emoji = folder.icon.value, fontSize = VolaLibrary.folderEmojiSize)
                         folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
                             Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                        folder.icon == null && mosaic.isNotEmpty() -> FavoriteFolderMosaic(mosaic)
                         else -> Icon(VolaIcons.Folder, contentDescription = null, modifier = Modifier.size(VolaLibrary.tileIconSize))
                     }
                 }
@@ -607,6 +613,38 @@ private fun FavoriteFolderCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+/** A folder with no icon of its own: the favicons of its first four sites, two by two, in order. */
+@Composable
+private fun FavoriteFolderMosaic(favicons: List<Bitmap>) {
+    val columns = VolaLibrary.FOLDER_MOSAIC_COLUMNS
+    Column(
+        modifier = Modifier.fillMaxSize().padding(VolaLibrary.folderMosaicPadding),
+        verticalArrangement = Arrangement.spacedBy(VolaLibrary.folderMosaicGap),
+    ) {
+        repeat(columns) { row ->
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(VolaLibrary.folderMosaicGap),
+            ) {
+                repeat(columns) { column ->
+                    val cell = Modifier.weight(1f).fillMaxHeight()
+                    val favicon = favicons.getOrNull(row * columns + column)
+                    if (favicon == null) {
+                        Spacer(cell)
+                    } else {
+                        Image(
+                            favicon.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = cell.clip(VolaLibrary.folderMosaicCellShape),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+                }
             }
         }
     }
@@ -735,5 +773,15 @@ internal fun favoriteFolderPreviewFavorites(
     }
     return collect(folderId).take(FOLDER_PREVIEW_FAVORITE_COUNT)
 }
+
+/**
+ * What a folder without its own icon shows: the favicons of its first four sites that have one.
+ * Empty when none has, and the folder keeps its plain folder symbol.
+ */
+internal fun <T : Any> favoriteFolderMosaic(
+    library: FavoriteLibrary,
+    folderId: String,
+    faviconFor: (url: String) -> T?,
+): List<T> = favoriteFolderPreviewFavorites(library, folderId).mapNotNull { faviconFor(it.url) }
 
 private const val FOLDER_PREVIEW_FAVORITE_COUNT = 4
