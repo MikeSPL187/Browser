@@ -13393,6 +13393,11 @@ class BrowserController(
                 cancel = { releaseResponse?.invoke() },
             )
         ) return null
+        // The sheet may have waited while the page moved on: nothing from it goes to any manager.
+        if (safetyChecked && isSourceCurrent?.invoke() == false) {
+            releaseResponse?.invoke()
+            return null
+        }
         val startBuiltInDownload = {
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
