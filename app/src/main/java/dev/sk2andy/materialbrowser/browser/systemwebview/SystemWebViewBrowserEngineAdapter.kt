@@ -222,6 +222,7 @@ internal class SystemWebViewBrowserEngineFactory(
             GeckoBrowsingData.All -> {
                 sessions.forEach { it.clearAllData() }
                 android.webkit.WebStorage.getInstance().deleteAllData()
+                WebViewProfileCookies.deleteStoredProfileWebStorage()
                 clearCookies(onComplete)
             }
         }
@@ -310,7 +311,8 @@ internal class SystemWebViewBrowserEngineFactory(
 
     private fun clearCookies(onComplete: (Boolean) -> Unit) {
         val managers = (knownCookieManagers +
-            sessions.mapNotNull(SystemWebViewBrowserEngineSession::cookieManager))
+            sessions.mapNotNull(SystemWebViewBrowserEngineSession::cookieManager) +
+            WebViewProfileCookies.storedProfileManagers())
             .distinctBy { manager -> System.identityHashCode(manager) }
             .ifEmpty { listOf(CookieManager.getInstance()) }
         val remaining = AtomicInteger(managers.size)

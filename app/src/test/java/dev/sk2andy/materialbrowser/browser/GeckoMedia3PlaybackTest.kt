@@ -1,8 +1,10 @@
 package dev.sk2andy.materialbrowser.browser
 
+import androidx.media3.common.C
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GeckoMedia3PlaybackTest {
@@ -444,6 +446,31 @@ class GeckoMedia3PlaybackTest {
                 target = owner(),
                 command = GeckoMediaPlaybackCommand.Stop,
             ),
+        )
+    }
+
+    @Test
+    fun `timeline duration converts milliseconds to microseconds`() {
+        assertEquals(60_000_000L, GeckoMediaPlaybackRules.durationUs(60_000L))
+        assertEquals(0L, GeckoMediaPlaybackRules.durationUs(0L))
+        assertEquals(C.TIME_UNSET, GeckoMediaPlaybackRules.durationUs(null))
+    }
+
+    @Test
+    fun `largest accepted duration converts without overflow`() {
+        val duration = requireNotNull(
+            GeckoMediaPlaybackRules.snapshot(
+                mediaState(durationMillis = Long.MAX_VALUE / 1_000L),
+                owner(),
+            )?.durationMillis,
+        )
+
+        assertTrue(GeckoMediaPlaybackRules.durationUs(duration) > 0L)
+        assertNull(
+            GeckoMediaPlaybackRules.snapshot(
+                mediaState(durationMillis = Long.MAX_VALUE / 1_000L + 1L),
+                owner(),
+            )?.durationMillis,
         )
     }
 

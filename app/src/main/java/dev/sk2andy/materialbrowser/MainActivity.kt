@@ -773,7 +773,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 }
-                AppUpdatePrompt(
+                LaunchPrompts(
                     context = this,
                     visible = !onboardingVisible &&
                         !releaseNotesVisible &&

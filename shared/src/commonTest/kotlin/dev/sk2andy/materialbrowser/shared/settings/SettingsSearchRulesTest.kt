@@ -60,4 +60,15 @@ class SettingsSearchRulesTest {
         assertTrue(SettingsSearchRules.search("   ", all).isEmpty())
         assertEquals("темные сайты", SettingsSearchRules.normalize(" Тёмные  сайты "))
     }
+
+    @Test
+    fun pastedUnicodeSpacesSeparateWordsLikeOrdinarySpaces() {
+        for (space in listOf('\u00a0', '\u202f', '\u2009')) {
+            assertEquals(
+                listOf(appearancePage),
+                SettingsSearchRules.search("Внешний${space}вид", listOf(appearancePage)),
+            )
+        }
+        assertEquals("внешний вид", SettingsSearchRules.normalize("\u00a0Внешний\u202f\u2009вид "))
+    }
 }

@@ -90,6 +90,8 @@ internal fun PasswordsListScreen(
     healthIssues: Int? = null,
     onHealth: () -> Unit = {},
     onImport: (() -> Unit)? = null,
+    busy: Boolean = false,
+    onTurnOff: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     val visible = remember(logins, query) { PasswordsRules.filter(logins, query) }
@@ -213,6 +215,16 @@ internal fun PasswordsListScreen(
                             modifier = Modifier.testTag(PasswordsTestTags.login(login.id)),
                         )
                     }
+                }
+            }
+            if (onTurnOff != null && query.isBlank()) {
+                item(key = "turn-off") {
+                    EraseVaultButton(
+                        label = stringResource(R.string.passwords_turn_off),
+                        busy = busy,
+                        onConfirm = onTurnOff,
+                        modifier = Modifier.padding(horizontal = VolaLibrary.sidePadding).padding(top = VolaLibrary.sectionGap),
+                    )
                 }
             }
         }

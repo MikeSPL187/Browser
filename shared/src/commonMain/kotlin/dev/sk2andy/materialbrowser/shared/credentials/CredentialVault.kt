@@ -70,15 +70,32 @@ sealed interface VaultSaveResult {
     data object Failed : VaultSaveResult
 }
 
+/**
+ * A login the export has with another password than the vault: [loginId]'s saved password was kept,
+ * and [password] is the export's, offered to the user as a replacement.
+ */
+class ImportConflict(val loginId: String, val password: String) {
+    override fun equals(other: Any?): Boolean =
+        other is ImportConflict && other.loginId == loginId && other.password == password
+
+    override fun hashCode(): Int = 31 * loginId.hashCode() + password.hashCode()
+
+    override fun toString(): String = "ImportConflict(loginId=$loginId, password=<redacted>)"
+}
+
 /** What an import did: the logins it added, and what it left alone. */
 data class VaultImportSummary(
     val addedIds: List<String>,
     /** Already in the vault (same site, realm and user name); the saved password was kept. */
     val duplicates: Int,
-    /** Refused by the vault's rules or over its size limit. */
+    /** Refused by the vault's rules. */
     val rejected: Int,
     /** Logins that came with a two-factor key, new ones and ones that had none yet. */
     val withTotp: Int,
+    /** The [duplicates] whose password in the export differs from the saved one, one per login. */
+    val conflicts: List<ImportConflict> = emptyList(),
+    /** New logins left out because the vault already holds [CredentialVaultRules.MAX_LOGINS]. */
+    val full: Int = 0,
 ) {
     val added: Int get() = addedIds.size
 }
@@ -130,6 +147,12 @@ interface CredentialVault {
      * its password; it only gains a two-factor key when it had none.
      */
     fun importLogins(logins: List<ImportedLogin>, nowMillis: Long): VaultImportResult
+
+    /**
+     * Gives each login in [conflicts] the export's password, in one write: the user chose the
+     * export's passwords after an import. False when the vault is locked or the write failed.
+     */
+    fun replacePasswords(conflicts: List<ImportConflict>, nowMillis: Long): Boolean
 
     /** Records that [id] filled a form; false if it is unknown, the vault is locked or the write failed. */
     fun markUsed(id: String, nowMillis: Long): Boolean

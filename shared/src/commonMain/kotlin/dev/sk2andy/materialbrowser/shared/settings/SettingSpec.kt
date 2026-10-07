@@ -69,15 +69,19 @@ object SettingsSearchRules {
             .take(MAX_RESULTS)
     }
 
-    /** Case, «ё» and spacing do not matter. */
+    /**
+     * Case, «ё» and spacing do not matter. Any Unicode space (a pasted no-break or thin space too)
+     * separates words like an ordinary one.
+     */
     fun normalize(text: String): String = text
         .lowercase()
         .replace('ё', 'е')
-        .split(WHITESPACE)
+        .map { char -> if (char.isWhitespace()) ' ' else char }
+        .joinToString("")
+        .split(' ')
         .filter(String::isNotEmpty)
         .joinToString(" ")
 
-    private val WHITESPACE = Regex("\\s+")
     private const val TITLE_PREFIX = 2
     private const val TITLE_WORDS = 1
     private const val ELSEWHERE = 0

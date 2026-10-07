@@ -26,6 +26,9 @@ sealed interface PasswordImportParse {
     /** A Bitwarden export sealed with its own password: it has to be exported unencrypted. */
     data object Encrypted : PasswordImportParse
 
+    /** More rows than any manager exports ([PasswordImportRules] reads at most 50 000). */
+    data object TooLarge : PasswordImportParse
+
     /** Neither a password CSV nor a Bitwarden JSON export. */
     data object NotAnExport : PasswordImportParse
 }
@@ -45,7 +48,7 @@ object PasswordImportRules {
     private val USERNAME_COLUMNS = listOf("username", "login_username", "user name", "login", "user")
     private val EMAIL_COLUMNS = listOf("email", "e-mail")
     private val PASSWORD_COLUMNS = listOf("password", "login_password")
-    private val TOTP_COLUMNS = listOf("totp", "login_totp", "otpauth", "one-time password", "otp")
+    private val TOTP_COLUMNS = listOf("totp", "login_totp", "otpauth", "one-time password", "otp", "otpsecret")
     private val LOGIN_TYPES = setOf("login", "password")
     private const val BITWARDEN_LOGIN_TYPE = 1
 
@@ -59,7 +62,11 @@ object PasswordImportRules {
     }
 
     private fun parseCsv(text: String, origin: (String) -> String?): PasswordImportParse {
-        val rows = csvRows(text) ?: return PasswordImportParse.NotAnExport
+        val rows = csvRows(text) ?: return if (text.count { it == '\n' } > MAX_ROWS) {
+            PasswordImportParse.TooLarge
+        } else {
+            PasswordImportParse.NotAnExport
+        }
         val header = rows.firstOrNull()?.map { it.trim().lowercase() } ?: return PasswordImportParse.NotAnExport
         fun column(names: List<String>): Int? = names.firstNotNullOfOrNull { name -> header.indexOf(name).takeIf { it >= 0 } }
         val url = column(URL_COLUMNS) ?: return PasswordImportParse.NotAnExport
@@ -100,9 +107,10 @@ object PasswordImportRules {
             ?: return PasswordImportParse.NotAnExport
         if (root["encrypted"].boolean() == true) return PasswordImportParse.Encrypted
         val items = root["items"] as? JsonArray ?: return PasswordImportParse.NotAnExport
+        if (items.size > MAX_ROWS) return PasswordImportParse.TooLarge
         val logins = ArrayList<ImportedLogin>()
         var skipped = 0
-        for (item in items.take(MAX_ROWS)) {
+        for (item in items) {
             val fields = item as? JsonObject
             val login = fields?.get("login") as? JsonObject
             val imported = if (fields == null || login == null || fields["type"].int() != BITWARDEN_LOGIN_TYPE) {
@@ -136,7 +144,8 @@ object PasswordImportRules {
         val site = sites.firstNotNullOfOrNull { site -> site.trim().takeIf(String::isNotEmpty)?.let(origin) } ?: return null
         val draft = VaultLoginDraft(
             origin = site,
-            formActionOrigin = formAction.trim().takeIf(String::isNotEmpty)?.let(origin),
+            // Firefox writes «javascript:» for forms a script sends: no site, so no action origin.
+            formActionOrigin = formAction.trim().takeIf { action -> "://" in action }?.let(origin),
             httpRealm = realm.takeIf(String::isNotBlank),
             username = username.trim(),
             password = password,

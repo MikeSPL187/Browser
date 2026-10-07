@@ -12,8 +12,8 @@ import dev.sk2andy.materialbrowser.ui.passwords.VaultAutoLock
 
 /**
  * Keeps the open vault open only while it is in use: every use restarts a five-minute timer, and
- * the vault locks when it runs out. The timer cannot run in deep sleep, so screens also check on
- * resume ([lockIfExpired]) against the monotonic clock.
+ * the vault locks when it runs out. The timer cannot run in deep sleep, so every read of the open
+ * state ([isOpen]) and the Passwords screen on resume ([lockIfExpired]) check the elapsed clock too.
  */
 internal object CredentialVaultSession {
     private val handler = Handler(Looper.getMainLooper())
@@ -31,6 +31,16 @@ internal object CredentialVaultSession {
         autoLock.touch(SystemClock.elapsedRealtime())
         handler.removeCallbacks(lockTask)
         handler.postDelayed(lockTask, VaultAutoLock.DEFAULT_TIMEOUT_MILLIS)
+    }
+
+    /**
+     * Whether [vault] is open now. A vault whose five minutes ran out while the timer could not run
+     * (the phone slept) locks here first, so the browser never fills from an expired session.
+     */
+    @MainThread
+    fun isOpen(vault: CredentialVault): Boolean {
+        lockIfExpired()
+        return vault.isUnlocked
     }
 
     @MainThread

@@ -22,9 +22,9 @@ import javax.crypto.spec.GCMParameterSpec
 
 /**
  * The Android side of the vault: the sealed file in `noBackupFilesDir` and the device key in
- * Android Keystore. `no_backup` is outside cloud backup, device-to-device transfer and the app's
- * own data export, and the device key never leaves the hardware anyway, so the vault stays on
- * this phone; the recovery phrase is the way to bring it back.
+ * Android Keystore. `no_backup` is outside cloud backup and device-to-device transfer, and the
+ * device key never leaves the hardware. Only Vola's own «Export all app data» carries the sealed
+ * file to another phone, where the recovery phrase opens it and binds a new device key.
  */
 internal object AndroidCredentialVault {
     private const val FILE_NAME = "credential_vault_v1.bin"
