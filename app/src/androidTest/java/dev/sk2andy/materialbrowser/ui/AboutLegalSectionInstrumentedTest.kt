@@ -121,19 +121,24 @@ class AboutLegalSectionInstrumentedTest {
             .bufferedReader()
             .use { it.readText() }
 
-        assertTrue(notices.contains(CandyLegalSources.UBLOCK_ORIGIN_REVISION))
-        // Every bundled Gecko extension is named with the SHA-256 of the XPI that ships.
-        val catalog = context.assets.open("gecko_default_extensions/catalog.json")
-            .bufferedReader()
-            .use { JSONObject(it.readText()) }
-            .getJSONArray("extensions")
-        assertTrue(catalog.length() > 0)
-        for (index in 0 until catalog.length()) {
-            val sha256 = catalog.getJSONObject(index).getString("sha256")
-            assertTrue("Notices miss the SHA-256 $sha256", notices.contains(sha256))
+        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+            // The System WebView build ships no Gecko extensions, so their notices are stripped.
+            assertFalse(notices.contains("Gecko default extensions"))
+            assertTrue(notices.contains("System WebView release runtime classpath for Vola"))
+        } else {
+            assertTrue(notices.contains(CandyLegalSources.UBLOCK_ORIGIN_REVISION))
+            // Every bundled extension package must be listed with the hash of the shipped file.
+            val catalog = context.assets.open("gecko_default_extensions/catalog.json")
+                .bufferedReader()
+                .use { JSONObject(it.readText()) }
+                .getJSONArray("extensions")
+            assertTrue(catalog.length() > 0)
+            for (index in 0 until catalog.length()) {
+                val sha256 = catalog.getJSONObject(index).getString("sha256")
+                assertTrue("Notices miss the SHA-256 $sha256", notices.contains(sha256))
+            }
+            assertTrue(notices.contains("GeckoView release runtime classpath for Vola"))
         }
-
-        assertTrue(notices.contains("release runtime classpath for Vola"))
         assertFalse(notices.contains("Google Code Scanner"))
         assertFalse(notices.contains("Google Data Transport"))
     }
