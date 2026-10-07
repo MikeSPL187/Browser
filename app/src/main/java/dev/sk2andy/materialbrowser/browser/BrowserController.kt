@@ -294,8 +294,8 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuEntry
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayoutRules
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLocation
-import dev.sk2andy.materialbrowser.recall.RecallExtractionIdentity
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.recall.RecallPageCapture
 import dev.sk2andy.materialbrowser.recall.RecallRules
 import dev.sk2andy.materialbrowser.sync.SyncConnectionSettings
 import dev.sk2andy.materialbrowser.sync.SyncDeviceIconCatalog
@@ -1167,7 +1167,6 @@ class BrowserController(
         mutableStateMapOf<String, WebContentStatusBarAppearance>()
     private val firefoxExtensionOptionsTabs =
         mutableMapOf<String, FirefoxExtensionOptionsTabChrome>()
-    private val committedRecallPages = mutableMapOf<String, RecallExtractionIdentity>()
     private val externalNavigationGrants = mutableMapOf<String, ExternalNavigationGrant>()
     private val pendingInitialExternalNavigationGrants =
         mutableMapOf<String, ExternalNavigationGrant>()
@@ -1178,7 +1177,6 @@ class BrowserController(
     private val navigationSourceTabs = mutableMapOf<String, BrowserTab>()
     private val externalAppNavigationRecoveries =
         mutableMapOf<String, ExternalAppNavigationRecovery>()
-    private var webContentRequestGeneration = 0L
     private var userScriptMutationPending = false
     private var toppingCatalogRefreshGeneration = 0
     private val pendingConsentCssUrls = mutableMapOf<String, String?>()
@@ -2650,9 +2648,6 @@ class BrowserController(
     private fun selectedAttachedBrowserEngineBinding(): GeckoViewBinding? = geckoViewBindings.values
         .firstOrNull { binding -> binding.tabId == selectedTabId }
         ?.takeIf { binding -> binding.view.isAttachedToWindow }
-
-    private fun selectedAttachedBrowserEngineView(): View? =
-        selectedAttachedBrowserEngineBinding()?.view
 
     /** Attaches the selected tab, or with [companion] Split View's other tab, to [container]. */
     private fun attachSelectedGeckoView(
@@ -10397,7 +10392,6 @@ class BrowserController(
         webContentTopBarStates.clear()
         webContentStatusBarBackdrops.clear()
         firefoxExtensionOptionsTabs.clear()
-        committedRecallPages.clear()
         externalNavigationGrants.clear()
         pendingInitialExternalNavigationGrants.clear()
         navigationSourceTabs.clear()
@@ -12275,7 +12269,7 @@ class BrowserController(
                 if (committedUrl != null) {
                     val committedTitle = event.title.orEmpty()
                         .ifBlank { currentTab?.title.orEmpty() }
-                    recordHistory(event.tabId, committedUrl, committedTitle)
+                    if (recordHistory(event.tabId, committedUrl, committedTitle)) captureRecall(event.tabId)
                     refineGeckoCandyTrailTitle(
                         tabId = event.tabId,
                         url = committedUrl,
@@ -13702,6 +13696,18 @@ class BrowserController(
         candyTrails[tab.id] = trail
         if (tab.id !in pendingCandyTrailRestoreIds) candyTrailRepository.save(tab, trail)
     }
+
+    /** Remembers the loaded page in Recall (PRO28-03), unless it is private or Recall is off or clearing. */
+    private fun captureRecall(tabId: String): Unit = RecallPageCapture.capture(
+        repository = recallRepository,
+        extract = browserEngineSessions[tabId]?.let { session -> session::extractPageForReader } ?: return,
+        current = {
+            val allowed = !destroyed && isActivityStarted && isRecallEnabled && !recallDisablePending &&
+                !browsingDataClearPending && !isSessionEphemeralTab(tabId)
+            val tab = tabs.firstOrNull { it.id == tabId }?.takeUnless { it.profileId in pendingRecallProfileDeletions }
+            RecallPageCapture.identity(tab, pageUrls[tabId], navigationGenerations[tabId], allowed)
+        },
+    )
 
     private fun recordHistory(tabId: String, url: String, title: String): Boolean {
         if (isSessionEphemeralTab(tabId)) return false
@@ -15541,12 +15547,6 @@ class BrowserController(
                 session.setDesktopMode(isDesktopView(tab, pageUrls[tab.id] ?: tab.url))
                 session.execute(BrowserEngineCommands.reload())
             }
-    }
-
-    private fun desktopViewDomains(tab: BrowserTab): Set<String> = if (tab.isIncognito) {
-        temporaryDesktopViewDomains[tab.profileId].orEmpty()
-    } else {
-        permanentDesktopViewDomains[tab.profileId].orEmpty()
     }
 
     private fun refreshDomainMuteForProfile(profileId: String, isIncognito: Boolean) {

@@ -8,8 +8,10 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.Handler
 import android.os.Looper
 import dev.sk2andy.materialbrowser.recall.RecallDocument
+import dev.sk2andy.materialbrowser.recall.RecallExtractionIdentity
 import dev.sk2andy.materialbrowser.recall.RecallExtractionParser
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.recall.RecallPageCapture
 import dev.sk2andy.materialbrowser.recall.RecallRules
 import java.io.File
 import java.nio.ByteBuffer
@@ -48,6 +50,24 @@ internal class RecallRepository private constructor(context: Context) {
                 expectedUrl = expectedUrl,
                 visitedAt = visitedAt,
             ) ?: return@execute
+            if (cleanupEpoch.get() != expectedCleanupEpoch) return@execute
+            indexSanitized(document)
+        }
+    }
+
+    /**
+     * Indexes the reader extraction of [identity]'s page ([RecallPageCapture.document]), read off the
+     * main thread, unless Recall was cleared since [expectedCleanupEpoch] was captured.
+     */
+    fun indexReaderPage(
+        rawJson: String?,
+        identity: RecallExtractionIdentity,
+        expectedCleanupEpoch: Long,
+        visitedAt: Long,
+    ) {
+        executor.execute {
+            if (cleanupEpoch.get() != expectedCleanupEpoch) return@execute
+            val document = RecallPageCapture.document(rawJson, identity, visitedAt) ?: return@execute
             if (cleanupEpoch.get() != expectedCleanupEpoch) return@execute
             indexSanitized(document)
         }
