@@ -56,6 +56,23 @@ class DownloadSafetyGate {
         return true
     }
 
+    /**
+     * The [final] name and type of a download [checked] before they were known (a link saved from
+     * the context menu). It waits for the user only when they bring a finding [checked] did not
+     * show; otherwise nothing new needs an answer and it returns false.
+     */
+    fun holdFinal(
+        checked: BrowserDownloadRequest,
+        final: BrowserDownloadRequest,
+        save: () -> Unit,
+        cancel: () -> Unit,
+    ): Boolean {
+        val seen = DownloadSafetyCheck.findings(checked.url, checked.fileName, checked.mimeType).toSet()
+        val findings = DownloadSafetyCheck.findings(final.url, final.fileName, final.mimeType)
+        if (findings.all { it in seen }) return false
+        return hold(final.fileName, hostOf(final.url), findings, save, cancel)
+    }
+
     fun save() {
         val item = pending ?: return
         pending = queue.removeFirstOrNull()

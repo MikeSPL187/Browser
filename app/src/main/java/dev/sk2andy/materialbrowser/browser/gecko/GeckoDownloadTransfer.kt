@@ -50,7 +50,30 @@ internal data class GeckoDownloadTransferStart(
     val totalBytes: Long,
 )
 
+/** The final name and type of a transfer, known from its response before anything is written. */
+internal data class GeckoDownloadTransferMetadata(
+    val fileName: String,
+    val mimeType: String,
+    val sourceUrl: String,
+)
+
+/** The one answer to [GeckoDownloadTransferListener.onMetadata]; later answers are ignored. */
+internal interface GeckoDownloadMetadataDecision {
+    /** Writes the file. */
+    fun proceed()
+
+    /** Closes the response; nothing is written and no failure is reported. */
+    fun abort()
+}
+
 internal interface GeckoDownloadTransferListener {
+    /**
+     * The final name and type are known and nothing is written yet. The transfer waits, holding
+     * the response open, until [decision] proceeds or aborts; by default it proceeds at once.
+     */
+    fun onMetadata(metadata: GeckoDownloadTransferMetadata, decision: GeckoDownloadMetadataDecision) =
+        decision.proceed()
+
     fun onStarted(start: GeckoDownloadTransferStart)
 
     fun onProgress(bytesReceived: Long, totalBytes: Long) = Unit
@@ -325,6 +348,38 @@ internal class GeckoDownloadTransferManager(
         )
         val safeMimeType = SafeDownloadValues.finalMimeType(safeFileName, candidateMimeType)
         val totalBytes = response.header("content-length")?.toLongOrNull()?.coerceAtLeast(-1L) ?: -1L
+        val metadata = GeckoDownloadTransferMetadata(safeFileName, safeMimeType, response.uri)
+        val answered = AtomicBoolean(false)
+        val decision = object : GeckoDownloadMetadataDecision {
+            override fun proceed() {
+                if (answered.compareAndSet(false, true)) {
+                    open(id, operation, body, metadata, referrer, totalBytes, listener)
+                }
+            }
+
+            override fun abort() {
+                if (answered.compareAndSet(false, true)) discard(id, operation, body)
+            }
+        }
+        dispatch { listener.onMetadata(metadata, decision) }
+    }
+
+    /** Starts writing once the final [metadata] may be saved. */
+    private fun open(
+        id: Int,
+        operation: Operation,
+        body: java.io.InputStream,
+        metadata: GeckoDownloadTransferMetadata,
+        referrer: String?,
+        totalBytes: Long,
+        listener: GeckoDownloadTransferListener,
+    ) {
+        if (operation.cancelled.get() || operation.terminal.get()) {
+            discard(id, operation, body)
+            return
+        }
+        val safeFileName = metadata.fileName
+        val safeMimeType = metadata.mimeType
         val entry = runCatching { sink.open(safeFileName, safeMimeType) }.getOrElse {
             runCatching(body::close)
             fail(id, operation, listener, GeckoDownloadFailure.Storage)
@@ -334,7 +389,7 @@ internal class GeckoDownloadTransferManager(
             id = id,
             fileName = safeFileName,
             mimeType = safeMimeType,
-            sourceUrl = response.uri,
+            sourceUrl = metadata.sourceUrl,
             referrer = referrer,
             startedAtMillis = System.currentTimeMillis(),
             totalBytes = totalBytes,
@@ -362,6 +417,15 @@ internal class GeckoDownloadTransferManager(
             dispatch { listener.onStarted(started) }
             notifier.started(started.id)
             io.execute { copy(id, operation, body, started, listener) }
+        }
+    }
+
+    /** Drops a response that will not be written, without reporting a failure. */
+    private fun discard(id: Int, operation: Operation, body: java.io.InputStream) {
+        synchronized(operation) {
+            operation.terminal.set(true)
+            runCatching(body::close)
+            operations.remove(id, operation)
         }
     }
 

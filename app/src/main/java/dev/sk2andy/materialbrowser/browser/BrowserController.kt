@@ -117,7 +117,9 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingDataReloadRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEvent
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoContextDownloadRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadMetadataDecision
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferMetadata
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
@@ -6696,6 +6698,16 @@ class BrowserController(
                     val cancellation = session.startContextDownload(
                         request = GeckoContextDownloadRequest(safeUrl, referrer = request.referrer),
                         listener = object : GeckoDownloadTransferListener {
+                            override fun onMetadata(
+                                metadata: GeckoDownloadTransferMetadata,
+                                decision: GeckoDownloadMetadataDecision,
+                            ) {
+                                // The link only guessed the name and type; the response tells the truth.
+                                val final = BrowserDownloadRequest(metadata.sourceUrl, metadata.fileName, metadata.mimeType)
+                                val save = { if (isSourceCurrent()) decision.proceed() else decision.abort() }
+                                if (!downloadSafety.holdFinal(request, final, save, decision::abort)) decision.proceed()
+                            }
+
                             override fun onStarted(start: GeckoDownloadTransferStart) {
                                 report(DownloadActionResult.Enqueued(start.id.toLong(), start.fileName))
                             }
