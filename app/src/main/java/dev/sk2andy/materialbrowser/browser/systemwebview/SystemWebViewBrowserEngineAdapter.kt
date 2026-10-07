@@ -135,6 +135,7 @@ import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
@@ -719,6 +720,13 @@ private class SystemWebViewBrowserEngineSession(
         onComplete: (GeckoFindResult?) -> Unit,
     ) {
         if (closed) return onComplete(null)
+        if (query.isBlank()) {
+            // Nothing to search for: clearMatches() reports nothing, so answer "no matches" here.
+            lastFindQuery = null
+            webView.setFindListener(null)
+            webView.clearMatches()
+            return onComplete(GeckoFindResult(activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = true))
+        }
         webView.setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
             onComplete(
                 GeckoFindResult(
@@ -728,16 +736,11 @@ private class SystemWebViewBrowserEngineSession(
                 ),
             )
         }
-        when {
-            query.isBlank() -> {
-                lastFindQuery = null
-                webView.clearMatches()
-            }
-            query != lastFindQuery -> {
-                lastFindQuery = query
-                webView.findAllAsync(query)
-            }
-            else -> webView.findNext(forward)
+        if (query != lastFindQuery) {
+            lastFindQuery = query
+            webView.findAllAsync(query)
+        } else {
+            webView.findNext(forward)
         }
     }
 
@@ -836,8 +839,15 @@ private class SystemWebViewBrowserEngineSession(
     }
 
     override fun extractPageForReader(onComplete: (String?) -> Unit) {
-        if (closed) onComplete(null)
-        else webView.evaluateJavascript(ReaderExtractionScript.javascript, onComplete)
+        if (closed) {
+            onComplete(null)
+            return
+        }
+        // evaluateJavascript returns the script's string JSON-encoded; the port hands back
+        // the raw JSON object text, the same as Gecko.
+        webView.evaluateJavascript(ReaderExtractionScript.javascript) { result ->
+            onComplete(ReaderExtractionParser.decodeJavascriptString(result))
+        }
     }
 
     override fun probeTextInputOcclusion(

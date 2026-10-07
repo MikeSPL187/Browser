@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
+import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -39,5 +41,21 @@ class WorkspaceSheetRulesTest {
         assertEquals(listOf("a", "b", "e"), WorkspaceSheetRules.collapsedIcons(icons, "e", limit = 3))
         assertEquals(listOf("a", "b", "c"), WorkspaceSheetRules.collapsedIcons(icons, null, limit = 3))
         assertEquals(listOf("a", "b", "c"), WorkspaceSheetRules.collapsedIcons(icons, "z", limit = 3))
+    }
+
+    @Test
+    fun `the protection draft survives saved instance state`() {
+        val protection = ProfileProtection(ProfileLockTrigger.Cooldown, cooldownMinutes = 15)
+
+        val saved = WorkspaceSheetRules.savedProtectionDraft(protection)
+
+        assertEquals(protection, WorkspaceSheetRules.restoredProtectionDraft(saved))
+        assertNull(WorkspaceSheetRules.savedProtectionDraft(null))
+        assertNull(WorkspaceSheetRules.restoredProtectionDraft(null))
+        assertNull(WorkspaceSheetRules.restoredProtectionDraft("unknown:5"))
+        assertEquals(
+            ProfileProtection(ProfileLockTrigger.AppClosed),
+            WorkspaceSheetRules.restoredProtectionDraft("app_closed:x"),
+        )
     }
 }

@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
@@ -99,6 +100,39 @@ private fun FavoritesScreenPreview() {
         )
     }
 }
+
+/** A folder with no icon of its own shows its first sites' favicons, two by two. */
+@VolaPreviews
+@Composable
+private fun FavoritesFolderMosaicPreview() {
+    val travel = FavoriteFolder("travel", "Путешествия")
+    val reading = FavoriteFolder("reading", "Чтение")
+    val sites = listOf(
+        FavoriteEntry("https://north-guide.ru/routes", "Ледовые маршруты", 1, parentFolderId = travel.id),
+        FavoriteEntry("https://ice-forecast.example.ru/", "Прогноз льда", 2, parentFolderId = travel.id),
+        FavoriteEntry("https://maps.example.org/", "Карты", 3, parentFolderId = travel.id),
+        FavoriteEntry("https://fonts.example.org/", "Каталог шрифтов", 4, parentFolderId = reading.id),
+    )
+    val colors = listOf(0xFF2F6B5F, 0xFF4A3A9E, 0xFF9A3A1E, 0xFF1E5E8C)
+    val favicons = sites.zip(colors).associate { (site, color) ->
+        site.url to Bitmap.createBitmap(PREVIEW_FAVICON_PX, PREVIEW_FAVICON_PX, Bitmap.Config.ARGB_8888)
+            .apply { eraseColor(color.toInt()) }
+    }
+    val library = FavoriteLibrary(listOf(travel, reading) + sites)
+    MaterialBrowserTheme {
+        FavoritesScreen(
+            favorites = library.favorites,
+            library = library,
+            favicons = favicons,
+            onDeleteFavorite = { _, _ -> },
+            onUndoDelete = {},
+            onOpenFavorite = {},
+            onBack = {},
+        )
+    }
+}
+
+private const val PREVIEW_FAVICON_PX = 32
 
 /** Board W-States: no favorites yet, with bookmarks from another browser one tap away. */
 @VolaPreviews
