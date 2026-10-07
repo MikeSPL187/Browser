@@ -134,7 +134,8 @@ class AboutLegalSectionInstrumentedTest {
                 .getJSONArray("extensions")
             assertTrue(catalog.length() > 0)
             for (index in 0 until catalog.length()) {
-                assertTrue(notices.contains(catalog.getJSONObject(index).getString("sha256")))
+                val sha256 = catalog.getJSONObject(index).getString("sha256")
+                assertTrue("Notices miss the SHA-256 $sha256", notices.contains(sha256))
             }
             assertTrue(notices.contains("GeckoView release runtime classpath for Vola"))
         }

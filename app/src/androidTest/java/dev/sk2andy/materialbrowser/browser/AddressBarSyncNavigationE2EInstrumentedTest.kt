@@ -101,6 +101,12 @@ class AddressBarSyncNavigationE2EInstrumentedTest {
                 composeRule.onNodeWithText(AddressResolver.displayText(server.oldUrl))
                     .assertIsDisplayed()
                     .performClick()
+                // The editor opens with the bar's expand motion.
+                composeRule.waitUntil(timeoutMillis = 5_000L) {
+                    runCatching {
+                        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+                    }.isSuccess
+                }
                 val searchEditor = composeRule.onNodeWithTag(AddressBarTestTags.Editor)
                     .assertIsDisplayed()
                 searchEditor.performTextReplacement(SEARCH_QUERY)

@@ -20,8 +20,11 @@ import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
@@ -64,7 +67,15 @@ class GeckoTabOverviewHandoffInstrumentedTest {
         AndroidSyncVaultStore(context).clear()
         AndroidSyncCacheStore(context).clear()
         GestureOnboardingStore(context).markCompleted()
-        BrowserSessionStore(context).saveStartupAnimationEnabled(false)
+        BrowserSessionStore(context).apply {
+            saveStartupAnimationEnabled(false)
+            // Without the startup animation a launcher start opens the address editor, which
+            // hides the bar's tab button.
+            saveStartupAddressFocusMode(StartupAddressFocusMode.Never)
+            // The handoff is measured edge to edge; Vola's default frame starts the page card
+            // below the status bar, where there is no safe-area inset to keep.
+            saveAppearanceSettings(AppearanceSettings(chromeStyle = BrowserChromeStyle.Air))
+        }
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
     }
 

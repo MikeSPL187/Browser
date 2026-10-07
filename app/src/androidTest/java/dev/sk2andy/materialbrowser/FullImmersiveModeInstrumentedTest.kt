@@ -275,7 +275,7 @@ class FullImmersiveModeInstrumentedTest {
     }
 
     private companion object {
-        const val VISIBILITY_TIMEOUT_MILLIS = 5_000L
+        const val VISIBILITY_TIMEOUT_MILLIS = 15_000L
         const val POLL_INTERVAL_MILLIS = 50L
     }
 }

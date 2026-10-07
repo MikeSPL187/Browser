@@ -41,20 +41,36 @@ class FirstRunExternalLinkInstrumentedTest {
         ActivityScenario.launch<MainActivity>(link).use { scenario ->
             composeRule.waitForIdle()
             composeRule.onNodeWithTag(FirstRunTestTags.Welcome).assertDoesNotExist()
+            val onboarding = context.getSharedPreferences(
+                GestureOnboardingStore.PREFERENCES_NAME,
+                Context.MODE_PRIVATE,
+            )
+            // An existing session makes the store treat the install as an update, so show it on failure.
             assertTrue(
-                context.getSharedPreferences(GestureOnboardingStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
-                    .getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
+                "onboarding=${onboarding.all}, session keys=" +
+                    context.getSharedPreferences(BrowserSessionStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+                        .all.keys.sorted(),
+                onboarding.getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
             )
 
+            // MainActivity is singleTask, so a launcher tap reaches it as a new intent.
+            lateinit var originalIntent: Intent
             scenario.onActivity { activity ->
-                activity.startActivity(
+                originalIntent = activity.intent
+                InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(
+                    activity,
                     Intent(Intent.ACTION_MAIN)
                         .addCategory(Intent.CATEGORY_LAUNCHER)
                         .setClass(activity, MainActivity::class.java),
                 )
             }
-            composeRule.waitUntil(timeoutMillis = 5_000) {
-                composeRule.onAllNodesWithTag(FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
+            try {
+                composeRule.waitUntil(timeoutMillis = 5_000) {
+                    composeRule.onAllNodesWithTag(FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
+                }
+            } finally {
+                // ActivityScenario matches lifecycle events against its original launch intent.
+                scenario.onActivity { activity -> activity.intent = originalIntent }
             }
         }
     }

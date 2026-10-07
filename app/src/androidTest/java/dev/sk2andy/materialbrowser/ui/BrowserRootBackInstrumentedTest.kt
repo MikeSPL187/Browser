@@ -110,7 +110,7 @@ class BrowserRootBackInstrumentedTest {
 
     @Test
     fun tabOverviewRequestsPortraitUntilClosed() {
-        val browserController = createController()
+        val browserController = createControllerWithSibling()
         val portraitLocked = AtomicBoolean(false)
         setBrowserContent(
             browserController = browserController,
@@ -137,7 +137,7 @@ class BrowserRootBackInstrumentedTest {
 
     @Test
     fun frostedTabOverviewKeepsClearSystemBarSpacing() {
-        val browserController = createController()
+        val browserController = createControllerWithSibling()
         val surfaceStyle = mutableStateOf(BrowserSurfaceStyle.Clear)
         val safeInsets = AtomicReference<Insets?>()
         val windowHeight = AtomicInteger()
@@ -177,8 +177,9 @@ class BrowserRootBackInstrumentedTest {
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow
+        // The v4 overview ends in the workspace dock; its new-tab button is the lowest control.
         val clearBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.Bar)
+            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow
@@ -198,7 +199,7 @@ class BrowserRootBackInstrumentedTest {
             .fetchSemanticsNode()
             .boundsInWindow
         val frostedBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.Bar)
+            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInWindow
@@ -210,7 +211,7 @@ class BrowserRootBackInstrumentedTest {
 
     @Test
     fun settingsFromOverviewReturnsToOverviewOnBack() {
-        val browserController = createController()
+        val browserController = createControllerWithSibling()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         setBrowserContent(browserController)
 
@@ -246,7 +247,7 @@ class BrowserRootBackInstrumentedTest {
 
     @Test
     fun incomingBrowserNavigationOpensNewTabAndClosesOverview() {
-        val browserController = createController()
+        val browserController = createControllerWithSibling()
         setBrowserContent(browserController)
 
         composeRule.activityRule.scenario.onActivity { activity ->
@@ -284,6 +285,13 @@ class BrowserRootBackInstrumentedTest {
         }
         return browserController
     }
+
+    /**
+     * Back on a lone root tab goes to the system, which finishes the activity; with a sibling it
+     * closes the tab and opens the overview.
+     */
+    private fun createControllerWithSibling(): BrowserController =
+        createController().also { browserController -> browserController.createTab() }
 
     private fun setBrowserContent(
         browserController: BrowserController,

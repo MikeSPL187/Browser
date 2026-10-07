@@ -3,9 +3,8 @@ package dev.sk2andy.materialbrowser
 import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.core.view.ViewCompat
@@ -16,6 +15,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.awaitAddressEditorFocused
+import dev.sk2andy.materialbrowser.ui.closeAddressInputButton
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -42,14 +43,11 @@ class StartupPresentationInstrumentedTest {
 
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.cd_close_address_input),
-        ).performClick()
+        composeRule.onNode(closeAddressInputButton(context)).performClick()
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertDoesNotExist()
 
         composeRule.activityRule.scenario.onActivity { activity ->
@@ -63,15 +61,18 @@ class StartupPresentationInstrumentedTest {
             composeRule.activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                 composeRule.activity.window.decorView.hasWindowFocus()
         }
+        // The launcher intent asks for the editor through a request id; it opens a frame later.
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            composeRule.onAllNodesWithTag(AddressBarTestTags.Editor).fetchSemanticsNodes().isNotEmpty()
+        }
 
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
     }
 
     private fun assertImeVisible() {
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }

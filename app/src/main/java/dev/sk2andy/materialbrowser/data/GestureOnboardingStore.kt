@@ -26,7 +26,7 @@ class GestureOnboardingStore(context: Context) {
             markStarted()
             return true
         }
-        if (browserSessionPreferences.all.isNotEmpty()) {
+        if (isExistingInstall(browserSessionPreferences.all.keys)) {
             markCompleted()
             return false
         }
@@ -39,6 +39,13 @@ class GestureOnboardingStore(context: Context) {
     }
 
     internal companion object {
+        /**
+         * The history lifecycle records its session flag before the first activity asks, so on a
+         * new install the session store already holds that one key; anything else means an update.
+         */
+        fun isExistingInstall(sessionKeys: Set<String>): Boolean =
+            sessionKeys.any { it != BrowserSessionStore.KEY_HISTORY_SESSION_ACTIVE }
+
         const val PREFERENCES_NAME = "gesture_onboarding"
         const val BROWSER_SESSION_PREFERENCES_NAME = "browser_session"
         const val KEY_COMPLETED_VERSION = "completed_version"

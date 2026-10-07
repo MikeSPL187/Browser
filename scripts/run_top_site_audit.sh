@@ -71,7 +71,7 @@ set +e
 adb -s "$serial" shell am instrument -w -r \
     "${instrument_args[@]}" \
     -e class dev.sk2andy.materialbrowser.blocking.TopSiteBlockingAuditInstrumentedTest \
-    "$test_app_id/androidx.test.runner.AndroidJUnitRunner"
+    "$test_app_id/dev.sk2andy.materialbrowser.VolaTestRunner"
 instrument_status=$?
 set -e
 

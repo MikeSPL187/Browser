@@ -19,9 +19,11 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
@@ -526,12 +528,19 @@ class AddressBarDockInstrumentedTest {
                 WideAddressTabStripTestTags.TabPrefix + "segmented-address-tab",
             ).performClick()
         } else {
+            // The restored tab's address reaches the bar a moment after the first frame.
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithText("example.test").fetchSemanticsNodes().isNotEmpty()
+            }
             composeRule.onNodeWithText("example.test").performClick()
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
-        composeRule.onNodeWithContentDescription(
-            composeRule.activity.getString(R.string.cd_close_address_input),
-        ).assertIsDisplayed()
+        // The editor takes focus once its expand motion has started, not on the tap's frame.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
+            }.isSuccess
+        }
+        composeRule.onNode(closeAddressInputButton(composeRule.activity)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.cd_more_options),
         ).assertDoesNotExist()
@@ -602,8 +611,24 @@ class AddressBarDockInstrumentedTest {
 
         composeRule.runOnIdle { videoOnlyPresentation.value = false }
 
+        // The pill comes back with the chrome's return motion; say where it is if it does not.
+        val returned = runCatching {
+            composeRule.waitUntil(timeoutMillis = 5_000L) {
+                runCatching {
+                    composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab).assertIsDisplayed()
+                }.isSuccess
+            }
+        }.isSuccess
+        if (!returned) {
+            val node = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
+                .fetchSemanticsNode()
+            val root = composeRule.onRoot().fetchSemanticsNode()
+            throw AssertionError(
+                "Parked pill did not return: bounds=${node.boundsInRoot}, " +
+                    "size=${node.size}, root=${root.size}, initial=$initialBounds",
+            )
+        }
         val returnedBounds = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
-            .assertIsDisplayed()
             .fetchSemanticsNode()
             .boundsInRoot
         assertEquals(initialBounds, returnedBounds)
@@ -648,7 +673,8 @@ class AddressBarDockInstrumentedTest {
             AddressBarActionTestTags.action(AddressBarAction.ParkRight),
         ).performClick()
 
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
                 .fetchSemanticsNodes().isNotEmpty()
         }
@@ -704,7 +730,7 @@ class AddressBarDockInstrumentedTest {
             composeRule.onAllNodesWithTag(AddressBarTestTags.Editor)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsFocused()
+        composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
         val editorBounds = composeRule.onNodeWithTag(AddressBarTestTags.Editor)
@@ -900,7 +926,8 @@ class AddressBarDockInstrumentedTest {
     }
 
     private fun assertImeVisible() {
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        // The keyboard can take several seconds to show on a loaded emulator.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }

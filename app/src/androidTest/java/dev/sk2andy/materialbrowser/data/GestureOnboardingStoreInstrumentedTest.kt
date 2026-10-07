@@ -59,6 +59,15 @@ class GestureOnboardingStoreInstrumentedTest {
     }
 
     @Test
+    fun historySessionFlagWrittenAtStartupStillCountsAsANewInstall() {
+        browserSessionPreferences.edit()
+            .putBoolean(BrowserSessionStore.KEY_HISTORY_SESSION_ACTIVE, false)
+            .commit()
+
+        assertTrue(GestureOnboardingStore(context).shouldShow())
+    }
+
+    @Test
     fun incompleteOnboardingSurvivesAColdRestartWithBrowserSessionData() {
         assertTrue(GestureOnboardingStore(context).shouldShow())
         browserSessionPreferences.edit().putString("tabs", "[]").commit()

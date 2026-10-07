@@ -231,6 +231,10 @@ class SystemWebViewBrowserEngineInstrumentedTest {
                 null,
             )
         }
+        // A cold emulator starts the WebView renderer slowly; ask once the page has loaded.
+        composeRule.waitUntil(timeoutMillis = 20_000L) {
+            composeRule.runOnUiThread<Int> { webView.progress } == 100
+        }
         val result = AtomicReference<String>()
         val completed = CountDownLatch(1)
         composeRule.runOnIdle {
@@ -243,8 +247,8 @@ class SystemWebViewBrowserEngineInstrumentedTest {
             }
         }
 
-        assertTrue(completed.await(5, TimeUnit.SECONDS))
-        assertTrue(result.get().toInt() >= EXPECTED_TOP_INSET)
+        assertTrue("WebView did not answer the inset query", completed.await(20, TimeUnit.SECONDS))
+        assertTrue("topInsetPx=${result.get()}", result.get().toInt() >= EXPECTED_TOP_INSET)
     }
 
     @Test

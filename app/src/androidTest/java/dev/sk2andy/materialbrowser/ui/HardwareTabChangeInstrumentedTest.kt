@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -51,9 +50,8 @@ class HardwareTabChangeInstrumentedTest {
                 )
             }
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
 
         composeRule.runOnIdle {
             hardwareTabChangeRequestId.intValue++

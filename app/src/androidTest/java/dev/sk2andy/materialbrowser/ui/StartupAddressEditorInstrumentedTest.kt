@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -49,9 +48,8 @@ class StartupAddressEditorInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor)
-            .assertIsDisplayed()
-            .assertIsFocused()
+        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.awaitAddressEditorFocused()
     }
 
     private fun clearSession() {
