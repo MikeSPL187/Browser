@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- Touch accuracy probe for the emulator tour (scripts/ci/page_probe.py). Every band is a
+     button whose red channel encodes its index; a tap reports which band the page received and
+     where, so the tour can compare it with where the band is drawn on screen. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Touch probe</title>
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(250, 250, 250); }
+  .band { display: block; width: 100%; height: 96px; margin: 0; padding: 0; border: 0;
+          border-radius: 0; font: 20px sans-serif; color: rgb(0, 0, 0); }
+  #out { position: fixed; top: 0; right: 0; width: 50%; padding: 8px; margin: 0;
+         font: 18px sans-serif; background: rgb(255, 255, 255); color: rgb(0, 0, 0);
+         pointer-events: none; }
+</style>
+</head>
+<body>
+<p id="out" aria-live="polite">PROBE ready</p>
+<script>
+  const out = document.getElementById("out");
+  const ratio = window.devicePixelRatio || 1;
+  // What the engine thinks of the top edge, to tell a renderer inset from a misplaced view.
+  const safeTop = document.createElement("div");
+  safeTop.style.cssText = "position:absolute;visibility:hidden;padding-top:env(safe-area-inset-top,0px)";
+  document.documentElement.appendChild(safeTop);
+  const edges = () => " safe " + Math.round(parseFloat(getComputedStyle(safeTop).paddingTop) * ratio) +
+    " inner " + Math.round(window.innerHeight * ratio) +
+    " vv " + Math.round((window.visualViewport ? window.visualViewport.offsetTop : 0) * ratio) +
+    " client " + Math.round(document.documentElement.clientHeight * ratio) +
+    " screenY " + Math.round((window.mozInnerScreenY || 0) * ratio);
+  for (let index = 0; index < 40; index++) {
+    const band = document.createElement("button");
+    band.className = "band";
+    band.textContent = "Band " + index;
+    band.style.background = "rgb(" + (20 + index * 6) + ", 180, 60)";
+    band.addEventListener("click", (event) => {
+      const top = band.getBoundingClientRect().top;
+      out.textContent = "PROBE tap " + index +
+        " y " + Math.round((event.clientY - top) * ratio) +
+        " of " + Math.round(band.getBoundingClientRect().height * ratio) +
+        " at " + Math.round(event.clientY * ratio) + edges();
+      document.title = out.textContent;
+    });
+    document.body.appendChild(band);
+  }
+</script>
+</body>
+</html>

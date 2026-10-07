@@ -17,6 +17,15 @@ class BrowserContentFrameRulesTest {
     }
 
     @Test
+    fun `an unframed page starts below the status bar, moved by the window layout`() {
+        assertEquals(
+            BrowserContentFrame(leftPx = 0, topPx = 128, rightPx = 0, bottomPx = 0),
+            BrowserContentFrameRules.belowStatusBar(safeTopPx = 128),
+        )
+        assertEquals(BrowserContentFrame.None, BrowserContentFrameRules.belowStatusBar(safeTopPx = 0))
+    }
+
+    @Test
     fun `compact mode lets the page fill the screen even in the frame style`() {
         assertFalse(framed(compactMode = true))
     }

@@ -6,6 +6,14 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 
 internal object AddressBarInsetRules {
+    /**
+     * Whether the keyboard is up for the page itself: a form field on the site, not the address
+     * editor or find-in-page. The address bar then gets out of the way under the keyboard
+     * instead of riding on top of it over the form (#123, H3).
+     */
+    fun hiddenByPageKeyboard(imeVisible: Boolean, browserChromeOwnsIme: Boolean): Boolean =
+        imeVisible && !browserChromeOwnsIme
+
     fun visibleViewportHeightPx(
         rootHeightPx: Int,
         fullWindowHeightPx: Int,

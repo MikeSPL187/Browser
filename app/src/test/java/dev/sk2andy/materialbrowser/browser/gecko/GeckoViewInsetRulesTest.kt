@@ -6,7 +6,7 @@ import org.junit.Test
 
 class GeckoViewInsetRulesTest {
     @Test
-    fun `keyboard reserves native surface space while renderer retains safe area`() {
+    fun `keyboard reserves native surface space below the native safe area`() {
         val safeArea = GeckoViewInsets(left = 8, top = 72, right = 6, bottom = 48)
         val layout = GeckoViewInsetRules.resolve(
             safeArea = safeArea,
@@ -17,8 +17,8 @@ class GeckoViewInsetRulesTest {
             keyboardBottomInsetPx = 600,
         )
 
-        assertEquals(GeckoViewInsets(0, 0, 0, 600), layout.margins)
-        assertEquals(safeArea.copy(bottom = 0), layout.rendererSafeAreaOverride)
+        assertEquals(GeckoViewInsets(8, 72, 6, 600), layout.margins)
+        assertEquals(GeckoViewInsets.Zero, layout.rendererSafeAreaOverride)
     }
 
     @Test
@@ -86,7 +86,9 @@ class GeckoViewInsetRulesTest {
     }
 
     @Test
-    fun `native safe area reaches renderer without margins or document correction`() {
+    fun `edges that move the page become native margins so touches stay under the finger`() {
+        // #123, H4: with the top safe area in the renderer, GeckoView drew the page below the
+        // status bar but placed taps a status bar higher than the finger.
         val safeArea = GeckoViewInsets(left = 8, top = 96, right = 6, bottom = 34)
         val layout = GeckoViewInsetRules.resolve(
             safeArea = safeArea,
@@ -96,13 +98,14 @@ class GeckoViewInsetRulesTest {
             isInsideSafeDrawingHost = false,
         )
 
-        assertEquals(GeckoViewInsets.Zero, layout.margins)
-        assertEquals(safeArea, layout.rendererSafeAreaOverride)
+        assertEquals(GeckoViewInsets(left = 8, top = 96, right = 6, bottom = 0), layout.margins)
+        assertEquals(GeckoViewInsets(left = 0, top = 0, right = 0, bottom = 34), layout.rendererSafeAreaOverride)
         assertEquals(0, layout.scrollableTopInsetPx)
+        assertEquals(WebContentTopInsetTransitionState.Document, layout.topInsetTransitionState)
     }
 
     @Test
-    fun `gesture navigation safe area reaches edge to edge renderer`() {
+    fun `gesture navigation safe area stays with the edge to edge renderer`() {
         val layout = GeckoViewInsetRules.resolve(
             safeArea = GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 34),
             forceNativeSafeArea = false,
@@ -112,18 +115,18 @@ class GeckoViewInsetRulesTest {
         )
 
         assertEquals(
-            GeckoViewInsets.Zero,
+            GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 0),
             layout.margins,
         )
         assertEquals(
-            GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 34),
+            GeckoViewInsets(left = 0, top = 0, right = 0, bottom = 34),
             layout.rendererSafeAreaOverride,
         )
         assertEquals(0, layout.scrollableTopInsetPx)
     }
 
     @Test
-    fun `three button navigation also remains edge to edge`() {
+    fun `three button navigation also remains edge to edge at the bottom`() {
         val layout = GeckoViewInsetRules.resolve(
             safeArea = GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 48),
             forceNativeSafeArea = false,
@@ -133,11 +136,11 @@ class GeckoViewInsetRulesTest {
         )
 
         assertEquals(
-            GeckoViewInsets.Zero,
+            GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 0),
             layout.margins,
         )
         assertEquals(
-            GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 48),
+            GeckoViewInsets(left = 0, top = 0, right = 0, bottom = 48),
             layout.rendererSafeAreaOverride,
         )
         assertEquals(0, layout.scrollableTopInsetPx)
@@ -160,7 +163,7 @@ class GeckoViewInsetRulesTest {
     }
 
     @Test
-    fun `automatic fallback moves only top safe area into native margin`() {
+    fun `automatic fallback keeps top and sides in native margins`() {
         val safeArea = GeckoViewInsets(left = 8, top = 72, right = 6, bottom = 48)
 
         val layout = GeckoViewInsetRules.resolve(
@@ -172,11 +175,11 @@ class GeckoViewInsetRulesTest {
         )
 
         assertEquals(
-            GeckoViewInsets(left = 0, top = 72, right = 0, bottom = 0),
+            GeckoViewInsets(left = 8, top = 72, right = 6, bottom = 0),
             layout.margins,
         )
         assertEquals(
-            GeckoViewInsets(left = 8, top = 0, right = 6, bottom = 48),
+            GeckoViewInsets(left = 0, top = 0, right = 0, bottom = 48),
             layout.rendererSafeAreaOverride,
         )
         assertEquals(0, layout.scrollableTopInsetPx)

@@ -81,26 +81,22 @@ internal object GeckoViewInsetRules {
                     rendererSafeAreaOverride = GeckoViewInsets.Zero,
                     scrollableTopInsetPx = 0,
                 )
-            } else if (forceNativeTopSafeArea) {
+            } else if (forceNativeTopSafeArea || useNativeCssSafeArea) {
+                // GeckoView draws the page below a renderer safe area but maps touches through
+                // that edge a second time: in the Air layout and Compact Mode a tap landed a
+                // status bar higher than the finger (#123, H4). The edges that move the page,
+                // top and sides, become native margins; only the bottom, which never moves page
+                // coordinates, stays with the renderer.
                 GeckoViewInsetLayout(
-                    margins = GeckoViewInsets(
-                        left = 0,
-                        top = normalizedSafeArea.top,
-                        right = 0,
-                        bottom = 0,
-                    ),
-                    rendererSafeAreaOverride = normalizedSafeArea.copy(top = 0),
+                    margins = normalizedSafeArea.copy(bottom = 0),
+                    rendererSafeAreaOverride = GeckoViewInsets.Zero.copy(bottom = normalizedSafeArea.bottom),
                     scrollableTopInsetPx = 0,
                 )
             } else {
                 GeckoViewInsetLayout(
                     margins = GeckoViewInsets.Zero,
-                    rendererSafeAreaOverride = if (useNativeCssSafeArea) {
-                        normalizedSafeArea
-                    } else {
-                        normalizedSafeArea.copy(top = 0)
-                    },
-                    scrollableTopInsetPx = if (useNativeCssSafeArea) 0 else normalizedSafeArea.top,
+                    rendererSafeAreaOverride = normalizedSafeArea.copy(top = 0),
+                    scrollableTopInsetPx = normalizedSafeArea.top,
                 )
             }
         }
