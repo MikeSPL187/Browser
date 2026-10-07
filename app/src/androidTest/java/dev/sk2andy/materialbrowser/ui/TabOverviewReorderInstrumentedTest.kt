@@ -45,6 +45,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -328,6 +329,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun heroStackCollapseExpandOpensConfiguredFolder() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var stackedTabId: String
@@ -379,6 +381,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun overflowMenuCreatesStack() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var secondTabId: String
@@ -418,6 +421,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun distantHeroStackMemberFoldsFromVisibleEdgeIntoTrigger() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var anchorTabId: String
         lateinit var distantTabId: String
@@ -504,6 +508,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun gridStackCollapseExpandPreservesCardsAndBlocksReorder() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var stackedTabId: String
@@ -1337,4 +1342,7 @@ class TabOverviewReorderInstrumentedTest {
         kotlin.math.abs(first.red - second.red) +
             kotlin.math.abs(first.green - second.green) +
             kotlin.math.abs(first.blue - second.blue)
+
+    // Stacks stay hidden until the overview draws them again (S12); these tests wait for that.
+    private fun assumeStacksShown() = assumeTrue(TabStacksFeature.ENABLED)
 }

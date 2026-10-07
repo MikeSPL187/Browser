@@ -41,9 +41,16 @@ class FirstRunExternalLinkInstrumentedTest {
         ActivityScenario.launch<MainActivity>(link).use { scenario ->
             composeRule.waitForIdle()
             composeRule.onNodeWithTag(FirstRunTestTags.Welcome).assertDoesNotExist()
+            val onboarding = context.getSharedPreferences(
+                GestureOnboardingStore.PREFERENCES_NAME,
+                Context.MODE_PRIVATE,
+            )
+            // An existing session makes the store treat the install as an update, so show it on failure.
             assertTrue(
-                context.getSharedPreferences(GestureOnboardingStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
-                    .getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
+                "onboarding=${onboarding.all}, session keys=" +
+                    context.getSharedPreferences(BrowserSessionStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+                        .all.keys.sorted(),
+                onboarding.getBoolean(GestureOnboardingStore.KEY_HAS_STARTED, false),
             )
 
             scenario.onActivity { activity ->

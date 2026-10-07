@@ -9,11 +9,6 @@
 # to remove it until it passes on several nights in a row. Tests outside this list get one rerun
 # instead: a new failure that passes on it is reported as flaky and does not fail the run.
 
-# Tab stacks: the v4 overview (Q7a) draws no stacks; tab groups return in S12.
-dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#distantHeroStackMemberFoldsFromVisibleEdgeIntoTrigger
-dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#gridStackCollapseExpandPreservesCardsAndBlocksReorder
-dev.sk2andy.materialbrowser.ui.TabOverviewReorderInstrumentedTest#heroStackCollapseExpandOpensConfiguredFolder
-
 # Menu, address bar and tabs still open (S5 follow-up, not yet understood).
 dev.sk2andy.materialbrowser.MainActivityIncomingNavigationInstrumentedTest#coldIncomingViewLoadsExternalPreviewPage -- flaky
 dev.sk2andy.materialbrowser.ui.AddressBarDockInstrumentedTest#configuredRightParkActionMovesRememberedLeftPlacementToRight -- flaky
