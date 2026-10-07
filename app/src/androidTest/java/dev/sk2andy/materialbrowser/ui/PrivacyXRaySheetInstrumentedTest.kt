@@ -30,6 +30,7 @@ import dev.sk2andy.materialbrowser.blocking.PrivacyPartyRelation
 import dev.sk2andy.materialbrowser.blocking.PrivacyRequestCategory
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRaySnapshot
 import dev.sk2andy.materialbrowser.blocking.SiteProtectionState
+import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineCapabilities
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
@@ -138,7 +139,7 @@ class PrivacyXRaySheetInstrumentedTest {
                         ),
                     ),
                     workspaceName = "Personal",
-                    websiteNotificationsSupported = true,
+                    supportedPermissions = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions,
                     onPause = {},
                     onResume = {},
                     onPermissionOriginSelected = {},
@@ -189,7 +190,7 @@ class PrivacyXRaySheetInstrumentedTest {
                         ),
                         permissionSnapshot = PermissionRadarSnapshot.Empty,
                         workspaceName = "Personal",
-                        websiteNotificationsSupported = true,
+                        supportedPermissions = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions,
                         backdropSource = blurTarget.asCandyChromeBackdropSource(),
                         onPause = { persistently ->
                             if (!persistently) temporaryPauses.incrementAndGet()

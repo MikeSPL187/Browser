@@ -229,6 +229,19 @@ object PrivacyRetention {
         candidateHost: String,
         limit: Int = MAX_DOMAINS_PER_TAB,
     ): Boolean = candidateHost in retainedHosts || retainedHosts.size < limit.coerceAtLeast(0)
+
+    /**
+     * X-Ray tells what was blocked on the current site, so a main-frame navigation to another site
+     * starts the tab's record over, while pages of one site keep adding up. A non-web address
+     * leaves the record for the next web page to decide.
+     */
+    fun resetsOnNavigation(previousPageUrl: String?, nextPageUrl: String?): Boolean {
+        val next = nextPageUrl?.let(::siteOf) ?: return false
+        return previousPageUrl?.let(::siteOf) != next
+    }
+
+    private fun siteOf(url: String): String? = PrivacyRequestSanitizer.webHost(url)
+        ?.let { host -> CandyPublicSuffixRules.registrableDomain(host) ?: host }
 }
 
 object PrivacyAggregation {

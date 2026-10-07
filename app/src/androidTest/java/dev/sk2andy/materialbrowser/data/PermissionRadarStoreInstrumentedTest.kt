@@ -62,4 +62,42 @@ class PermissionRadarStoreInstrumentedTest {
         assertFalse(preferences.getString(PermissionRadarStore.KEY_DECISIONS, "").orEmpty()
             .contains("private.example"))
     }
+
+    @Test
+    fun damagedEntryKeepsValidDecisionsAndUnreadableRootIsBackedUp() {
+        val site = PermissionSiteKey("personal", "https://example.com")
+        preferences.edit().putString(
+            PermissionRadarStore.KEY_DECISIONS,
+            """[{"profileId":"personal","origin":"https://example.com",""" +
+                """"permissions":{"Camera":"Block"}},7]""",
+        ).commit()
+
+        val repository = PermissionRadarRepository(PermissionRadarStore(context))
+        repository.setDecision(
+            site.copy(origin = "https://other.example"),
+            SitePermission.Location,
+            SitePermissionDecision.Allow,
+            isPrivate = false,
+        )
+        val restored = PermissionRadarRepository(PermissionRadarStore(context))
+
+        assertEquals(
+            SitePermissionDecision.Block,
+            restored.decision(site, SitePermission.Camera, isPrivate = false),
+        )
+
+        val unreadable = "[{\"profileId\":"
+        preferences.edit().putString(PermissionRadarStore.KEY_DECISIONS, unreadable).commit()
+        PermissionRadarRepository(PermissionRadarStore(context)).setDecision(
+            site,
+            SitePermission.Microphone,
+            SitePermissionDecision.Block,
+            isPrivate = false,
+        )
+
+        assertEquals(
+            unreadable,
+            preferences.getString(PermissionRadarStore.KEY_UNREADABLE_BACKUP, null),
+        )
+    }
 }

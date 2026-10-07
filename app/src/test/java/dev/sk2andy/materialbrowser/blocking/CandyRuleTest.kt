@@ -30,6 +30,39 @@ class CandyRuleTest {
     }
 
     @Test
+    fun `tenants of shared hosting are separate sites`() {
+        assertEquals("alice.workers.dev", CandyPublicSuffixRules.registrableDomain("alice.workers.dev"))
+        assertEquals("bob.workers.dev", CandyPublicSuffixRules.registrableDomain("api.bob.workers.dev"))
+        assertTrue(CandyPublicSuffixRules.isPublicSuffix("workers.dev"))
+        assertNull(CandyPublicSuffixRules.registrableDomain("workers.dev"))
+        assertEquals("alice.github.io", CandyPublicSuffixRules.registrableDomain("www.alice.github.io"))
+        assertEquals("example.com", CandyPublicSuffixRules.registrableDomain("a.b.example.com"))
+        // Outside the list the heuristic still answers.
+        assertEquals("example.test", CandyPublicSuffixRules.registrableDomain("www.example.test"))
+        assertEquals(
+            CandyRuleError.InvalidPair,
+            invalidReason(
+                rule(
+                    CandyRuleAction.Allow,
+                    CandyRuleKind.HostPair,
+                    request = "cdn.alice.workers.dev",
+                    firstParty = "alice.workers.dev",
+                ),
+            ),
+        )
+        assertTrue(
+            CandyRuleValidator.validate(
+                rule(
+                    CandyRuleAction.Allow,
+                    CandyRuleKind.HostPair,
+                    request = "bob.workers.dev",
+                    firstParty = "alice.workers.dev",
+                ),
+            ) is CandyRuleValidation.Valid,
+        )
+    }
+
+    @Test
     fun `validator rejects public suffixes and unsafe cosmetic input`() {
         assertEquals(
             CandyRuleError.PublicSuffixHost,

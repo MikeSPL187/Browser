@@ -1510,6 +1510,7 @@ internal fun BrowserScreen(
                 matchCaseLabel = stringResource(R.string.find_in_page_match_case),
                 wholeWordLabel = stringResource(R.string.find_in_page_whole_word),
                 onOptionsChange = controller::updateFindInPageOptions,
+                isPrivate = selectedTab.isIncognito,
                 // The find bar takes the island's place in the thumb zone, above the keyboard.
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

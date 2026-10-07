@@ -1,9 +1,11 @@
 package dev.sk2andy.materialbrowser.blocking
 
+import com.google.common.net.InternetDomainName
 import java.net.IDN
 import java.net.URI
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 const val CANDY_RULE_FORMAT_VERSION = 1
 
@@ -101,8 +103,19 @@ object CandyHostCanonicalizer {
         host == ruleHost || host.endsWith(".$ruleHost")
 }
 
+/**
+ * Sites as the Public Suffix List sees them, private suffixes included, so tenants of shared hosting
+ * (alice.workers.dev, bob.workers.dev) stay apart. Hosts the list does not cover fall back to a
+ * short heuristic.
+ */
 object CandyPublicSuffixRules {
-    // Common ICANN multi-label suffixes. Unknown suffixes remain registrable only above one label.
+    // Runs for every request: a bounded cache keeps the list lookup off the hot path.
+    private const val CACHE_LIMIT = 1_024
+    private val listAnswers = ConcurrentHashMap<String, ListAnswer>()
+    private val notOnList = ListAnswer(publicSuffix = false, registrableDomain = null)
+
+    // Fallback only: common ICANN multi-label suffixes.
+    // Unknown suffixes stay registrable above one label.
     private val multiLabelSuffixes = setOf(
         "ac.uk", "co.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "org.uk", "plc.uk",
         "asn.au", "com.au", "conf.au", "csiro.au", "edu.au", "gov.au", "id.au", "net.au",
@@ -121,6 +134,7 @@ object CandyPublicSuffixRules {
     )
 
     fun isPublicSuffix(host: String): Boolean {
+        listAnswer(host)?.let { return it.publicSuffix }
         if ('.' !in host || host in multiLabelSuffixes) return true
         val labels = host.split('.')
         return (labels.size == 2 && labels.last().length == 2 &&
@@ -129,6 +143,7 @@ object CandyPublicSuffixRules {
 
     fun registrableDomain(host: String?): String? {
         val safeHost = CandyHostCanonicalizer.canonicalHost(host) ?: return null
+        listAnswer(safeHost)?.let { return it.registrableDomain }
         if (isPublicSuffix(safeHost)) return null
         val labels = safeHost.split('.')
         val lastTwo = labels.takeLast(2).joinToString(".")
@@ -145,6 +160,28 @@ object CandyPublicSuffixRules {
 
     private fun isUsK12Suffix(labels: List<String>): Boolean =
         labels.size == 3 && labels[0] == "k12" && labels[1].length == 2 && labels[2] == "us"
+
+    /** What the Public Suffix List says about [host]; null when it does not cover the host. */
+    private fun listAnswer(host: String): ListAnswer? {
+        val answer = listAnswers[host] ?: run {
+            val domain = runCatching { InternetDomainName.from(host) }.getOrNull()
+            val looked = when {
+                domain == null -> notOnList
+                domain.isPublicSuffix -> ListAnswer(publicSuffix = true, registrableDomain = null)
+                domain.isUnderPublicSuffix -> ListAnswer(
+                    publicSuffix = false,
+                    registrableDomain = domain.topPrivateDomain().toString(),
+                )
+                else -> notOnList
+            }
+            if (listAnswers.size >= CACHE_LIMIT) listAnswers.clear()
+            listAnswers[host] = looked
+            looked
+        }
+        return answer.takeUnless { it === notOnList }
+    }
+
+    private class ListAnswer(val publicSuffix: Boolean, val registrableDomain: String?)
 }
 
 object CandyRuleValidator {

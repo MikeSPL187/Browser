@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineCapabilities
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
@@ -22,12 +23,14 @@ class SiteInfoRulesTest {
     )
 
     private val untouched = SitePermission.entries.map { permission -> entry(permission) }
+    private val gecko = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions
+    private val webView = AndroidBrowserEngineCapabilities.SystemWebView.sitePermissions
 
     @Test
     fun `core permissions are listed in board order, rare ones only once used`() {
         val visible = SiteInfoRules.visiblePermissions(
             entries = untouched.reversed(),
-            notificationsSupported = true,
+            supportedPermissions = gecko,
             isPrivate = false,
         )
 
@@ -41,16 +44,16 @@ class SiteInfoRulesTest {
             visible.map(PermissionRadarEntry::permission),
         )
 
-        val withMidi = untouched.map { item ->
-            if (item.permission == SitePermission.MidiSysex) {
+        val withProtectedMedia = untouched.map { item ->
+            if (item.permission == SitePermission.ProtectedMedia) {
                 item.copy(decision = SitePermissionDecision.Block)
             } else {
                 item
             }
         }
         assertEquals(
-            SitePermission.MidiSysex,
-            SiteInfoRules.visiblePermissions(withMidi, notificationsSupported = true, isPrivate = false)
+            SitePermission.ProtectedMedia,
+            SiteInfoRules.visiblePermissions(withProtectedMedia, supportedPermissions = gecko, isPrivate = false)
                 .last()
                 .permission,
         )
@@ -58,11 +61,51 @@ class SiteInfoRulesTest {
 
     @Test
     fun `notifications are hidden where they cannot work`() {
-        val webView = SiteInfoRules.visiblePermissions(untouched, notificationsSupported = false, isPrivate = false)
-        val private = SiteInfoRules.visiblePermissions(untouched, notificationsSupported = true, isPrivate = true)
+        val webViewRows = SiteInfoRules.visiblePermissions(untouched, supportedPermissions = webView, isPrivate = false)
+        val private = SiteInfoRules.visiblePermissions(untouched, supportedPermissions = gecko, isPrivate = true)
 
-        assertFalse(webView.any { item -> item.permission == SitePermission.Notifications })
+        assertFalse(webViewRows.any { item -> item.permission == SitePermission.Notifications })
         assertFalse(private.any { item -> item.permission == SitePermission.Notifications })
+    }
+
+    @Test
+    fun `permissions the engine does not route are hidden even with a saved decision`() {
+        val decided = SitePermission.entries.map { permission ->
+            entry(permission, decision = SitePermissionDecision.Block)
+        }
+
+        val geckoRows = SiteInfoRules.visiblePermissions(decided, gecko, isPrivate = false)
+            .map(PermissionRadarEntry::permission)
+        val webViewRows = SiteInfoRules.visiblePermissions(decided, webView, isPrivate = false)
+            .map(PermissionRadarEntry::permission)
+
+        assertFalse(SitePermission.MidiSysex in geckoRows)
+        assertTrue(SitePermission.ProtectedMedia in geckoRows)
+        assertFalse(SitePermission.MidiSysex in webViewRows)
+        assertFalse(SitePermission.ProtectedMedia in webViewRows)
+    }
+
+    @Test
+    fun `radar keeps unsupported notifications to explain them and drops other unsupported rows`() {
+        assertEquals(
+            listOf(
+                SitePermission.Camera,
+                SitePermission.Microphone,
+                SitePermission.Location,
+                SitePermission.Notifications,
+            ),
+            SiteInfoRules.radarEntries(untouched, webView).map(PermissionRadarEntry::permission),
+        )
+        assertEquals(
+            listOf(
+                SitePermission.Camera,
+                SitePermission.Microphone,
+                SitePermission.Location,
+                SitePermission.Notifications,
+                SitePermission.ProtectedMedia,
+            ),
+            SiteInfoRules.radarEntries(untouched, gecko).map(PermissionRadarEntry::permission),
+        )
     }
 
     @Test

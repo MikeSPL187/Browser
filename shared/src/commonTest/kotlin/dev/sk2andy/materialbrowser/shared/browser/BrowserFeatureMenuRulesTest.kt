@@ -118,6 +118,21 @@ class BrowserFeatureMenuRulesTest {
     }
 
     @Test
+    fun `a new tab with no page cannot reload, a loading one can still stop`() {
+        val blank = BrowserFeatureMenuRules.items(BrowserFeatureMenuState(hasPage = false, isLoading = false))
+            .single { it.action == BrowserFeatureMenuAction.Reload }
+        val page = BrowserFeatureMenuRules.items(BrowserFeatureMenuState(hasPage = true))
+            .single { it.action == BrowserFeatureMenuAction.Reload }
+        val loading = BrowserFeatureMenuRules.items(BrowserFeatureMenuState(hasPage = false, isLoading = true))
+            .single { it.action == BrowserFeatureMenuAction.Stop }
+
+        // The menu renders these flags as they are; Reload has no exception any more.
+        assertFalse(blank.enabled)
+        assertTrue(page.enabled)
+        assertTrue(loading.enabled)
+    }
+
+    @Test
     fun `toggle and selectable toolbar commands expose checked state`() {
         val items = BrowserFeatureMenuRules.items(
             state = BrowserFeatureMenuState(

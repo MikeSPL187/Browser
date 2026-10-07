@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteFolder
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
@@ -8,6 +9,7 @@ import dev.sk2andy.materialbrowser.data.HistoryEntry
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -107,6 +109,38 @@ class LibraryRulesTest {
         val recent = LibraryRules.sorted(level, FavoritesSort.Recent, ru)
         assertEquals(listOf(routes, ice), recent.folders)
         assertEquals(listOf("яндекс", "ёлки", "Байкал"), recent.favorites.map(FavoriteEntry::title))
+    }
+
+    @Test
+    fun `move earlier and later step over the other kind to the visible neighbour`() {
+        val a = favorite("a", null)
+        val folder = FavoriteFolder("f", "Folder")
+        val b = favorite("b", null)
+        val second = FavoriteFolder("g", "Second")
+        val source = FavoriteLibrary(listOf(a, folder, b, second))
+        val siblings = BrowsingFavoritesRules.children(source, null)
+        val level = LibraryRules.level(siblings)
+
+        // B «up» lands before A, not merely before the folder between them.
+        val earlier = LibraryRules.reorderTarget(siblings, level.favorites, b.id, -1)
+        assertEquals(0, earlier)
+        val moved = BrowsingFavoritesRules.reorder(source, b.id, earlier!!)
+        assertEquals(listOf(b, a), LibraryRules.level(BrowsingFavoritesRules.children(moved, null)).favorites)
+        // A «down» lands after B.
+        val later = LibraryRules.reorderTarget(siblings, level.favorites, a.id, 1)
+        assertEquals(2, later)
+        val movedDown = BrowsingFavoritesRules.reorder(source, a.id, later!!)
+        assertEquals(listOf(b, a), LibraryRules.level(BrowsingFavoritesRules.children(movedDown, null)).favorites)
+        // The first site and the last folder sit at their group's edge, whatever lies around them.
+        assertNull(LibraryRules.reorderTarget(siblings, level.favorites, a.id, -1))
+        assertNull(LibraryRules.reorderTarget(siblings, level.favorites, b.id, 1))
+        assertNull(LibraryRules.reorderTarget(siblings, level.folders, folder.id, -1))
+        assertNull(LibraryRules.reorderTarget(siblings, level.folders, second.id, 1))
+        val folderLater = LibraryRules.reorderTarget(siblings, level.folders, folder.id, 1)
+        assertEquals(3, folderLater)
+        val foldersMoved = BrowsingFavoritesRules.reorder(source, folder.id, folderLater!!)
+        assertEquals(listOf(second, folder), LibraryRules.level(BrowsingFavoritesRules.children(foldersMoved, null)).folders)
+        assertNull(LibraryRules.reorderTarget(siblings, level.favorites, "missing", 1))
     }
 
     private fun favorite(name: String, parent: String?, title: String = name, addedAt: Long = 1) = FavoriteEntry(

@@ -2132,7 +2132,12 @@ private class GeckoViewBrowserSession(
             .withHandler(mainHandler)
             .accept(
                 { permissions ->
-                    if (closed || notificationPermissionRevisions[origin] != revision) return@accept
+                    // A newer decision for the origin supersedes this one; callers still get to
+                    // finish (the controller reloads tabs here), so every branch completes.
+                    if (closed || notificationPermissionRevisions[origin] != revision) {
+                        onComplete?.invoke()
+                        return@accept
+                    }
                     reconcileNotificationPermission(
                         origin,
                         decision,
@@ -2141,7 +2146,7 @@ private class GeckoViewBrowserSession(
                         onComplete = onComplete,
                     )
                 },
-                { },
+                { onComplete?.invoke() },
             )
     }
 
@@ -2182,9 +2187,9 @@ private class GeckoViewBrowserSession(
             return
         }
         stalePermissions.forEach { permission -> storageController.setPermission(permission, value) }
-        verifyNotificationPermission(origin, value, revision, 0) {
+        verifyNotificationPermission(origin, value, revision, 0) { settled ->
             onComplete?.invoke()
-            onChanged?.invoke()
+            if (settled) onChanged?.invoke()
         }
     }
 
@@ -2193,21 +2198,24 @@ private class GeckoViewBrowserSession(
         value: Int,
         revision: Int,
         attempt: Int,
-        onComplete: () -> Unit,
+        onComplete: (settled: Boolean) -> Unit,
     ) {
-        if (closed || notificationPermissionRevisions[origin] != revision) return
+        if (closed || notificationPermissionRevisions[origin] != revision) return onComplete(false)
         storageController.getPermissions(origin, session.settings.contextId, false)
             .withHandler(mainHandler)
             .accept(
                 { permissions ->
-                    if (closed || notificationPermissionRevisions[origin] != revision) return@accept
+                    if (closed || notificationPermissionRevisions[origin] != revision) {
+                        onComplete(false)
+                        return@accept
+                    }
                     val settled = permissions.orEmpty().filter { permission ->
                         permission.permission ==
                             GeckoSession.PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION &&
                             PermissionOrigin.normalize(permission.uri) == origin
                     }.all { it.value == value }
                     when {
-                        settled -> onComplete()
+                        settled -> onComplete(true)
                         attempt < 20 -> mainHandler.postDelayed(
                             {
                                 verifyNotificationPermission(
@@ -2216,9 +2224,10 @@ private class GeckoViewBrowserSession(
                             },
                             100L,
                         )
+                        else -> onComplete(false)
                     }
                 },
-                { },
+                { onComplete(false) },
             )
     }
 

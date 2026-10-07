@@ -66,7 +66,8 @@ internal object PageErrorFeedbackRules {
         // the page promises. If that fails too, the state below waits for the Retry button.
         isOnline && current is PageErrorFeedbackState.Offline && !current.isOnlineReady ->
             PageErrorObservation(state = PageErrorFeedbackState.Retrying, shouldReload = true)
-        isOnline && current is PageErrorFeedbackState.Offline -> PageErrorObservation(current)
+        // Online, an Offline page that already reloaded once stays only while the engine still
+        // reports the connection failure: a loaded page or any other error replaces it.
         failureKind == BrowserEngineFailureKind.Offline && error != null -> PageErrorObservation(
             state = PageErrorFeedbackState.Offline(isOnlineReady = isOnline),
         )

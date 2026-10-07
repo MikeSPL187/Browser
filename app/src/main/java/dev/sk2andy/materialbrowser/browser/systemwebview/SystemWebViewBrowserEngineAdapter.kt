@@ -58,6 +58,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineFilePromptRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineFilePromptResponse
 import dev.sk2andy.materialbrowser.browser.BrowserEngineMediaPermissionRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineNavigationTarget
+import dev.sk2andy.materialbrowser.browser.BrowserEnginePermissionCancellation
 import dev.sk2andy.materialbrowser.browser.BrowserEnginePermissionSetResponse
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
@@ -144,6 +145,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.io.ByteArrayInputStream
+import java.util.IdentityHashMap
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -402,6 +404,10 @@ private class SystemWebViewBrowserEngineSession(
     private var androidPermissionListener: GeckoAndroidPermissionRequestListener? = null
     private var contentPermissionListener: GeckoContentPermissionRequestListener? = null
     private var mediaPermissionListener: GeckoMediaPermissionRequestListener? = null
+    // Unanswered requests, so WebView's cancel callbacks can withdraw Vola's prompt for them.
+    private val mediaPermissionCancellations =
+        IdentityHashMap<PermissionRequest, BrowserEnginePermissionCancellation>()
+    private val geolocationCancellations = mutableListOf<BrowserEnginePermissionCancellation>()
     private var authPromptListener: GeckoAuthPromptListener? = null
     private var webPromptListener: GeckoWebPromptListener? = null
     private var mediaStateListener: GeckoMediaSessionStateListener? = null
@@ -721,6 +727,13 @@ private class SystemWebViewBrowserEngineSession(
         onComplete: (GeckoFindResult?) -> Unit,
     ) {
         if (closed) return onComplete(null)
+        if (query.isBlank()) {
+            // Nothing to search for: clearMatches() reports nothing, so answer "no matches" here.
+            lastFindQuery = null
+            webView.setFindListener(null)
+            webView.clearMatches()
+            return onComplete(GeckoFindResult(activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = true))
+        }
         webView.setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
             onComplete(
                 GeckoFindResult(
@@ -730,16 +743,11 @@ private class SystemWebViewBrowserEngineSession(
                 ),
             )
         }
-        when {
-            query.isBlank() -> {
-                lastFindQuery = null
-                webView.clearMatches()
-            }
-            query != lastFindQuery -> {
-                lastFindQuery = query
-                webView.findAllAsync(query)
-            }
-            else -> webView.findNext(forward)
+        if (query != lastFindQuery) {
+            lastFindQuery = query
+            webView.findAllAsync(query)
+        } else {
+            webView.findNext(forward)
         }
     }
 
@@ -1436,11 +1444,15 @@ private class SystemWebViewBrowserEngineSession(
                 }
             }
             val listener = mediaPermissionListener ?: return request.deny()
+            val cancellation = BrowserEnginePermissionCancellation()
+            mediaPermissionCancellations[request] = cancellation
             listener.onMediaPermissionRequest(
                 BrowserEngineMediaPermissionRequest(
                     origin = request.origin.toString(),
                     permissions = requested,
+                    cancellation = cancellation,
                     response = BrowserEnginePermissionSetResponse { allowed ->
+                        mediaPermissionCancellations.remove(request)
                         val resources = buildList {
                             if (SitePermission.Camera in allowed) {
                                 add(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
@@ -1456,21 +1468,36 @@ private class SystemWebViewBrowserEngineSession(
             )
         }
 
+        override fun onPermissionRequestCanceled(request: PermissionRequest) {
+            mediaPermissionCancellations.remove(request)?.cancel()
+        }
+
         override fun onGeolocationPermissionsShowPrompt(
             origin: String,
             callback: GeolocationPermissions.Callback,
         ) {
             val listener = contentPermissionListener
                 ?: return callback.invoke(origin, false, false)
+            val cancellation = BrowserEnginePermissionCancellation()
+            geolocationCancellations += cancellation
             listener.onContentPermissionRequest(
                 BrowserEngineContentPermissionRequest(
                     origin = origin,
                     permission = SitePermission.Location,
                     response = BrowserEngineBooleanResponse { allowed ->
+                        geolocationCancellations -= cancellation
                         callback.invoke(origin, allowed, false)
                     },
+                    cancellation = cancellation,
                 ),
             )
+        }
+
+        // WebView names no request here: every geolocation prompt it opened is withdrawn.
+        override fun onGeolocationPermissionsHidePrompt() {
+            val canceled = geolocationCancellations.toList()
+            geolocationCancellations.clear()
+            canceled.forEach(BrowserEnginePermissionCancellation::cancel)
         }
 
         override fun onJsAlert(
