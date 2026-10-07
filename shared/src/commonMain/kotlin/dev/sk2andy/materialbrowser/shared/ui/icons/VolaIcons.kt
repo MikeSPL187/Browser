@@ -356,6 +356,13 @@ object VolaIcons {
         )
     }
 
+    val Mic: ImageVector by lazy {
+        materialSymbol(
+            name = "Mic",
+            pathData = "M480 560 q-50 0 -85 -35 t-35 -85 v-240 q0 -50 35 -85 t85 -35 q50 0 85 35 t35 85 v240 q0 50 -35 85 t-85 35 Z m0 -240 Z m-40 480 v-83 q-92 -13 -157.5 -78 T203 481 q-2 -17 9 -29 t28 -12 q17 0 28.5 11.5 T284 480 q14 70 69.5 115 T480 640 q72 0 127 -45.5 T676 480 q4 -17 15.5 -28.5 T720 440 q17 0 28 12 t9 29 q-14 91 -79 157 t-158 79 v83 q0 17 -11.5 28.5 T480 840 q-17 0 -28.5 -11.5 T440 800 Z m40 -320 q17 0 28.5 -11.5 T520 440 v-240 q0 -17 -11.5 -28.5 T480 160 q-17 0 -28.5 11.5 T440 200 v240 q0 17 11.5 28.5 T480 480 Z",
+        )
+    }
+
     val MoreHoriz: ImageVector by lazy {
         materialSymbol(
             name = "MoreHoriz",
@@ -681,6 +688,7 @@ object VolaIcons {
             LightMode,
             Lock,
             LockOpen,
+            Mic,
             MoreHoriz,
             MoreVert,
             Movie,
