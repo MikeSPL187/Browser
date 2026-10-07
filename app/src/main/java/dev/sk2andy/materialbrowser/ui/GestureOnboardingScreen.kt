@@ -1103,6 +1103,9 @@ private fun FakeBrowserPage(
     }
 }
 
+/** The address on the lesson's pretend page: a plain domain, the same in every language. */
+private const val LESSON_PAGE_HOST = "wikipedia.org"
+
 @Composable
 private fun FakeAddressBar(modifier: Modifier = Modifier) {
     Surface(
@@ -1115,7 +1118,7 @@ private fun FakeAddressBar(modifier: Modifier = Modifier) {
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
-                text = "candy://gestures",
+                text = LESSON_PAGE_HOST,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
