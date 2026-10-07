@@ -37,6 +37,51 @@ class LibraryRulesTest {
     }
 
     @Test
+    fun `pending deletions survive a save and restore`() {
+        val entries = listOf(
+            HistoryEntry("https://a.example/", "A", 20, profileId = "work", visitId = "a"),
+            HistoryEntry("https://b.example/?q=1", "", 10, profileId = "personal", visitId = ""),
+        )
+        val deleted = HistoryUndo(
+            deletion = HistoryPendingDeletion.Entries(entries, keys = setOf("work:a", "personal:b")),
+            deadlineMillis = 1_000L,
+        )
+        val cleared = HistoryUndo(
+            deletion = HistoryPendingDeletion.Clear(
+                HistoryClearRequest(setOf("work", "personal"), 5L, Long.MAX_VALUE),
+            ),
+            deadlineMillis = 2_000L,
+        )
+
+        assertEquals(deleted, LibraryRules.restoreUndo(LibraryRules.saveUndo(deleted)))
+        assertEquals(cleared, LibraryRules.restoreUndo(LibraryRules.saveUndo(cleared)))
+        assertEquals(null, LibraryRules.restoreUndo(arrayListOf<Any>("unknown", 1L)))
+        assertEquals(null, LibraryRules.restoreUndo("not a list"))
+    }
+
+    @Test
+    fun `undo keeps the time left and never more than a fresh window`() {
+        val undo = HistoryUndo(
+            deletion = HistoryPendingDeletion.Clear(HistoryClearRequest(setOf("work"), 0L, 1L)),
+            deadlineMillis = 10_000L,
+        )
+
+        assertEquals(
+            3_000L,
+            LibraryRules.undoRemainingMillis(undo, nowMillis = 7_000L, windowMillis = 5_000L),
+        )
+        assertEquals(
+            0L,
+            LibraryRules.undoRemainingMillis(undo, nowMillis = 12_000L, windowMillis = 5_000L),
+        )
+        // A clock moved back does not stretch «Undo» past one window.
+        assertEquals(
+            5_000L,
+            LibraryRules.undoRemainingMillis(undo, nowMillis = 0L, windowMillis = 5_000L),
+        )
+    }
+
+    @Test
     fun `history behind undo is hidden until the deletion commits`() {
         val work = HistoryEntry("https://a.example/", "A", lastVisitedAt = 100, profileId = "work")
         val late = HistoryEntry("https://b.example/", "B", lastVisitedAt = 200, profileId = "work")

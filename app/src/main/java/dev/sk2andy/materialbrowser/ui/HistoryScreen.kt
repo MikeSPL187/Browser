@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -102,6 +103,8 @@ internal fun HistoryScreen(
     onOpenEntry: (HistoryEntry) -> Unit,
     onBack: () -> Unit,
     onOpenNewTab: (() -> Unit)? = null,
+    /** True while the host is being recreated: a pending deletion then waits in saved state. */
+    isChangingConfigurations: () -> Boolean = { false },
 ) {
     val configuration = LocalConfiguration.current
     val locale = configuration.locales[0]
@@ -123,10 +126,23 @@ internal fun HistoryScreen(
     var distinctEntries by rememberSaveable { mutableStateOf(false) }
     var clearConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
-    // Deleted history hides at once and waits behind «Undo» (board W-History).
-    var pending by remember { mutableStateOf<HistoryPendingDeletion?>(null) }
+    // Deleted history hides at once and waits behind «Undo» (board W-History); the deletion and
+    // its deadline survive recreation, so rotating neither loses «Undo» nor confirms it.
+    var undo by rememberSaveable(stateSaver = HistoryUndoSaver) {
+        mutableStateOf<HistoryUndo?>(null)
+    }
+    val pending = undo?.deletion
+    val accessibilityManager = LocalAccessibilityManager.current
+    // TalkBack users and longer «Time to take action» settings get the window Android recommends.
+    val undoWindowMillis = accessibilityManager?.calculateRecommendedTimeoutMillis(
+        LibraryRules.UNDO_WINDOW_MILLIS,
+        containsIcons = false,
+        containsText = true,
+        containsControls = true,
+    ) ?: LibraryRules.UNDO_WINDOW_MILLIS
     val currentDelete by rememberUpdatedState(onDeleteEntries)
     val currentClear by rememberUpdatedState(onClearHistory)
+    val currentChangingConfigurations by rememberUpdatedState(isChangingConfigurations)
     fun commit(deletion: HistoryPendingDeletion) {
         when (deletion) {
             is HistoryPendingDeletion.Entries -> currentDelete(deletion.entries)
@@ -134,12 +150,15 @@ internal fun HistoryScreen(
         }
     }
     fun defer(deletion: HistoryPendingDeletion) {
-        pending?.let(::commit)
-        pending = deletion
+        undo?.let { previous -> commit(previous.deletion) }
+        undo = HistoryUndo(deletion, System.currentTimeMillis() + undoWindowMillis)
         selectedEntryKeys = arrayListOf()
     }
     DisposableEffect(Unit) {
-        onDispose { pending?.let(::commit) }
+        onDispose {
+            val pendingUndo = undo
+            if (pendingUndo != null && !currentChangingConfigurations()) commit(pendingUndo.deletion)
+        }
     }
     val selectedProfiles = selectedProfileIds.toSet()
     LaunchedEffect(query, selectedProfiles) {
@@ -185,18 +204,16 @@ internal fun HistoryScreen(
         deletedCount,
     )
     val undoLabel = stringResource(R.string.action_undo)
-    val accessibilityManager = LocalAccessibilityManager.current
-    LaunchedEffect(pending) {
-        val deletion = pending ?: return@LaunchedEffect
+    LaunchedEffect(undo) {
+        val current = undo ?: return@LaunchedEffect
+        val deletion = current.deletion
         val message = if (deletion is HistoryPendingDeletion.Clear) clearedMessage else deletedMessage
-        // TalkBack users and longer «Time to take action» settings get the window Android recommends.
-        val undoWindow = accessibilityManager?.calculateRecommendedTimeoutMillis(
-            LibraryRules.UNDO_WINDOW_MILLIS,
-            containsIcons = false,
-            containsText = true,
-            containsControls = true,
-        ) ?: LibraryRules.UNDO_WINDOW_MILLIS
-        val result = withTimeoutOrNull(undoWindow) {
+        val remaining = LibraryRules.undoRemainingMillis(
+            undo = current,
+            nowMillis = System.currentTimeMillis(),
+            windowMillis = undoWindowMillis,
+        )
+        val result = withTimeoutOrNull(remaining) {
             snackbarHostState.showSnackbar(
                 message = message,
                 actionLabel = undoLabel,
@@ -205,13 +222,23 @@ internal fun HistoryScreen(
         }
         snackbarHostState.currentSnackbarData?.dismiss()
         if (result != SnackbarResult.ActionPerformed) commit(deletion)
-        pending = null
+        undo = null
     }
 
+    // Leaving the screen confirms the deletion first, so the host saves it before it answers.
+    fun commitPending() {
+        val current = undo ?: return
+        undo = null
+        snackbarHostState.currentSnackbarData?.dismiss()
+        commit(current.deletion)
+    }
     fun handleBack() {
         when {
             selecting -> selectedEntryKeys = arrayListOf()
-            else -> onBack()
+            else -> {
+                commitPending()
+                onBack()
+            }
         }
     }
     BackHandler(onBack = ::handleBack)
@@ -388,7 +415,12 @@ internal fun HistoryScreen(
                 item(key = "empty") {
                     HistoryEmptyState(
                         searching = query.isNotBlank(),
-                        onOpenNewTab = onOpenNewTab,
+                        onOpenNewTab = onOpenNewTab?.let { open ->
+                            {
+                                commitPending()
+                                open()
+                            }
+                        },
                         modifier = Modifier
                             .padding(horizontal = VolaLibrary.sidePadding)
                             .padding(top = VolaLibrary.sectionGap),
@@ -426,7 +458,12 @@ internal fun HistoryScreen(
                                 selected = selected,
                                 onSelectedChange = { toggle(entryKey, it) },
                                 onOpen = {
-                                    if (selecting) toggle(entryKey, !selected) else onOpenEntry(entry)
+                                    if (selecting) {
+                                        toggle(entryKey, !selected)
+                                    } else {
+                                        commitPending()
+                                        onOpenEntry(entry)
+                                    }
                                 },
                             )
                         }
@@ -899,3 +936,8 @@ internal object HistoryScreenTestTags {
 
     fun select(entry: HistoryEntry): String = "history_select:${entry.profileId}:${entry.url}"
 }
+
+private val HistoryUndoSaver = Saver<HistoryUndo?, Any>(
+    save = { undo -> undo?.let(LibraryRules::saveUndo) },
+    restore = LibraryRules::restoreUndo,
+)

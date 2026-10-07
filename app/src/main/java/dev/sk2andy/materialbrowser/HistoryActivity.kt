@@ -130,6 +130,7 @@ class HistoryActivity : ComponentActivity() {
                     },
                     onBack = { whenMutationsSaved(::finishWithResult) },
                     onOpenNewTab = ::openNewTab,
+                    isChangingConfigurations = { isChangingConfigurations },
                 )
             }
         }

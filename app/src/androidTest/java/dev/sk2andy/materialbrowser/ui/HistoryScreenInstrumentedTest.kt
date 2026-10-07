@@ -319,6 +319,47 @@ class HistoryScreenInstrumentedTest {
     }
 
     @Test
+    fun pendingClearKeepsItsUndoAcrossRecreation() {
+        val undoLabel = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.action_undo)
+        val request = AtomicReference<HistoryClearRequest?>()
+        val entry = HistoryEntry(
+            url = "https://personal.example/",
+            title = "Personal",
+            lastVisitedAt = System.currentTimeMillis() - 60_000L,
+            profileId = "personal",
+        )
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MaterialBrowserTheme {
+                HistoryScreen(
+                    profiles = listOf(BrowserProfile(id = "personal", emoji = "🏠")),
+                    activeProfileId = "personal",
+                    history = listOf(entry),
+                    onDeleteEntries = {},
+                    onClearHistory = request::set,
+                    onOpenEntry = {},
+                    onBack = {},
+                    isChangingConfigurations = { true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(HistoryScreenTestTags.Clear).performClick()
+        composeRule.onNodeWithTag(HistoryScreenTestTags.ClearConfirm).performClick()
+        composeRule.onNodeWithTag(HistoryScreenTestTags.entry(entry)).assertDoesNotExist()
+        restorationTester.emulateSavedInstanceStateRestore()
+        assertNull(request.get())
+        composeRule.onNodeWithTag(HistoryScreenTestTags.entry(entry)).assertDoesNotExist()
+        composeRule.onNodeWithText(undoLabel).performClick()
+        composeRule.mainClock.advanceTimeBy(LibraryRules.UNDO_WINDOW_MILLIS + 1_000)
+        composeRule.waitForIdle()
+
+        assertNull(request.get())
+        composeRule.onNodeWithTag(HistoryScreenTestTags.entry(entry)).assertIsDisplayed()
+    }
+
+    @Test
     fun emptyHistoryOpensANewTabButAFruitlessSearchDoesNot() {
         val action = InstrumentationRegistry.getInstrumentation().targetContext
             .getString(R.string.history_empty_action)
