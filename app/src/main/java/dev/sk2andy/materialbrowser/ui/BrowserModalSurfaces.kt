@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
-import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
+import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineRules
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.SiteCertificateRules
@@ -100,8 +100,8 @@ internal fun BoxScope.BrowserModalSurfaces(
                 siteState = controller.siteProtectionState(tabId),
                 permissionSnapshot = permissionSnapshot,
                 workspaceName = workspaceName,
-                websiteNotificationsSupported =
-                    controller.browserEngineKind == AndroidBrowserEngineKind.GeckoView,
+                supportedPermissions =
+                    AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
                 backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
                 onPause = { persistently ->
                     controller.pauseSiteProtection(tabId, persistently)
@@ -213,8 +213,8 @@ internal fun BoxScope.BrowserModalSurfaces(
             PermissionRadarSheet(
                 snapshot = snapshot,
                 workspaceName = workspaceName,
-                websiteNotificationsSupported =
-                    controller.browserEngineKind == AndroidBrowserEngineKind.GeckoView,
+                supportedPermissions =
+                    AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
                 onOriginSelected = onPermissionOriginSelected,
                 onDecisionChanged = { permission, decision ->
                     snapshot.site?.let { site ->

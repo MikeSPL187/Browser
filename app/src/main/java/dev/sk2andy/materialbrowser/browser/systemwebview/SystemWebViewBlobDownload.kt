@@ -236,14 +236,15 @@ internal class SystemWebViewBlobDownloadTransfer(
             fail(operation, GeckoDownloadFailure.InvalidRequest)
             return
         }
-        val mimeType = SafeDownloadValues.mimeType(
+        val candidateMimeType = SafeDownloadValues.mimeType(
             message.mimeType.ifBlank { operation.reportedMimeType },
         )
         val fileName = SafeDownloadValues.fileName(
             operation.blobUrl,
             operation.contentDisposition,
-            mimeType,
+            candidateMimeType,
         )
+        val mimeType = SafeDownloadValues.finalMimeType(fileName, candidateMimeType)
         val entry = runCatching { sink.open(fileName, mimeType) }.getOrElse {
             fail(operation, GeckoDownloadFailure.Storage)
             return

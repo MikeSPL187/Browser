@@ -1,13 +1,23 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyCheck
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyFinding
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
+import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 
 internal data class BrowserEngineDownloadResponse(
     val url: String,
     val contentDisposition: String?,
     val mimeType: String?,
+)
+
+/** A file that only the engine can read (a blob or data URL), as it will be saved. */
+internal data class BrowserEngineLocalDownload(
+    val fileName: String,
+    val mimeType: String,
+    val findings: List<DownloadSafetyFinding>,
 )
 
 internal object BrowserEngineDownloadRules {
@@ -20,6 +30,22 @@ internal object BrowserEngineDownloadRules {
         mimeType = response.mimeType,
         referrer = referrer,
     )
+
+    /**
+     * The name and type a response without an HTTP request is saved under, the same way the
+     * engine's transfer names it, and what the file check finds in them. Such a file never leaves
+     * the engine, but a program in it deserves the same question as one from the network.
+     */
+    fun localDownload(response: BrowserEngineDownloadResponse): BrowserEngineLocalDownload {
+        val candidateMimeType = SafeDownloadValues.mimeType(response.mimeType, response.url)
+        val fileName = SafeDownloadValues.fileName(response.url, response.contentDisposition, candidateMimeType)
+        val mimeType = SafeDownloadValues.finalMimeType(fileName, candidateMimeType)
+        return BrowserEngineLocalDownload(
+            fileName = fileName,
+            mimeType = mimeType,
+            findings = DownloadSafetyCheck.findings(response.url, fileName, mimeType),
+        )
+    }
 }
 
 internal enum class BrowserEngineFileCapture {
@@ -50,13 +76,34 @@ internal data class BrowserEngineContentPermissionRequest(
     val permission: SitePermission,
     val response: BrowserEngineBooleanResponse,
     val onPromptShown: (() -> Unit)? = null,
+    val cancellation: BrowserEnginePermissionCancellation = BrowserEnginePermissionCancellation(),
 )
 
 internal data class BrowserEngineMediaPermissionRequest(
     val origin: String,
     val permissions: Set<SitePermission>,
     val response: BrowserEnginePermissionSetResponse,
+    val cancellation: BrowserEnginePermissionCancellation = BrowserEnginePermissionCancellation(),
 )
+
+/**
+ * The engine withdrew a permission request before it was answered (System WebView reports it when
+ * the requesting frame goes away). Engines without such a signal never fire it.
+ */
+internal class BrowserEnginePermissionCancellation {
+    private var canceled = false
+    private var listener: (() -> Unit)? = null
+
+    fun onCanceled(listener: () -> Unit) {
+        if (canceled) listener() else this.listener = listener
+    }
+
+    fun cancel() {
+        if (canceled) return
+        canceled = true
+        listener?.also { listener = null }?.invoke()
+    }
+}
 
 internal fun interface BrowserEngineBooleanResponse {
     fun complete(allowed: Boolean)

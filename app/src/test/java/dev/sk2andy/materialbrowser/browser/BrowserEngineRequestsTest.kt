@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyFinding
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -28,6 +29,54 @@ class BrowserEngineRequestsTest {
                     contentDisposition = null,
                     mimeType = null,
                 ),
+                referrer = null,
+            ),
+        )
+    }
+
+    @Test
+    fun `a blob program gets the same file check as one from the network`() {
+        val disguised = BrowserEngineDownloadRules.localDownload(
+            BrowserEngineDownloadResponse(
+                url = "blob:https://files.example/0f6c3a0e-2b4c-4b8e-9d55-0d1b9b0a8c11",
+                contentDisposition = "attachment; filename=\"invoice.pdf.apk\"",
+                mimeType = "application/octet-stream",
+            ),
+        )
+
+        assertEquals("invoice.pdf.apk", disguised.fileName)
+        assertEquals("application/vnd.android.package-archive", disguised.mimeType)
+        assertEquals(
+            listOf(DownloadSafetyFinding.DisguisedName, DownloadSafetyFinding.AndroidApp),
+            disguised.findings,
+        )
+        val typedOnly = BrowserEngineDownloadRules.localDownload(
+            BrowserEngineDownloadResponse(
+                url = "blob:https://files.example/1",
+                contentDisposition = null,
+                mimeType = "application/vnd.android.package-archive",
+            ),
+        )
+        assertEquals("download.apk", typedOnly.fileName)
+        assertEquals(listOf(DownloadSafetyFinding.AndroidApp), typedOnly.findings)
+    }
+
+    @Test
+    fun `an ordinary blob file passes the file check without a question`() {
+        val image = BrowserEngineDownloadRules.localDownload(
+            BrowserEngineDownloadResponse(
+                url = "blob:https://files.example/2",
+                contentDisposition = "attachment; filename=photo.png",
+                mimeType = "image/png",
+            ),
+        )
+
+        assertEquals("photo.png", image.fileName)
+        assertEquals("image/png", image.mimeType)
+        assertTrue(image.findings.isEmpty())
+        assertNull(
+            BrowserEngineDownloadRules.request(
+                BrowserEngineDownloadResponse("blob:https://files.example/2", null, "image/png"),
                 referrer = null,
             ),
         )
