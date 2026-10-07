@@ -4,6 +4,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextInputSelection
+import androidx.compose.ui.text.TextRange
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.browser.BrowserWebPrompt
 import dev.sk2andy.materialbrowser.browser.BrowserWebPromptKind
@@ -39,6 +41,9 @@ class BrowserWebPromptDialogInstrumentedTest {
             }
         }
 
+        // Text input goes in at the cursor, which a String field starts at the beginning.
+        composeRule.onNodeWithTag(BrowserWebPromptTestTags.Input)
+            .performTextInputSelection(TextRange("initial".length))
         composeRule.onNodeWithTag(BrowserWebPromptTestTags.Input).performTextInput(" candy")
         composeRule.onNodeWithTag(BrowserWebPromptTestTags.Confirm).performClick()
 

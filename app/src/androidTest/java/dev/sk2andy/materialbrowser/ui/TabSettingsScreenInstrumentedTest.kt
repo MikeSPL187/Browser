@@ -381,10 +381,13 @@ class TabSettingsScreenInstrumentedTest {
             // Stacks are hidden until the overview draws them, and their folder setting with them.
             composeRule.onNodeWithTag(TabSettingsTestTags.StackFolderMode).assertDoesNotExist()
         }
+        // The card rows below the overview modes start off screen; a click there misses.
         composeRule.onNodeWithTag(TabSettingsTestTags.ListStartsAtBottom)
+            .performScrollTo()
             .assertIsEnabled()
             .performClick()
         composeRule.onNodeWithTag(TabSettingsTestTags.AutomaticSorting)
+            .performScrollTo()
             .assertIsEnabled()
             .performClick()
 

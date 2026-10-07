@@ -21,6 +21,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -29,6 +30,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.TabStackColor
@@ -38,10 +40,12 @@ import dev.sk2andy.materialbrowser.data.TabPreviewRepository
 import dev.sk2andy.materialbrowser.data.TabPreviewStore
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -325,6 +329,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun heroStackCollapseExpandOpensConfiguredFolder() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var stackedTabId: String
@@ -376,6 +381,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun overflowMenuCreatesStack() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var secondTabId: String
@@ -393,6 +399,10 @@ class TabOverviewReorderInstrumentedTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
+        // Stack actions live in the sheet's folded "Add to group" section.
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.tab_actions_add_to_group))
+            .performScrollTo()
+            .performClick()
         composeRule.onNodeWithTag(TabStackTestTags.Create)
             .performScrollTo()
             .performClick()
@@ -411,6 +421,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun distantHeroStackMemberFoldsFromVisibleEdgeIntoTrigger() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var anchorTabId: String
         lateinit var distantTabId: String
@@ -497,6 +508,7 @@ class TabOverviewReorderInstrumentedTest {
 
     @Test
     fun gridStackCollapseExpandPreservesCardsAndBlocksReorder() {
+        assumeStacksShown()
         lateinit var browserController: BrowserController
         lateinit var selectedTabId: String
         lateinit var stackedTabId: String
@@ -783,7 +795,6 @@ class TabOverviewReorderInstrumentedTest {
         }
         setOverviewContent(browserController)
         composeRule.waitForIdle()
-
         val rootBounds = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         val cardBounds = tabIds.map { tabId ->
             composeRule
@@ -794,7 +805,9 @@ class TabOverviewReorderInstrumentedTest {
         val density = composeRule.activity.resources.displayMetrics.density
         val isLandscape = rootBounds.width > rootBounds.height
         val expectedPreviewAspectRatio = if (isLandscape) 1.6f else 0.72f
-        val expectedCardHeight = cardBounds.first().width / expectedPreviewAspectRatio
+        // A v4 card is its title row above the page preview.
+        val expectedCardHeight = cardBounds.first().width / expectedPreviewAspectRatio +
+            VolaTabOverview.cardTitleRowHeight.value * density
         val expectedColumns = if (isLandscape && rootBounds.width / density >= 900f) 3 else 2
         val firstRowCount = cardBounds.count { bounds ->
             kotlin.math.abs(bounds.top - cardBounds.first().top) < 2f
@@ -806,13 +819,13 @@ class TabOverviewReorderInstrumentedTest {
             )
             .fetchSemanticsNode()
             .boundsInRoot
-        val closeBounds = composeRule
+        val closeNode = composeRule
             .onNodeWithTag(
                 SnoozeTestTags.overviewClose(tabIds.first()),
                 useUnmergedTree = true,
             )
             .fetchSemanticsNode()
-            .boundsInRoot
+        val closeBounds = closeNode.boundsInRoot
 
         assertEquals(expectedCardHeight, cardBounds.first().height, 8f)
         assertEquals(expectedColumns, firstRowCount)
@@ -821,9 +834,17 @@ class TabOverviewReorderInstrumentedTest {
         assertTrue(titleBounds.top >= cardBounds.first().top)
         assertTrue(closeBounds.right <= cardBounds.first().right)
         assertTrue(closeBounds.top >= cardBounds.first().top)
-        assertTrue(titleBounds.right <= closeBounds.left + 1f)
-        assertTrue(closeBounds.width >= 48f * density)
-        assertTrue(closeBounds.height >= 48f * density)
+        // The v4 close button floats over the card's corner; its 48 dp target may reach over
+        // the title row, so the title ends before the button's visible centre.
+        assertTrue(titleBounds.right <= closeBounds.center.x)
+        // The touch target is the layout node's own size, which includes the minimum interactive
+        // size: the semantics bounds are the 40 dp visual button, and its bounds in the root are
+        // clipped where the button reaches past the card or the grid's edge.
+        val closeLayout = closeNode.layoutInfo
+        val closeTarget = "close target ${closeLayout.width}x${closeLayout.height} px, " +
+            "semantics ${closeNode.size}, density $density"
+        assertTrue(closeTarget, closeLayout.width >= 48f * density - 1f)
+        assertTrue(closeTarget, closeLayout.height >= 48f * density - 1f)
     }
 
     @Test
@@ -999,7 +1020,8 @@ class TabOverviewReorderInstrumentedTest {
 
         val density = composeRule.activity.resources.displayMetrics.density
         val sourceX = cardBounds.center.x
-        val sourceY = cardBounds.top + 12f * density
+        // Close to the card's top, so reaching behind the header stays short of the dismiss point.
+        val sourceY = cardBounds.top + 4f * density
         val requestedTargetY = profileBounds.bottom - 32f * density
         val requiredVisualDistance = sourceY - requestedTargetY
         assertTrue(requiredVisualDistance > 0f)
@@ -1321,4 +1343,7 @@ class TabOverviewReorderInstrumentedTest {
         kotlin.math.abs(first.red - second.red) +
             kotlin.math.abs(first.green - second.green) +
             kotlin.math.abs(first.blue - second.blue)
+
+    // Stacks stay hidden until the overview draws them again (S12); these tests wait for that.
+    private fun assumeStacksShown() = assumeTrue(TabStacksFeature.ENABLED)
 }

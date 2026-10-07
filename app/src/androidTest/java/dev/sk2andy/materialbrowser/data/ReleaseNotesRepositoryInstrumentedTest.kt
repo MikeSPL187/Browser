@@ -22,7 +22,7 @@ class ReleaseNotesRepositoryInstrumentedTest {
 
         assertEquals(BuildConfig.RELEASE_NOTES_VERSION, content.versionName)
         assertTrue(content.document.title.text.isNotBlank())
-        assertTrue(images.isNotEmpty())
+        // Screenshots are optional (0.2.0 has none); the ones referenced must ship.
         images.forEach { image ->
             context.assets.open(image.assetPath).use { input ->
                 assertTrue(input.read() >= 0)

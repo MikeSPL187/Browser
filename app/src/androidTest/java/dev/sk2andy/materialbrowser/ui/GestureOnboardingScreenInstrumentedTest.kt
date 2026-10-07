@@ -1,12 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -16,7 +17,6 @@ import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
-import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,7 +30,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class GestureOnboardingScreenInstrumentedTest {
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun everyGestureMustBePerformedInOrder() {
@@ -151,7 +151,7 @@ class GestureOnboardingScreenInstrumentedTest {
         }
 
         startTutorial()
-        Espresso.pressBack()
+        pressBack()
 
         composeRule.waitUntil(timeoutMillis = 2_000) { backs.get() == 1 }
     }
@@ -165,7 +165,7 @@ class GestureOnboardingScreenInstrumentedTest {
             }
         }
 
-        Espresso.pressBack()
+        pressBack()
 
         composeRule.waitUntil(timeoutMillis = 2_000) { completed.get() }
     }
@@ -180,6 +180,12 @@ class GestureOnboardingScreenInstrumentedTest {
             .assertIsDisplayed()
         composeRule.onAllNodesWithTag(pointerTag(GestureOnboardingStep.SwitchTabs))
             .assertCountEquals(1)
+    }
+
+    // Espresso's pressBack waits for an idle, focused root, which the floating welcome hero never gives.
+    private fun pressBack() {
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
     }
 
     private fun tag(step: GestureOnboardingStep): String = "gesture_onboarding_${step.name}"

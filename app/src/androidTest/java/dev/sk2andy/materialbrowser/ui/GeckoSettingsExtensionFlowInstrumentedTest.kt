@@ -7,7 +7,6 @@ import android.os.Looper
 import android.view.ViewGroup
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -28,6 +27,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoViewRuntimeHandle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -46,6 +46,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     init {
         clearPreferences()
+        grantNotificationPermissionForTests()
         GestureOnboardingStore(context).markCompleted()
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
         BrowserSessionStore(context).saveStartupAnimationEnabled(false)
@@ -272,12 +273,9 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
     }
 
     private fun openBrowserMenu() {
-        val closeAddressDescription = context.getString(R.string.cd_close_address_input)
-        if (
-            composeRule.onAllNodesWithContentDescription(closeAddressDescription)
-                .fetchSemanticsNodes().isNotEmpty()
-        ) {
-            composeRule.onNodeWithContentDescription(closeAddressDescription).performClick()
+        val closeAddressButton = closeAddressInputButton(context)
+        if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNode(closeAddressButton).performClick()
         }
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),

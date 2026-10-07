@@ -16,6 +16,8 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -173,6 +175,10 @@ class SnoozeScreensInstrumentedTest {
             .assertIsDisplayed()
             .assertIsEnabled()
             .performClick()
+        // Closing every unpinned tab asks first.
+        composeRule.onNode(
+            hasText(context.getString(R.string.action_close_all_tabs)) and hasAnyAncestor(isDialog()),
+        ).performClick()
 
         composeRule.runOnIdle {
             assertEquals(listOf(pinnedTabId), browserController.activeTabs.map(BrowserTab::id))
@@ -336,7 +342,7 @@ class SnoozeScreensInstrumentedTest {
         composeRule.runOnIdle {
             assertTrue(browserController.isDomainMuted(tabId))
         }
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.More).performClick()
+        // Muting keeps the sheet and its More section open; another tap would fold it.
         composeRule.onNodeWithTag(TabActionsSheetTestTags.more(TabMoreAction.AddBookmark)).performClick()
         composeRule.runOnIdle {
             assertEquals(tabId, favoriteTarget.get())

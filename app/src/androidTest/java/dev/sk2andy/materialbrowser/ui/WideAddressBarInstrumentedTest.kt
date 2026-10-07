@@ -215,9 +215,7 @@ class WideAddressBarInstrumentedTest {
 
         composeRule.mainClock.autoAdvance = false
         try {
-            composeRule.onNodeWithContentDescription(
-                composeRule.activity.getString(R.string.cd_close_address_input),
-            ).performClick()
+            composeRule.onNode(closeAddressInputButton(composeRule.activity)).performClick()
             val closingColors = (0 until 18).map {
                 composeRule.mainClock.advanceTimeByFrame()
                 fieldColors(tabSampleX, tabSampleY).second
