@@ -53,6 +53,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -184,10 +185,18 @@ internal fun HistoryScreen(
         deletedCount,
     )
     val undoLabel = stringResource(R.string.action_undo)
+    val accessibilityManager = LocalAccessibilityManager.current
     LaunchedEffect(pending) {
         val deletion = pending ?: return@LaunchedEffect
         val message = if (deletion is HistoryPendingDeletion.Clear) clearedMessage else deletedMessage
-        val result = withTimeoutOrNull(LibraryRules.UNDO_WINDOW_MILLIS) {
+        // TalkBack users and longer «Time to take action» settings get the window Android recommends.
+        val undoWindow = accessibilityManager?.calculateRecommendedTimeoutMillis(
+            LibraryRules.UNDO_WINDOW_MILLIS,
+            containsIcons = false,
+            containsText = true,
+            containsControls = true,
+        ) ?: LibraryRules.UNDO_WINDOW_MILLIS
+        val result = withTimeoutOrNull(undoWindow) {
             snackbarHostState.showSnackbar(
                 message = message,
                 actionLabel = undoLabel,

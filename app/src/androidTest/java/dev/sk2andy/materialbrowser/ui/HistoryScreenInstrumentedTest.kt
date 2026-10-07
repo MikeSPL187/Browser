@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.AccessibilityManager
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -20,6 +23,7 @@ import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -265,6 +269,53 @@ class HistoryScreenInstrumentedTest {
         assertEquals(setOf("personal", "work"), request.get()?.profileIds)
         assertTrue(request.get()!!.sinceInclusiveMillis <= personalTime)
         assertTrue(request.get()!!.untilExclusiveMillis > workTime)
+    }
+
+    @Test
+    fun undoWindowFollowsTheRecommendedAccessibilityTimeout() {
+        val request = AtomicReference<HistoryClearRequest?>()
+        val accessibleTimeout = LibraryRules.UNDO_WINDOW_MILLIS * 6
+        composeRule.setContent {
+            CompositionLocalProvider(
+                LocalAccessibilityManager provides object : AccessibilityManager {
+                    override fun calculateRecommendedTimeoutMillis(
+                        originalTimeoutMillis: Long,
+                        containsIcons: Boolean,
+                        containsText: Boolean,
+                        containsControls: Boolean,
+                    ): Long = accessibleTimeout
+                },
+            ) {
+                MaterialBrowserTheme {
+                    HistoryScreen(
+                        profiles = listOf(BrowserProfile(id = "personal", emoji = "🏠")),
+                        activeProfileId = "personal",
+                        history = listOf(
+                            HistoryEntry(
+                                url = "https://personal.example/",
+                                title = "Personal",
+                                lastVisitedAt = System.currentTimeMillis() - 60_000L,
+                                profileId = "personal",
+                            ),
+                        ),
+                        onDeleteEntries = {},
+                        onClearHistory = request::set,
+                        onOpenEntry = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag(HistoryScreenTestTags.Clear).performClick()
+        composeRule.onNodeWithTag(HistoryScreenTestTags.ClearConfirm).performClick()
+        composeRule.mainClock.advanceTimeBy(LibraryRules.UNDO_WINDOW_MILLIS + 1_000)
+        composeRule.waitForIdle()
+        assertNull(request.get())
+
+        composeRule.mainClock.advanceTimeBy(accessibleTimeout)
+        composeRule.waitForIdle()
+        assertEquals(setOf("personal"), request.get()?.profileIds)
     }
 
     @Test
