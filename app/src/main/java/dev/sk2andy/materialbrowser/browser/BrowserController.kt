@@ -1642,28 +1642,15 @@ class BrowserController(
         if (normalizedOrigin != origin) return false
         val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
         permissionRepository.setDecision(site, permission, decision, tab.isIncognito)
-        val reload = activePermissions.has(tabId, site, permission)
+        val reloadAfterSync = if (decision == SitePermissionDecision.Allow) emptySet()
+        else revokeSitePermissionAccess(tab, site, permission)
         if (permission == SitePermission.Notifications) {
-            browserEngineSessions[tabId]?.setNotificationPermission(normalizedOrigin, decision) {
-                if (reload) browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-            }
+            syncNotificationPermission(tabId, normalizedOrigin, decision, reloadAfterSync)
         }
         permissionRevision++
-        if (reload) {
-            cancelPendingPermissionAccess(tabId)
-            removeActivePermissionsForTab(tabId)
-            clearExternalNavigationAuthorization(tabId)
-            if (permission != SitePermission.Notifications) {
-                browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-            }
-        } else if (
-            pendingPermissionAccess?.let { access ->
-                access.site == site && permission in access.requested
-            } == true
-        ) {
-            cancelPendingPermissionAccess(tabId)
+        if (pendingPermissionAccess?.let { it.site == site && permission in it.requested } == true) {
+            cancelPendingPermissionAccess()
         }
-
         return true
     }
 
@@ -1673,20 +1660,46 @@ class BrowserController(
         if (normalizedOrigin != origin) return false
         val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
         permissionRepository.resetSite(site, tab.isIncognito)
-        val reload = activePermissions.hasSite(tabId, site)
-        browserEngineSessions[tabId]?.setNotificationPermission(
-            normalizedOrigin,
-            SitePermissionDecision.Ask,
-        ) {
-            if (reload) browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-        }
+        val reloadAfterSync = revokeSitePermissionAccess(tab, site, permission = null)
+        syncNotificationPermission(tabId, normalizedOrigin, SitePermissionDecision.Ask, reloadAfterSync)
         permissionRevision++
         if (pendingPermissionAccess?.site == site) cancelPendingPermissionAccess(tabId)
-        if (reload) {
-            removeActivePermissionsForTab(tabId)
-            clearExternalNavigationAuthorization(tabId)
-        }
         return true
+    }
+
+    /** Ends access [site] holds in every tab like [tab]; returns tabs to reload after notification sync. */
+    private fun revokeSitePermissionAccess(
+        tab: BrowserTab,
+        site: PermissionSiteKey,
+        permission: SitePermission?,
+    ): Set<String> {
+        val plan = activePermissions.revocationPlan(site, permission) { id ->
+            tabs.any { other -> other.id == id && other.isIncognito == tab.isIncognito }
+        }
+        plan.tabs.forEach { id ->
+            cancelPendingPermissionAccess(id)
+            removeActivePermissionsForTab(id)
+            clearExternalNavigationAuthorization(id)
+        }
+        plan.reloadNow.forEach(::reloadAfterPermissionChange)
+        return plan.reloadAfterNotificationSync
+    }
+
+    private fun syncNotificationPermission(
+        tabId: String,
+        origin: String,
+        decision: SitePermissionDecision,
+        reloadAfterSync: Set<String>,
+    ) {
+        val session = browserEngineSessions[tabId]
+            ?: return reloadAfterSync.forEach(::reloadAfterPermissionChange)
+        session.setNotificationPermission(origin, decision) {
+            reloadAfterSync.forEach(::reloadAfterPermissionChange)
+        }
+    }
+
+    private fun reloadAfterPermissionChange(tabId: String) {
+        browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
     }
 
     fun respondToPermissionPrompt(promptId: Long, choice: PermissionPromptChoice) {
@@ -10983,6 +10996,7 @@ class BrowserController(
             grant = { allowed -> request.response.complete(request.permission in allowed) },
             deny = { request.response.complete(false) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun onGeckoMediaPermissionRequest(
@@ -10999,6 +11013,7 @@ class BrowserController(
             grant = request.response::complete,
             deny = { request.response.complete(emptySet()) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun beginGeckoPermissionAccess(

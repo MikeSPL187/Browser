@@ -1277,10 +1277,10 @@
     <string name="permission_radar_sites">Sites in this workspace</string>
     <string name="permission_radar_no_site">Open a secure website to manage its permissions.</string>
     <string name="permission_radar_reset_site">Reset site</string>
-    <string name="permission_radar_active">Active now</string>
+    <string name="permission_radar_active">Access granted</string>
     <string name="permission_radar_pending">Request waiting</string>
     <string name="permission_radar_session_allowed">Allowed for this session</string>
-    <string name="permission_radar_activity_cd">Site permission active or waiting</string>
+    <string name="permission_radar_activity_cd">Site has access or a request is waiting</string>
     <string name="permission_prompt_question_location">Show this site where you are?</string>
     <string name="permission_prompt_question_camera">Let this site use your camera?</string>
     <string name="permission_prompt_question_microphone">Let this site use your microphone?</string>
