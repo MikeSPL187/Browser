@@ -44,5 +44,9 @@
             android:name="dev.sk2andy.materialbrowser.ui.ProfileLockedPreviewActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.NoActionBar" />
+        <activity
+            android:name="dev.sk2andy.materialbrowser.ui.VoiceSearchPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
     </application>
 </manifest>

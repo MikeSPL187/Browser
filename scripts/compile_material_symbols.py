@@ -158,6 +158,7 @@ COMPOSE_ICONS = [
     ("LightMode", "light_mode", False, False),
     ("Lock", "lock", False, False),
     ("LockOpen", "lock_open", False, False),
+    ("Mic", "mic", False, False),
     ("MoreHoriz", "more_horiz", False, False),
     ("MoreVert", "more_vert", False, False),
     ("Movie", "movie", False, False),

@@ -47,6 +47,24 @@
     <string name="cd_more_options">Другие действия</string>
     <string name="cd_restore_address_bar">Вернуть адресную строку в центр</string>
     <string name="cd_scan_qr_code">Сканировать QR-код</string>
+    <!-- Voice search in the address field (S7): recognised on the phone only. -->
+    <string name="voice_search_start">Голосовой поиск</string>
+    <string name="voice_search_listening">Говорите…</string>
+    <string name="voice_search_recognizing">Распознаю…</string>
+    <string name="voice_search_stop">Закончить и искать</string>
+    <string name="voice_search_cancel">Отменить голосовой поиск</string>
+    <string name="voice_search_permission_title">Голосовой поиск</string>
+    <string name="voice_search_permission_message">Чтобы услышать запрос, Vola нужен микрофон. Речь распознаётся прямо на телефоне: звук никуда не отправляется и не сохраняется.</string>
+    <string name="voice_search_permission_blocked">Доступ к микрофону для Vola выключен. Включите его в настройках приложения, чтобы искать голосом.</string>
+    <string name="voice_search_permission_continue">Продолжить</string>
+    <string name="voice_search_permission_settings">Открыть настройки</string>
+    <string name="voice_search_permission_not_now">Не сейчас</string>
+    <string name="voice_search_permission_needed">Для голосового поиска нужен микрофон</string>
+    <string name="voice_search_error_no_speech">Ничего не слышно. Попробуйте ещё раз</string>
+    <string name="voice_search_error_no_match">Не удалось разобрать. Попробуйте ещё раз</string>
+    <string name="voice_search_error_language">На телефоне пока нет модели распознавания для этого языка. Система может предложить её скачать.</string>
+    <string name="voice_search_error_busy">Распознавание речи занято другим приложением</string>
+    <string name="voice_search_error_failed">Голосовой поиск не сработал. Попробуйте ещё раз</string>
     <string name="action_back">Назад</string>
     <string name="action_forward">Вперёд</string>
     <string name="action_find_in_page">Найти на странице</string>
