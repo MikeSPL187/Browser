@@ -108,6 +108,7 @@ internal fun TabOverviewTabActions(
                 it.id != controller.selectedTabId &&
                 it.isIncognito == controller.selectedTab.isIncognito,
             isLocked = locked,
+            canSnooze = controller.canSnoozeTab(it.id),
         )
     }
     // Closes the sheet, then runs [action] on its tab.

@@ -8,7 +8,10 @@
     <string name="widget_open_profile_tab">Open a new tab in workspace %1$s</string>
     <string name="onboarding_welcome_title">Meet Vola</string>
     <string name="onboarding_welcome_body">A gesture-first browser that keeps tabs, journeys and privacy controls close at hand.</string>
-    <string name="onboarding_welcome_card_title">Three gestures. One fluid workflow.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d gesture. One fluid workflow.</item>
+        <item quantity="other">%1$d gestures. One fluid workflow.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Learn the gestures</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_completion_title">You’re ready to go!</string>
@@ -16,9 +19,9 @@
     <string name="onboarding_completion_cta">Start browsing</string>
     <string name="onboarding_follow_pointer">Follow the touch point with your finger</string>
     <string name="onboarding_title">Learn Vola gestures</string>
-    <string name="onboarding_progress">%1$d of %2$d</string>
+    <string name="onboarding_progress">Gesture %1$d of %2$d</string>
     <string name="onboarding_try_here">Try the gesture in the card</string>
-    <string name="onboarding_required_hint">All three gestures are required to continue.</string>
+    <string name="onboarding_required_hint">Do the gesture, or tap Skip.</string>
     <string name="onboarding_accessibility_complete_action">Mark this gesture as completed</string>
     <string name="onboarding_switch_tabs_title">Switch tabs</string>
     <string name="onboarding_switch_tabs_description">Swipe the address bar left or right.</string>
@@ -736,6 +739,8 @@
     <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as uBlock Origin. Uses more memory.</string>
     <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
+    <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
+    <string name="settings_browser_engine_change_save_failed">Couldn\'t save your tabs, so the engine wasn\'t changed. Try again.</string>
     <string name="settings_external_app_links_title">Open links in apps</string>
     <string name="settings_external_app_links_summary">Controls whether Vola opens supported links in other apps immediately or asks first.</string>
     <string name="settings_external_app_links_automatic">Automatically</string>
@@ -751,14 +756,14 @@
     <string name="settings_startup_animation_title">Startup animation</string>
     <string name="settings_startup_animation_subtitle">The Vola mark melts into the browser on launch.</string>
     <string name="first_run_welcome_title">A browser that stays out of the way</string>
-    <string name="first_run_welcome_body">Pages edge to edge, spaces for work and for rest, and tracking protection with no setup.</string>
+    <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
     <string name="first_run_setup_title">Make it yours</string>
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
     <string name="first_run_theme_auto">Auto</string>
-    <string name="first_run_trackers">Strict tracker protection</string>
+    <string name="first_run_trackers">Block ads and trackers</string>
     <string name="first_run_trackers_on">On</string>
     <string name="first_run_trackers_off">Off</string>
     <string name="first_run_https">HTTPS only</string>
@@ -1280,10 +1285,10 @@
     <string name="permission_radar_sites">Sites in this workspace</string>
     <string name="permission_radar_no_site">Open a secure website to manage its permissions.</string>
     <string name="permission_radar_reset_site">Reset site</string>
-    <string name="permission_radar_active">Active now</string>
+    <string name="permission_radar_active">Access granted</string>
     <string name="permission_radar_pending">Request waiting</string>
     <string name="permission_radar_session_allowed">Allowed for this session</string>
-    <string name="permission_radar_activity_cd">Site permission active or waiting</string>
+    <string name="permission_radar_activity_cd">Site has access or a request is waiting</string>
     <string name="permission_prompt_question_location">Show this site where you are?</string>
     <string name="permission_prompt_question_camera">Let this site use your camera?</string>
     <string name="permission_prompt_question_microphone">Let this site use your microphone?</string>
@@ -1339,6 +1344,7 @@
     <string name="snooze_invalid_time">Choose a future date and time</string>
     <string name="snoozed_tab_update_failed">Couldn\'t update this tab — it may have opened already</string>
     <string name="snooze_confirmation">Tab snoozed</string>
+    <string name="snooze_failed">Couldn’t snooze this tab</string>
     <string name="snooze_notification_channel_name">Snoozed tabs</string>
     <string name="snooze_notification_channel_description">Alerts when snoozed tabs are ready</string>
     <string name="snooze_notification_title">Snoozed tab is ready</string>
@@ -1567,7 +1573,7 @@
     <string name="developer_options_experiments_section">Experimental features</string>
     <string name="developer_options_performance_section">Performance</string>
     <string name="developer_options_scroll_dispatch_mode">Browser chrome scroll updates</string>
-    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 60 Hz and steps down to 30 or 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
+    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 30 Hz and steps down to 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
     <string name="developer_options_scroll_dispatch_optimized">Optimized</string>
     <string name="developer_options_scroll_dispatch_120_hz">Fixed 120 Hz</string>
     <string name="developer_options_scroll_dispatch_60_hz">Fixed 60 Hz</string>
@@ -1680,6 +1686,7 @@
     <string name="site_info_delete_site_data">Delete</string>
     <string name="site_info_delete_site_data_description">Delete data of %1$s</string>
     <string name="site_data_deleted">Data of %1$s deleted</string>
+    <string name="site_data_delete_failed">Couldn\'t delete data for %1$s</string>
     <string name="site_info_certificate">Certificate</string>
     <string name="site_info_certificate_summary">%1$s · until %2$s</string>
     <string name="site_info_certificate_expired">%1$s · expired %2$s</string>

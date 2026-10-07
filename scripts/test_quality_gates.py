@@ -124,7 +124,46 @@ class BrandTest(unittest.TestCase):
         </resources>"""
         self.assertEqual(gates.brand_findings_in_xml(xml), ["about", "%d Candy tab"])
 
-    def test_repository_strings_have_no_candy(self):
+    def kotlin(self, text):
+        return [line for _, line, _ in gates.brand_findings_in_kotlin(text, "Ui.kt")]
+
+    def test_kotlin_literals_the_user_sees_are_findings(self):
+        cases = [
+            'Text(\n    text = "candy://gestures",\n)',
+            'val title = "Welcome to Candy"',
+            'label = { Text("Candy tabs") }',
+            'error = if (failed) "Candy could not start" else null',
+            "val script = \"\"\"\n    alert('Candy says hi');\n\"\"\"",
+        ]
+        for kotlin in cases:
+            with self.subTest(kotlin=kotlin):
+                self.assertEqual(len(self.kotlin(kotlin)), 1)
+        self.assertEqual(self.kotlin('val a = 1\nText(\n    "Candy"\n)'), [3])
+
+    def test_kotlin_names_logs_exceptions_and_exemptions_are_clean(self):
+        cases = [
+            "// Candy wrote this screen",
+            '/** A "Candy" comment. */',
+            'Log.e(TAG, "Candy rule snapshot could not be persisted")',
+            'private const val TAG = "Candy"',
+            'throw IllegalStateException("Candy host timed out")',
+            'fail(IllegalStateException("Candy Privacy host disconnected"))',
+            'require(ok) {\n    "Unsupported bundled Candy Rule"\n}',
+            'check(ready) { "Candy is not ready" }',
+            'Modifier.testTag("Candy tab")',
+            'DiagnosticsStart("Candy.Diagnostics.Start")',
+            'label = "Candy-Trail-Navigation"',
+            'const val ACTION = "dev.sk2andy.materialbrowser.candy_open_tab"',
+            'const val UPSTREAM = "Candy Browser" // brand-exempt: credit to the upstream project',
+            '// brand-exempt: a protocol reason, never shown\nsocket.close(1002, "Invalid Candy Sync event")',
+            "val script = \"\"\"\n    // Never during a Candy layout write.\n    begin('Candy.SafeArea.Reconcile');\n\"\"\"",
+            'val name = "Candyfloss"',
+        ]
+        for kotlin in cases:
+            with self.subTest(kotlin=kotlin):
+                self.assertEqual(self.kotlin(kotlin), [])
+
+    def test_repository_has_no_candy(self):
         self.assertEqual(gates.check_brand(), [])
 
 

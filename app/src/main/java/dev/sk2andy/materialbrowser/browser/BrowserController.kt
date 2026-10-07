@@ -63,6 +63,7 @@ import dev.sk2andy.materialbrowser.blocking.PrivacyRequestSanitizer
 import dev.sk2andy.materialbrowser.blocking.PrivacyPolicyRules
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionAction
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionSummary
+import dev.sk2andy.materialbrowser.blocking.PrivacyRetention
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRayRepository
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRaySnapshot
 import dev.sk2andy.materialbrowser.blocking.SiteExceptionRules
@@ -117,7 +118,9 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingDataReloadRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEvent
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoContextDownloadRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadMetadataDecision
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferMetadata
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
@@ -144,6 +147,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoNewSessionRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.safety.BackToSafety
 import dev.sk2andy.materialbrowser.browser.safety.DangerousSiteGuard
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEvent
@@ -236,6 +240,7 @@ import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import dev.sk2andy.materialbrowser.data.InactiveTabLifetime
 import dev.sk2andy.materialbrowser.data.DownloadManagerMode
+import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.PermissionRadarStore
 import dev.sk2andy.materialbrowser.data.PendingCandyTrailRedaction
 import dev.sk2andy.materialbrowser.data.ProfileWallpaperStore
@@ -1199,6 +1204,7 @@ class BrowserController(
     private val federatedLoginPopupTabIds = mutableSetOf<String>()
     private val federatedLoginCompatibilityTabIds = mutableSetOf<String>()
     private val pageUrls = ConcurrentHashMap<String, String>()
+    private val historyVisits = mutableMapOf<String, HistoryEntry>() // last saved visit per tab
     private val mainHandler = Handler(Looper.getMainLooper())
     private val findInPage = FindInPageController(
         host = ::isFindInPageSessionCurrent,
@@ -1383,6 +1389,9 @@ class BrowserController(
     val siteDataDeletion = SiteDataDeletion(
         clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
         selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        selectedPageReloadable = {
+            SiteDataDeletionRules.pageReloadable(destroyed, isSelectedContentLocked, isActivityStarted)
+        },
         reloadSelected = ::reload,
         postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
         removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
@@ -1536,12 +1545,11 @@ class BrowserController(
         get() = canOpenLinkInPrivate
 
     val canSnoozeSelectedTab: Boolean
-        get() = selectedTab.let { tab ->
-            tab.url != BLANK_URL &&
-                !tab.isIncognito &&
-                !isSyncedProfile(tab.profileId) &&
-                !isSessionEphemeralTab(tab.id)
-        }
+        get() = selectedTab.url != BLANK_URL && canSnoozeTab(selectedTab.id)
+
+    /** Whether [snoozeTab] may store the tab at all: not private, synced or session-only. */
+    fun canSnoozeTab(tabId: String): Boolean = tabs.firstOrNull { it.id == tabId }
+        ?.let { tab -> !tab.isIncognito && !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id) } == true
 
     fun canToggleDomainMute(tabId: String): Boolean {
         val tab = tabs.firstOrNull { it.id == tabId } ?: return false
@@ -1638,28 +1646,15 @@ class BrowserController(
         if (normalizedOrigin != origin) return false
         val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
         permissionRepository.setDecision(site, permission, decision, tab.isIncognito)
-        val reload = activePermissions.has(tabId, site, permission)
+        val reloadAfterSync = if (decision == SitePermissionDecision.Allow) emptySet()
+        else revokeSitePermissionAccess(tab, site, permission)
         if (permission == SitePermission.Notifications) {
-            browserEngineSessions[tabId]?.setNotificationPermission(normalizedOrigin, decision) {
-                if (reload) browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-            }
+            syncNotificationPermission(tabId, normalizedOrigin, decision, reloadAfterSync)
         }
         permissionRevision++
-        if (reload) {
-            cancelPendingPermissionAccess(tabId)
-            removeActivePermissionsForTab(tabId)
-            clearExternalNavigationAuthorization(tabId)
-            if (permission != SitePermission.Notifications) {
-                browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-            }
-        } else if (
-            pendingPermissionAccess?.let { access ->
-                access.site == site && permission in access.requested
-            } == true
-        ) {
-            cancelPendingPermissionAccess(tabId)
+        if (pendingPermissionAccess?.let { it.site == site && permission in it.requested } == true) {
+            cancelPendingPermissionAccess()
         }
-
         return true
     }
 
@@ -1669,20 +1664,46 @@ class BrowserController(
         if (normalizedOrigin != origin) return false
         val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
         permissionRepository.resetSite(site, tab.isIncognito)
-        val reload = activePermissions.hasSite(tabId, site)
-        browserEngineSessions[tabId]?.setNotificationPermission(
-            normalizedOrigin,
-            SitePermissionDecision.Ask,
-        ) {
-            if (reload) browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-        }
+        val reloadAfterSync = revokeSitePermissionAccess(tab, site, permission = null)
+        syncNotificationPermission(tabId, normalizedOrigin, SitePermissionDecision.Ask, reloadAfterSync)
         permissionRevision++
         if (pendingPermissionAccess?.site == site) cancelPendingPermissionAccess(tabId)
-        if (reload) {
-            removeActivePermissionsForTab(tabId)
-            clearExternalNavigationAuthorization(tabId)
-        }
         return true
+    }
+
+    /** Ends access [site] holds in every tab like [tab]; returns tabs to reload after notification sync. */
+    private fun revokeSitePermissionAccess(
+        tab: BrowserTab,
+        site: PermissionSiteKey,
+        permission: SitePermission?,
+    ): Set<String> {
+        val plan = activePermissions.revocationPlan(site, permission) { id ->
+            tabs.any { other -> other.id == id && other.isIncognito == tab.isIncognito }
+        }
+        plan.tabs.forEach { id ->
+            cancelPendingPermissionAccess(id)
+            removeActivePermissionsForTab(id)
+            clearExternalNavigationAuthorization(id)
+        }
+        plan.reloadNow.forEach(::reloadAfterPermissionChange)
+        return plan.reloadAfterNotificationSync
+    }
+
+    private fun syncNotificationPermission(
+        tabId: String,
+        origin: String,
+        decision: SitePermissionDecision,
+        reloadAfterSync: Set<String>,
+    ) {
+        val session = browserEngineSessions[tabId]
+            ?: return reloadAfterSync.forEach(::reloadAfterPermissionChange)
+        session.setNotificationPermission(origin, decision) {
+            reloadAfterSync.forEach(::reloadAfterPermissionChange)
+        }
+    }
+
+    private fun reloadAfterPermissionChange(tabId: String) {
+        browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
     }
 
     fun respondToPermissionPrompt(promptId: Long, choice: PermissionPromptChoice) {
@@ -4917,6 +4938,8 @@ class BrowserController(
         }
         val tabId = selectedTabId
         val existingSession = browserEngineSessions[tabId]
+        // WebView loads a typed address without asking the guard: the old warning goes here.
+        dangerousSites.dismiss(tabId)
         updateTab(tabId) {
             it.copy(
                 url = target,
@@ -4936,6 +4959,24 @@ class BrowserController(
         } else {
             loadGeckoWithPrivacy(tabId, existingSession, target)
         }
+    }
+
+    /** «Back to safety» on the warning: the page the engine still shows, or no tab without one. */
+    fun backToSafety(tabId: String) {
+        val page = when (val next = dangerousSites.backToSafety(tabId)) {
+            BackToSafety.CloseTab -> return closeTab(tabId)
+            is BackToSafety.ShowPage -> next.url
+            null -> return
+        }
+        if (tabs.firstOrNull { tab -> tab.id == tabId }?.url == page) return
+        // A typed address took the tab before the engine was asked; the engine never left [page].
+        pageUrls[tabId] = page
+        pendingLocalSyncNavigationUrls.remove(tabId)
+        updateProtectionRequestContext(tabId, page)
+        updateTab(tabId) { tab ->
+            tab.copy(url = page, isLoading = false, progress = 100, error = null, failureKind = null)
+        }
+        persist()
     }
 
     fun openUrl(
@@ -6694,6 +6735,16 @@ class BrowserController(
                     val cancellation = session.startContextDownload(
                         request = GeckoContextDownloadRequest(safeUrl, referrer = request.referrer),
                         listener = object : GeckoDownloadTransferListener {
+                            override fun onMetadata(
+                                metadata: GeckoDownloadTransferMetadata,
+                                decision: GeckoDownloadMetadataDecision,
+                            ) {
+                                // The link only guessed the name and type; the response tells the truth.
+                                val final = BrowserDownloadRequest(metadata.sourceUrl, metadata.fileName, metadata.mimeType)
+                                val save = { if (isSourceCurrent()) decision.proceed() else decision.abort() }
+                                if (!downloadSafety.holdFinal(request, final, save, decision::abort)) decision.proceed()
+                            }
+
                             override fun onStarted(start: GeckoDownloadTransferStart) {
                                 report(DownloadActionResult.Enqueued(start.id.toLong(), start.fileName))
                             }
@@ -6869,7 +6920,7 @@ class BrowserController(
     }
 
     fun openDefaultBrowserSettings() {
-        if (!DefaultBrowserRole.openSettings(activity)) {
+        if (!DefaultBrowserRole.request(activity)) {
             Toast.makeText(
                 activity,
                 activity.getString(R.string.toast_default_browser_selection_unavailable),
@@ -8612,6 +8663,7 @@ class BrowserController(
         browserEngineSessions[selectedTabId]?.execute(BrowserEngineCommands.forward())
     }
     fun reload() {
+        if (selectedTab.url == BLANK_URL) return // A new tab has no page; reloading would only start a session.
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
         updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
@@ -9146,11 +9198,16 @@ class BrowserController(
         privacySignalSettings = settings
         store.savePrivacySignalSettings(settings)
         browserEngineSessionFactory.setGlobalPrivacyControl(settings.globalPrivacyControlEnabled)
+        // A later change or a navigation supersedes the reload a pending callback would do.
+        val revision = privacySignalRevision
         browserEngineSessions.forEach { (tabId, session) ->
             val policy = geckoPrivacyPolicyFor(tabId) ?: return@forEach
+            val navigationGeneration = navigationGenerations[tabId]
             session.updatePrivacyPolicy(policy) {
                 if (
+                    revision == privacySignalRevision &&
                     browserEngineSessions[tabId] === session &&
+                    navigationGenerations[tabId] == navigationGeneration &&
                     BrowserUriPolicy.normalizeHttpUrl(pageUrls[tabId]) != null
                 ) {
                     session.execute(BrowserEngineCommands.reload())
@@ -9170,7 +9227,7 @@ class BrowserController(
                     cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
-                if (geckoLinkPeekBindings[view] === binding) {
+                if (revision == privacySignalRevision && geckoLinkPeekBindings[view] === binding) {
                     binding.session.execute(BrowserEngineCommands.reload())
                 }
             }
@@ -9191,6 +9248,7 @@ class BrowserController(
                 ) {
                     if (
                         externalLinkPreviewRuntime === previewRuntime &&
+                        revision == privacySignalRevision &&
                         externalLinkPreviewState?.sessionId == previewRuntime.sessionId
                     ) {
                         previewRuntime.geckoBinding.session.execute(BrowserEngineCommands.reload())
@@ -9224,13 +9282,30 @@ class BrowserController(
 
     fun updateBrowserEngineKind(kind: AndroidBrowserEngineKind) {
         if (kind == browserEngineKind) return
+        // The restart kills this process, which owns streamed downloads.
+        if (DownloadRuntimeRegistry.activeTransferIds().isNotEmpty()) {
+            Toast.makeText(
+                activity,
+                R.string.settings_browser_engine_change_blocked_by_downloads,
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        // Tabs must be on disk before the engine flips and the process is killed.
+        persist()
+        val tabsSaved = store.saveTabsImmediately(persistableTabs(tabs), selectedTabId)
+        if (!tabsSaved || !store.flush()) {
+            Toast.makeText(
+                activity,
+                R.string.settings_browser_engine_change_save_failed,
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
         if (!store.saveAndroidBrowserEngineKind(kind)) return
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
             GeckoWebPushCoordinator.onBrowserEngineChanged(activity.applicationContext, kind)
         }
-        persist()
-        store.saveTabsImmediately(persistableTabs(tabs), selectedTabId)
-        store.flush()
         onBrowserEngineChangeRequested(kind)
     }
 
@@ -9259,11 +9334,16 @@ class BrowserController(
     }
 
     private fun applyAnimationPolicyToActiveSessions() {
+        // A later toggle or a navigation supersedes the reload a pending callback would do.
+        val revision = animationPolicyRevision
         browserEngineSessions.forEach { (tabId, session) ->
             val policy = geckoPrivacyPolicyFor(tabId) ?: return@forEach
+            val navigationGeneration = navigationGenerations[tabId]
             session.updatePrivacyPolicy(policy) {
                 if (
+                    revision == animationPolicyRevision &&
                     browserEngineSessions[tabId] === session &&
+                    navigationGenerations[tabId] == navigationGeneration &&
                     BrowserUriPolicy.normalizeHttpUrl(pageUrls[tabId]) != null
                 ) {
                     session.execute(BrowserEngineCommands.reload())
@@ -9283,7 +9363,7 @@ class BrowserController(
                     cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
-                if (geckoLinkPeekBindings[view] === binding) {
+                if (revision == animationPolicyRevision && geckoLinkPeekBindings[view] === binding) {
                     binding.session.execute(BrowserEngineCommands.reload())
                 }
             }
@@ -9304,6 +9384,7 @@ class BrowserController(
             ) {
                 if (
                     externalLinkPreviewRuntime === previewRuntime &&
+                    revision == animationPolicyRevision &&
                     externalLinkPreviewState?.sessionId == previewRuntime.sessionId
                 ) {
                     previewRuntime.geckoBinding.session.execute(BrowserEngineCommands.reload())
@@ -10622,7 +10703,10 @@ class BrowserController(
         if (handlePendingPopunderOpenerNavigation(tabId, session, request.url)) {
             return GeckoNavigationRequestDecision.Deny
         }
-        if (safeHttpUrl != null && dangerousSites.intercept(tabId, safeHttpUrl)) {
+        if (
+            safeHttpUrl != null &&
+            dangerousSites.intercept(tabId, safeHttpUrl, session.historyUrlAtOffset(0))
+        ) {
             return GeckoNavigationRequestDecision.Deny
         }
         val publisherUrl = if (
@@ -10816,8 +10900,12 @@ class BrowserController(
         }
         val request = BrowserEngineDownloadRules.request(response.metadata, referrerFor(tabId))
         if (request == null) {
-            runCatching(requestDownloadNotificationPermission)
-            startBuiltInDownloadResponse(response)
+            // Blob and data files stay in the engine (never an external manager) but get the file check.
+            val local = BrowserEngineDownloadRules.localDownload(response.metadata)
+            val start = { runCatching(requestDownloadNotificationPermission); startBuiltInDownloadResponse(response) }
+            val save = { if (isSourceCurrent()) start() else response.close() }
+            val sourceHost = DownloadSafetyGate.hostOf(sourceUrl)
+            if (!downloadSafety.hold(local.fileName, sourceHost, local.findings, save, response::close)) start()
             return
         }
         routeDownload(
@@ -10952,6 +11040,7 @@ class BrowserController(
             grant = { allowed -> request.response.complete(request.permission in allowed) },
             deny = { request.response.complete(false) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun onGeckoMediaPermissionRequest(
@@ -10968,6 +11057,7 @@ class BrowserController(
             grant = request.response::complete,
             deny = { request.response.complete(emptySet()) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun beginGeckoPermissionAccess(
@@ -11983,6 +12073,7 @@ class BrowserController(
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
+        findInPage.onNavigation(session, nextNavigationGeneration, sameDocument = true)
         updateProtectionRequestContext(tabId, pageUrls[tabId])
         fun isCurrentNavigation(): Boolean = !destroyed &&
             browserEngineSessions[tabId] === session &&
@@ -12031,6 +12122,7 @@ class BrowserController(
         ) return
         when (event.type) {
             BrowserEngineEventType.NavigationStarted -> {
+                historyVisits.remove(event.tabId)
                 invalidateExternalAppPromptForNavigation(event.tabId)
                 addressBar.cancelAutoDockProbe(event.tabId)
                 val navigatingSession = browserEngineSessions[event.tabId] ?: return
@@ -12046,6 +12138,8 @@ class BrowserController(
                 }
                 externalAppNavigationRecoveries.remove(event.tabId)
                 val previousUrl = previousTab?.url
+                val resetsPrivacyXRay =
+                    PrivacyRetention.resetsOnNavigation(pageUrls[event.tabId] ?: previousUrl, event.address)
                 event.address?.let { address ->
                     if (previousUrl != null && FaviconRules.changedSite(previousUrl, address)) {
                         invalidateFavicon(event.tabId)
@@ -12083,6 +12177,7 @@ class BrowserController(
                 if (contentActions.sourceTabId == event.tabId) contentActions.dismiss()
                 resetBrowserChromeScroll(event.tabId)
                 navigationGenerations[event.tabId] = nextNavigationGeneration
+                findInPage.onNavigation(navigatingSession, nextNavigationGeneration, sameDocument = false)
                 invalidateMedia3OwnerFor(
                     event.tabId,
                     replaceForNavigation = replaceActiveMediaOwner,
@@ -12091,6 +12186,7 @@ class BrowserController(
                 event.address?.let { address -> pageUrls[event.tabId] = address }
                 refreshDomainMuteForTab(event.tabId)
                 updateProtectionRequestContext(event.tabId, event.address)
+                if (resetsPrivacyXRay) resetPrivacyXRay(event.tabId)
                 val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
                     if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
                 } else {
@@ -12250,6 +12346,7 @@ class BrowserController(
                 val changedTitle = event.title?.takeIf(String::isNotBlank)
                 if (effectiveChangedUrl != null && changedTitle != null) {
                     refineGeckoCandyTrailTitle(event.tabId, effectiveChangedUrl, changedTitle)
+                    retitleHistoryVisit(event.tabId, effectiveChangedUrl, changedTitle)
                 }
                 if (currentTab?.isLoading == true && event.isLoading == false) {
                     clearRemoteSyncNavigationTracking(event.tabId)
@@ -12261,6 +12358,9 @@ class BrowserController(
                         markLocalSyncNavigationPending(event.tabId, normalizedChangedUrl)
                         scheduleSyncedTabNavigation(event.tabId)
                         addressBar.scheduleAutoDockProbe(event.tabId, normalizedChangedUrl)
+                        if (BrowsingLibraryRules.recordsSameDocumentVisit(previousUrl, normalizedChangedUrl)) {
+                            recordHistory(event.tabId, normalizedChangedUrl, event.title ?: currentTab.title)
+                        }
                     }
                     persist()
                 }
@@ -13393,6 +13493,11 @@ class BrowserController(
                 cancel = { releaseResponse?.invoke() },
             )
         ) return null
+        // The sheet may have waited while the page moved on: nothing from it goes to any manager.
+        if (safetyChecked && isSourceCurrent?.invoke() == false) {
+            releaseResponse?.invoke()
+            return null
+        }
         val startBuiltInDownload = {
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
@@ -13603,27 +13708,33 @@ class BrowserController(
         val tab = tabs.firstOrNull { it.id == tabId }?.takeUnless(BrowserTab::isIncognito)
             ?: return false
         if (isSyncedProfile(tab.profileId)) return false
-        val result = historyRepository.record(
-            HistoryEntry(
-                url = url,
-                title = title,
-                lastVisitedAt = System.currentTimeMillis(),
-                profileId = tab.profileId,
-                visitId = UUID.randomUUID().toString(),
-            ),
+        val entry = HistoryEntry(
+            url = url,
+            title = title,
+            lastVisitedAt = System.currentTimeMillis(),
+            profileId = tab.profileId,
+            visitId = UUID.randomUUID().toString(),
         )
-        val updated = result.history
-        if (updated == history) return result.recorded
-        history.clear()
-        history += updated
+        val result = historyRepository.record(entry)
+        if (result.recorded) historyVisits[tabId] = entry
+        showHistory(result.history)
         return result.recorded
     }
 
-    internal fun reloadHistory() {
-        val restored = historyRepository.snapshot()
-        if (restored == history) return
+    /** A page title that arrives after the visit was saved renames that visit (audit H03). */
+    private fun retitleHistoryVisit(tabId: String, url: String, title: String) {
+        val visit = historyVisits[tabId] ?: return
+        val lateTitle = BrowsingLibraryRules.lateHistoryTitle(visit, url, title) ?: return
+        historyVisits[tabId] = visit.copy(title = lateTitle)
+        showHistory(historyRepository.updateTitle(visit.visitId, lateTitle).history)
+    }
+
+    internal fun reloadHistory() = showHistory(historyRepository.snapshot())
+
+    private fun showHistory(updated: List<HistoryEntry>) {
+        if (updated == history) return
         history.clear()
-        history += restored
+        history += updated
     }
 
     internal fun reloadFavorites() {
@@ -14784,6 +14895,7 @@ class BrowserController(
         firefoxExtensionOptionsTabs.remove(tabId)
         clearExternalNavigationAuthorization(tabId)
         pageUrls.remove(tabId)
+        historyVisits.remove(tabId)
         extensionTabMuteOverrides.remove(tabId)
         addressBar.forgetTab(tabId)
         browserChromeScrollStates.remove(tabId)
@@ -14942,22 +15054,25 @@ class BrowserController(
         tabId: String,
         clearTemporarySiteOverrides: Boolean = true,
     ) {
-        synchronized(privacyEventLock) {
-            protectionRequestContexts.remove(tabId)
-            pendingBlockedCounts.remove(tabId)
-            privacyXRayRepository.remove(tabId)
-        }
-        privacySnapshots.remove(tabId)
-        reportedAllowedDecisions.remove(tabId)
+        synchronized(privacyEventLock) { protectionRequestContexts.remove(tabId) }
+        resetPrivacyXRay(tabId)
         pendingConsentCssUrls.remove(tabId)
         temporarySiteExceptions.remove(tabId)
         if (clearTemporarySiteOverrides) temporarySitePrivacyOverrides.remove(tabId)
         federatedLoginOfferKeys.remove(tabId)
         captchaCompatibilityOfferKeys.remove(tabId)
-        updateTab(tabId) { tab ->
-            if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0)
-        }
         siteExceptionRevision++
+    }
+
+    /** The tab's X-Ray record and blocked count start over: the tab closed or left the site. */
+    private fun resetPrivacyXRay(tabId: String) {
+        synchronized(privacyEventLock) {
+            pendingBlockedCounts.remove(tabId)
+            privacyXRayRepository.remove(tabId)
+            privacySnapshots.remove(tabId)
+            reportedAllowedDecisions.remove(tabId)
+        }
+        updateTab(tabId) { tab -> if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0) }
     }
 
     private fun detectFederatedLoginRequest(

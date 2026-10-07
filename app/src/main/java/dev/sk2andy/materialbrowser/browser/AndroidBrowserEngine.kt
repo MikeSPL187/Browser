@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
+
 enum class AndroidBrowserEngineKind(val stableId: String) {
     GeckoView("gecko"),
     SystemWebView("system_webview"),
@@ -22,6 +24,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val httpsOnly: Boolean,
     /** Deleting one site's cookies, storage and caches; System WebView cannot do it per site. */
     val siteDataDeletion: Boolean,
+    /** Site permissions the adapter routes to Vola's prompt and decisions; the radar hides others. */
+    val sitePermissions: Set<SitePermission>,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -32,6 +36,13 @@ internal data class AndroidBrowserEngineCapabilities(
             dnsOverHttps = true,
             httpsOnly = true,
             siteDataDeletion = true,
+            sitePermissions = setOf(
+                SitePermission.Camera,
+                SitePermission.Microphone,
+                SitePermission.Location,
+                SitePermission.Notifications,
+                SitePermission.ProtectedMedia,
+            ),
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -42,6 +53,11 @@ internal data class AndroidBrowserEngineCapabilities(
             dnsOverHttps = false,
             httpsOnly = false,
             siteDataDeletion = false,
+            sitePermissions = setOf(
+                SitePermission.Camera,
+                SitePermission.Microphone,
+                SitePermission.Location,
+            ),
         )
     }
 }

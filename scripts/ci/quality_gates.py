@@ -5,7 +5,7 @@ Usage:
   quality_gates.py size [--update]   the largest legacy files must not grow (tech-plan.md, section 1)
   quality_gates.py tokens --base REV  lines added since REV use ui/theme tokens, not literals
   quality_gates.py engine             GeckoView and WebView types stay inside the engine adapters
-  quality_gates.py brand              no "Candy" in strings the user can see
+  quality_gates.py brand              no "Candy" in strings the user can see (resources and Kotlin)
   quality_gates.py semantics          clearAndSetSemantics is never toggled and never hides a later testTag
 
 Findings are printed as GitHub Actions annotations; any finding exits with status 1.
@@ -175,21 +175,14 @@ OPENERS = {"(": ")", "{": "}", "[": "]"}
 CLOSERS = {value: key for key, value in OPENERS.items()}
 
 
-def kotlin_code(text):
-    """[text] with comments, strings and char literals blanked out; offsets and newlines kept."""
-    out = list(text)
+def kotlin_spans(text):
+    """(kind, start, end) for every comment, "string" literal (raw too) and 'char' literal."""
     i, n = 0, len(text)
-
-    def blank(start, end):
-        for k in range(start, min(end, n)):
-            if out[k] != "\n":
-                out[k] = " "
-
     while i < n:
         if text.startswith("//", i):
             end = text.find("\n", i)
             end = n if end < 0 else end
-            blank(i, end)
+            yield "comment", i, end
             i = end
         elif text.startswith("/*", i):
             depth, j = 1, i + 2
@@ -200,21 +193,30 @@ def kotlin_code(text):
                     depth, j = depth - 1, j + 2
                 else:
                     j += 1
-            blank(i, j)
+            yield "comment", i, j
             i = j
         elif text.startswith('"""', i):
             end = text.find('"""', i + 3)
             end = n if end < 0 else end + 3
-            blank(i, end)
+            yield "raw", i, end
             i = end
         elif text[i] in "\"'":
             quote, j = text[i], i + 1
             while j < n and text[j] != quote and text[j] != "\n":
                 j += 2 if text[j] == "\\" else 1
-            blank(i, j + 1)
+            yield "string" if quote == '"' else "char", i, min(j + 1, n)
             i = j + 1
         else:
             i += 1
+
+
+def kotlin_code(text):
+    """[text] with comments, strings and char literals blanked out; offsets and newlines kept."""
+    out = list(text)
+    for _, start, end in kotlin_spans(text):
+        for k in range(start, end):
+            if out[k] != "\n":
+                out[k] = " "
     return "".join(out)
 
 
@@ -449,23 +451,115 @@ def semantics_findings(files):
 
 # brand
 
+BRAND_IN_TEXT = re.compile(r"\bCandy\b")
+BRAND_IN_KOTLIN = re.compile(r"candy://|\bCandy\b")
+BRAND_EXEMPT_COMMENT = "brand-exempt:"
+# Calls whose strings never reach the screen: logs, exceptions and preconditions, test tags.
+NON_UI_CALL = re.compile(
+    r"^(Log\.\w+|require|requireNotNull|check|checkNotNull|error|fail|(?:[\w.]*\.)?(\w*Exception|\w*Error|testTag))$"
+)
+# One word joined by dots or dashes ("Candy.Blur.Bind", an animation label): a name, not a sentence.
+IDENTIFIER_LITERAL = re.compile(r"^[\w$]+(?:[.\-][\w$]+)+$")
+LOG_TAG = re.compile(r"\bTAG\s*=")
+EMBEDDED_STRING = re.compile(r"""(['"`])((?:\\.|(?!\1).)*)\1""")
+
+
+def embedded_string_at(line, column):
+    """The quoted string of a script line (kept in a Kotlin raw string) around [column], or None."""
+    for match in EMBEDDED_STRING.finditer(line):
+        if match.start(2) <= column < match.end(2):
+            return match.group(2)
+    return None
+
+
+def call_name(code, opening):
+    """The function an opening bracket belongs to: `Log.e` for `Log.e(`, `require` for `require(x) {`."""
+    i = opening - 1
+    while i >= 0 and code[i].isspace():
+        i -= 1
+    if code[opening] == "{" and i >= 0 and code[i] == ")":
+        return call_name(code, matching_open(code, i))
+    end = i + 1
+    while i >= 0 and (code[i].isalnum() or code[i] in "_."):
+        i -= 1
+    return code[i + 1:end]
+
+
+def inside_non_ui_call(code, position):
+    opening = enclosing_open(code, position)
+    while opening >= 0:
+        if NON_UI_CALL.match(call_name(code, opening)):
+            return True
+        opening = enclosing_open(code, opening)
+    return False
+
+
+def brand_findings_in_kotlin(text, path):
+    """String literals that show the Candy brand: `candy://` or the word "Candy". Not shown to the user
+    are comments, log tags and messages, exceptions, test tags, dotted or dashed names, lines marked
+    `// brand-exempt: reason` (on the line or the one above), and in a script kept in a raw string
+    everything but its own string literals."""
+    code = kotlin_code(text)
+    lines = text.splitlines()
+    line_starts = [0]
+    for line in lines:
+        line_starts.append(line_starts[-1] + len(line) + 1)
+
+    def exempt(number):
+        return any(BRAND_EXEMPT_COMMENT in line for line in lines[max(number - 2, 0):number])
+
+    findings = []
+    for kind, start, end in kotlin_spans(text):
+        if kind not in ("string", "raw"):
+            continue
+        quote = 3 if kind == "raw" else 1
+        literal = text[start + quote:end - quote]
+        if not BRAND_IN_KOTLIN.search(literal):
+            continue
+        first = text.count("\n", 0, start) + 1
+        if exempt(first) or LOG_TAG.search(lines[first - 1]):
+            continue
+        if "candy://" not in literal and IDENTIFIER_LITERAL.match(literal):
+            continue
+        if inside_non_ui_call(code, start):
+            continue
+        reported = set()
+        for match in BRAND_IN_KOTLIN.finditer(literal):
+            offset = start + quote + match.start()
+            number = text.count("\n", 0, offset) + 1
+            line = lines[number - 1]
+            if kind == "raw":
+                embedded = embedded_string_at(line, offset - line_starts[number - 1])
+                if embedded is None or IDENTIFIER_LITERAL.match(embedded):
+                    continue  # script code, a script comment or a name, not text
+            if number in reported or exempt(number):
+                continue
+            reported.add(number)
+            shown = line.strip() if kind == "raw" else literal
+            findings.append((path, number, f"\"{shown}\" shows the Candy brand; Vola's UI never does "
+                             f"(CLAUDE.md rule 7), or add `// {BRAND_EXEMPT_COMMENT} reason`"))
+    return findings
+
+
 def brand_findings_in_xml(xml_text):
     root = ElementTree.fromstring(xml_text)
     findings = []
     for node in root.iter():
         if node.tag in ("string", "item"):
             text = "".join(node.itertext())
-            if re.search(r"\bCandy\b", text):
+            if BRAND_IN_TEXT.search(text):
                 findings.append(node.get("name") or text.strip())
     return findings
 
 
-def check_brand():
+def check_brand(files=None):
     findings = []
     for path in sorted(ROOT.glob(STRINGS_GLOB)):
         for name in brand_findings_in_xml(path.read_text(encoding="utf-8")):
             findings.append((relative(path), 0, f"\"{name}\" shows the Candy brand; Vola's UI never does "
                                                 "(CLAUDE.md rule 7)"))
+    for path in source_files() if files is None else files:
+        findings += brand_findings_in_kotlin(Path(path).read_text(encoding="utf-8"), relative(path))
     return findings
 
 

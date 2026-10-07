@@ -12,7 +12,7 @@ object VolaProject {
     const val DOCS_URL = "$REPOSITORY_URL/blob/main/docs"
 
     /** Vola is a fork of Candy Browser (MPL-2.0); credited on the About screen. */
-    const val UPSTREAM_NAME = "Candy Browser"
+    const val UPSTREAM_NAME = "Candy Browser" // brand-exempt: MPL-2.0 credit to the upstream project
     const val UPSTREAM_AUTHOR = "André Naumann"
     const val UPSTREAM_URL = "https://github.com/sk2andy/candy-browser"
 }

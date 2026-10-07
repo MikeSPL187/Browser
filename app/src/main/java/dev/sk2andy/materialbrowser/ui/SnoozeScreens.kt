@@ -2,6 +2,8 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -106,11 +109,16 @@ internal fun SnoozeTabDialog(
         System.currentTimeMillis() + 24 * 60 * 60 * 1_000L
     }
     val enabled = !tab.isIncognito
+    val context = LocalContext.current
     val applyPreset: (SnoozePreset) -> Unit = { preset ->
         // The zone is read on each tap: the person may have travelled while the dialog was open.
         val nowMillis = System.currentTimeMillis()
         val zoneId = ZoneId.systemDefault()
-        if (onSnooze(SnoozeTimeRules.wakeAtMillis(preset, nowMillis, zoneId))) onDismiss()
+        if (onSnooze(SnoozeTimeRules.wakeAtMillis(preset, nowMillis, zoneId))) {
+            onDismiss()
+        } else {
+            showSnoozeFailed(context)
+        }
     }
 
     if (!customEditorVisible) {
@@ -197,9 +205,16 @@ internal fun SnoozeTabDialog(
             if (onSnooze(wakeAtMillis)) {
                 customEditorVisible = false
                 onDismiss()
+            } else {
+                showSnoozeFailed(context)
             }
         },
     )
+}
+
+/** The browser refused late, for instance when saving failed: say so instead of doing nothing. */
+private fun showSnoozeFailed(context: Context) {
+    Toast.makeText(context, R.string.snooze_failed, Toast.LENGTH_SHORT).show()
 }
 
 @Composable
