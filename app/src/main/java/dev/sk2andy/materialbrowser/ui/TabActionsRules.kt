@@ -45,6 +45,8 @@ internal data class TabActionsFacts(
     val canOpenSideBySide: Boolean = false,
     /** A locked private tab: nothing may reveal or act on its page until it is unlocked. */
     val isLocked: Boolean = false,
+    /** The browser can store the tab as snoozed: false for a synced or session-only tab. */
+    val canSnooze: Boolean = true,
 )
 
 internal object TabActionsRules {
@@ -64,8 +66,8 @@ internal object TabActionsRules {
 
     fun canMove(facts: TabActionsFacts): Boolean = !facts.isLocked && facts.otherWorkspaceCount > 0
 
-    /** Snoozed tabs are stored, so a private tab is never snoozed. */
-    fun canSnooze(facts: TabActionsFacts): Boolean = !facts.isIncognito
+    /** Snoozed tabs are stored, so a private, synced or session-only tab is never snoozed. */
+    fun canSnooze(facts: TabActionsFacts): Boolean = facts.canSnooze && !facts.isIncognito
 
     fun canClose(facts: TabActionsFacts): Boolean = facts.canDelete
 

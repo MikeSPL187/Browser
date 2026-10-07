@@ -182,6 +182,24 @@ internal object LibraryRules {
         }
     }
 
+    /**
+     * Where «Move earlier» ([step] -1) or «Move later» ([step] +1) puts [entryId]: the index in
+     * [siblings] of its neighbour in [group], the folder cards or the sites it is shown among.
+     * Null at the group's edge. Folders and sites interleave in [siblings], so a neighbour there may
+     * be of the other kind, and moving past it would save an order the screen never shows.
+     */
+    fun reorderTarget(
+        siblings: List<FavoriteLibraryEntry>,
+        group: List<FavoriteLibraryEntry>,
+        entryId: String,
+        step: Int,
+    ): Int? {
+        val position = group.indexOfFirst { it.id == entryId }
+        if (position < 0) return null
+        val neighbour = group.getOrNull(position + step) ?: return null
+        return siblings.indexOfFirst { it.id == neighbour.id }.takeIf { it >= 0 }
+    }
+
     /** Sites in a folder and its subfolders, for «12 sites» under the folder's name. */
     fun siteCount(library: FavoriteLibrary, folderId: String): Int {
         val visited = hashSetOf<String>()

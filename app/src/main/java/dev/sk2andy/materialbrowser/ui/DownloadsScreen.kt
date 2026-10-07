@@ -56,7 +56,6 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaLibrary
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -74,7 +73,9 @@ internal fun DownloadsScreen(
 ) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
-    val zoneId = remember { ZoneId.systemDefault() }
+    // The day moves on while the screen stays open; filters, sections and labels follow it.
+    val today = rememberLocalToday()
+    val zoneId = remember(today) { ZoneId.systemDefault() }
     val dateFormatter = remember(locale) {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     }
@@ -88,7 +89,7 @@ internal fun DownloadsScreen(
     var menuOpen by remember { mutableStateOf(false) }
     val timeFilter = DownloadTimeFilter.valueOf(timeFilterName)
     val kindFilter = DownloadKindFilter.valueOf(kindFilterName)
-    val visibleDownloads = remember(downloads, query, timeFilter, kindFilter, zoneId) {
+    val visibleDownloads = remember(downloads, query, timeFilter, kindFilter, zoneId, today) {
         LibraryFileRules.filter(
             DownloadHistoryRules.visibleEntries(
                 entries = downloads,
@@ -107,7 +108,6 @@ internal fun DownloadsScreen(
     val clearableDownloads = remember(downloads) {
         downloads.filter { entry -> entry.status.isTerminal }
     }
-    val today = remember { LocalDate.now(zoneId) }
 
     BackHandler(onBack = onBack)
     Scaffold(

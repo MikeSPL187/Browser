@@ -1,9 +1,12 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -13,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -64,5 +68,58 @@ class FindInPageBarInstrumentedTest {
             assertEquals(1, nextCount.intValue)
             assertTrue(closed)
         }
+    }
+
+    @Test
+    fun privateTabAsksKeyboardNotToLearnFromQuery() {
+        val imeOptions = imeOptionsOfFocusedQuery(isPrivate = true)
+
+        assertTrue(imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0)
+    }
+
+    @Test
+    fun regularTabLetsKeyboardLearn() {
+        val imeOptions = imeOptionsOfFocusedQuery(isPrivate = false)
+
+        assertFalse(imeOptions and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0)
+    }
+
+    /** The imeOptions the keyboard gets once the auto-focused query field starts input. */
+    private fun imeOptionsOfFocusedQuery(isPrivate: Boolean): Int {
+        lateinit var view: View
+        composeRule.setContent {
+            view = LocalView.current
+            MaterialBrowserTheme {
+                FindInPageBar(
+                    query = "",
+                    onQueryChange = {},
+                    matchText = "",
+                    isCounting = false,
+                    canNavigate = false,
+                    focusNonce = 1,
+                    autoFocus = true,
+                    placeholder = "Find",
+                    queryContentDescription = "Query",
+                    countingContentDescription = "Counting",
+                    previousMatchContentDescription = "Previous",
+                    nextMatchContentDescription = "Next",
+                    closeContentDescription = "Close",
+                    onPreviousMatch = {},
+                    onNextMatch = {},
+                    onClose = {},
+                    isPrivate = isPrivate,
+                )
+            }
+        }
+        var editorInfo = EditorInfo()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            var started = false
+            composeRule.runOnUiThread {
+                editorInfo = EditorInfo()
+                started = view.onCreateInputConnection(editorInfo) != null
+            }
+            started
+        }
+        return editorInfo.imeOptions
     }
 }

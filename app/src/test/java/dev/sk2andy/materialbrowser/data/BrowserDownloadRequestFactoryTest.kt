@@ -63,6 +63,19 @@ class BrowserDownloadRequestFactoryTest {
     }
 
     @Test
+    fun `the final type of an APK is an Android package whatever the server sent`() {
+        val androidPackage = "application/vnd.android.package-archive"
+
+        assertEquals(androidPackage, SafeDownloadValues.finalMimeType("App.apk", "application/octet-stream"))
+        assertEquals(androidPackage, SafeDownloadValues.finalMimeType("invoice.pdf.APK", "application/pdf"))
+        assertEquals("application/pdf", SafeDownloadValues.finalMimeType("invoice.pdf", "application/pdf"))
+        assertEquals(
+            "application/octet-stream",
+            SafeDownloadValues.finalMimeType("app.apk.zip", "application/octet-stream"),
+        )
+    }
+
+    @Test
     fun `infers Android package MIME type from APK link`() {
         val request = BrowserDownloadRequestFactory.create(
             url = "https://example.com/releases/latest/download/App.apk",

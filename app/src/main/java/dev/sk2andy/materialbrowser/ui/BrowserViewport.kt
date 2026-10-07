@@ -608,11 +608,7 @@ internal fun BrowserViewport(
         controller.dangerousSites.blocked[selectedTab.id]?.let { site ->
             DangerousSitePage(
                 site = site,
-                onBackToSafety = {
-                    controller.dangerousSites.dismiss(selectedTab.id)
-                    // A tab opened straight onto the fake site has nowhere safe to go back to.
-                    if (!selectedTab.canGoBack) controller.closeTab(selectedTab.id)
-                },
+                onBackToSafety = { controller.backToSafety(selectedTab.id) },
                 onOpenAnyway = {
                     controller.dangerousSites.allow(selectedTab.id)?.let(controller::submitAddress)
                 },
