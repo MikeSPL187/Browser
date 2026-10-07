@@ -31,8 +31,16 @@ internal object VolaGestureLessonTokens {
     val hintGap = VolaSpacing.x1
     val footerGap = 6.dp
 
-    /** The card the gestures are practised on. */
-    val practiceHeight = 390.dp
+    /**
+     * The card the gestures are practised on takes the room the screen has left, up to its
+     * largest size; at its smallest the pretend page still fits with its address bar.
+     */
+    val practiceMaxHeight = 390.dp
+    val practiceMinHeight = 240.dp
+
+    /** Below this height a screen on its side puts the copy beside the card, not above it. */
+    val stackedMinHeight = 560.dp
+    val besideGap = 24.dp
     val practiceShape = RoundedCornerShape(32.dp)
     val practiceElevation = VolaSpacing.x2
     const val PRACTICE_ALPHA = 0.94f

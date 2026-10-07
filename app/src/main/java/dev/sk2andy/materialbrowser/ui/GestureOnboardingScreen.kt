@@ -26,12 +26,15 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,6 +82,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
@@ -97,6 +101,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
@@ -135,6 +140,13 @@ internal object GestureOnboardingRules {
             -> dragY <= -threshold && dragY.absoluteValue > dragX.absoluteValue
         }
     }
+
+    /** The practice card takes the height left over, between its smallest and largest size. */
+    fun practiceHeight(available: Int, min: Int, max: Int): Int = available.coerceIn(min, max)
+
+    /** A phone on its side has no room for the copy above the card: they go side by side. */
+    fun placesPracticeBeside(width: Float, height: Float, stackedMinHeight: Float): Boolean =
+        width > height && height < stackedMinHeight
 }
 
 @Composable
@@ -297,122 +309,205 @@ internal fun GestureOnboardingScreen(
             GestureOnboardingCelebration(onContinue = onCompleted)
         } else {
             FirstRunBackground {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(lessonScrollState)
-                    .padding(VolaGestureLessonTokens.screenPadding),
-                verticalArrangement = Arrangement.Center,
-            ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.onboarding_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(
-                            R.string.onboarding_progress,
-                            currentStepIndex + 1,
-                            steps.size,
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val copy = @Composable {
+                        LessonCopy(step = step, stepNumber = currentStepIndex + 1, stepCount = steps.size, onSkip = onCompleted)
+                    }
+                    val practice = @Composable {
+                        PracticeCard(step = step, dragX = dragX, dragY = dragY, gestureModifier = gestureModifier)
+                    }
+                    val hints = @Composable { LessonHints(step = step) }
+                    val beside = GestureOnboardingRules.placesPracticeBeside(
+                        width = maxWidth.value,
+                        height = maxHeight.value,
+                        stackedMinHeight = VolaGestureLessonTokens.stackedMinHeight.value,
                     )
-                    TextButton(
-                        onClick = onCompleted,
-                        modifier = Modifier.testTag("gesture_onboarding_skip"),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.onboarding_skip),
-                            color = gestureAccent(step),
-                            fontWeight = FontWeight.Bold,
+                    if (beside) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(VolaGestureLessonTokens.screenPadding),
+                            horizontalArrangement = Arrangement.spacedBy(VolaGestureLessonTokens.besideGap),
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(lessonScrollState),
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                copy()
+                                hints()
+                            }
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) { practice() }
+                        }
+                    } else {
+                        StackedLesson(
+                            copy = copy,
+                            practice = practice,
+                            hints = hints,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(lessonScrollState)
+                                .padding(VolaGestureLessonTokens.screenPadding),
                         )
                     }
                 }
             }
-            Spacer(Modifier.height(VolaGestureLessonTokens.progressGap))
-            LinearProgressIndicator(
-                progress = { (currentStepIndex + 1f) / steps.size },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(VolaGestureLessonTokens.progressHeight)
-                    .clip(CircleShape),
-                color = gestureAccent(step),
-                trackColor = gestureAccent(step).copy(alpha = VolaGestureLessonTokens.PROGRESS_TRACK_ALPHA),
+        }
+    }
+}
+
+/**
+ * The lesson in a column: the copy, the practice card, the hints. The card takes the height the
+ * screen has left, between its smallest and largest size, so the pretend address bar stays in
+ * view; only when even the smallest card does not fit does the column scroll.
+ */
+@Composable
+private fun StackedLesson(
+    copy: @Composable () -> Unit,
+    practice: @Composable () -> Unit,
+    hints: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Layout(contents = listOf(copy, practice, hints), modifier = modifier) { (copyParts, practiceParts, hintParts), constraints ->
+        val free = constraints.copy(minWidth = 0, minHeight = 0, maxHeight = Constraints.Infinity)
+        val top = copyParts.map { it.measure(free) }
+        val bottom = hintParts.map { it.measure(free) }
+        val used = top.sumOf { it.height } + bottom.sumOf { it.height }
+        val cardHeight = GestureOnboardingRules.practiceHeight(
+            available = constraints.minHeight - used,
+            min = VolaGestureLessonTokens.practiceMinHeight.roundToPx(),
+            max = VolaGestureLessonTokens.practiceMaxHeight.roundToPx(),
+        )
+        val card = practiceParts.map { it.measure(free.copy(minHeight = cardHeight, maxHeight = cardHeight)) }
+        val content = used + cardHeight
+        val height = maxOf(constraints.minHeight, content)
+        layout(constraints.maxWidth, height) {
+            var y = (height - content) / 2
+            (top + card + bottom).forEach { placeable ->
+                placeable.placeRelative(0, y)
+                y += placeable.height
+            }
+        }
+    }
+}
+
+/** The title row with the step count and Skip, the progress line, and what to do in this step. */
+@Composable
+private fun LessonCopy(step: GestureOnboardingStep, stepNumber: Int, stepCount: Int, onSkip: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
             )
-            Spacer(Modifier.height(VolaGestureLessonTokens.headerGap))
-            AnimatedContent(
-                targetState = step,
-                transitionSpec = {
-                    fadeIn(tween(VolaGestureLessonTokens.COPY_FADE_IN_MILLIS)) togetherWith
-                        fadeOut(tween(VolaGestureLessonTokens.COPY_FADE_OUT_MILLIS))
-                },
-                label = "gesture-onboarding-copy",
-            ) { currentStep ->
-                Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(
+                        R.string.onboarding_progress,
+                        stepNumber,
+                        stepCount,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(
+                    onClick = onSkip,
+                    modifier = Modifier.testTag("gesture_onboarding_skip"),
+                ) {
                     Text(
-                        text = stepTitle(currentStep),
-                        style = MaterialTheme.typography.headlineMedium,
+                        text = stringResource(R.string.onboarding_skip),
+                        color = gestureAccent(step),
                         fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(VolaGestureLessonTokens.copyGap))
-                    Text(
-                        text = stepDescription(currentStep),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-            Spacer(Modifier.height(VolaGestureLessonTokens.practiceGap))
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(VolaGestureLessonTokens.practiceHeight),
-                shape = VolaGestureLessonTokens.practiceShape,
-                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = VolaGestureLessonTokens.PRACTICE_ALPHA),
-                tonalElevation = VolaGestureLessonTokens.practiceElevation,
-                shadowElevation = VolaGestureLessonTokens.practiceElevation,
-            ) {
-                GesturePracticeArea(
-                    step = step,
-                    dragX = dragX,
-                    dragY = dragY,
-                    modifier = gestureModifier,
+        }
+        Spacer(Modifier.height(VolaGestureLessonTokens.progressGap))
+        LinearProgressIndicator(
+            progress = { stepNumber.toFloat() / stepCount },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(VolaGestureLessonTokens.progressHeight)
+                .clip(CircleShape),
+            color = gestureAccent(step),
+            trackColor = gestureAccent(step).copy(alpha = VolaGestureLessonTokens.PROGRESS_TRACK_ALPHA),
+        )
+        Spacer(Modifier.height(VolaGestureLessonTokens.headerGap))
+        AnimatedContent(
+            targetState = step,
+            transitionSpec = {
+                fadeIn(tween(VolaGestureLessonTokens.COPY_FADE_IN_MILLIS)) togetherWith
+                    fadeOut(tween(VolaGestureLessonTokens.COPY_FADE_OUT_MILLIS))
+            },
+            label = "gesture-onboarding-copy",
+        ) { currentStep ->
+            Column {
+                Text(
+                    text = stepTitle(currentStep),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(VolaGestureLessonTokens.copyGap))
+                Text(
+                    text = stepDescription(currentStep),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.height(VolaGestureLessonTokens.badgeGap))
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                GestureDirectionBadge(step = step)
-            }
-            Spacer(Modifier.height(VolaGestureLessonTokens.hintGap))
-            Text(
-                text = stringResource(R.string.onboarding_follow_pointer),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelLarge,
-                color = gestureAccent(step),
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(VolaGestureLessonTokens.footerGap))
-            Text(
-                text = stringResource(R.string.onboarding_required_hint),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            }
-            }
         }
+        Spacer(Modifier.height(VolaGestureLessonTokens.practiceGap))
+    }
+}
+
+/** The card the gesture is practised on; [gestureModifier] makes its target listen. */
+@Composable
+private fun PracticeCard(step: GestureOnboardingStep, dragX: Float, dragY: Float, gestureModifier: Modifier) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        shape = VolaGestureLessonTokens.practiceShape,
+        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = VolaGestureLessonTokens.PRACTICE_ALPHA),
+        tonalElevation = VolaGestureLessonTokens.practiceElevation,
+        shadowElevation = VolaGestureLessonTokens.practiceElevation,
+    ) {
+        GesturePracticeArea(
+            step = step,
+            dragX = dragX,
+            dragY = dragY,
+            modifier = gestureModifier,
+        )
+    }
+}
+
+/** Under the card: which way to swipe, and the way out. */
+@Composable
+private fun LessonHints(step: GestureOnboardingStep) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(VolaGestureLessonTokens.badgeGap))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            GestureDirectionBadge(step = step)
+        }
+        Spacer(Modifier.height(VolaGestureLessonTokens.hintGap))
+        Text(
+            text = stringResource(R.string.onboarding_follow_pointer),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelLarge,
+            color = gestureAccent(step),
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(VolaGestureLessonTokens.footerGap))
+        Text(
+            text = stringResource(R.string.onboarding_required_hint),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -1083,7 +1178,7 @@ private fun FakeAddressBar(modifier: Modifier = Modifier) {
 @Composable
 private fun MiniTabCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(VolaGestureLessonTokens.tabCardHeight),
+        modifier = modifier.heightIn(max = VolaGestureLessonTokens.tabCardHeight).fillMaxHeight(),
         shape = VolaGestureLessonTokens.tabCardShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = VolaGestureLessonTokens.tabCardElevation),
@@ -1188,6 +1283,15 @@ private fun GestureLessonWelcomePreview() {
 @VolaPreviews
 @Composable
 private fun GestureLessonStepPreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        GestureOnboardingScreen(onCompleted = {}, showWelcome = false)
+    }
+}
+
+/** A phone on its side: the copy beside the card, nothing below the fold. */
+@Preview(name = "Landscape phone", group = "Vola", widthDp = 780, heightDp = 360, showBackground = true)
+@Composable
+private fun GestureLessonLandscapePreview() {
     MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
         GestureOnboardingScreen(onCompleted = {}, showWelcome = false)
     }
