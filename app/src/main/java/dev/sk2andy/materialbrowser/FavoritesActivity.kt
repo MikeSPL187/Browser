@@ -49,7 +49,8 @@ class FavoritesActivity : ComponentActivity() {
     // Retain replaced images until the composition is disposed; rendered frames may still use them.
     private val retiredIcons = mutableListOf<Bitmap>()
     private var favoriteRevision = 0L
-    private var undoLibrary: FavoriteLibrary? = null
+    // Observed by the screen: once a later change makes it stale, its «Undo» goes away.
+    private var undoLibrary by mutableStateOf<FavoriteLibrary?>(null)
     private var isFullImmersiveModeEnabled = false
     // A destroyed screen runs nothing more; its queued taps go with it.
     private val favoriteOperations = FavoriteOperationQueue(isClosed = { !lifecycleScope.isActive })
@@ -143,6 +144,7 @@ class FavoritesActivity : ComponentActivity() {
                     folderIcons = folderIcons,
                     onDeleteFavorite = ::deleteFavorite,
                     onUndoDelete = ::undoDelete,
+                    canUndo = undoLibrary != null,
                     onOpenFavorite = ::openFavorite,
                     onBack = ::finishWhenIdle,
                     onRenameEntry = { entry, title -> mutateLibrary { BrowsingFavoritesRules.rename(it, entry.id, title) } },

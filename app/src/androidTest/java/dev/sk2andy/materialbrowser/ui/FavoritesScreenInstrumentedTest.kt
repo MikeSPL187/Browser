@@ -93,6 +93,39 @@ class FavoritesScreenInstrumentedTest {
     }
 
     @Test
+    fun staleUndoLeavesTheScreen() {
+        val alpha = favorite("https://alpha.example/", "Alpha")
+        val beta = favorite("https://beta.example/", "Beta")
+        var canUndo by mutableStateOf(true)
+        composeRule.setContent {
+            var favorites by remember { mutableStateOf(listOf(alpha, beta)) }
+            MaterialBrowserTheme {
+                FavoritesScreen(
+                    favorites = favorites,
+                    onDeleteFavorite = { target, onComplete ->
+                        val before = favorites
+                        favorites = BrowsingFavoritesRules.remove(before, target)
+                        onComplete(FavoriteMutation(before, favorites, added = false, revision = 1))
+                    },
+                    onUndoDelete = {},
+                    onOpenFavorite = {},
+                    onBack = {},
+                    canUndo = canUndo,
+                )
+            }
+        }
+        val undo = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.action_undo)
+
+        composeRule.onNodeWithTag("favorites_actions:${beta.id}").performClick()
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.delete(beta.url)).performClick()
+        composeRule.onNodeWithText(undo).assertIsDisplayed()
+        // A later rename or move replaces the snapshot the undo would restore.
+        canUndo = false
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(undo).assertDoesNotExist()
+    }
+
+    @Test
     fun recursiveNavigationKeepsEmptyFoldersEmptyAndSearchFindsNestedFavorite() {
         val child = FavoriteFolder("child", "Child", parentFolderId = "parent")
         val parent = FavoriteFolder("parent", "Parent")

@@ -44,6 +44,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -110,6 +111,8 @@ internal fun FavoritesScreen(
     sort: FavoritesSort = FavoritesSort.Manual,
     onSortChange: (FavoritesSort) -> Unit = {},
     onImportBookmarks: (() -> Unit)? = null,
+    /** False once the last deletion can no longer be undone, for instance after a later edit. */
+    canUndo: Boolean = true,
 ) {
     val source = library ?: FavoriteLibrary(favorites)
     val locale = LocalConfiguration.current.locales[0]
@@ -135,6 +138,13 @@ internal fun FavoritesScreen(
     var iconTarget by remember { mutableStateOf<FavoriteFolder?>(null) }
     val removedMessage = stringResource(R.string.favorite_removed_confirmation)
     val undoLabel = stringResource(R.string.action_undo)
+    // An «Undo» whose snapshot a later change replaced would do nothing; take it off screen.
+    LaunchedEffect(canUndo) {
+        if (!canUndo) {
+            snackbarJob?.cancel()
+            snackbarHostState.currentSnackbarData?.dismiss()
+        }
+    }
     val navigateBack = {
         if (currentFolder != null) {
             currentFolderId = currentFolder.parentFolderId
