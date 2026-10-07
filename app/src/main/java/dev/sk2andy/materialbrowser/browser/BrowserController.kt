@@ -8613,6 +8613,7 @@ class BrowserController(
         browserEngineSessions[selectedTabId]?.execute(BrowserEngineCommands.forward())
     }
     fun reload() {
+        if (selectedTab.url == BLANK_URL) return // A new tab has no page; reloading would only start a session.
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
         updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
