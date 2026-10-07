@@ -158,6 +158,23 @@ class BrowserProfileRulesTest {
     }
 
     @Test
+    fun `name cap never splits a surrogate pair`() {
+        val rocket = "\uD83D\uDE80"
+        val capped = WorkspaceNameRules.cap("x".repeat(WorkspaceNameRules.MAX_LENGTH - 1) + rocket)
+
+        assertEquals("x".repeat(WorkspaceNameRules.MAX_LENGTH - 1), capped)
+        assertFalse(capped.last().isHighSurrogate())
+        assertEquals(
+            "x".repeat(WorkspaceNameRules.MAX_LENGTH - 2) + rocket,
+            WorkspaceNameRules.cap("x".repeat(WorkspaceNameRules.MAX_LENGTH - 2) + rocket + "y"),
+        )
+        assertEquals(
+            "x".repeat(WorkspaceNameRules.MAX_LENGTH - 1),
+            WorkspaceNameRules.normalize("x".repeat(WorkspaceNameRules.MAX_LENGTH - 1) + rocket),
+        )
+    }
+
+    @Test
     fun `rename and recolor change only local workspaces`() {
         val local = BrowserProfile(id = "home", emoji = "🏠")
         val synced = local.copy(syncedDeviceId = "device")
