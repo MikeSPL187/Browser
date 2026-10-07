@@ -569,7 +569,7 @@ private fun GestureOnboardingWelcome(
             onClick = onStart,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(VolaFirstRunTokens.buttonHeight)
+                .heightIn(min = VolaFirstRunTokens.buttonHeight)
                 .testTag("gesture_onboarding_start"),
         ) {
             Text(
@@ -766,7 +766,7 @@ private fun GestureOnboardingCelebration(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag("gesture_onboarding_finish")
                     .graphicsLayer {
                         val exit = exitProgress.value

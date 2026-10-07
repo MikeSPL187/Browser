@@ -122,7 +122,7 @@ internal fun FirstRunWelcomeScreen(
                 onClick = onStart,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Start),
             ) {
                 Text(stringResource(R.string.first_run_start))
@@ -131,7 +131,7 @@ internal fun FirstRunWelcomeScreen(
                 onClick = onImport,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Import),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
@@ -260,7 +260,7 @@ internal fun FirstRunSetupScreen(
                 onClick = onNext,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Next),
             ) {
                 Text(stringResource(R.string.first_run_next))
