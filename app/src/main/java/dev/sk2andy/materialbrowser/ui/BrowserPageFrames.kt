@@ -67,14 +67,18 @@ internal fun rememberBrowserPageFrames(
     val splitState = controller.splitView.state
     LaunchedEffect(controller.activeTabs, controller.selectedTabId) {
         controller.splitView.reconcile(
-            activeTabIds = controller.activeTabs.map(BrowserTab::id),
-            selectedTabId = controller.selectedTabId,
+            activeTabs = controller.activeTabs,
+            selectedTab = controller.selectedTab,
         )
     }
     val companion = splitState?.let { state ->
         controller.activeTabs.firstOrNull { tab -> tab.id == state.companionTabId }
     }
-    val splitShown = companion != null && chromeVisible && !controller.isActiveProfileLocked
+    // A locked private companion stays out of sight, as the selected private page does.
+    val splitShown = companion != null &&
+        chromeVisible &&
+        !controller.isActiveProfileLocked &&
+        !controller.privateTabsLock.hides(companion)
     // Split View is always framed: two cards on the aura, whatever the shell's style.
     val contentFramed = splitShown || BrowserContentFrameRules.isFramed(
         chromeStyle = controller.appearanceSettings.chromeStyle,

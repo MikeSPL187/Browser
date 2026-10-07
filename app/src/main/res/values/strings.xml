@@ -8,7 +8,10 @@
     <string name="widget_open_profile_tab">Open a new tab in workspace %1$s</string>
     <string name="onboarding_welcome_title">Meet Vola</string>
     <string name="onboarding_welcome_body">A gesture-first browser that keeps tabs, journeys and privacy controls close at hand.</string>
-    <string name="onboarding_welcome_card_title">Three gestures. One fluid workflow.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d gesture. One fluid workflow.</item>
+        <item quantity="other">%1$d gestures. One fluid workflow.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Learn the gestures</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_completion_title">You’re ready to go!</string>
@@ -16,9 +19,9 @@
     <string name="onboarding_completion_cta">Start browsing</string>
     <string name="onboarding_follow_pointer">Follow the touch point with your finger</string>
     <string name="onboarding_title">Learn Vola gestures</string>
-    <string name="onboarding_progress">%1$d of %2$d</string>
+    <string name="onboarding_progress">Gesture %1$d of %2$d</string>
     <string name="onboarding_try_here">Try the gesture in the card</string>
-    <string name="onboarding_required_hint">All three gestures are required to continue.</string>
+    <string name="onboarding_required_hint">Do the gesture, or tap Skip.</string>
     <string name="onboarding_accessibility_complete_action">Mark this gesture as completed</string>
     <string name="onboarding_switch_tabs_title">Switch tabs</string>
     <string name="onboarding_switch_tabs_description">Swipe the address bar left or right.</string>
@@ -70,6 +73,11 @@
     <string name="split_view_pane_top">Top tab: %1$s</string>
     <string name="split_view_pane_bottom">Bottom tab: %1$s</string>
     <string name="split_view_no_companion">Open one more page to see two side by side</string>
+    <string name="split_view_status_failed_title">Page didn’t load</string>
+    <string name="split_view_status_failed_body">Make this tab active to see what went wrong and try again.</string>
+    <string name="split_view_status_blocked_title">Site blocked</string>
+    <string name="split_view_status_blocked_body">A dangerous site was stopped in this tab. Make it active to see why.</string>
+    <string name="split_view_make_active">Make active</string>
     <string name="cd_new_tab">New tab</string>
     <plurals name="cd_open_tab_overview_count">
         <item quantity="one">Open tab overview, %1$d tab</item>
@@ -108,6 +116,10 @@
     <string name="action_pin_tab">Pin tab</string>
     <string name="action_remove_pin">Remove pin</string>
     <string name="action_close_all_tabs">Close all tabs</string>
+    <plurals name="close_all_tabs_title">
+        <item quantity="one">Close %1$d tab?</item>
+        <item quantity="other">Close %1$d tabs?</item>
+    </plurals>
     <string name="close_all_tabs_pinned_supporting_text">Pinned tabs stay open</string>
     <string name="candy_trail_title">Trail</string>
     <string name="action_open_candy_trail">Open Trail</string>
@@ -151,6 +163,8 @@
     <string name="workspace_sheet_delete">Delete workspace</string>
     <string name="workspace_delete_confirm_title">Delete «%1$s»?</string>
     <string name="workspace_delete_confirm_message">Its tabs stay in another workspace. Its history and, with separate storage, its cookies and sign-ins are deleted.</string>
+    <string name="workspace_delete_blocked_by_sync">This workspace is linked to Sync and can’t be deleted here</string>
+    <string name="workspace_delete_failed">Couldn’t delete the workspace — try again</string>
     <string name="workspace_name_label">Name</string>
     <string name="workspace_accent_label">Color</string>
     <string name="workspace_accent_violet">Violet</string>
@@ -304,6 +318,11 @@
     <string name="action_download_update">Download update</string>
     <string name="action_view_release_notes">Release notes</string>
     <string name="action_later">Later</string>
+    <string name="crash_report_title">Vola closed with an error</string>
+    <string name="crash_report_message">A report is saved on this device: the error and the device model, without pages or web addresses. It leaves the device only if you copy or share it.</string>
+    <string name="crash_report_copy">Copy report</string>
+    <string name="crash_report_copied">Report copied</string>
+    <string name="crash_report_close">Close</string>
 
     <!-- Address commands -->
     <string name="command_clear_cache_reload_name">Clear cache &amp; reload</string>
@@ -381,31 +400,31 @@
     <string name="essentials_empty_body">Essentials open in one tap. Each workspace keeps its own.</string>
     <string name="essentials_empty_action">Add a site</string>
     <plurals name="protection_card_title">
-        <item quantity="one">%1$s tracker this week</item>
-        <item quantity="other">%1$s trackers this week</item>
+        <item quantity="one">%1$s ad or tracker blocked this week</item>
+        <item quantity="other">%1$s ads and trackers blocked this week</item>
     </plurals>
     <plurals name="protection_card_sites">
         <item quantity="one">Blocked on %1$d site</item>
         <item quantity="other">Blocked on %1$d sites</item>
     </plurals>
-    <string name="protection_card_empty_title">Tracker protection is on</string>
-    <string name="protection_card_empty_body">Trackers blocked this week will be counted here</string>
+    <string name="protection_card_empty_title">Ad and tracker blocking is on</string>
+    <string name="protection_card_empty_body">Ads and trackers blocked this week will be counted here</string>
     <string name="protection_card_open">Open the weekly report</string>
     <string name="protection_report_title">Protection this week</string>
     <plurals name="protection_report_total">
-        <item quantity="one">%1$s tracker blocked</item>
-        <item quantity="other">%1$s trackers blocked</item>
+        <item quantity="one">%1$s ad or tracker blocked</item>
+        <item quantity="other">%1$s ads and trackers blocked</item>
     </plurals>
-    <string name="protection_report_chart">Blocked trackers by day: %1$s</string>
-    <string name="protection_report_top_sites">Tried to track you most</string>
-    <string name="protection_report_empty">No trackers blocked yet this week.</string>
+    <string name="protection_report_chart">Ads and trackers blocked by day: %1$s</string>
+    <string name="protection_report_top_sites">Sites with the most blocks</string>
+    <string name="protection_report_empty">No ads or trackers blocked yet this week.</string>
     <string name="protection_report_device_only">Counted on this phone only. Private tabs are not counted.</string>
     <string name="protection_report_clear">Clear report</string>
     <string name="protection_report_hide">Hide card</string>
     <string name="protection_report_clear_title">Clear the report?</string>
     <string name="protection_report_clear_body">This week\'s counts are deleted from this phone. Protection keeps working.</string>
     <string name="settings_protection_card_title">Weekly report on the new tab</string>
-    <string name="settings_protection_card_subtitle">Trackers blocked in the last 7 days</string>
+    <string name="settings_protection_card_subtitle">Ads and trackers blocked in the last 7 days</string>
     <string name="private_tab_title">Private tab</string>
     <string name="private_tab_body">Vola keeps no history of what you do here.</string>
     <string name="private_tab_fact_history">No history</string>
@@ -489,6 +508,12 @@
     <string name="glance_not_in_history">Not added to history until you open it</string>
     <string name="glance_private_note">Private preview: nothing from it is saved</string>
     <string name="glance_pull_to_open">Pull up to open in a tab</string>
+    <string name="glance_failed_title">Couldn’t load the preview</string>
+    <string name="glance_failed_message">%1$s didn’t open. Check the connection and try again.</string>
+    <string name="glance_crashed_title">The preview stopped</string>
+    <string name="glance_crashed_message">The page stopped working. Try again to load it afresh.</string>
+    <string name="glance_https_only_title">No secure connection</string>
+    <string name="glance_https_only_message">%1$s doesn’t open over HTTPS. Open it in a tab to decide what to do.</string>
     <string name="action_open_in_new_tab">Open in New Tab</string>
     <string name="action_open_in_new_tab_and_switch">Open in New Tab and Switch</string>
     <string name="action_open_link_in_private_tab">Open link in private tab</string>
@@ -718,6 +743,8 @@
     <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as uBlock Origin. Uses more memory.</string>
     <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
+    <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
+    <string name="settings_browser_engine_change_save_failed">Couldn\'t save your tabs, so the engine wasn\'t changed. Try again.</string>
     <string name="settings_external_app_links_title">Open links in apps</string>
     <string name="settings_external_app_links_summary">Controls whether Vola opens supported links in other apps immediately or asks first.</string>
     <string name="settings_external_app_links_automatic">Automatically</string>
@@ -733,14 +760,14 @@
     <string name="settings_startup_animation_title">Startup animation</string>
     <string name="settings_startup_animation_subtitle">The Vola mark melts into the browser on launch.</string>
     <string name="first_run_welcome_title">A browser that stays out of the way</string>
-    <string name="first_run_welcome_body">Pages edge to edge, spaces for work and for rest, and tracking protection with no setup.</string>
+    <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
     <string name="first_run_setup_title">Make it yours</string>
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
     <string name="first_run_theme_auto">Auto</string>
-    <string name="first_run_trackers">Strict tracker protection</string>
+    <string name="first_run_trackers">Block ads and trackers</string>
     <string name="first_run_trackers_on">On</string>
     <string name="first_run_trackers_off">Off</string>
     <string name="first_run_https">HTTPS only</string>
@@ -1260,10 +1287,10 @@
     <string name="permission_radar_sites">Sites in this workspace</string>
     <string name="permission_radar_no_site">Open a secure website to manage its permissions.</string>
     <string name="permission_radar_reset_site">Reset site</string>
-    <string name="permission_radar_active">Active now</string>
+    <string name="permission_radar_active">Access granted</string>
     <string name="permission_radar_pending">Request waiting</string>
     <string name="permission_radar_session_allowed">Allowed for this session</string>
-    <string name="permission_radar_activity_cd">Site permission active or waiting</string>
+    <string name="permission_radar_activity_cd">Site has access or a request is waiting</string>
     <string name="permission_prompt_question_location">Show this site where you are?</string>
     <string name="permission_prompt_question_camera">Let this site use your camera?</string>
     <string name="permission_prompt_question_microphone">Let this site use your microphone?</string>
@@ -1306,18 +1333,20 @@
     <string name="snoozed_tabs_title">Snoozed Tabs</string>
     <string name="snoozed_tabs_settings_summary">Manage tabs that will return later</string>
     <string name="snoozed_tabs_empty_title">No snoozed tabs</string>
-    <string name="snoozed_tabs_empty_body">Long-press a tab in the switcher or use its ⋮ menu to snooze it.</string>
+    <string name="snoozed_tabs_empty_body">To snooze a tab, open the tab overview, tap ⋮ and pick «Snooze tab».</string>
     <string name="snoozed_until">Returns %1$s</string>
     <string name="snoozed_archived_at">Archived %1$s</string>
     <string name="snoozed_tabs_subtitle">Tabs come back to their own workspace at the time you chose</string>
-    <string name="snoozed_tabs_hint">To snooze a tab, touch and hold it in the tab overview, then pick «Snooze».</string>
+    <string name="snoozed_tabs_hint">Snooze the current tab from the tab overview: tap ⋮, then «Snooze tab».</string>
     <string name="snoozed_today_at">Today, %1$s</string>
     <string name="snoozed_tomorrow_at">Tomorrow, %1$s</string>
     <string name="snoozed_tab_more">More actions for %1$s</string>
     <string name="action_reschedule">Change time</string>
     <string name="action_open_now">Open now</string>
     <string name="snooze_invalid_time">Choose a future date and time</string>
+    <string name="snoozed_tab_update_failed">Couldn\'t update this tab — it may have opened already</string>
     <string name="snooze_confirmation">Tab snoozed</string>
+    <string name="snooze_failed">Couldn’t snooze this tab</string>
     <string name="snooze_notification_channel_name">Snoozed tabs</string>
     <string name="snooze_notification_channel_description">Alerts when snoozed tabs are ready</string>
     <string name="snooze_notification_title">Snoozed tab is ready</string>
@@ -1546,7 +1575,7 @@
     <string name="developer_options_experiments_section">Experimental features</string>
     <string name="developer_options_performance_section">Performance</string>
     <string name="developer_options_scroll_dispatch_mode">Browser chrome scroll updates</string>
-    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 60 Hz and steps down to 30 or 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
+    <string name="developer_options_scroll_dispatch_mode_summary">Optimized starts at 30 Hz and steps down to 15 Hz only during sustained main-thread pressure. Fixed modes never adapt.</string>
     <string name="developer_options_scroll_dispatch_optimized">Optimized</string>
     <string name="developer_options_scroll_dispatch_120_hz">Fixed 120 Hz</string>
     <string name="developer_options_scroll_dispatch_60_hz">Fixed 60 Hz</string>
@@ -1659,6 +1688,7 @@
     <string name="site_info_delete_site_data">Delete</string>
     <string name="site_info_delete_site_data_description">Delete data of %1$s</string>
     <string name="site_data_deleted">Data of %1$s deleted</string>
+    <string name="site_data_delete_failed">Couldn\'t delete data for %1$s</string>
     <string name="site_info_certificate">Certificate</string>
     <string name="site_info_certificate_summary">%1$s · until %2$s</string>
     <string name="site_info_certificate_expired">%1$s · expired %2$s</string>
@@ -1740,6 +1770,9 @@
     <string name="passwords_sheet_update_title">Update password for %1$s?</string>
     <string name="passwords_sheet_save_body">It stays encrypted on this phone. Confirm with your fingerprint or screen lock.</string>
     <string name="passwords_sheet_update">Update</string>
+    <string name="passwords_offer_title">Sign in faster with Vola</string>
+    <string name="passwords_offer_body">Vola fills passwords on %1$s and other sites once you move them here from Google or another password manager. They stay encrypted on this phone.</string>
+    <string name="passwords_offer_set_up">Move passwords</string>
     <string name="passwords_sheet_not_now">Not now</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">With the System WebView engine, sites are filled by Android’s autofill service, not from this list.</string>

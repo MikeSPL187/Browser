@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineCapabilities
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPrompt
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPromptChoice
@@ -53,7 +54,7 @@ class PermissionRadarSheetInstrumentedTest {
                         ),
                     ),
                     workspaceName = "Personal",
-                    websiteNotificationsSupported = true,
+                    supportedPermissions = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions,
                     onOriginSelected = {},
                     onDecisionChanged = { permission, decision ->
                         changed.set(permission to decision)
@@ -142,7 +143,7 @@ class PermissionRadarSheetInstrumentedTest {
                         ),
                     ),
                     workspaceName = "Personal",
-                    websiteNotificationsSupported = true,
+                    supportedPermissions = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions,
                     onOriginSelected = {},
                     onDecisionChanged = { _, _ -> error("Private notifications cannot be changed") },
                     onResetSite = {},
@@ -175,7 +176,7 @@ class PermissionRadarSheetInstrumentedTest {
                         ),
                     ),
                     workspaceName = "Personal",
-                    websiteNotificationsSupported = false,
+                    supportedPermissions = AndroidBrowserEngineCapabilities.SystemWebView.sitePermissions,
                     onOriginSelected = {},
                     onDecisionChanged = { _, _ -> error("System WebView cannot grant notifications") },
                     onResetSite = {},

@@ -13,6 +13,7 @@ import android.os.Message
 import android.os.Bundle
 import android.print.PrintAttributes
 import android.print.PrintManager
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -57,6 +58,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineFilePromptRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineFilePromptResponse
 import dev.sk2andy.materialbrowser.browser.BrowserEngineMediaPermissionRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineNavigationTarget
+import dev.sk2andy.materialbrowser.browser.BrowserEnginePermissionCancellation
 import dev.sk2andy.materialbrowser.browser.BrowserEnginePermissionSetResponse
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
@@ -133,7 +135,9 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRuntime
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
+import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
+import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
@@ -141,6 +145,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.io.ByteArrayInputStream
+import java.util.IdentityHashMap
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -168,7 +173,7 @@ internal class SystemWebViewBrowserEngineFactory(
     private var forceDarkWebsites = false
     private val sessions = mutableSetOf<SystemWebViewBrowserEngineSession>()
     private val knownCookieManagers = mutableListOf<CookieManager>()
-    private val incognitoProfileName = INCOGNITO_PROFILE_NAME
+    private var privateGeneration = WebViewProfileRules.newPrivateGeneration()
     private val toppingRuntime = UserScriptRuntime(
         valueStore = UserScriptValueStore(context.applicationContext),
         onMenuCommandsChanged = { tabId, commands ->
@@ -256,11 +261,14 @@ internal class SystemWebViewBrowserEngineFactory(
 
     override fun clearPrivateData() {
         if (!supportsMultiProfile()) return
-        deleteProfileIfPresent(incognitoProfileName)
+        deletePrivateProfiles()
+        // Whether or not WebView let the old profiles go, the next private session starts in a new
+        // generation; a profile left behind is retried on the next clear and on the next start.
+        privateGeneration = WebViewProfileRules.newPrivateGeneration()
     }
 
     override fun shutdown() {
-        if (supportsMultiProfile()) deleteProfileIfPresent(incognitoProfileName)
+        if (supportsMultiProfile()) deletePrivateProfiles()
         knownCookieManagers.clear()
     }
 
@@ -281,7 +289,7 @@ internal class SystemWebViewBrowserEngineFactory(
         isolationEnabled = isolationEnabled,
         isPrivate = isPrivate,
         allowsToppings = contentKind != BrowserEngineContentKind.LinkPeek,
-        incognitoProfileName = incognitoProfileName,
+        incognitoProfileName = WebViewProfileRules.privateProfileName(privateGeneration, profileId),
         multiProfileSupported = supportsMultiProfile(),
         contentBlocker = contentBlocker,
         toppingRuntime = toppingRuntime,
@@ -315,32 +323,31 @@ internal class SystemWebViewBrowserEngineFactory(
     }
 
     companion object {
-        private const val LEGACY_INCOGNITO_PROFILE_PREFIX = "candy_incognito_v1_"
-        private const val INCOGNITO_PROFILE_PREFIX = "candy_incognito_v2_"
-        private const val INCOGNITO_PROFILE_NAME = "${INCOGNITO_PROFILE_PREFIX}runtime"
+        private const val LOG_TAG = "VolaWebViewProfiles"
 
         fun supportsMultiProfile(): Boolean =
             WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)
 
         private fun cleanupStalePrivateProfiles() {
             if (!supportsMultiProfile()) return
+            deletePrivateProfiles()
+        }
+
+        private fun deletePrivateProfiles() {
             runCatching {
                 ProfileStore.getInstance().allProfileNames
-                    .filter { profileName ->
-                        profileName.startsWith(INCOGNITO_PROFILE_PREFIX) ||
-                            profileName.startsWith(LEGACY_INCOGNITO_PROFILE_PREFIX)
-                    }
+                    .filter(WebViewProfileRules::isPrivateProfileName)
                     .forEach(::deleteProfileIfPresent)
-            }
+            }.onFailure { error -> Log.w(LOG_TAG, "Listing private WebView profiles failed", error) }
         }
 
         private fun deleteProfileIfPresent(profileName: String) {
             runCatching {
                 val profileStore = ProfileStore.getInstance()
-                if (profileName in profileStore.allProfileNames) {
-                    profileStore.deleteProfile(profileName)
-                }
-            }
+                profileName !in profileStore.allProfileNames || profileStore.deleteProfile(profileName)
+            }.onSuccess { deleted ->
+                if (!deleted) Log.w(LOG_TAG, "A private WebView profile was not deleted")
+            }.onFailure { error -> Log.w(LOG_TAG, "Deleting a private WebView profile failed", error) }
         }
     }
 
@@ -397,6 +404,10 @@ private class SystemWebViewBrowserEngineSession(
     private var androidPermissionListener: GeckoAndroidPermissionRequestListener? = null
     private var contentPermissionListener: GeckoContentPermissionRequestListener? = null
     private var mediaPermissionListener: GeckoMediaPermissionRequestListener? = null
+    // Unanswered requests, so WebView's cancel callbacks can withdraw Vola's prompt for them.
+    private val mediaPermissionCancellations =
+        IdentityHashMap<PermissionRequest, BrowserEnginePermissionCancellation>()
+    private val geolocationCancellations = mutableListOf<BrowserEnginePermissionCancellation>()
     private var authPromptListener: GeckoAuthPromptListener? = null
     private var webPromptListener: GeckoWebPromptListener? = null
     private var mediaStateListener: GeckoMediaSessionStateListener? = null
@@ -716,6 +727,13 @@ private class SystemWebViewBrowserEngineSession(
         onComplete: (GeckoFindResult?) -> Unit,
     ) {
         if (closed) return onComplete(null)
+        if (query.isBlank()) {
+            // Nothing to search for: clearMatches() reports nothing, so answer "no matches" here.
+            lastFindQuery = null
+            webView.setFindListener(null)
+            webView.clearMatches()
+            return onComplete(GeckoFindResult(activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = true))
+        }
         webView.setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
             onComplete(
                 GeckoFindResult(
@@ -725,16 +743,11 @@ private class SystemWebViewBrowserEngineSession(
                 ),
             )
         }
-        when {
-            query.isBlank() -> {
-                lastFindQuery = null
-                webView.clearMatches()
-            }
-            query != lastFindQuery -> {
-                lastFindQuery = query
-                webView.findAllAsync(query)
-            }
-            else -> webView.findNext(forward)
+        if (query != lastFindQuery) {
+            lastFindQuery = query
+            webView.findAllAsync(query)
+        } else {
+            webView.findNext(forward)
         }
     }
 
@@ -833,8 +846,15 @@ private class SystemWebViewBrowserEngineSession(
     }
 
     override fun extractPageForReader(onComplete: (String?) -> Unit) {
-        if (closed) onComplete(null)
-        else webView.evaluateJavascript(ReaderExtractionScript.javascript, onComplete)
+        if (closed) {
+            onComplete(null)
+            return
+        }
+        // evaluateJavascript returns the script's string JSON-encoded; the port hands back
+        // the raw JSON object text, the same as Gecko.
+        webView.evaluateJavascript(ReaderExtractionScript.javascript) { result ->
+            onComplete(ReaderExtractionParser.decodeJavascriptString(result))
+        }
     }
 
     override fun probeTextInputOcclusion(
@@ -1424,11 +1444,15 @@ private class SystemWebViewBrowserEngineSession(
                 }
             }
             val listener = mediaPermissionListener ?: return request.deny()
+            val cancellation = BrowserEnginePermissionCancellation()
+            mediaPermissionCancellations[request] = cancellation
             listener.onMediaPermissionRequest(
                 BrowserEngineMediaPermissionRequest(
                     origin = request.origin.toString(),
                     permissions = requested,
+                    cancellation = cancellation,
                     response = BrowserEnginePermissionSetResponse { allowed ->
+                        mediaPermissionCancellations.remove(request)
                         val resources = buildList {
                             if (SitePermission.Camera in allowed) {
                                 add(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
@@ -1444,21 +1468,36 @@ private class SystemWebViewBrowserEngineSession(
             )
         }
 
+        override fun onPermissionRequestCanceled(request: PermissionRequest) {
+            mediaPermissionCancellations.remove(request)?.cancel()
+        }
+
         override fun onGeolocationPermissionsShowPrompt(
             origin: String,
             callback: GeolocationPermissions.Callback,
         ) {
             val listener = contentPermissionListener
                 ?: return callback.invoke(origin, false, false)
+            val cancellation = BrowserEnginePermissionCancellation()
+            geolocationCancellations += cancellation
             listener.onContentPermissionRequest(
                 BrowserEngineContentPermissionRequest(
                     origin = origin,
                     permission = SitePermission.Location,
                     response = BrowserEngineBooleanResponse { allowed ->
+                        geolocationCancellations -= cancellation
                         callback.invoke(origin, allowed, false)
                     },
+                    cancellation = cancellation,
                 ),
             )
+        }
+
+        // WebView names no request here: every geolocation prompt it opened is withdrawn.
+        override fun onGeolocationPermissionsHidePrompt() {
+            val canceled = geolocationCancellations.toList()
+            geolocationCancellations.clear()
+            canceled.forEach(BrowserEnginePermissionCancellation::cancel)
         }
 
         override fun onJsAlert(
@@ -1843,13 +1882,8 @@ private class SystemWebViewBrowserEngineSession(
             mimeType = mimeType,
         )
         val fileName = downloadRequest?.fileName ?: "download"
-        val effectiveMimeType = if (
-            downloadRequest?.let(BrowserDownloadRequestFactory::isAndroidPackage) == true
-        ) {
-            "application/vnd.android.package-archive"
-        } else {
-            mimeType
-        }
+        val effectiveMimeType = downloadRequest?.mimeType
+            ?: mimeType?.let { type -> SafeDownloadValues.finalMimeType(fileName, type) }
         val request = DownloadManager.Request(safeUri)
             .setMimeType(effectiveMimeType)
             .setTitle(fileName)

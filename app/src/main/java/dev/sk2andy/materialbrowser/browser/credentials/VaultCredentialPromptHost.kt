@@ -12,6 +12,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultSess
 import dev.sk2andy.materialbrowser.browser.credentials.vault.KeystoreVaultKeyWrapper
 import dev.sk2andy.materialbrowser.browser.credentials.vault.LocalCredentialVault
 import dev.sk2andy.materialbrowser.browser.credentials.vault.VaultOpenResult
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.shared.credentials.CredentialVaultRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginHint
@@ -87,6 +88,7 @@ internal class VaultCredentialPromptHost(
     private val activity: FragmentActivity,
     private val vault: LocalCredentialVault,
     private val fallback: CredentialPromptHost?,
+    private val offerStore: VaultOfferStore = VaultOfferStore(activity),
 ) : CredentialPromptHost {
     private val windowId = System.identityHashCode(activity)
     private var pendingRequestId: Long? = null
@@ -191,6 +193,33 @@ internal class VaultCredentialPromptHost(
                 canSave -> openVault(onOpened = { done(password) }, onFailed = { done(null) })
                 else -> done(password)
             }
+        }
+    }
+
+    /**
+     * «Sign in faster with Vola» on a touched sign-in field while there is no vault: «Move
+     * passwords» opens the vault setup and then the import (#123, H2). See [VaultOfferRules].
+     */
+    override fun offerVault(prompt: CredentialVaultOfferPrompt) {
+        val origin = CredentialPromptRules.canonicalHttpsOrigin(prompt.identity.origin) ?: return
+        val offer = !closed && VaultOfferRules.shouldOffer(
+            vaultExists = vault.exists,
+            offeredBefore = offerStore.offered,
+            accepted = offerStore.accepted,
+            offeredThisRun = VaultOfferStore.offeredThisRun,
+            sheetShowing = VaultLoginPrompts.current != null,
+        )
+        if (!offer) return
+        offerStore.markOffered()
+        val request = VaultLoginRequest.Offer(
+            id = VaultLoginPrompts.nextRequestId(),
+            windowId = windowId,
+            site = VaultPromptRules.displaySite(origin),
+        )
+        show(request) { answer ->
+            if (answer != VaultLoginAnswer.SetUp) return@show
+            offerStore.markAccepted()
+            runCatching { activity.startActivity(PasswordsActivityContract.importIntent(activity)) }
         }
     }
 

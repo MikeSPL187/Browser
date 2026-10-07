@@ -16,6 +16,8 @@ object AddressSubmissionRules {
     ): AddressSubmission {
         val highlighted = suggestions.getOrNull(highlightedIndex)
         if (highlighted != null) return AddressSubmission.Select(highlighted)
+        // An emptied field is not a request to blank the tab and drop its history (#123, screen 4).
+        if (input.isBlank()) return AddressSubmission.None
         if (RecallRules.isExplicitCommand(input)) {
             val recall = suggestions.firstOrNull { it is AddressSuggestionItem.Recall }
             return recall?.let(AddressSubmission::Select) ?: AddressSubmission.None

@@ -254,6 +254,10 @@ internal object VolaAddressEditor {
     val fieldHeight = 56.dp
     val fieldRingWidth = 2.dp
 
+    /** The search glyph at the start of the segmented editor's field. */
+    val fieldSearchIconSize = 24.dp
+    val fieldSearchIconStartPadding = 8.dp
+
     /** The card of suggestions above the field. */
     val cardRadius = 26.dp
     val cardPadding = 6.dp

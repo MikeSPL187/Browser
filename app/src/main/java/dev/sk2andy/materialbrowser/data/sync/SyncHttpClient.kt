@@ -245,6 +245,7 @@ class SyncHttpClient(endpoint: String) : SyncTransport {
                     runCatching { SyncProtocolCodec.decodeRealtimeEvent(text) }
                         .onSuccess(onEvent)
                         .onFailure { error ->
+                            // brand-exempt: a close reason for the Candy Sync server, never shown
                             webSocket.close(1002, "Invalid Candy Sync event")
                             notifyClosed(error)
                         }

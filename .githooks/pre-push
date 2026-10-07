@@ -1,0 +1,4 @@
+#!/bin/bash
+# Vola: the checks CI runs first, before the push leaves (scripts/ci/preflight.sh).
+# The session start hook points core.hooksPath here; `git push --no-verify` skips it.
+exec "$(git rev-parse --show-toplevel)/scripts/ci/preflight.sh"

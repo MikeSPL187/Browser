@@ -9,9 +9,10 @@ import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 
 /**
- * The weekly protection report (ROADMAP Q5b, П7): trackers the blocker stopped, by site and day,
- * counted on the device for the new tab card and its report. [BrowserController] reports the
- * blocked trackers of regular tabs; private tabs are never recorded.
+ * The weekly protection report (ROADMAP Q5b, П7): requests the blocker stopped, by site and day,
+ * counted on the device for the new tab card and its report. The blocker does not tell ads from
+ * trackers or from the user's own block rules, so the report names them together. [BrowserController]
+ * reports the blocks of regular tabs; private tabs are never recorded.
  */
 class ProtectionReportController internal constructor(
     private val store: ProtectionReportPersistence,
@@ -36,12 +37,12 @@ class ProtectionReportController internal constructor(
         private set
 
     fun restore() {
-        days = ProtectionReportRules.prune(store.loadDays(), host.today())
+        days = store.loadDays()
         isCardVisible = store.loadCardVisible()
         refresh()
     }
 
-    /** Counts [blocked] trackers on the page at [pageUrl]; pages that are not on the web are skipped. */
+    /** Counts [blocked] requests on the page at [pageUrl]; pages that are not on the web are skipped. */
     fun record(pageUrl: String, blocked: Int) {
         val site = ProtectionReportRules.site(pageUrl) ?: return
         if (blocked <= 0) return
@@ -53,9 +54,20 @@ class ProtectionReportController internal constructor(
         }
     }
 
-    /** Recomputes the week, for example when the new tab opens on a later day. */
+    /**
+     * Recomputes the week, for example when the new tab opens on a later day. Days that left the
+     * week are dropped from the saved report too, so it never keeps more than seven days.
+     */
     fun refresh() {
-        week = ProtectionReportRules.week(days, host.today())
+        val today = host.today()
+        val kept = ProtectionReportRules.prune(days, today)
+        if (kept != days) {
+            days = kept
+            host.removeCallbacks(saveDays)
+            dirty = false
+            store.saveDays(days)
+        }
+        week = ProtectionReportRules.week(days, today)
     }
 
     fun clear() {
@@ -64,6 +76,15 @@ class ProtectionReportController internal constructor(
         dirty = false
         store.saveDays(days)
         refresh()
+    }
+
+    /**
+     * A workspace lock was turned on or off. Turning one on clears the report: the days so far do
+     * not say which workspace a site was opened in, so the locked one's sites cannot be told
+     * apart and removed alone.
+     */
+    fun onWorkspaceProtectionChanged(wasProtected: Boolean, isProtected: Boolean) {
+        if (!wasProtected && isProtected) clear()
     }
 
     fun updateCardVisible(visible: Boolean) {

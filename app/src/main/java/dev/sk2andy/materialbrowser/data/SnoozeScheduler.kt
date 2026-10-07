@@ -116,6 +116,7 @@ internal object SnoozeRestoreCoordinator {
                 tabs = result.tabs,
                 restoredTabIds = result.restoredTabIds,
                 profiles = profiles,
+                profilesEnabled = sessionStore.loadProfilesEnabled(),
             )
             if (notificationTabs.isNotEmpty()) {
                 SnoozeWakeNotifier(context).notifyRestored(notificationTabs)
@@ -127,16 +128,24 @@ internal object SnoozeRestoreCoordinator {
         }
     }
 
+    /**
+     * The restored tabs whose title and URL may appear in a wake notification: never a tab of a
+     * protected workspace (it shows on the lock screen), and with workspaces turned off only the
+     * tabs of the first one, the only workspace the person can see.
+     */
     internal fun restoredNotificationTabs(
         tabs: List<BrowserTab>,
         restoredTabIds: Set<String>,
         profiles: List<BrowserProfile>,
+        profilesEnabled: Boolean = true,
     ): List<BrowserTab> {
         val protectedProfileIds = profiles.asSequence()
             .filter { profile -> profile.protection != null }
             .mapTo(hashSetOf(), BrowserProfile::id)
+        val firstProfileId = profiles.firstOrNull()?.id
         return tabs.filter { tab ->
-            tab.id in restoredTabIds && tab.profileId !in protectedProfileIds
+            tab.id in restoredTabIds && tab.profileId !in protectedProfileIds &&
+                (profilesEnabled || tab.profileId == firstProfileId)
         }
     }
 }

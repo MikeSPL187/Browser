@@ -727,6 +727,20 @@ browser.runtime.onMessage.addListener((message, sender) => {
     }
     return undefined;
   }
+  if (message.type === "login-field-focus") {
+    const token = tokenByTab.get(sender.tab.id);
+    const policy = token && policiesByToken.get(token);
+    if (policy && nativePort) {
+      nativePort.postMessage({
+        type: "login-field-focus",
+        protocolVersion: PROTOCOL_VERSION,
+        token,
+        revision: policy.revision,
+        navigationGeneration: policy.navigationGeneration,
+      });
+    }
+    return undefined;
+  }
   if (message.type === "scroll-metrics") {
     const token = tokenByTab.get(sender.tab.id);
     const policy = token && policiesByToken.get(token);

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import org.junit.After
@@ -40,21 +41,30 @@ class BrowserControllerSearchSettingsInstrumentedTest {
             BrowserSessionStore(activity).saveHistory(
                 listOf(
                     HistoryEntry(
-                        url = "https://history.example/",
+                        url = HISTORY_URL,
                         title = "History match",
                         lastVisitedAt = 1L,
                     ),
                 ),
             )
             controller = BrowserController(activity).also { browserController ->
-                assertTrue(browserController.addressSuggestions("history").isNotEmpty())
+                assertTrue(browserController.historySuggestionUrls("history").contains(HISTORY_URL))
 
                 browserController.updateHistorySuggestionsEnabled(false)
 
                 assertFalse(browserController.isHistorySuggestionsEnabled)
-                assertTrue(browserController.addressSuggestions("history").isEmpty())
+                assertFalse(browserController.historySuggestionUrls("history").contains(HISTORY_URL))
                 assertFalse(BrowserSessionStore(activity).loadHistorySuggestionsEnabled())
             }
         }
+    }
+
+    private fun BrowserController.historySuggestionUrls(query: String): List<String> =
+        addressSuggestionItems(query)
+            .filterIsInstance<AddressSuggestionItem.Navigation>()
+            .map { item -> item.suggestion.url }
+
+    private companion object {
+        const val HISTORY_URL = "https://history.example/"
     }
 }

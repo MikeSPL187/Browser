@@ -39,24 +39,37 @@ internal class ProtectionReportStore(context: Context) : ProtectionReportPersist
     }
 }
 
-/** `{"<epoch day>": {"<site>": <blocked>}}`; anything malformed is skipped. */
+/**
+ * `{"<epoch day>": {"<site>": <blocked>}, "totals": {"<epoch day>": <blocked>}}`; anything
+ * malformed is skipped. A day without a saved total (written before totals existed) counts the
+ * sum of its sites, and older builds skip the `totals` key like any other that is not a day.
+ */
 internal object ProtectionReportCodec {
+    private const val KEY_TOTALS = "totals"
+
     fun encode(days: List<ProtectionDay>): String =
         JSONObject().apply {
+            val totals = JSONObject()
             days.forEach { day ->
                 put(day.epochDay.toString(), JSONObject(day.blockedBySite))
+                totals.put(day.epochDay.toString(), day.total)
             }
+            put(KEY_TOTALS, totals)
         }.toString()
 
     fun decode(json: String): List<ProtectionDay> {
         val root = runCatching { JSONObject(json) }.getOrNull() ?: return emptyList()
+        val totals = root.optJSONObject(KEY_TOTALS)
         return root.keys().asSequence().mapNotNull { key ->
             val epochDay = key.toLongOrNull() ?: return@mapNotNull null
             val sites = root.optJSONObject(key) ?: return@mapNotNull null
             val counts = sites.keys().asSequence()
                 .mapNotNull { site -> sites.optInt(site, 0).takeIf { it > 0 }?.let { site to it } }
                 .toMap()
-            ProtectionDay(epochDay, counts).takeIf { counts.isNotEmpty() }
+            if (counts.isEmpty()) return@mapNotNull null
+            val day = ProtectionDay(epochDay, counts)
+            val savedTotal = totals?.optInt(key, 0) ?: 0
+            if (savedTotal > day.total) day.copy(total = savedTotal) else day
         }.sortedBy(ProtectionDay::epochDay).toList()
     }
 }

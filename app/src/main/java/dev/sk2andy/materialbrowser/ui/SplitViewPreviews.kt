@@ -1,9 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,9 +15,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.browser.BrowserContentFrame
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.SplitCompanionStatus
 import dev.sk2andy.materialbrowser.browser.SplitPane
 import dev.sk2andy.materialbrowser.browser.SplitViewRules
 import dev.sk2andy.materialbrowser.browser.SplitViewState
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaSplit
@@ -91,3 +98,28 @@ private fun SplitViewHalvesPreview() {
 private fun SplitViewThirdPreview() {
     SplitViewPreview(activePane = SplitPane.Bottom, topRatio = SplitViewRules.THIRD)
 }
+
+/** The companion pane over a page that did not load, and over a blocked site. */
+@VolaPreviews
+@Composable
+private fun SplitCompanionStatusPreview() {
+    val settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)
+    MaterialBrowserTheme(settings = settings) {
+        Column(
+            modifier = Modifier
+                .height(720.dp)
+                .background(VolaTheme.auraBrush)
+                .padding(6.dp),
+            verticalArrangement = Arrangement.spacedBy(VolaSplit.dividerHeight),
+        ) {
+            SplitCompanionStatus.entries.forEach { status ->
+                SplitCompanionStatusCard(
+                    status = status,
+                    onActivate = {},
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+

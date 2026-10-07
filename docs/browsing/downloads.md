@@ -14,7 +14,7 @@
 
 - Downloads is a separate, non-exported activity opened from the browser `…` menu beside Favorites and History.
 - Candy-owned downloads from Android `DownloadManager` and Gecko's scoped `MediaStore` writer appear together. Downloads handed to an external manager remain owned and tracked by that app.
-- Entries are ordered by last update, newest first. The Material 3 search bar filters file names and source URLs live. Time chips filter to today or the last 7 or 30 local calendar days.
+- Entries are ordered by last update, newest first. The Material 3 search bar filters file names live. It does not match source addresses: finished engine transfers keep no source, so a source match would find a file only while it downloads. Time chips filter to today or the last 7 or 30 local calendar days.
 - Active downloads refresh while the screen is visible. The Material Expressive wavy indicator shows determinate progress for known total sizes and indeterminate progress for unknown totals.
 - Candy-streamed Gecko and System WebView blob downloads also publish a private, local-only system notification. Android 16+ uses the Material Expressive `ProgressStyle`; Android 12–15 keeps the standard determinate/indeterminate progress template. Tapping an active notification opens Downloads; completion opens the downloaded file. Supported controls expose **Pause**/**Resume** and **Cancel** directly in the notification.
 - Candy requests `POST_NOTIFICATIONS` only when the user chooses the built-in manager or an unavailable external manager falls back to it. Notification state created while the permission prompt is open is retained in memory and posted after a grant, including a fast completion update.

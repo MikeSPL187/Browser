@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -44,6 +45,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -110,6 +112,8 @@ internal fun FavoritesScreen(
     sort: FavoritesSort = FavoritesSort.Manual,
     onSortChange: (FavoritesSort) -> Unit = {},
     onImportBookmarks: (() -> Unit)? = null,
+    /** False once the last deletion can no longer be undone, for instance after a later edit. */
+    canUndo: Boolean = true,
 ) {
     val source = library ?: FavoriteLibrary(favorites)
     val locale = LocalConfiguration.current.locales[0]
@@ -129,12 +133,29 @@ internal fun FavoritesScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var snackbarJob by remember { mutableStateOf<Job?>(null) }
-    var renameTarget by remember { mutableStateOf<FavoriteLibraryEntry?>(null) }
+    // Dialogs keep only their target's id, so they survive recreation and always act on the current entry.
+    var renameTargetId by rememberSaveable { mutableStateOf<String?>(null) }
     var creatingFolder by rememberSaveable { mutableStateOf(false) }
-    var moveTarget by remember { mutableStateOf<FavoriteLibraryEntry?>(null) }
-    var iconTarget by remember { mutableStateOf<FavoriteFolder?>(null) }
+    var moveTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var iconTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    val renameTarget = renameTargetId?.let { id -> source.entries.firstOrNull { it.id == id } }
+    val moveTarget = moveTargetId?.let { id -> source.entries.firstOrNull { it.id == id } }
+    val iconTarget = iconTargetId?.let { id -> source.entries.firstOrNull { it.id == id } as? FavoriteFolder }
+    // An entry deleted meanwhile closes its dialog for good instead of reopening it should it come back.
+    LaunchedEffect(renameTarget, moveTarget, iconTarget) {
+        if (renameTarget == null) renameTargetId = null
+        if (moveTarget == null) moveTargetId = null
+        if (iconTarget == null) iconTargetId = null
+    }
     val removedMessage = stringResource(R.string.favorite_removed_confirmation)
     val undoLabel = stringResource(R.string.action_undo)
+    // An «Undo» whose snapshot a later change replaced would do nothing; take it off screen.
+    LaunchedEffect(canUndo) {
+        if (!canUndo) {
+            snackbarJob?.cancel()
+            snackbarHostState.currentSnackbarData?.dismiss()
+        }
+    }
     val navigateBack = {
         if (currentFolder != null) {
             currentFolderId = currentFolder.parentFolderId
@@ -147,11 +168,11 @@ internal fun FavoritesScreen(
         FavoriteNameDialog(
             initialName = renameTarget?.entryTitle().orEmpty(),
             creating = creatingFolder,
-            onDismiss = { creatingFolder = false; renameTarget = null },
+            onDismiss = { creatingFolder = false; renameTargetId = null },
             onConfirm = { name ->
                 renameTarget?.let { onRenameEntry(it, name) } ?: onCreateFolder(parentId, name)
                 creatingFolder = false
-                renameTarget = null
+                renameTargetId = null
             },
         )
     }
@@ -159,16 +180,16 @@ internal fun FavoritesScreen(
         FavoriteMoveDialog(
             library = source,
             target = target,
-            onDismiss = { moveTarget = null },
-            onMove = { destination -> onMoveEntry(target, destination); moveTarget = null },
+            onDismiss = { moveTargetId = null },
+            onMove = { destination -> onMoveEntry(target, destination); moveTargetId = null },
         )
     }
     iconTarget?.let { folder ->
         FavoriteIconDialog(
             folder = folder,
-            onDismiss = { iconTarget = null },
-            onConfirm = { icon -> onFolderIconChange(folder, icon); iconTarget = null },
-            onUpload = { onUploadFolderIcon(folder); iconTarget = null },
+            onDismiss = { iconTargetId = null },
+            onConfirm = { icon -> onFolderIconChange(folder, icon); iconTargetId = null },
+            onUpload = { onUploadFolderIcon(folder); iconTargetId = null },
         )
     }
     val listState = rememberLazyListState()
@@ -270,20 +291,24 @@ internal fun FavoritesScreen(
                         horizontalArrangement = Arrangement.spacedBy(VolaLibrary.folderCardGap),
                     ) {
                         rowFolders.forEach { folder ->
-                            val index = siblings.indexOfFirst { it.id == folder.id }
+                            val earlier = LibraryRules.reorderTarget(siblings, level.folders, folder.id, -1)
+                            val later = LibraryRules.reorderTarget(siblings, level.folders, folder.id, 1)
                             FavoriteFolderCard(
                                 folder = folder,
                                 siteCount = LibraryRules.siteCount(source, folder.id),
                                 customIcon = folderIcons[folder.id],
+                                mosaic = favoriteFolderMosaic(source, folder.id) { url ->
+                                    favicons[url]?.takeUnless(Bitmap::isRecycled)
+                                },
                                 modifier = Modifier.weight(1f),
                                 actions = FavoriteActions(
-                                    canMoveEarlier = canReorder && index > 0,
-                                    canMoveLater = canReorder && index in 0 until siblings.lastIndex,
-                                    onMoveEarlier = { onReorderEntry(folder, index - 1) },
-                                    onMoveLater = { onReorderEntry(folder, index + 1) },
-                                    onRename = { renameTarget = folder },
-                                    onMove = { moveTarget = folder },
-                                    onIcon = { iconTarget = folder },
+                                    canMoveEarlier = canReorder && earlier != null,
+                                    canMoveLater = canReorder && later != null,
+                                    onMoveEarlier = { earlier?.let { onReorderEntry(folder, it) } },
+                                    onMoveLater = { later?.let { onReorderEntry(folder, it) } },
+                                    onRename = { renameTargetId = folder.id },
+                                    onMove = { moveTargetId = folder.id },
+                                    onIcon = { iconTargetId = folder.id },
                                 ),
                                 onOpen = { currentFolderId = folder.id; query = "" },
                             )
@@ -305,6 +330,8 @@ internal fun FavoritesScreen(
             }
             itemsIndexed(level.favorites, key = { _, entry -> entry.id }) { position, entry ->
                 val index = siblings.indexOfFirst { it.id == entry.id }
+                val earlier = LibraryRules.reorderTarget(siblings, level.favorites, entry.id, -1)
+                val later = LibraryRules.reorderTarget(siblings, level.favorites, entry.id, 1)
                 val dragging = draggedId == entry.id
                 val lift by animateFloatAsState(if (dragging) 1.025f else 1f, spring(), label = "favorite lift")
                 val rowModifier = Modifier.animateItem().zIndex(if (dragging) 1f else 0f)
@@ -351,12 +378,12 @@ internal fun FavoritesScreen(
                         entry = entry,
                         favicon = favicons[entry.url],
                         actions = FavoriteActions(
-                            canMoveEarlier = canReorder && index > 0,
-                            canMoveLater = canReorder && index in 0 until siblings.lastIndex,
-                            onMoveEarlier = { onReorderEntry(entry, index - 1) },
-                            onMoveLater = { onReorderEntry(entry, index + 1) },
-                            onRename = { renameTarget = entry },
-                            onMove = { moveTarget = entry },
+                            canMoveEarlier = canReorder && earlier != null,
+                            canMoveLater = canReorder && later != null,
+                            onMoveEarlier = { earlier?.let { onReorderEntry(entry, it) } },
+                            onMoveLater = { later?.let { onReorderEntry(entry, it) } },
+                            onRename = { renameTargetId = entry.id },
+                            onMove = { moveTargetId = entry.id },
                             onDelete = {
                                 onDeleteFavorite(entry) { mutation ->
                                     if (mutation != null) {
@@ -556,6 +583,7 @@ private fun FavoriteFolderCard(
     actions: FavoriteActions,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    mosaic: List<Bitmap> = emptyList(),
 ) {
     Surface(
         modifier = modifier
@@ -576,6 +604,7 @@ private fun FavoriteFolderCard(
                             PlatformProfileEmoji(emoji = folder.icon.value, fontSize = VolaLibrary.folderEmojiSize)
                         folder.icon == FavoriteFolderIcon.Custom && customIcon != null && !customIcon.isRecycled ->
                             Image(customIcon.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                        folder.icon == null && mosaic.isNotEmpty() -> FavoriteFolderMosaic(mosaic)
                         else -> Icon(VolaIcons.Folder, contentDescription = null, modifier = Modifier.size(VolaLibrary.tileIconSize))
                     }
                 }
@@ -594,6 +623,38 @@ private fun FavoriteFolderCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+/** A folder with no icon of its own: the favicons of its first four sites, two by two, in order. */
+@Composable
+private fun FavoriteFolderMosaic(favicons: List<Bitmap>) {
+    val columns = VolaLibrary.FOLDER_MOSAIC_COLUMNS
+    Column(
+        modifier = Modifier.fillMaxSize().padding(VolaLibrary.folderMosaicPadding),
+        verticalArrangement = Arrangement.spacedBy(VolaLibrary.folderMosaicGap),
+    ) {
+        repeat(columns) { row ->
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(VolaLibrary.folderMosaicGap),
+            ) {
+                repeat(columns) { column ->
+                    val cell = Modifier.weight(1f).fillMaxHeight()
+                    val favicon = favicons.getOrNull(row * columns + column)
+                    if (favicon == null) {
+                        Spacer(cell)
+                    } else {
+                        Image(
+                            favicon.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = cell.clip(VolaLibrary.folderMosaicCellShape),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+                }
             }
         }
     }
@@ -722,5 +783,15 @@ internal fun favoriteFolderPreviewFavorites(
     }
     return collect(folderId).take(FOLDER_PREVIEW_FAVORITE_COUNT)
 }
+
+/**
+ * What a folder without its own icon shows: the favicons of its first four sites that have one.
+ * Empty when none has, and the folder keeps its plain folder symbol.
+ */
+internal fun <T : Any> favoriteFolderMosaic(
+    library: FavoriteLibrary,
+    folderId: String,
+    faviconFor: (url: String) -> T?,
+): List<T> = favoriteFolderPreviewFavorites(library, folderId).mapNotNull { faviconFor(it.url) }
 
 private const val FOLDER_PREVIEW_FAVORITE_COUNT = 4

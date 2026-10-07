@@ -59,11 +59,13 @@ import dev.sk2andy.materialbrowser.browser.BrowserMediaSystemSession
 import dev.sk2andy.materialbrowser.browser.BrowserMediaPlaybackService
 import dev.sk2andy.materialbrowser.browser.BrowserMediaLifecycleTrace
 import dev.sk2andy.materialbrowser.browser.BrowserMouseButton
+import dev.sk2andy.materialbrowser.browser.FirstRunPresentationRules
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoRules
 import dev.sk2andy.materialbrowser.browser.ProfileBiometricAuthenticator
 import dev.sk2andy.materialbrowser.browser.PrivateTabsNotifier
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesPresentationRules
 import dev.sk2andy.materialbrowser.browser.StartupPresentationRules
+import dev.sk2andy.materialbrowser.browser.allowsHardwareInput
 import dev.sk2andy.materialbrowser.browser.cast.CastSessionController
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
@@ -289,7 +291,7 @@ class MainActivity : AppCompatActivity() {
         initialOnboardingRequired = onboardingRequired && !hadCompletedOnboarding
         onboardingVisible = savedInstanceState
             ?.getBoolean(STATE_ONBOARDING_VISIBLE)
-            ?: onboardingRequired
+            ?: FirstRunPresentationRules.showNow(onboardingRequired, isColdExternalLinkLaunch)
         releaseNotesStore = ReleaseNotesStore(this)
         if (
             intent.action == Intent.ACTION_MAIN ||
@@ -771,7 +773,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 }
-                AppUpdatePrompt(
+                LaunchPrompts(
                     context = this,
                     visible = !onboardingVisible &&
                         !releaseNotesVisible &&
@@ -823,6 +825,9 @@ class MainActivity : AppCompatActivity() {
         showAppDataTransferResult(intent)
         openIntent(intent)
         openHomePageForLauncherLaunch(intent)
+        if (FirstRunPresentationRules.showOnNewIntent(intent.action == Intent.ACTION_MAIN, GestureOnboardingStore(this).isCompleted())) {
+            onboardingVisible = true
+        }
         if (intent.action == Intent.ACTION_MAIN) loadReleaseNotesContent()
         if (
             shouldPresentReleaseNotes(
@@ -905,8 +910,9 @@ class MainActivity : AppCompatActivity() {
             .takeIf { keyEvent -> keyEvent.action == KeyEvent.ACTION_DOWN }
             ?.toBrowserHardwareKeyStroke()
             ?.let(BrowserHardwareInputRules::keyboardAction)
-        if (action != null && isBrowserHardwareInputAvailable()) {
+        if (action != null && isBrowserHardwareInputAvailable(action)) {
             consumedHardwareShortcutKeys += event.keyCode
+            if (browserController.contentActions.isLinkPeekVisible) browserController.contentActions.dismiss()
             performBrowserHardwareInput(action)
             return true
         }
@@ -1552,13 +1558,14 @@ class MainActivity : AppCompatActivity() {
         if (!duplicate) performBrowserHardwareInput(action)
     }
 
-    private fun isBrowserHardwareInputAvailable(): Boolean =
+    private fun isBrowserHardwareInputAvailable(action: BrowserHardwareInputAction? = null): Boolean =
         ::browserController.isInitialized &&
             !onboardingVisible &&
             !releaseNotesVisible &&
             !firefoxExtensionsVisible &&
             !appDataExportWarningVisible &&
-            pendingAppDataImport == null
+            pendingAppDataImport == null &&
+            browserController.contentActions.allowsHardwareInput(action)
 
     private fun requestBrowserEngineFocusForHardwareInput(): Boolean =
         isBrowserHardwareInputAvailable() && browserController.requestSelectedBrowserEngineFocus()

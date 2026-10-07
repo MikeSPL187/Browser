@@ -26,20 +26,21 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -81,12 +82,14 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -98,11 +101,17 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.ui.theme.VolaBrand
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaFirstRunTokens
+import dev.sk2andy.materialbrowser.ui.theme.VolaGestureLessonTokens
+import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -117,6 +126,13 @@ internal enum class GestureOnboardingStep {
 }
 
 internal object GestureOnboardingRules {
+    /** What the lesson teaches; beside a tab strip tabs are switched there, not on the address bar. */
+    fun steps(usesTabStrip: Boolean): List<GestureOnboardingStep> = if (usesTabStrip) {
+        GestureOnboardingStep.entries.filterNot { it == GestureOnboardingStep.SwitchTabs }
+    } else {
+        GestureOnboardingStep.entries
+    }
+
     fun isCompleted(
         step: GestureOnboardingStep,
         dragX: Float,
@@ -132,23 +148,28 @@ internal object GestureOnboardingRules {
             -> dragY <= -threshold && dragY.absoluteValue > dragX.absoluteValue
         }
     }
+
+    /** The practice card takes the height left over, between its smallest and largest size. */
+    fun practiceHeight(available: Int, min: Int, max: Int): Int = available.coerceIn(min, max)
+
+    /** A phone on its side has no room for the copy above the card: they go side by side. */
+    fun placesPracticeBeside(width: Float, height: Float, stackedMinHeight: Float): Boolean =
+        width > height && height < stackedMinHeight
 }
 
 @Composable
 internal fun GestureOnboardingScreen(
     onCompleted: () -> Unit,
     modifier: Modifier = Modifier,
+    /** «Back» in the lesson; on its own it skips, like the Skip button. */
+    onBack: () -> Unit = onCompleted,
     /** The lesson's own welcome page; the first run already said hello and skips it. */
     showWelcome: Boolean = true,
 ) {
     val wideTabStripEnabled = AddressBarWideLayoutRules.usesTabStrip(
         LocalConfiguration.current.screenWidthDp.toFloat(),
     )
-    val steps = if (wideTabStripEnabled) {
-        GestureOnboardingStep.entries.filterNot { it == GestureOnboardingStep.SwitchTabs }
-    } else {
-        GestureOnboardingStep.entries
-    }
+    val steps = GestureOnboardingRules.steps(usesTabStrip = wideTabStripEnabled)
     var welcomeVisible by rememberSaveable { mutableStateOf(showWelcome) }
     var celebrationVisible by rememberSaveable { mutableStateOf(false) }
     var stepIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -166,7 +187,7 @@ internal fun GestureOnboardingScreen(
                 if (rootWidthPx > 0f) {
                     rootWidthPx * AddressBarTabSwitchRules.DISTANCE_FRACTION
                 } else {
-                    72.dp.toPx()
+                    VolaGestureLessonTokens.switchFallbackThreshold.toPx()
                 }
             GestureOnboardingStep.OpenTabOverview ->
                 AddressBarGestureRules.OPEN_TABS_THRESHOLD_DP.dp.toPx()
@@ -175,7 +196,7 @@ internal fun GestureOnboardingScreen(
                     ((practiceWidthPx / 0.53f) * 0.28f) *
                         TabDismissPhysics.DEFAULT_RESISTANCE_FRACTION
                 } else {
-                    44.dp.toPx()
+                    VolaGestureLessonTokens.closeFallbackThreshold.toPx()
                 }
         }
     }
@@ -183,7 +204,7 @@ internal fun GestureOnboardingScreen(
     val stepAccessibilityDescription = stepDescription(step)
     val completeActionLabel = stringResource(R.string.onboarding_accessibility_complete_action)
 
-    BackHandler(enabled = true) { }
+    BackHandler(onBack = onBack)
     LaunchedEffect(welcomeVisible, celebrationVisible, step) {
         if (!welcomeVisible) lessonScrollState.scrollTo(0)
     }
@@ -281,172 +302,239 @@ internal fun GestureOnboardingScreen(
             .fillMaxSize()
             .onSizeChanged { rootWidthPx = it.width.toFloat() }
             .testTag("gesture_onboarding"),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.background,
     ) {
         if (welcomeVisible) {
             GestureOnboardingWelcome(
+                steps = steps,
                 onStart = { welcomeVisible = false },
                 onSkip = onCompleted,
             )
         } else if (celebrationVisible) {
             GestureOnboardingCelebration(onContinue = onCompleted)
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                VolaBrand.Cyan.copy(alpha = 0.14f),
-                                MaterialTheme.colorScheme.surface,
-                                VolaBrand.Violet.copy(alpha = 0.18f),
-                            ),
-                        ),
+            FirstRunBackground {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val copy = @Composable {
+                        LessonCopy(step = step, stepNumber = currentStepIndex + 1, stepCount = steps.size, onSkip = onCompleted)
+                    }
+                    val practice = @Composable {
+                        PracticeCard(step = step, dragX = dragX, dragY = dragY, gestureModifier = gestureModifier)
+                    }
+                    val hints = @Composable { LessonHints(step = step) }
+                    val beside = GestureOnboardingRules.placesPracticeBeside(
+                        width = maxWidth.value,
+                        height = maxHeight.value,
+                        stackedMinHeight = VolaGestureLessonTokens.stackedMinHeight.value,
                     )
-                    .safeDrawingPadding()
-                    .verticalScroll(lessonScrollState)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.Center,
-            ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.onboarding_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(
-                            R.string.onboarding_progress,
-                            currentStepIndex + 1,
-                            steps.size,
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TextButton(
-                        onClick = onCompleted,
-                        modifier = Modifier.testTag("gesture_onboarding_skip"),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.onboarding_skip),
-                            color = gestureAccent(step),
-                            fontWeight = FontWeight.Bold,
+                    if (beside) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(VolaGestureLessonTokens.screenPadding),
+                            horizontalArrangement = Arrangement.spacedBy(VolaGestureLessonTokens.besideGap),
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(lessonScrollState),
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                copy()
+                                hints()
+                            }
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight()) { practice() }
+                        }
+                    } else {
+                        StackedLesson(
+                            copy = copy,
+                            practice = practice,
+                            hints = hints,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(lessonScrollState)
+                                .padding(VolaGestureLessonTokens.screenPadding),
                         )
                     }
                 }
-            }
-            Spacer(Modifier.height(10.dp))
-            LinearProgressIndicator(
-                progress = { (currentStepIndex + 1f) / steps.size },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape),
-                color = gestureAccent(step),
-                trackColor = gestureAccent(step).copy(alpha = 0.16f),
-            )
-            Spacer(Modifier.height(28.dp))
-            AnimatedContent(
-                targetState = step,
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(100)) },
-                label = "gesture-onboarding-copy",
-            ) { currentStep ->
-                Column {
-                    Text(
-                        text = stepTitle(currentStep),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stepDescription(currentStep),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Spacer(Modifier.height(22.dp))
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(390.dp),
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
-                tonalElevation = 8.dp,
-                shadowElevation = 8.dp,
-            ) {
-                GesturePracticeArea(
-                    step = step,
-                    dragX = dragX,
-                    dragY = dragY,
-                    modifier = gestureModifier,
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                GestureDirectionBadge(step = step)
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.onboarding_follow_pointer),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelLarge,
-                color = gestureAccent(step),
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.onboarding_required_hint),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             }
         }
     }
 }
 
+/**
+ * The lesson in a column: the copy, the practice card, the hints. The card takes the height the
+ * screen has left, between its smallest and largest size, so the pretend address bar stays in
+ * view; only when even the smallest card does not fit does the column scroll.
+ */
+@Composable
+private fun StackedLesson(
+    copy: @Composable () -> Unit,
+    practice: @Composable () -> Unit,
+    hints: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Layout(contents = listOf(copy, practice, hints), modifier = modifier) { (copyParts, practiceParts, hintParts), constraints ->
+        val free = constraints.copy(minWidth = 0, minHeight = 0, maxHeight = Constraints.Infinity)
+        val top = copyParts.map { it.measure(free) }
+        val bottom = hintParts.map { it.measure(free) }
+        val used = top.sumOf { it.height } + bottom.sumOf { it.height }
+        val cardHeight = GestureOnboardingRules.practiceHeight(
+            available = constraints.minHeight - used,
+            min = VolaGestureLessonTokens.practiceMinHeight.roundToPx(),
+            max = VolaGestureLessonTokens.practiceMaxHeight.roundToPx(),
+        )
+        val card = practiceParts.map { it.measure(free.copy(minHeight = cardHeight, maxHeight = cardHeight)) }
+        val content = used + cardHeight
+        val height = maxOf(constraints.minHeight, content)
+        layout(constraints.maxWidth, height) {
+            var y = (height - content) / 2
+            (top + card + bottom).forEach { placeable ->
+                placeable.placeRelative(0, y)
+                y += placeable.height
+            }
+        }
+    }
+}
+
+/** The title row with the step count and Skip, the progress line, and what to do in this step. */
+@Composable
+private fun LessonCopy(step: GestureOnboardingStep, stepNumber: Int, stepCount: Int, onSkip: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(
+                        R.string.onboarding_progress,
+                        stepNumber,
+                        stepCount,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(
+                    onClick = onSkip,
+                    modifier = Modifier.testTag("gesture_onboarding_skip"),
+                ) {
+                    Text(
+                        text = stringResource(R.string.onboarding_skip),
+                        color = gestureAccent(step),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(VolaGestureLessonTokens.progressGap))
+        LinearProgressIndicator(
+            progress = { stepNumber.toFloat() / stepCount },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(VolaGestureLessonTokens.progressHeight)
+                .clip(CircleShape),
+            color = gestureAccent(step),
+            trackColor = gestureAccent(step).copy(alpha = VolaGestureLessonTokens.PROGRESS_TRACK_ALPHA),
+        )
+        Spacer(Modifier.height(VolaGestureLessonTokens.headerGap))
+        AnimatedContent(
+            targetState = step,
+            transitionSpec = {
+                fadeIn(tween(VolaGestureLessonTokens.COPY_FADE_IN_MILLIS)) togetherWith
+                    fadeOut(tween(VolaGestureLessonTokens.COPY_FADE_OUT_MILLIS))
+            },
+            label = "gesture-onboarding-copy",
+        ) { currentStep ->
+            Column {
+                Text(
+                    text = stepTitle(currentStep),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(VolaGestureLessonTokens.copyGap))
+                Text(
+                    text = stepDescription(currentStep),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Spacer(Modifier.height(VolaGestureLessonTokens.practiceGap))
+    }
+}
+
+/** The card the gesture is practised on; [gestureModifier] makes its target listen. */
+@Composable
+private fun PracticeCard(step: GestureOnboardingStep, dragX: Float, dragY: Float, gestureModifier: Modifier) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        shape = VolaGestureLessonTokens.practiceShape,
+        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = VolaGestureLessonTokens.PRACTICE_ALPHA),
+        tonalElevation = VolaGestureLessonTokens.practiceElevation,
+        shadowElevation = VolaGestureLessonTokens.practiceElevation,
+    ) {
+        GesturePracticeArea(
+            step = step,
+            dragX = dragX,
+            dragY = dragY,
+            modifier = gestureModifier,
+        )
+    }
+}
+
+/** Under the card: which way to swipe, and the way out. */
+@Composable
+private fun LessonHints(step: GestureOnboardingStep) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(VolaGestureLessonTokens.badgeGap))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            GestureDirectionBadge(step = step)
+        }
+        Spacer(Modifier.height(VolaGestureLessonTokens.hintGap))
+        Text(
+            text = stringResource(R.string.onboarding_follow_pointer),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelLarge,
+            color = gestureAccent(step),
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(VolaGestureLessonTokens.footerGap))
+        Text(
+            text = stringResource(R.string.onboarding_required_hint),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 @Composable
 private fun GestureOnboardingWelcome(
+    /** The steps this screen will teach; the tab switch is left out beside a tab strip. */
+    steps: List<GestureOnboardingStep>,
     onStart: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("gesture_onboarding_welcome")
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        VolaBrand.Cyan.copy(alpha = 0.24f),
-                        MaterialTheme.colorScheme.surface,
-                        VolaBrand.Violet.copy(alpha = 0.24f),
-                    ),
-                ),
-            ),
-    ) {
+    FirstRunBackground(modifier = modifier.testTag("gesture_onboarding_welcome")) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 28.dp),
+                .padding(VolaGestureLessonTokens.welcomePadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-        CandyWelcomeHero()
-        Spacer(Modifier.height(20.dp))
+        LessonWelcomeHero()
+        Spacer(Modifier.height(VolaGestureLessonTokens.welcomeHeroGap))
         Text(
             text = stringResource(R.string.onboarding_welcome_title),
             modifier = Modifier.fillMaxWidth(),
@@ -454,7 +542,7 @@ private fun GestureOnboardingWelcome(
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(VolaGestureLessonTokens.welcomeTextGap))
         Text(
             text = stringResource(R.string.onboarding_welcome_body),
             modifier = Modifier.fillMaxWidth(),
@@ -462,51 +550,34 @@ private fun GestureOnboardingWelcome(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(VolaGestureLessonTokens.welcomeSectionGap))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
+            shape = VolaGestureLessonTokens.welcomeCardShape,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.94f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                    alpha = VolaGestureLessonTokens.WELCOME_CARD_ALPHA,
+                ),
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = VolaGestureLessonTokens.welcomeCardElevation),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+            Column(modifier = Modifier.padding(VolaGestureLessonTokens.welcomeCardPadding)) {
                 Text(
-                    text = stringResource(R.string.onboarding_welcome_card_title),
+                    text = pluralStringResource(R.plurals.onboarding_welcome_card_title, steps.size, steps.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
-                Spacer(Modifier.height(14.dp))
-                WelcomeGestureRow(
-                    symbol = "↔",
-                    title = stepTitle(GestureOnboardingStep.SwitchTabs),
-                    color = VolaBrand.Violet,
-                )
-                WelcomeGestureRow(
-                    symbol = "↑",
-                    title = stepTitle(GestureOnboardingStep.OpenTabOverview),
-                    color = VolaBrand.CyanDeep,
-                )
-                WelcomeGestureRow(
-                    symbol = "↑",
-                    title = stepTitle(GestureOnboardingStep.CloseTab),
-                    color = VolaBrand.Violet,
-                )
+                Spacer(Modifier.height(VolaGestureLessonTokens.welcomeCardTitleGap))
+                steps.forEach { step -> WelcomeGestureRow(step) }
             }
         }
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(VolaGestureLessonTokens.welcomeSectionGap))
         Button(
             onClick = onStart,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .heightIn(min = VolaFirstRunTokens.buttonHeight)
                 .testTag("gesture_onboarding_start"),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = VolaBrand.Violet,
-                contentColor = Color.White,
-            ),
         ) {
             Text(
                 text = stringResource(R.string.onboarding_welcome_start),
@@ -514,19 +585,17 @@ private fun GestureOnboardingWelcome(
                 fontWeight = FontWeight.Bold,
             )
         }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(VolaGestureLessonTokens.welcomeButtonGap))
         }
         TextButton(
             onClick = onSkip,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .safeDrawingPadding()
-                .padding(top = 6.dp, end = 8.dp)
+                .padding(VolaGestureLessonTokens.skipPadding)
                 .testTag("gesture_onboarding_skip"),
         ) {
             Text(
                 text = stringResource(R.string.onboarding_skip),
-                color = VolaBrand.Violet,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -549,30 +618,25 @@ private fun GestureOnboardingCelebration(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2_200, easing = LinearEasing),
+            animation = tween(VolaGestureLessonTokens.CONFETTI_STREAM_MILLIS, easing = LinearEasing),
         ),
         label = "onboarding-confetti-stream",
     )
     LaunchedEffect(Unit) {
         burstProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 1_250, easing = FastOutSlowInEasing),
+            animationSpec = tween(VolaGestureLessonTokens.CONFETTI_BURST_MILLIS, easing = FastOutSlowInEasing),
         )
     }
     LaunchedEffect(Unit) {
-        delay(620)
+        delay(VolaGestureLessonTokens.CELEBRATION_CONTENT_DELAY_MILLIS)
         contentVisible = true
     }
-    val confettiColors = listOf(
-        VolaBrand.CyanDeep,
-        VolaBrand.Violet,
-        Color(0xFFFFC857),
-        Color(0xFF2EC4B6),
-    )
+    val colors = MaterialTheme.colorScheme
+    val confettiColors = listOf(colors.primary, colors.tertiary, colors.secondary, colors.tertiaryContainer)
 
-    Box(
+    FirstRunBackground(
         modifier = modifier
-            .fillMaxSize()
             .testTag("gesture_onboarding_celebration")
             .graphicsLayer {
                 val exit = exitProgress.value
@@ -581,16 +645,7 @@ private fun GestureOnboardingCelebration(
             .semantics {
                 paneTitle = completionTitle
                 liveRegion = LiveRegionMode.Polite
-            }
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        VolaBrand.Violet.copy(alpha = 0.22f),
-                        MaterialTheme.colorScheme.surface,
-                        VolaBrand.Cyan.copy(alpha = 0.20f),
-                    ),
-                ),
-            ),
+            },
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val origin = Offset(size.width / 2f, size.height / 2f)
@@ -648,11 +703,11 @@ private fun GestureOnboardingCelebration(
         AnimatedVisibility(
             visible = contentVisible,
             modifier = Modifier.fillMaxSize(),
-            enter = fadeIn(tween(durationMillis = 720)) +
+            enter = fadeIn(tween(VolaGestureLessonTokens.CELEBRATION_ENTER_MILLIS)) +
                 scaleIn(
-                    initialScale = 0.92f,
+                    initialScale = VolaGestureLessonTokens.CELEBRATION_ENTER_SCALE,
                     animationSpec = tween(
-                        durationMillis = 720,
+                        VolaGestureLessonTokens.CELEBRATION_ENTER_MILLIS,
                         easing = FastOutSlowInEasing,
                     ),
                 ),
@@ -660,28 +715,27 @@ private fun GestureOnboardingCelebration(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 28.dp, vertical = 32.dp),
+                    .padding(VolaGestureLessonTokens.celebrationPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
             Surface(
-                modifier = Modifier.size(132.dp),
+                modifier = Modifier.size(VolaGestureLessonTokens.celebrationBadgeSize),
                 shape = CircleShape,
-                color = VolaBrand.Violet,
-                shadowElevation = 18.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = VolaGestureLessonTokens.celebrationBadgeShadow,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(R.drawable.ic_symbol_check),
                         contentDescription = null,
-                        modifier = Modifier.size(72.dp),
-                        tint = Color.White,
+                        modifier = Modifier.size(VolaGestureLessonTokens.celebrationIconSize),
+                        tint = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(VolaGestureLessonTokens.celebrationIconGap))
             Text(
                 text = completionTitle,
                 modifier = Modifier
@@ -691,7 +745,7 @@ private fun GestureOnboardingCelebration(
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(VolaGestureLessonTokens.celebrationTextGap))
             Text(
                 text = stringResource(R.string.onboarding_completion_body),
                 modifier = Modifier.fillMaxWidth(),
@@ -699,7 +753,7 @@ private fun GestureOnboardingCelebration(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(34.dp))
+            Spacer(Modifier.height(VolaGestureLessonTokens.celebrationButtonGap))
             Button(
                 enabled = !finishing,
                 onClick = {
@@ -709,7 +763,7 @@ private fun GestureOnboardingCelebration(
                             exitProgress.animateTo(
                                 targetValue = 1f,
                                 animationSpec = tween(
-                                    durationMillis = 720,
+                                    VolaGestureLessonTokens.CELEBRATION_EXIT_MILLIS,
                                     easing = FastOutSlowInEasing,
                                 ),
                             )
@@ -719,7 +773,7 @@ private fun GestureOnboardingCelebration(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag("gesture_onboarding_finish")
                     .graphicsLayer {
                         val exit = exitProgress.value
@@ -732,12 +786,10 @@ private fun GestureOnboardingCelebration(
                         scaleX = buttonScale
                         scaleY = buttonScale
                     },
-                shape = RoundedCornerShape(20.dp),
+                // The button stays in its colors while it bounces away.
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = VolaBrand.Violet,
-                    contentColor = Color.White,
-                    disabledContainerColor = VolaBrand.Violet,
-                    disabledContentColor = Color.White,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
                 Text(
@@ -760,79 +812,80 @@ private fun DrawScope.drawConfettiPiece(
     if (index % 3 == 0) {
         drawCircle(
             color = color,
-            radius = 5.dp.toPx(),
+            radius = VolaGestureLessonTokens.confettiDotRadius.toPx(),
             center = center,
         )
     } else {
+        val width = VolaGestureLessonTokens.confettiStripWidth.toPx()
+        val length = VolaGestureLessonTokens.confettiStripLength.toPx()
         rotate(degrees = rotation, pivot = center) {
             drawRect(
                 color = color,
-                topLeft = Offset(
-                    x = center.x - 3.dp.toPx(),
-                    y = center.y - 8.dp.toPx(),
-                ),
-                size = Size(6.dp.toPx(), 16.dp.toPx()),
+                topLeft = Offset(x = center.x - width / 2f, y = center.y - length / 2f),
+                size = Size(width, length),
             )
         }
     }
 }
 
+/** The lesson's mark, floating between two soft shapes in the accent colors. */
 @Composable
-private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "candy-welcome-hero")
+private fun LessonWelcomeHero(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "lesson-welcome-hero")
     val floatOffset by transition.animateFloat(
-        initialValue = -6f,
-        targetValue = 6f,
+        initialValue = -VolaGestureLessonTokens.HERO_FLOAT_PX,
+        targetValue = VolaGestureLessonTokens.HERO_FLOAT_PX,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1_800, easing = FastOutSlowInEasing),
+            animation = tween(VolaGestureLessonTokens.HERO_FLOAT_MILLIS, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "candy-welcome-float",
+        label = "lesson-welcome-float",
     )
+    val colors = MaterialTheme.colorScheme
 
     Box(
-        modifier = modifier.size(174.dp),
+        modifier = modifier.size(VolaGestureLessonTokens.heroSize),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(x = 8.dp, y = 26.dp)
-                .size(70.dp)
-                .graphicsLayer { rotationZ = -14f + floatOffset }
-                .clip(RoundedCornerShape(24.dp))
-                .background(VolaBrand.Cyan.copy(alpha = 0.8f)),
+                .offset(x = VolaGestureLessonTokens.heroTileOffsetX, y = VolaGestureLessonTokens.heroTileOffsetY)
+                .size(VolaGestureLessonTokens.heroTileSize)
+                .graphicsLayer { rotationZ = VolaGestureLessonTokens.HERO_TILE_ROTATION + floatOffset }
+                .clip(VolaGestureLessonTokens.heroTileShape)
+                .background(colors.tertiary.copy(alpha = VolaGestureLessonTokens.HERO_SHAPE_ALPHA)),
         )
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .offset(x = (-4).dp, y = (-18).dp)
-                .size(62.dp)
+                .offset(x = VolaGestureLessonTokens.heroDotOffsetX, y = VolaGestureLessonTokens.heroDotOffsetY)
+                .size(VolaGestureLessonTokens.heroDotSize)
                 .clip(CircleShape)
-                .background(VolaBrand.Violet.copy(alpha = 0.8f)),
+                .background(colors.primary.copy(alpha = VolaGestureLessonTokens.HERO_SHAPE_ALPHA)),
         )
         Surface(
             modifier = Modifier
-                .size(126.dp)
+                .size(VolaGestureLessonTokens.heroDiscSize)
                 .graphicsLayer {
                     translationY = floatOffset
-                    rotationZ = floatOffset * 0.25f
+                    rotationZ = floatOffset * VolaGestureLessonTokens.HERO_FLOAT_TILT
                 },
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 10.dp,
-            shadowElevation = 18.dp,
+            color = colors.surface,
+            tonalElevation = VolaGestureLessonTokens.heroDiscElevation,
+            shadowElevation = VolaGestureLessonTokens.heroDiscShadow,
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(VolaGestureLessonTokens.heroDiscInset)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                VolaBrand.Cyan.copy(alpha = 0.18f),
-                                VolaBrand.Violet.copy(alpha = 0.24f),
+                                colors.tertiary.copy(alpha = VolaGestureLessonTokens.HERO_GLOW_START_ALPHA),
+                                colors.primary.copy(alpha = VolaGestureLessonTokens.HERO_GLOW_END_ALPHA),
                             ),
                         ),
                     ),
@@ -841,7 +894,7 @@ private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
                 Image(
                     painter = painterResource(R.drawable.ic_launcher_foreground_art),
                     contentDescription = null,
-                    modifier = Modifier.size(94.dp),
+                    modifier = Modifier.size(VolaGestureLessonTokens.heroMarkSize),
                 )
             }
         }
@@ -849,36 +902,31 @@ private fun CandyWelcomeHero(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WelcomeGestureRow(
-    symbol: String,
-    title: String,
-    color: Color,
-) {
+private fun WelcomeGestureRow(step: GestureOnboardingStep) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = VolaGestureLessonTokens.rowPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
-            modifier = Modifier.size(38.dp),
+            modifier = Modifier.size(VolaGestureLessonTokens.rowIconSize),
             shape = CircleShape,
-            color = color,
+            color = gestureAccent(step),
+            contentColor = gestureOnAccent(step),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = symbol,
-                    modifier = Modifier.offset(y = (-2).dp),
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    lineHeight = 20.sp,
+                    text = directionSymbol(step),
+                    modifier = Modifier.offset(y = -VolaGestureLessonTokens.rowSymbolLift),
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(VolaGestureLessonTokens.rowGap))
         Text(
-            text = title,
+            text = stepTitle(step),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
@@ -895,8 +943,8 @@ private fun GesturePracticeArea(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .padding(VolaGestureLessonTokens.practiceInset)
+            .clip(VolaGestureLessonTokens.practiceInnerShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentAlignment = Alignment.Center,
     ) {
@@ -926,7 +974,7 @@ private fun GesturePointerGuide(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1_900, easing = LinearEasing),
+            animation = tween(VolaGestureLessonTokens.POINTER_LOOP_MILLIS, easing = LinearEasing),
         ),
         label = "gesture-pointer-progress",
     )
@@ -960,34 +1008,38 @@ private fun GesturePointerGuide(
             y = start.y + (end.y - start.y) * travel,
         )
         drawLine(
-            color = primary.copy(alpha = 0.38f * guideAlpha),
+            color = primary.copy(alpha = VolaGestureLessonTokens.POINTER_TRAIL_ALPHA * guideAlpha),
             start = start,
             end = end,
-            strokeWidth = 3.dp.toPx(),
+            strokeWidth = VolaGestureLessonTokens.pointerTrailWidth.toPx(),
             pathEffect = PathEffect.dashPathEffect(
-                intervals = floatArrayOf(10.dp.toPx(), 7.dp.toPx()),
-                phase = -loopProgress * 24.dp.toPx(),
+                intervals = floatArrayOf(
+                    VolaGestureLessonTokens.pointerDash.toPx(),
+                    VolaGestureLessonTokens.pointerDashGap.toPx(),
+                ),
+                phase = -loopProgress * VolaGestureLessonTokens.pointerDashTravel.toPx(),
             ),
         )
         drawCircle(
-            color = primary.copy(alpha = 0.16f * guideAlpha),
-            radius = 25.dp.toPx() + 4.dp.toPx() * (1f - rawTravel),
+            color = primary.copy(alpha = VolaGestureLessonTokens.POINTER_HALO_ALPHA * guideAlpha),
+            radius = VolaGestureLessonTokens.pointerHaloRadius.toPx() +
+                VolaGestureLessonTokens.pointerHaloGrowth.toPx() * (1f - rawTravel),
             center = pointer,
         )
         drawCircle(
             color = surface.copy(alpha = guideAlpha),
-            radius = 13.dp.toPx(),
+            radius = VolaGestureLessonTokens.pointerRadius.toPx(),
             center = pointer,
         )
         drawCircle(
             color = primary.copy(alpha = guideAlpha),
-            radius = 13.dp.toPx(),
+            radius = VolaGestureLessonTokens.pointerRadius.toPx(),
             center = pointer,
-            style = Stroke(width = 3.dp.toPx()),
+            style = Stroke(width = VolaGestureLessonTokens.pointerRing.toPx()),
         )
         drawCircle(
             color = primary.copy(alpha = guideAlpha),
-            radius = 4.dp.toPx(),
+            radius = VolaGestureLessonTokens.pointerDot.toPx(),
             center = pointer,
         )
     }
@@ -1021,7 +1073,7 @@ private fun AddressBarGesturePractice(
                 accent = MaterialTheme.colorScheme.tertiary,
             )
         } else {
-            MiniTabCard(modifier = Modifier.width(190.dp))
+            MiniTabCard(modifier = Modifier.width(VolaGestureLessonTokens.tabCardWidth))
         }
         FakeBrowserPage(
             modifier = Modifier
@@ -1056,10 +1108,11 @@ private fun CloseTabPractice(dragY: Float, modifier: Modifier) {
     ) {
         MiniTabCard(
             modifier = modifier
-                .width(210.dp)
+                .width(VolaGestureLessonTokens.closeTabCardWidth)
                 .offset { IntOffset(0, (dragY.coerceAtMost(0f) * 0.75f).roundToInt()) }
                 .graphicsLayer {
-                    alpha = (1f - (-dragY.coerceAtMost(0f) / 320f)).coerceIn(0.25f, 1f)
+                    alpha = (1f - (-dragY.coerceAtMost(0f) / 320f))
+                        .coerceIn(VolaGestureLessonTokens.CLOSE_CARD_MIN_ALPHA, 1f)
                 },
         )
     }
@@ -1074,28 +1127,31 @@ private fun FakeBrowserPage(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = VolaGestureLessonTokens.pageShape,
         color = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(VolaGestureLessonTokens.pagePadding)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.58f)
-                    .height(18.dp)
-                    .background(accent.copy(alpha = 0.8f), RoundedCornerShape(10.dp)),
+                    .height(VolaGestureLessonTokens.pageTitleHeight)
+                    .background(
+                        accent.copy(alpha = VolaGestureLessonTokens.PAGE_TITLE_ALPHA),
+                        VolaGestureLessonTokens.pageTitleShape,
+                    ),
             )
-            Spacer(Modifier.height(18.dp))
-            repeat(4) { index ->
+            Spacer(Modifier.height(VolaGestureLessonTokens.pagePadding))
+            repeat(VolaGestureLessonTokens.PAGE_LINES) { index ->
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(if (index == 3) 0.64f else 1f)
-                        .height(10.dp)
+                        .fillMaxWidth(if (index == VolaGestureLessonTokens.PAGE_LINES - 1) 0.64f else 1f)
+                        .height(VolaGestureLessonTokens.pageLineHeight)
                         .background(
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                            RoundedCornerShape(8.dp),
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = VolaGestureLessonTokens.PAGE_LINE_ALPHA),
+                            VolaGestureLessonTokens.pageLineShape,
                         ),
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(VolaGestureLessonTokens.pageLineHeight))
             }
             Spacer(Modifier.weight(1f))
             if (showAddressBar) FakeAddressBar(addressBarModifier)
@@ -1103,19 +1159,22 @@ private fun FakeBrowserPage(
     }
 }
 
+/** The address on the lesson's pretend page: a plain domain, the same in every language. */
+private const val LESSON_PAGE_HOST = "wikipedia.org"
+
 @Composable
 private fun FakeAddressBar(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp),
-        shape = RoundedCornerShape(24.dp),
+            .height(VolaGestureLessonTokens.addressBarHeight),
+        shape = VolaGestureLessonTokens.addressBarShape,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        tonalElevation = 6.dp,
+        tonalElevation = VolaGestureLessonTokens.addressBarElevation,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
-                text = "candy://gestures",
+                text = LESSON_PAGE_HOST,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1126,18 +1185,18 @@ private fun FakeAddressBar(modifier: Modifier = Modifier) {
 @Composable
 private fun MiniTabCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(260.dp),
-        shape = RoundedCornerShape(26.dp),
+        modifier = modifier.heightIn(max = VolaGestureLessonTokens.tabCardHeight).fillMaxHeight(),
+        shape = VolaGestureLessonTokens.tabCardShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = VolaGestureLessonTokens.tabCardElevation),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(VolaGestureLessonTokens.tabCardPadding)) {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(VolaGestureLessonTokens.tabCardGap))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1149,7 +1208,7 @@ private fun MiniTabCard(modifier: Modifier = Modifier) {
                                 MaterialTheme.colorScheme.tertiaryContainer,
                             ),
                         ),
-                        RoundedCornerShape(18.dp),
+                        VolaGestureLessonTokens.tabCardImageShape,
                     ),
             )
         }
@@ -1161,33 +1220,44 @@ private fun GestureDirectionBadge(
     step: GestureOnboardingStep,
     modifier: Modifier = Modifier,
 ) {
-    val direction = when (step) {
-        GestureOnboardingStep.SwitchTabs -> "↔"
-        GestureOnboardingStep.OpenTabOverview,
-        GestureOnboardingStep.CloseTab,
-        -> "↑"
-    }
     Surface(
         modifier = modifier,
         shape = CircleShape,
         color = gestureAccent(step),
-        shadowElevation = 5.dp,
+        contentColor = gestureOnAccent(step),
+        shadowElevation = VolaGestureLessonTokens.badgeShadow,
     ) {
         Text(
-            text = direction,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 7.dp),
-            color = Color.White,
-            fontSize = 22.sp,
+            text = directionSymbol(step),
+            modifier = Modifier.padding(VolaGestureLessonTokens.badgePadding),
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
         )
     }
 }
 
+private fun directionSymbol(step: GestureOnboardingStep): String = when (step) {
+    GestureOnboardingStep.SwitchTabs -> "↔"
+    GestureOnboardingStep.OpenTabOverview,
+    GestureOnboardingStep.CloseTab,
+    -> "↑"
+}
+
+/** Swipes along the address bar use the accent, the overview the tertiary color of the theme. */
+@Composable
 private fun gestureAccent(step: GestureOnboardingStep): Color = when (step) {
-    GestureOnboardingStep.OpenTabOverview -> VolaBrand.CyanDeep
+    GestureOnboardingStep.OpenTabOverview -> MaterialTheme.colorScheme.tertiary
     GestureOnboardingStep.SwitchTabs,
     GestureOnboardingStep.CloseTab,
-    -> VolaBrand.Violet
+    -> MaterialTheme.colorScheme.primary
+}
+
+@Composable
+private fun gestureOnAccent(step: GestureOnboardingStep): Color = when (step) {
+    GestureOnboardingStep.OpenTabOverview -> MaterialTheme.colorScheme.onTertiary
+    GestureOnboardingStep.SwitchTabs,
+    GestureOnboardingStep.CloseTab,
+    -> MaterialTheme.colorScheme.onPrimary
 }
 
 @Composable
@@ -1207,3 +1277,45 @@ private fun stepDescription(step: GestureOnboardingStep): String = stringResourc
         GestureOnboardingStep.CloseTab -> R.string.onboarding_close_tab_description
     },
 )
+
+/** The lesson's welcome, a step and the end, in the light, dark and private themes. */
+@VolaPreviews
+@Composable
+private fun GestureLessonWelcomePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        GestureOnboardingScreen(onCompleted = {})
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun GestureLessonStepPreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        GestureOnboardingScreen(onCompleted = {}, showWelcome = false)
+    }
+}
+
+/** A phone on its side: the copy beside the card, nothing below the fold. */
+@Preview(name = "Landscape phone", group = "Vola", widthDp = 780, heightDp = 360, showBackground = true)
+@Composable
+private fun GestureLessonLandscapePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        GestureOnboardingScreen(onCompleted = {}, showWelcome = false)
+    }
+}
+
+@Preview(name = "Private", group = "Vola", widthDp = 412, showBackground = true)
+@Composable
+private fun GestureLessonPrivatePreview() {
+    MaterialBrowserTheme(privateMode = true) {
+        GestureOnboardingScreen(onCompleted = {}, showWelcome = false)
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun GestureLessonCelebrationPreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        GestureOnboardingCelebration(onContinue = {})
+    }
+}

@@ -43,11 +43,16 @@ internal data class TabActionsFacts(
     val otherWorkspaceCount: Int,
     /** Another page than the selected one, which Split View can show next to it. */
     val canOpenSideBySide: Boolean = false,
+    /** A locked private tab: nothing may reveal or act on its page until it is unlocked. */
+    val isLocked: Boolean = false,
+    /** The browser can store the tab as snoozed: false for a synced or session-only tab. */
+    val canSnooze: Boolean = true,
 )
 
 internal object TabActionsRules {
     /** At most four, as on the board; Split View («Рядом») waits for Q30, so pinning takes its place. */
     fun quickActions(facts: TabActionsFacts): List<TabQuickAction> = buildList {
+        if (facts.isLocked) return@buildList
         if (facts.isHttpPage && !facts.isIncognito) {
             when {
                 facts.isEssential -> add(TabQuickAction.RemoveFromEssentials)
@@ -59,14 +64,18 @@ internal object TabActionsRules {
         if (facts.isWebPage) add(TabQuickAction.Share)
     }
 
-    fun canMove(facts: TabActionsFacts): Boolean = facts.otherWorkspaceCount > 0
+    fun canMove(facts: TabActionsFacts): Boolean = !facts.isLocked && facts.otherWorkspaceCount > 0
 
-    /** Snoozed tabs are stored, so a private tab is never snoozed. */
-    fun canSnooze(facts: TabActionsFacts): Boolean = !facts.isIncognito
+    /** Snoozed tabs are stored, so a private, synced or session-only tab is never snoozed. */
+    fun canSnooze(facts: TabActionsFacts): Boolean = facts.canSnooze && !facts.isIncognito
 
     fun canClose(facts: TabActionsFacts): Boolean = facts.canDelete
 
     fun moreActions(facts: TabActionsFacts): List<TabMoreAction> = buildList {
+        if (facts.isLocked) {
+            if (facts.canCloseAll) add(TabMoreAction.CloseAll)
+            return@buildList
+        }
         if (facts.canOpenSideBySide) add(TabMoreAction.SideBySide)
         if (facts.isWebPage && !facts.isIncognito) {
             add(if (facts.isBookmarked) TabMoreAction.RemoveBookmark else TabMoreAction.AddBookmark)

@@ -66,7 +66,8 @@ private val FIND_BAR_PROGRESS_SIZE = 18.dp
 /**
  * Find in page as the v4 Find board draws it: a card capsule in the thumb zone with the query,
  * the match count and the previous, next and close actions. Match case and whole word sit above
- * it when the engine supports them.
+ * it when the engine supports them. In a private tab ([isPrivate]) the keyboard is asked not to
+ * learn from the query.
  */
 @Composable
 internal fun FindInPageBar(
@@ -92,6 +93,7 @@ internal fun FindInPageBar(
     matchCaseLabel: String = "",
     wholeWordLabel: String = "",
     onOptionsChange: (FindInPageOptions) -> Unit = {},
+    isPrivate: Boolean = false,
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -146,40 +148,43 @@ internal fun FindInPageBar(
                     contentDescription = null,
                     tint = colors.onSurfaceVariant,
                 )
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = VolaSpacing.x3)
-                        .focusRequester(focusRequester)
-                        .semantics { contentDescription = queryContentDescription }
-                        .testTag(FindInPageBarTestTags.Query),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.titleMedium.copy(
-                        color = colors.onSurface,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    cursorBrush = SolidColor(colors.primary),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { if (canNavigate) onNextMatch() },
-                    ),
-                    decorationBox = { innerTextField ->
-                        Box(contentAlignment = Alignment.CenterStart) {
-                            if (query.isEmpty()) {
-                                Text(
-                                    text = placeholder,
-                                    color = colors.onSurfaceVariant,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                PrivateKeyboard(isPrivate = isPrivate) {
+                    BasicTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = VolaSpacing.x3)
+                            .focusRequester(focusRequester)
+                            .semantics { contentDescription = queryContentDescription }
+                            .testTag(FindInPageBarTestTags.Query),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.titleMedium.copy(
+                            color = colors.onSurface,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        cursorBrush = SolidColor(colors.primary),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            // Steps to the next match, or searches again when there is none.
+                            onSearch = { onNextMatch() },
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (query.isEmpty()) {
+                                    Text(
+                                        text = placeholder,
+                                        color = colors.onSurfaceVariant,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                innerTextField()
                             }
-                            innerTextField()
-                        }
-                    },
-                )
+                        },
+                    )
+                }
                 Box(
                     modifier = Modifier.widthIn(min = FIND_BAR_COUNT_MIN_WIDTH),
                     contentAlignment = Alignment.Center,

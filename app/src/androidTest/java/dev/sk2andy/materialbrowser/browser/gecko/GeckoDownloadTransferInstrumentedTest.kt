@@ -283,6 +283,98 @@ class GeckoDownloadTransferInstrumentedTest {
     }
 
     @Test
+    fun finalMetadataWaitsForAnAnswerBeforeAnythingIsWritten() {
+        val openedTypes = mutableListOf<String>()
+        val bodyClosed = AtomicBoolean(false)
+        val events = mutableListOf<String>()
+        val metadataRef = AtomicReference<GeckoDownloadTransferMetadata>()
+        val decisions = mutableListOf<GeckoDownloadMetadataDecision>()
+        val managerRef = AtomicReference<GeckoDownloadTransferManager>()
+        fun response(name: String) = WebResponse.Builder("https://files.example/get?id=20")
+            .statusCode(200)
+            .header("Content-Type", "application/octet-stream")
+            .header("Content-Disposition", "attachment; filename=\"$name\"")
+            .body(
+                object : ByteArrayInputStream("apk".encodeToByteArray()) {
+                    override fun close() {
+                        bodyClosed.set(true)
+                        super.close()
+                    }
+                },
+            )
+            .build()
+        val listener = object : GeckoDownloadTransferListener {
+            override fun onMetadata(
+                metadata: GeckoDownloadTransferMetadata,
+                decision: GeckoDownloadMetadataDecision,
+            ) {
+                metadataRef.set(metadata)
+                decisions += decision
+            }
+
+            override fun onStarted(start: GeckoDownloadTransferStart) {
+                events += "started:${start.mimeType}"
+            }
+
+            override fun onFailed(reason: GeckoDownloadFailure) {
+                events += "failed:$reason"
+            }
+        }
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val manager = GeckoDownloadTransferManager(
+                context = context,
+                executor = testExecutor(),
+                sink = object : GeckoDownloadStreamSink {
+                    override fun open(fileName: String, mimeType: String): GeckoDownloadStreamEntry {
+                        openedTypes += mimeType
+                        return object : GeckoDownloadStreamEntry {
+                            override val uri = android.net.Uri.parse("content://media/external/downloads/48")
+                            override val output = ByteArrayOutputStream()
+                            override fun commit() = Unit
+                            override fun abort() = Unit
+                            override fun close() = Unit
+                        }
+                    }
+                },
+            )
+            managerRef.set(manager)
+            val owner = GeckoDownloadOwner("test-profile", isPrivate = true, sessionKey = this)
+            manager.startResponse(owner, response("invoice.pdf.apk"), referrer = null, listener = listener)
+        }
+        val manager = requireNotNull(managerRef.get())
+        try {
+            assertEquals(
+                GeckoDownloadTransferMetadata(
+                    fileName = "invoice.pdf.apk",
+                    mimeType = "application/vnd.android.package-archive",
+                    sourceUrl = "https://files.example/get?id=20",
+                ),
+                metadataRef.get(),
+            )
+            assertTrue(openedTypes.isEmpty())
+            assertFalse(bodyClosed.get())
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                decisions.single().abort()
+                decisions.single().proceed()
+            }
+            assertTrue(bodyClosed.get())
+            assertTrue(openedTypes.isEmpty())
+            assertTrue(events.isEmpty())
+
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val owner = GeckoDownloadOwner("test-profile", isPrivate = true, sessionKey = this)
+                manager.startResponse(owner, response("App.apk"), referrer = null, listener = listener)
+                decisions.last().proceed()
+                decisions.last().proceed()
+            }
+            assertEquals(listOf("application/vnd.android.package-archive"), openedTypes)
+            assertEquals(listOf("started:application/vnd.android.package-archive"), events)
+        } finally {
+            manager.close()
+        }
+    }
+
+    @Test
     fun pausesOriginalResponseBeforeCopyThenResumesWithoutRefetch() {
         val bodyRead = CountDownLatch(1)
         val completed = CountDownLatch(1)

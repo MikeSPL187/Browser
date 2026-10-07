@@ -74,6 +74,43 @@ class EssentialsControllerTest {
     }
 
     @Test
+    fun `filling the freed cell ends the pending undo`() {
+        val full = (1..EssentialsRules.MAX_ENTRIES).map { EssentialEntry("https://s$it.example.com/", "S$it") }
+        val store = FakeStore(saved = mapOf(DEFAULT_PROFILE_ID to full, "work" to listOf(docs)))
+        val icons = FakeIcons()
+        val controller = controller(store, icons, profiles = listOf(DEFAULT_PROFILE_ID, "work"))
+        controller.restore()
+
+        controller.remove(DEFAULT_PROFILE_ID, full.first().id)
+        val removal = controller.removal!!
+        controller.add("work", mail.url, mail.title, icon = null)
+        assertEquals(removal, controller.removal)
+
+        controller.add(DEFAULT_PROFILE_ID, mail.url, mail.title, icon = null)
+
+        assertNull(controller.removal)
+        assertFalse(full.first().url in icons.pruned.last())
+        assertFalse(controller.undoRemoval(removal))
+        assertEquals(full.drop(1) + mail, controller.entriesFor(DEFAULT_PROFILE_ID))
+    }
+
+    @Test
+    fun `an undo that can no longer apply still ends and prunes icons`() {
+        val store = FakeStore(saved = mapOf(DEFAULT_PROFILE_ID to listOf(mail, docs)))
+        val icons = FakeIcons()
+        val controller = controller(store, icons)
+        controller.restore()
+        controller.remove(DEFAULT_PROFILE_ID, mail.id)
+        val removal = controller.removal!!
+        controller.add(DEFAULT_PROFILE_ID, mail.url, mail.title, icon = null)
+
+        assertFalse(controller.undoRemoval(removal))
+
+        assertNull(controller.removal)
+        assertEquals(setOf(docs.url, mail.url), icons.pruned.last())
+    }
+
+    @Test
     fun `a dismissed removal is final and prunes its icon`() {
         val store = FakeStore(saved = mapOf(DEFAULT_PROFILE_ID to listOf(mail, docs)))
         val icons = FakeIcons()
