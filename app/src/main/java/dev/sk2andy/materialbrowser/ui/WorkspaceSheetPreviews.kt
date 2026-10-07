@@ -66,3 +66,29 @@ private fun WorkspaceSettingsSheetPreview() {
         )
     }
 }
+
+@VolaPreviews
+@Composable
+private fun SyncBoundWorkspaceSettingsSheetPreview() {
+    WorkspaceSheetPreviewFrame {
+        WorkspaceSettingsSheet(
+            profile = BrowserProfile(id = "home", emoji = "🏠", name = "Home"),
+            tabCount = 3,
+            essentialsCount = 4,
+            icons = previewIcons,
+            canDelete = false,
+            isolationSupported = true,
+            profileProtectionSupported = true,
+            onRename = {},
+            onAccentChange = {},
+            onIconChange = {},
+            onCustomizeWallpaper = {},
+            onIsolationChange = {},
+            onEnableProtection = {},
+            onDisableProtection = {},
+            onDelete = {},
+            onDismiss = {},
+            deleteBlockedBySync = true,
+        )
+    }
+}

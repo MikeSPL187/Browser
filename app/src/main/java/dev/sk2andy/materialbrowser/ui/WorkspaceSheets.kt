@@ -52,6 +52,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,6 +97,7 @@ internal object WorkspaceSheetTestTags {
     const val Storage = "workspace_settings_storage"
     const val Biometric = "workspace_settings_biometric"
     const val Delete = "workspace_settings_delete"
+    const val DeleteBlockedBySync = "workspace_settings_delete_blocked_by_sync"
 
     fun icon(emoji: String): String = "workspace_icon:$emoji"
 }
@@ -113,13 +116,16 @@ internal fun NewWorkspaceSheet(
     onDismiss: () -> Unit,
 ) {
     if (!visible) return
-    var name by remember { mutableStateOf("") }
-    var accent by remember { mutableStateOf(WorkspaceAccent.Default) }
-    var emoji by remember(icons) { mutableStateOf(WorkspaceSheetRules.defaultIcon(icons)) }
-    var allIconsShown by remember { mutableStateOf(false) }
-    var isolationEnabled by remember { mutableStateOf(false) }
-    var protection by remember { mutableStateOf<ProfileProtection?>(null) }
-    var configuringProtection by remember { mutableStateOf(false) }
+    // The draft survives recreation; nothing here unlocks a workspace.
+    var name by rememberSaveable { mutableStateOf("") }
+    var accent by rememberSaveable { mutableStateOf(WorkspaceAccent.Default) }
+    var emoji by rememberSaveable(icons) { mutableStateOf(WorkspaceSheetRules.defaultIcon(icons)) }
+    var allIconsShown by rememberSaveable { mutableStateOf(false) }
+    var isolationEnabled by rememberSaveable { mutableStateOf(false) }
+    var protection by rememberSaveable(stateSaver = ProtectionDraftSaver) {
+        mutableStateOf<ProfileProtection?>(null)
+    }
+    var configuringProtection by rememberSaveable { mutableStateOf(false) }
     val gemColors = volaGemColors(accent)
     WorkspaceSheetFrame(
         onDismiss = onDismiss,
@@ -227,6 +233,11 @@ internal fun NewWorkspaceSheet(
     }
 }
 
+private val ProtectionDraftSaver = Saver<ProfileProtection?, String>(
+    save = { protection -> WorkspaceSheetRules.savedProtectionDraft(protection) },
+    restore = { saved -> WorkspaceSheetRules.restoredProtectionDraft(saved) },
+)
+
 /**
  * «Workspace settings» (board W-WorkspaceSettings), from a long press on the workspace's gem.
  * The name is saved when the sheet closes; everything else at once.
@@ -249,6 +260,7 @@ internal fun WorkspaceSettingsSheet(
     onDisableProtection: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    deleteBlockedBySync: Boolean = false,
 ) {
     val workspace = profile ?: return
     val editable = !workspace.isSyncLinked
@@ -388,7 +400,18 @@ internal fun WorkspaceSettingsSheet(
                 isolationModifier = Modifier.testTag(WorkspaceSheetTestTags.Storage),
                 protectionModifier = Modifier.testTag(WorkspaceSheetTestTags.Biometric),
             )
-            if (canDelete) {
+            if (deleteBlockedBySync) {
+                Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
+                Text(
+                    text = stringResource(R.string.workspace_delete_blocked_by_sync),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = VolaWorkspaceSheet.rowPadding)
+                        .testTag(WorkspaceSheetTestTags.DeleteBlockedBySync),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (canDelete) {
                 Spacer(Modifier.height(VolaWorkspaceSheet.sectionGap))
                 OutlinedButton(
                     onClick = { confirmingDelete = true },
@@ -538,7 +561,7 @@ private fun WorkspaceNameField(
     val focusManager = LocalFocusManager.current
     OutlinedTextField(
         value = name,
-        onValueChange = { value -> onNameChange(value.take(WorkspaceNameRules.MAX_LENGTH)) },
+        onValueChange = { value -> onNameChange(WorkspaceNameRules.cap(value)) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = VolaWorkspaceSheet.sectionGap)

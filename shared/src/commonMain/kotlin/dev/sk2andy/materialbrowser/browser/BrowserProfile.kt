@@ -101,7 +101,17 @@ object WorkspaceNameRules {
 
     /** Trims, collapses inner whitespace and caps the length; blank means "use the default". */
     fun normalize(value: String): String =
-        value.trim().replace(WHITESPACE, " ").take(MAX_LENGTH).trim()
+        cap(value.trim().replace(WHITESPACE, " ")).trim()
+
+    /** Caps the length in UTF-16 units without splitting a surrogate pair at the cut. */
+    fun cap(value: String): String {
+        val capped = value.take(MAX_LENGTH)
+        return if (capped.length == MAX_LENGTH && capped.last().isHighSurrogate()) {
+            capped.dropLast(1)
+        } else {
+            capped
+        }
+    }
 
     private val WHITESPACE = Regex("\\s+")
 }
