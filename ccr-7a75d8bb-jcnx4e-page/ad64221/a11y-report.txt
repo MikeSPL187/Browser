@@ -1,0 +1,4 @@
+Vola controls in the tour: 3 accessibility finding(s).
+- [NEW] unlabeled | View | first-run-setup — first-run-setup
+- [NEW] unlabeled | View | first-run-welcome — first-run-welcome
+- [NEW] unlabeled | View | launch — launch
