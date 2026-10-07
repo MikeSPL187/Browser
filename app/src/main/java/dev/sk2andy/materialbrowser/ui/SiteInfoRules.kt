@@ -19,18 +19,18 @@ internal object SiteInfoRules {
     )
 
     /**
-     * Permission rows in a stable order. Notifications are left out where they cannot work: in the
-     * System WebView build and in private tabs.
+     * Permission rows in a stable order. Permissions the engine does not route are left out, and so
+     * are notifications in private tabs.
      */
     fun visiblePermissions(
         entries: List<PermissionRadarEntry>,
-        notificationsSupported: Boolean,
+        supportedPermissions: Set<SitePermission>,
         isPrivate: Boolean,
     ): List<PermissionRadarEntry> = entries
         .filter { entry ->
             when {
-                entry.permission == SitePermission.Notifications ->
-                    notificationsSupported && !isPrivate
+                entry.permission !in supportedPermissions -> false
+                entry.permission == SitePermission.Notifications -> !isPrivate
                 entry.permission in CORE_PERMISSIONS -> true
                 else -> isCustomized(entry)
             }
@@ -44,6 +44,17 @@ internal object SiteInfoRules {
         entry.decision != SitePermissionDecision.Ask ||
             entry.allowedForSession ||
             entry.activity != SitePermissionActivity.Idle
+
+    /**
+     * Rows of the full radar: what the engine routes, plus notifications, which explain why they
+     * are unavailable instead of offering choices that would do nothing.
+     */
+    fun radarEntries(
+        entries: List<PermissionRadarEntry>,
+        supportedPermissions: Set<SitePermission>,
+    ): List<PermissionRadarEntry> = entries.filter { entry ->
+        entry.permission in supportedPermissions || entry.permission == SitePermission.Notifications
+    }
 
     /** The letter on the site's gem in the sheet header. */
     fun initial(host: String): String =

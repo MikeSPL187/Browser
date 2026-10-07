@@ -75,7 +75,7 @@ internal fun PrivacyXRaySheet(
     siteState: SiteProtectionState,
     permissionSnapshot: PermissionRadarSnapshot,
     workspaceName: String,
-    websiteNotificationsSupported: Boolean,
+    supportedPermissions: Set<SitePermission>,
     backdropSource: CandyChromeBackdropSource? = null,
     onPause: (persistently: Boolean) -> Unit,
     onResume: () -> Unit,
@@ -158,7 +158,7 @@ internal fun PrivacyXRaySheet(
                         blockedCount = snapshot.totalBlocked,
                         permissions = SiteInfoRules.visiblePermissions(
                             entries = permissionSnapshot.entries,
-                            notificationsSupported = websiteNotificationsSupported,
+                            supportedPermissions = supportedPermissions,
                             isPrivate = permissionSnapshot.isPrivate,
                         ),
                         canChangePermissions = permissionSnapshot.site != null,
@@ -228,7 +228,7 @@ internal fun PrivacyXRaySheet(
                     PermissionRadarContent(
                         snapshot = permissionSnapshot,
                         workspaceName = workspaceName,
-                        websiteNotificationsSupported = websiteNotificationsSupported,
+                        supportedPermissions = supportedPermissions,
                         onOriginSelected = onPermissionOriginSelected,
                         onDecisionChanged = onPermissionDecisionChanged,
                         onResetSite = onResetSitePermissions,
