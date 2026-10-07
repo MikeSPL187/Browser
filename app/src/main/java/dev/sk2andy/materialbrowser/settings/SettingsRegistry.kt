@@ -214,6 +214,19 @@ internal object SettingsRegistry {
             R.string.data_archive_import_title,
             R.string.data_archive_import_summary,
         ),
+        setting(
+            "private_tabs_lock",
+            ProtectionAndData,
+            R.string.private_tabs_lock_settings_title,
+            R.string.private_tabs_lock_settings_summary,
+        ),
+        setting(
+            "filter_studio",
+            ProtectionAndData,
+            R.string.filter_studio_title,
+            R.string.filter_studio_settings_summary,
+        ),
+        setting("permission_radar", ProtectionAndData, R.string.permission_radar_title, null),
 
         setting("search_engine", Search, R.string.settings_search_engine, null),
         setting(
@@ -235,7 +248,21 @@ internal object SettingsRegistry {
             R.string.settings_searxng_suggestion_fallback,
             null,
         ),
+        setting(
+            "searxng_instance_url",
+            Search,
+            R.string.settings_searxng_instance_url,
+            R.string.settings_searxng_instance_url_summary,
+        ),
 
+        setting("tab_overview_mode", TabsAndGestures, R.string.settings_tab_overview_mode, null),
+        setting(
+            "tab_list_starts_at_bottom",
+            TabsAndGestures,
+            R.string.settings_tab_list_starts_at_bottom_title,
+            R.string.settings_tab_list_starts_at_bottom_subtitle,
+        ),
+        setting("resident_tab_limit", TabsAndGestures, R.string.settings_resident_tab_limit, null),
         setting(
             "tab_stack_folder_mode",
             TabsAndGestures,

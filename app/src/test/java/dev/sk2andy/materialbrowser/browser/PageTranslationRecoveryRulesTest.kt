@@ -171,6 +171,25 @@ class PageTranslationRecoveryRulesTest {
     }
 
     @Test
+    fun `short article quoting a failure phrase stays visible`() {
+        val sentence =
+            "Troubleshooting: when a service reports translation failed, check your internet connection."
+        val articlePayload =
+            """{"hasVisibleContent":true,"visibleText":"Troubleshooting $sentence","blocks":[{"kind":"heading","level":1,"text":"Troubleshooting"},{"kind":"paragraph","level":0,"text":"$sentence"}]}"""
+        val headlineErrorPayload =
+            """{"hasVisibleContent":true,"visibleText":"Couldn't translate this page Try again later.","blocks":[{"kind":"heading","level":1,"text":"Couldn't translate this page"},{"kind":"paragraph","level":0,"text":"Try again later."}]}"""
+
+        assertEquals(
+            PageTranslationContentOutcome.Visible,
+            PageTranslationRecoveryRules.contentOutcome(articlePayload),
+        )
+        assertEquals(
+            PageTranslationContentOutcome.ProviderError,
+            PageTranslationRecoveryRules.contentOutcome(headlineErrorPayload),
+        )
+    }
+
+    @Test
     fun `empty result must remain empty across two checks`() {
         assertEquals(
             PageTranslationContentAction.Retry,

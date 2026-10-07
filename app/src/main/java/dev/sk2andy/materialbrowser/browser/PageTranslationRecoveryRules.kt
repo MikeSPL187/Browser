@@ -116,6 +116,32 @@ internal object PageTranslationRecoveryRules {
     private fun isProviderError(root: JSONObject): Boolean {
         val text = root.optString("visibleText").trim()
         if (text.isEmpty() || text.length > MAX_PROVIDER_ERROR_TEXT_CHARS) return false
+        if (!containsProviderErrorPhrase(text)) return false
+        return !hasArticleStructure(root.optJSONArray("blocks"))
+    }
+
+    /**
+     * A short translated article may quote a failure phrase ("when a service reports translation
+     * failed..."). A provider rejection page leads with the failure itself, so an extracted heading
+     * that does not state a failure, followed by body text, marks real content.
+     */
+    private fun hasArticleStructure(blocks: JSONArray?): Boolean {
+        if (blocks == null) return false
+        var hasContentHeading = false
+        var hasBody = false
+        for (index in 0 until blocks.length()) {
+            val block = blocks.optJSONObject(index) ?: continue
+            val blockText = block.optString("text").trim()
+            if (blockText.isEmpty()) continue
+            when (block.optString("kind")) {
+                "heading" -> if (!containsProviderErrorPhrase(blockText)) hasContentHeading = true
+                "paragraph", "listitem", "quote" -> hasBody = true
+            }
+        }
+        return hasContentHeading && hasBody
+    }
+
+    private fun containsProviderErrorPhrase(text: String): Boolean {
         val normalizedText = text.lowercase(Locale.ROOT)
         return providerErrorPhrases.any(normalizedText::contains)
     }

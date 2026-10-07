@@ -55,7 +55,7 @@ internal fun BrowserTransientOverlays(
         AlertDialog(
             onDismissRequest = { onClearDialogDismiss() },
             title = { Text(stringResource(R.string.clear_data_title)) },
-            text = { Text(stringResource(R.string.clear_data_message)) },
+            text = { Text(stringResource(R.string.clear_data_scope_message)) },
             confirmButton = {
                 Button(
                     onClick = {
