@@ -14,6 +14,7 @@ import dev.sk2andy.materialbrowser.legal.CandyLegalSources
 import dev.sk2andy.materialbrowser.legal.ThirdPartyComponent
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -120,14 +121,23 @@ class AboutLegalSectionInstrumentedTest {
             .bufferedReader()
             .use { it.readText() }
 
-        assertTrue(notices.contains(CandyLegalSources.UBLOCK_ORIGIN_REVISION))
-        assertTrue(
-            notices.contains(
-                "175756d74468c9ba45863f7fc333d3be670f82d5b066314e915814dd547d1652",
-            ),
-        )
-
-        assertTrue(notices.contains("release runtime classpath for Vola"))
+        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+            // The System WebView build ships no Gecko extensions, so their notices are stripped.
+            assertFalse(notices.contains("Gecko default extensions"))
+            assertTrue(notices.contains("System WebView release runtime classpath for Vola"))
+        } else {
+            assertTrue(notices.contains(CandyLegalSources.UBLOCK_ORIGIN_REVISION))
+            // Every bundled extension package must be listed with the hash of the shipped file.
+            val catalog = context.assets.open("gecko_default_extensions/catalog.json")
+                .bufferedReader()
+                .use { JSONObject(it.readText()) }
+                .getJSONArray("extensions")
+            assertTrue(catalog.length() > 0)
+            for (index in 0 until catalog.length()) {
+                assertTrue(notices.contains(catalog.getJSONObject(index).getString("sha256")))
+            }
+            assertTrue(notices.contains("GeckoView release runtime classpath for Vola"))
+        }
         assertFalse(notices.contains("Google Code Scanner"))
         assertFalse(notices.contains("Google Data Transport"))
     }

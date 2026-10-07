@@ -33,6 +33,9 @@ internal object DownloadDirectoryRules {
     private const val DOWNLOADS_DIRECTORY = "Download"
     private const val MAX_SUBDIRECTORY_LENGTH = 240
 
+    // Storage limits each path component to 255 bytes, so non-Latin names hit it before 240 chars.
+    private const val MAX_SEGMENT_UTF8_BYTES = 255
+
     fun normalizedSubdirectory(value: String?): String? {
         val normalized = value
             ?.trim()
@@ -47,7 +50,8 @@ internal object DownloadDirectoryRules {
                 segment.isBlank() ||
                     segment == "." ||
                     segment == ".." ||
-                    segment.any(Char::isISOControl)
+                    segment.any(Char::isISOControl) ||
+                    segment.toByteArray(Charsets.UTF_8).size > MAX_SEGMENT_UTF8_BYTES
             }
         ) {
             return null

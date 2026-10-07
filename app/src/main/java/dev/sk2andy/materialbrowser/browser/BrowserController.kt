@@ -240,6 +240,7 @@ import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import dev.sk2andy.materialbrowser.data.InactiveTabLifetime
 import dev.sk2andy.materialbrowser.data.DownloadManagerMode
+import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.PermissionRadarStore
 import dev.sk2andy.materialbrowser.data.PendingCandyTrailRedaction
 import dev.sk2andy.materialbrowser.data.ProfileWallpaperStore
@@ -9199,11 +9200,16 @@ class BrowserController(
         privacySignalSettings = settings
         store.savePrivacySignalSettings(settings)
         browserEngineSessionFactory.setGlobalPrivacyControl(settings.globalPrivacyControlEnabled)
+        // A later change or a navigation supersedes the reload a pending callback would do.
+        val revision = privacySignalRevision
         browserEngineSessions.forEach { (tabId, session) ->
             val policy = geckoPrivacyPolicyFor(tabId) ?: return@forEach
+            val navigationGeneration = navigationGenerations[tabId]
             session.updatePrivacyPolicy(policy) {
                 if (
+                    revision == privacySignalRevision &&
                     browserEngineSessions[tabId] === session &&
+                    navigationGenerations[tabId] == navigationGeneration &&
                     BrowserUriPolicy.normalizeHttpUrl(pageUrls[tabId]) != null
                 ) {
                     session.execute(BrowserEngineCommands.reload())
@@ -9223,7 +9229,7 @@ class BrowserController(
                     cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
-                if (geckoLinkPeekBindings[view] === binding) {
+                if (revision == privacySignalRevision && geckoLinkPeekBindings[view] === binding) {
                     binding.session.execute(BrowserEngineCommands.reload())
                 }
             }
@@ -9244,6 +9250,7 @@ class BrowserController(
                 ) {
                     if (
                         externalLinkPreviewRuntime === previewRuntime &&
+                        revision == privacySignalRevision &&
                         externalLinkPreviewState?.sessionId == previewRuntime.sessionId
                     ) {
                         previewRuntime.geckoBinding.session.execute(BrowserEngineCommands.reload())
@@ -9277,13 +9284,30 @@ class BrowserController(
 
     fun updateBrowserEngineKind(kind: AndroidBrowserEngineKind) {
         if (kind == browserEngineKind) return
+        // The restart kills this process, which owns streamed downloads.
+        if (DownloadRuntimeRegistry.activeTransferIds().isNotEmpty()) {
+            Toast.makeText(
+                activity,
+                R.string.settings_browser_engine_change_blocked_by_downloads,
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        // Tabs must be on disk before the engine flips and the process is killed.
+        persist()
+        val tabsSaved = store.saveTabsImmediately(persistableTabs(tabs), selectedTabId)
+        if (!tabsSaved || !store.flush()) {
+            Toast.makeText(
+                activity,
+                R.string.settings_browser_engine_change_save_failed,
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
         if (!store.saveAndroidBrowserEngineKind(kind)) return
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
             GeckoWebPushCoordinator.onBrowserEngineChanged(activity.applicationContext, kind)
         }
-        persist()
-        store.saveTabsImmediately(persistableTabs(tabs), selectedTabId)
-        store.flush()
         onBrowserEngineChangeRequested(kind)
     }
 
@@ -9312,11 +9336,16 @@ class BrowserController(
     }
 
     private fun applyAnimationPolicyToActiveSessions() {
+        // A later toggle or a navigation supersedes the reload a pending callback would do.
+        val revision = animationPolicyRevision
         browserEngineSessions.forEach { (tabId, session) ->
             val policy = geckoPrivacyPolicyFor(tabId) ?: return@forEach
+            val navigationGeneration = navigationGenerations[tabId]
             session.updatePrivacyPolicy(policy) {
                 if (
+                    revision == animationPolicyRevision &&
                     browserEngineSessions[tabId] === session &&
+                    navigationGenerations[tabId] == navigationGeneration &&
                     BrowserUriPolicy.normalizeHttpUrl(pageUrls[tabId]) != null
                 ) {
                     session.execute(BrowserEngineCommands.reload())
@@ -9336,7 +9365,7 @@ class BrowserController(
                     cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
-                if (geckoLinkPeekBindings[view] === binding) {
+                if (revision == animationPolicyRevision && geckoLinkPeekBindings[view] === binding) {
                     binding.session.execute(BrowserEngineCommands.reload())
                 }
             }
@@ -9357,6 +9386,7 @@ class BrowserController(
             ) {
                 if (
                     externalLinkPreviewRuntime === previewRuntime &&
+                    revision == animationPolicyRevision &&
                     externalLinkPreviewState?.sessionId == previewRuntime.sessionId
                 ) {
                     previewRuntime.geckoBinding.session.execute(BrowserEngineCommands.reload())
