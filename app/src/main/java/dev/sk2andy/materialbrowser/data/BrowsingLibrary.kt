@@ -68,6 +68,16 @@ internal object BrowsingLibraryRules {
     }
 
     /**
+     * Whether a same-document URL change (pushState, replaceState, Back within the page) is a new
+     * History visit: only when the page's path or query changed, never for a #fragment alone
+     * (owner's decision, audit H02).
+     */
+    fun recordsSameDocumentVisit(previousUrl: String?, url: String): Boolean {
+        val pageKey = urlKey(url) ?: return false
+        return pageKey != previousUrl?.let(::urlKey)
+    }
+
+    /**
      * The title a recorded [visit] takes from a page title that arrived after it was saved; null
      * when [title] is blank or unchanged, or [url] is no longer the visit's page (fragment aside).
      */

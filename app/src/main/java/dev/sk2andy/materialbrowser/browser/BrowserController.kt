@@ -12267,6 +12267,9 @@ class BrowserController(
                         markLocalSyncNavigationPending(event.tabId, normalizedChangedUrl)
                         scheduleSyncedTabNavigation(event.tabId)
                         addressBar.scheduleAutoDockProbe(event.tabId, normalizedChangedUrl)
+                        if (BrowsingLibraryRules.recordsSameDocumentVisit(previousUrl, normalizedChangedUrl)) {
+                            recordHistory(event.tabId, normalizedChangedUrl, event.title ?: currentTab.title)
+                        }
                     }
                     persist()
                 }

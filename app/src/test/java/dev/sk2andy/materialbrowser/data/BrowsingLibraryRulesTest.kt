@@ -11,6 +11,18 @@ import org.junit.Test
 
 class BrowsingLibraryRulesTest {
     @Test
+    fun `an in-page move to a new path or query is a visit but a fragment is not`() {
+        val catalog = "https://shop.example/catalog"
+
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "https://shop.example/product/42"))
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "$catalog?page=2"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "$catalog#reviews"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit("$catalog#top", "$catalog#reviews"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "about:blank"))
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(null, catalog))
+    }
+
+    @Test
     fun `a late page title renames only the recorded visit of the same page`() {
         val visit = HistoryEntry("https://shop.example/order/42", "Loading", 20, visitId = "new")
         val older = HistoryEntry("https://shop.example/order/42", "Loading", 10, visitId = "old")
