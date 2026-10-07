@@ -41,6 +41,24 @@ class WebViewProfileRulesTest {
     }
 
     @Test
+    fun `every private clear moves to a new profile generation`() {
+        val first = WebViewProfileRules.newPrivateGeneration()
+        val second = WebViewProfileRules.newPrivateGeneration()
+        val name = WebViewProfileRules.privateProfileName(first, isolated.id)
+
+        assertNotEquals(first, second)
+        assertNotEquals(name, WebViewProfileRules.privateProfileName(second, isolated.id))
+        assertTrue(name.matches(Regex("candy_incognito_v2_[0-9a-f]{32}_6172626569742fc3a9")))
+        assertTrue(WebViewProfileRules.isPrivateProfileName(name))
+        assertTrue(WebViewProfileRules.isPrivateProfileName("candy_incognito_v2_runtime"))
+        assertTrue(WebViewProfileRules.isPrivateProfileName("candy_incognito_v1_old"))
+        assertFalse(WebViewProfileRules.isPrivateProfileName(
+            WebViewProfileRules.isolatedProfileName(isolated.id),
+        ))
+        assertFalse(WebViewProfileRules.isPrivateProfileName(DEFAULT_STORAGE_KEY))
+    }
+
+    @Test
     fun `assignment gates isolation on provider support`() {
         val tab = BrowserTab(id = "tab", lastAccessedAt = 1L, profileId = isolated.id)
 
@@ -65,7 +83,20 @@ class WebViewProfileRulesTest {
     }
 
     @Test
-    fun `incognito wins over browser profile isolation and uses session name`() {
+    fun `each workspace gets its own private profile within a generation`() {
+        val work = WebViewProfileRules.privateProfileName("gen1", isolated.id)
+        val personal = WebViewProfileRules.privateProfileName("gen1", shared.id)
+
+        assertEquals("candy_incognito_v2_gen1_6172626569742fc3a9", work)
+        assertNotEquals(work, personal)
+        assertNotEquals(work, WebViewProfileRules.privateProfileName("gen1", "arbeit/e"))
+        assertNotEquals(work, WebViewProfileRules.privateProfileName("gen2", isolated.id))
+        assertTrue(listOf(work, personal).all { it.matches(Regex("[a-z0-9_]+")) })
+        assertTrue(WebViewProfileRules.isPrivateProfileName(personal))
+    }
+
+    @Test
+    fun `incognito wins over browser profile isolation and uses its workspace's private name`() {
         val incognito = BrowserTab(
             id = "private",
             lastAccessedAt = 1L,
@@ -74,12 +105,34 @@ class WebViewProfileRulesTest {
         )
 
         assertEquals(
-            WebViewProfileAssignment.Incognito("private-session"),
+            WebViewProfileAssignment.Incognito(
+                WebViewProfileRules.privateProfileName("session", isolated.id),
+            ),
             WebViewProfileRules.assignment(
                 tab = incognito,
                 profiles = listOf(isolated),
                 multiProfileSupported = true,
-                incognitoProfileName = "private-session",
+                privateGeneration = "session",
+            ),
+        )
+        assertEquals(
+            WebViewProfileAssignment.Incognito(
+                WebViewProfileRules.privateProfileName("session", shared.id),
+            ),
+            WebViewProfileRules.assignment(
+                tab = incognito.copy(profileId = shared.id),
+                profiles = listOf(shared),
+                multiProfileSupported = true,
+                privateGeneration = "session",
+            ),
+        )
+        assertEquals(
+            WebViewProfileAssignment.Default,
+            WebViewProfileRules.assignment(
+                tab = incognito,
+                profiles = listOf(isolated),
+                multiProfileSupported = false,
+                privateGeneration = "session",
             ),
         )
     }
@@ -155,14 +208,15 @@ class WebViewProfileRulesTest {
             targetProfileId = sharedTarget.id,
         )
 
+        // A private tab follows its workspace into that workspace's private storage.
         assertEquals(
-            setOf("regular"),
+            setOf("regular", "private"),
             WebViewProfileRules.tabIdsRequiringWebViewRecreation(
                 before = isolatedTabs,
                 after = movedFromIsolation,
                 profiles = listOf(shared, sharedTarget, isolated),
                 multiProfileSupported = true,
-                incognitoProfileName = "private-session",
+                privateGeneration = "session",
             ),
         )
         assertEquals(
@@ -172,7 +226,7 @@ class WebViewProfileRulesTest {
                 after = movedBetweenSharedProfiles,
                 profiles = listOf(shared, sharedTarget),
                 multiProfileSupported = true,
-                incognitoProfileName = "private-session",
+                privateGeneration = "session",
             ),
         )
     }

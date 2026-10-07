@@ -21,6 +21,22 @@ class FavoriteFolderPreviewTest {
         assertEquals(emptyList<FavoriteEntry>(), favoriteFolderPreviewFavorites(source, "missing"))
     }
 
+    @Test
+    fun `the mosaic shows the favicons of the first four sites, or nothing`() {
+        val root = FavoriteFolder("root", "Root")
+        val first = favorite("first", "root")
+        val second = favorite("second", "root")
+        val third = favorite("third", "root")
+        val fourth = favorite("fourth", "root")
+        val fifth = favorite("fifth", "root")
+        val source = FavoriteLibrary(listOf(root, first, second, third, fourth, fifth))
+        val icons = mapOf(first.url to "1", third.url to "3", fifth.url to "5")
+
+        // The fifth site is past the four the tile shows, even though the second has no icon.
+        assertEquals(listOf("1", "3"), favoriteFolderMosaic(source, root.id, icons::get))
+        assertEquals(emptyList<String>(), favoriteFolderMosaic(source, root.id) { null })
+    }
+
     private fun favorite(name: String, parent: String) = FavoriteEntry(
         url = "https://$name.example/",
         title = name,

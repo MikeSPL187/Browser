@@ -35,6 +35,7 @@ import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -48,9 +49,11 @@ class FavoritesActivity : ComponentActivity() {
     // Retain replaced images until the composition is disposed; rendered frames may still use them.
     private val retiredIcons = mutableListOf<Bitmap>()
     private var favoriteRevision = 0L
-    private var undoLibrary: FavoriteLibrary? = null
+    // Observed by the screen: once a later change makes it stale, its «Undo» goes away.
+    private var undoLibrary by mutableStateOf<FavoriteLibrary?>(null)
     private var isFullImmersiveModeEnabled = false
-    private var isFavoriteMutationInFlight = false
+    // A destroyed screen runs nothing more; its queued taps go with it.
+    private val favoriteOperations = FavoriteOperationQueue(isClosed = { !lifecycleScope.isActive })
     private var pendingIconFolderId: String? = null
     private val bookmarksImporter by lazy {
         FavoriteBookmarksImporter(this, lifecycleScope, ::mergeImportedFavorites)
@@ -62,14 +65,13 @@ class FavoritesActivity : ComponentActivity() {
     private val chooseFolderIcon = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val folderId = pendingIconFolderId
         pendingIconFolderId = null
-        if (uri != null && folderId != null) importFolderIcon(folderId, uri)
+        if (uri != null && folderId != null) whenIdle { importFolderIcon(folderId, uri) }
     }
 
     private fun importFolderIcon(folderId: String, uri: Uri) {
-        if (isFavoriteMutationInFlight) return
         val before = favoriteLibrary
         if (before.folders.none { it.id == folderId }) return
-        isFavoriteMutationInFlight = true
+        favoriteOperations.begin()
         lifecycleScope.launch {
             var previousBitmap: Bitmap? = null
             var importedBitmap: Bitmap? = null
@@ -107,7 +109,7 @@ class FavoritesActivity : ComponentActivity() {
                 }
                 previousBitmap?.let { if (!it.isRecycled) it.recycle() }
                 if (!ownershipTransferred) importedBitmap?.let { if (!it.isRecycled) it.recycle() }
-                isFavoriteMutationInFlight = false
+                favoriteOperations.end()
             }
         }
     }
@@ -142,6 +144,7 @@ class FavoritesActivity : ComponentActivity() {
                     folderIcons = folderIcons,
                     onDeleteFavorite = ::deleteFavorite,
                     onUndoDelete = ::undoDelete,
+                    canUndo = undoLibrary != null,
                     onOpenFavorite = ::openFavorite,
                     onBack = ::finishWhenIdle,
                     onRenameEntry = { entry, title -> mutateLibrary { BrowsingFavoritesRules.rename(it, entry.id, title) } },
@@ -154,7 +157,7 @@ class FavoritesActivity : ComponentActivity() {
                     onReorderEntry = { entry, index -> mutateLibrary { BrowsingFavoritesRules.reorder(it, entry.id, index) } },
                     onFolderIconChange = { folder, icon -> mutateLibrary { withFolderIcon(it, folder.id, icon) } },
                     onUploadFolderIcon = { folder ->
-                        if (!isFavoriteMutationInFlight) {
+                        whenIdle {
                             pendingIconFolderId = folder.id
                             chooseFolderIcon.launch("image/*")
                         }
@@ -165,7 +168,7 @@ class FavoritesActivity : ComponentActivity() {
                         getPreferences(MODE_PRIVATE).edit().putString(KEY_SORT, sort.name).apply()
                     },
                     onImportBookmarks = {
-                        if (!isFavoriteMutationInFlight) chooseBookmarks.launch(FavoriteBookmarksImporter.MIME_TYPES)
+                        whenIdle { chooseBookmarks.launch(FavoriteBookmarksImporter.MIME_TYPES) }
                     },
                 )
             }
@@ -230,21 +233,23 @@ class FavoritesActivity : ComponentActivity() {
         }
     }
 
-    private fun mutateLibrary(transform: (FavoriteLibrary) -> FavoriteLibrary) {
-        if (isFavoriteMutationInFlight) return
+    private fun whenIdle(operation: () -> Unit) = favoriteOperations.run(operation)
+
+    private fun mutateLibrary(transform: (FavoriteLibrary) -> FavoriteLibrary) = whenIdle {
         val before = favoriteLibrary
         val updated = transform(before)
-        if (updated == before) return
-        commitLibrary(before, updated) { saved ->
-            if (saved) {
-                favoriteRevision++
-                undoLibrary = null
+        if (updated != before) {
+            commitLibrary(before, updated) { saved ->
+                if (saved) {
+                    favoriteRevision++
+                    undoLibrary = null
+                }
             }
         }
     }
 
     private fun commitLibrary(before: FavoriteLibrary, updated: FavoriteLibrary, onComplete: (Boolean) -> Unit) {
-        isFavoriteMutationInFlight = true
+        favoriteOperations.begin()
         lifecycleScope.launch {
             try {
                 val saved = withContext(Dispatchers.IO) { store.saveFavoriteLibraryCommitted(updated, before) }
@@ -257,31 +262,24 @@ class FavoritesActivity : ComponentActivity() {
                 } else showSaveFailure()
                 onComplete(saved)
             } finally {
-                isFavoriteMutationInFlight = false
+                favoriteOperations.end()
             }
         }
     }
 
-    private fun openFavorite(favorite: FavoriteEntry) {
-        if (isFavoriteMutationInFlight) return
+    private fun openFavorite(favorite: FavoriteEntry) = whenIdle {
         setResult(Activity.RESULT_OK, FavoritesActivityContract.resultIntent(favorite))
         finish()
     }
 
-    private fun finishWhenIdle() {
-        if (!isFavoriteMutationInFlight) finish()
-    }
+    private fun finishWhenIdle() = whenIdle { finish() }
 
-    private fun deleteFavorite(entry: FavoriteEntry, onComplete: (FavoriteMutation?) -> Unit) {
-        if (isFavoriteMutationInFlight) {
-            onComplete(null)
-            return
-        }
+    private fun deleteFavorite(entry: FavoriteEntry, onComplete: (FavoriteMutation?) -> Unit) = whenIdle {
         val before = favoriteLibrary
         val updated = before.copy(entries = before.entries.filterNot { it.id == entry.id })
         if (updated == before) {
             onComplete(null)
-            return
+            return@whenIdle
         }
         commitLibrary(before, updated) { saved ->
             if (!saved) {
@@ -294,10 +292,9 @@ class FavoritesActivity : ComponentActivity() {
         }
     }
 
-    private fun undoDelete(mutation: FavoriteMutation) {
-        if (isFavoriteMutationInFlight) return
-        val restored = undoLibrary ?: return
-        FavoriteUndoRules.restore(favoriteLibrary.favorites, favoriteRevision, mutation) ?: return
+    private fun undoDelete(mutation: FavoriteMutation) = whenIdle {
+        val restored = undoLibrary ?: return@whenIdle
+        FavoriteUndoRules.restore(favoriteLibrary.favorites, favoriteRevision, mutation) ?: return@whenIdle
         commitLibrary(favoriteLibrary, restored) { saved ->
             if (saved) {
                 favoriteRevision++
@@ -312,12 +309,8 @@ class FavoritesActivity : ComponentActivity() {
     private fun mergeImportedFavorites(
         imported: List<FavoriteEntry>,
         onComplete: (FavoriteBookmarkMergeResult?) -> Unit,
-    ) {
-        if (isFavoriteMutationInFlight) {
-            onComplete(null)
-            return
-        }
-        isFavoriteMutationInFlight = true
+    ) = whenIdle {
+        favoriteOperations.begin()
         lifecycleScope.launch {
             try {
                 val (result, merged) = withContext(Dispatchers.IO) {
@@ -331,7 +324,7 @@ class FavoritesActivity : ComponentActivity() {
                 }
                 onComplete(result)
             } finally {
-                isFavoriteMutationInFlight = false
+                favoriteOperations.end()
             }
         }
     }

@@ -32,6 +32,15 @@ internal sealed interface HistoryPendingDeletion {
     data class Clear(val request: HistoryClearRequest) : HistoryPendingDeletion
 }
 
+/**
+ * A [deletion] behind «Undo» and the wall-clock moment its window closes, kept across recreation
+ * and process death so a rotation neither loses «Undo» nor confirms the deletion by itself.
+ */
+internal data class HistoryUndo(
+    val deletion: HistoryPendingDeletion,
+    val deadlineMillis: Long,
+)
+
 /** The current folder's level, split as on board W-Favorites: folder cards, then loose sites. */
 internal data class FavoritesLevel(
     val folders: List<FavoriteFolder>,
@@ -79,6 +88,70 @@ internal object LibraryRules {
         is HistoryPendingDeletion.Clear -> entries.filterNot { clears(pending.request, it) }
     }
 
+    /** How long «Undo» still stays: never negative, never longer than a fresh [windowMillis]. */
+    fun undoRemainingMillis(undo: HistoryUndo, nowMillis: Long, windowMillis: Long): Long =
+        (undo.deadlineMillis - nowMillis).coerceIn(0L, windowMillis.coerceAtLeast(0L))
+
+    /** [undo] as bundle-friendly values for rememberSaveable; read back by [restoreUndo]. */
+    fun saveUndo(undo: HistoryUndo): ArrayList<Any> = when (val deletion = undo.deletion) {
+        is HistoryPendingDeletion.Entries -> arrayListOf(
+            UNDO_ENTRIES,
+            undo.deadlineMillis,
+            ArrayList(deletion.keys),
+            deletion.entries.flatMapTo(ArrayList()) { entry ->
+                listOf(
+                    entry.url,
+                    entry.title,
+                    entry.lastVisitedAt.toString(),
+                    entry.profileId,
+                    entry.visitId,
+                )
+            },
+        )
+        is HistoryPendingDeletion.Clear -> arrayListOf(
+            UNDO_CLEAR,
+            undo.deadlineMillis,
+            ArrayList(deletion.request.profileIds),
+            deletion.request.sinceInclusiveMillis,
+            deletion.request.untilExclusiveMillis,
+        )
+    }
+
+    /** The «Undo» state [saveUndo] wrote, or null when [saved] is not one. */
+    fun restoreUndo(saved: Any?): HistoryUndo? = runCatching {
+        val values = saved as List<*>
+        val deadline = values[1] as Long
+        val deletion = when (values[0]) {
+            UNDO_ENTRIES -> HistoryPendingDeletion.Entries(
+                entries = (values[3] as List<*>).map { it as String }
+                    .chunked(UNDO_ENTRY_FIELDS) { fields ->
+                        require(fields.size == UNDO_ENTRY_FIELDS)
+                        HistoryEntry(
+                            url = fields[0],
+                            title = fields[1],
+                            lastVisitedAt = fields[2].toLong(),
+                            profileId = fields[3],
+                            visitId = fields[4],
+                        )
+                    },
+                keys = (values[2] as List<*>).mapTo(linkedSetOf()) { it as String },
+            )
+            UNDO_CLEAR -> HistoryPendingDeletion.Clear(
+                HistoryClearRequest(
+                    profileIds = (values[2] as List<*>).mapTo(linkedSetOf()) { it as String },
+                    sinceInclusiveMillis = values[3] as Long,
+                    untilExclusiveMillis = values[4] as Long,
+                ),
+            )
+            else -> return null
+        }
+        HistoryUndo(deletion, deadline)
+    }.getOrNull()
+
+    private const val UNDO_ENTRIES = "entries"
+    private const val UNDO_CLEAR = "clear"
+    private const val UNDO_ENTRY_FIELDS = 5
+
     fun clears(request: HistoryClearRequest, entry: HistoryEntry): Boolean =
         entry.profileId in request.profileIds &&
             entry.lastVisitedAt >= request.sinceInclusiveMillis &&
@@ -107,6 +180,24 @@ internal object LibraryRules {
                 favorites = level.favorites.sortedByDescending(FavoriteEntry::addedAt),
             )
         }
+    }
+
+    /**
+     * Where «Move earlier» ([step] -1) or «Move later» ([step] +1) puts [entryId]: the index in
+     * [siblings] of its neighbour in [group], the folder cards or the sites it is shown among.
+     * Null at the group's edge. Folders and sites interleave in [siblings], so a neighbour there may
+     * be of the other kind, and moving past it would save an order the screen never shows.
+     */
+    fun reorderTarget(
+        siblings: List<FavoriteLibraryEntry>,
+        group: List<FavoriteLibraryEntry>,
+        entryId: String,
+        step: Int,
+    ): Int? {
+        val position = group.indexOfFirst { it.id == entryId }
+        if (position < 0) return null
+        val neighbour = group.getOrNull(position + step) ?: return null
+        return siblings.indexOfFirst { it.id == neighbour.id }.takeIf { it >= 0 }
     }
 
     /** Sites in a folder and its subfolders, for «12 sites» under the folder's name. */

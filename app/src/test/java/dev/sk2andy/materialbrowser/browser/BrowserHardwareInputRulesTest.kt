@@ -167,4 +167,43 @@ class BrowserHardwareInputRulesTest {
             ),
         )
     }
+
+    @Test
+    fun `commands act as usual without Glance`() {
+        (BrowserHardwareInputAction.entries + listOf(null)).forEach { action ->
+            assertEquals(
+                LinkPeekHardwareInput.Run,
+                BrowserHardwareInputRules.overLinkPeek(action, isLinkPeekVisible = false, isLinkPeekCommitting = false),
+            )
+        }
+    }
+
+    @Test
+    fun `address and find close Glance first, everything else stays off the hidden page`() {
+        val leaving = setOf(BrowserHardwareInputAction.FocusAddress, BrowserHardwareInputAction.FindInPage)
+
+        BrowserHardwareInputAction.entries.forEach { action ->
+            assertEquals(
+                if (action in leaving) LinkPeekHardwareInput.DismissLinkPeekThenRun else LinkPeekHardwareInput.Blocked,
+                BrowserHardwareInputRules.overLinkPeek(action, isLinkPeekVisible = true, isLinkPeekCommitting = false),
+            )
+        }
+        // Engine focus, first-key replay and the wheel carry no command.
+        assertEquals(
+            LinkPeekHardwareInput.Blocked,
+            BrowserHardwareInputRules.overLinkPeek(null, isLinkPeekVisible = true, isLinkPeekCommitting = false),
+        )
+    }
+
+    @Test
+    fun `nothing interrupts Glance flying into a tab`() {
+        assertEquals(
+            LinkPeekHardwareInput.Blocked,
+            BrowserHardwareInputRules.overLinkPeek(
+                BrowserHardwareInputAction.FocusAddress,
+                isLinkPeekVisible = true,
+                isLinkPeekCommitting = true,
+            ),
+        )
+    }
 }

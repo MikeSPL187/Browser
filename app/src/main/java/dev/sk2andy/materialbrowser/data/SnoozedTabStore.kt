@@ -15,13 +15,21 @@ class SnoozedTabStore(context: Context) {
     )
 
     @Synchronized
-    fun load(): List<SnoozedTab> {
-        val raw = preferences.getString(KEY_TABS, null) ?: return emptyList()
-        return runCatching {
-            val array = JSONArray(raw)
-            buildList<SnoozedTab> {
+    fun load(): List<SnoozedTab> =
+        preferences.getString(KEY_TABS, null)?.let(::decodeTabs).orEmpty()
+
+    @Synchronized
+    fun save(tabs: List<SnoozedTab>): Boolean = save(preferences, tabs)
+
+    internal companion object {
+        const val KEY_TABS = "snoozed_tabs"
+
+        /** The saved list; an entry that is not a JSON object is skipped, not the whole list. */
+        fun decodeTabs(raw: String): List<SnoozedTab> {
+            val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+            return buildList<SnoozedTab> {
                 for (index in 0 until array.length()) {
-                    val item = array.getJSONObject(index)
+                    val item = array.optJSONObject(index) ?: continue
                     val id = item.optString("id").takeIf(String::isNotBlank) ?: continue
                     val wakeAtMillis = item.optLong("wakeAtMillis")
                     if (
@@ -50,14 +58,20 @@ class SnoozedTabStore(context: Context) {
                     )
                 }
             }.sortedWith(compareBy<SnoozedTab>({ it.wakeAtMillis }, { it.tab.id }))
-        }.getOrDefault(emptyList())
-    }
+        }
 
-    @Synchronized
-    fun save(tabs: List<SnoozedTab>): Boolean = putTabs(preferences.edit(), tabs).commit()
-
-    internal companion object {
-        const val KEY_TABS = "snoozed_tabs"
+        /**
+         * Writes [tabs] to disk. A failed commit has already changed the in-memory preferences, so
+         * the previous list is put back there: the app keeps reading what is really saved.
+         */
+        fun save(preferences: SharedPreferences, tabs: List<SnoozedTab>): Boolean {
+            val original = preferences.getString(KEY_TABS, null)
+            if (putTabs(preferences.edit(), tabs).commit()) return true
+            preferences.edit().apply {
+                if (original == null) remove(KEY_TABS) else putString(KEY_TABS, original)
+            }.commit()
+            return false
+        }
 
         fun putTabs(
             editor: SharedPreferences.Editor,

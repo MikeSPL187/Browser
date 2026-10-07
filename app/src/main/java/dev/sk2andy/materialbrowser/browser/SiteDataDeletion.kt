@@ -7,6 +7,9 @@ import androidx.compose.runtime.setValue
 /** One site's data waiting out its undo window. */
 internal data class PendingSiteDataDeletion(val baseDomain: String, val id: Long)
 
+/** One site's data the engine failed to delete, offered again behind «Retry». */
+internal data class FailedSiteDataDeletion(val baseDomain: String, val id: Long)
+
 internal object SiteDataDeletionRules {
     /** As long as «Undo» stays on screen before the data really goes. */
     const val UNDO_WINDOW_MILLIS = 5_000L
@@ -21,21 +24,32 @@ internal object SiteDataDeletionRules {
     /** After the deletion the selected page reloads, but only if it still shows that site. */
     fun reloadsSelected(baseDomain: String, selectedBaseDomain: String?): Boolean =
         selectedBaseDomain == baseDomain
+
+    /**
+     * The engine answers later, so the reload must not wake a page nobody can see: after teardown,
+     * behind a workspace or private tabs lock, or with the app in the background.
+     */
+    fun pageReloadable(destroyed: Boolean, locked: Boolean, started: Boolean): Boolean =
+        !destroyed && !locked && started
 }
 
 /**
  * «Delete site data» from Site info (Q10b). Deleting cannot be taken back once the engine has done
  * it, so it waits [SiteDataDeletionRules.UNDO_WINDOW_MILLIS] behind «Undo» first; leaving the app
- * carries it out at once, so a request is never silently lost.
+ * carries it out at once, so a request is never silently lost. When the engine reports a failure,
+ * [failed] holds it until «Retry» or the snackbar goes.
  */
 class SiteDataDeletion internal constructor(
     private val clearSiteData: (baseDomain: String, onComplete: (Boolean) -> Unit) -> Unit,
     private val selectedBaseDomain: () -> String?,
+    private val selectedPageReloadable: () -> Boolean,
     private val reloadSelected: () -> Unit,
     private val postDelayed: (Runnable, Long) -> Unit,
     private val removeCallbacks: (Runnable) -> Unit,
 ) {
     internal var pending by mutableStateOf<PendingSiteDataDeletion?>(null)
+        private set
+    internal var failed by mutableStateOf<FailedSiteDataDeletion?>(null)
         private set
 
     private var nextId = 0L
@@ -65,12 +79,32 @@ class SiteDataDeletion internal constructor(
         val deletion = pending ?: return
         removeCallbacks(commitWhenDue)
         pending = null
-        clearSiteData(deletion.baseDomain) { cleared ->
+        clear(deletion.baseDomain)
+    }
+
+    /** Asks the engine again for a deletion that failed; the user already waited out «Undo». */
+    internal fun retry(failure: FailedSiteDataDeletion) {
+        if (failed?.id != failure.id) return
+        failed = null
+        clear(failure.baseDomain)
+    }
+
+    internal fun dismissFailure(failure: FailedSiteDataDeletion) {
+        if (failed?.id == failure.id) failed = null
+    }
+
+    private fun clear(baseDomain: String) {
+        if (failed?.baseDomain == baseDomain) failed = null
+        clearSiteData(baseDomain) { cleared ->
+            if (!cleared) {
+                failed = FailedSiteDataDeletion(baseDomain, ++nextId)
+                return@clearSiteData
+            }
             val reloads = SiteDataDeletionRules.reloadsSelected(
-                baseDomain = deletion.baseDomain,
+                baseDomain = baseDomain,
                 selectedBaseDomain = selectedBaseDomain(),
             )
-            if (cleared && reloads) reloadSelected()
+            if (reloads && selectedPageReloadable()) reloadSelected()
         }
     }
 }

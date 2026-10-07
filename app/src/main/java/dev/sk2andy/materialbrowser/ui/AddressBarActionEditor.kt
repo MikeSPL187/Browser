@@ -879,8 +879,8 @@ internal fun AddressBarActionEditorPage(
                         elevation = (2f + lift * 7f).dp,
                         shape = MaterialTheme.shapes.large,
                     )
-                    .clearAndSetSemantics { }
-                    .testTag(AddressBarActionEditorTestTags.DragOverlay),
+                    .testTag(AddressBarActionEditorTestTags.DragOverlay)
+                    .clearAndSetSemantics { },
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
@@ -990,8 +990,8 @@ private fun AddressBarActionDropIndicators(
                             shape = RoundedCornerShape(cornerRadius),
                         )
                         .zIndex(20f)
-                        .clearAndSetSemantics { }
-                        .testTag(AddressBarActionEditorTestTags.dropIndicator(slot.target)),
+                        .testTag(AddressBarActionEditorTestTags.dropIndicator(slot.target))
+                        .clearAndSetSemantics { },
                     shape = RoundedCornerShape(cornerRadius),
                     color = if (slot.target == currentTarget) {
                         MaterialTheme.colorScheme.primaryContainer
@@ -1115,21 +1115,18 @@ private fun AddressBarActionEditorItem(
     onDragCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val semanticsModifier = if (dragged) {
-        Modifier.clearAndSetSemantics { }
-    } else {
-        Modifier.semantics {
-            contentDescription = label
-            this.customActions = customActions
-        }
-    }
     Surface(
         modifier = modifier
             .heightIn(min = 48.dp)
             .then(if (compact) Modifier.width(48.dp) else Modifier)
             .onGloballyPositioned { onBounds(it.boundsInRoot()) }
-            .then(semanticsModifier)
             .testTag(AddressBarActionEditorTestTags.action(action))
+            // While dragged, the row is the drag overlay's to announce.
+            .clearSemanticsWhen(dragged)
+            .semantics {
+                contentDescription = label
+                this.customActions = customActions
+            }
             .addressBarActionEditorDragSource(
                 action = action,
                 sourceBounds = sourceBounds,

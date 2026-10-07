@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -551,6 +552,48 @@ class LinkPeekOverlayInstrumentedTest {
     }
 
     @Test
+    fun previewIsNamedByItsPageTitleForTalkBack() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                LinkPeekOverlay(
+                    url = "https://example.com/article",
+                    progress = 0f,
+                    armed = false,
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also { callbacks.onTitleChanged("Ice forecast") }
+                    },
+                    releasePreviewView = WebView::destroy,
+                    onOpen = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(LinkPeekTestTags.Preview)
+            .assertContentDescriptionEquals("Ice forecast")
+    }
+
+    @Test
+    fun untitledPreviewIsNamedByItsHost() {
+        composeRule.setContent {
+            MaterialBrowserTheme {
+                LinkPeekOverlay(
+                    url = "https://example.com/untitled",
+                    progress = 0f,
+                    armed = false,
+                    createPreviewView = ::previewWebView,
+                    releasePreviewView = WebView::destroy,
+                    onOpen = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(LinkPeekTestTags.Preview)
+            .assertContentDescriptionEquals("example.com")
+    }
+
+    @Test
     fun committedRedirectUpdatesDisplayedOrigin() {
         composeRule.setContent {
             MaterialBrowserTheme {
@@ -558,9 +601,9 @@ class LinkPeekOverlayInstrumentedTest {
                     url = "https://redirect.example/start",
                     progress = 0f,
                     armed = false,
-                    createPreviewView = { onProgressChanged, onCommittedUrlChanged ->
-                        previewWebView(onProgressChanged, onCommittedUrlChanged).also {
-                            onCommittedUrlChanged("http://destination.example/article")
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also {
+                            callbacks.onCommittedUrlChanged("http://destination.example/article")
                         }
                     },
                     releasePreviewView = WebView::destroy,
@@ -584,9 +627,9 @@ class LinkPeekOverlayInstrumentedTest {
                     url = "https://start.example",
                     progress = 0f,
                     armed = false,
-                    createPreviewView = { onProgressChanged, onCommittedUrlChanged ->
-                        previewWebView(onProgressChanged, onCommittedUrlChanged).also {
-                            onCommittedUrlChanged("https://bücher.example/article")
+                    createPreviewView = { callbacks ->
+                        previewWebView(callbacks).also {
+                            callbacks.onCommittedUrlChanged("https://bücher.example/article")
                         }
                     },
                     releasePreviewView = WebView::destroy,
@@ -663,13 +706,10 @@ class LinkPeekOverlayInstrumentedTest {
         ).assertDoesNotExist()
     }
 
-    private fun previewWebView(
-        onProgressChanged: (Int) -> Unit,
-        onCommittedUrlChanged: (String) -> Unit,
-    ): WebView =
+    private fun previewWebView(callbacks: LinkPeekPreviewCallbacks): WebView =
         WebView(composeRule.activity).apply {
             loadData("<html><body>Preview</body></html>", "text/html", "UTF-8")
-            onProgressChanged(100)
-            onCommittedUrlChanged("https://example.com/preview")
+            callbacks.onProgressChanged(100)
+            callbacks.onCommittedUrlChanged("https://example.com/preview")
         }
 }

@@ -31,7 +31,9 @@ internal fun tabOverviewHeroVisuals(
     favicon: Bitmap?,
 ): TabOverviewHeroVisuals {
     val title = displayTabTitle(tab)
+    // A locked private tab shows no trace of its site, its icon included.
     val faviconImage = favicon
+        ?.takeUnless { hidesPrivateTab(tab) }
         ?.takeUnless(Bitmap::isRecycled)
         ?.asImageBitmap()
     return TabOverviewHeroVisuals(

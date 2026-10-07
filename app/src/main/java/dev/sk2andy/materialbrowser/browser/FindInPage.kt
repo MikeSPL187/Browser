@@ -77,6 +77,13 @@ internal object FindInPageRules {
     fun withoutCount(state: FindInPageState): FindInPageState =
         if (needsRecount(state)) state.copy(isDoneCounting = true) else state
 
+    /**
+     * Stops waiting when the engine gave no answer (a failed search or a closed page): whatever is
+     * already known stays, so a new query shows "0/0" instead of counting forever.
+     */
+    fun withoutResult(state: FindInPageState): FindInPageState =
+        if (state.query.isEmpty() || state.isDoneCounting) state else state.copy(isDoneCounting = true)
+
     fun canNavigate(state: FindInPageState): Boolean =
         state.query.isNotEmpty() && (state.matchCount > 0 || state.isMatchFound)
 

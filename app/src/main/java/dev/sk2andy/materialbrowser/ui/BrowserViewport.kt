@@ -514,7 +514,9 @@ internal fun BrowserViewport(
                     val essentials = controller.essentials
                     val profileId = selectedTab.profileId
                     if (!selectedTab.isIncognito) {
-                        LaunchedEffect(profileId) {
+                        // A new tab left open past midnight moves the report's week on as well.
+                        val today = rememberLocalToday()
+                        LaunchedEffect(profileId, today) {
                             essentials.materialize(profileId)
                             controller.protectionReport.refresh()
                         }
@@ -553,10 +555,11 @@ internal fun BrowserViewport(
                             .take(NEW_TAB_RECENT_TAB_COUNT),
                         recentTabFavicons = controller.favicons,
                         onRecentTab = controller::selectTab,
-                        title = controller.localBrowserProfiles
-                            .firstOrNull { profile -> profile.id == controller.activeProfileId }
-                            ?.name
-                            ?.takeIf(String::isNotBlank),
+                        // The tab's own workspace, synced ones included; a workspace without a
+                        // name of its own shows its localized default.
+                        title = controller.profiles
+                            .firstOrNull { profile -> profile.id == profileId }
+                            ?.workspaceDisplayName(),
                     )
                 }
             }
@@ -605,11 +608,7 @@ internal fun BrowserViewport(
         controller.dangerousSites.blocked[selectedTab.id]?.let { site ->
             DangerousSitePage(
                 site = site,
-                onBackToSafety = {
-                    controller.dangerousSites.dismiss(selectedTab.id)
-                    // A tab opened straight onto the fake site has nowhere safe to go back to.
-                    if (!selectedTab.canGoBack) controller.closeTab(selectedTab.id)
-                },
+                onBackToSafety = { controller.backToSafety(selectedTab.id) },
                 onOpenAnyway = {
                     controller.dangerousSites.allow(selectedTab.id)?.let(controller::submitAddress)
                 },

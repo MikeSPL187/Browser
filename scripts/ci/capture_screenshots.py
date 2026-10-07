@@ -297,14 +297,16 @@ def step(name, action):
 def dismiss_first_run():
     for _ in range(6):
         if find("Get started", "Начать"):
-            # Q23b: the welcome (W-Welcome), then setup (W-Setup) without the gesture lesson.
+            # Q23b: the welcome (W-Welcome), setup (W-Setup), then the first lesson step with its
+            # pretend address bar, which is skipped.
             shot("first-run-welcome")
             tap("Get started", "Начать")
             time.sleep(2)
             shot("first-run-setup")
-            tap("Show gestures", "Показать жесты")
-            time.sleep(1)
             tap("Next", "Далее")
+            time.sleep(2)
+            shot("first-run-lesson")
+            tap("Skip", "Пропустить")
         elif find("Skip", "Пропустить"):
             shot("onboarding")
             tap("Skip", "Пропустить")
@@ -1054,7 +1056,39 @@ def accessibility_pass():
     adb("shell", "am", "force-stop", PACKAGE, check=False)
     launch()
     time.sleep(12)
-    step("new-tab-a11y", lambda: shot("new-tab-a11y"))
+
+    def new_tab_a11y():
+        # The restart may restore any page, so the step opens a new tab itself (from the tab
+        # overview, as the essentials step does) and shoots only once a regular new tab is on
+        # screen at 200 %. A wrong screen or font scale fails the step instead of passing the audit.
+        scale = (adb("shell", "settings", "get", "system", "font_scale",
+                     check=False, capture=True) or b"").decode().strip()
+        if scale not in ("2", "2.0"):
+            raise RuntimeError(f"font_scale is {scale!r}, not 2.0")
+        width, height = screen_size()
+        adb("shell", "input", "swipe", str(width // 2), str(height - 120),
+            str(width // 2), str(int(height * 0.35)), "350")
+        time.sleep(3)
+        if not tap("New tab", "Новая вкладка"):
+            save_ui("new-tab-a11y-overview")
+            adb("shell", "input", "keyevent", "BACK")
+            raise RuntimeError("no New tab button in the tab overview")
+        time.sleep(3)
+        for _ in range(2):
+            if not find("Switch to tab", "Перейти во вкладку", "Search or enter a URL",
+                        "Поиск или адрес сайта", contains=True):
+                break
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        # The Essentials block is the new tab's own: its empty state, or its header and Edit.
+        on_new_tab = find("Pin your everyday sites", "Закрепите сайты на каждый день",
+                          "Add a site", "Добавить сайт") or (
+            find("ESSENTIALS") and find("Edit", "Изменить"))
+        if not on_new_tab:
+            save_ui("new-tab-a11y")
+            raise RuntimeError("the new tab is not on screen")
+        shot("new-tab-a11y")
+    step("new-tab-a11y", new_tab_a11y)
 
     def page_and_menu():
         open_url("https://en.wikipedia.org/wiki/Zen")

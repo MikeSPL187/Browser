@@ -64,4 +64,57 @@ class ActivePermissionLedgerTest {
         assertTrue(ledger.has("tab-b", site, SitePermission.Microphone))
         assertFalse(ledger.has("tab-a", site, SitePermission.Camera))
     }
+
+    @Test
+    fun tabsForFindsEverySiteTabHoldingTheAccess() {
+        val ledger = ActivePermissionLedger()
+        val other = PermissionSiteKey("profile-a", "https://other.example")
+        ledger.record(Any(), ActivePermissionGrant("tab-a", site, setOf(SitePermission.Camera)))
+        ledger.record(Any(), ActivePermissionGrant("tab-b", site, setOf(SitePermission.Camera)))
+        ledger.record(Any(), ActivePermissionGrant("tab-c", site, setOf(SitePermission.Location)))
+        ledger.record(Any(), ActivePermissionGrant("tab-d", other, setOf(SitePermission.Camera)))
+
+        assertEquals(setOf("tab-a", "tab-b"), ledger.tabsFor(site, SitePermission.Camera))
+        assertEquals(setOf("tab-a", "tab-b", "tab-c"), ledger.tabsFor(site))
+        assertEquals(emptySet<String>(), ledger.tabsFor(site, SitePermission.Microphone))
+    }
+
+    @Test
+    fun blockingRevokesTheAccessInEveryIncludedTab() {
+        val ledger = ActivePermissionLedger()
+        ledger.record(Any(), ActivePermissionGrant("tab-a", site, setOf(SitePermission.Camera)))
+        ledger.record(Any(), ActivePermissionGrant("tab-b", site, setOf(SitePermission.Camera)))
+        ledger.record(Any(), ActivePermissionGrant("private", site, setOf(SitePermission.Camera)))
+
+        val plan = ledger.revocationPlan(site, SitePermission.Camera) { tabId -> tabId != "private" }
+
+        assertEquals(setOf("tab-a", "tab-b"), plan.reloadNow)
+        assertTrue(plan.reloadAfterNotificationSync.isEmpty())
+    }
+
+    @Test
+    fun resetReloadsLiveAccessAtOnceAndNotificationOnlyTabsAfterSync() {
+        val ledger = ActivePermissionLedger()
+        ledger.record(
+            Any(),
+            ActivePermissionGrant(
+                "tab-a",
+                site,
+                setOf(SitePermission.Microphone, SitePermission.Notifications),
+            ),
+        )
+        ledger.record(
+            Any(),
+            ActivePermissionGrant("tab-b", site, setOf(SitePermission.Notifications)),
+        )
+
+        val reset = ledger.revocationPlan(site, permission = null) { true }
+        val blockNotifications = ledger.revocationPlan(site, SitePermission.Notifications) { true }
+
+        assertEquals(setOf("tab-a"), reset.reloadNow)
+        assertEquals(setOf("tab-b"), reset.reloadAfterNotificationSync)
+        assertEquals(setOf("tab-a", "tab-b"), reset.tabs)
+        assertTrue(blockNotifications.reloadNow.isEmpty())
+        assertEquals(setOf("tab-a", "tab-b"), blockNotifications.reloadAfterNotificationSync)
+    }
 }

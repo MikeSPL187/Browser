@@ -48,6 +48,7 @@ internal fun BrowserOfferSnackbarEffects(
     )
     val tryYandexLabel = stringResource(R.string.action_try_yandex_translation)
     val openOriginalLabel = stringResource(R.string.action_open_original_page)
+    WorkspaceDeletionFailureSnackbarEffect(controller, hostState)
     val blockedPopupOffer = controller.blockedPopupOffer
     LaunchedEffect(blockedPopupOffer?.token) {
         val offer = blockedPopupOffer ?: return@LaunchedEffect
@@ -139,5 +140,19 @@ internal fun BrowserOfferSnackbarEffects(
                 )
             }
         }
+    }
+}
+
+/** «Couldn't delete the workspace — try again» after a failed workspace deletion. */
+@Composable
+internal fun WorkspaceDeletionFailureSnackbarEffect(
+    controller: BrowserController,
+    hostState: SnackbarHostState,
+) {
+    val message = stringResource(R.string.workspace_delete_failed)
+    val failures = controller.workspaceDeletionFailures
+    LaunchedEffect(failures) {
+        if (failures == 0) return@LaunchedEffect
+        hostState.showSnackbar(message = message, withDismissAction = true)
     }
 }

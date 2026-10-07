@@ -78,7 +78,8 @@ fun CompactTabList(
     val selectedIndex = tabs.indexOfFirst { it.id == selectedTabId }.coerceAtLeast(0)
     var listBounds by remember { mutableStateOf<Rect?>(null) }
     reorderAutoScroll(listBounds)
-    LaunchedEffect(visible, initialTabId, selectedTabId, tabs.size, startsAtBottom) {
+    // Not on every count change: closing a tab further down must not jump back to the selected one.
+    LaunchedEffect(visible, initialTabId, selectedTabId, tabs.isEmpty(), startsAtBottom) {
         if (!visible || tabs.isEmpty()) return@LaunchedEffect
         withFrameNanos { }
         val targetIndex = if (startsAtBottom) tabs.lastIndex else selectedIndex

@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -90,6 +92,70 @@ class FavoritesScreenInstrumentedTest {
 
         composeRule.onNodeWithTag(FavoritesScreenTestTags.SearchField).performTextClearance()
         composeRule.onNodeWithText(alpha.title).assertIsDisplayed()
+    }
+
+    @Test
+    fun staleUndoLeavesTheScreen() {
+        val alpha = favorite("https://alpha.example/", "Alpha")
+        val beta = favorite("https://beta.example/", "Beta")
+        var canUndo by mutableStateOf(true)
+        composeRule.setContent {
+            var favorites by remember { mutableStateOf(listOf(alpha, beta)) }
+            MaterialBrowserTheme {
+                FavoritesScreen(
+                    favorites = favorites,
+                    onDeleteFavorite = { target, onComplete ->
+                        val before = favorites
+                        favorites = BrowsingFavoritesRules.remove(before, target)
+                        onComplete(FavoriteMutation(before, favorites, added = false, revision = 1))
+                    },
+                    onUndoDelete = {},
+                    onOpenFavorite = {},
+                    onBack = {},
+                    canUndo = canUndo,
+                )
+            }
+        }
+        val undo = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.action_undo)
+
+        composeRule.onNodeWithTag("favorites_actions:${beta.id}").performClick()
+        composeRule.onNodeWithTag(FavoritesScreenTestTags.delete(beta.url)).performClick()
+        composeRule.onNodeWithText(undo).assertIsDisplayed()
+        // A later rename or move replaces the snapshot the undo would restore.
+        canUndo = false
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(undo).assertDoesNotExist()
+    }
+
+    @Test
+    fun renameDialogKeepsItsTargetAndDraftAcrossRecreation() {
+        val alpha = favorite("https://alpha.example/", "Alpha")
+        val renamed = AtomicReference<Pair<String, String>?>()
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MaterialBrowserTheme {
+                FavoritesScreen(
+                    favorites = listOf(alpha),
+                    onDeleteFavorite = { _, _ -> },
+                    onUndoDelete = {},
+                    onOpenFavorite = {},
+                    onBack = {},
+                    onRenameEntry = { entry, title -> renamed.set(entry.id to title) },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("favorites_actions:${alpha.id}").performClick()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        composeRule.onNodeWithText(context.getString(R.string.favorites_rename)).performClick()
+        composeRule.onNodeWithTag("favorites_name").performTextClearance()
+        composeRule.onNodeWithTag("favorites_name").performTextInput("Draft")
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onNodeWithTag("favorites_name").assertTextContains("Draft")
+        composeRule.onNodeWithText(context.getString(android.R.string.ok)).performClick()
+        assertEquals(alpha.id to "Draft", renamed.get())
     }
 
     @Test

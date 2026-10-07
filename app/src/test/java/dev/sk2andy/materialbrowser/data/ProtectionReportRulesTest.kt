@@ -1,7 +1,9 @@
 package dev.sk2andy.materialbrowser.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProtectionReportRulesTest {
@@ -13,6 +15,13 @@ class ProtectionReportRulesTest {
         assertEquals("news.example.com", ProtectionReportRules.site("http://news.example.com"))
         assertNull(ProtectionReportRules.site("about:blank"))
         assertNull(ProtectionReportRules.site("file:///sdcard/page.html"))
+    }
+
+    @Test
+    fun `only regular tabs of unlocked workspaces are counted`() {
+        assertTrue(ProtectionReportRules.countsTab(isPrivate = false, workspaceProtected = false))
+        assertFalse(ProtectionReportRules.countsTab(isPrivate = true, workspaceProtected = false))
+        assertFalse(ProtectionReportRules.countsTab(isPrivate = false, workspaceProtected = true))
     }
 
     @Test
@@ -44,6 +53,20 @@ class ProtectionReportRulesTest {
 
         assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY, sites.size)
         assertNull(sites["s1.com"])
+    }
+
+    @Test
+    fun `the day total keeps counting blocks of sites dropped past the limit`() {
+        var days = emptyList<ProtectionDay>()
+        (1..ProtectionReportRules.MAX_SITES_PER_DAY + 1).forEach { index ->
+            days = ProtectionReportRules.record(days, today, "s$index.com", 1)
+        }
+        days = ProtectionReportRules.record(days, today, "s1.com", 1)
+        val week = ProtectionReportRules.week(days, today)
+
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, days.single().total)
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, week.total)
+        assertEquals(ProtectionReportRules.MAX_SITES_PER_DAY + 2, week.daily.last())
     }
 
     @Test

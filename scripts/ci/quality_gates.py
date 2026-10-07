@@ -5,7 +5,8 @@ Usage:
   quality_gates.py size [--update]   the largest legacy files must not grow (tech-plan.md, section 1)
   quality_gates.py tokens --base REV  lines added since REV use ui/theme tokens, not literals
   quality_gates.py engine             GeckoView and WebView types stay inside the engine adapters
-  quality_gates.py brand              no "Candy" in strings the user can see
+  quality_gates.py brand              no "Candy" in strings the user can see (resources and Kotlin)
+  quality_gates.py semantics          clearAndSetSemantics is never toggled and never hides a later testTag
 
 Findings are printed as GitHub Actions annotations; any finding exits with status 1.
 """
@@ -166,7 +167,379 @@ def source_files():
         yield from sorted((ROOT / root).rglob("*.kt"))
 
 
+# semantics
+
+SEMANTICS_EXEMPT_COMMENT = "semantics-exempt:"
+CLEAR_SEMANTICS = "clearAndSetSemantics"
+OPENERS = {"(": ")", "{": "}", "[": "]"}
+CLOSERS = {value: key for key, value in OPENERS.items()}
+
+
+def kotlin_spans(text):
+    """(kind, start, end) for every comment, "string" literal (raw too) and 'char' literal."""
+    i, n = 0, len(text)
+    while i < n:
+        if text.startswith("//", i):
+            end = text.find("\n", i)
+            end = n if end < 0 else end
+            yield "comment", i, end
+            i = end
+        elif text.startswith("/*", i):
+            depth, j = 1, i + 2
+            while j < n and depth:
+                if text.startswith("/*", j):
+                    depth, j = depth + 1, j + 2
+                elif text.startswith("*/", j):
+                    depth, j = depth - 1, j + 2
+                else:
+                    j += 1
+            yield "comment", i, j
+            i = j
+        elif text.startswith('"""', i):
+            end = text.find('"""', i + 3)
+            end = n if end < 0 else end + 3
+            yield "raw", i, end
+            i = end
+        elif text[i] in "\"'":
+            quote, j = text[i], i + 1
+            while j < n and text[j] != quote and text[j] != "\n":
+                j += 2 if text[j] == "\\" else 1
+            yield "string" if quote == '"' else "char", i, min(j + 1, n)
+            i = j + 1
+        else:
+            i += 1
+
+
+def kotlin_code(text):
+    """[text] with comments, strings and char literals blanked out; offsets and newlines kept."""
+    out = list(text)
+    for _, start, end in kotlin_spans(text):
+        for k in range(start, end):
+            if out[k] != "\n":
+                out[k] = " "
+    return "".join(out)
+
+
+def matching_close(code, start):
+    """The index after the bracket that closes the one at [start]."""
+    depth = 0
+    for i in range(start, len(code)):
+        if code[i] in OPENERS:
+            depth += 1
+        elif code[i] in CLOSERS:
+            depth -= 1
+            if depth == 0:
+                return i + 1
+    return len(code)
+
+
+def matching_open(code, end):
+    """The index of the bracket that opens the one closing at [end]."""
+    depth = 0
+    for i in range(end, -1, -1):
+        if code[i] in CLOSERS:
+            depth += 1
+        elif code[i] in OPENERS:
+            depth -= 1
+            if depth == 0:
+                return i
+    return 0
+
+
+def enclosing_open(code, position):
+    """The unmatched bracket around [position], or -1 at the top level."""
+    depth = 0
+    for i in range(position - 1, -1, -1):
+        if code[i] in CLOSERS:
+            depth += 1
+        elif code[i] in OPENERS:
+            if depth == 0:
+                return i
+            depth -= 1
+    return -1
+
+
+def word_before(code, position):
+    i = position - 1
+    while i >= 0 and code[i].isspace():
+        i -= 1
+    end = i + 1
+    while i >= 0 and (code[i].isalnum() or code[i] == "_"):
+        i -= 1
+    return code[i + 1:end], i + 1
+
+
+def depth_zero(text):
+    """[text] with the contents of its bracket pairs removed."""
+    out, depth = [], 0
+    for char in text:
+        if char in OPENERS:
+            depth += 1
+        elif char in CLOSERS:
+            depth = max(depth - 1, 0)
+        elif depth == 0:
+            out.append(char)
+    return "".join(out)
+
+
+def governing_if(code, position):
+    """The `if` whose branch holds [position], or None when no condition picks it."""
+    opener = enclosing_open(code, position)
+    start = opener + 1
+    if opener >= 0 and code[opener] == "{":
+        word, at = word_before(code, opener)
+        if word == "else":
+            return if_before_else(code, at)
+        if word == "" and at > 0 and code[at - 1] == ")":
+            paren = matching_open(code, at - 1)
+            word, if_at = word_before(code, paren)
+            if word == "if":
+                return if_at
+    segment = code[start:position]
+    # Only the expression that holds [position]: after the last argument or statement break.
+    cut = max(segment.rfind(","), segment.rfind(";"), statement_break(segment))
+    flat = depth_zero(segment[cut + 1:])
+    if not re.search(r"\b(if|else|when)\b", flat):
+        return None
+    for match in reversed(list(re.finditer(r"\bif\b", code[start + cut + 1:position]))):
+        at = start + cut + 1 + match.start()
+        if enclosing_open(code, at) == opener:
+            return at
+    return -1  # a `when` branch or an `else` without its `if` in sight
+
+
+def statement_break(segment):
+    """The last newline in [segment] that ends a statement at its own bracket depth."""
+    depth = 0
+    for i in range(len(segment) - 1, -1, -1):
+        char = segment[i]
+        if char in CLOSERS:
+            depth += 1
+        elif char in OPENERS:
+            depth -= 1
+        elif char == "\n" and depth == 0:
+            before = segment[:i].rstrip()
+            after = segment[i + 1:].lstrip()
+            if before and before[-1] not in "=(,{+-*/&|?:" and not before.endswith("else") \
+                    and not after.startswith((".", "?.", "else")):
+                return i
+    return -1
+
+
+def if_before_else(code, else_at):
+    i = else_at - 1
+    while i >= 0 and code[i].isspace():
+        i -= 1
+    if i >= 0 and code[i] == "}":
+        i = matching_open(code, i) - 1
+        while i >= 0 and code[i].isspace():
+            i -= 1
+    if i >= 0 and code[i] == ")":
+        word, at = word_before(code, matching_open(code, i))
+        return at if word == "if" else -1
+    return -1
+
+
+def if_branches(code, if_at):
+    """The branch texts of the if-else chain starting at [if_at]."""
+    branches = []
+    i = if_at
+    while True:
+        i = code.index("(", i)
+        i = skip_space(code, matching_close(code, i))
+        end = branch_end(code, i)
+        branches.append(code[i:end])
+        j = skip_space(code, end)
+        if not code.startswith("else", j) or (j + 4 < len(code) and (code[j + 4].isalnum() or code[j + 4] == "_")):
+            return branches
+        j = skip_space(code, j + 4)
+        if code.startswith("if", j) and not (code[j + 2].isalnum() or code[j + 2] == "_"):
+            i = j
+            continue
+        branches.append(code[j:branch_end(code, j)])
+        return branches
+
+
+def skip_space(code, i):
+    while i < len(code) and code[i].isspace():
+        i += 1
+    return i
+
+
+def branch_end(code, i):
+    if i < len(code) and code[i] == "{":
+        return matching_close(code, i)
+    j = i
+    while j < len(code):
+        char = code[j]
+        if char in OPENERS:
+            j = matching_close(code, j)
+            continue
+        if char in ",;" or char in CLOSERS:
+            return j
+        if code.startswith("else", j) and not code[j - 1].isalnum() \
+                and (j + 4 >= len(code) or not code[j + 4].isalnum()):
+            return j
+        if char == "\n" and not code[j + 1:].lstrip().startswith((".", "?.", "else")):
+            return j
+        j += 1
+    return j
+
+
+def hidden_test_tags(code, position):
+    """Offsets of `.testTag` calls later in the chain that starts clearing at [position]."""
+    found = []
+    i = skip_space(code, position + len(CLEAR_SEMANTICS))
+    while True:
+        while i < len(code) and code[i] in "({":
+            i = skip_space(code, matching_close(code, i))
+        if i < len(code) and code[i] == ")":
+            # The end of a `.then(...)` argument: the outer chain goes on after it.
+            word, _ = word_before(code, matching_open(code, i))
+            if word != "then":
+                return found
+            i = skip_space(code, i + 1)
+            continue
+        if not code.startswith(".", i):
+            return found
+        match = re.match(r"\.\s*(\w+)", code[i:])
+        if match is None:
+            return found
+        if match.group(1) == "testTag":
+            found.append(i)
+        i = skip_space(code, i + match.end())
+
+
+def semantics_findings_in_text(text, path):
+    code = kotlin_code(text)
+    lines = text.splitlines()
+    findings = []
+
+    def line_of(offset):
+        return code.count("\n", 0, offset) + 1
+
+    def exempt(number):
+        nearby = lines[max(number - 2, 0):number]
+        return any(SEMANTICS_EXEMPT_COMMENT in line for line in nearby)
+
+    for match in re.finditer(rf"\b{CLEAR_SEMANTICS}\b", code):
+        position = match.start()
+        if code[match.end():].lstrip()[:1] not in ("{", "("):
+            continue  # an import or a reference, not a call
+        number = line_of(position)
+        if exempt(number):
+            continue
+        if_at = governing_if(code, position)
+        if if_at is not None and (if_at < 0 or not all(
+            CLEAR_SEMANTICS in branch for branch in if_branches(code, if_at)
+        )):
+            findings.append((path, number, f"{CLEAR_SEMANTICS} switched on and off by a condition "
+                             "replaces the semantics node; use Modifier.clearSemanticsWhen(...) "
+                             "(ui/ModalSemantics.kt)"))
+        for tag in hidden_test_tags(code, position):
+            findings.append((path, line_of(tag), f"testTag after {CLEAR_SEMANTICS} in the same chain is "
+                             "cleared with the rest; put it before"))
+    return findings
+
+
+def semantics_findings(files):
+    findings = []
+    for path in files:
+        findings += semantics_findings_in_text(Path(path).read_text(encoding="utf-8"), relative(path))
+    return findings
+
+
 # brand
+
+BRAND_IN_TEXT = re.compile(r"\bCandy\b")
+BRAND_IN_KOTLIN = re.compile(r"candy://|\bCandy\b")
+BRAND_EXEMPT_COMMENT = "brand-exempt:"
+# Calls whose strings never reach the screen: logs, exceptions and preconditions, test tags.
+NON_UI_CALL = re.compile(
+    r"^(Log\.\w+|require|requireNotNull|check|checkNotNull|error|fail|(?:[\w.]*\.)?(\w*Exception|\w*Error|testTag))$"
+)
+# One word joined by dots or dashes ("Candy.Blur.Bind", an animation label): a name, not a sentence.
+IDENTIFIER_LITERAL = re.compile(r"^[\w$]+(?:[.\-][\w$]+)+$")
+LOG_TAG = re.compile(r"\bTAG\s*=")
+EMBEDDED_STRING = re.compile(r"""(['"`])((?:\\.|(?!\1).)*)\1""")
+
+
+def embedded_string_at(line, column):
+    """The quoted string of a script line (kept in a Kotlin raw string) around [column], or None."""
+    for match in EMBEDDED_STRING.finditer(line):
+        if match.start(2) <= column < match.end(2):
+            return match.group(2)
+    return None
+
+
+def call_name(code, opening):
+    """The function an opening bracket belongs to: `Log.e` for `Log.e(`, `require` for `require(x) {`."""
+    i = opening - 1
+    while i >= 0 and code[i].isspace():
+        i -= 1
+    if code[opening] == "{" and i >= 0 and code[i] == ")":
+        return call_name(code, matching_open(code, i))
+    end = i + 1
+    while i >= 0 and (code[i].isalnum() or code[i] in "_."):
+        i -= 1
+    return code[i + 1:end]
+
+
+def inside_non_ui_call(code, position):
+    opening = enclosing_open(code, position)
+    while opening >= 0:
+        if NON_UI_CALL.match(call_name(code, opening)):
+            return True
+        opening = enclosing_open(code, opening)
+    return False
+
+
+def brand_findings_in_kotlin(text, path):
+    """String literals that show the Candy brand: `candy://` or the word "Candy". Not shown to the user
+    are comments, log tags and messages, exceptions, test tags, dotted or dashed names, lines marked
+    `// brand-exempt: reason` (on the line or the one above), and in a script kept in a raw string
+    everything but its own string literals."""
+    code = kotlin_code(text)
+    lines = text.splitlines()
+    line_starts = [0]
+    for line in lines:
+        line_starts.append(line_starts[-1] + len(line) + 1)
+
+    def exempt(number):
+        return any(BRAND_EXEMPT_COMMENT in line for line in lines[max(number - 2, 0):number])
+
+    findings = []
+    for kind, start, end in kotlin_spans(text):
+        if kind not in ("string", "raw"):
+            continue
+        quote = 3 if kind == "raw" else 1
+        literal = text[start + quote:end - quote]
+        if not BRAND_IN_KOTLIN.search(literal):
+            continue
+        first = text.count("\n", 0, start) + 1
+        if exempt(first) or LOG_TAG.search(lines[first - 1]):
+            continue
+        if "candy://" not in literal and IDENTIFIER_LITERAL.match(literal):
+            continue
+        if inside_non_ui_call(code, start):
+            continue
+        reported = set()
+        for match in BRAND_IN_KOTLIN.finditer(literal):
+            offset = start + quote + match.start()
+            number = text.count("\n", 0, offset) + 1
+            line = lines[number - 1]
+            if kind == "raw":
+                embedded = embedded_string_at(line, offset - line_starts[number - 1])
+                if embedded is None or IDENTIFIER_LITERAL.match(embedded):
+                    continue  # script code, a script comment or a name, not text
+            if number in reported or exempt(number):
+                continue
+            reported.add(number)
+            shown = line.strip() if kind == "raw" else literal
+            findings.append((path, number, f"\"{shown}\" shows the Candy brand; Vola's UI never does "
+                             f"(CLAUDE.md rule 7), or add `// {BRAND_EXEMPT_COMMENT} reason`"))
+    return findings
+
 
 def brand_findings_in_xml(xml_text):
     root = ElementTree.fromstring(xml_text)
@@ -174,17 +547,19 @@ def brand_findings_in_xml(xml_text):
     for node in root.iter():
         if node.tag in ("string", "item"):
             text = "".join(node.itertext())
-            if re.search(r"\bCandy\b", text):
+            if BRAND_IN_TEXT.search(text):
                 findings.append(node.get("name") or text.strip())
     return findings
 
 
-def check_brand():
+def check_brand(files=None):
     findings = []
     for path in sorted(ROOT.glob(STRINGS_GLOB)):
         for name in brand_findings_in_xml(path.read_text(encoding="utf-8")):
             findings.append((relative(path), 0, f"\"{name}\" shows the Candy brand; Vola's UI never does "
                                                 "(CLAUDE.md rule 7)"))
+    for path in source_files() if files is None else files:
+        findings += brand_findings_in_kotlin(Path(path).read_text(encoding="utf-8"), relative(path))
     return findings
 
 
@@ -195,6 +570,7 @@ def main(argv):
     commands.add_parser("tokens").add_argument("--base", required=True)
     commands.add_parser("engine")
     commands.add_parser("brand")
+    commands.add_parser("semantics")
     args = parser.parse_args(argv)
 
     if args.command == "size":
@@ -203,6 +579,8 @@ def main(argv):
         findings = check_tokens(args.base)
     elif args.command == "engine":
         findings = engine_findings(source_files())
+    elif args.command == "semantics":
+        findings = semantics_findings(source_files())
     else:
         findings = check_brand()
 

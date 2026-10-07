@@ -173,7 +173,7 @@ fun SyncSettingsPage(
             value = serverPassword,
             onValueChange = { serverPassword = it },
             label = "Server-Passwort",
-            supportingText = "Nur für die Anmeldung am eigenen Candy-Sync-Server.",
+            supportingText = "Nur für die Anmeldung am eigenen Sync-Server.",
         )
 
         SectionTitle("Dieses Gerät")
@@ -261,7 +261,7 @@ fun SyncSettingsPage(
             Column(Modifier.padding(18.dp)) {
                 Text("Recovery-Passphrase sicher aufbewahren", fontWeight = FontWeight.Bold)
                 Text(
-                    "Sie verschlüsselt deine Sync-Daten Ende zu Ende. Candy speichert sie nicht und kann sie nicht wiederherstellen.",
+                    "Sie verschlüsselt deine Sync-Daten Ende zu Ende. Vola speichert sie nicht und kann sie nicht wiederherstellen.",
                     modifier = Modifier.padding(top = 6.dp),
                     style = MaterialTheme.typography.bodySmall,
                 )

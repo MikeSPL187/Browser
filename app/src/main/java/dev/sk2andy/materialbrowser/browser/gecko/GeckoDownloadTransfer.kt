@@ -50,7 +50,30 @@ internal data class GeckoDownloadTransferStart(
     val totalBytes: Long,
 )
 
+/** The final name and type of a transfer, known from its response before anything is written. */
+internal data class GeckoDownloadTransferMetadata(
+    val fileName: String,
+    val mimeType: String,
+    val sourceUrl: String,
+)
+
+/** The one answer to [GeckoDownloadTransferListener.onMetadata]; later answers are ignored. */
+internal interface GeckoDownloadMetadataDecision {
+    /** Writes the file. */
+    fun proceed()
+
+    /** Closes the response; nothing is written and no failure is reported. */
+    fun abort()
+}
+
 internal interface GeckoDownloadTransferListener {
+    /**
+     * The final name and type are known and nothing is written yet. The transfer waits, holding
+     * the response open, until [decision] proceeds or aborts; by default it proceeds at once.
+     */
+    fun onMetadata(metadata: GeckoDownloadTransferMetadata, decision: GeckoDownloadMetadataDecision) =
+        decision.proceed()
+
     fun onStarted(start: GeckoDownloadTransferStart)
 
     fun onProgress(bytesReceived: Long, totalBytes: Long) = Unit
@@ -76,6 +99,26 @@ internal object GeckoDownloadResponseRules {
     ): Boolean {
         if (allowHttpErrors || statusCode in 200..299) return false
         return statusCode != 0 || !uri.startsWith("blob:", ignoreCase = true)
+    }
+}
+
+internal object GeckoDownloadStreamRules {
+    /**
+     * Opens the output of a row that was just inserted. When opening fails, by returning null or by
+     * throwing, the row is rolled back so no pending file is left behind, and the failure goes on.
+     */
+    fun <T : Any> openOrRollback(open: () -> T?, rollback: () -> Unit): T {
+        val output = try {
+            open()
+        } catch (failure: Throwable) {
+            runCatching(rollback)
+            throw failure
+        }
+        if (output == null) {
+            runCatching(rollback)
+            error("MediaStore could not open download")
+        }
+        return output
     }
 }
 
@@ -116,10 +159,10 @@ internal class MediaStoreDownloadStreamSink(context: Context) : GeckoDownloadStr
         val uri = checkNotNull(
             resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values),
         ) { "MediaStore rejected download" }
-        val output = resolver.openOutputStream(uri, "w") ?: run {
-            resolver.delete(uri, null, null)
-            error("MediaStore could not open download")
-        }
+        val output = GeckoDownloadStreamRules.openOrRollback(
+            open = { resolver.openOutputStream(uri, "w") },
+            rollback = { resolver.delete(uri, null, null) },
+        )
         return MediaStoreDownloadStreamEntry(resolver, uri, output)
     }
 }
@@ -297,13 +340,46 @@ internal class GeckoDownloadTransferManager(
         val contentType = response.header("content-type")
         val contentDisposition = response.header("content-disposition")
             ?: suggestedFileName?.let { name -> "attachment; filename=\"$name\"" }
-        val safeMimeType = SafeDownloadValues.mimeType(contentType, response.uri)
+        val candidateMimeType = SafeDownloadValues.mimeType(contentType, response.uri)
         val safeFileName = SafeDownloadValues.fileName(
             response.uri,
             contentDisposition,
-            safeMimeType,
+            candidateMimeType,
         )
+        val safeMimeType = SafeDownloadValues.finalMimeType(safeFileName, candidateMimeType)
         val totalBytes = response.header("content-length")?.toLongOrNull()?.coerceAtLeast(-1L) ?: -1L
+        val metadata = GeckoDownloadTransferMetadata(safeFileName, safeMimeType, response.uri)
+        val answered = AtomicBoolean(false)
+        val decision = object : GeckoDownloadMetadataDecision {
+            override fun proceed() {
+                if (answered.compareAndSet(false, true)) {
+                    open(id, operation, body, metadata, referrer, totalBytes, listener)
+                }
+            }
+
+            override fun abort() {
+                if (answered.compareAndSet(false, true)) discard(id, operation, body)
+            }
+        }
+        dispatch { listener.onMetadata(metadata, decision) }
+    }
+
+    /** Starts writing once the final [metadata] may be saved. */
+    private fun open(
+        id: Int,
+        operation: Operation,
+        body: java.io.InputStream,
+        metadata: GeckoDownloadTransferMetadata,
+        referrer: String?,
+        totalBytes: Long,
+        listener: GeckoDownloadTransferListener,
+    ) {
+        if (operation.cancelled.get() || operation.terminal.get()) {
+            discard(id, operation, body)
+            return
+        }
+        val safeFileName = metadata.fileName
+        val safeMimeType = metadata.mimeType
         val entry = runCatching { sink.open(safeFileName, safeMimeType) }.getOrElse {
             runCatching(body::close)
             fail(id, operation, listener, GeckoDownloadFailure.Storage)
@@ -313,7 +389,7 @@ internal class GeckoDownloadTransferManager(
             id = id,
             fileName = safeFileName,
             mimeType = safeMimeType,
-            sourceUrl = response.uri,
+            sourceUrl = metadata.sourceUrl,
             referrer = referrer,
             startedAtMillis = System.currentTimeMillis(),
             totalBytes = totalBytes,
@@ -341,6 +417,15 @@ internal class GeckoDownloadTransferManager(
             dispatch { listener.onStarted(started) }
             notifier.started(started.id)
             io.execute { copy(id, operation, body, started, listener) }
+        }
+    }
+
+    /** Drops a response that will not be written, without reporting a failure. */
+    private fun discard(id: Int, operation: Operation, body: java.io.InputStream) {
+        synchronized(operation) {
+            operation.terminal.set(true)
+            runCatching(body::close)
+            operations.remove(id, operation)
         }
     }
 
