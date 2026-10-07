@@ -35,7 +35,10 @@ internal fun ClosedTabUndoSnackbarEffect(
     )
 }
 
-/** «Data of example.com deleted · Undo» while the deletion waits out its window. */
+/**
+ * «Data of example.com deleted · Undo» while the deletion waits out its window, then
+ * «Couldn't delete data for example.com · Retry» if the engine fails to delete it.
+ */
 @Composable
 private fun SiteDataDeletionSnackbarEffect(
     deletion: SiteDataDeletion,
@@ -48,11 +51,21 @@ private fun SiteDataDeletionSnackbarEffect(
         message = pending?.let { stringResource(R.string.site_data_deleted, it.baseDomain) }.orEmpty(),
         onUndo = deletion::undo,
     )
+    val failed = deletion.failed
+    UndoSnackbarEffect(
+        offer = failed,
+        hostState = hostState,
+        message = failed?.let { stringResource(R.string.site_data_delete_failed, it.baseDomain) }.orEmpty(),
+        onUndo = deletion::retry,
+        onGone = deletion::dismissFailure,
+        actionLabel = stringResource(R.string.action_retry),
+        duration = SnackbarDuration.Long,
+    )
 }
 
 /**
  * An «Undo» snackbar for as long as [offer] stands: the owner of the offer keeps its time, and the
- * snackbar goes when the offer does.
+ * snackbar goes when the offer does. [actionLabel] and [duration] serve offers like «Retry».
  */
 @Composable
 private fun <T : Any> UndoSnackbarEffect(
@@ -61,16 +74,17 @@ private fun <T : Any> UndoSnackbarEffect(
     message: String,
     onUndo: (T) -> Unit,
     onGone: (T) -> Unit = {},
+    actionLabel: String = stringResource(R.string.action_undo),
+    duration: SnackbarDuration = SnackbarDuration.Indefinite,
 ) {
-    val undoLabel = stringResource(R.string.action_undo)
     LaunchedEffect(offer) {
         val token = offer ?: return@LaunchedEffect
         hostState.currentSnackbarData?.dismiss()
         try {
             val result = hostState.showSnackbar(
                 message = message,
-                actionLabel = undoLabel,
-                duration = SnackbarDuration.Indefinite,
+                actionLabel = actionLabel,
+                duration = duration,
             )
             if (result == SnackbarResult.ActionPerformed) onUndo(token)
         } finally {

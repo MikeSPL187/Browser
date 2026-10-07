@@ -1681,6 +1681,7 @@
     <string name="site_info_delete_site_data">Delete</string>
     <string name="site_info_delete_site_data_description">Delete data of %1$s</string>
     <string name="site_data_deleted">Data of %1$s deleted</string>
+    <string name="site_data_delete_failed">Couldn\'t delete data for %1$s</string>
     <string name="site_info_certificate">Certificate</string>
     <string name="site_info_certificate_summary">%1$s · until %2$s</string>
     <string name="site_info_certificate_expired">%1$s · expired %2$s</string>

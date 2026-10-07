@@ -1735,6 +1735,7 @@
     <string name="site_info_delete_site_data">Удалить</string>
     <string name="site_info_delete_site_data_description">Удалить данные %1$s</string>
     <string name="site_data_deleted">Данные %1$s удалены</string>
+    <string name="site_data_delete_failed">Не удалось удалить данные %1$s</string>
     <string name="site_info_certificate">Сертификат</string>
     <string name="site_info_certificate_summary">%1$s · до %2$s</string>
     <string name="site_info_certificate_expired">%1$s · истёк %2$s</string>

@@ -176,8 +176,8 @@ internal fun BoxScope.BrowserModalSurfaces(
                     ?.let { domain ->
                         SiteInfoSiteData(
                             baseDomain = domain,
-                            allWorkspaces = controller.profilesEnabled &&
-                                controller.localBrowserProfiles.size > 1,
+                            // The engine clears every workspace's data, shown or not.
+                            allWorkspaces = controller.localBrowserProfiles.size > 1,
                             onDelete = {
                                 // TalkBack users get the longer window Android recommends.
                                 val window = SiteDataDeletionRules.UNDO_WINDOW_MILLIS
