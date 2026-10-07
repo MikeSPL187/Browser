@@ -787,7 +787,7 @@
     <string name="first_run_theme_light">Светлая</string>
     <string name="first_run_theme_dark">Тёмная</string>
     <string name="first_run_theme_auto">Авто</string>
-    <string name="first_run_trackers">Строгая защита от трекеров</string>
+    <string name="first_run_trackers">Блокировка рекламы и трекеров</string>
     <string name="first_run_trackers_on">Включена</string>
     <string name="first_run_trackers_off">Выключена</string>
     <string name="first_run_https">Только HTTPS</string>

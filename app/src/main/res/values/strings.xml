@@ -757,7 +757,7 @@
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
     <string name="first_run_theme_auto">Auto</string>
-    <string name="first_run_trackers">Strict tracker protection</string>
+    <string name="first_run_trackers">Block ads and trackers</string>
     <string name="first_run_trackers_on">On</string>
     <string name="first_run_trackers_off">Off</string>
     <string name="first_run_https">HTTPS only</string>
