@@ -189,6 +189,8 @@ object CredentialVaultRules {
         var duplicates = 0
         var rejected = 0
         var withTotp = 0
+        var full = 0
+        val conflicts = LinkedHashMap<String, ImportConflict>()
         for (item in imported) {
             val draft = item.draft
             val totp = item.totp?.takeIf(::acceptsTotp)
@@ -201,6 +203,9 @@ object CredentialVaultRules {
             if (position != null) {
                 duplicates++
                 val existing = result[position]
+                if (existing.password != draft.password && existing.id !in conflicts) {
+                    conflicts[existing.id] = ImportConflict(existing.id, draft.password)
+                }
                 if (existing.totp == null && totp != null) {
                     result[position] = existing.copy(totp = totp, updatedAtMillis = nowMillis)
                     withTotp++
@@ -208,7 +213,7 @@ object CredentialVaultRules {
                 continue
             }
             if (result.size >= MAX_LOGINS) {
-                rejected++
+                full++
                 continue
             }
             val added = VaultLogin(
@@ -229,7 +234,25 @@ object CredentialVaultRules {
             addedIds += added.id
             if (totp != null) withTotp++
         }
-        return result to VaultImportSummary(addedIds, duplicates, rejected, withTotp)
+        return result to VaultImportSummary(addedIds, duplicates, rejected, withTotp, conflicts.values.toList(), full)
+    }
+
+    /** [logins] with the export's password for each of [conflicts]; null when nothing changes. */
+    fun replacePasswords(logins: List<VaultLogin>, conflicts: List<ImportConflict>, nowMillis: Long): List<VaultLogin>? {
+        val passwords = conflicts.associate { it.loginId to it.password }
+        var changed = false
+        val result = logins.map { login ->
+            val password = passwords[login.id]?.takeIf { candidate ->
+                candidate != login.password && accepts(VaultLoginDraft(login.origin, login.formActionOrigin, login.httpRealm, login.username, candidate))
+            }
+            if (password == null) {
+                login
+            } else {
+                changed = true
+                login.copy(password = password, updatedAtMillis = nowMillis)
+            }
+        }
+        return result.takeIf { changed }
     }
 
     /** [logins] with [id] marked as just used, or null if there is no such login. */

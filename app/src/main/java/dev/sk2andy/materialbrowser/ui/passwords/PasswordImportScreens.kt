@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
+import dev.sk2andy.materialbrowser.shared.credentials.ImportConflict
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.LibraryCardSlice
 import dev.sk2andy.materialbrowser.ui.LibraryRow
@@ -58,7 +59,10 @@ internal enum class PasswordImportSource { Chrome, Firefox, Samsung, Managers, F
 /** Why a picked file brought nothing in. */
 internal enum class PasswordImportProblem { NotAnExport, Encrypted, TooLarge, NotText, Unreadable, NoLogins, Failed }
 
-/** What an import did, for the result screen. Holds counts and ids, never a password. */
+/**
+ * What an import did, for the result screen: counts and ids, and only the file's own passwords for
+ * logins Vola already had ([conflicts]), kept in memory until the user takes them or leaves.
+ */
 internal data class PasswordImportReport(
     val fileName: String?,
     val fileSizeBytes: Long,
@@ -72,10 +76,17 @@ internal data class PasswordImportReport(
     val bookmarks: Int = 0,
     val bookmarksSkipped: Int = 0,
     val bookmarksLimitReached: Boolean = false,
+    /** Logins the file has with another password; the saved ones were kept until the user chooses. */
+    val conflicts: List<ImportConflict> = emptyList(),
+    /** New logins that did not fit: the vault holds at most 10 000. */
+    val full: Int = 0,
 )
 
 /** The picked file after the import: still there, being deleted, gone, or refused to go. */
 internal enum class PasswordImportFileState { Present, Deleting, Deleted, DeleteFailed }
+
+/** The file's other passwords: offered, being written, taken, or the write failed. */
+internal enum class PasswordImportConflictState { Offered, Replacing, Replaced, Failed }
 
 internal object PasswordImportTestTags {
     const val Sources = "password_import_sources"
@@ -84,6 +95,7 @@ internal object PasswordImportTestTags {
     const val Problem = "password_import_problem"
     const val Result = "password_import_result"
     const val DeleteFile = "password_import_delete_file"
+    const val UseFilePasswords = "password_import_use_file_passwords"
     const val ToPasswords = "password_import_to_passwords"
     const val Check = "password_import_check"
     fun source(source: PasswordImportSource) = "password_import_source:${source.name}"
@@ -341,6 +353,8 @@ internal fun PasswordImportResultScreen(
     onDeleteFile: () -> Unit,
     onCheck: () -> Unit,
     onDone: () -> Unit,
+    conflictState: PasswordImportConflictState = PasswordImportConflictState.Offered,
+    onUseFilePasswords: () -> Unit = {},
 ) {
     val context = LocalContext.current
     ImportScaffold(title = stringResource(R.string.passwords_import_title), onBack = onDone) { padding ->
@@ -382,6 +396,7 @@ internal fun PasswordImportResultScreen(
                             CountLine(R.plurals.passwords_import_with_totp, report.withTotp)
                             CountLine(R.plurals.passwords_import_duplicates, report.duplicates)
                             CountLine(R.plurals.passwords_import_skipped, report.skipped)
+                            CountLine(R.plurals.passwords_import_full, report.full)
                         }
                         if (report.bookmarks > 0 || report.bookmarksSkipped > 0) {
                             Text(
@@ -400,6 +415,9 @@ internal fun PasswordImportResultScreen(
                         }
                     }
                 }
+            }
+            if (report.conflicts.isNotEmpty()) {
+                item(key = "conflicts") { ConflictCard(report.conflicts.size, conflictState, onUseFilePasswords) }
             }
             if (report.hadPasswords) item(key = "file") { FileCard(fileState, onDeleteFile) }
             if (report.added > 0) {
@@ -451,6 +469,43 @@ private fun CountLine(plural: Int, count: Int) {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/** Logins whose password in the file differs: Vola kept its own, and the user can take the file's. */
+@Composable
+private fun ConflictCard(count: Int, state: PasswordImportConflictState, onUse: () -> Unit) {
+    ImportCard {
+        if (state == PasswordImportConflictState.Replaced) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(VolaPasswords.healthSummaryGap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(VolaIcons.CheckCircle, contentDescription = null, tint = VolaTheme.extendedColors.ok)
+                Text(stringResource(R.string.passwords_import_replaced), style = MaterialTheme.typography.bodyMedium)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(VolaPasswords.healthSummaryGap)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(VolaPasswords.healthSummaryGap)) {
+                    Icon(VolaIcons.WarningFilled, contentDescription = null, tint = VolaTheme.extendedColors.warn)
+                    Text(
+                        text = if (state == PasswordImportConflictState.Failed) {
+                            stringResource(R.string.passwords_failed)
+                        } else {
+                            pluralStringResource(R.plurals.passwords_import_conflicts, count, count)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                FilledTonalButton(
+                    onClick = onUse,
+                    enabled = state != PasswordImportConflictState.Replacing,
+                    modifier = Modifier.testTag(PasswordImportTestTags.UseFilePasswords),
+                ) {
+                    Text(stringResource(R.string.passwords_import_use_file_passwords))
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -613,6 +668,7 @@ private fun PasswordImportResultPreview() {
                 addedIds = emptyList(),
                 bookmarks = 214,
                 bookmarksSkipped = 5,
+                conflicts = listOf(ImportConflict("1", "preview"), ImportConflict("2", "preview")),
             ),
             fileState = PasswordImportFileState.Present,
             healthIssues = 8,

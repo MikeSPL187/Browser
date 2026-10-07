@@ -1767,10 +1767,10 @@
     <string name="passwords_intro_title">Пароли, которые остаются на этом телефоне</string>
     <string name="passwords_intro_encrypted">Зашифрованы ключом, который не покидает телефон.</string>
     <string name="passwords_intro_unlock">Открываются отпечатком или кодом экрана.</string>
-    <string name="passwords_intro_phrase">Фраза из 12 слов вернёт их после сброса или на новом телефоне.</string>
+    <string name="passwords_intro_phrase">Если ключ телефона утрачен, их снова откроет фраза из 12 слов. Для нового телефона нужен ещё «Экспорт всех данных».</string>
     <string name="passwords_intro_action">Включить</string>
     <string name="passwords_phrase_title">Фраза восстановления</string>
-    <string name="passwords_phrase_body">Запишите эти 12 слов на бумаге по порядку и храните надёжно. Без них после сброса телефона пароли не вернуть.</string>
+    <string name="passwords_phrase_body">Запишите эти 12 слов на бумаге по порядку и храните надёжно. Они откроют пароли, если ключ телефона утрачен. После сброса или на новом телефоне они сработают только вместе с копией из «Экспорт всех данных».</string>
     <string name="passwords_phrase_done">Я записал(а)</string>
     <string name="passwords_confirm_title">Проверим фразу</string>
     <string name="passwords_confirm_body">Введите эти слова из своей записи.</string>
@@ -1786,6 +1786,11 @@
     <string name="passwords_recover_action">Открыть</string>
     <string name="passwords_recover_wrong">Эта фраза не открывает пароли.</string>
     <string name="passwords_device_key_lost">Ключ этого телефона утрачен. Откройте пароли фразой восстановления.</string>
+    <string name="passwords_erase_locked">Удалить пароли</string>
+    <string name="passwords_turn_off">Выключить пароли</string>
+    <string name="passwords_erase_title">Удалить все пароли?</string>
+    <string name="passwords_erase_body">Все сохранённые пароли и ключи 2FA будут стёрты с этого телефона, а фраза восстановления перестанет работать. Сайты снова будут обращаться к системному менеджеру паролей. Отменить нельзя.</string>
+    <string name="passwords_erase_action">Удалить всё</string>
     <string name="passwords_no_screen_lock">Сначала включите блокировку экрана на телефоне.</string>
     <string name="passwords_prompt_title">Пароли Vola</string>
     <string name="passwords_prompt_subtitle">Подтвердите, что это вы</string>
@@ -1982,11 +1987,25 @@
         <item quantity="many">%d уже были в Vola</item>
         <item quantity="other">%d уже были в Vola</item>
     </plurals>
+    <plurals name="passwords_import_conflicts">
+        <item quantity="one">У %d логина в файле другой пароль. Vola оставила сохранённый.</item>
+        <item quantity="few">У %d логинов в файле другой пароль. Vola оставила сохранённые.</item>
+        <item quantity="many">У %d логинов в файле другой пароль. Vola оставила сохранённые.</item>
+        <item quantity="other">У %d логина в файле другой пароль. Vola оставила сохранённые.</item>
+    </plurals>
+    <string name="passwords_import_use_file_passwords">Взять пароли из файла</string>
+    <string name="passwords_import_replaced">Пароли из файла сохранены</string>
     <plurals name="passwords_import_skipped">
         <item quantity="one">Пропущен %d: не сайт https или нет пароля</item>
         <item quantity="few">Пропущено %d: не сайты https или нет пароля</item>
         <item quantity="many">Пропущено %d: не сайты https или нет пароля</item>
         <item quantity="other">Пропущено %d: не сайты https или нет пароля</item>
+    </plurals>
+    <plurals name="passwords_import_full">
+        <item quantity="one">%d не поместился: Vola хранит до 10 000 паролей</item>
+        <item quantity="few">%d не поместились: Vola хранит до 10 000 паролей</item>
+        <item quantity="many">%d не поместились: Vola хранит до 10 000 паролей</item>
+        <item quantity="other">%d не поместились: Vola хранит до 10 000 паролей</item>
     </plurals>
     <plurals name="passwords_import_bookmarks">
         <item quantity="one">Перенесена %d закладка</item>
