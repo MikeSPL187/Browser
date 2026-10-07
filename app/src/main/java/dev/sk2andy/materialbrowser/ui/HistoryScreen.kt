@@ -104,7 +104,9 @@ internal fun HistoryScreen(
 ) {
     val configuration = LocalConfiguration.current
     val locale = configuration.locales[0]
-    val zoneId = remember { ZoneId.systemDefault() }
+    // «Today»/«Yesterday» and the zone follow the device day and time zone on an open screen.
+    val today = rememberLocalToday()
+    val zoneId = remember(today) { ZoneId.systemDefault() }
     val dateFormatter = remember(locale) {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     }
@@ -171,7 +173,6 @@ internal fun HistoryScreen(
         visibleEntries.filter { entry -> BrowsingHistoryRules.entryKey(entry) in keys }
     }
     val selecting = selectedEntries.isNotEmpty()
-    val today = remember { LocalDate.now(zoneId) }
     val profilesById = remember(profiles) { profiles.associateBy(BrowserProfile::id) }
 
     val snackbarHostState = remember { SnackbarHostState() }
