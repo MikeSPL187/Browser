@@ -20,6 +20,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.blocking.BlockerSettings
+import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.SearchEngine
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
@@ -45,7 +49,17 @@ class DeveloperOptionsSettingsPageInstrumentedTest {
         composeRule.setContent {
             MaterialBrowserTheme {
                 SettingsHomePage(
-                    downloadSummary = "Candy",
+                    state = SettingsHomeState(
+                        appearance = AppearanceSettings(),
+                        searchEngine = SearchEngine.DuckDuckGo,
+                        blocker = BlockerSettings(),
+                        httpsOnlyMode = HttpsOnlyMode.Always,
+                        isHttpsOnlySupported = true,
+                        downloadSummary = "",
+                        isDefaultBrowser = true,
+                    ),
+                    isDefaultBrowser = true,
+                    onOpenDefaultBrowserSettings = {},
                     onDestinationChanged = { destination = it },
                     onDismiss = {},
                     developerOptionsUnlocked = unlocked,
