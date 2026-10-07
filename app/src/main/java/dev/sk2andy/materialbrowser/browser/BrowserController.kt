@@ -10910,6 +10910,7 @@ class BrowserController(
             grant = { allowed -> request.response.complete(request.permission in allowed) },
             deny = { request.response.complete(false) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun onGeckoMediaPermissionRequest(
@@ -10926,6 +10927,7 @@ class BrowserController(
             grant = request.response::complete,
             deny = { request.response.complete(emptySet()) },
         )
+        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
     }
 
     private fun beginGeckoPermissionAccess(

@@ -50,13 +50,34 @@ internal data class BrowserEngineContentPermissionRequest(
     val permission: SitePermission,
     val response: BrowserEngineBooleanResponse,
     val onPromptShown: (() -> Unit)? = null,
+    val cancellation: BrowserEnginePermissionCancellation = BrowserEnginePermissionCancellation(),
 )
 
 internal data class BrowserEngineMediaPermissionRequest(
     val origin: String,
     val permissions: Set<SitePermission>,
     val response: BrowserEnginePermissionSetResponse,
+    val cancellation: BrowserEnginePermissionCancellation = BrowserEnginePermissionCancellation(),
 )
+
+/**
+ * The engine withdrew a permission request before it was answered (System WebView reports it when
+ * the requesting frame goes away). Engines without such a signal never fire it.
+ */
+internal class BrowserEnginePermissionCancellation {
+    private var canceled = false
+    private var listener: (() -> Unit)? = null
+
+    fun onCanceled(listener: () -> Unit) {
+        if (canceled) listener() else this.listener = listener
+    }
+
+    fun cancel() {
+        if (canceled) return
+        canceled = true
+        listener?.also { listener = null }?.invoke()
+    }
+}
 
 internal fun interface BrowserEngineBooleanResponse {
     fun complete(allowed: Boolean)
