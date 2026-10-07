@@ -780,7 +780,7 @@
     <string name="settings_startup_animation_title">Анимация запуска</string>
     <string name="settings_startup_animation_subtitle">Знак Vola плавно растворяется в браузере при запуске.</string>
     <string name="first_run_welcome_title">Браузер, который не мешает</string>
-    <string name="first_run_welcome_body">Страница на весь экран, пространства для работы и отдыха, защита от слежки без настроек.</string>
+    <string name="first_run_welcome_body">Ничего лишнего вокруг страницы, пространства для работы и отдыха, защита от слежки без настроек.</string>
     <string name="first_run_start">Начать</string>
     <string name="first_run_import">Перенести из другого браузера</string>
     <string name="first_run_setup_title">Настройте под себя</string>

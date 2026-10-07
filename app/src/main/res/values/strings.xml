@@ -750,7 +750,7 @@
     <string name="settings_startup_animation_title">Startup animation</string>
     <string name="settings_startup_animation_subtitle">The Vola mark melts into the browser on launch.</string>
     <string name="first_run_welcome_title">A browser that stays out of the way</string>
-    <string name="first_run_welcome_body">Pages edge to edge, spaces for work and for rest, and tracking protection with no setup.</string>
+    <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
     <string name="first_run_setup_title">Make it yours</string>
