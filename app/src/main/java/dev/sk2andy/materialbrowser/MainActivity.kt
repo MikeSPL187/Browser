@@ -59,6 +59,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserMediaSystemSession
 import dev.sk2andy.materialbrowser.browser.BrowserMediaPlaybackService
 import dev.sk2andy.materialbrowser.browser.BrowserMediaLifecycleTrace
 import dev.sk2andy.materialbrowser.browser.BrowserMouseButton
+import dev.sk2andy.materialbrowser.browser.FirstRunPresentationRules
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoRules
 import dev.sk2andy.materialbrowser.browser.ProfileBiometricAuthenticator
 import dev.sk2andy.materialbrowser.browser.PrivateTabsNotifier
@@ -290,7 +291,7 @@ class MainActivity : AppCompatActivity() {
         initialOnboardingRequired = onboardingRequired && !hadCompletedOnboarding
         onboardingVisible = savedInstanceState
             ?.getBoolean(STATE_ONBOARDING_VISIBLE)
-            ?: onboardingRequired
+            ?: FirstRunPresentationRules.showNow(onboardingRequired, isColdExternalLinkLaunch)
         releaseNotesStore = ReleaseNotesStore(this)
         if (
             intent.action == Intent.ACTION_MAIN ||
@@ -824,6 +825,9 @@ class MainActivity : AppCompatActivity() {
         showAppDataTransferResult(intent)
         openIntent(intent)
         openHomePageForLauncherLaunch(intent)
+        if (FirstRunPresentationRules.showOnNewIntent(intent.action == Intent.ACTION_MAIN, GestureOnboardingStore(this).isCompleted())) {
+            onboardingVisible = true
+        }
         if (intent.action == Intent.ACTION_MAIN) loadReleaseNotesContent()
         if (
             shouldPresentReleaseNotes(

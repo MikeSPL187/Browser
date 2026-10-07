@@ -9,7 +9,12 @@
     <string name="widget_open_profile_tab">Открыть новую вкладку в пространстве %1$s</string>
     <string name="onboarding_welcome_title">Знакомьтесь, Vola</string>
     <string name="onboarding_welcome_body">Браузер, которым управляют жестами: вкладки, маршруты и настройки приватности всегда под рукой.</string>
-    <string name="onboarding_welcome_card_title">Три жеста. Один плавный сценарий.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d жест. Один плавный сценарий.</item>
+        <item quantity="few">%1$d жеста. Один плавный сценарий.</item>
+        <item quantity="many">%1$d жестов. Один плавный сценарий.</item>
+        <item quantity="other">%1$d жеста. Один плавный сценарий.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Изучить жесты</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_completion_title">Всё готово!</string>
@@ -17,9 +22,9 @@
     <string name="onboarding_completion_cta">Начать</string>
     <string name="onboarding_follow_pointer">Следуйте пальцем за точкой касания</string>
     <string name="onboarding_title">Жесты Vola</string>
-    <string name="onboarding_progress">%1$d из %2$d</string>
+    <string name="onboarding_progress">Жест %1$d из %2$d</string>
     <string name="onboarding_try_here">Попробуйте жест на карточке</string>
-    <string name="onboarding_required_hint">Чтобы продолжить, выполните все три жеста.</string>
+    <string name="onboarding_required_hint">Выполните жест или нажмите «Пропустить».</string>
     <string name="onboarding_accessibility_complete_action">Отметить жест как выполненный</string>
     <string name="onboarding_switch_tabs_title">Переключение вкладок</string>
     <string name="onboarding_switch_tabs_description">Проведите по адресной строке влево или вправо.</string>
@@ -780,14 +785,14 @@
     <string name="settings_startup_animation_title">Анимация запуска</string>
     <string name="settings_startup_animation_subtitle">Знак Vola плавно растворяется в браузере при запуске.</string>
     <string name="first_run_welcome_title">Браузер, который не мешает</string>
-    <string name="first_run_welcome_body">Страница на весь экран, пространства для работы и отдыха, защита от слежки без настроек.</string>
+    <string name="first_run_welcome_body">Ничего лишнего вокруг страницы, пространства для работы и отдыха, защита от слежки без настроек.</string>
     <string name="first_run_start">Начать</string>
     <string name="first_run_import">Перенести из другого браузера</string>
     <string name="first_run_setup_title">Настройте под себя</string>
     <string name="first_run_theme_light">Светлая</string>
     <string name="first_run_theme_dark">Тёмная</string>
     <string name="first_run_theme_auto">Авто</string>
-    <string name="first_run_trackers">Строгая защита от трекеров</string>
+    <string name="first_run_trackers">Блокировка рекламы и трекеров</string>
     <string name="first_run_trackers_on">Включена</string>
     <string name="first_run_trackers_off">Выключена</string>
     <string name="first_run_https">Только HTTPS</string>
