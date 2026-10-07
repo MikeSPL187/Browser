@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -279,6 +280,9 @@ internal fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composa
     Box(
         modifier = modifier
             .fillMaxSize()
+            // The first run covers the browser: a touch that misses its controls stops here
+            // instead of reaching the page or the address bar underneath.
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
             .background(colors.background)
             .background(
                 Brush.verticalGradient(

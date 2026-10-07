@@ -32,9 +32,9 @@ jobs:
       ${{ github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'screenshots') }}
     runs-on: ubuntu-latest
-    # The tour walks every screen in four passes; with the Q16c settings and Q18 library
-    # steps it takes close to an hour on a busy runner.
-    timeout-minutes: 75
+    # The tour walks every screen in four passes; with the Q16c settings, Q18 library and
+    # #123 page probe steps it takes about 70 minutes on a busy runner.
+    timeout-minutes: 85
 
     steps:
       - name: Check out source

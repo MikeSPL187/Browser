@@ -102,6 +102,9 @@ internal object VolaIsland {
 
     /** Glow of the aura under the island in the Air layout. */
     val glowElevation = 14.dp
+
+    /** How far the island slides down under the keyboard of a page form, fading out. */
+    val pageKeyboardTravel = 96.dp
 }
 
 /** Shadow depth: --e1 … --e3 in vola4.css. */

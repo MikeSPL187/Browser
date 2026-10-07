@@ -2664,10 +2664,7 @@ class BrowserController(
         val selectedSessionIsBeingReleased =
             browserEngineSessions[tabId] in geckoViewSessionsBeingReleased
         if (isGeckoViewBindingMutationInProgress || selectedSessionIsBeingReleased) {
-            if (
-                !isGeckoViewBindingMutationInProgress ||
-                container !in geckoViewMutationHosts
-            ) {
+            if (!isGeckoViewBindingMutationInProgress || container !in geckoViewMutationHosts) {
                 scheduleGeckoViewAttachRetry(
                     container = container,
                     onContentPresented = onContentPresented,
@@ -2675,9 +2672,7 @@ class BrowserController(
                 )
             }
             val binding = geckoViewBindings[container]
-            return binding?.view?.takeIf { view ->
-                binding.tabId == tabId && view.parent === container
-            }
+            return binding?.view?.takeIf { view -> binding.tabId == tabId && view.parent === container }
         }
         isGeckoViewBindingMutationInProgress = true
         geckoViewMutationHosts += container
@@ -2687,7 +2682,12 @@ class BrowserController(
                 onContentPresented = onContentPresented,
                 backdropCaptureEnabled = backdropCaptureEnabled,
                 tabId = tabId,
-            )
+            )?.also {
+                // A session made at attach starts inactive: run it as tab selection does (#123, H7).
+                if (isActivityResumed && (companion || externalLinkPreviewState == null && !isSelectedContentLocked)) {
+                    browserEngineSessions[tabId]?.setActive(true)
+                }
+            }
         } finally {
             geckoViewMutationHosts.clear()
             isGeckoViewBindingMutationInProgress = false
@@ -11756,7 +11756,9 @@ class BrowserController(
         context: ProtectionRequestContext,
         topInsetPx: Int = 0,
         navigationGeneration: Int = 0,
-        cssSafeAreaTopInsetPx: Int = geckoCssSafeAreaTopInsetPx(tab, pageUrl),
+        // The top safe area is a native margin of the engine view (#123, H4): the page never
+        // lies under the status bar, so the CSS fallback has nothing to move down.
+        cssSafeAreaTopInsetPx: Int = 0,
     ): GeckoPrivacyPolicy {
         val siteProtectionPaused = isSiteProtectionPaused(tab.id, context, pageUrl)
         val federatedLoginCompatibilityEnabled =
@@ -11836,21 +11838,6 @@ class BrowserController(
         }
         return tabSafeAreaTopInsetPx()
     }
-
-    private fun geckoCssSafeAreaTopInsetPx(tab: BrowserTab, pageUrl: String): Int =
-        if (
-            !usesGeckoEngine ||
-            developerSettings.forceSafeAreaFallback ||
-            usesNativeSafeArea(tab.id) ||
-            PrivacyRequestSanitizer.webHost(pageUrl)?.let { host -> isSafeAreaForced(tab, host) } == true ||
-            tab.id in automaticNativeTopSafeAreaTabIds ||
-            webContentTopBarStates.containsKey(tab.id) ||
-            tab.id in browserEngineContentFullscreenTabIds
-        ) {
-            0
-        } else {
-            tabSafeAreaTopInsetPx()
-        }
 
     private fun currentSafeAreaTopInsetPx(): Int = lastWindowInsets
         ?.getInsets(SAFE_AREA_INSET_TYPES)

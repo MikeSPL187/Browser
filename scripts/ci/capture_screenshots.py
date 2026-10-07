@@ -18,6 +18,7 @@ import time
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
+import page_probe
 import startup_timeline
 
 PACKAGE = sys.argv[1]
@@ -301,9 +302,11 @@ def dismiss_first_run():
             # Q23b: the welcome (W-Welcome), setup (W-Setup), then the first lesson step with its
             # pretend address bar, which is skipped.
             shot("first-run-welcome")
+            save_ui("first-run-welcome")
             tap("Get started", "Начать")
             time.sleep(2)
             shot("first-run-setup")
+            save_ui("first-run-setup")
             tap("Next", "Далее")
             time.sleep(2)
             shot("first-run-lesson")
@@ -317,6 +320,215 @@ def dismiss_first_run():
         else:
             return
         time.sleep(3)
+
+
+def probe_touch(label):
+    """Taps the middle of a probe band where it is drawn on screen and logs where the page got
+    the tap (#123, H4: a tap in the Air layout or Compact Mode landed on an element above)."""
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    try:
+        width, height, pixels = page_probe.parse_raw_screencap(data)
+    except ValueError as error:
+        log(f"touch {label}: no screenshot: {error}")
+        return
+    # An eighth in: inside the framed card, clear of its rounded corners and the band labels.
+    runs = page_probe.band_runs(width, height, pixels, x=width // 8)
+    target = page_probe.target_band(runs, height)
+    if target is None:
+        log(f"touch {label}: no probe bands on screen")
+        shot(f"touch-none-{label}", audit=False)
+        return
+    band, first, last = target
+    tap_y = (first + last) // 2
+    adb("shell", "input", "tap", str(width // 4), str(tap_y))
+    time.sleep(2)
+    node = find("PROBE tap", contains=True)
+    reported = None
+    if node is not None:
+        reported = page_probe.parse_result(node["text"]) or page_probe.parse_result(node["desc"])
+    offset = page_probe.touch_offset(tap_y, band, first, last, reported)
+    verdict = "OK" if offset is not None and abs(offset) <= 4 else "MISMATCH"
+    log(f"touch {label}: {verdict}: finger on band {band} at y={tap_y} (band drawn {first}-{last}), "
+        f"page got {reported}, offset {offset} px; page says: {node['text'] if node else None}")
+    if verdict == "MISMATCH":
+        # Where the engine view and its surface sit, to tell a native margin from a renderer inset.
+        views = (adb("shell", "dumpsys", "activity", "top", check=False, capture=True) or b"").decode(
+            "utf-8", "replace")
+        for line in views.splitlines():
+            if "Gecko" in line or "SurfaceView" in line:
+                log(f"touch {label} view: {line.strip()}")
+    shot(f"touch-{label}", audit=False)
+
+
+def probe_tap_feedback(label):
+    """Holds a finger on a probe band and compares its colour mid-press with the colour before:
+    the tap highlight should tint it (#123, H6: no sign that a site's button was pressed)."""
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    try:
+        width, height, pixels = page_probe.parse_raw_screencap(data)
+    except ValueError as error:
+        log(f"tap feedback {label}: no screenshot: {error}")
+        return
+    x = width // 8
+    target = page_probe.target_band(page_probe.band_runs(width, height, pixels, x=x), height)
+    if target is None:
+        log(f"tap feedback {label}: no probe bands on screen")
+        return
+    _, first, last = target
+    y = (first + last) // 2
+    before = tuple(pixels[(y * width + x) * 4:(y * width + x) * 4 + 3])
+    press = subprocess.Popen(["adb", "shell", "input", "swipe", str(width // 4), str(y),
+                              str(width // 4), str(y), "1200"])
+    time.sleep(0.5)
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    press.wait(timeout=30)
+    try:
+        width, height, pixels = page_probe.parse_raw_screencap(data)
+        during = tuple(pixels[(y * width + x) * 4:(y * width + x) * 4 + 3])
+    except ValueError:
+        during = None
+    shown = during is not None and sum(abs(a - b) for a, b in zip(before, during)) >= 12
+    log(f"tap feedback {label}: {'shown' if shown else 'NONE'}: band colour {before} -> {during}")
+    time.sleep(1)
+
+
+def probe_scroll_down():
+    """Two slow swipes up: the page scrolls and the address bar compacts."""
+    width, height = screen_size()
+    for _ in range(2):
+        adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+            str(width // 2), str(int(height * 0.4)), "600")
+        time.sleep(1)
+    time.sleep(2)
+
+
+def probe_keyboard(label):
+    """Taps the login field of the form probe and logs whether the address bar stays over the
+    page while the keyboard is up (#123, H3)."""
+    open_url(f"{page_probe.BASE_URL}/form.html")
+    time.sleep(6)
+    field = find("probe-login")
+    if field is None:
+        log(f"keyboard {label}: form probe not found")
+        shot(f"keyboard-none-{label}", audit=False)
+        return
+    x, y = field["center"]
+    adb("shell", "input", "tap", str(x), str(y))
+    time.sleep(3)
+    ime = (adb("shell", "dumpsys", "input_method", check=False, capture=True) or b"").decode(
+        "utf-8", "replace")
+    shown = "mInputShown=true" in ime
+    bar = find("More options", "Другие действия")
+    field = find("probe-login")
+    log(f"keyboard {label}: keyboard shown={shown}, address bar "
+        f"{'visible at y=' + str(bar['center'][1]) if bar else 'hidden'}, "
+        f"field at y={field['center'][1] if field else 'gone'}")
+    shot(f"keyboard-{label}", audit=False)
+    adb("shell", "input", "keyevent", "BACK")
+    time.sleep(1)
+
+
+def probe_open_site(label, address):
+    """Frame statistics while a site opens from the address bar, as a person opens it: tap the
+    bar, type, Enter (#123, H5: the opening looked jerky)."""
+    width, height = screen_size()
+    menu = find("More options", "Другие действия")
+    if menu is None:
+        # A scrolled page hides the bar; scrolling back up brings it back.
+        adb("shell", "input", "swipe", str(width // 2), str(height // 3), str(width // 2),
+            str(height * 2 // 3), "300")
+        time.sleep(1)
+    if not tap("Search or enter an address", "Поиск или адрес"):
+        menu = find("More options", "Другие действия")
+        if menu is None:
+            log(f"open site {label}: address bar not found")
+            return
+        adb("shell", "input", "tap", str(int(width * 0.45)), str(menu["center"][1]))
+    time.sleep(2)
+    adb("shell", "input", "text", address)
+    time.sleep(2)
+    adb("shell", "dumpsys", "gfxinfo", PACKAGE, "reset", check=False, capture=True)
+    adb("shell", "input", "keyevent", "ENTER")
+    time.sleep(5)
+    frames = (adb("shell", "dumpsys", "gfxinfo", PACKAGE, check=False, capture=True) or b"").decode(
+        "utf-8", "replace")
+    log(f"open site {label}: {page_probe.describe_frames(page_probe.parse_gfxinfo(frames))}")
+
+
+def card_spread_now():
+    data = adb("exec-out", "screencap", check=False, capture=True) or b""
+    try:
+        return page_probe.card_spread(*page_probe.parse_raw_screencap(data))
+    except ValueError:
+        return None
+
+
+def probe_first_paint(label):
+    """Opens a site in a new tab, as a link from another app does, and logs whether the page
+    card shows it: brightness spread at 5, 10, 15 and 20 s, whether the page text is in the
+    accessibility tree (Gecko has the page) and the spread after a small scroll (#123, H7: an
+    empty card until the first scroll in a third of the tours)."""
+    open_url("https://en.wikipedia.org/wiki/Zen")
+    spreads = []
+    for _ in range(4):
+        time.sleep(5)
+        spreads.append(card_spread_now())
+    page_text = find("Zen originated", "Mahayana", contains=True) is not None
+    save_ui(f"first-paint-{label}")
+    shot(f"first-paint-{label}", audit=False)
+    width, height = screen_size()
+    adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.6)),
+        str(width // 2), str(int(height * 0.5)), "400")
+    time.sleep(2)
+    after = card_spread_now()
+    empty = [spread is not None and spread < 3 for spread in spreads]
+    verdict = "EMPTY" if empty[-1] else "OK"
+    log(f"first paint {label}: {verdict}: card spread at 5/10/15/20 s {spreads}, "
+        f"page text in tree {page_text}, after a small scroll {after}")
+
+
+def probe_page(label):
+    """Opening a site, touch accuracy at the top of the page and after scrolling, then the
+    keyboard."""
+    probe_open_site(f"{label}-wikipedia", "en.wikipedia.org/wiki/Zen")
+    probe_open_site(f"{label}-local", f"localhost:{page_probe.PORT}/touch.html")
+    open_url(f"{page_probe.BASE_URL}/touch.html")
+    time.sleep(6)
+    probe_touch(f"{label}-top")
+    probe_scroll_down()
+    probe_touch(f"{label}-scrolled")
+    probe_tap_feedback(label)
+    probe_keyboard(label)
+
+
+def probe_compact(suffix):
+    """The probes with Compact Mode on, switched off again afterwards."""
+    open_url(f"{page_probe.BASE_URL}/touch.html")
+    time.sleep(6)
+    if not tap("More options", "Другие действия"):
+        log("touch compact: menu not found")
+        return
+    time.sleep(2)
+    if not tap_scrolling("Compact mode", "Компактный режим", name=f"probe-compact-{suffix}"):
+        adb("shell", "input", "keyevent", "BACK")
+        return
+    time.sleep(5)
+    probe_touch(f"compact-{suffix}-top")
+    probe_scroll_down()
+    probe_touch(f"compact-{suffix}-scrolled")
+    probe_keyboard(f"compact-{suffix}")
+    width, height = screen_size()
+    if not find("More options", "Другие действия"):
+        if not tap("Show the bar", "Показать панель"):
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.955)))
+        time.sleep(2)
+    if tap("More options", "Другие действия"):
+        time.sleep(2)
+        if not tap_scrolling("Compact mode", "Компактный режим", name=f"probe-compact-off-{suffix}"):
+            adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    if not find("More options", "Другие действия"):
+        log("touch compact: still on after switching it off")
 
 
 def tour(suffix):
@@ -336,6 +548,11 @@ def tour(suffix):
         time.sleep(2)
         shot(f"page-scrolled-{suffix}")
     step("page", page)
+    if suffix == "light":
+        step("probe-first-paint-1", lambda: probe_first_paint("frame-1"))
+        step("probe-first-paint-2", lambda: probe_first_paint("frame-2"))
+        step("probe-frame", lambda: probe_page("frame"))
+        step("probe-compact", lambda: probe_compact(suffix))
 
     def compact_mode():
         """Compact Mode (Q11, board W-Compact): on from the menu, the page fills the screen and
@@ -1228,6 +1445,8 @@ def air_layout(suffix):
 
 
 def main():
+    page_probe.serve()
+    adb("reverse", f"tcp:{page_probe.PORT}", f"tcp:{page_probe.PORT}", check=False)
     density = (adb("shell", "wm", "density", capture=True, check=False) or b"").decode()
     match = re.search(r"(\d+)\s*$", density.strip())
     (DUMPS / "density.txt").write_text((match.group(1) if match else "420") + "\n")
@@ -1253,6 +1472,7 @@ def main():
     dismiss_first_run()
     tour("ru")
     step("air", lambda: air_layout("ru"))
+    step("probe-air", lambda: probe_page("air"))
 
     crashes = (adb("logcat", "-d", "-b", "crash", check=False, capture=True) or b"").decode(
         "utf-8", "replace"
