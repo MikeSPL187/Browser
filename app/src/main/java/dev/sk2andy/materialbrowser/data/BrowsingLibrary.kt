@@ -67,6 +67,33 @@ internal object BrowsingLibraryRules {
             .take(limit.coerceAtLeast(0))
     }
 
+    /**
+     * The title a recorded [visit] takes from a page title that arrived after it was saved; null
+     * when [title] is blank or unchanged, or [url] is no longer the visit's page (fragment aside).
+     */
+    fun lateHistoryTitle(visit: HistoryEntry, url: String, title: String): String? {
+        val safeTitle = title.trim().ifEmpty { return null }
+        val pageKey = urlKey(visit.url) ?: return null
+        if (visit.visitId.isBlank() || urlKey(url) != pageKey) return null
+        return safeTitle.takeUnless { it == visit.title }
+    }
+
+    /** [current] with visit [visitId] renamed to [title]; other visits of the page keep theirs. */
+    fun renameHistoryVisit(
+        current: List<HistoryEntry>,
+        visitId: String,
+        title: String,
+    ): List<HistoryEntry> {
+        val safeTitle = title.trim()
+        if (visitId.isBlank() || safeTitle.isEmpty()) return current
+        if (current.none { entry -> entry.visitId == visitId && entry.title != safeTitle }) {
+            return current
+        }
+        return current.map { entry ->
+            if (entry.visitId == visitId) entry.copy(title = safeTitle) else entry
+        }
+    }
+
     fun suggestions(
         history: List<HistoryEntry>,
         query: String,
