@@ -40,13 +40,20 @@ internal object RecoveryPhrase {
 
     /**
      * The phrase as typed, in its one canonical spelling (lower case, single spaces), or null if
-     * it is not 12 words from the list. Hyphens stay: «yo-yo» is one word of the list.
+     * it is not 12 words from the list. Hyphens stay: «yo-yo» is one word of the list. Any space a
+     * notes app pastes (no-break, narrow, ideographic) separates words, and numbers written in front
+     * of them («1. word», «2) word») are dropped: no word of the list has a digit.
      */
     fun normalize(input: String, wordlist: RecoveryWordlist): String? {
-        val words = input.lowercase(Locale.ROOT).split(WHITESPACE).filter(String::isNotEmpty)
+        val words = input.lowercase(Locale.ROOT)
+            .map { char -> if (char.isWhitespace() || char == ',') ' ' else char }
+            .joinToString("")
+            .split(' ')
+            .map { word -> word.replace(NUMBERING, "") }
+            .filter(String::isNotEmpty)
         if (words.size != WORD_COUNT || words.any { it !in wordlist }) return null
         return words.joinToString(" ")
     }
 
-    private val WHITESPACE = Regex("[\\s,]+")
+    private val NUMBERING = Regex("^\\d+[.):]?")
 }

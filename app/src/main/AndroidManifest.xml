@@ -271,6 +271,7 @@
 
         <activity
             android:name=".PasswordsActivity"
+            android:configChanges="density|keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

@@ -43,6 +43,9 @@ class PasswordsRulesTest {
         assertNull(PasswordsRules.manualOrigin("http://example.com"))
         assertNull(PasswordsRules.manualOrigin(""))
         assertNull(PasswordsRules.manualOrigin("not a site"))
+        // An international name is kept in punycode, the spelling the browser reports for the page.
+        assertEquals("https://xn--e1afmkfd.xn--p1ai", PasswordsRules.manualOrigin("пример.рф"))
+        assertEquals("https://xn--e1afmkfd.xn--p1ai", PasswordsRules.manualOrigin("https://Пример.рф/вход"))
     }
 
     @Test
@@ -51,6 +54,8 @@ class PasswordsRulesTest {
         assertEquals(listOf("2"), PasswordsRules.filter(logins, "BANK").map(VaultLogin::id))
         assertEquals(listOf("1", "2"), PasswordsRules.filter(logins, "anna").map(VaultLogin::id))
         assertEquals(logins, PasswordsRules.filter(logins, "  "))
+        val international = login("3", "https://xn--e1afmkfd.xn--p1ai", "boris")
+        assertEquals(listOf("3"), PasswordsRules.filter(logins + international, "Пример").map(VaultLogin::id))
         assertEquals("bank.example.ru", PasswordsRules.displaySite("https://bank.example.ru"))
     }
 
