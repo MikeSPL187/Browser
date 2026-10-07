@@ -339,4 +339,19 @@ class PrivacyXRayTest {
 
         assertEquals(PrivacyXRaySnapshot.Empty, repository.snapshot("tab"))
     }
+
+    @Test
+    fun `x-ray starts over when the tab leaves the site, not between its pages`() {
+        val reset = PrivacyRetention::resetsOnNavigation
+        assertTrue(reset("https://news.example/a", "https://other.example/"))
+        assertTrue(reset("https://alice.workers.dev/", "https://bob.workers.dev/"))
+        assertTrue(reset(null, "https://example.com/"))
+        assertTrue(reset("about:blank", "https://example.com/"))
+        assertFalse(reset("https://www.example.com/a", "https://shop.example.com/b"))
+        assertFalse(reset("https://example.com/a", "https://example.com/a#top"))
+        assertFalse(reset("https://example.com/", null))
+        assertFalse(reset("https://example.com/", "intent://scan/#Intent;end"))
+        assertFalse(reset("http://192.168.0.1/", "http://192.168.0.1/admin"))
+        assertTrue(reset("http://192.168.0.1/", "http://192.168.0.2/"))
+    }
 }

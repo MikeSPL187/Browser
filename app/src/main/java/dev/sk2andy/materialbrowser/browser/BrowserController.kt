@@ -63,6 +63,7 @@ import dev.sk2andy.materialbrowser.blocking.PrivacyRequestSanitizer
 import dev.sk2andy.materialbrowser.blocking.PrivacyPolicyRules
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionAction
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionSummary
+import dev.sk2andy.materialbrowser.blocking.PrivacyRetention
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRayRepository
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRaySnapshot
 import dev.sk2andy.materialbrowser.blocking.SiteExceptionRules
@@ -1384,6 +1385,9 @@ class BrowserController(
     val siteDataDeletion = SiteDataDeletion(
         clearSiteData = { domain, done -> browserEngineSessionFactory.clearSiteData(domain, done) },
         selectedBaseDomain = { SiteDomainRules.domainForUrl(selectedTab.url) },
+        selectedPageReloadable = {
+            SiteDataDeletionRules.pageReloadable(destroyed, isSelectedContentLocked, isActivityStarted)
+        },
         reloadSelected = ::reload,
         postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
         removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
@@ -12074,6 +12078,8 @@ class BrowserController(
                 }
                 externalAppNavigationRecoveries.remove(event.tabId)
                 val previousUrl = previousTab?.url
+                val resetsPrivacyXRay =
+                    PrivacyRetention.resetsOnNavigation(pageUrls[event.tabId] ?: previousUrl, event.address)
                 event.address?.let { address ->
                     if (previousUrl != null && FaviconRules.changedSite(previousUrl, address)) {
                         invalidateFavicon(event.tabId)
@@ -12120,6 +12126,7 @@ class BrowserController(
                 event.address?.let { address -> pageUrls[event.tabId] = address }
                 refreshDomainMuteForTab(event.tabId)
                 updateProtectionRequestContext(event.tabId, event.address)
+                if (resetsPrivacyXRay) resetPrivacyXRay(event.tabId)
                 val restoredDocumentTopInset = if (restoreDocumentTopSafeArea) {
                     if (usesGeckoEngine) 0 else tabSafeAreaTopInsetPx()
                 } else {
@@ -14968,22 +14975,25 @@ class BrowserController(
         tabId: String,
         clearTemporarySiteOverrides: Boolean = true,
     ) {
-        synchronized(privacyEventLock) {
-            protectionRequestContexts.remove(tabId)
-            pendingBlockedCounts.remove(tabId)
-            privacyXRayRepository.remove(tabId)
-        }
-        privacySnapshots.remove(tabId)
-        reportedAllowedDecisions.remove(tabId)
+        synchronized(privacyEventLock) { protectionRequestContexts.remove(tabId) }
+        resetPrivacyXRay(tabId)
         pendingConsentCssUrls.remove(tabId)
         temporarySiteExceptions.remove(tabId)
         if (clearTemporarySiteOverrides) temporarySitePrivacyOverrides.remove(tabId)
         federatedLoginOfferKeys.remove(tabId)
         captchaCompatibilityOfferKeys.remove(tabId)
-        updateTab(tabId) { tab ->
-            if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0)
-        }
         siteExceptionRevision++
+    }
+
+    /** The tab's X-Ray record and blocked count start over: the tab closed or left the site. */
+    private fun resetPrivacyXRay(tabId: String) {
+        synchronized(privacyEventLock) {
+            pendingBlockedCounts.remove(tabId)
+            privacyXRayRepository.remove(tabId)
+            privacySnapshots.remove(tabId)
+            reportedAllowedDecisions.remove(tabId)
+        }
+        updateTab(tabId) { tab -> if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0) }
     }
 
     private fun detectFederatedLoginRequest(

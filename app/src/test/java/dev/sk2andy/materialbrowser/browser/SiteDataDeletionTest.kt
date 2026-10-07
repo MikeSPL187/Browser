@@ -24,6 +24,14 @@ class SiteDataDeletionRulesTest {
     }
 
     @Test
+    fun `a late completion reloads only a visible, unlocked page`() {
+        assertTrue(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = false, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = true, locked = false, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = true, started = true))
+        assertFalse(SiteDataDeletionRules.pageReloadable(destroyed = false, locked = false, started = false))
+    }
+
+    @Test
     fun `a new load starts from zero with the last failure cleared`() {
         val failed = BrowserTab(
             id = "tab",
@@ -47,6 +55,7 @@ class SiteDataDeletionTest {
     private var clearResult = true
     private var selectedDomain: String? = "example.com"
     private var reloads = 0
+    private var pageReloadable = true
     private val scheduled = mutableListOf<Pair<Runnable, Long>>()
 
     private val deletion = SiteDataDeletion(
@@ -55,6 +64,7 @@ class SiteDataDeletionTest {
             done(clearResult)
         },
         selectedBaseDomain = { selectedDomain },
+        selectedPageReloadable = { pageReloadable },
         reloadSelected = { reloads++ },
         postDelayed = { task, delay -> scheduled += task to delay },
         removeCallbacks = { task -> scheduled.removeAll { it.first === task } },
@@ -112,6 +122,49 @@ class SiteDataDeletionTest {
         clearResult = false
         deletion.request("example.com")
         deletion.commit()
+        assertEquals(0, reloads)
+    }
+
+    @Test
+    fun `a failed deletion is kept for retry, and retry asks the engine again`() {
+        clearResult = false
+        deletion.request("example.com")
+        deletion.commit()
+        val failure = deletion.failed!!
+        assertEquals("example.com", failure.baseDomain)
+        assertEquals(0, reloads)
+        clearResult = true
+        deletion.retry(failure)
+        assertEquals(listOf("example.com", "example.com"), cleared)
+        assertNull(deletion.failed)
+        assertEquals(1, reloads)
+        deletion.retry(failure)
+        assertEquals(2, cleared.size)
+    }
+
+    @Test
+    fun `a dismissed or stale failure does nothing`() {
+        clearResult = false
+        deletion.request("example.com")
+        deletion.commit()
+        val first = deletion.failed!!
+        deletion.retry(first)
+        val second = deletion.failed!!
+        assertTrue(second != first)
+        deletion.dismissFailure(first)
+        assertEquals(second, deletion.failed)
+        deletion.dismissFailure(second)
+        assertNull(deletion.failed)
+        deletion.retry(second)
+        assertEquals(2, cleared.size)
+    }
+
+    @Test
+    fun `a deletion finishing in the background or behind a lock does not reload`() {
+        pageReloadable = false
+        deletion.request("example.com")
+        deletion.commit()
+        assertEquals(listOf("example.com"), cleared)
         assertEquals(0, reloads)
     }
 }
