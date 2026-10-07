@@ -369,6 +369,21 @@ class FullscreenVideoRulesTest {
     }
 
     @Test
+    fun `mini player follows a physical drag in both layout directions`() {
+        assertEquals(-30f, FullscreenVideoRules.miniPlayerDragDeltaX(dragX = -30f, isRtl = false))
+        // RTL: the player is anchored at the left edge; a rightward drag moves it into the screen,
+        // which is the negative logical x that the RTL-aware offset renders to the right.
+        val fromRtlAnchor = FullscreenVideoRules.clampMiniPlayerOffset(
+            proposedX = FullscreenVideoRules.miniPlayerDragDeltaX(dragX = 30f, isRtl = true),
+            proposedY = 0f,
+            maxLeftTravel = 120f,
+            maxUpTravel = 240f,
+        )
+        assertEquals(FullscreenVideoOffset(x = -30f, y = 0f), fromRtlAnchor)
+        assertEquals(30f, FullscreenVideoRules.miniPlayerDragDeltaX(dragX = -30f, isRtl = true))
+    }
+
+    @Test
     fun `accessible move action cycles mini player corners`() {
         val bottomRight = FullscreenVideoOffset(x = 0f, y = 0f)
         val bottomLeft = FullscreenVideoRules.nextMiniPlayerAnchor(bottomRight, 120f, 240f)
