@@ -26,11 +26,7 @@ object BrowserDownloadRequestFactory {
         if (!SafeDownloadValues.isHttpUrl(url)) return null
         val candidateMimeType = SafeDownloadValues.mimeType(mimeType, url)
         val fileName = SafeDownloadValues.fileName(url, contentDisposition, candidateMimeType)
-        val safeMimeType = if (fileName.endsWith(".apk", ignoreCase = true)) {
-            ANDROID_PACKAGE_MIME_TYPE
-        } else {
-            candidateMimeType
-        }
+        val safeMimeType = SafeDownloadValues.finalMimeType(fileName, candidateMimeType)
         return BrowserDownloadRequest(
             url = url,
             fileName = fileName,
@@ -72,6 +68,17 @@ internal object SafeDownloadValues {
             ?: mimeTypeFromUrl(url)
             ?: "application/octet-stream"
     }
+
+    /**
+     * The type a file is saved and opened with once its final [fileName] is known: an `.apk` is
+     * always an Android package, whatever generic type the server sent.
+     */
+    fun finalMimeType(fileName: String, mimeType: String): String =
+        if (fileName.endsWith(".apk", ignoreCase = true)) {
+            BrowserDownloadRequestFactory.ANDROID_PACKAGE_MIME_TYPE
+        } else {
+            mimeType
+        }
 
     fun header(value: String?, maxLength: Int = 4_096): String? = value
         ?.takeIf { it.isNotBlank() && it.length <= maxLength && '\r' !in it && '\n' !in it }

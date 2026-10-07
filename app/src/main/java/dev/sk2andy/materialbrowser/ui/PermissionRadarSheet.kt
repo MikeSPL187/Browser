@@ -62,7 +62,7 @@ import androidx.annotation.DrawableRes
 internal fun PermissionRadarSheet(
     snapshot: PermissionRadarSnapshot,
     workspaceName: String,
-    websiteNotificationsSupported: Boolean,
+    supportedPermissions: Set<SitePermission>,
     onOriginSelected: (String) -> Unit,
     onDecisionChanged: (SitePermission, SitePermissionDecision) -> Unit,
     onResetSite: () -> Unit,
@@ -76,7 +76,7 @@ internal fun PermissionRadarSheet(
         PermissionRadarContent(
             snapshot = snapshot,
             workspaceName = workspaceName,
-            websiteNotificationsSupported = websiteNotificationsSupported,
+            supportedPermissions = supportedPermissions,
             onOriginSelected = onOriginSelected,
             onDecisionChanged = onDecisionChanged,
             onResetSite = onResetSite,
@@ -93,7 +93,7 @@ internal fun PermissionRadarSheet(
 internal fun PermissionRadarContent(
     snapshot: PermissionRadarSnapshot,
     workspaceName: String,
-    websiteNotificationsSupported: Boolean,
+    supportedPermissions: Set<SitePermission>,
     onOriginSelected: (String) -> Unit,
     onDecisionChanged: (SitePermission, SitePermissionDecision) -> Unit,
     onResetSite: () -> Unit,
@@ -186,11 +186,11 @@ internal fun PermissionRadarContent(
                 )
             }
             Spacer(Modifier.height(10.dp))
-            snapshot.entries.forEach { entry ->
+            SiteInfoRules.radarEntries(snapshot.entries, supportedPermissions).forEach { entry ->
                 PermissionRadarRow(
                     entry,
                     snapshot.isPrivate,
-                    websiteNotificationsSupported,
+                    SitePermission.Notifications in supportedPermissions,
                     onDecisionChanged,
                 )
                 Spacer(Modifier.height(8.dp))

@@ -4,8 +4,8 @@
 
 | Boundary | Contract |
 | --- | --- |
-| Normal APK | `candy.performanceDiagnostics` defaults to `false`; provider disabled, shell profiling disabled, no samples or timing entries |
-| Diagnostic APK | Explicit `-Pcandy.performanceDiagnostics=true`; use signed, minified FullRelease for realistic reproduction |
+| Normal APK | `vola.performanceDiagnostics` defaults to `false`; provider disabled, shell profiling disabled, no samples or timing entries |
+| Diagnostic APK | Explicit `-Pvola.performanceDiagnostics=true`; use signed, minified FullRelease for realistic reproduction |
 | Activation | Never automatic; ADB shell starts a capture after Gecko runtime exists |
 | Private browsing | Any open private Gecko session rejects capture; opening one cancels the entire capture and removes unpublished/exported files |
 | Asynchronous completion | Generation check prevents canceled or stale results becoming readable |
@@ -33,8 +33,8 @@
 | Layout | The probe itself adds no repair; normal Gecko CSS protection and retained fallback keep their independent configuration |
 
 ```sh
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method dom-probe
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method dom-probe-status
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method dom-probe
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method dom-probe-status
 # Require the returned domCommandId to be accepted, domResultId to match it, and domStatus=ready.
 # domPayload is the bounded JSON snapshot. discard erases it.
 ```
@@ -86,16 +86,16 @@ therefore does not mean that this header lacks its independently seeded protecti
 Use one explicit serial for every command. Do not change device rotation settings.
 
 ```sh
-./gradlew assembleFullRelease -Pcandy.performanceDiagnostics=true
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method start
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method status
+./gradlew assembleFullRelease -Pvola.performanceDiagnostics=true
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method start
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method status
 # Wait for status=recording, then reproduce scrolling while Perfetto is recording.
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method gap
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method stop
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method status
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method gap
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method stop
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method status
 # Wait for status=ready before export. Substitute the application ID for suffixed builds.
-adb -s SERIAL exec-out content read --uri content://dev.sk2andy.materialbrowser.performance/gecko-profile.json.gz > gecko-profile.json.gz
-adb -s SERIAL shell content call --uri content://dev.sk2andy.materialbrowser.performance --method discard
+adb -s SERIAL exec-out content read --uri content://io.github.mikespl187.vola.performance/gecko-profile.json.gz > gecko-profile.json.gz
+adb -s SERIAL shell content call --uri content://io.github.mikespl187.vola.performance --method discard
 ```
 
 | Provider response | Meaning |

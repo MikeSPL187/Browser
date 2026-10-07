@@ -244,4 +244,17 @@ class FindInPageRulesTest {
         assertFalse(next.isMatchFound)
         assertFalse(FindInPageRules.needsRecount(next))
     }
+
+    @Test
+    fun `no answer stops counting and keeps what is known`() {
+        val counting = FindInPageRules.withQuery(FindInPageState(tabId = "tab"), "Zen")
+        val known = FindInPageState(tabId = "tab", query = "Zen", activeMatchOrdinal = 2, matchCount = 5)
+
+        val stopped = FindInPageRules.withoutResult(counting)
+
+        assertTrue(stopped.isDoneCounting)
+        assertEquals(0, FindInPageRules.displayPosition(stopped).matchCount)
+        assertFalse(FindInPageRules.canNavigate(stopped))
+        assertSame(known, FindInPageRules.withoutResult(known))
+    }
 }

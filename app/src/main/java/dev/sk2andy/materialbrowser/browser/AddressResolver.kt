@@ -7,7 +7,9 @@ object AddressResolver {
     private val schemePattern = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://")
     private val ipPattern = Regex("^(?:\\d{1,3}\\.){3}\\d{1,3}(?::\\d+)?(?:/.*)?$")
     private val hostPattern = Regex(
-        "^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}(?::\\d+)?(?:[/?#].*)?$",
+        // An international top-level domain (.рф, .онлайн) arrives in punycode: xn--p1ai.
+        "^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+(?:[a-zA-Z]{2,}|xn--[a-zA-Z0-9-]{2,59})" +
+            "(?::\\d+)?(?:[/?#].*)?$",
     )
 
     fun resolve(input: String): String = resolve(input, SearchEngine.Google)
@@ -17,7 +19,8 @@ object AddressResolver {
         searchEngine: SearchEngine,
         searchMode: SearchMode = SearchMode.Web,
         searxngInstanceUrl: String = "",
-    ): String = when (val target = classify(input)) {
+        forceSearch: Boolean = false,
+    ): String = when (val target = if (forceSearch) searchTarget(input) else classify(input)) {
         AddressTarget.Blank -> BLANK_URL
         is AddressTarget.Url -> target.value
         is AddressTarget.Search -> searchEngine.buildSearchUrl(
@@ -28,6 +31,10 @@ object AddressResolver {
     }
 
     fun isSearchQuery(input: String): Boolean = classify(input) is AddressTarget.Search
+
+    /** A search suggestion stays a search, whatever it looks like. */
+    private fun searchTarget(input: String): AddressTarget =
+        input.trim().takeIf(String::isNotEmpty)?.let { AddressTarget.Search(it) } ?: AddressTarget.Blank
 
     private fun classify(input: String): AddressTarget {
         val value = input.trim()

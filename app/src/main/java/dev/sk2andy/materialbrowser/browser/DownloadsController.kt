@@ -9,8 +9,9 @@ import dev.sk2andy.materialbrowser.data.DownloadEntry
  * The list behind the library's Downloads screen: what is downloading and what is done, and the
  * pause, cancel and clear actions on it. The screen's activity owns one and polls it while visible.
  *
- * Reading and changing downloads blocks, so it runs through [Worker]; a refresh that finishes after
- * a newer one is dropped, so the list never steps back.
+ * Reading and changing downloads blocks, so it runs through [Worker]. Only one read runs at a time:
+ * a refresh asked for while one is running is folded into a single follow-up read, so a slow store
+ * neither piles up reads nor keeps the list from updating, and results land in order.
  */
 class DownloadsController internal constructor(
     private val store: DownloadStore,
@@ -38,16 +39,26 @@ class DownloadsController internal constructor(
     internal var isClearing by mutableStateOf(false)
         private set
 
-    private var latestRefresh = 0L
+    private var isRefreshing = false
+    private var refreshAgain = false
 
     /** How long to wait before the next refresh: short while something is downloading. */
     internal val pollDelayMillis: Long
         get() = if (downloads.any { entry -> entry.status.isActive }) ACTIVE_POLL_MILLIS else IDLE_POLL_MILLIS
 
     internal fun refresh() {
-        val request = ++latestRefresh
+        if (isRefreshing) {
+            refreshAgain = true
+            return
+        }
+        isRefreshing = true
         worker.run(store::snapshot) { entries ->
-            if (request == latestRefresh) downloads = entries
+            downloads = entries
+            isRefreshing = false
+            if (refreshAgain) {
+                refreshAgain = false
+                refresh()
+            }
         }
     }
 

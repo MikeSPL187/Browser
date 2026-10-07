@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.browser
 
+import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -58,6 +59,20 @@ class AndroidBrowserEngineRulesTest {
         assertFalse(
             AndroidBrowserEngineRules.capabilities(AndroidBrowserEngineKind.SystemWebView)
                 .insecureHttpPasswordManagerSelection,
+        )
+    }
+
+    @Test
+    fun `site permissions list only what each adapter routes`() {
+        val gecko = AndroidBrowserEngineRules.capabilities(AndroidBrowserEngineKind.GeckoView)
+        val webView = AndroidBrowserEngineRules.capabilities(AndroidBrowserEngineKind.SystemWebView)
+
+        assertTrue(SitePermission.ProtectedMedia in gecko.sitePermissions)
+        assertTrue(SitePermission.Notifications in gecko.sitePermissions)
+        assertFalse(SitePermission.MidiSysex in gecko.sitePermissions)
+        assertEquals(
+            setOf(SitePermission.Camera, SitePermission.Microphone, SitePermission.Location),
+            webView.sitePermissions,
         )
     }
 }

@@ -84,7 +84,7 @@ internal fun WorkspaceIdentityEditor(
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = name,
-            onValueChange = { value -> onNameChange(value.take(WorkspaceNameRules.MAX_LENGTH)) },
+            onValueChange = { value -> onNameChange(WorkspaceNameRules.cap(value)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(WorkspaceIdentityTestTags.Name),

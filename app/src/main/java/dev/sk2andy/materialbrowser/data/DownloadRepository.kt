@@ -18,10 +18,15 @@ internal class DownloadRepository(
     private val resolver = applicationContext.contentResolver
 
     fun snapshot(): List<DownloadEntry> {
-        val systemEntries = querySystemDownloads()
-        val mediaEntries = queryMediaStoreDownloads().filterNot { mediaEntry ->
-            systemEntries.any { systemEntry -> systemEntry.matchesIndexedMedia(mediaEntry) }
-        }
+        val systemRows = querySystemDownloads()
+        val systemEntries = systemRows.map(SystemRow::entry)
+        val mediaEntries = queryMediaStoreDownloads()
+            .filterNot { mediaRow ->
+                systemRows.any { systemRow ->
+                    DownloadIndexRules.isSameFile(systemRow.localUri, mediaRow.location)
+                }
+            }
+            .map(MediaRow::entry)
         return (DownloadRuntimeRegistry.snapshot() + systemEntries + mediaEntries)
             .distinctBy(DownloadEntry::id)
             .sortedWith(
@@ -60,7 +65,7 @@ internal class DownloadRepository(
         DownloadRuntimeRegistry.togglePause(entry.id)
     }.getOrDefault(false)
 
-    private fun querySystemDownloads(): List<DownloadEntry> = runCatching {
+    private fun querySystemDownloads(): List<SystemRow> = runCatching {
         manager.query(DownloadManager.Query())?.use { cursor ->
             buildList {
                 while (cursor.moveToNext()) cursor.systemDownload()?.let(::add)
@@ -68,7 +73,7 @@ internal class DownloadRepository(
         }.orEmpty()
     }.getOrDefault(emptyList())
 
-    private fun queryMediaStoreDownloads(): List<DownloadEntry> = runCatching {
+    private fun queryMediaStoreDownloads(): List<MediaRow> = runCatching {
         resolver.query(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
             MEDIA_PROJECTION,
@@ -82,7 +87,7 @@ internal class DownloadRepository(
         }.orEmpty()
     }.getOrDefault(emptyList())
 
-    private fun Cursor.systemDownload(): DownloadEntry? {
+    private fun Cursor.systemDownload(): SystemRow? {
         val id = long(DownloadManager.COLUMN_ID) ?: return null
         val source = string(DownloadManager.COLUMN_URI).orEmpty().take(MAX_SOURCE_CHARS)
         val name = string(DownloadManager.COLUMN_TITLE)
@@ -98,7 +103,7 @@ internal class DownloadRepository(
             DownloadManager.STATUS_FAILED -> DownloadStatus.Failed
             else -> DownloadStatus.Cancelled
         }
-        return DownloadEntry(
+        val entry = DownloadEntry(
             id = id,
             name = name,
             source = source,
@@ -109,9 +114,10 @@ internal class DownloadRepository(
                 ?: 0L,
             mime = string(DownloadManager.COLUMN_MEDIA_TYPE).orEmpty().take(MAX_MIME_CHARS),
         )
+        return SystemRow(entry, localUri = string(DownloadManager.COLUMN_LOCAL_URI))
     }
 
-    private fun Cursor.mediaStoreDownload(): DownloadEntry? {
+    private fun Cursor.mediaStoreDownload(): MediaRow? {
         val owner = string(MediaStore.Downloads.OWNER_PACKAGE_NAME)
         if (owner != ownerPackageName) return null
         val mediaId = long(MediaStore.Downloads._ID) ?: return null
@@ -122,7 +128,7 @@ internal class DownloadRepository(
         val bytes = long(MediaStore.Downloads.SIZE)?.coerceAtLeast(0L) ?: 0L
         val pending = int(MediaStore.Downloads.IS_PENDING) == 1
         val modifiedSeconds = long(MediaStore.Downloads.DATE_MODIFIED)?.coerceAtLeast(0L) ?: 0L
-        return DownloadEntry(
+        val entry = DownloadEntry(
             id = DownloadEntryIds.encodeMediaStoreId(mediaId),
             name = name,
             source = "",
@@ -132,12 +138,19 @@ internal class DownloadRepository(
             lastModified = modifiedSeconds * MILLIS_PER_SECOND,
             mime = string(MediaStore.Downloads.MIME_TYPE).orEmpty().take(MAX_MIME_CHARS),
         )
+        val location = MediaStoreFileLocation(
+            mediaId = mediaId,
+            relativePath = string(MediaStore.Downloads.RELATIVE_PATH),
+            displayName = string(MediaStore.Downloads.DISPLAY_NAME).orEmpty(),
+        )
+        return MediaRow(entry, location)
     }
 
-    private fun DownloadEntry.matchesIndexedMedia(mediaEntry: DownloadEntry): Boolean =
-        name == mediaEntry.name &&
-            bytes == mediaEntry.bytes &&
-            kotlin.math.abs(lastModified - mediaEntry.lastModified) <= INDEX_MATCH_WINDOW_MILLIS
+    /** A download manager row and the file it wrote, which the media index may list again. */
+    private class SystemRow(val entry: DownloadEntry, val localUri: String?)
+
+    /** A MediaStore row and where its file lives. */
+    private class MediaRow(val entry: DownloadEntry, val location: MediaStoreFileLocation)
 
     private fun Cursor.string(column: String): String? = getColumnIndex(column)
         .takeIf { index -> index >= 0 && !isNull(index) }
@@ -161,11 +174,11 @@ internal class DownloadRepository(
         const val MAX_SOURCE_CHARS = 2_048
         const val MAX_MIME_CHARS = 128
         const val MILLIS_PER_SECOND = 1_000L
-        const val INDEX_MATCH_WINDOW_MILLIS = 5 * 60 * 1_000L
 
         val MEDIA_PROJECTION = arrayOf(
             MediaStore.Downloads._ID,
             MediaStore.Downloads.DISPLAY_NAME,
+            MediaStore.Downloads.RELATIVE_PATH,
             MediaStore.Downloads.MIME_TYPE,
             MediaStore.Downloads.SIZE,
             MediaStore.Downloads.DATE_MODIFIED,

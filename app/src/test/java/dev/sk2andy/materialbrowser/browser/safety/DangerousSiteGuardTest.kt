@@ -33,6 +33,50 @@ class DangerousSiteGuardTest {
     }
 
     @Test
+    fun `a safe address after the warning takes the warning away`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+
+        assertFalse(guard.intercept("tab", "https://en.wikipedia.org/"))
+
+        assertNull(guard.blocked["tab"])
+        assertNull(guard.allow("tab"))
+    }
+
+    @Test
+    fun `a safe address in another tab leaves this tab's warning`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+
+        assertFalse(guard.intercept("other", "https://en.wikipedia.org/"))
+
+        assertEquals("paypa1.com", guard.blocked["tab"]?.host)
+    }
+
+    @Test
+    fun `back to safety returns to the page the tab still shows`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/", "https://news.example.org/a"))
+
+        assertEquals(BackToSafety.ShowPage("https://news.example.org/a"), guard.backToSafety("tab"))
+        assertNull(guard.blocked["tab"])
+    }
+
+    @Test
+    fun `back to safety closes a tab opened straight onto the stopped site`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+
+        assertEquals(BackToSafety.CloseTab, guard.backToSafety("tab"))
+        assertNull(guard.backToSafety("tab"))
+    }
+
+    @Test
+    fun `neither a blank page nor the stopped site itself counts as safety`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/login", "about:blank"))
+        assertEquals(BackToSafety.CloseTab, guard.backToSafety("tab"))
+
+        assertTrue(guard.intercept("tab", "https://paypa1.com/login", "https://www.paypa1.com/"))
+        assertEquals(BackToSafety.CloseTab, guard.backToSafety("tab"))
+    }
+
+    @Test
     fun `back to safety forgets the warning but not the danger`() {
         assertTrue(guard.intercept("tab", "https://paypa1.com/"))
         guard.dismiss("tab")
@@ -63,5 +107,22 @@ class DangerousSiteGuardTest {
 
         assertTrue(listed.intercept("tab", "https://bank-exarnple.ru/"))
         assertEquals("bank.example.ru", listed.blocked["tab"]?.imitatedHost)
+    }
+
+    @Test
+    fun `check names the danger without remembering it for any tab`() {
+        assertEquals(
+            BlockedSite("https://paypa1.com/login", "paypa1.com", "paypal.com"),
+            guard.check("https://paypa1.com/login"),
+        )
+        assertNull(guard.check("https://en.wikipedia.org/"))
+        assertTrue(guard.blocked.isEmpty())
+    }
+
+    @Test
+    fun `check follows open anyway like the tab does`() {
+        assertTrue(guard.intercept("tab", "https://paypa1.com/"))
+        guard.allow("tab")
+        assertNull(guard.check("https://paypa1.com/other"))
     }
 }

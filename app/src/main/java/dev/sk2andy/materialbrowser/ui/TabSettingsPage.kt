@@ -173,7 +173,7 @@ internal fun TabsAndGesturesSettingsPage(
                     divider = true,
                     onSelected = onTabOverviewModeChanged,
                 )
-                SettingsCardDropdownRow(
+                if (TabStacksFeature.ENABLED) SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_tab_stack_folder_mode),
                     selected = tabStackFolderMode,
                     options = TabOverviewMode.entries,

@@ -26,15 +26,31 @@ class DownloadHistoryRulesTest {
     }
 
     @Test
-    fun `search matches name and source ignoring case and whitespace`() {
+    fun `search matches the file name ignoring case and whitespace`() {
         val named = entry(id = 1, name = "Candy Manual.pdf", source = "https://example.com")
         val sourced = entry(id = 2, name = "Archive.zip", source = "https://CANDY.example")
         val unrelated = entry(id = 3, name = "Notes.txt", source = "https://other.example")
 
         assertEquals(
-            listOf(sourced, named),
+            listOf(named),
             visible(listOf(named, unrelated, sourced), query = "  candy  "),
         )
+    }
+
+    @Test
+    fun `search finds a file the same way while it downloads and after it finishes`() {
+        val downloading = entry(
+            id = -4,
+            name = "research-notes.pdf",
+            source = "https://research.example/notes",
+            status = DownloadStatus.Running,
+        )
+        val finished = downloading.copy(id = 40, source = "", status = DownloadStatus.Successful)
+
+        assertEquals(listOf(downloading), visible(listOf(downloading), query = "research"))
+        assertEquals(listOf(finished), visible(listOf(finished), query = "research"))
+        assertEquals(emptyList<DownloadEntry>(), visible(listOf(downloading), query = "research.example"))
+        assertEquals(emptyList<DownloadEntry>(), visible(listOf(finished), query = "research.example"))
     }
 
     @Test

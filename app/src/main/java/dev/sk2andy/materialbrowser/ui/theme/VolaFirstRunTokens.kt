@@ -11,6 +11,7 @@ internal object VolaFirstRunTokens {
     val sectionGap = VolaSpacing.x4
     val textGap = VolaSpacing.x3
     val buttonGap = VolaSpacing.x3
+    /** The least height of a button; a two-line label at a large font makes it taller. */
     val buttonHeight = 56.dp
     val buttonIconGap = VolaSpacing.x2
 

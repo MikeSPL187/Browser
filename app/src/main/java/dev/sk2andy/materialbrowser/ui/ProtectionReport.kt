@@ -73,7 +73,7 @@ internal object ProtectionReportTestTags {
 }
 
 /**
- * «N trackers this week» on the new tab (board NewTab): the blocker's work of the last seven days,
+ * «N ads and trackers blocked this week» on the new tab (board NewTab): the blocker's work of the last seven days,
  * counted on the device. A tap opens [ProtectionReportSheet].
  */
 @Composable
@@ -147,7 +147,7 @@ internal fun NewTabProtectionCard(
 
 /**
  * The weekly report (board ProtectionReport, П7): the week's total, a bar per day and the sites
- * that tried to track the most. Everything comes from this phone; the user can clear the report
+ * with the most blocks. Everything comes from this phone; the user can clear the report
  * or hide the card.
  */
 @Composable

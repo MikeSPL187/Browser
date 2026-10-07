@@ -22,6 +22,17 @@ class TabActionsRulesTest {
     )
 
     @Test
+    fun `a locked private tab offers only closing`() {
+        val locked = page.copy(isIncognito = true, isLocked = true, canOpenSideBySide = true)
+        assertEquals(emptyList<TabQuickAction>(), TabActionsRules.quickActions(locked))
+        assertEquals(listOf(TabMoreAction.CloseAll), TabActionsRules.moreActions(locked))
+        assertEquals(emptyList<TabMoreAction>(), TabActionsRules.moreActions(locked.copy(canCloseAll = false)))
+        assertFalse(TabActionsRules.canMove(locked))
+        assertFalse(TabActionsRules.canSnooze(locked))
+        assertTrue(TabActionsRules.canClose(locked))
+    }
+
+    @Test
     fun `a web page gets the board's four quick actions, pinning in place of Split View`() {
         assertEquals(
             listOf(
@@ -104,6 +115,8 @@ class TabActionsRulesTest {
         assertFalse(TabActionsRules.canMove(page.copy(otherWorkspaceCount = 0)))
         assertTrue(TabActionsRules.canSnooze(page))
         assertFalse(TabActionsRules.canSnooze(page.copy(isIncognito = true)))
+        // A synced or session-only tab: the browser would refuse to store it.
+        assertFalse(TabActionsRules.canSnooze(page.copy(canSnooze = false)))
         assertFalse(TabActionsRules.canClose(page.copy(canDelete = false)))
     }
 }

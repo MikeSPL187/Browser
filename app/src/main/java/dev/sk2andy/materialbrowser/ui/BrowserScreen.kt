@@ -1039,7 +1039,7 @@ internal fun BrowserScreen(
             is AddressSuggestionItem.Command -> selectCommand(item.suggestion)
             is AddressSuggestionItem.Search -> {
                 rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                controller.submitAddress(item.query, searchModeFor(item.query))
+                controller.submitAddress(item.query, searchModeFor(item.query), forceSearch = true)
                 addressEditorVisible = false
             }
             is AddressSuggestionItem.Recall -> selectNavigation(
@@ -1510,6 +1510,7 @@ internal fun BrowserScreen(
                 matchCaseLabel = stringResource(R.string.find_in_page_match_case),
                 wholeWordLabel = stringResource(R.string.find_in_page_whole_word),
                 onOptionsChange = controller::updateFindInPageOptions,
+                isPrivate = selectedTab.isIncognito,
                 // The find bar takes the island's place in the thumb zone, above the keyboard.
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

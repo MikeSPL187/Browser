@@ -27,6 +27,13 @@ class AddressSubmissionRulesTest {
     }
 
     @Test
+    fun `an emptied field submits nothing instead of blanking the tab`() {
+        assertSame(AddressSubmission.None, AddressSubmissionRules.resolve("", listOf(command), -1))
+        assertSame(AddressSubmission.None, AddressSubmissionRules.resolve("   ", emptyList(), -1))
+        assertEquals(AddressSubmission.Select(command), AddressSubmissionRules.resolve(" ", listOf(command), 0))
+    }
+
+    @Test
     fun `explicit command submit selects first command and never navigates`() {
         assertEquals(
             AddressSubmission.Select(command),

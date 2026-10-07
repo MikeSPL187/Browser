@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -677,12 +679,15 @@ private fun EssentialsAddSheet(editor: NewTabEssentialsEditor, onDismiss: () -> 
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                // A workspace can have many more open tabs than fit the sheet: the list scrolls
+                // under the title, which stays in place.
                 else -> Surface(
+                    modifier = Modifier.weight(1f, fill = false),
                     shape = VolaShapes.card,
                     color = VolaTheme.extendedColors.card,
                 ) {
-                    Column {
-                        candidates.forEachIndexed { index, candidate ->
+                    LazyColumn {
+                        itemsIndexed(candidates, key = { _, candidate -> candidate.tabId }) { index, candidate ->
                             if (index > 0) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = VolaSpacing.x4),

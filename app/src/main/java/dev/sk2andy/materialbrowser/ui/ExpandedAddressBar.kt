@@ -91,7 +91,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
@@ -205,6 +204,7 @@ internal fun ExpandedBottomBarContent(
     onTogglePinned: () -> Unit,
     canToggleDomainMute: Boolean,
     isDomainMuted: Boolean,
+    canSnooze: Boolean,
     onDomainMutedChange: (Boolean) -> Unit,
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
@@ -493,142 +493,148 @@ internal fun ExpandedBottomBarContent(
                             scrollState = wideTabScrollState,
                         )
                     } else {
-                        AddressBarFieldContent(
-                            editing = if (wideTabStripEnabled) true else editing,
-                            editValue = editValue,
-                            onEditValueChange = onEditValueChange,
-                            ghostCompletion = ghostCompletion,
-                            placeholder = voiceSearch.placeholder()
-                                ?: stringResource(R.string.search_or_enter_url),
-                            displayText = if (tab.url == BLANK_URL) {
-                                stringResource(
-                                    if (tab.isIncognito) R.string.address_private_hint else R.string.address_empty_hint,
-                                )
-                            } else {
-                                AddressResolver.displayText(tab.url)
-                            },
-                            onSubmitAddress = onSubmitAddress,
-                            submissionText = AddressEditorCompletionRules::submissionText,
-                            modifier = Modifier.blockExitingAddressEditor(
-                                blocked = wideTabStripEnabled && !editing,
-                            ),
-                            contentColor = addressChromeTokens.fieldContentColor,
-                            secondaryContentColor = addressChromeTokens.fieldSecondaryContentColor,
-                            cursorColor = addressChromeTokens.accentColor,
-                            editorModifier = Modifier
-                                .testTag(AddressBarTestTags.Editor)
-                                .onPreviewKeyEvent { event ->
-                                            when (event.key) {
-                                                Key.DirectionDown -> {
-                                                    if (event.type == KeyEventType.KeyDown) {
-                                                        onMoveAddressSuggestion(1)
-                                                    }
-                                                    true
-                                                }
-                                                Key.DirectionUp -> {
-                                                    if (event.type == KeyEventType.KeyDown) {
-                                                        onMoveAddressSuggestion(-1)
-                                                    }
-                                                    true
-                                                }
-                                                Key.Enter,
-                                                Key.NumPadEnter,
-                                                Key.DirectionCenter,
-                                                -> {
-                                                    if (event.type == KeyEventType.KeyUp) {
-                                                        onActivateAddressSuggestion()
-                                                    }
-                                                    true
-                                                }
-                                                Key.DirectionRight,
-                                                Key.Tab,
-                                                -> if (
-                                                    event.type == KeyEventType.KeyDown &&
-                                                    ghostCompletion != null &&
-                                                    editValue.selection.start == editValue.text.length &&
-                                                    editValue.selection.end == editValue.text.length
-                                                ) {
-                                                    onAcceptGhostCompletion()
-                                                    true
-                                                } else {
-                                                    false
-                                                }
-                                                else -> false
-                                            }
-                                        }
-                                .focusRequester(focusRequester)
-                                .onFocusChanged { addressFieldFocused = it.isFocused },
-                            displayTextModifier = Modifier.addressBarPressActions(
-                                longPressEnabled = addressBarLongPressEnabled,
-                                onClick = onAddress,
-                                onLongPress = onAddressBarLongPress,
-                                longPressLabel = addressBarLongPressLabel,
-                            ),
-                            editorLeadingContent = {
-                                if (segmentedAddressBar) {
-                                    Icon(
-                                        VolaIcons.Search,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .padding(start = 8.dp)
-                                            .size(24.dp),
-                                        tint = addressChromeTokens.accentColor,
-                                    )
-                                }
-                            },
-                            editorTrailingContent = {
-                                if (voiceSearch.active) {
-                                    AddressVoiceListeningControls(
-                                        status = voiceSearch.status,
-                                        level = voiceSearch::level,
-                                        accentColor = addressChromeTokens.accentColor,
-                                        onAccentColor = addressChromeTokens.onAccentColor,
-                                        onStop = voiceSearch::stop,
-                                        onCancel = voiceSearch::cancel,
+                        PrivateKeyboard(isPrivate = tab.isIncognito) {
+                            AddressBarFieldContent(
+                                editing = if (wideTabStripEnabled) true else editing,
+                                editValue = editValue,
+                                onEditValueChange = onEditValueChange,
+                                ghostCompletion = ghostCompletion,
+                                placeholder = voiceSearch.placeholder()
+                                    ?: stringResource(R.string.search_or_enter_url),
+                                displayText = if (tab.url == BLANK_URL) {
+                                    stringResource(
+                                        if (tab.isIncognito) {
+                                            R.string.address_private_hint
+                                        } else {
+                                            R.string.address_empty_hint
+                                        },
                                     )
                                 } else {
-                                    if (tab.url == BLANK_URL) {
-                                        BlankTabIncognitoModeButton(
-                                            enabled = tab.isIncognito,
-                                            progress = blankTabModeProgress,
-                                            onCenterChanged = onIncognitoControlCenterChanged,
-                                            onClick = onToggleIncognito,
+                                    AddressResolver.displayText(tab.url)
+                                },
+                                onSubmitAddress = onSubmitAddress,
+                                submissionText = AddressEditorCompletionRules::submissionText,
+                                modifier = Modifier.blockExitingAddressEditor(
+                                    blocked = wideTabStripEnabled && !editing,
+                                ),
+                                contentColor = addressChromeTokens.fieldContentColor,
+                                secondaryContentColor = addressChromeTokens.fieldSecondaryContentColor,
+                                cursorColor = addressChromeTokens.accentColor,
+                                editorModifier = Modifier
+                                    .testTag(AddressBarTestTags.Editor)
+                                    .onPreviewKeyEvent { event ->
+                                                when (event.key) {
+                                                    Key.DirectionDown -> {
+                                                        if (event.type == KeyEventType.KeyDown) {
+                                                            onMoveAddressSuggestion(1)
+                                                        }
+                                                        true
+                                                    }
+                                                    Key.DirectionUp -> {
+                                                        if (event.type == KeyEventType.KeyDown) {
+                                                            onMoveAddressSuggestion(-1)
+                                                        }
+                                                        true
+                                                    }
+                                                    Key.Enter,
+                                                    Key.NumPadEnter,
+                                                    Key.DirectionCenter,
+                                                    -> {
+                                                        if (event.type == KeyEventType.KeyUp) {
+                                                            onActivateAddressSuggestion()
+                                                        }
+                                                        true
+                                                    }
+                                                    Key.DirectionRight,
+                                                    Key.Tab,
+                                                    -> if (
+                                                        event.type == KeyEventType.KeyDown &&
+                                                        ghostCompletion != null &&
+                                                        editValue.selection.start == editValue.text.length &&
+                                                        editValue.selection.end == editValue.text.length
+                                                    ) {
+                                                        onAcceptGhostCompletion()
+                                                        true
+                                                    } else {
+                                                        false
+                                                    }
+                                                    else -> false
+                                                }
+                                            }
+                                    .focusRequester(focusRequester)
+                                    .onFocusChanged { addressFieldFocused = it.isFocused },
+                                displayTextModifier = Modifier.addressBarPressActions(
+                                    longPressEnabled = addressBarLongPressEnabled,
+                                    onClick = onAddress,
+                                    onLongPress = onAddressBarLongPress,
+                                    longPressLabel = addressBarLongPressLabel,
+                                ),
+                                editorLeadingContent = {
+                                    if (segmentedAddressBar) {
+                                        Icon(
+                                            VolaIcons.Search,
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .padding(start = VolaAddressEditor.fieldSearchIconStartPadding)
+                                                .size(VolaAddressEditor.fieldSearchIconSize),
+                                            tint = addressChromeTokens.accentColor,
                                         )
                                     }
-                                    if (showAiModeToggle) {
-                                        AddressAiModeToggle(
-                                            selected = aiModeSelected,
-                                            onSelectedChange = onAiModeSelectedChange,
+                                },
+                                editorTrailingContent = {
+                                    if (voiceSearch.active) {
+                                        AddressVoiceListeningControls(
+                                            status = voiceSearch.status,
+                                            level = voiceSearch::level,
+                                            accentColor = addressChromeTokens.accentColor,
+                                            onAccentColor = addressChromeTokens.onAccentColor,
+                                            onStop = voiceSearch::stop,
+                                            onCancel = voiceSearch::cancel,
                                         )
-                                    }
-                                    AddressVoiceSearchButton(voiceSearch)
-                                    if (!segmentedAddressBar) {
-                                        IconButton(onClick = onDismissEditor) {
-                                            Icon(
-                                                VolaIcons.Close,
-                                                contentDescription = stringResource(
-                                                    R.string.cd_close_address_input,
-                                                ),
+                                    } else {
+                                        if (tab.url == BLANK_URL) {
+                                            BlankTabIncognitoModeButton(
+                                                enabled = tab.isIncognito,
+                                                progress = blankTabModeProgress,
+                                                onCenterChanged = onIncognitoControlCenterChanged,
+                                                onClick = onToggleIncognito,
                                             )
                                         }
+                                        if (showAiModeToggle) {
+                                            AddressAiModeToggle(
+                                                selected = aiModeSelected,
+                                                onSelectedChange = onAiModeSelectedChange,
+                                            )
+                                        }
+                                        AddressVoiceSearchButton(voiceSearch)
+                                        if (!segmentedAddressBar) {
+                                            IconButton(onClick = onDismissEditor) {
+                                                Icon(
+                                                    VolaIcons.Close,
+                                                    contentDescription = stringResource(
+                                                        R.string.cd_close_address_input,
+                                                    ),
+                                                )
+                                            }
+                                        }
                                     }
-                                }
-                            },
-                            displayTrailingContent = {
-                                    PermissionRadarBadge(
-                                        siteAvailable = PermissionOrigin.normalize(tab.url) != null,
-                                        activityVisible = permissionActivityVisible,
-                                        connectionKind = SiteConnectionRules.kind(
-                                            pageUrl = tab.url,
-                                            isLoading = tab.isLoading,
-                                            hasError = tab.error != null || tab.failureKind != null,
-                                        ),
-                                        blockedCount = tab.blockedCount,
-                                        onClick = onPrivacyXRay,
-                                        tabId = tab.id,
-                                    )
-                            },
-                        )
+                                },
+                                displayTrailingContent = {
+                                        PermissionRadarBadge(
+                                            siteAvailable = PermissionOrigin.normalize(tab.url) != null,
+                                            activityVisible = permissionActivityVisible,
+                                            connectionKind = SiteConnectionRules.kind(
+                                                pageUrl = tab.url,
+                                                isLoading = tab.isLoading,
+                                                hasError = tab.error != null || tab.failureKind != null,
+                                            ),
+                                            blockedCount = tab.blockedCount,
+                                            onClick = onPrivacyXRay,
+                                            tabId = tab.id,
+                                        )
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -721,7 +727,7 @@ internal fun ExpandedBottomBarContent(
                                         tab.url.startsWith("https://") ||
                                             tab.url.startsWith("http://")
                                         ),
-                                canSnooze = !tab.isIncognito,
+                                canSnooze = canSnooze,
                                 snoozedTabCount = snoozedTabCount,
                                 overflowAddressBarActions = overflowAddressBarActions,
                                 canCloseTab = actionState.canCloseTab,
@@ -917,25 +923,23 @@ private fun Modifier.segmentedAddressBarBackground(
     }
 }
 
-private fun Modifier.blockExitingAddressEditor(blocked: Boolean): Modifier = if (!blocked) {
-    this
-} else {
-    this
-        .clearAndSetSemantics { }
-        .pointerInput(Unit) {
-            awaitEachGesture {
-                val down = awaitFirstDown(
-                    requireUnconsumed = false,
-                    pass = PointerEventPass.Initial,
-                )
-                down.consume()
-                while (true) {
-                    val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                    event.changes.forEach { it.consume() }
-                    if (event.changes.none { it.pressed }) break
-                }
-            }
+// The semantics node stays in the chain whether or not it clears; only the gesture sink comes and goes.
+private fun Modifier.blockExitingAddressEditor(blocked: Boolean): Modifier =
+    clearSemanticsWhen(blocked).then(if (blocked) Modifier.consumeAllPointerInput() else Modifier)
+
+private fun Modifier.consumeAllPointerInput(): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial,
+        )
+        down.consume()
+        while (true) {
+            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+            event.changes.forEach { it.consume() }
+            if (event.changes.none { it.pressed }) break
         }
+    }
 }
 
 @Composable
