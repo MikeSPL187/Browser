@@ -270,17 +270,18 @@ internal fun FavoritesScreen(
                         horizontalArrangement = Arrangement.spacedBy(VolaLibrary.folderCardGap),
                     ) {
                         rowFolders.forEach { folder ->
-                            val index = siblings.indexOfFirst { it.id == folder.id }
+                            val earlier = LibraryRules.reorderTarget(siblings, level.folders, folder.id, -1)
+                            val later = LibraryRules.reorderTarget(siblings, level.folders, folder.id, 1)
                             FavoriteFolderCard(
                                 folder = folder,
                                 siteCount = LibraryRules.siteCount(source, folder.id),
                                 customIcon = folderIcons[folder.id],
                                 modifier = Modifier.weight(1f),
                                 actions = FavoriteActions(
-                                    canMoveEarlier = canReorder && index > 0,
-                                    canMoveLater = canReorder && index in 0 until siblings.lastIndex,
-                                    onMoveEarlier = { onReorderEntry(folder, index - 1) },
-                                    onMoveLater = { onReorderEntry(folder, index + 1) },
+                                    canMoveEarlier = canReorder && earlier != null,
+                                    canMoveLater = canReorder && later != null,
+                                    onMoveEarlier = { earlier?.let { onReorderEntry(folder, it) } },
+                                    onMoveLater = { later?.let { onReorderEntry(folder, it) } },
                                     onRename = { renameTarget = folder },
                                     onMove = { moveTarget = folder },
                                     onIcon = { iconTarget = folder },
@@ -305,6 +306,8 @@ internal fun FavoritesScreen(
             }
             itemsIndexed(level.favorites, key = { _, entry -> entry.id }) { position, entry ->
                 val index = siblings.indexOfFirst { it.id == entry.id }
+                val earlier = LibraryRules.reorderTarget(siblings, level.favorites, entry.id, -1)
+                val later = LibraryRules.reorderTarget(siblings, level.favorites, entry.id, 1)
                 val dragging = draggedId == entry.id
                 val lift by animateFloatAsState(if (dragging) 1.025f else 1f, spring(), label = "favorite lift")
                 val rowModifier = Modifier.animateItem().zIndex(if (dragging) 1f else 0f)
@@ -351,10 +354,10 @@ internal fun FavoritesScreen(
                         entry = entry,
                         favicon = favicons[entry.url],
                         actions = FavoriteActions(
-                            canMoveEarlier = canReorder && index > 0,
-                            canMoveLater = canReorder && index in 0 until siblings.lastIndex,
-                            onMoveEarlier = { onReorderEntry(entry, index - 1) },
-                            onMoveLater = { onReorderEntry(entry, index + 1) },
+                            canMoveEarlier = canReorder && earlier != null,
+                            canMoveLater = canReorder && later != null,
+                            onMoveEarlier = { earlier?.let { onReorderEntry(entry, it) } },
+                            onMoveLater = { later?.let { onReorderEntry(entry, it) } },
                             onRename = { renameTarget = entry },
                             onMove = { moveTarget = entry },
                             onDelete = {
