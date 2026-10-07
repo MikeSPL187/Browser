@@ -115,6 +115,8 @@ class TabActionsRulesTest {
         assertFalse(TabActionsRules.canMove(page.copy(otherWorkspaceCount = 0)))
         assertTrue(TabActionsRules.canSnooze(page))
         assertFalse(TabActionsRules.canSnooze(page.copy(isIncognito = true)))
+        // A synced or session-only tab: the browser would refuse to store it.
+        assertFalse(TabActionsRules.canSnooze(page.copy(canSnooze = false)))
         assertFalse(TabActionsRules.canClose(page.copy(canDelete = false)))
     }
 }

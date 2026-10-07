@@ -204,6 +204,7 @@ internal fun ExpandedBottomBarContent(
     onTogglePinned: () -> Unit,
     canToggleDomainMute: Boolean,
     isDomainMuted: Boolean,
+    canSnooze: Boolean,
     onDomainMutedChange: (Boolean) -> Unit,
     canToggleDesktopView: Boolean,
     isDesktopView: Boolean,
@@ -707,7 +708,7 @@ internal fun ExpandedBottomBarContent(
                                         tab.url.startsWith("https://") ||
                                             tab.url.startsWith("http://")
                                         ),
-                                canSnooze = !tab.isIncognito,
+                                canSnooze = canSnooze,
                                 snoozedTabCount = snoozedTabCount,
                                 overflowAddressBarActions = overflowAddressBarActions,
                                 canCloseTab = actionState.canCloseTab,

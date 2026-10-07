@@ -1372,6 +1372,7 @@
     <string name="snooze_invalid_time">Выберите дату и время в будущем</string>
     <string name="snoozed_tab_update_failed">Не удалось изменить вкладку — возможно, она уже открылась</string>
     <string name="snooze_confirmation">Вкладка отложена</string>
+    <string name="snooze_failed">Не удалось отложить вкладку</string>
     <string name="snooze_notification_channel_name">Отложенные вкладки</string>
     <string name="snooze_notification_channel_description">Сообщает, когда отложенные вкладки готовы</string>
     <string name="snooze_notification_title">Отложенная вкладка готова</string>

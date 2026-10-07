@@ -1537,12 +1537,11 @@ class BrowserController(
         get() = canOpenLinkInPrivate
 
     val canSnoozeSelectedTab: Boolean
-        get() = selectedTab.let { tab ->
-            tab.url != BLANK_URL &&
-                !tab.isIncognito &&
-                !isSyncedProfile(tab.profileId) &&
-                !isSessionEphemeralTab(tab.id)
-        }
+        get() = selectedTab.url != BLANK_URL && canSnoozeTab(selectedTab.id)
+
+    /** Whether [snoozeTab] may store the tab at all: not private, synced or session-only. */
+    fun canSnoozeTab(tabId: String): Boolean = tabs.firstOrNull { it.id == tabId }
+        ?.let { tab -> !tab.isIncognito && !isSyncedProfile(tab.profileId) && !isSessionEphemeralTab(tab.id) } == true
 
     fun canToggleDomainMute(tabId: String): Boolean {
         val tab = tabs.firstOrNull { it.id == tabId } ?: return false
@@ -8635,6 +8634,7 @@ class BrowserController(
         browserEngineSessions[selectedTabId]?.execute(BrowserEngineCommands.forward())
     }
     fun reload() {
+        if (selectedTab.url == BLANK_URL) return // A new tab has no page; reloading would only start a session.
         pendingBrowserEngineLoadRequests.remove(selectedTabId)
         updateTab(selectedTabId) { it.startingLoad() }
         val session = browserEngineSessionFor(selectedTabId)
