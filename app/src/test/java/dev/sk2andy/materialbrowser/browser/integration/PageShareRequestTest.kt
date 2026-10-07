@@ -26,4 +26,33 @@ class PageShareRequestTest {
         assertEquals("", request?.title)
         assertNull(PageShareRequest.create(url = "about:blank", title = "New tab"))
     }
+
+    @Test
+    fun webShareKeepsTextBeforeTheLink() {
+        val request = PageShareRequest.createWebShare(
+            url = "https://example.com/article",
+            title = "Article",
+            text = " Read this ",
+        )
+
+        assertEquals("Read this\nhttps://example.com/article", request?.sharedText)
+        assertEquals("Article", request?.title)
+    }
+
+    @Test
+    fun webShareAcceptsTextOnlyAndTitleOnly() {
+        assertEquals(
+            "Just text",
+            PageShareRequest.createWebShare(url = null, title = null, text = "Just text")?.sharedText,
+        )
+        val titleOnly = PageShareRequest.createWebShare(url = null, title = "Title", text = null)
+        assertEquals("Title", titleOnly?.sharedText)
+        assertNull(titleOnly?.url)
+    }
+
+    @Test
+    fun webShareRejectsUnsafeLinksAndEmptyShares() {
+        assertNull(PageShareRequest.createWebShare(url = "javascript:alert(1)", title = null, text = "x"))
+        assertNull(PageShareRequest.createWebShare(url = null, title = " ", text = ""))
+    }
 }

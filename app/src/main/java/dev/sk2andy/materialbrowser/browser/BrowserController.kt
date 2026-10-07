@@ -1763,10 +1763,11 @@ class BrowserController(
         pendingWebPrompt = null
         webPrompt = null
         val shareLaunched = if (prompt?.kind == BrowserWebPromptKind.Share) {
-            prompt.shareUri?.let { uri ->
-                PageShareRequest.create(uri, prompt.title.orEmpty())
-                    ?.let(PageShareLauncher(activity)::launch)
-            } == PageShareResult.Launched
+            PageShareRequest.createWebShare(
+                url = prompt.shareUri,
+                title = prompt.title,
+                text = prompt.message,
+            )?.let(PageShareLauncher(activity)::launch) == PageShareResult.Launched
         } else true
         val responseValue = if (prompt?.kind == BrowserWebPromptKind.Share) {
             null
@@ -12464,6 +12465,10 @@ class BrowserController(
         navigationGeneration: Int,
     ) {
         if (pageTranslationAttempts.remove(attempt.tabId) != attempt) return
+        // The single recovery Snackbar belongs to the selected tab: a late failure of a background
+        // tab must not replace the offer of the tab on screen. The failed provider page stays
+        // visible in that tab, and translating again there starts a fresh attempt.
+        if (selectedTabId != attempt.tabId) return
         pageTranslationRecoveryOfferSequence++
         pageTranslationRecoveryOffer = PageTranslationRecoveryOffer(
             token = pageTranslationRecoveryOfferSequence,
