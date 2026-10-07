@@ -59,6 +59,19 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         )
     }
 
+    /** Renames one saved visit to a page title that arrived after it was recorded. */
+    @Synchronized
+    fun updateTitle(visitId: String, title: String): HistoryRecordResult {
+        val current = store.loadHistory()
+        val updated = BrowsingLibraryRules.renameHistoryVisit(current, visitId, title)
+        if (updated == current) return HistoryRecordResult(history = current, recorded = false)
+        val committed = store.commitHistory(updated)
+        return HistoryRecordResult(
+            history = if (committed) updated else current,
+            recorded = committed,
+        )
+    }
+
     @Synchronized
     fun remove(entries: Collection<HistoryEntry>): HistoryMutationResult {
         val current = store.loadHistory()

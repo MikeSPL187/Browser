@@ -9,7 +9,12 @@
     <string name="widget_open_profile_tab">Открыть новую вкладку в пространстве %1$s</string>
     <string name="onboarding_welcome_title">Знакомьтесь, Vola</string>
     <string name="onboarding_welcome_body">Браузер, которым управляют жестами: вкладки, маршруты и настройки приватности всегда под рукой.</string>
-    <string name="onboarding_welcome_card_title">Три жеста. Один плавный сценарий.</string>
+    <plurals name="onboarding_welcome_card_title">
+        <item quantity="one">%1$d жест. Один плавный сценарий.</item>
+        <item quantity="few">%1$d жеста. Один плавный сценарий.</item>
+        <item quantity="many">%1$d жестов. Один плавный сценарий.</item>
+        <item quantity="other">%1$d жеста. Один плавный сценарий.</item>
+    </plurals>
     <string name="onboarding_welcome_start">Изучить жесты</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_completion_title">Всё готово!</string>
@@ -17,9 +22,9 @@
     <string name="onboarding_completion_cta">Начать</string>
     <string name="onboarding_follow_pointer">Следуйте пальцем за точкой касания</string>
     <string name="onboarding_title">Жесты Vola</string>
-    <string name="onboarding_progress">%1$d из %2$d</string>
+    <string name="onboarding_progress">Жест %1$d из %2$d</string>
     <string name="onboarding_try_here">Попробуйте жест на карточке</string>
-    <string name="onboarding_required_hint">Чтобы продолжить, выполните все три жеста.</string>
+    <string name="onboarding_required_hint">Выполните жест или нажмите «Пропустить».</string>
     <string name="onboarding_accessibility_complete_action">Отметить жест как выполненный</string>
     <string name="onboarding_switch_tabs_title">Переключение вкладок</string>
     <string name="onboarding_switch_tabs_description">Проведите по адресной строке влево или вправо.</string>
@@ -765,6 +770,8 @@
     <string name="settings_browser_engine_gecko_summary">Скрипты и расширения Firefox, например uBlock Origin. Использует больше памяти.</string>
     <string name="settings_browser_engine_system_summary">Меньше расходует память и поддерживает скрипты, но не расширения Firefox. Защита Vola остаётся.</string>
     <string name="settings_browser_engine_restart_warning">Смена движка перезапустит Vola. Входы, куки и история страниц у каждого движка свои.</string>
+    <string name="settings_browser_engine_change_blocked_by_downloads">Дождитесь окончания загрузок или отмените их, прежде чем менять движок: перезапуск их прервёт.</string>
+    <string name="settings_browser_engine_change_save_failed">Не удалось сохранить вкладки, поэтому движок не сменился. Попробуйте ещё раз.</string>
     <string name="settings_external_app_links_title">Открывать ссылки в приложениях</string>
     <string name="settings_external_app_links_summary">Открывать поддерживаемые ссылки в других приложениях сразу или сначала спрашивать.</string>
     <string name="settings_external_app_links_automatic">Автоматически</string>
@@ -780,14 +787,14 @@
     <string name="settings_startup_animation_title">Анимация запуска</string>
     <string name="settings_startup_animation_subtitle">Знак Vola плавно растворяется в браузере при запуске.</string>
     <string name="first_run_welcome_title">Браузер, который не мешает</string>
-    <string name="first_run_welcome_body">Страница на весь экран, пространства для работы и отдыха, защита от слежки без настроек.</string>
+    <string name="first_run_welcome_body">Ничего лишнего вокруг страницы, пространства для работы и отдыха, защита от слежки без настроек.</string>
     <string name="first_run_start">Начать</string>
     <string name="first_run_import">Перенести из другого браузера</string>
     <string name="first_run_setup_title">Настройте под себя</string>
     <string name="first_run_theme_light">Светлая</string>
     <string name="first_run_theme_dark">Тёмная</string>
     <string name="first_run_theme_auto">Авто</string>
-    <string name="first_run_trackers">Строгая защита от трекеров</string>
+    <string name="first_run_trackers">Блокировка рекламы и трекеров</string>
     <string name="first_run_trackers_on">Включена</string>
     <string name="first_run_trackers_off">Выключена</string>
     <string name="first_run_https">Только HTTPS</string>
@@ -1609,7 +1616,7 @@
     <string name="developer_options_experiments_section">Экспериментальные функции</string>
     <string name="developer_options_performance_section">Производительность</string>
     <string name="developer_options_scroll_dispatch_mode">Обновление панелей при прокрутке</string>
-    <string name="developer_options_scroll_dispatch_mode_summary">«Оптимально» начинает с 60 Гц и снижается до 30 или 15 Гц только при длительной нагрузке на главный поток. Фиксированные режимы не меняются.</string>
+    <string name="developer_options_scroll_dispatch_mode_summary">«Оптимально» начинает с 30 Гц и снижается до 15 Гц только при длительной нагрузке на главный поток. Фиксированные режимы не меняются.</string>
     <string name="developer_options_scroll_dispatch_optimized">Оптимально</string>
     <string name="developer_options_scroll_dispatch_120_hz">Всегда 120 Гц</string>
     <string name="developer_options_scroll_dispatch_60_hz">Всегда 60 Гц</string>

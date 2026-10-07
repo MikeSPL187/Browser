@@ -22,8 +22,26 @@ internal object FirstRunRules {
     /** After setup: the lesson when it is wanted, otherwise the first run is over (null). */
     fun afterSetup(showGestures: Boolean): FirstRunStage? = FirstRunStage.Gestures.takeIf { showGestures }
 
-    /** «Back» from setup returns to the welcome; elsewhere it stays put. */
-    fun back(stage: FirstRunStage): FirstRunStage = if (stage == FirstRunStage.Setup) FirstRunStage.Welcome else stage
+    /**
+     * Where «Back» goes: from setup to the welcome, from the lesson to setup when the first run
+     * showed it. Null leaves: on the welcome the system closes Vola (the first run comes back on
+     * the next launch), and the lesson on its own (after an update or from settings) is skipped.
+     */
+    fun back(stage: FirstRunStage, showIntro: Boolean): FirstRunStage? = when (stage) {
+        FirstRunStage.Welcome -> null
+        FirstRunStage.Setup -> FirstRunStage.Welcome
+        FirstRunStage.Gestures -> FirstRunStage.Setup.takeIf { showIntro }
+    }
+
+    /**
+     * How many steps the first run counts: the welcome, setup and, while it is switched on, the
+     * gesture lesson. The welcome counts with the switch as it stands, on at first, so the
+     * welcome and setup always agree.
+     */
+    fun stepCount(showGestures: Boolean): Int = if (showGestures) 3 else 2
+
+    /** The overlay catches «Back» only on setup: the welcome lets it through, the lesson has its own. */
+    fun handlesBack(stage: FirstRunStage): Boolean = stage == FirstRunStage.Setup
 }
 
 /**
@@ -40,13 +58,13 @@ internal fun FirstRunOverlay(
     val context = LocalContext.current
     var stage by rememberSaveable { mutableStateOf(FirstRunRules.firstStage(showIntro)) }
     var showGestures by rememberSaveable { mutableStateOf(true) }
-    // The first run is not left with «Back»; on the setup screen it goes back to the welcome.
-    BackHandler(enabled = stage != FirstRunStage.Gestures) {
-        stage = FirstRunRules.back(stage)
+    BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
+        FirstRunRules.back(stage, showIntro)?.let { stage = it }
     }
     AnimatedContent(targetState = stage, label = "first_run") { current ->
         when (current) {
             FirstRunStage.Welcome -> FirstRunWelcomeScreen(
+                stepCount = FirstRunRules.stepCount(showGestures),
                 onStart = { stage = FirstRunStage.Setup },
                 // «Move to Vola» opens over the welcome, which waits for the user to come back.
                 onImport = { context.startActivity(PasswordsActivityContract.importIntent(context)) },
@@ -75,6 +93,7 @@ internal fun FirstRunOverlay(
             )
             FirstRunStage.Gestures -> GestureOnboardingScreen(
                 onCompleted = onCompleted,
+                onBack = { FirstRunRules.back(FirstRunStage.Gestures, showIntro)?.let { stage = it } ?: onCompleted() },
                 showWelcome = !showIntro,
             )
         }

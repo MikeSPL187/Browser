@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -80,15 +81,14 @@ internal data class FirstRunSetup(
     val isDefaultBrowser: Boolean,
 )
 
-/** How many steps the first run has: welcome, setup and, when chosen, the gesture lesson. */
-private const val FIRST_RUN_STEPS = 3
-
 /**
  * Board W-Welcome: three pages of three spaces, what Vola is in one sentence, «Get started», and a
  * way to bring passwords and bookmarks over first.
  */
 @Composable
 internal fun FirstRunWelcomeScreen(
+    /** Steps in the whole first run ([FirstRunRules.stepCount]). */
+    stepCount: Int,
     onStart: () -> Unit,
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
@@ -115,13 +115,13 @@ internal fun FirstRunWelcomeScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                StepDots(current = 0)
+                StepDots(current = 0, count = stepCount)
             }
             Button(
                 onClick = onStart,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Start),
             ) {
                 Text(stringResource(R.string.first_run_start))
@@ -130,7 +130,7 @@ internal fun FirstRunWelcomeScreen(
                 onClick = onImport,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Import),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
@@ -168,7 +168,7 @@ internal fun FirstRunSetupScreen(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.sectionGap),
             ) {
-                StepProgress(current = 1)
+                StepProgress(current = 1, count = FirstRunRules.stepCount(setup.showGestures))
                 Text(
                     text = stringResource(R.string.first_run_setup_title),
                     modifier = Modifier.semantics { heading() },
@@ -259,7 +259,7 @@ internal fun FirstRunSetupScreen(
                 onClick = onNext,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(VolaFirstRunTokens.buttonHeight)
+                    .heightIn(min = VolaFirstRunTokens.buttonHeight)
                     .testTag(FirstRunTestTags.Next),
             ) {
                 Text(stringResource(R.string.first_run_next))
@@ -268,9 +268,13 @@ internal fun FirstRunSetupScreen(
     }
 }
 
-/** A soft glow of the accent from the top, over the theme's background (pure black in dark). */
+/**
+ * A soft glow of the accent from the top, over the theme's background (pure black in dark); the
+ * content sits inside the safe area. Shared with the gesture lesson, so the whole first run looks
+ * the same.
+ */
 @Composable
-private fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val colors = MaterialTheme.colorScheme
     Box(
         modifier = modifier
@@ -358,13 +362,13 @@ private fun HeroPage(accent: WorkspaceAccent, offset: Dp?, rotation: Float) {
 }
 
 @Composable
-private fun StepDots(current: Int) {
-    val description = stringResource(R.string.first_run_step, current + 1, FIRST_RUN_STEPS)
+private fun StepDots(current: Int, count: Int) {
+    val description = stringResource(R.string.first_run_step, current + 1, count)
     Row(
         modifier = Modifier.semantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.dotGap),
     ) {
-        repeat(FIRST_RUN_STEPS) { index ->
+        repeat(count) { index ->
             Box(
                 modifier = Modifier
                     .size(
@@ -381,13 +385,13 @@ private fun StepDots(current: Int) {
 }
 
 @Composable
-private fun StepProgress(current: Int) {
-    val description = stringResource(R.string.first_run_step, current + 1, FIRST_RUN_STEPS)
+private fun StepProgress(current: Int, count: Int) {
+    val description = stringResource(R.string.first_run_step, current + 1, count)
     Row(
         modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(VolaFirstRunTokens.progressGap),
     ) {
-        repeat(FIRST_RUN_STEPS) { index ->
+        repeat(count) { index ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -511,7 +515,7 @@ private fun SwitchRow(
 @Composable
 private fun FirstRunWelcomePreview() {
     MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
-        FirstRunWelcomeScreen(onStart = {}, onImport = {})
+        FirstRunWelcomeScreen(stepCount = FirstRunRules.stepCount(showGestures = true), onStart = {}, onImport = {})
     }
 }
 
