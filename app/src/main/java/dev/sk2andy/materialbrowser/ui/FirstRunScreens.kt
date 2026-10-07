@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -268,9 +269,13 @@ internal fun FirstRunSetupScreen(
     }
 }
 
-/** A soft glow of the accent from the top, over the theme's background (pure black in dark). */
+/**
+ * A soft glow of the accent from the top, over the theme's background (pure black in dark); the
+ * content sits inside the safe area. Shared with the gesture lesson, so the whole first run looks
+ * the same.
+ */
 @Composable
-private fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val colors = MaterialTheme.colorScheme
     Box(
         modifier = modifier
