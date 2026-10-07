@@ -297,12 +297,13 @@ internal class GeckoDownloadTransferManager(
         val contentType = response.header("content-type")
         val contentDisposition = response.header("content-disposition")
             ?: suggestedFileName?.let { name -> "attachment; filename=\"$name\"" }
-        val safeMimeType = SafeDownloadValues.mimeType(contentType, response.uri)
+        val candidateMimeType = SafeDownloadValues.mimeType(contentType, response.uri)
         val safeFileName = SafeDownloadValues.fileName(
             response.uri,
             contentDisposition,
-            safeMimeType,
+            candidateMimeType,
         )
+        val safeMimeType = SafeDownloadValues.finalMimeType(safeFileName, candidateMimeType)
         val totalBytes = response.header("content-length")?.toLongOrNull()?.coerceAtLeast(-1L) ?: -1L
         val entry = runCatching { sink.open(safeFileName, safeMimeType) }.getOrElse {
             runCatching(body::close)
