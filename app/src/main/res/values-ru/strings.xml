@@ -19,7 +19,7 @@
     <string name="onboarding_title">Жесты Vola</string>
     <string name="onboarding_progress">%1$d из %2$d</string>
     <string name="onboarding_try_here">Попробуйте жест на карточке</string>
-    <string name="onboarding_required_hint">Чтобы продолжить, выполните все три жеста.</string>
+    <string name="onboarding_required_hint">Выполните жест или нажмите «Пропустить».</string>
     <string name="onboarding_accessibility_complete_action">Отметить жест как выполненный</string>
     <string name="onboarding_switch_tabs_title">Переключение вкладок</string>
     <string name="onboarding_switch_tabs_description">Проведите по адресной строке влево или вправо.</string>
