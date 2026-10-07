@@ -111,6 +111,7 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
             painter = painterResource(
                 when (icon) {
                     ReaderStudioIcon.Download -> R.drawable.ic_reader_download
+                    ReaderStudioIcon.Library -> R.drawable.ic_widget_workspace_books
                     ReaderStudioIcon.Pause -> R.drawable.ic_reader_pause
                     ReaderStudioIcon.Stop -> R.drawable.ic_reader_stop
                 },

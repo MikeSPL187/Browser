@@ -35,13 +35,30 @@ object ReaderExtractionScript {
           const blocks = [];
           let totalChars = 0;
           let totalLinks = 0;
-          root.querySelectorAll('h1,h2,h3,h4,h5,h6,p,blockquote,li').forEach(node => {
+          const blockSelector = 'h1,h2,h3,h4,h5,h6,p,blockquote,li';
+          // A block inside another block is already in that block's text. The exception is an item of a
+          // list nested in a list item: the outer item drops its nested lists, so their items stand alone.
+          const isOwnBlock = node => {
+            const outer = node.parentElement?.closest(blockSelector);
+            if (!outer || outer === root || !root.contains(outer)) return true;
+            const list = node.parentElement.closest('ul,ol');
+            return outer.tagName.toLowerCase() === 'li' && !!list && outer.contains(list) && isOwnBlock(outer);
+          };
+          const blockContent = node => {
+            if (node.tagName.toLowerCase() !== 'li') return node;
+            const item = node.cloneNode(true);
+            item.querySelectorAll('ul,ol').forEach(list => list.remove());
+            return item;
+          };
+          root.querySelectorAll(blockSelector).forEach(node => {
             if (blocks.length >= 600 || totalChars >= 500000) return;
-            const text = clean(node.innerText || node.textContent).slice(0, Math.min(12000, 500000 - totalChars));
+            if (!isOwnBlock(node)) return;
+            const content = blockContent(node);
+            const text = clean(content.innerText || content.textContent).slice(0, Math.min(12000, 500000 - totalChars));
             if (!text || text.length < 2) return;
             const tag = node.tagName.toLowerCase();
             const kind = tag.startsWith('h') ? 'heading' : tag === 'blockquote' ? 'quote' : tag === 'li' ? 'listitem' : 'paragraph';
-            const links = Array.from(node.querySelectorAll('a[href]')).slice(0, Math.min(40, 500 - totalLinks)).map(anchor => ({
+            const links = Array.from(content.querySelectorAll('a[href]')).slice(0, Math.min(40, 500 - totalLinks)).map(anchor => ({
               label: clean(anchor.innerText || anchor.textContent),
               url: anchor.href
             }));
@@ -118,7 +135,11 @@ object ReaderExtractionParser {
         }
     }
 
-    private fun decodeJavascriptString(result: String?): String? {
+    /**
+     * Decodes the JSON-encoded string that `WebView.evaluateJavascript` hands back for
+     * [ReaderExtractionScript] into the raw JSON object text that [parseJson] reads.
+     */
+    fun decodeJavascriptString(result: String?): String? {
         val value = result?.takeIf { it != "null" && it.length <= MAX_JSON_CHARS } ?: return null
         return runCatching { JSONArray("[$value]").getString(0) }.getOrNull()
     }
