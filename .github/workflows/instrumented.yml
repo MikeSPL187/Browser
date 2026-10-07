@@ -186,6 +186,8 @@ jobs:
           cp -r app/build/outputs/androidTest-results "$first" 2>/dev/null || true
           # A new failure gets one rerun on its own; the Report job lists it as flaky when the
           # rerun passes. Known failures are not rerun, and a long list means a real breakage.
+          # One Gradle call per test: with the orchestrator, a comma-separated class list ran
+          # only its first test.
           python3 scripts/ci/instrumented_summary.py "$first" \
             --baseline scripts/ci/instrumented-baseline.txt \
             --new-failures "$RUNNER_TEMP/rerun.txt" > /dev/null || true
@@ -193,13 +195,19 @@ jobs:
           if (( ${rerun_count:-0} > 0 && ${rerun_count:-0} <= RERUN_LIMIT )); then
             echo "Rerunning $rerun_count new failure(s) once:"
             cat "$RUNNER_TEMP/rerun.txt"
-            rm -rf app/build/outputs/androidTest-results
-            ./gradlew --no-daemon connectedFullDebugAndroidTest \
-              -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
-              -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
-              -Pandroid.testInstrumentationRunnerArguments.class="$(paste -sd, "$RUNNER_TEMP/rerun.txt")" \
-              || true
-            cp -r app/build/outputs/androidTest-results "$RUNNER_TEMP/rerun-results" 2>/dev/null || true
+            index=0
+            while read -r test; do
+              index=$((index + 1))
+              rm -rf app/build/outputs/androidTest-results
+              ./gradlew --no-daemon connectedFullDebugAndroidTest \
+                -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
+                -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
+                -Pandroid.testInstrumentationRunnerArguments.class="$test" \
+                < /dev/null || true
+              mkdir -p "$RUNNER_TEMP/rerun-results"
+              cp -r app/build/outputs/androidTest-results "$RUNNER_TEMP/rerun-results/$index" \
+                2>/dev/null || true
+            done < "$RUNNER_TEMP/rerun.txt"
           fi
           kill "$progress" "$monitor" 2>/dev/null || true
           pkill -f "logcat -v brief" || true

@@ -146,8 +146,8 @@ internal class CrashJournal(context: Context) {
     companion object {
         private const val BUFFER_BYTES = 64 * 1024
         private const val DIRECTORY_NAME = "crash_reports"
-        private const val PREFERENCES_NAME = "crash_journal"
-        private const val KEY_LAST_EXIT_SCAN = "last_exit_scan"
+        internal const val PREFERENCES_NAME = "crash_journal"
+        internal const val KEY_LAST_EXIT_SCAN = "last_exit_scan"
         private const val KEY_LAST_SEEN = "last_seen_report"
         private const val MAX_ANR_TRACE_BYTES = 2 * 1024 * 1024
 

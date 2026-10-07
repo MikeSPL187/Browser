@@ -226,7 +226,7 @@ android {
             performanceDiagnostics.get().toString()
         buildConfigField("String", "RELEASE_NOTES_VERSION", "\"${volaVersionName.get()}\"")
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "dev.sk2andy.materialbrowser.VolaTestRunner"
 
         releaseAbi.orNull?.let { abi ->
             ndk {

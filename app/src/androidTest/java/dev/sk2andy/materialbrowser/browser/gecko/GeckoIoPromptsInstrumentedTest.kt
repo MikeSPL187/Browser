@@ -153,7 +153,7 @@ class GeckoIoPromptsInstrumentedTest {
             seedSelectedTab("about:blank")
             launchMainActivity().use { scenario ->
                 navigateAndAwaitView(scenario, server.localhostUrl("/notification"))
-                tapAttachedGeckoView()
+                tapUntilPageLeaves(scenario, "notification-ready")
 
                 val prompt = awaitValue("Gecko notification permission prompt") {
                     scenario.value(BrowserController::permissionPrompt)
@@ -382,6 +382,22 @@ class GeckoIoPromptsInstrumentedTest {
         SystemClock.sleep(250)
     }
 
+    /** A tap that lands before Gecko is ready to take input is lost, so tap until the page reacts. */
+    private fun tapUntilPageLeaves(scenario: ActivityScenario<MainActivity>, readyTitle: String) {
+        repeat(TAP_ATTEMPTS) {
+            tapAttachedGeckoView()
+            val deadline = SystemClock.elapsedRealtime() + TAP_REACTION_MILLIS
+            while (SystemClock.elapsedRealtime() < deadline) {
+                instrumentation.waitForIdleSync()
+                val title = scenario.value { controller -> controller.selectedTab.title }
+                if (title != null && title != readyTitle) return
+                SystemClock.sleep(50)
+            }
+        }
+        val title = scenario.value { controller -> controller.selectedTab.title }
+        throw AssertionError("Page did not react to $TAP_ATTEMPTS taps, title=$title")
+    }
+
     private fun storedDownload(name: String): ByteArray? = context.contentResolver.query(
         MediaStore.Downloads.EXTERNAL_CONTENT_URI,
         arrayOf(MediaStore.Downloads._ID),
@@ -549,6 +565,8 @@ class GeckoIoPromptsInstrumentedTest {
 
     private companion object {
         const val DOWNLOAD_FILE_NAME = "gecko.apk"
+        const val TAP_ATTEMPTS = 3
+        const val TAP_REACTION_MILLIS = 5_000L
         const val TEST_ACTIVITY_ACTION = "dev.sk2andy.materialbrowser.test.GECKO_IO"
     }
 }
