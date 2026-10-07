@@ -176,7 +176,10 @@ _Обновлено: 2026-10-04. Основа: `tech-plan.md` (раздел 4: 1
   3. **Граница движков** `quality_gates.py engine`: `org.mozilla.geckoview.*` и `android.webkit.*`
      — только в `browser/gecko`, `browser/systemwebview` и `browser/userscript`. Единственное
      нарушение (`AppDataTransferActivity`: версия GeckoView) перенесено в адаптер в Q3a.
-  4. **Бренд** `quality_gates.py brand`: слово «Candy» в тексте `values*/strings.xml` — ошибка.
+  4. **Бренд** `quality_gates.py brand`: слово «Candy» в тексте `values*/strings.xml` — ошибка;
+     в Kotlin (`app/src/main/java`, `shared/src`) — строковые литералы с «Candy» или `candy://`.
+     Не считаются комментарии, логи и исключения, `testTag`, имена через точку или дефис и код
+     скриптов в raw-строках. Исключение — комментарий `// brand-exempt: причина`.
   5. **Доступность в туре снимков.** По дампу uiautomator на каждом шаге: кликабельные
      элементы ≥ 48 dp; у кликабельного без текста есть `content-desc`. Новые нарушения — ошибка.
   6. **Тур снимков.** Новые экраны снимаются со шрифтом 200 % и с выключенными анимациями.
