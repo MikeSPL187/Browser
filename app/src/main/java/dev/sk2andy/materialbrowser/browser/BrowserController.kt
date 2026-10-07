@@ -118,7 +118,9 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingDataReloadRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEvent
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoContextDownloadRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadMetadataDecision
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferMetadata
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
@@ -6733,6 +6735,16 @@ class BrowserController(
                     val cancellation = session.startContextDownload(
                         request = GeckoContextDownloadRequest(safeUrl, referrer = request.referrer),
                         listener = object : GeckoDownloadTransferListener {
+                            override fun onMetadata(
+                                metadata: GeckoDownloadTransferMetadata,
+                                decision: GeckoDownloadMetadataDecision,
+                            ) {
+                                // The link only guessed the name and type; the response tells the truth.
+                                val final = BrowserDownloadRequest(metadata.sourceUrl, metadata.fileName, metadata.mimeType)
+                                val save = { if (isSourceCurrent()) decision.proceed() else decision.abort() }
+                                if (!downloadSafety.holdFinal(request, final, save, decision::abort)) decision.proceed()
+                            }
+
                             override fun onStarted(start: GeckoDownloadTransferStart) {
                                 report(DownloadActionResult.Enqueued(start.id.toLong(), start.fileName))
                             }
@@ -10860,8 +10872,12 @@ class BrowserController(
         }
         val request = BrowserEngineDownloadRules.request(response.metadata, referrerFor(tabId))
         if (request == null) {
-            runCatching(requestDownloadNotificationPermission)
-            startBuiltInDownloadResponse(response)
+            // Blob and data files stay in the engine (never an external manager) but get the file check.
+            val local = BrowserEngineDownloadRules.localDownload(response.metadata)
+            val start = { runCatching(requestDownloadNotificationPermission); startBuiltInDownloadResponse(response) }
+            val save = { if (isSourceCurrent()) start() else response.close() }
+            val sourceHost = DownloadSafetyGate.hostOf(sourceUrl)
+            if (!downloadSafety.hold(local.fileName, sourceHost, local.findings, save, response::close)) start()
             return
         }
         routeDownload(
@@ -13441,6 +13457,11 @@ class BrowserController(
                 cancel = { releaseResponse?.invoke() },
             )
         ) return null
+        // The sheet may have waited while the page moved on: nothing from it goes to any manager.
+        if (safetyChecked && isSourceCurrent?.invoke() == false) {
+            releaseResponse?.invoke()
+            return null
+        }
         val startBuiltInDownload = {
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()

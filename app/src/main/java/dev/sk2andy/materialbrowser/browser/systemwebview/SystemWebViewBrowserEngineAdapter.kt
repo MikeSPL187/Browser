@@ -135,6 +135,7 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRuntime
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
+import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript
@@ -1881,13 +1882,8 @@ private class SystemWebViewBrowserEngineSession(
             mimeType = mimeType,
         )
         val fileName = downloadRequest?.fileName ?: "download"
-        val effectiveMimeType = if (
-            downloadRequest?.let(BrowserDownloadRequestFactory::isAndroidPackage) == true
-        ) {
-            "application/vnd.android.package-archive"
-        } else {
-            mimeType
-        }
+        val effectiveMimeType = downloadRequest?.mimeType
+            ?: mimeType?.let { type -> SafeDownloadValues.finalMimeType(fileName, type) }
         val request = DownloadManager.Request(safeUri)
             .setMimeType(effectiveMimeType)
             .setTitle(fileName)

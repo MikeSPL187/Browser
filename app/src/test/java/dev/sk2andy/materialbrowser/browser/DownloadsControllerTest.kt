@@ -36,10 +36,34 @@ class DownloadsControllerTest {
         store.entries = listOf(done)
         controller.refresh()
         worker.runAll()
-        store.entries = listOf(running)
         stale()
+        worker.runAll()
 
         assertEquals(listOf(done), controller.downloads)
+    }
+
+    @Test
+    fun `a slow store runs one read at a time and still updates the list`() {
+        val store = FakeStore(listOf(running))
+        val worker = QueuedWorker()
+        val controller = DownloadsController(store, worker)
+
+        controller.refresh()
+        repeat(10) {
+            store.entries = listOf(running, entry(10L + it, DownloadStatus.Running))
+            controller.refresh()
+            assertEquals(1, worker.pending)
+        }
+        store.entries = listOf(done)
+        worker.take()()
+
+        assertEquals(listOf(done), controller.downloads)
+        assertEquals(1, worker.pending)
+        worker.runAll()
+        assertEquals(listOf(done), controller.downloads)
+        assertEquals(2, store.snapshots)
+        controller.refresh()
+        assertEquals(1, worker.pending)
     }
 
     @Test
@@ -77,8 +101,12 @@ class DownloadsControllerTest {
 
     private class FakeStore(var entries: List<DownloadEntry>) : DownloadsController.DownloadStore {
         var clears = 0
+        var snapshots = 0
 
-        override fun snapshot() = entries
+        override fun snapshot(): List<DownloadEntry> {
+            snapshots++
+            return entries
+        }
 
         override fun clear(entries: Collection<DownloadEntry>): Boolean {
             clears++
@@ -114,6 +142,8 @@ class DownloadsControllerTest {
         override fun <T> run(work: () -> T, onResult: (T) -> Unit) {
             queue.addLast { onResult(work()) }
         }
+
+        val pending: Int get() = queue.size
 
         fun take(): () -> Unit = queue.removeFirst()
 
