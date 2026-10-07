@@ -79,6 +79,26 @@ internal object GeckoDownloadResponseRules {
     }
 }
 
+internal object GeckoDownloadStreamRules {
+    /**
+     * Opens the output of a row that was just inserted. When opening fails, by returning null or by
+     * throwing, the row is rolled back so no pending file is left behind, and the failure goes on.
+     */
+    fun <T : Any> openOrRollback(open: () -> T?, rollback: () -> Unit): T {
+        val output = try {
+            open()
+        } catch (failure: Throwable) {
+            runCatching(rollback)
+            throw failure
+        }
+        if (output == null) {
+            runCatching(rollback)
+            error("MediaStore could not open download")
+        }
+        return output
+    }
+}
+
 internal fun interface GeckoDownloadCancellation {
     fun cancel()
 }
@@ -116,10 +136,10 @@ internal class MediaStoreDownloadStreamSink(context: Context) : GeckoDownloadStr
         val uri = checkNotNull(
             resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values),
         ) { "MediaStore rejected download" }
-        val output = resolver.openOutputStream(uri, "w") ?: run {
-            resolver.delete(uri, null, null)
-            error("MediaStore could not open download")
-        }
+        val output = GeckoDownloadStreamRules.openOrRollback(
+            open = { resolver.openOutputStream(uri, "w") },
+            rollback = { resolver.delete(uri, null, null) },
+        )
         return MediaStoreDownloadStreamEntry(resolver, uri, output)
     }
 }
