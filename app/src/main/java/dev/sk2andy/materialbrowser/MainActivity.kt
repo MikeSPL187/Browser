@@ -106,6 +106,7 @@ import dev.sk2andy.materialbrowser.ui.FullscreenVideoOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoSystemControls
 import dev.sk2andy.materialbrowser.ui.FirstRunOverlay
 import dev.sk2andy.materialbrowser.ui.BrowserLockScreens
+import dev.sk2andy.materialbrowser.ui.LocalBrowserUnderFirstRun
 import dev.sk2andy.materialbrowser.ui.LocalPrivateTabsLocked
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesScreen
 import dev.sk2andy.materialbrowser.ui.performConfirmHaptic
@@ -614,13 +615,10 @@ class MainActivity : AppCompatActivity() {
                     fullscreenVideoGestureState.setEnabled(fullscreenVideoGesturesActive)
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
-                    val castController = if (::castSessionController.isInitialized) {
-                        castSessionController
-                    } else {
-                        null
-                    }
+                    val castController = if (::castSessionController.isInitialized) castSessionController else null
                     CompositionLocalProvider(
                         LocalPrivateTabsLocked provides browserController.privateTabsLock.isLocked,
+                        LocalBrowserUnderFirstRun provides (!videoOnlyPresentation && onboardingVisible),
                     ) {
                         BrowserScreen(
                             controller = browserController,

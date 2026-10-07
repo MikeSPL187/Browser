@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -11,6 +12,9 @@ import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
+
+/** Whether the first run covers the browser, which then leaves the accessibility tree as under a dialog. */
+internal val LocalBrowserUnderFirstRun = compositionLocalOf { false }
 
 /** Where the first run is. */
 internal enum class FirstRunStage { Welcome, Setup, Gestures }
