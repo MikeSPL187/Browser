@@ -1203,6 +1203,7 @@ class BrowserController(
     private val federatedLoginPopupTabIds = mutableSetOf<String>()
     private val federatedLoginCompatibilityTabIds = mutableSetOf<String>()
     private val pageUrls = ConcurrentHashMap<String, String>()
+    private val historyVisits = mutableMapOf<String, HistoryEntry>() // last saved visit per tab
     private val mainHandler = Handler(Looper.getMainLooper())
     private val findInPage = FindInPageController(
         host = ::isFindInPageSessionCurrent,
@@ -12094,6 +12095,7 @@ class BrowserController(
         ) return
         when (event.type) {
             BrowserEngineEventType.NavigationStarted -> {
+                historyVisits.remove(event.tabId)
                 invalidateExternalAppPromptForNavigation(event.tabId)
                 addressBar.cancelAutoDockProbe(event.tabId)
                 val navigatingSession = browserEngineSessions[event.tabId] ?: return
@@ -12317,6 +12319,7 @@ class BrowserController(
                 val changedTitle = event.title?.takeIf(String::isNotBlank)
                 if (effectiveChangedUrl != null && changedTitle != null) {
                     refineGeckoCandyTrailTitle(event.tabId, effectiveChangedUrl, changedTitle)
+                    retitleHistoryVisit(event.tabId, effectiveChangedUrl, changedTitle)
                 }
                 if (currentTab?.isLoading == true && event.isLoading == false) {
                     clearRemoteSyncNavigationTracking(event.tabId)
@@ -12328,6 +12331,9 @@ class BrowserController(
                         markLocalSyncNavigationPending(event.tabId, normalizedChangedUrl)
                         scheduleSyncedTabNavigation(event.tabId)
                         addressBar.scheduleAutoDockProbe(event.tabId, normalizedChangedUrl)
+                        if (BrowsingLibraryRules.recordsSameDocumentVisit(previousUrl, normalizedChangedUrl)) {
+                            recordHistory(event.tabId, normalizedChangedUrl, event.title ?: currentTab.title)
+                        }
                     }
                     persist()
                 }
@@ -13672,27 +13678,33 @@ class BrowserController(
         val tab = tabs.firstOrNull { it.id == tabId }?.takeUnless(BrowserTab::isIncognito)
             ?: return false
         if (isSyncedProfile(tab.profileId)) return false
-        val result = historyRepository.record(
-            HistoryEntry(
-                url = url,
-                title = title,
-                lastVisitedAt = System.currentTimeMillis(),
-                profileId = tab.profileId,
-                visitId = UUID.randomUUID().toString(),
-            ),
+        val entry = HistoryEntry(
+            url = url,
+            title = title,
+            lastVisitedAt = System.currentTimeMillis(),
+            profileId = tab.profileId,
+            visitId = UUID.randomUUID().toString(),
         )
-        val updated = result.history
-        if (updated == history) return result.recorded
-        history.clear()
-        history += updated
+        val result = historyRepository.record(entry)
+        if (result.recorded) historyVisits[tabId] = entry
+        showHistory(result.history)
         return result.recorded
     }
 
-    internal fun reloadHistory() {
-        val restored = historyRepository.snapshot()
-        if (restored == history) return
+    /** A page title that arrives after the visit was saved renames that visit (audit H03). */
+    private fun retitleHistoryVisit(tabId: String, url: String, title: String) {
+        val visit = historyVisits[tabId] ?: return
+        val lateTitle = BrowsingLibraryRules.lateHistoryTitle(visit, url, title) ?: return
+        historyVisits[tabId] = visit.copy(title = lateTitle)
+        showHistory(historyRepository.updateTitle(visit.visitId, lateTitle).history)
+    }
+
+    internal fun reloadHistory() = showHistory(historyRepository.snapshot())
+
+    private fun showHistory(updated: List<HistoryEntry>) {
+        if (updated == history) return
         history.clear()
-        history += restored
+        history += updated
     }
 
     internal fun reloadFavorites() {
@@ -14853,6 +14865,7 @@ class BrowserController(
         firefoxExtensionOptionsTabs.remove(tabId)
         clearExternalNavigationAuthorization(tabId)
         pageUrls.remove(tabId)
+        historyVisits.remove(tabId)
         extensionTabMuteOverrides.remove(tabId)
         addressBar.forgetTab(tabId)
         browserChromeScrollStates.remove(tabId)

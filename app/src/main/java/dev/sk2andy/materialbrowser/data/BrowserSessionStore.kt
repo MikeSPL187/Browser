@@ -252,17 +252,8 @@ class BrowserSessionStore internal constructor(
     }
 
     @Synchronized
-    fun loadHistory(): List<HistoryEntry> = loadArray(KEY_HISTORY) { item ->
-        HistoryEntry(
-            url = item.getString("url"),
-            title = item.optString("title"),
-            lastVisitedAt = item.optLong("lastVisitedAt"),
-            profileId = item.optString("profileId", DEFAULT_PROFILE_ID)
-                .takeIf(String::isNotBlank)
-                ?: DEFAULT_PROFILE_ID,
-            visitId = item.optString("visitId"),
-        )
-    }
+    fun loadHistory(): List<HistoryEntry> =
+        HistoryJsonCodec.decode(preferences.getString(KEY_HISTORY, null))
 
     @Synchronized
     fun saveHistory(history: List<HistoryEntry>) {

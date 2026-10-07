@@ -11,6 +11,47 @@ import org.junit.Test
 
 class BrowsingLibraryRulesTest {
     @Test
+    fun `an in-page move to a new path or query is a visit but a fragment is not`() {
+        val catalog = "https://shop.example/catalog"
+
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "https://shop.example/product/42"))
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "$catalog?page=2"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "$catalog#reviews"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit("$catalog#top", "$catalog#reviews"))
+        assertFalse(BrowsingLibraryRules.recordsSameDocumentVisit(catalog, "about:blank"))
+        assertTrue(BrowsingLibraryRules.recordsSameDocumentVisit(null, catalog))
+    }
+
+    @Test
+    fun `a late page title renames only the recorded visit of the same page`() {
+        val visit = HistoryEntry("https://shop.example/order/42", "Loading", 20, visitId = "new")
+        val older = HistoryEntry("https://shop.example/order/42", "Loading", 10, visitId = "old")
+
+        assertEquals(
+            "Order 42",
+            BrowsingLibraryRules.lateHistoryTitle(visit, "https://shop.example/order/42#items", " Order 42 "),
+        )
+        assertEquals(
+            listOf(visit.copy(title = "Order 42"), older),
+            BrowsingLibraryRules.renameHistoryVisit(listOf(visit, older), "new", "Order 42"),
+        )
+    }
+
+    @Test
+    fun `a late title from another page, a blank or the same title changes nothing`() {
+        val visit = HistoryEntry("https://shop.example/order/42", "Order 42", 20, visitId = "new")
+        val history = listOf(visit)
+
+        assertEquals(null, BrowsingLibraryRules.lateHistoryTitle(visit, "https://shop.example/cart", "Cart"))
+        assertEquals(null, BrowsingLibraryRules.lateHistoryTitle(visit, visit.url, "   "))
+        assertEquals(null, BrowsingLibraryRules.lateHistoryTitle(visit, visit.url, "Order 42"))
+        assertEquals(null, BrowsingLibraryRules.lateHistoryTitle(visit.copy(visitId = ""), visit.url, "New"))
+        assertTrue(BrowsingLibraryRules.renameHistoryVisit(history, "missing", "New") === history)
+        assertTrue(BrowsingLibraryRules.renameHistoryVisit(history, "new", "Order 42") === history)
+        assertTrue(BrowsingLibraryRules.renameHistoryVisit(history, "", "New") === history)
+    }
+
+    @Test
     fun `history keeps repeated visits to canonical URL`() {
         val old = HistoryEntry("https://Example.com:443/page#old", "Old", 10)
         val latest = HistoryEntry("https://example.com/page#new", "Latest", 20)
