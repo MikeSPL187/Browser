@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import gzip
 import tempfile
 import unittest
 from pathlib import Path
@@ -114,6 +115,21 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertEqual(1, status)
         self.assertIn("**shard-2: no test results**", "\n".join(lines))
 
+    def test_a_shard_with_no_tests_to_run_is_not_a_failure(self):
+        idle = self.root / "shard-2" / "connected"
+        idle.mkdir(parents=True)
+        (idle / "TEST-emulator.xml").write_text(
+            "<testsuite name=\"dev.sk2andy.materialbrowser\" tests=\"0\" time=\"0\" />",
+            encoding="utf-8",
+        )
+        lines, status = render(collect(self.shards + [str(self.root / "shard-2")]), {
+            "dev.sk2andy.materialbrowser.ui.TabsTest",
+            "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest",
+        })
+
+        self.assertEqual(0, status)
+        self.assertNotIn("no test results", "\n".join(lines))
+
     def test_a_failure_that_passes_on_the_rerun_is_flaky(self):
         retry = self.root / "shard-0" / "retry" / "connected"
         retry.mkdir(parents=True)
@@ -151,6 +167,25 @@ class InstrumentedSummaryTest(unittest.TestCase):
             "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest#loadsPage\n",
             output.read_text(encoding="utf-8"),
         )
+
+    def test_a_class_that_failed_to_start_fails_the_run_once(self):
+        line = (
+            "10-08 15:00:00.000  4729  4745 E TestRunner: failed: initializationError("
+            "dev.sk2andy.materialbrowser.browser.gecko.EdgeTest)\n"
+        )
+        for index in (0, 1):
+            with gzip.open(self.root / f"shard-{index}" / "logcat.txt.gz", "wt", encoding="utf-8") as log:
+                log.write("10-08 15:00:00.000  4729  4745 I TestRunner: started: opensMenu\n" + line)
+        baseline = {
+            "dev.sk2andy.materialbrowser.ui.TabsTest",
+            "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest",
+        }
+        lines, status = render(collect(self.shards), baseline)
+        text = "\n".join(lines)
+
+        self.assertEqual(1, status)
+        self.assertIn("#### New failures (1)", text)
+        self.assertIn("<code>EdgeTest#initializationError</code> — the class failed to start", text)
 
     def test_no_results_at_all_fails(self):
         empty = self.root / "nothing"

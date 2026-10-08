@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
@@ -31,6 +32,9 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.dismissSystemNotResponding
+import dev.sk2andy.materialbrowser.focusedWindow
+import dev.sk2andy.materialbrowser.ui.BrowserContentFrameRules
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,9 +42,17 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * The Gecko page in the Air layout since #123 (H4): the window layout moves the whole engine host
+ * below the status bar ([BrowserContentFrameRules.belowStatusBar]), the engine view fills the host
+ * down to the window's bottom edge, and the page gets no CSS top inset of its own. Candy drew the
+ * page from the window's top and protected headers with a CSS inset; with that, taps landed a
+ * status bar higher than the finger.
+ */
 @RunWith(AndroidJUnit4::class)
 class GeckoEdgeToEdgeInstrumentedTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private val store by lazy { BrowserSessionStore(context) }
     private val preferences by lazy {
@@ -69,7 +81,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
     }
 
     @Test
-    fun selectedGeckoViewAndSurfaceStayEdgeToEdgeAfterInsetDispatch() {
+    fun selectedGeckoViewAndSurfaceSitBelowStatusBarAfterInsetDispatch() {
         ActivityScenario.launch<MainActivity>(
             Intent(context, MainActivity::class.java).setAction(TEST_ACTIVITY_ACTION),
         ).use { scenario ->
@@ -94,27 +106,29 @@ class GeckoEdgeToEdgeInstrumentedTest {
             scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 val view = requireNotNull(controller.selectedGeckoViewForTesting())
+                val hostTop = safeTopPx(activity)
+                val engineTop = hostTop + engineTopMarginPx(hostTop)
                 assertMargins(view, left = 0, top = 0, right = 0, bottom = 0)
-                assertWindowTop(view, expectedTop = 0)
+                assertWindowTop(view, expectedTop = hostTop)
                 assertWindowBottom(view, expectedBottom = activity.window.decorView.height)
-                assertScreenTop(view, expectedTop = 0)
+                assertScreenTop(view, expectedTop = hostTop)
                 assertMargins(
                     view.engineView(),
                     left = 0,
-                    top = 0,
+                    top = engineTopMarginPx(hostTop),
                     right = 0,
                     bottom = 0,
                 )
-                assertWindowTop(view.engineView(), expectedTop = 0)
+                assertWindowTop(view.engineView(), expectedTop = engineTop)
                 assertWindowBottom(
                     view.engineView(),
                     expectedBottom = activity.window.decorView.height,
                 )
-                assertScreenTop(view.engineView(), expectedTop = 0)
+                assertScreenTop(view.engineView(), expectedTop = engineTop)
                 val surfaceView = requireNotNull(view.findSurfaceView())
-                assertWindowTop(surfaceView, expectedTop = 0)
+                assertWindowTop(surfaceView, expectedTop = engineTop)
                 assertWindowBottom(surfaceView, expectedBottom = activity.window.decorView.height)
-                assertScreenTop(surfaceView, expectedTop = 0)
+                assertScreenTop(surfaceView, expectedTop = engineTop)
                 assertTrue(
                     "GeckoView must use SurfaceView to avoid copying every page frame",
                     view.hasSurfaceView(),
@@ -200,7 +214,8 @@ class GeckoEdgeToEdgeInstrumentedTest {
                         view.findTextureView() == null,
                     )
                     val surfaceView = requireNotNull(view.findSurfaceView())
-                    assertWindowTop(surfaceView, expectedTop = 0)
+                    val hostTop = safeTopPx(activity)
+                    assertWindowTop(surfaceView, expectedTop = hostTop + engineTopMarginPx(hostTop))
                     assertWindowBottom(surfaceView, expectedBottom = activity.window.decorView.height)
                     if (Build.VERSION.SDK_INT >= 37) {
                         val region = requireNotNull(nativeBlurRegion)
@@ -218,14 +233,14 @@ class GeckoEdgeToEdgeInstrumentedTest {
                                 surfaceHeightPx = surfaceView.height,
                             ),
                         )
-                        assertEquals(expectedRegion.leftPx, region.bounds.left, 0.01f)
-                        assertEquals(expectedRegion.topPx, region.bounds.top, 0.01f)
-                        assertEquals(expectedRegion.rightPx, region.bounds.right, 0.01f)
-                        assertEquals(expectedRegion.bottomPx, region.bounds.bottom, 0.01f)
-                        assertEquals(expectedRegion.cornerRadiusPx, region.cornerRadii[0], 0.01f)
+                        assertEquals(expectedRegion.leftPx, region.left, 0.01f)
+                        assertEquals(expectedRegion.topPx, region.top, 0.01f)
+                        assertEquals(expectedRegion.rightPx, region.right, 0.01f)
+                        assertEquals(expectedRegion.bottomPx, region.bottom, 0.01f)
+                        assertEquals(expectedRegion.cornerRadiusPx, region.cornerRadius, 0.01f)
                         assertEquals(expectedRegion.blurRadiusPx, region.blurRadius, 0.01f)
-                        assertTrue(region.bounds.width() > 0f)
-                        assertTrue(region.bounds.height() > 0f)
+                        assertTrue(region.right - region.left > 0f)
+                        assertTrue(region.bottom - region.top > 0f)
                         assertTrue(region.blurRadius > 0f)
                     }
                     activity.browserControllerForTesting().updateAppearanceSettings(
@@ -277,11 +292,13 @@ class GeckoEdgeToEdgeInstrumentedTest {
                 )
 
                 assertMargins(view, left = 0, top = 0, right = 0, bottom = 0)
-                assertWindowTop(view, expectedTop = 0)
+                assertWindowTop(view, expectedTop = safeTopPx(activity))
+                // The forced safe area is native margins inside the host, less the part of the
+                // status bar the host already sits below.
                 assertMargins(
                     view.engineView(),
                     left = 0,
-                    top = STATUS_BAR_INSET_PX,
+                    top = engineTopMarginPx(safeTopPx(activity)),
                     right = 0,
                     bottom = NAVIGATION_BAR_INSET_PX,
                 )
@@ -305,13 +322,14 @@ class GeckoEdgeToEdgeInstrumentedTest {
             }
             instrumentation.waitForIdleSync()
             SystemClock.sleep(LAYOUT_STABILITY_WINDOW_MILLIS)
+            awaitViewReady(scenario)
 
             scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 val view = requireNotNull(controller.selectedGeckoViewForTesting())
                 assertEquals(0, controller.previewTopInsetPx(controller.selectedTabId))
                 assertMargins(view.engineView(), left = 0, top = 0, right = 0, bottom = 0)
-                assertWindowTop(view.engineView(), expectedTop = 0)
+                assertWindowTop(view.engineView(), expectedTop = safeTopPx(activity))
                 assertWindowBottom(
                     view.engineView(),
                     expectedBottom = activity.window.decorView.height,
@@ -321,12 +339,12 @@ class GeckoEdgeToEdgeInstrumentedTest {
     }
 
     @Test
-    fun requestedSiteLayoutsStaySafeWithoutLeavingEdgeToEdge() {
+    fun requestedSiteLayoutsSitBelowStatusBarWithoutCssInset() {
         EdgeToEdgeSiteFixtureServer().use { server ->
             val tab = BrowserTab(
                 id = "gecko-site-matrix-safe-area-fixture",
                 lastAccessedAt = System.currentTimeMillis(),
-                url = server.url,
+                url = server.siteUrl(EdgeToEdgeSiteMatrix.allSites.first(), nativeTop = true),
             )
             assertTrue(store.saveTabsImmediately(listOf(tab), tab.id))
 
@@ -339,7 +357,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
                         scenario.onActivity { activity ->
                             assertTrue(
                                 activity.browserControllerForTesting()
-                                    .openUrl(server.siteUrl(site)),
+                                    .openUrl(server.siteUrl(site, nativeTop = true)),
                             )
                         }
                     }
@@ -369,8 +387,8 @@ class GeckoEdgeToEdgeInstrumentedTest {
                             right = 0,
                             bottom = 0,
                         )
-                        assertWindowTop(view, expectedTop = 0)
-                        assertWindowTop(view.engineView(), expectedTop = 0)
+                        assertWindowTop(view, expectedTop = safeTopPx(activity))
+                        assertWindowTop(view.engineView(), expectedTop = safeTopPx(activity))
                         assertWindowBottom(view, expectedBottom = activity.window.decorView.height)
                         assertWindowBottom(
                             view.engineView(),
@@ -396,7 +414,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
             val tab = BrowserTab(
                 id = "gecko-focused-search-safe-area-fixture",
                 lastAccessedAt = System.currentTimeMillis(),
-                url = server.url,
+                url = server.siteUrl(EdgeToEdgeSiteMatrix.allSites.first(), nativeTop = true),
             )
             assertTrue(store.saveTabsImmediately(listOf(tab), tab.id))
 
@@ -415,22 +433,30 @@ class GeckoEdgeToEdgeInstrumentedTest {
                     scenario.onActivity { activity ->
                         assertTrue(
                             activity.browserControllerForTesting()
-                                .openUrl("${server.siteUrl(site)}#${site.name}"),
+                                .openUrl("${server.siteUrl(site, nativeTop = true)}#${site.name}"),
                         )
                     }
                     awaitSelectedTabTitle(
                         scenario,
                         "Candy focused search ready: ${site.name}",
                     )
+                    val focusedTitle = "Candy focused search safe: ${site.name}"
+                    device.dismissSystemNotResponding()
                     tapSearchField(scenario)
-                    awaitSelectedTabTitle(scenario, "Candy focused search safe: ${site.name}")
+                    if (!titleReached(scenario, focusedTitle, TAP_RESPONSE_MILLIS)) {
+                        // A tap that lands before the page takes input is lost; a user taps again.
+                        device.dismissSystemNotResponding()
+                        tapSearchField(scenario)
+                    }
+                    awaitSelectedTabTitle(scenario, focusedTitle)
                     awaitImeVisibility(scenario, expectedVisible = true)
                     scenario.onActivity { activity ->
                         val controller = activity.browserControllerForTesting()
                         val view = requireNotNull(controller.selectedGeckoViewForTesting())
                         assertWindowTop(
                             view.engineView(),
-                            controller.previewTopInsetPx(controller.selectedTabId),
+                            safeTopPx(activity) +
+                                controller.previewTopInsetPx(controller.selectedTabId),
                         )
                         WindowCompat.getInsetsController(
                             activity.window,
@@ -469,24 +495,48 @@ class GeckoEdgeToEdgeInstrumentedTest {
         )
     }
 
+    /**
+     * What the test reads of a native blur region. The API 37 type stays inside the method body:
+     * in a signature it made JUnit's reflection fail to load the whole class on older devices, so
+     * none of these tests ran (an initializationError on the API 35 CI emulator).
+     */
+    private data class ObservedBlurRegion(
+        val left: Float,
+        val top: Float,
+        val right: Float,
+        val bottom: Float,
+        val cornerRadius: Float,
+        val blurRadius: Float,
+    )
+
     @RequiresApi(37)
     private fun awaitNativeBlurRegion(
         scenario: ActivityScenario<MainActivity>,
-    ): RoundedRectBlurRegion {
+    ): ObservedBlurRegion {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
         var lastRequestedRegion = "null"
         while (SystemClock.elapsedRealtime() < deadline) {
             instrumentation.waitForIdleSync()
-            var observedRegion: RoundedRectBlurRegion? = null
+            var observedRegion: ObservedBlurRegion? = null
             scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 lastRequestedRegion = controller
                     .selectedBrowserBackdropBlurRegionForTesting()
                     .toString()
-                observedRegion = controller.selectedGeckoViewForTesting()
+                val region = controller.selectedGeckoViewForTesting()
                     ?.findSurfaceView()
                     ?.blurRegions
                     ?.singleOrNull() as? RoundedRectBlurRegion
+                observedRegion = region?.let {
+                    ObservedBlurRegion(
+                        left = it.bounds.left,
+                        top = it.bounds.top,
+                        right = it.bounds.right,
+                        bottom = it.bounds.bottom,
+                        cornerRadius = it.cornerRadii[0],
+                        blurRadius = it.blurRadius,
+                    )
+                }
             }
             observedRegion?.let { return it }
             SystemClock.sleep(POLL_MILLIS)
@@ -521,22 +571,62 @@ class GeckoEdgeToEdgeInstrumentedTest {
         scenario: ActivityScenario<MainActivity>,
         expectedTitle: String,
     ) {
-        val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
-        var lastTitle = ""
+        if (titleReached(scenario, expectedTitle, TIMEOUT_MILLIS)) return
+        val seen = seenTitles.joinToString(" → ")
+        // The system UI's «isn't responding» dialog takes the window's focus; it is not the app's.
+        val focusedWindow = device.focusedWindow()
+        if ("Not Responding" in focusedWindow) {
+            device.dismissSystemNotResponding()
+            if (titleReached(scenario, expectedTitle, TIMEOUT_MILLIS)) return
+        }
+        throw AssertionError(
+            "Selected Gecko tab did not reach title $expectedTitle; last title was $lastSeenTitle; " +
+                "titles: $seen; " +
+                "${engineState(scenario)}; focused window: $focusedWindow",
+        )
+    }
+
+    /** The titles the page went through while [titleReached] waited, with their times. */
+    private val seenTitles = mutableListOf<String>()
+    private var lastSeenTitle: String? = null
+
+    private fun titleReached(
+        scenario: ActivityScenario<MainActivity>,
+        expectedTitle: String,
+        timeoutMillis: Long,
+    ): Boolean {
+        val started = SystemClock.elapsedRealtime()
+        val deadline = started + timeoutMillis
+        seenTitles.clear()
+        lastSeenTitle = null
         while (SystemClock.elapsedRealtime() < deadline) {
             instrumentation.waitForIdleSync()
             var title = ""
             scenario.onActivity { activity ->
                 title = activity.browserControllerForTesting().selectedTabForTesting().title
             }
-            if (title == expectedTitle) return
-            lastTitle = title
+            if (title == expectedTitle) return true
+            if (title != lastSeenTitle) {
+                lastSeenTitle = title
+                seenTitles += "${SystemClock.elapsedRealtime() - started} ms ${title.take(TITLE_CHARS)}"
+            }
             SystemClock.sleep(POLL_MILLIS)
         }
-        assertTrue(
-            "Selected Gecko tab did not reach title $expectedTitle; last title was $lastTitle",
-            false,
-        )
+        return false
+    }
+
+    private fun engineState(scenario: ActivityScenario<MainActivity>): String {
+        var state = ""
+        scenario.onActivity { activity ->
+            val controller = activity.browserControllerForTesting()
+            val engine = controller.selectedGeckoViewForTesting()?.engineView()
+            val location = IntArray(2).also { engine?.getLocationInWindow(it) }
+            state = "activity ${activity.lifecycle.currentState}, window focus " +
+                "${activity.hasWindowFocus()}, url ${controller.selectedTabForTesting().url}, " +
+                "engine shown ${engine?.isShown}, top ${location[1]}, " +
+                "size ${engine?.width}x${engine?.height}, input focus ${engine?.hasFocus()}"
+        }
+        return state
     }
 
     private fun tapSearchField(scenario: ActivityScenario<MainActivity>) {
@@ -548,14 +638,9 @@ class GeckoEdgeToEdgeInstrumentedTest {
             val location = IntArray(2)
             engineView.getLocationOnScreen(location)
             val density = activity.resources.displayMetrics.density
-            val safeTop = requireNotNull(
-                ViewCompat.getRootWindowInsets(activity.window.decorView),
-            ).getInsets(
-                WindowInsetsCompat.Type.statusBars() or
-                    WindowInsetsCompat.Type.displayCutout(),
-            ).top
+            // The engine view already starts below the status bar: the page's top is its top.
             coordinates[0] = location[0] + SEARCH_TAP_X_CSS_PX * density
-            coordinates[1] = location[1] + safeTop + SEARCH_TAP_Y_CSS_PX * density
+            coordinates[1] = location[1] + SEARCH_TAP_Y_CSS_PX * density
         }
         val downTime = SystemClock.uptimeMillis()
         injectTouch(
@@ -648,6 +733,17 @@ class GeckoEdgeToEdgeInstrumentedTest {
         assertEquals(bottom, margins.bottomMargin)
     }
 
+    /** Where the window layout puts the Gecko host: below the real status bar and cutout. */
+    private fun safeTopPx(activity: MainActivity): Int =
+        requireNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView)) {
+            "The window has no insets yet"
+        }.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            .top
+
+    /** The engine's own top margin: the dispatched status bar less what the host sits below. */
+    private fun engineTopMarginPx(hostTop: Int): Int =
+        (STATUS_BAR_INSET_PX - hostTop).coerceAtLeast(0)
+
     private fun assertWindowTop(view: View, expectedTop: Int) {
         val location = IntArray(2)
         view.getLocationInWindow(location)
@@ -676,6 +772,8 @@ class GeckoEdgeToEdgeInstrumentedTest {
         const val SEARCH_TAP_X_CSS_PX = 100f
         const val SEARCH_TAP_Y_CSS_PX = 16f
         const val TIMEOUT_MILLIS = 15_000L
+        const val TAP_RESPONSE_MILLIS = 5_000L
+        const val TITLE_CHARS = 80
         const val POLL_MILLIS = 50L
     }
 }
