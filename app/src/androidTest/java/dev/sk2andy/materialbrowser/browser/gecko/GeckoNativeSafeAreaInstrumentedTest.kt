@@ -18,13 +18,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Native CSS contract only; no scroll performance or checkerboard-absence assertion. */
+/**
+ * The top safe area of a Gecko page is a native margin of the engine view (#123, H4): the page is
+ * drawn below the status bar and gets no CSS top inset, so a tap lands where the finger is.
+ * Before H4 the renderer got the top as a CSS safe area and GeckoView mapped touches through that
+ * edge a second time. Native layout contract only; no scroll performance assertion.
+ */
 @RunWith(AndroidJUnit4::class)
 class GeckoNativeSafeAreaInstrumentedTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
 
     @Test
-    fun nativeTopInsetUpdatesCssConsumersWithoutMovingUnawareContentOrShrinkingSurface() {
+    fun nativeTopMarginMovesThePageBelowTheStatusBarWithoutCssInset() {
         val title = AtomicReference<String?>(null)
         EdgeToEdgeSiteFixtureServer { target ->
             if (target.startsWith("/site-matrix/native-safe-area")) HTML else "<!doctype html><title>Fixture resource</title>"
@@ -47,26 +52,30 @@ class GeckoNativeSafeAreaInstrumentedTest {
                     assertTrue(session.loadUrl(server.fixtureUrl("/site-matrix/native-safe-area")))
                 }
                 try {
-                    var lastSequence = 0
-                    var initialViewportHeight: Double? = null
-                    for (topPx in listOf(0, 144, 216, 0)) {
+                    val edgeToEdge = awaitReport(title, "the page to report") { true }
+                    val fullHeightPx = edgeToEdge.getDouble("viewportHeight") * edgeToEdge.getDouble("density")
+                    var lastSequence = edgeToEdge.getInt("sequence")
+                    for (topPx in listOf(144, 216, 0)) {
                         scenario.onActivity { updateNativeTop(view, topPx) }
-                        val report = awaitNativeInset(title, topPx, lastSequence)
+                        val report = awaitReport(title, "a viewport $topPx px shorter") { candidate ->
+                            candidate.getInt("sequence") > lastSequence && kotlin.math.abs(
+                                candidate.getDouble("viewportHeight") * candidate.getDouble("density") -
+                                    (fullHeightPx - topPx),
+                            ) <= VIEWPORT_TOLERANCE_PX
+                        }
                         lastSequence = report.getInt("sequence")
-                        val viewportHeight = report.getDouble("viewportHeight")
-                        if (initialViewportHeight == null) initialViewportHeight = viewportHeight
-                        assertEquals(initialViewportHeight, viewportHeight, 0.5)
-                        val cssInset = topPx / report.getDouble("density")
-                        assertEquals(cssInset, report.getDouble("envInset"), 0.5)
-                        assertEquals(cssInset, report.getDouble("awareFixedTop"), 0.5)
+                        // The page itself starts at its own top: nothing is under the status bar.
+                        assertEquals(0.0, report.getDouble("envInset"), 0.5)
+                        assertEquals(0.0, report.getDouble("awareFixedTop"), 0.5)
                         assertEquals(0.0, report.getDouble("unawareFixedTop"), 0.5)
                         assertEquals(0.0, report.getDouble("unawareFlowTop"), 0.5)
-                        assertEquals(cssInset, report.getDouble("awareFlowContentTop"), 0.5)
+                        assertEquals(0.0, report.getDouble("awareFlowContentTop"), 0.5)
                         assertEquals(0.0, report.getDouble("candyInset"), 0.5)
                         assertEquals(0, report.getInt("candyOwnedElements"))
                         scenario.onActivity { activity ->
-                            assertEdgeToEdge(view, activity.window.decorView.height)
-                            assertEdgeToEdge((view as ViewGroup).getChildAt(0), activity.window.decorView.height)
+                            val windowHeight = activity.window.decorView.height
+                            assertSpans(view, top = 0, windowHeight = windowHeight)
+                            assertSpans((view as ViewGroup).getChildAt(0), top = topPx, windowHeight = windowHeight)
                         }
                     }
                     assertEquals("Native inset changes must not reload the document", 1, server.documentRequestCount.get())
@@ -96,38 +105,42 @@ class GeckoNativeSafeAreaInstrumentedTest {
         )
     }
 
-    private fun awaitNativeInset(title: AtomicReference<String?>, topPx: Int, afterSequence: Int): JSONObject {
+    private fun awaitReport(
+        title: AtomicReference<String?>,
+        what: String,
+        predicate: (JSONObject) -> Boolean,
+    ): JSONObject {
         val deadline = SystemClock.elapsedRealtime() + 30_000
         while (SystemClock.elapsedRealtime() < deadline) {
+            instrumentation.waitForIdleSync()
             val current = title.get().orEmpty()
             val report = if (current.startsWith(REPORT_PREFIX) && current.length < 2_048) {
                 runCatching { JSONObject(current.removePrefix(REPORT_PREFIX)) }.getOrNull()
             } else {
                 null
             }
-            if (report != null && report.getInt("sequence") > afterSequence && kotlin.math.abs(
-                    report.getDouble("envInset") * report.getDouble("density") - topPx,
-                ) <= 0.5
-            ) {
-                return report
-            }
+            if (report != null && predicate(report)) return report
             SystemClock.sleep(50)
         }
-        throw AssertionError("Native CSS safe-area did not reach $topPx screen pixels; last title=${title.get()}")
+        throw AssertionError("The page did not report $what; last title=${title.get()}")
     }
 
-    private fun assertEdgeToEdge(view: View, windowHeight: Int) {
+    /** The view starts [top] px down the window and reaches its bottom edge. */
+    private fun assertSpans(view: View, top: Int, windowHeight: Int) {
         val margins = view.layoutParams as ViewGroup.MarginLayoutParams
-        assertEquals(0, margins.topMargin)
+        assertEquals(top, margins.topMargin)
         assertEquals(0, margins.bottomMargin)
         val location = IntArray(2)
         view.getLocationInWindow(location)
-        assertEquals(0, location[1])
+        assertEquals(top, location[1])
         assertEquals(windowHeight, location[1] + view.height)
     }
 
     private companion object {
         const val REPORT_PREFIX = "Candy native safe-area: "
+
+        /** CSS pixels round the viewport height; one device pixel either way is the same layout. */
+        const val VIEWPORT_TOLERANCE_PX = 2.0
         val HTML = """
             <!doctype html>
             <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
