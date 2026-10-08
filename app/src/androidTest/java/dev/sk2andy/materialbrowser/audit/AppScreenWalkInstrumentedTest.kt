@@ -253,7 +253,9 @@ class AppScreenWalkInstrumentedTest(
                 config = config.name,
                 kind = AuditKind.Navigation,
                 detail = "${error.javaClass.simpleName}: ${error.message?.lineSequence()?.firstOrNull()}" +
-                    " — on screen: ${runCatching { auditor.describeScreen() }.getOrDefault("?")}",
+                    " — on screen: ${runCatching { auditor.describeScreen() }.getOrDefault("?")}" +
+                    // Back lost to a system window reads like a screen that ignores back.
+                    " — focused package: ${runCatching { device.currentPackageName }.getOrDefault("?")}",
             )
             runCatching { recover() }
         }
@@ -261,12 +263,19 @@ class AppScreenWalkInstrumentedTest(
 
     private fun recover() {
         repeat(BACK_ATTEMPTS) {
-            if (exists(hasTestTag(NewTabPageTestTags.Header))) return
+            if (atBareNewTab()) return
             device.pressBack()
             composeRule.waitForIdle()
         }
-        if (!exists(hasTestTag(NewTabPageTestTags.Header))) relaunch()
+        if (!atBareNewTab()) relaunch()
     }
+
+    /** The new tab with nothing over it: its header stays in the tree under the editor. */
+    private fun atBareNewTab(): Boolean =
+        exists(hasTestTag(NewTabPageTestTags.Header)) &&
+            !exists(closeAddressInput()) &&
+            !exists(hasTestTag(BrowserMainMenuTestTags.Menu)) &&
+            !exists(hasTestTag(TabOverviewChromeTestTags.Root))
 
     private fun relaunch() {
         runCatching { scenario.close() }
