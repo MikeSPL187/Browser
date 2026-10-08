@@ -152,7 +152,11 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertEqual(1, status)
         self.assertIn("| 6 | 2 | 1 | 1 | 0 | 2 | 0 min 13 s |", text)
         self.assertIn("Flaky — failed, then passed on the rerun (1)", text)
-        self.assertIn("- `TabsTest#closesTab` — Expected &lt;1&gt; tabs", text)
+        flaky = text[text.index("Flaky — failed"):]
+        # The flaky test's first failure is shown whole, with its stack and logcat errors.
+        self.assertIn("<code>TabsTest#closesTab</code> — Expected &lt;1&gt; tabs", flaky)
+        self.assertIn("TabsTest.kt:42", flaky)
+        self.assertIn("E AndroidRuntime: FATAL EXCEPTION: main", flaky)
         # The test that failed twice keeps its first failure's details.
         self.assertIn("<code>GeckoTest#loadsPage</code> — java.lang.IllegalStateException", text)
 

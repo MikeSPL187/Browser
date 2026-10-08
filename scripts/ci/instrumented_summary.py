@@ -200,7 +200,7 @@ def init_errors(shard_dirs: list) -> list:
 
 def attach_log(result: TestResult, shard: Path) -> TestResult:
     """Adds the errors from the failed test's own logcat (logcat-<class>-<method>.txt)."""
-    if result.outcome != "failed":
+    if result.outcome not in ("failed", "flaky"):
         return result
     name = f"{result.class_name}-{result.method}"
     for file in first_run_files(shard, "logcat-*.txt"):
@@ -279,11 +279,11 @@ def render(summary: Summary, baseline: set) -> tuple:
         lines.extend([f"#### New failures ({len(new_failures)})", ""])
         lines.extend(render_failures(new_failures))
     if flaky:
+        # A flaky test's first failure is shown whole: it is the only trace of a failure that a
+        # rerun hid, and its message may be a test's own diagnostics.
         lines.extend([f"<details><summary>Flaky — failed, then passed on the rerun ({len(flaky)})</summary>", ""])
-        for result in sorted(flaky, key=lambda item: item.test_id):
-            message = escape_html(result.message[:160])
-            lines.append(f"- `{short_name(result.class_name)}#{result.method}` — {message}")
-        lines.extend(["", "</details>", ""])
+        lines.extend(render_failures(flaky))
+        lines.extend(["</details>", ""])
     if known_failures:
         lines.extend([f"<details><summary>Known failures ({len(known_failures)})</summary>", ""])
         for result in sorted(known_failures, key=lambda item: item.test_id):

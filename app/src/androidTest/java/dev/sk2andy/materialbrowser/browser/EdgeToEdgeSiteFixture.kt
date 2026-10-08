@@ -1,9 +1,10 @@
 package dev.sk2andy.materialbrowser.browser
 
 import java.io.Closeable
+import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.net.SocketException
+import java.net.Socket
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -85,6 +86,22 @@ internal object EdgeToEdgeSiteMatrix {
                   // #123 H4), so the page must get no CSS top inset of its own: one would push
                   // its header a second status bar down.
                   const nativeTop = new URLSearchParams(location.search).has('native-top');
+                  // While the matrix runs, a stretch without animation frames is written into the
+                  // title, which the test reports when it times out: whether the document was
+                  // hidden (an inactive session) or visible with its painting stopped.
+                  let lastFrameAt = performance.now();
+                  let watchingFrames = false;
+                  const watchFrames = (now) => {
+                    lastFrameAt = now;
+                    if (watchingFrames) requestAnimationFrame(watchFrames);
+                  };
+                  const frameWatchdog = setInterval(() => {
+                    const stalledFor = Math.round(performance.now() - lastFrameAt);
+                    if (!watchingFrames || stalledFor < 2000) return;
+                    document.title = document.title.replace(/ \[no frames .*$/, '') +
+                      ' [no frames ' + stalledFor + ' ms, ' + document.visibilityState +
+                      ', focus ' + document.hasFocus() + ']';
+                  }, 1000);
                   const results = [];
                   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
                   const candyPolicyReady = () => {
@@ -189,6 +206,8 @@ internal object EdgeToEdgeSiteMatrix {
                     );
                   });
                   const run = async () => {
+                    watchingFrames = true;
+                    requestAnimationFrame(watchFrames);
                     for (const site of cases) {
                       renderSite(site);
                       const search = document.querySelector('#search');
@@ -331,6 +350,8 @@ internal object EdgeToEdgeSiteMatrix {
                         ['YouTube', 'Google', 'DuckDuckGo'].includes(result.name) && result.focused
                       ).length
                     };
+                    watchingFrames = false;
+                    clearInterval(frameWatchdog);
                     document.title = globalThis.__candySiteMatrix.passed
                       ? ${readyTitle(site).jsQuoted()}
                       : 'Candy site matrix failed: ' + JSON.stringify(
@@ -393,49 +414,73 @@ internal class EdgeToEdgeSiteFixtureServer(
             URLEncoder.encode(site.name, StandardCharsets.UTF_8.name()) +
             if (nativeTop) "&native-top=1" else ""
 
+    /**
+     * Each connection gets its own thread: an engine may open a connection ahead of a load and
+     * send nothing on it, and a server that waited on it held every later request, so the page
+     * never arrived and its title stayed empty. An idle connection is dropped after a while.
+     */
     private fun serve() {
         while (!server.isClosed) {
-            try {
-                server.accept().use { connection ->
-                    val reader = connection.getInputStream().bufferedReader()
-                    val requestLine = reader.readLine().orEmpty()
-                    val requestTarget = requestLine.split(' ').getOrNull(1).orEmpty()
-                    if (requestTarget.startsWith("/site-matrix")) {
-                        documentRequestCount.incrementAndGet()
-                    }
-                    while (true) {
-                        val header = reader.readLine() ?: break
-                        if (header.isEmpty()) break
-                    }
-                    val requestedName = requestTarget.substringAfter("site=", "")
-                        .substringBefore('&')
-                        .let { encoded ->
-                            URLDecoder.decode(encoded, StandardCharsets.UTF_8.name())
-                        }
-                    val site = EdgeToEdgeSiteMatrix.allSites.firstOrNull { candidate ->
-                        candidate.name == requestedName
-                    } ?: EdgeToEdgeSiteMatrix.allSites.first()
-                    val body = (requestHandler?.invoke(requestTarget) ?: EdgeToEdgeSiteMatrix.html(site)).toByteArray()
-                    val contentType = if (requestTarget.substringBefore('?').endsWith(".css")) "text/css" else "text/html"
-                    connection.getOutputStream().apply {
-                        write("HTTP/1.1 200 OK\r\n".toByteArray())
-                        write("Content-Type: $contentType; charset=utf-8\r\n".toByteArray())
-                        write("Cache-Control: no-store\r\n".toByteArray())
-                        write("Content-Length: ${body.size}\r\n".toByteArray())
-                        write("Connection: close\r\n\r\n".toByteArray())
-                        write(body)
-                        flush()
-                    }
-                }
-            } catch (error: SocketException) {
+            val connection = try {
+                server.accept()
+            } catch (error: IOException) {
                 if (server.isClosed) return
-                // Browser engines may cancel speculative or superseded document requests.
+                continue
             }
+            Thread({ respond(connection) }, "edge-to-edge-site-matrix-connection").apply {
+                isDaemon = true
+                start()
+            }
+        }
+    }
+
+    private fun respond(socket: Socket) {
+        try {
+            socket.use { connection ->
+                connection.soTimeout = IDLE_CONNECTION_MILLIS
+                val reader = connection.getInputStream().bufferedReader()
+                val requestLine = reader.readLine()
+                if (requestLine.isNullOrBlank()) return
+                val requestTarget = requestLine.split(' ').getOrNull(1).orEmpty()
+                if (requestTarget.startsWith("/site-matrix")) {
+                    documentRequestCount.incrementAndGet()
+                }
+                while (true) {
+                    val header = reader.readLine() ?: break
+                    if (header.isEmpty()) break
+                }
+                val requestedName = requestTarget.substringAfter("site=", "")
+                    .substringBefore('&')
+                    .let { encoded ->
+                        URLDecoder.decode(encoded, StandardCharsets.UTF_8.name())
+                    }
+                val site = EdgeToEdgeSiteMatrix.allSites.firstOrNull { candidate ->
+                    candidate.name == requestedName
+                } ?: EdgeToEdgeSiteMatrix.allSites.first()
+                val body = (requestHandler?.invoke(requestTarget) ?: EdgeToEdgeSiteMatrix.html(site)).toByteArray()
+                val contentType = if (requestTarget.substringBefore('?').endsWith(".css")) "text/css" else "text/html"
+                connection.getOutputStream().apply {
+                    write("HTTP/1.1 200 OK\r\n".toByteArray())
+                    write("Content-Type: $contentType; charset=utf-8\r\n".toByteArray())
+                    write("Cache-Control: no-store\r\n".toByteArray())
+                    write("Content-Length: ${body.size}\r\n".toByteArray())
+                    write("Connection: close\r\n\r\n".toByteArray())
+                    write(body)
+                    flush()
+                }
+            }
+        } catch (error: IOException) {
+            // Browser engines may cancel speculative or superseded document requests, and an
+            // idle connection times out.
         }
     }
 
     override fun close() {
         server.close()
         thread.join(2_000L)
+    }
+
+    private companion object {
+        const val IDLE_CONNECTION_MILLIS = 10_000
     }
 }
