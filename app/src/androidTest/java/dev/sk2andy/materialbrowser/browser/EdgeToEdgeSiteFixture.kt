@@ -81,9 +81,14 @@ internal object EdgeToEdgeSiteMatrix {
               <script>
                 (() => {
                   const cases = [$cases];
+                  // native-top: the engine already places the page below the status bar (Gecko,
+                  // #123 H4), so the page must get no CSS top inset of its own: one would push
+                  // its header a second status bar down.
+                  const nativeTop = new URLSearchParams(location.search).has('native-top');
                   const results = [];
                   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
                   const candyPolicyReady = () => {
+                    if (nativeTop) return true;
                     const rootInset = Number.parseFloat(
                       document.documentElement.style.getPropertyValue(
                         '--candy-browser-content-top-inset'
@@ -159,7 +164,7 @@ internal object EdgeToEdgeSiteMatrix {
                       const focusedTop = document.querySelector('#focused-search')
                         .getBoundingClientRect().top;
                       const queryTop = focusedQuery.getBoundingClientRect().top;
-                      const safe = requiredTop > 0 &&
+                      const safe = (nativeTop ? requiredTop === 0 : requiredTop > 0) &&
                         focusedTop >= requiredTop - 0.5 &&
                         queryTop >= requiredTop - 0.5;
                       document.title = safe
@@ -268,16 +273,19 @@ internal object EdgeToEdgeSiteMatrix {
                       ) === 'true';
                       const usesEngineSafeArea = site.layout === 'CoverWithSafeArea' &&
                         !candyCompatibilityApplied && safeAreaPaddingTop > 0;
-                      const protectionModeValid = usesNativeTopHeader || usesEngineSafeArea ||
-                        (candyCompatibilityApplied && candyTopInset > 0);
-                      const ownedProtectionValid = usesNativeTopHeader || site.layout === 'Flow' ||
+                      const protectionModeValid = nativeTop
+                        ? candyTopInset === 0 && safeAreaPaddingTop === 0
+                        : usesNativeTopHeader || usesEngineSafeArea ||
+                          (candyCompatibilityApplied && candyTopInset > 0);
+                      const ownedProtectionValid = nativeTop || usesNativeTopHeader ||
+                        site.layout === 'Flow' ||
                         protectedOwned === 'true' &&
                         protectedOffset.endsWith('px') ||
                         protectedStickyOwned === 'true' &&
                         protectedStickyTop.length > 0 &&
                         CSS.supports('top', protectedStickyTop) &&
                         Number.isFinite(computedStickyTop);
-                      const requiredTop = usesNativeTopHeader || usesEngineSafeArea
+                      const requiredTop = nativeTop || usesNativeTopHeader || usesEngineSafeArea
                         ? 0
                         : candyTopInset;
                       results.push({
@@ -376,9 +384,14 @@ internal class EdgeToEdgeSiteFixtureServer(
 
     fun fixtureUrl(path: String): String = "http://127.0.0.1:${server.localPort}$path"
 
-    fun siteUrl(site: EdgeToEdgeSiteMatrix.Site): String =
+    /**
+     * @param nativeTop the engine places the page below the status bar itself (Gecko since #123,
+     *   H4): the page passes only without a CSS top inset of its own.
+     */
+    fun siteUrl(site: EdgeToEdgeSiteMatrix.Site, nativeTop: Boolean = false): String =
         "http://127.0.0.1:${server.localPort}/site-matrix?site=" +
-            URLEncoder.encode(site.name, StandardCharsets.UTF_8.name())
+            URLEncoder.encode(site.name, StandardCharsets.UTF_8.name()) +
+            if (nativeTop) "&native-top=1" else ""
 
     private fun serve() {
         while (!server.isClosed) {

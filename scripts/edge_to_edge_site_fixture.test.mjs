@@ -15,6 +15,7 @@ function readinessFixture({
   safeAreaPadding = null,
   readyAfterFrames = 0,
   nativeTopHeader = false,
+  nativeTop = false,
 } = {}) {
   let frames = 0;
   const delays = [];
@@ -42,6 +43,7 @@ function readinessFixture({
     setTimeout(callback, delay) { delays.push(delay); callback(); },
   });
   vm.runInContext(`
+    const nativeTop = ${nativeTop};
     const frame = ${helpers}
     globalThis.fixture = { candyPolicyReady, settleCandyLayout, settleScrollLayout };
   `, context);
@@ -69,6 +71,13 @@ test('readiness waits for actual DOM policy and retains four stabilization frame
 
 test('genuine engine safe-area padding is ready without Candy root CSS ownership', async () => {
   const fixture = readinessFixture({ rootInset: '', safeAreaPadding: '32px' });
+  await fixture.context.fixture.settleCandyLayout();
+  assert.equal(fixture.frames, 4);
+  assert.equal(fixture.context.fixture.candyPolicyReady(), true);
+});
+
+test('a page the engine already places below the status bar waits for no CSS policy', async () => {
+  const fixture = readinessFixture({ rootInset: '', nativeTop: true });
   await fixture.context.fixture.settleCandyLayout();
   assert.equal(fixture.frames, 4);
   assert.equal(fixture.context.fixture.candyPolicyReady(), true);
