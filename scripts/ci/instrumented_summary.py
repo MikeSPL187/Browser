@@ -4,8 +4,9 @@
 Usage: instrumented_summary.py SHARD_DIR [SHARD_DIR ...] [--baseline FILE] [--markdown FILE]
        [--failures FILE] [--new-failures FILE]
 
-Every SHARD_DIR is searched for JUnit XML. A shard without any XML failed before its tests ran,
-which fails the run. A failing test that is not listed in the baseline fails the run too; listed
+Every SHARD_DIR is searched for JUnit XML. A shard without any readable XML failed before its
+tests ran, which fails the run; a shard whose XML lists no tests had none to run (a filtered run
+of a few tests leaves some of the shards empty). A failing test that is not listed in the baseline fails the run too; listed
 tests are reported as known failures, and listed tests that passed are reported as fixed so their
 entries can be removed (docs/vola/ci-instrumented-tests.md).
 
@@ -131,11 +132,22 @@ def read_all(files: list) -> list:
     return results
 
 
+def has_readable_xml(files: list) -> bool:
+    for file in files:
+        try:
+            ElementTree.parse(file)
+            return True
+        except ElementTree.ParseError:
+            continue
+    return False
+
+
 def collect(shard_dirs: list) -> Summary:
     results, empty_shards, shard_seconds = [], [], {}
     for shard in map(Path, shard_dirs):
-        shard_results = read_all(first_run_files(shard, "*.xml"))
-        if not shard_results:
+        xml_files = first_run_files(shard, "*.xml")
+        shard_results = read_all(xml_files)
+        if not shard_results and not has_readable_xml(xml_files):
             empty_shards.append(str(shard))
         passed_on_retry = {
             result.test_id
