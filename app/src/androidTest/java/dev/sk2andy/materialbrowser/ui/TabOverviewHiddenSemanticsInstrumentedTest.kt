@@ -26,7 +26,8 @@ import org.junit.runner.RunWith
 /**
  * The closed tab overview stays composed under the page, drawn fully transparent. Its tab cards
  * must not stay in the accessibility tree with it: TalkBack read «New tab, current tab» on the
- * new tab, a card nobody could see (found by the screen audit).
+ * new tab, a card nobody could see. The other way round, the page under the open overview
+ * leaves the tree while the overview covers it (both found by the screen audit).
  */
 @RunWith(AndroidJUnit4::class)
 class TabOverviewHiddenSemanticsInstrumentedTest {
@@ -61,11 +62,16 @@ class TabOverviewHiddenSemanticsInstrumentedTest {
         composeRule.onNodeWithTag(AddressBarTestTags.TabButton).performClick()
         composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(TabOverviewChromeTestTags.Root)) }
         composeRule.waitUntil(TIMEOUT_MILLIS) { exists(currentTabCard) }
+        assertTrue(
+            "The page under the open overview is in the accessibility tree",
+            !exists(hasTestTag(NewTabPageTestTags.Header)),
+        )
 
         Espresso.pressBack()
         composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(hasTestTag(TabOverviewChromeTestTags.Root)) }
         composeRule.waitForIdle()
         assertTrue("The overview's card stayed in the tree after closing it", !exists(currentTabCard))
+        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(NewTabPageTestTags.Header)) }
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

@@ -1398,7 +1398,7 @@ internal fun BrowserScreen(
             .hiddenUnderModal(controller.contentActions.isLinkPeekVisible || LocalBrowserUnderFirstRun.current),
     ) {
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
-            Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible)) {
+            Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible || tabOverviewVisible)) {
                 if (showFirefoxExtensionOptionsChrome) {
                     FirefoxExtensionOptionsTopBar(
                         title = requireNotNull(firefoxExtensionOptionsTitle),
