@@ -13,7 +13,9 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -23,17 +25,22 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTestTags
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
 import dev.sk2andy.materialbrowser.ui.AppearanceMainTestTags
+import dev.sk2andy.materialbrowser.ui.FindInPageBarTestTags
 import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
 import dev.sk2andy.materialbrowser.ui.NewTabPageTestTags
+import dev.sk2andy.materialbrowser.ui.PermissionRadarTestTags
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesTestTags
 import dev.sk2andy.materialbrowser.ui.SettingsDestination
 import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
+import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import java.util.concurrent.atomic.AtomicReference
@@ -79,6 +86,8 @@ class AppScreenWalkInstrumentedTest(
             BROWSER_GROUP -> walk(config, steps = ::walkBrowser)
             LIBRARY_GROUP -> walk(config, steps = ::walkLibrary)
             FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
+            PAGE_GROUP -> walk(config, steps = ::walkPage)
+            PAGE_STATES_GROUP -> walk(config, steps = ::walkPageStates)
             in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
         }
@@ -216,6 +225,85 @@ class AppScreenWalkInstrumentedTest(
                 device.pressBack()
             }
         }
+    }
+
+    /** A real web page typed into the address bar, its site information and find in page. */
+    private fun walkPage() {
+        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
+            step("web page") {
+                openTyped(server.fixtureUrl("/article"))
+                auditScrolling("web page")
+            }
+            step("site information") {
+                click(hasTestTag(PermissionRadarTestTags.ActivityBadge))
+                awaitTag(SiteInfoTestTags.Overview)
+                auditScrolling("site information")
+                backUntilGone(hasTestTag(SiteInfoTestTags.Overview))
+            }
+            step("find in page") {
+                openMenuItem(BrowserMainMenuTestTags.FindInPage)
+                awaitTag(FindInPageBarTestTags.Bar)
+                audit("find in page, empty")
+                composeRule.onNodeWithTag(FindInPageBarTestTags.Query).performTextInput("Vola")
+                composeRule.waitUntil("matches to be counted", PAGE_TIMEOUT_MILLIS) {
+                    exists(hasTestTag(FindInPageBarTestTags.MatchCount))
+                }
+                audit("find in page, matches")
+                click(hasTestTag(FindInPageBarTestTags.Close))
+                composeRule.waitUntil("find in page to close", TIMEOUT_MILLIS) {
+                    !exists(hasTestTag(FindInPageBarTestTags.Bar))
+                }
+            }
+        }
+    }
+
+    /** The menu over a page, a page that fails to load, and the overview with several tabs. */
+    private fun walkPageStates() {
+        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
+            step("menu on a page") {
+                openTyped(server.fixtureUrl("/article"))
+                click(hasContentDescription(string(R.string.cd_more_options)))
+                awaitTag(BrowserMainMenuTestTags.Menu)
+                audit("menu on a page")
+                click(hasTestTag(BrowserMainMenuTestTags.More))
+                awaitTag(BrowserMainMenuTestTags.MoreGroup)
+                audit("menu on a page, more")
+                backUntilGone(hasTestTag(BrowserMainMenuTestTags.Menu))
+            }
+            step("page that fails to load") {
+                scenario.onActivity { activity ->
+                    activity.browserControllerForTesting().createTab(isIncognito = false)
+                }
+                composeRule.waitForIdle()
+                // Nothing listens on port 1: the connection is refused at once.
+                openTyped(UNREACHABLE_URL, expectFailure = true)
+                auditScrolling("page that fails to load")
+            }
+            step("tab overview, two tabs") {
+                click(hasTestTag(AddressBarTestTags.TabButton))
+                awaitTag(TabOverviewChromeTestTags.Root)
+                auditScrolling("tab overview, two tabs")
+                backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
+            }
+        }
+    }
+
+    /** Types [url] into the address bar and submits it from the keyboard, as a user does. */
+    private fun openTyped(url: String, expectFailure: Boolean = false) {
+        click(hasTestTag(AddressBarTestTags.PrimaryField))
+        awaitShown(closeAddressInput())
+        composeRule.onAllNodes(hasSetTextAction()).onFirst().apply {
+            performTextInput(url)
+            performImeAction()
+        }
+        composeRule.waitUntil("$url to load", PAGE_TIMEOUT_MILLIS) {
+            val tab = AtomicReference<BrowserTab>()
+            scenario.onActivity { activity -> tab.set(activity.browserControllerForTesting().selectedTab) }
+            val current = tab.get()
+            val failed = current.error != null || current.failureKind != null
+            !current.isLoading && if (expectFailure) failed else current.url.startsWith(url)
+        }
+        composeRule.waitForIdle()
     }
 
     /** Pages one level deeper: their parent page first, then the row that opens them. */
@@ -402,7 +490,26 @@ class AppScreenWalkInstrumentedTest(
         private const val MAX_SCROLL_PAGES = 8
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
+        private const val PAGE_GROUP = -4
+        private const val PAGE_STATES_GROUP = -5
         private const val SUBPAGE_GROUP_BASE = -10
+        private const val PAGE_TIMEOUT_MILLIS = 30_000L
+        private const val UNREACHABLE_URL = "http://127.0.0.1:1/"
+
+        /** An ordinary article: headings, paragraphs, a list and links, longer than a screen. */
+        private val AUDIT_PAGE_HTML = buildString {
+            append("<!doctype html><html lang=en><head><meta charset=utf-8>")
+            append("<meta name=viewport content='width=device-width, initial-scale=1'>")
+            append("<title>Vola audit article</title></head><body>")
+            append("<h1>Vola audit article</h1>")
+            repeat(12) { index ->
+                append("<h2>Section ${index + 1}</h2>")
+                append("<p>Vola keeps the page edge to edge. This paragraph is long enough to wrap ")
+                append("over several lines on a phone, with a <a href='#s$index'>link</a> in it.</p>")
+                append("<ul><li>First point</li><li>Second point</li></ul>")
+            }
+            append("</body></html>")
+        }
 
         /** A settings page opened from a row on another settings page. */
         private class Subpage(
@@ -451,7 +558,7 @@ class AppScreenWalkInstrumentedTest(
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
-            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP) +
+            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP, PAGE_GROUP, PAGE_STATES_GROUP) +
                 settingsSlices().indices + subpageGroups()
             return groups.flatMap { group -> configs.map { config -> arrayOf<Any>(group, config) } }
         }
