@@ -93,14 +93,18 @@ internal class ScreenAuditor(
         }
         for (node in controls) {
             val label = node.label()
-            // The whole control, not its visible part: a row half scrolled out is not too small.
-            val size = node.size
+            // Touch bounds take in the extension Compose gives a small control (a 40 dp icon
+            // button answers touches over 48 dp) but are clipped by scrolling; the node's own
+            // size is whole. A control is too small only when both are.
+            val touch = node.touchBoundsInRoot
+            val width = maxOf(touch.width, node.size.width.toFloat())
+            val height = maxOf(touch.height, node.size.height.toFloat())
             val minTouchPx = MIN_TOUCH_DP * window.density - 0.5f
-            if (size.width < minTouchPx || size.height < minTouchPx) {
+            if (width < minTouchPx || height < minTouchPx) {
                 file(
                     AuditKind.TouchTarget,
-                    "«$label» is ${(size.width / window.density).toInt()}×" +
-                        "${(size.height / window.density).toInt()} dp to touch",
+                    "«$label» is ${(width / window.density).toInt()}×" +
+                        "${(height / window.density).toInt()} dp to touch",
                 )
             }
             if (label.isBlank()) {

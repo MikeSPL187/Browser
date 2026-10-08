@@ -11,6 +11,7 @@ import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
+import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
 
 /** The settings a real phone may have that change how every screen is laid out. */
 data class AuditConfig(
@@ -38,7 +39,16 @@ internal object AuditEnvironment {
         setAppLanguage(context, config.languageTag)
         if (firstRun) {
             // A fresh install has written nothing yet: any saved setting reads as an update and
-            // skips the welcome. The theme comes from the system, as on a new phone.
+            // skips the welcome. The test runner marks the welcome done for every test, so undo
+            // that the way the onboarding tests do. The theme comes from the system.
+            listOf(GestureOnboardingStore.PREFERENCES_NAME, ReleaseNotesStore.PREFERENCES_NAME)
+                .forEach { name ->
+                    context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().commit()
+                }
+            context.getSharedPreferences(GestureOnboardingStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(GestureOnboardingStore.KEY_HAS_STARTED, true)
+                .commit()
             shell("cmd uimode night ${if (config.dark) "yes" else "no"}")
             return
         }
