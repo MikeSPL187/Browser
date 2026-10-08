@@ -91,11 +91,6 @@ internal fun NewTabPage(
     interactive: Boolean = true,
     essentialsAlpha: () -> Float = { 1f },
     explicitSafeDrawingPadding: PaddingValues? = null,
-    /**
-     * The status and navigation bars' heights for the wallpaper's scrims, read where the window
-     * insets reach; `null` reads them here. Passed together with [explicitSafeDrawingPadding].
-     */
-    explicitSystemBarsPadding: PaddingValues? = null,
     /** The workspace name shown above the page, as on the NewTab board. */
     title: String? = null,
     /** Recently used tabs for the Continue card, newest first. */
@@ -133,22 +128,14 @@ internal fun NewTabPage(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .then(
-                        explicitSystemBarsPadding
-                            ?.let { bars -> Modifier.height(bars.calculateTopPadding()) }
-                            ?: Modifier.windowInsetsTopHeight(WindowInsets.statusBars),
-                    )
+                    .windowInsetsTopHeight(WindowInsets.statusBars)
                     .background(colors.surface.copy(alpha = 0.92f)),
             )
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .then(
-                        explicitSystemBarsPadding
-                            ?.let { bars -> Modifier.height(bars.calculateBottomPadding()) }
-                            ?: Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars),
-                    )
+                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
                     .background(colors.surface.copy(alpha = 0.92f)),
             )
         }
