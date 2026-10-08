@@ -28,11 +28,14 @@ import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTestTags
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.AppearanceMainTestTags
 import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
 import dev.sk2andy.materialbrowser.ui.NewTabPageTestTags
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesTestTags
 import dev.sk2andy.materialbrowser.ui.SettingsDestination
 import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
+import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
+import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.fail
@@ -50,7 +53,7 @@ import org.junit.runners.Parameterized
  */
 @RunWith(Parameterized::class)
 class AppScreenWalkInstrumentedTest(
-    /** [BROWSER_GROUP], or the index of a slice of the settings pages. */
+    /** A walk group: [BROWSER_GROUP] and the like, a settings slice, or a subpage slice. */
     private val group: Int,
     private val config: AuditConfig,
 ) {
@@ -76,6 +79,7 @@ class AppScreenWalkInstrumentedTest(
             BROWSER_GROUP -> walk(config, steps = ::walkBrowser)
             LIBRARY_GROUP -> walk(config, steps = ::walkLibrary)
             FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
+            in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
         }
     }
@@ -210,6 +214,24 @@ class AppScreenWalkInstrumentedTest(
                 composeRule.waitForIdle()
                 auditScrolling("settings search, results")
                 device.pressBack()
+            }
+        }
+    }
+
+    /** Pages one level deeper: their parent page first, then the row that opens them. */
+    private fun walkSubpages(slice: Int) {
+        step("settings home") { openSettings() }
+        for (subpage in subpageSlices().getOrElse(slice) { emptyList() }) {
+            val screen = "settings: ${string(subpage.parent)} › ${subpage.name}"
+            step(screen) {
+                ensureSettingsHome()
+                composeRule.onAllNodes(hasText(string(subpage.parent)) and hasClickAction()).onFirst()
+                    .performScrollTo()
+                    .performClick()
+                composeRule.waitForIdle()
+                click(subpage.entry(this))
+                composeRule.waitForIdle()
+                auditScrolling(screen)
             }
         }
     }
@@ -380,6 +402,40 @@ class AppScreenWalkInstrumentedTest(
         private const val MAX_SCROLL_PAGES = 8
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
+        private const val SUBPAGE_GROUP_BASE = -10
+
+        /** A settings page opened from a row on another settings page. */
+        private class Subpage(
+            val parent: Int,
+            val name: String,
+            val entry: AppScreenWalkInstrumentedTest.() -> SemanticsMatcher,
+        )
+
+        private val subpages = listOf(
+            Subpage(R.string.settings_tabs_gestures_title, "address bar long press") {
+                hasTestTag(TabSettingsTestTags.AddressBarLongPressAction)
+            },
+            Subpage(R.string.settings_tabs_gestures_title, "link peek buttons") {
+                hasText(string(R.string.settings_link_peek_actions_title)) and hasClickAction()
+            },
+            Subpage(R.string.settings_tabs_gestures_title, "address bar buttons") {
+                hasText(string(R.string.settings_address_bar_actions_title)) and hasClickAction()
+            },
+            Subpage(R.string.settings_tabs_gestures_title, "menu buttons") {
+                hasText(string(R.string.settings_menu_actions_title)) and hasClickAction()
+            },
+            Subpage(R.string.settings_appearance_title, "themes") {
+                hasTestTag(AppearanceMainTestTags.Themes)
+            },
+            Subpage(R.string.userscript_title, "script catalog") {
+                hasTestTag(UserscriptManagementTestTags.Discover)
+            },
+        )
+
+        private fun subpageSlices() = subpages.chunked(PAGES_PER_TEST)
+
+        private fun subpageGroups() = subpageSlices().indices.map { slice -> SUBPAGE_GROUP_BASE - slice }
+
         /** The settings pages opened from the settings home, a few per test to stay in time. */
         private fun settingsSlices() = SettingsRegistry.pages
             .filter { page -> page.destination.parent == SettingsDestination.Home }
@@ -395,7 +451,8 @@ class AppScreenWalkInstrumentedTest(
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
-            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP) + settingsSlices().indices
+            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP) +
+                settingsSlices().indices + subpageGroups()
             return groups.flatMap { group -> configs.map { config -> arrayOf<Any>(group, config) } }
         }
     }
