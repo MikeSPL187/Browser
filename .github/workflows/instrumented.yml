@@ -13,6 +13,8 @@ on:
     types: [opened, synchronize, reopened, labeled]
   schedule:
     - cron: "23 1 * * *"
+    # The System WebView build: the screen walk, every screen in every configuration.
+    - cron: "53 2 * * *"
   workflow_dispatch:
     inputs:
       filter:
@@ -21,6 +23,11 @@ on:
           separated by commas. Empty runs everything.
         required: false
         default: ""
+      flavor:
+        description: Build to test — the GeckoView build or the System WebView one.
+        type: choice
+        options: [full, systemwebview]
+        default: full
 
 permissions:
   contents: read
@@ -35,6 +42,10 @@ defaults:
 
 env:
   ANDROID_SERIAL: emulator-5554
+  # The Gradle variant: "Full" (GeckoView), or "Systemwebview" when asked for and at 02:53.
+  FLAVOR: >-
+    ${{ (github.event.inputs.flavor == 'systemwebview' || github.event.schedule == '53 2 * * *')
+    && 'Systemwebview' || 'Full' }}
   # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
   # eight shards keep each one well under the 16 GB a hosted runner has.
   SHARDS: 8
@@ -125,7 +136,7 @@ jobs:
       # Compiles while the emulator boots.
       - name: Build app and test APKs
         run: |
-          ./gradlew --no-daemon --stacktrace assembleFullDebug assembleFullDebugAndroidTest
+          ./gradlew --no-daemon --stacktrace "assemble${FLAVOR}Debug" "assemble${FLAVOR}DebugAndroidTest"
           # The Kotlin compile daemon outlives the build; free its memory for the emulator.
           pkill -f KotlinCompileDaemon || true
 
@@ -146,7 +157,9 @@ jobs:
 
       - name: Run tests
         env:
-          FILTER: ${{ github.event.inputs.filter }}
+          FILTER: >-
+            ${{ github.event.inputs.filter ||
+            (github.event.schedule == '53 2 * * *' && 'dev.sk2andy.materialbrowser.audit' || '') }}
           SHARD: ${{ matrix.shard }}
         run: |
           # timeout_msec: a hanging test fails after two minutes instead of holding the shard
@@ -180,7 +193,7 @@ jobs:
           started=$(date +%s)
           # Failing tests are judged by the Report job against the baseline; this step fails only
           # when the shard produced no results at all.
-          ./gradlew --no-daemon --stacktrace connectedFullDebugAndroidTest "${args[@]}" || true
+          ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" "${args[@]}" || true
           first="$RUNNER_TEMP/first-results"
           rm -rf "$first"
           cp -r app/build/outputs/androidTest-results "$first" 2>/dev/null || true
@@ -199,7 +212,7 @@ jobs:
             while read -r test; do
               index=$((index + 1))
               rm -rf app/build/outputs/androidTest-results
-              ./gradlew --no-daemon connectedFullDebugAndroidTest \
+              ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
                 -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
                 -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
                 -Pandroid.testInstrumentationRunnerArguments.class="$test" \
