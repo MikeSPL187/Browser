@@ -402,8 +402,11 @@ private fun LessonCopy(step: GestureOnboardingStep, stepNumber: Int, stepCount: 
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // The title takes what is left and wraps: with a large font it used to take the whole
+            // row and leave Skip no room at all, so the lesson could not be skipped.
             Text(
                 text = stringResource(R.string.onboarding_title),
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
