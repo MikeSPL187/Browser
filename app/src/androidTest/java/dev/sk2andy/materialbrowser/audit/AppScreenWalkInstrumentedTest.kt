@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.SystemClock
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -409,9 +410,19 @@ class AppScreenWalkInstrumentedTest(
         repeat(TAP_ATTEMPTS) { attempt ->
             if (attempt > 0 && !exists(target)) return@repeat
             click(target)
-            if (runCatching { composeRule.waitUntil(RETAP_AFTER_MILLIS) { done() } }.isSuccess) return
+            val opened = timed("wait for $what") {
+                runCatching { composeRule.waitUntil(RETAP_AFTER_MILLIS) { done() } }.isSuccess
+            }
+            if (opened) return
         }
-        composeRule.waitUntil(what, TIMEOUT_MILLIS) { done() }
+        timed("wait for $what") { composeRule.waitUntil(what, TIMEOUT_MILLIS) { done() } }
+    }
+
+    /** The node lies whole inside its window: a tap lands on it without scrolling first. */
+    private fun fullyShown(node: SemanticsNode): Boolean {
+        val bounds = node.boundsInWindow
+        return bounds.width >= node.size.width - 1f && bounds.height >= node.size.height - 1f &&
+            bounds.width > 0f && bounds.height > 0f
     }
 
     private fun ensureSettingsHome() {
@@ -568,9 +579,12 @@ class AppScreenWalkInstrumentedTest(
             composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
+        // Only when it is not in view: a scroll to a row already shown once stalled for minutes.
         val target = composeRule.onAllNodes(matcher).onFirst()
-        runCatching { target.performScrollTo() }
-        target.performClick()
+        if (!fullyShown(target.fetchSemanticsNode())) {
+            timed("scroll to ${matcher.description}") { runCatching { target.performScrollTo() } }
+        }
+        timed("tap ${matcher.description}") { target.performClick() }
         idle()
     }
 
