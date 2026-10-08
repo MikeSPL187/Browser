@@ -70,7 +70,7 @@ internal class ScreenAuditor(
         val controls = nodes.filter { it.isControl() }
         val layouts = textLayouts(nodes)
         for (node in nodes) {
-            val bounds = node.boundsInWindow
+            val bounds = node.boundsOnScreen()
             val label = node.label()
             val readable = node.config.contains(SemanticsProperties.Text) || node.isControl()
             if (readable && !node.isFullScreen(window) && window.underSystemBars(bounds)) {
@@ -87,7 +87,7 @@ internal class ScreenAuditor(
             }
             layouts[node.id]?.let { layout ->
                 if (layout.isClippedWithoutEllipsis()) {
-                    file(AuditKind.TextClipped, "«$label» is cut off (${layout.size}, ${layout.lineCount} lines)")
+                    file(AuditKind.TextClipped, "«$label» is cut off: ${layout.clipDetail()}")
                 }
             }
         }
@@ -103,15 +103,17 @@ internal class ScreenAuditor(
                 )
             }
             if (label.isBlank()) {
-                file(AuditKind.NoLabel, "a control at ${node.boundsInWindow.short()} has no text or description")
+                file(AuditKind.NoLabel, "a control at ${node.boundsOnScreen().short()} has no text or description")
             }
         }
         controls.forEachIndexed { index, first ->
             for (second in controls.drop(index + 1)) {
                 if (first.isFullScreen(window) || second.isFullScreen(window)) continue
                 if (first.isAncestorOf(second) || second.isAncestorOf(first)) continue
-                val a = first.boundsInWindow
-                val b = second.boundsInWindow
+                // A menu or a dialog is a window of its own above the page: that is no conflict.
+                if (first.rootKey() != second.rootKey()) continue
+                val a = first.boundsOnScreen()
+                val b = second.boundsOnScreen()
                 val overlap = a.intersect(b)
                 if (overlap.width <= 0f || overlap.height <= 0f) continue
                 val smaller = minOf(a.width * a.height, b.width * b.height)
@@ -230,13 +232,13 @@ private fun SemanticsNode.isControl(): Boolean =
 private fun SemanticsNode.isShown(window: WindowGeometry): Boolean {
     if (config.contains(SemanticsProperties.InvisibleToUser)) return false
     if (!layoutInfo.isAttached || !layoutInfo.isPlaced) return false
-    val bounds = boundsInWindow
+    val bounds = boundsOnScreen()
     if (bounds.width <= 0f || bounds.height <= 0f) return false
     return bounds.right > 0f && bounds.bottom > 0f && bounds.left < window.width && bounds.top < window.height
 }
 
 private fun SemanticsNode.isFullScreen(window: WindowGeometry): Boolean {
-    val bounds = boundsInWindow
+    val bounds = boundsOnScreen()
     return bounds.width >= window.width * FULL_SCREEN_SHARE && bounds.height >= window.height * FULL_SCREEN_SHARE
 }
 
@@ -249,18 +251,32 @@ private fun SemanticsNode.isInHorizontalScroll(): Boolean {
     return false
 }
 
+/**
+ * The node's visible bounds on the screen. Menus, sheets and dialogs are windows of their own,
+ * so window coordinates would put a popup's top at 0 whatever its place on the screen.
+ */
+internal fun SemanticsNode.boundsOnScreen(): Rect =
+    boundsInWindow.translate(positionOnScreen - positionInWindow)
+
 /** Where the nearest vertical scroll container is and how far it is scrolled, for diagnosis. */
 private fun SemanticsNode.scrollContext(): String {
     var current = parent
     while (current != null) {
         val range = current.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
         if (range != null) {
-            return "; in a scroll container at ${current.boundsInWindow.short()} scrolled " +
+            return "; in a scroll container at ${current.boundsOnScreen().short()} scrolled " +
                 "${range.value().toInt()} of ${range.maxValue().toInt()} px"
         }
         current = current.parent
     }
     return "; not in a scroll container"
+}
+
+/** Identifies the Compose root (window) the node belongs to. */
+private fun SemanticsNode.rootKey(): String {
+    var root = this
+    while (true) root = root.parent ?: break
+    return "${root.id}@${root.boundsOnScreen()}"
 }
 
 private fun SemanticsNode.isAncestorOf(other: SemanticsNode): Boolean {
@@ -298,6 +314,14 @@ private fun TextLayoutResult.isClippedWithoutEllipsis(): Boolean {
 }
 
 private const val CLIP_SLACK_PX = 2f
+
+/** The numbers that show how text overflows its box: box, widest line, paragraph height. */
+private fun TextLayoutResult.clipDetail(): String {
+    val widest = (0 until lineCount).maxOfOrNull { line -> getLineRight(line) } ?: 0f
+    return "box ${size.width}×${size.height} px, widest line ${widest.toInt()} px, " +
+        "text ${multiParagraph.height.toInt()} px tall, $lineCount lines" +
+        if (multiParagraph.didExceedMaxLines) ", more lines than allowed" else ""
+}
 
 private fun Rect.short(): String = "[${left.toInt()},${top.toInt()} ${width.toInt()}×${height.toInt()}]"
 

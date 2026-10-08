@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -109,11 +110,11 @@ class AppScreenWalkInstrumentedTest(
         step("new tab") { auditScrolling("new tab") }
         step("address editor") {
             click(hasTestTag(AddressBarTestTags.PrimaryField))
-            awaitTag(AddressBarTestTags.Editor)
+            awaitShown(closeAddressInput())
             audit("address editor, empty")
             composeRule.onAllNodes(hasSetTextAction()).onFirst().performTextInput("vola test")
             audit("address editor, typed")
-            backUntilGone(AddressBarTestTags.Editor)
+            backUntilGone(closeAddressInput())
         }
         step("main menu") {
             click(hasContentDescription(string(R.string.cd_more_options)))
@@ -122,13 +123,13 @@ class AppScreenWalkInstrumentedTest(
             click(hasTestTag(BrowserMainMenuTestTags.More))
             awaitTag(BrowserMainMenuTestTags.MoreGroup)
             audit("main menu, more")
-            backUntilGone(BrowserMainMenuTestTags.Menu)
+            backUntilGone(hasTestTag(BrowserMainMenuTestTags.Menu))
         }
         step("tab overview") {
             click(hasTestTag(AddressBarTestTags.TabButton))
             awaitTag(TabOverviewChromeTestTags.Root)
             auditScrolling("tab overview")
-            backUntilGone(TabOverviewChromeTestTags.Root)
+            backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
         }
         step("private tab") {
             scenario.onActivity { activity ->
@@ -174,10 +175,15 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
+    /** The menu's Settings, in its short view or under More, the way a user finds it. */
     private fun openSettings() {
         click(hasContentDescription(string(R.string.cd_more_options)))
         awaitTag(BrowserMainMenuTestTags.Menu)
-        click(hasText(string(R.string.action_settings)) and hasClickAction())
+        if (!exists(hasTestTag(BrowserMainMenuTestTags.Settings))) {
+            click(hasTestTag(BrowserMainMenuTestTags.More))
+            awaitTag(BrowserMainMenuTestTags.MoreGroup)
+        }
+        click(hasTestTag(BrowserMainMenuTestTags.Settings))
         awaitTag(SettingsSearchTestTags.Open)
     }
 
@@ -277,14 +283,23 @@ class AppScreenWalkInstrumentedTest(
     }
 
     /** Presses back the way a user leaves a screen, until the screen is gone. */
-    private fun backUntilGone(tag: String) {
+    private fun backUntilGone(screen: SemanticsMatcher) {
         repeat(BACK_ATTEMPTS) {
-            if (!exists(hasTestTag(tag))) return
+            if (!exists(screen)) return
             device.pressBack()
             composeRule.waitForIdle()
         }
-        composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(hasTestTag(tag)) }
+        composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(screen) }
     }
+
+    private fun awaitShown(matcher: SemanticsMatcher) {
+        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(matcher) }
+    }
+
+    /** The open address editor's close button (the scrim behind it has the same label). */
+    private fun closeAddressInput(): SemanticsMatcher =
+        hasContentDescription(string(R.string.cd_close_address_input)) and
+            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
 
     private fun exists(matcher: SemanticsMatcher): Boolean = runCatching {
         composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
