@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -106,8 +108,12 @@ internal fun PrivacyXRaySheet(
         shadowElevation = 0.dp,
     )
 
+    // On a wide window the sheet is a card that fits whole; opened half-way on a tall tablet, its
+    // last rows sat under the navigation bar.
+    val wideWindow = LocalConfiguration.current.screenWidthDp >= AddressBarWideLayoutRules.MIN_WINDOW_WIDTH_DP
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = wideWindow),
         modifier = Modifier
             .testTag(PrivacyXRayTestTags.Sheet)
             .semantics { paneTitle = title },

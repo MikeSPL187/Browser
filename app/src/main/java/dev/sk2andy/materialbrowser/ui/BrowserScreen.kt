@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -1518,7 +1517,7 @@ internal fun BrowserScreen(
                         fullWindowHeightPx = fullWindowHeightPx,
                         rootBottomInWindowPx = browserRootBottomInWindowPx,
                         imeInsets = WindowInsets.ime,
-                        navigationBarInsets = WindowInsets.navigationBars,
+                        navigationBarInsets = WindowInsets.addressBarEdges,
                     )
                     .padding(horizontal = VolaSpacing.x2, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
                     .zIndex(25f),

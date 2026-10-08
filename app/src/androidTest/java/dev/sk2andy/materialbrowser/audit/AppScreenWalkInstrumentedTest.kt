@@ -173,7 +173,7 @@ class AppScreenWalkInstrumentedTest(
                 idle()
                 auditScrolling(screen)
                 // Some of these are activities of their own: the browser stays composed under them.
-                device.pressBack()
+                back()
                 idle()
                 recover()
             }
@@ -244,7 +244,7 @@ class AppScreenWalkInstrumentedTest(
                 ensureSettingsHome()
                 tapUntil(hasText(title) and hasClickAction(), "the $title page to open") { !atSettingsHome() }
                 auditScrolling("settings: $title")
-                device.pressBack()
+                back()
                 idle()
             }
         }
@@ -258,7 +258,7 @@ class AppScreenWalkInstrumentedTest(
                     .performTextInput(if (config.languageTag.startsWith("ru")) "вкладки" else "tabs")
                 idle()
                 auditScrolling("settings search, results")
-                device.pressBack()
+                back()
             }
         }
     }
@@ -417,7 +417,7 @@ class AppScreenWalkInstrumentedTest(
     private fun ensureSettingsHome() {
         if (exists(hasTestTag(SettingsSearchTestTags.Open))) return
         repeat(BACK_ATTEMPTS) {
-            device.pressBack()
+            back()
             idle()
             if (exists(hasTestTag(SettingsSearchTestTags.Open))) return
         }
@@ -427,22 +427,20 @@ class AppScreenWalkInstrumentedTest(
 
     /** One step of the walk: a failure to reach the screen is filed, and the walk goes on. */
     private fun step(name: String, body: () -> Unit) {
-        device.dismissSystemNotResponding()
+        stepTimings.clear()
         val started = SystemClock.elapsedRealtime()
-        slowOperations.clear()
+        timed("system dialog check") { device.dismissSystemNotResponding() }
         try {
             body()
-            val seconds = (SystemClock.elapsedRealtime() - started) / 1000
+            val millis = SystemClock.elapsedRealtime() - started
             // A user waits through this too: a screen that takes minutes to go through is a bug,
             // and the timings say where a slow run spent its time.
-            if (seconds * 1000 > SLOW_STEP_MILLIS) {
-                val slowest = slowOperations.sortedByDescending { it.second }.take(SLOWEST_SHOWN)
-                    .joinToString { (operation, millis) -> "$operation ${millis / 1000} s" }
+            if (millis > SLOW_STEP_MILLIS) {
                 findings += AuditFinding(
                     name,
                     config.name,
                     AuditKind.Navigation,
-                    "took $seconds s to go through; slowest: $slowest",
+                    "took ${millis / 1000} s to go through; slowest: ${timingSummary(millis)}",
                 )
             }
         } catch (error: Throwable) {
@@ -461,18 +459,31 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
-    /** Operations of the current step that took long, for the step's own timing finding. */
-    private val slowOperations = mutableListOf<Pair<String, Long>>()
+    /**
+     * Where the current step spent its time: every timed operation's count and total, for the
+     * step's own timing finding. A slow step can be one long wait or hundreds of short ones.
+     */
+    private val stepTimings = linkedMapOf<String, LongArray>()
 
     private inline fun <T> timed(operation: String, block: () -> T): T {
         val started = SystemClock.elapsedRealtime()
         try {
             return block()
         } finally {
-            val millis = SystemClock.elapsedRealtime() - started
-            if (millis >= SLOW_OPERATION_MILLIS) slowOperations += operation to millis
+            val timing = stepTimings.getOrPut(operation) { LongArray(2) }
+            timing[0]++
+            timing[1] += SystemClock.elapsedRealtime() - started
         }
     }
+
+    private fun timingSummary(stepMillis: Long): String {
+        val timedMillis = stepTimings.values.sumOf { it[1] }
+        val slowest = stepTimings.entries.sortedByDescending { it.value[1] }.take(SLOWEST_SHOWN)
+            .joinToString { (operation, timing) -> "$operation ×${timing[0]} ${timing[1] / 1000} s" }
+        return "$slowest; untimed ${(stepMillis - timedMillis).coerceAtLeast(0) / 1000} s"
+    }
+
+    private fun back() = timed("back") { device.pressBack() }
 
     private fun idle() = timed("wait for idle") { composeRule.waitForIdle() }
 
@@ -480,7 +491,7 @@ class AppScreenWalkInstrumentedTest(
         device.dismissSystemNotResponding()
         repeat(BACK_ATTEMPTS) {
             if (atBareNewTab()) return
-            device.pressBack()
+            back()
             idle()
         }
         if (!atBareNewTab()) relaunch()
@@ -518,10 +529,11 @@ class AppScreenWalkInstrumentedTest(
     private fun auditScrolling(screen: String) {
         audit(screen)
         repeat(MAX_SCROLL_PAGES) { page ->
-            val scrollable = composeRule.onAllNodes(hasScrollAction() and isVerticallyScrollable)
-                .fetchSemanticsNodes(atLeastOneRootRequired = false)
-                .maxByOrNull { node -> node.boundsInWindow.height * node.boundsInWindow.width }
-                ?: return
+            val scrollable = timed("find the list") {
+                composeRule.onAllNodes(hasScrollAction() and isVerticallyScrollable)
+                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                    .maxByOrNull { node -> node.boundsInWindow.height * node.boundsInWindow.width }
+            } ?: return
             val before = scrollable.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.value?.invoke()
             val target = composeRule.onAllNodes(SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id })
                 .onFirst()
@@ -590,7 +602,7 @@ class AppScreenWalkInstrumentedTest(
             if (!exists(screen)) return
             device.dismissSystemNotResponding()
             val keyboard = keyboardShown()
-            device.pressBack()
+            back()
             idle()
             val after = if (exists(screen)) "stayed" else "closed"
             presses += "back with keyboard ${if (keyboard) "up" else "down"} → screen $after"
@@ -651,7 +663,6 @@ class AppScreenWalkInstrumentedTest(
         private const val TIMEOUT_MILLIS = 10_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
-        private const val SLOW_OPERATION_MILLIS = 5_000L
         private const val SLOWEST_SHOWN = 4
         private const val WALK_TIMEOUT_MINUTES = 20L
         private const val REVEAL_AFTER_MILLIS = 3_000L
