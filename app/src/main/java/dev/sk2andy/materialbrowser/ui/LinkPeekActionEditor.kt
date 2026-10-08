@@ -792,6 +792,7 @@ internal fun LinkPeekActionEditorPage(
                             .padding(start = 44.dp, end = 10.dp)
                             .graphicsLayer { alpha = labelAlpha },
                         maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.labelMedium,
                     )
                 }
@@ -1031,6 +1032,7 @@ private fun LinkPeekActionEditorItem(
                 Text(
                     text = label,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelMedium,
                 )
             }

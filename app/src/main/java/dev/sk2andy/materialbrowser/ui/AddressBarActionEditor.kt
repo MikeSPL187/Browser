@@ -71,6 +71,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
@@ -626,7 +627,8 @@ internal fun AddressBarActionEditorPage(
                 }
                 Text(
                     text = title,
-                    maxLines = 1,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = if (compactLayout) {
                         MaterialTheme.typography.titleLarge
                     } else {
@@ -904,6 +906,7 @@ internal fun AddressBarActionEditorPage(
                             .padding(start = 44.dp, end = 10.dp)
                             .graphicsLayer { alpha = labelAlpha },
                         maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.labelMedium,
                     )
                 }
@@ -1160,6 +1163,7 @@ private fun AddressBarActionEditorItem(
                 Text(
                     text = label,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
