@@ -34,7 +34,15 @@ internal object AuditEnvironment {
     /** [firstRun]: a fresh install that still shows the welcome and setup screens. */
     fun enter(context: Context, config: AuditConfig, firstRun: Boolean = false) {
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
-        if (!firstRun) GestureOnboardingStore(context).markCompleted()
+        setFontScale(config.fontScale)
+        setAppLanguage(context, config.languageTag)
+        if (firstRun) {
+            // A fresh install has written nothing yet: any saved setting reads as an update and
+            // skips the welcome. The theme comes from the system, as on a new phone.
+            shell("cmd uimode night ${if (config.dark) "yes" else "no"}")
+            return
+        }
+        GestureOnboardingStore(context).markCompleted()
         BrowserSessionStore(context).apply {
             saveAppearanceSettings(
                 AppearanceSettings(
@@ -44,11 +52,10 @@ internal object AuditEnvironment {
             // The walk opens the address editor itself, as a tap would.
             saveStartupAddressFocusMode(StartupAddressFocusMode.Never)
         }
-        setFontScale(config.fontScale)
-        setAppLanguage(context, config.languageTag)
     }
 
     fun reset(context: Context) {
+        shell("cmd uimode night no")
         setFontScale(1f)
         setAppLanguage(context, null)
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()

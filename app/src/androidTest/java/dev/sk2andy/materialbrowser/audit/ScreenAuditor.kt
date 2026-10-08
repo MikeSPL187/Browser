@@ -93,13 +93,14 @@ internal class ScreenAuditor(
         }
         for (node in controls) {
             val label = node.label()
-            val touch = node.touchBoundsInRoot
+            // The whole control, not its visible part: a row half scrolled out is not too small.
+            val size = node.size
             val minTouchPx = MIN_TOUCH_DP * window.density - 0.5f
-            if (touch.width < minTouchPx || touch.height < minTouchPx) {
+            if (size.width < minTouchPx || size.height < minTouchPx) {
                 file(
                     AuditKind.TouchTarget,
-                    "«$label» is ${(touch.width / window.density).toInt()}×" +
-                        "${(touch.height / window.density).toInt()} dp to touch",
+                    "«$label» is ${(size.width / window.density).toInt()}×" +
+                        "${(size.height / window.density).toInt()} dp to touch",
                 )
             }
             if (label.isBlank()) {
@@ -112,6 +113,8 @@ internal class ScreenAuditor(
                 if (first.isAncestorOf(second) || second.isAncestorOf(first)) continue
                 // A menu or a dialog is a window of its own above the page: that is no conflict.
                 if (first.rootKey() != second.rootKey()) continue
+                // Content scrolling under a floating bar can still be scrolled clear of it.
+                if (first.canScrollFurther() || second.canScrollFurther()) continue
                 val a = first.boundsOnScreen()
                 val b = second.boundsOnScreen()
                 val overlap = a.intersect(b)
@@ -270,6 +273,17 @@ private fun SemanticsNode.scrollContext(): String {
         current = current.parent
     }
     return "; not in a scroll container"
+}
+
+/** Whether a vertical scroll container around the node can still move it. */
+private fun SemanticsNode.canScrollFurther(): Boolean {
+    var current = parent
+    while (current != null) {
+        val range = current.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+        if (range != null) return range.value() < range.maxValue() - 1f
+        current = current.parent
+    }
+    return false
 }
 
 /** Identifies the Compose root (window) the node belongs to. */

@@ -318,7 +318,10 @@ class AppScreenWalkInstrumentedTest(
 
     private fun click(matcher: SemanticsMatcher) {
         composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
-        composeRule.onAllNodes(matcher).onFirst().performClick()
+        // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
+        val target = composeRule.onAllNodes(matcher).onFirst()
+        runCatching { target.performScrollTo() }
+        target.performClick()
         composeRule.waitForIdle()
     }
 
