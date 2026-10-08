@@ -13,7 +13,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 
 /** The settings a real phone may have that change how every screen is laid out. */
-internal data class AuditConfig(
+data class AuditConfig(
     val languageTag: String,
     val dark: Boolean,
     val fontScale: Float,

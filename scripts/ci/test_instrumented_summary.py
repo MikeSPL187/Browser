@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from instrumented_summary import collect, main, read_baseline, render
+from instrumented_summary import STACK_LINES, collect, failure_lines, main, read_baseline, render
 
 SHARD_0 = """\
 <?xml version='1.0' encoding='UTF-8' ?>
@@ -73,6 +73,17 @@ class InstrumentedSummaryTest(unittest.TestCase):
         self.assertNotIn("noise", text)
         self.assertNotIn("TestRunner: started", text)
         self.assertNotIn("TestRunner: failed", text)
+
+    def test_a_long_failure_message_is_shown_whole_before_a_short_stack(self):
+        findings = [f"[SystemBars] screen {index}" for index in range(40)]
+        frames = [f"\tat dev.sk2andy.Frame.call{index}(Frame.kt:{index})" for index in range(30)]
+        details = "\n".join(["java.lang.AssertionError: 40 findings", *findings, *frames])
+
+        lines = failure_lines(details)
+
+        self.assertEqual(1 + 40 + STACK_LINES, len(lines))
+        self.assertEqual("[SystemBars] screen 39", lines[40])
+        self.assertEqual("\tat dev.sk2andy.Frame.call0(Frame.kt:0)", lines[41])
 
     def test_baseline_entries_by_method_or_class_are_known_failures(self):
         baseline_file = self.root / "baseline.txt"

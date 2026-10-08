@@ -2,6 +2,8 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.content.Context
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -10,6 +12,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.MainActivity
+import dev.sk2andy.materialbrowser.audit.AuditConfig
+import dev.sk2andy.materialbrowser.audit.AuditEnvironment
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
@@ -77,6 +81,38 @@ class NewTabSystemBarsLifecycleInstrumentedTest {
 
             scenario.recreate()
             measure(scenario, "clear, recreated")
+        }
+        assertTrue(
+            "The header ran under the status bar in: $violations. All states: $measurements",
+            violations.isEmpty(),
+        )
+    }
+
+    /**
+     * With double font size the header was filed under the status bar by the screen audit.
+     * Reports where the page's scroll container sits, how far it is scrolled and where the
+     * header is, so the failure names the cause.
+     */
+    @Test
+    fun largeFontHeaderStaysBelowStatusBar() {
+        AuditEnvironment.enter(context, AuditConfig.EnglishDarkLargeFont)
+        try {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                measure(scenario, "200% font")
+                val header = composeRule.onNodeWithTag(NewTabPageTestTags.Header).fetchSemanticsNode()
+                var container = header.parent
+                while (container != null &&
+                    !container.config.contains(SemanticsProperties.VerticalScrollAxisRange)
+                ) {
+                    container = container.parent
+                }
+                val range = container?.config?.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+                measurements += "scroll container ${container?.boundsInWindow}, " +
+                    "scrolled ${range?.value?.invoke()} of ${range?.maxValue?.invoke()}, " +
+                    "header ${header.boundsInWindow}"
+            }
+        } finally {
+            AuditEnvironment.reset(context)
         }
         assertTrue(
             "The header ran under the status bar in: $violations. All states: $measurements",

@@ -18,7 +18,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ActivityScenario
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.MainActivity
@@ -38,6 +37,7 @@ import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * A tester's walk through the real app: launch, then every screen reached the way a user reaches
@@ -46,8 +46,12 @@ import org.junit.runner.RunWith
  * Russian, light and dark, normal and double font size — so each screen is gone through four
  * times. A screen the walk cannot reach is a finding too. The test fails with the full list.
  */
-@RunWith(AndroidJUnit4::class)
-class AppScreenWalkInstrumentedTest {
+@RunWith(Parameterized::class)
+class AppScreenWalkInstrumentedTest(
+    /** [BROWSER_GROUP], or the index of a slice of the settings pages. */
+    private val group: Int,
+    private val config: AuditConfig,
+) {
     @get:Rule
     val composeRule = createEmptyComposeRule()
 
@@ -55,7 +59,6 @@ class AppScreenWalkInstrumentedTest {
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val findings = mutableListOf<AuditFinding>()
     private val visited = mutableListOf<String>()
-    private lateinit var config: AuditConfig
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
 
@@ -65,55 +68,45 @@ class AppScreenWalkInstrumentedTest {
         AuditEnvironment.reset(context)
     }
 
-    @Test fun browserScreensEnglishLight() = walk(AuditConfig.EnglishLight, ::walkBrowser)
-
-    @Test fun browserScreensRussianDark() = walk(AuditConfig.RussianDark, ::walkBrowser)
-
-    @Test fun browserScreensEnglishDarkLargeFont() = walk(AuditConfig.EnglishDarkLargeFont, ::walkBrowser)
-
-    @Test fun browserScreensRussianLightLargeFont() = walk(AuditConfig.RussianLightLargeFont, ::walkBrowser)
-
-    @Test fun settingsFirstHalfEnglishLight() = walk(AuditConfig.EnglishLight) { walkSettings(FIRST_HALF) }
-
-    @Test fun settingsFirstHalfRussianDark() = walk(AuditConfig.RussianDark) { walkSettings(FIRST_HALF) }
-
-    @Test fun settingsFirstHalfEnglishDarkLargeFont() =
-        walk(AuditConfig.EnglishDarkLargeFont) { walkSettings(FIRST_HALF) }
-
-    @Test fun settingsFirstHalfRussianLightLargeFont() =
-        walk(AuditConfig.RussianLightLargeFont) { walkSettings(FIRST_HALF) }
-
-    @Test fun settingsSecondHalfEnglishLight() = walk(AuditConfig.EnglishLight) { walkSettings(SECOND_HALF) }
-
-    @Test fun settingsSecondHalfRussianDark() = walk(AuditConfig.RussianDark) { walkSettings(SECOND_HALF) }
-
-    @Test fun settingsSecondHalfEnglishDarkLargeFont() =
-        walk(AuditConfig.EnglishDarkLargeFont) { walkSettings(SECOND_HALF) }
-
-    @Test fun settingsSecondHalfRussianLightLargeFont() =
-        walk(AuditConfig.RussianLightLargeFont) { walkSettings(SECOND_HALF) }
+    @Test
+    fun walk() {
+        if (group == BROWSER_GROUP) {
+            walk(config, ::walkBrowser)
+        } else {
+            walk(config) { walkSettings(group) }
+        }
+    }
 
     private fun walk(auditConfig: AuditConfig, steps: () -> Unit) {
-        config = auditConfig
-        AuditEnvironment.enter(context, config)
+        AuditEnvironment.enter(context, auditConfig)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         dismissReleaseNotes()
-        step("new tab") {
-            awaitTag(NewTabPageTestTags.Header)
-            auditScrolling("new tab")
-        }
+        step("launch") { awaitTag(NewTabPageTestTags.Header) }
         steps()
-        if (findings.isNotEmpty()) {
-            fail(
-                "${findings.size} findings in ${config.name}; screens: $visited\n" +
-                    findings.joinToString("\n"),
-            )
-        }
+        if (findings.isNotEmpty()) fail(report())
+    }
+
+    /**
+     * One line per distinct finding, most serious kinds first, with the screens it was seen on:
+     * the same label under the status bar on five screens is one problem, not five.
+     */
+    private fun report(): String {
+        val lines = findings
+            .groupBy { finding -> finding.kind to finding.detail }
+            .entries
+            .sortedWith(compareBy({ it.key.first.ordinal }, { it.key.second }))
+            .map { (key, seen) ->
+                val screens = seen.map(AuditFinding::screen).distinct()
+                "[${key.first}] ${key.second} — on ${screens.size}: ${screens.joinToString()}"
+            }
+        return "${lines.size} distinct findings in ${config.name}; screens walked: $visited\n" +
+            lines.joinToString("\n")
     }
 
     /** New tab, address editor, menus, tab overview and a private tab. */
     private fun walkBrowser() {
+        step("new tab") { auditScrolling("new tab") }
         step("address editor") {
             click(hasTestTag(AddressBarTestTags.PrimaryField))
             awaitTag(AddressBarTestTags.Editor)
@@ -147,14 +140,12 @@ class AppScreenWalkInstrumentedTest {
     }
 
     /** The settings home, then every page on it, top to bottom, and back. */
-    private fun walkSettings(half: Int) {
+    private fun walkSettings(slice: Int) {
         step("settings home") {
             openSettings()
-            auditScrolling("settings home")
+            if (slice == 0) auditScrolling("settings home")
         }
-        val pages = SettingsRegistry.pages
-            .filter { page -> page.destination.parent == SettingsDestination.Home }
-        val chosen = pages.chunked((pages.size + 1) / 2).getOrElse(half) { emptyList() }
+        val chosen = settingsSlices().getOrElse(slice) { emptyList() }
         for (page in chosen) {
             val title = string(page.title)
             step("settings: $title") {
@@ -168,7 +159,7 @@ class AppScreenWalkInstrumentedTest {
                 composeRule.waitForIdle()
             }
         }
-        if (half == SECOND_HALF) {
+        if (slice == settingsSlices().lastIndex) {
             step("settings search") {
                 ensureSettingsHome()
                 click(hasTestTag(SettingsSearchTestTags.Open))
@@ -307,12 +298,31 @@ class AppScreenWalkInstrumentedTest {
         return activity.get()
     }
 
-    private companion object {
-        const val FIRST_HALF = 0
-        const val SECOND_HALF = 1
-        const val TIMEOUT_MILLIS = 10_000L
-        const val BACK_ATTEMPTS = 3
-        const val MAX_SCROLL_PAGES = 8
-        val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+    companion object {
+        private const val BROWSER_GROUP = -1
+        private const val PAGES_PER_TEST = 2
+        private const val TIMEOUT_MILLIS = 10_000L
+        private const val BACK_ATTEMPTS = 3
+        private const val MAX_SCROLL_PAGES = 8
+        private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+
+        /** The settings pages opened from the settings home, a few per test to stay in time. */
+        private fun settingsSlices() = SettingsRegistry.pages
+            .filter { page -> page.destination.parent == SettingsDestination.Home }
+            .chunked(PAGES_PER_TEST)
+
+        private val configs = listOf(
+            AuditConfig.EnglishLight,
+            AuditConfig.RussianDark,
+            AuditConfig.EnglishDarkLargeFont,
+            AuditConfig.RussianLightLargeFont,
+        )
+
+        @JvmStatic
+        @Parameterized.Parameters(name = "{index}")
+        fun parameters(): List<Array<Any>> {
+            val groups = listOf(BROWSER_GROUP) + settingsSlices().indices
+            return groups.flatMap { group -> configs.map { config -> arrayOf<Any>(group, config) } }
+        }
     }
 }

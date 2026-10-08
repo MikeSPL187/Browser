@@ -23,6 +23,9 @@ internal data class AuditFinding(
 }
 
 internal enum class AuditKind {
+    /** The walk could not reach or leave a screen the way a user does. */
+    Navigation,
+
     /** A label or a control under the status bar, the camera cutout or the navigation bar. */
     SystemBars,
 
@@ -41,8 +44,6 @@ internal enum class AuditKind {
     /** A control or a label partly outside the screen with no way to scroll to it. */
     OffScreen,
 
-    /** The walk could not reach or leave a screen the way a user does. */
-    Navigation,
 }
 
 /**
@@ -73,7 +74,10 @@ internal class ScreenAuditor(
             val label = node.label()
             val readable = node.config.contains(SemanticsProperties.Text) || node.isControl()
             if (readable && !node.isFullScreen(window) && window.underSystemBars(bounds)) {
-                file(AuditKind.SystemBars, "«$label» at ${bounds.short()} — ${window.bars()}")
+                file(
+                    AuditKind.SystemBars,
+                    "«$label» at ${bounds.short()} — ${window.bars()}${node.scrollContext()}",
+                )
             }
             if (readable && !node.isInHorizontalScroll() && window.cutOffSideways(bounds)) {
                 file(
@@ -245,6 +249,20 @@ private fun SemanticsNode.isInHorizontalScroll(): Boolean {
     return false
 }
 
+/** Where the nearest vertical scroll container is and how far it is scrolled, for diagnosis. */
+private fun SemanticsNode.scrollContext(): String {
+    var current = parent
+    while (current != null) {
+        val range = current.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+        if (range != null) {
+            return "; in a scroll container at ${current.boundsInWindow.short()} scrolled " +
+                "${range.value().toInt()} of ${range.maxValue().toInt()} px"
+        }
+        current = current.parent
+    }
+    return "; not in a scroll container"
+}
+
 private fun SemanticsNode.isAncestorOf(other: SemanticsNode): Boolean {
     var current = other.parent
     while (current != null) {
@@ -263,10 +281,23 @@ internal fun SemanticsNode.label(): String {
     return parts.filter(String::isNotBlank).joinToString(" ").take(LABEL_LIMIT)
 }
 
+/**
+ * Text that lost lines or glyphs with nothing to show it: more lines than allowed, or lines
+ * wider or taller than the box the text was given, and no ellipsis anywhere.
+ * [TextLayoutResult.hasVisualOverflow] alone is true for ordinary single-line labels too.
+ */
 private fun TextLayoutResult.isClippedWithoutEllipsis(): Boolean {
-    if (!hasVisualOverflow || lineCount == 0) return false
-    return (0 until lineCount).none { line -> isLineEllipsized(line) }
+    if (lineCount == 0) return false
+    if ((0 until lineCount).any { line -> isLineEllipsized(line) }) return false
+    val slack = CLIP_SLACK_PX
+    val tooTall = multiParagraph.height > size.height + slack
+    val tooWide = (0 until lineCount).any { line ->
+        getLineRight(line) > size.width + slack || getLineLeft(line) < -slack
+    }
+    return multiParagraph.didExceedMaxLines || tooTall || tooWide
 }
+
+private const val CLIP_SLACK_PX = 2f
 
 private fun Rect.short(): String = "[${left.toInt()},${top.toInt()} ${width.toInt()}×${height.toInt()}]"
 
