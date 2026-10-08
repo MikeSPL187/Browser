@@ -85,6 +85,22 @@ internal object EdgeToEdgeSiteMatrix {
                   // #123 H4), so the page must get no CSS top inset of its own: one would push
                   // its header a second status bar down.
                   const nativeTop = new URLSearchParams(location.search).has('native-top');
+                  // While the matrix runs, a stretch without animation frames is written into the
+                  // title, which the test reports when it times out: whether the document was
+                  // hidden (an inactive session) or visible with its painting stopped.
+                  let lastFrameAt = performance.now();
+                  let watchingFrames = false;
+                  const watchFrames = (now) => {
+                    lastFrameAt = now;
+                    if (watchingFrames) requestAnimationFrame(watchFrames);
+                  };
+                  const frameWatchdog = setInterval(() => {
+                    const stalledFor = Math.round(performance.now() - lastFrameAt);
+                    if (!watchingFrames || stalledFor < 2000) return;
+                    document.title = document.title.replace(/ \[no frames .*$/, '') +
+                      ' [no frames ' + stalledFor + ' ms, ' + document.visibilityState +
+                      ', focus ' + document.hasFocus() + ']';
+                  }, 1000);
                   const results = [];
                   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
                   const candyPolicyReady = () => {
@@ -189,6 +205,8 @@ internal object EdgeToEdgeSiteMatrix {
                     );
                   });
                   const run = async () => {
+                    watchingFrames = true;
+                    requestAnimationFrame(watchFrames);
                     for (const site of cases) {
                       renderSite(site);
                       const search = document.querySelector('#search');
@@ -331,6 +349,8 @@ internal object EdgeToEdgeSiteMatrix {
                         ['YouTube', 'Google', 'DuckDuckGo'].includes(result.name) && result.focused
                       ).length
                     };
+                    watchingFrames = false;
+                    clearInterval(frameWatchdog);
                     document.title = globalThis.__candySiteMatrix.passed
                       ? ${readyTitle(site).jsQuoted()}
                       : 'Candy site matrix failed: ' + JSON.stringify(
