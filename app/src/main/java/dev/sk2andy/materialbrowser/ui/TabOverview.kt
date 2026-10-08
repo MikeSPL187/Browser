@@ -1050,7 +1050,7 @@ internal fun TabOverview(
                 .windowInsetsPadding(statusBarInsets)
                 .windowInsetsPadding(navigationBarInsets)
                 .clearSemanticsWhen(
-                    candyTrailTransition.currentState != null ||
+                    !visible || candyTrailTransition.currentState != null ||
                         candyTrailTransition.targetState != null ||
                         tabActionsTabId != null,
                 ),
