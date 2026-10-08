@@ -218,14 +218,14 @@ class GeckoEdgeToEdgeInstrumentedTest {
                                 surfaceHeightPx = surfaceView.height,
                             ),
                         )
-                        assertEquals(expectedRegion.leftPx, region.bounds.left, 0.01f)
-                        assertEquals(expectedRegion.topPx, region.bounds.top, 0.01f)
-                        assertEquals(expectedRegion.rightPx, region.bounds.right, 0.01f)
-                        assertEquals(expectedRegion.bottomPx, region.bounds.bottom, 0.01f)
-                        assertEquals(expectedRegion.cornerRadiusPx, region.cornerRadii[0], 0.01f)
+                        assertEquals(expectedRegion.leftPx, region.left, 0.01f)
+                        assertEquals(expectedRegion.topPx, region.top, 0.01f)
+                        assertEquals(expectedRegion.rightPx, region.right, 0.01f)
+                        assertEquals(expectedRegion.bottomPx, region.bottom, 0.01f)
+                        assertEquals(expectedRegion.cornerRadiusPx, region.cornerRadius, 0.01f)
                         assertEquals(expectedRegion.blurRadiusPx, region.blurRadius, 0.01f)
-                        assertTrue(region.bounds.width() > 0f)
-                        assertTrue(region.bounds.height() > 0f)
+                        assertTrue(region.right - region.left > 0f)
+                        assertTrue(region.bottom - region.top > 0f)
                         assertTrue(region.blurRadius > 0f)
                     }
                     activity.browserControllerForTesting().updateAppearanceSettings(
@@ -469,24 +469,48 @@ class GeckoEdgeToEdgeInstrumentedTest {
         )
     }
 
+    /**
+     * What the test reads of a native blur region. The API 37 type stays inside the method body:
+     * in a signature it made JUnit's reflection fail to load the whole class on older devices, so
+     * none of these tests ran (an initializationError on the API 35 CI emulator).
+     */
+    private data class ObservedBlurRegion(
+        val left: Float,
+        val top: Float,
+        val right: Float,
+        val bottom: Float,
+        val cornerRadius: Float,
+        val blurRadius: Float,
+    )
+
     @RequiresApi(37)
     private fun awaitNativeBlurRegion(
         scenario: ActivityScenario<MainActivity>,
-    ): RoundedRectBlurRegion {
+    ): ObservedBlurRegion {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
         var lastRequestedRegion = "null"
         while (SystemClock.elapsedRealtime() < deadline) {
             instrumentation.waitForIdleSync()
-            var observedRegion: RoundedRectBlurRegion? = null
+            var observedRegion: ObservedBlurRegion? = null
             scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
                 lastRequestedRegion = controller
                     .selectedBrowserBackdropBlurRegionForTesting()
                     .toString()
-                observedRegion = controller.selectedGeckoViewForTesting()
+                val region = controller.selectedGeckoViewForTesting()
                     ?.findSurfaceView()
                     ?.blurRegions
                     ?.singleOrNull() as? RoundedRectBlurRegion
+                observedRegion = region?.let {
+                    ObservedBlurRegion(
+                        left = it.bounds.left,
+                        top = it.bounds.top,
+                        right = it.bounds.right,
+                        bottom = it.bounds.bottom,
+                        cornerRadius = it.cornerRadii[0],
+                        blurRadius = it.blurRadius,
+                    )
+                }
             }
             observedRegion?.let { return it }
             SystemClock.sleep(POLL_MILLIS)

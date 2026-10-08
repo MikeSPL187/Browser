@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import gzip
 import tempfile
 import unittest
 from pathlib import Path
@@ -151,6 +152,25 @@ class InstrumentedSummaryTest(unittest.TestCase):
             "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest#loadsPage\n",
             output.read_text(encoding="utf-8"),
         )
+
+    def test_a_class_that_failed_to_start_fails_the_run_once(self):
+        line = (
+            "10-08 15:00:00.000  4729  4745 E TestRunner: failed: initializationError("
+            "dev.sk2andy.materialbrowser.browser.gecko.EdgeTest)\n"
+        )
+        for index in (0, 1):
+            with gzip.open(self.root / f"shard-{index}" / "logcat.txt.gz", "wt", encoding="utf-8") as log:
+                log.write("10-08 15:00:00.000  4729  4745 I TestRunner: started: opensMenu\n" + line)
+        baseline = {
+            "dev.sk2andy.materialbrowser.ui.TabsTest",
+            "dev.sk2andy.materialbrowser.browser.gecko.GeckoTest",
+        }
+        lines, status = render(collect(self.shards), baseline)
+        text = "\n".join(lines)
+
+        self.assertEqual(1, status)
+        self.assertIn("#### New failures (1)", text)
+        self.assertIn("<code>EdgeTest#initializationError</code> — the class failed to start", text)
 
     def test_no_results_at_all_fails(self):
         empty = self.root / "nothing"

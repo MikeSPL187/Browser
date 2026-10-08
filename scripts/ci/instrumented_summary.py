@@ -13,12 +13,18 @@ A shard reruns its new failures once (--new-failures lists them) and keeps those
 "retry" directory. A new failure that passed on the rerun is reported as flaky and does not fail
 the run; one that failed again stays a new failure.
 
+A class whose runner cannot be built (initializationError: no runnable methods, or a method
+signature naming a class the emulator's API level lacks) fails in the orchestrator's listing run,
+so none of its tests reach the JUnit XML. Such classes are read from the shard's logcat.txt.gz and
+reported as one failed "initializationError" test per class.
+
 Baseline lines are "package.Class#method" or "package.Class" (every method of the class);
 text after " -- " is a note, lines starting with "#" are comments.
 """
 
 import argparse
 import dataclasses
+import gzip
 import re
 import sys
 import xml.etree.ElementTree as ElementTree
@@ -33,6 +39,7 @@ MAX_MESSAGE_LINES = 300
 LOG_LINES = 20
 # Errors and crashes in a logcat line: "10-06 05:20:00.000  1234  1240 E Tag: message".
 LOG_ERROR = re.compile(r"^\S+ \S+\s+\d+\s+\d+ [EF] |FATAL EXCEPTION")
+INIT_ERROR = re.compile(r"TestRunner\s*:\s*failed: initializationError\(([\w.$]+)\)")
 ASSUMPTION_FAILURES = (
     "org.junit.AssumptionViolatedException",
     "org.junit.internal.AssumptionViolatedException",
@@ -144,7 +151,39 @@ def collect(shard_dirs: list) -> Summary:
         shard_results = [attach_log(result, shard) for result in shard_results]
         shard_seconds[str(shard)] = sum(result.seconds for result in shard_results)
         results.extend(shard_results)
+    seen = {result.class_name for result in results if result.method == "initializationError"}
+    for class_name in init_errors(shard_dirs):
+        if class_name not in seen:
+            seen.add(class_name)
+            results.append(
+                TestResult(
+                    class_name=class_name,
+                    method="initializationError",
+                    seconds=0,
+                    outcome="failed",
+                    message="the class failed to start: none of its tests ran",
+                    details="TestRunner: failed: initializationError — see the shard's logcat.txt.gz",
+                )
+            )
     return Summary(results=results, empty_shards=empty_shards, shard_seconds=shard_seconds)
+
+
+def init_errors(shard_dirs: list) -> list:
+    """Classes whose runner failed to start, from each shard's logcat.txt.gz, in first-seen order."""
+    classes = []
+    for shard in map(Path, shard_dirs):
+        log = shard / "logcat.txt.gz"
+        if not log.is_file():
+            continue
+        try:
+            with gzip.open(log, "rt", encoding="utf-8", errors="replace") as lines:
+                for line in lines:
+                    match = INIT_ERROR.search(line)
+                    if match and match.group(1) not in classes:
+                        classes.append(match.group(1))
+        except (OSError, EOFError):
+            continue
+    return classes
 
 
 def attach_log(result: TestResult, shard: Path) -> TestResult:
