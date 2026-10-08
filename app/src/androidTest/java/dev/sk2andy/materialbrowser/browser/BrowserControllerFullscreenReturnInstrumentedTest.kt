@@ -31,6 +31,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Gecko pages get no CSS top safe area since H4 (#123, e3d66c4a): the page sits below the status
+ * bar by its frame and native margins, so every privacy policy carries a CSS top inset of 0. The
+ * policies still follow each inset change and are still acknowledged before content is restored;
+ * the tests check that sequence with the inset the page now gets.
+ */
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = 34)
 class BrowserControllerFullscreenReturnInstrumentedTest {
@@ -120,7 +126,7 @@ class BrowserControllerFullscreenReturnInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(128, session.policies.last().cssSafeAreaTopInsetPx)
+            assertEquals(0, session.policies.last().cssSafeAreaTopInsetPx)
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.restoreCount == 2 }
         composeRule.runOnUiThread {
