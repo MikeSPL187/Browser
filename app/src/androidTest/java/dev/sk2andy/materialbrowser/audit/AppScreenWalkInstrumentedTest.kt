@@ -65,9 +65,9 @@ import org.junit.runners.Parameterized
 /**
  * A tester's walk through the real app: launch, then every screen reached the way a user reaches
  * it (taps on the address bar, the menu, the tab counter, the settings rows), each one checked
- * by [ScreenAuditor] from top to bottom. Every group runs in four configurations — English and
- * Russian, light and dark, normal and double font size — so each screen is gone through four
- * times. A screen the walk cannot reach is a finding too. The test fails with the full list.
+ * by [ScreenAuditor] from top to bottom. Every group runs in six configurations — English and
+ * Russian, light and dark, normal and double font size, the phone upright and on its side, and a
+ * tablet — so each screen is gone through six times. A screen the walk cannot reach is a finding too. The test fails with the full list.
  */
 @RunWith(Parameterized::class)
 class AppScreenWalkInstrumentedTest(
@@ -681,6 +681,8 @@ class AppScreenWalkInstrumentedTest(
             AuditConfig.RussianDark,
             AuditConfig.EnglishDarkLargeFont,
             AuditConfig.RussianLightLargeFont,
+            AuditConfig.RussianLightLandscape,
+            AuditConfig.EnglishDarkTablet,
         )
 
         @JvmStatic
