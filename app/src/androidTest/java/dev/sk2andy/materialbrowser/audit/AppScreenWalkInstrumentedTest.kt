@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
+import android.os.SystemClock
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
@@ -104,21 +107,38 @@ class AppScreenWalkInstrumentedTest(
         if (findings.isNotEmpty()) fail(report())
     }
 
-    /** The welcome, then every setup screen through «Next», as a new user goes through them. */
+    /**
+     * The welcome, then every screen after it the way a new user goes on: «Next» through the setup
+     * screens, the gesture lessons' intro and the first lesson (then «Skip», as a hurried user
+     * does), until the browser shows its new tab.
+     */
     private fun walkFirstRun() {
         step("first run: welcome") {
             awaitTag(FirstRunTestTags.Welcome)
             auditScrolling("first run: welcome")
             click(hasTestTag(FirstRunTestTags.Start))
         }
+        var reachedBrowser = false
         repeat(MAX_FIRST_RUN_SCREENS) { index ->
-            if (!exists(hasTestTag(FirstRunTestTags.Next))) return
-            step("first run: screen ${index + 1}") {
-                auditScrolling("first run: screen ${index + 1}")
-                click(hasTestTag(FirstRunTestTags.Next))
+            if (reachedBrowser) return
+            val screen = "first run: screen ${index + 1}"
+            step(screen) {
+                composeRule.waitUntil("the next first-run screen", TIMEOUT_MILLIS) {
+                    firstRunForward() != null || exists(hasTestTag(NewTabPageTestTags.Header))
+                }
+                val forward = firstRunForward()
+                if (forward == null) {
+                    reachedBrowser = true
+                } else {
+                    auditScrolling(screen)
+                    click(hasTestTag(forward))
+                    composeRule.waitForIdle()
+                }
             }
         }
     }
+
+    private fun firstRunForward(): String? = FIRST_RUN_FORWARD.firstOrNull { tag -> exists(hasTestTag(tag)) }
 
     /** Favorites, downloads, history and snoozed tabs, opened from the menu. */
     private fun walkLibrary() {
@@ -292,18 +312,34 @@ class AppScreenWalkInstrumentedTest(
     private fun openTyped(url: String, expectFailure: Boolean = false) {
         click(hasTestTag(AddressBarTestTags.PrimaryField))
         awaitShown(closeAddressInput())
-        composeRule.onAllNodes(hasSetTextAction()).onFirst().apply {
-            performTextInput(url)
-            performImeAction()
+        val field = composeRule.onAllNodes(hasSetTextAction()).onFirst()
+        field.performTextInput(url)
+        val typed = runCatching {
+            field.fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text
+        }.getOrNull()
+        field.performImeAction()
+        val loaded = runCatching {
+            composeRule.waitUntil("$url to load", PAGE_TIMEOUT_MILLIS) {
+                val current = selectedTab()
+                val failed = current.error != null || current.failureKind != null
+                !current.isLoading && if (expectFailure) failed else current.url.startsWith(url)
+            }
         }
-        composeRule.waitUntil("$url to load", PAGE_TIMEOUT_MILLIS) {
-            val tab = AtomicReference<BrowserTab>()
-            scenario.onActivity { activity -> tab.set(activity.browserControllerForTesting().selectedTab) }
-            val current = tab.get()
-            val failed = current.error != null || current.failureKind != null
-            !current.isLoading && if (expectFailure) failed else current.url.startsWith(url)
+        if (loaded.isFailure) {
+            val tab = selectedTab()
+            throw AssertionError(
+                "$url did not ${if (expectFailure) "fail" else "load"} in ${PAGE_TIMEOUT_MILLIS / 1000} s: " +
+                    "typed «$typed», tab at «${tab.url}», loading ${tab.isLoading}, " +
+                    "error ${tab.error}, failure ${tab.failureKind}",
+            )
         }
         composeRule.waitForIdle()
+    }
+
+    private fun selectedTab(): BrowserTab {
+        val tab = AtomicReference<BrowserTab>()
+        scenario.onActivity { activity -> tab.set(activity.browserControllerForTesting().selectedTab) }
+        return tab.get()
     }
 
     /** Pages one level deeper: their parent page first, then the row that opens them. */
@@ -354,9 +390,15 @@ class AppScreenWalkInstrumentedTest(
 
     /** One step of the walk: a failure to reach the screen is filed, and the walk goes on. */
     private fun step(name: String, body: () -> Unit) {
-        visited += name
+        val started = SystemClock.elapsedRealtime()
         try {
             body()
+            val seconds = (SystemClock.elapsedRealtime() - started) / 1000
+            // A user waits through this too: a screen that takes minutes to go through is a bug,
+            // and the timings say where a slow run spent its time.
+            if (seconds * 1000 > SLOW_STEP_MILLIS) {
+                findings += AuditFinding(name, config.name, AuditKind.Navigation, "took $seconds s to go through")
+            }
         } catch (error: Throwable) {
             findings += AuditFinding(
                 screen = name,
@@ -368,6 +410,8 @@ class AppScreenWalkInstrumentedTest(
                     " — focused package: ${runCatching { device.currentPackageName }.getOrDefault("?")}",
             )
             runCatching { recover() }
+        } finally {
+            visited += "$name ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         }
     }
 
@@ -429,19 +473,34 @@ class AppScreenWalkInstrumentedTest(
                 ?.value
                 ?.invoke()
             if (after == null || after == before) return
-            // Content under the status bar after scrolling is how edge-to-edge lists look.
             findings += auditor.audit("$screen ↓${page + 1}", config.name)
-                .filterNot { it.kind == AuditKind.SystemBars }
         }
     }
 
     private fun click(matcher: SemanticsMatcher) {
+        // Screens still animating in get a moment first; only then are lists scrolled to look.
+        val shown = runCatching { composeRule.waitUntil(REVEAL_AFTER_MILLIS) { exists(matcher) } }.isSuccess
+        if (!shown) revealInLazyList(matcher)
         composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
         val target = composeRule.onAllNodes(matcher).onFirst()
         runCatching { target.performScrollTo() }
         target.performClick()
         composeRule.waitForIdle()
+    }
+
+    /**
+     * A lazy list composes only the rows near the screen: with a large font a row further down
+     * is not in the tree at all until the list is scrolled to it, as a user would scroll.
+     */
+    private fun revealInLazyList(matcher: SemanticsMatcher): Boolean {
+        val lists = composeRule.onAllNodes(hasScrollToNodeAction())
+        val count = lists.fetchSemanticsNodes(atLeastOneRootRequired = false).size
+        for (index in 0 until count) {
+            runCatching { lists[index].performScrollToNode(matcher) }
+            if (exists(matcher)) return true
+        }
+        return false
     }
 
     private fun awaitTag(tag: String) {
@@ -484,9 +543,18 @@ class AppScreenWalkInstrumentedTest(
         private const val LIBRARY_GROUP = -2
         private const val FIRST_RUN_GROUP = -3
         private const val MAX_FIRST_RUN_SCREENS = 10
+
+        /** What moves each first-run screen on: «Next», the lessons' «Start», a lesson's «Skip». */
+        private val FIRST_RUN_FORWARD = listOf(
+            FirstRunTestTags.Next,
+            "gesture_onboarding_start",
+            "gesture_onboarding_skip",
+        )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
         private const val BACK_ATTEMPTS = 3
+        private const val SLOW_STEP_MILLIS = 90_000L
+        private const val REVEAL_AFTER_MILLIS = 3_000L
         private const val MAX_SCROLL_PAGES = 8
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 

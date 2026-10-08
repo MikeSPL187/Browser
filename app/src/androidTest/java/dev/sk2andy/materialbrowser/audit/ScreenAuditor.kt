@@ -73,7 +73,8 @@ internal class ScreenAuditor(
             val bounds = node.boundsOnScreen()
             val label = node.label()
             val readable = node.config.contains(SemanticsProperties.Text) || node.isControl()
-            if (readable && !node.isFullScreen(window) && window.underSystemBars(bounds)) {
+            val underBars = window.underSystemBars(bounds, node.scrollRoom())
+            if (readable && !node.isFullScreen(window) && underBars) {
                 file(
                     AuditKind.SystemBars,
                     "«$label» at ${bounds.short()} — ${window.bars()}${node.scrollContext()}",
@@ -100,7 +101,10 @@ internal class ScreenAuditor(
             val width = maxOf(touch.width, node.size.width.toFloat())
             val height = maxOf(touch.height, node.size.height.toFloat())
             val minTouchPx = MIN_TOUCH_DP * window.density - 0.5f
-            if (width < minTouchPx || height < minTouchPx) {
+            // Half scrolled out of view, a control is judged when it is in view.
+            val visible = node.boundsInWindow
+            val clipped = visible.width < node.size.width - 1f || visible.height < node.size.height - 1f
+            if (!clipped && (width < minTouchPx || height < minTouchPx)) {
                 file(
                     AuditKind.TouchTarget,
                     "«$label» is ${(width / window.density).toInt()}×" +
@@ -209,12 +213,17 @@ internal data class WindowGeometry(
     val right: Int,
     val density: Float,
 ) {
-    /** Touches a system bar band by more than a pixel or two (shadows and ripples aside). */
-    fun underSystemBars(bounds: Rect): Boolean {
+    /**
+     * Touches a system bar band by more than a pixel or two (shadows and ripples aside). Edge to
+     * edge, a list scrolls under the bars: content under the status bar is fine while the list
+     * can scroll back down, and under the navigation bar while it can scroll on. At its ends the
+     * list must keep its first and last rows clear of the bars.
+     */
+    fun underSystemBars(bounds: Rect, room: ScrollRoom): Boolean {
         val tolerance = SYSTEM_BAR_TOLERANCE_DP * density
-        val underTop = top > 0 && bounds.top < top - tolerance && bounds.bottom > 0f
-        val underBottom = bottom > 0 && bounds.bottom > height - bottom + tolerance &&
-            bounds.top < height
+        val underTop = top > 0 && !room.back && bounds.top < top - tolerance && bounds.bottom > 0f
+        val underBottom = bottom > 0 && !room.forward &&
+            bounds.bottom > height - bottom + tolerance && bounds.top < height
         val underLeft = left > 0 && bounds.left < left - tolerance && bounds.right > 0f
         val underRight = right > 0 && bounds.right > width - right + tolerance && bounds.left < width
         return underTop || underBottom || underLeft || underRight
@@ -277,6 +286,22 @@ private fun SemanticsNode.scrollContext(): String {
         current = current.parent
     }
     return "; not in a scroll container"
+}
+
+/** How far the nearest vertical scroll container around a node can still move. */
+internal data class ScrollRoom(val back: Boolean, val forward: Boolean)
+
+private fun SemanticsNode.scrollRoom(): ScrollRoom {
+    var current = parent
+    while (current != null) {
+        val range = current.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+        if (range != null) {
+            val position = range.value()
+            return ScrollRoom(back = position > 1f, forward = position < range.maxValue() - 1f)
+        }
+        current = current.parent
+    }
+    return ScrollRoom(back = false, forward = false)
 }
 
 /** Whether a vertical scroll container around the node can still move it. */
