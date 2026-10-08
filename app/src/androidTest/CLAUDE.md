@@ -15,6 +15,9 @@
   (параметр или возвращаемое значение, даже у `@RequiresApi`-помощника) роняет рефлексию JUnit →
   `initializationError`, и класс целиком не запускается ни в одном шарде. Такие типы — только внутри
   тела метода; наружу отдавай свой data class. Сводка ловит это по `logcat.txt.gz` шарда.
+- **Тесты широкой раскладки** (`assumeTrue(screenWidthDp >= 600)`, например `WideAddressBarInstrumentedTest`)
+  на эмуляторе CI (телефон, книжно) **всегда пропускаются**. Планшет и альбомную ориентацию в CI проверяет
+  только обход экранов (`AuditLayout.Tablet`/`PhoneLandscape`, #163) — так нашлись планшетные пробелы.
 - AndroidX Test Orchestrator с `clearPackageData`: каждый тест — свой процесс, данные и
   **runtime-разрешения сбрасываются**. Первая приватная вкладка просит `POST_NOTIFICATIONS` — выдай его
   заранее (`grantNotificationPermissionForTests()`), иначе системный диалог перекроет экран.

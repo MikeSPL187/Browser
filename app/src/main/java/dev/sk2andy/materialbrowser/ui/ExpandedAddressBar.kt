@@ -443,6 +443,23 @@ internal fun ExpandedBottomBarContent(
                     null
                 },
             ) {
+                // The site's badge (connection, blocked trackers, permissions) ends the address
+                // field. On a wide window the tab strip takes the field's place, and the badge
+                // ends the strip: without it a tablet had no way to the site's information.
+                val siteBadge: @Composable () -> Unit = {
+                    PermissionRadarBadge(
+                        siteAvailable = PermissionOrigin.normalize(tab.url) != null,
+                        activityVisible = permissionActivityVisible,
+                        connectionKind = SiteConnectionRules.kind(
+                            pageUrl = tab.url,
+                            isLoading = tab.isLoading,
+                            hasError = tab.error != null || tab.failureKind != null,
+                        ),
+                        blockedCount = tab.blockedCount,
+                        onClick = onPrivacyXRay,
+                        tabId = tab.id,
+                    )
+                }
                 AnimatedContent(
                     targetState = wideTabStripVisible,
                     modifier = Modifier
@@ -480,18 +497,22 @@ internal fun ExpandedBottomBarContent(
                     label = "Wide tabs and address editor",
                 ) { showTabStrip ->
                     if (showTabStrip) {
-                        WideAddressTabStrip(
-                            tabs = wideTabs,
-                            selectedTabId = tab.id,
-                            onTabClick = onWideTabSelected,
-                            onCurrentTabClick = onAddress,
-                            onCurrentTabLongPress = onAddressBarLongPress,
-                            currentTabLongPressEnabled = addressBarLongPressEnabled,
-                            currentTabLongPressLabel = addressBarLongPressLabel,
-                            onCloseTab = onWideTabClosed,
-                            interactionEnabled = wideTabStripVisible,
-                            scrollState = wideTabScrollState,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            WideAddressTabStrip(
+                                tabs = wideTabs,
+                                selectedTabId = tab.id,
+                                onTabClick = onWideTabSelected,
+                                onCurrentTabClick = onAddress,
+                                onCurrentTabLongPress = onAddressBarLongPress,
+                                currentTabLongPressEnabled = addressBarLongPressEnabled,
+                                currentTabLongPressLabel = addressBarLongPressLabel,
+                                onCloseTab = onWideTabClosed,
+                                interactionEnabled = wideTabStripVisible,
+                                scrollState = wideTabScrollState,
+                                modifier = Modifier.weight(1f),
+                            )
+                            siteBadge()
+                        }
                     } else {
                         PrivateKeyboard(isPrivate = tab.isIncognito) {
                             AddressBarFieldContent(
@@ -619,20 +640,7 @@ internal fun ExpandedBottomBarContent(
                                         }
                                     }
                                 },
-                                displayTrailingContent = {
-                                        PermissionRadarBadge(
-                                            siteAvailable = PermissionOrigin.normalize(tab.url) != null,
-                                            activityVisible = permissionActivityVisible,
-                                            connectionKind = SiteConnectionRules.kind(
-                                                pageUrl = tab.url,
-                                                isLoading = tab.isLoading,
-                                                hasError = tab.error != null || tab.failureKind != null,
-                                            ),
-                                            blockedCount = tab.blockedCount,
-                                            onClick = onPrivacyXRay,
-                                            tabId = tab.id,
-                                        )
-                                },
+                                displayTrailingContent = { siteBadge() },
                             )
                         }
                     }
