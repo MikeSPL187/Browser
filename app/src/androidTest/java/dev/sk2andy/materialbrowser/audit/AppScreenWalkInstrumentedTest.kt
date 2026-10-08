@@ -23,6 +23,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
@@ -507,14 +509,37 @@ class AppScreenWalkInstrumentedTest(
         composeRule.waitUntil("tag $tag to appear", TIMEOUT_MILLIS) { exists(hasTestTag(tag)) }
     }
 
-    /** Presses back the way a user leaves a screen, until the screen is gone. */
+    /**
+     * Presses back the way a user leaves a screen, until the screen is gone. A screen still there
+     * after that is filed with what each press found: the keyboard up or down, the screen there.
+     */
     private fun backUntilGone(screen: SemanticsMatcher) {
+        val presses = mutableListOf<String>()
         repeat(BACK_ATTEMPTS) {
             if (!exists(screen)) return
+            val keyboard = keyboardShown()
             device.pressBack()
             composeRule.waitForIdle()
+            val after = if (exists(screen)) "stayed" else "closed"
+            presses += "back with keyboard ${if (keyboard) "up" else "down"} → screen $after"
         }
-        composeRule.waitUntil("${screen.description} to close on back", TIMEOUT_MILLIS) { !exists(screen) }
+        val closed = runCatching {
+            composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(screen) }
+        }.isSuccess
+        if (!closed) {
+            throw AssertionError("${screen.description} did not close on back: ${presses.joinToString("; ")}")
+        }
+    }
+
+    private fun keyboardShown(): Boolean {
+        val shown = AtomicReference(false)
+        scenario.onActivity { activity ->
+            shown.set(
+                ViewCompat.getRootWindowInsets(activity.window.decorView)
+                    ?.isVisible(WindowInsetsCompat.Type.ime()) == true,
+            )
+        }
+        return shown.get()
     }
 
     private fun awaitShown(matcher: SemanticsMatcher) {
