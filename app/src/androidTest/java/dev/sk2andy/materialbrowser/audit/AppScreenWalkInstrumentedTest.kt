@@ -48,6 +48,8 @@ import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
 import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
+import java.net.InetAddress
+import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.fail
@@ -200,8 +202,7 @@ class AppScreenWalkInstrumentedTest(
             backUntilGone(hasTestTag(BrowserMainMenuTestTags.Menu))
         }
         step("tab overview") {
-            click(hasTestTag(AddressBarTestTags.TabButton))
-            awaitTag(TabOverviewChromeTestTags.Root)
+            openOverview()
             auditScrolling("tab overview")
             backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
         }
@@ -225,10 +226,7 @@ class AppScreenWalkInstrumentedTest(
             val title = string(page.title)
             step("settings: $title") {
                 ensureSettingsHome()
-                composeRule.onAllNodes(hasText(title) and hasClickAction()).onFirst()
-                    .performScrollTo()
-                    .performClick()
-                composeRule.waitForIdle()
+                tapUntil(hasText(title) and hasClickAction(), "the $title page to open") { !atSettingsHome() }
                 auditScrolling("settings: $title")
                 device.pressBack()
                 composeRule.waitForIdle()
@@ -297,13 +295,14 @@ class AppScreenWalkInstrumentedTest(
                     activity.browserControllerForTesting().createTab(isIncognito = false)
                 }
                 composeRule.waitForIdle()
-                // Nothing listens on port 1: the connection is refused at once.
-                openTyped(UNREACHABLE_URL, expectFailure = true)
+                // A port just freed: nothing listens there and the connection is refused at once.
+                // (Port 1 is one Gecko refuses to try at all, which is a different page.)
+                val closedPort = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { it.localPort }
+                openTyped("http://127.0.0.1:$closedPort/", expectFailure = true)
                 auditScrolling("page that fails to load")
             }
             step("tab overview, two tabs") {
-                click(hasTestTag(AddressBarTestTags.TabButton))
-                awaitTag(TabOverviewChromeTestTags.Root)
+                openOverview()
                 auditScrolling("tab overview, two tabs")
                 backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
             }
@@ -351,12 +350,10 @@ class AppScreenWalkInstrumentedTest(
             val screen = "settings: ${string(subpage.parent)} › ${subpage.name}"
             step(screen) {
                 ensureSettingsHome()
-                composeRule.onAllNodes(hasText(string(subpage.parent)) and hasClickAction()).onFirst()
-                    .performScrollTo()
-                    .performClick()
-                composeRule.waitForIdle()
-                click(subpage.entry(this))
-                composeRule.waitForIdle()
+                val parent = hasText(string(subpage.parent)) and hasClickAction()
+                tapUntil(parent, "${string(subpage.parent)} to open") { !atSettingsHome() }
+                val entry = subpage.entry(this)
+                tapUntil(entry, "$screen to open") { !exists(entry) }
                 auditScrolling(screen)
             }
         }
@@ -364,19 +361,41 @@ class AppScreenWalkInstrumentedTest(
 
     /** The menu's Settings, in its short view or under More, the way a user finds it. */
     private fun openSettings() {
-        openMenuItem(BrowserMainMenuTestTags.Settings)
-        awaitTag(SettingsSearchTestTags.Open)
+        openMenuItem(BrowserMainMenuTestTags.Settings) { atSettingsHome() }
     }
 
-    /** Taps a menu item, in the short menu or under More. */
-    private fun openMenuItem(tag: String) {
-        click(hasContentDescription(string(R.string.cd_more_options)))
-        awaitTag(BrowserMainMenuTestTags.Menu)
+    private fun openOverview() {
+        val overview = hasTestTag(TabOverviewChromeTestTags.Root)
+        tapUntil(hasTestTag(AddressBarTestTags.TabButton), "the tab overview to open") { exists(overview) }
+    }
+
+    private fun atSettingsHome(): Boolean = exists(hasTestTag(SettingsSearchTestTags.Open))
+
+    /** Taps a menu item, in the short menu or under More, until what it opens is there. */
+    private fun openMenuItem(
+        tag: String,
+        opened: () -> Boolean = { !exists(hasTestTag(BrowserMainMenuTestTags.Menu)) },
+    ) {
+        val menu = hasTestTag(BrowserMainMenuTestTags.Menu)
+        tapUntil(hasContentDescription(string(R.string.cd_more_options)), "the menu to open") { exists(menu) }
         if (!exists(hasTestTag(tag))) {
-            click(hasTestTag(BrowserMainMenuTestTags.More))
-            awaitTag(BrowserMainMenuTestTags.MoreGroup)
+            val more = hasTestTag(BrowserMainMenuTestTags.MoreGroup)
+            tapUntil(hasTestTag(BrowserMainMenuTestTags.More), "More to open") { exists(more) }
         }
-        click(hasTestTag(tag))
+        tapUntil(hasTestTag(tag), "$tag to open", opened)
+    }
+
+    /**
+     * Taps [target] until [done]. On a busy phone a tap that lands while a screen is still
+     * animating in can be lost; a user taps once more, and so does the walk — once.
+     */
+    private fun tapUntil(target: SemanticsMatcher, what: String, done: () -> Boolean) {
+        repeat(TAP_ATTEMPTS) { attempt ->
+            if (attempt > 0 && !exists(target)) return@repeat
+            click(target)
+            if (runCatching { composeRule.waitUntil(RETAP_AFTER_MILLIS) { done() } }.isSuccess) return
+        }
+        composeRule.waitUntil(what, TIMEOUT_MILLIS) { done() }
     }
 
     private fun ensureSettingsHome() {
@@ -409,13 +428,22 @@ class AppScreenWalkInstrumentedTest(
                 detail = "${error.javaClass.simpleName}: ${error.message?.lineSequence()?.firstOrNull()}" +
                     " — on screen: ${runCatching { auditor.describeScreen() }.getOrDefault("?")}" +
                     // Back lost to a system window reads like a screen that ignores back.
-                    " — focused package: ${runCatching { device.currentPackageName }.getOrDefault("?")}",
+                    " — focused window: ${focusedWindow()}",
             )
             runCatching { recover() }
         } finally {
             visited += "$name ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         }
     }
+
+    /** The window holding focus, as the window manager names it: a system dialog shows here. */
+    private fun focusedWindow(): String = runCatching {
+        device.executeShellCommand("dumpsys window")
+            .lineSequence()
+            .firstOrNull { line -> "mCurrentFocus" in line }
+            ?.trim()
+            ?: device.currentPackageName
+    }.getOrDefault("?")
 
     private fun recover() {
         repeat(BACK_ATTEMPTS) {
@@ -587,7 +615,8 @@ class AppScreenWalkInstrumentedTest(
         private const val PAGE_STATES_GROUP = -5
         private const val SUBPAGE_GROUP_BASE = -10
         private const val PAGE_TIMEOUT_MILLIS = 30_000L
-        private const val UNREACHABLE_URL = "http://127.0.0.1:1/"
+        private const val TAP_ATTEMPTS = 2
+        private const val RETAP_AFTER_MILLIS = 4_000L
 
         /** An ordinary article: headings, paragraphs, a list and links, longer than a screen. */
         private val AUDIT_PAGE_HTML = buildString {
