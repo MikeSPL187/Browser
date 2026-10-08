@@ -84,6 +84,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -720,7 +721,12 @@ internal fun BrowserBottomBar(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                IconButton(onClick = onNewTab) {
+                                // The island only lands on the overview dock's new-tab button,
+                                // which TalkBack already reads; a second «New tab» there is noise.
+                                IconButton(
+                                    onClick = onNewTab,
+                                    modifier = Modifier.clearAndSetSemantics { },
+                                ) {
                                     Icon(
                                         VolaIcons.Add,
                                         contentDescription = stringResource(R.string.cd_new_tab),

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -187,7 +187,7 @@ internal fun VolaStatePagePrimaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(VolaStatePageTokens.buttonHeight),
+            .heightIn(min = VolaStatePageTokens.buttonHeight),
         enabled = enabled,
         shape = CircleShape,
         contentPadding = if (icon != null) {
@@ -220,7 +220,7 @@ internal fun VolaStatePageSecondaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(VolaStatePageTokens.buttonHeight),
+            .heightIn(min = VolaStatePageTokens.buttonHeight),
         shape = CircleShape,
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)

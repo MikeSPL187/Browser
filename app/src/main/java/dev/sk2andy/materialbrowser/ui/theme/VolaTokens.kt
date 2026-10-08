@@ -213,6 +213,9 @@ internal object VolaStateTokens {
 internal object VolaSettings {
     /** Between the rows of one settings group. */
     val rowGap = 2.dp
+
+    /** The numbered circle of a setup step at normal font size; it grows with the font. */
+    val stepNumberSize = 36.dp
 }
 
 internal object VolaProtection {

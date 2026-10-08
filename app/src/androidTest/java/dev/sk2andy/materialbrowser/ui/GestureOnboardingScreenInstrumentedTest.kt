@@ -1,7 +1,9 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -17,6 +19,8 @@ import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicBoolean
@@ -167,6 +171,40 @@ class GestureOnboardingScreenInstrumentedTest {
 
         pressBack()
 
+        composeRule.waitUntil(timeoutMillis = 2_000) { completed.get() }
+    }
+
+    /**
+     * With double font size the lesson title took the whole header row and Skip got no width:
+     * the lesson could not be skipped (found by the screen audit).
+     */
+    @Test
+    fun skipStaysReachableWithLargeFont() {
+        val completed = AtomicBoolean(false)
+        composeRule.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                MaterialBrowserTheme {
+                    GestureOnboardingScreen(onCompleted = { completed.set(true) })
+                }
+            }
+        }
+
+        val start = composeRule.onNodeWithTag("gesture_onboarding_start")
+        runCatching { start.performScrollTo() }
+        start.performClick()
+        // The welcome has a Skip of its own: wait until only the lesson's is left.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(tag(GestureOnboardingStep.SwitchTabs))
+                .fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithTag("gesture_onboarding_skip").fetchSemanticsNodes().size == 1
+        }
+
+        val skip = composeRule.onNodeWithTag("gesture_onboarding_skip").assertIsDisplayed()
+        val width = skip.fetchSemanticsNode().boundsInWindow.width
+        val minWidth = with(composeRule.density) { 48.dp.toPx() } - 1f
+        assertTrue("Skip is $width px wide with a large font", width >= minWidth)
+        skip.performClick()
         composeRule.waitUntil(timeoutMillis = 2_000) { completed.get() }
     }
 

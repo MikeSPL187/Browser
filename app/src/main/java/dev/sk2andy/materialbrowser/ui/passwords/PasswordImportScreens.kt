@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -217,7 +217,7 @@ internal fun PasswordImportScreen(
                         .fillMaxWidth()
                         .padding(horizontal = VolaPasswords.sidePadding)
                         .padding(top = VolaPasswords.sectionGap)
-                        .height(VolaPasswords.buttonHeight)
+                        .heightIn(min = VolaPasswords.buttonHeight)
                         .testTag(PasswordImportTestTags.PickFile),
                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
@@ -325,7 +325,7 @@ internal fun PasswordImportGuideScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = VolaPasswords.sidePadding)
-                        .height(VolaPasswords.buttonHeight)
+                        .heightIn(min = VolaPasswords.buttonHeight)
                         .testTag(PasswordImportTestTags.PickFile),
                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
@@ -451,7 +451,7 @@ internal fun PasswordImportResultScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = VolaPasswords.sidePadding)
-                        .height(VolaPasswords.buttonHeight)
+                        .heightIn(min = VolaPasswords.buttonHeight)
                         .testTag(PasswordImportTestTags.ToPasswords),
                 ) {
                     Text(stringResource(if (report.hadPasswords) R.string.passwords_import_to_passwords else R.string.passwords_import_done))

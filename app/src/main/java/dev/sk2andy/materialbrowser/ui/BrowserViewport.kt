@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +44,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -499,6 +501,14 @@ internal fun BrowserViewport(
             )
         }
 
+        // Read here, outside the blur target: its nested ComposeView gets no window insets, so a
+        // new tab measured inside it ran under the status bar while the chrome was frosted.
+        val newTabSafeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
+        val newTabSystemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+        val newTabBottomPadding = NewTabLayoutRules.bottomContentPadding(
+            addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled,
+            addressBarHeight = addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
+        )
         AnimatedVisibility(
             visible = selectedTab.url == BLANK_URL,
             enter = fadeIn(),
@@ -529,6 +539,9 @@ internal fun BrowserViewport(
                         revealOriginInRoot = blankTabModeRevealOrigin,
                         onOpenEssential = onFavorite,
                         editor = rememberNewTabEssentialsEditor(controller, profileId),
+                        explicitSafeDrawingPadding = newTabSafeDrawingPadding,
+                        explicitSystemBarsPadding = newTabSystemBarsPadding,
+                        bottomContentPadding = newTabBottomPadding,
                         privateTab = NewTabPrivate(
                             storage = PrivateTabRules.storage(
                                 engine = controller.browserEngineKind,
@@ -1051,14 +1064,16 @@ internal fun FullscreenTabPreviewContent(
 }
 
 @Composable
-private fun rootSafeDrawingPadding(rootView: View): PaddingValues {
+private fun rootSafeDrawingPadding(
+    rootView: View,
+    types: Int = WindowInsetsCompat.Type.systemBars() or
+        WindowInsetsCompat.Type.ime() or
+        WindowInsetsCompat.Type.displayCutout(),
+): PaddingValues {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val insets = ViewCompat.getRootWindowInsets(rootView)?.getInsets(
-        WindowInsetsCompat.Type.systemBars() or
-            WindowInsetsCompat.Type.ime() or
-            WindowInsetsCompat.Type.displayCutout(),
-    ) ?: return PaddingValues(0.dp)
+    val insets = ViewCompat.getRootWindowInsets(rootView)?.getInsets(types)
+        ?: return PaddingValues(0.dp)
     val startPx = if (layoutDirection == LayoutDirection.Ltr) insets.left else insets.right
     val endPx = if (layoutDirection == LayoutDirection.Ltr) insets.right else insets.left
     return PaddingValues(
@@ -1079,6 +1094,10 @@ internal fun BlankTabPreview(
     val density = LocalDensity.current
     val rootView = LocalView.current
     val rootSafeDrawingPadding = rootSafeDrawingPadding(rootView)
+    val rootSystemBarsPadding = rootSafeDrawingPadding(
+        rootView = rootView,
+        types = WindowInsetsCompat.Type.systemBars(),
+    )
     val sourceWidthPx = TabOverviewHeroRules.blankPreviewSourceExtentPx(
         rootViewExtentPx = rootView.width,
         configurationExtentPx = with(density) { configuration.screenWidthDp.dp.toPx() },
@@ -1125,6 +1144,7 @@ internal fun BlankTabPreview(
                 interactive = false,
                 essentialsAlpha = essentialsAlpha,
                 explicitSafeDrawingPadding = rootSafeDrawingPadding,
+                explicitSystemBarsPadding = rootSystemBarsPadding,
             )
         }
     }

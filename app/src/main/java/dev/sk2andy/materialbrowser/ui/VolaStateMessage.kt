@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -108,7 +108,7 @@ internal fun VolaStateMessage(
                     onClick = onAction,
                     modifier = Modifier
                         .padding(top = VolaSpacing.x2)
-                        .height(VolaStateTokens.buttonHeight),
+                        .heightIn(min = VolaStateTokens.buttonHeight),
                     shape = CircleShape,
                 ) {
                     Text(actionLabel, style = MaterialTheme.typography.labelLarge)

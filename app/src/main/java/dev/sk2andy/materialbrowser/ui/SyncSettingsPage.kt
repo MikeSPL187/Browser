@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +55,7 @@ import dev.sk2andy.materialbrowser.sync.SyncStatus
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.WorkspaceIconResources
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettings
 
 private val SYNC_ACCENT_HUES = listOf(0, 36, 72, 108, 144, 180, 216, 252, 288, 312)
 private const val SYNC_ACCENT_COLORS_PER_ROW = 5
@@ -517,8 +519,11 @@ private fun SyncSetupGuideStep(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // The circle grows with the font size: at a fixed size a large-text digit was cut off.
+            val badgeSize = VolaSettings.stepNumberSize *
+                LocalDensity.current.fontScale.coerceAtLeast(1f)
             Surface(
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(badgeSize),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
