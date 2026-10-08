@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -555,10 +556,12 @@ private fun FileCard(state: PasswordImportFileState, onDelete: () -> Unit) {
 
 @Composable
 private fun StepRow(number: Int, step: ImportStep) {
+    // The circle grows with the font size: at a fixed size a large-text digit was cut off.
+    val badgeSize = VolaPasswords.importStepBadge * LocalDensity.current.fontScale.coerceAtLeast(1f)
     Row(horizontalArrangement = Arrangement.spacedBy(VolaPasswords.importStepGap)) {
         Box(
             modifier = Modifier
-                .size(VolaPasswords.importStepBadge)
+                .size(badgeSize)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
