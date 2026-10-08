@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.audit
 import android.app.Activity
 import android.os.SystemClock
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
@@ -512,9 +514,16 @@ class AppScreenWalkInstrumentedTest(
                 .maxByOrNull { node -> node.boundsInWindow.height * node.boundsInWindow.width }
                 ?: return
             val before = scrollable.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.value?.invoke()
-            composeRule.onAllNodes(SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id })
+            val target = composeRule.onAllNodes(SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id })
                 .onFirst()
-                .performTouchInput { swipeUp() }
+            // Scrolled by the list's own scroll action, most of a screen at a time. A swipe on a
+            // loaded emulator can be slow enough to read as a long press, and on the drag-to-arrange
+            // editors that starts a drag: the menu buttons page then took up to 21 minutes.
+            val pageHeight = scrollable.boundsInWindow.height * SCROLL_PAGE_FRACTION
+            val scrolled = runCatching {
+                target.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, pageHeight) }
+            }.isSuccess
+            if (!scrolled) target.performTouchInput { swipeUp() }
             composeRule.waitForIdle()
             val after = composeRule.onAllNodes(SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id })
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
@@ -631,6 +640,7 @@ class AppScreenWalkInstrumentedTest(
         private const val SLOW_STEP_MILLIS = 90_000L
         private const val REVEAL_AFTER_MILLIS = 3_000L
         private const val MAX_SCROLL_PAGES = 8
+        private const val SCROLL_PAGE_FRACTION = 0.8f
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
         private const val PAGE_GROUP = -4
