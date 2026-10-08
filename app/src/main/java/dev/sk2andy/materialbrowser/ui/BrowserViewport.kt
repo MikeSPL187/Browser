@@ -505,6 +505,10 @@ internal fun BrowserViewport(
         // new tab measured inside it ran under the status bar while the chrome was frosted.
         val newTabSafeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
         val newTabSystemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+        val newTabBottomPadding = NewTabLayoutRules.bottomContentPadding(
+            addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled,
+            addressBarHeight = addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
+        )
         AnimatedVisibility(
             visible = selectedTab.url == BLANK_URL,
             enter = fadeIn(),
@@ -537,6 +541,7 @@ internal fun BrowserViewport(
                         editor = rememberNewTabEssentialsEditor(controller, profileId),
                         explicitSafeDrawingPadding = newTabSafeDrawingPadding,
                         explicitSystemBarsPadding = newTabSystemBarsPadding,
+                        bottomContentPadding = newTabBottomPadding,
                         privateTab = NewTabPrivate(
                             storage = PrivateTabRules.storage(
                                 engine = controller.browserEngineKind,

@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
@@ -72,6 +73,18 @@ import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 
 internal object NewTabPageTestTags {
     const val Header = "new_tab_header"
+}
+
+/** Where the new tab's content may reach. */
+internal object NewTabLayoutRules {
+    /**
+     * Space kept under the last card. The floating address bar covers the bottom of the page by
+     * its height and its margins above and below; with the bar docked aside, a plain gap.
+     */
+    fun bottomContentPadding(addressBarDocked: Boolean, addressBarHeight: Dp): Dp {
+        if (addressBarDocked) return VolaSpacing.x12
+        return maxOf(VolaSpacing.x12, addressBarHeight + ADDRESS_BAR_VERTICAL_MARGIN * 2)
+    }
 }
 
 /**
@@ -96,6 +109,8 @@ internal fun NewTabPage(
      * insets reach; `null` reads them here. Passed together with [explicitSafeDrawingPadding].
      */
     explicitSystemBarsPadding: PaddingValues? = null,
+    /** Space under the last card, clear of the address bar ([NewTabLayoutRules]). */
+    bottomContentPadding: Dp = VolaSpacing.x12,
     /** The workspace name shown above the page, as on the NewTab board. */
     title: String? = null,
     /** Recently used tabs for the Continue card, newest first. */
@@ -172,7 +187,7 @@ internal fun NewTabPage(
                         .graphicsLayer { alpha = 1f - boundedProgress }
                         .verticalScroll(rememberScrollState(), enabled = interactive)
                         .padding(horizontal = VolaSpacing.x4)
-                        .padding(bottom = VolaSpacing.x12),
+                        .padding(bottom = bottomContentPadding),
                     verticalArrangement = Arrangement.spacedBy(VolaSpacing.x5),
                 ) {
                     if (interactive && !editing) NewTabHeader(title = title)
@@ -219,7 +234,7 @@ internal fun NewTabPage(
                         .graphicsLayer { alpha = if (incognito) 1f else boundedProgress }
                         .verticalScroll(rememberScrollState(), enabled = interactive)
                         .padding(horizontal = VolaSpacing.x6)
-                        .padding(top = VolaSpacing.x12, bottom = VolaSpacing.x12),
+                        .padding(top = VolaSpacing.x12, bottom = bottomContentPadding),
                 )
             }
         }
