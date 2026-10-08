@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
@@ -31,6 +32,8 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.dismissSystemNotResponding
+import dev.sk2andy.materialbrowser.focusedWindow
 import dev.sk2andy.materialbrowser.ui.BrowserContentFrameRules
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,6 +52,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class GeckoEdgeToEdgeInstrumentedTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private val store by lazy { BrowserSessionStore(context) }
     private val preferences by lazy {
@@ -318,6 +322,7 @@ class GeckoEdgeToEdgeInstrumentedTest {
             }
             instrumentation.waitForIdleSync()
             SystemClock.sleep(LAYOUT_STABILITY_WINDOW_MILLIS)
+            awaitViewReady(scenario)
 
             scenario.onActivity { activity ->
                 val controller = activity.browserControllerForTesting()
@@ -435,8 +440,15 @@ class GeckoEdgeToEdgeInstrumentedTest {
                         scenario,
                         "Candy focused search ready: ${site.name}",
                     )
+                    val focusedTitle = "Candy focused search safe: ${site.name}"
+                    device.dismissSystemNotResponding()
                     tapSearchField(scenario)
-                    awaitSelectedTabTitle(scenario, "Candy focused search safe: ${site.name}")
+                    if (!titleReached(scenario, focusedTitle, TAP_RESPONSE_MILLIS)) {
+                        // A tap that lands before the page takes input is lost; a user taps again.
+                        device.dismissSystemNotResponding()
+                        tapSearchField(scenario)
+                    }
+                    awaitSelectedTabTitle(scenario, focusedTitle)
                     awaitImeVisibility(scenario, expectedVisible = true)
                     scenario.onActivity { activity ->
                         val controller = activity.browserControllerForTesting()
@@ -559,22 +571,62 @@ class GeckoEdgeToEdgeInstrumentedTest {
         scenario: ActivityScenario<MainActivity>,
         expectedTitle: String,
     ) {
-        val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
-        var lastTitle = ""
+        if (titleReached(scenario, expectedTitle, TIMEOUT_MILLIS)) return
+        val seen = seenTitles.joinToString(" → ")
+        // The system UI's «isn't responding» dialog takes the window's focus; it is not the app's.
+        val focusedWindow = device.focusedWindow()
+        if ("Not Responding" in focusedWindow) {
+            device.dismissSystemNotResponding()
+            if (titleReached(scenario, expectedTitle, TIMEOUT_MILLIS)) return
+        }
+        throw AssertionError(
+            "Selected Gecko tab did not reach title $expectedTitle; last title was $lastSeenTitle; " +
+                "titles: $seen; " +
+                "${engineState(scenario)}; focused window: $focusedWindow",
+        )
+    }
+
+    /** The titles the page went through while [titleReached] waited, with their times. */
+    private val seenTitles = mutableListOf<String>()
+    private var lastSeenTitle: String? = null
+
+    private fun titleReached(
+        scenario: ActivityScenario<MainActivity>,
+        expectedTitle: String,
+        timeoutMillis: Long,
+    ): Boolean {
+        val started = SystemClock.elapsedRealtime()
+        val deadline = started + timeoutMillis
+        seenTitles.clear()
+        lastSeenTitle = null
         while (SystemClock.elapsedRealtime() < deadline) {
             instrumentation.waitForIdleSync()
             var title = ""
             scenario.onActivity { activity ->
                 title = activity.browserControllerForTesting().selectedTabForTesting().title
             }
-            if (title == expectedTitle) return
-            lastTitle = title
+            if (title == expectedTitle) return true
+            if (title != lastSeenTitle) {
+                lastSeenTitle = title
+                seenTitles += "${SystemClock.elapsedRealtime() - started} ms ${title.take(TITLE_CHARS)}"
+            }
             SystemClock.sleep(POLL_MILLIS)
         }
-        assertTrue(
-            "Selected Gecko tab did not reach title $expectedTitle; last title was $lastTitle",
-            false,
-        )
+        return false
+    }
+
+    private fun engineState(scenario: ActivityScenario<MainActivity>): String {
+        var state = ""
+        scenario.onActivity { activity ->
+            val controller = activity.browserControllerForTesting()
+            val engine = controller.selectedGeckoViewForTesting()?.engineView()
+            val location = IntArray(2).also { engine?.getLocationInWindow(it) }
+            state = "activity ${activity.lifecycle.currentState}, window focus " +
+                "${activity.hasWindowFocus()}, url ${controller.selectedTabForTesting().url}, " +
+                "engine shown ${engine?.isShown}, top ${location[1]}, " +
+                "size ${engine?.width}x${engine?.height}, input focus ${engine?.hasFocus()}"
+        }
+        return state
     }
 
     private fun tapSearchField(scenario: ActivityScenario<MainActivity>) {
@@ -683,8 +735,9 @@ class GeckoEdgeToEdgeInstrumentedTest {
 
     /** Where the window layout puts the Gecko host: below the real status bar and cutout. */
     private fun safeTopPx(activity: MainActivity): Int =
-        requireNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView))
-            .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+        requireNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView)) {
+            "The window has no insets yet"
+        }.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             .top
 
     /** The engine's own top margin: the dispatched status bar less what the host sits below. */
@@ -719,6 +772,8 @@ class GeckoEdgeToEdgeInstrumentedTest {
         const val SEARCH_TAP_X_CSS_PX = 100f
         const val SEARCH_TAP_Y_CSS_PX = 16f
         const val TIMEOUT_MILLIS = 15_000L
+        const val TAP_RESPONSE_MILLIS = 5_000L
+        const val TITLE_CHARS = 80
         const val POLL_MILLIS = 50L
     }
 }
