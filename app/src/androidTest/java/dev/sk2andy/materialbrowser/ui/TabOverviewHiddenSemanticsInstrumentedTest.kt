@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +28,8 @@ import org.junit.runner.RunWith
  * The closed tab overview stays composed under the page, drawn fully transparent. Its tab cards
  * must not stay in the accessibility tree with it: TalkBack read «New tab, current tab» on the
  * new tab, a card nobody could see. The other way round, the page under the open overview
- * leaves the tree while the overview covers it (both found by the screen audit).
+ * leaves the tree while the overview covers it, and the address island resting on the dock's
+ * new-tab button does not read as a second «New tab» (all found by the screen audit).
  */
 @RunWith(AndroidJUnit4::class)
 class TabOverviewHiddenSemanticsInstrumentedTest {
@@ -66,6 +68,11 @@ class TabOverviewHiddenSemanticsInstrumentedTest {
             "The page under the open overview is in the accessibility tree",
             !exists(hasTestTag(NewTabPageTestTags.Header)),
         )
+        // The address island lands on the dock's new-tab button: TalkBack must read it once.
+        val newTabButtons = composeRule
+            .onAllNodes(hasContentDescription(context.getString(R.string.cd_new_tab)))
+            .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        assertEquals("«New tab» buttons in the open overview", 1, newTabButtons.size)
 
         Espresso.pressBack()
         composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(hasTestTag(TabOverviewChromeTestTags.Root)) }
