@@ -55,6 +55,7 @@ import dev.sk2andy.materialbrowser.sync.SyncStatus
 import dev.sk2andy.materialbrowser.shared.ui.PlatformProfileEmoji
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.WorkspaceIconResources
+import dev.sk2andy.materialbrowser.ui.theme.VolaSettings
 
 private val SYNC_ACCENT_HUES = listOf(0, 36, 72, 108, 144, 180, 216, 252, 288, 312)
 private const val SYNC_ACCENT_COLORS_PER_ROW = 5
@@ -518,8 +519,9 @@ private fun SyncSetupGuideStep(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The circle grows with the font size: at 36 dp a large-text digit was cut off.
-            val badgeSize = 36.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+            // The circle grows with the font size: at a fixed size a large-text digit was cut off.
+            val badgeSize = VolaSettings.stepNumberSize *
+                LocalDensity.current.fontScale.coerceAtLeast(1f)
             Surface(
                 modifier = Modifier.size(badgeSize),
                 shape = CircleShape,
