@@ -9,6 +9,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,12 +34,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
@@ -88,6 +91,7 @@ internal fun WideAddressTabStrip(
     var selectedWidthPx by remember(selectedTabId) { mutableIntStateOf(0) }
     val rememberedListState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
     val listState = scrollState ?: rememberedListState
+    val currentTabClick by rememberUpdatedState(onCurrentTabClick)
 
     LaunchedEffect(
         selectedTabId,
@@ -118,6 +122,11 @@ internal fun WideAddressTabStrip(
         state = listState,
         modifier = modifier
             .fillMaxSize()
+            // The strip fills the whole address field, and past the last tab it is empty: a tap
+            // there still means the address bar, as on the current tab. A tab takes its own tap.
+            .pointerInput(interactionEnabled) {
+                if (interactionEnabled) detectTapGestures(onTap = { currentTabClick() })
+            }
             .testTag(WideAddressTabStripTestTags.Strip)
             .clearSemanticsWhen(!interactionEnabled),
         userScrollEnabled = interactionEnabled,

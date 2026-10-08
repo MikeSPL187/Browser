@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -56,6 +58,29 @@ class WideAddressTabStripInstrumentedTest {
         composeRule.runOnIdle {
             assertEquals(listOf("second"), openedTabs)
             assertEquals(1, addressEditorOpens)
+        }
+    }
+
+    /** On a tablet the strip is far wider than its tabs: the rest of the address bar still opens the editor. */
+    @Test
+    fun emptyStripPastTheTabsOpensAddressEditor() {
+        val openedTabs = mutableListOf<String>()
+        var addressEditorOpens = 0
+        setStrip(
+            tabs = listOf(tab("only")),
+            selectedTabId = "only",
+            onTabClick = { openedTabs += it },
+            onCurrentTabClick = { addressEditorOpens++ },
+        )
+
+        composeRule.onNodeWithTag(WideAddressTabStripTestTags.Strip).performTouchInput {
+            click(Offset(width - EMPTY_STRIP_INSET_PX, centerY))
+        }
+        composeRule.onNodeWithTag(tabTag("only")).performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(2, addressEditorOpens)
+            assertEquals(emptyList<String>(), openedTabs)
         }
     }
 
@@ -304,5 +329,10 @@ class WideAddressTabStripInstrumentedTest {
 
     private fun solidFavicon() = Bitmap.createBitmap(24, 24, Bitmap.Config.ARGB_8888).apply {
         eraseColor(Color.BLUE)
+    }
+
+    private companion object {
+        /** A point near the strip's far end, past its only tab. */
+        const val EMPTY_STRIP_INSET_PX = 24f
     }
 }

@@ -1,6 +1,12 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.union
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
@@ -43,6 +49,14 @@ internal object AddressBarInsetRules {
         return (occupiedBottomPx - alreadyResizedByPx).coerceAtLeast(0)
     }
 }
+
+/**
+ * The edges a bar along the bottom keeps clear of: the navigation bar, and on a phone on its side
+ * the camera cutout, which is then a side edge (the tab button sat under it). Only the cutout's
+ * sides: upright, the cutout is at the top, far from the bar.
+ */
+internal val WindowInsets.Companion.addressBarEdges: WindowInsets
+    @Composable get() = navigationBars.union(displayCutout.only(WindowInsetsSides.Horizontal))
 
 /**
  * Applies root-owned browser chrome insets. Call only for a bar anchored directly to the measured

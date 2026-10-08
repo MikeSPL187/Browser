@@ -105,8 +105,12 @@ class WideAddressBarInstrumentedTest {
             composeRule.activity.getString(R.string.cd_more_options),
         ).assertIsDisplayed().getUnclippedBoundsInRoot()
         val root = composeRule.onRoot().getUnclippedBoundsInRoot()
+        // The site's badge ends the strip, as it ends the address field on a phone.
+        val siteBadge = composeRule.onNodeWithTag(PermissionRadarTestTags.ActivityBadge)
+            .assertIsDisplayed().getUnclippedBoundsInRoot()
 
         assertTrue(tabsAction.right <= strip.left)
+        assertTrue(strip.right <= siteBadge.left)
         assertTrue(strip.right <= newTabAction.left)
         assertTrue(newTabAction.right <= more.left)
         assertTrue(strip.top > (root.bottom - root.top) * 0.7f)

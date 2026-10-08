@@ -93,6 +93,11 @@ internal class ScreenAuditor(
             }
         }
         for (node in controls) {
+            // A control of no size, or not placed on screen yet (collapsed, or caught
+            // mid-animation), is neither seen nor reached by TalkBack: a row that appears in
+            // settings search was filed as unlabelled.
+            if (node.size.width == 0 || node.size.height == 0) continue
+            if (node.boundsInWindow.width <= 0f || node.boundsInWindow.height <= 0f) continue
             val label = node.label()
             // Touch bounds take in the extension Compose gives a small control (a 40 dp icon
             // button answers touches over 48 dp) but are clipped by scrolling; the node's own

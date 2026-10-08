@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -381,7 +380,7 @@ internal fun BrowserBottomBar(
                 fullWindowHeightPx = fullWindowHeightPx,
                 rootBottomInWindowPx = rootBottomInWindowPx,
                 imeInsets = WindowInsets.ime,
-                navigationBarInsets = WindowInsets.navigationBars,
+                navigationBarInsets = WindowInsets.addressBarEdges,
             )
             .padding(
                 horizontal = ADDRESS_BAR_HORIZONTAL_MARGIN,
