@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -388,7 +389,7 @@ internal fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = !busy,
-        modifier = Modifier.fillMaxWidth().height(VolaPasswords.buttonHeight).testTag(tag),
+        modifier = Modifier.fillMaxWidth().heightIn(min = VolaPasswords.buttonHeight).testTag(tag),
     ) {
         if (busy) {
             CircularProgressIndicator(modifier = Modifier.size(VolaPasswords.pointIconSize))

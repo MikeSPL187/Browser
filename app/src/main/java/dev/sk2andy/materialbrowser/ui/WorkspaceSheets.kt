@@ -210,7 +210,7 @@ internal fun NewWorkspaceSheet(
             enabled = emoji != null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(VolaWorkspaceSheet.buttonHeight)
+                .heightIn(min = VolaWorkspaceSheet.buttonHeight)
                 .testTag(ProfileCreationTestTags.CreateButton),
             shape = VolaWorkspaceSheet.buttonShape,
             colors = ButtonDefaults.buttonColors(
@@ -417,7 +417,7 @@ internal fun WorkspaceSettingsSheet(
                     onClick = { confirmingDelete = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(VolaWorkspaceSheet.buttonHeight)
+                        .heightIn(min = VolaWorkspaceSheet.buttonHeight)
                         .testTag(WorkspaceSheetTestTags.Delete),
                     shape = VolaWorkspaceSheet.buttonShape,
                     border = BorderStroke(
