@@ -743,21 +743,13 @@ class AppScreenWalkInstrumentedTest(
             .filter { page -> page.destination.parent == SettingsDestination.Home }
             .chunked(PAGES_PER_TEST)
 
-        private val configs = listOf(
-            AuditConfig.EnglishLight,
-            AuditConfig.RussianDark,
-            AuditConfig.EnglishDarkLargeFont,
-            AuditConfig.RussianLightLargeFont,
-            AuditConfig.RussianLightLandscape,
-            AuditConfig.EnglishDarkTablet,
-        )
 
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
             val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP, PAGE_GROUP, PAGE_STATES_GROUP) +
                 settingsSlices().indices + subpageGroups()
-            return groups.flatMap { group -> configs.map { config -> arrayOf<Any>(group, config) } }
+            return groups.flatMap { group -> AuditConfig.All.map { config -> arrayOf<Any>(group, config) } }
         }
     }
 }

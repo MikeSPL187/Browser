@@ -7,7 +7,12 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -56,6 +61,39 @@ internal class ScreenAuditor(
     private val composeRule: ComposeTestRule,
     private val activity: () -> Activity,
 ) {
+    /** Audits the screen, then scrolls it a page at a time to the end and audits again. */
+    fun auditScrolling(screen: String, config: String): List<AuditFinding> {
+        val findings = audit(screen, config).toMutableList()
+        repeat(MAX_SCROLL_PAGES) { page ->
+            val scrollable = composeRule.onAllNodes(hasScrollAction() and isVerticallyScrollable)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .maxByOrNull { node -> node.boundsInWindow.height * node.boundsInWindow.width }
+                ?: return findings
+            val matcher = SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id }
+            val before = scrollable.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.value?.invoke()
+            val target = composeRule.onAllNodes(matcher).onFirst()
+            // Scrolled by the list's own scroll action, most of a screen at a time. A swipe on a
+            // loaded emulator can be slow enough to read as a long press, and on the drag-to-arrange
+            // editors that starts a drag: the menu buttons page then took up to 21 minutes.
+            val pageHeight = scrollable.boundsInWindow.height * SCROLL_PAGE_FRACTION
+            val scrolled = runCatching {
+                target.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, pageHeight) }
+            }.isSuccess
+            if (!scrolled) target.performTouchInput { swipeUp() }
+            composeRule.waitForIdle()
+            val after = composeRule.onAllNodes(matcher)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .firstOrNull()
+                ?.config
+                ?.getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+                ?.value
+                ?.invoke()
+            if (after == null || after == before) return findings
+            findings += audit("$screen ↓${page + 1}", config)
+        }
+        return findings
+    }
+
     fun audit(screen: String, config: String): List<AuditFinding> {
         composeRule.waitForIdle()
         val window = windowGeometry()
@@ -206,6 +244,9 @@ internal class ScreenAuditor(
         const val OVERLAP_SHARE = 0.25f
         const val SCREEN_DESCRIPTION_LIMIT = 40
         val anyNode = SemanticsMatcher("any node") { true }
+        val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+        const val MAX_SCROLL_PAGES = 8
+        const val SCROLL_PAGE_FRACTION = 0.8f
     }
 }
 
