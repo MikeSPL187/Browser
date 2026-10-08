@@ -54,11 +54,13 @@ import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
@@ -75,7 +77,17 @@ class AppScreenWalkInstrumentedTest(
     private val group: Int,
     private val config: AuditConfig,
 ) {
-    @get:Rule
+    /**
+     * The orchestrator's own test timeout does not stop a test here; one that hangs held its shard
+     * for an hour. This one fails it and names where the test thread was stuck.
+     */
+    @get:Rule(order = 0)
+    val timeout: Timeout = Timeout.builder()
+        .withTimeout(WALK_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+        .withLookingForStuckThread(true)
+        .build()
+
+    @get:Rule(order = 1)
     val composeRule = createEmptyComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -140,7 +152,7 @@ class AppScreenWalkInstrumentedTest(
                 } else {
                     auditScrolling(screen)
                     click(hasTestTag(forward))
-                    composeRule.waitForIdle()
+                    idle()
                 }
             }
         }
@@ -158,11 +170,11 @@ class AppScreenWalkInstrumentedTest(
         ).forEach { (tag, screen) ->
             step(screen) {
                 openMenuItem(tag)
-                composeRule.waitForIdle()
+                idle()
                 auditScrolling(screen)
                 // Some of these are activities of their own: the browser stays composed under them.
                 device.pressBack()
-                composeRule.waitForIdle()
+                idle()
                 recover()
             }
         }
@@ -214,7 +226,7 @@ class AppScreenWalkInstrumentedTest(
             scenario.onActivity { activity ->
                 activity.browserControllerForTesting().createTab(isIncognito = true)
             }
-            composeRule.waitForIdle()
+            idle()
             auditScrolling("private tab")
         }
     }
@@ -233,7 +245,7 @@ class AppScreenWalkInstrumentedTest(
                 tapUntil(hasText(title) and hasClickAction(), "the $title page to open") { !atSettingsHome() }
                 auditScrolling("settings: $title")
                 device.pressBack()
-                composeRule.waitForIdle()
+                idle()
             }
         }
         if (slice == settingsSlices().lastIndex) {
@@ -244,7 +256,7 @@ class AppScreenWalkInstrumentedTest(
                 audit("settings search, empty")
                 composeRule.onAllNodes(hasSetTextAction()).onFirst()
                     .performTextInput(if (config.languageTag.startsWith("ru")) "вкладки" else "tabs")
-                composeRule.waitForIdle()
+                idle()
                 auditScrolling("settings search, results")
                 device.pressBack()
             }
@@ -298,7 +310,7 @@ class AppScreenWalkInstrumentedTest(
                 scenario.onActivity { activity ->
                     activity.browserControllerForTesting().createTab(isIncognito = false)
                 }
-                composeRule.waitForIdle()
+                idle()
                 // A port just freed: nothing listens there and the connection is refused at once.
                 // (Port 1 is one Gecko refuses to try at all, which is a different page.)
                 val closedPort = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { it.localPort }
@@ -338,7 +350,7 @@ class AppScreenWalkInstrumentedTest(
                     "error ${tab.error}, failure ${tab.failureKind}",
             )
         }
-        composeRule.waitForIdle()
+        idle()
     }
 
     private fun selectedTab(): BrowserTab {
@@ -406,7 +418,7 @@ class AppScreenWalkInstrumentedTest(
         if (exists(hasTestTag(SettingsSearchTestTags.Open))) return
         repeat(BACK_ATTEMPTS) {
             device.pressBack()
-            composeRule.waitForIdle()
+            idle()
             if (exists(hasTestTag(SettingsSearchTestTags.Open))) return
         }
         if (!exists(hasTestTag(NewTabPageTestTags.Header))) relaunch()
@@ -417,13 +429,21 @@ class AppScreenWalkInstrumentedTest(
     private fun step(name: String, body: () -> Unit) {
         device.dismissSystemNotResponding()
         val started = SystemClock.elapsedRealtime()
+        slowOperations.clear()
         try {
             body()
             val seconds = (SystemClock.elapsedRealtime() - started) / 1000
             // A user waits through this too: a screen that takes minutes to go through is a bug,
             // and the timings say where a slow run spent its time.
             if (seconds * 1000 > SLOW_STEP_MILLIS) {
-                findings += AuditFinding(name, config.name, AuditKind.Navigation, "took $seconds s to go through")
+                val slowest = slowOperations.sortedByDescending { it.second }.take(SLOWEST_SHOWN)
+                    .joinToString { (operation, millis) -> "$operation ${millis / 1000} s" }
+                findings += AuditFinding(
+                    name,
+                    config.name,
+                    AuditKind.Navigation,
+                    "took $seconds s to go through; slowest: $slowest",
+                )
             }
         } catch (error: Throwable) {
             findings += AuditFinding(
@@ -441,12 +461,27 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
+    /** Operations of the current step that took long, for the step's own timing finding. */
+    private val slowOperations = mutableListOf<Pair<String, Long>>()
+
+    private inline fun <T> timed(operation: String, block: () -> T): T {
+        val started = SystemClock.elapsedRealtime()
+        try {
+            return block()
+        } finally {
+            val millis = SystemClock.elapsedRealtime() - started
+            if (millis >= SLOW_OPERATION_MILLIS) slowOperations += operation to millis
+        }
+    }
+
+    private fun idle() = timed("wait for idle") { composeRule.waitForIdle() }
+
     private fun recover() {
         device.dismissSystemNotResponding()
         repeat(BACK_ATTEMPTS) {
             if (atBareNewTab()) return
             device.pressBack()
-            composeRule.waitForIdle()
+            idle()
         }
         if (!atBareNewTab()) relaunch()
     }
@@ -466,17 +501,17 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun dismissReleaseNotes() {
-        composeRule.waitForIdle()
+        idle()
         if (!exists(hasTestTag(ReleaseNotesTestTags.Screen))) return
         step("release notes") {
             auditScrolling("release notes")
             click(hasTestTag(ReleaseNotesTestTags.Done))
-            composeRule.waitForIdle()
+            idle()
         }
     }
 
     private fun audit(screen: String) {
-        findings += auditor.audit(screen, config.name)
+        findings += timed("audit $screen") { auditor.audit(screen, config.name) }
     }
 
     /** Audits the screen, then scrolls it a page at a time to the end and audits again. */
@@ -494,11 +529,13 @@ class AppScreenWalkInstrumentedTest(
             // loaded emulator can be slow enough to read as a long press, and on the drag-to-arrange
             // editors that starts a drag: the menu buttons page then took up to 21 minutes.
             val pageHeight = scrollable.boundsInWindow.height * SCROLL_PAGE_FRACTION
-            val scrolled = runCatching {
-                target.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, pageHeight) }
-            }.isSuccess
+            val scrolled = timed("scroll $screen") {
+                runCatching {
+                    target.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, pageHeight) }
+                }.isSuccess
+            }
             if (!scrolled) target.performTouchInput { swipeUp() }
-            composeRule.waitForIdle()
+            idle()
             val after = composeRule.onAllNodes(SemanticsMatcher("scrollable ${scrollable.id}") { it.id == scrollable.id })
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .firstOrNull()
@@ -507,20 +544,22 @@ class AppScreenWalkInstrumentedTest(
                 ?.value
                 ?.invoke()
             if (after == null || after == before) return
-            findings += auditor.audit("$screen ↓${page + 1}", config.name)
+            findings += timed("audit $screen ↓${page + 1}") { auditor.audit("$screen ↓${page + 1}", config.name) }
         }
     }
 
     private fun click(matcher: SemanticsMatcher) {
         // Screens still animating in get a moment first; only then are lists scrolled to look.
-        val shown = runCatching { composeRule.waitUntil(REVEAL_AFTER_MILLIS) { exists(matcher) } }.isSuccess
-        if (!shown) revealInLazyList(matcher)
-        composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
+        timed("find ${matcher.description}") {
+            val shown = runCatching { composeRule.waitUntil(REVEAL_AFTER_MILLIS) { exists(matcher) } }.isSuccess
+            if (!shown) revealInLazyList(matcher)
+            composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
+        }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
         val target = composeRule.onAllNodes(matcher).onFirst()
         runCatching { target.performScrollTo() }
         target.performClick()
-        composeRule.waitForIdle()
+        idle()
     }
 
     /**
@@ -552,7 +591,7 @@ class AppScreenWalkInstrumentedTest(
             device.dismissSystemNotResponding()
             val keyboard = keyboardShown()
             device.pressBack()
-            composeRule.waitForIdle()
+            idle()
             val after = if (exists(screen)) "stayed" else "closed"
             presses += "back with keyboard ${if (keyboard) "up" else "down"} → screen $after"
         }
@@ -612,6 +651,9 @@ class AppScreenWalkInstrumentedTest(
         private const val TIMEOUT_MILLIS = 10_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
+        private const val SLOW_OPERATION_MILLIS = 5_000L
+        private const val SLOWEST_SHOWN = 4
+        private const val WALK_TIMEOUT_MINUTES = 20L
         private const val REVEAL_AFTER_MILLIS = 3_000L
         private const val MAX_SCROLL_PAGES = 8
         private const val SCROLL_PAGE_FRACTION = 0.8f
