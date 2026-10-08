@@ -307,8 +307,9 @@ private fun TextLayoutResult.isClippedWithoutEllipsis(): Boolean {
     if ((0 until lineCount).any { line -> isLineEllipsized(line) }) return false
     val slack = CLIP_SLACK_PX
     val tooTall = multiParagraph.height > size.height + slack
+    // Width, not position: centred text is laid out in a wider paragraph than its box.
     val tooWide = (0 until lineCount).any { line ->
-        getLineRight(line) > size.width + slack || getLineLeft(line) < -slack
+        getLineRight(line) - getLineLeft(line) > size.width + slack
     }
     return multiParagraph.didExceedMaxLines || tooTall || tooWide
 }
@@ -317,7 +318,7 @@ private const val CLIP_SLACK_PX = 2f
 
 /** The numbers that show how text overflows its box: box, widest line, paragraph height. */
 private fun TextLayoutResult.clipDetail(): String {
-    val widest = (0 until lineCount).maxOfOrNull { line -> getLineRight(line) } ?: 0f
+    val widest = (0 until lineCount).maxOfOrNull { line -> getLineRight(line) - getLineLeft(line) } ?: 0f
     return "box ${size.width}×${size.height} px, widest line ${widest.toInt()} px, " +
         "text ${multiParagraph.height.toInt()} px tall, $lineCount lines" +
         if (multiParagraph.didExceedMaxLines) ", more lines than allowed" else ""

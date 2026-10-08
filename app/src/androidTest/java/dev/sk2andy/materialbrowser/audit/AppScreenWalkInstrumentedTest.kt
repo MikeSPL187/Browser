@@ -317,13 +317,13 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun click(matcher: SemanticsMatcher) {
-        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(matcher) }
+        composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         composeRule.onAllNodes(matcher).onFirst().performClick()
         composeRule.waitForIdle()
     }
 
     private fun awaitTag(tag: String) {
-        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(hasTestTag(tag)) }
+        composeRule.waitUntil("tag $tag to appear", TIMEOUT_MILLIS) { exists(hasTestTag(tag)) }
     }
 
     /** Presses back the way a user leaves a screen, until the screen is gone. */
@@ -333,11 +333,11 @@ class AppScreenWalkInstrumentedTest(
             device.pressBack()
             composeRule.waitForIdle()
         }
-        composeRule.waitUntil(TIMEOUT_MILLIS) { !exists(screen) }
+        composeRule.waitUntil("${screen.description} to close on back", TIMEOUT_MILLIS) { !exists(screen) }
     }
 
     private fun awaitShown(matcher: SemanticsMatcher) {
-        composeRule.waitUntil(TIMEOUT_MILLIS) { exists(matcher) }
+        composeRule.waitUntil("${matcher.description} to appear", TIMEOUT_MILLIS) { exists(matcher) }
     }
 
     /** The open address editor's close button (the scrim behind it has the same label). */
