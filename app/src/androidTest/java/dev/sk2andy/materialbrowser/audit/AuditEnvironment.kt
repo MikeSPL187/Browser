@@ -44,6 +44,16 @@ data class AuditConfig(
             AuditConfig("ru-RU", dark = false, fontScale = 1f, layout = AuditLayout.PhoneLandscape)
         val EnglishDarkTablet =
             AuditConfig("en-US", dark = true, fontScale = 1f, layout = AuditLayout.Tablet)
+
+        /** Every screen is checked in each of these. */
+        val All = listOf(
+            EnglishLight,
+            RussianDark,
+            EnglishDarkLargeFont,
+            RussianLightLargeFont,
+            RussianLightLandscape,
+            EnglishDarkTablet,
+        )
     }
 }
 
