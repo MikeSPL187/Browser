@@ -28,6 +28,7 @@ import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTestTags
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
 import dev.sk2andy.materialbrowser.ui.NewTabPageTestTags
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesTestTags
 import dev.sk2andy.materialbrowser.ui.SettingsDestination
@@ -71,21 +72,59 @@ class AppScreenWalkInstrumentedTest(
 
     @Test
     fun walk() {
-        if (group == BROWSER_GROUP) {
-            walk(config, ::walkBrowser)
-        } else {
-            walk(config) { walkSettings(group) }
+        when (group) {
+            BROWSER_GROUP -> walk(config, steps = ::walkBrowser)
+            LIBRARY_GROUP -> walk(config, steps = ::walkLibrary)
+            FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
+            else -> walk(config) { walkSettings(group) }
         }
     }
 
-    private fun walk(auditConfig: AuditConfig, steps: () -> Unit) {
-        AuditEnvironment.enter(context, auditConfig)
+    private fun walk(auditConfig: AuditConfig, firstRun: Boolean = false, steps: () -> Unit) {
+        AuditEnvironment.enter(context, auditConfig, firstRun)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        if (firstRun) walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(NewTabPageTestTags.Header) }
         steps()
         if (findings.isNotEmpty()) fail(report())
+    }
+
+    /** The welcome, then every setup screen through «Next», as a new user goes through them. */
+    private fun walkFirstRun() {
+        step("first run: welcome") {
+            awaitTag(FirstRunTestTags.Welcome)
+            auditScrolling("first run: welcome")
+            click(hasTestTag(FirstRunTestTags.Start))
+        }
+        repeat(MAX_FIRST_RUN_SCREENS) { index ->
+            if (!exists(hasTestTag(FirstRunTestTags.Next))) return
+            step("first run: screen ${index + 1}") {
+                auditScrolling("first run: screen ${index + 1}")
+                click(hasTestTag(FirstRunTestTags.Next))
+            }
+        }
+    }
+
+    /** Favorites, downloads, history and snoozed tabs, opened from the menu. */
+    private fun walkLibrary() {
+        listOf(
+            BrowserMainMenuTestTags.Favorites to "favorites",
+            BrowserMainMenuTestTags.Downloads to "downloads",
+            BrowserMainMenuTestTags.History to "history",
+            BrowserMainMenuTestTags.SnoozedTabs to "snoozed tabs",
+        ).forEach { (tag, screen) ->
+            step(screen) {
+                openMenuItem(tag)
+                composeRule.waitForIdle()
+                auditScrolling(screen)
+                // Some of these are activities of their own: the browser stays composed under them.
+                device.pressBack()
+                composeRule.waitForIdle()
+                recover()
+            }
+        }
     }
 
     /**
@@ -177,14 +216,19 @@ class AppScreenWalkInstrumentedTest(
 
     /** The menu's Settings, in its short view or under More, the way a user finds it. */
     private fun openSettings() {
+        openMenuItem(BrowserMainMenuTestTags.Settings)
+        awaitTag(SettingsSearchTestTags.Open)
+    }
+
+    /** Taps a menu item, in the short menu or under More. */
+    private fun openMenuItem(tag: String) {
         click(hasContentDescription(string(R.string.cd_more_options)))
         awaitTag(BrowserMainMenuTestTags.Menu)
-        if (!exists(hasTestTag(BrowserMainMenuTestTags.Settings))) {
+        if (!exists(hasTestTag(tag))) {
             click(hasTestTag(BrowserMainMenuTestTags.More))
             awaitTag(BrowserMainMenuTestTags.MoreGroup)
         }
-        click(hasTestTag(BrowserMainMenuTestTags.Settings))
-        awaitTag(SettingsSearchTestTags.Open)
+        click(hasTestTag(tag))
     }
 
     private fun ensureSettingsHome() {
@@ -315,6 +359,9 @@ class AppScreenWalkInstrumentedTest(
 
     companion object {
         private const val BROWSER_GROUP = -1
+        private const val LIBRARY_GROUP = -2
+        private const val FIRST_RUN_GROUP = -3
+        private const val MAX_FIRST_RUN_SCREENS = 10
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
         private const val BACK_ATTEMPTS = 3
@@ -336,7 +383,7 @@ class AppScreenWalkInstrumentedTest(
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
-            val groups = listOf(BROWSER_GROUP) + settingsSlices().indices
+            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP) + settingsSlices().indices
             return groups.flatMap { group -> configs.map { config -> arrayOf<Any>(group, config) } }
         }
     }

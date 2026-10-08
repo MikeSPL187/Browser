@@ -31,9 +31,10 @@ data class AuditConfig(
 
 /** Puts the device and the app into an [AuditConfig] before launch, and back afterwards. */
 internal object AuditEnvironment {
-    fun enter(context: Context, config: AuditConfig) {
+    /** [firstRun]: a fresh install that still shows the welcome and setup screens. */
+    fun enter(context: Context, config: AuditConfig, firstRun: Boolean = false) {
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
-        GestureOnboardingStore(context).markCompleted()
+        if (!firstRun) GestureOnboardingStore(context).markCompleted()
         BrowserSessionStore(context).apply {
             saveAppearanceSettings(
                 AppearanceSettings(
