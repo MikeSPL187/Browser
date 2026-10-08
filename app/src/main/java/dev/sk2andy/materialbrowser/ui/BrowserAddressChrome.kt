@@ -662,7 +662,8 @@ internal fun BoxScope.BrowserAddressChrome(
                 translationY = hide * VolaIsland.pageKeyboardTravel.toPx()
                 alpha = 1f - hide
             }
-            .clearSemanticsWhen(hiddenByPageKeyboard),
+            // Settings cover the screen: TalkBack must not wander to the bar under them.
+            .clearSemanticsWhen(hiddenByPageKeyboard || settingsVisible),
     )
     CompactModeHint(
         visible = controller.addressBar.compactModeHintVisible && !tabOverviewVisible,
