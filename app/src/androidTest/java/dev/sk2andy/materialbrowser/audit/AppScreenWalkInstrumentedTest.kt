@@ -27,6 +27,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.R
@@ -51,6 +52,7 @@ import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicReference
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Rule
@@ -411,6 +413,7 @@ class AppScreenWalkInstrumentedTest(
 
     /** One step of the walk: a failure to reach the screen is filed, and the walk goes on. */
     private fun step(name: String, body: () -> Unit) {
+        dismissSystemNotResponding()
         val started = SystemClock.elapsedRealtime()
         try {
             body()
@@ -436,6 +439,23 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
+    /**
+     * On a loaded emulator the system's own UI can stop answering, and Android puts up its
+     * «isn't responding» dialog over everything: every back then goes to that dialog. It is not
+     * the app's; a user taps «Wait», and so does the walk.
+     */
+    private fun dismissSystemNotResponding() {
+        if ("Not Responding" !in focusedWindow()) return
+        val wait = device.findObject(By.res("android", "aerr_wait"))
+            ?: device.findObject(By.text(Pattern.compile("(?i)wait|подождать")))
+        if (wait != null) {
+            wait.click()
+        } else {
+            device.executeShellCommand("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
+        }
+        device.waitForIdle()
+    }
+
     /** The window holding focus, as the window manager names it: a system dialog shows here. */
     private fun focusedWindow(): String = runCatching {
         device.executeShellCommand("dumpsys window")
@@ -446,6 +466,7 @@ class AppScreenWalkInstrumentedTest(
     }.getOrDefault("?")
 
     private fun recover() {
+        dismissSystemNotResponding()
         repeat(BACK_ATTEMPTS) {
             if (atBareNewTab()) return
             device.pressBack()
@@ -545,6 +566,7 @@ class AppScreenWalkInstrumentedTest(
         val presses = mutableListOf<String>()
         repeat(BACK_ATTEMPTS) {
             if (!exists(screen)) return
+            dismissSystemNotResponding()
             val keyboard = keyboardShown()
             device.pressBack()
             composeRule.waitForIdle()
