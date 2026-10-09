@@ -186,8 +186,10 @@ class AppScreenWalkInstrumentedTest(
                     val left = timed("wait for $screen to go") {
                         runCatching {
                             composeRule.waitUntil(TIMEOUT_MILLIS) {
+                                // Leaving, a screen's nodes can linger a moment at no size, unplaced.
                                 composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
-                                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
+                                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                                    .none { node -> node.layoutInfo.isPlaced && node.size.width > 0 }
                             }
                         }.isSuccess
                     }
