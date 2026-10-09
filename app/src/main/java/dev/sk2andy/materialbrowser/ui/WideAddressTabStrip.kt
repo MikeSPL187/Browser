@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
+import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import kotlinx.coroutines.flow.first
 
 internal data class WideAddressTabItem(
@@ -212,14 +213,14 @@ private fun WideAddressTab(
                 bitmap = tab.favicon.asImageBitmap(),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(VolaTabOverview.cardFaviconSize)
                     .testTag(WideAddressTabStripTestTags.FaviconPrefix + tab.id),
                 contentScale = ContentScale.Fit,
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(VolaTabOverview.cardFaviconSize)
                     .clip(RoundedCornerShape(6.dp))
                     .background(contentColor)
                     .testTag(WideAddressTabStripTestTags.FallbackPrefix + tab.id),
@@ -229,7 +230,7 @@ private fun WideAddressTab(
                     text = title.take(1).uppercase(),
                     color = containerColor,
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = letterTileStyle(VolaTabOverview.cardFaviconSize, MaterialTheme.typography.labelSmall),
                 )
             }
         }

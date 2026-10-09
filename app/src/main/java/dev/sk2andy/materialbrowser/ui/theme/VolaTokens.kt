@@ -345,6 +345,12 @@ internal object VolaGem {
 
     /** The icon inside, as a share of the gem's size. */
     const val ICON_FRACTION = 0.56f
+
+    /**
+     * A site's letter on a tile standing in for its icon, as a share of the tile's size. The letter
+     * is part of the icon and does not grow with the font size: at 200 % it outgrew a 20 dp tile.
+     */
+    const val LETTER_FRACTION = 0.6f
 }
 
 /** The tab overview (boards W-Tabs, W-TabsDark): one card per tab on the workspace aura. */
