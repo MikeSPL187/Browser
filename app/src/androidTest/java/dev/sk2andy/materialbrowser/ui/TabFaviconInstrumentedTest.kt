@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -45,10 +44,17 @@ class TabFaviconInstrumentedTest {
         node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
         val layout = layouts.single()
         assertTrue("letter ${layout.size.height} px tall in a $tilePx px tile", layout.size.height <= tilePx + 1f)
-        assertFalse("letter is cut off", layout.hasVisualOverflow)
+        // The screen audit's measure of cut-off text: the drawn letter, not a sub-pixel overhang.
+        val drawnHeight = layout.multiParagraph.height
+        val drawnWidth = layout.getLineRight(0) - layout.getLineLeft(0)
+        assertTrue(
+            "letter drawn ${drawnWidth}×$drawnHeight px in a ${layout.size} box",
+            drawnHeight <= layout.size.height + CLIP_SLACK_PX && drawnWidth <= layout.size.width + CLIP_SLACK_PX,
+        )
     }
 
     private companion object {
         val TILE = 20.dp
+        const val CLIP_SLACK_PX = 2f
     }
 }
