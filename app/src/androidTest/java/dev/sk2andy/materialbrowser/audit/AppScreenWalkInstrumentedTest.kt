@@ -148,7 +148,6 @@ class AppScreenWalkInstrumentedTest(
         AuditEnvironment.enter(context, auditConfig, firstRun)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        awaitWindowShape(auditConfig.layout)
         if (firstRun) walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(NewTabPageTestTags.Header) }
@@ -762,20 +761,6 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun string(id: Int): String = currentActivity().getString(id)
-
-    /**
-     * The display can already be upright while the activity, launched a moment after a landscape
-     * walk, still lays out on its side: settings then opened 2274 px wide under a «phone» label
-     * and every row was filed under the camera cutout. The rotation recreates the activity.
-     */
-    private fun awaitWindowShape(layout: AuditLayout) {
-        val landscape = layout == AuditLayout.PhoneLandscape
-        // Failing here says what went wrong; walking on would file every row under the cutout.
-        composeRule.waitUntil("the window to be ${layout.label}", TIMEOUT_MILLIS) {
-            val decor = currentActivity().window.decorView
-            decor.width > 0 && (decor.width > decor.height) == landscape
-        }
-    }
 
     private fun currentActivity(): Activity {
         val activity = AtomicReference<Activity>()

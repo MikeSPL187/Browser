@@ -65,7 +65,7 @@ internal fun FirstRunOverlay(
     BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
         FirstRunRules.back(stage, showIntro)?.let { stage = it }
     }
-    val screen: @Composable (FirstRunStage) -> Unit = { current ->
+    AnimatedContent(targetState = stage, label = "first_run") { current ->
         when (current) {
             FirstRunStage.Welcome -> FirstRunWelcomeScreen(
                 stepCount = FirstRunRules.stepCount(showGestures),
@@ -101,13 +101,5 @@ internal fun FirstRunOverlay(
                 showWelcome = !showIntro,
             )
         }
-    }
-    // With the system's animations removed the screens swap at once. Through AnimatedContent the
-    // setup screen stayed in place, unseen, until some other frame came, and its touch shield
-    // swallowed every tap on the lesson: Skip did nothing.
-    if (rememberSystemAnimationsOn()) {
-        AnimatedContent(targetState = stage, label = "first_run") { current -> screen(current) }
-    } else {
-        screen(stage)
     }
 }

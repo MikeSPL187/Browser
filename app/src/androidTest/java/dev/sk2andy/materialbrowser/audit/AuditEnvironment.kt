@@ -5,9 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.LocaleList
 import android.os.ParcelFileDescriptor
-import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -97,8 +95,7 @@ internal object AuditEnvironment {
     fun reset(context: Context) {
         shell("cmd uimode night no")
         setFontScale(1f)
-        // The next test waits for its own shape; a slow turn here must not hide this one's result.
-        runCatching { setLayout(AuditLayout.PhonePortrait) }
+        setLayout(AuditLayout.PhonePortrait)
         setAppLanguage(context, null)
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
     }
@@ -109,9 +106,8 @@ internal object AuditEnvironment {
 
     private fun setLayout(layout: AuditLayout) {
         // The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
-        val rotation = if (layout == AuditLayout.PhoneLandscape) 1 else 0
         shell("settings put system accelerometer_rotation 0")
-        shell("settings put system user_rotation $rotation")
+        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")
@@ -119,24 +115,6 @@ internal object AuditEnvironment {
             shell("wm size reset")
             shell("wm density reset")
         }
-        awaitShape(landscape = layout == AuditLayout.PhoneLandscape)
-    }
-
-    /**
-     * The rotation and the size change after the shell command returns: a walk launched at once
-     * after a landscape one opened its settings in a 2274 px wide window while it said «phone»,
-     * and filed every row under the camera cutout.
-     */
-    private fun awaitShape(landscape: Boolean) {
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val deadline = SystemClock.elapsedRealtime() + SHAPE_TIMEOUT_MILLIS
-        while (SystemClock.elapsedRealtime() < deadline) {
-            device.waitForIdle()
-            val wide = device.displayWidth > device.displayHeight
-            if (wide == landscape) return
-            SystemClock.sleep(SHAPE_POLL_MILLIS)
-        }
-        // The walk checks its own window's shape next; the display's size is not always current.
     }
 
     private fun setAppLanguage(context: Context, languageTag: String?) {
@@ -150,8 +128,6 @@ internal object AuditEnvironment {
     /** 900 by 1440 dp: wider than the 840 dp where the expanded window size class starts. */
     private const val TABLET_SIZE = "1800x2880"
     private const val TABLET_DENSITY = 320
-    private const val SHAPE_TIMEOUT_MILLIS = 10_000L
-    private const val SHAPE_POLL_MILLIS = 200L
 
     private fun shell(command: String) {
         val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation

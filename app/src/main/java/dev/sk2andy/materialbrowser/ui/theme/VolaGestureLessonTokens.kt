@@ -80,9 +80,6 @@ internal object VolaGestureLessonTokens {
 
     /** The pointer that shows the gesture: a dashed trail, a halo and a ringed dot. */
     const val POINTER_LOOP_MILLIS = 1_900
-
-    /** Where in its loop the pointer stands when the system removed animations: half-way, fully shown. */
-    const val POINTER_STILL_PROGRESS = 0.5f
     val pointerTrailWidth = 3.dp
     val pointerDash = 10.dp
     val pointerDashGap = 7.dp
