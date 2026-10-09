@@ -148,6 +148,7 @@ class AppScreenWalkInstrumentedTest(
         AuditEnvironment.enter(context, auditConfig, firstRun)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        awaitWindowShape(auditConfig.layout)
         if (firstRun) walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(NewTabPageTestTags.Header) }
@@ -186,10 +187,10 @@ class AppScreenWalkInstrumentedTest(
                     val left = timed("wait for $screen to go") {
                         runCatching {
                             composeRule.waitUntil(TIMEOUT_MILLIS) {
-                                // Leaving, a screen's nodes can linger a moment at no size, unplaced.
+                                // A screen that left can linger in a detached root, at no size.
                                 composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
                                     .fetchSemanticsNodes(atLeastOneRootRequired = false)
-                                    .none { node -> node.layoutInfo.isPlaced && node.size.width > 0 }
+                                    .none { node -> node.boundsInWindow.width > 0f && node.boundsInWindow.height > 0f }
                             }
                         }.isSuccess
                     }
@@ -779,6 +780,21 @@ class AppScreenWalkInstrumentedTest(
     }.getOrDefault(false)
 
     private fun string(id: Int): String = currentActivity().getString(id)
+
+    /**
+     * The display can already be upright while the activity, launched a moment after a landscape
+     * walk, still lays out on its side: settings then opened 2274 px wide under a «phone» label
+     * and every row was filed under the camera cutout. The rotation recreates the activity.
+     */
+    private fun awaitWindowShape(layout: AuditLayout) {
+        val landscape = layout == AuditLayout.PhoneLandscape
+        runCatching {
+            composeRule.waitUntil("the window to be ${layout.label}", TIMEOUT_MILLIS) {
+                val decor = currentActivity().window.decorView
+                decor.width > 0 && (decor.width > decor.height) == landscape
+            }
+        }
+    }
 
     private fun currentActivity(): Activity {
         val activity = AtomicReference<Activity>()
