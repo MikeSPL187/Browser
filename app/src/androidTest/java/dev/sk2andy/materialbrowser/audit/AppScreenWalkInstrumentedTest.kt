@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
 import android.os.SystemClock
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -178,7 +179,24 @@ class AppScreenWalkInstrumentedTest(
                     reachedBrowser = true
                 } else {
                     auditScrolling(screen)
+                    val before = auditor.describeScreen()
                     click(hasTestTag(forward))
+                    // The next screen fades in over this one, and a screen that left can linger in
+                    // a detached root: the walk once pressed «Next» nine times on a screen it had
+                    // left. What it waits for is what is shown, as a user does.
+                    val moved = timed("wait for $screen to go") {
+                        runCatching {
+                            composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
+                        }.isSuccess
+                    }
+                    if (!moved) {
+                        findings += AuditFinding(
+                            screen,
+                            config.name,
+                            AuditKind.Navigation,
+                            "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — on screen: $before",
+                        )
+                    }
                     idle()
                 }
             }
@@ -615,7 +633,7 @@ class AppScreenWalkInstrumentedTest(
             composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
-        val target = composeRule.onAllNodes(matcher).onFirst()
+        val target = composeRule.onAllNodes(matcher)[liveIndex(matcher) ?: 0]
         if (!fullyShown(target.fetchSemanticsNode())) {
             timed("scroll to ${matcher.description}") { scrollIntoView(matcher) }
         }
@@ -648,7 +666,7 @@ class AppScreenWalkInstrumentedTest(
     private fun scrollIntoView(matcher: SemanticsMatcher) {
         repeat(SCROLL_INTO_VIEW_ATTEMPTS) {
             val node = composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false)
-                .firstOrNull() ?: return
+                .getOrNull(liveIndex(matcher) ?: return) ?: return
             if (fullyShown(node)) return
             var list = node.parent
             while (list != null && !list.config.contains(SemanticsProperties.VerticalScrollAxisRange)) {
@@ -724,9 +742,23 @@ class AppScreenWalkInstrumentedTest(
         hasContentDescription(string(R.string.cd_close_address_input)) and
             SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = runCatching {
-        composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-    }.getOrDefault(false)
+    private fun exists(matcher: SemanticsMatcher): Boolean = runCatching { liveIndex(matcher) != null }.getOrDefault(false)
+
+    /**
+     * The first node the matcher finds in a Compose root that is on screen. A root of no size can
+     * hold a copy of a screen that left: tapping the first-run lesson's Skip there tapped the
+     * window's corner, and the lesson stayed.
+     */
+    private fun liveIndex(matcher: SemanticsMatcher): Int? = composeRule.onAllNodes(matcher)
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .indexOfFirst { node -> node.rootBounds().width > 0f && node.rootBounds().height > 0f }
+        .takeIf { it >= 0 }
+
+    private fun SemanticsNode.rootBounds(): Rect {
+        var root = this
+        while (true) root = root.parent ?: break
+        return root.boundsInWindow
+    }
 
     private fun string(id: Int): String = currentActivity().getString(id)
 
@@ -742,11 +774,15 @@ class AppScreenWalkInstrumentedTest(
         private const val FIRST_RUN_GROUP = -3
         private const val MAX_FIRST_RUN_SCREENS = 10
 
-        /** What moves each first-run screen on: «Next», the lessons' «Start», a lesson's «Skip». */
+        /**
+         * What moves each first-run screen on: a lesson's «Skip», the lessons' «Start», «Next». The
+         * lesson's own buttons come first: the setup screen's «Next» may still be in the tree while
+         * the lesson fades in over it.
+         */
         private val FIRST_RUN_FORWARD = listOf(
-            FirstRunTestTags.Next,
-            "gesture_onboarding_start",
             "gesture_onboarding_skip",
+            "gesture_onboarding_start",
+            FirstRunTestTags.Next,
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
