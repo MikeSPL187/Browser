@@ -178,7 +178,18 @@ class AppScreenWalkInstrumentedTest(
                     reachedBrowser = true
                 } else {
                     auditScrolling(screen)
+                    val pressed = composeRule.onAllNodes(hasTestTag(forward)).onFirst().fetchSemanticsNode().id
                     click(hasTestTag(forward))
+                    // The next screen fades in over this one: until it is gone its «Next» is still
+                    // there to find, and the walk pressed it nine times on the screen it had left.
+                    timed("wait for $screen to go") {
+                        runCatching {
+                            composeRule.waitUntil(TIMEOUT_MILLIS) {
+                                composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                                    .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
+                            }
+                        }
+                    }
                     idle()
                 }
             }
