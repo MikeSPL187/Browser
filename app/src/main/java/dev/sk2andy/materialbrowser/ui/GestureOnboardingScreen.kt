@@ -616,15 +616,18 @@ private fun GestureOnboardingCelebration(
     var contentVisible by remember { mutableStateOf(false) }
     var finishing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val confettiTransition = rememberInfiniteTransition(label = "onboarding-confetti")
-    val streamProgress by confettiTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(VolaGestureLessonTokens.CONFETTI_STREAM_MILLIS, easing = LinearEasing),
-        ),
-        label = "onboarding-confetti-stream",
-    )
+    val streamProgress by if (rememberSystemAnimationsOn()) {
+        rememberInfiniteTransition(label = "onboarding-confetti").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(VolaGestureLessonTokens.CONFETTI_STREAM_MILLIS, easing = LinearEasing),
+            ),
+            label = "onboarding-confetti-stream",
+        )
+    } else {
+        remember { mutableFloatStateOf(0f) }
+    }
     LaunchedEffect(Unit) {
         burstProgress.animateTo(
             targetValue = 1f,
@@ -834,16 +837,19 @@ private fun DrawScope.drawConfettiPiece(
 /** The lesson's mark, floating between two soft shapes in the accent colors. */
 @Composable
 private fun LessonWelcomeHero(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "lesson-welcome-hero")
-    val floatOffset by transition.animateFloat(
-        initialValue = -VolaGestureLessonTokens.HERO_FLOAT_PX,
-        targetValue = VolaGestureLessonTokens.HERO_FLOAT_PX,
-        animationSpec = infiniteRepeatable(
-            animation = tween(VolaGestureLessonTokens.HERO_FLOAT_MILLIS, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "lesson-welcome-float",
-    )
+    val floatOffset by if (rememberSystemAnimationsOn()) {
+        rememberInfiniteTransition(label = "lesson-welcome-hero").animateFloat(
+            initialValue = -VolaGestureLessonTokens.HERO_FLOAT_PX,
+            targetValue = VolaGestureLessonTokens.HERO_FLOAT_PX,
+            animationSpec = infiniteRepeatable(
+                animation = tween(VolaGestureLessonTokens.HERO_FLOAT_MILLIS, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "lesson-welcome-float",
+        )
+    } else {
+        remember { mutableFloatStateOf(0f) }
+    }
     val colors = MaterialTheme.colorScheme
 
     Box(
@@ -972,15 +978,19 @@ private fun GesturePointerGuide(
     userDragging: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "gesture-pointer-${step.name}")
-    val loopProgress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(VolaGestureLessonTokens.POINTER_LOOP_MILLIS, easing = LinearEasing),
-        ),
-        label = "gesture-pointer-progress",
-    )
+    // With animations removed the pointer holds still half-way along the gesture.
+    val loopProgress by if (rememberSystemAnimationsOn()) {
+        rememberInfiniteTransition(label = "gesture-pointer-${step.name}").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(VolaGestureLessonTokens.POINTER_LOOP_MILLIS, easing = LinearEasing),
+            ),
+            label = "gesture-pointer-progress",
+        )
+    } else {
+        remember { mutableFloatStateOf(VolaGestureLessonTokens.POINTER_STILL_PROGRESS) }
+    }
     val primary = gestureAccent(step)
     val surface = MaterialTheme.colorScheme.surface
     Canvas(
