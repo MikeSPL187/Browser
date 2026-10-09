@@ -97,9 +97,14 @@ internal class ScreenAuditor(
     fun audit(screen: String, config: String): List<AuditFinding> {
         composeRule.waitForIdle()
         val window = windowGeometry()
-        val nodes = composeRule.onAllNodes(anyNode, useUnmergedTree = false)
+        val allNodes = composeRule.onAllNodes(anyNode, useUnmergedTree = false)
             .fetchSemanticsNodes(atLeastOneRootRequired = false)
-            .filter { node -> node.isShown(window) }
+        val nodes = allNodes.filter { node -> node.isShown(window) }
+        // A sheet opened half-way offers to expand: what its lower edge hides is a drag away, as
+        // in a list that scrolls on. Its rows were filed only when the content was too short to scroll.
+        val expandableRoots = allNodes
+            .filter { node -> node.config.contains(SemanticsActions.Expand) }
+            .mapTo(HashSet()) { node -> node.rootKey() }
         val findings = mutableListOf<AuditFinding>()
         fun file(kind: AuditKind, detail: String) {
             findings += AuditFinding(screen, config, kind, detail)
@@ -111,7 +116,10 @@ internal class ScreenAuditor(
             val bounds = node.boundsOnScreen()
             val label = node.label()
             val readable = node.config.contains(SemanticsProperties.Text) || node.isControl()
-            val underBars = window.underSystemBars(bounds, node.scrollRoom())
+            val room = node.scrollRoom().let { room ->
+                if (node.rootKey() in expandableRoots) room.copy(forward = true) else room
+            }
+            val underBars = window.underSystemBars(bounds, room)
             if (readable && !node.isFullScreen(window) && underBars) {
                 file(
                     AuditKind.SystemBars,

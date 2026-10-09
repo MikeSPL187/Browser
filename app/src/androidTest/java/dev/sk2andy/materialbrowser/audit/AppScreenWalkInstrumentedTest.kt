@@ -61,9 +61,13 @@ import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.junit.runners.model.MultipleFailureException
+import org.junit.runners.model.Statement
+import org.junit.runners.model.TestTimedOutException
 
 /**
  * A tester's walk through the real app: launch, then every screen reached the way a user reaches
@@ -87,6 +91,30 @@ class AppScreenWalkInstrumentedTest(
         .withTimeout(WALK_TIMEOUT_MINUTES, TimeUnit.MINUTES)
         .withLookingForStuckThread(true)
         .build()
+
+    /**
+     * A walk stopped by [timeout] says which step hung and what the main thread was doing: a hang
+     * in the test thread alone is only a wait on a busy app.
+     */
+    @get:Rule(order = -1)
+    val hangReport = TestRule { base, _ ->
+        object : Statement() {
+            override fun evaluate() {
+                try {
+                    base.evaluate()
+                } catch (failure: Throwable) {
+                    val timedOut = (failure as? MultipleFailureException)?.failures
+                        ?.firstOrNull { it is TestTimedOutException } ?: failure
+                    if (timedOut !is TestTimedOutException) throw failure
+                    throw AssertionError(
+                        "${timedOut.message} in step «$currentStep» after ${visited.toList()}; " +
+                            (stepSampler?.summary() ?: "no step running"),
+                        failure,
+                    )
+                }
+            }
+        }
+    }
 
     @get:Rule(order = 1)
     val composeRule = createEmptyComposeRule()
@@ -440,6 +468,9 @@ class AppScreenWalkInstrumentedTest(
     private fun step(name: String, body: () -> Unit) {
         stepTimings.clear()
         val started = SystemClock.elapsedRealtime()
+        val sampler = MainThreadSampler()
+        stepSampler = sampler
+        currentStep = name
         timed("system dialog check") { device.dismissSystemNotResponding() }
         try {
             body()
@@ -451,7 +482,8 @@ class AppScreenWalkInstrumentedTest(
                     name,
                     config.name,
                     AuditKind.Navigation,
-                    "took ${millis / 1000} s to go through; slowest: ${timingSummary(millis)}",
+                    "took ${millis / 1000} s to go through; slowest: ${timingSummary(millis)}; " +
+                        sampler.summary(),
                 )
             }
         } catch (error: Throwable) {
@@ -466,6 +498,8 @@ class AppScreenWalkInstrumentedTest(
             )
             runCatching { recover() }
         } finally {
+            sampler.close()
+            stepSampler = null
             visited += "$name ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         }
     }
@@ -475,6 +509,10 @@ class AppScreenWalkInstrumentedTest(
      * step's own timing finding. A slow step can be one long wait or hundreds of short ones.
      */
     private val stepTimings = linkedMapOf<String, LongArray>()
+
+    @Volatile private var stepSampler: MainThreadSampler? = null
+
+    @Volatile private var currentStep = ""
 
     private inline fun <T> timed(operation: String, block: () -> T): T {
         val started = SystemClock.elapsedRealtime()
