@@ -72,6 +72,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import dev.sk2andy.materialbrowser.ui.theme.VolaGem
@@ -129,7 +130,8 @@ internal fun TabFavicon(
 @Composable
 internal fun letterTileStyle(tile: Dp, base: TextStyle): TextStyle {
     val letterSize = with(LocalDensity.current) { (tile * VolaGem.LETTER_FRACTION).toSp() }
-    return base.copy(fontSize = letterSize, lineHeight = letterSize)
+    // The font's own line height: one equal to the size cut the letter's top and bottom.
+    return base.copy(fontSize = letterSize, lineHeight = TextUnit.Unspecified)
 }
 
 @Composable
