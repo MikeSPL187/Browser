@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
@@ -191,12 +192,27 @@ class AppScreenWalkInstrumentedTest(
                         }.isSuccess
                     }
                     if (!left) {
+                        val node = runCatching {
+                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                                .onFirst().fetchSemanticsNode()
+                        }.getOrNull()
+                        // A tap that misses and a button that does nothing look alike: its own
+                        // click action tells them apart.
+                        val byAction = runCatching {
+                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                                .onFirst().performSemanticsAction(SemanticsActions.OnClick)
+                            idle()
+                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                                .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
+                        }.getOrElse { error -> "failed: ${error.javaClass.simpleName}" }
                         findings += AuditFinding(
                             screen,
                             config.name,
                             AuditKind.Navigation,
-                            "«$forward» stayed on screen ${TIMEOUT_MILLIS / 1000} s after it was pressed — " +
-                                "on screen: ${runCatching { auditor.describeScreen() }.getOrDefault("?")}",
+                            "«$forward» stayed on screen ${TIMEOUT_MILLIS / 1000} s after it was tapped " +
+                                "at ${node?.boundsInWindow}, window ${node?.let { window(it) }}; gone after its " +
+                                "click action: $byAction; roots: ${roots()} — on screen: " +
+                                runCatching { auditor.describeScreen() }.getOrDefault("?"),
                         )
                     }
                     idle()
@@ -204,6 +220,18 @@ class AppScreenWalkInstrumentedTest(
             }
         }
     }
+
+    /** Which window (Compose root) a node is in: a dialog or popup over the screen shows here. */
+    private fun window(node: SemanticsNode): String {
+        var root = node
+        while (true) root = root.parent ?: break
+        return "root ${root.id} at ${root.boundsInWindow}"
+    }
+
+    private fun roots(): String = runCatching {
+        composeRule.onAllNodes(isRoot()).fetchSemanticsNodes(atLeastOneRootRequired = false)
+            .joinToString { root -> "${root.id}@${root.boundsInWindow}" }
+    }.getOrDefault("?")
 
     private fun firstRunForward(): String? = FIRST_RUN_FORWARD.firstOrNull { tag -> exists(hasTestTag(tag)) }
 
