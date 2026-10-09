@@ -181,6 +181,9 @@ class AppScreenWalkInstrumentedTest(
                 } else {
                     auditScrolling(screen)
                     val pressed = composeRule.onAllNodes(hasTestTag(forward)).onFirst().fetchSemanticsNode().id
+                    // Ids are unique only within one Compose root: the tag keeps another root's
+                    // node with the same id from passing for the pressed button.
+                    val pressedMatcher = hasTestTag(forward) and SemanticsMatcher("pressed $pressed") { it.id == pressed }
                     click(hasTestTag(forward))
                     // The next screen fades in over this one: until it is gone its «Next» is still
                     // there to find, and the walk pressed it nine times on the screen it had left.
@@ -188,7 +191,7 @@ class AppScreenWalkInstrumentedTest(
                         runCatching {
                             composeRule.waitUntil(TIMEOUT_MILLIS) {
                                 // A screen that left can linger in a detached root, at no size.
-                                composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                                composeRule.onAllNodes(pressedMatcher)
                                     .fetchSemanticsNodes(atLeastOneRootRequired = false)
                                     .none { node -> node.boundsInWindow.width > 0f && node.boundsInWindow.height > 0f }
                             }
@@ -196,16 +199,16 @@ class AppScreenWalkInstrumentedTest(
                     }
                     if (!left) {
                         val node = runCatching {
-                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                            composeRule.onAllNodes(pressedMatcher)
                                 .onFirst().fetchSemanticsNode()
                         }.getOrNull()
                         // A tap that misses and a button that does nothing look alike: its own
                         // click action tells them apart.
                         val byAction = runCatching {
-                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                            composeRule.onAllNodes(pressedMatcher)
                                 .onFirst().performSemanticsAction(SemanticsActions.OnClick)
                             idle()
-                            composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
+                            composeRule.onAllNodes(pressedMatcher)
                                 .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
                         }.getOrElse { error -> "failed: ${error.javaClass.simpleName}" }
                         findings += AuditFinding(
