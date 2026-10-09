@@ -14,7 +14,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
@@ -180,45 +179,22 @@ class AppScreenWalkInstrumentedTest(
                     reachedBrowser = true
                 } else {
                     auditScrolling(screen)
-                    val pressed = composeRule.onAllNodes(hasTestTag(forward)).onFirst().fetchSemanticsNode().id
-                    // Ids are unique only within one Compose root: the tag keeps another root's
-                    // node with the same id from passing for the pressed button.
-                    val pressedMatcher = hasTestTag(forward) and SemanticsMatcher("pressed $pressed") { it.id == pressed }
+                    val before = auditor.describeScreen()
                     click(hasTestTag(forward))
-                    // The next screen fades in over this one: until it is gone its «Next» is still
-                    // there to find, and the walk pressed it nine times on the screen it had left.
-                    val left = timed("wait for $screen to go") {
+                    // The next screen fades in over this one, and a screen that left can linger in
+                    // a detached root: the walk once pressed «Next» nine times on a screen it had
+                    // left. What it waits for is what is shown, as a user does.
+                    val moved = timed("wait for $screen to go") {
                         runCatching {
-                            composeRule.waitUntil(TIMEOUT_MILLIS) {
-                                // A screen that left can linger in a detached root, at no size.
-                                composeRule.onAllNodes(pressedMatcher)
-                                    .fetchSemanticsNodes(atLeastOneRootRequired = false)
-                                    .none { node -> node.boundsInWindow.width > 0f && node.boundsInWindow.height > 0f }
-                            }
+                            composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
                         }.isSuccess
                     }
-                    if (!left) {
-                        val node = runCatching {
-                            composeRule.onAllNodes(pressedMatcher)
-                                .onFirst().fetchSemanticsNode()
-                        }.getOrNull()
-                        // A tap that misses and a button that does nothing look alike: its own
-                        // click action tells them apart.
-                        val byAction = runCatching {
-                            composeRule.onAllNodes(pressedMatcher)
-                                .onFirst().performSemanticsAction(SemanticsActions.OnClick)
-                            idle()
-                            composeRule.onAllNodes(pressedMatcher)
-                                .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
-                        }.getOrElse { error -> "failed: ${error.javaClass.simpleName}" }
+                    if (!moved) {
                         findings += AuditFinding(
                             screen,
                             config.name,
                             AuditKind.Navigation,
-                            "«$forward» stayed on screen ${TIMEOUT_MILLIS / 1000} s after it was tapped " +
-                                "at ${node?.boundsInWindow}, window ${node?.let { window(it) }}; gone after its " +
-                                "click action: $byAction; roots: ${roots()} — on screen: " +
-                                runCatching { auditor.describeScreen() }.getOrDefault("?"),
+                            "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — on screen: $before",
                         )
                     }
                     idle()
@@ -226,18 +202,6 @@ class AppScreenWalkInstrumentedTest(
             }
         }
     }
-
-    /** Which window (Compose root) a node is in: a dialog or popup over the screen shows here. */
-    private fun window(node: SemanticsNode): String {
-        var root = node
-        while (true) root = root.parent ?: break
-        return "root ${root.id} at ${root.boundsInWindow}"
-    }
-
-    private fun roots(): String = runCatching {
-        composeRule.onAllNodes(isRoot()).fetchSemanticsNodes(atLeastOneRootRequired = false)
-            .joinToString { root -> "${root.id}@${root.boundsInWindow}" }
-    }.getOrDefault("?")
 
     private fun firstRunForward(): String? = FIRST_RUN_FORWARD.firstOrNull { tag -> exists(hasTestTag(tag)) }
 
