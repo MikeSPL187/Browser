@@ -97,7 +97,8 @@ internal object AuditEnvironment {
     fun reset(context: Context) {
         shell("cmd uimode night no")
         setFontScale(1f)
-        setLayout(AuditLayout.PhonePortrait)
+        // The next test waits for its own shape; a slow turn here must not hide this one's result.
+        runCatching { setLayout(AuditLayout.PhonePortrait) }
         setAppLanguage(context, null)
         context.getSharedPreferences("browser_session", Context.MODE_PRIVATE).edit().clear().commit()
     }
@@ -108,8 +109,12 @@ internal object AuditEnvironment {
 
     private fun setLayout(layout: AuditLayout) {
         // The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
+        val rotation = if (layout == AuditLayout.PhoneLandscape) 1 else 0
         shell("settings put system accelerometer_rotation 0")
-        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
+        shell("settings put system user_rotation $rotation")
+        // The window manager's own lock: the setting alone was at times not taken up, and a walk
+        // labelled upright ran on its side.
+        shell("wm user-rotation lock $rotation")
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")
@@ -134,6 +139,10 @@ internal object AuditEnvironment {
             if (wide == landscape) return
             SystemClock.sleep(SHAPE_POLL_MILLIS)
         }
+        throw AssertionError(
+            "the display stayed ${device.displayWidth}×${device.displayHeight} px, not " +
+                if (landscape) "landscape" else "upright",
+        )
     }
 
     private fun setAppLanguage(context: Context, languageTag: String?) {

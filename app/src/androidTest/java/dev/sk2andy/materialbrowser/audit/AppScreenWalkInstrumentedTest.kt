@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
 import android.os.SystemClock
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -633,7 +634,7 @@ class AppScreenWalkInstrumentedTest(
             composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
-        val target = composeRule.onAllNodes(matcher).onFirst()
+        val target = composeRule.onAllNodes(matcher)[liveIndex(matcher) ?: 0]
         if (!fullyShown(target.fetchSemanticsNode())) {
             timed("scroll to ${matcher.description}") { scrollIntoView(matcher) }
         }
@@ -666,7 +667,7 @@ class AppScreenWalkInstrumentedTest(
     private fun scrollIntoView(matcher: SemanticsMatcher) {
         repeat(SCROLL_INTO_VIEW_ATTEMPTS) {
             val node = composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false)
-                .firstOrNull() ?: return
+                .getOrNull(liveIndex(matcher) ?: return) ?: return
             if (fullyShown(node)) return
             var list = node.parent
             while (list != null && !list.config.contains(SemanticsProperties.VerticalScrollAxisRange)) {
@@ -742,9 +743,23 @@ class AppScreenWalkInstrumentedTest(
         hasContentDescription(string(R.string.cd_close_address_input)) and
             SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = runCatching {
-        composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
-    }.getOrDefault(false)
+    private fun exists(matcher: SemanticsMatcher): Boolean = runCatching { liveIndex(matcher) != null }.getOrDefault(false)
+
+    /**
+     * The first node the matcher finds in a Compose root that is on screen. A root of no size can
+     * hold a copy of a screen that left: tapping the first-run lesson's Skip there tapped the
+     * window's corner, and the lesson stayed.
+     */
+    private fun liveIndex(matcher: SemanticsMatcher): Int? = composeRule.onAllNodes(matcher)
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .indexOfFirst { node -> node.rootBounds().width > 0f && node.rootBounds().height > 0f }
+        .takeIf { it >= 0 }
+
+    private fun SemanticsNode.rootBounds(): Rect {
+        var root = this
+        while (true) root = root.parent ?: break
+        return root.boundsInWindow
+    }
 
     private fun string(id: Int): String = currentActivity().getString(id)
 
@@ -755,11 +770,10 @@ class AppScreenWalkInstrumentedTest(
      */
     private fun awaitWindowShape(layout: AuditLayout) {
         val landscape = layout == AuditLayout.PhoneLandscape
-        runCatching {
-            composeRule.waitUntil("the window to be ${layout.label}", TIMEOUT_MILLIS) {
-                val decor = currentActivity().window.decorView
-                decor.width > 0 && (decor.width > decor.height) == landscape
-            }
+        // Failing here says what went wrong; walking on would file every row under the cutout.
+        composeRule.waitUntil("the window to be ${layout.label}", TIMEOUT_MILLIS) {
+            val decor = currentActivity().window.decorView
+            decor.width > 0 && (decor.width > decor.height) == landscape
         }
     }
 
