@@ -20,8 +20,6 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -617,10 +615,9 @@ class AppScreenWalkInstrumentedTest(
             composeRule.waitUntil("${matcher.description} to tap", TIMEOUT_MILLIS) { exists(matcher) }
         }
         // Scrolled into view first, as a user would: with a large font menu items sit below the fold.
-        // Only when it is not in view: a scroll to a row already shown once stalled for minutes.
         val target = composeRule.onAllNodes(matcher).onFirst()
         if (!fullyShown(target.fetchSemanticsNode())) {
-            timed("scroll to ${matcher.description}") { runCatching { target.performScrollTo() } }
+            timed("scroll to ${matcher.description}") { scrollIntoView(matcher) }
         }
         timed("tap ${matcher.description}") { target.performClick() }
         idle()
@@ -632,12 +629,52 @@ class AppScreenWalkInstrumentedTest(
      */
     private fun revealInLazyList(matcher: SemanticsMatcher): Boolean {
         val lists = composeRule.onAllNodes(hasScrollToNodeAction())
-        val count = lists.fetchSemanticsNodes(atLeastOneRootRequired = false).size
-        for (index in 0 until count) {
-            runCatching { lists[index].performScrollToNode(matcher) }
-            if (exists(matcher)) return true
+            .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        for (list in lists) {
+            for (page in 0 until MAX_SCROLL_PAGES) {
+                if (exists(matcher)) return true
+                if (!scrollBy(list.id, list.boundsInWindow.height * SCROLL_PAGE_FRACTION)) break
+            }
         }
-        return false
+        return exists(matcher)
+    }
+
+    /**
+     * Scrolls the list around the node until the node lies whole inside it. Compose's own
+     * `performScrollTo`/`performScrollToNode` took two to seven minutes here with the main thread
+     * mostly idle (sampled on the System WebView build) and hung a walk past its timeout; the
+     * list's scroll action takes a moment.
+     */
+    private fun scrollIntoView(matcher: SemanticsMatcher) {
+        repeat(SCROLL_INTO_VIEW_ATTEMPTS) {
+            val node = composeRule.onAllNodes(matcher).fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .firstOrNull() ?: return
+            if (fullyShown(node)) return
+            var list = node.parent
+            while (list != null && !list.config.contains(SemanticsProperties.VerticalScrollAxisRange)) {
+                list = list.parent
+            }
+            if (list == null) return
+            val viewport = list.boundsInWindow
+            val top = node.positionInWindow.y
+            val bottom = top + node.size.height
+            val delta = when {
+                bottom > viewport.bottom -> bottom - viewport.bottom
+                top < viewport.top -> top - viewport.top
+                else -> return
+            }
+            if (!scrollBy(list.id, delta)) return
+        }
+    }
+
+    /** Scrolls the list with this semantics id by [delta] px with its own scroll action. */
+    private fun scrollBy(listId: Int, delta: Float): Boolean {
+        val list = composeRule.onAllNodes(SemanticsMatcher("list $listId") { it.id == listId }).onFirst()
+        val scrolled = runCatching {
+            list.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, delta) }
+        }.isSuccess
+        idle()
+        return scrolled
     }
 
     private fun awaitTag(tag: String) {
@@ -719,6 +756,7 @@ class AppScreenWalkInstrumentedTest(
         private const val WALK_TIMEOUT_MINUTES = 20L
         private const val REVEAL_AFTER_MILLIS = 3_000L
         private const val MAX_SCROLL_PAGES = 8
+        private const val SCROLL_INTO_VIEW_ATTEMPTS = 4
         private const val SCROLL_PAGE_FRACTION = 0.8f
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
