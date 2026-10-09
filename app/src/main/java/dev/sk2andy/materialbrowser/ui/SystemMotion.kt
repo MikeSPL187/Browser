@@ -15,5 +15,8 @@ internal fun rememberSystemAnimationsOn(): Boolean {
     val context = LocalContext.current
     return remember(context) {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
-    }
+    } || EXPERIMENT_ANIMATIONS_ALWAYS_ON
 }
+
+/** Temporary: tells whether the lesson standing still is what stops a tap on Skip in CI. */
+private const val EXPERIMENT_ANIMATIONS_ALWAYS_ON = true
