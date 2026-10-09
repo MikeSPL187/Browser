@@ -182,13 +182,22 @@ class AppScreenWalkInstrumentedTest(
                     click(hasTestTag(forward))
                     // The next screen fades in over this one: until it is gone its «Next» is still
                     // there to find, and the walk pressed it nine times on the screen it had left.
-                    timed("wait for $screen to go") {
+                    val left = timed("wait for $screen to go") {
                         runCatching {
                             composeRule.waitUntil(TIMEOUT_MILLIS) {
                                 composeRule.onAllNodes(SemanticsMatcher("pressed $pressed") { it.id == pressed })
                                     .fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
                             }
-                        }
+                        }.isSuccess
+                    }
+                    if (!left) {
+                        findings += AuditFinding(
+                            screen,
+                            config.name,
+                            AuditKind.Navigation,
+                            "«$forward» stayed on screen ${TIMEOUT_MILLIS / 1000} s after it was pressed — " +
+                                "on screen: ${runCatching { auditor.describeScreen() }.getOrDefault("?")}",
+                        )
                     }
                     idle()
                 }
@@ -753,11 +762,15 @@ class AppScreenWalkInstrumentedTest(
         private const val FIRST_RUN_GROUP = -3
         private const val MAX_FIRST_RUN_SCREENS = 10
 
-        /** What moves each first-run screen on: «Next», the lessons' «Start», a lesson's «Skip». */
+        /**
+         * What moves each first-run screen on: a lesson's «Skip», the lessons' «Start», «Next». The
+         * lesson's own buttons come first: the setup screen's «Next» may still be in the tree while
+         * the lesson fades in over it.
+         */
         private val FIRST_RUN_FORWARD = listOf(
-            FirstRunTestTags.Next,
-            "gesture_onboarding_start",
             "gesture_onboarding_skip",
+            "gesture_onboarding_start",
+            FirstRunTestTags.Next,
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
