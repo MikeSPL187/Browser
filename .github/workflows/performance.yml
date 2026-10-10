@@ -1,9 +1,9 @@
-# Performance budget (docs/vola/plan-v5.md, section 7, V2): cold start and frame CPU time of a pull
-# request against its base, both built in this run and measured on the same emulator in six
-# alternating turns, so a drift in the runner's speed hits both builds alike.
-# scripts/ci/perf_gate.py fails the job only on a significant slowdown; the owner's "perf-approved"
-# label lets a known regression through (add it, then re-run the job). Emulator numbers compare
-# builds; smoothness is judged on a phone.
+# Performance budget (docs/vola/plan-v5.md, section 7, V2 and V3): cold start, frame CPU time and
+# memory of a pull request against its base, both built in this run and measured on the same
+# emulator in alternating turns, so a drift in the runner's speed hits both builds alike.
+# scripts/ci/perf_gate.py and memory_budget.py fail the job only on a clear regression; the owner's
+# "perf-approved" label lets a known one through (add it, then re-run the job). Emulator numbers
+# compare builds; smoothness is judged on a phone.
 
 name: Performance budget
 
@@ -18,6 +18,7 @@ on:
       - "gradle.properties"
       - ".github/workflows/performance.yml"
       - "scripts/ci/perf_gate.py"
+      - "scripts/ci/memory_budget.py"
       - "scripts/ci/pages/**"
   workflow_dispatch:
 
@@ -169,6 +170,22 @@ jobs:
             echo "::endgroup::"
           done
 
+      # docs/vola/plan-v5.md, V3: memory with one page open, and what each further tab adds.
+      - name: Measure memory in turns
+        run: |
+          for turn in base:1 head:1 head:2 base:2; do
+            build="${turn%%:*}"
+            round="${turn##*:}"
+            echo "::group::memory, ${build}, round ${round}"
+            adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
+            adb install "perf/${build}.apk"
+            python3 scripts/ci/memory_budget.py measure --package "$APP_PACKAGE" \
+              --url "http://localhost:${PAGE_PORT}/scroll.html" \
+              --out "perf/memory/${build}-${round}.json" ||
+              echo "::warning title=Memory budget::${build} round ${round} was not measured"
+            echo "::endgroup::"
+          done
+
       - name: Performance budget
         env:
           GH_TOKEN: ${{ github.token }}
@@ -180,8 +197,14 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.labels[].name' | grep -qx perf-approved; then
             options+=(--approved)
           fi
-          python3 scripts/ci/perf_gate.py --base perf/results/base --head perf/results/head "${options[@]}"
+          # Both budgets report before the job fails, so one does not hide the other.
+          status=0
+          python3 scripts/ci/perf_gate.py --base perf/results/base --head perf/results/head "${options[@]}" || status=1
+          python3 scripts/ci/memory_budget.py compare \
+            --base perf/memory/base-*.json --head perf/memory/head-*.json "${options[@]}" || status=1
+          exit "$status"
 
+      # Only the numbers: the traces Macrobenchmark leaves next to them weigh hundreds of megabytes.
       - name: Upload results
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -189,7 +212,8 @@ jobs:
           name: performance-${{ github.run_number }}
           path: |
             perf/*.log
-            perf/results/
+            perf/results/**/*benchmarkData.json
+            perf/memory/
           if-no-files-found: ignore
           retention-days: 14
 
