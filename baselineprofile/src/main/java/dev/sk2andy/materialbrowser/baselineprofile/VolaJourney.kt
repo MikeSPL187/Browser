@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.Until
 
 /** The benchmark build of the GeckoView app (app build type "benchmark", flavor "full"). */
@@ -18,7 +19,12 @@ internal fun MacrobenchmarkScope.passFirstRun() {
         val button = listOf("Get started", "Next", "Skip", "Explore Vola", "Начать", "Далее", "Пропустить", "К браузеру")
             .firstNotNullOfOrNull { label -> device.wait(Until.findObject(By.text(label)), UI_TIMEOUT_MILLIS / 4) }
             ?: return
-        button.click()
+        // The screen can move on between finding the button and tapping it; look again.
+        try {
+            button.click()
+        } catch (_: StaleObjectException) {
+            return@repeat
+        }
         device.waitForIdle()
     }
 }

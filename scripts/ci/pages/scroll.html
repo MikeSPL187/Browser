@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll probe</title>
+<style>
+  /* A long, static article for the frame-timing benchmark (scripts/ci/perf_gate.py): text,
+     rounded cards and gradients, the mix a real page scrolls through, with no network or timers. */
+  body { margin: 0; font: 17px/1.5 sans-serif; color: #1c1c1e; background: #f2f2f7; }
+  header { position: sticky; top: 0; padding: 12px 16px; background: rgba(242, 242, 247, 0.9); font-weight: 600; }
+  article { padding: 0 16px 48px; }
+  .card { margin: 16px 0; padding: 16px; border-radius: 16px; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+  .band { height: 140px; margin: 12px 0; border-radius: 12px; }
+</style>
+</head>
+<body>
+<header>Scroll probe</header>
+<article id="article"></article>
+<script>
+  const article = document.getElementById("article");
+  const text = "A browser is judged by how a long page moves under the finger. This paragraph repeats " +
+    "so the page is many screens tall, with cards and gradients between the lines of text.";
+  for (let i = 0; i < 60; i++) {
+    const card = document.createElement("section");
+    card.className = "card";
+    const title = document.createElement("h2");
+    title.textContent = "Section " + (i + 1);
+    card.appendChild(title);
+    for (let p = 0; p < 3; p++) {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+      card.appendChild(paragraph);
+    }
+    const band = document.createElement("div");
+    band.className = "band";
+    const hue = (i * 37) % 360;
+    band.style.background = `linear-gradient(135deg, hsl(${hue} 70% 60%), hsl(${(hue + 60) % 360} 70% 45%))`;
+    card.appendChild(band);
+    article.appendChild(card);
+  }
+</script>
+</body>
+</html>

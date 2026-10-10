@@ -89,7 +89,7 @@ jobs:
             scripts/test_quality_gates.py scripts/test_a11y_audit.py \
             scripts/ci/test_startup_timeline.py scripts/ci/test_symbolicate.py \
             scripts/ci/test_release_smoke.py scripts/ci/test_page_probe.py \
-            scripts/ci/test_apk_size_gate.py; do
+            scripts/ci/test_apk_size_gate.py scripts/ci/test_perf_gate.py; do
             echo "::group::${test}"
             python3 "$test"
             echo "::endgroup::"
