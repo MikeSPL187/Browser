@@ -23,15 +23,18 @@
 
 Навыки вызывает владелец (`/claim`, `/handoff`) или Claude сам, когда задача подходит под описание навыка.
 
-## Что дальше (по плану, отдельными PR)
+## Что дальше
 
-1. **Проверки Compose в `quality_gates.py`** — условное `clearAndSetSemantics` и `testTag` после него;
-   исправление найденных мест (`WideAddressTabStrip.kt`, `hiddenUnderModal`, редакторы действий).
-2. **Хук старта сессии + проверка перед пушем + `/preflight`** — Android SDK в облаке, гейты и
-   юнит-тесты до пуша. Нужна сеть: владелец добавляет в настройках **каждой** среды (меню среды в
-   заголовке сессии → Edit → Network access → Custom, список менеджеров пакетов оставить) хосты
-   `dl.google.com`, `maven.mozilla.org`, `jitpack.io`, `symbolication.services.mozilla.com`.
-   Инструкция: https://code.claude.com/docs/en/cloud-environments#network-access
+Проверки Compose (гейт `semantics`), хук старта сессии, проверка перед пушем и ночной smoke-тест сделаны
+(#133, #135). Осталось:
+
+1. **Сеть среды (делает владелец).** Без неё хук не ставит Android SDK и облачная сессия не собирает
+   проект (проверено 2026-10-10: хосты закрыты, Maven Central отвечает 429). В настройках **каждой** среды:
+   меню среды в заголовке сессии → Edit → Network access → уровень Limited, в Allowed domains добавить
+   `dl.google.com`, `maven.mozilla.org`, `jitpack.io`, `symbolication.services.mozilla.com`; галочку
+   Allow package managers оставить (в старом приложении это уровень Custom с галочкой списка менеджеров
+   пакетов). Инструкция: https://code.claude.com/docs/en/cloud-environments#network-access
+2. **Бюджеты качества и видео сценариев в CI** — V1–V4 в `plan-v5.md`, раздел 9.
 
 ## Проверка, что работает
 - Новая сессия: на вопрос «что сейчас открыто?» отвечает по короткому `STATUS.md`, не открывая историю.
