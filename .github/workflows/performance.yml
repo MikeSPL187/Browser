@@ -1,8 +1,9 @@
-# Performance budget (docs/vola/plan-v5.md, section 7, V2): cold start and janky frames of a pull
-# request against its base, both built in this run and measured on the same emulator in turns
-# (base, PR, PR, base), so the runner's speed cancels out. scripts/ci/perf_gate.py fails the job
-# when a budget gets worse; the owner's "perf-approved" label lets a known regression through
-# (add it, then re-run the job). Emulator numbers compare builds; smoothness is judged on a phone.
+# Performance budget (docs/vola/plan-v5.md, section 7, V2): cold start and frame CPU time of a pull
+# request against its base, both built in this run and measured on the same emulator in six
+# alternating turns, so a drift in the runner's speed hits both builds alike.
+# scripts/ci/perf_gate.py fails the job only on a significant slowdown; the owner's "perf-approved"
+# label lets a known regression through (add it, then re-run the job). Emulator numbers compare
+# builds; smoothness is judged on a phone.
 
 name: Performance budget
 
@@ -146,8 +147,8 @@ jobs:
             sed -nE "s/^instrumentation:${test_package}\/([^ ]+) .*/\1/p" | head -n 1)"
           device_output="/sdcard/Android/media/${test_package}/additional_test_output"
 
-          # Base, PR, PR, base: a drift in the emulator's speed hits both builds alike.
-          for turn in base:1 head:1 head:2 base:2; do
+          # Alternating turns: a drift in the emulator's speed hits both builds alike.
+          for turn in base:1 head:1 head:2 base:2 base:3 head:3; do
             build="${turn%%:*}"
             round="${turn##*:}"
             echo "::group::${build}, round ${round}"
