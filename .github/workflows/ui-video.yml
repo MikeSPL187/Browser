@@ -17,6 +17,8 @@ on:
       - "app/src/main/res/**"
       - ".github/workflows/ui-video.yml"
       - "scripts/ci/record_ui_video.py"
+      - "scripts/ci/page_probe.py"
+      - "scripts/ci/pages/**"
   workflow_dispatch:
 
 permissions:
