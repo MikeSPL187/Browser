@@ -1,0 +1,154 @@
+# Scenario videos (plan v5, V4): the owner reviews pull requests from a phone, where screenshots
+# cannot show motion. On an emulator with system animations on, this records cold start, scrolling
+# a long page, swiping tabs on the bottom bar and the tab overview, and uploads the mp4s with a
+# contact sheet of eight frames each as the artifact "ui-video-<run number>". The job summary lists
+# the scenarios and a checklist to copy into the pull request description.
+#
+# Runs for pull requests that change UI code or resources, and on manual dispatch. It is separate
+# from screenshots.yml because that tour runs only with the "screenshots" label and takes over an
+# hour, while this one runs on its own for every UI change and needs about 25 minutes.
+
+name: UI video
+
+on:
+  pull_request:
+    paths:
+      - "app/src/main/java/**/ui/**"
+      - "app/src/main/res/**"
+      - ".github/workflows/ui-video.yml"
+      - "scripts/ci/record_ui_video.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-video-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ANDROID_SERIAL: emulator-5554
+  PACKAGE: io.github.mikespl187.vola.debug
+
+jobs:
+  ui-video:
+    name: Scenario videos
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - name: Install emulator and system image
+        run: |
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          # The SDK mirror sometimes cuts a download short ("Error reading Zip content"):
+          # drop the partial file and try again before failing the job.
+          for attempt in 1 2 3; do
+            if sdkmanager \
+              "emulator" \
+              "platform-tools" \
+              "platforms;android-37.1" \
+              "system-images;android-35;google_apis;x86_64"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "sdkmanager failed (attempt $attempt), retrying"
+            rm -rf "$ANDROID_HOME/.temp" "$HOME/.android/cache"
+            sleep $((attempt * 15))
+          done
+          printf 'no\n' | avdmanager create avd \
+            --force \
+            --name vola_ci \
+            --package "system-images;android-35;google_apis;x86_64" \
+            --device pixel_6
+          sudo chmod 666 /dev/kvm
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+
+      - name: Start emulator
+        run: |
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd vola_ci \
+            -port 5554 \
+            -no-window \
+            -noaudio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            > "$RUNNER_TEMP/emulator.log" 2>&1 &
+
+      # The same build the screenshot tour drives.
+      - name: Build debug APK
+        run: ./gradlew --no-daemon --stacktrace assembleFullDebug
+
+      # Unlike the other emulator jobs, animations stay on: the videos are about motion.
+      - name: Wait for emulator
+        run: |
+          timeout 300 adb wait-for-device
+          # shellcheck disable=SC2016 # expanded by the inner shell
+          timeout 300 bash -c '
+            until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do
+              sleep 2
+            done
+          '
+          adb shell settings put global hide_error_dialogs 1
+          adb shell input keyevent 82
+
+      - name: Record scenarios
+        run: |
+          adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
+          status=0
+          python3 scripts/ci/record_ui_video.py "$PACKAGE" "$RUNNER_TEMP/ui-video" || status=$?
+          cat "$RUNNER_TEMP/ui-video/summary.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null \
+            || echo "### Видео сценариев: сводки нет" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload videos
+        id: upload
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ui-video-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/ui-video/*.mp4
+            ${{ runner.temp }}/ui-video/*.png
+            ${{ runner.temp }}/ui-video/*.md
+            ${{ runner.temp }}/ui-video/*.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Link the artifact
+        if: ${{ always() && steps.upload.outputs.artifact-url != '' }}
+        env:
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          echo "Artifact: $ARTIFACT_URL"
+          echo "[Скачать видео и листы кадров]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show emulator log after failure
+        if: ${{ failure() }}
+        run: sed -n '1,300p' "$RUNNER_TEMP/emulator.log" || true
+
+      - name: Stop emulator
+        if: ${{ always() }}
+        run: adb emu kill || true
