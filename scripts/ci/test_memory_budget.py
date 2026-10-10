@@ -46,24 +46,39 @@ class MemoryBudgetTest(unittest.TestCase):
             self.assertEqual(memory_budget.averaged([Path(directory) / "absent.json"]), {})
 
     def test_within_budget_passes(self):
-        _, errors = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30},
+        _, errors, warnings = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30},
                                           {"browser_mb": 214, "per_tab_mb": 34}, approved=False)
-        self.assertEqual(errors, [])
+        self.assertEqual((errors, warnings), ([], []))
 
-    def test_per_tab_regression_fails_unless_approved(self):
+    def test_per_tab_regression_only_warns_while_calibrating(self):
         base, head = {"browser_mb": 200, "per_tab_mb": 30}, {"browser_mb": 200, "per_tab_mb": 40}
-        _, errors = memory_budget.compare(base, head, approved=False)
+        _, errors, warnings = memory_budget.compare(base, head, approved=False)
+        self.assertEqual((errors, warnings), ([], ["each further tab, MB went from 30.0 to 40.0"]))
+
+    def test_enforced_regression_fails_unless_approved(self):
+        base, head = {"browser_mb": 200, "per_tab_mb": 30}, {"browser_mb": 200, "per_tab_mb": 40}
+        _, errors, _ = memory_budget.compare(base, head, approved=False, enforce=True)
         self.assertEqual(errors, ["each further tab, MB went from 30.0 to 40.0"])
-        self.assertEqual(memory_budget.compare(base, head, approved=True)[1], [])
+        self.assertEqual(memory_budget.compare(base, head, approved=True, enforce=True)[1], [])
 
     def test_small_absolute_growth_is_noise(self):
-        _, errors = memory_budget.compare({"browser_mb": 100, "per_tab_mb": 10},
-                                          {"browser_mb": 114, "per_tab_mb": 14}, approved=False)
-        self.assertEqual(errors, [])
+        _, errors, warnings = memory_budget.compare({"browser_mb": 100, "per_tab_mb": 10},
+                                                    {"browser_mb": 114, "per_tab_mb": 14}, approved=False,
+                                                    enforce=True)
+        self.assertEqual((errors, warnings), ([], []))
 
     def test_missing_pull_request_result_fails(self):
-        _, errors = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30}, {}, approved=True)
+        _, errors, _ = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30}, {}, approved=True)
         self.assertEqual(len(errors), 2)
+
+    def test_the_first_ci_run_does_not_fail(self):
+        # Base 737 / 938 MB with negative growth per tab: noise the gate must not fail on yet.
+        base = {"browser_mb": 838.0, "per_tab_mb": -12.7}
+        head = {"browser_mb": 747.4, "per_tab_mb": -2.8}
+        lines, errors, warnings = memory_budget.compare(base, head, approved=False)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(warnings), 1)
+        self.assertTrue(any(line.startswith("Calibration") for line in lines))
 
     def test_compare_command_prints_targets(self):
         with tempfile.TemporaryDirectory() as directory:

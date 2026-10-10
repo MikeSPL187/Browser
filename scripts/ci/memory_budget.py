@@ -4,13 +4,15 @@ page open, and how much each further tab adds, for a pull request against its ba
 
 Usage:
   memory_budget.py measure --package PKG --url URL --out FILE [--tabs N]
-  memory_budget.py compare --base FILE [FILE ...] --head FILE [FILE ...] [--approved]
+  memory_budget.py compare --base FILE [FILE ...] --head FILE [FILE ...] [--approved] [--enforce]
 
 measure drives the emulator with adb (ANDROID_SERIAL): it opens URL as a link from another app (a
 new tab each time), waits for the pages to settle and sums the PSS of every Vola process, Gecko's
-content and GPU processes included. compare averages the rounds of each build and fails when the
-pull request takes noticeably more memory. The absolute targets are reported, not enforced, until
-a week of numbers calibrates them.
+content and GPU processes included. compare averages the rounds of each build and flags a pull
+request that takes noticeably more memory. Until a week of numbers calibrates the budget it only
+warns; --enforce turns a regression into a failure. On the first CI run the same build measured
+737 and 938 MB, and memory one minute after start fell below the first sample, so the numbers are
+not yet steady enough to fail a pull request on.
 """
 
 from __future__ import annotations
@@ -32,7 +34,7 @@ TARGET_PER_TAB_MB = 40.0
 BROWSER_MAX_RATIO, BROWSER_MIN_DELTA_MB = 1.10, 15.0
 PER_TAB_MAX_RATIO, PER_TAB_MIN_DELTA_MB = 1.15, 5.0
 PAGE_SETTLE_SECONDS = 8
-MEMORY_SETTLE_SECONDS = 10
+MEMORY_SETTLE_SECONDS = 25
 SAMPLES = 3
 
 PSS_LINE = re.compile(r"^\s*([\d,]+)K:\s+(\S+)\s+\(pid")
@@ -90,14 +92,17 @@ def averaged(paths: list[Path]) -> dict[str, float]:
     return {key: mean(round_[key] for round_ in rounds) for key in ("browser_mb", "per_tab_mb")}
 
 
-def compare(base: dict[str, float], head: dict[str, float], approved: bool) -> tuple[list[str], list[str]]:
+def compare(base: dict[str, float], head: dict[str, float], approved: bool,
+            enforce: bool = False) -> tuple[list[str], list[str], list[str]]:
+    """The summary lines, the errors that fail the job and the warnings that only annotate it."""
     lines = [
         "### Memory budget (emulator, base vs this pull request)",
         "",
         "| Budget | Target | Base | This PR | Change |",
         "| --- | ---: | ---: | ---: | ---: |",
     ]
-    errors = []
+    errors: list[str] = []
+    warnings: list[str] = []
     budgets = (
         ("browser with one page, MB", "browser_mb", TARGET_BROWSER_MB, BROWSER_MAX_RATIO, BROWSER_MIN_DELTA_MB),
         ("each further tab, MB", "per_tab_mb", TARGET_PER_TAB_MB, PER_TAB_MAX_RATIO, PER_TAB_MIN_DELTA_MB),
@@ -113,17 +118,20 @@ def compare(base: dict[str, float], head: dict[str, float], approved: bool) -> t
         mark = " ⚠️" if worse else ""
         lines.append(f"| {label} | ≤ {target:.0f} | {fmt(before)} | {after:.1f} | {change}{mark} |")
         if worse and not approved:
-            errors.append(f"{label} went from {before:.1f} to {after:.1f}")
+            (errors if enforce else warnings).append(f"{label} went from {before:.1f} to {after:.1f}")
     lines.append("")
     lines.append(
         f"A pull request fails when the browser grows by over {(BROWSER_MAX_RATIO - 1) * 100:.0f} % and "
         f"{BROWSER_MIN_DELTA_MB:.0f} MB, or each tab by over {(PER_TAB_MAX_RATIO - 1) * 100:.0f} % and "
         f"{PER_TAB_MIN_DELTA_MB:.0f} MB. Targets are reported until a week of numbers calibrates them."
     )
+    if not enforce:
+        lines.append("Calibration: a regression only warns for now; it fails the job once the budget "
+                     "is enforced.")
     if errors and not approved:
         lines.append(f"To let a known regression through, the owner adds the `{APPROVAL_LABEL}` label "
                      "and re-runs this job.")
-    return lines, errors
+    return lines, errors, warnings
 
 
 def fmt(value: float | None) -> str:
@@ -142,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     compare_parser.add_argument("--base", nargs="+", type=Path, required=True)
     compare_parser.add_argument("--head", nargs="+", type=Path, required=True)
     compare_parser.add_argument("--approved", action="store_true")
+    compare_parser.add_argument("--enforce", action="store_true")
     args = parser.parse_args(argv)
 
     if args.command == "measure":
@@ -151,13 +160,15 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result))
         return 0
 
-    lines, errors = compare(averaged(args.base), averaged(args.head), args.approved)
+    lines, errors, warnings = compare(averaged(args.base), averaged(args.head), args.approved, args.enforce)
     text = "\n".join(lines) + "\n"
     print(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write(text)
+    for warning in warnings:
+        print(f"::warning title=Memory budget::{warning}")
     for error in errors:
         print(f"::error title=Memory budget::{error}")
     return 1 if errors else 0
