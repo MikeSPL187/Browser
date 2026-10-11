@@ -75,7 +75,13 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
 
 - The extension packs the network lists; `host_blocker.js` ports `RequestBlocker` with the same
   decision order, `network_blocker.js` adds the uAssets URL rules (bucketed by target host) and the
-  person's own Vola rules with `CandyRulePrecedence`. Order: own rule → URL rule → host lists.
+  person's own Vola rules with `CandyRulePrecedence`. `network_filters.js` applies the EasyList and
+  EasyPrivacy URL rules the host compiler leaves out (`easylist_network_filters.txt`, 12 745 rules
+  from `scripts/compile_network_filters.py`): paths, `||`/`|`/`^`/`*`, resource types (Gecko's
+  webRequest reports them), party and `domain=`, and `@@` exceptions. Each rule carries one URL
+  token, so a request only tries the rules whose token its URL contains; `$redirect`, `$csp`,
+  `$important`, `$removeparam`, regular expressions and `match-case` stay out. Order: own rule →
+  URL rules (an exception in any list wins, as in uBlock Origin) → host lists.
 - With the option on, `geckoPrivacyPolicyFor` sends the site's `blockAdsAndTrackers`, the active
   Candy rules and `strictBlocking` (Strict level). Off sends nothing to block; a paused site is
   skipped as before; Strict drops the lists' compatibility exceptions (allow pairs, owner families,

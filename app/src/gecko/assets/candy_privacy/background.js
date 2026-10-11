@@ -321,6 +321,7 @@ function networkDecision(details, token, policy, pageHost) {
     const decision = blocker.decide(details.url, pageHost, {
       strict: policy.strictBlocking === true,
       userRules: policy.rules,
+      type: details.type,
     });
     if (decision === null) return {};
     queueEvent(token, policy.revision, {

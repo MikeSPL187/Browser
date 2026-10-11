@@ -3,9 +3,9 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-const context = vm.createContext({ Map, Set, URL, Uint32Array, Math, String, Error, Promise, atob, TextDecoder });
+const context = vm.createContext({ Map, Set, URL, Uint32Array, Uint8Array, Math, String, Error, Promise, atob, TextDecoder, RegExp, Array, Number });
 // The background page's order: rules.js, then the host lists, then the request decisions.
-for (const script of ["rules.js", "host_blocker.js", "network_blocker.js"]) {
+for (const script of ["rules.js", "host_blocker.js", "network_filters.js", "network_blocker.js"]) {
   vm.runInContext(
     fs.readFileSync(new URL(`../app/src/gecko/assets/candy_privacy/${script}`, import.meta.url), "utf8"),
     context,
@@ -46,13 +46,16 @@ test("the bundled lists load through the extension's file reader", async () => {
     requested.push(name);
     return readList(name);
   });
-  assert.equal(requested.length, 9);
+  assert.equal(requested.length, 10);
   assert.deepEqual(Array.from(blocker.indexedSizes), [100_377, 166_078]);
   // The asset header counts 747 request rules; popup and popunder rules stay out.
   assert.equal(blocker.advancedRuleCount, 747);
   assert.equal(action(blocker.decide("https://stats.doubleclick.net/x.js", "news.example")), "B");
   assert.equal(action(blocker.decide("https://www.example.com/", "news.example")), null);
   assert.equal(action(blocker.decide("https://9anime.vip/banner/top.jpg", "9anime.vip")), "B");
+  assert.ok(blocker.networkFilterCount > 10_000);
+  // EasyList URL rules: a path on any host, and the resource type the rule names.
+  assert.equal(action(blocker.decide("https://js-agent.example/nr-spa-1216.min.js", "news.example", { type: "script" })), "B");
   const started = performance.now();
   for (let i = 0; i < 20_000; i++) blocker.decide(`https://cdn${i}.static.example.org/app.js`, "news.example");
   console.log(`decide: ${((performance.now() - started) * 1000 / 20_000).toFixed(1)} µs per request`);
