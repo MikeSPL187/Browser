@@ -83,6 +83,15 @@ test("bank and payment sites, and their frames on other pages, keep the bundled 
     documentHost: "acs.bank.example",
   })), null);
   assert.equal(action(blocker.decide("https://ads.example/a.js", "notbank.example")), "B");
+  // A frame that is not listed, inside a bank's frame on a shop page.
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "shop.example", {
+    documentHost: "acs.issuer.example",
+    frameHosts: ["acs.bank.example", "shop.example"],
+  })), null);
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "shop.example", {
+    documentHost: "acs.issuer.example",
+    frameHosts: ["shop.example"],
+  })), "B");
   // Strict keeps the exception: it is about not breaking sign-in and payments, not list quality.
   assert.equal(action(blocker.decide("https://ads.example/a.js", "bank.example", { strict: true })), null);
   // The person's own rules still decide there.

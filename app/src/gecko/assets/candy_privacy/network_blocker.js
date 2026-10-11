@@ -102,9 +102,10 @@
     // `type` is the webRequest resource type; EasyList rules may name one. `documentHost` is the
     // frame's own document: list rules judge `domain=` and the party against it, as uBlock Origin
     // does, so a rule for ads inside an ad iframe sees the iframe, not the top page. On a bank or
-    // payment site, and in such a site's frame on another page, the bundled lists stay out.
+    // payment site, and in such a site's frame on another page (`frameHosts`: every enclosing frame),
+    // the bundled lists stay out.
     function decide(requestUrl, pageHost, {
-      strict = false, userRules = [], type = "other", documentHost = null,
+      strict = false, userRules = [], type = "other", documentHost = null, frameHosts = [],
     } = {}) {
       let requestHost;
       try {
@@ -119,7 +120,9 @@
       const context = typeof documentHost === "string" && documentHost ? documentHost.toLowerCase() : page;
       const user = userDecision(userRules, requestHost, page);
       if (user !== null) return user;
-      if (exempt(page) || exempt(context)) return null;
+      if (exempt(page) || exempt(context) || (Array.isArray(frameHosts) && frameHosts.some(exempt))) {
+        return null;
+      }
       const advanced = rules.advancedDecision(
         (strict ? strictCandidates : candidates)(requestHost),
         requestUrl,

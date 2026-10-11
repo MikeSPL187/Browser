@@ -47,6 +47,7 @@ gosuslugi.ru
 nalog.gov.ru
 nalog.ru
 sfr.gov.ru
+mos.ru
 
 # Kazakhstan, Ukraine, Belarus
 kaspi.kz
@@ -64,7 +65,9 @@ alfabank.by
 
 # Payments and card checks
 paypal.com
+paypalobjects.com
 stripe.com
+stripe.network
 adyen.com
 klarna.com
 wise.com
