@@ -8,8 +8,8 @@ from compile_easylist_hosts import compile_sources, template_sources, write_asse
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-PINNED_BLOCKED_ASSET = PROJECT_DIR / "app/src/main/assets/easylist_blocked_hosts.txt"
-PINNED_ALLOWED_ASSET = PROJECT_DIR / "app/src/main/assets/easylist_allowed_host_pairs.txt"
+PINNED_BLOCKED_ASSET = PROJECT_DIR / "app/src/blocking/assets/easylist_blocked_hosts.txt"
+PINNED_ALLOWED_ASSET = PROJECT_DIR / "app/src/blocking/assets/easylist_allowed_host_pairs.txt"
 
 
 class EasyListHostCompilerTest(unittest.TestCase):

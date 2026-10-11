@@ -55,7 +55,10 @@ temporary body scroll lock on WebKit. Gecko delegates consent handling to its in
 extension and does not run Candy consent selectors or request rules in parallel.
 
 Network host matching combines Candy's curated hosts, the complete supported EasyList/EasyPrivacy
-template graph, uAssets, and a deduplicated HaGeZi Pro delta. Sorted byte indexes keep the larger
+template graph, uAssets, and a deduplicated HaGeZi Pro delta. These network lists (hosts, host pairs
+and `uassets_advanced_filters.txt`) live in `app/src/blocking/assets/` and ship once per build:
+System WebView reads them at the asset root, the Gecko build inside the `candy_privacy` extension
+(`rules/`); `BlockingListAssets` opens either. Sorted byte indexes keep the larger
 bundles off the per-request allocation path. Curated owner-family exceptions may allow a blocked
 service only on a PSL-validated family such as `google.*`; lookalike suffixes do not match. User
 Candy allow rules and site pause still take precedence over bundled blocking.
@@ -65,8 +68,11 @@ Candy allow rules and site pause still take precedence over bundled blocking.
 Android Gecko sessions provision Mozilla-signed uBlock Origin as their ad and tracker blocker.
 Candy does not send bundled ad lists, custom ad rules, popup or popunder filter lists to Gecko and
 does not initialize the native `ContentBlocker` snapshot in the Gecko controller. The private
-`candy-privacy-host` packages and parses only the 4.9 KB `candy_default_rules.txt` consent defaults;
-EasyList, HaGeZi, uAssets and generated ad-cosmetic assets stay out of the Gecko extension. The host
+`candy-privacy-host` parses only the 4.9 KB `candy_default_rules.txt` consent defaults today.
+Vola's own Gecko blocker replaces uBlock Origin in steps (`docs/vola/research/ublock-origin.md`):
+the extension already packs the network lists and `host_blocker.js`, a port of `RequestBlocker`
+with the same decision order and tests (`scripts/host_blocker.test.mjs`), not wired to requests
+yet. Generated ad-cosmetic assets stay out of the Gecko extension for now. The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped
 SSO/CAPTCHA compatibility observation.
 

@@ -107,7 +107,7 @@ class UassetsFilterAssetInstrumentedTest {
 
     private fun assetLines(name: String): List<String> {
         val assets = InstrumentationRegistry.getInstrumentation().targetContext.assets
-        return assets.open(name).bufferedReader().useLines { lines ->
+        return BlockingListAssets.open(assets, name).bufferedReader().useLines { lines ->
             lines.map(String::trim)
                 .filter { it.isNotEmpty() && !it.startsWith('#') }
                 .sorted()

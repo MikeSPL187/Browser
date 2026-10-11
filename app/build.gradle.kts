@@ -343,6 +343,9 @@ android {
         getByName("systemwebview").assets.srcDir(
             layout.buildDirectory.dir("generated/systemWebViewNotices/assets").get().asFile,
         )
+        // Network filter lists: System WebView reads them as app assets; the Gecko build packs them
+        // into the candy_privacy extension instead (generateGeckoPrivacyRuleAssets), never both.
+        getByName("systemwebview").assets.srcDir("src/blocking/assets")
         getByName("userCaDebug").res.srcDir("src/userCa/res")
         getByName("userCaRelease").res.srcDir("src/userCa/res")
     }
@@ -420,6 +423,8 @@ tasks.matching { task ->
 val generateGeckoPrivacyRuleAssets by tasks.registering(Sync::class) {
     val ruleAssets = listOf("candy_default_rules.txt")
     from(ruleAssets.map { fileName -> layout.projectDirectory.file("src/main/assets/$fileName") })
+    // Vola's own Gecko blocker reads the network filter lists from its extension.
+    from(layout.projectDirectory.dir("src/blocking/assets")) { include("*.txt") }
     into(layout.buildDirectory.dir("generated/geckoPrivacy/assets/candy_privacy/rules"))
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }

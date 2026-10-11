@@ -14,7 +14,7 @@ from compile_hagezi_hosts import (
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-PINNED_ASSET = PROJECT_DIR / "app/src/main/assets/hagezi_blocked_hosts.txt"
+PINNED_ASSET = PROJECT_DIR / "app/src/blocking/assets/hagezi_blocked_hosts.txt"
 PINNED_REVISION = "4952c89a3ee5e87e173cef9c6c21a17345dfdc24"
 PINNED_SHA256 = "9d9737fb46df0b9a5cdf08a8497c45a4ac8f0d106b3e45269098f65b89e24df0"
 
@@ -120,9 +120,9 @@ class HageziHostCompilerTest(unittest.TestCase):
 
         existing = load_existing_hosts(
             [
-                PROJECT_DIR / "app/src/main/assets/easylist_blocked_hosts.txt",
-                PROJECT_DIR / "app/src/main/assets/blocked_hosts.txt",
-                PROJECT_DIR / "app/src/main/assets/uassets_blocked_hosts.txt",
+                PROJECT_DIR / "app/src/blocking/assets/easylist_blocked_hosts.txt",
+                PROJECT_DIR / "app/src/blocking/assets/blocked_hosts.txt",
+                PROJECT_DIR / "app/src/blocking/assets/uassets_blocked_hosts.txt",
             ]
         )
         self.assertFalse(any(is_covered(host, existing) for host in hosts))

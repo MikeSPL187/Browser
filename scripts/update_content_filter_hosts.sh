@@ -8,8 +8,8 @@ set -eu
 SOURCE_REVISION="54849f55642f155a67649b46fe3b87c39607c1c5"
 SOURCE_ARCHIVE="https://github.com/easylist/easylist/archive/$SOURCE_REVISION.tar.gz"
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-OUTPUT_FILE="$PROJECT_DIR/app/src/main/assets/easylist_blocked_hosts.txt"
-ALLOW_OUTPUT_FILE="$PROJECT_DIR/app/src/main/assets/easylist_allowed_host_pairs.txt"
+OUTPUT_FILE="$PROJECT_DIR/app/src/blocking/assets/easylist_blocked_hosts.txt"
+ALLOW_OUTPUT_FILE="$PROJECT_DIR/app/src/blocking/assets/easylist_allowed_host_pairs.txt"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
 
