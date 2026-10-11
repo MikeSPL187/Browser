@@ -208,10 +208,13 @@
 - Keep private always-block-popup domains memory-only; persist regular domains per profile only.
 - Keep `CREDENTIAL_MANAGER_QUERY_CANDIDATE_CREDENTIALS` and `CREDENTIAL_MANAGER_SET_ORIGIN`
   declared for GeckoView's passkey lookup, origin-bound WebAuthn, and Candy's password Credential
-  Manager bridge. Vola starts Gecko with `security.webauth.webauthn` off: GeckoView 157 asks Google
-  Play services FIDO, which Vola does not ship, whether a platform authenticator exists and for a
-  passkey Credential Manager lacks, and the missing classes crashed Gecko on accounts.google.com
-  (#123, H1). The WebAuthn delegate below stays for when GeckoView handles that. Regular HTTPS Gecko views expose
+  Manager bridge. GeckoView 157 asks Google Play services FIDO, which Vola does not ship, whether a
+  platform authenticator exists and for a passkey Credential Manager lacks; the missing classes
+  crashed Gecko on accounts.google.com (#123, H1). Vola ships refusing stand-ins for the classes
+  GeckoView reaches (`app/src/full/java/com/google`): the platform authenticator question answers
+  `false` and the Play services fallback rejects the page's promise. `security.webauth.webauthn` is on
+  only on Android 14+ with the system Credential Manager (`PasskeySupport`), so passkeys go through the
+  installed provider; on Android 12 and 13 the API stays hidden. Regular HTTPS Gecko views expose
   native virtual Autofill nodes; private views do not. Without Vola's vault, the system password
   manager fills only browsers it trusts, so the first touch of a sign-in field on a regular HTTPS
   Gecko page offers «Sign in faster with Vola», which opens the vault setup and the import (#123,

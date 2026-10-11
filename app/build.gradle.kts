@@ -677,7 +677,8 @@ dependencies {
     implementation(libs.argon2kt)
     implementation(libs.kotlinx.serialization.json)
     // Vola ships without Google Play services. GeckoView uses the framework Credential Manager for
-    // WebAuthn on API 34+, so its optional Play services FIDO provider is excluded.
+    // WebAuthn on API 34+, so its optional Play services FIDO provider is excluded; the classes
+    // GeckoView still calls on its fallback are refusing stand-ins in src/full/java/com/google.
     addProvider<MinimalExternalModuleDependency, ExternalModuleDependency>(
         "fullImplementation",
         libs.geckoview,
@@ -693,13 +694,25 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.json)
-    testImplementation(libs.geckoview)
+    // Vola's own stand-ins for the Play services FIDO classes live in src/full (passkeys, option A).
+    addProvider<MinimalExternalModuleDependency, ExternalModuleDependency>(
+        "testImplementation",
+        libs.geckoview,
+    ) {
+        exclude(group = "com.google.android.gms", module = "play-services-fido")
+    }
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.uiautomator)
-    androidTestImplementation(libs.geckoview)
+    // Vola's own stand-ins for the Play services FIDO classes live in src/full (passkeys, option A).
+    addProvider<MinimalExternalModuleDependency, ExternalModuleDependency>(
+        "androidTestImplementation",
+        libs.geckoview,
+    ) {
+        exclude(group = "com.google.android.gms", module = "play-services-fido")
+    }
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestUtil(libs.androidx.test.orchestrator)

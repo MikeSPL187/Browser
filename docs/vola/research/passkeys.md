@@ -26,7 +26,9 @@ Bitwarden, KeePassDX, Proton Pass и другие. На Android 12–13 passkeys
 
 Код — `WebAuthnTokenManager.java` и `WebAuthnCredentialManager.java` в
 [mozilla-firefox/firefox](https://github.com/mozilla-firefox/firefox/tree/main/mobile/android/geckoview/src/main/java/org/mozilla/geckoview)
-(сборка Vola — не `MOZILLA_OFFICIAL`, поэтому идёт «непривилегированная» ветка).
+(какая ветка — привилегированный `Fido2PrivilegedApiClient` или обычный `Fido2ApiClient` — решает
+константа `MOZILLA_OFFICIAL` сборки GeckoView с maven.mozilla.org; javac оставляет в классе только одну.
+Заглушка закрывает обе).
 
 | Вызов страницы | Первый шаг | Когда уходит в Play services FIDO |
 |---|---|---|
@@ -149,6 +151,27 @@ WebAuthn остаётся выключенным.
    без падения; Android 13 (если есть) — вход по паролю.
 5. Заявки в списки провайдеров — после релиза с этим PR (нужен отпечаток релизного ключа; он публичный,
    секретом не является).
+
+## 7. Реализация варианта A
+
+- **Заглушки** — `app/src/full/java/com/google/android/gms/**` (только сборка Gecko): `Fido`, оба
+  клиента, `Task` со слушателями и около десятка типов запроса. `isUVPAA` — задача, которая сразу
+  сообщает ошибку (страница получает `false`). Создание и вход через Play services падают на первом же
+  конструкторе (`PublicKeyCredentialCreationOptions.Builder`, `AuthenticationExtensions.Builder`,
+  `PublicKeyCredentialDescriptor`) исключением `UnsupportedOperationException`; его ловит `catch` GeckoView,
+  и обещание на странице отклоняется — без падения и без зависания (задача Play services не создаётся).
+  `getCredentialList` бросает исключение — GeckoView считает, что ключа в Play services нет, и идёт в
+  Credential Manager. Остальные типы Play services, которые упоминает GeckoView, достижимы только после
+  отказа заглушки, поэтому их нет.
+- **Включение:** `security.webauth.webauthn` = `PasskeySupport.current() == Available`
+  (API 34+ и `android.software.credentials`), иначе выключен, как раньше.
+- **Тесты:** `GeckoWebAuthnFallbackTest` читает пул констант классов GeckoView
+  (`WebAuthnTokenManager`, `WebAuthnUtils`) и проверяет, что каждый вызов до отказа есть в заглушке —
+  обновление GeckoView с новым вызовом краснеет в юнит-тестах, а не падает у пользователя;
+  `GeckoWebAuthnStandInsTest` — поведение заглушек; `GeckoWebAuthnInstrumentedTest` — настоящий Gecko
+  на эмуляторе: API есть ровно там, где есть Credential Manager, `isUVPAA` отвечает `false`.
+- `play-services-fido` исключён и из тестовых зависимостей GeckoView, иначе настоящие классы
+  перекрыли бы заглушки в тестах.
 
 ## Источники
 

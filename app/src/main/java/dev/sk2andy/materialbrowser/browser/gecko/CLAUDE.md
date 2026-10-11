@@ -6,9 +6,11 @@
 - **Новая возможность движка:** сначала порт (interface) в общем коде, затем реализация для Gecko и
   System WebView; если в WebView невозможно — фича явно скрыта в UI для flavor `systemwebview`.
 - **Настройки Gecko без публичного API** — через `CandyGeckoPrefsBridge` (пакет `org.mozilla.geckoview`).
-- **WebAuthn выключен (#127):** в GeckoView он работает только через FIDO Google Play services, которых в
-  Vola нет; Google спрашивал платформенный аутентификатор — Gecko падал (SIGSEGV в `libxul`). Не включать
-  обратно без провайдера без Google Play.
+- **WebAuthn (passkeys, вариант A):** GeckoView зовёт Google Play services FIDO, которых в Vola нет; без
+  классов Gecko падал (SIGSEGV в `libxul`, #127). Теперь вызовы GeckoView принимают отказывающие заглушки
+  `src/full/java/com/google/**`, и WebAuthn включён только на Android 14+ с Credential Manager
+  (`PasskeySupport`). Обновление GeckoView с новым вызовом Play services ловит `GeckoWebAuthnFallbackTest`:
+  добавь заглушку, которая отказывает исключением (`Exception`, не `Error`), а не правь список в тесте.
 - **Debug и release ведут себя по-разному:** вылет H1 был только в release (и без R8 тоже — дело не в
   минификации). Изменения, способные уронить движок, проверяй на release-сборке (`localRelease` или
   `benchmark`) на эмуляторе CI, а не только тестами на debug.
