@@ -1957,4 +1957,19 @@
         <item quantity="one">%d bookmark skipped: already in Vola or not a web page</item>
         <item quantity="other">%d bookmarks skipped: already in Vola or not web pages</item>
     </plurals>
+    <string name="developer_options_ui_v5">v5 interface</string>
+    <string name="developer_options_ui_v5_summary">Turns on screens of the new interface as they become ready. None is ready yet: the design specimen below shows what they are built from.</string>
+    <string name="developer_options_ui_v5_specimen">v5 design specimen</string>
+    <string name="developer_options_ui_v5_specimen_summary">Colors, the Inter font, shapes and settings tiles of v5 in the light, dark and private themes.</string>
+    <string name="v5_specimen_title">v5 specimen</string>
+    <string name="v5_specimen_close">Close</string>
+    <string name="v5_specimen_theme_light">Light</string>
+    <string name="v5_specimen_theme_dark">Dark</string>
+    <string name="v5_specimen_theme_private">Private</string>
+    <string name="v5_accent_blue">Blue</string>
+    <string name="v5_accent_green">Green</string>
+    <string name="v5_accent_orange">Orange</string>
+    <string name="v5_accent_pink">Pink</string>
+    <string name="v5_accent_purple">Purple</string>
+    <string name="v5_accent_graphite">Graphite</string>
 </resources>

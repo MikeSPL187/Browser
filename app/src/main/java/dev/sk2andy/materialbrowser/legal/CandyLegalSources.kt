@@ -13,6 +13,7 @@ enum class ThirdPartyComponent {
     IStillDontCareAboutCookies,
     Manrope,
     Literata,
+    Inter,
 }
 
 data class ThirdPartyNotice(
@@ -103,6 +104,12 @@ object CandyLegalSources {
             licenseName = "SIL Open Font License 1.1",
             sourceUrl = "https://github.com/googlefonts/literata",
             licenseUrl = "https://github.com/google/fonts/blob/main/ofl/literata/OFL.txt",
+        ),
+        ThirdPartyNotice(
+            component = ThirdPartyComponent.Inter,
+            licenseName = "SIL Open Font License 1.1",
+            sourceUrl = "https://github.com/rsms/inter",
+            licenseUrl = "https://github.com/rsms/inter/blob/master/LICENSE.txt",
         ),
     )
 
