@@ -105,8 +105,8 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
 - Popups: the uAssets `$popup` / `$popunder` rules (`uassets_advanced_filters.txt`). The 98 that
   judge the new window (opener page, target) go to `PopupListFilter` in Kotlin, which
   `BrowserController` asks at its popup and popunder decisions when the flag is on and the opener's
-  site blocks ads; the list is parsed off the main thread, a popup opened before it is ready waits
-  up to 300 ms, then goes through. The 629 marked for the window.open defuser come to the frame
+  site blocks ads; the list starts loading off the main thread with the first policy of Vola's own
+  blocker, and a popup opened before it is ready goes through without the main thread waiting. The 629 marked for the window.open defuser come to the frame
   with its cosmetics (`defuseWindowOpen`): the page's `window.open` opens nothing, defined in the
   page's own scope through `exportFunction`, as `CandyWindowOpenDefuserScript` does on WebView.
   Popups to hosts on the host lists are not blocked on Gecko yet (WebView checks them too).

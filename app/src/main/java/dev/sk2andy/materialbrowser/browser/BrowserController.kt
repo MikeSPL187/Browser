@@ -11759,7 +11759,7 @@ class BrowserController(
             blockAdsAndTrackers = site.blockAdsAndTrackers,
             strictBlocking = site.ignoreCompatibilityAllowLists,
             candyRules = filterRules.filter { it.active && (it.profileId == null || it.profileId == tab.profileId) },
-        )
+        ).also { if (usesGeckoEngine) geckoPopupFilter.preload() }
     }
 
     private fun geckoBlocksPopups(tabId: String, url: String?) = usesGeckoEngine && developerSettings.volaGeckoBlocker &&

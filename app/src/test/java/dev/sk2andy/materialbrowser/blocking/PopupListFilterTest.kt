@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.blocking
 import dev.sk2andy.materialbrowser.browser.PopupFilterDecision
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PopupListFilterTest {
@@ -42,6 +43,22 @@ class PopupListFilterTest {
             PopupFilterDecision.NoMatch,
             filter.decidePopup("https://landing.example/offer", "https://0xxx.ws/"),
         )
+    }
+
+    @Test
+    fun aPopupBeforeTheListIsReadyGoesThroughWithoutWaiting() {
+        val release = java.util.concurrent.CountDownLatch(1)
+        val slow = PopupListFilter {
+            release.await()
+            File("src/blocking/assets/${PopupListFilter.ASSET}").readText()
+        }
+        val started = System.nanoTime()
+        assertEquals(
+            PopupFilterDecision.NoMatch,
+            slow.decidePopup("https://landing.example/offer", "https://sextgem.com/video"),
+        )
+        assertTrue(System.nanoTime() - started < 100_000_000L)
+        release.countDown()
     }
 
     @Test
