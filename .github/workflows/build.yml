@@ -90,7 +90,7 @@ jobs:
             scripts/ci/test_startup_timeline.py scripts/ci/test_symbolicate.py \
             scripts/ci/test_release_smoke.py scripts/ci/test_page_probe.py \
             scripts/ci/test_apk_size_gate.py scripts/ci/test_perf_gate.py \
-            scripts/ci/test_memory_budget.py; do
+            scripts/ci/test_memory_budget.py scripts/ci/test_record_ui_video.py; do
             echo "::group::${test}"
             python3 "$test"
             echo "::endgroup::"
