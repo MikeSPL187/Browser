@@ -71,6 +71,8 @@ internal data class GeckoPrivacyPolicy(
     val animationPolicyRevision: Long = 0L,
     val blockThirdPartyCookies: Boolean = true,
     val allowThirdPartyCookiesForSite: Boolean = false,
+    /** Strict site protection: requests to other sites go without a Referer (`privacy_signals.js`). */
+    val trimCrossSiteReferrer: Boolean = false,
     val compatibilityRequestHosts: Set<String> = DEFAULT_COMPATIBILITY_REQUEST_HOSTS,
     val topInsetPx: Int = 0,
     val navigationGeneration: Int = 0,
@@ -116,6 +118,7 @@ internal object GeckoPrivacyPolicyRules {
         cookieBannerRemovalDisabled: Boolean,
         blockThirdPartyCookies: Boolean,
         allowThirdPartyCookiesForSite: Boolean,
+        trimCrossSiteReferrer: Boolean = false,
         doNotTrackEnabled: Boolean = true,
         globalPrivacyControlEnabled: Boolean = true,
         privacySignalRevision: Long = 0L,
@@ -158,6 +161,7 @@ internal object GeckoPrivacyPolicyRules {
             animationPolicyRevision = animationPolicyRevision.coerceAtLeast(0L),
             blockThirdPartyCookies = blockThirdPartyCookies,
             allowThirdPartyCookiesForSite = allowThirdPartyCookiesForSite,
+            trimCrossSiteReferrer = trimCrossSiteReferrer,
             topInsetPx = topInsetPx.coerceAtLeast(0),
             navigationGeneration = navigationGeneration.coerceAtLeast(0),
             scrollMetricsEnabled = scrollMetricsEnabled,
@@ -215,6 +219,7 @@ internal fun GeckoPrivacyPolicy.toMessage(token: String, revision: Long): JSONOb
     .put("cookieBannerRemovalDisabled", cookieBannerRemovalDisabled)
     .put("doNotTrackEnabled", doNotTrackEnabled)
     .put("globalPrivacyControlEnabled", globalPrivacyControlEnabled)
+    .put("trimCrossSiteReferrer", trimCrossSiteReferrer)
     .put("privacySignalRevision", privacySignalRevision)
     .put("animationsEnabled", animationsEnabled)
     .put("animationPolicyRevision", animationPolicyRevision)

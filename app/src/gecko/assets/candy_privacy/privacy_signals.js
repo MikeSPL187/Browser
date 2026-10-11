@@ -1,8 +1,37 @@
 "use strict";
 
 (function installPrivacySignalHelpers(global) {
-  function requestHeaders(currentHeaders, policy) {
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // A site is a registrable domain (rules.js), so www.example.com and img.example.com are one site.
+  // IP addresses and hosts without a known suffix stay their own site.
+  function siteOf(host) {
+    if (/^[0-9.]+$/.test(host) || host.includes(":")) return host;
+    const rules = global.CandyPrivacyRules;
+    return (typeof rules?.registrableDomain === "function" && rules.registrableDomain(host)) || host;
+  }
+
+  // Strict site protection: a request to another site carries no Referer at all. The source is the
+  // document that made the request (its originUrl), so a link from a strict page to another site
+  // loses the Referer too; without one, the tab's page stands in.
+  function dropsReferrer(policy, requestUrl, originUrl) {
+    if (policy?.trimCrossSiteReferrer !== true) return false;
+    const sourceHost = hostOf(originUrl) ||
+      (typeof policy.pageHost === "string" ? policy.pageHost.toLowerCase() : null);
+    const requestHost = hostOf(requestUrl);
+    if (!sourceHost || !requestHost) return false;
+    return siteOf(requestHost) !== siteOf(sourceHost);
+  }
+
+  function requestHeaders(currentHeaders, policy, requestUrl, originUrl) {
     const names = new Set(["dnt", "sec-gpc"]);
+    if (dropsReferrer(policy, requestUrl, originUrl)) names.add("referer");
     const headers = Array.isArray(currentHeaders) ?
       currentHeaders.filter((header) =>
         typeof header?.name !== "string" || !names.has(header.name.toLowerCase()),

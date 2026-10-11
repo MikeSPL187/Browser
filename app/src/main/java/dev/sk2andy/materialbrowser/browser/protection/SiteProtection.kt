@@ -75,7 +75,11 @@ internal data class SiteProtectionPanelState(
  * something changed; a change reloads the site's open pages so it applies at once.
  */
 internal interface SiteProtectionPort {
+    /** The panel's state now; its counts hold only Vola's blocker, [counts] adds the engine's log. */
     fun state(tabId: String): SiteProtectionPanelState?
+
+    /** Everything blocked on the tab's page, the engine's log included; answers on the main thread. */
+    fun counts(tabId: String, onResult: (SiteProtectionCounts) -> Unit)
 
     fun setLevel(tabId: String, level: SiteProtectionLevel): Boolean
 
