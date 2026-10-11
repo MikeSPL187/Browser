@@ -13,8 +13,12 @@ for (const script of ["rules.js", "host_blocker.js", "network_filters.js", "netw
 }
 const { create, load, LIST_FILES } = context.CandyNetworkBlocker;
 const action = (decision) => (decision === null ? null : decision.action);
-const readList = async (name) =>
-  fs.readFileSync(new URL(`../app/src/blocking/assets/${name}`, import.meta.url), "utf8");
+// Gecko-only lists live in app/src/blocking/gecko; the extension gets both folders.
+const readList = async (name) => {
+  const shared = new URL(`../app/src/blocking/assets/${name}`, import.meta.url);
+  const gecko = new URL(`../app/src/blocking/gecko/${name}`, import.meta.url);
+  return fs.readFileSync(fs.existsSync(shared) ? shared : gecko, "utf8");
+};
 
 const advancedText = [
   "candy-advanced-filter:2",

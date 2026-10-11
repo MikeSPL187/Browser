@@ -425,6 +425,8 @@ val generateGeckoPrivacyRuleAssets by tasks.registering(Sync::class) {
     from(ruleAssets.map { fileName -> layout.projectDirectory.file("src/main/assets/$fileName") })
     // Vola's own Gecko blocker reads the network filter lists from its extension.
     from(layout.projectDirectory.dir("src/blocking/assets")) { include("*.txt") }
+    // Lists only the Gecko blocker reads (System WebView has no use for them).
+    from(layout.projectDirectory.dir("src/blocking/gecko")) { include("*.txt") }
     into(layout.buildDirectory.dir("generated/geckoPrivacy/assets/candy_privacy/rules"))
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }

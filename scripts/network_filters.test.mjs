@@ -12,8 +12,7 @@ for (const script of ["rules.js", "network_filters.js"]) {
 }
 const { parse, index, patternToRegExp } = context.CandyNetworkFilters;
 const rules = context.CandyPrivacyRules;
-const b64 = (value) => Buffer.from(value, "utf8").toString("base64url");
-const asset = (rows) => ["candy-network-filter:1", `# Rules: ${rows.length}`,
+const asset = (rows) => ["candy-network-filter:2", `# Rules: ${rows.length}`,
   ...rows.map((fields) => fields.join("\t"))].join("\n");
 
 test("ABP anchors and separators become the regular expression they mean", () => {
@@ -34,10 +33,10 @@ test("ABP anchors and separators become the regular expression they mean", () =>
 
 test("types, party, page scope and exceptions decide together", () => {
   const decide = index(parse(asset([
-    ["B", "banner", b64("/ads/banner."), "image,imageset", "-", "-", "*"],
-    ["B", "pixel", b64("/pixel.gif"), "*", "-", "-", "3"],
-    ["B", "promo", b64("/promo/"), "*", "news.example", "sport.news.example", "*"],
-    ["A", "banner", b64("/ads/banner.ok"), "*", "-", "-", "*"],
+    ["B", "banner", "/ads/banner.", "image,imageset", "-", "-", "*"],
+    ["B", "pixel", "/pixel.gif", "*", "-", "-", "3"],
+    ["B", "promo", "/promo/", "*", "news.example", "sport.news.example", "*"],
+    ["A", "banner", "/ads/banner.ok", "*", "-", "-", "*"],
   ])), rules);
   assert.equal(decide("https://x.example/ads/banner.png", "image", "x.example", "news.example"), "B");
   assert.equal(decide("https://x.example/ads/banner.png", "script", "x.example", "news.example"), null);
@@ -51,7 +50,7 @@ test("types, party, page scope and exceptions decide together", () => {
 });
 
 test("the bundled EasyList filters load and block typical ad URLs", () => {
-  const text = fs.readFileSync(new URL("../app/src/blocking/assets/easylist_network_filters.txt", import.meta.url), "utf8");
+  const text = fs.readFileSync(new URL("../app/src/blocking/gecko/easylist_network_filters.txt", import.meta.url), "utf8");
   const filters = parse(text);
   assert.ok(filters.length > 10_000);
   const decide = index(filters, rules);
