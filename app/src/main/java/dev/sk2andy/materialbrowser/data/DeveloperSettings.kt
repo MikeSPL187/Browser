@@ -26,8 +26,8 @@ data class DeveloperSettings(
     val safeAreaRequiredFailureCount: Int = DEFAULT_SAFE_AREA_REQUIRED_FAILURE_COUNT,
     val forceSafeAreaFallback: Boolean = false,
     val geckoSafeAreaSettings: GeckoSafeAreaSettings = GeckoSafeAreaSettings(),
-    /** Vola's own Gecko blocker instead of uBlock Origin (in progress, off by default). */
-    val volaGeckoBlocker: Boolean = false,
+    /** Vola's own Gecko blocker (on by default; turning it off is the emergency switch). */
+    val volaGeckoBlocker: Boolean = true,
 ) {
     fun normalized(): DeveloperSettings = copy(
         geckoSafeAreaSettings = geckoSafeAreaSettings.normalized(),
