@@ -201,6 +201,8 @@ internal data class GeckoPrivacyEvent(
     val safeAreaFallbackIsTopHeader: Boolean = false,
     val statusBarBackdropNavigationGeneration: Int? = null,
     val statusBarBackdropThemeColor: String? = null,
+    val siteThemeColorNavigationGeneration: Int? = null,
+    val siteThemeColor: String? = null,
     val isCloudflareChallengeResponse: Boolean = false,
 )
 

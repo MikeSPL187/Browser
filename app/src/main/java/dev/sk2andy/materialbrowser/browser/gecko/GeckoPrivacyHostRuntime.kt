@@ -554,7 +554,12 @@ internal class GeckoViewPrivacyHostRuntime(
             "events" -> acceptEvents(value)
             "main-frame-response" -> acceptMainFrameResponse(value)
             "safe-area-fallback" -> acceptSafeAreaFallback(value)
-            "status-bar-backdrop" -> acceptStatusBarBackdrop(value)
+            "status-bar-backdrop" -> acceptPageColor(value) { generation, color ->
+                copy(statusBarBackdropNavigationGeneration = generation, statusBarBackdropThemeColor = color)
+            }
+            "site-color" -> acceptPageColor(value) { generation, color ->
+                copy(siteThemeColorNavigationGeneration = generation, siteThemeColor = color)
+            }
             "scroll-metrics" -> acceptScrollMetrics(value)
             "inline-video-state" -> acceptInlineVideoState(value)
             "inline-video-open-request" -> acceptInlineVideoOpenRequest(value)
@@ -783,7 +788,11 @@ internal class GeckoViewPrivacyHostRuntime(
         )
     }
 
-    private fun acceptStatusBarBackdrop(value: JSONObject) {
+    /** A color the page reports for the chrome: the status bar backdrop or its theme-color. */
+    private fun acceptPageColor(
+        value: JSONObject,
+        report: GeckoPrivacyEvent.(navigationGeneration: Int, themeColor: String?) -> GeckoPrivacyEvent,
+    ) {
         val binding = bindings[value.optString("token")] ?: return
         if (binding.handshake.publishedRevision != value.optLong("revision", -1)) return
         val navigationGeneration = value.optInt("navigationGeneration", -1)
@@ -798,9 +807,7 @@ internal class GeckoViewPrivacyHostRuntime(
                 wasBlocked = false,
                 isBuiltIn = false,
                 isCompatibilityObservation = false,
-                statusBarBackdropNavigationGeneration = navigationGeneration,
-                statusBarBackdropThemeColor = themeColor,
-            ),
+            ).report(navigationGeneration, themeColor),
         )
     }
 

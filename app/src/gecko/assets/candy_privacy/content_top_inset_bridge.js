@@ -145,6 +145,7 @@ function applyPolicy(policy) {
   if (safeAreaSettingsChanged) globalThis.__candyReconfigureContentTopInset?.();
   else globalThis.__candyReconcileContentTopInset?.();
   globalThis.__candyConfigureCssSafeArea?.();
+  globalThis.__candyReportSiteColor?.();
   scheduleScrollMetrics();
 }
 
@@ -189,6 +190,17 @@ globalThis.CandyContentTopInset = Object.freeze({
       revision,
       themeColor,
     }).catch(() => {});
+  },
+  // The page's theme-color for the v5 bar (content_site_color.js); false until the policy arrives.
+  siteColor: (themeColor) => {
+    if (!policyReady || (themeColor !== null && typeof themeColor !== "string")) return false;
+    browser.runtime.sendMessage({
+      type: "site-color",
+      navigationGeneration: state.navigationGeneration,
+      revision: state.revision,
+      themeColor,
+    }).catch(() => {});
+    return true;
   },
 });
 
