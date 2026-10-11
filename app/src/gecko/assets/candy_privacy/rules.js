@@ -69,6 +69,18 @@
     return Boolean(suffix) && isRegistrySuffix(suffix);
   }
 
+  // A list of domains, one per line (financial_sites.txt): whether a host is one of them or under one.
+  function parseSiteList(text) {
+    const sites = new Set(lines(text).map((line) => line.toLowerCase()));
+    return function listed(host) {
+      if (typeof host !== "string" || !host) return false;
+      for (let candidate = host; ; candidate = candidate.slice(candidate.indexOf(".") + 1)) {
+        if (sites.has(candidate)) return true;
+        if (!candidate.includes(".")) return false;
+      }
+    };
+  }
+
   function isUsK12Suffix(labels) {
     return labels.length === 3 && labels[0] === "k12" && labels[1].length === 2 && labels[2] === "us";
   }
@@ -387,6 +399,7 @@
     parseCandyDefaults,
     parseCosmetic,
     parseProcedural,
+    parseSiteList,
     parseWindowOpenDefusers,
     registrableDomain,
     urlPatternMatches,

@@ -306,7 +306,7 @@ test("WebRTC policies use fail-closed ordering and acknowledge verified settings
 });
 
 test("newer privacy policy wins while older cookie rules are still loading", async () => {
-  let resolveCookieAsset;
+  const cookieAssetResolvers = [];
   let nativeMessageListener;
   let beforeRequestListener;
   let beforeSendHeadersListener;
@@ -330,6 +330,7 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
     clearTimeout,
     CandyPrivacyRules: {
       parseCandyDefaults: () => [],
+      parseSiteList: () => () => false,
       hostMatches: () => false,
       cosmeticPayload: () => ({ selectors: [], procedural: [] }),
     },
@@ -350,7 +351,7 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
       registrationCode: (revision) => `/* animation revision ${revision} */`,
       stylesheet: "* { animation-duration: 0s !important; }",
     },
-    fetch: () => new Promise((resolve) => { resolveCookieAsset = resolve; }),
+    fetch: () => new Promise((resolve) => { cookieAssetResolvers.push(resolve); }),
     browser: {
       runtime: {
         getURL: (path) => path,
@@ -444,7 +445,7 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
     safeAreaRequiredFailureCount: 0,
   });
   await new Promise((resolve) => setImmediate(resolve));
-  resolveCookieAsset({ ok: true, text: () => Promise.resolve("") });
+  cookieAssetResolvers.forEach((resolve) => resolve({ ok: true, text: () => Promise.resolve("") }));
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.equal(privacyRegistrations.length, 1);
@@ -944,6 +945,7 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
   let nativeMessageListener;
   const runtimeMessageListeners = [];
   const payloadRules = [];
+  const payloadPolicies = [];
   const backgroundContext = vm.createContext({
     URL,
     Map,
@@ -958,12 +960,14 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
     clearTimeout,
     CandyPrivacyRules: {
       parseCandyDefaults: () => [],
+      parseSiteList: () => (host) => host === "bank.example",
       parseCosmetic: () => [],
       parseProcedural: () => [],
       indexCosmetics: () => ({ size: 0, candidates: () => [] }),
       hostMatches: () => false,
-      cosmeticPayload: (rules) => {
+      cosmeticPayload: (rules, policy) => {
         payloadRules.push(rules);
+        payloadPolicies.push(policy);
         return { selectors: ["#ad-slot"], procedural: [] };
       },
     },
@@ -1015,6 +1019,7 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
     hideConsent: false,
     blockAds: true,
     pageHost: "news.example",
+    pausedHosts: [],
   });
   for (let i = 0; i < 10; i++) await new Promise((resolve) => setImmediate(resolve));
   const sendRuntimeMessage = async (message, sender) => {
@@ -1032,4 +1037,18 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
 
   assert.deepEqual(Array.from(payload.selectors), ["#ad-slot"]);
   assert.equal(payloadRules.length, 1);
+  assert.equal(payloadPolicies[0].blockAds, true);
+
+  // A bank's frame on the page gets no ad hiding and keeps its window.open.
+  const bankPayload = await sendRuntimeMessage(
+    { type: "cosmetics", url: "https://bank.example/3ds" },
+    { tab: { id: 7 }, url: "https://bank.example/3ds" },
+  );
+  assert.equal(payloadPolicies[1].blockAds, false);
+  assert.equal(bankPayload.defuseWindowOpen, false);
+  const generic = await sendRuntimeMessage(
+    { type: "genericCosmetics", classes: ["ad"], ids: [] },
+    { tab: { id: 7 }, url: "https://bank.example/3ds" },
+  );
+  assert.deepEqual(Array.from(generic.selectors), []);
 });

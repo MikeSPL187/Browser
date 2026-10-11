@@ -3,6 +3,7 @@
 const NATIVE_APP = "dev.sk2andy.materialbrowser.privacy";
 const PROTOCOL_VERSION = 2;
 const COOKIE_RULE_FILE = "candy_default_rules.txt";
+const EXEMPT_SITES_FILE = "financial_sites.txt";
 const policiesByToken = new Map();
 const latestPolicyRevisionByToken = new Map();
 const tokenByTab = new Map();
@@ -247,13 +248,23 @@ async function loadText(fileName) {
   return response.text();
 }
 
+// The bank and payment sites travel with the cookie rules: every frame's answer waits for those.
 async function loadCookieRules() {
-  const candyDefaults = await loadText(COOKIE_RULE_FILE);
+  const [candyDefaults, exemptSites] = await Promise.all([
+    loadText(COOKIE_RULE_FILE),
+    loadText(EXEMPT_SITES_FILE),
+  ]);
   return {
     cosmetics: [],
     procedural: [],
     candyDefaults: CandyPrivacyRules.parseCandyDefaults(candyDefaults),
+    exemptSites: CandyPrivacyRules.parseSiteList(exemptSites),
   };
+}
+
+// No ad hiding and no window.open defusing in a bank or payment frame, or on such a site's page.
+function exemptFromAds(frameHost, pageHost) {
+  return Boolean(cookieRules) && (cookieRules.exemptSites(frameHost) || cookieRules.exemptSites(pageHost));
 }
 
 function ensureCookieRules() {
@@ -871,11 +882,12 @@ browser.runtime.onMessage.addListener((message, sender) => {
       return Promise.resolve({ type: "cosmetics", selectors: [], procedural: [] });
     }
     const pageHost = policy.pageHost || frameHost;
-    return cosmeticRulesFor(policy).then((rules) => ({
+    const framePolicy = exemptFromAds(frameHost, pageHost) ? { ...policy, blockAds: false } : policy;
+    return cosmeticRulesFor(framePolicy).then((rules) => ({
       type: "cosmetics",
       revision: policy.revision,
-      ...CandyPrivacyRules.cosmeticPayload(rules, policy, frameHost),
-      defuseWindowOpen: policy.blockAds === true && Boolean(networkBlocker) && !isPaused(policy, pageHost) &&
+      ...CandyPrivacyRules.cosmeticPayload(rules, framePolicy, frameHost),
+      defuseWindowOpen: framePolicy.blockAds === true && Boolean(networkBlocker) && !isPaused(policy, pageHost) &&
         networkBlocker.defusesWindowOpen(pageHost),
     }));
   }
@@ -886,7 +898,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
     const policy = token && policiesByToken.get(token);
     const frameHost = hostFromUrl(sender.url);
     if (!policy || policy.blockAds !== true || !adCosmetics || !frameHost ||
-        isPaused(policy, policy.pageHost || frameHost)) {
+        isPaused(policy, policy.pageHost || frameHost) || exemptFromAds(frameHost, policy.pageHost || frameHost)) {
       return Promise.resolve({ type: "genericCosmetics", selectors: [] });
     }
     return Promise.resolve({

@@ -50,7 +50,7 @@ test("the bundled lists load through the extension's file reader", async () => {
     requested.push(name);
     return readList(name);
   });
-  assert.equal(requested.length, 10);
+  assert.equal(requested.length, 11);
   assert.deepEqual(Array.from(blocker.indexedSizes), [100_377, 166_078]);
   // The asset header counts 747 request rules; popup and popunder rules stay out.
   assert.equal(blocker.advancedRuleCount, 747);
@@ -60,9 +60,53 @@ test("the bundled lists load through the extension's file reader", async () => {
   assert.ok(blocker.networkFilterCount > 10_000);
   // EasyList URL rules: a path on any host, and the resource type the rule names.
   assert.equal(action(blocker.decide("https://js-agent.example/nr-spa-1216.min.js", "news.example", { type: "script" })), "B");
+  // A bank's own pages keep every request.
+  assert.equal(action(blocker.decide("https://stats.doubleclick.net/x.js", "online.sberbank.ru")), null);
+  assert.equal(blocker.exempts("online.sberbank.ru"), true);
+  assert.equal(blocker.exempts("sberbank.ru.example"), false);
   const started = performance.now();
   for (let i = 0; i < 20_000; i++) blocker.decide(`https://cdn${i}.static.example.org/app.js`, "news.example");
   console.log(`decide: ${((performance.now() - started) * 1000 / 20_000).toFixed(1)} µs per request`);
+});
+
+test("bank and payment sites, and their frames on other pages, keep the bundled lists out", () => {
+  const blocker = create({
+    lists: { hostLists: ["ads.example"] },
+    advancedText,
+    exemptSitesText: "# Banks\nbank.example\n",
+  });
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "news.example")), "B");
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "online.bank.example")), null);
+  assert.equal(action(blocker.decide("https://tracker.example/ads/file.js", "bank.example")), null);
+  // A 3-D Secure check from the bank inside a shop's checkout.
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "shop.example", {
+    documentHost: "acs.bank.example",
+  })), null);
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "notbank.example")), "B");
+  // Strict keeps the exception: it is about not breaking sign-in and payments, not list quality.
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "bank.example", { strict: true })), null);
+  // The person's own rules still decide there.
+  const userRules = [{ id: "mine", a: "B", k: "H", r: "ads.example", f: null }];
+  assert.equal(action(blocker.decide("https://ads.example/a.js", "bank.example", { userRules })), "B");
+  assert.equal(blocker.defusesWindowOpen("bank.example"), false);
+});
+
+test("the bank and payment list holds plain lowercase domains, each once", async () => {
+  const text = await readList(LIST_FILES.exemptSites);
+  const sites = text.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("#"));
+  assert.ok(sites.length > 100);
+  assert.equal(new Set(sites).size, sites.length);
+  for (const site of sites) {
+    assert.match(site, /^[a-z0-9-]+(\.[a-z0-9-]+)+$/, site);
+    assert.ok(!site.startsWith("www."), site);
+  }
+  const listed = context.CandyPrivacyRules.parseSiteList(text);
+  assert.equal(listed("3ds.cardinalcommerce.com"), true);
+  assert.equal(listed("paypal.com"), true);
+  assert.equal(listed("paypal.com.example"), false);
+  assert.equal(listed("com"), false);
+  assert.equal(listed(""), false);
+  assert.equal(listed(null), false);
 });
 
 test("a missing list fails the load instead of blocking less", async () => {
