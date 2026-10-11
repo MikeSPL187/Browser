@@ -83,6 +83,11 @@ test("cosmetic payload is host scoped, respects pause, and includes dynamic and 
   );
   assert.equal(paused.selectors.length, 0);
   assert.equal(paused.procedural.length, 0);
+  // A bank or payment frame: the bundled lists stay out, the person's own rule still hides.
+  const exempt = rules.cosmeticPayload(staticRules, { ...policy, listsExempt: true }, "cdn.news.example");
+  assert.deepEqual(Array.from(exempt.selectors), [".personal-ad"]);
+  assert.equal(exempt.procedural.length, 0);
+  assert.equal(exempt.generic, false);
 });
 
 test("public suffix wildcard matching mirrors Candy host rules", () => {
@@ -1044,7 +1049,8 @@ test("ad cosmetics reach frames when consent banners are left alone", async () =
     { type: "cosmetics", url: "https://bank.example/3ds" },
     { tab: { id: 7 }, url: "https://bank.example/3ds" },
   );
-  assert.equal(payloadPolicies[1].blockAds, false);
+  assert.equal(payloadPolicies[1].blockAds, true);
+  assert.equal(payloadPolicies[1].listsExempt, true);
   assert.equal(bankPayload.defuseWindowOpen, false);
   const generic = await sendRuntimeMessage(
     { type: "genericCosmetics", classes: ["ad"], ids: [] },

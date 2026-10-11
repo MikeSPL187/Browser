@@ -262,7 +262,8 @@ async function loadCookieRules() {
   };
 }
 
-// No ad hiding and no window.open defusing in a bank or payment frame, or on such a site's page.
+// No bundled ad hiding and no window.open defusing in a bank or payment frame, or on such a
+// site's page; the person's own hiding rules still apply.
 function exemptFromAds(frameHost, pageHost) {
   return Boolean(cookieRules) && (cookieRules.exemptSites(frameHost) || cookieRules.exemptSites(pageHost));
 }
@@ -341,6 +342,9 @@ function networkDecision(details, token, policy, pageHost) {
       userRules: policy.rules,
       type: details.type,
       documentHost: hostFromUrl(details.documentUrl),
+      // Every enclosing frame, so a bank's page inside a payment provider's frame is left alone too.
+      frameHosts: Array.isArray(details.frameAncestors) ?
+        details.frameAncestors.map((ancestor) => hostFromUrl(ancestor.url)) : [],
     });
     if (decision === null) return {};
     queueEvent(token, policy.revision, {
@@ -882,13 +886,15 @@ browser.runtime.onMessage.addListener((message, sender) => {
       return Promise.resolve({ type: "cosmetics", selectors: [], procedural: [] });
     }
     const pageHost = policy.pageHost || frameHost;
-    const framePolicy = exemptFromAds(frameHost, pageHost) ? { ...policy, blockAds: false } : policy;
-    return cosmeticRulesFor(framePolicy).then((rules) => ({
+    const exempt = exemptFromAds(frameHost, pageHost);
+    const framePolicy = exempt ? { ...policy, listsExempt: true } : policy;
+    // An exempt frame needs no bundled ad cosmetics: only the cookie rules and the person's own.
+    return cosmeticRulesFor(exempt ? { blockAds: false } : policy).then((rules) => ({
       type: "cosmetics",
       revision: policy.revision,
       ...CandyPrivacyRules.cosmeticPayload(rules, framePolicy, frameHost),
-      defuseWindowOpen: framePolicy.blockAds === true && Boolean(networkBlocker) && !isPaused(policy, pageHost) &&
-        networkBlocker.defusesWindowOpen(pageHost),
+      defuseWindowOpen: policy.blockAds === true && !exempt && Boolean(networkBlocker) &&
+        !isPaused(policy, pageHost) && networkBlocker.defusesWindowOpen(pageHost),
     }));
   }
   // A frame that got `generic: true` reports the class and id names it uses; the answer is the
