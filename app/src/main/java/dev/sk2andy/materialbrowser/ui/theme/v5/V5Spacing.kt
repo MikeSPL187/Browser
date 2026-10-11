@@ -74,6 +74,16 @@ object V5Sizes {
     /** The top of the suggestion list fades into the material over this height. */
     val suggestionFade: Dp = 36.dp
 
+    // Tab overview (system-v5.md, section 10; canvas screen «d»).
+    /** A tab card's thumbnail: width to height, as the canvas card 173 × 231. */
+    const val OVERVIEW_CARD_RATIO = 0.75f
+    /** The accent ring around the current tab's card. */
+    val overviewRing: Dp = 2.dp
+    /** The round plate of a card's close button; its touch target stays [touchTarget]. */
+    val overviewClosePlate: Dp = 24.dp
+    /** The site icon under a card. */
+    val overviewFavicon: Dp = 16.dp
+
     // Sheets.
     val sheetHandleWidth: Dp = 36.dp
     val sheetHandleHeight: Dp = 4.dp

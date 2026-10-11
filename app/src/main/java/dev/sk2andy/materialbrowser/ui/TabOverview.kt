@@ -144,7 +144,7 @@ internal data class HeroPagerSnapshotObservation(
 )
 
 @Composable
-internal fun TabOverview(
+internal fun TabOverviewV4(
     controller: BrowserController,
     backgroundWallpaper: ProfileWallpaperRuntime? = null,
     visible: Boolean,
