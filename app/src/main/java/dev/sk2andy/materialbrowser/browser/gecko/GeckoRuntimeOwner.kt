@@ -65,6 +65,10 @@ internal interface GeckoRuntimeHandle {
     @UiThread
     fun setGlobalPrivacyControl(enabled: Boolean)
 
+    /** Sites whose fingerprinting protection is off ([GeckoFingerprintingExceptions]). */
+    @UiThread
+    fun setFingerprintingProtectionExceptions(hosts: Set<String>) = Unit
+
     @UiThread
     fun setWebContentFontSizeFactor(factor: Float)
 

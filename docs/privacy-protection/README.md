@@ -9,6 +9,7 @@
 | WebRTC IP protection and engine fallbacks | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#webrtc-protection) | `WebRtcProtectionMode`, engine factories, Gecko Privacy host |
 | Do Not Track and Global Privacy Control | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#privacy-signals) | `PrivacySignalSettings`, engine privacy policy, Gecko Privacy host |
 | Browser and page animation suppression | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#animation-suppression) | `AppearanceSettings`, engine privacy policy, Gecko Privacy host |
+| Site protection levels (Off / Standard / Strict), per-site switches and counts (v5) | [`site-protection.md`](site-protection.md) | `browser/protection/`, `SitePrivacyOverrides`, `GeckoSiteProtection` |
 | Default-on Auto De-AMP navigation | [`../browsing/runtime-and-navigation.md`](../browsing/runtime-and-navigation.md#navigation-paths) | `AutoDeAmpRules`, `BrowserController`, `BrowserSessionStore`, `ProtectionSettingsPage` |
 | GeckoView HTTPS-only mode and its warning page | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#https-only-mode) | `HttpsOnlyMode`, `GeckoHttpsOnlyErrorPage`, `BrowserSessionStore`, Gecko runtime settings |
 | GeckoView encrypted DNS and System WebView boundary | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#encrypted-dns) | `DnsOverHttpsSettings`, `BrowserSessionStore`, Gecko runtime settings |

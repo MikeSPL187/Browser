@@ -43,11 +43,13 @@ private fun previewState(domain: String?, loading: Boolean = false) = V5BarState
 )
 
 @Composable
-private fun BarPreview(state: V5BarState) {
+private fun BarPreview(state: V5BarState, collapsed: Boolean = false) {
     Box(Modifier.fillMaxSize().background(V5Theme.colors.background)) {
         V5BottomBar(
             state = state,
             gestures = PreviewGestures,
+            collapsed = collapsed,
+            onExpand = {},
             onAddress = {},
             onShield = {},
             onReloadOrStop = {},
@@ -80,4 +82,10 @@ private fun V5BarNewTabPreview() {
 @Composable
 private fun V5BarPrivatePreview() {
     VolaV5Theme(privateBrowsing = true) { BarPreview(previewState("polar-notes.ru")) }
+}
+
+@Preview(name = "v5 bar · collapsed", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarCollapsedPreview() {
+    VolaV5Theme(dark = true) { BarPreview(previewState("polar-notes.ru"), collapsed = true) }
 }
