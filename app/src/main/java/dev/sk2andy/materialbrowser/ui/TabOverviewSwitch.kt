@@ -51,6 +51,7 @@ internal fun TabOverview(
             controller = controller,
             visible = visible,
             onClose = onClose,
+            onSelect = onSelect,
             onNewTab = onNewTab,
             onEntryHeroStarted = onEntryHeroStarted,
             onEntryHeroCompleted = onEntryHeroCompleted,

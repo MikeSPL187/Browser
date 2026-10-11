@@ -41,6 +41,7 @@ internal fun BrowserTabOverviewV5(
     controller: BrowserController,
     visible: Boolean,
     onClose: () -> Unit,
+    onSelect: (String) -> Unit,
     onNewTab: () -> Unit,
     onEntryHeroStarted: (Boolean) -> Unit,
     onEntryHeroCompleted: () -> Unit,
@@ -65,7 +66,7 @@ internal fun BrowserTabOverviewV5(
         },
         exit = fadeOut(if (moves) V5Motion.effects.spec<Float>() else V5Motion.reducedFade<Float>()),
     ) {
-        OverviewContent(controller, darkShell, onClose, onNewTab)
+        OverviewContent(controller, darkShell, onClose, onSelect, onNewTab)
     }
 }
 
@@ -74,6 +75,7 @@ private fun OverviewContent(
     controller: BrowserController,
     darkShell: Boolean,
     onClose: () -> Unit,
+    onSelect: (String) -> Unit,
     onNewTab: () -> Unit,
 ) {
     val rootView = LocalView.current
@@ -111,8 +113,9 @@ private fun OverviewContent(
             ),
             onQueryChange = { query = it },
             onSegmentChange = { privateSegment = it },
+            // The browser's select hands the card's snapshot over to the page until it draws.
             onSelect = { tabId ->
-                controller.selectTab(tabId)
+                onSelect(tabId)
                 onClose()
             },
             onClose = { tabId -> controller.closeTabFromUser(tabId) },
