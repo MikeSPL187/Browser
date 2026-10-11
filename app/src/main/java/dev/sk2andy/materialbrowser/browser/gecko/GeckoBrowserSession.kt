@@ -23,6 +23,7 @@ import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebRequestError
@@ -393,6 +394,9 @@ internal interface GeckoBrowserSession {
 
     /** Extracts bounded article JSON through Candy's internal Gecko content-script bridge. */
     fun extractPageForReader(onComplete: (String?) -> Unit)
+
+    /** What Gecko's content blocking stopped on the current page; null when unknown. */
+    fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) = onResult(null)
 
     /** Checks one committed document for a text editor hidden by browser chrome. */
     fun probeTextInputOcclusion(

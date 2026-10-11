@@ -29,6 +29,7 @@ import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
@@ -222,6 +223,12 @@ internal interface AndroidBrowserEngineSessionPort :
      */
     fun extractPageForReader(onComplete: (String?) -> Unit)
 
+    /**
+     * What the engine's own tracking protection stopped on the current page (v5 site protection);
+     * engines without such a log, System WebView among them, answer null.
+     */
+    fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) = onResult(null)
+
     fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,
         mode: TextInputOcclusionProbeMode,
@@ -320,6 +327,11 @@ internal class GeckoBrowserEngineSessionFactory(
     @UiThread
     override fun setGlobalPrivacyControl(enabled: Boolean) {
         runtime.setGlobalPrivacyControl(enabled)
+    }
+
+    @UiThread
+    override fun setFingerprintingProtectionExceptions(hosts: Set<String>) {
+        runtime.setFingerprintingProtectionExceptions(hosts)
     }
 
     @UiThread
@@ -788,6 +800,11 @@ internal class GeckoBrowserEngineSessionAdapter(
             return
         }
         session.extractPageForReader(onComplete)
+    }
+
+    @UiThread
+    override fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) {
+        if (closed) onResult(null) else session.protectionCounts(onResult)
     }
 
     override fun probeTextInputOcclusion(

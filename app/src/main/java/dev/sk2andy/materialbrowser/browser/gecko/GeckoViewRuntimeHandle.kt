@@ -70,6 +70,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.VaultCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
 import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
@@ -93,6 +94,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.Autocomplete
+import org.mozilla.geckoview.CandyGeckoPrefsBridge
 import org.mozilla.geckoview.CandyGeckoViewSafeAreaBridge
 import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.ExperimentalGeckoViewApi
@@ -250,6 +252,15 @@ internal class GeckoViewRuntimeHandle private constructor(
     @UiThread
     override fun setGlobalPrivacyControl(enabled: Boolean) {
         runtime.settings.setGlobalPrivacyControl(enabled)
+    }
+
+    @UiThread
+    override fun setFingerprintingProtectionExceptions(hosts: Set<String>) {
+        CandyGeckoPrefsBridge.commitRuntimePref(
+            runtime.settings,
+            GeckoFingerprintingExceptions.PREF,
+            GeckoFingerprintingExceptions.prefValue(hosts),
+        )
     }
 
     @UiThread
@@ -938,6 +949,7 @@ private class GeckoViewBrowserSession(
     )
 
     private val storageController = runtime.storageController
+    private val contentBlockingController = runtime.contentBlockingController
     private val mainHandler = Handler(Looper.getMainLooper())
     private val mediaRestorationReadback = GeckoMediaRestorationReadback(mainHandler)
     private val cookieBehaviorOwner = Any()
@@ -2928,6 +2940,15 @@ private class GeckoViewBrowserSession(
             return
         }
         privacyBinding.extractPageForReader(onComplete)
+    }
+
+    @UiThread
+    override fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) {
+        if (closed) return onResult(null)
+        runCatching { contentBlockingController.getLog(session) }.getOrNull()
+            ?.withHandler(mainHandler)
+            ?.accept({ log -> onResult(GeckoContentBlockingCounts.fromLog(log)) }, { onResult(null) })
+            ?: onResult(null)
     }
 
     override fun probeTextInputOcclusion(

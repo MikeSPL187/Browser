@@ -26,6 +26,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val siteDataDeletion: Boolean,
     /** Site permissions the adapter routes to Vola's prompt and decisions; the radar hides others. */
     val sitePermissions: Set<SitePermission>,
+    /** Turning the engine's fingerprinting protection off for one site (v5 site protection). */
+    val perSiteFingerprintingProtection: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -43,6 +45,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.Notifications,
                 SitePermission.ProtectedMedia,
             ),
+            perSiteFingerprintingProtection = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -58,6 +61,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.Microphone,
                 SitePermission.Location,
             ),
+            perSiteFingerprintingProtection = false,
         )
     }
 }
