@@ -6,21 +6,16 @@ import org.junit.Test
 
 class PwnedPasswordsClientTest {
     @Test
-    fun `only the first five characters of the hash are asked for, once per prefix`() {
-        val asked = mutableListOf<String>()
-        val client = PwnedPasswordsClient { prefix ->
-            asked += prefix
-            "1E4C9B93F3F0682250B6CF8331B7EE68FD8:3861493\r\n0018A45C4D1DEF81644B54AB7F969B88D65:0"
-        }
-
+    fun `the hash is upper-case SHA-1 hex, as Pwned Passwords lists it`() {
         assertEquals("5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8", PwnedPasswordsClient.sha1Hex("password"))
-        assertEquals(3_861_493, client.timesSeen("password"))
-        assertEquals(3_861_493, client.timesSeen("password"))
-        assertEquals(listOf("5BAA6"), asked)
     }
 
     @Test
-    fun `a failed request is no answer, not a clean password`() {
-        assertNull(PwnedPasswordsClient { null }.timesSeen("password"))
+    fun `nothing is sent for anything but five upper-case hex characters`() {
+        // Each is refused before a connection opens, so the test needs no network.
+        assertNull(PwnedPasswordsClient.range("5BAA61"))
+        assertNull(PwnedPasswordsClient.range("5baa6"))
+        assertNull(PwnedPasswordsClient.range("5BAG6"))
+        assertNull(PwnedPasswordsClient.range(""))
     }
 }

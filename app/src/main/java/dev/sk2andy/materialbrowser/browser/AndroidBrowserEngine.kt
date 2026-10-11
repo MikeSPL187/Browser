@@ -28,6 +28,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val sitePermissions: Set<SitePermission>,
     /** Turning the engine's fingerprinting protection off for one site (v5 site protection). */
     val perSiteFingerprintingProtection: Boolean,
+    /** Page translation on the phone (v5 V23); System WebView has none, so the UI hides it. */
+    val onDeviceTranslation: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -46,6 +48,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.ProtectedMedia,
             ),
             perSiteFingerprintingProtection = true,
+            onDeviceTranslation = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -62,6 +65,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.Location,
             ),
             perSiteFingerprintingProtection = false,
+            onDeviceTranslation = false,
         )
     }
 }
