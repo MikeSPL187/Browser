@@ -35,7 +35,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.toSize
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
@@ -61,7 +80,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
  * The v5 tab overview (system-v5.md, section 10; canvas screen «d»): search at the top, the
  * «Tabs / Private» segment, a two-column grid of cards with the current one ringed in the accent,
  * and at the bottom edge [+], the profile chip and «Done», where the thumb is (Safari moved «+» back
- * down after complaints). Groups, swipe to close and the morph from the page come in later steps.
+ * down after complaints). A card swipes sideways to close (V10b); groups come with V12.
  */
 
 object V5OverviewTestTags {
@@ -83,6 +102,8 @@ data class V5TabCard(
     val selected: Boolean,
     val preview: ImageBitmap?,
     val favicon: ImageBitmap?,
+    /** False for pinned tabs: they have no close button and spring back when swiped. */
+    val closable: Boolean = true,
 )
 
 @Immutable
@@ -106,6 +127,12 @@ fun V5TabOverview(
     onDone: () -> Unit,
     onCloseAll: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Where each card sits in the root, for the page that shrinks into its card (V10b). */
+    onCardBounds: (String, Rect) -> Unit = { _, _ -> },
+    /** A card drawn by the hero layer instead, while the page shrinks into it or grows out. */
+    heroCardId: String? = null,
+    /** The card the grid opens on, so the page's card is on screen for the hero. */
+    initialCardIndex: Int = 0,
 ) {
     val colors = V5Theme.colors
     Box(
@@ -129,6 +156,7 @@ fun V5TabOverview(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
+                    state = rememberLazyGridState(initialFirstVisibleItemIndex = initialCardIndex),
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentPadding = PaddingValues(
                         start = V5Spacing.marginPhone,
@@ -140,7 +168,14 @@ fun V5TabOverview(
                     verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
                 ) {
                     items(state.cards, key = { it.id }) { card ->
-                        TabCard(card, onSelect, onClose)
+                        TabCard(
+                            card = card,
+                            onSelect = onSelect,
+                            onClose = onClose,
+                            onBounds = onCardBounds,
+                            hidden = card.id == heroCardId,
+                            modifier = Modifier.animateItem(),
+                        )
                     }
                 }
             }
@@ -257,11 +292,58 @@ private fun Segments(privateSegment: Boolean, counts: V5OverviewCounts, onChange
 }
 
 @Composable
-private fun TabCard(card: V5TabCard, onSelect: (String) -> Unit, onClose: (String) -> Unit) {
+private fun TabCard(
+    card: V5TabCard,
+    onSelect: (String) -> Unit,
+    onClose: (String) -> Unit,
+    onBounds: (String, Rect) -> Unit,
+    hidden: Boolean,
+    modifier: Modifier,
+) {
     val colors = V5Theme.colors
     val shape = V5Theme.shapes.m
+    val view = LocalView.current
+    val density = LocalDensity.current.density
+    val scope = rememberCoroutineScope()
+    // Swipe sideways to close (system-v5.md, section 7.1): the card follows the finger, fades, and
+    // past 40 % of its width or on a fling it leaves on the tabSwipe spring and the tab closes. The
+    // tab closes as the card leaves, so the grid closes the gap at once; a pinned tab springs back.
+    val offset = remember(card.id) { Animatable(0f) }
+    var widthPx by remember { mutableFloatStateOf(0f) }
+    val dragState = rememberDraggableState { delta -> scope.launch { offset.snapTo(offset.value + delta) } }
     Column(
-        Modifier
+        modifier
+            .onSizeChanged { widthPx = it.width.toFloat() }
+            .graphicsLayer {
+                translationX = offset.value
+                alpha = if (hidden) 0f else V5TabOverviewRules.swipeAlpha(offset.value, widthPx)
+            }
+            .draggable(
+                state = dragState,
+                orientation = Orientation.Horizontal,
+                onDragStopped = { velocity ->
+                    val closes = V5TabOverviewRules.closes(offset.value, velocity, widthPx, density)
+                    if (closes && card.closable) {
+                        view.performV5Haptic(V5Haptic.Confirm)
+                        onClose(card.id)
+                        if (V5Motion.animationsEnabled) {
+                            val away = if (offset.value < 0f) -widthPx * 2 else widthPx * 2
+                            offset.animateTo(away, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
+                        }
+                    } else if (closes) {
+                        view.performV5Haptic(V5Haptic.Reject)
+                        if (V5Motion.animationsEnabled) {
+                            offset.animateTo(0f, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
+                        } else {
+                            offset.snapTo(0f)
+                        }
+                    } else if (V5Motion.animationsEnabled) {
+                        offset.animateTo(0f, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
+                    } else {
+                        offset.snapTo(0f)
+                    }
+                },
+            )
             .semantics { selected = card.selected }
             .clickable(role = Role.Button, onClick = { onSelect(card.id) })
             .testTag(V5OverviewTestTags.card(card.id)),
@@ -270,6 +352,7 @@ private fun TabCard(card: V5TabCard, onSelect: (String) -> Unit, onClose: (Strin
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(V5Sizes.OVERVIEW_CARD_RATIO)
+                .onGloballyPositioned { onBounds(card.id, Rect(it.positionInRoot(), it.size.toSize())) }
                 .clip(shape)
                 .background(colors.surfaceHighest)
                 .then(if (card.selected) Modifier.border(V5Sizes.overviewRing, colors.accent, shape) else Modifier),
@@ -287,7 +370,7 @@ private fun TabCard(card: V5TabCard, onSelect: (String) -> Unit, onClose: (Strin
                     Favicon(card, size = V5Sizes.iconMax)
                 }
             }
-            Box(
+            if (card.closable) Box(
                 Modifier
                     .align(Alignment.TopEnd)
                     .size(V5Sizes.touchTarget)

@@ -16,7 +16,8 @@ private val PreviewCards = listOf(
     "Kotlin coroutines guide",
     "Погода на неделю",
 ).mapIndexed { index, title ->
-    V5TabCard(id = "t$index", title = title, selected = index == 0, preview = null, favicon = null)
+    // The second card is a pinned tab: no close button.
+    V5TabCard(id = "t$index", title = title, selected = index == 0, preview = null, favicon = null, closable = index != 1)
 }
 
 @Composable

@@ -60,6 +60,10 @@ object V5Motion {
     const val TAB_SWIPE_COMMIT_FRACTION = 0.30f
     const val TAB_SWIPE_COMMIT_VELOCITY_DP = 1000f
     const val OVERVIEW_CARD_START_SCALE = 0.92f
+    /** A card swiped sideways in the overview closes past 40 % of its width or 1000 dp/s. */
+    const val CARD_CLOSE_COMMIT_FRACTION = 0.40f
+    /** How transparent a card gets at a full width of travel while it is swiped. */
+    const val CARD_CLOSE_FADE = 0.6f
     const val OVERVIEW_CARD_STAGGER_MILLIS = 15
     const val GLANCE_PRESS_MILLIS = 400
     const val GLANCE_LIFT_SCALE = 1.03f

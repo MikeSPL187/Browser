@@ -15,6 +15,7 @@ import dev.sk2andy.materialbrowser.sync.SyncDeviceIconCatalog
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -41,6 +42,7 @@ class ProfileCreationSheetInstrumentedTest {
 
         composeRule.onNodeWithContentDescription(context.getString(R.string.workspace_icon_work))
             .performClick()
+        // Own cookies and storage are on by default; the switch turns them off.
         composeRule.onNodeWithTag(ProfileCreationTestTags.Isolation).performScrollTo().performClick()
         composeRule.onNodeWithTag(ProfileCreationOptionTestTags.Protection)
             .performScrollTo()
@@ -52,20 +54,24 @@ class ProfileCreationSheetInstrumentedTest {
 
         val submission = requireNotNull(created.get())
         assertEquals("💼", submission.emoji)
-        assertTrue(submission.isolationEnabled)
+        assertFalse(submission.isolationEnabled)
         assertTrue(submission.protection != null)
     }
 
     @Test
-    fun aNewWorkspaceStartsWithAnIconChosen() {
-        val created = AtomicReference<String?>()
-        setSheet { emoji, _, _ -> created.set(emoji) }
+    fun aNewWorkspaceStartsWithAnIconChosenAndItsOwnCookies() {
+        val created = AtomicReference<Submission?>()
+        setSheet { emoji, isolationEnabled, options ->
+            created.set(Submission(emoji, isolationEnabled, options.protection))
+        }
 
         composeRule.onNodeWithTag(ProfileCreationTestTags.CreateButton)
             .assertIsEnabled()
             .performClick()
 
-        assertEquals(profileEmojis.first(), created.get())
+        val submission = requireNotNull(created.get())
+        assertEquals(profileEmojis.first(), submission.emoji)
+        assertTrue(submission.isolationEnabled)
     }
 
     @Test

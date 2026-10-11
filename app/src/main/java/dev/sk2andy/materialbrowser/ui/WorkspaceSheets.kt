@@ -121,7 +121,8 @@ internal fun NewWorkspaceSheet(
     var accent by rememberSaveable { mutableStateOf(WorkspaceAccent.Default) }
     var emoji by rememberSaveable(icons) { mutableStateOf(WorkspaceSheetRules.defaultIcon(icons)) }
     var allIconsShown by rememberSaveable { mutableStateOf(false) }
-    var isolationEnabled by rememberSaveable { mutableStateOf(false) }
+    // New workspaces keep their own cookies and storage by default (owner, 2026-10-11).
+    var isolationEnabled by rememberSaveable { mutableStateOf(true) }
     var protection by rememberSaveable(stateSaver = ProtectionDraftSaver) {
         mutableStateOf<ProfileProtection?>(null)
     }
