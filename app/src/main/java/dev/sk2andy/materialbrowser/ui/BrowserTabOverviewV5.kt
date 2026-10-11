@@ -1,6 +1,37 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import dev.sk2andy.materialbrowser.ui.theme.v5.SmoothCornerShape
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Shapes
+import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -33,8 +64,10 @@ import dev.sk2andy.materialbrowser.ui.v5.V5TabOverviewRules
 
 /**
  * The v5 tab overview (V10a) bound to the browser: the profile's tabs, their snapshots and icons,
- * and the same select, close, new tab and «Close all» as the current overview. It fades in from a
- * slightly smaller scale on the overviewEnter spring; the page shrinking into its card is V10b.
+ * and the same select, close, new tab and «Close all» as the current overview. On the way in the
+ * page's snapshot shrinks into its card and on the way out the chosen card grows back into the
+ * page, both on the overviewEnter spring (V10b); without a snapshot, or without animations, the
+ * overview fades in instead.
  */
 @Composable
 internal fun BrowserTabOverviewV5(
@@ -56,9 +89,12 @@ internal fun BrowserTabOverviewV5(
     }
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_SHELL_LUMINANCE
     val moves = V5Motion.animationsEnabled
+    val heroOnEntry = moves && heroPreview(controller, controller.selectedTabId) != null
     AnimatedVisibility(
         visible = visible,
-        enter = if (moves) {
+        enter = if (heroOnEntry) {
+            EnterTransition.None
+        } else if (moves) {
             fadeIn(V5Motion.overviewEnter.spec<Float>()) +
                 scaleIn(V5Motion.overviewEnter.spec<Float>(), initialScale = ENTER_SCALE)
         } else {
@@ -66,19 +102,42 @@ internal fun BrowserTabOverviewV5(
         },
         exit = fadeOut(if (moves) V5Motion.effects.spec<Float>() else V5Motion.reducedFade<Float>()),
     ) {
-        OverviewContent(controller, darkShell, onClose, onSelect, onNewTab)
+        OverviewContent(controller, darkShell, heroOnEntry, onClose, onSelect, onNewTab)
     }
+}
+
+/** The snapshot a hero can fly: none for private tabs, whose page the overview never shows. */
+private fun heroPreview(controller: BrowserController, tabId: String?): ImageBitmap? {
+    val tab = controller.activeTabs.firstOrNull { it.id == tabId } ?: return null
+    if (tab.isIncognito) return null
+    return controller.previews[tab.id]?.asImageBitmap()
 }
 
 @Composable
 private fun OverviewContent(
     controller: BrowserController,
     darkShell: Boolean,
+    heroOnEntry: Boolean,
     onClose: () -> Unit,
     onSelect: (String) -> Unit,
     onNewTab: () -> Unit,
 ) {
     val rootView = LocalView.current
+    val scope = rememberCoroutineScope()
+    // The hero: 0 is the page filling the overview, 1 is the page in its card.
+    val cardBounds = remember { mutableStateMapOf<String, Rect>() }
+    var overviewBounds by remember { mutableStateOf(Rect.Zero) }
+    var heroTabId by remember { mutableStateOf(if (heroOnEntry) controller.selectedTabId else null) }
+    val hero = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        val tabId = heroTabId ?: return@LaunchedEffect
+        // The card has to be laid out before the page can fly into it; without it, just show it.
+        val landed = withTimeoutOrNull(HERO_TARGET_WAIT_MILLIS) {
+            snapshotFlow { cardBounds[tabId] }.filterNotNull().first()
+        }
+        if (landed != null) hero.animateTo(1f, V5Motion.overviewEnter.spec())
+        heroTabId = null
+    }
     val browserTabs = controller.activeTabs
     val byId = browserTabs.associateBy { it.id }
     val tabs = browserTabs.map { V5OverviewTab(it.id, it.title, it.url, it.isIncognito) }
@@ -103,29 +162,53 @@ private fun OverviewContent(
     }
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
-        V5TabOverview(
-            state = V5OverviewState(
-                cards = cards,
-                privateSegment = privateSegment,
-                counts = counts,
-                query = query,
-                profileLabel = profile?.let { "${it.emoji} ${it.name}".trim() }.orEmpty(),
-            ),
-            onQueryChange = { query = it },
-            onSegmentChange = { privateSegment = it },
-            // The browser's select hands the card's snapshot over to the page until it draws.
-            onSelect = { tabId ->
-                onSelect(tabId)
-                onClose()
-            },
-            onClose = { tabId -> controller.closeTabFromUser(tabId) },
-            onNewTab = {
-                onNewTab()
-                if (privateSegment) controller.setBlankTabIncognito(true)
-            },
-            onDone = onClose,
-            onCloseAll = { closeAllCount = TabDeletionRules.deletableTabIds(controller.activeTabs).size },
-        )
+        Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
+            V5TabOverview(
+                state = V5OverviewState(
+                    cards = cards,
+                    privateSegment = privateSegment,
+                    counts = counts,
+                    query = query,
+                    profileLabel = profile?.let { "${it.emoji} ${it.name}".trim() }.orEmpty(),
+                ),
+                onQueryChange = { query = it },
+                onSegmentChange = { privateSegment = it },
+                // The browser's select hands the card's snapshot over to the page until it draws; first
+                // the card grows back into the page.
+                onSelect = { tabId ->
+                    if (V5Motion.animationsEnabled && heroTabId == null &&
+                        heroPreview(controller, tabId) != null && cardBounds[tabId] != null
+                    ) {
+                        scope.launch {
+                            heroTabId = tabId
+                            hero.snapTo(1f)
+                            hero.animateTo(0f, V5Motion.overviewEnter.spec())
+                            onSelect(tabId)
+                            onClose()
+                        }
+                    } else {
+                        onSelect(tabId)
+                        onClose()
+                    }
+                },
+                onClose = { tabId -> controller.closeTabFromUser(tabId) },
+                onNewTab = {
+                    onNewTab()
+                    if (privateSegment) controller.setBlankTabIncognito(true)
+                },
+                onDone = onClose,
+                onCloseAll = { closeAllCount = TabDeletionRules.deletableTabIds(controller.activeTabs).size },
+                modifier = Modifier.graphicsLayer { alpha = if (heroTabId != null) hero.value.coerceIn(0f, 1f) else 1f },
+                onCardBounds = { id, bounds -> cardBounds[id] = bounds },
+                heroCardId = heroTabId,
+            )
+            val heroId = heroTabId
+            val heroBitmap = heroId?.let { heroPreview(controller, it) }
+            val target = heroId?.let { cardBounds[it] }
+            if (heroBitmap != null && target != null && overviewBounds != Rect.Zero) {
+                OverviewHero(heroBitmap, from = overviewBounds, to = target, origin = overviewBounds.topLeft, progress = hero.value)
+            }
+        }
     }
     // «Close all tabs» asks first, like the current overview's menu.
     if (closeAllCount > 0) {
@@ -146,6 +229,29 @@ private fun OverviewContent(
         )
     }
 }
+
+/**
+ * The page's snapshot between the whole overview ([from]) and its card ([to]), both in root
+ * coordinates; the corners round into the card's as it lands.
+ */
+@Composable
+private fun OverviewHero(bitmap: ImageBitmap, from: Rect, to: Rect, origin: Offset, progress: Float) {
+    val density = LocalDensity.current
+    val rect = lerp(from, to, progress)
+    Image(
+        bitmap = bitmap,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        alignment = Alignment.TopCenter,
+        modifier = Modifier
+            .offset { IntOffset((rect.left - origin.x).roundToInt(), (rect.top - origin.y).roundToInt()) }
+            .size(with(density) { rect.width.toDp() }, with(density) { rect.height.toDp() })
+            .clip(SmoothCornerShape(V5Shapes.radiusM * progress.coerceIn(0f, 1f))),
+    )
+}
+
+/** How long the hero waits for its card to be laid out before the overview just shows. */
+private const val HERO_TARGET_WAIT_MILLIS = 300L
 
 /** Below this background luminance the current theme is dark. */
 private const val DARK_SHELL_LUMINANCE = 0.5f

@@ -33,4 +33,22 @@ class V5TabOverviewRulesTest {
         assertFalse(V5TabOverviewRules.initialSegmentIsPrivate(true, V5OverviewCounts(2, 0)))
         assertFalse(V5TabOverviewRules.initialSegmentIsPrivate(false, V5OverviewCounts(2, 1)))
     }
+
+    @Test
+    fun `a card closes past 40 percent of its width or on a fling the same way`() {
+        val width = 400f
+        val density = 2f
+        assertTrue(V5TabOverviewRules.closes(-170f, 0f, width, density))
+        assertFalse(V5TabOverviewRules.closes(150f, 0f, width, density))
+        assertTrue(V5TabOverviewRules.closes(60f, 2100f, width, density))
+        assertFalse(V5TabOverviewRules.closes(60f, -2100f, width, density))
+        assertFalse(V5TabOverviewRules.closes(0f, 5000f, width, density))
+    }
+
+    @Test
+    fun `a swiped card fades with its travel`() {
+        assertEquals(1f, V5TabOverviewRules.swipeAlpha(0f, 400f), 0.001f)
+        assertEquals(0.7f, V5TabOverviewRules.swipeAlpha(-200f, 400f), 0.001f)
+        assertEquals(0.4f, V5TabOverviewRules.swipeAlpha(900f, 400f), 0.001f)
+    }
 }
