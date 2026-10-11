@@ -6,6 +6,7 @@
 - Владелец работает ТОЛЬКО с телефона/планшета. Нет локального ПК, нет Android Studio, нет эмулятора.
 - Источник истины для сборки — GitHub Actions (.github/workflows/build.yml). Каждый PR должен собираться зелёным.
 - Отвечай и пиши описания PR на русском; код, комментарии и коммиты — на английском (Conventional Commits).
+- **Время — всегда по Москве (МСК, UTC+3)**: в ответах владельцу, на доске #80, в PR и комментариях пиши «15:45 МСК»; время из CI, GitHub и расписаний (UTC) переводи. Текущее время не угадывай по последнему событию — сверяйся: `TZ=Europe/Moscow date`. Решение владельца 2026-10-11.
 
 ## Стек
 - Kotlin, Jetpack Compose, Material 3 (Expressive), JDK 17, Gradle Kotlin DSL, version catalog (gradle/libs.versions.toml).
