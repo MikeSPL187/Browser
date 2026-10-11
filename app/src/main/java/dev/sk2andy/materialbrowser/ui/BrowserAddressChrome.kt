@@ -70,6 +70,8 @@ import kotlin.math.absoluteValue
 import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
+import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 
 @Composable
 internal fun BoxScope.BrowserAddressChrome(
@@ -334,14 +336,187 @@ internal fun BoxScope.BrowserAddressChrome(
     LaunchedEffect(hiddenByPageKeyboard) {
         pageKeyboardHide.animateTo(if (hiddenByPageKeyboard) 1f else 0f, VolaMotion.standard())
     }
-    BrowserBottomBar(
+    val onTabDrag: (Float) -> Unit = { delta ->
+        if (tabSwipeEnabled && !addressEditorVisible && !tabOverviewVisible) {
+            if (browserDragOffset.floatValue == 0f && delta != 0f) {
+                controller.refreshSelectedTabPreviewBeforeDeparture()
+            }
+            val proposed = browserDragOffset.floatValue + delta
+            val tabs = controller.activeTabs
+            val currentIndex = tabs.indexOfFirst { it.id == controller.selectedTabId }
+            val hasTarget = if (proposed < 0f) {
+                currentIndex in 0 until tabs.lastIndex
+            } else {
+                currentIndex > 0
+            }
+            browserDragOffset.floatValue = if (hasTarget) {
+                proposed.coerceIn(-tabSwitchTravelPx, tabSwitchTravelPx)
+            } else {
+                (proposed * AddressBarTabSwitchRules.EDGE_RESISTANCE).coerceIn(
+                    -with(density) { AddressBarTabSwitchRules.EDGE_TRAVEL_MAX_DP.dp.toPx() },
+                    with(density) { AddressBarTabSwitchRules.EDGE_TRAVEL_MAX_DP.dp.toPx() },
+                )
+            }
+        }
+    }
+    val onTabDragStopped: suspend (Float) -> Unit = { velocity ->
+        val direction = browserDragOffset.floatValue.compareTo(0f)
+        val tabs = controller.activeTabs
+        val currentIndex = tabs.indexOfFirst { it.id == controller.selectedTabId }
+        val targetTab = tabs.getOrNull(currentIndex - direction)
+        val minTravel = with(density) { AddressBarTabSwitchRules.FLING_MIN_TRAVEL_DP.dp.toPx() }
+        val fastEnough = browserDragOffset.floatValue.absoluteValue >= minTravel &&
+            velocity.absoluteValue >= with(density) { AddressBarTabSwitchRules.FLING_MIN_VELOCITY_DP.dp.toPx() } &&
+            velocity.compareTo(0f) == direction
+        val shouldSwitch = tabSwipeEnabled && targetTab != null &&
+            (
+                AddressBarTabSwitchRules.hasReachedDistance(
+                    dragDistance = browserDragOffset.floatValue.absoluteValue,
+                    viewportWidth = browserWidthPx,
+                ) || fastEnough
+            )
+        val settle = Animatable(browserDragOffset.floatValue)
+        settle.animateTo(
+            targetValue = if (shouldSwitch) direction * tabSwitchTravelPx else 0f,
+            initialVelocity = velocity,
+            animationSpec = if (shouldSwitch) {
+                tween(AddressBarTabSwitchRules.SETTLE_MILLIS, easing = FastOutSlowInEasing)
+            } else {
+                spring(
+                    dampingRatio = AddressBarTabSwitchRules.CANCEL_DAMPING_RATIO,
+                    stiffness = AddressBarTabSwitchRules.CANCEL_STIFFNESS,
+                )
+            },
+        ) { browserDragOffset.floatValue = value }
+        if (shouldSwitch) {
+            onLiveFrameCleared()
+            tabHandoffAlpha.snapTo(1f)
+            onTabHandoffChanged(
+                TabHandoff(
+                    tab = targetTab,
+                    preview = controller.previews[targetTab.id].takeUnless {
+                        targetTab.isIncognito
+                    },
+                    favicon = controller.favicons[targetTab.id],
+                    previewTopInsetPx = controller.previewTopInsetPx(targetTab.id),
+                ),
+            )
+            browserDragOffset.floatValue = 0f
+            controller.selectTab(targetTab.id)
+            rootView.performConfirmHaptic()
+        } else {
+            browserDragOffset.floatValue = 0f
+        }
+    }
+    val onBarPositioned: (Rect, Int) -> Unit = { boundsInRoot, topInWindowPx ->
+        addressBarBoundsInRoot = boundsInRoot
+        if (
+            effectiveAddressBarDockPlacement != null &&
+            !addressEditorVisible &&
+            commandFeedback == null
+        ) {
+            bottomBarTopPx.floatValue = Float.NaN
+            controller.setPreviewContentBottomInWindowPx(0)
+        } else {
+            bottomBarTopPx.floatValue = boundsInRoot.top
+            controller.setPreviewContentBottomInWindowPx(topInWindowPx)
+        }
+    }
+    val compactBar = controller.isBottomBarCompact &&
+        // A new tab is where an address is typed: its bar stays open even in Compact Mode.
+        selectedTab.url != BLANK_URL &&
+        !linkPeekAddressBarExpanded &&
+        !wideWindow
+    val uiV5 by rememberUiV5Flag()
+    // V7: the v5 bar replaces the expanded bar at rest; editing, the collapsed bar, docking,
+    // feedback, the overview morph and wide windows stay on the current bar until their v5 steps.
+    val showV5Bar = uiV5 &&
+        !addressEditorVisible &&
+        commandFeedback == null &&
+        !wideWindow &&
+        !compactBar &&
+        effectiveAddressBarDockPlacement == null &&
+        !linkPeekAddressBarExpanded &&
+        !tabOverviewOpening &&
+        !tabOverviewVisible &&
+        !addressBarMorphInFront
+    if (showV5Bar) {
+        BrowserV5Bar(
+            controller = controller,
+            selectedTab = selectedTab,
+            backdropSource = chromeBackdropSource.takeIf { pageBehindAddressBar },
+            gestures = V5BarGestures(
+                tabSwipeEnabled = tabSwipeEnabled,
+                onTabDrag = onTabDrag,
+                onTabDragStopped = onTabDragStopped,
+                overviewEnabled = true,
+                overviewProgress = overviewGestureProgress,
+                onOverviewProgress = { progress ->
+                    onOverviewGestureStarted()
+                    overviewGestureProgress.floatValue = progress.coerceIn(0f, 1f)
+                },
+                onOverviewStarted = { onOverviewGestureStarted() },
+                onOverviewCancelled = onOverviewGestureCancelled,
+            ),
+            permissionActivityVisible = permissionActivityVisible,
+            canDock = addressBarDockingAvailable,
+            snoozedTabCount = visibleSnoozedTabCount,
+            onAddress = openAddressEditor,
+            onTabs = onTabs,
+            onBarPositioned = onBarPositioned,
+            actions = V5MenuActions(
+                onNewTab = openNewTabAndEdit,
+                onDuplicateTab = { controller.duplicateSelectedTab() },
+                onCloseTab = { controller.closeTabFromUser(selectedTab.id) },
+                onToggleFavorite = { toggleFavoriteWithFeedback(selectedTab.id) },
+                onTogglePinned = {
+                    if (controller.tabOrder.setPinned(selectedTab.id, !selectedTab.isPinned)) {
+                        rootView.performConfirmHaptic()
+                    }
+                },
+                onFindInPage = {
+                    onAddressEditorDismiss()
+                    controller.openFindInPage()
+                },
+                onReaderStudio = onReaderStudio,
+                onOpenCandyTrail = onOpenCandyTrail,
+                onSnooze = onSnooze,
+                onSnoozedTabs = onSnoozedTabs,
+                onAddSiteCapsule = onAddSiteCapsule,
+                onFavorites = onOpenFavorites,
+                onDownloads = onOpenDownloads,
+                onHistory = onOpenHistory,
+                onSettings = onSettings,
+                onPrivacyXRay = {
+                    onPrivacyXRay()
+                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                },
+                onSplitViewChange = { enabled ->
+                    if (!enabled) {
+                        controller.splitView.close()
+                    } else if (!controller.openSplitView()) {
+                        Toast.makeText(
+                            rootView.context,
+                            R.string.split_view_no_companion,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                },
+            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    val hide = pageKeyboardHide.value
+                    translationY = hide * VolaIsland.pageKeyboardTravel.toPx()
+                    alpha = 1f - hide
+                }
+                .clearSemanticsWhen(hiddenByPageKeyboard || settingsVisible),
+        )
+    }
+    if (!showV5Bar) BrowserBottomBar(
         tab = selectedTab,
         pageTranslationProvider = controller.pageTranslationProvider,
-        compact = controller.isBottomBarCompact &&
-            // A new tab is where an address is typed: its bar stays open even in Compact Mode.
-            selectedTab.url != BLANK_URL &&
-            !linkPeekAddressBarExpanded &&
-            !wideWindow,
+        compact = compactBar,
         dockState = AddressBarDockState(
             enabled = addressBarDockingAvailable,
             placement = effectiveAddressBarDockPlacement,
@@ -451,75 +626,8 @@ internal fun BoxScope.BrowserAddressChrome(
         onParkRight = controller.addressBar::parkOnRight,
         onDockPlacementChanged = controller.addressBar::updateDockPlacement,
         onRestoreDock = { controller.addressBar.updateDocked(false) },
-        onTabDrag = { delta ->
-            if (tabSwipeEnabled && !addressEditorVisible && !tabOverviewVisible) {
-                if (browserDragOffset.floatValue == 0f && delta != 0f) {
-                    controller.refreshSelectedTabPreviewBeforeDeparture()
-                }
-                val proposed = browserDragOffset.floatValue + delta
-                val tabs = controller.activeTabs
-                val currentIndex = tabs.indexOfFirst { it.id == controller.selectedTabId }
-                val hasTarget = if (proposed < 0f) {
-                    currentIndex in 0 until tabs.lastIndex
-                } else {
-                    currentIndex > 0
-                }
-                browserDragOffset.floatValue = if (hasTarget) {
-                    proposed.coerceIn(-tabSwitchTravelPx, tabSwitchTravelPx)
-                } else {
-                    (proposed * 0.24f).coerceIn(
-                        -with(density) { 42.dp.toPx() },
-                        with(density) { 42.dp.toPx() },
-                    )
-                }
-            }
-        },
-        onTabDragStopped = { velocity ->
-            val direction = browserDragOffset.floatValue.compareTo(0f)
-            val tabs = controller.activeTabs
-            val currentIndex = tabs.indexOfFirst { it.id == controller.selectedTabId }
-            val targetTab = tabs.getOrNull(currentIndex - direction)
-            val minTravel = with(density) { 24.dp.toPx() }
-            val fastEnough = browserDragOffset.floatValue.absoluteValue >= minTravel &&
-                velocity.absoluteValue >= with(density) { 900.dp.toPx() } &&
-                velocity.compareTo(0f) == direction
-            val shouldSwitch = tabSwipeEnabled && targetTab != null &&
-                (
-                    AddressBarTabSwitchRules.hasReachedDistance(
-                        dragDistance = browserDragOffset.floatValue.absoluteValue,
-                        viewportWidth = browserWidthPx,
-                    ) || fastEnough
-                )
-            val settle = Animatable(browserDragOffset.floatValue)
-            settle.animateTo(
-                targetValue = if (shouldSwitch) direction * tabSwitchTravelPx else 0f,
-                initialVelocity = velocity,
-                animationSpec = if (shouldSwitch) {
-                    tween(150, easing = FastOutSlowInEasing)
-                } else {
-                    spring(dampingRatio = 0.82f, stiffness = 520f)
-                },
-            ) { browserDragOffset.floatValue = value }
-            if (shouldSwitch) {
-                onLiveFrameCleared()
-                tabHandoffAlpha.snapTo(1f)
-                onTabHandoffChanged(
-                    TabHandoff(
-                        tab = targetTab,
-                        preview = controller.previews[targetTab.id].takeUnless {
-                            targetTab.isIncognito
-                        },
-                        favicon = controller.favicons[targetTab.id],
-                        previewTopInsetPx = controller.previewTopInsetPx(targetTab.id),
-                    ),
-                )
-                browserDragOffset.floatValue = 0f
-                controller.selectTab(targetTab.id)
-                rootView.performConfirmHaptic()
-            } else {
-                browserDragOffset.floatValue = 0f
-            }
-        },
+        onTabDrag = onTabDrag,
+        onTabDragStopped = onTabDragStopped,
         onTabs = onTabs,
         overviewGestureEnabled = !tabOverviewOpening && !tabOverviewVisible,
         overviewGestureProgress = overviewGestureProgress,
@@ -628,20 +736,7 @@ internal fun BoxScope.BrowserAddressChrome(
         onOpenCandyTrail = onOpenCandyTrail,
         onSnooze = onSnooze,
         onAddSiteCapsule = onAddSiteCapsule,
-        onBarPositioned = { boundsInRoot, topInWindowPx ->
-            addressBarBoundsInRoot = boundsInRoot
-            if (
-                effectiveAddressBarDockPlacement != null &&
-                !addressEditorVisible &&
-                commandFeedback == null
-            ) {
-                bottomBarTopPx.floatValue = Float.NaN
-                controller.setPreviewContentBottomInWindowPx(0)
-            } else {
-                bottomBarTopPx.floatValue = boundsInRoot.top
-                controller.setPreviewContentBottomInWindowPx(topInWindowPx)
-            }
-        },
+        onBarPositioned = onBarPositioned,
         auraRim = controller.appearanceSettings.chromeStyle == BrowserChromeStyle.Air,
         handle = controller.addressBar.compactMode,
         backdropBlurRegionEnabled = pageBehindAddressBar &&
