@@ -71,7 +71,7 @@ _Обновлено: 2026-10-10 вечер (сессия E: V0–V3 слиты, 
 | PR | Что | Сессия | Состояние |
 |---|---|---|---|
 | — | Документы v5: холст, `system-v5.md`, исследование ориентиров | E | CI |
-| — | V23: порт перевода на устройстве (`browser/translation/`), Gecko `TranslationsController`; WebView — недоступно | F | CI |
+| #175 | V23: порт перевода на устройстве (`browser/translation/`), Gecko `TranslationsController`; WebView — недоступно | F | CI |
 
 ## Идёт сейчас
 
