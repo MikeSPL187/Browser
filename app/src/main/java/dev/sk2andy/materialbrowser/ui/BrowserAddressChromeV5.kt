@@ -93,10 +93,9 @@ internal fun BrowserV5Bar(
         blockedCount = tab.blockedCount,
     )
     var menuExpanded by remember { mutableStateOf(false) }
-    // The site's color (V8). Until the engine reports theme-color for every page, the color the
-    // page already reports for the status bar backdrop is used. Private tabs, a new tab and error
-    // pages keep the neutral bar (system-v5.md, section 1.3, step 7).
-    val siteColor = controller.selectedWebContentStatusBarBackdrop?.colorArgb
+    // The page's theme-color (system-v5.md, section 1.3). Private tabs, a new tab and error pages
+    // keep the neutral bar (step 7).
+    val siteColor = controller.selectedSiteThemeColor
         ?.takeUnless { tab.isIncognito || tab.url == BLANK_URL || tab.error != null || tab.failureKind != null }
     VolaV5Theme(dark = darkShell, privateBrowsing = tab.isIncognito) {
         val chrome = V5Theme.colors.chrome
