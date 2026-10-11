@@ -96,8 +96,12 @@
 
     // { action: "A" | "B", ruleId?, builtIn } or null for no opinion. A user rule decides first;
     // Strict drops the bundled lists' compatibility exceptions, never the person's own rules.
-    // `type` is the webRequest resource type; EasyList rules may name one.
-    function decide(requestUrl, pageHost, { strict = false, userRules = [], type = "other" } = {}) {
+    // `type` is the webRequest resource type; EasyList rules may name one. `documentHost` is the
+    // frame's own document: list rules judge `domain=` and the party against it, as uBlock Origin
+    // does, so a rule for ads inside an ad iframe sees the iframe, not the top page.
+    function decide(requestUrl, pageHost, {
+      strict = false, userRules = [], type = "other", documentHost = null,
+    } = {}) {
       let requestHost;
       try {
         const parsed = new URL(requestUrl);
@@ -108,16 +112,17 @@
       }
       if (!requestHost) return null;
       const page = typeof pageHost === "string" && pageHost ? pageHost.toLowerCase() : null;
+      const context = typeof documentHost === "string" && documentHost ? documentHost.toLowerCase() : page;
       const user = userDecision(userRules, requestHost, page);
       if (user !== null) return user;
       const advanced = rules.advancedDecision(
         (strict ? strictCandidates : candidates)(requestHost),
         requestUrl,
-        page,
+        context,
       );
       if (advanced === "A") return null;
       // An exception in any list beats a block in any other, as in uBlock Origin.
-      const filtered = filterDecision(requestUrl, type, requestHost, page, { strict });
+      const filtered = filterDecision(requestUrl, type, requestHost, context, { strict });
       if (filtered === "A") return null;
       if (advanced === "B" || filtered === "B" || hosts.shouldBlockHosts(requestHost, page, { strict })) {
         return { action: "B", builtIn: true };

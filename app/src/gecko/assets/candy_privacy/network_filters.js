@@ -32,6 +32,9 @@
       body = body.slice(0, -1);
       suffix = "$";
     }
+    // An unanchored edge that is only `*` matches anyway: no `.*` to scan.
+    if (!prefix) body = body.replace(/^\*+/, "");
+    if (!suffix) body = body.replace(/\*+$/, "");
     const source = Array.from(body, (character) => {
       if (character === "*") return ".*";
       if (character === "^") return SEPARATOR;

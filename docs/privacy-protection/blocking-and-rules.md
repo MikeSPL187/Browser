@@ -79,7 +79,8 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   EasyPrivacy URL rules the host compiler leaves out (`easylist_network_filters.txt`, 12 745 rules
   from `scripts/compile_network_filters.py`; it sits in `app/src/blocking/gecko/`, packed only into
   the Gecko extension, and keeps patterns as plain text so the APK grows by ~180 KB): paths, `||`/`|`/`^`/`*`, resource types (Gecko's
-  webRequest reports them), party and `domain=`, and `@@` exceptions. Each rule carries one URL
+  webRequest reports them), party and `domain=` (judged by the frame's own document, as in uBlock
+  Origin, so rules for ads inside an ad iframe see the iframe), and `@@` exceptions. Each rule carries one URL
   token, so a request only tries the rules whose token its URL contains; `$redirect`, `$csp`,
   `$important`, `$removeparam`, regular expressions and `match-case` stay out. Order: own rule →
   URL rules (an exception in any list wins, as in uBlock Origin) → host lists.

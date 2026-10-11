@@ -49,6 +49,7 @@ COMMON_TOKENS = frozenset({
     "svg", "json", "api", "static", "cdn", "assets", "img", "images", "min",
 })
 MAX_PATTERN_LENGTH = 512
+OPTIONS = re.compile(r"~?[a-z0-9_-]+(=[^,]*)?(,~?[a-z0-9_-]+(=[^,]*)?)*", re.IGNORECASE)
 MAX_WILDCARDS = 8
 
 
@@ -148,9 +149,13 @@ def parse_rule(value: str, disabled: set[str], stats: CompileStats) -> NetworkRe
     action = "A" if value.startswith("@@") else "B"
     body = value.removeprefix("@@")
     pattern, separator, raw_options = body.rpartition("$")
-    if not separator or "/" in raw_options:
-        # No options, or a `$` inside the URL pattern itself.
+    if not separator or not OPTIONS.fullmatch(raw_options):
+        # No options, or a `$` inside the URL pattern itself. Option values may hold `/`
+        # (`$removeparam=/^utm_/`): they still are options, never part of the pattern.
         pattern, raw_options = body, ""
+    if "$" in pattern:
+        # Options this parser cannot split (a `,` inside an option value) must not turn into URL text.
+        return None
     options = [option for option in raw_options.split(",") if option]
     if "badfilter" in options:
         stats.badfilter_rules += 1
