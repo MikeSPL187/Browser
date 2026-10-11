@@ -329,6 +329,7 @@ function networkDecision(details, token, policy, pageHost) {
       strict: policy.strictBlocking === true,
       userRules: policy.rules,
       type: details.type,
+      documentHost: hostFromUrl(details.documentUrl),
     });
     if (decision === null) return {};
     queueEvent(token, policy.revision, {

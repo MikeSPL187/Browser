@@ -841,8 +841,9 @@ test("a frame reports its class and id names and hides the generic selectors it 
     createElement: () => ({
       dataset: {},
       isConnected: false,
-      sheet: { cssRules: insertedRules, insertRule: (rule) => insertedRules.push(rule) },
+      appendChild: (node) => insertedRules.push(node.text.trim()),
     }),
+    createTextNode: (text) => ({ text }),
   };
   const browser = {
     runtime: {

@@ -113,3 +113,18 @@ test("pages on the uAssets popup lists get a window.open that opens nothing", as
   assert.equal(excluded.defusesWindowOpen("www.movies.example"), true);
   assert.equal(excluded.defusesWindowOpen("kids.movies.example"), false);
 });
+
+test("list rules judge domain= and the party by the frame's own document", () => {
+  const networkFiltersText = [
+    "candy-network-filter:2",
+    "# Rules: 1",
+    ["B", "creative", "/creative/", "*", "adframe.example", "-", "*"].join("\t"),
+  ].join("\n");
+  const blocker = create({ networkFiltersText });
+  const url = "https://cdn.example/creative/banner.png";
+  assert.equal(action(blocker.decide(url, "news.example", { type: "image" })), null);
+  assert.equal(
+    action(blocker.decide(url, "news.example", { type: "image", documentHost: "adframe.example" })),
+    "B",
+  );
+});

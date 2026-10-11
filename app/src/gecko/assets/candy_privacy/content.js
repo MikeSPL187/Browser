@@ -2677,10 +2677,10 @@ window.addEventListener("orientationchange", scheduleCandyPictureInPictureAlignm
         hiddenBytes += selector.length;
         return true;
       });
-      if (!batch.length || !attach(simpleStyle)) return;
-      try {
-        simpleStyle.sheet.insertRule(`${batch.join(",")}{display:none!important}`, simpleStyle.sheet.cssRules.length);
-      } catch (_) { }
+      if (!batch.length) return;
+      // Text, not insertRule: a page that takes the <style> out and puts it back keeps the rules.
+      simpleStyle.appendChild(document.createTextNode(`${batch.join(",")}{display:none!important}\n`));
+      attach(simpleStyle);
     };
 
     const reported = new Set();

@@ -64,3 +64,9 @@ test("the bundled EasyList filters load and block typical ad URLs", () => {
   assert.equal(decide("https://js-agent.example/nr-spa-1216.min.js", "script", "js-agent.example", "news.example"), "B");
   assert.equal(decide("https://news.example/aap/stats?id=1", "xmlhttprequest", "news.example", "news.example"), "B");
 });
+
+test("a pattern edge that is only `*` adds nothing to scan", () => {
+  assert.equal(patternToRegExp("*/ads/*").source, patternToRegExp("/ads/").source);
+  assert.equal(patternToRegExp("|https://x.example/*").source.endsWith(".*"), false);
+  assert.equal(patternToRegExp("/ads/*|").source.endsWith(".*$"), true);
+});

@@ -48,6 +48,16 @@ class NetworkFilterCompilerTest(unittest.TestCase):
         )
         self.assertEqual([], records)
 
+    def test_option_values_with_slashes_stay_options(self):
+        records, _ = self.compile(
+            "||tracker.example^$removeparam=/^utm_/\n"
+            "/ads/a$b/c.js\n"
+        )
+        # `removeparam` changes what a match does, so the rule is left out rather than turned into
+        # URL text; a `$` inside the path is never mistaken for options either.
+        self.assertEqual([], [record for record in records if "removeparam" in record.pattern])
+        self.assertEqual([], [record for record in records if "$" in record.pattern])
+
     def test_negated_types_cover_every_other_type(self):
         records, _ = self.compile("/track/event$~image,~script\n")
         self.assertNotIn("image", records[0].types)
