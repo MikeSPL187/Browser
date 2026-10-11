@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "name": "Vola Privacy Host",
-  "version": "1.5.67",
+  "version": "1.5.68",
   "browser_specific_settings": {
     "gecko": {
       "id": "candy-privacy-host@sk2andy.dev"
     }
   },
   "background": {
-    "scripts": ["rules.js", "host_blocker.js", "network_blocker.js", "privacy_signals.js", "animation_policy.js", "background.js"]
+    "scripts": ["rules.js", "host_blocker.js", "network_filters.js", "network_blocker.js", "privacy_signals.js", "animation_policy.js", "background.js"]
   },
   "content_scripts": [
     {

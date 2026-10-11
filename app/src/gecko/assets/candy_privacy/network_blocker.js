@@ -11,6 +11,7 @@
     allowedPairs: ["easylist_allowed_host_pairs.txt", "uassets_allowed_host_pairs.txt"],
     familyPairs: ["first_party_family_allowed_host_pairs.txt"],
     advanced: "uassets_advanced_filters.txt",
+    networkFilters: "easylist_network_filters.txt",
   });
 
   // URL rules bucketed by target host, so a request checks a handful of rules instead of all.
@@ -72,17 +73,29 @@
     return winner === null ? null : { action: winner.a, ruleId: winner.id, builtIn: false };
   }
 
-  function create({ lists = {}, advancedText = "", rules = global.CandyPrivacyRules, hostBlocker = global.CandyHostBlocker } = {}) {
-    if (!rules || !hostBlocker) throw new Error("Vola blocker needs rules.js and host_blocker.js loaded first");
+  function create({
+    lists = {},
+    advancedText = "",
+    networkFiltersText = "",
+    rules = global.CandyPrivacyRules,
+    hostBlocker = global.CandyHostBlocker,
+    networkFilters = global.CandyNetworkFilters,
+  } = {}) {
+    if (!rules || !hostBlocker || !networkFilters) {
+      throw new Error("Vola blocker needs rules.js, host_blocker.js and network_filters.js loaded first");
+    }
     const hosts = hostBlocker.create({ ...lists, hostPatternMatches: rules.hostPatternMatches });
     const advancedRules = advancedText ? rules.parseAdvanced(advancedText) : [];
     const candidates = advancedIndex(advancedRules);
     const strictRules = advancedRules.filter((rule) => rule.action !== "A");
     const strictCandidates = advancedIndex(strictRules);
+    const urlFilters = networkFiltersText ? networkFilters.parse(networkFiltersText) : [];
+    const filterDecision = networkFilters.index(urlFilters, rules);
 
     // { action: "A" | "B", ruleId?, builtIn } or null for no opinion. A user rule decides first;
     // Strict drops the bundled lists' compatibility exceptions, never the person's own rules.
-    function decide(requestUrl, pageHost, { strict = false, userRules = [] } = {}) {
+    // `type` is the webRequest resource type; EasyList rules may name one.
+    function decide(requestUrl, pageHost, { strict = false, userRules = [], type = "other" } = {}) {
       let requestHost;
       try {
         const parsed = new URL(requestUrl);
@@ -101,7 +114,10 @@
         page,
       );
       if (advanced === "A") return null;
-      if (advanced === "B" || hosts.shouldBlockHosts(requestHost, page, { strict })) {
+      // An exception in any list beats a block in any other, as in uBlock Origin.
+      const filtered = filterDecision(requestUrl, type, requestHost, page, { strict });
+      if (filtered === "A") return null;
+      if (advanced === "B" || filtered === "B" || hosts.shouldBlockHosts(requestHost, page, { strict })) {
         return { action: "B", builtIn: true };
       }
       return null;
@@ -111,24 +127,28 @@
       decide,
       indexedSizes: hosts.indexedSizes,
       advancedRuleCount: advancedRules.length,
+      networkFilterCount: urlFilters.length,
     };
   }
 
   // Reads every list through load(fileName) -> Promise<string>; a missing list fails the load.
   async function load(loadText, options = {}) {
     const read = (names) => Promise.all(names.map(loadText));
-    const [hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs, advancedText] = await Promise.all([
-      read(LIST_FILES.hostLists),
-      read(LIST_FILES.indexedLists),
-      read(LIST_FILES.blockedPairs),
-      read(LIST_FILES.allowedPairs),
-      read(LIST_FILES.familyPairs),
-      loadText(LIST_FILES.advanced),
-    ]);
+    const [hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs, advancedText, networkFiltersText] =
+      await Promise.all([
+        read(LIST_FILES.hostLists),
+        read(LIST_FILES.indexedLists),
+        read(LIST_FILES.blockedPairs),
+        read(LIST_FILES.allowedPairs),
+        read(LIST_FILES.familyPairs),
+        loadText(LIST_FILES.advanced),
+        loadText(LIST_FILES.networkFilters),
+      ]);
     return create({
       ...options,
       lists: { hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs },
       advancedText,
+      networkFiltersText,
     });
   }
 
