@@ -256,11 +256,13 @@ internal class GeckoViewRuntimeHandle private constructor(
 
     @UiThread
     override fun setFingerprintingProtectionExceptions(hosts: Set<String>) {
-        CandyGeckoPrefsBridge.commitRuntimePref(
-            runtime.settings,
-            GeckoFingerprintingExceptions.PREF,
-            GeckoFingerprintingExceptions.prefValue(hosts),
-        )
+        runCatching {
+            CandyGeckoPrefsBridge.commitRuntimePref(
+                runtime.settings,
+                GeckoFingerprintingExceptions.PREF,
+                GeckoFingerprintingExceptions.prefValue(hosts),
+            )
+        }
     }
 
     @UiThread

@@ -16,27 +16,42 @@ import org.mozilla.geckoview.ContentBlockingController.LogEntry
 internal object GeckoFingerprintingExceptions {
     const val PREF = "privacy.fingerprintingProtection.granularOverrides"
     private const val ALL_TARGETS_OFF = "-AllTargets"
-    private val SAFE_DOMAIN = Regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
+
+    /**
+     * The domain shape Gecko's override schema accepts: labels of up to 63 characters and a top
+     * level of 2–6 Latin letters. Gecko silently drops anything else, so `.рф` (`xn--p1ai`), longer
+     * zones such as `.digital` and IP addresses cannot be excepted.
+     */
+    private val GECKO_DOMAIN = Regex("^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,6}$")
+
+    /** Whether Gecko can except [host]; the panel hides the fingerprinting switch when it cannot. */
+    fun supports(
+        host: String,
+        registrableDomain: (String) -> String? = CandyPublicSuffixRules::registrableDomain,
+    ): Boolean = exceptionDomain(host, registrableDomain) != null
 
     /**
      * The pref value for [hosts]: their registrable domains, sorted, as Gecko's JSON; empty with no
-     * exception, which restores Gecko's default. A host that does not reduce to a plain ASCII
-     * domain is left out rather than escaped.
+     * exception, which restores Gecko's default. A host Gecko cannot except ([supports]) is left
+     * out rather than escaped.
      */
     fun prefValue(
         hosts: Collection<String>,
         registrableDomain: (String) -> String? = CandyPublicSuffixRules::registrableDomain,
     ): String {
         val domains = hosts.asSequence()
-            .mapNotNull(PrivacyRequestSanitizer::normalizeHost)
-            .map { host -> registrableDomain(host) ?: host }
-            .filter(SAFE_DOMAIN::matches)
+            .mapNotNull { host -> exceptionDomain(host, registrableDomain) }
             .toSortedSet()
         if (domains.isEmpty()) return ""
         return domains.joinToString(separator = ",", prefix = "[", postfix = "]") { domain ->
             """{"firstPartyDomain":"$domain","overrides":"$ALL_TARGETS_OFF"},""" +
                 """{"firstPartyDomain":"$domain","thirdPartyDomain":"*","overrides":"$ALL_TARGETS_OFF"}"""
         }
+    }
+
+    private fun exceptionDomain(host: String, registrableDomain: (String) -> String?): String? {
+        val normalized = PrivacyRequestSanitizer.normalizeHost(host) ?: return null
+        return (registrableDomain(normalized) ?: normalized).takeIf(GECKO_DOMAIN::matches)
     }
 }
 
@@ -61,7 +76,6 @@ internal object GeckoContentBlockingCounts {
     private val trackingCookies = setOf(
         Event.COOKIES_BLOCKED_TRACKER,
         Event.COOKIES_BLOCKED_SOCIALTRACKER,
-        Event.COOKIES_PARTITIONED_TRACKER,
     )
 
     fun fromLog(log: List<LogEntry>?): SiteProtectionCounts? = log?.let { entries ->
@@ -72,12 +86,22 @@ internal object GeckoContentBlockingCounts {
         )
     }
 
-    /** Counts the sites per kind; events the engine only logged (not blocked) do not count. */
-    fun counts(events: List<BlockedEvent>): SiteProtectionCounts {
-        val blocked = events.filter { it.blocked && !it.origin.isNullOrBlank() }
+    /**
+     * Counts the sites per kind: origins of one registrable domain (`a.tracker.example` and
+     * `b.tracker.example`) are one site. Events the engine only logged (not blocked) do not count.
+     */
+    fun counts(
+        events: List<BlockedEvent>,
+        registrableDomain: (String) -> String? = CandyPublicSuffixRules::registrableDomain,
+    ): SiteProtectionCounts {
+        val blocked = events.mapNotNull { event ->
+            if (!event.blocked) return@mapNotNull null
+            val host = event.origin?.let(PrivacyRequestSanitizer::webHost) ?: return@mapNotNull null
+            event.category to (registrableDomain(host) ?: host)
+        }
         fun sites(categories: Set<Int>) = blocked.asSequence()
-            .filter { it.category in categories }
-            .map { it.origin }
+            .filter { (category, _) -> category in categories }
+            .map { (_, site) -> site }
             .distinct()
             .count()
         return SiteProtectionCounts(

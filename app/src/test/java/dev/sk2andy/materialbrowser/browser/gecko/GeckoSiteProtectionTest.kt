@@ -44,9 +44,22 @@ class GeckoSiteProtectionTest {
     }
 
     @Test
-    fun `blocked sites count once per kind and logged-only events do not count`() {
+    fun `hosts gecko's schema rejects are not written and the switch is hidden`() {
+        val rejected = listOf("пример.рф", "studio.digital", "192.168.0.1", "example.c0m")
+
+        assertEquals("", GeckoFingerprintingExceptions.prefValue(rejected) { null })
+        rejected.forEach { host -> assertFalse(host, GeckoFingerprintingExceptions.supports(host) { null }) }
+        assertTrue(GeckoFingerprintingExceptions.supports("maps.example.com") { registrable[it] })
+        assertTrue(GeckoFingerprintingExceptions.supports("news.museum") { null })
+    }
+
+    @Test
+    fun `blocked sites count once per kind and domain, partitioned cookies are not blocked`() {
+        val sites = mapOf("a.tracker.example" to "tracker.example", "b.tracker.example" to "tracker.example")
         val counts = GeckoContentBlockingCounts.counts(
             listOf(
+                BlockedEvent("https://a.tracker.example", Event.BLOCKED_TRACKING_CONTENT, blocked = true),
+                BlockedEvent("https://b.tracker.example:8443", Event.BLOCKED_TRACKING_CONTENT, blocked = true),
                 BlockedEvent("https://ads.example", Event.BLOCKED_TRACKING_CONTENT, blocked = true),
                 BlockedEvent("https://ads.example", Event.BLOCKED_TRACKING_CONTENT, blocked = true),
                 BlockedEvent("https://pixel.example", Event.REPLACED_TRACKING_CONTENT, blocked = true),
@@ -58,16 +71,17 @@ class GeckoSiteProtectionTest {
                 BlockedEvent("https://social.example", Event.COOKIES_BLOCKED_SOCIALTRACKER, blocked = true),
                 BlockedEvent("https://ads.example", Event.COOKIES_PARTITIONED_TRACKER, blocked = true),
                 BlockedEvent(null, Event.BLOCKED_TRACKING_CONTENT, blocked = true),
+                BlockedEvent("moz-nullprincipal:{x}", Event.BLOCKED_TRACKING_CONTENT, blocked = true),
             ),
-        )
+        ) { host -> sites[host] }
 
         assertEquals(
             SiteProtectionCounts(
-                trackerSites = 2,
+                trackerSites = 3,
                 fingerprinterSites = 1,
                 cryptominerSites = 1,
                 socialTrackerSites = 1,
-                trackingCookieSites = 2,
+                trackingCookieSites = 1,
             ),
             counts,
         )

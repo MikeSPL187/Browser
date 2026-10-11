@@ -30,3 +30,13 @@ memory only.
 
 Gecko keeps one fingerprinting exception list for the whole runtime: a site excepted in one
 profile or private tab is excepted in all of them while the exception lasts. The panel says so.
+
+For the panel (V17):
+
+- Gecko's override schema takes only domains whose top level is 2–6 Latin letters. `.рф`
+  (`xn--p1ai`), longer zones such as `.digital` and IP addresses cannot be excepted: hide the
+  fingerprinting switch there (`GeckoFingerprintingExceptions.supports`) or say why it is missing.
+- Counts are per registrable domain (`a.tracker.example` and `b.tracker.example` are one site).
+  Partitioned cookies are not counted as blocked. The panel shows one total (`system-v5.md`, section 10).
+- Off is the site pause and clears the Strict mark: after the pause is lifted the site is back on
+  Standard. The panel text must say so.
