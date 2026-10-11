@@ -1,8 +1,29 @@
 "use strict";
 
 (function installPrivacySignalHelpers(global) {
-  function requestHeaders(currentHeaders, policy) {
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Strict site protection: a request to another site carries no Referer at all. The same host and
+  // its parent or child domains count as the site, so a page's own CDN keeps working.
+  function dropsReferrer(policy, requestUrl) {
+    if (policy?.trimCrossSiteReferrer !== true) return false;
+    const pageHost = typeof policy.pageHost === "string" ? policy.pageHost.toLowerCase() : null;
+    const requestHost = hostOf(requestUrl);
+    if (!pageHost || !requestHost) return false;
+    return requestHost !== pageHost &&
+      !requestHost.endsWith(`.${pageHost}`) &&
+      !pageHost.endsWith(`.${requestHost}`);
+  }
+
+  function requestHeaders(currentHeaders, policy, requestUrl) {
     const names = new Set(["dnt", "sec-gpc"]);
+    if (dropsReferrer(policy, requestUrl)) names.add("referer");
     const headers = Array.isArray(currentHeaders) ?
       currentHeaders.filter((header) =>
         typeof header?.name !== "string" || !names.has(header.name.toLowerCase()),

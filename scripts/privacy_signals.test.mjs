@@ -3,7 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-const context = vm.createContext({ Map, Object, Set });
+const context = vm.createContext({ Map, Object, Set, URL });
 const source = fs.readFileSync(
   new URL("../app/src/gecko/assets/candy_privacy/privacy_signals.js", import.meta.url),
   "utf8",
@@ -26,6 +26,21 @@ test("request headers replace spoofed values and keep unrelated headers", () => 
     { name: "DNT", value: "1" },
     { name: "Sec-GPC", value: "1" },
   ]);
+});
+
+test("strict site protection drops the referrer to other sites only", () => {
+  const policy = { pageHost: "news.example", trimCrossSiteReferrer: true };
+  const headers = [{ name: "Referer", value: "https://news.example/story" }];
+  const plain = (value) => JSON.parse(JSON.stringify(value));
+
+  assert.deepEqual(plain(signals.requestHeaders(headers, policy, "https://ads.tracker.test/pixel")), []);
+  assert.deepEqual(plain(signals.requestHeaders(headers, policy, "https://cdn.news.example/a.js")), plain(headers));
+  assert.deepEqual(plain(signals.requestHeaders(headers, policy, "https://news.example/b")), plain(headers));
+  assert.deepEqual(
+    plain(signals.requestHeaders(headers, { ...policy, trimCrossSiteReferrer: false }, "https://ads.tracker.test/")),
+    plain(headers),
+  );
+  assert.deepEqual(plain(signals.requestHeaders(headers, policy, "not a url")), plain(headers));
 });
 
 test("disabled request signals remove stale privacy headers", () => {

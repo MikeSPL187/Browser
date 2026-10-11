@@ -626,7 +626,7 @@ browser.webRequest.onBeforeSendHeaders.addListener((details) => {
   const policy = token && policiesByToken.get(token);
   if (!policy) return {};
   return {
-    requestHeaders: CandyPrivacySignals.requestHeaders(details.requestHeaders, policy),
+    requestHeaders: CandyPrivacySignals.requestHeaders(details.requestHeaders, policy, details.url),
   };
 }, { urls: ["http://*/*", "https://*/*"] }, ["blocking", "requestHeaders"]);
 

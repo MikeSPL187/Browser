@@ -27,6 +27,14 @@ class CandyPrivacyHostContractTest {
     }
 
     @Test
+    fun `strict referrer trimming crosses the policy and is off by default`() {
+        val strict = GeckoPrivacyPolicy.Disabled.copy(trimCrossSiteReferrer = true)
+
+        assertTrue(strict.toMessage(token = "session-token", revision = 2).getBoolean("trimCrossSiteReferrer"))
+        assertFalse(GeckoPrivacyPolicy.Disabled.toMessage(token = "session-token", revision = 2).getBoolean("trimCrossSiteReferrer"))
+    }
+
+    @Test
     fun `animation policy crosses authenticated policy with bounded revision`() {
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
             pageHost = null,

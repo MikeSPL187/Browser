@@ -334,6 +334,9 @@ internal class GeckoBrowserEngineSessionFactory(
         runtime.setFingerprintingProtectionExceptions(hosts)
     }
 
+    override fun supportsFingerprintingException(host: String): Boolean =
+        GeckoFingerprintingExceptions.supports(host)
+
     @UiThread
     override fun setWebContentFontSizeFactor(factor: Float) {
         runtime.setWebContentFontSizeFactor(factor)

@@ -90,6 +90,9 @@ internal interface AndroidBrowserEngineFactory {
      */
     fun setFingerprintingProtectionExceptions(hosts: Set<String>) = Unit
 
+    /** Whether [host] can be excepted from fingerprinting protection; Gecko rejects some domains. */
+    fun supportsFingerprintingException(host: String): Boolean = false
+
     fun setWebContentFontSizeFactor(factor: Float)
 
     fun setWebContentColorScheme(colorScheme: BrowserWebContentColorScheme) = Unit

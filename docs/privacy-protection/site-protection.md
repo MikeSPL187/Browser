@@ -1,8 +1,7 @@
 # Site protection levels (v5, V17 groundwork)
 
 The model and engine parts behind the v5 site protection panel. No screen yet: part 1 defines the
-port, the rules, storage and the Gecko pieces; part 2 wires them into `BrowserController` and the
-blocker.
+port, the rules, storage and the Gecko pieces; part 2 wires them into the browser.
 
 ## Levels (owner's decision 2026-10-11, after Brave)
 
@@ -44,3 +43,18 @@ For the panel (V17):
 On Gecko, network ad blocking is the bundled uBlock Origin, which Vola cannot steer per site (no API
 for other extensions, no managed storage on Android): levels do not reach it yet. Options and the
 plan-v5 decision to replace it — `docs/vola/research/ublock-origin.md`.
+
+## Wiring (part 2)
+
+| Effect | Where |
+| --- | --- |
+| The port | `BrowserSiteProtection` implements `SiteProtectionPort` and now holds the site pause (`pause`, `resume`), moved out of `BrowserController`, which keeps one-line delegates |
+| Policy per page | `BrowserController.sitePolicyFor` resolves `SiteProtectionPolicy`; `geckoPrivacyPolicyFor` takes cookie-banner handling (`SiteProtectionRules.handlesCookieConsent`), third-party cookie exceptions and Strict referrer trimming from it, and on System WebView the ad blocking too |
+| Referer on Strict | `GeckoPrivacyPolicy.trimCrossSiteReferrer` → `privacy_signals.js` drops `Referer` on requests to another site (not the page's own host, its parents or children) |
+| de-AMP per site | AMP links to a site whose de-AMP switch is off stay AMP (`deAmpsTo`) |
+| Fingerprinting | `permanentSitePrivacyOverrides` and private-tab changes push the exception list to the engine; an engine started later gets it at start |
+| Counts | `SiteProtectionPort.counts` adds the engine's log to the blocker's requests |
+
+Limits: Strict cannot block third-party cookies on a site while the global switch lets them through
+(Gecko keeps per-site allow exceptions only); uBlock Origin is untouched until Vola's own blocker
+replaces it on Gecko.

@@ -141,6 +141,18 @@ class SiteProtectionRulesTest {
     }
 
     @Test
+    fun `consent handling stops on off, always runs on strict, else follows the global switch`() {
+        val off = BlockerSettings(hideCookieConsent = false)
+        fun handles(level: SiteProtectionLevel, global: BlockerSettings) =
+            SiteProtectionRules.handlesCookieConsent(SiteProtectionRules.policy(level, global, null), global)
+
+        assertFalse(handles(SiteProtectionLevel.Off, defaults))
+        assertTrue(handles(SiteProtectionLevel.Standard, defaults))
+        assertFalse(handles(SiteProtectionLevel.Standard, off))
+        assertTrue(handles(SiteProtectionLevel.Strict, off))
+    }
+
+    @Test
     fun `levels keep stable ids for storage`() {
         SiteProtectionLevel.entries.forEach { level ->
             assertEquals(level, SiteProtectionLevel.fromStableId(level.stableId))

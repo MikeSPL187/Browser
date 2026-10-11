@@ -68,6 +68,10 @@ import dev.sk2andy.materialbrowser.blocking.PrivacyXRayRepository
 import dev.sk2andy.materialbrowser.blocking.PrivacyXRaySnapshot
 import dev.sk2andy.materialbrowser.blocking.SiteExceptionRules
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrides
+import dev.sk2andy.materialbrowser.browser.protection.BrowserSiteProtection
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionPolicy
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionRules
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrideRules
 import dev.sk2andy.materialbrowser.blocking.SiteProtectionState
 import dev.sk2andy.materialbrowser.capsule.CapsuleDeletionRules
@@ -403,7 +407,7 @@ class BrowserController(
     val browserEngineKind: AndroidBrowserEngineKind =
         BrowserSessionStore(activity.applicationContext).loadAndroidBrowserEngineKind()
 
-    private val browserEngineCapabilities = AndroidBrowserEngineRules.capabilities(browserEngineKind)
+    internal val browserEngineCapabilities = AndroidBrowserEngineRules.capabilities(browserEngineKind)
 
     val usesGeckoEngine: Boolean
         get() = browserEngineCapabilities.firefoxExtensions
@@ -1117,10 +1121,8 @@ class BrowserController(
     private val pendingGeckoViewAttachRetries =
         mutableMapOf<FrameLayout, PendingGeckoViewAttach>()
     private var isGeckoViewBindingMutationInProgress = false
-    private val browserEngineSessionFactory: AndroidBrowserEngineFactory by lazy(
-        LazyThreadSafetyMode.NONE,
-    ) {
-        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
+    private val browserEngineSessionFactoryLazy = lazy<AndroidBrowserEngineFactory>(LazyThreadSafetyMode.NONE) {
+        val factory = if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
             SystemWebViewBrowserEngineFactory(activity)
         } else when (browserEngineKind) {
             AndroidBrowserEngineKind.GeckoView ->
@@ -1128,7 +1130,9 @@ class BrowserController(
             AndroidBrowserEngineKind.SystemWebView ->
                 SystemWebViewBrowserEngineFactory(activity)
         }
+        factory.also { it.setFingerprintingProtectionExceptions(fingerprintingExceptionHosts()) }
     }
+    private val browserEngineSessionFactory: AndroidBrowserEngineFactory by browserEngineSessionFactoryLazy
     private val residentSessionAccessOrder = mutableMapOf<String, Long>()
     private var residentSessionAccessSequence = 0L
     private var residentSessionTrimScheduled = false
@@ -1201,7 +1205,7 @@ class BrowserController(
     private var pageTranslationRecoveryOfferSequence = 0L
     private val federatedLoginPopupTabIds = mutableSetOf<String>()
     private val federatedLoginCompatibilityTabIds = mutableSetOf<String>()
-    private val pageUrls = ConcurrentHashMap<String, String>()
+    internal val pageUrls = ConcurrentHashMap<String, String>()
     private val historyVisits = mutableMapOf<String, HistoryEntry>() // last saved visit per tab
     private val mainHandler = Handler(Looper.getMainLooper())
     private val findInPage = FindInPageController(
@@ -1257,7 +1261,7 @@ class BrowserController(
     private val blockerFlushScheduled = AtomicBoolean(false)
     private val privacyXRayRepository = PrivacyXRayRepository()
     private val privacyEventLock = Any()
-    private val temporarySiteExceptions = ConcurrentHashMap<String, Set<String>>()
+    internal val temporarySiteExceptions = ConcurrentHashMap<String, Set<String>>()
     private val temporarySitePrivacyOverrides =
         ConcurrentHashMap<String, Map<String, SitePrivacyOverrides>>()
     private val permissionStore = PermissionRadarStore(activity)
@@ -1315,7 +1319,7 @@ class BrowserController(
     private val candyTrailRedactionsDuringRestore = mutableListOf<PendingCandyTrailRedaction>()
     private var isCandyTrailRestoreInProgress = false
     private var candyTrailEpoch = 0
-    private val store = BrowserSessionStore(activity)
+    internal val store = BrowserSessionStore(activity)
     val splitView = SplitViewController { tabId ->
         // The tab left Split View: it is in the background again, unless it is the selected one.
         if (tabId != selectedTabId) browserEngineSessions[tabId]?.setActive(false)
@@ -1466,9 +1470,11 @@ class BrowserController(
     private val ephemeralRuleIds = mutableSetOf<String>()
 
     @Volatile
-    private var permanentSiteExceptions = store.loadPermanentSiteExceptions()
+    internal var permanentSiteExceptions = store.loadPermanentSiteExceptions()
     private var permanentSitePrivacyOverrides = store.loadSitePrivacyOverrides()
-    private var siteExceptionRevision by mutableIntStateOf(0)
+        set(value) { field = value; pushFingerprintingExceptions() }
+    internal var siteExceptionRevision by mutableIntStateOf(0)
+    internal val siteProtection = BrowserSiteProtection(this)
 
     @Volatile
     private var workerSettings = store.loadBlockerSettings()
@@ -9563,63 +9569,10 @@ class BrowserController(
         }
     }
 
-    fun pauseSiteProtection(tabId: String, persistently: Boolean): Boolean {
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return false
-        val host = PrivacyRequestSanitizer.webHost(pageUrls[tabId] ?: tab.url) ?: return false
-        if (persistently && SiteExceptionRules.mayPersist(tab.isIncognito)) {
-            permanentSiteExceptions = permanentSiteExceptions + (
-                tab.profileId to SiteExceptionRules.withException(
-                    permanentSiteExceptions[tab.profileId].orEmpty(),
-                    host,
-                )
-            )
-            temporarySiteExceptions.computeIfPresent(tabId) { _, hosts ->
-                hosts.filterNot { exception ->
-                    SiteExceptionRules.isPaused(host, listOf(exception))
-                }.toSet().takeIf(Set<String>::isNotEmpty)
-            }
-            store.savePermanentSiteExceptions(permanentSiteExceptions)
-            refreshProtectionForProfile(tab.profileId)
-        } else temporarySiteExceptions[tabId] = setOf(host)
-        siteExceptionRevision++
-        reloadTabWithProtection(tabId)
-        return true
-    }
+    fun pauseSiteProtection(tabId: String, persistently: Boolean): Boolean =
+        siteProtection.pause(tabId, persistently)
 
-    fun resumeSiteProtection(tabId: String): Boolean {
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return false
-        val host = PrivacyRequestSanitizer.webHost(pageUrls[tabId] ?: tab.url) ?: return false
-        var changed = false
-        var persistentChanged = false
-        temporarySiteExceptions.computeIfPresent(tabId) { _, hosts ->
-            val retained = hosts.filterNot { exception ->
-                SiteExceptionRules.isPaused(host, listOf(exception))
-            }.toSet()
-            changed = changed || retained.size != hosts.size
-            retained.takeIf(Set<String>::isNotEmpty)
-        }
-        if (!tab.isIncognito) {
-            val profileHosts = permanentSiteExceptions[tab.profileId].orEmpty()
-            val retained = profileHosts.filterNot { exception ->
-                SiteExceptionRules.isPaused(host, listOf(exception))
-            }.toSet()
-            if (retained.size != profileHosts.size) {
-                changed = true
-                persistentChanged = true
-                permanentSiteExceptions = if (retained.isEmpty()) {
-                    permanentSiteExceptions - tab.profileId
-                } else {
-                    permanentSiteExceptions + (tab.profileId to retained)
-                }
-                store.savePermanentSiteExceptions(permanentSiteExceptions)
-            }
-        }
-        if (!changed) return false
-        if (persistentChanged) refreshProtectionForProfile(tab.profileId)
-        siteExceptionRevision++
-        reloadTabWithProtection(tabId)
-        return true
-    }
+    fun resumeSiteProtection(tabId: String): Boolean = siteProtection.resume(tabId)
 
     fun setCookieBannerRemovalDisabled(tabId: String, disabled: Boolean): Boolean =
         updateSitePrivacyOverrides(tabId) { current, host ->
@@ -9661,7 +9614,7 @@ class BrowserController(
             )
         }
 
-    private fun updateSitePrivacyOverrides(
+    internal fun updateSitePrivacyOverrides(
         tabId: String,
         reloadAffectedPages: Boolean = true,
         persistently: Boolean = true,
@@ -9682,6 +9635,7 @@ class BrowserController(
             )
             if (byHost.isEmpty()) temporarySitePrivacyOverrides.remove(tabId)
             else temporarySitePrivacyOverrides[tabId] = byHost
+            pushFingerprintingExceptions()
 
         } else {
             val byHost = SitePrivacyOverrideRules.withOverride(
@@ -10706,7 +10660,7 @@ class BrowserController(
         val publisherUrl = if (
             isAutoDeAmpEnabled && request.target == BrowserEngineNavigationTarget.Current
         ) {
-            AutoDeAmpRules.publisherUrlFor(request.url)
+            AutoDeAmpRules.publisherUrlFor(request.url)?.takeIf { url -> deAmpsTo(tabId, url) }
         } else {
             null
         }
@@ -11673,7 +11627,7 @@ class BrowserController(
 
     private fun autoDeAmpPublisherUrl(tabId: String, url: String?): String? {
         if (!isAutoDeAmpEnabled) return null
-        val publisherUrl = AutoDeAmpRules.publisherUrlFor(url) ?: return null
+        val publisherUrl = AutoDeAmpRules.publisherUrlFor(url)?.takeIf { deAmpsTo(tabId, it) } ?: return null
         autoDeAmp.remember(tabId, publisherUrl)
         return publisherUrl
     }
@@ -11760,14 +11714,11 @@ class BrowserController(
         // lies under the status bar, so the CSS fallback has nothing to move down.
         cssSafeAreaTopInsetPx: Int = 0,
     ): GeckoPrivacyPolicy {
-        val siteProtectionPaused = isSiteProtectionPaused(tab.id, context, pageUrl)
-        val federatedLoginCompatibilityEnabled =
-            isFederatedLoginCompatibilityEnabled(tab, pageUrl)
-        val captchaCompatibilityEnabled = isCaptchaCompatibilityEnabled(tab, pageUrl)
+        val site = sitePolicyFor(tab, pageUrl, isSiteProtectionPaused(tab.id, context, pageUrl))
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
             pageHost = PrivacyRequestSanitizer.webHost(pageUrl),
             pausedHosts = siteExceptionHostsForTab(tab.id),
-            hideCookieConsent = workerSettings.hideCookieConsent && !siteProtectionPaused,
+            hideCookieConsent = SiteProtectionRules.handlesCookieConsent(site, workerSettings),
             cookieBannerRemovalDisabled = context.cookieBannerRemovalDisabled,
             doNotTrackEnabled = privacySignalSettings.doNotTrackEnabled,
             globalPrivacyControlEnabled = privacySignalSettings.globalPrivacyControlEnabled,
@@ -11775,10 +11726,8 @@ class BrowserController(
             animationsEnabled = appearanceSettings.animationsEnabled,
             animationPolicyRevision = animationPolicyRevision,
             blockThirdPartyCookies = workerSettings.blockThirdPartyCookies,
-            allowThirdPartyCookiesForSite =
-                siteProtectionPaused ||
-                    federatedLoginCompatibilityEnabled ||
-                    captchaCompatibilityEnabled,
+            allowThirdPartyCookiesForSite = SiteProtectionRules.acceptsThirdPartyCookies(site),
+            trimCrossSiteReferrer = site.trimCrossSiteReferrer,
             topInsetPx = topInsetPx,
             navigationGeneration = navigationGeneration,
             scrollMetricsEnabled = BrowserPullToRefreshRules.shouldCollectScrollMetrics(
@@ -11816,8 +11765,7 @@ class BrowserController(
             policy
         } else {
             policy.copy(
-                blockAdsAndTrackers = workerSettings.blockAdsAndTrackers &&
-                    !siteProtectionPaused,
+                blockAdsAndTrackers = site.blockAdsAndTrackers,
                 candyRules = filterRules.filter { rule ->
                     rule.active && (rule.profileId == null || rule.profileId == tab.profileId)
                 },
@@ -15257,6 +15205,46 @@ class BrowserController(
         }
     }
 
+    /** The site's resolved protection (v5 site protection levels), from its level and switches. */
+    internal fun sitePolicyFor(tab: BrowserTab, pageUrl: String?, paused: Boolean): SiteProtectionPolicy {
+        val host = PrivacyRequestSanitizer.webHost(pageUrl ?: tab.url)
+        val overrides = host?.let { sitePrivacyOverridesFor(tab)[it] }
+        return SiteProtectionRules.policy(
+            level = SiteProtectionRules.level(paused, overrides),
+            global = workerSettings,
+            overrides = overrides,
+            cookieBannerRemovalDisabledByDefault = bundledSitePrivacyDefaults.cookieBannerRemovalDisabled(host),
+        )
+    }
+
+    /** Whether an AMP link may be rewritten to [publisherUrl]: not when the user kept AMP on that site. */
+    private fun deAmpsTo(tabId: String, publisherUrl: String): Boolean {
+        val tab = tabs.firstOrNull { it.id == tabId } ?: return true
+        val host = PrivacyRequestSanitizer.webHost(publisherUrl) ?: return true
+        return sitePrivacyOverridesFor(tab)[host]?.deAmpDisabled != true
+    }
+
+    private fun fingerprintingExceptionHosts(): Set<String> = SiteProtectionRules.fingerprintingExceptionHosts(
+        permanentSitePrivacyOverrides.values + temporarySitePrivacyOverrides.values,
+    )
+
+    /** Hands the engine its fingerprinting exceptions; an engine not started yet gets them at start. */
+    private fun pushFingerprintingExceptions() {
+        if (!browserEngineSessionFactoryLazy.isInitialized()) return
+        browserEngineSessionFactory.setFingerprintingProtectionExceptions(fingerprintingExceptionHosts())
+    }
+
+    internal fun sitePrivacyOverrides(tabId: String): SitePrivacyOverrides? {
+        val tab = tabs.firstOrNull { it.id == tabId } ?: return null
+        return PrivacyRequestSanitizer.webHost(pageUrls[tabId] ?: tab.url)?.let { sitePrivacyOverridesFor(tab)[it] }
+    }
+
+    internal fun supportsFingerprintingException(host: String): Boolean =
+        browserEngineSessionFactory.supportsFingerprintingException(host)
+
+    internal fun protectionCounts(tabId: String, onResult: (SiteProtectionCounts?) -> Unit) =
+        browserEngineSessions[tabId]?.protectionCounts(onResult) ?: onResult(null)
+
     private fun sitePrivacyOverridesFor(tab: BrowserTab): Map<String, SitePrivacyOverrides> {
         val temporary = temporarySitePrivacyOverrides[tab.id].orEmpty()
         if (tab.isIncognito) return temporary
@@ -15371,7 +15359,7 @@ class BrowserController(
         return !isCookieBannerRemovalDisabled(tab, host)
     }
 
-    private fun reloadTabWithProtection(tabId: String) {
+    internal fun reloadTabWithProtection(tabId: String) {
         updateProtectionRequestContext(tabId, pageUrls[tabId])
         val session = browserEngineSessionFor(tabId)
         geckoPrivacyPolicyFor(tabId)?.let { policy ->
@@ -15381,7 +15369,7 @@ class BrowserController(
         }
     }
 
-    private fun refreshProtectionForProfile(profileId: String) {
+    internal fun refreshProtectionForProfile(profileId: String) {
         tabs.asSequence()
             .filter { tab -> tab.profileId == profileId && !tab.isIncognito }
             .forEach { tab ->
