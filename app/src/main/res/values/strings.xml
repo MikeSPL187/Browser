@@ -1974,6 +1974,16 @@
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
     <string name="v5_sheet_close">Close</string>
+    <string name="v5_menu_title">Page menu</string>
+    <string name="v5_menu_favorite">Favorite</string>
+    <string name="v5_menu_in_favorites">In favorites</string>
+    <string name="v5_menu_read">Read</string>
+    <string name="v5_menu_read_subtitle">Reader view, listening and saving</string>
+    <string name="v5_menu_unpin_tab">Unpin tab</string>
+    <string name="v5_menu_new_private_tab">New private tab</string>
+    <string name="v5_menu_favorites">Favorites</string>
+    <string name="v5_menu_downloads">Downloads</string>
+    <string name="v5_menu_all_actions">All actions</string>
     <string name="v5_overview_tabs">Tabs · %1$d</string>
     <string name="v5_overview_private">Private · %1$d</string>
     <string name="v5_overview_search">Search tabs</string>

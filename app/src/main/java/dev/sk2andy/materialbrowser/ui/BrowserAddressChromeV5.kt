@@ -41,8 +41,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 
 /*
- * Binds the v5 bottom bar (ui/v5/V5BottomBar.kt) to the browser while the ui.v5 flag is on. The menu
- * is still the current browser menu: its v5 version is V15.
+ * Binds the v5 bottom bar (ui/v5/V5BottomBar.kt) to the browser while the ui.v5 flag is on. «•••»
+ * opens the v5 page menu (V15b); its «All actions» opens the current menu for the rest.
  */
 
 /** Menu actions that need more than a controller call. */
@@ -101,6 +101,7 @@ internal fun BrowserV5Bar(
         blockedCount = tab.blockedCount,
     )
     var menuExpanded by remember { mutableStateOf(false) }
+    var allActionsExpanded by remember { mutableStateOf(false) }
     // The page's color (system-v5.md, section 1.3), unless turned off in Appearance. Private tabs,
     // a new tab and error pages keep the neutral bar (step 7).
     val siteTint by rememberV5Preference(V5SiteTintSetting)
@@ -128,9 +129,9 @@ internal fun BrowserV5Bar(
                         Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
                     }
                     BrowserMainMenu(
-                        expanded = menuExpanded,
+                        expanded = allActionsExpanded,
                         backdropSource = backdropSource,
-                        onDismissRequest = { menuExpanded = false },
+                        onDismissRequest = { allActionsExpanded = false },
                         pageSubtitle = if (tab.url == BLANK_URL) {
                             stringResource(R.string.new_tab_title)
                         } else {
@@ -202,6 +203,15 @@ internal fun BrowserV5Bar(
                         onSettings = actions.onSettings,
                     )
                 },
+            )
+            // Over the whole browser, above the bar: the bar's box fills the window.
+            BrowserPageMenuV5(
+                controller = controller,
+                tab = tab,
+                visible = menuExpanded,
+                actions = actions,
+                onDismiss = { menuExpanded = false },
+                onAllActions = { allActionsExpanded = true },
             )
         }
     }

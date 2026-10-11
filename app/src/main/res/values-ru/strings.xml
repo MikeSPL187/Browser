@@ -2054,6 +2054,16 @@
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
     <string name="v5_sheet_close">Закрыть</string>
+    <string name="v5_menu_title">Меню страницы</string>
+    <string name="v5_menu_favorite">В избранное</string>
+    <string name="v5_menu_in_favorites">В избранном</string>
+    <string name="v5_menu_read">Читать</string>
+    <string name="v5_menu_read_subtitle">Режим чтения, прослушивание и сохранение</string>
+    <string name="v5_menu_unpin_tab">Открепить вкладку</string>
+    <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
+    <string name="v5_menu_favorites">Избранное</string>
+    <string name="v5_menu_downloads">Загрузки</string>
+    <string name="v5_menu_all_actions">Все действия</string>
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>
     <string name="v5_overview_search">Поиск по вкладкам</string>
