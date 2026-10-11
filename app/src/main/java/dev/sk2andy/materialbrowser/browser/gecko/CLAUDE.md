@@ -11,6 +11,11 @@
   `src/full/java/com/google/**`, и WebAuthn включён только на Android 14+ с Credential Manager
   (`PasskeySupport`). Обновление GeckoView с новым вызовом Play services ловит `GeckoWebAuthnFallbackTest`:
   добавь заглушку, которая отказывает исключением (`Exception`, не `Error`), а не правь список в тесте.
+  `GeckoPlayServicesReferenceTest` проверяет все ссылки GeckoView на Play services, по тесту на ссылку
+  (имя ссылки видно в логе CI). Ссылку без заглушки вноси в `testFull/resources/gecko_play_services_unreachable.txt`
+  только после того, как прочитал в исходнике GeckoView, что она выполняется лишь после отказа заглушки.
+  Исходник — `git clone --filter=blob:none` репозитория `mozilla-firefox/firefox` на теге релиза
+  (maven.mozilla.org из облака закрыт).
 - **Debug и release ведут себя по-разному:** вылет H1 был только в release (и без R8 тоже — дело не в
   минификации). Изменения, способные уронить движок, проверяй на release-сборке (`localRelease` или
   `benchmark`) на эмуляторе CI, а не только тестами на debug.

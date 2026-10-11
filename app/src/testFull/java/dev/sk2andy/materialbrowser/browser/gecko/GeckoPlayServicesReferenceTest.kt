@@ -10,8 +10,8 @@ import org.junit.runners.Parameterized
  * Passkeys option A against a GeckoView update, for every class of it: each Play services class,
  * field or method GeckoView names exists in the stand-ins (`src/full/java/com/google`) or is on
  * [KNOWN_UNREACHABLE], code GeckoView runs only after a stand-in has refused. One test per reference,
- * named by its key, so the CI log names what a new GeckoView started to call. [KNOWN_UNREACHABLE]
- * matches `proguard-gecko-rules.pro`, which lets R8 leave exactly these absent.
+ * named by its key, so the CI log names what a new GeckoView started to call. Because every absent
+ * reference has to pass here first, the broad `-dontwarn` in `proguard-gecko-rules.pro` cannot hide one.
  */
 @RunWith(Parameterized::class)
 class GeckoPlayServicesReferenceTest(private val key: String) {
@@ -25,7 +25,7 @@ class GeckoPlayServicesReferenceTest(private val key: String) {
             assertTrue(
                 "GeckoView names $key, which no stand-in has. Read the code that names it at the GeckoView " +
                     "tag: add a stand-in when it can run before a stand-in refuses, otherwise add it to " +
-                    "KNOWN_UNREACHABLE and proguard-gecko-rules.pro",
+                    "KNOWN_UNREACHABLE",
                 key in KNOWN_UNREACHABLE,
             )
         }
@@ -39,10 +39,16 @@ class GeckoPlayServicesReferenceTest(private val key: String) {
         fun keys(): List<String> = (referencesByKey.keys + KNOWN_UNREACHABLE).sorted()
 
         /**
-         * Play services GeckoView names only on paths that start after a stand-in has refused: it
-         * never gets a client result, a credential or a successful task, so no stand-in is needed.
-         * Keys as [GeckoPlayServicesReferences.Reference.key].
+         * Play services GeckoView names only after a stand-in has refused, with the reasons:
+         * `gecko_play_services_unreachable.txt` in the test resources.
          */
-        val KNOWN_UNREACHABLE = setOf<String>()
+        val KNOWN_UNREACHABLE: Set<String> by lazy {
+            val stream = checkNotNull(GeckoPlayServicesReferenceTest::class.java.getResourceAsStream(UNREACHABLE_LIST))
+            stream.bufferedReader().useLines { lines ->
+                lines.map(String::trim).filter { it.isNotEmpty() && !it.startsWith("#") }.toSet()
+            }
+        }
+
+        private const val UNREACHABLE_LIST = "/gecko_play_services_unreachable.txt"
     }
 }
