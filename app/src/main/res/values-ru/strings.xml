@@ -2045,6 +2045,12 @@
     <string name="developer_options_ui_v5_specimen_summary">Цвета, шрифт Inter, формы и плитки настроек v5 в светлой, тёмной и частной теме.</string>
     <string name="settings_v5_site_tint">Окрашивать панель в цвет сайта</string>
     <string name="settings_v5_site_tint_summary">Нижняя панель берёт цвет, который объявил сайт, или цвет верха страницы</string>
+    <string name="v5_suggestion_best">Лучшее совпадение</string>
+    <string name="v5_suggestion_open_tabs">Открытые вкладки</string>
+    <string name="v5_suggestion_search">Поиск</string>
+    <string name="v5_suggestion_commands">Команды</string>
+    <string name="v5_suggestion_tab">Вкладка</string>
+    <string name="v5_editor_clear">Очистить</string>
     <string name="v5_specimen_title">Образец v5</string>
     <string name="v5_specimen_close">Закрыть</string>
     <string name="v5_specimen_theme_light">Светлая</string>
