@@ -70,6 +70,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.VaultCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
+import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
 import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
@@ -947,6 +948,7 @@ private class GeckoViewBrowserSession(
     private var state = GeckoBrowserSessionState()
 
     private var findInPageOptions = FindInPageOptions()
+    private val pageTranslation = GeckoPageTranslation(session)
 
     @Volatile
     private var listener: GeckoBrowserSessionStateListener? = null
@@ -2930,6 +2932,8 @@ private class GeckoViewBrowserSession(
         privacyBinding.extractPageForReader(onComplete)
     }
 
+    override fun pageTranslation(): PageTranslationPort = pageTranslation
+
     override fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,
         mode: TextInputOcclusionProbeMode,
@@ -3153,6 +3157,7 @@ private class GeckoViewBrowserSession(
         if (closed) return
         closed = true
         mediaRestorationReadback.cancel()
+        pageTranslation.close()
         if (BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS) GeckoDomDiagnostics.unregisterSession(session)
         if (active) extensionController.setTabActive(session, false)
         downloadTransfers.cancelOwner(session)

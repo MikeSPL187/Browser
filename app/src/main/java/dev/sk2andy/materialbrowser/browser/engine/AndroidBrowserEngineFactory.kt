@@ -20,6 +20,7 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEventSink
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 
@@ -30,6 +31,12 @@ internal interface AndroidBrowserEngineFactory {
     val capabilities: AndroidBrowserEngineCapabilities
 
     val runtimeVersionName: String?
+
+    /**
+     * Language models for on-device page translation (v5 V23). Engines without it, System WebView
+     * among them, keep [TranslationModelsPort.Unavailable].
+     */
+    val translationModels: TranslationModelsPort get() = TranslationModelsPort.Unavailable
 
     fun setExtensionChromeHost(host: GeckoExtensionChromeHost?) = Unit
 
