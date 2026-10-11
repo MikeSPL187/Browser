@@ -4,16 +4,9 @@
 // Rules are indexed by one URL token each; a request tries only the rules whose token occurs in
 // its URL, and an ABP pattern becomes a regular expression the first time it is tried.
 (function exposeCandyNetworkFilters(global) {
-  const HEADER = "candy-network-filter:1";
+  const HEADER = "candy-network-filter:2";
   const TOKEN_RUN = /[a-z0-9%]+/g;
   const SEPARATOR = "(?:[^a-z0-9_.%-]|$)";
-
-  function decode(value) {
-    const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
-    return new TextDecoder("utf-8", { fatal: true }).decode(
-      Uint8Array.from(binary, (character) => character.charCodeAt(0)),
-    );
-  }
 
   function declaredCount(text, prefix) {
     const line = text.split(/\r?\n/).find((value) => value.startsWith(prefix));
@@ -59,7 +52,7 @@
       return {
         action: fields[0],
         token: fields[1] === "-" ? null : fields[1],
-        pattern: decode(fields[2]),
+        pattern: fields[2],
         types: fields[3] === "*" ? null : new Set(fields[3].split(",")),
         pages: fields[4] === "-" ? [] : fields[4].split(","),
         excluded: fields[5] === "-" ? [] : fields[5].split(","),

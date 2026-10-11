@@ -11,7 +11,6 @@ the request URL (the way uBlock Origin indexes its filters).
 from __future__ import annotations
 
 import argparse
-import base64
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,7 +20,7 @@ from compile_easylist_hosts import CompileStats as HostStats
 from compile_easylist_hosts import active_lines, anchored_host, badfilter_targets, canonical_filter
 
 
-FORMAT_HEADER = "candy-network-filter:1"
+FORMAT_HEADER = "candy-network-filter:2"
 # ABP resource types -> the Gecko webRequest types they cover. `document` stays out on purpose:
 # Vola never blocks a page itself.
 RESOURCE_TYPES = {
@@ -242,15 +241,11 @@ def compile_sources(source_paths: list[Path]) -> tuple[list[NetworkRecord], Comp
     return ordered, stats
 
 
-def encode(value: str) -> str:
-    return base64.urlsafe_b64encode(value.encode("utf-8")).decode("ascii").rstrip("=")
-
-
 def write_asset(output: Path, revision: str, records: list[NetworkRecord], stats: CompileStats) -> None:
     lines = [
         FORMAT_HEADER,
         "# Generated EasyList/EasyPrivacy network filters for Vola's Gecko blocker. Do not edit by hand.",
-        "# Format: action<TAB>token|-<TAB>base64url(pattern)<TAB>types|*<TAB>pages|-<TAB>excluded|-<TAB>party",
+        "# Format: action<TAB>token|-<TAB>pattern<TAB>types|*<TAB>pages|-<TAB>excluded|-<TAB>party",
         "# Source: https://github.com/easylist/easylist",
         f"# Source revision: {revision}",
         "# Source graph: easylist.template + easyprivacy.template",
@@ -267,7 +262,7 @@ def write_asset(output: Path, revision: str, records: list[NetworkRecord], stats
         lines.append("\t".join((
             record.action,
             record.token,
-            encode(record.pattern),
+            record.pattern,
             ",".join(record.types) if record.types else "*",
             ",".join(record.page_hosts) or "-",
             ",".join(record.excluded_page_hosts) or "-",

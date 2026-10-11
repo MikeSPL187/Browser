@@ -77,7 +77,8 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   decision order, `network_blocker.js` adds the uAssets URL rules (bucketed by target host) and the
   person's own Vola rules with `CandyRulePrecedence`. `network_filters.js` applies the EasyList and
   EasyPrivacy URL rules the host compiler leaves out (`easylist_network_filters.txt`, 12 745 rules
-  from `scripts/compile_network_filters.py`): paths, `||`/`|`/`^`/`*`, resource types (Gecko's
+  from `scripts/compile_network_filters.py`; it sits in `app/src/blocking/gecko/`, packed only into
+  the Gecko extension, and keeps patterns as plain text so the APK grows by ~180 KB): paths, `||`/`|`/`^`/`*`, resource types (Gecko's
   webRequest reports them), party and `domain=`, and `@@` exceptions. Each rule carries one URL
   token, so a request only tries the rules whose token its URL contains; `$redirect`, `$csp`,
   `$important`, `$removeparam`, regular expressions and `match-case` stay out. Order: own rule →
