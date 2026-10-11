@@ -42,8 +42,7 @@ class CandyDefaultRulesAssetInstrumentedTest {
     @Test
     fun networkHostAssetBuildsAllocationLightSortedIndex() {
         val assets = InstrumentationRegistry.getInstrumentation().targetContext.assets
-        val bytes = assets
-            .open("easylist_blocked_hosts.txt")
+        val bytes = BlockingListAssets.open(assets, "easylist_blocked_hosts.txt")
             .use { it.readBytes() }
 
         val index = SortedHostIndex.from(bytes)
@@ -54,7 +53,7 @@ class CandyDefaultRulesAssetInstrumentedTest {
         assertEquals(false, "example.com" in index)
 
         val hagezi = SortedHostIndex.from(
-            assets.open("hagezi_blocked_hosts.txt").use { it.readBytes() },
+            BlockingListAssets.open(assets, "hagezi_blocked_hosts.txt").use { it.readBytes() },
         )
         assertEquals(166_078, hagezi.size)
         assertEquals(true, "analyticsengine.s3.amazonaws.com" in hagezi)
@@ -64,8 +63,8 @@ class CandyDefaultRulesAssetInstrumentedTest {
 
     @Test
     fun curatedHostAssetCoversTelemetryWithoutBlockingFunctionalPlatforms() {
-        val hostRules = InstrumentationRegistry.getInstrumentation().targetContext.assets
-            .open("blocked_hosts.txt")
+        val hostRules = BlockingListAssets
+            .open(InstrumentationRegistry.getInstrumentation().targetContext.assets, "blocked_hosts.txt")
             .bufferedReader()
             .use { it.readLines() }
         val blocker = RequestBlocker(hostRules.asSequence())

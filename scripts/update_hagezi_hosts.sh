@@ -8,6 +8,7 @@ SOURCE_URL="https://raw.githubusercontent.com/hagezi/dns-blocklists/$SOURCE_REVI
 LICENSE_URL="https://raw.githubusercontent.com/hagezi/dns-blocklists/$SOURCE_REVISION/LICENSE"
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 ASSET_DIR="$PROJECT_DIR/app/src/main/assets"
+BLOCKING_ASSET_DIR="$PROJECT_DIR/app/src/blocking/assets"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
 
@@ -26,9 +27,9 @@ python3 "$PROJECT_DIR/scripts/compile_hagezi_hosts.py" \
     --source-file "$TEMP_DIR/source.txt" \
     --source-sha256 "$SOURCE_SHA256" \
     --revision "$SOURCE_REVISION" \
-    --exclude-file "$ASSET_DIR/easylist_blocked_hosts.txt" \
-    --exclude-file "$ASSET_DIR/blocked_hosts.txt" \
-    --exclude-file "$ASSET_DIR/uassets_blocked_hosts.txt" \
+    --exclude-file "$BLOCKING_ASSET_DIR/easylist_blocked_hosts.txt" \
+    --exclude-file "$BLOCKING_ASSET_DIR/blocked_hosts.txt" \
+    --exclude-file "$BLOCKING_ASSET_DIR/uassets_blocked_hosts.txt" \
     --output "$TEMP_DIR/hagezi_blocked_hosts.txt"
 
 {
@@ -51,5 +52,5 @@ python3 "$PROJECT_DIR/scripts/compile_hagezi_hosts.py" \
 } > "$TEMP_DIR/hagezi.LICENSE.txt"
 
 chmod 644 "$TEMP_DIR/hagezi_blocked_hosts.txt" "$TEMP_DIR/hagezi.LICENSE.txt"
-mv "$TEMP_DIR/hagezi_blocked_hosts.txt" "$ASSET_DIR/hagezi_blocked_hosts.txt"
+mv "$TEMP_DIR/hagezi_blocked_hosts.txt" "$BLOCKING_ASSET_DIR/hagezi_blocked_hosts.txt"
 mv "$TEMP_DIR/hagezi.LICENSE.txt" "$ASSET_DIR/hagezi.LICENSE.txt"

@@ -22,13 +22,14 @@ internal class BundledBlockingSnapshotProvider private constructor(context: Cont
                 ),
                 indexedHostRules = runCatching {
                     SortedHostIndex.from(
-                        appContext.assets.open("easylist_blocked_hosts.txt").use { it.readBytes() },
+                        BlockingListAssets.open(appContext.assets, "easylist_blocked_hosts.txt")
+                            .use { it.readBytes() },
                     )
                 }.getOrDefault(SortedHostIndex.Empty),
                 additionalIndexedHostRules = listOf(
                     runCatching {
                         SortedHostIndex.from(
-                            appContext.assets.open("hagezi_blocked_hosts.txt").use {
+                            BlockingListAssets.open(appContext.assets, "hagezi_blocked_hosts.txt").use {
                                 it.readBytes()
                             },
                         )
@@ -88,13 +89,14 @@ internal class BundledBlockingSnapshotProvider private constructor(context: Cont
     }
 
     private fun readAssetOrEmpty(assetName: String): String = runCatching {
-        appContext.assets.open(assetName).bufferedReader().use { it.readText() }
+        BlockingListAssets.open(appContext.assets, assetName).bufferedReader().use { it.readText() }
     }.getOrDefault("")
 
     private fun loadLinesOrEmpty(vararg assetNames: String): Sequence<String> =
         assetNames.asSequence().flatMap { assetName ->
             runCatching {
-                appContext.assets.open(assetName).bufferedReader().use { it.readLines() }
+                BlockingListAssets.open(appContext.assets, assetName).bufferedReader()
+                    .use { it.readLines() }
             }.getOrDefault(emptyList()).asSequence()
         }
 

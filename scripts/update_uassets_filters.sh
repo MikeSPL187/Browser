@@ -11,6 +11,7 @@ ADVANCED_SOURCE_NAMES="filters.txt filters-general.txt filters-mobile.txt filter
 LICENSE_URL="$SOURCE_ROOT/LICENSE"
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 ASSET_DIR="$PROJECT_DIR/app/src/main/assets"
+BLOCKING_ASSET_DIR="$PROJECT_DIR/app/src/blocking/assets"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
 
@@ -203,11 +204,11 @@ write_header() {
 } > "$TEMP_DIR/uassets.LICENSE.txt"
 
 chmod 644 "$TEMP_DIR"/uassets_*.txt "$TEMP_DIR/uassets.LICENSE.txt"
-mv "$TEMP_DIR/uassets_blocked_hosts.txt" "$ASSET_DIR/uassets_blocked_hosts.txt"
-mv "$TEMP_DIR/uassets_blocked_host_pairs.txt" "$ASSET_DIR/uassets_blocked_host_pairs.txt"
-mv "$TEMP_DIR/uassets_allowed_host_pairs.txt" "$ASSET_DIR/uassets_allowed_host_pairs.txt"
+mv "$TEMP_DIR/uassets_blocked_hosts.txt" "$BLOCKING_ASSET_DIR/uassets_blocked_hosts.txt"
+mv "$TEMP_DIR/uassets_blocked_host_pairs.txt" "$BLOCKING_ASSET_DIR/uassets_blocked_host_pairs.txt"
+mv "$TEMP_DIR/uassets_allowed_host_pairs.txt" "$BLOCKING_ASSET_DIR/uassets_allowed_host_pairs.txt"
 mv "$TEMP_DIR/uassets_cosmetic_rules.txt" "$ASSET_DIR/uassets_cosmetic_rules.txt"
-mv "$TEMP_DIR/uassets_advanced_filters.txt" "$ASSET_DIR/uassets_advanced_filters.txt"
+mv "$TEMP_DIR/uassets_advanced_filters.txt" "$BLOCKING_ASSET_DIR/uassets_advanced_filters.txt"
 mv "$TEMP_DIR/uassets_advanced_filters_source.txt" \
     "$ASSET_DIR/uassets_advanced_filters_source.txt"
 mv "$TEMP_DIR/uassets_procedural_cosmetic_rules.txt" \
