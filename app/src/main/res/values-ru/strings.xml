@@ -2037,4 +2037,19 @@
         <item quantity="many">Пропущено %d закладок: уже есть или не веб-страницы</item>
         <item quantity="other">Пропущено %d закладки: уже есть или не веб-страницы</item>
     </plurals>
+    <string name="developer_options_ui_v5">Интерфейс v5</string>
+    <string name="developer_options_ui_v5_summary">Включает экраны нового интерфейса по мере готовности. Пока готовых нет: образец ниже показывает, из чего они будут сделаны.</string>
+    <string name="developer_options_ui_v5_specimen">Образец дизайна v5</string>
+    <string name="developer_options_ui_v5_specimen_summary">Цвета, шрифт Inter, формы и плитки настроек v5 в светлой, тёмной и частной теме.</string>
+    <string name="v5_specimen_title">Образец v5</string>
+    <string name="v5_specimen_close">Закрыть</string>
+    <string name="v5_specimen_theme_light">Светлая</string>
+    <string name="v5_specimen_theme_dark">Тёмная</string>
+    <string name="v5_specimen_theme_private">Частная</string>
+    <string name="v5_accent_blue">Синий</string>
+    <string name="v5_accent_green">Зелёный</string>
+    <string name="v5_accent_orange">Оранжевый</string>
+    <string name="v5_accent_pink">Розовый</string>
+    <string name="v5_accent_purple">Фиолетовый</string>
+    <string name="v5_accent_graphite">Графит</string>
 </resources>
