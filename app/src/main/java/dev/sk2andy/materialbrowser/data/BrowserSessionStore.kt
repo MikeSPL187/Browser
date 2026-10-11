@@ -158,7 +158,7 @@ class BrowserSessionStore internal constructor(
         if (raw.length > MAX_TAB_STACKS_JSON_LENGTH) return emptyList()
         return runCatching {
             val array = JSONArray(raw)
-            check(array.length() <= TabStackRules.MAX_STACKS)
+            check(array.length() <= TabStackRules.MAX_STORED_STACKS)
             val stacks = buildList {
                 for (index in 0 until array.length()) {
                     val item = array.getJSONObject(index)

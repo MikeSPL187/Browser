@@ -167,6 +167,66 @@ class TabStackRulesTest {
     }
 
     @Test
+    fun `a group may hold one tab and disappears with its last one`() {
+        val single = TabStackRules.create(
+            stacks = emptyList(),
+            tabs = tabs,
+            tabIds = listOf("one"),
+            stackId = "solo",
+            name = "Reading",
+            color = TabStackColor.Lime,
+        )!!
+
+        assertEquals(listOf("one"), single.single().tabIds)
+        assertEquals(emptyList<TabStack>(), TabStackRules.removeTab(single, "one"))
+        assertEquals(emptyList<TabStack>(), TabStackRules.removeTabs(single, setOf("one")))
+    }
+
+    @Test
+    fun `rename and recolor change only the named group`() {
+        val groups = listOf(stack(id = "first", tabIds = listOf("one")), stack(id = "second", tabIds = listOf("two")))
+
+        val renamed = TabStackRules.rename(groups, "first", "  Trip   plans ")!!
+        val recolored = TabStackRules.setColor(renamed, "second", TabStackColor.Cherry)!!
+
+        assertEquals(listOf("Trip plans", "Ideas"), recolored.map(TabStack::name))
+        assertEquals(listOf(TabStackColor.Grape, TabStackColor.Cherry), recolored.map(TabStack::color))
+        assertNull(TabStackRules.rename(groups, "first", "   "))
+        assertNull(TabStackRules.rename(groups, "missing", "Name"))
+        assertNull(TabStackRules.setColor(groups, "missing", TabStackColor.Lime))
+    }
+
+    @Test
+    fun `ungrouping drops the group and leaves its tabs alone`() {
+        val groups = listOf(
+            stack(id = "first", tabIds = listOf("one", "two")),
+            stack(id = "second", tabIds = listOf("three")),
+        )
+
+        assertEquals(listOf("second"), TabStackRules.ungroup(groups, "first")!!.map(TabStack::id))
+        assertNull(TabStackRules.ungroup(groups, "missing"))
+    }
+
+    @Test
+    fun `the group limit counts each profile on its own`() {
+        val full = List(TabStackRules.MAX_STACKS) { index ->
+            stack(id = "stack-$index", tabIds = listOf("stack-$index"))
+        }
+        val allTabs = tabs + full.map { stack -> BrowserTab(id = stack.tabIds.single(), lastAccessedAt = 1L) }
+
+        assertNull(
+            TabStackRules.create(full, allTabs, listOf("one"), "overflow", "Overflow", TabStackColor.Grape),
+        )
+        val withWork = TabStackRules.create(full, allTabs, listOf("work"), "work-group", "Work", TabStackColor.Lime)!!
+        assertEquals(TabStackRules.MAX_STACKS + 1, withWork.size)
+        assertEquals(TabStackRules.MAX_STACKS + 1, TabStackRules.sanitized(withWork, allTabs).size)
+        assertEquals(
+            TabStackRules.MAX_STACKS,
+            TabStackRules.sanitized(full + stack(id = "extra", tabIds = listOf("one")), allTabs).size,
+        )
+    }
+
+    @Test
     fun `create rejects preview outside selected members`() {
         assertNull(
             TabStackRules.create(

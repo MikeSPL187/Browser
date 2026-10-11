@@ -53,6 +53,22 @@ class TabStacksControllerTest {
     }
 
     @Test
+    fun `a group is renamed, recolored and ungrouped by its id`() {
+        val stackId = controller.create(listOf("a"), "Work", TabStackColor.Lime, null)!!
+
+        assertTrue(controller.rename(stackId, "Trip"))
+        assertTrue(controller.setColor(stackId, TabStackColor.Cherry))
+        assertEquals("Trip", controller.stackFor("a")?.name)
+        assertEquals(TabStackColor.Cherry, controller.stackFor("a")?.color)
+        assertFalse(controller.rename(stackId, "Trip"))
+        assertFalse(controller.rename("missing", "Name"))
+        assertTrue(controller.ungroup(stackId))
+        assertNull(controller.stackFor("a"))
+        assertFalse(controller.ungroup(stackId))
+        assertEquals(4, saves)
+    }
+
+    @Test
     fun `a collapsed stack shows one card in the overview`() {
         val stackId = controller.create(listOf("a", "b"), "Work", TabStackColor.Lime, null)!!
 

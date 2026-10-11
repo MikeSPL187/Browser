@@ -1,12 +1,20 @@
 package dev.sk2andy.materialbrowser.data
 
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.MAX_PROFILES
 import dev.sk2andy.materialbrowser.browser.TabStack
 import dev.sk2andy.materialbrowser.browser.TabStackColor
 
+/** Tab stacks, the tab groups of v5 (V12, as in Safari). */
 object TabStackRules {
+    /** Groups one profile may keep. */
     const val MAX_STACKS = 12
-    const val MIN_MEMBER_COUNT = 2
+
+    /** Groups of all profiles together: what a stored session may hold. */
+    const val MAX_STORED_STACKS = MAX_STACKS * MAX_PROFILES
+
+    /** A group may hold a single tab, as in Safari; one left without tabs disappears. */
+    const val MIN_MEMBER_COUNT = 1
     const val MAX_NAME_LENGTH = 40
     private const val MAX_ID_LENGTH = 128
     private val whitespace = Regex("\\s+")
@@ -23,14 +31,16 @@ object TabStackRules {
         val tabsById = tabs.associateBy(BrowserTab::id)
         val claimedTabIds = mutableSetOf<String>()
         val acceptedStackIds = mutableSetOf<String>()
+        val stacksPerProfile = mutableMapOf<String, Int>()
         return buildList {
-            stacks.take(MAX_STACKS).forEach { stack ->
+            stacks.take(MAX_STORED_STACKS).forEach { stack ->
                 val name = normalizedName(stack.name)
                 if (
                     stack.id.isBlank() ||
                     stack.id.length > MAX_ID_LENGTH ||
                     stack.profileId.isBlank() ||
                     name.isBlank() ||
+                    stacksPerProfile.getOrElse(stack.profileId) { 0 } >= MAX_STACKS ||
                     !acceptedStackIds.add(stack.id)
                 ) return@forEach
 
@@ -53,6 +63,7 @@ object TabStackRules {
                     ?.id
                     ?: samePrivacyMembers.first()
                 claimedTabIds += samePrivacyMembers
+                stacksPerProfile[stack.profileId] = stacksPerProfile.getOrElse(stack.profileId) { 0 } + 1
                 add(
                     stack.copy(
                         name = name,
@@ -94,7 +105,9 @@ object TabStackRules {
         val withoutTargets = distinctTabIds.fold(stacks) { current, tabId ->
             removeTab(current, tabId)
         }
-        if (withoutTargets.size >= MAX_STACKS || stackId.isBlank()) return null
+        if (withoutTargets.count { it.profileId == target.profileId } >= MAX_STACKS || stackId.isBlank()) {
+            return null
+        }
         return sanitized(
             stacks = withoutTargets + TabStack(
                 id = stackId,
@@ -172,6 +185,22 @@ object TabStackRules {
             tabs = tabs,
         )
     }
+
+    /** Renames a group; null when there is no such group or the name is blank. */
+    fun rename(stacks: List<TabStack>, stackId: String, name: String): List<TabStack>? {
+        val normalizedName = normalizedName(name).takeIf(String::isNotBlank) ?: return null
+        if (stacks.none { it.id == stackId }) return null
+        return stacks.map { stack -> if (stack.id == stackId) stack.copy(name = normalizedName) else stack }
+    }
+
+    fun setColor(stacks: List<TabStack>, stackId: String, color: TabStackColor): List<TabStack>? {
+        if (stacks.none { it.id == stackId }) return null
+        return stacks.map { stack -> if (stack.id == stackId) stack.copy(color = color) else stack }
+    }
+
+    /** Drops a group and keeps its tabs, now ungrouped. */
+    fun ungroup(stacks: List<TabStack>, stackId: String): List<TabStack>? =
+        stacks.takeIf { current -> current.any { it.id == stackId } }?.filterNot { it.id == stackId }
 
     fun removeTab(stacks: List<TabStack>, tabId: String): List<TabStack> = stacks
         .map { stack ->

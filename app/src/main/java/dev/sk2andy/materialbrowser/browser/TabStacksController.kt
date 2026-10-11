@@ -77,6 +77,15 @@ class TabStacksController internal constructor(
 
     fun removeTab(tabId: String): Boolean = commit(TabStackRules.removeTab(stacks, tabId))
 
+    fun rename(stackId: String, name: String): Boolean =
+        isActive(stackId) && commit(TabStackRules.rename(stacks, stackId, name))
+
+    fun setColor(stackId: String, color: TabStackColor): Boolean =
+        isActive(stackId) && commit(TabStackRules.setColor(stacks, stackId, color))
+
+    /** Removes the group; its tabs stay open, ungrouped. */
+    fun ungroup(stackId: String): Boolean = isActive(stackId) && commit(TabStackRules.ungroup(stacks, stackId))
+
     fun toggleCollapsed(stackId: String, triggerTabId: String? = null): Boolean = commit(
         TabStackRules.toggleCollapsed(
             stacks = stacks,
@@ -97,6 +106,8 @@ class TabStacksController internal constructor(
         persist()
         return true
     }
+
+    private fun isActive(stackId: String): Boolean = activeStacks.any { stack -> stack.id == stackId }
 
     private fun allActive(tabIds: List<String>): Boolean {
         val activeTabIds = activeTabs().mapTo(hashSetOf(), BrowserTab::id)
