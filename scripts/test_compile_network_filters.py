@@ -8,7 +8,7 @@ from compile_network_filters import best_token, compile_sources, write_asset
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-PINNED_ASSET = PROJECT_DIR / "app/src/blocking/assets/easylist_network_filters.txt"
+PINNED_ASSET = PROJECT_DIR / "app/src/blocking/gecko/easylist_network_filters.txt"
 
 
 class NetworkFilterCompilerTest(unittest.TestCase):
@@ -77,7 +77,7 @@ class NetworkFilterCompilerTest(unittest.TestCase):
             output = Path(directory) / "filters.txt"
             write_asset(output, "rev", records, stats)
             text = output.read_text(encoding="utf-8")
-        self.assertTrue(text.startswith("candy-network-filter:1\n"))
+        self.assertTrue(text.startswith("candy-network-filter:2\n"))
         self.assertIn("# Rules: 2\n", text)
         self.assertIn("# Allow rules: 1\n", text)
 
@@ -85,7 +85,7 @@ class NetworkFilterCompilerTest(unittest.TestCase):
         text = PINNED_ASSET.read_text(encoding="utf-8")
         rows = [line for line in text.splitlines()[1:] if line and not line.startswith("#")]
         declared = int(next(line for line in text.splitlines() if line.startswith("# Rules:")).split(":")[1])
-        self.assertTrue(text.startswith("candy-network-filter:1\n"))
+        self.assertTrue(text.startswith("candy-network-filter:2\n"))
         self.assertEqual(declared, len(rows))
         self.assertGreater(len(rows), 10_000)
         self.assertTrue(all(len(row.split("\t")) == 7 for row in rows))

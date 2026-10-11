@@ -37,4 +37,4 @@ chmod 644 \
     "$TEMP_DIR/easylist_allowed_host_pairs.txt"
 mv "$TEMP_DIR/easylist_blocked_hosts.txt" "$OUTPUT_FILE"
 mv "$TEMP_DIR/easylist_allowed_host_pairs.txt" "$ALLOW_OUTPUT_FILE"
-mv "$TEMP_DIR/easylist_network_filters.txt" "$PROJECT_DIR/app/src/blocking/assets/easylist_network_filters.txt"
+mv "$TEMP_DIR/easylist_network_filters.txt" "$PROJECT_DIR/app/src/blocking/gecko/easylist_network_filters.txt"
