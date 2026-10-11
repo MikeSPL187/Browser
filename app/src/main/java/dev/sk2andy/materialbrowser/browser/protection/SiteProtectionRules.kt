@@ -89,6 +89,14 @@ internal object SiteProtectionRules {
     fun withFingerprintingProtection(overrides: SitePrivacyOverrides, enabled: Boolean): SitePrivacyOverrides =
         overrides.copy(fingerprintingProtectionDisabled = true.takeUnless { enabled })
 
+    /**
+     * Whether the consent handling runs on the site: off when paused, always on Strict, else as the
+     * global switch says. A site's own cookie-banner switch then decides whether banners are removed.
+     */
+    fun handlesCookieConsent(policy: SiteProtectionPolicy, global: BlockerSettings): Boolean =
+        policy.level != SiteProtectionLevel.Off &&
+            (policy.level == SiteProtectionLevel.Strict || global.hideCookieConsent)
+
     /** Whether the site's pages accept third-party cookies under [policy]. */
     fun acceptsThirdPartyCookies(policy: SiteProtectionPolicy): Boolean =
         !policy.blockThirdPartyCookies || policy.allowLoginAndCaptchaCookies
