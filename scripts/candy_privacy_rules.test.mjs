@@ -721,3 +721,181 @@ test("the host index gives every frame the same ad selectors as the full scan", 
   assert.equal(rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] },
     { ...policy, blockAds: false }, "www.reddit.com").selectors.length, 0);
 });
+
+test("generic cosmetics follow exceptions, generichide and host exclusions", () => {
+  const rule = (action, host, selector, excluded = []) => ({ action, host, selector, excluded });
+  const indexed = rules.indexCosmetics([
+    rule("H", "*", ".ad-banner"),
+    rule("H", "*", "#sponsor"),
+    rule("H", "*", "div[data-ad]"),
+    rule("H", "*", ".partner", ["shop.example"]),
+    rule("H", "*", ".promo", ["shop.example"]),
+    rule("H", "*", ".promo"),
+    rule("A", "news.example", ".ad-banner"),
+    rule("A", "*", "div[data-ad]"),
+    rule("D", "forum.example", ""),
+    rule("H", "news.example", ".scoped"),
+  ]);
+  const names = { classes: ["ad-banner", "partner", "promo", "plain"], ids: ["sponsor", "main"] };
+  const sorted = (values) => Array.from(values).sort();
+
+  assert.deepEqual(sorted(rules.genericSelectors(indexed, "www.example.org", names)),
+    ["#sponsor", ".ad-banner", ".partner", ".promo"]);
+  assert.deepEqual(sorted(rules.genericSelectors(indexed, "cdn.news.example", names)),
+    ["#sponsor", ".partner", ".promo"]);
+  // Every copy of `.partner` excludes the shop; `.promo` also has a copy without exclusions.
+  assert.deepEqual(sorted(rules.genericSelectors(indexed, "shop.example", names)),
+    ["#sponsor", ".ad-banner", ".promo"]);
+  assert.deepEqual(Array.from(rules.genericSelectors(indexed, "m.forum.example", names)), []);
+  assert.deepEqual(Array.from(rules.genericSelectors(indexed, "accounts.google.com", names)), []);
+  assert.deepEqual(Array.from(rules.genericSelectors(indexed, "www.example.org", { classes: "ad-banner" })), []);
+
+  const policy = { blockAds: true, pausedHosts: [], cosmetics: [], hideConsent: false, pageHost: null };
+  const payload = rules.cosmeticPayload({ cosmetics: indexed, procedural: [], candyDefaults: [] }, policy, "a.example");
+  assert.equal(payload.generic, true);
+  assert.deepEqual(Array.from(payload.genericSelectors), []);
+  assert.ok(!payload.selectors.includes(".ad-banner"));
+  const forum = rules.cosmeticPayload({ cosmetics: indexed, procedural: [], candyDefaults: [] }, policy, "forum.example");
+  assert.equal(forum.generic, false);
+  const off = rules.cosmeticPayload({ cosmetics: indexed, procedural: [], candyDefaults: [] },
+    { ...policy, blockAds: false }, "a.example");
+  assert.equal(off.generic, false);
+  assert.equal(rules.cosmeticPayload({ cosmetics: [], procedural: [], candyDefaults: [] }, policy, "a.example")
+    .generic, false);
+});
+
+test("generic cosmetics on the bundled lists match a full scan of the lists", () => {
+  const readList = (name) => fs.readFileSync(
+    new URL(`../app/src/blocking/assets/${name}`, import.meta.url),
+    "utf8",
+  );
+  const cosmetics = [
+    ...rules.parseCosmetic(readList("easylist_cosmetic_rules.txt"), "candy-easylist-cosmetic:2"),
+    ...rules.parseCosmetic(readList("uassets_cosmetic_rules.txt"), "candy-uassets-cosmetic:2"),
+  ];
+  const indexed = rules.indexCosmetics(cosmetics);
+  const generic = cosmetics.filter((rule) => rule.host === "*" && rule.action === "H");
+  assert.ok(indexed.generic.classes.size + indexed.generic.ids.size > 12000);
+  assert.ok(indexed.generic.complex.length > 0 && indexed.generic.complex.length <= 1024);
+
+  // The full scan the index replaces: a generic selector applies on a host unless generichide
+  // covers the host, an exception names it there, or every copy of it excludes the host.
+  const applies = (host, selector) => {
+    if (["accounts.google.*", "mail.google.*", "maps.google.*"].some((p) => rules.hostPatternMatches(host, p))) {
+      return false;
+    }
+    const matches = (rule) => rules.hostPatternMatches(host, rule.host) &&
+      !rule.excluded.some((pattern) => rules.hostPatternMatches(host, pattern));
+    if (cosmetics.some((rule) => rule.action === "D" && matches(rule))) return false;
+    if (cosmetics.some((rule) => rule.action === "A" && rule.selector === selector &&
+      rules.hostPatternMatches(host, rule.host))) return false;
+    return generic.some((rule) => rule.selector === selector &&
+      !rule.excluded.some((pattern) => rules.hostPatternMatches(host, pattern)));
+  };
+  const names = { classes: [], ids: [] };
+  const sample = [...indexed.generic.classes].filter((_, i) => i % 40 === 0)
+    .concat([...indexed.generic.ids].filter((_, i) => i % 40 === 0));
+  for (const name of sample) (indexed.generic.classes.has(name) ? names.classes : names.ids).push(name);
+  const hosts = ["www.reddit.com", "news.ycombinator.com", "www.google.de", "m.youtube.com",
+    "www.skai.gr", "example.com", "mail.yahoo.com", "www.9anime.vip"];
+  for (const host of hosts) {
+    const fast = new Set(rules.genericSelectors(indexed, host, names));
+    for (const name of names.classes) assert.equal(fast.has(`.${name}`), applies(host, `.${name}`), `${host} .${name}`);
+    for (const name of names.ids) assert.equal(fast.has(`#${name}`), applies(host, `#${name}`), `${host} #${name}`);
+  }
+
+  const pageNames = {
+    classes: Array.from({ length: 1500 }, (_, i) => `site-class-${i}`).concat(names.classes.slice(0, 50)),
+    ids: Array.from({ length: 300 }, (_, i) => `site-id-${i}`),
+  };
+  const started = performance.now();
+  for (let i = 0; i < 100; i++) rules.genericSelectors(indexed, `s${i % 10}.example.org`, pageNames);
+  console.log(`generic cosmetics: ${((performance.now() - started) / 100).toFixed(3)} ms per 1 850 names`);
+});
+
+test("a frame reports its class and id names and hides the generic selectors it is sent", async () => {
+  const source = fs.readFileSync(
+    new URL("../app/src/gecko/assets/candy_privacy/content.js", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("(function installCandyCosmetics() {");
+  const end = source.indexOf("})();", start) + "})();".length;
+  const installer = source.slice(start, end);
+
+  const element = (id, classes, children = []) => {
+    const node = { nodeType: 1, id, classList: new Set(classes), children };
+    children.forEach((child, index) => { child.nextElementSibling = children[index + 1] || null; });
+    node.firstElementChild = children[0] || null;
+    return node;
+  };
+  const ad = element("", ["ad-banner", "card"]);
+  const root = element("", [], [element("", [], [ad, element("sponsor", [])])]);
+  const insertedRules = [];
+  const styles = [];
+  const messages = [];
+  const frames = [];
+  let observer = null;
+  const document = {
+    documentElement: root,
+    head: { appendChild: (style) => { style.isConnected = true; styles.push(style); } },
+    createElement: () => ({
+      dataset: {},
+      isConnected: false,
+      sheet: { cssRules: insertedRules, insertRule: (rule) => insertedRules.push(rule) },
+    }),
+  };
+  const browser = {
+    runtime: {
+      sendMessage: (message) => {
+        messages.push(message);
+        if (message.type === "cosmetics") {
+          return Promise.resolve({
+            type: "cosmetics", selectors: [], procedural: [], generic: true,
+            genericSelectors: ["div[data-ad]"],
+          });
+        }
+        return Promise.resolve({
+          type: "genericCosmetics",
+          selectors: [...message.classes.filter((name) => name === "ad-banner").map((name) => `.${name}`),
+            ...message.ids.filter((name) => name === "sponsor").map((name) => `#${name}`), ".bad selector"],
+        });
+      },
+    },
+  };
+  const context = vm.createContext({
+    self: null, top: null, document, browser, location: { href: "https://news.example/" },
+    performance, Promise, Set, WeakSet, Array,
+    requestAnimationFrame: (callback) => frames.push(callback),
+    MutationObserver: class {
+      constructor(callback) { this.callback = callback; observer = this; }
+      observe() {}
+      disconnect() {}
+    },
+    setTimeout,
+    addEventListener: () => {},
+  });
+  context.self = context;
+  context.top = context;
+  vm.runInContext(installer, context);
+  const settle = async () => {
+    for (let i = 0; i < 10; i++) {
+      while (frames.length) frames.shift()();
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+  };
+  await settle();
+
+  const reports = messages.filter((message) => message.type === "genericCosmetics");
+  assert.equal(reports.length, 1);
+  assert.deepEqual(Array.from(reports[0].classes).sort(), ["ad-banner", "card"]);
+  assert.deepEqual(Array.from(reports[0].ids), ["sponsor"]);
+  assert.ok(styles.some((style) => style.textContent === "div[data-ad]{display:none!important}"));
+  assert.deepEqual(insertedRules, [".ad-banner,#sponsor{display:none!important}"]);
+
+  // Names already reported are not sent again; new ones from later nodes are.
+  observer.callback([{ type: "childList", addedNodes: [element("", ["card", "promo"])] }]);
+  await settle();
+  const later = messages.filter((message) => message.type === "genericCosmetics");
+  assert.equal(later.length, 2);
+  assert.deepEqual(Array.from(later[1].classes), ["promo"]);
+});
