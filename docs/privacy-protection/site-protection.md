@@ -50,7 +50,8 @@ plan-v5 decision to replace it — `docs/vola/research/ublock-origin.md`.
 | --- | --- |
 | The port | `BrowserSiteProtection` implements `SiteProtectionPort` and now holds the site pause (`pause`, `resume`), moved out of `BrowserController`, which keeps one-line delegates |
 | Policy per page | `BrowserController.sitePolicyFor` resolves `SiteProtectionPolicy`; `geckoPrivacyPolicyFor` takes cookie-banner handling (`SiteProtectionRules.handlesCookieConsent`), third-party cookie exceptions and Strict referrer trimming from it, and on System WebView the ad blocking too |
-| Referer on Strict | `GeckoPrivacyPolicy.trimCrossSiteReferrer` → `privacy_signals.js` drops `Referer` on requests to another site (not the page's own host, its parents or children) |
+| Referer on Strict | `GeckoPrivacyPolicy.trimCrossSiteReferrer` → `privacy_signals.js` drops `Referer` when the request goes to another site than the document that made it (`originUrl`, else the tab's page). A site is the registrable domain from `rules.js`, so `www.example.com` and `img.example.com` keep it; IP addresses are their own site |
+| Private overrides | `TemporarySitePrivacyOverrides` holds per-tab memory-only overrides and hands the engine new fingerprinting exceptions on every change, closing a tab and leaving private mode included |
 | de-AMP per site | AMP links to a site whose de-AMP switch is off stay AMP (`deAmpsTo`) |
 | Fingerprinting | `permanentSitePrivacyOverrides` and private-tab changes push the exception list to the engine; an engine started later gets it at start |
 | Counts | `SiteProtectionPort.counts` adds the engine's log to the blocker's requests |

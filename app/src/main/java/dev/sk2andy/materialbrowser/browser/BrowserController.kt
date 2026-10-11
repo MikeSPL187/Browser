@@ -72,6 +72,7 @@ import dev.sk2andy.materialbrowser.browser.protection.BrowserSiteProtection
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionPolicy
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionRules
+import dev.sk2andy.materialbrowser.browser.protection.TemporarySitePrivacyOverrides
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrideRules
 import dev.sk2andy.materialbrowser.blocking.SiteProtectionState
 import dev.sk2andy.materialbrowser.capsule.CapsuleDeletionRules
@@ -1262,8 +1263,7 @@ class BrowserController(
     private val privacyXRayRepository = PrivacyXRayRepository()
     private val privacyEventLock = Any()
     internal val temporarySiteExceptions = ConcurrentHashMap<String, Set<String>>()
-    private val temporarySitePrivacyOverrides =
-        ConcurrentHashMap<String, Map<String, SitePrivacyOverrides>>()
+    private val temporarySitePrivacyOverrides = TemporarySitePrivacyOverrides(::pushFingerprintingExceptions)
     private val permissionStore = PermissionRadarStore(activity)
     private val permissionRepository = PermissionRadarRepository(permissionStore)
     private val activePermissions = ActivePermissionLedger()
@@ -9633,10 +9633,7 @@ class BrowserController(
                 host,
                 updated,
             )
-            if (byHost.isEmpty()) temporarySitePrivacyOverrides.remove(tabId)
-            else temporarySitePrivacyOverrides[tabId] = byHost
-            pushFingerprintingExceptions()
-
+            temporarySitePrivacyOverrides[tabId] = byHost
         } else {
             val byHost = SitePrivacyOverrideRules.withOverride(
                 permanentSitePrivacyOverrides[tab.profileId].orEmpty(),
@@ -9649,13 +9646,7 @@ class BrowserController(
                 permanentSitePrivacyOverrides + (tab.profileId to byHost)
             }
             store.saveSitePrivacyOverrides(permanentSitePrivacyOverrides)
-            temporarySitePrivacyOverrides.computeIfPresent(tabId) { _, overrides ->
-                SitePrivacyOverrideRules.withOverride(
-                    current = overrides,
-                    host = host,
-                    overrides = SitePrivacyOverrides(),
-                ).takeIf(Map<String, SitePrivacyOverrides>::isNotEmpty)
-            }
+            temporarySitePrivacyOverrides.clearHost(tabId, host)
             tabs.asSequence()
                 .filter { candidate -> candidate.profileId == tab.profileId && !candidate.isIncognito }
                 .forEach { candidate ->
