@@ -759,7 +759,7 @@
     <string name="settings_browser_engine_title">Web engine</string>
     <string name="settings_browser_engine_gecko">Extensions · GeckoView</string>
     <string name="settings_browser_engine_system">Memory saver · Android System WebView</string>
-    <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as uBlock Origin. Uses more memory.</string>
+    <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as Dark Reader. Uses more memory.</string>
     <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
     <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>

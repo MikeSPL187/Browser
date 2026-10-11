@@ -791,7 +791,7 @@
     <string name="settings_browser_engine_title">Движок</string>
     <string name="settings_browser_engine_gecko">Расширения · GeckoView</string>
     <string name="settings_browser_engine_system">Экономия памяти · Android System WebView</string>
-    <string name="settings_browser_engine_gecko_summary">Скрипты и расширения Firefox, например uBlock Origin. Использует больше памяти.</string>
+    <string name="settings_browser_engine_gecko_summary">Скрипты и расширения Firefox, например Dark Reader. Использует больше памяти.</string>
     <string name="settings_browser_engine_system_summary">Меньше расходует память и поддерживает скрипты, но не расширения Firefox. Защита Vola остаётся.</string>
     <string name="settings_browser_engine_restart_warning">Смена движка перезапустит Vola. Входы, куки и история страниц у каждого движка свои.</string>
     <string name="settings_browser_engine_change_blocked_by_downloads">Дождитесь окончания загрузок или отмените их, прежде чем менять движок: перезапуск их прервёт.</string>
