@@ -70,6 +70,9 @@ import kotlin.math.absoluteValue
 import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 
@@ -336,6 +339,10 @@ internal fun BoxScope.BrowserAddressChrome(
     LaunchedEffect(hiddenByPageKeyboard) {
         pageKeyboardHide.animateTo(if (hiddenByPageKeyboard) 1f else 0f, VolaMotion.standard())
     }
+    val uiV5 by rememberUiV5Flag()
+    // v5 tab swipe (system-v5.md, section 7): a tick when the swipe crosses the switch threshold and
+    // when it falls back under it, 30 % of the width or 1000 dp/s, and the tabSwipe spring.
+    var v5SwipeThresholdReached by remember { mutableStateOf(false) }
     val onTabDrag: (Float) -> Unit = { delta ->
         if (tabSwipeEnabled && !addressEditorVisible && !tabOverviewVisible) {
             if (browserDragOffset.floatValue == 0f && delta != 0f) {
@@ -357,6 +364,14 @@ internal fun BoxScope.BrowserAddressChrome(
                     with(density) { AddressBarTabSwitchRules.EDGE_TRAVEL_MAX_DP.dp.toPx() },
                 )
             }
+            if (uiV5) {
+                val reached = hasTarget &&
+                    browserDragOffset.floatValue.absoluteValue >= browserWidthPx * V5Motion.TAB_SWIPE_COMMIT_FRACTION
+                if (reached != v5SwipeThresholdReached) {
+                    v5SwipeThresholdReached = reached
+                    rootView.performV5Haptic(if (reached) V5Haptic.ThresholdReached else V5Haptic.ThresholdLeft)
+                }
+            }
         }
     }
     val onTabDragStopped: suspend (Float) -> Unit = { velocity ->
@@ -365,21 +380,31 @@ internal fun BoxScope.BrowserAddressChrome(
         val currentIndex = tabs.indexOfFirst { it.id == controller.selectedTabId }
         val targetTab = tabs.getOrNull(currentIndex - direction)
         val minTravel = with(density) { AddressBarTabSwitchRules.FLING_MIN_TRAVEL_DP.dp.toPx() }
+        val flingVelocityDp = if (uiV5) {
+            V5Motion.TAB_SWIPE_COMMIT_VELOCITY_DP
+        } else {
+            AddressBarTabSwitchRules.FLING_MIN_VELOCITY_DP
+        }
         val fastEnough = browserDragOffset.floatValue.absoluteValue >= minTravel &&
-            velocity.absoluteValue >= with(density) { AddressBarTabSwitchRules.FLING_MIN_VELOCITY_DP.dp.toPx() } &&
+            velocity.absoluteValue >= with(density) { flingVelocityDp.dp.toPx() } &&
             velocity.compareTo(0f) == direction
-        val shouldSwitch = tabSwipeEnabled && targetTab != null &&
-            (
-                AddressBarTabSwitchRules.hasReachedDistance(
-                    dragDistance = browserDragOffset.floatValue.absoluteValue,
-                    viewportWidth = browserWidthPx,
-                ) || fastEnough
+        val farEnough = if (uiV5) {
+            browserDragOffset.floatValue.absoluteValue >= browserWidthPx * V5Motion.TAB_SWIPE_COMMIT_FRACTION
+        } else {
+            AddressBarTabSwitchRules.hasReachedDistance(
+                dragDistance = browserDragOffset.floatValue.absoluteValue,
+                viewportWidth = browserWidthPx,
             )
+        }
+        v5SwipeThresholdReached = false
+        val shouldSwitch = tabSwipeEnabled && targetTab != null && (farEnough || fastEnough)
         val settle = Animatable(browserDragOffset.floatValue)
         settle.animateTo(
             targetValue = if (shouldSwitch) direction * tabSwitchTravelPx else 0f,
             initialVelocity = velocity,
-            animationSpec = if (shouldSwitch) {
+            animationSpec = if (uiV5) {
+                if (V5Motion.animationsEnabled) V5Motion.tabSwipe.spec() else V5Motion.reducedFade()
+            } else if (shouldSwitch) {
                 tween(AddressBarTabSwitchRules.SETTLE_MILLIS, easing = FastOutSlowInEasing)
             } else {
                 spring(
@@ -427,14 +452,12 @@ internal fun BoxScope.BrowserAddressChrome(
         selectedTab.url != BLANK_URL &&
         !linkPeekAddressBarExpanded &&
         !wideWindow
-    val uiV5 by rememberUiV5Flag()
-    // V7: the v5 bar replaces the expanded bar at rest; editing, the collapsed bar, docking,
-    // feedback, the overview morph and wide windows stay on the current bar until their v5 steps.
+    // V7: the v5 bar replaces the bar at rest and while collapsed; editing, docking, feedback, the
+    // overview morph and wide windows stay on the current bar until their v5 steps.
     val showV5Bar = uiV5 &&
         !addressEditorVisible &&
         commandFeedback == null &&
         !wideWindow &&
-        !compactBar &&
         effectiveAddressBarDockPlacement == null &&
         !linkPeekAddressBarExpanded &&
         !tabOverviewOpening &&
@@ -445,6 +468,8 @@ internal fun BoxScope.BrowserAddressChrome(
             controller = controller,
             selectedTab = selectedTab,
             backdropSource = chromeBackdropSource.takeIf { pageBehindAddressBar },
+            collapsed = compactBar,
+            onExpand = controller::expandBottomBar,
             gestures = V5BarGestures(
                 tabSwipeEnabled = tabSwipeEnabled,
                 onTabDrag = onTabDrag,
