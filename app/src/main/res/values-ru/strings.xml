@@ -2054,6 +2054,15 @@
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
     <string name="v5_sheet_close">Закрыть</string>
+    <string name="v5_overview_ungrouped">Без группы</string>
+    <string name="v5_overview_group_collapse">Свернуть группу</string>
+    <string name="v5_overview_group_expand">Развернуть группу</string>
+    <plurals name="v5_overview_group_description">
+        <item quantity="one">Группа «%1$s», %2$d вкладка</item>
+        <item quantity="few">Группа «%1$s», %2$d вкладки</item>
+        <item quantity="many">Группа «%1$s», %2$d вкладок</item>
+        <item quantity="other">Группа «%1$s», %2$d вкладки</item>
+    </plurals>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
