@@ -32,8 +32,9 @@ internal object PwnedPasswordsClient {
     @WorkerThread
     fun range(prefix: String): String? {
         if (prefix.length != PasswordHealthRules.HASH_PREFIX_LENGTH || prefix.any { it !in HEX }) return null
-        val connection = URL(RANGE_URL + prefix).openConnection() as HttpURLConnection
+        var connection: HttpURLConnection? = null
         return try {
+            connection = URL(RANGE_URL + prefix).openConnection() as HttpURLConnection
             connection.connectTimeout = TIMEOUT_MILLIS
             connection.readTimeout = TIMEOUT_MILLIS
             connection.useCaches = false
@@ -56,7 +57,7 @@ internal object PwnedPasswordsClient {
         } catch (_: IOException) {
             null
         } finally {
-            connection.disconnect()
+            connection?.disconnect()
         }
     }
 }
