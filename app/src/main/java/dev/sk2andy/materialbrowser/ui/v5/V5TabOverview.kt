@@ -44,7 +44,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.toSize
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -100,6 +102,8 @@ data class V5TabCard(
     val selected: Boolean,
     val preview: ImageBitmap?,
     val favicon: ImageBitmap?,
+    /** False for pinned tabs: they have no close button and spring back when swiped. */
+    val closable: Boolean = true,
 )
 
 @Immutable
@@ -127,6 +131,8 @@ fun V5TabOverview(
     onCardBounds: (String, Rect) -> Unit = { _, _ -> },
     /** A card drawn by the hero layer instead, while the page shrinks into it or grows out. */
     heroCardId: String? = null,
+    /** The card the grid opens on, so the page's card is on screen for the hero. */
+    initialCardIndex: Int = 0,
 ) {
     val colors = V5Theme.colors
     Box(
@@ -150,6 +156,7 @@ fun V5TabOverview(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
+                    state = rememberLazyGridState(initialFirstVisibleItemIndex = initialCardIndex),
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentPadding = PaddingValues(
                         start = V5Spacing.marginPhone,
@@ -299,7 +306,8 @@ private fun TabCard(
     val density = LocalDensity.current.density
     val scope = rememberCoroutineScope()
     // Swipe sideways to close (system-v5.md, section 7.1): the card follows the finger, fades, and
-    // past 40 % of its width or on a fling it leaves on the tabSwipe spring and the tab closes.
+    // past 40 % of its width or on a fling it leaves on the tabSwipe spring and the tab closes. The
+    // tab closes as the card leaves, so the grid closes the gap at once; a pinned tab springs back.
     val offset = remember(card.id) { Animatable(0f) }
     var widthPx by remember { mutableFloatStateOf(0f) }
     val dragState = rememberDraggableState { delta -> scope.launch { offset.snapTo(offset.value + delta) } }
@@ -314,13 +322,21 @@ private fun TabCard(
                 state = dragState,
                 orientation = Orientation.Horizontal,
                 onDragStopped = { velocity ->
-                    if (V5TabOverviewRules.closes(offset.value, velocity, widthPx, density)) {
+                    val closes = V5TabOverviewRules.closes(offset.value, velocity, widthPx, density)
+                    if (closes && card.closable) {
                         view.performV5Haptic(V5Haptic.Confirm)
+                        onClose(card.id)
                         if (V5Motion.animationsEnabled) {
                             val away = if (offset.value < 0f) -widthPx * 2 else widthPx * 2
                             offset.animateTo(away, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
                         }
-                        onClose(card.id)
+                    } else if (closes) {
+                        view.performV5Haptic(V5Haptic.Reject)
+                        if (V5Motion.animationsEnabled) {
+                            offset.animateTo(0f, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
+                        } else {
+                            offset.snapTo(0f)
+                        }
                     } else if (V5Motion.animationsEnabled) {
                         offset.animateTo(0f, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
                     } else {
@@ -336,7 +352,7 @@ private fun TabCard(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(V5Sizes.OVERVIEW_CARD_RATIO)
-                .onGloballyPositioned { onBounds(card.id, it.boundsInRoot()) }
+                .onGloballyPositioned { onBounds(card.id, Rect(it.positionInRoot(), it.size.toSize())) }
                 .clip(shape)
                 .background(colors.surfaceHighest)
                 .then(if (card.selected) Modifier.border(V5Sizes.overviewRing, colors.accent, shape) else Modifier),
@@ -354,7 +370,7 @@ private fun TabCard(
                     Favicon(card, size = V5Sizes.iconMax)
                 }
             }
-            Box(
+            if (card.closable) Box(
                 Modifier
                     .align(Alignment.TopEnd)
                     .size(V5Sizes.touchTarget)
