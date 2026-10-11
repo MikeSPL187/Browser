@@ -130,6 +130,41 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual(["cold-start", "scroll", "tab-swipe", "overview"], ids)
 
+    def test_missing_scenarios_are_named(self):
+        results = [{"title": "Холодный старт", "files": ["cold-start.mp4"]},
+                   {"title": "Прокрутка длинной страницы", "files": []}]
+        self.assertEqual(["Прокрутка длинной страницы"], video.missing_scenarios(results))
+
+
+class RetryTest(unittest.TestCase):
+    """record() without a device: start, stop and the contact sheet are stubbed."""
+
+    def recorder(self, videos):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        recorder = video.Recorder("pkg", directory.name)
+        recorder.log = lambda message: None
+        recorder.start_recording = lambda scenario: object()
+        recorder.stop_recording = lambda scenario, process: videos.pop(0)
+        recorder.duration = lambda path: 5.0
+        recorder.contact_sheet = lambda path, duration: None
+        return recorder
+
+    def test_lost_recording_is_driven_again_from_setup(self):
+        calls = []
+        recorder = self.recorder([None, Path("scroll.mp4")])
+        result = recorder.record("scroll", "Прокрутка", lambda: calls.append("drive"),
+                                 setup=lambda: calls.append("setup"))
+        self.assertEqual(["setup", "drive", "setup", "drive"], calls)
+        self.assertEqual(["scroll.mp4"], result["files"])
+        self.assertEqual("с попытки 2", result["note"])
+
+    def test_scenario_counts_as_lost_after_the_last_attempt(self):
+        recorder = self.recorder([None] * video.ATTEMPTS)
+        result = recorder.record("scroll", "Прокрутка", lambda: "")
+        self.assertEqual([], result["files"])
+        self.assertEqual("файл не получен", result["note"])
+
 
 if __name__ == "__main__":
     unittest.main()

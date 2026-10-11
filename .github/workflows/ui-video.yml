@@ -6,7 +6,7 @@
 #
 # Runs for pull requests that change UI code or resources, and on manual dispatch. It is separate
 # from screenshots.yml because that tour runs only with the "screenshots" label and takes over an
-# hour, while this one runs on its own for every UI change and needs about 25 minutes.
+# hour, while this one runs on its own for every UI change and needs about 10–15 minutes.
 
 name: UI video
 
@@ -98,6 +98,13 @@ jobs:
             -no-boot-anim \
             -gpu swiftshader_indirect \
             > "$RUNNER_TEMP/emulator.log" 2>&1 &
+
+      # Contact sheets and durations need ffmpeg and ffprobe; the runner image has neither.
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
 
       # The same build the screenshot tour drives.
       - name: Build debug APK

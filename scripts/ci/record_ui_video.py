@@ -32,6 +32,8 @@ BIT_RATE = 6_000_000
 SIZE = "720x1600"
 # screenrecord stops by itself after 180 s; scenarios take under a minute, this only caps a hang.
 TIME_LIMIT_S = 90
+# A scenario whose recording yields no file is driven once more before it counts as lost.
+ATTEMPTS = 2
 SHEET_COLUMNS = 4
 SHEET_ROWS = 2
 SHEET_FRAME_WIDTH = 240
@@ -182,6 +184,11 @@ def tile_command(pattern, target, columns=SHEET_COLUMNS, rows=SHEET_ROWS,
             "-frames:v", "1", str(target)]
 
 
+def missing_scenarios(results):
+    """Titles of the scenarios that produced no video."""
+    return [result["title"] for result in results if not result["files"]]
+
+
 def summary_markdown(results, run_number=None):
     """The job summary: one row per scenario and the checklist for the pull request."""
     title = "### Видео сценариев (V4)"
@@ -318,25 +325,43 @@ class Recorder:
             previous = size
             time.sleep(1)
         local = self.out / f"{scenario}.mp4"
-        self.adb("pull", remote_path(scenario), str(local), timeout=120)
-        return local if local.is_file() and local.stat().st_size > 0 else None
+        local.unlink(missing_ok=True)
+        pulled = self.adb("pull", remote_path(scenario), str(local), timeout=120)
+        if local.is_file() and local.stat().st_size > 0:
+            return local
+        # Say why, so the next run can be fixed from the log alone.
+        output = process.stdout.read().decode("utf-8", "replace").strip() if process.stdout else ""
+        self.log(f"{scenario}: no video; size on device {previous or 'none'}, "
+                 f"screenrecord: {output[:200] or 'no output'}, pull: {pulled.strip()[:200]}")
+        return None
 
-    def record(self, scenario, title, drive):
+    def record(self, scenario, title, drive, setup=None, attempts=ATTEMPTS):
+        """Records one scenario; a recording that yields no file is tried again from `setup`."""
         result = {"id": scenario, "title": title, "files": [], "note": ""}
-        process = self.start_recording(scenario)
-        if process is None:
-            result["note"] = "screenrecord не запустился"
-            return result
-        started = time.monotonic()
-        try:
-            result["note"] = drive() or ""
-        except Exception as error:  # noqa: BLE001 - one broken scenario never hides the rest
-            self.log(f"{scenario}: failed: {error}")
-            result["note"] = f"сбой сценария: {error}"
-        wall = time.monotonic() - started
-        video = self.stop_recording(scenario, process)
+        video = None
+        for attempt in range(1, attempts + 1):
+            if setup is not None:
+                setup()
+            process = self.start_recording(scenario)
+            if process is None:
+                result["note"] = "screenrecord не запустился"
+                continue
+            started = time.monotonic()
+            try:
+                result["note"] = drive() or ""
+            except Exception as error:  # noqa: BLE001 - one broken scenario never hides the rest
+                self.log(f"{scenario}: failed: {error}")
+                result["note"] = f"сбой сценария: {error}"
+            wall = time.monotonic() - started
+            video = self.stop_recording(scenario, process)
+            if video is not None:
+                if attempt > 1:
+                    result["note"] = (result["note"] + f"; с попытки {attempt}").lstrip("; ")
+                break
+            self.log(f"{scenario}: attempt {attempt} of {attempts} gave no video")
         if video is None:
-            result["note"] = (result["note"] + "; файл не получен").lstrip("; ")
+            if "screenrecord" not in result["note"]:
+                result["note"] = (result["note"] + "; файл не получен").lstrip("; ")
             return result
         result["files"].append(video.name)
         result["duration"] = self.duration(video) or wall
@@ -416,6 +441,12 @@ class Recorder:
         time.sleep(2.5)
         return ""
 
+    def stop_on_launcher(self):
+        """Cold start begins on the launcher with Vola stopped."""
+        self.adb("shell", "am", "force-stop", self.package)
+        self.adb("shell", "input", "keyevent", "HOME")
+        time.sleep(3)
+
     def run(self):
         page_probe.serve()
         self.adb("reverse", f"tcp:{page_probe.PORT}", f"tcp:{page_probe.PORT}")
@@ -423,11 +454,8 @@ class Recorder:
         titles = {scenario: title for scenario, title, _ in SCENARIOS}
         results = []
 
-        # Cold start begins on the launcher with Vola stopped.
-        self.adb("shell", "am", "force-stop", self.package)
-        self.adb("shell", "input", "keyevent", "HOME")
-        time.sleep(3)
-        results.append(self.record("cold-start", titles["cold-start"], self.cold_start))
+        results.append(self.record("cold-start", titles["cold-start"], self.cold_start,
+                                   setup=self.stop_on_launcher))
 
         long_page = scroll_page(page_probe.PAGES)
         self.open_url(f"{page_probe.BASE_URL}/{long_page}")
@@ -457,6 +485,9 @@ def main():
     summary = summary_markdown(results, run_number)
     (recorder.out / "summary.md").write_text(summary)
     print(summary)
+    for title in missing_scenarios(results):
+        # A warning annotation on the pull request, so a lost scenario is not read as a pass.
+        print(f"::warning title=UI video::Сценарий «{title}» не записан, см. record-log.txt")
     if not any(result["files"] for result in results):
         print("No video was recorded.", file=sys.stderr)
         return 1
