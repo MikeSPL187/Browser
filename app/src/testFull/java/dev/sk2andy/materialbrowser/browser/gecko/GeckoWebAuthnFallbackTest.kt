@@ -1,10 +1,10 @@
 package dev.sk2andy.materialbrowser.browser.gecko
 
-import java.io.DataInputStream
-import java.io.File
-import java.lang.reflect.Constructor
-import java.lang.reflect.Method
-import java.net.JarURLConnection
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoPlayServicesReferences.GMS
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoPlayServicesReferences.Kind
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoPlayServicesReferences.Reference
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoPlayServicesReferences.TOKEN_MANAGER
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoPlayServicesReferences.WEBAUTHN_UTILS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -18,26 +18,9 @@ import org.junit.Test
  *
  * The references are read from GeckoView's own class files. If this fails after a GeckoView update,
  * re-read `WebAuthnTokenManager` at the new tag and update the stand-ins, not this list alone.
+ * [GeckoPlayServicesReferenceTest] checks every other reference GeckoView makes.
  */
 class GeckoWebAuthnFallbackTest {
-    /**
-     * Every Play services class, field or method any GeckoView class names either exists in the
-     * stand-ins or is on [KNOWN_UNREACHABLE]: code GeckoView runs only after a stand-in has refused.
-     * A new GeckoView that calls Play services somewhere else fails here, not on a person's phone.
-     */
-    @Test
-    fun everyPlayServicesReferenceInGeckoViewIsAStandInOrKnownUnreachable() {
-        val unresolved = geckoViewReferences().filterNot(::resolves).map(Reference::key).toSortedSet()
-        assertEquals(
-            "GeckoView names Play services the stand-ins lack. Read the code that names each new one at the " +
-                "GeckoView tag: add a stand-in when it can run before a stand-in refuses, otherwise list it " +
-                "in KNOWN_UNREACHABLE (and in proguard-gecko-rules.pro). Found:\n" +
-                unresolved.joinToString("\n") { "\"$it\"," },
-            KNOWN_UNREACHABLE,
-            unresolved,
-        )
-    }
-
     @Test
     fun algorithmsListedWhenGeckoLoadsWebAuthnExist() {
         val references = references(TOKEN_MANAGER)
@@ -102,16 +85,7 @@ class GeckoWebAuthnFallbackTest {
         }
     }
 
-    private enum class Kind { Class, Field, Method }
-
-    private data class Reference(val kind: Kind, val owner: String, val name: String, val descriptor: String) {
-        val key: String
-            get() = when (kind) {
-                Kind.Class -> owner
-                Kind.Field -> "$owner.$name:$descriptor"
-                Kind.Method -> "$owner.$name$descriptor"
-            }
-    }
+    private fun references(className: String) = GeckoPlayServicesReferences.inClass(className)
 
     private fun assertReferencedAndResolves(references: Set<Reference>, reference: Reference) {
         assertTrue("GeckoView no longer calls $reference; re-audit the stand-ins", reference in references)
@@ -119,134 +93,11 @@ class GeckoWebAuthnFallbackTest {
     }
 
     private fun assertResolves(reference: Reference) {
-        runCatching { Class.forName(reference.owner.replace('/', '.'), false, javaClass.classLoader) }
-            .getOrElse { fail("Missing stand-in class for $reference"); return }
-        assertTrue("Stand-in lacks $reference", resolves(reference))
+        if (GeckoPlayServicesReferences.ownerClass(reference) == null) fail("Missing stand-in class for $reference")
+        assertTrue("Stand-in lacks $reference", GeckoPlayServicesReferences.resolves(reference))
     }
-
-    private fun resolves(reference: Reference): Boolean {
-        val owner = runCatching { Class.forName(reference.owner.replace('/', '.'), false, javaClass.classLoader) }
-            .getOrElse { return false }
-        return when (reference.kind) {
-            Kind.Class -> true
-            Kind.Field -> owner.declaredFields.any {
-                it.name == reference.name && descriptorOf(it.type) == reference.descriptor
-            }
-            Kind.Method -> if (reference.name == "<init>") {
-                owner.declaredConstructors.any { descriptorOf(it) == reference.descriptor }
-            } else {
-                (owner.declaredMethods.asSequence() + owner.methods.asSequence()).any {
-                    it.name == reference.name && descriptorOf(it) == reference.descriptor
-                }
-            }
-        }
-    }
-
-    /** The Play services references of every class in the archive (or folder) GeckoView loads from. */
-    private fun geckoViewReferences(): Set<Reference> {
-        val url = javaClass.classLoader!!.getResource("$TOKEN_MANAGER.class")
-            ?: error("GeckoView class $TOKEN_MANAGER is not on the test classpath")
-        val found = mutableSetOf<Reference>()
-        if (url.protocol == "jar") {
-            val connection = url.openConnection() as JarURLConnection
-            connection.useCaches = false
-            connection.jarFile.use { jar ->
-                jar.entries().asSequence().filter { it.name.endsWith(".class") }.forEach { entry ->
-                    found += DataInputStream(jar.getInputStream(entry).buffered()).use { readGmsReferences(it) }
-                }
-            }
-        } else {
-            val root = File(url.toURI()).path.removeSuffix("$TOKEN_MANAGER.class".replace('/', File.separatorChar))
-            File(root).walkTopDown().filter { it.isFile && it.name.endsWith(".class") }.forEach { file ->
-                found += DataInputStream(file.inputStream().buffered()).use { readGmsReferences(it) }
-            }
-        }
-        check(found.isNotEmpty()) { "No Play services reference found in GeckoView; is $url its archive?" }
-        return found
-    }
-
-    private fun references(className: String): Set<Reference> {
-        val stream = javaClass.classLoader!!.getResourceAsStream("$className.class")
-            ?: error("GeckoView class $className is not on the test classpath")
-        return DataInputStream(stream.buffered()).use { readGmsReferences(it) }
-    }
-
-    /** Reads the member references of a class file's constant pool (JVMS 4.4) that name GMS types. */
-    private fun readGmsReferences(input: DataInputStream): Set<Reference> {
-        check(input.readInt() == 0xCAFEBABE.toInt()) { "Not a class file" }
-        input.readUnsignedShort()
-        input.readUnsignedShort()
-        val count = input.readUnsignedShort()
-        val utf8 = arrayOfNulls<String>(count)
-        val classNames = IntArray(count)
-        val nameAndTypes = arrayOfNulls<IntArray>(count)
-        val members = mutableListOf<Triple<Kind, Int, Int>>()
-        val classes = mutableListOf<Int>()
-        var index = 1
-        while (index < count) {
-            var slots = 1
-            when (val tag = input.readUnsignedByte()) {
-                1 -> utf8[index] = input.readUTF()
-                3, 4 -> input.readInt()
-                5, 6 -> {
-                    input.readLong()
-                    slots = 2
-                }
-                7 -> {
-                    classNames[index] = input.readUnsignedShort()
-                    classes += index
-                }
-                8, 16, 19, 20 -> input.readUnsignedShort()
-                9 -> members += Triple(Kind.Field, input.readUnsignedShort(), input.readUnsignedShort())
-                10, 11 -> members += Triple(Kind.Method, input.readUnsignedShort(), input.readUnsignedShort())
-                12 -> nameAndTypes[index] = intArrayOf(input.readUnsignedShort(), input.readUnsignedShort())
-                15 -> {
-                    input.readUnsignedByte()
-                    input.readUnsignedShort()
-                }
-                17, 18 -> input.readInt()
-                else -> error("Unknown constant pool tag $tag")
-            }
-            index += slots
-        }
-        // A class constant names a type the code checks, casts to or creates; an array type counts
-        // as its element type.
-        val classReferences = classes.mapNotNull { index ->
-            val name = utf8[classNames[index]]?.trimStart('[')?.removePrefix("L")?.removeSuffix(";")
-            name?.takeIf { it.startsWith("$GMS/") }?.let { Reference(Kind.Class, it, "", "") }
-        }
-        return members.mapNotNull { (kind, classIndex, nameAndTypeIndex) ->
-            val owner = utf8[classNames[classIndex]] ?: return@mapNotNull null
-            if (!owner.startsWith("$GMS/")) return@mapNotNull null
-            val (name, descriptor) = nameAndTypes[nameAndTypeIndex]!!
-            Reference(kind, owner, utf8[name]!!, utf8[descriptor]!!)
-        }.toSet() + classReferences
-    }
-
-    private fun descriptorOf(type: Class<*>): String = when {
-        type.isArray -> "[" + descriptorOf(type.componentType!!)
-        type == Void.TYPE -> "V"
-        type == java.lang.Boolean.TYPE -> "Z"
-        type == java.lang.Byte.TYPE -> "B"
-        type == java.lang.Character.TYPE -> "C"
-        type == java.lang.Short.TYPE -> "S"
-        type == Integer.TYPE -> "I"
-        type == java.lang.Long.TYPE -> "J"
-        type == java.lang.Float.TYPE -> "F"
-        type == java.lang.Double.TYPE -> "D"
-        else -> "L" + type.name.replace('.', '/') + ";"
-    }
-
-    private fun descriptorOf(method: Method): String =
-        method.parameterTypes.joinToString("", "(", ")") { descriptorOf(it) } + descriptorOf(method.returnType)
-
-    private fun descriptorOf(constructor: Constructor<*>): String =
-        constructor.parameterTypes.joinToString("", "(", ")V") { descriptorOf(it) }
 
     private companion object {
-        const val TOKEN_MANAGER = "org/mozilla/geckoview/WebAuthnTokenManager"
-        const val WEBAUTHN_UTILS = "org/mozilla/gecko/util/WebAuthnUtils"
-        const val GMS = "com/google/android/gms"
         const val COMMON = "$GMS/fido/fido2/api/common"
         const val EC2 = "$COMMON/EC2Algorithm"
         const val RSA = "$COMMON/RSAAlgorithm"
@@ -256,13 +107,5 @@ class GeckoWebAuthnFallbackTest {
         const val TASK = "$GMS/tasks/Task"
         const val CONTEXT = "android/content/Context"
         const val UVPAA = "isUserVerifyingPlatformAuthenticatorAvailable"
-
-        /**
-         * Play services GeckoView names only on paths that start after a stand-in has refused (it
-         * never gets a credential, a pending intent or a successful task), so no stand-in is needed.
-         * Keys: a class as its internal name, a field as `owner.name:descriptor`, a method as
-         * `owner.name(descriptor)`.
-         */
-        val KNOWN_UNREACHABLE = sortedSetOf<String>()
     }
 }
