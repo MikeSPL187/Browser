@@ -916,7 +916,7 @@
     <string name="settings_block_ads_subtitle">Локальный список доменов, включая service workers</string>
     <string name="settings_hide_cookie_banners_title">Скрывать баннеры о куки</string>
     <string name="settings_hide_cookie_banners_subtitle">Известные окна согласия удаляются</string>
-    <string name="settings_block_ads_extension_summary">Рекламу здесь блокирует расширение uBlock Origin. Откройте «Расширения Firefox», чтобы выключить его или изменить фильтры.</string>
+    <string name="settings_block_ads_extension_summary">Vola теперь блокирует рекламу сама. Если uBlock Origin остался от прежней версии, его можно удалить здесь.</string>
     <string name="settings_hide_cookie_banners_extension_summary">Известные окна согласия удаляются. Расширение I still don\'t care about cookies покрывает больше сайтов, управлять им можно в «Расширениях Firefox».</string>
     <string name="settings_block_third_party_cookies_title">Блокировать сторонние куки</string>
     <string name="settings_block_third_party_cookies_subtitle">Собственные куки сайтов остаются включёнными для входа в аккаунты</string>
@@ -1686,7 +1686,7 @@
     <string name="developer_options_force_safe_area_fallback">Всегда системный запасной режим</string>
     <string name="developer_options_force_safe_area_fallback_summary">Использует системные верхние отступы на всех страницах вместо прокручиваемого отступа документа Vola.</string>
     <string name="developer_options_vola_gecko_blocker">Свой блокировщик Vola на Gecko</string>
-    <string name="developer_options_vola_gecko_blocker_summary">Блокирует рекламу и трекеры по спискам Vola с учётом уровня защиты сайта. В разработке: uBlock Origin пока работает рядом.</string>
+    <string name="developer_options_vola_gecko_blocker_summary">Блокирует рекламу и трекеры по спискам Vola с учётом уровня защиты сайта. Включён по умолчанию; выключайте, только если ломаются сайты.</string>
     <string name="developer_options_layout_quiet_period">Пауза после раскладки</string>
     <string name="developer_options_layout_quiet_period_summary">Ждать после последнего изменения раскладки страницы перед каждой проверкой.</string>
     <string name="developer_options_required_failures">Нужно неудачных проверок</string>
