@@ -50,9 +50,6 @@ import dev.sk2andy.materialbrowser.ui.passwords.SensitiveClipboard
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import java.security.SecureRandom
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,7 +75,8 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportReport
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportResultScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportSource
-import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordsClient
+import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
+import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordCheck
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
@@ -150,7 +148,7 @@ internal class PasswordsViewModel : ViewModel() {
     /** The leak check's answers by login id, kept only while the screen lives. */
     var leakStatus by mutableStateOf(LeakCheckStatus.Off)
 
-    /** Share of distinct passwords the running leak check has answered, 0 to 1. */
+    /** Share of hash prefixes the running leak check has answered, 0 to 1. */
     var leakProgress by mutableFloatStateOf(0f)
     var breaches by mutableStateOf<Map<String, Int>>(emptyMap())
 }
@@ -163,6 +161,7 @@ internal class PasswordsViewModel : ViewModel() {
 class PasswordsActivity : FragmentActivity() {
     private val model: PasswordsViewModel by viewModels()
     private val vault: LocalCredentialVault by lazy { AndroidCredentialVault.get(this) }
+    private val passwordCheck: PasswordCheck = PwnedPasswordCheck()
     private val random = SecureRandom()
     private val exportPicker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         importFrom(uris)
@@ -398,38 +397,16 @@ class PasswordsActivity : FragmentActivity() {
         }
     }
 
-    /**
-     * Asks Pwned Passwords about each distinct password, sending only a hash prefix for each. A few
-     * requests run at once, so hundreds of passwords take seconds, and the screen shows how far it is.
-     */
+    /** Asks Pwned Passwords which passwords leaked, sending only a hash prefix for each (V24 port). */
     private fun checkLeaks(logins: List<VaultLogin>) {
         if (model.leakStatus == LeakCheckStatus.Checking) return
         model.leakStatus = LeakCheckStatus.Checking
         model.leakProgress = 0f
         lifecycleScope.launch {
-            val answers = withContext(Dispatchers.IO) {
-                val client = PwnedPasswordsClient()
-                val passwords = logins.map(VaultLogin::password).distinct()
-                val answered = AtomicInteger()
-                val pool = Executors.newFixedThreadPool(LEAK_CHECK_REQUESTS)
-                val byPassword = try {
-                    pool.invokeAll(
-                        passwords.map { password ->
-                            Callable {
-                                client.timesSeen(password).also {
-                                    model.leakProgress = answered.incrementAndGet().toFloat() / passwords.size
-                                }
-                            }
-                        },
-                    ).mapIndexed { index, answer -> passwords[index] to answer.get() }.toMap()
-                } finally {
-                    pool.shutdownNow()
-                }
-                logins.associate { login -> login.id to byPassword[login.password] }
-            }
+            val result = passwordCheck.checkLeaks(logins) { progress -> model.leakProgress = progress.fraction }
             if (model.leakStatus != LeakCheckStatus.Checking) return@launch
-            model.breaches = answers.mapNotNull { (id, seen) -> seen?.let { id to it } }.toMap()
-            model.leakStatus = if (answers.values.any { it == null }) LeakCheckStatus.Failed else LeakCheckStatus.Done
+            model.breaches = result.breaches
+            model.leakStatus = if (result.complete) LeakCheckStatus.Done else LeakCheckStatus.Failed
         }
     }
 
@@ -824,9 +801,6 @@ class PasswordsActivity : FragmentActivity() {
     private companion object {
         const val PREFERENCES = "vola_passwords"
         const val KEY_LEAK_CHECK = "leak_check"
-
-        /** Requests to Pwned Passwords at once: quick for hundreds of passwords, gentle on the service. */
-        const val LEAK_CHECK_REQUESTS = 4
 
         /** CSV and HTML come as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
         val EXPORT_TYPES = arrayOf(
