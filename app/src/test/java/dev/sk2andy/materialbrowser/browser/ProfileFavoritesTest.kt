@@ -105,6 +105,28 @@ class ProfileFavoritesTest {
     }
 
     @Test
+    fun aSyncedProfileUsesTheLocalListTheFavoritesScreenOpens() {
+        // The controller maps a synced profile to the local one it keeps active (`persist()`).
+        val mapped = ProfileFavorites(
+            storage = storage,
+            ownerOf = { id -> if (id == "synced-laptop") "home" else id },
+            runInBackground = { task -> task() },
+            post = { task -> task() },
+            isDestroyed = { false },
+            pruneIcons = { _, _ -> },
+        )
+        mapped.select("synced-laptop")
+        assertEquals("home", mapped.profileId)
+        assertNotNull(mapped.toggle("https://laptop.example/", "Laptop", now = 1))
+
+        assertEquals(listOf("https://laptop.example/"), storage.load("home").favorites.map(FavoriteEntry::url))
+        assertTrue(storage.libraries.keys.none { it == "synced-laptop" })
+        // Switching between the synced profile and its local owner keeps the same list and its undo.
+        mapped.select("home")
+        assertTrue(mapped.isFavorite("https://laptop.example/"))
+    }
+
+    @Test
     fun nothingHappensBeforeAProfileIsSelected() {
         assertNull(favorites.toggle("https://work.example/", "Work", now = 1))
         var called = false

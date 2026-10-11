@@ -447,10 +447,11 @@ class BrowserController(
     val previews = mutableStateMapOf<String, Bitmap>()
     val favicons = mutableStateMapOf<String, Bitmap>()
     val history = mutableStateListOf<HistoryEntry>()
-    // Each profile keeps its own favorites (v5 V11); switching the profile switches the list.
+    // Each local profile keeps its own favorites (v5 V11); a synced one shows those persist() keeps.
     private val profileFavorites by lazy {
         ProfileFavorites(
             storage = ProfileFavoritesStore(store),
+            ownerOf = { id -> id.takeIf { localProfiles.any { it.id == id } } ?: localProfiles.firstOrNull()?.id ?: id },
             runInBackground = { task -> favoriteMutationExecutor.execute { task() } },
             post = { task -> mainHandler.post { task() } },
             isDestroyed = { destroyed },
@@ -8915,11 +8916,9 @@ class BrowserController(
 
     fun undoFavorite(mutation: FavoriteMutation): Boolean {
         if (!profileFavorites.undo(mutation)) return false
-        if (!mutation.added) {
-            mutation.before
-                .firstOrNull { entry -> mutation.applied.none { it.url == entry.url } }
-                ?.let { entry -> favoriteFaviconRepository.capture(entry.url, bitmap = null) }
-        }
+        // A favorite brought back by undo gets its icon again.
+        if (!mutation.added) mutation.before.firstOrNull { entry -> mutation.applied.none { it.url == entry.url } }
+            ?.let { entry -> favoriteFaviconRepository.capture(entry.url, bitmap = null) }
         return true
     }
 

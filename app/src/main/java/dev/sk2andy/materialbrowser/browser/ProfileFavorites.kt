@@ -18,10 +18,12 @@ import dev.sk2andy.materialbrowser.data.FavoriteUndoRules
  * The favorites of the active profile (v5 V11: every profile keeps its own, as in Safari). Selecting
  * a profile shows its list, a change is saved under that profile, and the icons of favorites and
  * folders that no profile keeps any more are dropped. An undo offered before a profile switch no
- * longer applies after it.
+ * longer applies after it. [ownerOf] says whose favorites a profile shows: a synced profile from
+ * another device keeps none here and shows those of a local profile.
  */
 internal class ProfileFavorites(
     private val storage: Storage,
+    private val ownerOf: (profileId: String) -> String = { it },
     private val runInBackground: (() -> Unit) -> Unit,
     private val post: (() -> Unit) -> Unit,
     private val isDestroyed: () -> Boolean,
@@ -53,8 +55,9 @@ internal class ProfileFavorites(
     fun isFavorite(url: String): Boolean = BrowsingLibraryRules.isFavorite(favorites, url)
 
     fun select(profileId: String) {
-        if (profileId == this.profileId) return
-        this.profileId = profileId
+        val owner = ownerOf(profileId)
+        if (owner == this.profileId) return
+        this.profileId = owner
         reload()
     }
 
@@ -141,10 +144,8 @@ internal class ProfileFavorites(
 
     /** Drops a deleted profile's favorites and the icons only they used. */
     fun forget(profileId: String) {
-        runInBackground {
-            storage.delete(profileId)
-            post { if (!isDestroyed()) pruneUnusedIcons() }
-        }
+        runInBackground { storage.delete(profileId) }
+        pruneUnusedIcons()
     }
 
     private fun apply(library: FavoriteLibrary) {
@@ -153,12 +154,16 @@ internal class ProfileFavorites(
         favorites += this.library.favorites
     }
 
+    // Reading every profile's favorites stays off the main thread.
     private fun pruneUnusedIcons() {
-        val libraries = storage.all() + library
-        pruneIcons(
-            libraries.flatMapTo(hashSetOf()) { kept -> kept.favorites.map(FavoriteEntry::url) },
-            libraries.flatMapTo(hashSetOf()) { kept -> kept.folders.map { folder -> folder.id } },
-        )
+        val current = library
+        runInBackground {
+            val libraries = storage.all() + current
+            pruneIcons(
+                libraries.flatMapTo(hashSetOf()) { kept -> kept.favorites.map(FavoriteEntry::url) },
+                libraries.flatMapTo(hashSetOf()) { kept -> kept.folders.map { folder -> folder.id } },
+            )
+        }
     }
 }
 
