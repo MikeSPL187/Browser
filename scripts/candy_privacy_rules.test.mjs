@@ -721,3 +721,97 @@ test("the host index gives every frame the same ad selectors as the full scan", 
   assert.equal(rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] },
     { ...policy, blockAds: false }, "www.reddit.com").selectors.length, 0);
 });
+
+test("ad cosmetics reach frames when consent banners are left alone", async () => {
+  let nativeMessageListener;
+  const runtimeMessageListeners = [];
+  const payloadRules = [];
+  const backgroundContext = vm.createContext({
+    URL,
+    Map,
+    Set,
+    Array,
+    Promise,
+    Number,
+    String,
+    Boolean,
+    Date,
+    setTimeout,
+    clearTimeout,
+    CandyPrivacyRules: {
+      parseCandyDefaults: () => [],
+      parseCosmetic: () => [],
+      parseProcedural: () => [],
+      indexCosmetics: () => ({ size: 0, candidates: () => [] }),
+      hostMatches: () => false,
+      cosmeticPayload: (rules) => {
+        payloadRules.push(rules);
+        return { selectors: ["#ad-slot"], procedural: [] };
+      },
+    },
+    CandyNetworkBlocker: { load: () => new Promise(() => {}) },
+    CandyPrivacySignals: {
+      registrationCode: () => "",
+      requestHeaders: (headers) => headers || [],
+    },
+    CandyAnimationPolicy: { registrationCode: () => "", stylesheet: "" },
+    fetch: () => Promise.resolve({ ok: true, text: () => Promise.resolve("") }),
+    browser: {
+      runtime: {
+        getURL: (path) => path,
+        connectNative: () => ({
+          postMessage: () => {},
+          onMessage: { addListener: (listener) => { nativeMessageListener = listener; } },
+          onDisconnect: { addListener: () => {} },
+        }),
+        onMessage: { addListener: (listener) => runtimeMessageListeners.push(listener) },
+      },
+      tabs: { sendMessage: () => Promise.resolve(), onRemoved: { addListener: () => {} } },
+      contentScripts: {
+        register: async () => ({ unregister: async () => {} }),
+      },
+      webRequest: {
+        onBeforeRequest: { addListener: () => {} },
+        onBeforeSendHeaders: { addListener: () => {} },
+        onHeadersReceived: { addListener: () => {} },
+        onErrorOccurred: { addListener: () => {} },
+      },
+    },
+  });
+  vm.runInContext(
+    fs.readFileSync(
+      new URL("../app/src/gecko/assets/candy_privacy/background.js", import.meta.url),
+      "utf8",
+    ),
+    backgroundContext,
+  );
+  nativeMessageListener({
+    type: "policy",
+    protocolVersion: 2,
+    token: "tab-token",
+    revision: 1,
+    privacySignalRevision: 1,
+    animationPolicyRevision: 1,
+    animationsEnabled: true,
+    navigationGeneration: 0,
+    hideConsent: false,
+    blockAds: true,
+    pageHost: "news.example",
+  });
+  for (let i = 0; i < 10; i++) await new Promise((resolve) => setImmediate(resolve));
+  const sendRuntimeMessage = async (message, sender) => {
+    for (const listener of runtimeMessageListeners) {
+      const result = listener(message, sender);
+      if (result !== undefined) return result;
+    }
+    return undefined;
+  };
+  await sendRuntimeMessage({ type: "bind", token: "tab-token" }, { tab: { id: 7 } });
+  const payload = await sendRuntimeMessage(
+    { type: "cosmetics", url: "https://news.example/" },
+    { tab: { id: 7 }, url: "https://news.example/" },
+  );
+
+  assert.deepEqual(Array.from(payload.selectors), ["#ad-slot"]);
+  assert.equal(payloadRules.length, 1);
+});
