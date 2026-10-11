@@ -61,6 +61,8 @@ internal fun BrowserV5Bar(
     controller: BrowserController,
     selectedTab: BrowserTab,
     backdropSource: CandyChromeBackdropSource?,
+    collapsed: Boolean,
+    onExpand: () -> Unit,
     gestures: V5BarGestures,
     permissionActivityVisible: Boolean,
     canDock: Boolean,
@@ -94,6 +96,8 @@ internal fun BrowserV5Bar(
             V5BottomBar(
                 state = state,
                 gestures = gestures,
+                collapsed = collapsed,
+                onExpand = onExpand,
                 onAddress = onAddress,
                 onShield = actions.onPrivacyXRay,
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
