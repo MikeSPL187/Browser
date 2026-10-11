@@ -39,6 +39,7 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomePage as SharedSettingsHomePage
 import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsHomeTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 internal object SettingsHomeTestTags {
     const val DefaultBrowserBanner = "settings_home_default_browser"
@@ -72,6 +73,27 @@ internal fun SettingsHomePage(
         hasDeveloperOptions = developerOptionsUnlocked,
     )
     val entries = items.map { item -> settingsHomeEntry(item, state) }
+    // V15c: under ui.v5 the same pages in the v5 grouped list; the pages themselves stay.
+    val uiV5 by rememberUiV5Flag()
+    if (uiV5) {
+        SettingsHomeV5(
+            entries = entries,
+            isDefaultBrowser = isDefaultBrowser,
+            onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,
+            onOpen = { item ->
+                if (item.isFirefoxExtensionsAction) {
+                    onOpenFirefoxExtensions?.invoke()
+                } else {
+                    item.destination?.let(onDestinationChanged)
+                }
+            },
+            onSearch = { searching = true },
+            onDismiss = onDismiss,
+            developerOptionsUnlocked = developerOptionsUnlocked,
+            onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+        )
+        return
+    }
     SharedSettingsHomePage(
         title = stringResource(R.string.settings_title),
         backContentDescription = stringResource(R.string.action_back),
@@ -119,7 +141,7 @@ internal fun SettingsHomePage(
 
 /** A row's words: a page's title and summary come from [SettingsRegistry]. */
 @Composable
-private fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState): SettingsHomeEntry {
+internal fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState): SettingsHomeEntry {
     val destination = item.destination
     return when {
         item.isFirefoxExtensionsAction -> SettingsHomeEntry(
@@ -142,7 +164,7 @@ private fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState):
 }
 
 @Composable
-private fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) {
+internal fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) {
     SettingsHomeIcon.Search -> VolaIcons.Search
     SettingsHomeIcon.Sync -> VolaIcons.Sync
     SettingsHomeIcon.Passwords -> VolaIcons.Key
@@ -164,7 +186,7 @@ private fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon) 
  * default-apps screen opens, since Android lets only the user pick.
  */
 @Composable
-private fun DefaultBrowserBanner(onMakeDefault: () -> Unit) {
+internal fun DefaultBrowserBanner(onMakeDefault: () -> Unit) {
     val stacked = SettingsHomeSummaryRules.stacksMakeDefault(LocalDensity.current.fontScale)
     val button: @Composable () -> Unit = {
         Button(

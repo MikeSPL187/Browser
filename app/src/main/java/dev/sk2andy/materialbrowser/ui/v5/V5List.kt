@@ -1,8 +1,10 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -176,6 +178,7 @@ object V5ListDefaults {
  * chevron or toggle. One line is at least 52 dp, with a subtitle 64 dp (section 3.4). It presses
  * in to 0.985 on the press spring; with a toggle the whole row switches.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun V5ListRow(
     title: String,
@@ -187,6 +190,9 @@ fun V5ListRow(
     titleColor: Color = V5Theme.colors.label,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
+    /** A second action on long press, announced to TalkBack with [onLongClickLabel]. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
 ) {
     val colors = V5Theme.colors
     val view = LocalView.current
@@ -208,6 +214,15 @@ fun V5ListRow(
             view.performV5Haptic(if (on) V5Haptic.ToggleOn else V5Haptic.ToggleOff)
             trailing.onCheckedChange(on)
         }
+        onClick != null && onLongClick != null -> Modifier.combinedClickable(
+            interactionSource = interaction,
+            indication = null,
+            enabled = enabled,
+            role = Role.Button,
+            onLongClickLabel = onLongClickLabel,
+            onLongClick = onLongClick,
+            onClick = onClick,
+        )
         onClick != null -> Modifier.clickable(
             interactionSource = interaction,
             indication = null,
