@@ -452,12 +452,12 @@ class BrowserController(
         ProfileFavorites(
             storage = ProfileFavoritesStore(store),
             ownerOf = { id -> id.takeIf { localProfiles.any { it.id == id } } ?: localProfiles.firstOrNull()?.id ?: id },
-            runInBackground = { task -> favoriteMutationExecutor.execute { task() } },
+            runInBackground = { task -> if (!destroyed) favoriteMutationExecutor.execute { task() } },
             post = { task -> mainHandler.post { task() } },
             isDestroyed = { destroyed },
             pruneIcons = { urls, folderIds ->
                 favoriteFaviconRepository.prune(urls)
-                favoriteMutationExecutor.execute { favoriteFolderIconStore.prune(folderIds) }
+                favoriteFolderIconStore.prune(folderIds) // already on favoriteMutationExecutor
             },
         )
     }

@@ -50,11 +50,13 @@ internal class ProfileFavorites(
     var importInFlight = false
         private set
     private var revision = 0L
+    private var requested: String? = null
     private val undoSnapshots = mutableMapOf<Long, FavoriteLibrary>()
 
     fun isFavorite(url: String): Boolean = BrowsingLibraryRules.isFavorite(favorites, url)
 
     fun select(profileId: String) {
+        requested = profileId
         val owner = ownerOf(profileId)
         if (owner == this.profileId) return
         this.profileId = owner
@@ -142,9 +144,17 @@ internal class ProfileFavorites(
         return true
     }
 
-    /** Drops a deleted profile's favorites and the icons only they used. */
+    /**
+     * Drops a deleted profile's favorites and the icons only they used. When the shown list was
+     * that profile's (a synced profile showing the first local one), the profile is chosen again
+     * once the deletion is through, so it shows the list of the profile that now owns it.
+     */
     fun forget(profileId: String) {
         runInBackground { storage.delete(profileId) }
+        if (profileId == this.profileId) {
+            this.profileId = null
+            post { if (!isDestroyed()) requested?.let(::select) }
+        }
         pruneUnusedIcons()
     }
 

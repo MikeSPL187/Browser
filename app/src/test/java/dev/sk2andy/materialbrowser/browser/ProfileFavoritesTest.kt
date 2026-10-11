@@ -127,6 +127,33 @@ class ProfileFavoritesTest {
     }
 
     @Test
+    fun deletingTheLocalProfileASyncedOneShowsMovesItToTheNextLocalOne() {
+        val locals = mutableListOf("first", "second")
+        storage.libraries["first"] = FavoriteLibrary(listOf(FavoriteEntry("https://first.example/", "First", 1)))
+        storage.libraries["second"] = FavoriteLibrary(listOf(FavoriteEntry("https://second.example/", "Second", 2)))
+        val mapped = ProfileFavorites(
+            storage = storage,
+            ownerOf = { id -> id.takeIf { it in locals } ?: locals.first() },
+            runInBackground = { task -> task() },
+            post = { task -> task() },
+            isDestroyed = { false },
+            pruneIcons = { _, _ -> },
+        )
+        mapped.select("synced-laptop")
+        assertEquals("first", mapped.profileId)
+
+        // The controller removes the profile, then forgets its favorites.
+        locals.remove("first")
+        mapped.forget("first")
+
+        assertEquals("second", mapped.profileId)
+        assertEquals(listOf("https://second.example/"), mapped.favorites.map(FavoriteEntry::url))
+        assertNotNull(mapped.toggle("https://laptop.example/", "Laptop", now = 3))
+        assertEquals(2, storage.load("second").favorites.size)
+        assertTrue(storage.libraries.keys.none { it == "first" })
+    }
+
+    @Test
     fun nothingHappensBeforeAProfileIsSelected() {
         assertNull(favorites.toggle("https://work.example/", "Work", now = 1))
         var called = false
