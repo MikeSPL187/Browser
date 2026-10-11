@@ -24,9 +24,11 @@ import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
@@ -93,10 +95,11 @@ internal fun BrowserV5Bar(
         blockedCount = tab.blockedCount,
     )
     var menuExpanded by remember { mutableStateOf(false) }
-    // The site's color (V8). Until the engine reports theme-color for every page, the color the
-    // page already reports for the status bar backdrop is used. Private tabs, a new tab and error
-    // pages keep the neutral bar (system-v5.md, section 1.3, step 7).
-    val siteColor = controller.selectedWebContentStatusBarBackdrop?.colorArgb
+    // The page's color (system-v5.md, section 1.3), unless turned off in Appearance. Private tabs,
+    // a new tab and error pages keep the neutral bar (step 7).
+    val siteTint by rememberV5Preference(V5SiteTintSetting)
+    val siteColor = controller.selectedSiteThemeColor
+        ?.takeIf { siteTint }
         ?.takeUnless { tab.isIncognito || tab.url == BLANK_URL || tab.error != null || tab.failureKind != null }
     VolaV5Theme(dark = darkShell, privateBrowsing = tab.isIncognito) {
         val chrome = V5Theme.colors.chrome

@@ -25,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -49,12 +51,16 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaColorRules
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaThemesTokens
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 
 internal object AppearanceMainTestTags {
     fun chromeStyle(style: BrowserChromeStyle) =
         "appearance_settings_chrome_style:${style.stableId}"
     fun mode(mode: BrowserAppearanceMode) = "appearance_settings_mode:${mode.stableId}"
     const val Themes = "appearance_settings_themes"
+    const val SiteTint = "appearance_settings_v5_site_tint"
 }
 
 /** The board's order for the theme: light, dark, then following the system («Auto»). */
@@ -125,6 +131,19 @@ internal fun ColumnScope.AppearanceMainSections(
             },
             testTag = AppearanceMainTestTags::mode,
             onSelect = { mode -> onSettingsChanged(settings.copy(appearanceMode = mode)) },
+        )
+    }
+    val uiV5 by rememberUiV5Flag()
+    if (uiV5) {
+        // The v5 bar's site color (system-v5.md, section 1.3); moves to the v5 settings with them.
+        var siteTint by rememberV5Preference(V5SiteTintSetting)
+        Spacer(Modifier.height(VolaAppearance.sectionGap))
+        SettingsSwitch(
+            title = stringResource(R.string.settings_v5_site_tint),
+            subtitle = stringResource(R.string.settings_v5_site_tint_summary),
+            checked = siteTint,
+            onCheckedChange = { siteTint = it },
+            modifier = Modifier.testTag(AppearanceMainTestTags.SiteTint),
         )
     }
     Spacer(Modifier.height(VolaAppearance.sectionGap))
