@@ -11753,14 +11753,14 @@ class BrowserController(
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
         )
-        return if (usesGeckoEngine) {
+        // On Gecko uBlock Origin blocks ads unless Vola's own blocker is on (developer option).
+        return if (usesGeckoEngine && !developerSettings.volaGeckoBlocker) {
             policy
         } else {
             policy.copy(
                 blockAdsAndTrackers = site.blockAdsAndTrackers,
-                candyRules = filterRules.filter { rule ->
-                    rule.active && (rule.profileId == null || rule.profileId == tab.profileId)
-                },
+                strictBlocking = site.ignoreCompatibilityAllowLists,
+                candyRules = filterRules.filter { it.active && (it.profileId == null || it.profileId == tab.profileId) },
             )
         }
     }

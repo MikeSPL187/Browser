@@ -73,6 +73,8 @@ internal data class GeckoPrivacyPolicy(
     val allowThirdPartyCookiesForSite: Boolean = false,
     /** Strict site protection: requests to other sites go without a Referer (`privacy_signals.js`). */
     val trimCrossSiteReferrer: Boolean = false,
+    /** Strict site protection: Vola's Gecko blocker drops the lists' compatibility exceptions. */
+    val strictBlocking: Boolean = false,
     val compatibilityRequestHosts: Set<String> = DEFAULT_COMPATIBILITY_REQUEST_HOSTS,
     val topInsetPx: Int = 0,
     val navigationGeneration: Int = 0,
@@ -222,6 +224,7 @@ internal fun GeckoPrivacyPolicy.toMessage(token: String, revision: Long): JSONOb
     .put("doNotTrackEnabled", doNotTrackEnabled)
     .put("globalPrivacyControlEnabled", globalPrivacyControlEnabled)
     .put("trimCrossSiteReferrer", trimCrossSiteReferrer)
+    .put("strictBlocking", strictBlocking)
     .put("privacySignalRevision", privacySignalRevision)
     .put("animationsEnabled", animationsEnabled)
     .put("animationPolicyRevision", animationPolicyRevision)

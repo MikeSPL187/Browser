@@ -1685,6 +1685,8 @@
     <string name="developer_options_safe_area_summary">Как Vola подтверждает, что сайт не может безопасно использовать прокручиваемый верхний отступ.</string>
     <string name="developer_options_force_safe_area_fallback">Всегда системный запасной режим</string>
     <string name="developer_options_force_safe_area_fallback_summary">Использует системные верхние отступы на всех страницах вместо прокручиваемого отступа документа Vola.</string>
+    <string name="developer_options_vola_gecko_blocker">Свой блокировщик Vola на Gecko</string>
+    <string name="developer_options_vola_gecko_blocker_summary">Блокирует рекламу и трекеры по спискам Vola с учётом уровня защиты сайта. В разработке: uBlock Origin пока работает рядом.</string>
     <string name="developer_options_layout_quiet_period">Пауза после раскладки</string>
     <string name="developer_options_layout_quiet_period_summary">Ждать после последнего изменения раскладки страницы перед каждой проверкой.</string>
     <string name="developer_options_required_failures">Нужно неудачных проверок</string>

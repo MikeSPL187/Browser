@@ -1069,6 +1069,7 @@ class BrowserSessionStore internal constructor(
             KEY_DEVELOPER_FORCE_SAFE_AREA_FALLBACK,
             false,
         ),
+        volaGeckoBlocker = preferences.getBoolean(KEY_DEVELOPER_VOLA_GECKO_BLOCKER, false),
         geckoSafeAreaSettings = GeckoSafeAreaSettings(
             enabled = loadBoolean(KEY_GECKO_SAFE_AREA_ENABLED, true),
             recheckAddedElements = loadBoolean(KEY_GECKO_SAFE_AREA_RECHECK_ADDED_ELEMENTS, true),
@@ -1130,6 +1131,7 @@ class BrowserSessionStore internal constructor(
                 KEY_DEVELOPER_FORCE_SAFE_AREA_FALLBACK,
                 normalized.forceSafeAreaFallback,
             )
+            .putBoolean(KEY_DEVELOPER_VOLA_GECKO_BLOCKER, normalized.volaGeckoBlocker)
             .putBoolean(KEY_GECKO_SAFE_AREA_ENABLED, normalized.geckoSafeAreaSettings.enabled)
             .putBoolean(
                 KEY_GECKO_SAFE_AREA_RECHECK_ADDED_ELEMENTS,
@@ -1530,6 +1532,7 @@ class BrowserSessionStore internal constructor(
             "developer_safe_area_required_failure_count"
         const val KEY_DEVELOPER_FORCE_SAFE_AREA_FALLBACK =
             "developer_force_safe_area_fallback"
+        const val KEY_DEVELOPER_VOLA_GECKO_BLOCKER = "developer_vola_gecko_blocker"
         const val KEY_GECKO_SAFE_AREA_ENABLED = "gecko_safe_area_enabled"
         const val KEY_GECKO_SAFE_AREA_RECHECK_ADDED_ELEMENTS = "gecko_safe_area_recheck_added_elements"
         const val KEY_GECKO_SAFE_AREA_RECHECK_CHANGED_ELEMENTS =

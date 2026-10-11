@@ -35,6 +35,16 @@ class CandyPrivacyHostContractTest {
     }
 
     @Test
+    fun `strict blocking crosses the policy for Vola's Gecko blocker and is off by default`() {
+        val strict = GeckoPrivacyPolicy.Disabled.copy(blockAdsAndTrackers = true, strictBlocking = true)
+        val message = strict.toMessage(token = "session-token", revision = 3)
+
+        assertTrue(message.getBoolean("blockAds"))
+        assertTrue(message.getBoolean("strictBlocking"))
+        assertFalse(GeckoPrivacyPolicy.Disabled.toMessage(token = "session-token", revision = 3).getBoolean("strictBlocking"))
+    }
+
+    @Test
     fun `animation policy crosses authenticated policy with bounded revision`() {
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
             pageHost = null,

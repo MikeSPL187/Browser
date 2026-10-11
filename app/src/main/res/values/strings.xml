@@ -1637,6 +1637,8 @@
     <string name="developer_options_safe_area_summary">Tune how Vola confirms that a website cannot safely use the scrollable top inset.</string>
     <string name="developer_options_force_safe_area_fallback">Force native safe-area fallback</string>
     <string name="developer_options_force_safe_area_fallback_summary">Uses native top insets on every page instead of Vola’s scrollable document inset.</string>
+    <string name="developer_options_vola_gecko_blocker">Vola’s own Gecko blocker</string>
+    <string name="developer_options_vola_gecko_blocker_summary">Blocks ads and trackers with Vola’s filter lists and follows each site’s protection level. In progress: uBlock Origin keeps running alongside.</string>
     <string name="developer_options_layout_quiet_period">Layout quiet period</string>
     <string name="developer_options_layout_quiet_period_summary">Wait after the last page layout change before each confirmation check.</string>
     <string name="developer_options_required_failures">Required failed checks</string>

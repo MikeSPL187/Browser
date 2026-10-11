@@ -69,10 +69,23 @@ Android Gecko sessions provision Mozilla-signed uBlock Origin as their ad and tr
 Candy does not send bundled ad lists, custom ad rules, popup or popunder filter lists to Gecko and
 does not initialize the native `ContentBlocker` snapshot in the Gecko controller. The private
 `candy-privacy-host` parses only the 4.9 KB `candy_default_rules.txt` consent defaults today.
-Vola's own Gecko blocker replaces uBlock Origin in steps (`docs/vola/research/ublock-origin.md`):
-the extension already packs the network lists and `host_blocker.js`, a port of `RequestBlocker`
-with the same decision order and tests (`scripts/host_blocker.test.mjs`), not wired to requests
-yet. Generated ad-cosmetic assets stay out of the Gecko extension for now. The host
+Vola's own Gecko blocker replaces uBlock Origin in steps (`docs/vola/research/ublock-origin.md`).
+It is behind the developer option «Vola's own Gecko blocker» (`DeveloperSettings.volaGeckoBlocker`,
+off by default; uBlock Origin keeps running alongside until the switch-over step):
+
+- The extension packs the network lists; `host_blocker.js` ports `RequestBlocker` with the same
+  decision order, `network_blocker.js` adds the uAssets URL rules (bucketed by target host) and the
+  person's own Vola rules with `CandyRulePrecedence`. Order: own rule → URL rule → host lists.
+- With the option on, `geckoPrivacyPolicyFor` sends the site's `blockAdsAndTrackers`, the active
+  Candy rules and `strictBlocking` (Strict level). Off sends nothing to block; a paused site is
+  skipped as before; Strict drops the lists' compatibility exceptions (allow pairs, owner families,
+  uAssets allow rules), never the person's own rules or the first-party escape.
+- Main-frame requests are never blocked. Blocks report as built-in events, so the site panel
+  counts them. The first requests after start wait up to 5 s for the lists to load; a list that
+  fails to load lets requests through rather than holding the page.
+- Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`.
+
+Generated ad-cosmetic assets stay out of the Gecko extension for now. The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped
 SSO/CAPTCHA compatibility observation.
 
