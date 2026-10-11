@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,15 +30,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -45,6 +50,7 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Materials
@@ -53,7 +59,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.launch
 
 object V5SheetTestTags {
     const val Scrim = "v5_sheet_scrim"
@@ -81,16 +86,51 @@ fun V5Sheet(
 ) {
     val colors = V5Theme.colors
     val density = LocalDensity.current.density
-    val scope = rememberCoroutineScope()
     val dismiss by rememberUpdatedState(onDismiss)
     val moves = V5Motion.animationsEnabled
-    val presence = remember { Animatable(0f) }
-    val offset = remember { Animatable(0f) }
+    // Previews show the sheet in place; the app always brings it in.
+    val inspection = LocalInspectionMode.current
+    val presence = remember { Animatable(if (inspection && visible) 1f else 0f) }
+    // How far the finger has pulled the sheet below its rest (negative: above it).
+    var dragPx by remember { mutableFloatStateOf(0f) }
     var heightPx by remember { mutableFloatStateOf(0f) }
     var backProgress by remember { mutableFloatStateOf(0f) }
+    val settle: suspend (Float) -> Unit = { velocity ->
+        if (V5SheetRules.dismisses(dragPx, velocity, heightPx, density)) {
+            dismiss()
+        } else if (moves) {
+            animate(dragPx, 0f, velocity, V5Motion.sheet.spec()) { value, _ -> dragPx = value }
+        } else {
+            dragPx = 0f
+        }
+    }
+    // A list inside the sheet scrolls first; pulled down from its top it moves the sheet, and pushed
+    // up while the sheet is lowered it raises the sheet before it scrolls.
+    val nestedScroll = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y >= 0f || dragPx <= 0f) return Offset.Zero
+                val consumed = maxOf(available.y, -dragPx)
+                dragPx += consumed
+                return Offset(0f, consumed)
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (source != NestedScrollSource.UserInput || available.y <= 0f) return Offset.Zero
+                dragPx = V5SheetRules.drag(dragPx, available.y)
+                return Offset(0f, available.y)
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (dragPx == 0f) return Velocity.Zero
+                settle(available.y)
+                return available
+            }
+        }
+    }
     LaunchedEffect(visible) {
         if (visible) {
-            offset.snapTo(0f)
+            dragPx = 0f
             backProgress = 0f
         }
         presence.animateTo(
@@ -108,16 +148,14 @@ fun V5Sheet(
         }
     }
     if (!visible && presence.value == 0f) return
-    val dragState = rememberDraggableState { delta ->
-        scope.launch { offset.snapTo(V5SheetRules.drag(offset.value, delta)) }
-    }
+    val dragState = rememberDraggableState { delta -> dragPx = V5SheetRules.drag(dragPx, delta) }
     BoxWithConstraints(modifier.fillMaxSize()) {
         val maxSheetHeight = maxHeight * V5Motion.SHEET_MAX_HEIGHT_FRACTION
         Box(
             Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    alpha = V5SheetRules.scrimAlpha(presence.value, offset.value, heightPx)
+                    alpha = V5SheetRules.scrimAlpha(presence.value, dragPx, heightPx)
                 }
                 .background(colors.scrim)
                 .clickable(
@@ -138,9 +176,9 @@ fun V5Sheet(
                 .graphicsLayer {
                     val hidden = if (moves) (1f - presence.value) * heightPx else 0f
                     val back = backProgress * V5Motion.SHEET_BACK_TRAVEL_DP * density
-                    translationY = hidden + offset.value + back
+                    translationY = hidden + dragPx + back
                     // Until its height is known the sheet would show at rest for a frame.
-                    alpha = if (heightPx == 0f) 0f else if (moves) 1f else presence.value
+                    alpha = if (heightPx == 0f && !inspection) 0f else if (moves) 1f else presence.value
                 }
                 .clip(shape)
                 .background(
@@ -152,16 +190,9 @@ fun V5Sheet(
                     state = dragState,
                     orientation = Orientation.Vertical,
                     enabled = visible,
-                    onDragStopped = { velocity ->
-                        if (V5SheetRules.dismisses(offset.value, velocity, heightPx, density)) {
-                            dismiss()
-                        } else if (moves) {
-                            offset.animateTo(0f, V5Motion.sheet.spec(), initialVelocity = velocity)
-                        } else {
-                            offset.snapTo(0f)
-                        }
-                    },
+                    onDragStopped = { velocity -> settle(velocity) },
                 )
+                .nestedScroll(nestedScroll)
                 .semantics {
                     paneTitle = title
                     isTraversalGroup = true

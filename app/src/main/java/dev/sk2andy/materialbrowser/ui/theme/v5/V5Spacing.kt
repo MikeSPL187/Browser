@@ -90,6 +90,9 @@ object V5Sizes {
     /** The handle sits this far below the sheet's top edge. */
     val sheetHandleTop: Dp = 6.dp
 
+    /** A round action of the page menu with its caption (canvas screen «д»). */
+    val menuActionWidth: Dp = 72.dp
+
     // Lists (section 3.4): the capsule toggle and its thumb, inset by 2 dp.
     val toggleWidth: Dp = 51.dp
     val toggleHeight: Dp = 31.dp
