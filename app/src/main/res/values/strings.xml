@@ -1974,6 +1974,13 @@
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
     <string name="v5_sheet_close">Close</string>
+    <string name="v5_overview_ungrouped">No group</string>
+    <string name="v5_overview_group_collapse">Collapse group</string>
+    <string name="v5_overview_group_expand">Expand group</string>
+    <plurals name="v5_overview_group_description">
+        <item quantity="one">Group %1$s, %2$d tab</item>
+        <item quantity="other">Group %1$s, %2$d tabs</item>
+    </plurals>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>

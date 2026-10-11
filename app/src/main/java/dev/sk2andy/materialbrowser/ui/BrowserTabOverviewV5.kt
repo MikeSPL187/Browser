@@ -53,9 +53,12 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5OverviewGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewState
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTab
 import dev.sk2andy.materialbrowser.ui.v5.V5TabCard
@@ -180,7 +183,16 @@ private fun OverviewContent(
     // Closed tabs and other segments leave no bounds behind for a hero to fly to.
     val cardIds = cards.mapTo(hashSetOf()) { it.id }
     SideEffect { cardBounds.keys.filter { it !in cardIds }.forEach { cardBounds.remove(it) } }
-    val initialCardIndex = remember { cards.indexOfFirst { it.selected }.coerceAtLeast(0) }
+    // The profile's tab groups (V12a): the same groups the data keeps, in their order.
+    val groups = controller.tabStackController.activeStacks.map { stack ->
+        V5OverviewGroup(
+            id = stack.id,
+            name = stack.name,
+            tabIds = stack.tabIds,
+            collapsed = stack.isCollapsed,
+            tile = stack.color.v5Tile(),
+        )
+    }
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
@@ -191,6 +203,7 @@ private fun OverviewContent(
                     counts = counts,
                     query = query,
                     profileLabel = profile?.let { "${it.emoji} ${it.name}".trim() }.orEmpty(),
+                    groups = groups,
                 ),
                 onQueryChange = { query = it },
                 onSegmentChange = { privateSegment = it },
@@ -235,7 +248,7 @@ private fun OverviewContent(
                 modifier = Modifier.graphicsLayer { alpha = if (heroTabId != null) hero.value.coerceIn(0f, 1f) else 1f },
                 onCardBounds = { id, bounds -> cardBounds[id] = bounds },
                 heroCardId = heroTabId,
-                initialCardIndex = initialCardIndex,
+                onToggleGroup = { id -> if (!exiting) controller.tabStackController.toggleCollapsed(id) },
             )
             val heroId = heroTabId
             val heroBitmap = heroId?.let { heroPreview(controller, it) }
@@ -304,3 +317,11 @@ private const val DARK_SHELL_LUMINANCE = 0.5f
 
 /** Cards grow into place from this scale (system-v5.md, section 7, overviewEnter). */
 private const val ENTER_SCALE = 0.92f
+
+/** A group's color as a v5 section tile: the data keeps four colors, v5 draws them as tiles. */
+private fun TabStackColor.v5Tile(): V5Tile = when (this) {
+    TabStackColor.Grape -> V5Tile.Purple
+    TabStackColor.Cherry -> V5Tile.Red
+    TabStackColor.Lime -> V5Tile.Green
+    TabStackColor.Blueberry -> V5Tile.Blue
+}
