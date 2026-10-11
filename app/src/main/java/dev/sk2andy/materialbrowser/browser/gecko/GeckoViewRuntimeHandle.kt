@@ -70,6 +70,8 @@ import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.VaultCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptIdentity
 import dev.sk2andy.materialbrowser.browser.credentials.CredentialPromptRules
+import dev.sk2andy.materialbrowser.browser.credentials.PasskeyAvailability
+import dev.sk2andy.materialbrowser.browser.credentials.PasskeySupport
 import dev.sk2andy.materialbrowser.browser.credentials.vault.AndroidCredentialVault
 import dev.sk2andy.materialbrowser.browser.credentials.vault.CredentialVaultFeature
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
@@ -331,6 +333,7 @@ internal class GeckoViewRuntimeHandle private constructor(
                 dnsOverHttpsSettings = store.loadDnsOverHttpsSettings(),
                 httpsOnlyMode = store.loadHttpsOnlyMode(),
                 globalPrivacyControl = store.loadPrivacySignalSettings().globalPrivacyControlEnabled,
+                webAuthnEnabled = PasskeySupport.current(appContext) == PasskeyAvailability.Available,
             )
             val runtime = StartupTimeline.section("GeckoRuntimeCreate") {
                 GeckoRuntime.create(appContext, runtimeSettings)
