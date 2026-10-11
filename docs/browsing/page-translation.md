@@ -52,3 +52,23 @@ Official feature documentation:
 - [Google Translate: translate documents and websites](https://support.google.com/translate/answer/2534559?hl=en)
 - [Yandex Translate: translating websites](https://yandex.com/support/translate-mobile/en/mode)
 - [Kagi Translate: URL parameters](https://help.kagi.com/kagi/translate/url-parameters.html)
+
+## On-device translation (v5 V23, port only)
+
+A second path, for the v5 UI: the engine translates the page in place, and the page text never leaves
+the phone. It is a port with no screen yet; the provider flow above stays as it is until the v5 menu
+replaces it.
+
+| Part | Where | Contract |
+| --- | --- | --- |
+| Ports | `browser/translation/OnDeviceTranslation.kt` | `PageTranslationPort` per tab (offer, state, translate, restore, «never on this site»), `TranslationModelsPort` per engine (device support, languages, models, download size, download, delete). Engine-neutral types only. |
+| Rules | `browser/translation/OnDeviceTranslationRules.kt` | The pair to offer (page language → the language the user reads, matched to a model), when to offer, BCP 47 matching by tag, script, then base language. |
+| Gecko | `browser/gecko/GeckoOnDeviceTranslation.kt` | `TranslationsController` with Bergamot models; per-tab port from `AndroidBrowserEngineSessionPort.pageTranslation()`, models from `AndroidBrowserEngineFactory.translationModels`. Calls and callbacks on the main thread. |
+| System WebView | defaults | No on-device translation: `PageTranslationPort.Unavailable`, `TranslationModelsPort.Unavailable`, `AndroidBrowserEngineCapabilities.onDeviceTranslation = false`; the UI hides the feature. |
+
+Privacy: nothing about the page is sent. A model that is not on the phone is downloaded from Mozilla's
+model server once per language, and only when `translate(…, allowModelDownload = true)` is called;
+with `false` the result is `ModelDownloadRequired`, so the UI can show the size
+(`TranslationModelsPort.downloadSize`) and ask first. GeckoView enables the engine by default
+(`browser.translations.enable`); devices whose processor cannot run the models report
+`isSupportedOnDevice = false`.

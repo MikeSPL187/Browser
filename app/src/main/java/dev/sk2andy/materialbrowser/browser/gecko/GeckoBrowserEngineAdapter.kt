@@ -29,6 +29,8 @@ import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
+import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
@@ -222,6 +224,13 @@ internal interface AndroidBrowserEngineSessionPort :
      */
     fun extractPageForReader(onComplete: (String?) -> Unit)
 
+    /**
+     * On-device translation of this tab's page (v5 V23). Engines without it, System WebView among
+     * them, keep [PageTranslationPort.Unavailable]; the UI hides the feature by
+     * [AndroidBrowserEngineCapabilities.onDeviceTranslation].
+     */
+    fun pageTranslation(): PageTranslationPort = PageTranslationPort.Unavailable
+
     fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,
         mode: TextInputOcclusionProbeMode,
@@ -251,6 +260,7 @@ internal class GeckoBrowserEngineSessionFactory(
 
     override val capabilities = AndroidBrowserEngineCapabilities.GeckoView
     override val runtimeVersionName: String = org.mozilla.geckoview.BuildConfig.MOZ_APP_VERSION
+    override val translationModels: TranslationModelsPort by lazy { GeckoTranslationModels() }
     private val extensionSessionGenerations = mutableMapOf<String, Long>()
     private val extensionSessionIdentities = mutableMapOf<String, GeckoExtensionSessionIdentity>()
     private val preparedSessions = mutableMapOf<String, GeckoSession>()
@@ -789,6 +799,9 @@ internal class GeckoBrowserEngineSessionAdapter(
         }
         session.extractPageForReader(onComplete)
     }
+
+    override fun pageTranslation(): PageTranslationPort =
+        if (closed) PageTranslationPort.Unavailable else session.pageTranslation()
 
     override fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,

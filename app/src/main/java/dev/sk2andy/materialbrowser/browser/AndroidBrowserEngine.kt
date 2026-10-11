@@ -26,6 +26,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val siteDataDeletion: Boolean,
     /** Site permissions the adapter routes to Vola's prompt and decisions; the radar hides others. */
     val sitePermissions: Set<SitePermission>,
+    /** Page translation on the phone (v5 V23); System WebView has none, so the UI hides it. */
+    val onDeviceTranslation: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -43,6 +45,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.Notifications,
                 SitePermission.ProtectedMedia,
             ),
+            onDeviceTranslation = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -58,6 +61,7 @@ internal data class AndroidBrowserEngineCapabilities(
                 SitePermission.Microphone,
                 SitePermission.Location,
             ),
+            onDeviceTranslation = false,
         )
     }
 }
