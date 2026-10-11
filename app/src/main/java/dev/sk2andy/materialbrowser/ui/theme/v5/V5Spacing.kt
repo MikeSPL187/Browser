@@ -87,6 +87,14 @@ object V5Sizes {
     // Sheets.
     val sheetHandleWidth: Dp = 36.dp
     val sheetHandleHeight: Dp = 4.dp
+    /** The handle sits this far below the sheet's top edge. */
+    val sheetHandleTop: Dp = 6.dp
+
+    // Lists (section 3.4): the capsule toggle and its thumb, inset by 2 dp.
+    val toggleWidth: Dp = 51.dp
+    val toggleHeight: Dp = 31.dp
+    val toggleThumb: Dp = 27.dp
+    val toggleThumbInset: Dp = 2.dp
 
     // Icons (section 6): next to 17 sp text, next to 15-12 sp text, the cap at 200 % font.
     val icon: Dp = 24.dp

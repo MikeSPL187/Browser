@@ -84,6 +84,12 @@ enum class V5Tile(val color: Color) {
     val glyph: Color get() = Color.White
 }
 
+/** Control colors that do not change with the theme: the toggle thumb is white in both, as on the canvas. */
+object V5ControlColors {
+    val toggleThumb = Color(0xFFFFFFFF)
+    val toggleThumbShadow = Color(0x33000000)
+}
+
 object V5Colors {
     private val White = Color(0xFFFFFFFF)
 

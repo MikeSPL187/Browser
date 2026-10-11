@@ -46,6 +46,9 @@ object V5Motion {
     /** Switching profile in the overview: the grid slides aside and the accent changes with it. */
     val profileSwitch = V5Spring(Spring.DampingRatioNoBouncy, 632f)
 
+    /** A sheet (the menu, settings layers) rises from the bottom and settles without a bounce. */
+    val sheet = V5Spring(Spring.DampingRatioNoBouncy, 500f)
+
     /** Color and opacity: the site color of the bar, the accent, dimming. */
     val effects = V5Spring(Spring.DampingRatioNoBouncy, 1600f)
     val effectsFast = V5Spring(Spring.DampingRatioNoBouncy, 3800f)
@@ -69,6 +72,15 @@ object V5Motion {
     const val GLANCE_LIFT_SCALE = 1.03f
     const val GLANCE_PAGE_SCALE = 0.97f
     const val GLANCE_ARC_MAX_DP = 20f
+    /** A sheet dragged down closes past 25 % of its height or 1000 dp/s. */
+    const val SHEET_DISMISS_FRACTION = 0.25f
+    const val SHEET_DISMISS_VELOCITY_DP = 1000f
+    /** Dragged up past its rest, a sheet moves at this fraction of the finger. */
+    const val SHEET_OVERDRAG_RESISTANCE = 0.2f
+    /** Predictive back lowers the sheet by up to this much before it closes. */
+    const val SHEET_BACK_TRAVEL_DP = 48f
+    /** A sheet is never taller than this share of the window. */
+    const val SHEET_MAX_HEIGHT_FRACTION = 0.92f
     const val PULL_RESISTANCE = 0.55f
     const val PULL_THRESHOLD_DP = 80f
 
