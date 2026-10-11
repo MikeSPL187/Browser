@@ -708,7 +708,8 @@ browser.runtime.onMessage.addListener((message, sender) => {
     });
   }
   if (
-    (message.type === "safe-area-fallback" || message.type === "status-bar-backdrop") &&
+    (message.type === "safe-area-fallback" || message.type === "status-bar-backdrop" ||
+      message.type === "site-color") &&
     Number.isSafeInteger(message.navigationGeneration) &&
     Number.isSafeInteger(message.revision)
   ) {

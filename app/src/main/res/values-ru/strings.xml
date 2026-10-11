@@ -2041,6 +2041,8 @@
     <string name="developer_options_ui_v5_summary">Включает экраны нового интерфейса по мере готовности. Пока готовых нет: образец ниже показывает, из чего они будут сделаны.</string>
     <string name="developer_options_ui_v5_specimen">Образец дизайна v5</string>
     <string name="developer_options_ui_v5_specimen_summary">Цвета, шрифт Inter, формы и плитки настроек v5 в светлой, тёмной и частной теме.</string>
+    <string name="settings_v5_site_tint">Окрашивать панель в цвет сайта</string>
+    <string name="settings_v5_site_tint_summary">Нижняя панель берёт цвет, который объявил сайт, или цвет верха страницы</string>
     <string name="v5_specimen_title">Образец v5</string>
     <string name="v5_specimen_close">Закрыть</string>
     <string name="v5_specimen_theme_light">Светлая</string>
