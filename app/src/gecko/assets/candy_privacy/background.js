@@ -27,6 +27,8 @@ let networkBlockerPromise = null;
 // consent rules for frames whose policy blocks ads.
 let adCosmetics = null;
 let adCosmeticsPromise = null;
+let adCosmeticsFailedAt = -Infinity;
+const LIST_RETRY_PAUSE_MILLIS = 60000;
 let flushTimer = null;
 let latestWebRtcPolicyRevision = 0;
 let webRtcPolicyQueue = Promise.resolve();
@@ -292,13 +294,18 @@ async function loadAdCosmetics() {
   };
 }
 
+// After a failed load the lists wait a minute before the next try, not one parse per frame.
 function ensureAdCosmetics() {
   if (!adCosmeticsPromise) {
+    if (Date.now() - adCosmeticsFailedAt < LIST_RETRY_PAUSE_MILLIS) {
+      return Promise.reject(new Error("Ad cosmetics unavailable"));
+    }
     adCosmeticsPromise = loadAdCosmetics().then((rules) => {
       adCosmetics = rules;
       return rules;
     }, (error) => {
       adCosmeticsPromise = null;
+      adCosmeticsFailedAt = Date.now();
       throw error;
     });
   }
@@ -1215,7 +1222,8 @@ function connectNative() {
         acknowledgePolicy();
       };
       const policyReady = documentPoliciesReady.then(async (readyPolicy) => {
-        if (readyPolicy.hideConsent) await ensureCookieRules();
+        // The cosmetics answer needs the Candy defaults whenever ads or consent banners are hidden.
+        if (readyPolicy.hideConsent || readyPolicy.blockAds === true) await ensureCookieRules();
         return readyPolicy;
       });
       policyReady.then(publishPolicy).catch((error) => {
