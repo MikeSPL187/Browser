@@ -96,8 +96,6 @@ class OnDeviceTranslationRulesTest {
         PageTranslationPort.Unavailable.translate(TranslationPair("de", "ru"), allowModelDownload = true) { results += it }
         TranslationModelsPort.Unavailable.download("de") { results += it }
 
-        assertFalse(PageTranslationPort.Unavailable.isAvailable)
-        assertFalse(TranslationModelsPort.Unavailable.isAvailable)
         assertEquals(List(2) { PageTranslationResult.Failed(PageTranslationError.Unsupported) }, results)
     }
 }

@@ -9,12 +9,10 @@ package dev.sk2andy.materialbrowser.browser.translation
  *
  * GeckoView implements it (`TranslationsController`, Bergamot models). System WebView has no
  * on-device translation: its adapter returns [PageTranslationPort.Unavailable] and
- * [TranslationModelsPort.Unavailable], and the capability flag hides the feature in the UI.
+ * [TranslationModelsPort.Unavailable]. Whether to show the feature is the engine's
+ * `AndroidBrowserEngineCapabilities.onDeviceTranslation`, the one source for it.
  */
 internal interface PageTranslationPort {
-    /** Whether this engine can translate pages at all; false means hide the feature. */
-    val isAvailable: Boolean
-
     /** Receives offers and state changes of this tab's page; null stops them. */
     fun setListener(listener: PageTranslationListener?)
 
@@ -39,8 +37,6 @@ internal interface PageTranslationPort {
 
     /** The engine without on-device translation (System WebView). */
     object Unavailable : PageTranslationPort {
-        override val isAvailable: Boolean = false
-
         override fun setListener(listener: PageTranslationListener?) = Unit
 
         override fun translate(
@@ -61,8 +57,6 @@ internal interface PageTranslationPort {
 
 /** Language models, shared by every tab: what can be translated and what is on the phone. */
 internal interface TranslationModelsPort {
-    val isAvailable: Boolean
-
     /** Whether this device can run the models (the engine checks the processor); false hides the feature. */
     fun isSupportedOnDevice(onResult: (Boolean) -> Unit)
 
@@ -83,8 +77,6 @@ internal interface TranslationModelsPort {
 
     /** The engine without on-device translation (System WebView). */
     object Unavailable : TranslationModelsPort {
-        override val isAvailable: Boolean = false
-
         override fun isSupportedOnDevice(onResult: (Boolean) -> Unit) = onResult(false)
 
         override fun languages(onResult: (TranslationLanguages?) -> Unit) = onResult(null)

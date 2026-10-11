@@ -29,8 +29,6 @@ internal class GeckoPageTranslation(private val session: GeckoSession) : PageTra
     private val mainHandler = Handler(Looper.getMainLooper())
     private var closed = false
 
-    override val isAvailable: Boolean = true
-
     @UiThread
     override fun setListener(listener: PageTranslationListener?) {
         if (closed) return
@@ -81,7 +79,7 @@ internal class GeckoPageTranslation(private val session: GeckoSession) : PageTra
     }
 
     private fun sessionTranslation(): SessionTranslation? =
-        if (closed) null else session.sessionTranslation
+        if (closed) null else runCatching { session.sessionTranslation }.getOrNull()
 
     private fun deliver(onResult: (PageTranslationResult) -> Unit, request: () -> GeckoResult<Void>) =
         GeckoTranslationResults.deliver(mainHandler, onResult, request)
@@ -104,8 +102,6 @@ internal class GeckoPageTranslation(private val session: GeckoSession) : PageTra
  */
 internal class GeckoTranslationModels : TranslationModelsPort {
     private val mainHandler = Handler(Looper.getMainLooper())
-
-    override val isAvailable: Boolean = true
 
     @UiThread
     override fun isSupportedOnDevice(onResult: (Boolean) -> Unit) =

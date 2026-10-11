@@ -72,3 +72,13 @@ with `false` the result is `ModelDownloadRequired`, so the UI can show the size
 (`TranslationModelsPort.downloadSize`) and ask first. GeckoView enables the engine by default
 (`browser.translations.enable`); devices whose processor cannot run the models report
 `isSupportedOnDevice = false`.
+
+Not every request waits for a user action. Gecko fetches its model lists and records from Mozilla's
+Remote Settings service on its own: for `languages()` (`listSupportedLanguages`), `models()`
+(`listModelDownloadStates`), `downloadSize()` (`checkPairDownloadSize`), and for the page language
+detection that drives offers and state. Those requests carry no page content, but they do reach
+Mozilla. The translation engine is on in GeckoView by default, and Vola does not change
+`browser.translations.automaticallyPopup` (`GeckoRuntimeSettings.translationsOfferPopup`), so Gecko
+raises offers (`onOffer`) as soon as a tab listens. The v5 UI PR must either tell the user about
+these requests or put the engine behind a setting (`browser.translations.enable`) before it shows the
+feature.
