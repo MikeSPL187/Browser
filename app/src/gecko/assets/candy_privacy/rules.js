@@ -139,6 +139,25 @@
     }).filter((rule) => rule.scope === "N");
   }
 
+  // uAssets `$popup` rules marked "W": on these pages window.open opens nothing (System WebView's
+  // CandyWindowOpenDefuserScript).
+  function parseWindowOpenDefusers(text) {
+    if (!text.startsWith("candy-advanced-filter:2")) throw new Error("Invalid advanced header");
+    return lines(text).slice(1).map((row) => row.split("\t"))
+      .filter((fields) => fields.length === 8 && fields[0] === "B" && fields[1] === "P" && fields[7] === "W")
+      .map((fields) => ({
+        pages: fields[4] === "-" ? [] : fields[4].split(","),
+        excluded: fields[5] === "-" ? [] : fields[5].split(","),
+      }))
+      .filter((rule) => rule.pages.length);
+  }
+
+  function defusesWindowOpen(defusers, pageHost) {
+    return Boolean(pageHost) && defusers.some((rule) =>
+      rule.pages.some((pattern) => hostPatternMatches(pageHost, pattern)) &&
+      !rule.excluded.some((pattern) => hostPatternMatches(pageHost, pattern)));
+  }
+
   function advancedDecision(rules, rawUrl, pageHost) {
     let target;
     try { target = new URL(rawUrl); } catch (_) { return null; }
@@ -359,6 +378,7 @@
   global.CandyPrivacyRules = {
     advancedDecision,
     cosmeticPayload,
+    defusesWindowOpen,
     genericSelectors,
     hostMatches,
     hostPatternMatches,
@@ -367,6 +387,7 @@
     parseCandyDefaults,
     parseCosmetic,
     parseProcedural,
+    parseWindowOpenDefusers,
     registrableDomain,
     urlPatternMatches,
   };

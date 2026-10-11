@@ -2632,6 +2632,15 @@ window.addEventListener("orientationchange", scheduleCandyPictureInPictureAlignm
   const MAX_GENERIC_BATCH = 2048;
   const MAX_PENDING_NODES = 8192;
 
+  // Pages listed by the uAssets popup rules get a window.open that opens nothing, as on System
+  // WebView. exportFunction puts it in the page's own scope, which a page's CSP cannot refuse.
+  function defuseWindowOpen() {
+    try {
+      if (typeof exportFunction !== "function" || !window.wrappedJSObject) return;
+      exportFunction(() => null, window.wrappedJSObject, { defineAs: "open" });
+    } catch (_) { }
+  }
+
   // Generic EasyList/uAssets rules (`##.ad-banner` on any site): the frame reports the class and id
   // names it meets and hides what the background answers. Walking is chunked (4 ms per animation
   // frame) and the hidden set bounded, like the System WebView scanner.
@@ -2785,6 +2794,7 @@ window.addEventListener("orientationchange", scheduleCandyPictureInPictureAlignm
       }
     }
 
+    if (payload.defuseWindowOpen === true) defuseWindowOpen();
     if (payload.generic === true) startGenericCosmetics(payload);
 
     const rules = Array.isArray(payload.procedural) ? payload.procedural.filter((rule) =>

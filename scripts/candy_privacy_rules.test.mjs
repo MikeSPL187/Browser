@@ -900,6 +900,45 @@ test("a frame reports its class and id names and hides the generic selectors it 
   assert.deepEqual(Array.from(later[1].classes), ["promo"]);
 });
 
+test("a defused page's window.open is replaced in the page's own scope", async () => {
+  const source = fs.readFileSync(
+    new URL("../app/src/gecko/assets/candy_privacy/content.js", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("(function installCandyCosmetics() {");
+  const installer = source.slice(start, source.indexOf("})();", start) + "})();".length);
+  const page = { open: () => "window" };
+  const exported = [];
+  const run = (defuseWindowOpen) => {
+    const context = vm.createContext({
+      browser: {
+        runtime: {
+          sendMessage: () => Promise.resolve({
+            type: "cosmetics", selectors: [], procedural: [], defuseWindowOpen,
+          }),
+        },
+      },
+      exportFunction: (fn, target, { defineAs }) => {
+        exported.push(defineAs);
+        target[defineAs] = fn;
+      },
+      location: { href: "https://0xxx.ws/" },
+      Promise,
+    });
+    context.self = context;
+    context.top = context;
+    context.window = { wrappedJSObject: page };
+    vm.runInContext(installer, context);
+    return new Promise((resolve) => setImmediate(resolve));
+  };
+
+  await run(false);
+  assert.equal(page.open(), "window");
+  await run(true);
+  assert.deepEqual(exported, ["open"]);
+  assert.equal(page.open("https://ads.example/"), null);
+});
+
 test("ad cosmetics reach frames when consent banners are left alone", async () => {
   let nativeMessageListener;
   const runtimeMessageListeners = [];

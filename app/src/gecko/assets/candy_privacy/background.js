@@ -869,10 +869,13 @@ browser.runtime.onMessage.addListener((message, sender) => {
     if (!cookieRules || !policy || !frameHost) {
       return Promise.resolve({ type: "cosmetics", selectors: [], procedural: [] });
     }
+    const pageHost = policy.pageHost || frameHost;
     return cosmeticRulesFor(policy).then((rules) => ({
       type: "cosmetics",
       revision: policy.revision,
       ...CandyPrivacyRules.cosmeticPayload(rules, policy, frameHost),
+      defuseWindowOpen: policy.blockAds === true && Boolean(networkBlocker) && !isPaused(policy, pageHost) &&
+        networkBlocker.defusesWindowOpen(pageHost),
     }));
   }
   // A frame that got `generic: true` reports the class and id names it uses; the answer is the
