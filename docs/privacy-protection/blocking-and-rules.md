@@ -94,8 +94,14 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   (`app/src/blocking/assets/`, packed into the extension like the network lists) load with them.
   `CandyPrivacyRules.indexCosmetics` buckets them by host, so a frame checks its own hosts' rules
   (about 0.8 ms per frame in node, 3.5 times faster than the full scan). A frame of a page that
-  blocks ads waits up to 5 s for them. Generic rules (host `*`) are not applied on Gecko yet:
-  WebView's token scanner has no port in the extension.
+  blocks ads waits up to 5 s for them.
+- Generic cosmetics (host `*`, about 13 900 selectors): the 13 100 plain `.class` / `#id` ones
+  sit in two sets. A frame whose payload says `generic: true` walks its DOM in 4 ms chunks per
+  animation frame, reports the class and id names it meets (each once, at most 20 000) with a
+  `genericCosmetics` message, and hides the selectors the background answers (at most 1 024). The
+  ~700 complex generic selectors come with the payload. Exceptions (`#@#`), `generichide` and
+  per-host exclusions (`~site##.ad`) are resolved per host and cached (128 hosts); a lookup of
+  1 850 names takes about 0.1 ms in node.
 - Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`,
   `scripts/candy_privacy_rules.test.mjs` (index matches the full scan on real lists). The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped

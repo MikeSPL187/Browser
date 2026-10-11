@@ -2625,6 +2625,135 @@ window.addEventListener("orientationchange", scheduleCandyPictureInPictureAlignm
     try { void frame.document; } catch (_) { return; }
   }
 
+  const SIMPLE_SELECTOR = /^[.#][A-Za-z_][A-Za-z0-9_-]*$/;
+  const MAX_GENERIC_HIDDEN = 1024;
+  const MAX_GENERIC_HIDDEN_BYTES = 96 * 1024;
+  const MAX_GENERIC_REPORTED = 20000;
+  const MAX_GENERIC_BATCH = 2048;
+  const MAX_PENDING_NODES = 8192;
+
+  // Generic EasyList/uAssets rules (`##.ad-banner` on any site): the frame reports the class and id
+  // names it meets and hides what the background answers. Walking is chunked (4 ms per animation
+  // frame) and the hidden set bounded, like the System WebView scanner.
+  function startGenericCosmetics(payload) {
+    const styles = [];
+    const attach = (style) => {
+      const parent = document.head || document.documentElement;
+      if (!parent) return false;
+      if (!style.isConnected) {
+        parent.appendChild(style);
+        if (!styles.includes(style)) styles.push(style);
+      }
+      return true;
+    };
+    const complex = Array.isArray(payload.genericSelectors) ? payload.genericSelectors.filter((selector) =>
+      typeof selector === "string" && selector.length > 0 && selector.length <= 2048,
+    ).slice(0, 1024) : [];
+    const complexStyle = complex.length ? document.createElement("style") : null;
+    if (complexStyle) {
+      complexStyle.dataset.candyPrivacy = "generic-cosmetic";
+      complexStyle.textContent = complex.map((selector) => `${selector}{display:none!important}`).join("\n");
+      attach(complexStyle);
+    }
+    const simpleStyle = document.createElement("style");
+    simpleStyle.dataset.candyPrivacy = "generic-cosmetic";
+    const hidden = new Set();
+    let hiddenBytes = 0;
+    const hide = (selectors) => {
+      if (!Array.isArray(selectors)) return;
+      const batch = selectors.filter((selector) => {
+        if (typeof selector !== "string" || !SIMPLE_SELECTOR.test(selector) || hidden.has(selector)) return false;
+        if (hidden.size >= MAX_GENERIC_HIDDEN || hiddenBytes + selector.length > MAX_GENERIC_HIDDEN_BYTES) return false;
+        hidden.add(selector);
+        hiddenBytes += selector.length;
+        return true;
+      });
+      if (!batch.length || !attach(simpleStyle)) return;
+      try {
+        simpleStyle.sheet.insertRule(`${batch.join(",")}{display:none!important}`, simpleStyle.sheet.cssRules.length);
+      } catch (_) { }
+    };
+
+    const reported = new Set();
+    let classes = [];
+    let ids = [];
+    const report = (prefix, name, list) => {
+      if (!name || typeof name !== "string" || name.length > 256) return;
+      const key = prefix + name;
+      if (reported.has(key) || reported.size >= MAX_GENERIC_REPORTED) return;
+      reported.add(key);
+      list.push(name);
+    };
+    const inspect = (element) => {
+      report("#", element.id, ids);
+      try { element.classList.forEach((name) => report(".", name, classes)); } catch (_) { }
+    };
+    let inFlight = false;
+    const send = () => {
+      if (inFlight || (!classes.length && !ids.length)) return;
+      inFlight = true;
+      const message = {
+        type: "genericCosmetics",
+        classes: classes.splice(0, MAX_GENERIC_BATCH),
+        ids: ids.splice(0, MAX_GENERIC_BATCH),
+      };
+      browser.runtime.sendMessage(message).then((answer) => {
+        if (answer && answer.type === "genericCosmetics") hide(answer.selectors);
+      }).catch(() => { }).finally(() => {
+        inFlight = false;
+        send();
+      });
+    };
+
+    let nodes = [];
+    let nodeIndex = 0;
+    let scheduled = false;
+    const seen = new WeakSet();
+    const schedule = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(drain);
+    };
+    const enqueue = (node) => {
+      if (!node || node.nodeType !== 1 || seen.has(node)) return;
+      if (nodes.length - nodeIndex >= MAX_PENDING_NODES) return;
+      if (complexStyle) attach(complexStyle);
+      seen.add(node);
+      inspect(node);
+      nodes.push(node);
+      schedule();
+    };
+    const drain = () => {
+      scheduled = false;
+      const started = performance.now();
+      let processed = 0;
+      while (nodeIndex < nodes.length && processed < 512 && performance.now() - started < 4) {
+        const node = nodes[nodeIndex++];
+        for (let child = node.firstElementChild; child; child = child.nextElementSibling) enqueue(child);
+        processed++;
+      }
+      if (nodeIndex >= nodes.length) {
+        nodes = [];
+        nodeIndex = 0;
+      } else {
+        if (nodeIndex > 4096) {
+          nodes = nodes.slice(nodeIndex);
+          nodeIndex = 0;
+        }
+        schedule();
+      }
+      send();
+    };
+    new MutationObserver((records) => {
+      records.forEach((record) => {
+        if (record.type === "attributes") inspect(record.target);
+        else record.addedNodes.forEach(enqueue);
+      });
+      schedule();
+    }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["id", "class"] });
+    enqueue(document.documentElement);
+  }
+
   browser.runtime.sendMessage({ type: "cosmetics", url: location.href }).then((payload) => {
     if (!payload || payload.type !== "cosmetics") return;
     const selectors = Array.isArray(payload.selectors) ? payload.selectors.filter((selector) =>
@@ -2655,6 +2784,8 @@ window.addEventListener("orientationchange", scheduleCandyPictureInPictureAlignm
         }
       }
     }
+
+    if (payload.generic === true) startGenericCosmetics(payload);
 
     const rules = Array.isArray(payload.procedural) ? payload.procedural.filter((rule) =>
       rule && (rule.action === "H" || rule.action === "R") &&

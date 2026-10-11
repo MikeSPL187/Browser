@@ -24,6 +24,10 @@
     "#ad_banner + #AlternateMessage",
   ];
   const SENSITIVE_HOSTS = ["accounts.google.*", "mail.google.*", "maps.google.*"];
+  const SIMPLE_SELECTOR = /^([.#])([A-Za-z_][A-Za-z0-9_-]*)$/;
+  const GENERIC_POLICY_CACHE_SIZE = 128;
+  const MAX_GENERIC_NAMES = 2048;
+  const MAX_GENERIC_COMPLEX = 1024;
 
   function lines(text) {
     return text.split(/\r?\n/).map((line) => line.trim())
@@ -206,13 +210,19 @@
   }
 
   // Scoped cosmetic rules bucketed by host, so a frame looks at its own hosts' rules instead of
-  // all 40 000. Generic rules (host "*") stay out: only their exceptions apply here.
+  // all 40 000. Generic rules (host "*") stay out of the buckets: plain `.class` and `#id` ones go
+  // to sets a page looks up with the names it actually uses, the rest to a short list.
   function indexCosmetics(cosmeticRules) {
     const byHost = new Map();
     const everyHost = [];
+    const generic = {
+      classes: new Set(), ids: new Set(), complex: [], selectors: new Set(),
+      unconditional: new Set(), conditional: new Map(),
+    };
     for (const rule of cosmeticRules) {
       if (rule.host === "*") {
         if (rule.action === "A") everyHost.push(rule);
+        if (rule.action === "H") addGeneric(generic, rule);
       } else if (rule.host.endsWith(".*")) {
         everyHost.push(rule);
       } else {
@@ -220,20 +230,84 @@
         byHost.get(rule.host).push(rule);
       }
     }
+    const candidates = (host) => {
+      const found = everyHost.slice();
+      let candidate = host;
+      while (true) {
+        const bucket = byHost.get(candidate);
+        if (bucket) found.push(...bucket);
+        const dot = candidate.indexOf(".");
+        if (dot < 0) return found;
+        candidate = candidate.slice(dot + 1);
+      }
+    };
+    const policies = new Map();
     return {
       size: cosmeticRules.length,
-      candidates(host) {
-        const found = everyHost.slice();
-        let candidate = host;
-        while (true) {
-          const bucket = byHost.get(candidate);
-          if (bucket) found.push(...bucket);
-          const dot = candidate.indexOf(".");
-          if (dot < 0) return found;
-          candidate = candidate.slice(dot + 1);
-        }
+      candidates,
+      generic,
+      // null when generic hiding is off on this host, else the generic selectors it must keep.
+      genericPolicy(host) {
+        if (policies.has(host)) return policies.get(host);
+        const policy = resolveGenericPolicy(generic, candidates(host), host);
+        if (policies.size >= GENERIC_POLICY_CACHE_SIZE) policies.delete(policies.keys().next().value);
+        policies.set(host, policy);
+        return policy;
       },
     };
+  }
+
+  function addGeneric(generic, rule) {
+    if (!generic.selectors.has(rule.selector)) {
+      generic.selectors.add(rule.selector);
+      const simple = SIMPLE_SELECTOR.exec(rule.selector);
+      if (!simple) generic.complex.push(rule.selector);
+      else (simple[1] === "." ? generic.classes : generic.ids).add(simple[2]);
+    }
+    if (!rule.excluded.length) {
+      generic.unconditional.add(rule.selector);
+    } else {
+      if (!generic.conditional.has(rule.selector)) generic.conditional.set(rule.selector, []);
+      generic.conditional.get(rule.selector).push(rule);
+    }
+  }
+
+  function resolveGenericPolicy(generic, rules, host) {
+    if (SENSITIVE_HOSTS.some((pattern) => hostPatternMatches(host, pattern))) return null;
+    const disabled = rules.some((rule) => rule.action === "D" && hostPatternMatches(host, rule.host) &&
+      !rule.excluded.some((pattern) => hostPatternMatches(host, pattern)));
+    if (disabled) return null;
+    const denied = new Set();
+    for (const rule of rules) {
+      if (rule.action === "A" && generic.selectors.has(rule.selector) &&
+          (rule.host === "*" || hostPatternMatches(host, rule.host))) {
+        denied.add(rule.selector);
+      }
+    }
+    // A selector some copies exclude on a host is kept there only when no copy applies to it.
+    for (const [selector, conditional] of generic.conditional) {
+      const keptEverywhere = conditional.every((rule) =>
+        rule.excluded.some((pattern) => hostPatternMatches(host, pattern)));
+      if (keptEverywhere && !generic.unconditional.has(selector)) denied.add(selector);
+    }
+    return { denied };
+  }
+
+  // The generic `.class` / `#id` selectors a frame's names hit, minus the ones its host keeps.
+  function genericSelectors(cosmetics, host, names) {
+    const policy = cosmetics.genericPolicy(host);
+    if (!policy) return [];
+    const found = [];
+    const add = (prefix, set, values) => {
+      for (const value of values.slice(0, MAX_GENERIC_NAMES)) {
+        if (typeof value !== "string" || !set.has(value)) continue;
+        const selector = prefix + value;
+        if (!policy.denied.has(selector)) found.push(selector);
+      }
+    };
+    add(".", cosmetics.generic.classes, Array.isArray(names.classes) ? names.classes : []);
+    add("#", cosmetics.generic.ids, Array.isArray(names.ids) ? names.ids : []);
+    return found;
   }
 
   function scopedSelectors(cosmetics, host) {
@@ -272,12 +346,20 @@
     const procedural = policy.blockAds ? staticRules.procedural.filter((rule) =>
       hostPatternMatches(frameHost, rule.host),
     ).slice(0, 64) : [];
-    return { selectors: unique, procedural };
+    // `generic` asks the frame to report its class and id names; the complex generic selectors
+    // (attribute and descendant ones, a few hundred) come with the payload.
+    const genericPolicy = policy.blockAds && !Array.isArray(staticRules.cosmetics) &&
+      staticRules.cosmetics.genericPolicy ? staticRules.cosmetics.genericPolicy(frameHost) : null;
+    const genericSelectorList = genericPolicy ? staticRules.cosmetics.generic.complex.filter((selector) =>
+      !genericPolicy.denied.has(selector),
+    ).slice(0, MAX_GENERIC_COMPLEX) : [];
+    return { selectors: unique, procedural, generic: genericPolicy !== null, genericSelectors: genericSelectorList };
   }
 
   global.CandyPrivacyRules = {
     advancedDecision,
     cosmeticPayload,
+    genericSelectors,
     hostMatches,
     hostPatternMatches,
     indexCosmetics,

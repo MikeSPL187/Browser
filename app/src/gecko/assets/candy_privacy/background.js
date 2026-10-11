@@ -875,6 +875,24 @@ browser.runtime.onMessage.addListener((message, sender) => {
       ...CandyPrivacyRules.cosmeticPayload(rules, policy, frameHost),
     }));
   }
+  // A frame that got `generic: true` reports the class and id names it uses; the answer is the
+  // generic `.class` / `#id` selectors among them to hide.
+  if (message.type === "genericCosmetics") {
+    const token = tokenByTab.get(sender.tab.id);
+    const policy = token && policiesByToken.get(token);
+    const frameHost = hostFromUrl(sender.url);
+    if (!policy || policy.blockAds !== true || !adCosmetics || !frameHost ||
+        isPaused(policy, policy.pageHost || frameHost)) {
+      return Promise.resolve({ type: "genericCosmetics", selectors: [] });
+    }
+    return Promise.resolve({
+      type: "genericCosmetics",
+      selectors: CandyPrivacyRules.genericSelectors(adCosmetics.cosmetics, frameHost, {
+        classes: message.classes,
+        ids: message.ids,
+      }),
+    });
+  }
   return undefined;
 });
 
