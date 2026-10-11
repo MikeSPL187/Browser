@@ -13,13 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.ClipboardOffer
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
+import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
@@ -29,9 +32,12 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
+import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
+import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 
 /*
@@ -198,6 +204,53 @@ internal fun BrowserV5Bar(
                 },
             )
         }
+    }
+}
+
+/**
+ * The v5 address editor (V9a) bound to the current editor state: the suggestions are the current
+ * ones, laid out the v5 way, and submitting goes the same way as from the current editor.
+ */
+@Composable
+internal fun BrowserV5AddressEditor(
+    selectedTab: BrowserTab,
+    suggestionItems: List<AddressSuggestionItem>,
+    highlightedIndex: Int,
+    value: TextFieldValue,
+    focusNonce: Int,
+    clipboard: ClipboardOffer?,
+    onValueChange: (TextFieldValue) -> Unit,
+    onSubmit: (String) -> Unit,
+    onSelect: (AddressSuggestionItem) -> Unit,
+    onFill: (AddressSuggestionItem) -> Unit,
+    onClipboard: () -> Unit,
+    onCancel: () -> Unit,
+    onHighlightChange: (Int) -> Unit,
+) {
+    val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
+    val highlighted = suggestionItems.getOrNull(highlightedIndex)
+    val layout = remember(suggestionItems, value.text) {
+        V5SuggestionLayoutRules.layout(suggestionItems, value.text)
+    }
+    VolaV5Theme(dark = darkShell, privateBrowsing = selectedTab.isIncognito) {
+        V5AddressEditor(
+            state = V5EditorState(
+                value = value,
+                layout = layout,
+                highlightedId = highlighted?.stableId,
+                clipboard = clipboard,
+                isPrivate = selectedTab.isIncognito,
+                focusNonce = focusNonce,
+            ),
+            onValueChange = onValueChange,
+            // Enter opens what the arrow keys picked, else the typed text, like the current editor.
+            onSubmit = { text -> if (highlighted != null) onSelect(highlighted) else onSubmit(text) },
+            onSelect = onSelect,
+            onFill = onFill,
+            onClipboard = onClipboard,
+            onCancel = onCancel,
+            onHighlight = { item -> onHighlightChange(suggestionItems.indexOf(item)) },
+        )
     }
 }
 

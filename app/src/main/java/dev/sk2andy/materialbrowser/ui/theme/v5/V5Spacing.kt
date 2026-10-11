@@ -63,6 +63,17 @@ object V5Sizes {
     val tabGridGap: Dp = 12.dp
     const val TAB_COLUMNS_PHONE = 2
 
+    // Address editor (system-v5.md, section 9).
+    /** A suggestion row; the best match is a little taller. */
+    val suggestionRow: Dp = 52.dp
+    val suggestionBest: Dp = 56.dp
+    /** The icon tile at the start of a suggestion. */
+    val suggestionTile: Dp = 32.dp
+    /** The «Cancel» button beside the field. */
+    val editorCancel: Dp = 72.dp
+    /** The top of the suggestion list fades into the material over this height. */
+    val suggestionFade: Dp = 36.dp
+
     // Sheets.
     val sheetHandleWidth: Dp = 36.dp
     val sheetHandleHeight: Dp = 4.dp
