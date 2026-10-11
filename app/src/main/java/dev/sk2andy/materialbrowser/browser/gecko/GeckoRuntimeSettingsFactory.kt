@@ -21,6 +21,8 @@ internal object GeckoRuntimeSettingsFactory {
         // never silently on page load.
         loginAutofillEnabled: Boolean = !CredentialVaultFeature.ENABLED,
         globalPrivacyControl: Boolean = true,
+        // Passkeys need the system Credential Manager (Android 14+); see [applyWebAuthn].
+        webAuthnEnabled: Boolean = false,
     ): GeckoRuntimeSettings = GeckoRuntimeSettings.Builder()
         .contentBlocking(contentBlocking)
         .loginAutofillEnabled(loginAutofillEnabled)
@@ -35,7 +37,7 @@ internal object GeckoRuntimeSettingsFactory {
             applyEngineProtections()
             applyDnsOverHttpsSettings(dnsOverHttpsSettings)
             applyHttpsOnlyMode(httpsOnlyMode)
-            disableWebAuthn()
+            applyWebAuthn(webAuthnEnabled)
         }
 }
 
@@ -43,14 +45,18 @@ internal object GeckoRuntimeSettingsFactory {
 internal const val WEB_AUTHN_PREF = "security.webauth.webauthn"
 
 /**
- * GeckoView reaches WebAuthn through Google Play services FIDO, which Vola does not ship: always to
- * ask whether a platform authenticator exists, and for a passkey whenever the system Credential
- * Manager has none. accounts.google.com asks on load, and the missing Play services classes crashed
- * Gecko on every visit (#123, H1). Without the API, sites fall back to their password sign-in.
+ * GeckoView asks the system Credential Manager for passkeys and falls back to Google Play services
+ * FIDO, which Vola does not ship. Missing Play services classes once crashed Gecko on
+ * accounts.google.com (#123, H1); Vola now carries stand-ins for them (`src/full/java/com/google`)
+ * that refuse every request, so that fallback rejects the page's promise instead.
+ *
+ * On by [PasskeySupport][dev.sk2andy.materialbrowser.browser.credentials.PasskeySupport] only:
+ * without Credential Manager (Android 12 and 13) every request would end in that refusal, so the
+ * API stays hidden and sites offer their password sign-in.
  */
 @UiThread
-internal fun GeckoRuntimeSettings.disableWebAuthn() {
-    CandyGeckoPrefsBridge.setStartupPref(this, WEB_AUTHN_PREF, false)
+internal fun GeckoRuntimeSettings.applyWebAuthn(enabled: Boolean) {
+    CandyGeckoPrefsBridge.setStartupPref(this, WEB_AUTHN_PREF, enabled)
 }
 
 /**
