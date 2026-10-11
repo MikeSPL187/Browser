@@ -39,6 +39,7 @@ internal object DeveloperOptionsTestTags {
     const val LayoutQuietPeriod = "developer_options_layout_quiet_period"
     const val RequiredFailures = "developer_options_required_failures"
     const val ForceSafeAreaFallback = "developer_options_force_safe_area_fallback"
+    const val VolaGeckoBlocker = "developer_options_vola_gecko_blocker"
     const val UiV5 = "developer_options_ui_v5"
     const val UiV5Specimen = "developer_options_ui_v5_specimen"
     const val HttpPasswordAutofill = "developer_options_http_password_autofill"
@@ -164,6 +165,18 @@ internal fun DeveloperOptionsSettingsPage(
                         onSettingsChanged(settings.copy(forceSafeAreaFallback = enabled))
                     },
                     modifier = Modifier.testTag(DeveloperOptionsTestTags.ForceSafeAreaFallback),
+                )
+                SettingsCardSwitchRow(
+                    title = stringResource(R.string.developer_options_vola_gecko_blocker),
+                    summary = stringResource(R.string.developer_options_vola_gecko_blocker_summary),
+                    checked = settings.volaGeckoBlocker,
+                    summaryMaxLines = Int.MAX_VALUE,
+                    dividerColor = dividerColor,
+                    divider = true,
+                    onCheckedChange = { enabled ->
+                        onSettingsChanged(settings.copy(volaGeckoBlocker = enabled))
+                    },
+                    modifier = Modifier.testTag(DeveloperOptionsTestTags.VolaGeckoBlocker),
                 )
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.developer_options_ui_v5),

@@ -211,7 +211,27 @@ internal fun BoxScope.BrowserAddressChrome(
         enabled = addressEditorVisible && commandFeedback == null,
         usedCopiedAtElapsedMillis = addressEditor.usedClipCopiedAtElapsedMillis,
     )
-    if (addressEditorVisible) {
+    val onClipboardOffer: () -> Unit = clipboardOffer@{
+        val offer = clipboardOffer ?: return@clipboardOffer
+        // The only clipboard read: the system shows its "pasted" notice now.
+        val text = readClipboardText(context) ?: return@clipboardOffer
+        addressEditor.markClipUsed(offer.copiedAtElapsedMillis)
+        rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        when (val action = ClipboardOfferRules.action(offer.offer, text)) {
+            is ClipboardAction.Open -> {
+                controller.submitAddress(action.address)
+                onAddressEditorDismiss()
+            }
+            is ClipboardAction.Paste -> addressEditor.fill(action.text)
+            null -> Unit
+        }
+    }
+    val uiV5 by rememberUiV5Flag()
+    // V9a: under ui.v5 typing an address happens in the v5 editor on a phone; the new tab's start
+    // content and command feedback stay on the current editor until their v5 steps.
+    val v5Editor = uiV5 && addressEditorVisible && commandFeedback == null && !wideWindow &&
+        !showInteractiveBlankStart
+    if (addressEditorVisible && !v5Editor) {
         if (!showInteractiveBlankStart) {
             AddressEditorBackdrop(
                 showStartContent = selectedTab.url == BLANK_URL,
@@ -244,21 +264,7 @@ internal fun BoxScope.BrowserAddressChrome(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 workspaces = controller.profiles.associateBy { it.id },
                 clipboardOffer = clipboardOffer?.offer,
-                onClipboardOffer = clipboardOffer@{
-                    val offer = clipboardOffer ?: return@clipboardOffer
-                    // The only clipboard read: the system shows its "pasted" notice now.
-                    val text = readClipboardText(context) ?: return@clipboardOffer
-                    addressEditor.markClipUsed(offer.copiedAtElapsedMillis)
-                    rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                    when (val action = ClipboardOfferRules.action(offer.offer, text)) {
-                        is ClipboardAction.Open -> {
-                            controller.submitAddress(action.address)
-                            onAddressEditorDismiss()
-                        }
-                        is ClipboardAction.Paste -> addressEditor.fill(action.text)
-                        null -> Unit
-                    }
-                },
+                onClipboardOffer = onClipboardOffer,
             )
         }
     }
@@ -339,7 +345,6 @@ internal fun BoxScope.BrowserAddressChrome(
     LaunchedEffect(hiddenByPageKeyboard) {
         pageKeyboardHide.animateTo(if (hiddenByPageKeyboard) 1f else 0f, VolaMotion.standard())
     }
-    val uiV5 by rememberUiV5Flag()
     // v5 tab swipe (system-v5.md, section 7): a tick when the swipe crosses the switch threshold and
     // when it falls back under it, 30 % of the width or 1000 dp/s, and the tabSwipe spring.
     var v5SwipeThresholdReached by remember { mutableStateOf(false) }
@@ -538,7 +543,24 @@ internal fun BoxScope.BrowserAddressChrome(
                 .clearSemanticsWhen(hiddenByPageKeyboard || settingsVisible),
         )
     }
-    if (!showV5Bar) BrowserBottomBar(
+    if (v5Editor) {
+        BrowserV5AddressEditor(
+            selectedTab = selectedTab,
+            suggestionItems = suggestionItems,
+            highlightedIndex = highlightedSuggestionIndex,
+            value = addressValue,
+            focusNonce = addressFocusNonce,
+            clipboard = clipboardOffer?.offer,
+            onValueChange = onAddressValueChanged,
+            onSubmit = submitAddressOrCommand,
+            onSelect = selectSuggestion,
+            onFill = fillAddressFromSuggestion,
+            onClipboard = onClipboardOffer,
+            onCancel = onAddressEditorDismiss,
+            onHighlightChange = onHighlightedSuggestionChanged,
+        )
+    }
+    if (!showV5Bar && !v5Editor) BrowserBottomBar(
         tab = selectedTab,
         pageTranslationProvider = controller.pageTranslationProvider,
         compact = compactBar,
