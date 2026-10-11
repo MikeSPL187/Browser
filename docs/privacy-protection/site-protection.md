@@ -40,3 +40,7 @@ For the panel (V17):
   Partitioned cookies are not counted as blocked. The panel shows one total (`system-v5.md`, section 10).
 - Off is the site pause and clears the Strict mark: after the pause is lifted the site is back on
   Standard. The panel text must say so.
+
+On Gecko, network ad blocking is the bundled uBlock Origin, which Vola cannot steer per site (no API
+for other extensions, no managed storage on Android): levels do not reach it yet. Options and the
+plan-v5 decision to replace it — `docs/vola/research/ublock-origin.md`.
