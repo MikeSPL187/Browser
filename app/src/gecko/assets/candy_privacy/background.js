@@ -19,6 +19,10 @@ const contentPolicyRetryDelaysMillis = [25, 50, 100, 200, 400, 800, 1200];
 let nativePort = null;
 let cookieRules = null;
 let cookieRulesPromise = null;
+// Vola's own Gecko blocker (network_blocker.js): lists load once, on the first policy that asks.
+const NETWORK_BLOCKER_WAIT_MILLIS = 5000;
+let networkBlocker = null;
+let networkBlockerPromise = null;
 let flushTimer = null;
 let latestWebRtcPolicyRevision = 0;
 let webRtcPolicyQueue = Promise.resolve();
@@ -254,6 +258,44 @@ function ensureCookieRules() {
     });
   }
   return cookieRulesPromise;
+}
+
+function ensureNetworkBlocker() {
+  if (!networkBlockerPromise) {
+    networkBlockerPromise = CandyNetworkBlocker.load(loadText).then((blocker) => {
+      networkBlocker = blocker;
+      return blocker;
+    }, (error) => {
+      networkBlockerPromise = null;
+      throw error;
+    });
+  }
+  return networkBlockerPromise;
+}
+
+function networkDecision(details, token, policy, pageHost) {
+  const apply = (blocker) => {
+    const decision = blocker.decide(details.url, pageHost, {
+      strict: policy.strictBlocking === true,
+      userRules: policy.rules,
+    });
+    if (decision === null) return {};
+    queueEvent(token, policy.revision, {
+      requestUrl: details.url,
+      pageUrl: pageHost ? `https://${pageHost}/` : null,
+      action: decision.action,
+      builtIn: decision.builtIn,
+      ruleId: decision.ruleId,
+    });
+    return decision.action === "B" ? { cancel: true } : {};
+  };
+  if (networkBlocker) return apply(networkBlocker);
+  // The first requests after start wait for the lists rather than let ads through; a list that
+  // fails to load, or takes longer than the bound, never holds the page.
+  return Promise.race([
+    ensureNetworkBlocker().then(apply),
+    new Promise((resolve) => setTimeout(() => resolve({}), NETWORK_BLOCKER_WAIT_MILLIS)),
+  ]).catch(() => ({}));
 }
 
 function hostMatches(host, expected) {
@@ -618,6 +660,7 @@ browser.webRequest.onBeforeRequest.addListener((details) => {
     });
     return { cancel: true };
   }
+  if (policy.blockAds === true) return networkDecision(details, token, policy, pageHost);
   return {};
 }, { urls: ["http://*/*", "https://*/*"] }, ["blocking"]);
 
@@ -1114,6 +1157,7 @@ function connectNative() {
           return;
         }
         policiesByToken.set(message.token, readyPolicy);
+        if (readyPolicy.blockAds === true) ensureNetworkBlocker().catch(() => {});
         const tabEntry = Array.from(tokenByTab.entries())
           .find(([, token]) => token === message.token);
         if (readyPolicy.inlineMediaPlayerEnabled !== true && tabEntry) {

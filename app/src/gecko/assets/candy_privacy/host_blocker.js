@@ -180,22 +180,28 @@
     const indexes = indexedLists.map(sortedHostIndex);
     const blockedPageHosts = hostPairs(blockedPairs, pageHostOrAny);
     const allowedPageHosts = hostPairs(allowedPairs, pageHostOrAny);
-    const familyPatterns = typeof hostPatternMatches === "function" ?
-      hostPairs(familyPairs, pageHostPattern) : new Map();
+    const familyPatterns = hostPairs(familyPairs, pageHostPattern);
+    // Without the matcher the owner family exceptions would vanish silently and block Google's own
+    // ad service on google.* pages; refuse instead (rules.js loads before this file).
+    if (familyPatterns.size > 0 && typeof hostPatternMatches !== "function") {
+      throw new Error("Family exceptions need CandyPrivacyRules.hostPatternMatches");
+    }
 
     function isListed(candidate) {
       return blockedHosts.has(candidate) || indexes.some((index) => index.has(candidate));
     }
 
-    function shouldBlockHosts(requestHost, pageHost) {
+    // Strict site protection drops the lists' compatibility exceptions (allow pairs and owner
+    // families); the current site itself still never blocks its own hosts.
+    function shouldBlockHosts(requestHost, pageHost, { strict = false } = {}) {
       const request = normalizeHost(requestHost);
       if (request === null) return false;
       const page = normalizeHost(pageHost);
       // The current site keeps working even when a list names its own host.
       if (page !== null && isSameHostOrSubdomain(request, page)) return false;
-      if (anyParent(request, (candidate) => (allowedPageHosts.get(candidate) || []).some((allowed) =>
+      if (!strict && anyParent(request, (candidate) => (allowedPageHosts.get(candidate) || []).some((allowed) =>
         allowed === "*" || (page !== null && matchesHostOrSubdomain(page, allowed))))) return false;
-      if (page !== null && anyParent(request, (candidate) =>
+      if (!strict && page !== null && anyParent(request, (candidate) =>
         (familyPatterns.get(candidate) || []).some((pattern) => hostPatternMatches(page, pattern)))) return false;
       if (page !== null && anyParent(request, (candidate) =>
         (blockedPageHosts.get(candidate) || []).some((blocked) => matchesHostOrSubdomain(page, blocked)))) return true;

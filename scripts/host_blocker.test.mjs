@@ -112,3 +112,21 @@ test("the bundled lists load as the WebView blocker reads them", () => {
   const perLookupUs = (performance.now() - lookupStarted) * 1000 / lookups;
   console.log(`host lists: built in ${builtMs.toFixed(0)} ms, ${perLookupUs.toFixed(1)} µs per lookup`);
 });
+
+test("strict drops the lists' compatibility exceptions but never blocks the site itself", () => {
+  const lists = create({
+    hostLists: ["adservice.google.com\nads.example"],
+    allowedPairs: ["ads.example\tnews.example"],
+    familyPairs: ["adservice.google.com\tgoogle.*"],
+  });
+  assert.equal(lists.shouldBlockHosts("ads.example", "news.example"), false);
+  assert.equal(lists.shouldBlockHosts("ads.example", "news.example", { strict: true }), true);
+  assert.equal(lists.shouldBlockHosts("adservice.google.com", "google.de"), false);
+  assert.equal(lists.shouldBlockHosts("adservice.google.com", "google.de", { strict: true }), true);
+  assert.equal(lists.shouldBlockHosts("cdn.ads.example", "ads.example", { strict: true }), false);
+});
+
+test("owner family exceptions refuse to load without their matcher", () => {
+  assert.throws(() => create({ familyPairs: ["adservice.google.com\tgoogle.*"], hostPatternMatches: null }));
+  assert.doesNotThrow(() => create({ hostLists: ["ads.example"], hostPatternMatches: null }));
+});
