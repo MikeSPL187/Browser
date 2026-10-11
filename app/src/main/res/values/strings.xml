@@ -1963,6 +1963,12 @@
     <string name="developer_options_ui_v5_specimen_summary">Colors, the Inter font, shapes and settings tiles of v5 in the light, dark and private themes.</string>
     <string name="settings_v5_site_tint">Tint the bar with the site’s color</string>
     <string name="settings_v5_site_tint_summary">The bottom bar takes the color the site declares or the color at the top of the page</string>
+    <string name="v5_suggestion_best">Best match</string>
+    <string name="v5_suggestion_open_tabs">Open tabs</string>
+    <string name="v5_suggestion_search">Search</string>
+    <string name="v5_suggestion_commands">Commands</string>
+    <string name="v5_suggestion_tab">Tab</string>
+    <string name="v5_editor_clear">Clear</string>
     <string name="v5_specimen_title">v5 specimen</string>
     <string name="v5_specimen_close">Close</string>
     <string name="v5_specimen_theme_light">Light</string>
