@@ -202,7 +202,7 @@ class ContentBlocker(context: Context) {
     }
 
     private fun readAssetOrEmpty(assetName: String): String = runCatching {
-        appContext.assets.open(assetName).bufferedReader().use { it.readText() }
+        BlockingListAssets.open(appContext.assets, assetName).bufferedReader().use { it.readText() }
     }.getOrDefault("")
 
     private fun loadConsentCss(context: Context): ByteArray = ByteArrayOutputStream().use { output ->

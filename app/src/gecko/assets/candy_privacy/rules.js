@@ -205,8 +205,40 @@
     });
   }
 
-  function scopedSelectors(cosmeticRules, host) {
+  // Scoped cosmetic rules bucketed by host, so a frame looks at its own hosts' rules instead of
+  // all 40 000. Generic rules (host "*") stay out: only their exceptions apply here.
+  function indexCosmetics(cosmeticRules) {
+    const byHost = new Map();
+    const everyHost = [];
+    for (const rule of cosmeticRules) {
+      if (rule.host === "*") {
+        if (rule.action === "A") everyHost.push(rule);
+      } else if (rule.host.endsWith(".*")) {
+        everyHost.push(rule);
+      } else {
+        if (!byHost.has(rule.host)) byHost.set(rule.host, []);
+        byHost.get(rule.host).push(rule);
+      }
+    }
+    return {
+      size: cosmeticRules.length,
+      candidates(host) {
+        const found = everyHost.slice();
+        let candidate = host;
+        while (true) {
+          const bucket = byHost.get(candidate);
+          if (bucket) found.push(...bucket);
+          const dot = candidate.indexOf(".");
+          if (dot < 0) return found;
+          candidate = candidate.slice(dot + 1);
+        }
+      },
+    };
+  }
+
+  function scopedSelectors(cosmetics, host) {
     if (SENSITIVE_HOSTS.some((pattern) => hostPatternMatches(host, pattern))) return [];
+    const cosmeticRules = Array.isArray(cosmetics) ? cosmetics : cosmetics.candidates(host);
     const allowed = new Set(cosmeticRules.filter((rule) =>
       rule.action === "A" && (rule.host === "*" || hostPatternMatches(host, rule.host)),
     ).map((rule) => rule.selector));
@@ -248,6 +280,7 @@
     cosmeticPayload,
     hostMatches,
     hostPatternMatches,
+    indexCosmetics,
     parseAdvanced,
     parseCandyDefaults,
     parseCosmetic,

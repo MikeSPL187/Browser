@@ -55,8 +55,8 @@ temporary body scroll lock on WebKit. Gecko delegates consent handling to its in
 extension and does not run Candy consent selectors or request rules in parallel.
 
 Network host matching combines Candy's curated hosts, the complete supported EasyList/EasyPrivacy
-template graph, uAssets, and a deduplicated HaGeZi Pro delta. These network lists (hosts, host pairs
-and `uassets_advanced_filters.txt`) live in `app/src/blocking/assets/` and ship once per build:
+template graph, uAssets, and a deduplicated HaGeZi Pro delta. These lists (hosts, host pairs,
+`uassets_advanced_filters.txt` and the cosmetic rules) live in `app/src/blocking/assets/` and ship once per build:
 System WebView reads them at the asset root, the Gecko build inside the `candy_privacy` extension
 (`rules/`); `BlockingListAssets` opens either. Sorted byte indexes keep the larger
 bundles off the per-request allocation path. Curated owner-family exceptions may allow a blocked
@@ -83,9 +83,14 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
 - Main-frame requests are never blocked. Blocks report as built-in events, so the site panel
   counts them. The first requests after start wait up to 5 s for the lists to load; a list that
   fails to load lets requests through rather than holding the page.
-- Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`.
-
-Generated ad-cosmetic assets stay out of the Gecko extension for now. The host
+- Ad cosmetics: the EasyList and uAssets scoped hiding rules and the uAssets procedural rules
+  (`app/src/blocking/assets/`, packed into the extension like the network lists) load with them.
+  `CandyPrivacyRules.indexCosmetics` buckets them by host, so a frame checks its own hosts' rules
+  (about 0.8 ms per frame in node, 3.5 times faster than the full scan). A frame of a page that
+  blocks ads waits up to 5 s for them. Generic rules (host `*`) are not applied on Gecko yet:
+  WebView's token scanner has no port in the extension.
+- Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`,
+  `scripts/candy_privacy_rules.test.mjs` (index matches the full scan on real lists). The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped
 SSO/CAPTCHA compatibility observation.
 

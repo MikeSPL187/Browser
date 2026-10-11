@@ -27,6 +27,9 @@ class BlockingListAssetsTest {
             "uassets_allowed_host_pairs.txt",
             "first_party_family_allowed_host_pairs.txt",
             "uassets_advanced_filters.txt",
+            "easylist_cosmetic_rules.txt",
+            "uassets_cosmetic_rules.txt",
+            "uassets_procedural_cosmetic_rules.txt",
         )
         lists.forEach { name ->
             assertTrue(name, File("src/blocking/assets/$name").isFile)

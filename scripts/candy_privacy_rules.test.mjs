@@ -693,3 +693,31 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
   assert.equal(animationRegistration.unregistered, true);
   assert.equal(privacyRegistrations.length, 3);
 });
+
+test("the host index gives every frame the same ad selectors as the full scan", () => {
+  const readList = (name) => fs.readFileSync(
+    new URL(`../app/src/blocking/assets/${name}`, import.meta.url),
+    "utf8",
+  );
+  const cosmetics = [
+    ...rules.parseCosmetic(readList("easylist_cosmetic_rules.txt"), "candy-easylist-cosmetic:2"),
+    ...rules.parseCosmetic(readList("uassets_cosmetic_rules.txt"), "candy-uassets-cosmetic:2"),
+  ];
+  const indexed = rules.indexCosmetics(cosmetics);
+  const procedural = rules.parseProcedural(readList("uassets_procedural_cosmetic_rules.txt"));
+  const policy = { blockAds: true, pausedHosts: [], cosmetics: [], hideConsent: false, pageHost: null };
+  const hosts = ["www.reddit.com", "news.ycombinator.com", "www.google.de", "m.youtube.com",
+    "www.skai.gr", "example.com", "www.9anime.vip"];
+  for (const host of hosts) {
+    const full = rules.cosmeticPayload({ cosmetics, procedural, candyDefaults: [] }, policy, host);
+    const fast = rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] }, policy, host);
+    assert.deepEqual(Array.from(fast.selectors).sort(), Array.from(full.selectors).sort(), host);
+  }
+  const started = performance.now();
+  for (let i = 0; i < 200; i++) {
+    rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] }, policy, `s${i}.example.org`);
+  }
+  console.log(`ad cosmetics: ${((performance.now() - started) / 200).toFixed(3)} ms per frame`);
+  assert.equal(rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] },
+    { ...policy, blockAds: false }, "www.reddit.com").selectors.length, 0);
+});
