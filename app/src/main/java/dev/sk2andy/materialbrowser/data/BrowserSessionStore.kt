@@ -525,6 +525,14 @@ class BrowserSessionStore internal constructor(
                         "captchaCompatibilityAllowedOverride",
                         false,
                     ).takeIf { item.has("captchaCompatibilityAllowedOverride") },
+                    strictProtection = item.optBoolean("strictProtectionOverride", false)
+                        .takeIf { item.has("strictProtectionOverride") },
+                    deAmpDisabled = item.optBoolean("deAmpDisabledOverride", false)
+                        .takeIf { item.has("deAmpDisabledOverride") },
+                    fingerprintingProtectionDisabled = item.optBoolean(
+                        "fingerprintingProtectionDisabledOverride",
+                        false,
+                    ).takeIf { item.has("fingerprintingProtectionDisabledOverride") },
                 ),
             )
         }.mapNotNull { (profileId, host, overrides) ->
@@ -581,6 +589,15 @@ class BrowserSessionStore internal constructor(
                     }
                     overrides.captchaCompatibilityAllowed?.let { enabled ->
                         item.put("captchaCompatibilityAllowedOverride", enabled)
+                    }
+                    overrides.strictProtection?.let { strict ->
+                        item.put("strictProtectionOverride", strict)
+                    }
+                    overrides.deAmpDisabled?.let { disabled ->
+                        item.put("deAmpDisabledOverride", disabled)
+                    }
+                    overrides.fingerprintingProtectionDisabled?.let { disabled ->
+                        item.put("fingerprintingProtectionDisabledOverride", disabled)
                     }
                 }
         }

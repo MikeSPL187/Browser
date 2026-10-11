@@ -29,6 +29,7 @@ import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
+import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
@@ -225,6 +226,12 @@ internal interface AndroidBrowserEngineSessionPort :
     fun extractPageForReader(onComplete: (String?) -> Unit)
 
     /**
+     * What the engine's own tracking protection stopped on the current page (v5 site protection);
+     * engines without such a log, System WebView among them, answer null.
+     */
+    fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) = onResult(null)
+
+    /**
      * On-device translation of this tab's page (v5 V23). Engines without it, System WebView among
      * them, keep [PageTranslationPort.Unavailable]; the UI hides the feature by
      * [AndroidBrowserEngineCapabilities.onDeviceTranslation].
@@ -330,6 +337,11 @@ internal class GeckoBrowserEngineSessionFactory(
     @UiThread
     override fun setGlobalPrivacyControl(enabled: Boolean) {
         runtime.setGlobalPrivacyControl(enabled)
+    }
+
+    @UiThread
+    override fun setFingerprintingProtectionExceptions(hosts: Set<String>) {
+        runtime.setFingerprintingProtectionExceptions(hosts)
     }
 
     @UiThread
@@ -798,6 +810,11 @@ internal class GeckoBrowserEngineSessionAdapter(
             return
         }
         session.extractPageForReader(onComplete)
+    }
+
+    @UiThread
+    override fun protectionCounts(onResult: (SiteProtectionCounts?) -> Unit) {
+        if (closed) onResult(null) else session.protectionCounts(onResult)
     }
 
     override fun pageTranslation(): PageTranslationPort =

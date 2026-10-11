@@ -90,6 +90,13 @@ internal interface AndroidBrowserEngineFactory {
     /** Engine-native GPC (workers and every request); WebView keeps the page script and header. */
     fun setGlobalPrivacyControl(enabled: Boolean) = Unit
 
+    /**
+     * Sites whose engine fingerprinting protection is off (v5 site protection). One list for the
+     * whole engine; engines without per-site control ignore it and the UI hides the switch by
+     * [AndroidBrowserEngineCapabilities.perSiteFingerprintingProtection].
+     */
+    fun setFingerprintingProtectionExceptions(hosts: Set<String>) = Unit
+
     fun setWebContentFontSizeFactor(factor: Float)
 
     fun setWebContentColorScheme(colorScheme: BrowserWebContentColorScheme) = Unit

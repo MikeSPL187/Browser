@@ -71,6 +71,12 @@ data class SitePrivacyOverrides(
     val forceSafeArea: Boolean? = null,
     val thirdPartyLoginAllowed: Boolean? = null,
     val captchaCompatibilityAllowed: Boolean? = null,
+    /** The site's protection level is Strict (v5 site protection, V17); null is Standard. */
+    val strictProtection: Boolean? = null,
+    /** AMP pages of this site stay AMP pages; null follows the global de-AMP. */
+    val deAmpDisabled: Boolean? = null,
+    /** The engine's fingerprinting protection is off for this site (Gecko only). */
+    val fingerprintingProtectionDisabled: Boolean? = null,
 ) {
     val isDefault: Boolean
         get() = cookieBannerRemovalDisabled == null &&
@@ -78,7 +84,10 @@ data class SitePrivacyOverrides(
             forcePageZooming == null &&
             forceSafeArea == null &&
             thirdPartyLoginAllowed == null &&
-            captchaCompatibilityAllowed == null
+            captchaCompatibilityAllowed == null &&
+            strictProtection == null &&
+            deAmpDisabled == null &&
+            fingerprintingProtectionDisabled == null
 }
 
 object SitePrivacyOverrideRules {
