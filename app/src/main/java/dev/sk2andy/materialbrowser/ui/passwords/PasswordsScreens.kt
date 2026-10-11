@@ -73,6 +73,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import kotlinx.coroutines.delay
 import dev.sk2andy.materialbrowser.browser.credentials.TotpCodes
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
+import dev.sk2andy.materialbrowser.browser.credentials.PasskeyAvailability
 
 /** Why a hand-made or edited login was not saved. */
 internal enum class PasswordEditError { SiteInvalid, PasswordRequired, Duplicate, Failed }
@@ -87,6 +88,7 @@ internal fun PasswordsListScreen(
     onLock: () -> Unit,
     onBack: () -> Unit,
     systemFillNote: Boolean = false,
+    passkeyNote: PasskeyAvailability? = null,
     healthIssues: Int? = null,
     onHealth: () -> Unit = {},
     onImport: (() -> Unit)? = null,
@@ -179,6 +181,26 @@ internal fun PasswordsListScreen(
                             .padding(horizontal = VolaLibrary.sidePadding)
                             .padding(top = VolaLibrary.sectionGap)
                             .testTag(PasswordsTestTags.SystemFillNote),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (passkeyNote != null && passkeyNote != PasskeyAvailability.Available) {
+                // Gecko signs in with passkeys only through Android 14's Credential Manager (#182).
+                item(key = "passkey-note") {
+                    Text(
+                        text = stringResource(
+                            if (passkeyNote == PasskeyAvailability.NeedsAndroid14) {
+                                R.string.passwords_passkeys_need_android_14
+                            } else {
+                                R.string.passwords_passkeys_no_credential_manager
+                            },
+                        ),
+                        modifier = Modifier
+                            .padding(horizontal = VolaLibrary.sidePadding)
+                            .padding(top = VolaLibrary.sectionGap)
+                            .testTag(PasswordsTestTags.PasskeyNote),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

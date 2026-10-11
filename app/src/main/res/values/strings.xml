@@ -1802,6 +1802,8 @@
     <string name="passwords_sheet_not_now">Not now</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">With the System WebView engine, sites are filled by Android’s autofill service, not from this list.</string>
+    <string name="passwords_passkeys_need_android_14">Passkeys work from Android 14. On this phone, sites offer to sign in with a password.</string>
+    <string name="passwords_passkeys_no_credential_manager">Passkeys need Android’s Credential Manager, which this phone’s system does not have. Sites offer to sign in with a password.</string>
     <string name="passwords_generator_title">Strong password</string>
     <string name="passwords_generator_use_and_save">Use and save</string>
     <string name="passwords_generator_use">Use</string>
