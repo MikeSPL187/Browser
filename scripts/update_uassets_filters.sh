@@ -207,12 +207,12 @@ chmod 644 "$TEMP_DIR"/uassets_*.txt "$TEMP_DIR/uassets.LICENSE.txt"
 mv "$TEMP_DIR/uassets_blocked_hosts.txt" "$BLOCKING_ASSET_DIR/uassets_blocked_hosts.txt"
 mv "$TEMP_DIR/uassets_blocked_host_pairs.txt" "$BLOCKING_ASSET_DIR/uassets_blocked_host_pairs.txt"
 mv "$TEMP_DIR/uassets_allowed_host_pairs.txt" "$BLOCKING_ASSET_DIR/uassets_allowed_host_pairs.txt"
-mv "$TEMP_DIR/uassets_cosmetic_rules.txt" "$ASSET_DIR/uassets_cosmetic_rules.txt"
+mv "$TEMP_DIR/uassets_cosmetic_rules.txt" "$BLOCKING_ASSET_DIR/uassets_cosmetic_rules.txt"
 mv "$TEMP_DIR/uassets_advanced_filters.txt" "$BLOCKING_ASSET_DIR/uassets_advanced_filters.txt"
 mv "$TEMP_DIR/uassets_advanced_filters_source.txt" \
     "$ASSET_DIR/uassets_advanced_filters_source.txt"
 mv "$TEMP_DIR/uassets_procedural_cosmetic_rules.txt" \
-    "$ASSET_DIR/uassets_procedural_cosmetic_rules.txt"
+    "$BLOCKING_ASSET_DIR/uassets_procedural_cosmetic_rules.txt"
 mv "$TEMP_DIR/uassets.LICENSE.txt" "$ASSET_DIR/uassets.LICENSE.txt"
 mv "$TEMP_DIR/source.txt" "$ASSET_DIR/uassets_filters_source.txt"
 

@@ -89,8 +89,8 @@ class CandyDefaultRulesAssetInstrumentedTest {
 
     @Test
     fun bundledAssetCoversModernGoogleAndRedditAds() {
-        val text = InstrumentationRegistry.getInstrumentation().targetContext.assets
-            .open("easylist_cosmetic_rules.txt")
+        val text = BlockingListAssets
+            .open(InstrumentationRegistry.getInstrumentation().targetContext.assets, "easylist_cosmetic_rules.txt")
             .bufferedReader()
             .use { it.readText() }
         val bundled = EasyListCosmeticRules.parse(
@@ -163,11 +163,11 @@ class CandyDefaultRulesAssetInstrumentedTest {
     fun bundledUassetsCosmeticsAreStrictAndMergeWithEasyListExceptions() {
         val assets = InstrumentationRegistry.getInstrumentation().targetContext.assets
         val easyList = EasyListCosmeticRules.parse(
-            assets.open("easylist_cosmetic_rules.txt").bufferedReader().use { it.readText() },
+            BlockingListAssets.open(assets, "easylist_cosmetic_rules.txt").bufferedReader().use { it.readText() },
             EasyListCosmeticRules.EASYLIST_V2_HEADER,
         )
         val uAssets = EasyListCosmeticRules.parse(
-            assets.open("uassets_cosmetic_rules.txt").bufferedReader().use { it.readText() },
+            BlockingListAssets.open(assets, "uassets_cosmetic_rules.txt").bufferedReader().use { it.readText() },
             EasyListCosmeticRules.UASSETS_HEADER,
         )
         val merged = EasyListCosmeticRules.merge(easyList, uAssets)

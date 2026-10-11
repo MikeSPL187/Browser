@@ -9,7 +9,7 @@ from compile_procedural_cosmetic import compile_sources, maximum_bucket, write_a
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 PINNED_SOURCE = PROJECT_DIR / "app/src/main/assets/uassets_advanced_filters_source.txt"
-PINNED_ASSET = PROJECT_DIR / "app/src/main/assets/uassets_procedural_cosmetic_rules.txt"
+PINNED_ASSET = PROJECT_DIR / "app/src/blocking/assets/uassets_procedural_cosmetic_rules.txt"
 REVISION = "05bc031ad40c2270223f068f052970201ca1bf14"
 
 

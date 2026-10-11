@@ -16,7 +16,7 @@ from compile_easylist_cosmetic import (
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-EASYLIST_ASSET = PROJECT_DIR / "app/src/main/assets/easylist_cosmetic_rules.txt"
+EASYLIST_ASSET = PROJECT_DIR / "app/src/blocking/assets/easylist_cosmetic_rules.txt"
 
 
 class CosmeticCompilerTest(unittest.TestCase):

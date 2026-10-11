@@ -6,7 +6,7 @@ set -eu
 SOURCE_REVISION="f1f8fe7c4bedf834bb89a7631b9cae94f627b263"
 SOURCE_ARCHIVE="https://github.com/easylist/easylist/archive/$SOURCE_REVISION.tar.gz"
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-OUTPUT_FILE="$PROJECT_DIR/app/src/main/assets/easylist_cosmetic_rules.txt"
+OUTPUT_FILE="$PROJECT_DIR/app/src/blocking/assets/easylist_cosmetic_rules.txt"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
 

@@ -14,7 +14,7 @@ from compile_easylist_cosmetic import (
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 SOURCE = PROJECT_DIR / "app/src/main/assets/uassets_advanced_filters_source.txt"
-ASSET = PROJECT_DIR / "app/src/main/assets/uassets_cosmetic_rules.txt"
+ASSET = PROJECT_DIR / "app/src/blocking/assets/uassets_cosmetic_rules.txt"
 REVISION = "05bc031ad40c2270223f068f052970201ca1bf14"
 
 

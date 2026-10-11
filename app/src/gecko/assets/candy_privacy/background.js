@@ -23,6 +23,12 @@ let cookieRulesPromise = null;
 const NETWORK_BLOCKER_WAIT_MILLIS = 5000;
 let networkBlocker = null;
 let networkBlockerPromise = null;
+// Ad cosmetics (EasyList, uAssets, procedural): loaded with the network lists, merged into the
+// consent rules for frames whose policy blocks ads.
+let adCosmetics = null;
+let adCosmeticsPromise = null;
+let adCosmeticsFailedAt = -Infinity;
+const LIST_RETRY_PAUSE_MILLIS = 60000;
 let flushTimer = null;
 let latestWebRtcPolicyRevision = 0;
 let webRtcPolicyQueue = Promise.resolve();
@@ -271,6 +277,50 @@ function ensureNetworkBlocker() {
     });
   }
   return networkBlockerPromise;
+}
+
+async function loadAdCosmetics() {
+  const [easyList, uAssets, procedural] = await Promise.all([
+    loadText("easylist_cosmetic_rules.txt"),
+    loadText("uassets_cosmetic_rules.txt"),
+    loadText("uassets_procedural_cosmetic_rules.txt"),
+  ]);
+  return {
+    cosmetics: CandyPrivacyRules.indexCosmetics([
+      ...CandyPrivacyRules.parseCosmetic(easyList, "candy-easylist-cosmetic:2"),
+      ...CandyPrivacyRules.parseCosmetic(uAssets, "candy-uassets-cosmetic:2"),
+    ]),
+    procedural: CandyPrivacyRules.parseProcedural(procedural),
+  };
+}
+
+// After a failed load the lists wait a minute before the next try, not one parse per frame.
+function ensureAdCosmetics() {
+  if (!adCosmeticsPromise) {
+    if (Date.now() - adCosmeticsFailedAt < LIST_RETRY_PAUSE_MILLIS) {
+      return Promise.reject(new Error("Ad cosmetics unavailable"));
+    }
+    adCosmeticsPromise = loadAdCosmetics().then((rules) => {
+      adCosmetics = rules;
+      return rules;
+    }, (error) => {
+      adCosmeticsPromise = null;
+      adCosmeticsFailedAt = Date.now();
+      throw error;
+    });
+  }
+  return adCosmeticsPromise;
+}
+
+// A frame of a page that blocks ads waits for the ad cosmetics (bounded) before it is answered.
+function cosmeticRulesFor(policy) {
+  if (policy.blockAds !== true) return Promise.resolve(cookieRules);
+  const merge = () => (adCosmetics ? { ...cookieRules, ...adCosmetics } : cookieRules);
+  if (adCosmetics) return Promise.resolve(merge());
+  return Promise.race([
+    ensureAdCosmetics().then(merge),
+    new Promise((resolve) => setTimeout(() => resolve(merge()), NETWORK_BLOCKER_WAIT_MILLIS)),
+  ]).catch(() => cookieRules);
 }
 
 function networkDecision(details, token, policy, pageHost) {
@@ -818,11 +868,11 @@ browser.runtime.onMessage.addListener((message, sender) => {
     if (!cookieRules || !policy || !frameHost) {
       return Promise.resolve({ type: "cosmetics", selectors: [], procedural: [] });
     }
-    return Promise.resolve({
+    return cosmeticRulesFor(policy).then((rules) => ({
       type: "cosmetics",
       revision: policy.revision,
-      ...CandyPrivacyRules.cosmeticPayload(cookieRules, policy, frameHost),
-    });
+      ...CandyPrivacyRules.cosmeticPayload(rules, policy, frameHost),
+    }));
   }
   return undefined;
 });
@@ -1157,7 +1207,10 @@ function connectNative() {
           return;
         }
         policiesByToken.set(message.token, readyPolicy);
-        if (readyPolicy.blockAds === true) ensureNetworkBlocker().catch(() => {});
+        if (readyPolicy.blockAds === true) {
+          ensureNetworkBlocker().catch(() => {});
+          ensureAdCosmetics().catch(() => {});
+        }
         const tabEntry = Array.from(tokenByTab.entries())
           .find(([, token]) => token === message.token);
         if (readyPolicy.inlineMediaPlayerEnabled !== true && tabEntry) {
@@ -1168,7 +1221,8 @@ function connectNative() {
         acknowledgePolicy();
       };
       const policyReady = documentPoliciesReady.then(async (readyPolicy) => {
-        if (readyPolicy.hideConsent) await ensureCookieRules();
+        // The cosmetics answer needs the Candy defaults whenever ads or consent banners are hidden.
+        if (readyPolicy.hideConsent || readyPolicy.blockAds === true) await ensureCookieRules();
         return readyPolicy;
       });
       policyReady.then(publishPolicy).catch((error) => {
