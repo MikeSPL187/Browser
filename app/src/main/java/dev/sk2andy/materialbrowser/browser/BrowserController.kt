@@ -1187,6 +1187,7 @@ class BrowserController(
     private var toppingCatalogRefreshGeneration = 0
     private val pendingConsentCssUrls = mutableMapOf<String, String?>()
     private val pendingPopupNavigations = mutableMapOf<String, PendingPopupNavigation>()
+    private val geckoPopupFilter by lazy { dev.sk2andy.materialbrowser.blocking.PopupListFilter.fromAssets(activity.assets) }
     private val pendingPopunderNavigations = mutableMapOf<String, PendingPopunderNavigation>()
     private val transientPopupTabIds = mutableSetOf<String>()
     private var blockedPopupSequence = 0L
@@ -11754,16 +11755,15 @@ class BrowserController(
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
         )
         // On Gecko uBlock Origin blocks ads unless Vola's own blocker is on (developer option).
-        return if (usesGeckoEngine && !developerSettings.volaGeckoBlocker) {
-            policy
-        } else {
-            policy.copy(
-                blockAdsAndTrackers = site.blockAdsAndTrackers,
-                strictBlocking = site.ignoreCompatibilityAllowLists,
-                candyRules = filterRules.filter { it.active && (it.profileId == null || it.profileId == tab.profileId) },
-            )
-        }
+        return if (usesGeckoEngine && !developerSettings.volaGeckoBlocker) policy else policy.copy(
+            blockAdsAndTrackers = site.blockAdsAndTrackers,
+            strictBlocking = site.ignoreCompatibilityAllowLists,
+            candyRules = filterRules.filter { it.active && (it.profileId == null || it.profileId == tab.profileId) },
+        )
     }
+
+    private fun geckoBlocksPopups(tabId: String, url: String?) = usesGeckoEngine && developerSettings.volaGeckoBlocker &&
+        tabs.firstOrNull { it.id == tabId }?.let { sitePolicyFor(it, url, paused = false).blockAdsAndTrackers } == true
 
     private fun geckoContentTopInsetPx(tabId: String): Int {
         if (
@@ -13248,8 +13248,8 @@ class BrowserController(
         val decision = PopupNavigationRules.decide(
             pending = pending,
             targetUrl = targetUrl,
-            blockerEnabled = false,
-            filterDecision = { _, _ -> PopupFilterDecision.NoMatch },
+            blockerEnabled = geckoBlocksPopups(pending.openerTabId, pending.openerUrl),
+            filterDecision = { target, opener -> geckoPopupFilter.decidePopup(target, opener) },
         )
         if (decision == PopupNavigationDecision.KeepPending) return decision
         if (decision != PopupNavigationDecision.AllowSameSite) {
@@ -13356,8 +13356,8 @@ class BrowserController(
         val decision = PopunderNavigationRules.decide(
             pending = candidate,
             nowMillis = SystemClock.elapsedRealtime(),
-            blockerEnabled = false,
-            filterDecision = { _, _ -> PopupFilterDecision.NoMatch },
+            blockerEnabled = geckoBlocksPopups(candidate.openerTabId, candidate.originalOpenerUrl),
+            filterDecision = { target, child -> geckoPopupFilter.decidePopunder(target, child) },
         )
         if (decision == PopunderNavigationDecision.KeepPending) {
             pendingPopunderNavigations[candidate.openerTabId] = candidate

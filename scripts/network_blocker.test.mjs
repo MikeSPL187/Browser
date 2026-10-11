@@ -88,3 +88,24 @@ test("the person's own rules win over the lists, by the Kotlin precedence", () =
     "block-own");
   assert.equal(action(blocker.decide("https://ads.example/a.js", "other.example")), "B");
 });
+
+test("pages on the uAssets popup lists get a window.open that opens nothing", async () => {
+  const blocker = await load(readList);
+  assert.ok(blocker.windowOpenDefuserCount > 600);
+  assert.equal(blocker.defusesWindowOpen("0xxx.ws"), true);
+  assert.equal(blocker.defusesWindowOpen("www.0xxx.ws"), true);
+  assert.equal(blocker.defusesWindowOpen("123mkv.com"), true);
+  assert.equal(blocker.defusesWindowOpen("news.example"), false);
+  // Rules that block the new window itself stay with the Kotlin popup filter.
+  assert.equal(blocker.defusesWindowOpen("sextgem.com"), false);
+  const excluded = create({
+    advancedText: [
+      "candy-advanced-filter:2",
+      "# Rules: 1",
+      ["B", "P", "*", Buffer.from("*").toString("base64url"), "movies.example", "kids.movies.example", "*", "W"]
+        .join("\t"),
+    ].join("\n"),
+  });
+  assert.equal(excluded.defusesWindowOpen("www.movies.example"), true);
+  assert.equal(excluded.defusesWindowOpen("kids.movies.example"), false);
+});

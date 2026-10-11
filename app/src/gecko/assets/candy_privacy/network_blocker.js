@@ -91,6 +91,8 @@
     const strictCandidates = advancedIndex(strictRules);
     const urlFilters = networkFiltersText ? networkFilters.parse(networkFiltersText) : [];
     const filterDecision = networkFilters.index(urlFilters, rules);
+    const windowOpenDefusers = advancedText ? rules.parseWindowOpenDefusers(advancedText) : [];
+    const defusedHosts = new Map();
 
     // { action: "A" | "B", ruleId?, builtIn } or null for no opinion. A user rule decides first;
     // Strict drops the bundled lists' compatibility exceptions, never the person's own rules.
@@ -123,8 +125,19 @@
       return null;
     }
 
+    // Whether the page's window.open should open nothing (uAssets popup rules, cached per host).
+    function defusesWindowOpen(pageHost) {
+      if (!defusedHosts.has(pageHost)) {
+        if (defusedHosts.size >= 256) defusedHosts.delete(defusedHosts.keys().next().value);
+        defusedHosts.set(pageHost, rules.defusesWindowOpen(windowOpenDefusers, pageHost));
+      }
+      return defusedHosts.get(pageHost);
+    }
+
     return {
       decide,
+      defusesWindowOpen,
+      windowOpenDefuserCount: windowOpenDefusers.length,
       indexedSizes: hosts.indexedSizes,
       advancedRuleCount: advancedRules.length,
       networkFilterCount: urlFilters.length,

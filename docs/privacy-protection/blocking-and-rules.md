@@ -101,6 +101,14 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   ~700 complex generic selectors come with the payload. Exceptions (`#@#`), `generichide` and
   per-host exclusions (`~site##.ad`) are resolved per host and cached (128 hosts); a lookup of
   1 850 names takes about 0.1 ms in node.
+- Popups: the uAssets `$popup` / `$popunder` rules (`uassets_advanced_filters.txt`). The 98 that
+  judge the new window (opener page, target) go to `PopupListFilter` in Kotlin, which
+  `BrowserController` asks at its popup and popunder decisions when the flag is on and the opener's
+  site blocks ads; the list is parsed off the main thread, a popup opened before it is ready waits
+  up to 300 ms, then goes through. The 629 marked for the window.open defuser come to the frame
+  with its cosmetics (`defuseWindowOpen`): the page's `window.open` opens nothing, defined in the
+  page's own scope through `exportFunction`, as `CandyWindowOpenDefuserScript` does on WebView.
+  Popups to hosts on the host lists are not blocked on Gecko yet (WebView checks them too).
 - Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`,
   `scripts/candy_privacy_rules.test.mjs` (index matches the full scan on real lists). The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped
