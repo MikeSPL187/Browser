@@ -41,6 +41,8 @@ import kotlinx.coroutines.withContext
 
 class FavoritesActivity : ComponentActivity() {
     private val store by lazy { BrowserSessionStore(this) }
+    // The profile whose favorites this screen edits: the active one when it opened (v5 V11).
+    private val profileId by lazy { store.loadActiveProfileId() }
     private val favoriteFaviconRepository by lazy { FavoriteFaviconRepository.get(applicationContext) }
     private val folderIconStore by lazy { FavoriteFolderIconStore(applicationContext) }
     private var favoriteLibrary by mutableStateOf(FavoriteLibrary())
@@ -88,7 +90,7 @@ class FavoritesActivity : ComponentActivity() {
                     return@launch
                 }
                 val updated = withFolderIcon(before, folderId, FavoriteFolderIcon.Custom)
-                withContext(Dispatchers.IO) { committed = store.saveFavoriteLibraryCommitted(updated, before) }
+                withContext(Dispatchers.IO) { committed = store.saveFavoriteLibraryCommitted(updated, before, profileId) }
                 if (!committed) {
                     showSaveFailure()
                     return@launch
@@ -124,7 +126,7 @@ class FavoritesActivity : ComponentActivity() {
         enableEdgeToEdge()
         isFullImmersiveModeEnabled = store.loadFullImmersiveModeEnabled()
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
-        favoriteLibrary = store.loadFavoriteLibrary()
+        favoriteLibrary = store.loadFavoriteLibrary(profileId)
         favoritesSort = getPreferences(MODE_PRIVATE).getString(KEY_SORT, null)
             ?.let { saved -> FavoritesSort.entries.firstOrNull { it.name == saved } }
             ?: FavoritesSort.Manual
@@ -204,7 +206,7 @@ class FavoritesActivity : ComponentActivity() {
             var ownershipTransferred = false
             try {
                 withContext(Dispatchers.IO) {
-                    favoriteFaviconRepository.prune(snapshot.favorites.map(FavoriteEntry::url).toSet())
+                    favoriteFaviconRepository.prune(keptFavoriteUrls(snapshot))
                     favoriteFaviconRepository.flush()
                     loadedFavicons += favoriteFaviconRepository.loadAll(snapshot.favorites.map(FavoriteEntry::url))
                     val customIds = snapshot.folders.filter { it.icon == FavoriteFolderIcon.Custom }.map(FavoriteFolder::id)
@@ -252,11 +254,11 @@ class FavoritesActivity : ComponentActivity() {
         favoriteOperations.begin()
         lifecycleScope.launch {
             try {
-                val saved = withContext(Dispatchers.IO) { store.saveFavoriteLibraryCommitted(updated, before) }
+                val saved = withContext(Dispatchers.IO) { store.saveFavoriteLibraryCommitted(updated, before, profileId) }
                 if (saved) {
                     favoriteLibrary = updated
                     val retainedIconIds = updated.folders.filter { it.icon == FavoriteFolderIcon.Custom }.map(FavoriteFolder::id).toSet()
-                    withContext(Dispatchers.IO) { folderIconStore.prune(retainedIconIds) }
+                    withContext(Dispatchers.IO) { folderIconStore.prune(keptFolderIconIds(updated)) }
                     folderIcons.filterKeys { it !in retainedIconIds }.values.forEach(retiredIcons::add)
                     folderIcons = folderIcons.filterKeys(retainedIconIds::contains)
                 } else showSaveFailure()
@@ -266,6 +268,17 @@ class FavoritesActivity : ComponentActivity() {
             }
         }
     }
+
+    // Every profile keeps its own favorites: an icon stays while any of them uses it.
+    private fun keptFavoriteUrls(current: FavoriteLibrary): Set<String> =
+        (store.loadAllFavoriteLibraries() + current).flatMapTo(hashSetOf()) { library ->
+            library.favorites.map(FavoriteEntry::url)
+        }
+
+    private fun keptFolderIconIds(current: FavoriteLibrary): Set<String> =
+        (store.loadAllFavoriteLibraries() + current).flatMapTo(hashSetOf()) { library ->
+            library.folders.filter { it.icon == FavoriteFolderIcon.Custom }.map(FavoriteFolder::id)
+        }
 
     private fun openFavorite(favorite: FavoriteEntry) = whenIdle {
         setResult(Activity.RESULT_OK, FavoritesActivityContract.resultIntent(favorite))
@@ -286,7 +299,7 @@ class FavoritesActivity : ComponentActivity() {
                 onComplete(null)
             } else {
                 undoLibrary = before
-                favoriteFaviconRepository.prune(updated.favorites.map(FavoriteEntry::url).toSet())
+                favoriteFaviconRepository.prune(keptFavoriteUrls(updated))
                 onComplete(FavoriteMutation(before.favorites, updated.favorites, added = false, revision = ++favoriteRevision))
             }
         }
@@ -314,8 +327,8 @@ class FavoritesActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 val (result, merged) = withContext(Dispatchers.IO) {
-                    val outcome = store.mergeImportedFavoritesCommitted(imported)
-                    outcome to outcome?.takeIf { it.importedCount > 0 }?.let { store.loadFavoriteLibrary() }
+                    val outcome = store.mergeImportedFavoritesCommitted(imported, profileId)
+                    outcome to outcome?.takeIf { it.importedCount > 0 }?.let { store.loadFavoriteLibrary(profileId) }
                 }
                 if (merged != null) {
                     favoriteLibrary = merged
