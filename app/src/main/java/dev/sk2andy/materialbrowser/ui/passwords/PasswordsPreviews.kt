@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
+import dev.sk2andy.materialbrowser.browser.credentials.PasskeyAvailability
 import androidx.compose.runtime.Composable
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
@@ -29,6 +30,22 @@ private fun PasswordsListPreview() {
 private fun PasswordsEmptyPreview() {
     MaterialBrowserTheme {
         PasswordsListScreen(logins = emptyList(), onOpen = {}, onAdd = {}, onLock = {}, onBack = {}, systemFillNote = true)
+    }
+}
+
+/** Android 12–13: the note that passkeys need Android 14. */
+@VolaPreviews
+@Composable
+private fun PasswordsPasskeyNotePreview() {
+    MaterialBrowserTheme {
+        PasswordsListScreen(
+            logins = previewLogins,
+            onOpen = {},
+            onAdd = {},
+            onLock = {},
+            onBack = {},
+            passkeyNote = PasskeyAvailability.NeedsAndroid14,
+        )
     }
 }
 

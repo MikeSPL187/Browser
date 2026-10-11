@@ -65,6 +65,7 @@ internal object PasswordsTestTags {
     const val RecoverOpen = "passwords_recover_open"
     const val List = "passwords_list"
     const val SystemFillNote = "passwords_system_fill_note"
+    const val PasskeyNote = "passwords_passkey_note"
     const val Generate = "passwords_generate"
     const val Health = "passwords_health"
     const val Import = "passwords_import"

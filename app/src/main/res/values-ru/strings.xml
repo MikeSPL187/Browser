@@ -1858,6 +1858,8 @@
     <string name="passwords_sheet_not_now">Не сейчас</string>
     <string name="passwords_sheet_hidden_password">••••••••</string>
     <string name="passwords_webview_note">С движком System WebView сайты заполняет служба автозаполнения Android, а не этот список.</string>
+    <string name="passwords_passkeys_need_android_14">Ключи доступа (passkeys) работают с Android 14. На этом телефоне сайты предложат вход по паролю.</string>
+    <string name="passwords_passkeys_no_credential_manager">Для ключей доступа нужен диспетчер учётных данных Android, а в системе этого телефона его нет. Сайты предложат вход по паролю.</string>
     <string name="passwords_generator_title">Надёжный пароль</string>
     <string name="passwords_generator_use_and_save">Использовать и сохранить</string>
     <string name="passwords_generator_use">Использовать</string>

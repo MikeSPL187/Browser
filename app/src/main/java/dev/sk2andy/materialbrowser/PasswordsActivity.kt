@@ -56,6 +56,7 @@ import kotlinx.coroutines.withContext
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
+import dev.sk2andy.materialbrowser.browser.credentials.PasskeySupport
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFile
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordImportFiles
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
@@ -264,6 +265,7 @@ class PasswordsActivity : FragmentActivity() {
                 onLock = ::lockNow,
                 onBack = ::finish,
                 systemFillNote = systemFillOnly,
+                passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
                 healthIssues = remember(logins, model.breaches) {
                     PasswordHealthRules.report(logins, model.breaches).needsAttention
                 },
