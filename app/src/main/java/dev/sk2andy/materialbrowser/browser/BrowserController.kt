@@ -233,12 +233,9 @@ import dev.sk2andy.materialbrowser.data.CandyRuleRepository
 import dev.sk2andy.materialbrowser.data.FavoriteBookmarkMergeResult
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
-import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
-import dev.sk2andy.materialbrowser.data.CanonicalWebUrl
 import dev.sk2andy.materialbrowser.data.FavoriteFaviconRepository
 import dev.sk2andy.materialbrowser.data.FavoriteFolderIconStore
 import dev.sk2andy.materialbrowser.data.FavoriteMutation
-import dev.sk2andy.materialbrowser.data.FavoriteUndoRules
 import dev.sk2andy.materialbrowser.data.FaviconRepository
 import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
@@ -450,12 +447,21 @@ class BrowserController(
     val previews = mutableStateMapOf<String, Bitmap>()
     val favicons = mutableStateMapOf<String, Bitmap>()
     val history = mutableStateListOf<HistoryEntry>()
-    val favorites = mutableStateListOf<FavoriteEntry>()
-    var favoriteLibrary by mutableStateOf(FavoriteLibrary())
-        private set
-    private var favoriteRevision = 0L
-    private val favoriteLibraryUndoSnapshots = mutableMapOf<Long, FavoriteLibrary>()
-    private var favoriteImportInFlight = false
+    // Each profile keeps its own favorites (v5 V11); switching the profile switches the list.
+    private val profileFavorites by lazy {
+        ProfileFavorites(
+            storage = ProfileFavoritesStore(store),
+            runInBackground = { task -> favoriteMutationExecutor.execute { task() } },
+            post = { task -> mainHandler.post { task() } },
+            isDestroyed = { destroyed },
+            pruneIcons = { urls, folderIds ->
+                favoriteFaviconRepository.prune(urls)
+                favoriteMutationExecutor.execute { favoriteFolderIconStore.prune(folderIds) }
+            },
+        )
+    }
+    val favorites: List<FavoriteEntry> get() = profileFavorites.favorites
+    val favoriteLibrary: FavoriteLibrary get() = profileFavorites.library
     val privacySnapshots = mutableStateMapOf<String, PrivacyXRaySnapshot>()
     val filterRules = mutableStateListOf<CandyRule>()
     private val incognitoRuleHits = mutableStateMapOf<String, Int>()
@@ -497,8 +503,13 @@ class BrowserController(
                 }
                 ?.let { clearGeckoMediaPresentation() }
         }
-    var activeProfileId by mutableStateOf(DEFAULT_PROFILE_ID)
-        private set
+    var activeProfileId: String
+        get() = activeProfileIdState
+        private set(value) {
+            activeProfileIdState = value
+            profileFavorites.select(value)
+        }
+    private var activeProfileIdState by mutableStateOf(DEFAULT_PROFILE_ID)
     var profilesEnabled by mutableStateOf(true)
         private set
     var isProfileProtectionSupported by mutableStateOf(profileProtectionSupported())
@@ -2463,7 +2474,7 @@ class BrowserController(
         refreshActiveProfileWallpaper()
         val (restoredTabs, restoredSelection) = StartupTimeline.section("LoadTabs") { store.loadTabs(nowMillis) }
         history += StartupTimeline.section("LoadHistory") { historyRepository.snapshot() }
-        StartupTimeline.section("LoadFavorites") { applyFavoriteLibrary(store.loadFavoriteLibrary()) }
+        StartupTimeline.section("LoadFavorites") { profileFavorites.select(activeProfileId) }
         StartupTimeline.section("RestoreEssentials") { essentials.restore() }
         StartupTimeline.section("RestoreProtectionReport") { protectionReport.restore() }
         val profileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
@@ -6525,6 +6536,7 @@ class BrowserController(
             history += historyMutation.history
         }
         reassignSiteCapsules(profileId, fallbackProfile, excludedCapsuleId)
+        profileFavorites.forget(profileId)
         removedProfileTrailTabIds.forEach { tabId ->
             geckoSessionStateStore.delete(tabId)
             webViewStateRepository.delete(tabId)
@@ -8875,37 +8887,13 @@ class BrowserController(
     internal fun importFavoriteBookmarks(
         imported: List<FavoriteEntry>,
         onComplete: (FavoriteBookmarkMergeResult?) -> Unit,
-    ) {
-        if (favoriteImportInFlight) {
-            onComplete(null)
-            return
-        }
-        favoriteImportInFlight = true
-        favoriteMutationExecutor.execute {
-            val result = store.mergeImportedFavoritesCommitted(imported)
-            mainHandler.post {
-                favoriteImportInFlight = false
-                if (destroyed) return@post
-                if (result == null) {
-                    onComplete(null)
-                    return@post
-                }
-                if (result.importedCount > 0) {
-                    reloadFavorites()
-                }
-                onComplete(result)
-            }
-        }
-    }
+    ) = profileFavorites.import(imported, onComplete)
 
     fun toggleFavorite(tabId: String = selectedTabId): FavoriteMutation? {
-        if (favoriteImportInFlight) return null
+        if (profileFavorites.importInFlight) return null
         val tab = tabs.firstOrNull { it.id == tabId } ?: return null
         if (tab.isIncognito || tab.url == BLANK_URL) return null
-        val mutation = toggleFavoriteEntry(
-            url = tab.url,
-            title = tab.title,
-        )
+        val mutation = profileFavorites.toggle(tab.url, tab.title, System.currentTimeMillis())
         if (mutation?.added == true) {
             favoriteFaviconRepository.capture(tab.url, favicons[tabId])
         }
@@ -8913,14 +8901,11 @@ class BrowserController(
     }
 
     fun toggleContextLinkFavorite(url: String, title: String?): FavoriteMutation? {
-        if (favoriteImportInFlight) return null
+        if (profileFavorites.importInFlight) return null
         val sourceTab = contextLinkSourceTab() ?: return null
         if (sourceTab.isIncognito) return null
         val safeUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return null
-        val mutation = toggleFavoriteEntry(
-            url = safeUrl,
-            title = title.orEmpty(),
-        )
+        val mutation = profileFavorites.toggle(safeUrl, title.orEmpty(), System.currentTimeMillis())
         if (mutation != null) {
             if (mutation.added) favoriteFaviconRepository.capture(safeUrl, bitmap = null)
             contentActions.dismiss()
@@ -8928,61 +8913,8 @@ class BrowserController(
         return mutation
     }
 
-    private fun toggleFavoriteEntry(url: String, title: String): FavoriteMutation? {
-        val before = favorites.toList()
-        val libraryBefore = favoriteLibrary
-        val wasFavorite = BrowsingLibraryRules.isFavorite(favorites, url)
-        val updated = BrowsingLibraryRules.toggleFavorite(
-            current = favorites,
-            entry = FavoriteEntry(
-                url = url,
-                title = title,
-                addedAt = System.currentTimeMillis(),
-            ),
-        )
-        if (updated == before) return null
-        val updatedLibrary = if (wasFavorite) {
-            FavoriteLibrary(
-                favoriteLibrary.entries.filterNot { entry ->
-                    entry is FavoriteEntry && CanonicalWebUrl.key(entry.url) == CanonicalWebUrl.key(url)
-                },
-            )
-        } else {
-            FavoriteLibrary(entries = listOf(updated.first()) + favoriteLibrary.entries)
-        }
-        applyFavoriteLibrary(updatedLibrary)
-        store.saveFavoriteLibrary(favoriteLibrary)
-        favoriteFaviconRepository.prune(updated.map(FavoriteEntry::url).toSet())
-        return FavoriteMutation(
-            before = before,
-            applied = updated,
-            added = !wasFavorite,
-            revision = ++favoriteRevision,
-        ).also { mutation ->
-            favoriteLibraryUndoSnapshots[mutation.revision] = libraryBefore
-        }
-    }
-
     fun undoFavorite(mutation: FavoriteMutation): Boolean {
-        if (favoriteImportInFlight) return false
-        val restored = FavoriteUndoRules.restore(
-            current = favorites.toList(),
-            currentRevision = favoriteRevision,
-            mutation = mutation,
-        ) ?: return false
-        val changed = favoriteLibraryUndoSnapshots.remove(mutation.revision) ?: if (mutation.added) {
-            mutation.applied.firstOrNull { applied -> mutation.before.none { it.id == applied.id } }
-                ?.let { added ->
-                    FavoriteLibrary(favoriteLibrary.entries.filterNot { it.id == added.id })
-                }
-        } else {
-            mutation.before.firstOrNull { before -> mutation.applied.none { it.id == before.id } }
-                ?.let { removed -> FavoriteLibrary(listOf(removed) + favoriteLibrary.entries) }
-        } ?: return false
-        favoriteRevision++
-        applyFavoriteLibrary(changed)
-        store.saveFavoriteLibrary(favoriteLibrary)
-        favoriteFaviconRepository.prune(restored.map(FavoriteEntry::url).toSet())
+        if (!profileFavorites.undo(mutation)) return false
         if (!mutation.added) {
             mutation.before
                 .firstOrNull { entry -> mutation.applied.none { it.url == entry.url } }
@@ -10352,7 +10284,6 @@ class BrowserController(
         browserChromeScrollStates.clear()
         previews.clear()
         favicons.clear()
-        favoriteLibraryUndoSnapshots.clear()
         privacySnapshots.clear()
         faviconGenerations.clear()
         faviconFetchAttempts.values.forEach { it.cancelled.set(true) }
@@ -13669,21 +13600,7 @@ class BrowserController(
         history += updated
     }
 
-    internal fun reloadFavorites() {
-        val restored = store.loadFavoriteLibrary()
-        favoriteRevision++
-        applyFavoriteLibrary(restored)
-    }
-
-    private fun applyFavoriteLibrary(library: FavoriteLibrary) {
-        favoriteLibrary = BrowsingFavoritesRules.normalizeLibrary(library)
-        favorites.clear()
-        favorites += favoriteLibrary.favorites
-        if (destroyed) return
-        // Icons of folders that no longer exist; Favorites shows the rest.
-        val folderIds = favoriteLibrary.folders.mapTo(hashSetOf()) { folder -> folder.id }
-        favoriteMutationExecutor.execute { favoriteFolderIconStore.prune(folderIds) }
-    }
+    internal fun reloadFavorites() = profileFavorites.reload()
 
     private fun updateTab(tabId: String, transform: (BrowserTab) -> BrowserTab) {
         val index = tabs.indexOfFirst { it.id == tabId }

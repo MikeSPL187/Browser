@@ -19,6 +19,18 @@ each with a name, an icon and an accent color. In code they are still `BrowserPr
 Synced workspaces from other devices keep their synced name and icon and cannot be renamed or
 recolored locally.
 
+## Favorites
+
+Each workspace keeps its own favorites (v5 V11, owner's decision 2026-10-11: profiles as in
+Safari). `BrowserSessionStore` keeps them under `FavoriteProfileKeys`: the list saved before this
+change stays under the old `favorites` key and belongs to the workspace that owned it then (the
+default one, or the first when the default was deleted; recorded in `favorites_legacy_owner`), so
+the update moves no data. Every other workspace has `favorites:<id>` and starts empty.
+`ProfileFavorites` holds the active workspace's list in `BrowserController`: switching the
+workspace switches the list, an undo offered before the switch no longer applies, and deleting a
+workspace deletes its favorites. Favicons and folder icons stay while any workspace keeps them.
+The Favorites screen edits the list of the workspace that was active when it opened.
+
 ## Editing
 
 The create sheet and the workspace options sheet (long press on a workspace in the tab overview)
