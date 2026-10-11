@@ -395,4 +395,5 @@ private fun ThirdPartyComponent.displayName(): String = when (this) {
     ThirdPartyComponent.IStillDontCareAboutCookies -> "I still don't care about cookies"
     ThirdPartyComponent.Manrope -> "Manrope"
     ThirdPartyComponent.Literata -> "Literata"
+    ThirdPartyComponent.Inter -> "Inter"
 }

@@ -1,10 +1,13 @@
 # Дизайн-система Vola v5
 
-Черновик на утверждение владельцем (шаг V5 плана, `plan-v5.md`). Решения владельца — в `plan-v5.md`
+**Утверждена владельцем 2026-10-11** (шаг V5 плана, `plan-v5.md`). Решения владельца — в `plan-v5.md`
 (разделы 1, 5, 6), в разделе «Дизайн v5» `CLAUDE.md` и в разделе 11 этого документа. Опора —
-исследование «Дизайн Vola v5: ориентиры» (`reports/Дизайн Vola v5 ориентиры.md`, далее «исследование»).
-После утверждения каждая таблица становится токенами Kotlin в `ui/theme` (шаг V6): `VolaColors`,
-`VolaType`, `VolaShapes`, `VolaMaterials`, `VolaSpacing`, `VolaElevation`, `VolaMotion`, `VolaHaptics`.
+исследование «Дизайн Vola v5: ориентиры» (`research-v5/report.md`, далее «исследование»).
+Каждая таблица — токены Kotlin в пакете `ui/theme/v5` (шаг V6): `V5Colors` (+ `V5Accent`, `V5Tile`),
+`V5Type`, `V5Shapes` (+ `SmoothCornerShape`), `V5Materials`, `V5Spacing`, `V5Sizes`, `V5Elevation`,
+`V5Motion`, `V5Haptics`; доступ из экранов — `V5Theme.colors / type / shapes` внутри `VolaV5Theme`.
+Приставка `V5` отличает их от токенов v4 (`VolaColors`, `VolaSpacing`…), которые живут до удаления старого
+интерфейса (V28). Контраст из таблиц проверяет `V5ColorsTest`.
 Значения дизайна v4 («Рама», «Воздух», чистый чёрный фон, Manrope) отменены и сюда не переносятся.
 
 Как всё выглядит и двигается — холст `canvas-v5/index.html` (открывается в браузере телефона,

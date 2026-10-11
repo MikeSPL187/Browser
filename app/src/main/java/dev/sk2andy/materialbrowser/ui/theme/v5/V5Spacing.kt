@@ -1,0 +1,79 @@
+package dev.sk2andy.materialbrowser.ui.theme.v5
+
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
+/*
+ * v5 spacing and sizes (system-v5.md, section 5). A 4 dp grid; hairlines are the only exception.
+ * Heights that hold text are minimums: with nonlinear font scaling (Android 14+) rows grow instead
+ * of clipping, so use them with heightIn(min = ...).
+ */
+
+object V5Spacing {
+    val space1: Dp = 4.dp
+    val space2: Dp = 8.dp
+    val space3: Dp = 12.dp
+    val space4: Dp = 16.dp
+    val space5: Dp = 20.dp
+    val space6: Dp = 24.dp
+    val space8: Dp = 32.dp
+    val space10: Dp = 40.dp
+    val space12: Dp = 48.dp
+    val space16: Dp = 64.dp
+
+    /** Lines between rows, edges of materials and of the bar. */
+    val hairline: Dp = 0.5.dp
+
+    /** Side margins: phone, tablet. */
+    val marginPhone: Dp = space4
+    val marginTablet: Dp = space6
+}
+
+object V5Sizes {
+    /** Smallest touch target; in the bar the visible capsule and buttons are this size themselves. */
+    val touchTarget: Dp = 48.dp
+
+    // Bottom bar on a phone (section 5.1).
+    /** The bar: 8 + 48 + 8, plus the system navigation under it. */
+    val bar: Dp = 64.dp
+    /** The address capsule and the round buttons beside it. */
+    val barCapsule: Dp = 48.dp
+    /** The bar collapsed while scrolling; the whole strip stays one 48 dp target. */
+    val barCollapsed: Dp = 28.dp
+    /** Height the bar may grow to at 200 % font. */
+    val barLargeFont: Dp = 72.dp
+    /** The loading line along the bar's top edge. */
+    val barProgress: Dp = 2.dp
+    /** How far a finger moves on the bar before it is a swipe rather than a tap. */
+    val barGestureSlop: Dp = 8.dp
+
+    // Tablet (section 5.3).
+    val tabletBar: Dp = 52.dp
+    val tabletTabStrip: Dp = 40.dp
+    val tabletSidebar: Dp = 280.dp
+    val tabletPageInset: Dp = 8.dp
+
+    // Lists and grids (section 5.2).
+    val rowSingleLine: Dp = 52.dp
+    val rowTwoLine: Dp = 64.dp
+    val rowTile: Dp = 30.dp
+    val pinnedTile: Dp = 60.dp
+    const val PINNED_COLUMNS = 4
+    const val PINNED_MAX = 12
+    val tabGridGap: Dp = 12.dp
+    const val TAB_COLUMNS_PHONE = 2
+
+    // Sheets.
+    val sheetHandleWidth: Dp = 36.dp
+    val sheetHandleHeight: Dp = 4.dp
+
+    // Icons (section 6): next to 17 sp text, next to 15-12 sp text, the cap at 200 % font.
+    val icon: Dp = 24.dp
+    val iconSmall: Dp = 20.dp
+    val iconMax: Dp = 32.dp
+
+    /** The dot of a tab group, and of profiles in an overflowing switcher. */
+    val dot: Dp = 8.dp
+    /** The border of a tab card in a colored group. */
+    val groupBorder: Dp = 2.dp
+}
