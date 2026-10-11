@@ -9,16 +9,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 
 /*
- * The ui.v5 flag (plan-v5.md, section 9): the new interface replaces the current one screen by
- * screen while this is on. Off by default and only reachable from developer options until v5 is
- * the default (V28). It lives in its own preferences file so the screens of v5 can read it without
- * the browser session store, and one shared state, so turning it on in developer options switches
- * the browser screen underneath at once.
+ * Switches of the v5 interface. They live in their own preferences file so the screens of v5 can
+ * read them without the browser session store, and each is one shared state, so turning it on in
+ * settings changes the browser screen underneath at once.
  */
-object UiV5Flag {
-    const val KEY = "ui.v5"
-    private const val PREFERENCES = "vola_ui_v5"
-
+open class V5Preference internal constructor(
+    private val key: String,
+    private val default: Boolean,
+) {
     @Volatile
     private var state: MutableState<Boolean>? = null
 
@@ -26,28 +24,49 @@ object UiV5Flag {
 
     fun setEnabled(context: Context, enabled: Boolean) {
         state(context).value = enabled
-        preferences(context).edit { putBoolean(KEY, enabled) }
+        preferences(context).edit { putBoolean(key, enabled) }
     }
 
     internal fun state(context: Context): MutableState<Boolean> =
         state ?: synchronized(this) {
-            state ?: mutableStateOf(preferences(context).getBoolean(KEY, false)).also { state = it }
+            state ?: mutableStateOf(preferences(context).getBoolean(key, default)).also { state = it }
         }
 
     private fun preferences(context: Context) =
         context.applicationContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+
+    private companion object {
+        const val PREFERENCES = "vola_ui_v5"
+    }
 }
+
+/**
+ * The ui.v5 flag (plan-v5.md, section 9): the new interface replaces the current one screen by
+ * screen while this is on. Off by default and only reachable from developer options until v5 is
+ * the default (V28).
+ */
+object UiV5Flag : V5Preference(key = "ui.v5", default = false)
+
+/**
+ * «Tint the bar with the site's color» (system-v5.md, section 1.3): on by default; off keeps the
+ * neutral bar on every site, as Safari allows after complaints about unreadable bars.
+ */
+object V5SiteTintSetting : V5Preference(key = "ui.v5.site_tint", default = true)
 
 /** The flag as Compose state; writing the state stores it. */
 @Composable
-fun rememberUiV5Flag(): MutableState<Boolean> {
+fun rememberUiV5Flag(): MutableState<Boolean> = rememberV5Preference(UiV5Flag)
+
+/** [preference] as Compose state; writing the state stores it. */
+@Composable
+fun rememberV5Preference(preference: V5Preference): MutableState<Boolean> {
     val context = LocalContext.current
-    return remember(context) {
-        val shared = UiV5Flag.state(context)
+    return remember(context, preference) {
+        val shared = preference.state(context)
         object : MutableState<Boolean> {
             override var value: Boolean
                 get() = shared.value
-                set(enabled) = UiV5Flag.setEnabled(context, enabled)
+                set(enabled) = preference.setEnabled(context, enabled)
 
             override fun component1(): Boolean = value
 

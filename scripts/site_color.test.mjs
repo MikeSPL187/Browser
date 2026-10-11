@@ -24,7 +24,11 @@ function canvasColor(value) {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function harness({ metas = [], dark = false, ready = true, head = true, readyState = 'interactive' } = {}) {
+// `top` lists the computed backgrounds from the element under the top edge up to its ancestors.
+function harness({
+  metas = [], dark = false, ready = true, head = true, readyState = 'interactive',
+  top = null, body = 'rgba(0, 0, 0, 0)', html = 'rgba(0, 0, 0, 0)',
+} = {}) {
   const timers = [];
   const reports = [];
   const listeners = {};
@@ -44,8 +48,13 @@ function harness({ metas = [], dark = false, ready = true, head = true, readySta
     get fillStyle() { return this.value; },
     set fillStyle(next) { const parsed = canvasColor(next); if (parsed) this.value = parsed; },
   };
+  const element = (backgroundColor, parentElement = null) => ({ backgroundColor, parentElement });
+  const topElement = top && top.reduceRight((parent, color) => element(color, parent), null);
   const document = {
     head: head ? {} : null,
+    body: element(body),
+    documentElement: element(html),
+    elementFromPoint: top ? () => topElement : undefined,
     readyState,
     createElement: () => ({ getContext: () => context2d }),
     querySelectorAll: () => nodes.filter((node) => node.name.toLowerCase() === 'theme-color'),
@@ -54,6 +63,8 @@ function harness({ metas = [], dark = false, ready = true, head = true, readySta
   const context = {
     document,
     setTimeout: (callback) => { timers.push(callback); return timers.length; },
+    innerWidth: 400,
+    getComputedStyle: (node) => ({ backgroundColor: node.backgroundColor }),
     addEventListener: (type, listener) => { listeners[type] = listener; },
     matchMedia: (media) => ({
       get matches() { return media.includes('dark') === state.dark; },
@@ -171,4 +182,28 @@ test('no color is reported while the page is still loading, a found color is', (
   plain.listeners.DOMContentLoaded();
   plain.flush();
   assert.deepEqual(plain.reports, [null]);
+});
+
+test('without theme-color the first opaque background under the top edge is reported', () => {
+  const page = harness({ top: ['rgba(0, 0, 0, 0)', 'rgba(255, 255, 255, 0.5)', 'rgb(29, 161, 242)'] });
+  assert.deepEqual(page.reports, ['#1da1f2']);
+});
+
+test('the body, then the root background stand in when nothing at the top is opaque', () => {
+  assert.deepEqual(harness({ top: ['rgba(0, 0, 0, 0)'], body: 'rgb(13, 17, 23)' }).reports, ['#0d1117']);
+  assert.deepEqual(harness({ html: 'rgb(255, 255, 255)' }).reports, ['#ffffff']);
+  assert.deepEqual(harness({ top: ['rgba(0, 0, 0, 0)'] }).reports, [null]);
+});
+
+test('theme-color wins over the top of the page, and the top is not read while loading', () => {
+  assert.deepEqual(
+    harness({ metas: [{ content: '#e50914' }], top: ['rgb(255, 255, 255)'] }).reports,
+    ['#e50914'],
+  );
+  const loading = harness({ readyState: 'loading', top: ['rgb(29, 161, 242)'] });
+  assert.deepEqual(loading.reports, []);
+  loading.context.document.readyState = 'complete';
+  loading.listeners.load();
+  loading.flush();
+  assert.deepEqual(loading.reports, ['#1da1f2']);
 });
