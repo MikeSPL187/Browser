@@ -2049,6 +2049,9 @@
     <string name="v5_suggestion_commands">Команды</string>
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
+    <string name="v5_overview_tabs">Вкладки · %1$d</string>
+    <string name="v5_overview_private">Частные · %1$d</string>
+    <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_specimen_title">Образец v5</string>
     <string name="v5_specimen_close">Закрыть</string>
     <string name="v5_specimen_theme_light">Светлая</string>

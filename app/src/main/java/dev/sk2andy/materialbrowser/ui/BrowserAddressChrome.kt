@@ -560,7 +560,9 @@ internal fun BoxScope.BrowserAddressChrome(
             onHighlightChange = onHighlightedSuggestionChanged,
         )
     }
-    if (!showV5Bar && !v5Editor) BrowserBottomBar(
+    // V10a: the v5 overview has its own toolbar, so no bar shows while it opens or is open.
+    val v5Overview = uiV5 && !wideWindow && (tabOverviewOpening || tabOverviewVisible)
+    if (!showV5Bar && !v5Editor && !v5Overview) BrowserBottomBar(
         tab = selectedTab,
         pageTranslationProvider = controller.pageTranslationProvider,
         compact = compactBar,
