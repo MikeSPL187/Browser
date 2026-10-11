@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTint
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
@@ -43,11 +45,12 @@ private fun previewState(domain: String?, loading: Boolean = false) = V5BarState
 )
 
 @Composable
-private fun BarPreview(state: V5BarState, collapsed: Boolean = false) {
+private fun BarPreview(state: V5BarState, collapsed: Boolean = false, tint: V5SiteTint? = null) {
     Box(Modifier.fillMaxSize().background(V5Theme.colors.background)) {
         V5BottomBar(
             state = state,
             gestures = PreviewGestures,
+            tint = tint ?: V5SiteTints.of(null, V5Theme.colors.chrome, V5Theme.colors.label),
             collapsed = collapsed,
             onExpand = {},
             onAddress = {},
@@ -88,4 +91,21 @@ private fun V5BarPrivatePreview() {
 @Composable
 private fun V5BarCollapsedPreview() {
     VolaV5Theme(dark = true) { BarPreview(previewState("polar-notes.ru"), collapsed = true) }
+}
+
+@Preview(name = "v5 bar · site colors", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP * 3)
+@Composable
+private fun V5BarSiteColorPreview() {
+    VolaV5Theme(dark = false) {
+        androidx.compose.foundation.layout.Column {
+            listOf(0x1DA1F2, 0xFFCC00, 0x1F4E5F).forEach { site ->
+                Box(Modifier.weight(1f)) {
+                    BarPreview(
+                        previewState("example.com"),
+                        tint = V5SiteTints.of(site, V5Theme.colors.chrome, V5Theme.colors.label),
+                    )
+                }
+            }
+        }
+    }
 }

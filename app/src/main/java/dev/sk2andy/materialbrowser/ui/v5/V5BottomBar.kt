@@ -32,6 +32,13 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTint
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.text.font.FontWeight
@@ -104,6 +111,7 @@ internal class V5BarGestures(
 internal fun BoxScope.V5BottomBar(
     state: V5BarState,
     gestures: V5BarGestures,
+    tint: V5SiteTint,
     collapsed: Boolean,
     onExpand: () -> Unit,
     onAddress: () -> Unit,
@@ -115,6 +123,15 @@ internal fun BoxScope.V5BottomBar(
     modifier: Modifier = Modifier,
 ) {
     val colors = V5Theme.colors
+    // The site's color follows navigation on the effects spring; text and icons switch at once,
+    // because white and dark text mixed half way would be gray with poor contrast.
+    val container by animateColorAsState(tint.container, V5Motion.effects.spec(), label = "v5 bar tint")
+    val barColors = V5BarColors(
+        container = container,
+        onTint = tint.onTint,
+        onTintSecondary = tint.onTintSecondary,
+        field = tint.onTint.copy(alpha = V5_FIELD_ALPHA).compositeOver(container),
+    )
     // 0 = the 28 dp strip while scrolling, 1 = the full bar. Collapsing settles without overshoot,
     // coming back has a hint of it; with animations removed the bar only fades between the two.
     val expanded by animateFloatAsState(
@@ -132,7 +149,7 @@ internal fun BoxScope.V5BottomBar(
         modifier
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
-            .background(colors.chrome)
+            .background(barColors.container)
             .then(
                 // Collapsed, the strip and the navigation area under it are one target.
                 if (collapsed) {
@@ -144,62 +161,64 @@ internal fun BoxScope.V5BottomBar(
                 },
             ),
     ) {
-        Box(Modifier.fillMaxWidth().height(V5Spacing.hairline).background(colors.edge))
-        LoadingLine(visible = state.isLoading, progress = state.progress)
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
-                .clipToBounds()
-                .onGloballyPositioned { coordinates ->
-                    onBarPositioned(
-                        coordinates.boundsInRoot(),
-                        coordinates.boundsInWindow().top.roundToInt(),
+        CompositionLocalProvider(LocalV5BarColors provides barColors, LocalContentColor provides barColors.onTint) {
+            Box(Modifier.fillMaxWidth().height(V5Spacing.hairline).background(colors.edge))
+            LoadingLine(visible = state.isLoading, progress = state.progress)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
+                    .clipToBounds()
+                    .onGloballyPositioned { coordinates ->
+                        onBarPositioned(
+                            coordinates.boundsInRoot(),
+                            coordinates.boundsInWindow().top.roundToInt(),
+                        )
+                    },
+            ) {
+                if (expanded > 0f) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(Alignment.Top, unbounded = true)
+                            .heightIn(min = fullHeight)
+                            .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
+                            .graphicsLayer { alpha = expanded },
+                        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AddressCapsule(
+                            state = state,
+                            gestures = gestures,
+                            onAddress = onAddress,
+                            onShield = onShield,
+                            onReloadOrStop = onReloadOrStop,
+                            onTabs = onTabs,
+                            modifier = Modifier.weight(1f),
+                        )
+                        RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
+                        RoundButton { menuButton() }
+                    }
+                }
+                if (expanded < 1f) {
+                    Text(
+                        text = state.domain ?: stringResource(R.string.address_empty_hint),
+                        style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
+                        color = barColors.onTint,
+                        maxLines = 1,
+                        overflow = TextOverflow.MiddleEllipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth()
+                            .padding(horizontal = V5Spacing.space6)
+                            .graphicsLayer { alpha = 1f - expanded },
                     )
-                },
-        ) {
-            if (expanded > 0f) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(Alignment.Top, unbounded = true)
-                        .heightIn(min = fullHeight)
-                        .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
-                        .graphicsLayer { alpha = expanded },
-                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AddressCapsule(
-                        state = state,
-                        gestures = gestures,
-                        onAddress = onAddress,
-                        onShield = onShield,
-                        onReloadOrStop = onReloadOrStop,
-                        onTabs = onTabs,
-                        modifier = Modifier.weight(1f),
-                    )
-                    RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
-                    RoundButton { menuButton() }
                 }
             }
-            if (expanded < 1f) {
-                Text(
-                    text = state.domain ?: stringResource(R.string.address_empty_hint),
-                    style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.label,
-                    maxLines = 1,
-                    overflow = TextOverflow.MiddleEllipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth()
-                        .padding(horizontal = V5Spacing.space6)
-                        .graphicsLayer { alpha = 1f - expanded },
-                )
-            }
+            // The strip runs on under the system navigation (edge to edge).
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
-        // The strip runs on under the system navigation (edge to edge).
-        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
 
@@ -237,7 +256,7 @@ private fun AddressCapsule(
     onTabs: () -> Unit,
     modifier: Modifier,
 ) {
-    val colors = V5Theme.colors
+    val bar = LocalV5BarColors.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -254,7 +273,7 @@ private fun AddressCapsule(
                 scaleY = scale
             }
             .clip(V5Theme.shapes.full)
-            .background(colors.fill)
+            .background(LocalV5BarColors.current.field)
             .testTag(AddressBarTestTags.PrimaryField)
             .v5BarGestures(gestures, onTabs)
             .clickable(
@@ -279,7 +298,7 @@ private fun AddressCapsule(
         Text(
             text = state.domain ?: openLabel,
             style = if (state.domain != null) V5Theme.type.headline else V5Theme.type.body,
-            color = if (state.domain != null) colors.label else colors.labelTertiary,
+            color = if (state.domain != null) bar.onTint else bar.onTintSecondary,
             maxLines = 1,
             overflow = TextOverflow.MiddleEllipsis,
             textAlign = TextAlign.Center,
@@ -292,7 +311,7 @@ private fun AddressCapsule(
                     contentDescription = stringResource(
                         if (state.isLoading) R.string.action_stop_loading else R.string.action_reload,
                     ),
-                    tint = colors.label,
+                    tint = bar.onTint,
                 )
             }
         } else {
@@ -307,7 +326,7 @@ private fun RoundButton(content: @Composable () -> Unit) {
         Modifier
             .size(V5Sizes.barCapsule)
             .clip(V5Theme.shapes.full)
-            .background(V5Theme.colors.fill),
+            .background(LocalV5BarColors.current.field),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -331,7 +350,7 @@ private fun LoadingLine(visible: Boolean, progress: Float) {
                 .fillMaxWidth(value)
                 .height(V5Sizes.barProgress)
                 .graphicsLayer { alpha = shown }
-                .background(V5Theme.colors.label),
+                .background(LocalV5BarColors.current.onTint),
         )
     }
 }
@@ -349,3 +368,19 @@ internal fun v5BarDomain(url: String): String? {
     }
     return host.lowercase().removePrefix("www.").takeIf { it.isNotBlank() && it != "[]" }
 }
+
+/** The bar's colors after the site tint (system-v5.md, section 1.3). */
+@Immutable
+private data class V5BarColors(
+    val container: Color,
+    val onTint: Color,
+    val onTintSecondary: Color,
+    val field: Color,
+)
+
+private val LocalV5BarColors = staticCompositionLocalOf {
+    V5BarColors(Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified)
+}
+
+/** onTint over the bar color for the capsule and the round buttons. */
+private const val V5_FIELD_ALPHA = 0.12f
