@@ -179,24 +179,25 @@ internal fun ProtectionAndDataSettingsPage(
                         }
                     }
                 }
+                // Vola blocks ads itself on both engines (blocker step 5b); on Gecko a note points
+                // to Firefox extensions, where an earlier uBlock Origin may still be installed.
+                ProtectionSwitch(
+                    title = stringResource(R.string.settings_block_ads_title),
+                    summary = stringResource(R.string.settings_block_ads_subtitle),
+                    checked = blockerSettings.blockAdsAndTrackers,
+                    dividerColor = dividerColor,
+                    onCheckedChange = {
+                        onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
+                    },
+                )
                 if (openExtensions != null) {
                     SettingsCardLinkRow(
-                        title = stringResource(R.string.settings_block_ads_title),
+                        title = stringResource(R.string.gecko_extensions_title),
                         summary = stringResource(R.string.settings_block_ads_extension_summary),
                         dividerColor = dividerColor,
                         divider = true,
                         summaryMaxLines = Int.MAX_VALUE,
                         onClick = openExtensions,
-                    )
-                } else {
-                    ProtectionSwitch(
-                        title = stringResource(R.string.settings_block_ads_title),
-                        summary = stringResource(R.string.settings_block_ads_subtitle),
-                        checked = blockerSettings.blockAdsAndTrackers,
-                        dividerColor = dividerColor,
-                        onCheckedChange = {
-                            onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
-                        },
                     )
                 }
                 ProtectionSwitch(

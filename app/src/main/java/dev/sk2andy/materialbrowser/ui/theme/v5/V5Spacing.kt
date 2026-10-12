@@ -108,4 +108,7 @@ object V5Sizes {
     val dot: Dp = 8.dp
     /** The border of a tab card in a colored group. */
     val groupBorder: Dp = 2.dp
+    /** A collapsed group's fan of pages (canvas `.gcol`): each thumbnail and how far they overlap. */
+    val groupPreview: Dp = 32.dp
+    val groupPreviewOverlap: Dp = 12.dp
 }

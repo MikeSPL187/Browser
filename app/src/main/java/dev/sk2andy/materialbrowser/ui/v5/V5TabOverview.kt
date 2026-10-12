@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -75,6 +76,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Materials
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 
 /*
  * The v5 tab overview (system-v5.md, section 10; canvas screen «d»): search at the top, the
@@ -114,6 +116,8 @@ data class V5OverviewState(
     val query: String,
     /** The profile chip: its emoji and name. */
     val profileLabel: String,
+    /** The profile's tab groups (V12); empty keeps one flat grid. */
+    val groups: List<V5OverviewGroup> = emptyList(),
 )
 
 @Composable
@@ -131,10 +135,14 @@ fun V5TabOverview(
     onCardBounds: (String, Rect) -> Unit = { _, _ -> },
     /** A card drawn by the hero layer instead, while the page shrinks into it or grows out. */
     heroCardId: String? = null,
-    /** The card the grid opens on, so the page's card is on screen for the hero. */
-    initialCardIndex: Int = 0,
+    /** A group's header or collapsed row was tapped: it folds or unfolds. */
+    onToggleGroup: (String) -> Unit = {},
 ) {
     val colors = V5Theme.colors
+    val items = remember(state.cards, state.groups, state.query) {
+        V5OverviewGroupRules.items(state.cards.map { it.id }, state.groups, searching = state.query.isNotBlank())
+    }
+    val cardsById = remember(state.cards) { state.cards.associateBy { it.id } }
     Box(
         modifier
             .fillMaxSize()
@@ -156,7 +164,13 @@ fun V5TabOverview(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
-                    state = rememberLazyGridState(initialFirstVisibleItemIndex = initialCardIndex),
+                    // The grid opens on the selected card, so the page's card is on screen for the hero.
+                    state = rememberLazyGridState(
+                        initialFirstVisibleItemIndex = V5OverviewGroupRules.indexOf(
+                            items,
+                            state.cards.firstOrNull { it.selected }?.id,
+                        ),
+                    ),
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentPadding = PaddingValues(
                         start = V5Spacing.marginPhone,
@@ -167,15 +181,41 @@ fun V5TabOverview(
                     horizontalArrangement = Arrangement.spacedBy(V5Sizes.tabGridGap),
                     verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
                 ) {
-                    items(state.cards, key = { it.id }) { card ->
-                        TabCard(
-                            card = card,
-                            onSelect = onSelect,
-                            onClose = onClose,
-                            onBounds = onCardBounds,
-                            hidden = card.id == heroCardId,
-                            modifier = Modifier.animateItem(),
-                        )
+                    items(
+                        items,
+                        key = { it.key },
+                        span = { item -> GridItemSpan(if (item is V5OverviewItem.Card) 1 else maxLineSpan) },
+                    ) { item ->
+                        when (item) {
+                            is V5OverviewItem.Card -> cardsById[item.id]?.let { card ->
+                                TabCard(
+                                    card = card,
+                                    onSelect = onSelect,
+                                    onClose = onClose,
+                                    onBounds = onCardBounds,
+                                    hidden = card.id == heroCardId,
+                                    groupTile = item.group?.tile,
+                                    modifier = Modifier.animateItem(),
+                                )
+                            }
+                            is V5OverviewItem.GroupHeader -> GroupHeader(
+                                group = item.group,
+                                count = item.count,
+                                onToggle = { onToggleGroup(item.group.id) },
+                                modifier = Modifier.animateItem(),
+                            )
+                            is V5OverviewItem.CollapsedGroup -> CollapsedGroup(
+                                group = item.group,
+                                count = item.count,
+                                previews = item.previewIds.mapNotNull(cardsById::get),
+                                onToggle = { onToggleGroup(item.group.id) },
+                                modifier = Modifier.animateItem(),
+                            )
+                            V5OverviewItem.UngroupedHeader -> SectionTitle(
+                                stringResource(R.string.v5_overview_ungrouped),
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
                 }
             }
@@ -299,6 +339,7 @@ private fun TabCard(
     onBounds: (String, Rect) -> Unit,
     hidden: Boolean,
     modifier: Modifier,
+    groupTile: V5Tile? = null,
 ) {
     val colors = V5Theme.colors
     val shape = V5Theme.shapes.m
@@ -355,7 +396,14 @@ private fun TabCard(
                 .onGloballyPositioned { onBounds(card.id, Rect(it.positionInRoot(), it.size.toSize())) }
                 .clip(shape)
                 .background(colors.surfaceHighest)
-                .then(if (card.selected) Modifier.border(V5Sizes.overviewRing, colors.accent, shape) else Modifier),
+                .then(
+                    // The group's color only frames its cards (section 10); the selected card keeps the accent.
+                    when {
+                        card.selected -> Modifier.border(V5Sizes.overviewRing, colors.accent, shape)
+                        groupTile != null -> Modifier.border(V5Sizes.groupBorder, groupTile.color, shape)
+                        else -> Modifier
+                    },
+                ),
         ) {
             if (card.preview != null) {
                 Image(

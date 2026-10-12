@@ -759,7 +759,7 @@
     <string name="settings_browser_engine_title">Web engine</string>
     <string name="settings_browser_engine_gecko">Extensions · GeckoView</string>
     <string name="settings_browser_engine_system">Memory saver · Android System WebView</string>
-    <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as uBlock Origin. Uses more memory.</string>
+    <string name="settings_browser_engine_gecko_summary">Toppings plus Firefox extensions such as Dark Reader. Uses more memory.</string>
     <string name="settings_browser_engine_system_summary">Uses less memory and supports Toppings, but not Firefox extensions. Vola protection remains available.</string>
     <string name="settings_browser_engine_restart_warning">Changing the engine restarts Vola. Logins, cookies and page history stay separate for each engine.</string>
     <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
@@ -878,7 +878,7 @@
     <string name="settings_block_ads_subtitle">Local domain list, including service workers</string>
     <string name="settings_hide_cookie_banners_title">Hide cookie banners</string>
     <string name="settings_hide_cookie_banners_subtitle">Known consent overlays are removed</string>
-    <string name="settings_block_ads_extension_summary">The uBlock Origin extension blocks ads here. Open Firefox extensions to turn it off or change its filters.</string>
+    <string name="settings_block_ads_extension_summary">Vola blocks ads itself now. If uBlock Origin from an earlier version is still installed, you can remove it here.</string>
     <string name="settings_hide_cookie_banners_extension_summary">Known consent overlays are removed. The I still don\'t care about cookies extension covers more sites; manage it in Firefox extensions.</string>
     <string name="settings_block_third_party_cookies_title">Block third-party cookies</string>
     <string name="settings_block_third_party_cookies_subtitle">First-party cookies remain enabled for sign-ins</string>
@@ -1638,7 +1638,7 @@
     <string name="developer_options_force_safe_area_fallback">Force native safe-area fallback</string>
     <string name="developer_options_force_safe_area_fallback_summary">Uses native top insets on every page instead of Vola’s scrollable document inset.</string>
     <string name="developer_options_vola_gecko_blocker">Vola’s own Gecko blocker</string>
-    <string name="developer_options_vola_gecko_blocker_summary">Blocks ads and trackers with Vola’s filter lists and follows each site’s protection level. In progress: uBlock Origin keeps running alongside.</string>
+    <string name="developer_options_vola_gecko_blocker_summary">Blocks ads and trackers with Vola’s filter lists and follows each site’s protection level. On by default; turn off only if it breaks sites.</string>
     <string name="developer_options_layout_quiet_period">Layout quiet period</string>
     <string name="developer_options_layout_quiet_period_summary">Wait after the last page layout change before each confirmation check.</string>
     <string name="developer_options_required_failures">Required failed checks</string>
@@ -1974,6 +1974,13 @@
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
     <string name="v5_sheet_close">Close</string>
+    <string name="v5_overview_ungrouped">No group</string>
+    <string name="v5_overview_group_collapse">Collapse group</string>
+    <string name="v5_overview_group_expand">Expand group</string>
+    <plurals name="v5_overview_group_description">
+        <item quantity="one">Group %1$s, %2$d tab</item>
+        <item quantity="other">Group %1$s, %2$d tabs</item>
+    </plurals>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>

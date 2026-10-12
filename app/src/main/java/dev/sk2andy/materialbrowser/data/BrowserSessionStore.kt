@@ -338,12 +338,29 @@ class BrowserSessionStore internal constructor(
     internal fun saveHistorySessionActive(active: Boolean): Boolean =
         preferences.edit().putBoolean(KEY_HISTORY_SESSION_ACTIVE, active).commit()
 
+    /** The profile whose favorites the screens outside the browser show: the active one. */
+    fun loadActiveProfileId(): String = loadStoredProfiles().activeProfileId
+
+    // Each profile keeps its own favorites (v5 V11); `FavoriteProfileKeys` says where.
     @Synchronized
-    fun loadFavorites(): List<FavoriteEntry> = loadFavoriteLibrary().favorites
+    private fun favoritesKey(profileId: String): String {
+        val owner = preferences.getString(KEY_FAVORITES_LEGACY_OWNER, null)
+            ?: FavoriteProfileKeys.legacyOwner(loadStoredProfiles().profiles.map(BrowserProfile::id)).also { owner ->
+                preferences.edit().putString(KEY_FAVORITES_LEGACY_OWNER, owner).apply()
+            }
+        return FavoriteProfileKeys.key(profileId, owner)
+    }
 
     @Synchronized
-    fun loadFavoriteLibrary(): FavoriteLibrary {
-        val raw = preferences.getString(KEY_FAVORITES, null) ?: return FavoriteLibrary()
+    fun loadFavorites(profileId: String = loadActiveProfileId()): List<FavoriteEntry> =
+        loadFavoriteLibrary(profileId).favorites
+
+    @Synchronized
+    fun loadFavoriteLibrary(profileId: String = loadActiveProfileId()): FavoriteLibrary =
+        readFavoriteLibrary(preferences.getString(favoritesKey(profileId), null))
+
+    private fun readFavoriteLibrary(raw: String?): FavoriteLibrary {
+        raw ?: return FavoriteLibrary()
         val array = runCatching { JSONArray(raw) }.getOrNull() ?: return FavoriteLibrary()
         val entries = buildList {
             for (index in 0 until array.length()) {
@@ -353,15 +370,27 @@ class BrowserSessionStore internal constructor(
         return BrowsingFavoritesRules.normalizeLibrary(FavoriteLibrary(entries))
     }
 
+    /** Every profile's favorites, for cleaning icons no profile uses any more. */
     @Synchronized
-    fun saveFavorites(favorites: List<FavoriteEntry>) {
-        saveFavoriteLibrary(FavoriteLibrary(favorites))
+    fun loadAllFavoriteLibraries(): List<FavoriteLibrary> = preferences.all
+        .filterKeys(FavoriteProfileKeys::isFavoritesKey)
+        .values
+        .map { raw -> readFavoriteLibrary(raw as? String) }
+
+    @Synchronized
+    fun deleteFavorites(profileId: String) {
+        preferences.edit().remove(favoritesKey(profileId)).apply()
     }
 
     @Synchronized
-    fun saveFavoriteLibrary(library: FavoriteLibrary) {
+    fun saveFavorites(favorites: List<FavoriteEntry>, profileId: String = loadActiveProfileId()) {
+        saveFavoriteLibrary(FavoriteLibrary(favorites), profileId)
+    }
+
+    @Synchronized
+    fun saveFavoriteLibrary(library: FavoriteLibrary, profileId: String = loadActiveProfileId()) {
         saveArray(
-            key = KEY_FAVORITES,
+            key = favoritesKey(profileId),
             values = BrowsingFavoritesRules.normalizeLibrary(library).entries,
             write = ::writeFavoriteLibraryEntry,
         )
@@ -370,22 +399,25 @@ class BrowserSessionStore internal constructor(
     internal fun saveFavoritesCommitted(
         favorites: List<FavoriteEntry>,
         expectedCurrent: List<FavoriteEntry>? = null,
+        profileId: String = loadActiveProfileId(),
     ): Boolean = saveFavoriteLibraryCommitted(
         library = FavoriteLibrary(favorites),
         expectedCurrent = expectedCurrent?.let(::FavoriteLibrary),
+        profileId = profileId,
     )
 
     internal fun saveFavoriteLibraryCommitted(
         library: FavoriteLibrary,
         expectedCurrent: FavoriteLibrary? = null,
+        profileId: String = loadActiveProfileId(),
     ): Boolean =
         synchronized(FAVORITES_COMMIT_LOCK) {
             synchronized(this) favoriteWrite@{
-                if (expectedCurrent != null && loadFavoriteLibrary() != expectedCurrent) {
+                if (expectedCurrent != null && loadFavoriteLibrary(profileId) != expectedCurrent) {
                     return@favoriteWrite false
                 }
                 saveArrayCommitted(
-                    key = KEY_FAVORITES,
+                    key = favoritesKey(profileId),
                     values = BrowsingFavoritesRules.normalizeLibrary(library).entries,
                     write = ::writeFavoriteLibraryEntry,
                 )
@@ -394,8 +426,9 @@ class BrowserSessionStore internal constructor(
 
     internal fun mergeImportedFavoritesCommitted(
         imported: List<FavoriteEntry>,
+        profileId: String = loadActiveProfileId(),
     ): FavoriteBookmarkMergeResult? = synchronized(FAVORITES_COMMIT_LOCK) {
-        val current = loadFavoriteLibrary()
+        val current = loadFavoriteLibrary(profileId)
         val result = FavoriteBookmarkImportRules.merge(
             current = current.favorites,
             imported = imported,
@@ -409,6 +442,7 @@ class BrowserSessionStore internal constructor(
             saveFavoriteLibraryCommitted(
                 library = merged,
                 expectedCurrent = current,
+                profileId = profileId,
             )
         ) {
             result
@@ -1479,7 +1513,7 @@ class BrowserSessionStore internal constructor(
         const val KEY_HISTORY_RECORDING_MODE = "history_recording_mode"
         const val KEY_HISTORY_SESSION_ACTIVE = "history_session_active"
         const val KEY_PENDING_CANDY_TRAIL_REDACTIONS = "pending_candy_trail_redactions"
-        const val KEY_FAVORITES = "favorites"
+        const val KEY_FAVORITES_LEGACY_OWNER = "favorites_legacy_owner"
         private val FAVORITES_COMMIT_LOCK = Any()
         const val KEY_INACTIVE_TAB_LIFETIME = "inactive_tab_lifetime"
         const val KEY_ARCHIVE_INACTIVE_TABS = "archive_inactive_tabs"

@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -50,5 +51,43 @@ class V5TabOverviewRulesTest {
         assertEquals(1f, V5TabOverviewRules.swipeAlpha(0f, 400f), 0.001f)
         assertEquals(0.7f, V5TabOverviewRules.swipeAlpha(-200f, 400f), 0.001f)
         assertEquals(0.4f, V5TabOverviewRules.swipeAlpha(900f, 400f), 0.001f)
+    }
+
+    private val dinner = V5OverviewGroup("g1", "Ужин", listOf("3", "1"), collapsed = false, tile = V5Tile.Red)
+    private val trip = V5OverviewGroup("g2", "Поездка", listOf("4", "5"), collapsed = true, tile = V5Tile.Blue)
+
+    @Test
+    fun `groups come first with their cards in tab order, then the rest under No group`() {
+        val items = V5OverviewGroupRules.items(listOf("1", "2", "3", "4", "5"), listOf(dinner, trip), searching = false)
+        assertEquals(
+            listOf(
+                V5OverviewItem.GroupHeader(dinner, 2),
+                V5OverviewItem.Card("1", dinner),
+                V5OverviewItem.Card("3", dinner),
+                V5OverviewItem.CollapsedGroup(trip, 2, listOf("4", "5")),
+                V5OverviewItem.UngroupedHeader,
+                V5OverviewItem.Card("2", null),
+            ),
+            items,
+        )
+    }
+
+    @Test
+    fun `without visible groups or while searching the grid stays flat`() {
+        val flat = listOf(V5OverviewItem.Card("2", null), V5OverviewItem.Card("6", null))
+        assertEquals(flat, V5OverviewGroupRules.items(listOf("2", "6"), listOf(dinner, trip), searching = false))
+        assertEquals(
+            listOf(V5OverviewItem.Card("1", null), V5OverviewItem.Card("3", null)),
+            V5OverviewGroupRules.items(listOf("1", "3"), listOf(dinner), searching = true),
+        )
+    }
+
+    @Test
+    fun `the grid opens at the selected card's group`() {
+        val items = V5OverviewGroupRules.items(listOf("1", "2", "3", "4", "5"), listOf(dinner, trip), searching = false)
+        assertEquals(0, V5OverviewGroupRules.indexOf(items, "3"))
+        assertEquals(3, V5OverviewGroupRules.indexOf(items, "5"))
+        assertEquals(5, V5OverviewGroupRules.indexOf(items, "2"))
+        assertEquals(0, V5OverviewGroupRules.indexOf(items, "missing"))
     }
 }

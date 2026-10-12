@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 tab overview as canvas screen «d»: tabs in light and dark, the private segment, no match. */
@@ -25,6 +26,7 @@ private fun OverviewPreview(
     cards: List<V5TabCard> = PreviewCards,
     privateSegment: Boolean = false,
     query: String = "",
+    groups: List<V5OverviewGroup> = emptyList(),
 ) {
     V5TabOverview(
         state = V5OverviewState(
@@ -33,6 +35,7 @@ private fun OverviewPreview(
             counts = V5OverviewCounts(regular = 10, private = 2),
             query = query,
             profileLabel = "🏔 Личный",
+            groups = groups,
         ),
         onQueryChange = {},
         onSegmentChange = {},
@@ -66,4 +69,21 @@ private fun V5OverviewPrivatePreview() {
 @Composable
 private fun V5OverviewEmptyPreview() {
     VolaV5Theme(dark = false) { OverviewPreview(cards = emptyList(), query = "банк") }
+}
+
+private val PreviewGroups = listOf(
+    V5OverviewGroup("dinner", "Ужин", listOf("t2", "t4"), collapsed = false, tile = V5Tile.Red),
+    V5OverviewGroup("trip", "Поездка", listOf("t0", "t1"), collapsed = true, tile = V5Tile.Blue),
+)
+
+@Preview(name = "Overview · groups", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5OverviewGroupsPreview() {
+    VolaV5Theme(dark = false) { OverviewPreview(groups = PreviewGroups) }
+}
+
+@Preview(name = "Overview · groups dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5OverviewGroupsDarkPreview() {
+    VolaV5Theme(dark = true) { OverviewPreview(groups = PreviewGroups) }
 }
