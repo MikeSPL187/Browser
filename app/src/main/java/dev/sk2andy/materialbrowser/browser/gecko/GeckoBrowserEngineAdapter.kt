@@ -33,6 +33,7 @@ import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
+import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
@@ -237,6 +238,13 @@ internal interface AndroidBrowserEngineSessionPort :
      * [AndroidBrowserEngineCapabilities.onDeviceTranslation].
      */
     fun pageTranslation(): PageTranslationPort = PageTranslationPort.Unavailable
+
+    /**
+     * Choosing distracting items to hide on this tab's page (v5 V20). System WebView keeps
+     * [PageDistractionsPort.Unavailable]; the UI hides the feature by
+     * [AndroidBrowserEngineCapabilities.hideDistractions].
+     */
+    fun pageDistractions(): PageDistractionsPort = PageDistractionsPort.Unavailable
 
     fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,
@@ -822,6 +830,9 @@ internal class GeckoBrowserEngineSessionAdapter(
 
     override fun pageTranslation(): PageTranslationPort =
         if (closed) PageTranslationPort.Unavailable else session.pageTranslation()
+
+    override fun pageDistractions(): PageDistractionsPort =
+        if (closed) PageDistractionsPort.Unavailable else session.pageDistractions()
 
     override fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,

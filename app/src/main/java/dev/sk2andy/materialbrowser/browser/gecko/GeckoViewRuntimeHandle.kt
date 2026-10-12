@@ -83,6 +83,8 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
+import dev.sk2andy.materialbrowser.browser.PageDistractionsListener
+import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
@@ -966,6 +968,13 @@ private class GeckoViewBrowserSession(
 
     private var findInPageOptions = FindInPageOptions()
     private val pageTranslation = GeckoPageTranslation(session)
+    private val pageDistractions = object : PageDistractionsPort {
+        override fun startPicking(highlightArgb: Int, listener: PageDistractionsListener): Boolean =
+            !closed && privacyBound && currentPageUrl != null &&
+                privacyBinding.startDistractionPicking(highlightArgb, listener)
+
+        override fun stopPicking() = privacyBinding.stopDistractionPicking()
+    }
 
     @Volatile
     private var listener: GeckoBrowserSessionStateListener? = null
@@ -2959,6 +2968,8 @@ private class GeckoViewBrowserSession(
     }
 
     override fun pageTranslation(): PageTranslationPort = pageTranslation
+
+    override fun pageDistractions(): PageDistractionsPort = pageDistractions
 
     override fun probeTextInputOcclusion(
         viewportRect: BrowserViewportRect,

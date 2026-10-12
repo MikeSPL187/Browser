@@ -10,6 +10,7 @@ import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginRules
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
+import dev.sk2andy.materialbrowser.data.HiddenDistractionsRules
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -96,6 +97,8 @@ internal data class GeckoPrivacyPolicy(
         DeveloperSettings.DEFAULT_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
     val safeAreaRequiredFailureCount: Int =
         DeveloperSettings.DEFAULT_SAFE_AREA_REQUIRED_FAILURE_COUNT,
+    /** The page site's hidden distracting items (v5 V20), as selectors `hide_distractions.js` hides. */
+    val hiddenDistractions: List<String> = emptyList(),
 ) {
     companion object {
         val Disabled = GeckoPrivacyPolicy(
@@ -146,6 +149,7 @@ internal object GeckoPrivacyPolicyRules {
             DeveloperSettings.DEFAULT_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
         safeAreaRequiredFailureCount: Int =
             DeveloperSettings.DEFAULT_SAFE_AREA_REQUIRED_FAILURE_COUNT,
+        hiddenDistractions: List<String> = emptyList(),
     ): GeckoPrivacyPolicy {
         val developerSettings = DeveloperSettings(
             safeAreaLayoutQuietPeriodMillis = safeAreaLayoutQuietPeriodMillis,
@@ -187,6 +191,8 @@ internal object GeckoPrivacyPolicyRules {
             safeAreaLayoutQuietPeriodMillis =
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
+            hiddenDistractions = hiddenDistractions.filter(HiddenDistractionsRules::isValidSelector)
+                .takeLast(HiddenDistractionsRules.MAX_SELECTORS_PER_SITE),
         )
     }
 }
@@ -260,6 +266,7 @@ internal fun GeckoPrivacyPolicy.toMessage(token: String, revision: Long): JSONOb
         JSONArray(compatibilityRequestHosts.sorted()),
     )
     .put("pausedHosts", JSONArray(pausedHosts.sorted()))
+    .put("hiddenElements", JSONArray(hiddenDistractions))
     .put(
         "rules",
         JSONArray().also { values ->

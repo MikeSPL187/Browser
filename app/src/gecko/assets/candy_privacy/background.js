@@ -421,6 +421,9 @@ function contentPolicy(policy) {
     animationPolicyRevision: Number.isSafeInteger(policy?.animationPolicyRevision) ?
       Math.max(0, policy.animationPolicyRevision) : 0,
     inlineMediaPlayerMode,
+    // The site's hidden distracting items (`hide_distractions.js`); Vola sends this site's only.
+    hiddenElements: Array.isArray(policy?.hiddenElements) ?
+      policy.hiddenElements.filter((selector) => typeof selector === "string").slice(0, 32) : [],
     inlineMediaPlayerActionLabel:
       typeof policy?.inlineMediaPlayerActionLabel === "string" ?
         policy.inlineMediaPlayerActionLabel.slice(0, 80) : "Open in Vola Player",
@@ -843,6 +846,10 @@ browser.runtime.onMessage.addListener((message, sender) => {
     }
     return undefined;
   }
+  if (message.type === "distraction-hidden") {
+    relayDistractionHidden(message, sender);
+    return undefined;
+  }
   if (message.type === "login-field-focus") {
     const token = tokenByTab.get(sender.tab.id);
     const policy = token && policiesByToken.get(token);
@@ -929,6 +936,39 @@ browser.tabs.onRemoved.addListener((tabId) => {
     latestPolicyRevisionByToken.delete(token);
   }
 });
+
+// Hide distracting items (v5 V20): Vola starts and stops choosing on a tab's top frame, and the
+// top frame reports each hidden block for the page it was bound to.
+function forwardDistractionPick(message) {
+  const tabEntry = Array.from(tokenByTab.entries()).find(([, token]) => token === message.token);
+  if (!tabEntry) return;
+  browser.tabs.sendMessage(tabEntry[0], {
+    type: "distractions-pick",
+    active: message.active === true,
+    highlightColor: typeof message.highlightColor === "string" ? message.highlightColor : null,
+  }, { frameId: 0 }).catch(() => {});
+}
+
+function relayDistractionHidden(message, sender) {
+  if (
+    sender.frameId !== 0 ||
+    typeof message.selector !== "string" ||
+    !Number.isSafeInteger(message.navigationGeneration)
+  ) {
+    return;
+  }
+  const token = tokenByTab.get(sender.tab.id);
+  const policy = token && policiesByToken.get(token);
+  if (!policy || policy.navigationGeneration !== message.navigationGeneration || !nativePort) return;
+  nativePort.postMessage({
+    type: "distraction-hidden",
+    protocolVersion: PROTOCOL_VERSION,
+    token,
+    revision: policy.revision,
+    navigationGeneration: message.navigationGeneration,
+    selector: message.selector.slice(0, 256),
+  });
+}
 
 function postReaderResult(message, payload) {
   if (!nativePort) return;
@@ -1286,6 +1326,8 @@ function connectNative() {
           inlineVideosByTab.delete(tabId);
         }
       }
+    } else if (message.type === "distractions-pick" && typeof message.token === "string") {
+      forwardDistractionPick(message);
     } else if (message.type === "reader-extract" && typeof message.token === "string") {
       extractReader(message);
     } else if (

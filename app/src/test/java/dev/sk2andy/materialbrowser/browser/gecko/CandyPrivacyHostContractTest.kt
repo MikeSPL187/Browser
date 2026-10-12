@@ -45,6 +45,23 @@ class CandyPrivacyHostContractTest {
     }
 
     @Test
+    fun `the site's hidden distracting items cross the policy, only plain selectors`() {
+        val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
+            pageHost = "news.example",
+            pausedHosts = emptySet(),
+            hideCookieConsent = false,
+            cookieBannerRemovalDisabled = false,
+            blockThirdPartyCookies = true,
+            allowThirdPartyCookiesForSite = false,
+            hiddenDistractions = listOf("#promo", "div{color:red}", "#main > div.card:nth-of-type(2)"),
+        )
+        val hidden = policy.toMessage(token = "session-token", revision = 6).getJSONArray("hiddenElements")
+
+        assertEquals(listOf("#promo", "#main > div.card:nth-of-type(2)"), List(hidden.length(), hidden::getString))
+        assertEquals(0, GeckoPrivacyPolicy.Disabled.toMessage(token = "session-token", revision = 6).getJSONArray("hiddenElements").length())
+    }
+
+    @Test
     fun `animation policy crosses authenticated policy with bounded revision`() {
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
             pageHost = null,

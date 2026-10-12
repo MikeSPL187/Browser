@@ -174,6 +174,35 @@ WebView request callbacks pass their already parsed request/page hosts into `Con
 Advanced rules inspect path/query only when a host or page bucket has candidates; the legacy
 fallback reuses the same hosts instead of parsing both URLs again.
 
+### Hide distracting items (v5 V20, Gecko)
+
+After Safari: the person picks page blocks to hide, and the site keeps them hidden.
+
+- **Choosing.** `PageDistractionsPort.startPicking` tells the top frame's `hide_distractions.js`
+  to enter choosing mode. The first tap outlines the block under the finger: a fixed or sticky bar
+  at once, otherwise the first box wide and tall enough to be more than a word, never one that
+  fills the screen. A second tap on the outlined block hides it. While choosing, the page's own
+  taps, links and forms get nothing; scrolling still works. Choosing ends on `stopPicking`,
+  navigation or tab close (`PageDistractionsListener.onPickingEnded`).
+- **Selectors.** Each hidden block becomes a selector that finds only that block. The page script
+  tries its id first, then a child chain of tags and classes. Generated, hash-like and state class
+  and id names are never used. A chain that needs `:nth-of-type` climbs to an ancestor with an id,
+  or to `body`. Only `[A-Za-z0-9_-#.>:() ]` crosses to Vola (`HiddenDistractionsRules.isValidSelector`),
+  so nothing can close or add a style rule.
+- **Storage.** `HiddenDistractionsController` keeps a list per profile and per site: the host
+  without `www.`, at most 32 blocks per site and 200 sites, oldest dropped first. It lives in the
+  `hidden_distractions` preferences, outside cloud backup, and is read and written on its own
+  storage thread. A profile's list is read the first time one of its pages asks. A private tab
+  hides in memory only, for that profile's private tabs, until the last private tab closes.
+  Deleting a profile deletes its list. Clearing browsing data keeps the lists: they are the
+  person's own site settings, like site protection.
+- **Applying.** The page policy carries the site's selectors (`hiddenElements`). The top frame
+  hides them with one style sheet, independent of ad blocking, site pause and the bank
+  exemptions. «Show hidden items» (`showAll`) empties the site's list and the pages are sent their
+  new policy.
+- System WebView has no choosing mode: `AndroidBrowserEngineCapabilities.hideDistractions` is
+  false there, and the UI hides the feature.
+
 ## Candy Rule precedence
 
 | Higher priority | Lower priority |
@@ -208,3 +237,4 @@ fallback reuses the same hosts instead of parsing both URLs again.
 | Generic cosmetic runtime | [`GenericCosmeticRuntime.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/GenericCosmeticRuntime.kt) |
 | Rule validation/matching | [`CandyRule.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/CandyRule.kt) |
 | Import/export/subscriptions | [`CandyRuleFormat.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/CandyRuleFormat.kt) |
+| Hide distracting items | [`PageDistractions.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/browser/PageDistractions.kt), [`HiddenDistractionsController.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/browser/HiddenDistractionsController.kt), [`HiddenDistractions.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/data/HiddenDistractions.kt), [`hide_distractions.js`](../../app/src/gecko/assets/candy_privacy/hide_distractions.js) |
