@@ -12,7 +12,7 @@
 | Consent handling | `ConsentBlockerScript` + curated request rules | Hide consent UI, stop known modal CMP runtimes and apply bounded declarative site rules |
 | User/import/subscription rules | `CandyRule*`, `CandyRuleRepository` | Validate, normalize, persist and compile per-profile matchers |
 | WebKit runtime interception | WebKit browser controller | Combine site settings, bundled lists and Candy Rule decisions for the active WebKit renderer |
-| Gecko runtime interception | uBlock Origin + Candy Cookie Defaults | Mozilla-signed default extension owns ad filtering; Candy keeps only its small curated consent fallback |
+| Gecko runtime interception | Vola's own blocker in `candy-privacy-host` + Candy Cookie Defaults | The same lists as System WebView plus EasyList URL rules, applied by the private extension; on by default, the developer option turns it off |
 
 Scoped cosmetic document-start rules run in every frame whose origin matches the registered page or
 user-rule origin. Generic cosmetics use a Candy-owned token scanner in the top document and its
@@ -65,13 +65,15 @@ Candy allow rules and site pause still take precedence over bundled blocking.
 
 ### GeckoView extension-owned filtering
 
-Android Gecko sessions provision Mozilla-signed uBlock Origin as their ad and tracker blocker.
-Candy does not send bundled ad lists, custom ad rules, popup or popunder filter lists to Gecko and
-does not initialize the native `ContentBlocker` snapshot in the Gecko controller. The private
-`candy-privacy-host` parses only the 4.9 KB `candy_default_rules.txt` consent defaults today.
-Vola's own Gecko blocker replaces uBlock Origin in steps (`docs/vola/research/ublock-origin.md`).
-It is behind the developer option «Vola's own Gecko blocker» (`DeveloperSettings.volaGeckoBlocker`,
-off by default; uBlock Origin keeps running alongside until the switch-over step):
+Vola's own Gecko blocker, inside the private `candy-privacy-host` extension, blocks ads and
+trackers on Gecko. It replaced the bundled uBlock Origin (`docs/vola/research/ublock-origin.md`):
+new installs no longer get uBlock Origin (the APK is 4.6 MB smaller), and a copy an earlier version
+installed stays, as the provisioner leaves extensions that left its catalog alone. The Gecko
+controller does not initialize the native `ContentBlocker` snapshot. The blocker is on by default;
+the developer option «Vola's own Gecko blocker» (`DeveloperSettings.volaGeckoBlocker`, preference
+`developer_vola_gecko_blocker_on`) is its emergency switch. The key is new because every save of the
+developer options wrote the old one off while the blocker was in progress. Turned off, the policy
+falls back to `extensionOwnedAdFilteringWithCandyCookieDefaults`: consent handling only.
 
 - The extension packs the network lists; `host_blocker.js` ports `RequestBlocker` with the same
   decision order, `network_blocker.js` adds the uAssets URL rules (bucketed by target host) and the
@@ -84,7 +86,7 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   token, so a request only tries the rules whose token its URL contains; `$redirect`, `$csp`,
   `$important`, `$removeparam`, regular expressions and `match-case` stay out. Order: own rule →
   URL rules (an exception in any list wins, as in uBlock Origin) → host lists.
-- With the option on, `geckoPrivacyPolicyFor` sends the site's `blockAdsAndTrackers`, the active
+- `geckoPrivacyPolicyFor` sends the site's `blockAdsAndTrackers`, the active
   Candy rules and `strictBlocking` (Strict level). Off sends nothing to block; a paused site is
   skipped as before; Strict drops the lists' compatibility exceptions (allow pairs, owner families,
   uAssets allow rules), never the person's own rules or the first-party escape.
@@ -105,7 +107,7 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   1 850 names takes about 0.1 ms in node.
 - Popups: the uAssets `$popup` / `$popunder` rules (`uassets_advanced_filters.txt`). The 98 that
   judge the new window (opener page, target) go to `PopupListFilter` in Kotlin, which
-  `BrowserController` asks at its popup and popunder decisions when the flag is on and the opener's
+  `BrowserController` asks at its popup and popunder decisions when the blocker is on and the opener's
   site blocks ads; the list starts loading off the main thread with the first policy of Vola's own
   blocker, and a popup opened before it is ready goes through without the main thread waiting. The 629 marked for the window.open defuser come to the frame
   with its cosmetics (`defuseWindowOpen`): the page's `window.open` opens nothing, defined in the

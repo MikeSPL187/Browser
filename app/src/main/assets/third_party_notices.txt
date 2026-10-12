@@ -43,8 +43,9 @@ Foundation (https://www.eff.org/dice), with the dice-roll numbers removed, under
 Gecko default extensions
 ------------------------
 
-The original Mozilla-signed uBlock Origin 1.75.0 XPI is redistributed unmodified under
-GPL-3.0-only. SHA-256: 5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287
+Vola no longer bundles uBlock Origin. Earlier versions installed the original Mozilla-signed
+uBlock Origin 1.75.0 XPI unmodified under GPL-3.0-only, and that copy stays installed until the
+person removes it. SHA-256: 5b74415860456370644bd80f16125e865b0e6c356bb5dfcfb84069967eaa5287
 Corresponding source is pinned to commit 21f0e686506bb21b514b451c8c6cb9bf8c82d232:
 https://github.com/gorhill/uBlock/tree/21f0e686506bb21b514b451c8c6cb9bf8c82d232
 The complete GPL-3.0 text is present inside the unmodified XPI and in uassets.LICENSE.txt; the full

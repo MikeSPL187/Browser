@@ -11684,7 +11684,7 @@ class BrowserController(
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
         )
-        // On Gecko uBlock Origin blocks ads unless Vola's own blocker is on (developer option).
+        // Vola's own blocker, on by default on Gecko; the developer option is its emergency switch.
         return if (usesGeckoEngine && !developerSettings.volaGeckoBlocker) policy else policy.copy(
             blockAdsAndTrackers = site.blockAdsAndTrackers,
             strictBlocking = site.ignoreCompatibilityAllowLists,

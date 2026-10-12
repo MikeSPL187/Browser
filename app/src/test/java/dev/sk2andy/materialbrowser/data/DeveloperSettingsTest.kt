@@ -19,6 +19,12 @@ class DeveloperSettingsTest {
     }
 
     @Test
+    fun `vola's own gecko blocker is on by default`() {
+        assertEquals(true, DeveloperSettings().volaGeckoBlocker)
+        assertEquals(true, DeveloperSettings().normalized().volaGeckoBlocker)
+    }
+
+    @Test
     fun `gecko budgets normalize without changing chrome or fallback settings`() {
         val settings = DeveloperSettings(
             browserChromeScrollDispatchMode = BrowserChromeScrollDispatchMode.Fixed15Hz,

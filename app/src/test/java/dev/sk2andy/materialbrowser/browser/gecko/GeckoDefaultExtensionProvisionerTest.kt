@@ -63,6 +63,28 @@ class GeckoDefaultExtensionProvisionerTest {
     }
 
     @Test
+    fun `a default that left the catalog stays where it is installed and no longer comes to new ones`() =
+        runBlocking {
+            // uBlock Origin left the catalog when Vola's own blocker replaced it.
+            val state = FakeStateStore(U_BLOCK.id to GeckoDefaultExtensionState.Provisioned)
+            val installer = FakeInstaller(installed = linkedMapOf(U_BLOCK.id to installedExtension(U_BLOCK)))
+
+            val result = provisioner(state, installer = installer, extensions = listOf(COOKIE_HELPER)).provision()
+
+            assertEquals(
+                mapOf(COOKIE_HELPER.id to GeckoDefaultExtensionProvisioningOutcome.Installed),
+                result.outcomes,
+            )
+            assertTrue(installer.uninstallCalls.isEmpty())
+            assertTrue(U_BLOCK.id in installer.installed)
+            assertEquals(GeckoDefaultExtensionState.Provisioned, state.values[U_BLOCK.id])
+
+            val fresh = FakeInstaller()
+            provisioner(installer = fresh, extensions = listOf(COOKIE_HELPER)).provision()
+            assertEquals(listOf(COOKIE_HELPER.id), fresh.installCalls)
+        }
+
+    @Test
     fun `explicit removal tombstone prevents installation`() = runBlocking {
         val state = FakeStateStore(U_BLOCK.id to GeckoDefaultExtensionState.Removed)
         val installer = FakeInstaller()
@@ -229,8 +251,9 @@ class GeckoDefaultExtensionProvisionerTest {
         verifier: FakeAssetVerifier = FakeAssetVerifier(),
         installer: FakeInstaller = FakeInstaller(),
         retiredExtensionIds: Set<String> = emptySet(),
+        extensions: List<GeckoDefaultExtension> = listOf(U_BLOCK, COOKIE_HELPER),
     ) = GeckoDefaultExtensionProvisioner(
-        extensions = listOf(U_BLOCK, COOKIE_HELPER),
+        extensions = extensions,
         stateStore = state,
         assetVerifier = verifier,
         installer = installer,

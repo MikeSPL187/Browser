@@ -7,7 +7,9 @@ uBlock Origin 1.75.0
 Copyright Raymond Hill and contributors.
 License: GNU General Public License version 3 only (GPL-3.0-only).
 
-Candy Browser redistributes the original, unmodified Mozilla-signed Firefox XPI from:
+Vola no longer bundles uBlock Origin: its own blocker replaced it. Earlier versions installed the
+original, unmodified Mozilla-signed Firefox XPI from the address below, and that copy stays on the
+devices it was installed on until the person removes it:
 https://addons.mozilla.org/firefox/downloads/file/5034826/ublock_origin-1.75.0.xpi
 
 SHA-256:

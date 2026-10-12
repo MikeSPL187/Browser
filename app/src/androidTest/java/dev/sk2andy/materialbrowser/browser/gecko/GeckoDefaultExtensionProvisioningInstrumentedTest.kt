@@ -19,16 +19,10 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class GeckoDefaultExtensionProvisioningInstrumentedTest {
+    // uBlock Origin is no longer a default: Vola's own blocker replaced it (installs from earlier
+    // versions keep it). The cookie helper is the bundled default left.
     @Test
-    fun bundledDefaultInstallsThroughSignedPersistentResourcePipeline() {
-        val installed = installedDefaults()
-        val uBlock = checkNotNull(installed.firstOrNull { extension -> extension.id == U_BLOCK_ID })
-
-        assertDefaultExtension(uBlock, U_BLOCK_VERSION)
-    }
-
-    @Test
-    fun onlineFallbackInstallsPinnedCookieExtensionWithoutPrivateAccess() {
+    fun bundledCookieExtensionInstallsThroughSignedPersistentPipelineWithoutPrivateAccess() {
         val installed = installedDefaults()
         val cookieExtension = checkNotNull(
             installed.firstOrNull { extension -> extension.id == COOKIE_EXTENSION_ID },
@@ -72,8 +66,6 @@ class GeckoDefaultExtensionProvisioningInstrumentedTest {
     }
 
     private companion object {
-        const val U_BLOCK_ID = "uBlock0@raymondhill.net"
-        const val U_BLOCK_VERSION = "1.75.0"
         const val COOKIE_EXTENSION_ID = "idcac-pub@guus.ninja"
         const val COOKIE_EXTENSION_VERSION = "1.1.9"
     }
