@@ -391,6 +391,13 @@ object VolaIcons {
         )
     }
 
+    val OpenInFull: ImageVector by lazy {
+        materialSymbol(
+            name = "OpenInFull",
+            pathData = "M160 840 q-17 0 -28.5 -11.5 T120 800 v-240 q0 -17 11.5 -28.5 T160 520 q17 0 28.5 11.5 T200 560 v144 l504 -504 H560 q-17 0 -28.5 -11.5 T520 160 q0 -17 11.5 -28.5 T560 120 h240 q17 0 28.5 11.5 T840 160 v240 q0 17 -11.5 28.5 T800 440 q-17 0 -28.5 -11.5 T760 400 v-144 L256 760 h144 q17 0 28.5 11.5 T440 800 q0 17 -11.5 28.5 T400 840 H160 Z",
+        )
+    }
+
     val OpenInNew: ImageVector by lazy {
         materialSymbol(
             name = "OpenInNew",
@@ -693,6 +700,7 @@ object VolaIcons {
             MoreVert,
             Movie,
             NorthWest,
+            OpenInFull,
             OpenInNew,
             Palette,
             Pause,

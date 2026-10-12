@@ -163,6 +163,7 @@ COMPOSE_ICONS = [
     ("MoreVert", "more_vert", False, False),
     ("Movie", "movie", False, False),
     ("NorthWest", "north_west", False, False),
+    ("OpenInFull", "open_in_full", False, False),
     ("OpenInNew", "open_in_new", False, False),
     ("Palette", "palette", False, False),
     ("Pause", "pause", False, False),

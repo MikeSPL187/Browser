@@ -31,6 +31,7 @@ import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 @Composable
 internal fun BrowserTransientOverlays(
@@ -140,7 +141,10 @@ internal fun BrowserTransientOverlays(
         )
     }
 
-    if (controller.contentActions.isLinkPeekVisible) {
+    val uiV5 by rememberUiV5Flag()
+    if (uiV5 && controller.contentActions.isLinkPeekVisible) {
+        BrowserLinkGlanceV5(controller)
+    } else if (controller.contentActions.isLinkPeekVisible) {
         val linkTarget = controller.contentActions.target
         LinkPeekOverlay(
             url = requireNotNull(linkTarget?.linkUrl),

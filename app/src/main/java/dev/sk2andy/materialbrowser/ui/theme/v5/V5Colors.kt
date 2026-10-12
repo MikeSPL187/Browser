@@ -88,6 +88,9 @@ enum class V5Tile(val color: Color) {
 object V5ControlColors {
     val toggleThumb = Color(0xFFFFFFFF)
     val toggleThumbShadow = Color(0x33000000)
+
+    /** Behind the page while it shrinks under a link preview: the device's dark frame (canvas «н1»). */
+    val glanceBackdrop = Color(0xFF0B0B0D)
 }
 
 object V5Colors {

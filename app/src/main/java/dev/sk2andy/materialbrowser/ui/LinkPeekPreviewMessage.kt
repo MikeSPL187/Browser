@@ -50,48 +50,94 @@ internal fun LinkPeekPreviewMessage(
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         when (status) {
-            is LinkPeekPreviewStatus.Blocked -> BlockedPreviewMessage(status, onClose)
-            is LinkPeekPreviewStatus.Failed -> FailedPreviewMessage(status.kind, host, onRetry, onClose)
-            LinkPeekPreviewStatus.Crashed -> RetryablePreviewMessage(
-                title = stringResource(R.string.glance_crashed_title),
-                message = stringResource(R.string.glance_crashed_message),
-                icon = VolaIcons.Error,
-                onRetry = onRetry,
-                onClose = onClose,
-            )
+            is LinkPeekPreviewStatus.Blocked -> BlockedPreviewMessage(status, host, onClose)
+            is LinkPeekPreviewStatus.Failed -> FailedPreviewMessage(status, host, onRetry, onClose)
+            LinkPeekPreviewStatus.Crashed -> {
+                val text = requireNotNull(linkPeekMessageText(status, host))
+                RetryablePreviewMessage(
+                    title = text.title,
+                    message = text.body,
+                    icon = VolaIcons.Error,
+                    onRetry = onRetry,
+                    onClose = onClose,
+                )
+            }
             LinkPeekPreviewStatus.Loading, LinkPeekPreviewStatus.Loaded -> Unit
         }
     }
 }
 
+/** The words for a preview that can't be shown, shared by the v4 card and the v5 one (V21). */
+internal data class LinkPeekMessageText(
+    val title: String,
+    val body: String,
+    val danger: Boolean,
+    val retryable: Boolean,
+)
+
+/** What to say in place of the page, or null while the page loads or shows. */
+@Composable
+internal fun linkPeekMessageText(status: LinkPeekPreviewStatus, host: String): LinkPeekMessageText? =
+    when (status) {
+        is LinkPeekPreviewStatus.Blocked -> {
+            val site = status.site
+            val imitatedHost = site.imitatedHost
+            LinkPeekMessageText(
+                title = stringResource(
+                    if (imitatedHost != null) R.string.dangerous_site_title else R.string.dangerous_site_listed_title,
+                ),
+                body = when {
+                    imitatedHost != null ->
+                        stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
+                    site.reportedBySafeBrowsing ->
+                        stringResource(R.string.dangerous_site_safe_browsing_message, site.host)
+                    else -> stringResource(R.string.dangerous_site_listed_message, site.host)
+                },
+                danger = true,
+                retryable = false,
+            )
+        }
+        is LinkPeekPreviewStatus.Failed -> {
+            val (title, body) = when (status.kind) {
+                BrowserEngineFailureKind.Offline ->
+                    stringResource(R.string.page_error_offline_title) to
+                        stringResource(R.string.glance_failed_message, host)
+                BrowserEngineFailureKind.UnknownHost ->
+                    stringResource(R.string.error_page_unreachable) to
+                        stringResource(R.string.page_error_unknown_host_message, host)
+                BrowserEngineFailureKind.InsecureConnection ->
+                    stringResource(R.string.page_error_insecure_title) to
+                        stringResource(R.string.page_error_insecure_message, host)
+                BrowserEngineFailureKind.HttpsOnly ->
+                    stringResource(R.string.glance_https_only_title) to
+                        stringResource(R.string.glance_https_only_message, host)
+                else ->
+                    stringResource(R.string.glance_failed_title) to
+                        stringResource(R.string.glance_failed_message, host)
+            }
+            LinkPeekMessageText(title, body, danger = false, retryable = true)
+        }
+        LinkPeekPreviewStatus.Crashed -> LinkPeekMessageText(
+            title = stringResource(R.string.glance_crashed_title),
+            body = stringResource(R.string.glance_crashed_message),
+            danger = false,
+            retryable = true,
+        )
+        LinkPeekPreviewStatus.Loading, LinkPeekPreviewStatus.Loaded -> null
+    }
+
 @Composable
 private fun FailedPreviewMessage(
-    kind: BrowserEngineFailureKind?,
+    status: LinkPeekPreviewStatus.Failed,
     host: String,
     onRetry: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val (title, message) = when (kind) {
-        BrowserEngineFailureKind.Offline ->
-            stringResource(R.string.page_error_offline_title) to
-                stringResource(R.string.glance_failed_message, host)
-        BrowserEngineFailureKind.UnknownHost ->
-            stringResource(R.string.error_page_unreachable) to
-                stringResource(R.string.page_error_unknown_host_message, host)
-        BrowserEngineFailureKind.InsecureConnection ->
-            stringResource(R.string.page_error_insecure_title) to
-                stringResource(R.string.page_error_insecure_message, host)
-        BrowserEngineFailureKind.HttpsOnly ->
-            stringResource(R.string.glance_https_only_title) to
-                stringResource(R.string.glance_https_only_message, host)
-        else ->
-            stringResource(R.string.glance_failed_title) to
-                stringResource(R.string.glance_failed_message, host)
-    }
+    val text = requireNotNull(linkPeekMessageText(status, host))
     RetryablePreviewMessage(
-        title = title,
-        message = message,
-        icon = when (kind) {
+        title = text.title,
+        message = text.body,
+        icon = when (status.kind) {
             BrowserEngineFailureKind.Offline -> VolaIcons.WifiOff
             BrowserEngineFailureKind.InsecureConnection,
             BrowserEngineFailureKind.HttpsOnly,
@@ -132,20 +178,11 @@ private fun RetryablePreviewMessage(
 }
 
 @Composable
-private fun BlockedPreviewMessage(status: LinkPeekPreviewStatus.Blocked, onClose: () -> Unit) {
-    val site = status.site
-    val imitatedHost = site.imitatedHost
+private fun BlockedPreviewMessage(status: LinkPeekPreviewStatus.Blocked, host: String, onClose: () -> Unit) {
+    val text = requireNotNull(linkPeekMessageText(status, host))
     VolaStatePage(
-        title = stringResource(
-            if (imitatedHost != null) R.string.dangerous_site_title else R.string.dangerous_site_listed_title,
-        ),
-        message = when {
-            imitatedHost != null ->
-                stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
-            site.reportedBySafeBrowsing ->
-                stringResource(R.string.dangerous_site_safe_browsing_message, site.host)
-            else -> stringResource(R.string.dangerous_site_listed_message, site.host)
-        },
+        title = text.title,
+        message = text.body,
         icon = { VolaStatePageIcon(icon = VolaIcons.Dangerous, tone = VolaStatePageTone.Error) },
         announce = true,
     ) {
