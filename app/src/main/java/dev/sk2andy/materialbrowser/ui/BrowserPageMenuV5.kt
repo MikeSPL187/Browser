@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -12,6 +14,9 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuActions
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuState
@@ -31,6 +36,10 @@ internal fun BrowserPageMenuV5(
     onAllActions: () -> Unit,
 ) {
     val blank = tab.url == BLANK_URL
+    val view = LocalView.current
+    val accentArgb = V5Theme.colors.accent.toArgb()
+    // Only GeckoView can choose and hide page blocks; WebView keeps the menu without the item.
+    val canHideDistractions = !blank && controller.browserEngineCapabilities.hideDistractions
     val faviconBitmap = controller.favicons[tab.id]
     val favicon = remember(faviconBitmap) { faviconBitmap?.asImageBitmap() }
     val state = V5PageMenuState(
@@ -50,6 +59,8 @@ internal fun BrowserPageMenuV5(
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },
         canCloseTab = TabDeletionRules.canDelete(tab),
+        canHideDistractions = canHideDistractions,
+        hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
     )
     V5PageMenu(
         visible = visible,
@@ -76,6 +87,11 @@ internal fun BrowserPageMenuV5(
             onDownloads = actions.onDownloads,
             onSettings = actions.onSettings,
             onAllActions = onAllActions,
+            // The page outlines in the profile's accent; a page not ready to choose refuses.
+            onHideDistractions = {
+                if (!controller.hiddenDistractions.startPicking(tab, accentArgb)) view.performV5Haptic(V5Haptic.Reject)
+            },
+            onShowHidden = { controller.hiddenDistractions.showAll(tab) },
         ),
         onDismiss = onDismiss,
     )

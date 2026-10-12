@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -9,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
@@ -36,6 +38,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
+import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
 import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
@@ -212,6 +215,19 @@ internal fun BrowserV5Bar(
                 actions = actions,
                 onDismiss = { menuExpanded = false },
                 onAllActions = { allActionsExpanded = true },
+            )
+            // «Hide distracting items» (V20): while the page chooses, the hint sits at the top edge.
+            val distractions = controller.hiddenDistractions
+            val picking = distractions.pickingTabId == tab.id
+            BackHandler(enabled = picking) { distractions.stopPicking() }
+            V5DistractionsPanel(
+                visible = picking,
+                site = v5BarDomain(tab.url) ?: tab.url,
+                privateTab = tab.isIncognito,
+                hiddenCount = if (picking) distractions.hiddenCount(tab) else 0,
+                onShowHidden = { distractions.showAll(tab) },
+                onDone = distractions::stopPicking,
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         }
     }
