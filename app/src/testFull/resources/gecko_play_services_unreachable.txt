@@ -1,0 +1,100 @@
+# Google Play services GeckoView names only after a Vola stand-in has refused, so no stand-in is
+# needed (GeckoPlayServicesReferenceTest). Read in WebAuthnTokenManager at FIREFOX_157_0_RELEASE:
+# - creating a passkey: everything after `new PublicKeyCredentialCreationOptions.Builder()`, whose
+#   stand-in throws first, up to getRegisterPendingIntent;
+# - signing in: everything after `new PublicKeyCredentialDescriptor(...)` or
+#   `new AuthenticationExtensions.Builder()`, whose stand-ins throw, up to getSignPendingIntent;
+# - success listeners: reading a credential, an authenticator response or error, and the stored
+#   credential list. They run only on a successful task; the stand-in tasks fail (Task.unavailable)
+#   and getCredentialList throws.
+# One key per line: a class as its internal name, a field as owner.name:descriptor, a method as
+# owner.name(descriptor). After a GeckoView update, re-read the code naming each new key first.
+com/google/android/gms/fido/fido2/Fido2PrivilegedApiClient.getRegisterPendingIntent(Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions;)Lcom/google/android/gms/tasks/Task;
+com/google/android/gms/fido/fido2/Fido2PrivilegedApiClient.getSignPendingIntent(Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions;)Lcom/google/android/gms/tasks/Task;
+com/google/android/gms/fido/fido2/api/common/Attachment
+com/google/android/gms/fido/fido2/api/common/Attachment.CROSS_PLATFORM:Lcom/google/android/gms/fido/fido2/api/common/Attachment;
+com/google/android/gms/fido/fido2/api/common/Attachment.PLATFORM:Lcom/google/android/gms/fido/fido2/api/common/Attachment;
+com/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference
+com/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference.DIRECT:Lcom/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference;
+com/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference.INDIRECT:Lcom/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference;
+com/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference.NONE:Lcom/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference;
+com/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference.name()Ljava/lang/String;
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensions$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensions;
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensions$Builder.setFido2Extension(Lcom/google/android/gms/fido/fido2/api/common/FidoAppIdExtension;)Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensions$Builder;
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsClientOutputs
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsClientOutputs.getCredProps()Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsCredPropsOutputs;
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsCredPropsOutputs
+com/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsCredPropsOutputs.getIsDiscoverableCredential()Z
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAssertionResponse
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAssertionResponse.getAuthenticatorData()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAssertionResponse.getClientDataJSON()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAssertionResponse.getSignature()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAssertionResponse.getUserHandle()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAttestationResponse
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAttestationResponse.getAttestationObject()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAttestationResponse.getClientDataJSON()[B
+com/google/android/gms/fido/fido2/api/common/AuthenticatorAttestationResponse.getTransports()[Ljava/lang/String;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorErrorResponse
+com/google/android/gms/fido/fido2/api/common/AuthenticatorErrorResponse.getErrorCode()Lcom/google/android/gms/fido/fido2/api/common/ErrorCode;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorErrorResponse.getErrorMessage()Ljava/lang/String;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorResponse
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder.<init>()V
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder.setAttachment(Lcom/google/android/gms/fido/fido2/api/common/Attachment;)Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder.setRequireResidentKey(Ljava/lang/Boolean;)Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder;
+com/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder.setResidentKeyRequirement(Lcom/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement;)Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria$Builder;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder.<init>()V
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder.setOrigin(Landroid/net/Uri;)Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder.setPublicKeyCredentialCreationOptions(Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions;)Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder.<init>()V
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder.setOrigin(Landroid/net/Uri;)Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder.setPublicKeyCredentialRequestOptions(Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions;)Lcom/google/android/gms/fido/fido2/api/common/BrowserPublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/ErrorCode
+com/google/android/gms/fido/fido2/api/common/ErrorCode.name()Ljava/lang/String;
+com/google/android/gms/fido/fido2/api/common/FidoAppIdExtension
+com/google/android/gms/fido/fido2/api/common/FidoAppIdExtension.<init>(Ljava/lang/String;)V
+com/google/android/gms/fido/fido2/api/common/FidoCredentialDetails.getCredentialId()[B
+com/google/android/gms/fido/fido2/api/common/FidoCredentialDetails.getIsDiscoverable()Z
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential.deserializeFromBytes([B)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredential;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential.getAuthenticatorAttachment()Ljava/lang/String;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential.getClientExtensionResults()Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensionsClientOutputs;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential.getRawId()[B
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredential.getResponse()Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorResponse;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setAttestationConveyancePreference(Lcom/google/android/gms/fido/fido2/api/common/AttestationConveyancePreference;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setAuthenticationExtensions(Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensions;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setAuthenticatorSelection(Lcom/google/android/gms/fido/fido2/api/common/AuthenticatorSelectionCriteria;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setChallenge([B)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setExcludeList(Ljava/util/List;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setParameters(Ljava/util/List;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setRp(Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRpEntity;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setTimeoutSeconds(Ljava/lang/Double;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder.setUser(Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialUserEntity;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialCreationOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialParameters
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialParameters.<init>(Ljava/lang/String;I)V
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.<init>()V
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.build()Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.setAllowList(Ljava/util/List;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.setAuthenticationExtensions(Lcom/google/android/gms/fido/fido2/api/common/AuthenticationExtensions;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.setChallenge([B)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.setRpId(Ljava/lang/String;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder.setTimeoutSeconds(Ljava/lang/Double;)Lcom/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRequestOptions$Builder;
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRpEntity
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialRpEntity.<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialUserEntity
+com/google/android/gms/fido/fido2/api/common/PublicKeyCredentialUserEntity.<init>([BLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+com/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement
+com/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement.RESIDENT_KEY_DISCOURAGED:Lcom/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement;
+com/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement.RESIDENT_KEY_PREFERRED:Lcom/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement;
+com/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement.RESIDENT_KEY_REQUIRED:Lcom/google/android/gms/fido/fido2/api/common/ResidentKeyRequirement;
