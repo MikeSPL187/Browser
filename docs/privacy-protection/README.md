@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | Request/cosmetic blocking, Candy Rules, validation and precedence | [`blocking-and-rules.md`](blocking-and-rules.md) | `blocking/ContentBlocker`, `RequestBlocker`, `CandyRule*` |
 | Privacy X-Ray, Permission Radar, asset maintenance and audits | [`xray-permissions-and-maintenance.md`](xray-permissions-and-maintenance.md) | `PrivacyXRay`, `browser/permissions`, `scripts/`, `docs/audits/` |
+| Protection report: the new tab week and the 30-day privacy report with trackers (V18) | [`xray-permissions-and-maintenance.md`](xray-permissions-and-maintenance.md#protection-and-privacy-report) | `ProtectionReport*`, `ProtectionReportController` |
 | WebRTC IP protection and engine fallbacks | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#webrtc-protection) | `WebRtcProtectionMode`, engine factories, Gecko Privacy host |
 | Do Not Track and Global Privacy Control | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#privacy-signals) | `PrivacySignalSettings`, engine privacy policy, Gecko Privacy host |
 | Browser and page animation suppression | [`../browsing/platform-engines.md`](../browsing/platform-engines.md#animation-suppression) | `AppearanceSettings`, engine privacy policy, Gecko Privacy host |
