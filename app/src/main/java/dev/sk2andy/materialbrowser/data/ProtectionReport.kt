@@ -43,6 +43,12 @@ data class ProtectionWeek(
 
 data class ProtectionSite(val host: String, val blocked: Int)
 
+/** A day's trackers as saved apart from its sites: read off the main thread after the start. */
+data class ProtectionDayTrackers(
+    val blockedByTracker: Map<String, Int>,
+    val trackersBySite: Map<String, Set<String>>,
+)
+
 /** A tracker of the privacy report: how often it was blocked and on how many sites. */
 data class ProtectionTracker(val host: String, val blocked: Int, val siteCount: Int)
 
@@ -81,7 +87,10 @@ object ProtectionReportRules {
     const val MAX_TRACKERS_PER_DAY = 200
 
     /** Different trackers kept per site and day. */
-    const val MAX_TRACKERS_PER_SITE = 64
+    const val MAX_TRACKERS_PER_SITE = 32
+
+    /** Site and tracker pairs kept per day, so 30 days stay a few hundred kilobytes at most. */
+    const val MAX_SITE_TRACKERS_PER_DAY = 1_000
     const val TOP_SITES = 5
 
     /** Entries of each list of the privacy report. */
@@ -123,21 +132,58 @@ object ProtectionReportRules {
         trackers.forEach { (tracker, count) ->
             if (count > 0) byTracker[tracker] = (byTracker[tracker] ?: 0).saturatedPlus(count)
         }
-        val siteTrackers = day?.trackersBySite.orEmpty().toMutableMap()
-        if (trackers.isNotEmpty()) {
-            val known = siteTrackers[site].orEmpty()
-            val room = (MAX_TRACKERS_PER_SITE - known.size).coerceAtLeast(0)
-            siteTrackers[site] = known + trackers.keys.filterNot(known::contains).take(room)
-        }
+        val keptTrackers = mostBlocked(byTracker, MAX_TRACKERS_PER_DAY)
+        val siteTrackers = addSiteTrackers(day?.trackersBySite.orEmpty(), site, trackers.keys)
         val updated = ProtectionDay(
             epochDay = today,
             blockedBySite = sites,
             total = (day?.total ?: 0).saturatedPlus(blocked),
-            blockedByTracker = mostBlocked(byTracker, MAX_TRACKERS_PER_DAY),
-            trackersBySite = siteTrackers.filterKeys(sites::containsKey),
+            blockedByTracker = keptTrackers,
+            trackersBySite = keptSiteTrackers(siteTrackers, sites, keptTrackers),
         )
         return prune(days.filterNot { it.epochDay == today } + updated, today)
     }
+
+    /**
+     * Adds the trackers read after the start ([loaded], by day) to [days], which may already hold
+     * trackers recorded since; the limits of [record] apply to the sum.
+     */
+    fun withTrackers(days: List<ProtectionDay>, loaded: Map<Long, ProtectionDayTrackers>): List<ProtectionDay> =
+        days.map { day ->
+            val saved = loaded[day.epochDay] ?: return@map day
+            val byTracker = day.blockedByTracker.toMutableMap()
+            saved.blockedByTracker.forEach { (tracker, count) ->
+                byTracker[tracker] = (byTracker[tracker] ?: 0).saturatedPlus(count)
+            }
+            val kept = mostBlocked(byTracker, MAX_TRACKERS_PER_DAY)
+            var siteTrackers = saved.trackersBySite
+            day.trackersBySite.forEach { (site, trackers) ->
+                siteTrackers = addSiteTrackers(siteTrackers, site, trackers)
+            }
+            day.copy(blockedByTracker = kept, trackersBySite = keptSiteTrackers(siteTrackers, day.blockedBySite, kept))
+        }
+
+    /** [current] with [trackers] added to [site], within the per-site and per-day limits. */
+    private fun addSiteTrackers(
+        current: Map<String, Set<String>>,
+        site: String,
+        trackers: Collection<String>,
+    ): Map<String, Set<String>> {
+        if (trackers.isEmpty()) return current
+        val known = current[site].orEmpty()
+        val pairs = current.values.sumOf(Set<String>::size)
+        val room = minOf(MAX_TRACKERS_PER_SITE - known.size, MAX_SITE_TRACKERS_PER_DAY - pairs).coerceAtLeast(0)
+        return current + (site to known + trackers.filterNot(known::contains).take(room))
+    }
+
+    /** Pairs of sites the day still lists and trackers it still counts, so a dropped one counts nowhere. */
+    private fun keptSiteTrackers(
+        siteTrackers: Map<String, Set<String>>,
+        sites: Map<String, Int>,
+        trackers: Map<String, Int>,
+    ): Map<String, Set<String>> = siteTrackers.filterKeys(sites::containsKey)
+        .mapValues { (_, names) -> names.filterTo(linkedSetOf(), trackers::containsKey) }
+        .filterValues(Set<String>::isNotEmpty)
 
     /** Keeps the last [KEPT_DAYS] days up to today, oldest first. A clock moved back keeps nothing newer. */
     fun prune(days: List<ProtectionDay>, today: Long): List<ProtectionDay> =

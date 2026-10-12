@@ -15,7 +15,7 @@ class ProtectionReportCodecTest {
     }
 
     @Test
-    fun `trackers and the sites that loaded them survive a round trip`() {
+    fun `trackers are saved apart from the days and survive a round trip`() {
         val days = listOf(
             ProtectionDay(
                 20_000,
@@ -25,21 +25,21 @@ class ProtectionReportCodecTest {
             ),
         )
 
-        assertEquals(days, ProtectionReportCodec.decode(ProtectionReportCodec.encode(days)))
+        assertEquals(listOf(ProtectionDay(20_000, mapOf("news.com" to 3))), ProtectionReportCodec.decode(ProtectionReportCodec.encode(days)))
+        assertEquals(
+            mapOf(20_000L to ProtectionDayTrackers(days.single().blockedByTracker, days.single().trackersBySite)),
+            ProtectionReportCodec.decodeTrackers(ProtectionReportCodec.encodeTrackers(days)),
+        )
     }
 
     @Test
-    fun `a report saved before trackers existed loads without them`() {
+    fun `malformed trackers are skipped`() {
+        assertEquals(emptyMap<Long, ProtectionDayTrackers>(), ProtectionReportCodec.decodeTrackers(""))
         assertEquals(
-            listOf(ProtectionDay(20_000, mapOf("a.com" to 2))),
-            ProtectionReportCodec.decode("""{"20000": {"a.com": 2}, "totals": {"20000": 2}}"""),
-        )
-        // Trackers of a site the day no longer lists are not kept.
-        assertEquals(
-            listOf(ProtectionDay(20_000, mapOf("a.com" to 2), blockedByTracker = mapOf("ads.net" to 2))),
-            ProtectionReportCodec.decode(
-                """{"20000": {"a.com": 2}, "trackers": {"20000": {"ads.net": 2, "x.net": 0}},""" +
-                    """ "siteTrackers": {"20000": {"gone.com": ["ads.net"], "a.com": []}}}""",
+            mapOf(20_000L to ProtectionDayTrackers(mapOf("ads.net" to 2), mapOf("a.com" to setOf("ads.net")))),
+            ProtectionReportCodec.decodeTrackers(
+                """{"20000": {"blocked": {"ads.net": 2, "x.net": 0}, "sites": {"a.com": ["ads.net", "x.net"], "b.com": []}},""" +
+                    """ "x": {}, "20001": {"sites": {"a.com": ["ads.net"]}}}""",
             ),
         )
     }

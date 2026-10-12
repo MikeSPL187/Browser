@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.blocking.CandyHostCanonicalizer
 import dev.sk2andy.materialbrowser.blocking.CandyPublicSuffixRules
 import dev.sk2andy.materialbrowser.data.ProtectionDay
+import dev.sk2andy.materialbrowser.data.ProtectionDayTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionReportPersistence
 import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
@@ -32,10 +33,21 @@ class ProtectionReportController internal constructor(
         fun postDelayed(action: Runnable, delayMillis: Long)
 
         fun removeCallbacks(action: Runnable)
+
+        /** Runs [task] off the main thread, one after another (reading and writing the store). */
+        fun runInBackground(task: () -> Unit) = task()
+
+        /** Runs [action] on the main thread. */
+        fun post(action: () -> Unit) = action()
     }
 
     private var days by mutableStateOf(emptyList<ProtectionDay>())
     private var dirty = false
+
+    /** Whether the saved trackers are back; until then a write would drop them, so it waits. */
+    private var trackersRestored = false
+    private var savePending = false
+    private var savedTrackersCleared = false
 
     /** Blocked requests by tracker, per tab, since the tab's last [record]. */
     private val pendingTrackers = ConcurrentHashMap<String, ConcurrentHashMap<String, AtomicInteger>>()
@@ -46,10 +58,24 @@ class ProtectionReportController internal constructor(
     var isCardVisible by mutableStateOf(true)
         private set
 
+    /**
+     * Reads the sites and totals at once, a few kilobytes for the card, and the trackers, up to a few
+     * hundred kilobytes, off the main thread afterwards.
+     */
     fun restore() {
         days = store.loadDays()
         isCardVisible = store.loadCardVisible()
         refresh()
+        host.runInBackground {
+            val trackers = store.loadTrackers()
+            host.post { onTrackersRestored(trackers) }
+        }
+    }
+
+    private fun onTrackersRestored(trackers: Map<Long, ProtectionDayTrackers>) {
+        if (!savedTrackersCleared) days = ProtectionReportRules.withTrackers(days, trackers)
+        trackersRestored = true
+        if (savePending) save()
     }
 
     /** A request of the tab was blocked; [record] adds its tracker to the report. Any thread. */
@@ -102,9 +128,7 @@ class ProtectionReportController internal constructor(
         val kept = ProtectionReportRules.prune(days, today)
         if (kept != days) {
             days = kept
-            host.removeCallbacks(saveDays)
-            dirty = false
-            store.saveDays(days)
+            save()
         }
         week = ProtectionReportRules.week(days, today)
     }
@@ -112,10 +136,9 @@ class ProtectionReportController internal constructor(
     /** Empties the report, for example with the browsing data. */
     fun clear() {
         pendingTrackers.clear()
+        if (!trackersRestored) savedTrackersCleared = true
         days = emptyList()
-        host.removeCallbacks(saveDays)
-        dirty = false
-        store.saveDays(days)
+        save()
         refresh()
     }
 
@@ -137,9 +160,17 @@ class ProtectionReportController internal constructor(
     /** Writes pending counts now; the browser calls it when it goes away. */
     fun flush() {
         host.removeCallbacks(saveDays)
-        if (!dirty) return
+        if (dirty) save()
+    }
+
+    /** Writes the days off the main thread; the list does not change once made, so it can be shared. */
+    private fun save() {
+        host.removeCallbacks(saveDays)
         dirty = false
-        store.saveDays(days)
+        savePending = !trackersRestored
+        if (savePending) return
+        val snapshot = days
+        host.runInBackground { store.saveDays(snapshot) }
     }
 
     private companion object {

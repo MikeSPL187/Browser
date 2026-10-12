@@ -103,6 +103,53 @@ class ProtectionReportRulesTest {
     }
 
     @Test
+    fun `a day keeps a bounded number of site and tracker pairs`() {
+        var days = emptyList<ProtectionDay>()
+        val perSite = ProtectionReportRules.MAX_TRACKERS_PER_SITE
+        repeat(ProtectionReportRules.MAX_SITE_TRACKERS_PER_DAY / perSite + 2) { site ->
+            days = ProtectionReportRules.record(days, today, "s$site.com", 1, (1..perSite).associate { "t$it.net" to 1 })
+        }
+
+        assertEquals(
+            ProtectionReportRules.MAX_SITE_TRACKERS_PER_DAY,
+            days.single().trackersBySite.values.sumOf { it.size },
+        )
+    }
+
+    @Test
+    fun `a tracker the day no longer counts is not listed for a site`() {
+        var days = emptyList<ProtectionDay>()
+        (1..ProtectionReportRules.MAX_TRACKERS_PER_DAY).forEach { index ->
+            days = ProtectionReportRules.record(days, today, "s$index.com", 1, mapOf("t$index.net" to 5))
+        }
+        // The site itself stays (most blocks of the day); only its tracker is past the limit.
+        days = ProtectionReportRules.record(days, today, "news.com", 10, mapOf("rare.net" to 1))
+
+        assertEquals(10, days.single().blockedBySite["news.com"])
+        assertNull(days.single().blockedByTracker["rare.net"])
+        assertNull(days.single().trackersBySite["news.com"])
+    }
+
+    @Test
+    fun `trackers read after the start join those recorded since`() {
+        val recorded = ProtectionReportRules.record(
+            listOf(ProtectionDay(today, mapOf("news.com" to 2))),
+            today,
+            "news.com",
+            1,
+            mapOf("ads.net" to 1),
+        )
+        val loaded = mapOf(
+            today to ProtectionDayTrackers(mapOf("ads.net" to 2, "track.io" to 1), mapOf("news.com" to setOf("track.io"))),
+            today - 1 to ProtectionDayTrackers(mapOf("old.net" to 1), emptyMap()),
+        )
+
+        val day = ProtectionReportRules.withTrackers(recorded, loaded).single()
+        assertEquals(mapOf("ads.net" to 3, "track.io" to 1), day.blockedByTracker)
+        assertEquals(mapOf("news.com" to setOf("track.io", "ads.net")), day.trackersBySite)
+    }
+
+    @Test
     fun `a site keeps a bounded number of different trackers`() {
         val many = (1..ProtectionReportRules.MAX_TRACKERS_PER_SITE + 10).associate { "t$it.net" to 1 }
         var days = ProtectionReportRules.record(emptyList(), today, "news.com", many.size, many)

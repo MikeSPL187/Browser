@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import dev.sk2andy.materialbrowser.data.ProtectionDay
+import dev.sk2andy.materialbrowser.data.ProtectionDayTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionReportPersistence
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -115,6 +116,53 @@ class ProtectionReportControllerTest {
     }
 
     @Test
+    fun `saved trackers come back after the start`() {
+        val store = FakeStore(
+            days = listOf(ProtectionDay(today, mapOf("news.com" to 2))),
+            trackers = mapOf(today to ProtectionDayTrackers(mapOf("ads.net" to 2), mapOf("news.com" to setOf("ads.net")))),
+        )
+        val controller = controller(store)
+
+        controller.restore()
+
+        assertEquals(listOf("ads.net" to 2), controller.summary(30).topTrackers.map { it.host to it.blocked })
+    }
+
+    @Test
+    fun `nothing is written before the saved trackers are back, so they are kept`() {
+        val background = mutableListOf<() -> Unit>()
+        val store = FakeStore(
+            days = listOf(ProtectionDay(today - 30, mapOf("old.com" to 1)), ProtectionDay(today, mapOf("news.com" to 2))),
+            trackers = mapOf(today to ProtectionDayTrackers(mapOf("ads.net" to 2), mapOf("news.com" to setOf("ads.net")))),
+        )
+        val controller = controller(store) { task -> background += task }
+
+        controller.restore()
+        assertEquals(0, store.saves)
+        while (background.isNotEmpty()) background.removeAt(0)()
+
+        assertEquals(1, store.saves)
+        assertEquals(mapOf("ads.net" to 2), store.days.single().blockedByTracker)
+    }
+
+    @Test
+    fun `clearing before the saved trackers are back drops them too`() {
+        val background = mutableListOf<() -> Unit>()
+        val store = FakeStore(
+            days = listOf(ProtectionDay(today, mapOf("news.com" to 2))),
+            trackers = mapOf(today to ProtectionDayTrackers(mapOf("ads.net" to 2), emptyMap())),
+        )
+        val controller = controller(store) { task -> background += task }
+
+        controller.restore()
+        controller.clear()
+        while (background.isNotEmpty()) background.removeAt(0)()
+
+        assertEquals(0, controller.summary(30).trackerCount)
+        assertTrue(store.days.isEmpty())
+    }
+
+    @Test
     fun `refresh moves the week on to a new day`() {
         val controller = controller(FakeStore(days = listOf(ProtectionDay(today, mapOf("a.com" to 2)))))
         controller.restore()
@@ -177,10 +225,15 @@ class ProtectionReportControllerTest {
         assertEquals(1, store.saves)
     }
 
-    private fun controller(store: FakeStore) = ProtectionReportController(
+    private fun controller(
+        store: FakeStore,
+        background: ((() -> Unit) -> Unit)? = null,
+    ) = ProtectionReportController(
         store = store,
         host = object : ProtectionReportController.Host {
             override fun today(): Long = today
+
+            override fun runInBackground(task: () -> Unit) = background?.invoke(task) ?: task()
 
             override fun postDelayed(action: Runnable, delayMillis: Long) {
                 pending += action
@@ -195,10 +248,13 @@ class ProtectionReportControllerTest {
     private class FakeStore(
         var days: List<ProtectionDay> = emptyList(),
         var cardVisible: Boolean = true,
+        val trackers: Map<Long, ProtectionDayTrackers> = emptyMap(),
     ) : ProtectionReportPersistence {
         var saves = 0
 
         override fun loadDays(): List<ProtectionDay> = days
+
+        override fun loadTrackers(): Map<Long, ProtectionDayTrackers> = trackers
 
         override fun saveDays(days: List<ProtectionDay>) {
             saves++

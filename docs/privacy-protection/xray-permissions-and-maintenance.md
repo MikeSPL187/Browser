@@ -14,18 +14,23 @@
 ## Protection and privacy report
 
 The new tab card's week (П7) and the privacy report (V18, as in Safari) read one store,
-`ProtectionReportStore` (preferences `vola_protection_report`, key `days_v1`).
+`ProtectionReportStore` (preferences `vola_protection_report`).
 
 - **What is kept, per day, for `ProtectionReportRules.KEPT_DAYS` = 30 days:**
-  - blocked requests by the site the user was on (at most 200 sites);
-  - the day's total;
-  - blocks by tracker, meaning the registrable domain of the blocked request (at most 200);
-  - the different trackers each site tried to load (at most 64 per site).
+  - key `days_v1`: blocked requests by the site the user was on (at most 200 sites), plus the day's
+    total;
+  - key `trackers_v1`: blocks by tracker, meaning the registrable domain of the blocked request (at
+    most 200), and the different trackers each site tried to load (at most 32 per site and 1 000
+    pairs per day). A tracker the day stops counting leaves the sites' lists too.
 
-  Page addresses are never kept. Older builds skip the `trackers` and `siteTrackers` keys.
+  Page addresses are never kept.
+- **When it is read and written.** The sites and totals (a few kilobytes) are read at start for the
+  card. The trackers (up to a few hundred kilobytes) are read afterwards on the store's own thread
+  and joined with what was recorded since. Writes are encoded on that thread as well, and wait until
+  the trackers are back so that they are not lost.
 - **Where the data comes from.** `BrowserController` notes every blocked request with
   `ProtectionReportController.noteBlocked`; this runs on any thread, both engines feed it, and it
-  keeps at most 64 trackers per tab between two records. The blocker-count flush then hands the tab's
+  keeps at most 32 trackers per tab between two records. The blocker-count flush then hands the tab's
   burst to `record(tabId, ...)`.
 - **What is never counted.** Private and session-only tabs, and tabs of a workspace behind a lock,
   only drop what was noted. So does a tab that closes or leaves its site (`forgetTab`).
