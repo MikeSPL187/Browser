@@ -1,9 +1,11 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.view.View
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -27,14 +30,17 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 
 /*
  * Tab groups in the v5 overview (V12, canvas screen «г», system-v5.md section 10): a group's color
@@ -47,24 +53,33 @@ object V5TabGroupTestTags {
     fun collapsed(id: String) = "v5_group_collapsed:$id"
 }
 
-/** An open group: its dot, name and tab count; a tap folds it. */
+/** An open group: its dot, name and tab count; a tap folds it, a long press edits it. */
 @Composable
-internal fun GroupHeader(group: V5OverviewGroup, count: Int, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+internal fun GroupHeader(
+    group: V5OverviewGroup,
+    count: Int,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongPress: (() -> Unit)? = null,
+) {
     val colors = V5Theme.colors
     val description = pluralStringResource(R.plurals.v5_overview_group_description, count, group.name, count)
     val action = stringResource(R.string.v5_overview_group_collapse)
+    val edit = stringResource(R.string.v5_group_edit_title)
+    val view = LocalView.current
     Row(
         modifier
             .fillMaxWidth()
             .heightIn(min = V5Sizes.touchTarget)
             .clip(V5Theme.shapes.s)
-            .clickable(onClick = onToggle)
+            .groupClickable(view, onToggle, onLongPress)
             .testTag(V5TabGroupTestTags.header(group.id))
             .clearAndSetSemantics {
                 contentDescription = description
                 heading()
                 role = Role.Button
                 onClick(label = action) { onToggle(); true }
+                if (onLongPress != null) onLongClick(label = edit) { onLongPress(); true }
             }
             .padding(horizontal = V5Spacing.space1),
         verticalAlignment = Alignment.CenterVertically,
@@ -93,11 +108,14 @@ internal fun CollapsedGroup(
     previews: List<V5TabCard>,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongPress: (() -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val shape = V5Theme.shapes.m
     val description = pluralStringResource(R.plurals.v5_overview_group_description, count, group.name, count)
     val action = stringResource(R.string.v5_overview_group_expand)
+    val edit = stringResource(R.string.v5_group_edit_title)
+    val view = LocalView.current
     Row(
         modifier
             .fillMaxWidth()
@@ -105,12 +123,13 @@ internal fun CollapsedGroup(
             .clip(shape)
             .background(colors.surface)
             .border(V5Sizes.groupBorder, group.tile.color, shape)
-            .clickable(onClick = onToggle)
+            .groupClickable(view, onToggle, onLongPress)
             .testTag(V5TabGroupTestTags.collapsed(group.id))
             .clearAndSetSemantics {
                 contentDescription = description
                 role = Role.Button
                 onClick(label = action) { onToggle(); true }
+                if (onLongPress != null) onLongClick(label = edit) { onLongPress(); true }
             }
             .padding(horizontal = V5Spacing.space4),
         verticalAlignment = Alignment.CenterVertically,
@@ -145,6 +164,19 @@ internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
             .semantics { heading() },
     )
 }
+
+/** A tap folds or unfolds the group; a long press, where given, edits it with the long-press tick. */
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.groupClickable(view: View, onToggle: () -> Unit, onLongPress: (() -> Unit)?): Modifier =
+    combinedClickable(
+        onClick = onToggle,
+        onLongClick = onLongPress?.let { press ->
+            {
+                view.performV5Haptic(V5Haptic.LongPress)
+                press()
+            }
+        },
+    )
 
 @Composable
 private fun GroupDot(group: V5OverviewGroup) {
