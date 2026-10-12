@@ -80,7 +80,7 @@ class BrowserControllerTabStackInstrumentedTest {
     }
 
     @Test
-    fun closingMemberDissolvesTwoTabStack() {
+    fun closingMemberLeavesOneTabStack() {
         activityRule.scenario.onActivity { activity ->
             seedTabs(activity)
             val browserController = BrowserController(activity).also { controller = it }
@@ -94,8 +94,12 @@ class BrowserControllerTabStackInstrumentedTest {
 
             browserController.closeTab("two")
 
-            assertTrue(browserController.tabStackController.activeStacks.isEmpty())
-            assertTrue(BrowserSessionStore(activity).loadTabStacks(browserController.tabs).isEmpty())
+            // A group may hold one tab (v5 V12b, as in Safari); it goes with its last tab.
+            assertEquals(listOf("one"), browserController.tabStackController.activeStacks.single().tabIds)
+            assertEquals(
+                listOf("one"),
+                BrowserSessionStore(activity).loadTabStacks(browserController.tabs).single().tabIds,
+            )
         }
     }
 
@@ -121,7 +125,7 @@ class BrowserControllerTabStackInstrumentedTest {
                     nowMillis = nowMillis,
                 ),
             )
-            assertTrue(browserController.tabStackController.activeStacks.isEmpty())
+            assertEquals(listOf("one"), browserController.tabStackController.activeStacks.single().tabIds)
 
             assertTrue(browserController.undoSnooze(token, nowMillis + 1L))
 
