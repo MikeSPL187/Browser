@@ -2122,6 +2122,8 @@
     <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
+    <string name="v5_private_title">Частный доступ</string>
+    <string name="v5_private_body">Vola не запомнит историю, cookie и данные форм. Закройте частные вкладки — и всё исчезнет.</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>

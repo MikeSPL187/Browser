@@ -129,4 +129,8 @@ object V5Sizes {
     val pinnedBadge: Dp = 22.dp
     /** The accent wash behind the top of the new tab fades out over this height. */
     val newTabWash: Dp = 280.dp
+
+    // Private new tab (canvas screen «h1»): the round plate of the mask and the mask on it.
+    val privateGem: Dp = 80.dp
+    val privateGemIcon: Dp = 40.dp
 }
