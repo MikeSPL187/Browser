@@ -35,12 +35,127 @@ class ProtectionReportRulesTest {
     }
 
     @Test
-    fun `days outside the week are dropped, also after the clock moved back`() {
-        val old = ProtectionDay(today - 7, mapOf("old.com" to 9))
-        val edge = ProtectionDay(today - 6, mapOf("edge.com" to 1))
+    fun `days the report no longer keeps are dropped, also after the clock moved back`() {
+        val old = ProtectionDay(today - ProtectionReportRules.KEPT_DAYS, mapOf("old.com" to 9))
+        val edge = ProtectionDay(today - ProtectionReportRules.KEPT_DAYS + 1, mapOf("edge.com" to 1))
         val future = ProtectionDay(today + 1, mapOf("future.com" to 1))
 
         assertEquals(listOf(edge), ProtectionReportRules.prune(listOf(future, old, edge), today))
+    }
+
+    @Test
+    fun `the week counts its seven days only, the report keeps thirty`() {
+        val days = listOf(
+            ProtectionDay(today - 20, mapOf("old.com" to 4)),
+            ProtectionDay(today, mapOf("new.com" to 1)),
+        )
+
+        assertEquals(1, ProtectionReportRules.week(days, today).total)
+        assertEquals(5, ProtectionReportRules.summary(days, today, 30).total)
+        assertEquals(30, ProtectionReportRules.summary(days, today, 30).daily.size)
+        assertEquals(4, ProtectionReportRules.summary(days, today, 30).daily.first { it > 0 })
+    }
+
+    @Test
+    fun `record counts trackers and which sites loaded them`() {
+        var days = ProtectionReportRules.record(emptyList(), today, "news.com", 3, mapOf("ads.net" to 2, "track.io" to 1))
+        days = ProtectionReportRules.record(days, today, "shop.com", 1, mapOf("ads.net" to 1))
+        days = ProtectionReportRules.record(days, today, "news.com", 1, mapOf("ads.net" to 1))
+        val day = days.single()
+
+        assertEquals(mapOf("ads.net" to 4, "track.io" to 1), day.blockedByTracker)
+        assertEquals(mapOf("news.com" to setOf("ads.net", "track.io"), "shop.com" to setOf("ads.net")), day.trackersBySite)
+    }
+
+    @Test
+    fun `the privacy report ranks trackers and the sites that loaded the most of them`() {
+        val days = listOf(
+            ProtectionDay(
+                today - 10,
+                mapOf("news.com" to 5),
+                blockedByTracker = mapOf("ads.net" to 5),
+                trackersBySite = mapOf("news.com" to setOf("ads.net")),
+            ),
+            ProtectionDay(
+                today,
+                mapOf("news.com" to 2, "blog.com" to 3),
+                blockedByTracker = mapOf("ads.net" to 1, "track.io" to 3, "pixel.org" to 1),
+                trackersBySite = mapOf("news.com" to setOf("ads.net", "track.io"), "blog.com" to setOf("track.io", "pixel.org")),
+            ),
+        )
+
+        val month = ProtectionReportRules.summary(days, today, 30)
+        assertEquals(3, month.trackerCount)
+        assertEquals(
+            listOf(
+                ProtectionTracker("ads.net", 6, 1),
+                ProtectionTracker("track.io", 3, 2),
+                ProtectionTracker("pixel.org", 1, 1),
+            ),
+            month.topTrackers,
+        )
+        assertEquals(
+            listOf(ProtectionSiteTrackers("blog.com", 2), ProtectionSiteTrackers("news.com", 2)),
+            month.sitesWithMostTrackers,
+        )
+        val week = ProtectionReportRules.summary(days, today, 7)
+        assertEquals(listOf("track.io" to 3, "ads.net" to 1, "pixel.org" to 1), week.topTrackers.map { it.host to it.blocked })
+    }
+
+    @Test
+    fun `a day keeps a bounded number of site and tracker pairs`() {
+        var days = emptyList<ProtectionDay>()
+        val perSite = ProtectionReportRules.MAX_TRACKERS_PER_SITE
+        repeat(ProtectionReportRules.MAX_SITE_TRACKERS_PER_DAY / perSite + 2) { site ->
+            days = ProtectionReportRules.record(days, today, "s$site.com", 1, (1..perSite).associate { "t$it.net" to 1 })
+        }
+
+        assertEquals(
+            ProtectionReportRules.MAX_SITE_TRACKERS_PER_DAY,
+            days.single().trackersBySite.values.sumOf { it.size },
+        )
+    }
+
+    @Test
+    fun `a tracker the day no longer counts is not listed for a site`() {
+        var days = emptyList<ProtectionDay>()
+        (1..ProtectionReportRules.MAX_TRACKERS_PER_DAY).forEach { index ->
+            days = ProtectionReportRules.record(days, today, "s$index.com", 1, mapOf("t$index.net" to 5))
+        }
+        // The site itself stays (most blocks of the day); only its tracker is past the limit.
+        days = ProtectionReportRules.record(days, today, "news.com", 10, mapOf("rare.net" to 1))
+
+        assertEquals(10, days.single().blockedBySite["news.com"])
+        assertNull(days.single().blockedByTracker["rare.net"])
+        assertNull(days.single().trackersBySite["news.com"])
+    }
+
+    @Test
+    fun `trackers read after the start join those recorded since`() {
+        val recorded = ProtectionReportRules.record(
+            listOf(ProtectionDay(today, mapOf("news.com" to 2))),
+            today,
+            "news.com",
+            1,
+            mapOf("ads.net" to 1),
+        )
+        val loaded = mapOf(
+            today to ProtectionDayTrackers(mapOf("ads.net" to 2, "track.io" to 1), mapOf("news.com" to setOf("track.io"))),
+            today - 1 to ProtectionDayTrackers(mapOf("old.net" to 1), emptyMap()),
+        )
+
+        val day = ProtectionReportRules.withTrackers(recorded, loaded).single()
+        assertEquals(mapOf("ads.net" to 3, "track.io" to 1), day.blockedByTracker)
+        assertEquals(mapOf("news.com" to setOf("track.io", "ads.net")), day.trackersBySite)
+    }
+
+    @Test
+    fun `a site keeps a bounded number of different trackers`() {
+        val many = (1..ProtectionReportRules.MAX_TRACKERS_PER_SITE + 10).associate { "t$it.net" to 1 }
+        var days = ProtectionReportRules.record(emptyList(), today, "news.com", many.size, many)
+        days = ProtectionReportRules.record(days, today, "news.com", 1, mapOf("late.net" to 1))
+
+        assertEquals(ProtectionReportRules.MAX_TRACKERS_PER_SITE, days.single().trackersBySite.getValue("news.com").size)
     }
 
     @Test

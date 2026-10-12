@@ -11,6 +11,34 @@
 | Address-bar connection badge | Opens one site sheet with Privacy X-Ray and Permission Radar tabs, including when no requests were blocked; shows the blocked count and uses distinct HTTPS, HTTP and unavailable indicators; keeps a 48 dp touch target around a 40 dp visible badge |
 | `PrivacyXRaySheet` | Shows the page address connection type and switches between the live X-Ray snapshot and site permissions; Frosted mode blurs the active browser-content source behind the sheet |
 
+## Protection and privacy report
+
+The new tab card's week (П7) and the privacy report (V18, as in Safari) read one store,
+`ProtectionReportStore` (preferences `vola_protection_report`).
+
+- **What is kept, per day, for `ProtectionReportRules.KEPT_DAYS` = 30 days:**
+  - key `days_v1`: blocked requests by the site the user was on (at most 200 sites), plus the day's
+    total;
+  - key `trackers_v1`: blocks by tracker, meaning the registrable domain of the blocked request (at
+    most 200), and the different trackers each site tried to load (at most 32 per site and 1 000
+    pairs per day). A tracker the day stops counting leaves the sites' lists too.
+
+  Page addresses are never kept.
+- **When it is read and written.** The sites and totals (a few kilobytes) are read at start for the
+  card. The trackers (up to a few hundred kilobytes) are read afterwards on the store's own thread
+  and joined with what was recorded since. Writes are encoded on that thread as well, and wait until
+  the trackers are back so that they are not lost.
+- **Where the data comes from.** `BrowserController` notes every blocked request with
+  `ProtectionReportController.noteBlocked`; this runs on any thread, both engines feed it, and it
+  keeps at most 32 trackers per tab between two records. The blocker-count flush then hands the tab's
+  burst to `record(tabId, ...)`.
+- **What is never counted.** Private and session-only tabs, and tabs of a workspace behind a lock,
+  only drop what was noted. So does a tab that closes or leaves its site (`forgetTab`).
+- **Reading.** `week` (Compose state) is what the card shows. `summary(7 or 30)` returns totals, days,
+  top sites, top trackers (with the number of sites each was blocked on) and the sites that loaded
+  the most different trackers.
+- **Clearing.** "Clear browsing data" and turning a workspace lock on clear the report.
+
 ## Permission Radar
 
 | Stage | Source | Invariant |

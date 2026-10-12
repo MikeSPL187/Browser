@@ -246,7 +246,6 @@ import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.PermissionRadarStore
 import dev.sk2andy.materialbrowser.data.PendingCandyTrailRedaction
 import dev.sk2andy.materialbrowser.data.ProfileWallpaperStore
-import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SiteCapsuleIconStore
 import dev.sk2andy.materialbrowser.data.SiteCapsuleStore
@@ -9866,6 +9865,7 @@ class BrowserController(
             savePersistentFilterRules()
         }
         privacySnapshots.clear()
+        protectionReport.clear()
         temporarySiteExceptions.clear()
         permanentSiteExceptions = emptyMap()
         store.savePermanentSiteExceptions(emptyMap())
@@ -13456,6 +13456,7 @@ class BrowserController(
                 )
             }
             pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }.incrementAndGet()
+            protectionReport.noteBlocked(tabId, requestUrl)
             pendingPrivacyTabs += tabId
             scheduleBlockerFlush()
         }
@@ -13500,7 +13501,8 @@ class BrowserController(
                     },
                 ),
             )
-            if (wasBlocked) pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }.incrementAndGet()
+            if (wasBlocked) pendingBlockedCounts.computeIfAbsent(tabId) { AtomicInteger() }
+                .incrementAndGet().also { protectionReport.noteBlocked(tabId, requestUrl) }
             pendingPrivacyTabs += tabId
             scheduleBlockerFlush()
         }
@@ -14045,11 +14047,8 @@ class BrowserController(
                 val tab = tabs.firstOrNull { it.id == tabId }
                 if (delta > 0 && tab != null) {
                     updateTab(tabId) { it.copy(blockedCount = it.blockedCount + delta) }
-                    // The weekly report counts regular tabs of unlocked workspaces only (П7).
                     val isPrivate = tab.isIncognito || isSessionEphemeralTab(tabId)
-                    if (ProtectionReportRules.countsTab(isPrivate, profileForId(tab.profileId)?.protection != null)) {
-                        protectionReport.record(tab.url, delta)
-                    }
+                    protectionReport.record(tabId, tab.url, delta, isPrivate, profileForId(tab.profileId)?.protection != null)
                     privacySnapshots[tabId] = privacyXRayRepository.snapshot(tabId)
                 } else if (tab == null) {
                     privacyXRayRepository.remove(tabId)
@@ -14914,7 +14913,7 @@ class BrowserController(
     /** The tab's X-Ray record and blocked count start over: the tab closed or left the site. */
     private fun resetPrivacyXRay(tabId: String) {
         synchronized(privacyEventLock) {
-            pendingBlockedCounts.remove(tabId)
+            pendingBlockedCounts.remove(tabId).also { protectionReport.forgetTab(tabId) }
             privacyXRayRepository.remove(tabId)
             privacySnapshots.remove(tabId)
             reportedAllowedDecisions.remove(tabId)

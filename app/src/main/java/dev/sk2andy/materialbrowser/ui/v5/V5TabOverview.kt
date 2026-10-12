@@ -1,9 +1,11 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,6 +139,10 @@ fun V5TabOverview(
     heroCardId: String? = null,
     /** A group's header or collapsed row was tapped: it folds or unfolds. */
     onToggleGroup: (String) -> Unit = {},
+    /** A card was long-pressed: its tab moves into a group (V12b); null keeps cards tap-only. */
+    onCardLongPress: ((String) -> Unit)? = null,
+    /** A group's header or collapsed row was long-pressed: the group is edited (V12b). */
+    onGroupLongPress: ((String) -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -195,6 +201,7 @@ fun V5TabOverview(
                                     onBounds = onCardBounds,
                                     hidden = card.id == heroCardId,
                                     groupTile = item.group?.tile,
+                                    onLongPress = onCardLongPress,
                                     modifier = Modifier.animateItem(),
                                 )
                             }
@@ -202,6 +209,7 @@ fun V5TabOverview(
                                 group = item.group,
                                 count = item.count,
                                 onToggle = { onToggleGroup(item.group.id) },
+                                onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
                                 modifier = Modifier.animateItem(),
                             )
                             is V5OverviewItem.CollapsedGroup -> CollapsedGroup(
@@ -209,6 +217,7 @@ fun V5TabOverview(
                                 count = item.count,
                                 previews = item.previewIds.mapNotNull(cardsById::get),
                                 onToggle = { onToggleGroup(item.group.id) },
+                                onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
                                 modifier = Modifier.animateItem(),
                             )
                             V5OverviewItem.UngroupedHeader -> SectionTitle(
@@ -331,6 +340,7 @@ private fun Segments(privateSegment: Boolean, counts: V5OverviewCounts, onChange
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TabCard(
     card: V5TabCard,
@@ -340,9 +350,11 @@ private fun TabCard(
     hidden: Boolean,
     modifier: Modifier,
     groupTile: V5Tile? = null,
+    onLongPress: ((String) -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val shape = V5Theme.shapes.m
+    val longPressLabel = stringResource(R.string.v5_group_move_title)
     val view = LocalView.current
     val density = LocalDensity.current.density
     val scope = rememberCoroutineScope()
@@ -386,7 +398,17 @@ private fun TabCard(
                 },
             )
             .semantics { selected = card.selected }
-            .clickable(role = Role.Button, onClick = { onSelect(card.id) })
+            .combinedClickable(
+                role = Role.Button,
+                onClick = { onSelect(card.id) },
+                onLongClickLabel = longPressLabel.takeIf { onLongPress != null },
+                onLongClick = onLongPress?.let { press ->
+                    {
+                        view.performV5Haptic(V5Haptic.LongPress)
+                        press(card.id)
+                    }
+                },
+            )
             .testTag(V5OverviewTestTags.card(card.id)),
     ) {
         Box(

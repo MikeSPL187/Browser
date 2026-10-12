@@ -53,12 +53,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
-import dev.sk2andy.materialbrowser.ui.v5.V5OverviewGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewState
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTab
 import dev.sk2andy.materialbrowser.ui.v5.V5TabCard
@@ -184,15 +181,8 @@ private fun OverviewContent(
     val cardIds = cards.mapTo(hashSetOf()) { it.id }
     SideEffect { cardBounds.keys.filter { it !in cardIds }.forEach { cardBounds.remove(it) } }
     // The profile's tab groups (V12a): the same groups the data keeps, in their order.
-    val groups = controller.tabStackController.activeStacks.map { stack ->
-        V5OverviewGroup(
-            id = stack.id,
-            name = stack.name,
-            tabIds = stack.tabIds,
-            collapsed = stack.isCollapsed,
-            tile = stack.color.v5Tile(),
-        )
-    }
+    val groups = controller.tabStackController.activeStacks.map { it.v5Group() }
+    var groupSheet by remember { mutableStateOf<TabGroupSheetTarget?>(null) }
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
@@ -249,6 +239,8 @@ private fun OverviewContent(
                 onCardBounds = { id, bounds -> cardBounds[id] = bounds },
                 heroCardId = heroTabId,
                 onToggleGroup = { id -> if (!exiting) controller.tabStackController.toggleCollapsed(id) },
+                onCardLongPress = { id -> if (!exiting) groupSheet = TabGroupSheetTarget.Move(id) },
+                onGroupLongPress = { id -> if (!exiting) groupSheet = TabGroupSheetTarget.Edit(id) },
             )
             val heroId = heroTabId
             val heroBitmap = heroId?.let { heroPreview(controller, it) }
@@ -260,6 +252,7 @@ private fun OverviewContent(
                     progress = hero.value,
                 )
             }
+            BrowserTabGroupSheetsV5(controller, groupSheet, onTargetChange = { groupSheet = it })
         }
     }
     // «Close all tabs» asks first, like the current overview's menu.
@@ -317,11 +310,3 @@ private const val DARK_SHELL_LUMINANCE = 0.5f
 
 /** Cards grow into place from this scale (system-v5.md, section 7, overviewEnter). */
 private const val ENTER_SCALE = 0.92f
-
-/** A group's color as a v5 section tile: the data keeps four colors, v5 draws them as tiles. */
-private fun TabStackColor.v5Tile(): V5Tile = when (this) {
-    TabStackColor.Grape -> V5Tile.Purple
-    TabStackColor.Cherry -> V5Tile.Red
-    TabStackColor.Lime -> V5Tile.Green
-    TabStackColor.Blueberry -> V5Tile.Blue
-}
