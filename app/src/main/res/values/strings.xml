@@ -1981,6 +1981,20 @@
         <item quantity="one">Group %1$s, %2$d tab</item>
         <item quantity="other">Group %1$s, %2$d tabs</item>
     </plurals>
+    <string name="v5_group_move_title">Move to group</string>
+    <string name="v5_group_current">Current</string>
+    <string name="v5_group_new">New group</string>
+    <string name="v5_group_remove_tab">Remove from group</string>
+    <string name="v5_group_edit_title">Edit group</string>
+    <string name="v5_group_default_name">Group</string>
+    <string name="v5_group_save">Done</string>
+    <string name="v5_group_ungroup">Ungroup</string>
+    <string name="v5_group_name">Group name</string>
+    <string name="v5_group_color">Color</string>
+    <string name="v5_group_color_purple">Purple</string>
+    <string name="v5_group_color_red">Red</string>
+    <string name="v5_group_color_green">Green</string>
+    <string name="v5_group_color_blue">Blue</string>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>

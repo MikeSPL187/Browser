@@ -2063,6 +2063,20 @@
         <item quantity="many">Группа «%1$s», %2$d вкладок</item>
         <item quantity="other">Группа «%1$s», %2$d вкладки</item>
     </plurals>
+    <string name="v5_group_move_title">Переместить в группу</string>
+    <string name="v5_group_current">Текущая</string>
+    <string name="v5_group_new">Новая группа</string>
+    <string name="v5_group_remove_tab">Убрать из группы</string>
+    <string name="v5_group_edit_title">Изменить группу</string>
+    <string name="v5_group_default_name">Группа</string>
+    <string name="v5_group_save">Готово</string>
+    <string name="v5_group_ungroup">Разгруппировать</string>
+    <string name="v5_group_name">Название группы</string>
+    <string name="v5_group_color">Цвет</string>
+    <string name="v5_group_color_purple">Фиолетовый</string>
+    <string name="v5_group_color_red">Красный</string>
+    <string name="v5_group_color_green">Зелёный</string>
+    <string name="v5_group_color_blue">Синий</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
