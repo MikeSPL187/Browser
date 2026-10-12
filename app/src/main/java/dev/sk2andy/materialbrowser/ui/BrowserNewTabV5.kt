@@ -71,6 +71,7 @@ internal fun BrowserNewTabV5(
             state = state,
             onOpenPinned = { id -> essentials.firstOrNull { it.id == id }?.let { onOpenEssential(it.url) } },
             onRemovePinned = { id -> essentials.firstOrNull { it.id == id }?.let { editor?.remove(it) } },
+            onMovePinned = { id, toIndex -> essentials.firstOrNull { it.id == id }?.let { editor?.move(it, toIndex) } },
             onAddPinned = { addVisible = true },
             onOpenReport = { reportVisible = true },
             onHideReport = { protection?.onHideCard?.invoke() },

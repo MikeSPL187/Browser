@@ -23,6 +23,16 @@ class V5NewTabRulesTest {
     }
 
     @Test
+    fun `a dragged tile takes the place it is dropped on`() {
+        val order = listOf("a", "b", "c", "d")
+        assertEquals(listOf("b", "c", "a", "d"), V5NewTabRules.moved(order, "a", 2))
+        assertEquals(listOf("d", "a", "b", "c"), V5NewTabRules.moved(order, "d", 0))
+        assertEquals(listOf("b", "c", "d", "a"), V5NewTabRules.moved(order, "a", 99))
+        assertEquals(order, V5NewTabRules.moved(order, "x", 1))
+        assertEquals(order, V5NewTabRules.moved(order, "b", 1))
+    }
+
+    @Test
     fun `a site keeps its letter tile and never gets gray`() {
         val tile = V5NewTabRules.letterTile("wikipedia.org")
         assertEquals(tile, V5NewTabRules.letterTile("wikipedia.org"))

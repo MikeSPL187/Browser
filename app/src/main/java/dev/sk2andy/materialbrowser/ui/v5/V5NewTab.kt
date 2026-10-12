@@ -1,6 +1,22 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.zIndex
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -105,6 +121,8 @@ fun V5NewTab(
     onOpenRecent: (String) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    /** A pinned site was dragged (or moved by TalkBack) to a new place among the pinned ones. */
+    onMovePinned: (id: String, toIndex: Int) -> Unit = { _, _ -> },
 ) {
     val colors = V5Theme.colors
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -139,6 +157,7 @@ fun V5NewTab(
                 onOpen = onOpenPinned,
                 onRemove = onRemovePinned,
                 onAdd = onAddPinned,
+                onMove = onMovePinned,
             )
             state.report?.let { ReportCard(it, onOpenReport, onHideReport) }
             if (state.recent.isNotEmpty()) Recent(state.recent, onOpenRecent)
@@ -196,6 +215,10 @@ private fun SectionHeader(title: String, action: String? = null, onAction: () ->
     }
 }
 
+/**
+ * The pinned sites. While editing, a long press lifts a tile and it follows the finger; the others
+ * make room at once and the drop saves the new place. Outside editing a long press starts it.
+ */
 @Composable
 private fun Pinned(
     state: V5NewTabState,
@@ -204,7 +227,22 @@ private fun Pinned(
     onOpen: (String) -> Unit,
     onRemove: (String) -> Unit,
     onAdd: () -> Unit,
+    onMove: (String, Int) -> Unit,
 ) {
+    val view = LocalView.current
+    val ids = state.pinned.map { it.id }
+    val byId = state.pinned.associateBy { it.id }
+    // Where each tile sits in the root, before any drag offset, to find the tile under the finger.
+    val bounds = remember { HashMap<String, Rect>() }
+    var dragId by remember { mutableStateOf<String?>(null) }
+    var dragOrder by remember { mutableStateOf(emptyList<String>()) }
+    var pointer by remember { mutableStateOf(Offset.Zero) }
+    var grab by remember { mutableStateOf(Offset.Zero) }
+    val currentIds by rememberUpdatedState(ids)
+    val move by rememberUpdatedState(onMove)
+    val shown = if (dragId == null) ids else dragOrder
+    val moveEarlier = stringResource(R.string.v5_newtab_move_earlier)
+    val moveLater = stringResource(R.string.v5_newtab_move_later)
     Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space3)) {
         SectionHeader(
             title = stringResource(R.string.v5_newtab_pinned),
@@ -216,19 +254,94 @@ private fun Pinned(
             onAction = { onEditingChange(!editing) },
             actionTag = V5NewTabTestTags.Edit,
         )
-        V5NewTabRules.rows(state.pinned.size, canAdd = state.canAdd && !editing).forEach { row ->
-            Row(Modifier.fillMaxWidth()) {
+        V5NewTabRules.rows(shown.size, canAdd = state.canAdd && !editing).forEach { row ->
+            val lifted = row.any { it is V5NewTabRules.Cell.Site && shown[it.index] == dragId }
+            Row(Modifier.fillMaxWidth().zIndex(if (lifted) 1f else 0f)) {
                 row.forEach { cell ->
                     val cellModifier = Modifier.weight(1f)
                     when (cell) {
                         is V5NewTabRules.Cell.Site -> {
-                            val site = state.pinned[cell.index]
-                            PinnedTile(
-                                site = site,
-                                editing = editing,
-                                onClick = { if (editing) onRemove(site.id) else onOpen(site.id) },
-                                modifier = cellModifier,
-                            )
+                            val id = shown[cell.index]
+                            val site = byId[id]
+                            if (site == null) {
+                                Spacer(cellModifier)
+                            } else {
+                                val index = cell.index
+                                val dragging = id == dragId
+                                PinnedTile(
+                                    site = site,
+                                    editing = editing,
+                                    onClick = { if (editing) onRemove(id) else onOpen(id) },
+                                    // While editing a long press lifts the tile (below); taking it here
+                                    // keeps its release from counting as a tap that would unpin.
+                                    onLongClick = if (editing) {
+                                        {}
+                                    } else {
+                                        {
+                                            view.performV5Haptic(V5Haptic.LongPress)
+                                            onEditingChange(true)
+                                        }
+                                    },
+                                    modifier = cellModifier
+                                        .onGloballyPositioned { bounds[id] = it.boundsInRoot() }
+                                        .then(
+                                            if (editing) {
+                                                Modifier.pointerInput(id) {
+                                                    detectDragGesturesAfterLongPress(
+                                                        onDragStart = { local ->
+                                                            val start = bounds[id] ?: return@detectDragGesturesAfterLongPress
+                                                            grab = local
+                                                            pointer = start.topLeft + local
+                                                            dragOrder = currentIds
+                                                            dragId = id
+                                                            view.performV5Haptic(V5Haptic.DragStart)
+                                                        },
+                                                        onDrag = { change, amount ->
+                                                            change.consume()
+                                                            pointer += amount
+                                                            val under = dragOrder.firstOrNull { other ->
+                                                                other != id && bounds[other]?.contains(pointer) == true
+                                                            }
+                                                            if (under != null) {
+                                                                dragOrder = V5NewTabRules.moved(dragOrder, id, dragOrder.indexOf(under))
+                                                                view.performV5Haptic(V5Haptic.SegmentTick)
+                                                            }
+                                                        },
+                                                        onDragEnd = {
+                                                            val to = dragOrder.indexOf(id)
+                                                            dragId = null
+                                                            if (to >= 0 && to != currentIds.indexOf(id)) move(id, to)
+                                                        },
+                                                        onDragCancel = { dragId = null },
+                                                    )
+                                                }
+                                            } else {
+                                                Modifier
+                                            },
+                                        )
+                                        .graphicsLayer {
+                                            val base = bounds[id]
+                                            if (dragging && base != null) {
+                                                translationX = pointer.x - grab.x - base.left
+                                                translationY = pointer.y - grab.y - base.top
+                                                scaleX = PINNED_LIFT_SCALE
+                                                scaleY = PINNED_LIFT_SCALE
+                                            }
+                                        }
+                                        .semantics {
+                                            if (editing) {
+                                                customActions = buildList {
+                                                    if (index > 0) {
+                                                        add(CustomAccessibilityAction(moveEarlier) { move(id, index - 1); true })
+                                                    }
+                                                    if (index < shown.lastIndex) {
+                                                        add(CustomAccessibilityAction(moveLater) { move(id, index + 1); true })
+                                                    }
+                                                }
+                                            }
+                                        },
+                                )
+                            }
                         }
                         V5NewTabRules.Cell.Add -> AddTile(onAdd, cellModifier)
                     }
@@ -240,7 +353,13 @@ private fun Pinned(
 }
 
 @Composable
-private fun PinnedTile(site: V5PinnedSite, editing: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun PinnedTile(
+    site: V5PinnedSite,
+    editing: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier,
+) {
     val colors = V5Theme.colors
     // TalkBack reads the name under the tile; while editing, the action says it removes the site.
     val removeLabel = stringResource(R.string.v5_newtab_remove_pinned, site.title)
@@ -248,6 +367,8 @@ private fun PinnedTile(site: V5PinnedSite, editing: Boolean, onClick: () -> Unit
         label = site.title,
         onClick = onClick,
         onClickLabel = if (editing) removeLabel else null,
+        onLongClick = onLongClick,
+        onLongClickLabel = if (editing) null else stringResource(R.string.v5_newtab_edit),
         modifier = modifier.testTag(V5NewTabTestTags.pinned(site.id)),
     ) {
         Box(
@@ -312,17 +433,26 @@ private fun AddTile(onAdd: () -> Unit, modifier: Modifier) {
 
 /** A tile with its name under it; the tile box is [tile]'s scope, so a badge can sit on its corner. */
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun TileCell(
     label: String,
     onClick: () -> Unit,
     onClickLabel: String?,
     modifier: Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     tile: @Composable BoxScope.() -> Unit,
 ) {
     Column(
         modifier
             .clip(V5Theme.shapes.m)
-            .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
+            .combinedClickable(
+                role = Role.Button,
+                onClickLabel = onClickLabel,
+                onClick = onClick,
+                onLongClickLabel = onLongClickLabel.takeIf { onLongClick != null },
+                onLongClick = onLongClick,
+            )
             .padding(vertical = V5Spacing.space1),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(V5Spacing.space1),
@@ -454,6 +584,9 @@ private fun Recent(tabs: List<V5RecentTab>, onOpen: (String) -> Unit) {
         }
     }
 }
+
+/** A lifted tile grows a little under the finger. */
+private const val PINNED_LIFT_SCALE = 1.08f
 
 /** How much of the surface lies over a tile's blurred icon, so the icon on top stands out. */
 private const val PINNED_VEIL_ALPHA = 0.35f

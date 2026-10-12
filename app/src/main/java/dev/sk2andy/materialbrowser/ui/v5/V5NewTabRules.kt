@@ -26,6 +26,18 @@ object V5NewTabRules {
         return cells.chunked(columns.coerceAtLeast(1))
     }
 
+    /**
+     * [order] with [id] taken out and put back at [toIndex], as the data's own move does: the grid
+     * shows this while a tile is dragged, before the drop saves it.
+     */
+    fun moved(order: List<String>, id: String, toIndex: Int): List<String> {
+        val from = order.indexOf(id)
+        if (from < 0) return order
+        val target = toIndex.coerceIn(0, order.lastIndex)
+        if (target == from) return order
+        return order.toMutableList().apply { add(target, removeAt(from)) }
+    }
+
     /** Tile colors for a site without an icon: the vivid ones, never gray. */
     private val letterTiles = V5Tile.entries.filterNot { it == V5Tile.Gray }
 
