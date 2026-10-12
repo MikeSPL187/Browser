@@ -11,6 +11,29 @@
 | Address-bar connection badge | Opens one site sheet with Privacy X-Ray and Permission Radar tabs, including when no requests were blocked; shows the blocked count and uses distinct HTTPS, HTTP and unavailable indicators; keeps a 48 dp touch target around a 40 dp visible badge |
 | `PrivacyXRaySheet` | Shows the page address connection type and switches between the live X-Ray snapshot and site permissions; Frosted mode blurs the active browser-content source behind the sheet |
 
+## Protection and privacy report
+
+The new tab card's week (П7) and the privacy report (V18, as in Safari) read one store,
+`ProtectionReportStore` (preferences `vola_protection_report`, key `days_v1`).
+
+- **What is kept, per day, for `ProtectionReportRules.KEPT_DAYS` = 30 days:**
+  - blocked requests by the site the user was on (at most 200 sites);
+  - the day's total;
+  - blocks by tracker, meaning the registrable domain of the blocked request (at most 200);
+  - the different trackers each site tried to load (at most 64 per site).
+
+  Page addresses are never kept. Older builds skip the `trackers` and `siteTrackers` keys.
+- **Where the data comes from.** `BrowserController` notes every blocked request with
+  `ProtectionReportController.noteBlocked`; this runs on any thread, both engines feed it, and it
+  keeps at most 64 trackers per tab between two records. The blocker-count flush then hands the tab's
+  burst to `record(tabId, ...)`.
+- **What is never counted.** Private and session-only tabs, and tabs of a workspace behind a lock,
+  only drop what was noted. So does a tab that closes or leaves its site (`forgetTab`).
+- **Reading.** `week` (Compose state) is what the card shows. `summary(7 or 30)` returns totals, days,
+  top sites, top trackers (with the number of sites each was blocked on) and the sites that loaded
+  the most different trackers.
+- **Clearing.** "Clear browsing data" and turning a workspace lock on clear the report.
+
 ## Permission Radar
 
 | Stage | Source | Invariant |
