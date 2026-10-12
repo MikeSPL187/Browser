@@ -69,6 +69,18 @@
     return Boolean(suffix) && isRegistrySuffix(suffix);
   }
 
+  // A list of domains, one per line (financial_sites.txt): whether a host is one of them or under one.
+  function parseSiteList(text) {
+    const sites = new Set(lines(text).map((line) => line.toLowerCase()));
+    return function listed(host) {
+      if (typeof host !== "string" || !host) return false;
+      for (let candidate = host; ; candidate = candidate.slice(candidate.indexOf(".") + 1)) {
+        if (sites.has(candidate)) return true;
+        if (!candidate.includes(".")) return false;
+      }
+    };
+  }
+
   function isUsK12Suffix(labels) {
     return labels.length === 3 && labels[0] === "k12" && labels[1].length === 2 && labels[2] === "us";
   }
@@ -346,12 +358,16 @@
       return { selectors: [], procedural: [] };
     }
     const selectors = [];
-    if (policy.blockAds) {
+    // `listsExempt` (a bank or payment frame) keeps the bundled lists out, never the person's rules.
+    const bundled = Boolean(policy.blockAds) && policy.listsExempt !== true;
+    if (bundled) {
       selectors.push(...HIGH_CONFIDENCE_SELECTORS);
       selectors.push(...scopedSelectors(staticRules.cosmetics, frameHost));
       selectors.push(...staticRules.candyDefaults.filter((rule) =>
         rule.group === "Built-in ads" && hostPatternMatches(frameHost, rule.host),
       ).map((rule) => rule.selector));
+    }
+    if (policy.blockAds) {
       selectors.push(...policy.cosmetics.filter((rule) =>
         hostMatches(frameHost, rule.h),
       ).map((rule) => rule.s));
@@ -362,12 +378,12 @@
       ).map((rule) => rule.selector));
     }
     const unique = [...new Set(selectors)].slice(0, 4096);
-    const procedural = policy.blockAds ? staticRules.procedural.filter((rule) =>
+    const procedural = bundled ? staticRules.procedural.filter((rule) =>
       hostPatternMatches(frameHost, rule.host),
     ).slice(0, 64) : [];
     // `generic` asks the frame to report its class and id names; the complex generic selectors
     // (attribute and descendant ones, a few hundred) come with the payload.
-    const genericPolicy = policy.blockAds && !Array.isArray(staticRules.cosmetics) &&
+    const genericPolicy = bundled && !Array.isArray(staticRules.cosmetics) &&
       staticRules.cosmetics.genericPolicy ? staticRules.cosmetics.genericPolicy(frameHost) : null;
     const genericSelectorList = genericPolicy ? staticRules.cosmetics.generic.complex.filter((selector) =>
       !genericPolicy.denied.has(selector),
@@ -387,6 +403,7 @@
     parseCandyDefaults,
     parseCosmetic,
     parseProcedural,
+    parseSiteList,
     parseWindowOpenDefusers,
     registrableDomain,
     urlPatternMatches,

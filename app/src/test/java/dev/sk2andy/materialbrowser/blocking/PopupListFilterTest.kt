@@ -62,6 +62,33 @@ class PopupListFilterTest {
     }
 
     @Test
+    fun popupsOfBankAndPaymentSitesAreLetThrough() {
+        val withSites = PopupListFilter(
+            loadWaitMillis = 30_000,
+            loadExemptSites = { File("src/blocking/gecko/${PopupListFilter.EXEMPT_SITES_ASSET}").readText() },
+        ) {
+            File("src/blocking/assets/${PopupListFilter.ASSET}").readText()
+        }
+        // A 3-D Secure window from a listed opener, and a bank's own popup.
+        assertEquals(
+            PopupFilterDecision.Allow,
+            withSites.decidePopup("https://3ds.cardinalcommerce.com/acs", "https://sextgem.com/video"),
+        )
+        assertEquals(
+            PopupFilterDecision.Allow,
+            withSites.decidePopup("https://landing.example/offer", "https://online.sberbank.ru/"),
+        )
+        assertEquals(
+            PopupFilterDecision.Allow,
+            withSites.decidePopunder("https://www.paypal.com/checkout", "https://cambro.tv/watch"),
+        )
+        assertEquals(
+            PopupFilterDecision.Block,
+            withSites.decidePopup("https://landing.example/offer", "https://sextgem.com/video"),
+        )
+    }
+
+    @Test
     fun unreadableListLetsPopupsThrough() {
         val broken = PopupListFilter(loadWaitMillis = 30_000) { error("missing") }
         assertEquals(

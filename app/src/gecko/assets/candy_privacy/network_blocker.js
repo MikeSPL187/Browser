@@ -12,6 +12,7 @@
     familyPairs: ["first_party_family_allowed_host_pairs.txt"],
     advanced: "uassets_advanced_filters.txt",
     networkFilters: "easylist_network_filters.txt",
+    exemptSites: "financial_sites.txt",
   });
 
   // URL rules bucketed by target host, so a request checks a handful of rules instead of all.
@@ -77,6 +78,7 @@
     lists = {},
     advancedText = "",
     networkFiltersText = "",
+    exemptSitesText = "",
     rules = global.CandyPrivacyRules,
     hostBlocker = global.CandyHostBlocker,
     networkFilters = global.CandyNetworkFilters,
@@ -93,14 +95,17 @@
     const filterDecision = networkFilters.index(urlFilters, rules);
     const windowOpenDefusers = advancedText ? rules.parseWindowOpenDefusers(advancedText) : [];
     const defusedHosts = new Map();
+    const exempt = rules.parseSiteList(exemptSitesText);
 
     // { action: "A" | "B", ruleId?, builtIn } or null for no opinion. A user rule decides first;
     // Strict drops the bundled lists' compatibility exceptions, never the person's own rules.
     // `type` is the webRequest resource type; EasyList rules may name one. `documentHost` is the
     // frame's own document: list rules judge `domain=` and the party against it, as uBlock Origin
-    // does, so a rule for ads inside an ad iframe sees the iframe, not the top page.
+    // does, so a rule for ads inside an ad iframe sees the iframe, not the top page. On a bank or
+    // payment site, and in such a site's frame on another page (`frameHosts`: every enclosing frame),
+    // the bundled lists stay out.
     function decide(requestUrl, pageHost, {
-      strict = false, userRules = [], type = "other", documentHost = null,
+      strict = false, userRules = [], type = "other", documentHost = null, frameHosts = [],
     } = {}) {
       let requestHost;
       try {
@@ -115,6 +120,9 @@
       const context = typeof documentHost === "string" && documentHost ? documentHost.toLowerCase() : page;
       const user = userDecision(userRules, requestHost, page);
       if (user !== null) return user;
+      if (exempt(page) || exempt(context) || (Array.isArray(frameHosts) && frameHosts.some(exempt))) {
+        return null;
+      }
       const advanced = rules.advancedDecision(
         (strict ? strictCandidates : candidates)(requestHost),
         requestUrl,
@@ -134,7 +142,7 @@
     function defusesWindowOpen(pageHost) {
       if (!defusedHosts.has(pageHost)) {
         if (defusedHosts.size >= 256) defusedHosts.delete(defusedHosts.keys().next().value);
-        defusedHosts.set(pageHost, rules.defusesWindowOpen(windowOpenDefusers, pageHost));
+        defusedHosts.set(pageHost, !exempt(pageHost) && rules.defusesWindowOpen(windowOpenDefusers, pageHost));
       }
       return defusedHosts.get(pageHost);
     }
@@ -142,6 +150,7 @@
     return {
       decide,
       defusesWindowOpen,
+      exempts: exempt,
       windowOpenDefuserCount: windowOpenDefusers.length,
       indexedSizes: hosts.indexedSizes,
       advancedRuleCount: advancedRules.length,
@@ -152,21 +161,25 @@
   // Reads every list through load(fileName) -> Promise<string>; a missing list fails the load.
   async function load(loadText, options = {}) {
     const read = (names) => Promise.all(names.map(loadText));
-    const [hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs, advancedText, networkFiltersText] =
-      await Promise.all([
-        read(LIST_FILES.hostLists),
-        read(LIST_FILES.indexedLists),
-        read(LIST_FILES.blockedPairs),
-        read(LIST_FILES.allowedPairs),
-        read(LIST_FILES.familyPairs),
-        loadText(LIST_FILES.advanced),
-        loadText(LIST_FILES.networkFilters),
-      ]);
+    const [
+      hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs, advancedText, networkFiltersText,
+      exemptSitesText,
+    ] = await Promise.all([
+      read(LIST_FILES.hostLists),
+      read(LIST_FILES.indexedLists),
+      read(LIST_FILES.blockedPairs),
+      read(LIST_FILES.allowedPairs),
+      read(LIST_FILES.familyPairs),
+      loadText(LIST_FILES.advanced),
+      loadText(LIST_FILES.networkFilters),
+      loadText(LIST_FILES.exemptSites),
+    ]);
     return create({
       ...options,
       lists: { hostLists, indexedLists, blockedPairs, allowedPairs, familyPairs },
       advancedText,
       networkFiltersText,
+      exemptSitesText,
     });
   }
 

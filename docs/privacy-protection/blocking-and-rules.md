@@ -111,6 +111,17 @@ off by default; uBlock Origin keeps running alongside until the switch-over step
   with its cosmetics (`defuseWindowOpen`): the page's `window.open` opens nothing, defined in the
   page's own scope through `exportFunction`, as `CandyWindowOpenDefuserScript` does on WebView.
   Popups to hosts on the host lists are not blocked on Gecko yet (WebView checks them too).
+- Banks, payments and government services (`app/src/blocking/gecko/financial_sites.txt`, about 140
+  domains, each covering its subdomains): on these sites, and in their frames on other pages (a
+  3-D Secure check, a payment widget; a request checks every enclosing frame through
+  `frameAncestors`), the bundled lists block no request, hide nothing, leave `window.open` alone,
+  and `PopupListFilter` lets a popup through when either end is such a site. A missed tracker
+  costs less than a broken sign-in or payment. The person's own rules, request and hiding ones
+  (`listsExempt` keeps only the bundled lists out of a frame's answer), still apply there; Strict
+  keeps the exception. `network_blocker.js` reads the list with the network
+  lists, the background page with the cookie rules (every frame's answer waits for those), and
+  Kotlin through `ExemptSites`. Google sign-in, mail and maps keep their own cosmetic exception
+  (`SENSITIVE_HOSTS`).
 - Tests: `scripts/host_blocker.test.mjs`, `scripts/network_blocker.test.mjs`,
   `scripts/candy_privacy_rules.test.mjs` (index matches the full scan on real lists). The host
 also retains session binding, Reader extraction, PiP playback continuity and narrowly scoped

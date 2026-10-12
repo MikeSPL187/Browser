@@ -3,6 +3,7 @@
 const NATIVE_APP = "dev.sk2andy.materialbrowser.privacy";
 const PROTOCOL_VERSION = 2;
 const COOKIE_RULE_FILE = "candy_default_rules.txt";
+const EXEMPT_SITES_FILE = "financial_sites.txt";
 const policiesByToken = new Map();
 const latestPolicyRevisionByToken = new Map();
 const tokenByTab = new Map();
@@ -247,13 +248,24 @@ async function loadText(fileName) {
   return response.text();
 }
 
+// The bank and payment sites travel with the cookie rules: every frame's answer waits for those.
 async function loadCookieRules() {
-  const candyDefaults = await loadText(COOKIE_RULE_FILE);
+  const [candyDefaults, exemptSites] = await Promise.all([
+    loadText(COOKIE_RULE_FILE),
+    loadText(EXEMPT_SITES_FILE),
+  ]);
   return {
     cosmetics: [],
     procedural: [],
     candyDefaults: CandyPrivacyRules.parseCandyDefaults(candyDefaults),
+    exemptSites: CandyPrivacyRules.parseSiteList(exemptSites),
   };
+}
+
+// No bundled ad hiding and no window.open defusing in a bank or payment frame, or on such a
+// site's page; the person's own hiding rules still apply.
+function exemptFromAds(frameHost, pageHost) {
+  return Boolean(cookieRules) && (cookieRules.exemptSites(frameHost) || cookieRules.exemptSites(pageHost));
 }
 
 function ensureCookieRules() {
@@ -330,6 +342,9 @@ function networkDecision(details, token, policy, pageHost) {
       userRules: policy.rules,
       type: details.type,
       documentHost: hostFromUrl(details.documentUrl),
+      // Every enclosing frame, so a bank's page inside a payment provider's frame is left alone too.
+      frameHosts: Array.isArray(details.frameAncestors) ?
+        details.frameAncestors.map((ancestor) => hostFromUrl(ancestor.url)) : [],
     });
     if (decision === null) return {};
     queueEvent(token, policy.revision, {
@@ -871,12 +886,15 @@ browser.runtime.onMessage.addListener((message, sender) => {
       return Promise.resolve({ type: "cosmetics", selectors: [], procedural: [] });
     }
     const pageHost = policy.pageHost || frameHost;
-    return cosmeticRulesFor(policy).then((rules) => ({
+    const exempt = exemptFromAds(frameHost, pageHost);
+    const framePolicy = exempt ? { ...policy, listsExempt: true } : policy;
+    // An exempt frame needs no bundled ad cosmetics: only the cookie rules and the person's own.
+    return cosmeticRulesFor(exempt ? { blockAds: false } : policy).then((rules) => ({
       type: "cosmetics",
       revision: policy.revision,
-      ...CandyPrivacyRules.cosmeticPayload(rules, policy, frameHost),
-      defuseWindowOpen: policy.blockAds === true && Boolean(networkBlocker) && !isPaused(policy, pageHost) &&
-        networkBlocker.defusesWindowOpen(pageHost),
+      ...CandyPrivacyRules.cosmeticPayload(rules, framePolicy, frameHost),
+      defuseWindowOpen: policy.blockAds === true && !exempt && Boolean(networkBlocker) &&
+        !isPaused(policy, pageHost) && networkBlocker.defusesWindowOpen(pageHost),
     }));
   }
   // A frame that got `generic: true` reports the class and id names it uses; the answer is the
@@ -886,7 +904,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
     const policy = token && policiesByToken.get(token);
     const frameHost = hostFromUrl(sender.url);
     if (!policy || policy.blockAds !== true || !adCosmetics || !frameHost ||
-        isPaused(policy, policy.pageHost || frameHost)) {
+        isPaused(policy, policy.pageHost || frameHost) || exemptFromAds(frameHost, policy.pageHost || frameHost)) {
       return Promise.resolve({ type: "genericCosmetics", selectors: [] });
     }
     return Promise.resolve({
