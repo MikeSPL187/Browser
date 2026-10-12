@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -54,6 +55,8 @@ object V5PageMenuTestTags {
     const val Print = "v5_menu_print"
     const val Read = "v5_menu_read"
     const val AllActions = "v5_menu_all_actions"
+    const val HideDistractions = "v5_menu_hide_distractions"
+    const val ShowHidden = "v5_menu_show_hidden"
 }
 
 /** What the menu shows about the selected tab. A null toggle is not available for this page. */
@@ -74,6 +77,10 @@ data class V5PageMenuState(
     val desktopView: Boolean?,
     val siteMuted: Boolean?,
     val canCloseTab: Boolean,
+    /** «Hide distracting items» applies: a web page with an engine that can (GeckoView, V20). */
+    val canHideDistractions: Boolean = false,
+    /** Blocks hidden on this site; «Show hidden items» from one. */
+    val hiddenCount: Int = 0,
 )
 
 /** The menu's actions. Each one but the toggles closes the menu first. */
@@ -96,6 +103,8 @@ class V5PageMenuActions(
     val onDownloads: () -> Unit,
     val onSettings: () -> Unit,
     val onAllActions: () -> Unit,
+    val onHideDistractions: () -> Unit = {},
+    val onShowHidden: () -> Unit = {},
 )
 
 @Composable
@@ -208,6 +217,22 @@ private fun PageGroup(
             icon = V5RowIcon(VolaIcons.Search),
             onClick = closing(actions.onFindInPage),
         )
+        if (state.canHideDistractions) {
+            V5ListRow(
+                stringResource(R.string.v5_distractions_hide),
+                icon = V5RowIcon(VolaIcons.VisibilityOff),
+                onClick = closing(actions.onHideDistractions),
+                modifier = Modifier.testTag(V5PageMenuTestTags.HideDistractions),
+            )
+            if (state.hiddenCount > 0) {
+                V5ListRow(
+                    pluralStringResource(R.plurals.v5_distractions_show, state.hiddenCount, state.hiddenCount),
+                    icon = V5RowIcon(VolaIcons.Visibility),
+                    onClick = closing(actions.onShowHidden),
+                    modifier = Modifier.testTag(V5PageMenuTestTags.ShowHidden),
+                )
+            }
+        }
         V5ListRow(
             stringResource(if (state.isPinned) R.string.v5_menu_unpin_tab else R.string.action_pin_tab),
             icon = V5RowIcon(VolaIcons.PushPin),
