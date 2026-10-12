@@ -14,6 +14,7 @@ class HiddenDistractionsControllerTest {
         val lists = mutableMapOf<String, HiddenDistractions>()
         val deleted = mutableListOf<String>()
         var loads = 0
+        var clears = 0
 
         override fun load(profileId: String): HiddenDistractions {
             loads++
@@ -27,6 +28,11 @@ class HiddenDistractionsControllerTest {
         override fun delete(profileId: String) {
             deleted += profileId
             lists.remove(profileId)
+        }
+
+        override fun clearAll() {
+            clears++
+            lists.clear()
         }
     }
 
@@ -165,6 +171,45 @@ class HiddenDistractionsControllerTest {
         assertEquals(emptyList<String>(), controller.selectorsFor(tab, tab.url))
         assertEquals(HiddenDistractions(), storage.lists["work"])
         assertEquals(before + 1, refreshes)
+    }
+
+    @Test
+    fun `show all in a private tab holds for private tabs in memory and leaves the disk alone`() {
+        storedFor("work", "news.example", "#saved")
+        controller.selectorsFor(tab, tab.url)
+        host.runBackground()
+
+        controller.showAll(privateTab)
+        host.runBackground()
+
+        assertEquals(emptyList<String>(), controller.selectorsFor(privateTab, privateTab.url))
+        assertEquals(listOf("#saved"), controller.selectorsFor(tab, tab.url))
+        assertEquals(listOf("#saved"), storage.lists["work"]?.selectorsFor("news.example"))
+
+        controller.endPrivateSession()
+
+        assertEquals(listOf("#saved"), controller.selectorsFor(privateTab, privateTab.url))
+    }
+
+    @Test
+    fun `clearing browsing data forgets every hidden block, saved and private, even while read`() {
+        storedFor("work", "news.example", "#saved")
+        storedFor("home", "mail.example", "#ad")
+        val page = FakePage()
+        pages[privateTab.id] = page
+        controller.selectorsFor(tab, tab.url)
+        host.runBackground()
+        controller.startPicking(privateTab, highlightArgb = 0)
+        page.listener!!.onHidden("news.example", "#private")
+        controller.selectorsFor(tab.copy(profileId = "home", url = "https://mail.example/"), "https://mail.example/")
+
+        controller.clearAll()
+        host.runBackground()
+
+        assertEquals(1, storage.clears)
+        assertTrue(storage.lists.isEmpty())
+        assertEquals(emptyList<String>(), controller.selectorsFor(tab, tab.url))
+        assertEquals(emptyList<String>(), controller.selectorsFor(privateTab, privateTab.url))
     }
 
     @Test

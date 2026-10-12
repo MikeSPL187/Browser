@@ -46,6 +46,12 @@ internal class HiddenDistractionsController(
     private val saved = mutableMapOf<String, Saved>()
     private val privateSession = mutableMapOf<String, HiddenDistractions>()
 
+    /**
+     * Sites whose blocks a private tab showed again, by profile: private tabs show them there until
+     * the private session ends, and the profile's saved list stays as it is on the disk.
+     */
+    private val privateShown = mutableMapOf<String, MutableSet<String>>()
+
     /** Grows with every change, so a screen that reads [hiddenCount] recomposes. */
     var revision by mutableLongStateOf(0L)
         private set
@@ -59,8 +65,10 @@ internal class HiddenDistractionsController(
         val pageHost = PrivacyRequestSanitizer.webHost(pageUrl) ?: return emptyList()
         val profile = savedFor(tab.profileId).current().selectorsFor(pageHost)
         if (!tab.isIncognito) return profile
+        val shown = privateShown[tab.profileId]?.contains(pageHost) == true
         val session = privateSession[tab.profileId]?.selectorsFor(pageHost).orEmpty()
-        return (profile + session).distinct().takeLast(HiddenDistractionsRules.MAX_SELECTORS_PER_SITE)
+        return ((if (shown) emptyList() else profile) + session).distinct()
+            .takeLast(HiddenDistractionsRules.MAX_SELECTORS_PER_SITE)
     }
 
     /** How many blocks [tab]'s page hides; read from a screen, it follows every change. */
@@ -91,27 +99,46 @@ internal class HiddenDistractionsController(
         pageFor(tabId)?.stopPicking()
     }
 
-    /** Shows again every block hidden on the site of [tab]'s page, «Show hidden items». */
+    /**
+     * Shows again every block hidden on the site of [tab]'s page, «Show hidden items». From a
+     * private tab it holds for private tabs only and in memory only: the saved list is not touched.
+     */
     fun showAll(tab: BrowserTab) {
         val pageHost = PrivacyRequestSanitizer.webHost(tab.url) ?: return
         privateSession[tab.profileId]?.let { session ->
             privateSession[tab.profileId] = HiddenDistractionsRules.showAll(session, pageHost)
         }
+        if (tab.isIncognito) {
+            privateShown.getOrPut(tab.profileId) { mutableSetOf() } += pageHost
+            changed()
+            return
+        }
         change(tab.profileId) { HiddenDistractionsRules.showAll(it, pageHost) }
+    }
+
+    /** Clearing the browsing data forgets every hidden block: the sites alone tell where one has been. */
+    fun clearAll() {
+        saved.clear()
+        privateSession.clear()
+        privateShown.clear()
+        host.runInBackground { storage.clearAll() }
+        changed()
     }
 
     /** A deleted profile's list goes with it. */
     fun forgetProfile(profileId: String) {
         saved.remove(profileId)
         privateSession.remove(profileId)
+        privateShown.remove(profileId)
         host.runInBackground { storage.delete(profileId) }
         revision++
     }
 
     /** The last private tab closed: what its pages hid is forgotten. */
     fun endPrivateSession() {
-        if (privateSession.isEmpty()) return
+        if (privateSession.isEmpty() && privateShown.isEmpty()) return
         privateSession.clear()
+        privateShown.clear()
         revision++
     }
 

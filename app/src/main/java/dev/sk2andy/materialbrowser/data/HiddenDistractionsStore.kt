@@ -9,6 +9,9 @@ internal interface HiddenDistractionsStorage {
     fun save(profileId: String, state: HiddenDistractions)
 
     fun delete(profileId: String)
+
+    /** Every profile's list, with the browsing data. */
+    fun clearAll()
 }
 
 /** One preference per profile in the app's private storage; private tabs never reach it. */
@@ -27,6 +30,10 @@ internal class HiddenDistractionsStore(context: Context) : HiddenDistractionsSto
 
     override fun delete(profileId: String) {
         preferences.edit().remove(key(profileId)).apply()
+    }
+
+    override fun clearAll() {
+        preferences.edit().clear().apply()
     }
 
     private fun key(profileId: String) = "profile_$profileId"

@@ -223,15 +223,20 @@ test("choosing mode outlines a block, hides it on the second tap and tells Vola"
   assert.equal(sheet.textContent, "#cookie-wall{display:none!important}");
 
   onMessage({ type: "distractions-pick", active: true, highlightColor: "#336699" });
-  const tap = (target) => {
-    const event = { type: "click", target, cancelable: true, stopImmediatePropagation() { this.stopped = true; }, preventDefault() { this.prevented = true; } };
+  const tap = (target, isTrusted = true) => {
+    const event = { type: "click", target, isTrusted, cancelable: true, stopImmediatePropagation() { this.stopped = true; }, preventDefault() { this.prevented = true; } };
     listeners.click(event);
     return event;
   };
+  // The page's own script cannot choose: a synthetic click is swallowed and outlines nothing.
+  const forged = tap(word, false);
+  assert.ok(forged.stopped, "the page never sees its own synthetic click either");
+  assert.equal(appended.find((node) => node.name === "div"), undefined);
+  listeners.touchstart({ type: "touchstart", isTrusted: false, touches: [{ clientX: 0, clientY: 0 }], stopImmediatePropagation() {} });
   // The engine moved the click onto a nearby link; the touch began on the banner.
   const link = element("a", { parent: body, rect: { width: 360, height: 40 } });
   document.elementFromPoint = (x, y) => (x === 30 && y === 120 ? word : null);
-  listeners.touchstart({ type: "touchstart", touches: [{ clientX: 30, clientY: 120 }], stopImmediatePropagation() {} });
+  listeners.touchstart({ type: "touchstart", isTrusted: true, touches: [{ clientX: 30, clientY: 120 }], stopImmediatePropagation() {} });
   const first = tap(link);
   assert.ok(first.stopped && first.prevented, "the page never sees the tap");
   const outline = appended.find((node) => node.name === "div");

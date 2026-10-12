@@ -231,8 +231,10 @@
 
   // The engine moves a tap's click onto a nearby link or button (Gecko's `ui.mouse.radius`); the
   // block under the finger is where the touch began, so the click is read from there.
+  // Only the user's own touches and taps choose: the page's script can dispatch synthetic ones.
   const onTouchStart = (event) => {
     swallow(event);
+    if (!event.isTrusted) return;
     const touch = event.touches?.[0];
     if (picking && touch) picking.touch = { x: touch.clientX, y: touch.clientY, at: Date.now() };
   };
@@ -246,6 +248,7 @@
 
   const onClick = (event) => {
     swallow(event);
+    if (!event.isTrusted) return;
     const state = picking;
     if (!state) return;
     const tapped = tappedBy(state, event);

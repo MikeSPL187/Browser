@@ -9846,9 +9846,7 @@ class BrowserController(
         activePermissions.clear()
         permissionRepository.clearAll()
         permissionRevision++
-        tabs.forEach { tab ->
-            updateProtectionRequestContext(tab.id, pageUrls[tab.id] ?: tab.url)
-        }
+        tabs.forEach { tab -> updateProtectionRequestContext(tab.id, pageUrls[tab.id] ?: tab.url) }
         mainHandler.removeCallbacks(blockerCountFlush)
         synchronized(privacyEventLock) {
             pendingBlockedCounts.clear()
@@ -9866,6 +9864,7 @@ class BrowserController(
         }
         privacySnapshots.clear()
         protectionReport.clear()
+        hiddenDistractions.clearAll()
         temporarySiteExceptions.clear()
         permanentSiteExceptions = emptyMap()
         store.savePermanentSiteExceptions(emptyMap())
