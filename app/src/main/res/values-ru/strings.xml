@@ -2171,6 +2171,12 @@
     <string name="v5_site_https">Только HTTPS</string>
     <string name="v5_site_reset">Сбросить сайт к умолчаниям</string>
     <string name="v5_site_back">Назад</string>
+    <string name="v5_glance_open">Открыть</string>
+    <string name="v5_glance_background">В фоне</string>
+    <string name="v5_glance_opened_background">Открыто в фоне</string>
+    <string name="v5_glance_more">Ещё действия со ссылкой</string>
+    <string name="v5_glance_private">Открыть в частной вкладке</string>
+    <string name="v5_glance_private_note">Частная вкладка: из просмотра ничего не сохранится</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>

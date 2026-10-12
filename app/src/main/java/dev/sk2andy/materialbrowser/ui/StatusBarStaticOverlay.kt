@@ -46,6 +46,12 @@ internal class StatusBarStaticOverlayHost(
         )
     }
 
+    // Watches, never takes: the v5 link preview flies out of the last touch on the page (V21).
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) PageTouchPoint.record(this, event)
+        return super.onInterceptTouchEvent(event)
+    }
+
     fun updatePullToRefresh(
         enabled: Boolean,
         refreshing: Boolean,

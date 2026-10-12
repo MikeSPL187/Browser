@@ -133,4 +133,17 @@ object V5Sizes {
     // Private new tab (canvas screen «h1»): the round plate of the mask and the mask on it.
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
+
+    // Link preview (canvas screen «н1»).
+    /** The address line over the live page in the preview card. */
+    val glanceHeader: Dp = 40.dp
+    /** The card's width on a wide window; a phone gives it the whole width less the margins. */
+    val glanceMaxWidth: Dp = 480.dp
+    /** The square the card grows from at the touch point, and its corners there. */
+    val glanceOrigin: Dp = 48.dp
+    val glanceOriginRadius: Dp = 6.dp
+    /** The shrunk page's corners, close to a phone screen's own. */
+    val glancePageRadius: Dp = 36.dp
+    /** Space between the card and its buttons. */
+    val glanceActionsGap: Dp = 14.dp
 }

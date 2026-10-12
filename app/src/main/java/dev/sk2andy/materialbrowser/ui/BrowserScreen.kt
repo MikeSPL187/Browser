@@ -1394,7 +1394,7 @@ internal fun BrowserScreen(
                 browserRootBottomInWindowPx = coordinates.boundsInWindow().bottom.roundToInt()
             }
             .background(VolaTheme.auraBrush)
-            .hiddenUnderModal(controller.contentActions.isLinkPeekVisible || LocalBrowserUnderFirstRun.current),
+            .hiddenUnderModal(controller.contentActions.isLinkPeekVisible || LocalBrowserUnderFirstRun.current).linkGlancePageScale(),
     ) {
         CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
             Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible || tabOverviewVisible || snoozedTabsVisible)) {
