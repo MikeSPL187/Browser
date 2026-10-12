@@ -2120,6 +2120,8 @@
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
     <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
+    <string name="v5_newtab_move_earlier">Переместить раньше</string>
+    <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
