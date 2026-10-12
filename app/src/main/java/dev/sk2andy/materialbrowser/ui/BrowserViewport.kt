@@ -556,6 +556,7 @@ internal fun BrowserViewport(
                                 week = report.week,
                                 onClear = report::clear,
                                 onHideCard = { report.updateCardVisible(false) },
+                                summary = report::summary,
                             )
                         },
                         recentTabs = controller.activeTabs

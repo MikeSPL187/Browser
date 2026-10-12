@@ -111,4 +111,12 @@ object V5Sizes {
     /** A collapsed group's fan of pages (canvas `.gcol`): each thumbnail and how far they overlap. */
     val groupPreview: Dp = 32.dp
     val groupPreviewOverlap: Dp = 12.dp
+
+    // Privacy report (canvas screen «л1»).
+    /** The bar chart of blocks by day, the gap between its bars and their corners. */
+    val reportChart: Dp = 72.dp
+    val reportBarGap: Dp = 3.dp
+    val reportBarRadius: Dp = 3.dp
+    /** A row with a caption, a value and a detail line: the report's two findings. */
+    val rowThreeLine: Dp = 72.dp
 }

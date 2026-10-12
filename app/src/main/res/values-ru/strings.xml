@@ -2077,6 +2077,39 @@
     <string name="v5_group_color_red">Красный</string>
     <string name="v5_group_color_green">Зелёный</string>
     <string name="v5_group_color_blue">Синий</string>
+    <string name="v5_report_title">Отчёт о приватности</string>
+    <plurals name="v5_report_days">
+        <item quantity="one">%d день</item>
+        <item quantity="few">%d дня</item>
+        <item quantity="many">%d дней</item>
+        <item quantity="other">%d дня</item>
+    </plurals>
+    <plurals name="v5_report_blocked">
+        <item quantity="one">%1$s блокировка трекеров и рекламы</item>
+        <item quantity="few">%1$s блокировки трекеров и рекламы</item>
+        <item quantity="many">%1$s блокировок трекеров и рекламы</item>
+        <item quantity="other">%1$s блокировки трекеров и рекламы</item>
+    </plurals>
+    <string name="v5_report_chart">Блокировки по дням; сегодня — %1$s</string>
+    <string name="v5_report_empty">За этот период пока ничего не заблокировано.</string>
+    <string name="v5_report_top_tracker">Самый частый трекер</string>
+    <plurals name="v5_report_tracker_sites">
+        <item quantity="one">заблокирован на %d сайте</item>
+        <item quantity="few">заблокирован на %d сайтах</item>
+        <item quantity="many">заблокирован на %d сайтах</item>
+        <item quantity="other">заблокирован на %d сайта</item>
+    </plurals>
+    <string name="v5_report_busiest_site">Сайт с наибольшим числом трекеров</string>
+    <plurals name="v5_report_site_trackers">
+        <item quantity="one">пытался загрузить %d трекер</item>
+        <item quantity="few">пытался загрузить %d разных трекера</item>
+        <item quantity="many">пытался загрузить %d разных трекеров</item>
+        <item quantity="other">пытался загрузить %d разных трекера</item>
+    </plurals>
+    <string name="v5_report_device_only">Хранится только на этом устройстве и никуда не отправляется. Частные вкладки не учитываются.</string>
+    <string name="v5_report_hide_card">Не показывать на новой вкладке</string>
+    <string name="v5_report_clear">Очистить данные отчёта</string>
+    <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>

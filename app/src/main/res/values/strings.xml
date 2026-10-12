@@ -1995,6 +1995,31 @@
     <string name="v5_group_color_red">Red</string>
     <string name="v5_group_color_green">Green</string>
     <string name="v5_group_color_blue">Blue</string>
+    <string name="v5_report_title">Privacy report</string>
+    <plurals name="v5_report_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="v5_report_blocked">
+        <item quantity="one">%1$s tracker or ad blocked</item>
+        <item quantity="other">%1$s trackers and ads blocked</item>
+    </plurals>
+    <string name="v5_report_chart">Blocks by day; today %1$s</string>
+    <string name="v5_report_empty">Nothing blocked in this period yet.</string>
+    <string name="v5_report_top_tracker">Most frequent tracker</string>
+    <plurals name="v5_report_tracker_sites">
+        <item quantity="one">blocked on %d site</item>
+        <item quantity="other">blocked on %d sites</item>
+    </plurals>
+    <string name="v5_report_busiest_site">Site with the most trackers</string>
+    <plurals name="v5_report_site_trackers">
+        <item quantity="one">tried to load %d tracker</item>
+        <item quantity="other">tried to load %d different trackers</item>
+    </plurals>
+    <string name="v5_report_device_only">Stored only on this device and never sent anywhere. Private tabs are not counted.</string>
+    <string name="v5_report_hide_card">Hide on new tab</string>
+    <string name="v5_report_clear">Clear report data</string>
+    <string name="v5_report_clear_body">The report\'s counts are deleted from this device. Protection keeps working.</string>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
