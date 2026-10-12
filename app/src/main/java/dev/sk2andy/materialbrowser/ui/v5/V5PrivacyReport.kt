@@ -46,7 +46,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import java.text.NumberFormat
-import java.util.Locale
 
 object V5PrivacyReportTestTags {
     const val Total = "v5_report_total"
@@ -283,6 +282,6 @@ private fun DeviceNote() {
 
 @Composable
 private fun rememberCountFormat(): NumberFormat {
-    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     return remember(locale) { NumberFormat.getIntegerInstance(locale) }
 }
