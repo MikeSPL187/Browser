@@ -57,7 +57,7 @@ class ProtectionReportController internal constructor(
         val requestHost = CandyHostCanonicalizer.webHost(requestUrl) ?: return
         val tracker = CandyPublicSuffixRules.registrableDomain(requestHost) ?: requestHost
         val trackers = pendingTrackers.computeIfAbsent(tabId) { ConcurrentHashMap() }
-        if (trackers.size < MAX_PENDING_TRACKERS_PER_TAB || tracker in trackers) {
+        if (trackers.size < MAX_PENDING_TRACKERS_PER_TAB || trackers.containsKey(tracker)) {
             trackers.computeIfAbsent(tracker) { AtomicInteger() }.incrementAndGet()
         }
     }
