@@ -1385,7 +1385,7 @@ class BrowserController(
             localProfiles.flatMap { profile -> essentials.entriesFor(profile.id).map { it.url } }
     }
     val protectionReport = androidProtectionReportController(activity, mainHandler)
-    val hiddenDistractions = androidHiddenDistractionsController(activity, mainHandler, { browserEngineSessions[it]?.pageDistractions() }, ::refreshGeckoContentTopInsetPolicies)
+    internal val hiddenDistractions = androidHiddenDistractionsController(activity, mainHandler, { browserEngineSessions[it]?.pageDistractions() }, ::refreshGeckoContentTopInsetPolicies)
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
