@@ -17,6 +17,8 @@
   // A block that fills the screen is the page itself, not a distraction.
   const maxViewportShare = 0.9;
   const fadeMs = 220;
+  // A click this soon after a touch belongs to it.
+  const touchClickMs = 1000;
   const defaultHighlight = "#0a84ff";
   const tag = "vola-hide-distractions";
   // State and decoration classes change while the page runs, so a selector never relies on them.
@@ -227,11 +229,26 @@
     }
   };
 
+  // The engine moves a tap's click onto a nearby link or button (Gecko's `ui.mouse.radius`); the
+  // block under the finger is where the touch began, so the click is read from there.
+  const onTouchStart = (event) => {
+    swallow(event);
+    const touch = event.touches?.[0];
+    if (picking && touch) picking.touch = { x: touch.clientX, y: touch.clientY, at: Date.now() };
+  };
+
+  const tappedBy = (state, event) => {
+    const touch = state.touch;
+    state.touch = null;
+    if (!touch || Date.now() - touch.at > touchClickMs) return event.target;
+    return document.elementFromPoint(touch.x, touch.y) || event.target;
+  };
+
   const onClick = (event) => {
     swallow(event);
     const state = picking;
     if (!state) return;
-    const tapped = event.target;
+    const tapped = tappedBy(state, event);
     if (state.target && tapped && (state.target === tapped || state.target.contains(tapped))) {
       hide(state, state.target);
       return;
@@ -241,7 +258,7 @@
 
   const onMove = () => { if (picking) place(picking); };
 
-  const swallowed = ["mousedown", "mouseup", "pointerdown", "pointerup", "touchstart", "touchend",
+  const swallowed = ["mousedown", "mouseup", "pointerdown", "pointerup", "touchend",
     "dblclick", "auxclick", "contextmenu", "submit"];
 
   const startPicking = (color) => {
@@ -249,8 +266,9 @@
       picking.color = color;
       return;
     }
-    picking = { color, target: null, box: null };
+    picking = { color, target: null, box: null, touch: null };
     globalThis.addEventListener("click", onClick, { capture: true });
+    globalThis.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
     swallowed.forEach((type) => globalThis.addEventListener(type, swallow, { capture: true, passive: type.startsWith("touch") }));
     globalThis.addEventListener("scroll", onMove, { capture: true, passive: true });
     globalThis.addEventListener("resize", onMove, { passive: true });
@@ -261,6 +279,7 @@
     outline(picking, null);
     picking = null;
     globalThis.removeEventListener("click", onClick, { capture: true });
+    globalThis.removeEventListener("touchstart", onTouchStart, { capture: true });
     swallowed.forEach((type) => globalThis.removeEventListener(type, swallow, { capture: true }));
     globalThis.removeEventListener("scroll", onMove, { capture: true });
     globalThis.removeEventListener("resize", onMove);

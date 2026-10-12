@@ -228,7 +228,11 @@ test("choosing mode outlines a block, hides it on the second tap and tells Vola"
     listeners.click(event);
     return event;
   };
-  const first = tap(word);
+  // The engine moved the click onto a nearby link; the touch began on the banner.
+  const link = element("a", { parent: body, rect: { width: 360, height: 40 } });
+  document.elementFromPoint = (x, y) => (x === 30 && y === 120 ? word : null);
+  listeners.touchstart({ type: "touchstart", touches: [{ clientX: 30, clientY: 120 }], stopImmediatePropagation() {} });
+  const first = tap(link);
   assert.ok(first.stopped && first.prevented, "the page never sees the tap");
   const outline = appended.find((node) => node.name === "div");
   assert.equal(outline.properties.width, "360px");
