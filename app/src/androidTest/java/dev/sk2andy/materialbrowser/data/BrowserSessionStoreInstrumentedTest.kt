@@ -216,7 +216,7 @@ class BrowserSessionStoreInstrumentedTest {
         )
         val stackJson =
             """{"id":"stack","profileId":"candy","name":"Ideas","tabIds":["one","two"]}"""
-        val tooManyStacks = List(TabStackRules.MAX_STACKS + 1) { stackJson }
+        val tooManyStacks = List(TabStackRules.MAX_STORED_STACKS + 1) { stackJson }
             .joinToString(prefix = "[", postfix = "]")
 
         preferences.edit().putString("tab_stacks", tooManyStacks).commit()
