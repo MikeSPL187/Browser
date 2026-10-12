@@ -59,7 +59,7 @@ internal fun BrowserTabGroupSheetsV5(
     val tabsById = controller.activeTabs.associateBy { it.id }
     V5TabGroupMoveSheet(
         visible = target is TabGroupSheetTarget.Move && movingTab != null,
-        tabTitle = movingTab?.let(::displayTabTitle).orEmpty(),
+        tabTitle = if (movingTab != null) displayTabTitle(movingTab) else "",
         groups = stacks.activeStacks
             .filter { stack ->
                 val member = stack.tabIds.firstNotNullOfOrNull(tabsById::get)
