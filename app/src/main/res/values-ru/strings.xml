@@ -2110,6 +2110,16 @@
     <string name="v5_report_hide_card">Не показывать на новой вкладке</string>
     <string name="v5_report_clear">Очистить данные отчёта</string>
     <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
+    <string name="v5_newtab_pinned">Закреплённые</string>
+    <string name="v5_newtab_edit">Изменить</string>
+    <string name="v5_newtab_done">Готово</string>
+    <string name="v5_newtab_add">Добавить</string>
+    <string name="v5_newtab_remove_pinned">Открепить %1$s</string>
+    <string name="v5_newtab_report_more">Подробнее</string>
+    <string name="v5_newtab_more">Ещё</string>
+    <string name="v5_newtab_recent">Недавние вкладки</string>
+    <string name="v5_newtab_add_title">Закрепить сайт</string>
+    <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>

@@ -137,9 +137,6 @@ fun V5PrivacyReport(
 private fun TotalCard(summary: ProtectionSummary) {
     val colors = V5Theme.colors
     val format = rememberCountFormat()
-    val count = format.format(summary.total)
-    val line = pluralStringResource(R.plurals.v5_report_blocked, summary.total, count)
-    val countAt = line.indexOf(count)
     Column(
         Modifier
             .padding(horizontal = V5Spacing.marginPhone)
@@ -149,32 +146,42 @@ private fun TotalCard(summary: ProtectionSummary) {
             .padding(V5Spacing.space4),
         verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
-        Text(
-            // The number in the title size, the words around it smaller and quieter.
-            buildAnnotatedString {
-                val words = V5Theme.type.callout.toSpanStyle().copy(color = colors.labelSecondary)
-                if (countAt < 0) {
-                    withStyle(words) { append(line) }
-                } else {
-                    withStyle(words) { append(line.substring(0, countAt)) }
-                    withStyle(V5Theme.type.title.toSpanStyle()) { append(count) }
-                    withStyle(words) { append(line.substring(countAt + count.length)) }
-                }
-            },
-            style = V5Theme.type.title,
-            color = colors.label,
-            modifier = Modifier.testTag(V5PrivacyReportTestTags.Total),
-        )
+        V5ReportTotal(summary.total, Modifier.testTag(V5PrivacyReportTestTags.Total))
         if (summary.total > 0) {
-            Chart(summary.daily, format.format(summary.daily.lastOrNull() ?: 0))
+            V5ReportChart(summary.daily, format.format(summary.daily.lastOrNull() ?: 0))
         } else {
             Text(stringResource(R.string.v5_report_empty), style = V5Theme.type.footnote, color = colors.labelSecondary)
         }
     }
 }
 
+/** The period's blocks: the number in the title size, the words around it smaller and quieter. */
 @Composable
-private fun Chart(daily: List<Int>, today: String) {
+internal fun V5ReportTotal(total: Int, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    val count = rememberCountFormat().format(total)
+    val line = pluralStringResource(R.plurals.v5_report_blocked, total, count)
+    val countAt = line.indexOf(count)
+    Text(
+        buildAnnotatedString {
+            val words = V5Theme.type.callout.toSpanStyle().copy(color = colors.labelSecondary)
+            if (countAt < 0) {
+                withStyle(words) { append(line) }
+            } else {
+                withStyle(words) { append(line.substring(0, countAt)) }
+                withStyle(V5Theme.type.title.toSpanStyle()) { append(count) }
+                withStyle(words) { append(line.substring(countAt + count.length)) }
+            }
+        },
+        style = V5Theme.type.title,
+        color = colors.label,
+        modifier = modifier,
+    )
+}
+
+/** A bar per day, today in the full accent; TalkBack reads [today]'s count. Shared with the new tab's card. */
+@Composable
+internal fun V5ReportChart(daily: List<Int>, today: String) {
     val colors = V5Theme.colors
     val description = stringResource(R.string.v5_report_chart, today)
     val bar = RoundedCornerShape(V5Sizes.reportBarRadius)
@@ -280,8 +287,9 @@ private fun DeviceNote() {
     }
 }
 
+/** Counts grouped the way the screen's language writes them. */
 @Composable
-private fun rememberCountFormat(): NumberFormat {
+internal fun rememberCountFormat(): NumberFormat {
     val locale = LocalConfiguration.current.locales[0]
     return remember(locale) { NumberFormat.getIntegerInstance(locale) }
 }

@@ -119,4 +119,14 @@ object V5Sizes {
     val reportBarRadius: Dp = 3.dp
     /** A row with a caption, a value and a detail line: the report's two findings. */
     val rowThreeLine: Dp = 72.dp
+
+    // New tab (canvas screen «а»).
+    /** The site icon inside a pinned tile, over its own blurred copy. */
+    val pinnedFavicon: Dp = 28.dp
+    /** How far a pinned tile's own icon is blurred into its backdrop (Zen's trick, section 11). */
+    val pinnedBlur: Dp = 24.dp
+    /** The round «remove» badge on a tile while pinned sites are edited. */
+    val pinnedBadge: Dp = 22.dp
+    /** The accent wash behind the top of the new tab fades out over this height. */
+    val newTabWash: Dp = 280.dp
 }

@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -124,6 +126,28 @@ internal fun NewTabPage(
     /** What the private new tab shows; `null` in previews of regular tabs. */
     privateTab: NewTabPrivate? = null,
 ) {
+    val uiV5 by rememberUiV5Flag()
+    // Under v5 a regular tab's live new tab is the v5 one (V13a); private tabs and the overview's
+    // miniature stay as they are until their own screens.
+    if (uiV5 && interactive && !incognito) {
+        val safeDrawing = explicitSafeDrawingPadding ?: WindowInsets.safeDrawing.asPaddingValues()
+        BrowserNewTabV5(
+            essentials = essentials,
+            essentialIcons = essentialIcons,
+            onOpenEssential = onOpenEssential,
+            editor = editor,
+            profileLabel = title,
+            recentTabs = recentTabs,
+            recentTabFavicons = recentTabFavicons,
+            onRecentTab = onRecentTab,
+            protection = protection,
+            contentPadding = PaddingValues(
+                top = safeDrawing.calculateTopPadding(),
+                bottom = safeDrawing.calculateBottomPadding() + bottomContentPadding,
+            ),
+        )
+        return
+    }
     val colors = MaterialTheme.colorScheme
     val profileWallpaper = LocalProfileWallpaper.current.takeUnless { incognito }
     val boundedProgress = BlankTabModeMorphRules.bounded(modeProgress)
@@ -241,7 +265,6 @@ internal fun NewTabPage(
             }
         }
     }
-    val uiV5 by rememberUiV5Flag()
     if (uiV5 && protection != null && !incognito) {
         BrowserPrivacyReportV5(
             protection = protection,
