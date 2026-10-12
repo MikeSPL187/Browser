@@ -7,10 +7,12 @@ import android.util.Log
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
+import dev.sk2andy.materialbrowser.browser.PageDistractionsListener
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionRules
+import dev.sk2andy.materialbrowser.data.HiddenDistractionsRules
 import java.util.UUID
 import org.json.JSONObject
 import org.mozilla.geckoview.GeckoResult
@@ -49,6 +51,14 @@ internal interface GeckoPrivacyBinding {
         expected: Boolean,
         onResult: (Boolean) -> Unit,
     )
+
+    /**
+     * Starts choosing distracting items on the page (v5 V20) until [stopDistractionPicking] or the
+     * next navigation; false when the binding is gone.
+     */
+    fun startDistractionPicking(highlightArgb: Int, listener: PageDistractionsListener): Boolean = false
+
+    fun stopDistractionPicking() = Unit
 
     fun close()
 }
@@ -100,6 +110,7 @@ internal class GeckoViewPrivacyHostRuntime(
         val onInlineVideoOpenRequest: (GeckoInlineVideoOpenRequest) -> Unit,
         val onInlineVideoGestureHaptic: (GeckoInlineVideoGestureHaptic) -> Unit,
         val onLoginFieldFocus: () -> Unit,
+        var distractionListener: PageDistractionsListener? = null,
     )
 
     private val bindings = linkedMapOf<String, Binding>()
@@ -247,8 +258,28 @@ internal class GeckoViewPrivacyHostRuntime(
             override fun update(policy: GeckoPrivacyPolicy, onReady: () -> Unit) {
                 binding.inlineVideoOpenGate.invalidatePolicy(policy, session.settings.usePrivateMode)
                 refreshInlineVideoOpenTimeout(binding)
+                val navigated = policy.navigationGeneration != binding.policy.navigationGeneration
                 binding.policy = policy
+                // The next page starts without choosing; the one that chose is gone.
+                if (navigated) endDistractionPicking(binding)
                 runWhenReady(binding) { publish(binding, policy, onReady) }
+            }
+
+            override fun startDistractionPicking(
+                highlightArgb: Int,
+                listener: PageDistractionsListener,
+            ): Boolean {
+                if (bindings[token] !== binding || failureDescription != null) return false
+                binding.distractionListener?.takeIf { it !== listener }?.onPickingEnded()
+                binding.distractionListener = listener
+                runWhenReady(binding) { publishDistractionPicking(binding, highlightArgb) }
+                return true
+            }
+
+            override fun stopDistractionPicking() {
+                if (binding.distractionListener == null) return
+                binding.distractionListener = null
+                runWhenReady(binding) { publishDistractionPicking(binding, highlightArgb = null) }
             }
 
             override fun extractPageForReader(onResult: (String?) -> Unit) {
@@ -381,6 +412,7 @@ internal class GeckoViewPrivacyHostRuntime(
             override fun close() {
                 cancelPendingInlineVideoOpen(binding)
                 bindings.remove(token)
+                endDistractionPicking(binding)
                 binding.domProbe.cancel()
                 binding.textInputOcclusionProbe.cancel()
                 clearPictureInPicturePreparationRequest(binding)?.invoke(null)
@@ -568,6 +600,7 @@ internal class GeckoViewPrivacyHostRuntime(
             "picture-in-picture-playback-result" ->
                 acceptPictureInPicturePlaybackResult(value)
             "reader-result" -> acceptReaderResult(value)
+            "distraction-hidden" -> acceptDistractionHidden(value)
             "login-field-focus" -> {
                 val binding = bindings[value.optString("token")] ?: return
                 // Private tabs never offer the vault; a message from an older page is stale.
@@ -681,6 +714,38 @@ internal class GeckoViewPrivacyHostRuntime(
             post = connectedPort::postMessage,
             onResult = onResult,
         )
+    }
+
+    private fun publishDistractionPicking(binding: Binding, highlightArgb: Int?) {
+        if (bindings[binding.token] !== binding) return
+        // Still choosing is a precondition of starting; a stop that arrived since wins.
+        if (highlightArgb != null && binding.distractionListener == null) return
+        port?.postMessage(
+            JSONObject()
+                .put("type", "distractions-pick")
+                .put("protocolVersion", CandyPrivacyHostContract.PROTOCOL_VERSION)
+                .put("token", binding.token)
+                .put("active", highlightArgb != null)
+                .put("highlightColor", highlightArgb?.let { "#%06x".format(it and 0xFFFFFF) }),
+        )
+    }
+
+    private fun acceptDistractionHidden(value: JSONObject) {
+        val binding = bindings[value.optString("token")] ?: return
+        val listener = binding.distractionListener ?: return
+        val pageHost = binding.policy.pageHost ?: return
+        val selector = value.optString("selector")
+        if (
+            binding.policy.navigationGeneration != value.optInt("navigationGeneration", -1) ||
+            !HiddenDistractionsRules.isValidSelector(selector)
+        ) {
+            return
+        }
+        listener.onHidden(pageHost, selector)
+    }
+
+    private fun endDistractionPicking(binding: Binding) {
+        binding.distractionListener?.also { binding.distractionListener = null }?.onPickingEnded()
     }
 
     private fun acceptReaderResult(value: JSONObject) {

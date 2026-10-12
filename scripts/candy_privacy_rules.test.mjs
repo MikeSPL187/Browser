@@ -170,7 +170,7 @@ test("privacy host uses required MV2 web origins for document-start scripts", ()
   assert.equal(manifest.content_scripts[0].all_frames, false);
   assert.deepEqual(
     manifest.content_scripts[0].js,
-    ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js"],
+    ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js", "hide_distractions.js"],
   );
   assert.equal(manifest.content_scripts[1].all_frames, true);
 });

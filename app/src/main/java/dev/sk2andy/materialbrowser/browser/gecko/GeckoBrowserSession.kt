@@ -22,6 +22,7 @@ import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
+import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
@@ -401,6 +402,9 @@ internal interface GeckoBrowserSession {
 
     /** On-device translation of this session's page (v5 V23). */
     fun pageTranslation(): PageTranslationPort = PageTranslationPort.Unavailable
+
+    /** Choosing distracting items to hide on this session's page (v5 V20). */
+    fun pageDistractions(): PageDistractionsPort = PageDistractionsPort.Unavailable
 
     /** Checks one committed document for a text editor hidden by browser chrome. */
     fun probeTextInputOcclusion(

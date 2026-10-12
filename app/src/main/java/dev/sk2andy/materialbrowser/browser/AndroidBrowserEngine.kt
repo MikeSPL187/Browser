@@ -30,6 +30,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val perSiteFingerprintingProtection: Boolean,
     /** Page translation on the phone (v5 V23); System WebView has none, so the UI hides it. */
     val onDeviceTranslation: Boolean,
+    /** «Hide distracting items» (v5 V20); System WebView has no choosing mode, so the UI hides it. */
+    val hideDistractions: Boolean,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -49,6 +51,7 @@ internal data class AndroidBrowserEngineCapabilities(
             ),
             perSiteFingerprintingProtection = true,
             onDeviceTranslation = true,
+            hideDistractions = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
@@ -66,6 +69,7 @@ internal data class AndroidBrowserEngineCapabilities(
             ),
             perSiteFingerprintingProtection = false,
             onDeviceTranslation = false,
+            hideDistractions = false,
         )
     }
 }

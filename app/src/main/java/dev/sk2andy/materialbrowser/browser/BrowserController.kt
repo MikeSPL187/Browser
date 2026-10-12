@@ -1385,6 +1385,7 @@ class BrowserController(
             localProfiles.flatMap { profile -> essentials.entriesFor(profile.id).map { it.url } }
     }
     val protectionReport = androidProtectionReportController(activity, mainHandler)
+    val hiddenDistractions = androidHiddenDistractionsController(activity, mainHandler, { browserEngineSessions[it]?.pageDistractions() }, ::refreshGeckoContentTopInsetPolicies)
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
@@ -6539,6 +6540,7 @@ class BrowserController(
         }
         reassignSiteCapsules(profileId, fallbackProfile, excludedCapsuleId)
         profileFavorites.forget(profileId)
+        hiddenDistractions.forgetProfile(profileId)
         removedProfileTrailTabIds.forEach { tabId ->
             geckoSessionStateStore.delete(tabId)
             webViewStateRepository.delete(tabId)
@@ -6664,9 +6666,7 @@ class BrowserController(
                 null
             },
         )
-        if (tabId == selectedTabId) {
-            clearPermissionActivity(tabId)
-        }
+        if (tabId == selectedTabId) clearPermissionActivity(tabId)
         clearPrivacyDataForTab(tabId)
         if (GeckoProfileStorageRules.contextChanged(sourceTab, movedTab)) {
             closeBrowserEngineSession(tabId)
@@ -6961,9 +6961,7 @@ class BrowserController(
             sourceUrl = tab.url,
             provider = pageTranslationProvider,
         )
-        if (pageTranslationRecoveryOffer?.tabId == tab.id) {
-            pageTranslationRecoveryOffer = null
-        }
+        if (pageTranslationRecoveryOffer?.tabId == tab.id) pageTranslationRecoveryOffer = null
         submitAddress(translationUrl)
     }
 
@@ -11683,6 +11681,7 @@ class BrowserController(
             safeAreaLayoutQuietPeriodMillis =
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
+            hiddenDistractions = hiddenDistractions.selectorsFor(tab, pageUrl),
         )
         // Vola's own blocker, on by default on Gecko; the developer option is its emergency switch.
         return if (usesGeckoEngine && !developerSettings.volaGeckoBlocker) policy else policy.copy(
@@ -15325,6 +15324,7 @@ class BrowserController(
 
     private fun clearIncognitoProfile() {
         browserEngineSessionFactory.clearPrivateData()
+        hiddenDistractions.endPrivateSession()
         incognitoRuleHits.clear()
         temporaryMutedDomains.clear()
         temporaryDesktopViewDomains.clear()

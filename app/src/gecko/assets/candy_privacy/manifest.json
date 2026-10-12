@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Vola Privacy Host",
-  "version": "1.5.72",
+  "version": "1.5.73",
   "browser_specific_settings": {
     "gecko": {
       "id": "candy-privacy-host@sk2andy.dev"
@@ -13,7 +13,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js"],
+      "js": ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js", "hide_distractions.js"],
       "run_at": "document_start",
       "all_frames": false
     },
