@@ -61,6 +61,7 @@ import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
+import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
@@ -70,6 +71,7 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 internal object NewTabPageTestTags {
     const val Header = "new_tab_header"
@@ -239,7 +241,14 @@ internal fun NewTabPage(
             }
         }
     }
-    if (protectionReportVisible && protection != null && !incognito) {
+    val uiV5 by rememberUiV5Flag()
+    if (uiV5 && protection != null && !incognito) {
+        BrowserPrivacyReportV5(
+            protection = protection,
+            visible = protectionReportVisible,
+            onDismiss = { protectionReportVisible = false },
+        )
+    } else if (protectionReportVisible && protection != null && !incognito) {
         ProtectionReportSheet(
             week = protection.week,
             onClear = protection.onClear,
@@ -265,6 +274,8 @@ internal class NewTabProtection(
     val week: ProtectionWeek,
     val onClear: () -> Unit,
     val onHideCard: () -> Unit,
+    /** The privacy report over the last given days, for the v5 report (V18). */
+    val summary: (windowDays: Int) -> ProtectionSummary,
 )
 
 internal const val NEW_TAB_RECENT_TAB_COUNT = 3

@@ -82,11 +82,14 @@ fun V5Sheet(
     onDismiss: () -> Unit,
     title: String,
     modifier: Modifier = Modifier,
+    /** The sheet has left after [visible] turned false (a host window can close then). */
+    onHidden: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = V5Theme.colors
     val density = LocalDensity.current.density
     val dismiss by rememberUpdatedState(onDismiss)
+    val hidden by rememberUpdatedState(onHidden)
     val moves = V5Motion.animationsEnabled
     // Previews show the sheet in place; the app always brings it in.
     val inspection = LocalInspectionMode.current
@@ -137,6 +140,7 @@ fun V5Sheet(
             if (visible) 1f else 0f,
             if (moves) V5Motion.sheet.spec() else V5Motion.reducedFade(),
         )
+        if (!visible) hidden()
     }
     PredictiveBackHandler(enabled = visible) { events ->
         try {
