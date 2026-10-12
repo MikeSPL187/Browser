@@ -19,7 +19,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +41,7 @@ import dev.sk2andy.materialbrowser.browser.FederatedLoginOffer
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityOffer
 import dev.sk2andy.materialbrowser.data.SnoozedTab
 import dev.sk2andy.materialbrowser.ui.passwords.VaultLoginPromptSheets
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import eightbitlab.com.blurview.BlurTarget
 
 @Composable
@@ -81,7 +85,21 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
-    privacyXRayTabId?.let { tabId ->
+    // Under v5 the shield opens the v5 site protection panel (V17); its «Permissions and site info»
+    // opens this sheet for the same tab.
+    val uiV5 by rememberUiV5Flag()
+    var siteInfoTabId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(privacyXRayTabId) { if (privacyXRayTabId == null) siteInfoTabId = null }
+    if (uiV5) {
+        BrowserSiteProtectionV5(
+            controller = controller,
+            tabId = privacyXRayTabId?.takeIf { it != siteInfoTabId },
+            onDismiss = onPrivacyXRayDismiss,
+            onSiteInfo = { siteInfoTabId = privacyXRayTabId },
+            onOpenProtectionSettings = onOpenProtectionSettings,
+        )
+    }
+    privacyXRayTabId?.takeIf { !uiV5 || it == siteInfoTabId }?.let { tabId ->
         val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
         if (xRayTab != null) {
             val permissionSnapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
