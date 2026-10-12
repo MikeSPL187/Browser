@@ -2020,6 +2020,16 @@
     <string name="v5_report_hide_card">Hide on new tab</string>
     <string name="v5_report_clear">Clear report data</string>
     <string name="v5_report_clear_body">The report\'s counts are deleted from this device. Protection keeps working.</string>
+    <string name="v5_newtab_pinned">Pinned</string>
+    <string name="v5_newtab_edit">Edit</string>
+    <string name="v5_newtab_done">Done</string>
+    <string name="v5_newtab_add">Add</string>
+    <string name="v5_newtab_remove_pinned">Unpin %1$s</string>
+    <string name="v5_newtab_report_more">Details</string>
+    <string name="v5_newtab_more">More</string>
+    <string name="v5_newtab_recent">Recent tabs</string>
+    <string name="v5_newtab_add_title">Pin a site</string>
+    <string name="v5_newtab_add_empty">Open a site in a tab of this profile to pin it here.</string>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
