@@ -127,8 +127,19 @@ internal fun NewTabPage(
     privateTab: NewTabPrivate? = null,
 ) {
     val uiV5 by rememberUiV5Flag()
-    // Under v5 a regular tab's live new tab is the v5 one (V13a); private tabs and the overview's
-    // miniature stay as they are until their own screens.
+    // Under v5 the live new tab is the v5 one: regular (V13a) or private (V14a); the overview's
+    // miniature stays as it is.
+    if (uiV5 && interactive && incognito && privateTab != null) {
+        val safeDrawing = explicitSafeDrawingPadding ?: WindowInsets.safeDrawing.asPaddingValues()
+        BrowserPrivateNewTabV5(
+            privateTab = privateTab,
+            contentPadding = PaddingValues(
+                top = safeDrawing.calculateTopPadding(),
+                bottom = safeDrawing.calculateBottomPadding() + bottomContentPadding,
+            ),
+        )
+        return
+    }
     if (uiV5 && interactive && !incognito) {
         val safeDrawing = explicitSafeDrawingPadding ?: WindowInsets.safeDrawing.asPaddingValues()
         BrowserNewTabV5(

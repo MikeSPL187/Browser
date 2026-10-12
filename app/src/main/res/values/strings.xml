@@ -2032,6 +2032,8 @@
     <string name="v5_newtab_add_empty">Open a site in a tab of this profile to pin it here.</string>
     <string name="v5_newtab_move_earlier">Move earlier</string>
     <string name="v5_newtab_move_later">Move later</string>
+    <string name="v5_private_title">Private browsing</string>
+    <string name="v5_private_body">Vola won\'t remember history, cookies or form data. Close the private tabs and it\'s all gone.</string>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
