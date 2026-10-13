@@ -56,7 +56,7 @@ class SettingsRegistryTest {
         )
         listOf("chrome_style", "address_bar_color", "surface_style", "frosted_blur", "color_palette", "density")
             .forEach { key -> assertTrue(key, !inV5(key)) }
-        listOf("appearance_mode", "web_content_font_size", "animations", "private_tabs_lock", "tab_overview_mode")
+        listOf("appearance_mode", "web_content_font_size", "animations", "private_tabs_lock", "auto_close_tabs")
             .forEach { key -> assertTrue(key, inV5(key)) }
         assertTrue(!SettingsRegistry.searchableInV5("page:Themes", SettingsDestination.Themes))
         assertTrue(SettingsRegistry.searchableInV5("page:Appearance", SettingsDestination.Appearance))
@@ -72,7 +72,8 @@ class SettingsRegistryTest {
         SettingsRegistry.settings.forEach { setting ->
             val key = setting.spec.key
             val destination = setting.spec.destination
-            if (destination != protection && destination != SettingsDestination.Browser) {
+            val split = setOf(protection, SettingsDestination.Browser, SettingsDestination.TabsAndGestures)
+            if (destination !in split) {
                 assertEquals(key, destination, SettingsRegistry.v5Destination(key, destination))
             }
         }
@@ -89,5 +90,20 @@ class SettingsRegistryTest {
             val target = SettingsRegistry.v5Destination(setting.spec.key, browser)
             assertTrue(setting.spec.key, target == browser || target == SettingsDestination.BrowserMore)
         }
+    }
+
+    @Test
+    fun `under v5 tabs keep only what the v5 interface reads`() {
+        val tabs = SettingsDestination.TabsAndGestures
+        listOf("tab_overview_mode", "tab_list_starts_at_bottom", "tab_dismiss_resistance", "address_bar_long_press",
+            "address_bar_actions", "link_peek_actions")
+            .forEach { key -> assertTrue(key, !SettingsRegistry.searchableInV5(key, tabs)) }
+        listOf("auto_close_tabs", "automatic_tab_sorting", "closed_tab_undo", "link_long_press_action")
+            .forEach { key ->
+                assertTrue(key, SettingsRegistry.searchableInV5(key, tabs))
+                assertEquals(key, tabs, SettingsRegistry.v5Destination(key, tabs))
+            }
+        listOf("resident_tab_limit", "profiles", "menu_actions", "address_bar_docking")
+            .forEach { key -> assertEquals(key, SettingsDestination.TabsMore, SettingsRegistry.v5Destination(key, tabs)) }
     }
 }

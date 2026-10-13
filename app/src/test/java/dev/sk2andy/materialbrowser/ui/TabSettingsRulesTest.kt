@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,5 +28,12 @@ class TabSettingsRulesTest {
         assertEquals(3, SettingsSliderRules.steps(2..6, 1))
         assertEquals(0, SettingsSliderRules.steps(4..5, 1))
         assertEquals(0, SettingsSliderRules.steps(4..4, 1))
+    }
+
+    @Test
+    fun `under v5 the page is just Tabs, its other half More`() {
+        assertEquals(R.string.settings_tabs_gestures_title, TabSettingsRules.title(SettingsLayer.All))
+        assertEquals(R.string.settings_section_tabs, TabSettingsRules.title(SettingsLayer.Main))
+        assertEquals(R.string.settings_appearance_advanced, TabSettingsRules.title(SettingsLayer.More))
     }
 }

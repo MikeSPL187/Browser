@@ -77,12 +77,14 @@ internal fun SettingsHomePage(
     if (uiV5) {
         // The v5 interface has no frame style; under Appearance only the theme counts.
         val appearanceSummary = stringResource(SettingsHomeSummaryRules.theme(state.appearance.appearanceMode))
+        // Its gestures are the v5 interface's own, so the page is just «Tabs».
+        val tabsTitle = stringResource(R.string.settings_section_tabs)
         SettingsHomeV5(
             entries = entries.map { entry ->
-                if (entry.item.destination == SettingsDestination.Appearance) {
-                    entry.copy(summary = appearanceSummary)
-                } else {
-                    entry
+                when (entry.item.destination) {
+                    SettingsDestination.Appearance -> entry.copy(summary = appearanceSummary)
+                    SettingsDestination.TabsAndGestures -> entry.copy(title = tabsTitle)
+                    else -> entry
                 }
             },
             isDefaultBrowser = isDefaultBrowser,

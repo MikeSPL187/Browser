@@ -2048,6 +2048,7 @@
     <string name="developer_options_ui_v5_specimen_summary">Цвета, шрифт Inter, формы и плитки настроек v5 в светлой, тёмной и частной теме.</string>
     <string name="settings_protection_more_summary">Зашифрованный DNS, WebRTC, студия фильтров, память страниц, импорт и экспорт</string>
     <string name="settings_browser_more_summary">Движок, запуск, полноэкранный режим, полоса прокрутки, медиаплеер, перенос</string>
+    <string name="settings_tabs_more_summary">Вкладки в памяти, профили, меню «Все действия»</string>
     <string name="settings_value_percent">%1$d %%</string>
     <string name="settings_v5_site_tint">Окрашивать панель в цвет сайта</string>
     <string name="settings_v5_site_tint_summary">Нижняя панель берёт цвет, который объявил сайт, или цвет верха страницы</string>

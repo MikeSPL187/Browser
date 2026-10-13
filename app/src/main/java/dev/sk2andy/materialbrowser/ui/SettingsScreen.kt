@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -250,7 +251,11 @@ internal fun SettingsScreen(
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 )
 
-                SettingsDestination.TabsAndGestures -> TabsAndGesturesSettingsPage(
+                SettingsDestination.TabsAndGestures,
+                SettingsDestination.TabsMore,
+                -> TabsAndGesturesSettingsPage(
+                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    onOpenMore = { onDestinationChanged(SettingsDestination.TabsMore) },
                     inactiveTabLifetime = inactiveTabLifetime,
                     archiveInactiveTabs = archiveInactiveTabs,
                     residentTabLimit = residentTabLimit,
@@ -289,7 +294,7 @@ internal fun SettingsScreen(
                     onMenuActions = {
                         onDestinationChanged(SettingsDestination.MenuActions)
                     },
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
+                    onBack = { onDestinationChanged(currentDestination.parent) },
                 )
 
                 SettingsDestination.AddressBarLongPressActions ->
@@ -328,13 +333,16 @@ internal fun SettingsScreen(
                     )
                 }
 
-                SettingsDestination.MenuActions -> BrowserMenuSettingsPage(
-                    layout = browserMenuLayout,
-                    onLocationChanged = onBrowserMenuLocationChanged,
-                    onBack = {
-                        onDestinationChanged(SettingsDestination.TabsAndGestures)
-                    },
-                )
+                SettingsDestination.MenuActions -> {
+                    // Under ui.v5 «Menu actions» opens from «Tabs › More» and goes back there.
+                    val menuBack = if (uiV5) SettingsDestination.TabsMore else currentDestination.parent
+                    BackHandler { onDestinationChanged(menuBack) }
+                    BrowserMenuSettingsPage(
+                        layout = browserMenuLayout,
+                        onLocationChanged = onBrowserMenuLocationChanged,
+                        onBack = { onDestinationChanged(menuBack) },
+                    )
+                }
 
                 SettingsDestination.LinkPeekActions -> {
                     val actionLabels = LinkPeekAction.entries.associateWith { action ->
