@@ -397,7 +397,11 @@ internal fun SettingsScreen(
                     onBack = { onDestinationChanged(SettingsDestination.Appearance) },
                 )
 
-                SettingsDestination.Browser -> BrowserSettingsPage(
+                SettingsDestination.Browser,
+                SettingsDestination.BrowserMore,
+                -> BrowserSettingsPage(
+                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    onOpenMore = { onDestinationChanged(SettingsDestination.BrowserMore) },
                     browserEngineKind = browserEngineKind,
                     pageTranslationProvider = pageTranslationProvider,
                     isExternalLinkPreviewEnabled = isExternalLinkPreviewEnabled,
@@ -427,7 +431,7 @@ internal fun SettingsScreen(
                     onInlineMediaPlayerModeChanged = onInlineMediaPlayerModeChanged,
                     onPageTranslationProviderChanged = onPageTranslationProviderChanged,
                     onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
+                    onBack = { onDestinationChanged(currentDestination.parent) },
                 )
 
                 SettingsDestination.Downloads -> DownloadsSettingsPage(
@@ -490,7 +494,7 @@ internal fun SettingsScreen(
                 -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
-                        layer = ProtectionSettingsRules.layer(uiV5, currentDestination),
+                        layer = SettingsLayerRules.layer(uiV5, currentDestination),
                         onOpenMore = { onDestinationChanged(SettingsDestination.ProtectionMore) },
                         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,

@@ -457,13 +457,29 @@ internal object SettingsRegistry {
         "protection_card",
     )
 
+    /** «Browser» settings that under ui.v5 live on its «More» page (V15d-4). */
+    private val browserMoreKeys = setOf(
+        "browser_engine",
+        "startup_animation",
+        "startup_address_focus",
+        "open_home_on_startup",
+        "favorite_bookmark_import",
+        "full_immersive_mode",
+        "scroll_bar",
+        "inline_media_player",
+    )
+
+    /** Each page split in two layers under ui.v5: its «More» page and the keys that live there. */
+    private val moreLayers: Map<SettingsDestination, Pair<SettingsDestination, Set<String>>> = mapOf(
+        ProtectionAndData to (SettingsDestination.ProtectionMore to protectionMoreKeys),
+        Browser to (SettingsDestination.BrowserMore to browserMoreKeys),
+    )
+
     /** Where search under ui.v5 opens the setting [key] that the registry keeps on [destination]. */
-    fun v5Destination(key: String, destination: SettingsDestination): SettingsDestination =
-        if (destination == ProtectionAndData && key in protectionMoreKeys) {
-            SettingsDestination.ProtectionMore
-        } else {
-            destination
-        }
+    fun v5Destination(key: String, destination: SettingsDestination): SettingsDestination {
+        val (more, keys) = moreLayers[destination] ?: return destination
+        return if (key in keys) more else destination
+    }
 
     /** Whether search under ui.v5 offers the setting [key] (or a page) on [destination]. */
     fun searchableInV5(key: String, destination: SettingsDestination): Boolean =
