@@ -1,8 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -40,7 +40,6 @@ import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsRouter
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuEntry
@@ -205,7 +204,7 @@ internal fun SettingsScreen(
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
         ?.accent
         ?: WorkspaceAccent.Default
-    val uiV5 by rememberUiV5Flag()
+    val uiV5 = rememberSettingsUiV5()
     // Under ui.v5 the inner pages draw their shared components as v5 lists (V15d).
     ProvideV5SettingsSkin(enabled = uiV5) {
     SettingsRouter(
@@ -252,7 +251,11 @@ internal fun SettingsScreen(
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 )
 
-                SettingsDestination.TabsAndGestures -> TabsAndGesturesSettingsPage(
+                SettingsDestination.TabsAndGestures,
+                SettingsDestination.TabsMore,
+                -> TabsAndGesturesSettingsPage(
+                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    onOpenMore = { onDestinationChanged(SettingsDestination.TabsMore) },
                     inactiveTabLifetime = inactiveTabLifetime,
                     archiveInactiveTabs = archiveInactiveTabs,
                     residentTabLimit = residentTabLimit,
@@ -291,7 +294,7 @@ internal fun SettingsScreen(
                     onMenuActions = {
                         onDestinationChanged(SettingsDestination.MenuActions)
                     },
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
+                    onBack = { onDestinationChanged(currentDestination.parent) },
                 )
 
                 SettingsDestination.AddressBarLongPressActions ->
@@ -330,13 +333,16 @@ internal fun SettingsScreen(
                     )
                 }
 
-                SettingsDestination.MenuActions -> BrowserMenuSettingsPage(
-                    layout = browserMenuLayout,
-                    onLocationChanged = onBrowserMenuLocationChanged,
-                    onBack = {
-                        onDestinationChanged(SettingsDestination.TabsAndGestures)
-                    },
-                )
+                SettingsDestination.MenuActions -> {
+                    // Under ui.v5 «Menu actions» opens from «Tabs › More» and goes back there.
+                    val menuBack = if (uiV5) SettingsDestination.TabsMore else currentDestination.parent
+                    BackHandler { onDestinationChanged(menuBack) }
+                    BrowserMenuSettingsPage(
+                        layout = browserMenuLayout,
+                        onLocationChanged = onBrowserMenuLocationChanged,
+                        onBack = { onDestinationChanged(menuBack) },
+                    )
+                }
 
                 SettingsDestination.LinkPeekActions -> {
                     val actionLabels = LinkPeekAction.entries.associateWith { action ->
@@ -397,7 +403,11 @@ internal fun SettingsScreen(
                     onBack = { onDestinationChanged(SettingsDestination.Appearance) },
                 )
 
-                SettingsDestination.Browser -> BrowserSettingsPage(
+                SettingsDestination.Browser,
+                SettingsDestination.BrowserMore,
+                -> BrowserSettingsPage(
+                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    onOpenMore = { onDestinationChanged(SettingsDestination.BrowserMore) },
                     browserEngineKind = browserEngineKind,
                     pageTranslationProvider = pageTranslationProvider,
                     isExternalLinkPreviewEnabled = isExternalLinkPreviewEnabled,
@@ -427,7 +437,7 @@ internal fun SettingsScreen(
                     onInlineMediaPlayerModeChanged = onInlineMediaPlayerModeChanged,
                     onPageTranslationProviderChanged = onPageTranslationProviderChanged,
                     onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
+                    onBack = { onDestinationChanged(currentDestination.parent) },
                 )
 
                 SettingsDestination.Downloads -> DownloadsSettingsPage(
@@ -490,7 +500,7 @@ internal fun SettingsScreen(
                 -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
-                        layer = ProtectionSettingsRules.layer(uiV5, currentDestination),
+                        layer = SettingsLayerRules.layer(uiV5, currentDestination),
                         onOpenMore = { onDestinationChanged(SettingsDestination.ProtectionMore) },
                         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,

@@ -73,7 +73,7 @@ internal object ProtectionSettingsTestTags {
 @Composable
 internal fun ProtectionAndDataSettingsPage(
     blockerSettings: BlockerSettings,
-    layer: ProtectionSettingsLayer = ProtectionSettingsLayer.All,
+    layer: SettingsLayer = SettingsLayer.All,
     onOpenMore: () -> Unit = {},
     blockedCount: Int,
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
@@ -134,7 +134,7 @@ internal fun ProtectionAndDataSettingsPage(
     val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
         title = stringResource(
-            if (layer == ProtectionSettingsLayer.More) {
+            if (layer == SettingsLayer.More) {
                 R.string.settings_appearance_advanced
             } else {
                 R.string.settings_protection_data_title
@@ -201,7 +201,7 @@ internal fun ProtectionAndDataSettingsPage(
                             onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
                         },
                     )
-                    if (openExtensions != null && layer == ProtectionSettingsLayer.All) {
+                    if (openExtensions != null && layer == SettingsLayer.All) {
                         SettingsCardLinkRow(
                             title = stringResource(R.string.gecko_extensions_title),
                             summary = stringResource(R.string.settings_block_ads_extension_summary),
@@ -233,12 +233,12 @@ internal fun ProtectionAndDataSettingsPage(
                         ),
                         checked = blockerSettings.blockThirdPartyCookies,
                         dividerColor = dividerColor,
-                        divider = layer == ProtectionSettingsLayer.All,
+                        divider = layer == SettingsLayer.All,
                         onCheckedChange = {
                             onBlockerSettingsChanged(blockerSettings.copy(blockThirdPartyCookies = it))
                         },
                     )
-                    if (layer == ProtectionSettingsLayer.All) {
+                    if (layer == SettingsLayer.All) {
                         SettingsCardLinkRow(
                             title = stringResource(R.string.filter_studio_title),
                             summary = stringResource(R.string.filter_studio_settings_summary),
@@ -368,7 +368,7 @@ internal fun ProtectionAndDataSettingsPage(
                 )
                 SettingsCardHeader(stringResource(R.string.settings_protection_group_tools))
                 SettingsCard(containerColor = cardColor) {
-                    if (layer == ProtectionSettingsLayer.More) {
+                    if (layer == SettingsLayer.More) {
                         SettingsCardLinkRow(
                             title = stringResource(R.string.filter_studio_title),
                             summary = stringResource(R.string.filter_studio_settings_summary),
@@ -451,7 +451,7 @@ internal fun ProtectionAndDataSettingsPage(
                         checked = historyRecordingMode == HistoryRecordingMode.ClearOnExit,
                         enabled = historyRecordingMode != HistoryRecordingMode.Disabled,
                         dividerColor = dividerColor,
-                        divider = layer == ProtectionSettingsLayer.All,
+                        divider = layer == SettingsLayer.All,
                         onCheckedChange = { enabled ->
                             onHistoryRecordingModeChanged(
                                 if (enabled) {
@@ -504,7 +504,7 @@ internal fun ProtectionAndDataSettingsPage(
                     )
                 }
             }
-            if (layer == ProtectionSettingsLayer.Main) {
+            if (layer == SettingsLayer.Main) {
                 // One layer (V15d-3): the less used half waits behind «More».
                 SettingsCard(containerColor = cardColor) {
                     SettingsCardLinkRow(
@@ -754,7 +754,7 @@ private fun ProtectionSettingsPageSystemWebViewPreview() {
 
 /** V15d-3 under ui.v5: the main layer (with «More») and the More page, drawn by the v5 skin. */
 @Composable
-private fun ProtectionSettingsV5Preview(layer: ProtectionSettingsLayer) {
+private fun ProtectionSettingsV5Preview(layer: SettingsLayer) {
     MaterialBrowserTheme {
         ProvideV5SettingsSkin(enabled = true) {
             ProtectionAndDataSettingsPage(
@@ -779,11 +779,11 @@ private fun ProtectionSettingsV5Preview(layer: ProtectionSettingsLayer) {
 @VolaPreviews
 @Composable
 private fun ProtectionSettingsV5MainPreview() {
-    ProtectionSettingsV5Preview(ProtectionSettingsLayer.Main)
+    ProtectionSettingsV5Preview(SettingsLayer.Main)
 }
 
 @VolaPreviews
 @Composable
 private fun ProtectionSettingsV5MorePreview() {
-    ProtectionSettingsV5Preview(ProtectionSettingsLayer.More)
+    ProtectionSettingsV5Preview(SettingsLayer.More)
 }

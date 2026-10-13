@@ -50,6 +50,8 @@ class SettingsHomeRulesTest {
             SettingsDestination.Themes,
             SettingsDestination.ToppingCatalog,
             SettingsDestination.ProtectionMore,
+            SettingsDestination.BrowserMore,
+            SettingsDestination.TabsMore,
         )
         assertEquals(pagesOfTheHome, destinations)
     }

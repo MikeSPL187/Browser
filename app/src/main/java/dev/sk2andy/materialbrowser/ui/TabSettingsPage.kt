@@ -27,6 +27,7 @@ import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object TabSettingsTestTags {
+    const val More = "tab_settings_more"
     const val StackFolderMode = "tab_settings_stack_folder_mode"
     const val ResidentTabLimit = "tab_settings_resident_limit"
     const val ListStartsAtBottom = "tab_settings_list_starts_at_bottom"
@@ -45,9 +46,20 @@ internal object TabSettingsRules {
 
     /** The hero overview has no top or bottom to start from. */
     fun listCanStartAtBottom(mode: TabOverviewMode): Boolean = mode != TabOverviewMode.Hero
+
+    /** Under ui.v5 the gestures are the interface's own, so the page is just «Tabs». */
+    fun title(layer: SettingsLayer): Int = when (layer) {
+        SettingsLayer.All -> R.string.settings_tabs_gestures_title
+        SettingsLayer.Main -> R.string.settings_section_tabs
+        SettingsLayer.More -> R.string.settings_appearance_advanced
+    }
 }
 
-/** Tabs and gestures (board W-SetTabs): gestures first, then the overview, then tabs in memory. */
+/**
+ * Tabs and gestures (board W-SetTabs): gestures first, then the overview, then tabs in memory.
+ * Under ui.v5 (V15d-5) only what the v5 interface reads: its bar, overview and link glance have
+ * fixed gestures and buttons, so their settings stay with the current interface.
+ */
 @Composable
 internal fun TabsAndGesturesSettingsPage(
     inactiveTabLifetime: InactiveTabLifetime,
@@ -80,6 +92,8 @@ internal fun TabsAndGesturesSettingsPage(
     onAddressBarActions: () -> Unit,
     onMenuActions: () -> Unit = {},
     onBack: () -> Unit,
+    layer: SettingsLayer = SettingsLayer.All,
+    onOpenMore: () -> Unit = {},
 ) {
     val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
     val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -87,187 +101,269 @@ internal fun TabsAndGesturesSettingsPage(
     var dismissResistance by remember(dismissResistancePercent) {
         mutableIntStateOf(dismissResistancePercent)
     }
+    val addressBarLongPressRow: CardRow = { divider ->
+        SettingsCardLinkRow(
+            title = stringResource(R.string.settings_address_bar_long_press_title),
+            summary = stringResource(addressBarLongPressAction.labelRes()),
+            dividerColor = dividerColor,
+            divider = divider,
+            onClick = onAddressBarLongPressActions,
+            modifier = Modifier.testTag(TabSettingsTestTags.AddressBarLongPressAction),
+        )
+    }
+    val linkLongPressRow: CardRow = { divider ->
+        SettingsCardDropdownRow(
+            title = stringResource(R.string.settings_link_long_press_action),
+            selected = linkLongPressAction,
+            options = LinkLongPressAction.entries,
+            label = { action -> stringResource(action.labelRes()) },
+            dividerColor = dividerColor,
+            divider = divider,
+            onSelected = onLinkLongPressActionChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.LinkLongPressAction),
+        )
+    }
+    val linkPeekActionsRow: CardRow = { divider ->
+        SettingsCardLinkRow(
+            title = stringResource(R.string.settings_link_peek_actions_title),
+            summary = stringResource(R.string.settings_link_peek_actions_summary),
+            dividerColor = dividerColor,
+            divider = divider,
+            onClick = onLinkPeekActions,
+        )
+    }
+    val addressBarActionsRow: CardRow = { divider ->
+        SettingsCardLinkRow(
+            title = stringResource(R.string.settings_address_bar_actions_title),
+            summary = stringResource(R.string.settings_address_bar_actions_summary),
+            dividerColor = dividerColor,
+            divider = divider,
+            onClick = onAddressBarActions,
+        )
+    }
+    val menuActionsRow: CardRow = { divider ->
+        SettingsCardLinkRow(
+            title = stringResource(R.string.settings_menu_actions_title),
+            summary = stringResource(R.string.settings_menu_actions_summary),
+            dividerColor = dividerColor,
+            divider = divider,
+            onClick = onMenuActions,
+        )
+    }
+    val dockingRow: CardRow = { divider ->
+        SettingsCardSwitchRow(
+            title = stringResource(R.string.settings_address_bar_docking_title),
+            summary = stringResource(R.string.settings_address_bar_docking_subtitle),
+            checked = isAddressBarDockingEnabled,
+            summaryMaxLines = Int.MAX_VALUE,
+            dividerColor = dividerColor,
+            divider = divider,
+            onCheckedChange = onAddressBarDockingEnabledChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.AddressBarDocking),
+        )
+    }
+    val dismissResistanceRow: CardRow = { divider ->
+        val resistanceTitle = stringResource(R.string.settings_tab_dismiss_resistance)
+        SettingsCardSliderRow(
+            title = resistanceTitle,
+            summary = stringResource(
+                R.string.settings_tab_dismiss_resistance_summary,
+                dismissResistance,
+            ),
+            dividerColor = dividerColor,
+            divider = divider,
+        ) {
+            SettingsCardSlider(
+                value = dismissResistancePercent,
+                range = TabSettingsRules.DismissResistanceRange,
+                step = TabSettingsRules.DISMISS_RESISTANCE_STEP,
+                label = resistanceTitle,
+                onValueChange = { dismissResistance = it },
+                onValueChangeFinished = onDismissResistancePercentChanged,
+            )
+        }
+    }
+    val overviewModeRow: CardRow = { divider ->
+        SettingsCardDropdownRow(
+            title = stringResource(R.string.settings_tab_overview_mode),
+            selected = tabOverviewMode,
+            options = TabOverviewMode.entries,
+            label = { mode -> mode.displayName() },
+            dividerColor = dividerColor,
+            divider = divider,
+            onSelected = onTabOverviewModeChanged,
+        )
+    }
+    val stackFolderModeRow: CardRow = { divider ->
+        SettingsCardDropdownRow(
+            title = stringResource(R.string.settings_tab_stack_folder_mode),
+            selected = tabStackFolderMode,
+            options = TabOverviewMode.entries,
+            label = { mode -> mode.displayName() },
+            dividerColor = dividerColor,
+            divider = divider,
+            onSelected = onTabStackFolderModeChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.StackFolderMode),
+        )
+    }
+    val startsAtBottomRow: CardRow = { divider ->
+        SettingsCardSwitchRow(
+            title = stringResource(R.string.settings_tab_list_starts_at_bottom_title),
+            summary = stringResource(R.string.settings_tab_list_starts_at_bottom_subtitle),
+            checked = tabListStartsAtBottom,
+            summaryMaxLines = Int.MAX_VALUE,
+            dividerColor = dividerColor,
+            divider = divider,
+            enabled = TabSettingsRules.listCanStartAtBottom(tabOverviewMode),
+            onCheckedChange = onTabListStartsAtBottomChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.ListStartsAtBottom),
+        )
+    }
+    val sortingRow: CardRow = { divider ->
+        SettingsCardSwitchRow(
+            title = stringResource(R.string.settings_automatic_tab_sorting_title),
+            summary = stringResource(R.string.settings_automatic_tab_sorting_subtitle),
+            checked = automaticTabSortingEnabled,
+            summaryMaxLines = Int.MAX_VALUE,
+            dividerColor = dividerColor,
+            divider = divider,
+            onCheckedChange = onAutomaticTabSortingEnabledChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.AutomaticSorting),
+        )
+    }
+    val closedTabUndoRow: CardRow = { divider ->
+        SettingsCardSwitchRow(
+            title = stringResource(R.string.settings_closed_tab_undo_title),
+            summary = stringResource(R.string.settings_closed_tab_undo_summary),
+            checked = isClosedTabUndoEnabled,
+            summaryMaxLines = Int.MAX_VALUE,
+            dividerColor = dividerColor,
+            divider = divider,
+            onCheckedChange = onClosedTabUndoEnabledChanged,
+            modifier = Modifier.testTag(TabSettingsTestTags.ClosedTabUndo),
+        )
+    }
+    val residentLimitRow: CardRow = { divider ->
+        val residentTitle = stringResource(R.string.settings_resident_tab_limit)
+        SettingsCardSliderRow(
+            title = residentTitle,
+            summary = pluralStringResource(
+                R.plurals.settings_resident_tab_limit_summary,
+                residentLimit,
+                residentLimit,
+            ),
+            dividerColor = dividerColor,
+            divider = divider,
+        ) {
+            SettingsCardSlider(
+                value = residentTabLimit,
+                range = BrowserSessionResidencyRules.MIN_LIMIT..
+                    BrowserSessionResidencyRules.MAX_LIMIT,
+                label = residentTitle,
+                onValueChange = { residentLimit = it },
+                onValueChangeFinished = onResidentTabLimitChanged,
+                modifier = Modifier.testTag(TabSettingsTestTags.ResidentTabLimit),
+            )
+        }
+    }
+    val autoCloseRow: CardRow = { divider ->
+        SettingsCardDropdownRow(
+            title = stringResource(R.string.settings_auto_close_tabs),
+            selected = inactiveTabLifetime,
+            options = InactiveTabLifetime.entries,
+            label = { lifetime -> lifetime.displayName() },
+            dividerColor = dividerColor,
+            divider = divider,
+            onSelected = onInactiveTabLifetimeChanged,
+        )
+    }
+    // Only the lifetimes counted in days can archive; the others close every tab on leaving.
+    val archiveRow: CardRow? = if (inactiveTabLifetime.maxAgeMillis != null) {
+        { divider ->
+            SettingsCardSwitchRow(
+                title = stringResource(R.string.settings_archive_inactive_tabs_title),
+                summary = stringResource(R.string.settings_archive_inactive_tabs_summary),
+                checked = archiveInactiveTabs,
+                summaryMaxLines = Int.MAX_VALUE,
+                dividerColor = dividerColor,
+                divider = divider,
+                onCheckedChange = onArchiveInactiveTabsChanged,
+                modifier = Modifier.testTag(TabSettingsTestTags.ArchiveInactiveTabs),
+            )
+        }
+    } else {
+        null
+    }
+    val profilesRow: CardRow = { divider ->
+        SettingsCardSwitchRow(
+            title = stringResource(R.string.settings_profiles_title),
+            summary = stringResource(R.string.settings_profiles_subtitle),
+            checked = profilesEnabled,
+            summaryMaxLines = Int.MAX_VALUE,
+            dividerColor = dividerColor,
+            divider = divider,
+            onCheckedChange = onProfilesEnabledChanged,
+        )
+    }
+    val cards: List<Pair<Int, List<CardRow>>> = when (layer) {
+        SettingsLayer.All -> listOf(
+            R.string.settings_section_gestures to listOf(
+                addressBarLongPressRow,
+                linkLongPressRow,
+                linkPeekActionsRow,
+                addressBarActionsRow,
+                menuActionsRow,
+                dockingRow,
+                dismissResistanceRow,
+            ),
+            R.string.settings_tabs_group_overview to listOfNotNull(
+                overviewModeRow,
+                stackFolderModeRow.takeIf { TabStacksFeature.ENABLED },
+                startsAtBottomRow,
+                sortingRow,
+                closedTabUndoRow,
+            ),
+            R.string.settings_section_tabs to listOfNotNull(
+                residentLimitRow,
+                autoCloseRow,
+                archiveRow,
+                profilesRow,
+            ),
+        )
+        SettingsLayer.Main -> listOf(
+            R.string.settings_section_tabs to listOfNotNull(
+                autoCloseRow,
+                archiveRow,
+                sortingRow,
+                closedTabUndoRow,
+            ),
+            R.string.settings_browser_group_links to listOf(linkLongPressRow),
+        )
+        // The page menu's «All actions» is the current menu, and docking drops back to it.
+        SettingsLayer.More -> listOf(
+            R.string.settings_section_tabs to listOf(residentLimitRow, profilesRow),
+            R.string.v5_menu_all_actions to listOf(menuActionsRow, dockingRow),
+        )
+    }
     SettingsPage(
-        title = stringResource(R.string.settings_tabs_gestures_title),
+        title = stringResource(TabSettingsRules.title(layer)),
         onBack = onBack,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
-            SettingsCardHeader(stringResource(R.string.settings_section_gestures))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_address_bar_long_press_title),
-                    summary = stringResource(addressBarLongPressAction.labelRes()),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onAddressBarLongPressActions,
-                    modifier = Modifier.testTag(TabSettingsTestTags.AddressBarLongPressAction),
-                )
-                SettingsCardDropdownRow(
-                    title = stringResource(R.string.settings_link_long_press_action),
-                    selected = linkLongPressAction,
-                    options = LinkLongPressAction.entries,
-                    label = { action -> stringResource(action.labelRes()) },
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onSelected = onLinkLongPressActionChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.LinkLongPressAction),
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_link_peek_actions_title),
-                    summary = stringResource(R.string.settings_link_peek_actions_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onLinkPeekActions,
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_address_bar_actions_title),
-                    summary = stringResource(R.string.settings_address_bar_actions_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onAddressBarActions,
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_menu_actions_title),
-                    summary = stringResource(R.string.settings_menu_actions_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onMenuActions,
-                )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_address_bar_docking_title),
-                    summary = stringResource(R.string.settings_address_bar_docking_subtitle),
-                    checked = isAddressBarDockingEnabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onCheckedChange = onAddressBarDockingEnabledChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.AddressBarDocking),
-                )
-                val resistanceTitle = stringResource(R.string.settings_tab_dismiss_resistance)
-                SettingsCardSliderRow(
-                    title = resistanceTitle,
-                    summary = stringResource(
-                        R.string.settings_tab_dismiss_resistance_summary,
-                        dismissResistance,
-                    ),
-                    dividerColor = dividerColor,
-                ) {
-                    SettingsCardSlider(
-                        value = dismissResistancePercent,
-                        range = TabSettingsRules.DismissResistanceRange,
-                        step = TabSettingsRules.DISMISS_RESISTANCE_STEP,
-                        label = resistanceTitle,
-                        onValueChange = { dismissResistance = it },
-                        onValueChangeFinished = onDismissResistancePercentChanged,
-                    )
-                }
+            cards.forEach { (header, rows) ->
+                SettingsCardHeader(stringResource(header))
+                SettingsCard(containerColor = cardColor) { CardRows(rows) }
             }
-            SettingsCardHeader(stringResource(R.string.settings_tabs_group_overview))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardDropdownRow(
-                    title = stringResource(R.string.settings_tab_overview_mode),
-                    selected = tabOverviewMode,
-                    options = TabOverviewMode.entries,
-                    label = { mode -> mode.displayName() },
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onSelected = onTabOverviewModeChanged,
-                )
-                if (TabStacksFeature.ENABLED) SettingsCardDropdownRow(
-                    title = stringResource(R.string.settings_tab_stack_folder_mode),
-                    selected = tabStackFolderMode,
-                    options = TabOverviewMode.entries,
-                    label = { mode -> mode.displayName() },
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onSelected = onTabStackFolderModeChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.StackFolderMode),
-                )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_tab_list_starts_at_bottom_title),
-                    summary = stringResource(R.string.settings_tab_list_starts_at_bottom_subtitle),
-                    checked = tabListStartsAtBottom,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    divider = true,
-                    enabled = TabSettingsRules.listCanStartAtBottom(tabOverviewMode),
-                    onCheckedChange = onTabListStartsAtBottomChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.ListStartsAtBottom),
-                )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_automatic_tab_sorting_title),
-                    summary = stringResource(R.string.settings_automatic_tab_sorting_subtitle),
-                    checked = automaticTabSortingEnabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onCheckedChange = onAutomaticTabSortingEnabledChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.AutomaticSorting),
-                )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_closed_tab_undo_title),
-                    summary = stringResource(R.string.settings_closed_tab_undo_summary),
-                    checked = isClosedTabUndoEnabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    onCheckedChange = onClosedTabUndoEnabledChanged,
-                    modifier = Modifier.testTag(TabSettingsTestTags.ClosedTabUndo),
-                )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_section_tabs))
-            SettingsCard(containerColor = cardColor) {
-                val residentTitle = stringResource(R.string.settings_resident_tab_limit)
-                SettingsCardSliderRow(
-                    title = residentTitle,
-                    summary = pluralStringResource(
-                        R.plurals.settings_resident_tab_limit_summary,
-                        residentLimit,
-                        residentLimit,
-                    ),
-                    dividerColor = dividerColor,
-                    divider = true,
-                ) {
-                    SettingsCardSlider(
-                        value = residentTabLimit,
-                        range = BrowserSessionResidencyRules.MIN_LIMIT..
-                            BrowserSessionResidencyRules.MAX_LIMIT,
-                        label = residentTitle,
-                        onValueChange = { residentLimit = it },
-                        onValueChangeFinished = onResidentTabLimitChanged,
-                        modifier = Modifier.testTag(TabSettingsTestTags.ResidentTabLimit),
-                    )
-                }
-                SettingsCardDropdownRow(
-                    title = stringResource(R.string.settings_auto_close_tabs),
-                    selected = inactiveTabLifetime,
-                    options = InactiveTabLifetime.entries,
-                    label = { lifetime -> lifetime.displayName() },
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onSelected = onInactiveTabLifetimeChanged,
-                )
-                // Only the lifetimes counted in days can archive; the others close every tab on
-                // leaving.
-                if (inactiveTabLifetime.maxAgeMillis != null) {
-                    SettingsCardSwitchRow(
-                        title = stringResource(R.string.settings_archive_inactive_tabs_title),
-                        summary = stringResource(R.string.settings_archive_inactive_tabs_summary),
-                        checked = archiveInactiveTabs,
-                        summaryMaxLines = Int.MAX_VALUE,
+            if (layer == SettingsLayer.Main) {
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.settings_appearance_advanced),
+                        summary = stringResource(R.string.settings_tabs_more_summary),
                         dividerColor = dividerColor,
-                        divider = true,
-                        onCheckedChange = onArchiveInactiveTabsChanged,
-                        modifier = Modifier.testTag(TabSettingsTestTags.ArchiveInactiveTabs),
+                        onClick = onOpenMore,
+                        modifier = Modifier.testTag(TabSettingsTestTags.More),
                     )
                 }
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_profiles_title),
-                    summary = stringResource(R.string.settings_profiles_subtitle),
-                    checked = profilesEnabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    onCheckedChange = onProfilesEnabledChanged,
-                )
             }
         }
     }

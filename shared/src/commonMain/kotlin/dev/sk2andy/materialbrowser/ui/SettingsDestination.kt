@@ -4,6 +4,9 @@ enum class SettingsDestination {
     Home,
     Search,
     TabsAndGestures,
+
+    /** Under ui.v5: the less used half of «Tabs» (V15d-5). */
+    TabsMore,
     AddressBarLongPressActions,
     AddressBarActions,
     MenuActions,
@@ -11,6 +14,9 @@ enum class SettingsDestination {
     Appearance,
     Themes,
     Browser,
+
+    /** Under ui.v5: the less used half of «Browser» (V15d-4). */
+    BrowserMore,
     Downloads,
     Userscripts,
     ToppingCatalog,
@@ -36,6 +42,8 @@ enum class SettingsDestination {
             Themes -> Appearance
             ToppingCatalog -> Userscripts
             ProtectionMore -> ProtectionAndData
+            BrowserMore -> Browser
+            TabsMore -> TabsAndGestures
             else -> Home
         }
 }
