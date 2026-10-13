@@ -53,6 +53,10 @@ fun SettingsCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Card(modifier, content)
+        return
+    }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = SettingsCardTokens.shape,
@@ -65,6 +69,10 @@ fun SettingsCard(
 /** The small label above a card, such as «Search engine». */
 @Composable
 fun SettingsCardHeader(text: String, modifier: Modifier = Modifier) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Header(text, modifier)
+        return
+    }
     Text(
         text,
         modifier = modifier
@@ -81,6 +89,10 @@ fun SettingsCardTile(
     colors: SettingsTileColors,
     content: @Composable (Modifier, Color) -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Tile(colors, content)
+        return
+    }
     Box(
         modifier = Modifier
             .size(SettingsCardTokens.tileSize)
@@ -125,14 +137,7 @@ fun SettingsCardRow(
             onClick = onClick,
         ),
         leading = { SettingsCardTile(colors = tileColors, content = icon) },
-        trailing = {
-            Icon(
-                VolaIcons.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.size(SettingsCardTokens.chevronSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
+        end = SettingsRowEnd.Chevron,
     )
 }
 
@@ -155,14 +160,7 @@ fun SettingsCardLinkRow(
         modifier = modifier,
         summaryMaxLines = summaryMaxLines,
         interaction = Modifier.clickable(role = Role.Button, onClick = onClick),
-        trailing = {
-            Icon(
-                VolaIcons.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.size(SettingsCardTokens.chevronSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
+        end = SettingsRowEnd.Chevron,
     )
 }
 
@@ -190,16 +188,7 @@ fun SettingsCardChoiceRow(
             onClick = onClick,
         ),
         leading = leading,
-        trailing = {
-            if (selected) {
-                Icon(
-                    VolaIcons.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(SettingsCardTokens.chevronSize),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-        },
+        end = SettingsRowEnd.Check(selected),
     )
 }
 
@@ -217,6 +206,7 @@ fun SettingsCardSwitchRow(
     summaryMaxLines: Int = SUMMARY_MAX_LINES,
     leading: (@Composable () -> Unit)? = null,
 ) {
+    val skin = LocalSettingsSkin.current
     SettingsCardRowLayout(
         title = title,
         summary = summary,
@@ -229,12 +219,13 @@ fun SettingsCardSwitchRow(
             value = checked,
             enabled = enabled,
             role = Role.Switch,
-            onValueChange = onCheckedChange,
+            onValueChange = { on ->
+                skin?.onToggled(on)
+                onCheckedChange(on)
+            },
         ),
         leading = leading,
-        trailing = {
-            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
-        },
+        end = SettingsRowEnd.Switch(checked, enabled),
     )
 }
 
@@ -260,21 +251,7 @@ fun SettingsCardValueRow(
         // The summary explains the chosen value, so it is never cut short.
         summaryMaxLines = Int.MAX_VALUE,
         interaction = Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        trailing = {
-            Text(
-                value,
-                modifier = Modifier.widthIn(max = SettingsCardTokens.valueMaxWidth),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.End,
-            )
-            Icon(
-                VolaIcons.ArrowDropDown,
-                contentDescription = null,
-                modifier = Modifier.size(SettingsCardTokens.chevronSize),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        },
+        end = SettingsRowEnd.Value(value),
     )
 }
 
@@ -293,6 +270,10 @@ fun SettingsCardSliderRow(
     divider: Boolean = false,
     slider: @Composable () -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.SliderRow(title, summary, value, divider, modifier, slider)
+        return
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -346,8 +327,12 @@ private fun SettingsCardRowLayout(
     enabled: Boolean = true,
     summaryMaxLines: Int = SUMMARY_MAX_LINES,
     leading: (@Composable () -> Unit)? = null,
-    trailing: @Composable RowScope.() -> Unit,
+    end: SettingsRowEnd,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Row(title, summary, summaryMaxLines, enabled, divider, interaction, modifier, leading, end)
+        return
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         // The caller's modifier (a test tag, say) lands on the row that holds the semantics.
         Row(
@@ -380,10 +365,47 @@ private fun SettingsCardRowLayout(
                     )
                 }
             }
-            trailing()
+            SettingsRowEndDefault(end)
         }
         if (divider) {
             SettingsCardDivider(color = dividerColor, underTile = leading != null)
+        }
+    }
+}
+
+/** The current cards' row ends. */
+@Composable
+private fun RowScope.SettingsRowEndDefault(end: SettingsRowEnd) {
+    when (end) {
+        SettingsRowEnd.Chevron -> Icon(
+            VolaIcons.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(SettingsCardTokens.chevronSize),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        is SettingsRowEnd.Check -> if (end.selected) {
+            Icon(
+                VolaIcons.Check,
+                contentDescription = null,
+                modifier = Modifier.size(SettingsCardTokens.chevronSize),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        is SettingsRowEnd.Switch -> Switch(checked = end.checked, onCheckedChange = null, enabled = end.enabled)
+        is SettingsRowEnd.Value -> {
+            Text(
+                end.text,
+                modifier = Modifier.widthIn(max = SettingsCardTokens.valueMaxWidth),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.End,
+            )
+            Icon(
+                VolaIcons.ArrowDropDown,
+                contentDescription = null,
+                modifier = Modifier.size(SettingsCardTokens.chevronSize),
+                tint = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
