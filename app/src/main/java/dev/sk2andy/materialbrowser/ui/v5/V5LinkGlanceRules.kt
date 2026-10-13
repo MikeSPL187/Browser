@@ -15,8 +15,8 @@ import kotlin.math.sin
  * live page inside it is never stretched.
  */
 object V5LinkGlanceRules {
-    /** The live page shows once the card is this far in; earlier it would sit in a speck. */
-    const val SHOW_PAGE_AT = 0.95f
+    /** The live page starts to show this far into the flight; before, the card is only its frame. */
+    const val PAGE_FADE_FROM = 0.3f
 
     /** A full back gesture takes the card this far back towards the link before it lets go. */
     const val BACK_TRAVEL = 0.2f
@@ -72,6 +72,13 @@ object V5LinkGlanceRules {
             lerp(rest.bottom, window.bottom, t),
         )
     }
+
+    /**
+     * The live page inside the card: it comes in from [PAGE_FADE_FROM] to the end of the flight, so
+     * the speck at the touch point is the card's own colour, not a page squeezed into a dot.
+     */
+    fun pageAlpha(progress: Float): Float =
+        ((progress - PAGE_FADE_FROM) / (1f - PAGE_FADE_FROM)).coerceIn(0f, 1f)
 
     /** The buttons under the card: they come in over the second half of the flight. */
     fun actionsAlpha(progress: Float): Float = ((progress - 0.5f) * 2f).coerceIn(0f, 1f)

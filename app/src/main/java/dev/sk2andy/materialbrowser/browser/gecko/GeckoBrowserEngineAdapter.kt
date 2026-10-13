@@ -472,6 +472,7 @@ internal class GeckoBrowserEngineSessionFactory(
             tabId = tabId,
             session = session,
             eventSink = eventSink,
+            contentKind = contentKind,
             trailHistoryEventSink = trailHistoryEventSink,
             onActiveChanged = { active ->
                 runtime.toppings.setActiveTab(tabId.takeIf { active })
@@ -491,6 +492,7 @@ internal class GeckoBrowserEngineSessionAdapter(
     override val tabId: String,
     private val session: GeckoBrowserSession,
     private val eventSink: BrowserEngineEventSink,
+    private val contentKind: BrowserEngineContentKind = BrowserEngineContentKind.RegularTab,
     trailHistoryEventSink: GeckoCandyTrailHistoryEventSink =
         GeckoCandyTrailHistoryEventSink { _, _ -> },
     private val onActiveChanged: (Boolean) -> Unit = {},
@@ -535,7 +537,12 @@ internal class GeckoBrowserEngineSessionAdapter(
     @UiThread
     override fun createView(context: Context): View {
         check(!closed) { "Cannot bind a closed browser engine session" }
-        return session.createView(context)
+        // The link preview's page flies, fades and clips with its card; tabs keep the faster surface.
+        return if (contentKind == BrowserEngineContentKind.LinkPeek) {
+            session.createAnimatableView(context)
+        } else {
+            session.createView(context)
+        }
     }
 
     @UiThread

@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.isInvisible
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
@@ -118,7 +117,7 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
             actions = actions,
             origin = origin,
             onPageScale = { LinkGlancePage.scale = it },
-        ) { shown, modifier ->
+        ) { modifier ->
             key(attempt) {
                 AndroidView(
                     factory = {
@@ -132,12 +131,11 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
                             onTitleChanged = { if (reports()) title = it },
                         )
                     },
-                    update = { it.isInvisible = !shown },
                     onRelease = controller::releaseLinkPeekPreviewView,
                     // The engine's own tree stays hidden (the preview takes no input); TalkBack reads
                     // which page it shows, and nothing while a message covers it.
                     modifier = modifier
-                        .clearSemanticsWhen(!shown || status.coversPage)
+                        .clearSemanticsWhen(status.coversPage)
                         .semantics { contentDescription = title ?: host },
                 )
             }

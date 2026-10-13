@@ -80,7 +80,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 object V5LinkGlanceTestTags {
@@ -143,9 +142,9 @@ class V5LinkGlanceActions(
  * tab, as Safari's preview does; «In background» opens it in a new tab behind; «⋯» has the rest.
  * Nothing in the card goes into history until the link is opened.
  *
- * The live page is a separate surface no Compose layer can fade or clip, so [preview] is told when
- * to show it: once the card is nearly in place. Its square corners sit between the address line
- * and the note under it, never at the card's rounded edge.
+ * [preview] is drawn in the card's own layer (the engine draws the preview's page as a texture,
+ * V21b), so it flies, fades and is clipped to the card's rounded corners with it; the page comes
+ * in over the flight ([V5LinkGlanceRules.pageAlpha]).
  */
 @Composable
 fun V5LinkGlance(
@@ -156,7 +155,7 @@ fun V5LinkGlance(
     modifier: Modifier = Modifier,
     // Previews draw the card already in place.
     entered: Boolean = false,
-    preview: @Composable (shown: Boolean, modifier: Modifier) -> Unit,
+    preview: @Composable (modifier: Modifier) -> Unit,
 ) {
     val colors = V5Theme.colors
     val density = LocalDensity.current
@@ -164,18 +163,13 @@ fun V5LinkGlance(
     val spec: AnimationSpec<Float> = if (moves) V5Motion.glance.spec() else V5Motion.reducedFade()
     val glance = remember { Animatable(if (entered) 1f else 0f) }
     val opening = remember { Animatable(0f) }
-    var settled by remember { mutableStateOf(entered) }
     var leaving by remember { mutableStateOf(false) }
     var openingStarted by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val currentOnPageScale by rememberUpdatedState(onPageScale)
 
-    LaunchedEffect(Unit) {
-        // A back gesture may take the card over before it lands; then the page never shows.
-        launch { glance.animateTo(1f, spec) }
-        snapshotFlow { glance.value }.first { it >= V5LinkGlanceRules.SHOW_PAGE_AT }
-        settled = true
-    }
+    // A back gesture may take the card over before it lands.
+    LaunchedEffect(Unit) { glance.animateTo(1f, spec) }
     LaunchedEffect(moves) {
         if (!moves) return@LaunchedEffect
         snapshotFlow { if (openingStarted) 1f else glance.value }
@@ -212,8 +206,6 @@ fun V5LinkGlance(
         }
     }
 
-    // The live page can't follow a fade, so with motion off it shows only while the card is fully in.
-    val pageShown = settled && !openingStarted && (moves || !leaving)
     var windowOffset by remember { mutableStateOf(Offset.Zero) }
     var rest by remember { mutableStateOf(Rect.Zero) }
     val localOrigin = origin?.minus(windowOffset)
@@ -321,7 +313,13 @@ fun V5LinkGlance(
                     actions = actions,
                 )
                 Box(Modifier.fillMaxWidth().weight(1f)) {
-                    preview(pageShown, Modifier.fillMaxSize().testTag(V5LinkGlanceTestTags.Preview))
+                    preview(
+                        Modifier
+                            .fillMaxSize()
+                            // With motion off the whole card fades, the page with it.
+                            .graphicsLayer { if (moves) alpha = V5LinkGlanceRules.pageAlpha(glance.value) }
+                            .testTag(V5LinkGlanceTestTags.Preview),
+                    )
                     state.message?.let { message ->
                         GlanceMessage(message, onRetry = actions.onRetry, onClose = { leave(actions.onDismiss) })
                     }

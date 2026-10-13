@@ -2796,10 +2796,16 @@ private class GeckoViewBrowserSession(
     }
 
     @UiThread
-    override fun createView(context: Context): View {
+    override fun createView(context: Context): View = createBoundView(context, animatable = false)
+
+    @UiThread
+    override fun createAnimatableView(context: Context): View = createBoundView(context, animatable = true)
+
+    private fun createBoundView(context: Context, animatable: Boolean): View {
         check(!closed) { "Cannot bind a closed Gecko session" }
         check(boundView == null) { "Gecko session already has a bound View" }
         return CandyGeckoView(context).also { view ->
+            if (animatable) view.useTextureBackend()
             view.setBackdropBlurRegion(backdropBlurRegion)
             view.setAnimationsEnabled(privacyPolicy.animationsEnabled)
             view.configureAutofill(isPrivate)
@@ -3595,6 +3601,11 @@ internal class CandyGeckoView(context: Context) :
 
     fun setBackdropBlurRegion(region: BrowserBackdropBlurRegion?) {
         engineView.setBackdropBlurRegion(region)
+    }
+
+    /** Draws through a TextureView, before the session attaches; the backdrop blur then has no surface. */
+    fun useTextureBackend() {
+        engineView.setViewBackend(GeckoView.BACKEND_TEXTURE_VIEW)
     }
 
     override fun updateDynamicToolbar(maxHeightPx: Int, coveredPx: Int) {
