@@ -367,6 +367,13 @@ internal interface GeckoBrowserSession {
     fun createView(context: Context): View
 
     /**
+     * Like [createView], but the page is drawn through a TextureView, so it fades, clips and moves
+     * with the views around it. It costs more than the default SurfaceView: only for a page that
+     * flies inside a card (the link preview), never for a tab.
+     */
+    fun createAnimatableView(context: Context): View = createView(context)
+
+    /**
      * Runs after Gecko has both started its compositor and painted valid page content.
      * A newer request replaces an older pending request for this session.
      */
