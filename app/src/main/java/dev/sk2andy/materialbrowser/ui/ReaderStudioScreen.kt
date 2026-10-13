@@ -18,7 +18,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
-import dev.sk2andy.materialbrowser.reader.ReaderSpeechController
+import dev.sk2andy.materialbrowser.reader.ListenSession
 import dev.sk2andy.materialbrowser.shared.ui.ReaderPalette
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioIcon
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioLabel
@@ -45,14 +45,18 @@ internal fun ReaderStudioScreen(
     onOpenLink: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val v5 = rememberReaderUiV5()
     SharedReaderStudioScreen(
         result = result,
         sourceUrl = sourceUrl,
         isPrivate = isPrivate,
         repository = repository,
         resources = AndroidReaderStudioResources,
-        style = rememberReaderStudioStyle(v5 = rememberReaderUiV5()),
-        speechFactory = { ReaderSpeechController(context) },
+        style = rememberReaderStudioStyle(v5 = v5),
+        // Under v5 the mini player above the bar goes on with the article after the reader closes.
+        speechFactory = { document ->
+            ListenSession.get(context).speechFor(document, isPrivate, keepsSpeaking = v5)
+        },
         backHandler = { enabled, onBack -> BackHandler(enabled = enabled, onBack = onBack) },
         onRetry = onRetry,
         onDismiss = onDismiss,

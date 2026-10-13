@@ -1414,6 +1414,8 @@
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans serif</string>
     <string name="reader_font_mono">Monospace</string>
+    <string name="listen_unavailable">Reading aloud isn’t available on this device</string>
+    <string name="listen_private_page">Private page</string>
     <string name="reader_wide_margins">Wide margins</string>
     <string name="reader_listen">Listen</string>
     <string name="reader_speech_start">Read aloud</string>

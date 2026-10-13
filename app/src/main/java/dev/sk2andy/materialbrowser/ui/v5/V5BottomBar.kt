@@ -49,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -121,6 +122,11 @@ internal fun BoxScope.V5BottomBar(
     onBarPositioned: (boundsInRoot: Rect, topInWindowPx: Int) -> Unit,
     menuButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * A second row above the bar, such as the listening mini player (V19b). It is part of the bar:
+     * the page ends above it, and it folds away with the bar while scrolling.
+     */
+    accessory: (@Composable () -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     // The site's color follows navigation on the effects spring; text and icons switch at once,
@@ -164,11 +170,10 @@ internal fun BoxScope.V5BottomBar(
         CompositionLocalProvider(LocalV5BarColors provides barColors, LocalContentColor provides barColors.onTint) {
             Box(Modifier.fillMaxWidth().height(V5Spacing.hairline).background(colors.edge))
             LoadingLine(visible = state.isLoading, progress = state.progress)
-            Box(
+            // The bar's top, which the page ends at, is the accessory's when there is one.
+            Column(
                 Modifier
                     .fillMaxWidth()
-                    .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
-                    .clipToBounds()
                     .onGloballyPositioned { coordinates ->
                         onBarPositioned(
                             coordinates.boundsInRoot(),
@@ -176,44 +181,67 @@ internal fun BoxScope.V5BottomBar(
                         )
                     },
             ) {
-                if (expanded > 0f) {
-                    Row(
+                if (accessory != null && expanded > 0f) {
+                    Box(
                         Modifier
                             .fillMaxWidth()
-                            .wrapContentHeight(Alignment.Top, unbounded = true)
-                            .heightIn(min = fullHeight)
-                            .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
+                            .clipToBounds()
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(placeable.width, (placeable.height * expanded).roundToInt()) {
+                                    placeable.place(0, 0)
+                                }
+                            }
                             .graphicsLayer { alpha = expanded },
-                        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AddressCapsule(
-                            state = state,
-                            gestures = gestures,
-                            onAddress = onAddress,
-                            onShield = onShield,
-                            onReloadOrStop = onReloadOrStop,
-                            onTabs = onTabs,
-                            modifier = Modifier.weight(1f),
-                        )
-                        RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
-                        RoundButton { menuButton() }
+                        accessory()
                     }
                 }
-                if (expanded < 1f) {
-                    Text(
-                        text = state.domain ?: stringResource(R.string.address_empty_hint),
-                        style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
-                        color = barColors.onTint,
-                        maxLines = 1,
-                        overflow = TextOverflow.MiddleEllipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .fillMaxWidth()
-                            .padding(horizontal = V5Spacing.space6)
-                            .graphicsLayer { alpha = 1f - expanded },
-                    )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
+                        .clipToBounds(),
+                ) {
+                    if (expanded > 0f) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(Alignment.Top, unbounded = true)
+                                .heightIn(min = fullHeight)
+                                .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
+                                .graphicsLayer { alpha = expanded },
+                            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            AddressCapsule(
+                                state = state,
+                                gestures = gestures,
+                                onAddress = onAddress,
+                                onShield = onShield,
+                                onReloadOrStop = onReloadOrStop,
+                                onTabs = onTabs,
+                                modifier = Modifier.weight(1f),
+                            )
+                            RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
+                            RoundButton { menuButton() }
+                        }
+                    }
+                    if (expanded < 1f) {
+                        Text(
+                            text = state.domain ?: stringResource(R.string.address_empty_hint),
+                            style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
+                            color = barColors.onTint,
+                            maxLines = 1,
+                            overflow = TextOverflow.MiddleEllipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .padding(horizontal = V5Spacing.space6)
+                                .graphicsLayer { alpha = 1f - expanded },
+                        )
+                    }
                 }
             }
             // The strip runs on under the system navigation (edge to edge).
