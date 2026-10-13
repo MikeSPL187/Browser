@@ -428,7 +428,57 @@ internal object SettingsRegistry {
     )
 
     /** Pages and settings in the interface language, for [SettingsSearchRules]. */
-    fun searchCandidates(resources: Resources): List<SettingSearchCandidate> {
+    /**
+     * The current interface's frame, glass and address bar colours, and its «Themes» page: the v5
+     * interface draws none of them, so under ui.v5 search does not lead there (V15d-2).
+     */
+    private val currentInterfaceOnlyKeys = setOf(
+        "chrome_style",
+        "address_bar_color",
+        "address_bar_style",
+        "surface_style",
+        "frosted_transparency",
+        "frosted_address_bar_transparency",
+        "frosted_blur",
+    )
+
+    /** «Protection and data» settings that under ui.v5 live on its «More» page (V15d-3). */
+    private val protectionMoreKeys = setOf(
+        "do_not_track",
+        "global_privacy_control",
+        "auto_de_amp",
+        "dns_over_https",
+        "webrtc_protection",
+        "recall",
+        "data_archive_export",
+        "data_archive_import",
+        "filter_studio",
+        "permission_radar",
+        "protection_card",
+    )
+
+    /** Where search under ui.v5 opens the setting [key] that the registry keeps on [destination]. */
+    fun v5Destination(key: String, destination: SettingsDestination): SettingsDestination =
+        if (destination == ProtectionAndData && key in protectionMoreKeys) {
+            SettingsDestination.ProtectionMore
+        } else {
+            destination
+        }
+
+    /** Whether search under ui.v5 offers the setting [key] (or a page) on [destination]. */
+    fun searchableInV5(key: String, destination: SettingsDestination): Boolean =
+        destination != Themes && key !in currentInterfaceOnlyKeys
+
+    fun searchCandidates(resources: Resources, uiV5: Boolean = false): List<SettingSearchCandidate> =
+        allSearchCandidates(resources).mapNotNull { candidate ->
+            when {
+                !uiV5 -> candidate
+                !searchableInV5(candidate.key, candidate.destination) -> null
+                else -> candidate.copy(destination = v5Destination(candidate.key, candidate.destination))
+            }
+        }
+
+    private fun allSearchCandidates(resources: Resources): List<SettingSearchCandidate> {
         val pageTitles = pages.associate { page ->
             page.destination to resources.getString(page.title)
         }

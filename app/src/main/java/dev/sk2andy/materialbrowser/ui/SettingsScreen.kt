@@ -370,7 +370,16 @@ internal fun SettingsScreen(
                     )
                 }
 
-                SettingsDestination.Appearance -> AppearanceSettingsPage(
+                // V15d-2: under ui.v5 only what the v5 interface uses.
+                SettingsDestination.Appearance -> if (uiV5) {
+                    AppearanceSettingsPageV5(
+                        settings = appearanceSettings,
+                        onSettingsChanged = onAppearanceSettingsChanged,
+                        onBack = { onDestinationChanged(SettingsDestination.Home) },
+                        forceDarkWebsitesAvailable =
+                            browserEngineKind == AndroidBrowserEngineKind.SystemWebView,
+                    )
+                } else AppearanceSettingsPage(
                     settings = appearanceSettings,
                     workspaceAccent = workspaceAccent,
                     onSettingsChanged = onAppearanceSettingsChanged,
@@ -476,9 +485,13 @@ internal fun SettingsScreen(
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 )
 
-                SettingsDestination.ProtectionAndData -> {
+                SettingsDestination.ProtectionAndData,
+                SettingsDestination.ProtectionMore,
+                -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
+                        layer = ProtectionSettingsRules.layer(uiV5, currentDestination),
+                        onOpenMore = { onDestinationChanged(SettingsDestination.ProtectionMore) },
                         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,
                         blockedCount = blockedCount,
@@ -511,7 +524,7 @@ internal fun SettingsScreen(
                         onImportAppData = onImportAppData,
                         onMoveToVola = { context.startActivity(PasswordsActivityContract.importIntent(context)) },
                         onClearData = onClearData,
-                        onBack = { onDestinationChanged(SettingsDestination.Home) },
+                        onBack = { onDestinationChanged(currentDestination.parent) },
                     )
                 }
 

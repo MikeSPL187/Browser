@@ -47,4 +47,32 @@ class SettingsRegistryTest {
         assertEquals(listOf("color_palette", "accent_override", "shape_style", "density"), keys)
         assertTrue(SettingsRegistry.page(SettingsDestination.Themes) != null)
     }
+
+    @Test
+    fun `under v5 search leaves out what only the current interface draws`() {
+        fun inV5(key: String) = SettingsRegistry.searchableInV5(
+            key,
+            SettingsRegistry.settings.first { setting -> setting.spec.key == key }.spec.destination,
+        )
+        listOf("chrome_style", "address_bar_color", "surface_style", "frosted_blur", "color_palette", "density")
+            .forEach { key -> assertTrue(key, !inV5(key)) }
+        listOf("appearance_mode", "web_content_font_size", "animations", "private_tabs_lock", "tab_overview_mode")
+            .forEach { key -> assertTrue(key, inV5(key)) }
+        assertTrue(!SettingsRegistry.searchableInV5("page:Themes", SettingsDestination.Themes))
+        assertTrue(SettingsRegistry.searchableInV5("page:Appearance", SettingsDestination.Appearance))
+    }
+
+    @Test
+    fun `under v5 the less used protection settings open on the More page`() {
+        val protection = SettingsDestination.ProtectionAndData
+        listOf("dns_over_https", "webrtc_protection", "filter_studio", "recall", "data_archive_export")
+            .forEach { key -> assertEquals(key, SettingsDestination.ProtectionMore, SettingsRegistry.v5Destination(key, protection)) }
+        listOf("https_only", "block_ads", "history_save", "private_tabs_lock")
+            .forEach { key -> assertEquals(key, protection, SettingsRegistry.v5Destination(key, protection)) }
+        SettingsRegistry.settings.forEach { setting ->
+            val key = setting.spec.key
+            val destination = setting.spec.destination
+            if (destination != protection) assertEquals(key, destination, SettingsRegistry.v5Destination(key, destination))
+        }
+    }
 }

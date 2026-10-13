@@ -9,6 +9,8 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
+import dev.sk2andy.materialbrowser.data.AppearanceSettings
+import dev.sk2andy.materialbrowser.ui.AppearanceSettingsPageV5
 import dev.sk2andy.materialbrowser.ui.SearchSettingsPage
 import dev.sk2andy.materialbrowser.ui.SettingsPage
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
@@ -83,6 +85,22 @@ private fun V5SettingsRowsPreview() {
                     )
                 }
             }
+        }
+    }
+}
+
+/** V15d-2: «Appearance» under ui.v5, with dark sites as System WebView offers them. */
+@VolaPreviews
+@Composable
+private fun V5AppearanceSettingsPreview() {
+    MaterialBrowserTheme {
+        ProvideV5SettingsSkin(enabled = true) {
+            AppearanceSettingsPageV5(
+                settings = AppearanceSettings(),
+                onSettingsChanged = {},
+                onBack = {},
+                forceDarkWebsitesAvailable = true,
+            )
         }
     }
 }
