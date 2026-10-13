@@ -28,4 +28,18 @@ class ListenRulesTest {
         assertTrue(ListenRules.showsTitle(article, selectedTabPrivate = false))
         assertTrue(ListenRules.showsTitle(article, selectedTabPrivate = true))
     }
+
+    @Test
+    fun `the mini player shows while a page from the menu is prepared or failed`() {
+        val preparing = article.copy(text = "")
+        assertTrue(ListenRules.showsPlayer(preparing, ReaderSpeechStatus.Closed, ListenPreparation.Preparing))
+        assertTrue(
+            ListenRules.showsPlayer(
+                preparing,
+                ReaderSpeechStatus.Closed,
+                ListenPreparation.Failed(ReaderExtractionFailure.EmptyArticle),
+            ),
+        )
+        assertFalse(ListenRules.showsPlayer(null, ReaderSpeechStatus.Closed, ListenPreparation.Preparing))
+    }
 }

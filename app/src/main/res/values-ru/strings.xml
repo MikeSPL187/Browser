@@ -1462,6 +1462,7 @@
     <string name="reader_font_mono">Моноширинный</string>
     <string name="listen_unavailable">Чтение вслух недоступно на этом устройстве</string>
     <string name="listen_private_page">Частная страница</string>
+    <string name="listen_preparing">Готовлю страницу к чтению вслух…</string>
     <string name="reader_wide_margins">Широкие поля</string>
     <string name="reader_listen">Слушать</string>
     <string name="reader_speech_start">Читать вслух</string>
@@ -2186,7 +2187,6 @@
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
     <string name="v5_menu_read">Читать</string>
-    <string name="v5_menu_read_subtitle">Режим чтения, прослушивание и сохранение</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
     <string name="v5_menu_favorites">Избранное</string>

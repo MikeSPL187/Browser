@@ -54,6 +54,7 @@ object V5PageMenuTestTags {
     const val Share = "v5_menu_share"
     const val Print = "v5_menu_print"
     const val Read = "v5_menu_read"
+    const val Listen = "v5_menu_listen"
     const val AllActions = "v5_menu_all_actions"
     const val HideDistractions = "v5_menu_hide_distractions"
     const val ShowHidden = "v5_menu_show_hidden"
@@ -105,6 +106,8 @@ class V5PageMenuActions(
     val onAllActions: () -> Unit,
     val onHideDistractions: () -> Unit = {},
     val onShowHidden: () -> Unit = {},
+    /** «Listen» (V19c): the article read aloud without opening the reader. */
+    val onListen: () -> Unit = {},
 )
 
 @Composable
@@ -140,7 +143,7 @@ fun V5PageMenu(
         ) {
             RoundActions(state, actions, ::closing)
             if (state.canRead) {
-                ReadTile(onClick = closing(actions.onRead))
+                ReadListenTiles(onRead = closing(actions.onRead), onListen = closing(actions.onListen))
             }
             PageGroup(state, actions, ::closing)
             V5ListGroup {
@@ -352,28 +355,51 @@ private fun RoundAction(
     }
 }
 
-/** «Read»: a wide tile into the reader, where listening lives too. */
+/** «Read» and «Listen» side by side (system-v5.md section 10): the reader, or the article aloud. */
 @Composable
-private fun ReadTile(onClick: () -> Unit) {
-    val colors = V5Theme.colors
+private fun ReadListenTiles(onRead: () -> Unit, onListen: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = V5Spacing.marginPhone)
+            .padding(horizontal = V5Spacing.marginPhone),
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
+        WideTile(
+            icon = VolaIcons.FormatAlignLeft,
+            label = stringResource(R.string.v5_menu_read),
+            onClick = onRead,
+            modifier = Modifier.weight(1f).testTag(V5PageMenuTestTags.Read),
+        )
+        WideTile(
+            icon = VolaIcons.Headphones,
+            label = stringResource(R.string.reader_listen),
+            onClick = onListen,
+            modifier = Modifier.weight(1f).testTag(V5PageMenuTestTags.Listen),
+        )
+    }
+}
+
+@Composable
+private fun WideTile(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    Row(
+        modifier
             .heightIn(min = V5Sizes.rowSingleLine)
             .clip(V5Theme.shapes.s)
             .background(colors.surface)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = V5Spacing.space4)
-            .testTag(V5PageMenuTestTags.Read),
+            .padding(horizontal = V5Spacing.space4),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
-        Icon(VolaIcons.FormatAlignLeft, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.icon))
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.v5_menu_read), style = V5Theme.type.headline, color = colors.label)
-            Text(stringResource(R.string.v5_menu_read_subtitle), style = V5Theme.type.footnote, color = colors.labelSecondary)
-        }
+        Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.icon))
+        Text(
+            label,
+            style = V5Theme.type.headline,
+            color = colors.label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
