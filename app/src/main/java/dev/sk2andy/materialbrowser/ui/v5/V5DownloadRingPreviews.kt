@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,7 +20,8 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* V22: «•••» with the downloads ring — a quarter, almost done, and a size not yet known. */
+/* V22: «•••» with the downloads ring — a quarter, almost done, a size not yet known, done, failed —
+ * and the line above the bar when a download ends (V22b). */
 
 @Composable
 private fun RingsPreview(dark: Boolean) {
@@ -32,13 +34,19 @@ private fun RingsPreview(dark: Boolean) {
                 V5DownloadRingState.Progress(count = 1, fraction = 0.25f),
                 V5DownloadRingState.Progress(count = 2, fraction = 0.9f),
                 V5DownloadRingState.Indeterminate(count = 1),
+                V5DownloadRingState.Done,
+                V5DownloadRingState.Failed,
             ).forEach { state ->
                 Box(
                     Modifier.size(V5Sizes.barCapsule).clip(CircleShape).background(V5Theme.colors.fill),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(VolaIcons.MoreVert, contentDescription = null, tint = V5Theme.colors.label)
-                    V5DownloadRing(state, color = V5Theme.colors.accent, modifier = Modifier.size(V5Sizes.barCapsule))
+                    V5DownloadRing(
+                        state = state,
+                        color = v5DownloadRingColor(state, ink = V5Theme.colors.accent),
+                        modifier = Modifier.size(V5Sizes.barCapsule),
+                    )
                 }
             }
         }
@@ -52,3 +60,27 @@ private fun V5DownloadRingLightPreview() = RingsPreview(dark = false)
 @Preview(name = "Downloads ring · dark")
 @Composable
 private fun V5DownloadRingDarkPreview() = RingsPreview(dark = true)
+
+@Composable
+private fun NoticesPreview(dark: Boolean) {
+    VolaV5Theme(dark = dark) {
+        Column(Modifier.background(V5Theme.colors.chrome)) {
+            V5DownloadNoticeRow(V5DownloadNotice.Done(1, "annual-report-2026.pdf"), onOpen = {}, onDownloads = {})
+            V5DownloadNoticeRow(V5DownloadNotice.Failed(2, "holiday-photos.zip"), onOpen = {}, onDownloads = {})
+            V5DownloadNoticeRow(
+                V5DownloadNotice.Done(3, "boarding-pass.pdf"),
+                onOpen = {},
+                onDownloads = {},
+                privateTab = true,
+            )
+        }
+    }
+}
+
+@Preview(name = "Download ended · light", widthDp = 360)
+@Composable
+private fun V5DownloadNoticeLightPreview() = NoticesPreview(dark = false)
+
+@Preview(name = "Download ended · dark", widthDp = 360)
+@Composable
+private fun V5DownloadNoticeDarkPreview() = NoticesPreview(dark = true)
