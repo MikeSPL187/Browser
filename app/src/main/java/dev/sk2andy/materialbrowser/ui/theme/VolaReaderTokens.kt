@@ -2,6 +2,8 @@ package dev.sk2andy.materialbrowser.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Colors
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -25,6 +27,13 @@ internal object VolaReader {
     val darkContent = Color(0xFFE6E1E5)
     val darkMuted = Color(0xFFA9A4AE)
     val darkCard = Color(0xFF1C1B1F)
+
+    /** Under ui.v5: the v5 dark gray, as Safari's reader, and its surface for quotes. */
+    val darkBackgroundV5 = V5Colors.dark().background
+    val darkCardV5 = V5Colors.dark().surface
+
+    /** The third typeface (V19): the system monospace, no font file to add. */
+    val monoFontFamily = FontFamily.Monospace
 
     val titleFontSize = 30.sp
     val titleLineHeight = 37.sp

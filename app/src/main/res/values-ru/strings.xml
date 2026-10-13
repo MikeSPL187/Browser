@@ -1459,6 +1459,7 @@
     <string name="reader_text_size">Размер текста</string>
     <string name="reader_font_serif">С засечками</string>
     <string name="reader_font_sans">Без засечек</string>
+    <string name="reader_font_mono">Моноширинный</string>
     <string name="reader_wide_margins">Широкие поля</string>
     <string name="reader_listen">Слушать</string>
     <string name="reader_speech_start">Читать вслух</string>

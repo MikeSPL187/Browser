@@ -111,7 +111,9 @@ class ReaderLibraryStore(context: Context) {
                 .put("fontScale", state.settings.fontScale.toDouble())
                 .put("theme", state.settings.theme.name)
                 .put("textAlignment", state.settings.textAlignment.name)
-                .put("serif", state.settings.serif)
+                .put("font", state.settings.font.name)
+                // Read by builds before V19, which know only serif or not.
+                .put("serif", state.settings.font != ReaderFont.Sans)
                 .put("wideMargins", state.settings.wideMargins),
         )
         .put(
@@ -158,9 +160,13 @@ class ReaderLibraryStore(context: Context) {
         if (root.optInt("version") != CURRENT_VERSION) return ReaderLibraryState()
         val settingsJson = root.optJSONObject("settings") ?: JSONObject()
         val settings = ReaderSettings(
-            fontScale = settingsJson.optDouble("fontScale", 1.0).toFloat().coerceIn(0.8f, 1.6f),
+            fontScale = settingsJson.optDouble("fontScale", 1.0).toFloat()
+                .coerceIn(ReaderLibraryRules.MIN_FONT_SCALE, ReaderLibraryRules.MAX_FONT_SCALE),
             theme = ReaderTheme.fromStoredName(settingsJson.optString("theme")),
-            serif = settingsJson.optBoolean("serif", true),
+            font = ReaderFont.fromStored(
+                settingsJson.optString("font").takeIf(String::isNotEmpty),
+                serif = settingsJson.optBoolean("serif", true),
+            ),
             wideMargins = settingsJson.optBoolean("wideMargins", false),
             textAlignment = runCatching {
                 ReaderTextAlignment.valueOf(

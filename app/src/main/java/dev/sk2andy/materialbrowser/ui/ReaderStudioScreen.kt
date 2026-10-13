@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -25,6 +27,7 @@ import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioStyle
 import dev.sk2andy.materialbrowser.ui.theme.LiterataFontFamily
 import dev.sk2andy.materialbrowser.ui.theme.ManropeFontFamily
 import dev.sk2andy.materialbrowser.ui.theme.VolaReader
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioScreen as SharedReaderStudioScreen
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioTestTags as SharedReaderStudioTestTags
 
@@ -48,7 +51,7 @@ internal fun ReaderStudioScreen(
         isPrivate = isPrivate,
         repository = repository,
         resources = AndroidReaderStudioResources,
-        style = rememberReaderStudioStyle(),
+        style = rememberReaderStudioStyle(v5 = rememberReaderUiV5()),
         speechFactory = { ReaderSpeechController(context) },
         backHandler = { enabled, onBack -> BackHandler(enabled = enabled, onBack = onBack) },
         onRetry = onRetry,
@@ -87,6 +90,7 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.TextSize -> stringResource(R.string.reader_text_size)
         ReaderStudioLabel.FontSerif -> stringResource(R.string.reader_font_serif)
         ReaderStudioLabel.FontSans -> stringResource(R.string.reader_font_sans)
+        ReaderStudioLabel.FontMono -> stringResource(R.string.reader_font_mono)
         ReaderStudioLabel.WideMargins -> stringResource(R.string.reader_wide_margins)
         ReaderStudioLabel.Listen -> stringResource(R.string.reader_listen)
         ReaderStudioLabel.SpeechStart -> stringResource(R.string.reader_speech_start)
@@ -122,9 +126,19 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
     }
 }
 
-/** The reader's look from the design tokens (board W-Reader), with the browser's accent. */
+/** Whether v5 draws the browser around the reader: the flag is on and the window is a phone's. */
 @Composable
-internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
+private fun rememberReaderUiV5(): Boolean {
+    val flag by rememberUiV5Flag()
+    return flag && !AddressBarWideLayoutRules.usesTabStrip(LocalConfiguration.current.screenWidthDp.toFloat())
+}
+
+/**
+ * The reader's look from the design tokens (board W-Reader), with the browser's accent. Under
+ * ui.v5 ([v5]) the dark reading theme is the v5 dark gray, not pure black (system-v5.md 1.1).
+ */
+@Composable
+internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
     val scheme = MaterialTheme.colorScheme
     val browserDark = scheme.background.luminance() < 0.5f
     // On a page of the other brightness than the browser, the inverse accent keeps its contrast.
@@ -132,7 +146,7 @@ internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
     val onPageAccent = if (browserDark) scheme.onPrimaryContainer else scheme.onPrimary
     val darkAccent = if (browserDark) scheme.primary else scheme.inversePrimary
     val onDarkAccent = if (browserDark) scheme.onPrimary else scheme.onPrimaryContainer
-    return remember(scheme) {
+    return remember(scheme, v5) {
         ReaderStudioStyle(
             light = ReaderPalette(
                 background = VolaReader.lightBackground,
@@ -151,15 +165,16 @@ internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
                 onAccent = onPageAccent,
             ),
             dark = ReaderPalette(
-                background = VolaReader.darkBackground,
+                background = if (v5) VolaReader.darkBackgroundV5 else VolaReader.darkBackground,
                 content = VolaReader.darkContent,
                 muted = VolaReader.darkMuted,
-                card = VolaReader.darkCard,
+                card = if (v5) VolaReader.darkCardV5 else VolaReader.darkCard,
                 accent = darkAccent,
                 onAccent = onDarkAccent,
             ),
             serifFontFamily = LiterataFontFamily,
             sansFontFamily = ManropeFontFamily,
+            monoFontFamily = VolaReader.monoFontFamily,
             titleFontSize = VolaReader.titleFontSize,
             titleLineHeight = VolaReader.titleLineHeight,
             progressHeight = VolaReader.progressHeight,

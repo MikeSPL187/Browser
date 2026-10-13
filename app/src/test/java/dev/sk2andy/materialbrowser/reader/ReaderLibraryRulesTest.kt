@@ -185,4 +185,24 @@ class ReaderLibraryRulesTest {
         progress = 0.5f,
         savedAtMillis = savedAt,
     )
+
+    @Test
+    fun `text goes up to 250 percent in steps of a tenth`() {
+        assertEquals(2.5f, ReaderLibraryRules.MAX_FONT_SCALE)
+        val stops = ReaderLibraryRules.FONT_SCALE_STEPS + 1
+        assertEquals(
+            0.1f,
+            (ReaderLibraryRules.MAX_FONT_SCALE - ReaderLibraryRules.MIN_FONT_SCALE) / stops,
+            0.0001f,
+        )
+    }
+
+    @Test
+    fun `a typeface saved before V19 keeps whether it had serifs`() {
+        assertEquals(ReaderFont.Serif, ReaderFont.fromStored(null, serif = true))
+        assertEquals(ReaderFont.Sans, ReaderFont.fromStored(null, serif = false))
+        assertEquals(ReaderFont.Mono, ReaderFont.fromStored("Mono", serif = true))
+        assertEquals(ReaderFont.Serif, ReaderFont.fromStored("Gothic", serif = true))
+        assertEquals(ReaderFont.Sans, ReaderSettings(1f, ReaderTheme.Light, serif = false).font)
+    }
 }
