@@ -127,6 +127,7 @@ internal fun BrowserV5Bar(
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
                 onTabs = onTabs,
                 onBarPositioned = onBarPositioned,
+                accessory = { BrowserListenAccessory(selectedTabPrivate = tab.isIncognito) },
                 menuButton = {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))

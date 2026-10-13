@@ -307,7 +307,8 @@ fun ReaderStudioScreen(
     repository: ReaderLibraryDataSource,
     resources: ReaderStudioResources,
     style: ReaderStudioStyle,
-    speechFactory: () -> ReaderSpeech,
+    /** The voice for one article; the app's may go on speaking after the reader closes. */
+    speechFactory: (ReaderDocument) -> ReaderSpeech,
     /** Registers a system back handler; shared code has none of its own. */
     backHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit,
     onRetry: () -> Unit,
@@ -656,7 +657,7 @@ private fun ReaderArticle(
     resources: ReaderStudioResources,
     style: ReaderStudioStyle,
     browserDark: Boolean,
-    speechFactory: () -> ReaderSpeech,
+    speechFactory: (ReaderDocument) -> ReaderSpeech,
     colors: ReaderPalette,
     settingsVisible: Boolean,
     onSettingsDismiss: () -> Unit,
@@ -667,7 +668,7 @@ private fun ReaderArticle(
     onOpenLink: (String) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    val speech = remember(document.sourceUrl) { speechFactory() }
+    val speech = remember(document.sourceUrl) { speechFactory(document) }
     var restored by remember(document.sourceUrl) { mutableStateOf(false) }
     val progress = ReaderLibraryRules.progress(scrollState.value, scrollState.maxValue)
     val fontFamily = style.fontFamily(settings.font)

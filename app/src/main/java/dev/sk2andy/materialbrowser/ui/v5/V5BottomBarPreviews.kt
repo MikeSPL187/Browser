@@ -45,7 +45,12 @@ private fun previewState(domain: String?, loading: Boolean = false) = V5BarState
 )
 
 @Composable
-private fun BarPreview(state: V5BarState, collapsed: Boolean = false, tint: V5SiteTint? = null) {
+private fun BarPreview(
+    state: V5BarState,
+    collapsed: Boolean = false,
+    tint: V5SiteTint? = null,
+    listen: V5ListenRowState? = null,
+) {
     Box(Modifier.fillMaxSize().background(V5Theme.colors.background)) {
         V5BottomBar(
             state = state,
@@ -59,6 +64,7 @@ private fun BarPreview(state: V5BarState, collapsed: Boolean = false, tint: V5Si
             onTabs = {},
             onBarPositioned = { _, _ -> },
             menuButton = { IconButton(onClick = {}) { Icon(VolaIcons.MoreVert, contentDescription = null) } },
+            accessory = listen?.let { row -> { V5ListenRow(state = row, onPlayPause = {}, onClose = {}) } },
         )
     }
 }
@@ -107,5 +113,31 @@ private fun V5BarSiteColorPreview() {
                 }
             }
         }
+    }
+}
+
+@Preview(name = "v5 bar · listening (V19b)", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarListeningPreview() {
+    VolaV5Theme(dark = false) {
+        BarPreview(
+            previewState("polar-notes.ru"),
+            listen = V5ListenRowState(
+                title = "Как полярники готовятся к долгой зимовке",
+                speaking = true,
+                unavailable = false,
+            ),
+        )
+    }
+}
+
+@Preview(name = "v5 bar · listening paused, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarListeningPausedPreview() {
+    VolaV5Theme(dark = true) {
+        BarPreview(
+            previewState("polar-notes.ru"),
+            listen = V5ListenRowState(title = null, speaking = false, unavailable = false),
+        )
     }
 }
