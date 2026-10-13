@@ -326,15 +326,6 @@ internal fun BrowserSettingsPage(
     }
 }
 
-/** One row of a card that knows whether a line follows it. */
-private typealias CardRow = @Composable (divider: Boolean) -> Unit
-
-/** [rows] one under another, with a line between each two. */
-@Composable
-private fun CardRows(rows: List<CardRow>) {
-    rows.forEachIndexed { index, row -> row(index < rows.lastIndex) }
-}
-
 private fun translationSummary(provider: PageTranslationProvider): Int = when (provider) {
     PageTranslationProvider.Google -> R.string.settings_translation_provider_google_summary
     PageTranslationProvider.Yandex -> R.string.settings_translation_provider_summary

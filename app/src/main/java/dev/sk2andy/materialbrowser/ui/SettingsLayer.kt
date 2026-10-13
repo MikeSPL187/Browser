@@ -37,6 +37,7 @@ internal object SettingsLayerRules {
     val moreOf: Map<SettingsDestination, SettingsDestination> = mapOf(
         SettingsDestination.ProtectionMore to SettingsDestination.ProtectionAndData,
         SettingsDestination.BrowserMore to SettingsDestination.Browser,
+        SettingsDestination.TabsMore to SettingsDestination.TabsAndGestures,
     )
 
     fun layer(uiV5: Boolean, destination: SettingsDestination): SettingsLayer = when {
@@ -51,4 +52,13 @@ internal object SettingsLayerRules {
 internal fun rememberSettingsUiV5(): Boolean {
     val flag by rememberUiV5Flag()
     return SettingsLayerRules.speaksForV5(flag, LocalConfiguration.current.screenWidthDp.toFloat())
+}
+
+/** One row of a settings card that knows whether a line follows it. */
+internal typealias CardRow = @Composable (divider: Boolean) -> Unit
+
+/** [rows] one under another, with a line between each two. */
+@Composable
+internal fun CardRows(rows: List<CardRow>) {
+    rows.forEachIndexed { index, row -> row(index < rows.lastIndex) }
 }
