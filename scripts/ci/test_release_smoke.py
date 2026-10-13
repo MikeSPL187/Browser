@@ -65,6 +65,61 @@ class ReportTest(unittest.TestCase):
         finally:
             smoke.subprocess.run = real
 
+    def test_a_lost_device_is_a_stuck_emulator_not_an_empty_answer(self):
+        real = smoke.subprocess.run
+        smoke.subprocess.run = lambda *args, **kwargs: smoke.subprocess.CompletedProcess(
+            args[0], 1, stdout="", stderr="adb: device offline\n")
+        try:
+            with self.assertRaisesRegex(smoke.EmulatorStuck, "adb shell pidof x: adb: device offline"):
+                smoke.adb("shell", "pidof", "x")
+        finally:
+            smoke.subprocess.run = real
+
+    def test_a_missing_process_is_still_an_empty_answer(self):
+        real = smoke.subprocess.run
+        smoke.subprocess.run = lambda *args, **kwargs: smoke.subprocess.CompletedProcess(
+            args[0], 1, stdout="", stderr="")
+        try:
+            self.assertEqual("", smoke.adb("shell", "pidof", "x"))
+        finally:
+            smoke.subprocess.run = real
+
+    def run_with_stalls(self, stalling, recovers=True):
+        def check(package, name, url, settle):
+            if name in stalling:
+                raise smoke.EmulatorStuck(f"adb shell am start {name}: no answer in 120 s")
+            return smoke.SiteResult(name, url, alive=True)
+        real = smoke.stuck_diagnostics
+        smoke.stuck_diagnostics = lambda: None
+        try:
+            return smoke.run_sites("x", 0, check=check, recover_emulator=lambda: recovers)
+        finally:
+            smoke.stuck_diagnostics = real
+
+    def test_a_hang_marks_the_site_unchecked_and_the_run_goes_on(self):
+        results, aborted = self.run_with_stalls({"Сбербанк Онлайн"})
+        self.assertEqual("", aborted)
+        self.assertEqual(len(smoke.SITES), len(results))
+        sber = next(result for result in results if result.name == "Сбербанк Онлайн")
+        self.assertTrue(sber.stalled)
+        self.assertFalse(sber.crashed)
+        self.assertFalse(sber.unopened)
+        text = smoke.report(results, "x")
+        self.assertIn("✅ без вылетов · ⏸ эмулятор зависал: 1", text)
+        self.assertIn("| [Сбербанк Онлайн](https://online.sberbank.ru/) | ⏸ эмулятор завис, сайт не проверен |", text)
+        self.assertIn("⏸ Сбербанк Онлайн: `adb shell am start Сбербанк Онлайн: no answer in 120 s`", text)
+
+    def test_an_emulator_that_does_not_come_back_stops_the_run(self):
+        results, aborted = self.run_with_stalls({"Т-Банк"}, recovers=False)
+        self.assertEqual(7, len(results))
+        self.assertTrue(aborted.startswith("Т-Банк: эмулятор перестал отвечать"))
+
+    def test_hangs_that_keep_coming_back_stop_the_run(self):
+        stalling = {name for name, _ in smoke.SITES[6:6 + smoke.MAX_STALLS + 1]}
+        results, aborted = self.run_with_stalls(stalling)
+        self.assertEqual(6 + smoke.MAX_STALLS, len(results))
+        self.assertIn("эмулятор перестал отвечать", aborted)
+
     def test_a_quiet_death_keeps_why_the_process_ended(self):
         dead = smoke.SiteResult("Т-Банк", "https://www.tbank.ru/login/", alive=False,
                                 exit_info="ApplicationExitInfo #0:\nreason=3 (LOW_MEMORY)",

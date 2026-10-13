@@ -9,7 +9,9 @@ Markdown file for the issue comment and to the job summary.
 
   scripts/ci/release_smoke.py --apk app-full-localRelease.apk --package io.github.mikespl187.vola.preview \\
       --report smoke.md
-Exits 1 when any site crashed the browser.
+Exits 1 when any site crashed the browser. When the emulator itself hangs (adb gets no answer or
+says the device is offline), the site is marked as not checked, the emulator gets a few minutes to
+come back and the run goes on; a hang is never counted as a crash of the browser.
 """
 
 import argparse
@@ -57,14 +59,17 @@ class SiteResult:
     exit_info: str = ""
     start_output: str = ""
     system_log: str = ""
+    # The emulator hung on this site, so nothing about the browser is known; [stall] says how.
+    stalled: bool = False
+    stall: str = ""
 
     @property
     def quiet_death(self):
-        return not self.alive and not self.crash_log.strip()
+        return self.crashed and not self.alive and not self.crash_log.strip()
 
     @property
     def unopened(self):
-        return not self.crashed and not self.loaded
+        return not self.stalled and not self.crashed and not self.loaded
 
     @property
     def java_crash(self):
@@ -72,20 +77,33 @@ class SiteResult:
 
     @property
     def crashed(self):
-        return not self.alive or bool(self.crash_log.strip())
+        return not self.stalled and (not self.alive or bool(self.crash_log.strip()))
 
 
 class EmulatorStuck(Exception):
     """adb got no answer: the emulator, not the browser, stopped working."""
 
 
+# What adb says on stderr when it lost the emulator, rather than when the command failed on it.
+LOST_DEVICE_MARKERS = ("device offline", "no devices/emulators found", "device not found",
+                       "device still connecting", "error: closed", "protocol fault")
+
+# Hangs a run gets over before it stops: a hang that keeps coming back is no longer one bad page.
+MAX_STALLS = 2
+
+
 def adb(*args, check=False, timeout=120):
-    # A hang is never read as empty output: an empty pidof would look like a crash.
+    # A hang or a lost device is never read as empty output: an empty pidof would look like a crash.
+    # Once the emulator hung, adb fails at once with "device offline", and every later site read
+    # as a crash with no trace (nightly runs 9.10-13.10, #134).
     try:
         result = subprocess.run(["adb", *args], capture_output=True, text=True, errors="replace",
                                 timeout=timeout, check=check)
     except subprocess.TimeoutExpired:
         raise EmulatorStuck(f"adb {' '.join(args)}: no answer in {timeout} s") from None
+    error = (result.stderr or "").strip()
+    if result.returncode != 0 and any(marker in error.lower() for marker in LOST_DEVICE_MARKERS):
+        raise EmulatorStuck(f"adb {' '.join(args)}: {error.splitlines()[-1]}")
     return result.stdout
 
 
@@ -98,6 +116,19 @@ def wait_for_boot(timeout=300):
             return
         time.sleep(3)
     raise SystemExit("the emulator did not boot")
+
+
+def recover(timeout=240):
+    """Whether the emulator answers again after a hang; it gets [timeout] seconds."""
+    try:
+        adb("reconnect", "offline", timeout=30)
+    except EmulatorStuck:
+        pass
+    try:
+        wait_for_boot(timeout)
+        return adb("shell", "echo", "ok", timeout=30).strip() == "ok"
+    except (EmulatorStuck, SystemExit):
+        return False
 
 
 def newest_tombstone(since):
@@ -179,6 +210,9 @@ def report(results, version, aborted=""):
     verdict = "✅ без вылетов" if not crashed else f"❌ вылетов: {len(crashed)} из {len(results)}"
     if unopened:
         verdict += f" · ⚠️ не открылись: {len(unopened)}"
+    stalled = [result for result in results if result.stalled]
+    if stalled:
+        verdict += f" · ⏸ эмулятор зависал: {len(stalled)}"
     if aborted:
         verdict += f" · ⚠️ прогон прерван: проверено {len(results)} из {len(SITES)}"
     lines = [f"## Ночной smoke-тест release · {version} · {verdict}", ""]
@@ -186,7 +220,9 @@ def report(results, version, aborted=""):
         lines += [f"Прерван: `{aborted}`", ""]
     lines += ["| Сайт | Результат |", "|---|---|"]
     for result in results:
-        if result.unopened:
+        if result.stalled:
+            status = "⏸ эмулятор завис, сайт не проверен"
+        elif result.unopened:
             status = "⚠️ страница не открылась (нет процесса вкладки)"
         elif not result.crashed:
             status = "✅ жив"
@@ -195,6 +231,8 @@ def report(results, version, aborted=""):
         else:
             status = "❌ вылет" if not result.alive else "⚠️ сбой в журнале, процесс жив"
         lines.append(f"| [{result.name}]({result.url}) | {status} |")
+    for result in stalled:
+        lines += ["", f"⏸ {result.name}: `{result.stall}`"]
     for result in crashed:
         lines += ["", f"### {result.name}", f"`{result.url}`", ""]
         for number, block in enumerate(result.symbolicated, start=1):
@@ -216,6 +254,36 @@ def report(results, version, aborted=""):
     return "\n".join(lines) + "\n"
 
 
+def aborted_at(reason):
+    print(f"ABORT {reason}", flush=True)
+    return reason
+
+
+def run_sites(package, settle, check=None, recover_emulator=None):
+    """The result of every site, and why the run stopped early ("" when it did not)."""
+    check = check or check_site
+    recover_emulator = recover_emulator or recover
+    results = []
+    stalls = 0
+    for name, url in SITES:
+        try:
+            result = check(package, name, url, settle)
+        except EmulatorStuck as error:  # the sites checked so far still make the report
+            print(f"STALL {name}: {error}", flush=True)
+            stuck_diagnostics()
+            stalls += 1
+            if stalls > MAX_STALLS or not recover_emulator():
+                return results, aborted_at(f"{name}: эмулятор перестал отвечать ({error})")
+            results.append(SiteResult(name, url, alive=True, stalled=True, stall=str(error)))
+            continue
+        except Exception as error:
+            return results, aborted_at(f"{name}: {type(error).__name__}: {error}")
+        label = "CRASH" if result.crashed else "EMPTY" if result.unopened else "ok"
+        print(f"{label:5} {name} {url}", flush=True)
+        results.append(result)
+    return results, ""
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--apk", required=True)
@@ -231,23 +299,7 @@ def main(argv):
     adb("install", "-r", "-g", args.apk, check=True, timeout=600)
     adb("shell", "pm", "grant", args.package, "android.permission.POST_NOTIFICATIONS")
 
-    results = []
-    aborted = ""
-    for name, url in SITES:
-        try:
-            result = check_site(args.package, name, url, args.settle)
-        except EmulatorStuck as error:  # the sites checked so far still make the report
-            aborted = f"{name}: эмулятор перестал отвечать ({error})"
-            print(f"ABORT {aborted}", flush=True)
-            stuck_diagnostics()
-            break
-        except Exception as error:
-            aborted = f"{name}: {type(error).__name__}: {error}"
-            print(f"ABORT {aborted}", flush=True)
-            break
-        label = "CRASH" if result.crashed else "EMPTY" if result.unopened else "ok"
-        print(f"{label:5} {name} {url}", flush=True)
-        results.append(result)
+    results, aborted = run_sites(args.package, args.settle)
 
     text = report(results, args.version, aborted)
     Path(args.report).write_text(text, encoding="utf-8")
