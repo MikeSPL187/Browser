@@ -61,4 +61,18 @@ class SettingsRegistryTest {
         assertTrue(!SettingsRegistry.searchableInV5("page:Themes", SettingsDestination.Themes))
         assertTrue(SettingsRegistry.searchableInV5("page:Appearance", SettingsDestination.Appearance))
     }
+
+    @Test
+    fun `under v5 the less used protection settings open on the More page`() {
+        val protection = SettingsDestination.ProtectionAndData
+        listOf("dns_over_https", "webrtc_protection", "filter_studio", "recall", "data_archive_export")
+            .forEach { key -> assertEquals(key, SettingsDestination.ProtectionMore, SettingsRegistry.v5Destination(key, protection)) }
+        listOf("https_only", "block_ads", "history_save", "private_tabs_lock")
+            .forEach { key -> assertEquals(key, protection, SettingsRegistry.v5Destination(key, protection)) }
+        SettingsRegistry.settings.forEach { setting ->
+            val key = setting.spec.key
+            val destination = setting.spec.destination
+            if (destination != protection) assertEquals(key, destination, SettingsRegistry.v5Destination(key, destination))
+        }
+    }
 }

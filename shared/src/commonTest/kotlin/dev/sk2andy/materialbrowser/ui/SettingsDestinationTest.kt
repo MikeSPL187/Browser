@@ -8,6 +8,7 @@ class SettingsDestinationTest {
     fun subpagesReturnToThePageTheyOpenFrom() {
         assertEquals(SettingsDestination.Appearance, SettingsDestination.Themes.parent)
         assertEquals(SettingsDestination.Userscripts, SettingsDestination.ToppingCatalog.parent)
+        assertEquals(SettingsDestination.ProtectionAndData, SettingsDestination.ProtectionMore.parent)
         listOf(
             SettingsDestination.AddressBarLongPressActions,
             SettingsDestination.AddressBarActions,

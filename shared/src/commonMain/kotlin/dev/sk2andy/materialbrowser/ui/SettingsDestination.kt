@@ -18,6 +18,9 @@ enum class SettingsDestination {
     Sync,
     Passwords,
     ProtectionAndData,
+
+    /** Under ui.v5: the less used half of «Protection and data» (V15d-3). */
+    ProtectionMore,
     DeveloperOptions,
     AboutLegal,
     ;
@@ -32,6 +35,7 @@ enum class SettingsDestination {
             -> TabsAndGestures
             Themes -> Appearance
             ToppingCatalog -> Userscripts
+            ProtectionMore -> ProtectionAndData
             else -> Home
         }
 }
