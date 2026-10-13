@@ -57,6 +57,9 @@ class ListenSession private constructor(private val context: Context) {
     var preparation by mutableStateOf<ListenPreparation?>(null)
         private set
 
+    val state: ReaderSpeechState
+        get() = speech?.state ?: ReaderSpeechState(ReaderSpeechStatus.Closed)
+
     /** Bumped by every [prepare], so a late answer for an earlier page is ignored. */
     private var preparationId = 0
 
