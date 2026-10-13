@@ -65,6 +65,53 @@ class ReportTest(unittest.TestCase):
         finally:
             smoke.subprocess.run = real
 
+    def test_a_quiet_death_keeps_why_the_process_ended(self):
+        dead = smoke.SiteResult("Т-Банк", "https://www.tbank.ru/login/", alive=False,
+                                exit_info="ApplicationExitInfo #0:\nreason=3 (LOW_MEMORY)",
+                                start_output="Status: ok",
+                                system_log="I lowmemorykiller: Kill 'io.github.mikespl187.vola.preview'")
+        self.assertTrue(dead.crashed)
+        self.assertTrue(dead.quiet_death)
+        text = smoke.report([dead], "x")
+        self.assertIn("Процесс завершился без журнала сбоев", text)
+        self.assertIn("reason=3 (LOW_MEMORY)", text)
+        self.assertIn("lowmemorykiller", text)
+
+    def test_a_crash_with_a_log_is_not_a_quiet_death(self):
+        crash = smoke.SiteResult("VK", "https://vk.com/", alive=False, crash_log="FATAL EXCEPTION: main")
+        self.assertFalse(crash.quiet_death)
+        self.assertNotIn("без журнала сбоев", smoke.report([crash], "x"))
+
+    def test_exit_reasons_keep_a_few_lines_of_each_record(self):
+        dump = """ACTIVITY MANAGER PROCESS EXIT INFO (dumpsys activity exit-info)
+  package: io.github.mikespl187.vola.preview
+    Historical Process Exit for uid=10190
+        ApplicationExitInfo #0:
+          timestamp=2026-10-13 15:30:01.000 pid=4242 realUid=10190 packageUid=10190 definingUid=10190 user=0
+          process=io.github.mikespl187.vola.preview reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=512MB rss=600MB description=null state=empty trace=null
+        ApplicationExitInfo #1:
+          timestamp=2026-10-13 15:29:00.000 pid=4100
+          process=io.github.mikespl187.vola.preview reason=10 (USER_REQUESTED) subreason=23 (FORCE_STOP)
+"""
+        reasons = smoke.exit_reasons(dump)
+        self.assertTrue(reasons.startswith("ApplicationExitInfo #0:"))
+        self.assertIn("reason=3 (LOW_MEMORY)", reasons)
+        self.assertIn("FORCE_STOP", reasons)
+        self.assertNotIn("Historical Process Exit", reasons)
+
+    def test_the_system_log_keeps_process_deaths_and_the_package(self):
+        log = "\n".join([
+            "I chatty: noise",
+            "I ActivityManager: Process io.github.mikespl187.vola.preview (pid 4242) has died: fg TOP",
+            "W Unrelated: noise",
+            "E GeckoRuntime: Parent process crashed",
+        ])
+        tail = smoke.system_log_tail(log, "io.github.mikespl187.vola.preview")
+        self.assertIn("has died", tail)
+        self.assertIn("GeckoRuntime", tail)
+        self.assertNotIn("chatty", tail)
+
     def test_every_site_is_an_https_page(self):
         self.assertTrue(all(url.startswith("https://") for _, url in smoke.SITES))
         self.assertEqual(len({url for _, url in smoke.SITES}), len(smoke.SITES))

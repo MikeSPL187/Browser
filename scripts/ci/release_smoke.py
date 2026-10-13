@@ -51,6 +51,16 @@ class SiteResult:
     tombstone: str = ""
     symbolicated: list = dataclasses.field(default_factory=list)
     loaded: bool = True  # Gecko started a content process for the page
+    # When the process is gone without a crash log: why Android says it ended, what `am start` said
+    # and the system log around it. Without these a quiet death (killed for memory, the app ending
+    # itself) reads exactly like a crash with no trace.
+    exit_info: str = ""
+    start_output: str = ""
+    system_log: str = ""
+
+    @property
+    def quiet_death(self):
+        return not self.alive and not self.crash_log.strip()
 
     @property
     def unopened(self):
@@ -114,11 +124,39 @@ def stuck_diagnostics():
         print("::endgroup::", flush=True)
 
 
+# The log lines that tell why a process ended or never started.
+SYSTEM_LOG_MARKERS = ("ActivityManager", "ActivityTaskManager", "lowmemorykiller", "lmkd", "libprocessgroup",
+                      "GeckoRuntime", "GeckoThread", "Gecko", "AndroidRuntime", "DEBUG", "Process", "Vola")
+
+
+def exit_reasons(dump, limit=12):
+    """The ApplicationExitInfo records of `dumpsys activity exit-info`, newest first, a few lines each."""
+    records, current = [], []
+    for line in dump.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("ApplicationExitInfo #"):
+            if current:
+                records.append(current)
+            current = [stripped]
+        elif current and stripped and len(current) < 6:
+            current.append(stripped)
+    if current:
+        records.append(current)
+    return "\n".join("\n".join(record) for record in records[:limit])
+
+
+def system_log_tail(log, package, limit=120):
+    """The lines of the main and system logs that speak of the package or of process deaths."""
+    lines = [line for line in log.splitlines()
+             if package in line or any(marker in line for marker in SYSTEM_LOG_MARKERS)]
+    return "\n".join(lines[-limit:])
+
+
 def check_site(package, name, url, settle):
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
     before = set(adb("shell", "ls", "/data/tombstones").split())
-    adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", f"'{url}'", "-p", package)
+    start_output = adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", f"'{url}'", "-p", package)
     time.sleep(settle)
     alive = bool(adb("shell", "pidof", package).strip())
     # Gecko renders pages in "<package>:tabN"; without one the page never started loading.
@@ -126,9 +164,12 @@ def check_site(package, name, url, settle):
     loaded = f"{package}:tab" in adb("shell", "ps", "-A", "-o", "NAME")
     crash_log = adb("logcat", "-d", "-b", "crash")
     tombstone = newest_tombstone(before) if not alive or crash_log.strip() else ""
-    result = SiteResult(name, url, alive, crash_log, tombstone, loaded=loaded)
+    result = SiteResult(name, url, alive, crash_log, tombstone, loaded=loaded, start_output=start_output.strip())
     if result.crashed:
         result.symbolicated = symbolicate.symbolicate(crash_log + "\n" + tombstone)
+    if result.quiet_death:
+        result.exit_info = exit_reasons(adb("shell", "dumpsys", "activity", "exit-info", package))
+        result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system,events", "-t", "2000"), package)
     return result
 
 
@@ -162,6 +203,16 @@ def report(results, version, aborted=""):
         if tail:
             lines += ["<details><summary>Журнал сбоев (logcat -b crash)</summary>", "", "```", *tail, "```",
                       "</details>"]
+        if result.quiet_death:
+            lines += ["Процесс завершился без журнала сбоев.", ""]
+            for title, text in (
+                ("Причина выхода (dumpsys activity exit-info)", result.exit_info),
+                ("am start", result.start_output),
+                ("Журнал системы (процессы и Gecko)", result.system_log),
+            ):
+                if text:
+                    lines += [f"<details><summary>{title}</summary>", "", "```", *text.splitlines(), "```",
+                              "</details>"]
     return "\n".join(lines) + "\n"
 
 
