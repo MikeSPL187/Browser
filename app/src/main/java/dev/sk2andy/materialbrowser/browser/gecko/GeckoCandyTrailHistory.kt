@@ -21,6 +21,11 @@ internal class GeckoCandyTrailHistoryTracker(
 ) {
     private var previous: GeckoBrowserHistoryState? = null
 
+    /** The next state is news, not a reload of this one: a tab took the page over from a preview. */
+    fun forget() {
+        previous = null
+    }
+
     fun onHistoryStateChanged(state: GeckoBrowserHistoryState) {
         if (state.currentIndex !in state.urls.indices) return
         val stableState = state.copy(urls = state.urls.toList())

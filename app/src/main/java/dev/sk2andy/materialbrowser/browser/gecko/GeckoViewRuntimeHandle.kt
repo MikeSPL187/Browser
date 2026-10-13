@@ -926,7 +926,7 @@ private class GeckoViewBrowserSession(
     private val extensionController: WebExtensionController,
     private val extensionRuntime: GeckoExtensionRuntime,
     override val profileId: String,
-    private val isolationEnabled: Boolean,
+    override val isolationEnabled: Boolean,
     override val isPrivate: Boolean,
     private val toppingHost: GeckoToppingHostRuntime,
     private val privacyHost: GeckoViewPrivacyHostRuntime,
@@ -1096,6 +1096,10 @@ private class GeckoViewBrowserSession(
     private val notificationPermissionRevisions = mutableMapOf<String, Int>()
     private var privacyBound = false
     private var privacyFailureDescription: String? = null
+
+    // A link preview's session keeps its privacy binding when a tab adopts it; only the sink moves.
+    @Volatile
+    private var privacyEventSink = privacyEventSink
     private val privacyBinding: GeckoPrivacyBinding
     private var toppingBinding: GeckoToppingSessionBinding = GeckoToppingSessionBinding.None
     init {
@@ -2012,7 +2016,7 @@ private class GeckoViewBrowserSession(
         privacyBinding = privacyHost.bind(
             session = session,
             policy = initialPrivacyPolicy,
-            sink = privacyEventSink,
+            sink = { event -> this.privacyEventSink.onEvent(event) },
             onScrollMetrics = { metrics ->
                 BrowserPerformanceTrace.section(
                     BrowserPerformanceTrace.Phase.GeckoDocumentMetrics,
@@ -2072,6 +2076,10 @@ private class GeckoViewBrowserSession(
         GeckoDomDiagnostics.navigationChanged(session)
         // Navigation delegates can run during initial host binding; cancel after it exists.
         if (privacyBound) privacyBinding.cancelDomProbe()
+    }
+
+    override fun setPrivacyEventSink(sink: GeckoPrivacyEventSink) {
+        privacyEventSink = sink
     }
 
     override fun setStateListener(listener: GeckoBrowserSessionStateListener?) {

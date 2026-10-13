@@ -75,6 +75,62 @@ class GeckoLinkPeekPreviewInstrumentedTest {
     }
 
     @Test
+    fun backgroundHandOverMovesTheLivePreviewIntoANewTabNextToItsSource() {
+        activityRule.scenario.onActivity { activity ->
+            val controller = BrowserController(activity)
+            val sourceTabId = controller.selectedTabId
+            val laterTabId = requireNotNull(controller.createBackgroundTab("https://example.com/later"))
+            val url = "https://example.com/hand-over"
+            controller.contentActions.show(target = WebContentTarget(linkUrl = url), sourceTabId = sourceTabId)
+            val preview = controller.createLinkPeekPreviewView(
+                url = url,
+                onProgressChanged = {},
+                onCommittedUrlChanged = {},
+            )
+            val tabsBefore = controller.tabs.map(BrowserTab::id).toSet()
+
+            assertTrue(controller.openLinkPreviewInNewTab(preview, url, foreground = false))
+
+            val created = controller.tabs.single { tab -> tab.id !in tabsBefore }
+            assertEquals("The preview's session moved, none is left", 0, controller.activeLinkPeekPreviewCountForTesting)
+            assertTrue("The tab took the live session", created.id in controller.residentTabIdsForTesting())
+            assertEquals(url, created.url)
+            assertEquals(sourceTabId, created.openerTabId)
+            assertEquals(sourceTabId, controller.selectedTabId)
+            assertEquals(
+                listOf(sourceTabId, created.id, laterTabId),
+                controller.activeTabs.map(BrowserTab::id).filter { id -> id in setOf(sourceTabId, created.id, laterTabId) },
+            )
+            controller.destroy()
+        }
+    }
+
+    @Test
+    fun newTabHandOverSelectsTheTabThatTookThePreview() {
+        activityRule.scenario.onActivity { activity ->
+            val controller = BrowserController(activity)
+            val sourceTabId = controller.selectedTabId
+            val url = "https://example.com/hand-over-foreground"
+            controller.contentActions.show(target = WebContentTarget(linkUrl = url), sourceTabId = sourceTabId)
+            val preview = controller.createLinkPeekPreviewView(
+                url = url,
+                onProgressChanged = {},
+                onCommittedUrlChanged = {},
+            )
+
+            assertTrue(controller.openLinkPreviewInNewTab(preview, url, foreground = true))
+
+            val created = controller.selectedTab
+            assertTrue(created.id != sourceTabId)
+            assertEquals(url, created.url)
+            assertEquals(sourceTabId, created.openerTabId)
+            assertEquals(0, controller.activeLinkPeekPreviewCountForTesting)
+            assertTrue(created.id in controller.residentTabIdsForTesting())
+            controller.destroy()
+        }
+    }
+
+    @Test
     fun loadingPreviewCannotBePersistedToReader() {
         activityRule.scenario.onActivity { activity ->
             val controller = BrowserController(activity)

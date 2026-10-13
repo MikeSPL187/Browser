@@ -6,6 +6,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -154,4 +155,17 @@ class LinkPeekPreviewRulesTest {
         failureDescription = failureDescription,
         failureKind = failureKind,
     )
+
+    @Test
+    fun `only a loading or loaded preview moves into a tab as it is`() {
+        assertTrue(LinkPeekPreviewRules.canHandOver(LinkPeekPreviewStatus.Loading))
+        assertTrue(LinkPeekPreviewRules.canHandOver(LinkPeekPreviewStatus.Loaded))
+        assertFalse(LinkPeekPreviewRules.canHandOver(LinkPeekPreviewStatus.Failed(null)))
+        assertFalse(LinkPeekPreviewRules.canHandOver(LinkPeekPreviewStatus.Crashed))
+        assertFalse(
+            LinkPeekPreviewRules.canHandOver(
+                LinkPeekPreviewStatus.Blocked(BlockedSite("https://paypa1.com/", "paypa1.com")),
+            ),
+        )
+    }
 }
