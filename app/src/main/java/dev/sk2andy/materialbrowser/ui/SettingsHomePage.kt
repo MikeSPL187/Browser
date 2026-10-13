@@ -76,8 +76,16 @@ internal fun SettingsHomePage(
     // V15c: under ui.v5 the same pages in the v5 grouped list; V15d draws the pages as v5 lists too.
     val uiV5 by rememberUiV5Flag()
     if (uiV5) {
+        // The v5 interface has no frame style; under Appearance only the theme counts.
+        val appearanceSummary = stringResource(SettingsHomeSummaryRules.theme(state.appearance.appearanceMode))
         SettingsHomeV5(
-            entries = entries,
+            entries = entries.map { entry ->
+                if (entry.item.destination == SettingsDestination.Appearance) {
+                    entry.copy(summary = appearanceSummary)
+                } else {
+                    entry
+                }
+            },
             isDefaultBrowser = isDefaultBrowser,
             onOpenDefaultBrowserSettings = onOpenDefaultBrowserSettings,
             onOpen = { item ->

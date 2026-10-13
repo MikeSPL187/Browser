@@ -370,7 +370,16 @@ internal fun SettingsScreen(
                     )
                 }
 
-                SettingsDestination.Appearance -> AppearanceSettingsPage(
+                // V15d-2: under ui.v5 only what the v5 interface uses.
+                SettingsDestination.Appearance -> if (uiV5) {
+                    AppearanceSettingsPageV5(
+                        settings = appearanceSettings,
+                        onSettingsChanged = onAppearanceSettingsChanged,
+                        onBack = { onDestinationChanged(SettingsDestination.Home) },
+                        forceDarkWebsitesAvailable =
+                            browserEngineKind == AndroidBrowserEngineKind.SystemWebView,
+                    )
+                } else AppearanceSettingsPage(
                     settings = appearanceSettings,
                     workspaceAccent = workspaceAccent,
                     onSettingsChanged = onAppearanceSettingsChanged,
