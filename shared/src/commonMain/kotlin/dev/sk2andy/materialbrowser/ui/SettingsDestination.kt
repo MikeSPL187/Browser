@@ -11,6 +11,9 @@ enum class SettingsDestination {
     Appearance,
     Themes,
     Browser,
+
+    /** Under ui.v5: the less used half of «Browser» (V15d-4). */
+    BrowserMore,
     Downloads,
     Userscripts,
     ToppingCatalog,
@@ -36,6 +39,7 @@ enum class SettingsDestination {
             Themes -> Appearance
             ToppingCatalog -> Userscripts
             ProtectionMore -> ProtectionAndData
+            BrowserMore -> Browser
             else -> Home
         }
 }

@@ -1967,6 +1967,7 @@
     <string name="developer_options_ui_v5_specimen">v5 design specimen</string>
     <string name="developer_options_ui_v5_specimen_summary">Colors, the Inter font, shapes and settings tiles of v5 in the light, dark and private themes.</string>
     <string name="settings_protection_more_summary">Encrypted DNS, WebRTC, Filter Studio, Recall, import and export</string>
+    <string name="settings_browser_more_summary">Engine, startup, immersive mode, scroll bar, media player, import</string>
     <string name="settings_value_percent">%1$d %%</string>
     <string name="settings_v5_site_tint">Tint the bar with the site’s color</string>
     <string name="settings_v5_site_tint_summary">The bottom bar takes the color the site declares or the color at the top of the page</string>

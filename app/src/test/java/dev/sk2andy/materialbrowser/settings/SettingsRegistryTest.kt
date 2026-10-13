@@ -72,7 +72,22 @@ class SettingsRegistryTest {
         SettingsRegistry.settings.forEach { setting ->
             val key = setting.spec.key
             val destination = setting.spec.destination
-            if (destination != protection) assertEquals(key, destination, SettingsRegistry.v5Destination(key, destination))
+            if (destination != protection && destination != SettingsDestination.Browser) {
+                assertEquals(key, destination, SettingsRegistry.v5Destination(key, destination))
+            }
+        }
+    }
+
+    @Test
+    fun `under v5 the engine, startup and rarer site settings open on the browser More page`() {
+        val browser = SettingsDestination.Browser
+        listOf("browser_engine", "startup_animation", "open_home_on_startup", "scroll_bar", "inline_media_player")
+            .forEach { key -> assertEquals(key, SettingsDestination.BrowserMore, SettingsRegistry.v5Destination(key, browser)) }
+        listOf("video_autoplay", "translation_provider", "external_app_links", "external_link_preview", "page:Browser")
+            .forEach { key -> assertEquals(key, browser, SettingsRegistry.v5Destination(key, browser)) }
+        SettingsRegistry.settings.filter { setting -> setting.spec.destination == browser }.forEach { setting ->
+            val target = SettingsRegistry.v5Destination(setting.spec.key, browser)
+            assertTrue(setting.spec.key, target == browser || target == SettingsDestination.BrowserMore)
         }
     }
 }
