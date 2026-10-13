@@ -58,7 +58,7 @@ jobs:
           export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
-          sdkmanager "emulator" "platform-tools" "platforms;android-37.1" \
+          sdkmanager "emulator" "platform-tools" "platforms;android-37.2" \
             "system-images;android-35;google_apis;x86_64"
           printf 'no\n' | avdmanager create avd --force --name vola_smoke \
             --package "system-images;android-35;google_apis;x86_64" --device pixel_6
