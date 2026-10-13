@@ -1413,6 +1413,7 @@
     <string name="reader_text_size">Text size</string>
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans serif</string>
+    <string name="reader_font_mono">Monospace</string>
     <string name="reader_wide_margins">Wide margins</string>
     <string name="reader_listen">Listen</string>
     <string name="reader_speech_start">Read aloud</string>
