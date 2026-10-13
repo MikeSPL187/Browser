@@ -44,6 +44,8 @@ object V5Sizes {
     val barLargeFont: Dp = 72.dp
     /** The loading line along the bar's top edge. */
     val barProgress: Dp = 2.dp
+    /** The downloads ring around «•••» (V22): as thin as the loading line. */
+    val downloadRing: Dp = 2.dp
     /** How far a finger moves on the bar before it is a swipe rather than a tap. */
     val barGestureSlop: Dp = 8.dp
 

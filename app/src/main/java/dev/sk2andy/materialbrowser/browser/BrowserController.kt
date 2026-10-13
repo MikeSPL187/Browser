@@ -6672,7 +6672,6 @@ class BrowserController(
         fun report(result: DownloadActionResult) {
             if (reported) return
             reported = true
-            contentActions.reportDownload(result)
             showDownloadResult(result)
         }
         fun reportFailure() = report(
@@ -13406,6 +13405,7 @@ class BrowserController(
         externalDownloadDiscoveryForTesting?.invoke(request) ?: externalDownloadManager.discover(request)
 
     private fun showDownloadResult(result: DownloadActionResult) {
+        contentActions.reportDownload(result)
         Toast.makeText(
             activity,
             when (result) {

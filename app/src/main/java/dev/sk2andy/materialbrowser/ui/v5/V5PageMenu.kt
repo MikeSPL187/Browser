@@ -82,6 +82,8 @@ data class V5PageMenuState(
     val canHideDistractions: Boolean = false,
     /** Blocks hidden on this site; «Show hidden items» from one. */
     val hiddenCount: Int = 0,
+    /** What is downloading now (V22): a row above the rest while there is something. */
+    val downloads: V5DownloadRingState? = null,
 )
 
 /** The menu's actions. Each one but the toggles closes the menu first. */
@@ -141,6 +143,16 @@ fun V5PageMenu(
                 .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
         ) {
+            state.downloads?.let { downloads ->
+                V5ListGroup {
+                    V5ListRow(
+                        stringResource(R.string.v5_menu_downloads),
+                        subtitle = v5DownloadsSummary(downloads),
+                        icon = V5RowIcon(VolaIcons.Download),
+                        onClick = closing(actions.onDownloads),
+                    )
+                }
+            }
             RoundActions(state, actions, ::closing)
             if (state.canRead) {
                 ReadListenTiles(onRead = closing(actions.onRead), onListen = closing(actions.onListen))
