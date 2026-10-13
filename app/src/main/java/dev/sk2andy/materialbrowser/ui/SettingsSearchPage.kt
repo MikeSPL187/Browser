@@ -41,7 +41,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.settings.SettingsRegistry
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.shared.settings.SettingSearchCandidate
 import dev.sk2andy.materialbrowser.shared.settings.SettingsSearchRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -67,7 +66,7 @@ internal fun SettingsSearchPage(
     BackHandler(onBack = onBack)
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
-    val uiV5 by rememberUiV5Flag()
+    val uiV5 = rememberSettingsUiV5()
     val candidates = remember(configuration, uiV5) {
         SettingsRegistry.searchCandidates(context.resources, uiV5)
     }

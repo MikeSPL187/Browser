@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -40,7 +39,6 @@ import dev.sk2andy.materialbrowser.browser.LinkPeekAction
 import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsRouter
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuEntry
@@ -205,7 +203,7 @@ internal fun SettingsScreen(
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
         ?.accent
         ?: WorkspaceAccent.Default
-    val uiV5 by rememberUiV5Flag()
+    val uiV5 = rememberSettingsUiV5()
     // Under ui.v5 the inner pages draw their shared components as v5 lists (V15d).
     ProvideV5SettingsSkin(enabled = uiV5) {
     SettingsRouter(

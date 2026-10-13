@@ -23,4 +23,11 @@ class SettingsLayerRulesTest {
         assertTrue(SettingsLayer.Main.main && !SettingsLayer.Main.more)
         assertTrue(SettingsLayer.More.more && !SettingsLayer.More.main)
     }
+
+    @Test
+    fun `settings speak for v5 only where v5 draws the browser`() {
+        assertTrue(SettingsLayerRules.speaksForV5(flag = true, windowWidthDp = 411f))
+        assertTrue(!SettingsLayerRules.speaksForV5(flag = true, windowWidthDp = 800f))
+        assertTrue(!SettingsLayerRules.speaksForV5(flag = false, windowWidthDp = 411f))
+    }
 }

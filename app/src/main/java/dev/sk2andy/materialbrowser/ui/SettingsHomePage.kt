@@ -39,7 +39,6 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomePage as SharedSettingsHomePage
 import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsHomeTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 internal object SettingsHomeTestTags {
     const val DefaultBrowserBanner = "settings_home_default_browser"
@@ -74,7 +73,7 @@ internal fun SettingsHomePage(
     )
     val entries = items.map { item -> settingsHomeEntry(item, state) }
     // V15c: under ui.v5 the same pages in the v5 grouped list; V15d draws the pages as v5 lists too.
-    val uiV5 by rememberUiV5Flag()
+    val uiV5 = rememberSettingsUiV5()
     if (uiV5) {
         // The v5 interface has no frame style; under Appearance only the theme counts.
         val appearanceSummary = stringResource(SettingsHomeSummaryRules.theme(state.appearance.appearanceMode))
