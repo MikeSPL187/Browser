@@ -50,6 +50,19 @@ internal interface AndroidBrowserEngineFactory {
 
     fun prepareSession(tabId: String, session: BrowserEnginePreparedSession): Boolean = false
 
+    /**
+     * Hands [preview], a link preview's live session, to the next [create] of tab [tabId] of this
+     * context, so the tab shows the page without loading it again. Engines that can't keep the
+     * preview's page (System WebView) return false and the tab loads the link itself.
+     */
+    fun prepareAdoption(
+        tabId: String,
+        preview: AndroidBrowserEngineSessionPort,
+        profileId: String,
+        isolationEnabled: Boolean,
+        isPrivate: Boolean,
+    ): Boolean = false
+
     fun createExtensionPopupView(
         context: Context,
         session: BrowserEnginePreparedSession,

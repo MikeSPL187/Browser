@@ -244,6 +244,12 @@ internal interface GeckoBrowserSession {
     val profileId: String
     val isPrivate: Boolean
 
+    /** Whether the profile's storage is isolated; with [profileId] and [isPrivate] it names the context. */
+    val isolationEnabled: Boolean get() = false
+
+    /** Sends this session's privacy events to [sink] from now on: a tab adopting a link preview. */
+    fun setPrivacyEventSink(sink: GeckoPrivacyEventSink) = Unit
+
     fun setStateListener(listener: GeckoBrowserSessionStateListener?)
 
     fun setHistoryStateListener(listener: GeckoBrowserHistoryStateListener?)

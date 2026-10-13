@@ -207,14 +207,12 @@ import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogEntry
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogRules
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
-import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyFailureReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyResolution
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParseResult
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptGrant
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptOpenTabRequest
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
-import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
@@ -314,67 +312,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
-
-internal data class FullscreenVideoState(
-    val tabId: String,
-    val minimizedByUser: Boolean,
-    val sourceRevision: Int,
-    val source: FullscreenVideoSource,
-    val host: FullscreenVideoHost,
-)
-
-internal enum class FullscreenVideoSource {
-    GeckoView,
-}
-
-internal enum class FullscreenVideoHost {
-    BrowserViewport,
-    Overlay,
-}
-
-internal sealed interface UserScriptSaveOutcome {
-    data object Saved : UserScriptSaveOutcome
-    data object LimitReached : UserScriptSaveOutcome
-    data object Missing : UserScriptSaveOutcome
-    data object PersistenceFailed : UserScriptSaveOutcome
-    data class Rejected(val reason: UserScriptRejectionReason) : UserScriptSaveOutcome
-    data class DependencyFailed(
-        val reason: UserScriptDependencyFailureReason,
-    ) : UserScriptSaveOutcome
-}
-
-internal data class BrowserActivityResultIdentity(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val navigationGeneration: Int,
-)
-
-private data class ExternalNavigationRollback(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val navigationGeneration: Int,
-    val sourceUrl: String,
-    var restoringSource: Boolean = false,
-)
-
-private data class ExternalAppNavigationRecovery(
-    val session: AndroidBrowserEngineSessionPort,
-    val targetUrl: String,
-    val sourceTab: BrowserTab,
-    val navigationGeneration: Int,
-    var restored: Boolean = false,
-)
-
-private data class AutoDeAmpReplacementGuard(
-    val publisherUrl: String,
-    val expiresAtElapsedRealtime: Long,
-)
-
-enum class BrowserGestureHapticFeedback {
-    RubberbandStart,
-    RubberbandStop,
-    Confirm,
-}
 
 class BrowserController(
     private val activity: Activity,
@@ -6860,6 +6797,54 @@ class BrowserController(
             openerTabId = sourceTab.id,
         )
         return tabId != sourceTab.id && selectedTabId == tabId
+    }
+
+    /**
+     * Opens the link a v5 preview shows in a new tab next to its source, behind it or [foreground].
+     * A live Gecko preview moves into the tab as it is, with no reload; the tab's history,
+     * protection and extensions take it over. Otherwise the tab loads [url] itself.
+     */
+    fun openLinkPreviewInNewTab(previewView: View?, url: String, foreground: Boolean): Boolean {
+        val sourceTab = contextLinkSourceTab() ?: return false
+        val safeUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return false
+        val binding = previewView?.let(geckoLinkPeekBindings::get)?.takeIf { binding ->
+            binding.sourceTabId == sourceTab.id &&
+                binding.contentRevision == contentActions.revision &&
+                binding.committedUrl == safeUrl &&
+                LinkPeekPreviewRules.canHandOver(binding.status)
+        }
+        val tabId = createBackgroundTab(
+            initialUrl = if (binding == null) safeUrl else BLANK_URL,
+            openerTabId = sourceTab.id,
+            isIncognito = sourceTab.isIncognito,
+        ) ?: return false
+        if (binding != null) adoptLinkPeekPreview(binding, tabId, safeUrl)
+        activeTabs.indexOfFirst { tab -> tab.id == sourceTab.id }
+            .takeIf { index -> index >= 0 }
+            ?.let { index -> tabOrder.positionCreatedTab(tabId, index + 1) }
+        if (foreground) selectTab(tabId) else contentActions.requestLinkPeekNewTabPulse()
+        return true
+    }
+
+    private fun adoptLinkPeekPreview(binding: GeckoLinkPeekBinding, tabId: String, url: String) {
+        geckoLinkPeekBindings.remove(binding.view)
+        releaseGeckoView(binding.session, binding.view)
+        val tab = tabs.first { candidate -> candidate.id == tabId }
+        val adopted = browserEngineSessionFactory.prepareAdoption(
+            tabId = tabId,
+            preview = binding.session,
+            profileId = tab.profileId,
+            isolationEnabled = profileForId(tab.profileId)?.isolationEnabled == true,
+            isPrivate = tab.isIncognito,
+        )
+        if (adopted) {
+            browserEngineSessionFor(tabId).announceAdoptedPage()
+        } else {
+            binding.session.execute(BrowserEngineCommands.close())
+        }
+        // A preview not yet at its page keeps loading it, or the tab loads it: either way, show it.
+        if (tabs.first { it.id == tabId }.url == BLANK_URL) updateTab(tabId) { it.startingLoad(url = url) }
+        persist()
     }
 
     private fun handleWebContentLongPress(target: WebContentTarget, tabId: String) {

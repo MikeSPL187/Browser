@@ -6,12 +6,14 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollEvent
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollListener
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -592,6 +594,140 @@ class GeckoBrowserEngineAdapterTest {
         assertEquals(listOf(BrowserEngineEventType.Crashed), events.map(BrowserEngineEvent::type))
         assertEquals("Gecko content process terminated", events.single().failureDescription)
         assertTrue(session.actions.isEmpty())
+    }
+
+    @Test
+    fun `a link preview lets go of its session without closing it`() {
+        val session = FakeGeckoBrowserSession()
+        var closedCallbacks = 0
+        val preview = GeckoBrowserEngineSessionAdapter(
+            tabId = "link-peek-1",
+            session = session,
+            eventSink = BrowserEngineEventSink { },
+            contentKind = BrowserEngineContentKind.LinkPeek,
+            onClosed = { closedCallbacks++ },
+        )
+
+        assertSame(session, preview.detachForAdoption())
+        preview.execute(BrowserEngineCommands.reload())
+
+        assertEquals(0, session.closeCount)
+        assertEquals(1, closedCallbacks)
+        assertTrue(session.actions.isEmpty())
+        assertNull(preview.detachForAdoption())
+    }
+
+    @Test
+    fun `only a link preview hands its session over`() {
+        val session = FakeGeckoBrowserSession()
+        val tab = GeckoBrowserEngineSessionAdapter(
+            tabId = "tab-1",
+            session = session,
+            eventSink = BrowserEngineEventSink { },
+        )
+
+        assertNull(tab.detachForAdoption())
+        tab.execute(BrowserEngineCommands.reload())
+        assertEquals(listOf("reload"), session.actions)
+    }
+
+    @Test
+    fun `a preview is adopted only into a tab of its own context`() {
+        val preview = GeckoBrowserEngineSessionAdapter(
+            tabId = "link-peek-1",
+            session = FakeGeckoBrowserSession(),
+            eventSink = BrowserEngineEventSink { },
+            contentKind = BrowserEngineContentKind.LinkPeek,
+        )
+
+        assertTrue(preview.sharesContext("profile", isolationEnabled = false, isPrivate = false))
+        assertFalse(preview.sharesContext("other", isolationEnabled = false, isPrivate = false))
+        assertFalse(preview.sharesContext("profile", isolationEnabled = true, isPrivate = false))
+        assertFalse(preview.sharesContext("profile", isolationEnabled = false, isPrivate = true))
+    }
+
+    @Test
+    fun `an adopted page is announced as a navigation that started and finished`() {
+        val loaded = GeckoBrowserSessionState(
+            url = "https://example.com/article",
+            title = "Article",
+            progress = 100,
+            canGoBack = true,
+            lastNavigationSucceeded = true,
+        )
+        val events = mutableListOf<BrowserEngineEvent>()
+        val tab = GeckoBrowserEngineSessionAdapter(
+            tabId = "tab-2",
+            session = FakeGeckoBrowserSession(initialState = loaded),
+            eventSink = BrowserEngineEventSink { event -> events += event },
+            adopted = true,
+        )
+        events.clear()
+
+        tab.announceAdoptedPage()
+
+        assertEquals(
+            listOf(BrowserEngineEventType.NavigationStarted, BrowserEngineEventType.NavigationCommitted),
+            events.map(BrowserEngineEvent::type),
+        )
+        assertEquals(true, events.first().isLoading)
+        assertEquals("https://example.com/article", events.last().address)
+        assertEquals("Article", events.last().title)
+        assertTrue(events.last().canGoBack)
+        assertEquals("tab-2", events.last().tabId)
+    }
+
+    @Test
+    fun `an adopted page still loading is announced as started and finishes on its own`() {
+        val loading = GeckoBrowserSessionState(url = "https://example.com/slow", isLoading = true)
+        val events = mutableListOf<BrowserEngineEvent>()
+        val tab = GeckoBrowserEngineSessionAdapter(
+            tabId = "tab-2",
+            session = FakeGeckoBrowserSession(initialState = loading),
+            eventSink = BrowserEngineEventSink { event -> events += event },
+            adopted = true,
+        )
+        events.clear()
+
+        tab.announceAdoptedPage()
+
+        assertEquals(listOf(BrowserEngineEventType.NavigationStarted), events.map(BrowserEngineEvent::type))
+    }
+
+    @Test
+    fun `a failed adopted page is announced as a failed navigation`() {
+        val failed = GeckoBrowserSessionState(url = "https://example.com/down", lastNavigationSucceeded = false)
+        val events = mutableListOf<BrowserEngineEvent>()
+        val tab = GeckoBrowserEngineSessionAdapter(
+            tabId = "tab-2",
+            session = FakeGeckoBrowserSession(initialState = failed),
+            eventSink = BrowserEngineEventSink { event -> events += event },
+            adopted = true,
+        )
+        events.clear()
+
+        tab.announceAdoptedPage()
+
+        assertEquals(
+            listOf(BrowserEngineEventType.NavigationStarted, BrowserEngineEventType.NavigationFailed),
+            events.map(BrowserEngineEvent::type),
+        )
+    }
+
+    @Test
+    fun `a tab that adopted nothing announces nothing`() {
+        val loaded = GeckoBrowserSessionState(url = "https://example.com/", lastNavigationSucceeded = true)
+        val events = mutableListOf<BrowserEngineEvent>()
+        val tab = GeckoBrowserEngineSessionAdapter(
+            tabId = "tab-1",
+            session = FakeGeckoBrowserSession(initialState = loaded),
+            eventSink = BrowserEngineEventSink { event -> events += event },
+        )
+        events.clear()
+
+        tab.announceAdoptedPage()
+
+        assertTrue(events.isEmpty())
     }
 }
 
