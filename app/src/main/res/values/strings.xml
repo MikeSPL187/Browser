@@ -1416,6 +1416,7 @@
     <string name="reader_font_mono">Monospace</string>
     <string name="listen_unavailable">Reading aloud isn’t available on this device</string>
     <string name="listen_private_page">Private page</string>
+    <string name="listen_preparing">Preparing the page to read aloud…</string>
     <string name="reader_wide_margins">Wide margins</string>
     <string name="reader_listen">Listen</string>
     <string name="reader_speech_start">Read aloud</string>
@@ -2094,7 +2095,6 @@
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
     <string name="v5_menu_read">Read</string>
-    <string name="v5_menu_read_subtitle">Reader view, listening and saving</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>
     <string name="v5_menu_favorites">Favorites</string>

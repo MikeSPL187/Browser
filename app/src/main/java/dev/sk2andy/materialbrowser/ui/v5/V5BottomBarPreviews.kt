@@ -125,7 +125,6 @@ private fun V5BarListeningPreview() {
             listen = V5ListenRowState(
                 title = "Как полярники готовятся к долгой зимовке",
                 speaking = true,
-                unavailable = false,
             ),
         )
     }
@@ -137,7 +136,23 @@ private fun V5BarListeningPausedPreview() {
     VolaV5Theme(dark = true) {
         BarPreview(
             previewState("polar-notes.ru"),
-            listen = V5ListenRowState(title = null, speaking = false, unavailable = false),
+            listen = V5ListenRowState(title = null, speaking = false),
+        )
+    }
+}
+
+@Preview(name = "v5 bar · preparing a page to listen (V19c)", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarListenPreparingPreview() {
+    VolaV5Theme(dark = false) {
+        BarPreview(
+            previewState("polar-notes.ru"),
+            listen = V5ListenRowState(
+                title = "Как полярники готовятся к долгой зимовке",
+                speaking = false,
+                canPlay = false,
+                message = "Готовлю страницу к чтению вслух…",
+            ),
         )
     }
 }

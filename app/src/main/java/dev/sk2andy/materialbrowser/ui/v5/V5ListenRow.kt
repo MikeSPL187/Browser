@@ -41,7 +41,10 @@ internal data class V5ListenRowState(
     /** The article's title; null when it is a private page seen from a normal tab. */
     val title: String?,
     val speaking: Boolean,
-    val unavailable: Boolean,
+    /** Pause and resume apply: the voice has the article. */
+    val canPlay: Boolean = true,
+    /** Said instead of the title: the page is being prepared, or why it cannot be read aloud. */
+    val message: String? = null,
 )
 
 /**
@@ -55,10 +58,7 @@ internal fun V5ListenRow(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = when {
-        state.unavailable -> stringResource(R.string.listen_unavailable)
-        else -> state.title ?: stringResource(R.string.listen_private_page)
-    }
+    val label = state.message ?: state.title ?: stringResource(R.string.listen_private_page)
     val paneTitle = stringResource(R.string.reader_listen)
     Row(
         modifier
@@ -78,7 +78,7 @@ internal fun V5ListenRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        if (!state.unavailable) {
+        if (state.canPlay) {
             IconButton(onClick = onPlayPause, modifier = Modifier.testTag(V5ListenRowTestTags.PlayPause)) {
                 Icon(
                     if (state.speaking) VolaIcons.Pause else VolaIcons.PlayArrow,

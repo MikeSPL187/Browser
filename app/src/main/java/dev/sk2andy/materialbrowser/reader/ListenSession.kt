@@ -13,9 +13,22 @@ data class ListenItem(
     val isPrivate: Boolean,
 )
 
+/** Where listening to a page from the menu stands before the voice takes over (V19c). */
+sealed interface ListenPreparation {
+    /** The page's text is being taken out of the page. */
+    data object Preparing : ListenPreparation
+
+    /** The page gave no article to read. */
+    data class Failed(val reason: ReaderExtractionFailure) : ListenPreparation
+}
+
 /** When the mini player shows (V19b): while there is something to pause, resume or explain. */
 object ListenRules {
-    fun showsPlayer(item: ListenItem?, status: ReaderSpeechStatus): Boolean = item != null && when (status) {
+    fun showsPlayer(
+        item: ListenItem?,
+        status: ReaderSpeechStatus,
+        preparation: ListenPreparation? = null,
+    ): Boolean = item != null && (preparation != null || when (status) {
         ReaderSpeechStatus.Initializing,
         ReaderSpeechStatus.Speaking,
         ReaderSpeechStatus.Paused,
@@ -24,7 +37,7 @@ object ListenRules {
         ReaderSpeechStatus.Ready,
         ReaderSpeechStatus.Closed,
         -> false
-    }
+    })
 
     /** A private page's title stays out of a normal tab's bar. */
     fun showsTitle(item: ListenItem, selectedTabPrivate: Boolean): Boolean = !item.isPrivate || selectedTabPrivate
@@ -40,10 +53,48 @@ class ListenSession private constructor(private val context: Context) {
         private set
     private var speech by mutableStateOf<ReaderSpeech?>(null)
 
+    /** Set while a page from the menu is being prepared, or when it could not be (V19c). */
+    var preparation by mutableStateOf<ListenPreparation?>(null)
+        private set
+
     val state: ReaderSpeechState
         get() = speech?.state ?: ReaderSpeechState(ReaderSpeechStatus.Closed)
 
+    /** Bumped by every [prepare], so a late answer for an earlier page is ignored. */
+    private var preparationId = 0
+
+    /**
+     * Listening to a page from the menu: the article is taken out of the page first. Returns the id
+     * that [prepared] or [failed] answers with.
+     */
+    fun prepare(title: String, sourceUrl: String, isPrivate: Boolean): Int {
+        speech?.close()
+        speech = null
+        item = ListenItem(title, sourceUrl, text = "", isPrivate = isPrivate)
+        preparation = ListenPreparation.Preparing
+        return ++preparationId
+    }
+
+    /** The prepared page's article, if [id] is still the page being prepared. */
+    fun prepared(id: Int, document: ReaderDocument) {
+        val current = item ?: return
+        if (id != preparationId || preparation != ListenPreparation.Preparing) return
+        listen(
+            current.copy(
+                title = document.title.ifBlank { current.title },
+                sourceUrl = document.sourceUrl,
+                text = document.speechText,
+            ),
+        )
+    }
+
+    fun failed(id: Int, reason: ReaderExtractionFailure) {
+        if (id != preparationId || preparation != ListenPreparation.Preparing) return
+        preparation = ListenPreparation.Failed(reason)
+    }
+
     fun listen(next: ListenItem) {
+        preparation = null
         val current = speech
         if (current != null && item == next) {
             current.play(next.text)
@@ -68,6 +119,7 @@ class ListenSession private constructor(private val context: Context) {
         speech?.close()
         speech = null
         item = null
+        preparation = null
     }
 
     /**
