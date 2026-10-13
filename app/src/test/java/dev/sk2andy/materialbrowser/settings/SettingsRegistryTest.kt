@@ -56,7 +56,7 @@ class SettingsRegistryTest {
         )
         listOf("chrome_style", "address_bar_color", "surface_style", "frosted_blur", "color_palette", "density")
             .forEach { key -> assertTrue(key, !inV5(key)) }
-        listOf("appearance_mode", "web_content_font_size", "animations", "private_tabs_lock", "tab_overview_mode")
+        listOf("appearance_mode", "web_content_font_size", "animations", "private_tabs_lock", "auto_close_tabs")
             .forEach { key -> assertTrue(key, inV5(key)) }
         assertTrue(!SettingsRegistry.searchableInV5("page:Themes", SettingsDestination.Themes))
         assertTrue(SettingsRegistry.searchableInV5("page:Appearance", SettingsDestination.Appearance))
