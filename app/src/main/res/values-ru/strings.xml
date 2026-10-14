@@ -2193,6 +2193,12 @@
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
     <string name="v5_menu_favorites">Избранное</string>
     <string name="v5_menu_downloads">Загрузки</string>
+    <plurals name="v5_downloads_active">
+        <item quantity="one">Загружается %d файл</item>
+        <item quantity="few">Загружаются %d файла</item>
+        <item quantity="many">Загружаются %d файлов</item>
+        <item quantity="other">Загружаются %d файла</item>
+    </plurals>
     <string name="v5_menu_all_actions">Все действия</string>
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>

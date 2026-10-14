@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuActions
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuState
@@ -36,6 +37,7 @@ internal fun BrowserPageMenuV5(
     actions: V5MenuActions,
     onDismiss: () -> Unit,
     onAllActions: () -> Unit,
+    downloads: V5DownloadRingState? = null,
 ) {
     val blank = tab.url == BLANK_URL
     val view = LocalView.current
@@ -65,6 +67,7 @@ internal fun BrowserPageMenuV5(
         canCloseTab = TabDeletionRules.canDelete(tab),
         canHideDistractions = canHideDistractions,
         hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
+        downloads = downloads,
     )
     V5PageMenu(
         visible = visible,

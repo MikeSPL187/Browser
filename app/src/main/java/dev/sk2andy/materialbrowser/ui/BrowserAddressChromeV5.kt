@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.TextFieldValue
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -38,6 +40,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
+import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRing
+import dev.sk2andy.materialbrowser.ui.v5.v5DownloadsSummary
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
 import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
@@ -104,6 +108,8 @@ internal fun BrowserV5Bar(
         blockedCount = tab.blockedCount,
     )
     var menuExpanded by remember { mutableStateOf(false) }
+    // V22: what is downloading, as a ring around «•••» and a row at the top of the menu.
+    val downloadRing = rememberDownloadRing(controller)
     var allActionsExpanded by remember { mutableStateOf(false) }
     // The page's color (system-v5.md, section 1.3), unless turned off in Appearance. Private tabs,
     // a new tab and error pages keep the neutral bar (step 7).
@@ -129,8 +135,22 @@ internal fun BrowserV5Bar(
                 onBarPositioned = onBarPositioned,
                 accessory = { BrowserListenAccessory(selectedTabPrivate = tab.isIncognito) },
                 menuButton = {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
+                    Box(contentAlignment = Alignment.Center) {
+                        val downloadsState = downloadRing?.let { v5DownloadsSummary(it) }
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier.semantics { downloadsState?.let { stateDescription = it } },
+                        ) {
+                            Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
+                        }
+                        downloadRing?.let { ring ->
+                            // On the site's color the accent may not show; the bar's own ink does.
+                            V5DownloadRing(
+                                state = ring,
+                                color = if (siteColor != null) tint.onTint else V5Theme.colors.accent,
+                                modifier = Modifier.matchParentSize(),
+                            )
+                        }
                     }
                     BrowserMainMenu(
                         expanded = allActionsExpanded,
@@ -216,6 +236,7 @@ internal fun BrowserV5Bar(
                 actions = actions,
                 onDismiss = { menuExpanded = false },
                 onAllActions = { allActionsExpanded = true },
+                downloads = downloadRing,
             )
             // «Hide distracting items» (V20): while the page chooses, the hint sits at the top edge.
             val distractions = controller.hiddenDistractions
