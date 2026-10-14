@@ -755,19 +755,23 @@ private fun ActiveBrowserEngineView(
     LaunchedEffect(selectedTabId, isLoading) {
         if (!isLoading) pullRefreshRequested = false
     }
+    // V16: under v5 the page itself is pulled (BrowserPullRefreshV5.kt).
+    val pullV5 = rememberPullRefreshV5()
+    val pullV5State = rememberV5PullRefresh(selectedTabId, isLoading, refreshIndicatorTopInsetPx)
     val indicatorColor = MaterialTheme.colorScheme.primary.toArgb()
     val indicatorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.toArgb()
     val currentOnRefresh by rememberUpdatedState(onRefresh)
     val currentOnLiveFrame by rememberUpdatedState(onLiveFrame)
     val currentOnBlurTargetAttached by rememberUpdatedState(onBlurTargetAttached)
     val currentOnBlurTargetReleased by rememberUpdatedState(onBlurTargetReleased)
-    key(browserContentBlurEnabled) {
+    key(browserContentBlurEnabled, pullV5) {
         AndroidView(
             factory = { context ->
                 StatusBarStaticOverlayHost(
                     context = context,
                     browserContentBlurEnabled = browserContentBlurEnabled,
                     pullToRefreshEnabled = true,
+                    v5Pull = pullV5,
                 ).apply {
                     tag = BrowserEngineViewHostState(contentContainer)
                 }
@@ -787,6 +791,20 @@ private fun ActiveBrowserEngineView(
                     visible = showStatusBarOverlay,
                     solid = solidStatusBarOverlay,
                 )
+                val canChildScrollUp = {
+                    BrowserPullToRefreshRules.canChildScrollUp(controller.selectedBrowserEngineScrollMetrics())
+                }
+                val refresh: () -> Boolean = refresh@{
+                    if (controller.selectedTabId != selectedTabId) return@refresh false
+                    val canStart = BrowserPullToRefreshRules.canStart(
+                        isLoading = controller.selectedTab.isLoading,
+                        scrollMetrics = controller.selectedBrowserEngineScrollMetrics(),
+                    )
+                    if (!canStart || pullRefreshRequested) return@refresh false
+                    pullRefreshRequested = true
+                    currentOnRefresh()
+                    true
+                }
                 hostView.updatePullToRefresh(
                     enabled = visible &&
                         !contentObscured &&
@@ -796,23 +814,18 @@ private fun ActiveBrowserEngineView(
                     indicatorColor = indicatorColor,
                     indicatorContainerColor = indicatorContainerColor,
                     indicatorTopInsetPx = refreshIndicatorTopInsetPx,
-                    canChildScrollUp = {
-                        BrowserPullToRefreshRules.canChildScrollUp(
-                            controller.selectedBrowserEngineScrollMetrics(),
-                        )
-                    },
-                    onRefresh = refresh@{
-                        if (controller.selectedTabId != selectedTabId) return@refresh false
-                        val canStart = BrowserPullToRefreshRules.canStart(
-                            isLoading = controller.selectedTab.isLoading,
-                            scrollMetrics = controller.selectedBrowserEngineScrollMetrics(),
-                        )
-                        if (!canStart || pullRefreshRequested) return@refresh false
-                        pullRefreshRequested = true
-                        currentOnRefresh()
-                        true
-                    },
+                    canChildScrollUp = canChildScrollUp,
+                    onRefresh = refresh,
                 )
+                hostView.v5PullLayout?.let { layout ->
+                    pullV5State.bind(
+                        layout = layout,
+                        enabled = visible && !contentObscured && pullToRefreshEnabled && !isLoading,
+                        topInsetPx = refreshIndicatorTopInsetPx,
+                        canScrollUp = canChildScrollUp,
+                        onRefresh = refresh,
+                    )
+                }
                 if (visible) {
                     val hostState = hostView.tag as BrowserEngineViewHostState
                     val attachedView = controller.attachSelectedBrowserEngineView(
@@ -837,8 +850,17 @@ private fun ActiveBrowserEngineView(
                 hostView.tag = null
                 hostState?.let { controller.detachBrowserEngineView(it.container) }
                 hostView.blurTarget?.let(currentOnBlurTargetReleased)
+                pullV5State.unbind()
             },
             modifier = Modifier.fillMaxSize(),
+        )
+    }
+    if (pullV5) {
+        V5PullRefreshOverlay(
+            state = pullV5State,
+            siteColorRgb = controller.selectedSiteThemeColor,
+            privateBrowsing = controller.selectedTab.isIncognito,
+            topInsetPx = refreshIndicatorTopInsetPx,
         )
     }
 }
