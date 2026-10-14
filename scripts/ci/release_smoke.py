@@ -60,6 +60,8 @@ class SiteResult:
     exit_info: str = ""
     start_output: str = ""
     system_log: str = ""
+    # A page that never got a content process: what was in front instead (a prompt, an error page).
+    screen: str = ""
     # The emulator hung on this site, so nothing about the browser is known; [stall] says how.
     stalled: bool = False
     stall: str = ""
@@ -119,13 +121,22 @@ def wait_for_boot(timeout=300):
     raise SystemExit("the emulator did not boot")
 
 
-def recover(timeout=240):
-    """Whether the emulator answers again after a hang; it gets [timeout] seconds."""
+def recover(reason="", timeout=240):
+    """Whether the emulator answers again after a hang; it gets [timeout] seconds.
+
+    After system_server died the emulator is rebooted: its graphics services, which outlive
+    system_server, kept spinning at 100 % CPU (#264) and every later site died with the system.
+    """
     try:
         adb("reconnect", "offline", timeout=30)
     except EmulatorStuck:
         pass
     try:
+        if SYSTEM_RESTART in reason:
+            adb("reboot", timeout=60)
+            time.sleep(10)
+            wait_for_boot(timeout)
+            adb("root")  # adbd comes back unprivileged; tombstones are readable only as root
         wait_for_boot(timeout)
         return adb("shell", "echo", "ok", timeout=30).strip() == "ok"
     except (EmulatorStuck, SystemExit):
@@ -195,6 +206,9 @@ def system_server_pid():
     return adb("shell", "pidof", "system_server").strip()
 
 
+SYSTEM_RESTART = "system_server перезапустился"
+
+
 def system_restart(before, after):
     """How Android's system_server changed while a site was open, or "" when it stayed.
 
@@ -203,7 +217,13 @@ def system_restart(before, after):
     """
     if not before or after == before:
         return ""
-    return f"system_server перезапустился (pid {before} → {after or 'нет'})"
+    return f"{SYSTEM_RESTART} (pid {before} → {after or 'нет'})"
+
+
+def focus_lines(dump):
+    """Which window has the focus and which app is in front, from `dumpsys window windows`."""
+    return "\n".join(line.strip() for line in dump.splitlines()
+                     if "mCurrentFocus" in line or "mFocusedApp" in line)
 
 
 def check_site(package, name, url, settle):
@@ -228,6 +248,9 @@ def check_site(package, name, url, settle):
     if result.quiet_death:
         result.exit_info = exit_reasons(adb("shell", "dumpsys", "activity", "exit-info", package))
         result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system,events", "-t", "2000"), package)
+    if result.unopened:
+        result.screen = focus_lines(adb("shell", "dumpsys", "window", "windows"))
+        result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system", "-t", "2000"), package)
     return result
 
 
@@ -260,6 +283,13 @@ def report(results, version, aborted=""):
         lines.append(f"| [{result.name}]({result.url}) | {status} |")
     for result in stalled:
         lines += ["", f"⏸ {result.name}: `{result.stall}`"]
+    for result in unopened:
+        lines += ["", f"### ⚠️ {result.name}: что было на экране", ""]
+        for title, text in (("Окно в фокусе (dumpsys window)", result.screen),
+                            ("Журнал (процессы и Gecko)", result.system_log)):
+            if text:
+                lines += [f"<details><summary>{title}</summary>", "", "```", *text.splitlines(), "```",
+                          "</details>"]
     for result in crashed:
         lines += ["", f"### {result.name}", f"`{result.url}`", ""]
         for number, block in enumerate(result.symbolicated, start=1):
@@ -299,7 +329,7 @@ def run_sites(package, settle, check=None, recover_emulator=None):
             print(f"STALL {name}: {error}", flush=True)
             stuck_diagnostics()
             stalls += 1
-            if stalls > MAX_STALLS or not recover_emulator():
+            if stalls > MAX_STALLS or not recover_emulator(str(error)):
                 return results, aborted_at(f"{name}: эмулятор перестал отвечать ({error})")
             results.append(SiteResult(name, url, alive=True, stalled=True, stall=str(error)))
             continue

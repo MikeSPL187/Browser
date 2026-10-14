@@ -92,7 +92,7 @@ class ReportTest(unittest.TestCase):
         real = smoke.stuck_diagnostics
         smoke.stuck_diagnostics = lambda: None
         try:
-            return smoke.run_sites("x", 0, check=check, recover_emulator=lambda: recovers)
+            return smoke.run_sites("x", 0, check=check, recover_emulator=lambda reason: recovers)
         finally:
             smoke.stuck_diagnostics = real
 
@@ -140,6 +140,34 @@ class ReportTest(unittest.TestCase):
                 smoke.check_site("x", "Т-Банк", "https://www.tbank.ru/login/", 0)
         finally:
             smoke.adb, smoke.time.sleep = real_adb, real_sleep
+
+    def test_a_dead_system_server_reboots_the_emulator(self):
+        calls = []
+        def adb(*args, **kwargs):
+            calls.append(args)
+            if args[-1] == "sys.boot_completed":
+                return "1"
+            return "ok" if args[-1] == "ok" else ""
+        real_adb, real_sleep = smoke.adb, smoke.time.sleep
+        smoke.adb, smoke.time.sleep = adb, lambda seconds: None
+        try:
+            self.assertTrue(smoke.recover("system_server перезапустился (pid 612 → 7569)"))
+            self.assertIn(("reboot",), calls)
+            self.assertIn(("root",), calls)
+            calls.clear()
+            self.assertTrue(smoke.recover("adb shell am start: no answer in 120 s"))
+            self.assertNotIn(("reboot",), calls)
+        finally:
+            smoke.adb, smoke.time.sleep = real_adb, real_sleep
+
+    def test_an_unopened_page_shows_what_was_in_front(self):
+        empty = smoke.SiteResult("Сбербанк Онлайн", "https://online.sberbank.ru/", alive=True, loaded=False,
+                                 screen="mCurrentFocus=Window{1 u0 io.github.mikespl187.vola.preview/MainActivity}")
+        text = smoke.report([empty], "x")
+        self.assertIn("### ⚠️ Сбербанк Онлайн: что было на экране", text)
+        self.assertIn("mCurrentFocus=Window", text)
+        self.assertEqual("mCurrentFocus=Window{1}\nmFocusedApp=ActivityRecord{2}",
+                         smoke.focus_lines("noise\n  mCurrentFocus=Window{1}\n  mFocusedApp=ActivityRecord{2}\nmore"))
 
     def test_a_quiet_death_keeps_why_the_process_ended(self):
         dead = smoke.SiteResult("Т-Банк", "https://www.tbank.ru/login/", alive=False,
