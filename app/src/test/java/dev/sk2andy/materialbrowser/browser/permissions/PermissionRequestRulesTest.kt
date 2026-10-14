@@ -99,4 +99,22 @@ class PermissionRequestRulesTest {
         isActivityResumed = true,
         tabExists = true,
     )
+
+    @Test
+    fun embeddedFramesAskOnBehalfOfTheSiteInTheAddressBar() {
+        assertEquals(
+            "https://news.example",
+            PermissionRequestRules.siteOrigin("https://maps.example", "https://news.example/story?id=1"),
+        )
+        assertEquals(
+            "https://news.example",
+            PermissionRequestRules.siteOrigin("https://news.example", "https://news.example/"),
+        )
+    }
+
+    @Test
+    fun anInsecureFrameCannotAskEvenOnASecurePage() {
+        assertEquals(null, PermissionRequestRules.siteOrigin("http://ads.example", "https://news.example/"))
+        assertEquals(null, PermissionRequestRules.siteOrigin(null, "https://news.example/"))
+    }
 }
