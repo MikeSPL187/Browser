@@ -10,8 +10,9 @@ Markdown file for the issue comment and to the job summary.
   scripts/ci/release_smoke.py --apk app-full-localRelease.apk --package io.github.mikespl187.vola.preview \\
       --report smoke.md
 Exits 1 when any site crashed the browser. When the emulator itself hangs (adb gets no answer or
-says the device is offline), the site is marked as not checked, the emulator gets a few minutes to
-come back and the run goes on; a hang is never counted as a crash of the browser.
+says the device is offline, or Android's own system_server dies and takes every app with it), the
+site is marked as not checked, the emulator gets a few minutes to come back and the run goes on; a
+hang is never counted as a crash of the browser.
 """
 
 import argparse
@@ -59,6 +60,8 @@ class SiteResult:
     exit_info: str = ""
     start_output: str = ""
     system_log: str = ""
+    # A page that never got a content process: what was in front instead (a prompt, an error page).
+    screen: str = ""
     # The emulator hung on this site, so nothing about the browser is known; [stall] says how.
     stalled: bool = False
     stall: str = ""
@@ -81,7 +84,7 @@ class SiteResult:
 
 
 class EmulatorStuck(Exception):
-    """adb got no answer: the emulator, not the browser, stopped working."""
+    """adb got no answer or Android itself restarted: the emulator, not the browser, stopped working."""
 
 
 # What adb says on stderr when it lost the emulator, rather than when the command failed on it.
@@ -118,13 +121,22 @@ def wait_for_boot(timeout=300):
     raise SystemExit("the emulator did not boot")
 
 
-def recover(timeout=240):
-    """Whether the emulator answers again after a hang; it gets [timeout] seconds."""
+def recover(reason="", timeout=240):
+    """Whether the emulator answers again after a hang; it gets [timeout] seconds.
+
+    After system_server died the emulator is rebooted: its graphics services, which outlive
+    system_server, kept spinning at 100 % CPU (#264) and every later site died with the system.
+    """
     try:
         adb("reconnect", "offline", timeout=30)
     except EmulatorStuck:
         pass
     try:
+        if SYSTEM_RESTART in reason:
+            adb("reboot", timeout=60)
+            time.sleep(10)
+            wait_for_boot(timeout)
+            adb("root")  # adbd comes back unprivileged; tombstones are readable only as root
         wait_for_boot(timeout)
         return adb("shell", "echo", "ok", timeout=30).strip() == "ok"
     except (EmulatorStuck, SystemExit):
@@ -142,6 +154,13 @@ def newest_tombstone(since):
 
 def stuck_diagnostics():
     """What the emulator was doing when adb stopped answering, for the job log; each probe may hang too."""
+    # The runner's own memory first: a runner swapping to disk stalls the emulator's disk.
+    print("::group::stuck emulator: runner memory", flush=True)
+    try:
+        print(subprocess.run(["free", "-m"], capture_output=True, text=True, timeout=10).stdout, flush=True)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        print(error, flush=True)
+    print("::endgroup::", flush=True)
     for title, command in (
         ("memory", ["shell", "cat", "/proc/meminfo"]),
         ("load", ["shell", "top", "-b", "-n", "1", "-m", "15"]),
@@ -183,12 +202,40 @@ def system_log_tail(log, package, limit=120):
     return "\n".join(lines[-limit:])
 
 
+def system_server_pid():
+    return adb("shell", "pidof", "system_server").strip()
+
+
+SYSTEM_RESTART = "system_server перезапустился"
+
+
+def system_restart(before, after):
+    """How Android's system_server changed while a site was open, or "" when it stayed.
+
+    When it dies (ANR, then killed) every app goes with it and leaves no crash log of its own: the
+    night of 14.10 counted six such deaths as crashes of the browser (#134).
+    """
+    if not before or after == before:
+        return ""
+    return f"{SYSTEM_RESTART} (pid {before} → {after or 'нет'})"
+
+
+def focus_lines(dump):
+    """Which window has the focus and which app is in front, from `dumpsys window windows`."""
+    return "\n".join(line.strip() for line in dump.splitlines()
+                     if "mCurrentFocus" in line or "mFocusedApp" in line)
+
+
 def check_site(package, name, url, settle):
+    system_before = system_server_pid()
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
     before = set(adb("shell", "ls", "/data/tombstones").split())
     start_output = adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", f"'{url}'", "-p", package)
     time.sleep(settle)
+    restart = system_restart(system_before, system_server_pid())
+    if restart:
+        raise EmulatorStuck(restart)
     alive = bool(adb("shell", "pidof", package).strip())
     # Gecko renders pages in "<package>:tabN"; without one the page never started loading.
     # No screencap here: on the emulator's software GPU it hangs the system while a video plays.
@@ -201,6 +248,9 @@ def check_site(package, name, url, settle):
     if result.quiet_death:
         result.exit_info = exit_reasons(adb("shell", "dumpsys", "activity", "exit-info", package))
         result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system,events", "-t", "2000"), package)
+    if result.unopened:
+        result.screen = focus_lines(adb("shell", "dumpsys", "window", "windows"))
+        result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system", "-t", "2000"), package)
     return result
 
 
@@ -233,6 +283,13 @@ def report(results, version, aborted=""):
         lines.append(f"| [{result.name}]({result.url}) | {status} |")
     for result in stalled:
         lines += ["", f"⏸ {result.name}: `{result.stall}`"]
+    for result in unopened:
+        lines += ["", f"### ⚠️ {result.name}: что было на экране", ""]
+        for title, text in (("Окно в фокусе (dumpsys window)", result.screen),
+                            ("Журнал (процессы и Gecko)", result.system_log)):
+            if text:
+                lines += [f"<details><summary>{title}</summary>", "", "```", *text.splitlines(), "```",
+                          "</details>"]
     for result in crashed:
         lines += ["", f"### {result.name}", f"`{result.url}`", ""]
         for number, block in enumerate(result.symbolicated, start=1):
@@ -272,7 +329,7 @@ def run_sites(package, settle, check=None, recover_emulator=None):
             print(f"STALL {name}: {error}", flush=True)
             stuck_diagnostics()
             stalls += 1
-            if stalls > MAX_STALLS or not recover_emulator():
+            if stalls > MAX_STALLS or not recover_emulator(str(error)):
                 return results, aborted_at(f"{name}: эмулятор перестал отвечать ({error})")
             results.append(SiteResult(name, url, alive=True, stalled=True, stall=str(error)))
             continue
