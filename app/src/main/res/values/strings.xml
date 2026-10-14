@@ -2127,9 +2127,6 @@
     <string name="v5_profile_storage_title">Switch the profile’s storage?</string>
     <string name="v5_profile_storage_on">This profile’s tabs reload with separate storage. Sign-ins you share with other profiles won’t carry over.</string>
     <string name="v5_profile_storage_off">This profile’s tabs reload with shared storage. Sign-ins from its separate storage stop working.</string>
-    <string name="v5_accent_orange">Orange</string>
-    <string name="v5_accent_pink">Pink</string>
-    <string name="v5_accent_purple">Purple</string>
     <string name="v5_specimen_title">v5 specimen</string>
     <string name="v5_specimen_close">Close</string>
     <string name="v5_specimen_theme_light">Light</string>
