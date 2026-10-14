@@ -15,6 +15,7 @@ internal class StatusBarStaticOverlayHost(
     context: Context,
     browserContentBlurEnabled: Boolean = false,
     pullToRefreshEnabled: Boolean = false,
+    v5Pull: Boolean = false,
 ) : FrameLayout(context) {
     val contentContainer: FrameLayout = if (browserContentBlurEnabled) {
         BrowserChromeBlurTarget(context).apply { captureEnabled = true }
@@ -23,11 +24,14 @@ internal class StatusBarStaticOverlayHost(
     }
     val blurTarget: BlurTarget?
         get() = contentContainer as? BlurTarget
-    private val pullToRefreshLayout = if (pullToRefreshEnabled) {
+    private val pullToRefreshLayout = if (pullToRefreshEnabled && !v5Pull) {
         BrowserPullToRefreshLayout(context, contentContainer)
     } else {
         null
     }
+
+    /** The v5 pull to refresh (V16) in place of the current one. */
+    val v5PullLayout: V5PullGestureLayout? = if (v5Pull) V5PullGestureLayout(context, contentContainer) else null
     private val overlayView = StatusBarStaticOverlayView(context).apply {
         tag = StatusBarStaticOverlayTestTags.Overlay
         importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
@@ -37,7 +41,7 @@ internal class StatusBarStaticOverlayHost(
 
     init {
         addView(
-            pullToRefreshLayout ?: contentContainer,
+            pullToRefreshLayout ?: v5PullLayout ?: contentContainer,
             LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
         )
         addView(
