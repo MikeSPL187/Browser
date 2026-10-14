@@ -59,6 +59,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
@@ -94,6 +95,7 @@ object V5OverviewTestTags {
     const val SegmentPrivate = "v5_tab_overview_segment_private"
     const val NewTab = "v5_tab_overview_new_tab"
     const val Done = "v5_tab_overview_done"
+    const val Profile = "v5_tab_overview_profile"
     fun card(id: String) = "v5_tab_card:$id"
     fun close(id: String) = "v5_tab_card_close:$id"
 }
@@ -116,10 +118,12 @@ data class V5OverviewState(
     val privateSegment: Boolean,
     val counts: V5OverviewCounts,
     val query: String,
-    /** The profile chip: its emoji and name. */
+    /** The profile chip: the profile's name, after its symbol. */
     val profileLabel: String,
     /** The profile's tab groups (V12); empty keeps one flat grid. */
     val groups: List<V5OverviewGroup> = emptyList(),
+    /** The profile's symbol on the chip (a Material Symbol for its stored emoji key). */
+    val profileIcon: ImageVector? = null,
 )
 
 @Composable
@@ -143,6 +147,8 @@ fun V5TabOverview(
     onCardLongPress: ((String) -> Unit)? = null,
     /** A group's header or collapsed row was long-pressed: the group is edited (V12b). */
     onGroupLongPress: ((String) -> Unit)? = null,
+    /** The profile chip was tapped: the profiles sheet opens (V11a); null keeps the chip a label. */
+    onProfiles: (() -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -228,7 +234,7 @@ fun V5TabOverview(
                     }
                 }
             }
-            Toolbar(state.profileLabel, onNewTab, onDone)
+            Toolbar(state.profileLabel, state.profileIcon, onNewTab, onDone, onProfiles)
         }
     }
 }
@@ -492,7 +498,13 @@ private fun Favicon(card: V5TabCard, size: Dp) {
 }
 
 @Composable
-private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Unit) {
+private fun Toolbar(
+    profileLabel: String,
+    profileIcon: ImageVector?,
+    onNewTab: () -> Unit,
+    onDone: () -> Unit,
+    onProfiles: (() -> Unit)?,
+) {
     val colors = V5Theme.colors
     Row(
         Modifier
@@ -507,17 +519,42 @@ private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Un
             Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.accent)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Text(
-                profileLabel,
-                style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.label,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.fill)
-                    .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
-            )
+            // The chip keeps its look; tapping it lists the profiles, its touch target is the bar's.
+            val chooseLabel = stringResource(R.string.v5_profiles_choose)
+            val chip = if (onProfiles != null) {
+                Modifier
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clickable(role = Role.Button, onClickLabel = chooseLabel, onClick = onProfiles)
+                    .testTag(V5OverviewTestTags.Profile)
+            } else {
+                Modifier
+            }
+            Box(chip, contentAlignment = Alignment.Center) {
+                Row(
+                    Modifier
+                        .clip(V5Theme.shapes.full)
+                        .background(colors.fill)
+                        .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
+                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (profileIcon != null) {
+                        Icon(
+                            profileIcon,
+                            contentDescription = null,
+                            tint = colors.accent,
+                            modifier = Modifier.size(V5Sizes.iconSmall),
+                        )
+                    }
+                    Text(
+                        profileLabel,
+                        style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
         Box(
             Modifier
