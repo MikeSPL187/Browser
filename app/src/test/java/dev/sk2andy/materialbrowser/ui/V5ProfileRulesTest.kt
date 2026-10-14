@@ -43,4 +43,13 @@ class V5ProfileRulesTest {
         assertEquals("Laptop", items[2].device)
         assertEquals("Laptop", items[2].name)
     }
+
+    @Test
+    fun `a chosen accent is stored as its twin and reads back the same`() {
+        V5Accent.entries.forEach { accent ->
+            assertEquals(accent, V5ProfileRules.accent(V5ProfileRules.stored(accent)))
+        }
+        assertEquals(WorkspaceAccent.Violet, V5ProfileRules.stored(V5Accent.Purple))
+        assertEquals(WorkspaceAccent.Amber, V5ProfileRules.stored(V5Accent.Orange))
+    }
 }

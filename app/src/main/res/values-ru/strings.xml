@@ -2212,6 +2212,17 @@
     <string name="v5_profiles_title">Профили</string>
     <string name="v5_profiles_other_devices">С других устройств</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
+    <string name="v5_profile_untitled">Профиль</string>
+    <string name="v5_profile_locked">Заблокирован</string>
+    <string name="v5_profile_new">Новый профиль</string>
+    <string name="v5_profile_edit">Изменить профиль</string>
+    <string name="v5_profile_edit_action">Изменить</string>
+    <string name="v5_profile_create">Создать</string>
+    <string name="v5_profile_delete">Удалить профиль</string>
+    <string name="v5_profile_delete_message">Вкладки перейдут в другой профиль. Удалятся его история, а при отдельном хранилище — cookie и входы.</string>
+    <string name="v5_profile_storage_title">Сменить хранилище профиля?</string>
+    <string name="v5_profile_storage_on">Вкладки этого профиля перезагрузятся с отдельным хранилищем. Общие с другими профилями входы не перенесутся.</string>
+    <string name="v5_profile_storage_off">Вкладки этого профиля перезагрузятся с общим хранилищем. Входы из отдельного хранилища перестанут действовать.</string>
     <string name="v5_specimen_title">Образец v5</string>
     <string name="v5_specimen_close">Закрыть</string>
     <string name="v5_specimen_theme_light">Светлая</string>
