@@ -10930,7 +10930,7 @@ class BrowserController(
             deny()
             return
         }
-        val normalizedOrigin = PermissionOrigin.normalize(origin)
+        val normalizedOrigin = PermissionRequestRules.siteOrigin(origin, pageUrls[tabId] ?: tabs.firstOrNull { it.id == tabId }?.url)
         val identity = permissionRequestIdentity(tabId, normalizedOrigin)
         if (
             identity == null ||
