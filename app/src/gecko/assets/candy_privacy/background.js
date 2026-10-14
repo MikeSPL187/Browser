@@ -822,7 +822,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
   if (
     (message.type === "safe-area-fallback" || message.type === "status-bar-backdrop" ||
-      message.type === "site-color") &&
+      message.type === "site-color" || message.type === "reader-available") &&
     Number.isSafeInteger(message.navigationGeneration) &&
     Number.isSafeInteger(message.revision)
   ) {
@@ -842,6 +842,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
         navigationGeneration: message.navigationGeneration,
         themeColor: typeof message.themeColor === "string" ? message.themeColor : null,
         topHeader: message.topHeader === true,
+        readerAvailable: message.readerAvailable === true,
       });
     }
     return undefined;

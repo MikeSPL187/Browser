@@ -32,7 +32,7 @@ private val PreviewGestures = V5BarGestures(
     onOverviewCancelled = {},
 )
 
-private fun previewState(domain: String?, loading: Boolean = false) = V5BarState(
+private fun previewState(domain: String?, loading: Boolean = false, readable: Boolean = false) = V5BarState(
     tabId = "preview",
     domain = domain,
     isLoading = loading,
@@ -42,6 +42,7 @@ private fun previewState(domain: String?, loading: Boolean = false) = V5BarState
     permissionActivity = false,
     connectionKind = SiteConnectionKind.Https,
     blockedCount = 12,
+    readerAvailable = readable,
 )
 
 @Composable
@@ -79,6 +80,18 @@ private fun V5BarLightPreview() {
 @Composable
 private fun V5BarDarkPreview() {
     VolaV5Theme(dark = true) { BarPreview(previewState("a-very-long-subdomain.example-news-site.com", loading = true)) }
+}
+
+@Preview(name = "v5 bar · article, «Read» (V19)", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarReadablePreview() {
+    VolaV5Theme(dark = false) { BarPreview(previewState("polar-notes.ru", readable = true)) }
+}
+
+@Preview(name = "v5 bar · article, «Read», dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarReadableDarkPreview() {
+    VolaV5Theme(dark = true) { BarPreview(previewState("a-very-long-subdomain.example-news-site.com", readable = true)) }
 }
 
 @Preview(name = "v5 bar · new tab", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

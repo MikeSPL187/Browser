@@ -586,11 +586,17 @@ internal class GeckoViewPrivacyHostRuntime(
             "events" -> acceptEvents(value)
             "main-frame-response" -> acceptMainFrameResponse(value)
             "safe-area-fallback" -> acceptSafeAreaFallback(value)
-            "status-bar-backdrop" -> acceptPageColor(value) { generation, color ->
+            "status-bar-backdrop" -> acceptPageSignal(value) { generation, color ->
                 copy(statusBarBackdropNavigationGeneration = generation, statusBarBackdropThemeColor = color)
             }
-            "site-color" -> acceptPageColor(value) { generation, color ->
+            "site-color" -> acceptPageSignal(value) { generation, color ->
                 copy(siteThemeColorNavigationGeneration = generation, siteThemeColor = color)
+            }
+            "reader-available" -> acceptPageSignal(value) { generation, _ ->
+                copy(
+                    readerAvailableNavigationGeneration = generation,
+                    readerAvailable = value.optBoolean("readerAvailable"),
+                )
             }
             "scroll-metrics" -> acceptScrollMetrics(value)
             "inline-video-state" -> acceptInlineVideoState(value)
@@ -853,8 +859,8 @@ internal class GeckoViewPrivacyHostRuntime(
         )
     }
 
-    /** A color the page reports for the chrome: the status bar backdrop or its theme-color. */
-    private fun acceptPageColor(
+    /** What the page reports for the chrome: a color, or whether it reads as an article. */
+    private fun acceptPageSignal(
         value: JSONObject,
         report: GeckoPrivacyEvent.(navigationGeneration: Int, themeColor: String?) -> GeckoPrivacyEvent,
     ) {
