@@ -90,6 +90,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.net.URI
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -653,6 +654,7 @@ internal class GeckoViewExtensionRuntime(
 ) : GeckoExtensionRuntime {
     private var chrome: GeckoViewExtensionChrome? = null
     private val defaultExtensionStartup: GeckoDefaultExtensionStartup
+    private val userInstallsInFlight = AtomicInteger()
 
     @Volatile
     private var permissionPrompt = GeckoExtensionPermissionPrompt {
@@ -741,6 +743,7 @@ internal class GeckoViewExtensionRuntime(
         require(installationMethod == WebExtensionController.INSTALLATION_METHOD_MANAGER) {
             "Signed user extensions must use the add-on manager installation method"
         }
+        userInstallsInFlight.incrementAndGet()
         val installed = try {
             controller.install(
                 uri,
@@ -748,6 +751,8 @@ internal class GeckoViewExtensionRuntime(
             ).await()
         } catch (error: WebExtension.InstallException) {
             throw error.toCandyInstallException()
+        } finally {
+            userInstallsInFlight.decrementAndGet()
         }
         if (!defaultExtensionStartup.markUserInstallSucceeded(installed.id)) {
             controller.uninstall(installed).awaitCompletion()
@@ -864,6 +869,9 @@ internal class GeckoViewExtensionRuntime(
                         false,
                     ),
                 )
+            }
+            if (!GeckoExtensionRules.acceptsInstallPrompt(userInstallsInFlight.get())) {
+                return GeckoResult.fromValue(WebExtension.PermissionPromptResponse(false, false, false))
             }
             return promptResult(
                 extension = extension,

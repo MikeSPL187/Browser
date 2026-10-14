@@ -9,6 +9,13 @@ internal object GeckoExtensionRules {
     fun isVisibleToUserManager(extensionId: String): Boolean =
         extensionId !in INTERNAL_EXTENSION_IDS
 
+    /**
+     * An install prompt is shown only while the person's own install from the extension manager runs
+     * ([userInstallsInFlight] > 0). Any other one comes from a web page, a timer on it say, and would
+     * look exactly like theirs, so it is declined without asking (V29).
+     */
+    fun acceptsInstallPrompt(userInstallsInFlight: Int): Boolean = userInstallsInFlight > 0
+
     fun normalizeSignedXpiUri(rawUri: String): String? {
         if (rawUri.isBlank() || rawUri.length > MAX_URI_LENGTH || rawUri.any(Char::isISOControl)) {
             return null
