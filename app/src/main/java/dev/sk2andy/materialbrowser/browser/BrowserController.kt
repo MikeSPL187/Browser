@@ -183,6 +183,7 @@ import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationRollbac
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrant
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrantRules
 import dev.sk2andy.materialbrowser.browser.integration.PageShareLauncher
+import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 import dev.sk2andy.materialbrowser.browser.integration.PageShareRequest
 import dev.sk2andy.materialbrowser.browser.integration.PageShareResult
 import dev.sk2andy.materialbrowser.browser.integration.PreparedWebAppLaunch
@@ -7847,11 +7848,9 @@ class BrowserController(
 
     fun copyLink(url: String) {
         val safeUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return
+        val label = activity.getString(R.string.external_link_preview_copy_label)
         activity.getSystemService(ClipboardManager::class.java).setPrimaryClip(
-            ClipData.newPlainText(
-                activity.getString(R.string.external_link_preview_copy_label),
-                safeUrl,
-            ),
+            ClipData.newPlainText(label, safeUrl).markedSensitive(selectedTab.isIncognito),
         )
         Toast.makeText(activity, R.string.toast_link_copied, Toast.LENGTH_SHORT).show()
     }

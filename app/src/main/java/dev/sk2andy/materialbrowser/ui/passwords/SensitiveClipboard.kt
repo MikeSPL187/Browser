@@ -5,8 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.os.PersistableBundle
 import android.os.SystemClock
+import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 
 /**
  * Copies a login or password marked as sensitive (Android hides it from the clipboard preview and
@@ -21,8 +21,6 @@ internal object SensitiveClipboard {
     private const val LABEL = "Vola password"
     private const val CLEAR_AFTER_MILLIS = 60_000L
 
-    /** `ClipDescription.EXTRA_IS_SENSITIVE`, spelled out so it also reaches Android 12. */
-    private const val EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE"
     private val handler = Handler(Looper.getMainLooper())
     private var pendingClear: Runnable? = null
 
@@ -32,9 +30,7 @@ internal object SensitiveClipboard {
     fun copy(context: Context, text: String) {
         val app = context.applicationContext
         val clipboard = app.getSystemService(ClipboardManager::class.java) ?: return
-        val clip = ClipData.newPlainText(LABEL, text)
-        clip.description.extras = PersistableBundle().apply { putBoolean(EXTRA_IS_SENSITIVE, true) }
-        clipboard.setPrimaryClip(clip)
+        clipboard.setPrimaryClip(ClipData.newPlainText(LABEL, text).markedSensitive())
         pendingClear?.let(handler::removeCallbacks)
         deadline = SystemClock.elapsedRealtime() + CLEAR_AFTER_MILLIS
         val clear = Runnable { clear(clipboard) }
