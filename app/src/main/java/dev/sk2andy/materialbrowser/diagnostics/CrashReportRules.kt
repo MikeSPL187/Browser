@@ -40,8 +40,8 @@ internal data class CrashReportHeader(
 
 /**
  * The text of a local crash report (#123, H1). Reports stay on the device until the person copies
- * or shares them; they hold no page content or logs, and every web address is cut out in case an
- * exception or abort message carried one (a private tab's, say).
+ * or shares them; they hold no page content or logs, and every web address or site named by a
+ * network error is cut out in case an exception or abort message carried one (a private tab's, say).
  */
 internal object CrashReportRules {
     const val MAX_REPORTS = 5
@@ -54,13 +54,32 @@ internal object CrashReportRules {
     /** How long before its process exit Vola's own handler may have written the same crash. */
     private const val SAME_CRASH_WINDOW_MILLIS = 30_000L
     private const val ANR_THREAD_LINES = 60
+    private const val HOST_REMOVED = "<host removed>"
 
     private val address = Regex(
         """(?i)\b(?:https?|wss?|ftp|file|content|blob|data|about|moz-extension|resource|chrome|intent|javascript):[^\s"'<>()\[\]{}]*[^\s"'<>()\[\]{},.;:!?]""",
     )
 
-    fun redact(text: String): String = address.replace(text) { match ->
-        match.value.substringBefore(':').lowercase() + ":<address removed>"
+    /**
+     * Network errors name the site without a scheme: `Unable to resolve host "x"`, `Hostname x not
+     * verified`, `Failed to connect to x/1.2.3.4`. Only these phrasings are matched, since stack
+     * frames (`dev.Foo.bar`) look like host names too.
+     */
+    private val hostMentions = listOf(
+        Regex("""(?i)(\bhost\s+")[^"\s]+(")"""),
+        Regex("""(?i)(\bhostname\s+)\S+(\s+not verified)"""),
+        Regex("""(?i)(\bconnect to\s+)[^\s/]*/\S*?((?:\s+\(port|\s|$))"""),
+    )
+
+    fun redact(text: String): String {
+        val withoutAddresses = address.replace(text) { match ->
+            match.value.substringBefore(':').lowercase() + ":<address removed>"
+        }
+        return hostMentions.fold(withoutAddresses) { redacted, mention ->
+            mention.replace(redacted) { match ->
+                match.groupValues[1] + HOST_REMOVED + match.groupValues[2]
+            }
+        }
     }
 
     fun forThrowable(
