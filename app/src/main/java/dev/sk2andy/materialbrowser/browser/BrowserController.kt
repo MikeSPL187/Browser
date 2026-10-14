@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -1202,6 +1201,7 @@ class BrowserController(
     }
     private var automaticExternalAppRequestId = 0L
     private val geckoFileUploadStager = GeckoFileUploadStager(activity.applicationContext)
+    private val fileCaptures = FileCaptureStore(activity)
     private val profileWallpaperExecutor = Executors.newSingleThreadExecutor { task ->
         Thread(task, "profile-wallpaper")
     }
@@ -1800,7 +1800,7 @@ class BrowserController(
         val pending = pendingFileChooser ?: return
         if (!isFileChooserCurrent(pending.identity)) {
             pendingFileChooser = null
-            finalizeFileCapture(pending.captureOutput, keep = false)
+            fileCaptures.settle(pending.captureOutput, keep = false)
             pending.delivery.complete(null)
             scheduleResidentSessionTrim()
             return
@@ -1837,7 +1837,7 @@ class BrowserController(
                     ) {
                         if (pendingFileChooser === pending) pendingFileChooser = null
                         stagedUpload?.delete()
-                        finalizeFileCapture(pending.captureOutput, keep = false)
+                        fileCaptures.settle(pending.captureOutput, keep = false)
                         pending.delivery.complete(null)
                         scheduleResidentSessionTrim()
                     } else {
@@ -1845,7 +1845,12 @@ class BrowserController(
                         if (stagedUpload != null) {
                             geckoFileUploadStager.retain(pending.identity.tabId, stagedUpload)
                         }
-                        finalizeFileCapture(pending.captureOutput, keep = deliverUris != null)
+                        val privateTab = tabs.firstOrNull { it.id == pending.identity.tabId }
+                            ?.isIncognito != false
+                        fileCaptures.settle(
+                            pending.captureOutput,
+                            FileChooserRules.keepsCapture(deliverUris != null, stagedUpload != null, privateTab),
+                        )
                         pending.delivery.complete(deliverUris)
                         scheduleResidentSessionTrim()
                     }
@@ -1853,7 +1858,7 @@ class BrowserController(
             }
         }.onFailure {
             if (pendingFileChooser === pending) pendingFileChooser = null
-            finalizeFileCapture(pending.captureOutput, keep = false)
+            fileCaptures.settle(pending.captureOutput, keep = false)
             pending.delivery.complete(null)
             scheduleResidentSessionTrim()
         }
@@ -6987,16 +6992,14 @@ class BrowserController(
         grant: ExternalNavigationGrant?,
         isRedirect: Boolean,
     ): ExternalAppNavigationHandling {
+        val isPrivate = (source as? ExternalAppHandoffSource.Tab)?.isPrivate == true
+        val handling = ExternalAppLinkHandling.forSource(externalAppLinkHandling, isPrivate)
         if (
             safeHttpUrl != null &&
-            externalAppLinkHandling == ExternalAppLinkHandling.AskEveryTime &&
+            handling == ExternalAppLinkHandling.AskEveryTime &&
             !externalApps.canOpenWebUrlExternally(safeHttpUrl)
-        ) {
-            return ExternalAppNavigationHandling.Unavailable
-        }
-        if (externalAppLinkHandling == ExternalAppLinkHandling.Automatic) {
-            return ExternalAppNavigationHandling.Automatic
-        }
+        ) return ExternalAppNavigationHandling.Unavailable
+        if (handling == ExternalAppLinkHandling.Automatic) return ExternalAppNavigationHandling.Automatic
         val destination = BrowserUriPolicy.displayHttpHost(webTargetUrl)
             .ifBlank { runCatching { Uri.parse(requestUrl).scheme }.getOrNull().orEmpty() }
             .ifBlank { activity.getString(R.string.external_app_prompt_fallback_destination) }
@@ -10803,7 +10806,7 @@ class BrowserController(
             request.response.complete(uris?.map(Uri::toString))
         }
         val captureAction = FileChooserRules.captureAction(request.capture, request.mimeTypes)
-        val captureOutput = captureAction?.let(::createFileCaptureOutput)
+        val captureOutput = captureAction?.let(fileCaptures::create)
         pendingFileChooser = PendingFileChooser(
             identity = identity,
             delivery = delivery,
@@ -10917,7 +10920,7 @@ class BrowserController(
             deny()
             return
         }
-        val normalizedOrigin = PermissionOrigin.normalize(origin)
+        val normalizedOrigin = PermissionRequestRules.siteOrigin(origin, pageUrls[tabId] ?: tabs.firstOrNull { it.id == tabId }?.url)
         val identity = permissionRequestIdentity(tabId, normalizedOrigin)
         if (
             identity == null ||
@@ -13072,37 +13075,9 @@ class BrowserController(
         val pending = pendingFileChooser ?: return
         if (tabId != null && pending.identity.tabId != tabId) return
         pendingFileChooser = null
-        finalizeFileCapture(pending.captureOutput, keep = false)
+        fileCaptures.settle(pending.captureOutput, keep = false)
         pending.delivery.complete(null)
         scheduleResidentSessionTrim()
-    }
-
-    private fun createFileCaptureOutput(action: String): FileCaptureOutput? {
-        val isVideo = action == MediaStore.ACTION_VIDEO_CAPTURE
-        val mimeType = if (isVideo) "video/mp4" else "image/jpeg"
-        val collection = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val name = "candy-capture-${System.currentTimeMillis()}.${if (isVideo) "mp4" else "jpg"}"
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
-        }
-        val uri = runCatching { activity.contentResolver.insert(collection, values) }.getOrNull()
-            ?: return null
-        return FileCaptureOutput(uri = uri, mimeType = mimeType)
-    }
-
-    private fun finalizeFileCapture(output: FileCaptureOutput?, keep: Boolean) {
-        output ?: return
-        runCatching {
-            if (keep) {
-                ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
-                    .let { values -> activity.contentResolver.update(output.uri, values, null, null) }
-            } else {
-                activity.contentResolver.delete(output.uri, null, null)
-            }
-        }
     }
 
     private fun publishFullscreenVideoState() {
@@ -13329,7 +13304,7 @@ class BrowserController(
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
         }
-        return when (downloadSettings.managerMode) {
+        return when (DownloadManagerMode.forSource(downloadSettings.managerMode, tabs.any { it.id == tabId && it.isIncognito })) {
             DownloadManagerMode.BuiltIn -> startBuiltInDownload()
             DownloadManagerMode.AskEveryTime -> {
                 val apps = discoverExternalDownloadManagers(request)
@@ -15529,11 +15504,6 @@ class BrowserController(
         val allowMultiple: Boolean,
         val acceptTypes: Array<String>,
         val captureOutput: FileCaptureOutput?,
-    )
-
-    private data class FileCaptureOutput(
-        val uri: Uri,
-        val mimeType: String,
     )
 
     private data class ProtectionRequestContext(
