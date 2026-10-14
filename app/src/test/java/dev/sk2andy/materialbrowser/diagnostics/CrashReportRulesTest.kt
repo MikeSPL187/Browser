@@ -30,6 +30,24 @@ class CrashReportRulesTest {
     }
 
     @Test
+    fun redactsHostsNamedByNetworkErrors() {
+        val text = "UnknownHostException: Unable to resolve host \"secret.example\": No address\n" +
+            "SSLPeerUnverifiedException: Hostname mail.secret.example not verified:\n" +
+            "SocketTimeoutException: failed to connect to secret.example/93.184.216.34 " +
+            "(port 443) after 10000ms\n" +
+            "ConnectException: Failed to connect to /93.184.216.34 (port 443)"
+
+        assertEquals(
+            "UnknownHostException: Unable to resolve host \"<host removed>\": No address\n" +
+                "SSLPeerUnverifiedException: Hostname <host removed> not verified:\n" +
+                "SocketTimeoutException: failed to connect to <host removed> " +
+                "(port 443) after 10000ms\n" +
+                "ConnectException: Failed to connect to <host removed> (port 443)",
+            CrashReportRules.redact(text),
+        )
+    }
+
+    @Test
     fun keepsStackFramesAndPlainWords() {
         val text = "at dev.Foo.bar(MainActivity.kt:774)\nmetadata: none\ncontent: empty"
 

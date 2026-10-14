@@ -12,6 +12,7 @@ import androidx.webkit.WebViewFeature
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyCheck
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadStreamEntry
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadStreamSink
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
@@ -245,6 +246,14 @@ internal class SystemWebViewBlobDownloadTransfer(
             candidateMimeType,
         )
         val mimeType = SafeDownloadValues.finalMimeType(fileName, candidateMimeType)
+        if (
+            SystemWebViewBlobDownloadRules.addsFindings(
+                operation.blobUrl, operation.contentDisposition, operation.reportedMimeType, fileName, mimeType,
+            )
+        ) {
+            fail(operation, GeckoDownloadFailure.InvalidRequest)
+            return
+        }
         val entry = runCatching { sink.open(fileName, mimeType) }.getOrElse {
             fail(operation, GeckoDownloadFailure.Storage)
             return
@@ -378,6 +387,26 @@ internal class SystemWebViewBlobDownloadTransfer(
 }
 
 internal object SystemWebViewBlobDownloadRules {
+    /**
+     * The blob's type comes from a script in the page, and the page can rewrite what it reports. The
+     * file check ran earlier, on the type WebView reported, so a file the page turned into something
+     * that check did not see, a program say, is refused (V29).
+     */
+    fun addsFindings(
+        blobUrl: String,
+        contentDisposition: String?,
+        reportedMimeType: String?,
+        fileName: String,
+        mimeType: String,
+    ): Boolean {
+        val checkedType = SafeDownloadValues.mimeType(reportedMimeType, blobUrl)
+        val checkedName = SafeDownloadValues.fileName(blobUrl, contentDisposition, checkedType)
+        val checked = DownloadSafetyCheck.findings(
+            blobUrl, checkedName, SafeDownloadValues.finalMimeType(checkedName, checkedType),
+        )
+        return DownloadSafetyCheck.findings(blobUrl, fileName, mimeType).any { it !in checked }
+    }
+
     fun isPopupBlobDownload(
         blobUrl: String,
         pageUrl: String,
