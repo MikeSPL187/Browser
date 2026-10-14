@@ -70,4 +70,19 @@ class BrowserDownloadSettingsTest {
         assertTrue(DownloadDirectoryRules.isValidSubdirectoryInput("a".repeat(200)))
         assertEquals("Download", DownloadDirectoryRules.mediaStoreRelativePath("я".repeat(128)))
     }
+
+    @Test
+    fun `a private tab asks before handing a download to another app`() {
+        assertEquals(
+            DownloadManagerMode.AskEveryTime,
+            DownloadManagerMode.forSource(DownloadManagerMode.External, isPrivate = true),
+        )
+        DownloadManagerMode.entries.forEach { mode ->
+            assertEquals(mode, DownloadManagerMode.forSource(mode, isPrivate = false))
+        }
+        assertEquals(
+            DownloadManagerMode.BuiltIn,
+            DownloadManagerMode.forSource(DownloadManagerMode.BuiltIn, isPrivate = true),
+        )
+    }
 }

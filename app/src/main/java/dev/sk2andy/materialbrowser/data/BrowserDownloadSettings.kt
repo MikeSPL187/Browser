@@ -80,5 +80,12 @@ enum class DownloadManagerMode(val stableId: String) {
     companion object {
         fun fromStableId(value: String?): DownloadManagerMode =
             entries.firstOrNull { it.stableId == value } ?: BuiltIn
+
+        /**
+         * A private tab never hands a download to another app without asking: that app keeps the
+         * address in its own history, outside the private session (V29). "External" asks there.
+         */
+        fun forSource(chosen: DownloadManagerMode, isPrivate: Boolean): DownloadManagerMode =
+            if (isPrivate && chosen == External) AskEveryTime else chosen
     }
 }
