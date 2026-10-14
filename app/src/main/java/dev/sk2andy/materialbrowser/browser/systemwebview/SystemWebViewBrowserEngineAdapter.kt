@@ -386,6 +386,7 @@ private class SystemWebViewBrowserEngineSession(
     private val webView = SystemWebViewHost(context, ::onSafeAreaFallback)
     private val host = webView
     private val blobDownloadTransfer = SystemWebViewBlobDownloadTransfer(appContext, webView)
+    private val privateDownloadTransfer = SystemWebViewPrivateDownloadTransfer(appContext)
     private var closed = false
     private var active = true
     private var desktopMode = false
@@ -981,6 +982,7 @@ private class SystemWebViewBrowserEngineSession(
         desktopViewportScriptHandler?.remove()
         removeMediaBridge()
         blobDownloadTransfer.close()
+        privateDownloadTransfer.close()
         dismissCustomFullscreenView(notify = false)
         webView.stopLoading()
         webView.webChromeClient = null
@@ -1886,6 +1888,20 @@ private class SystemWebViewBrowserEngineSession(
         val fileName = downloadRequest?.fileName ?: "download"
         val effectiveMimeType = downloadRequest?.mimeType
             ?: mimeType?.let { type -> SafeDownloadValues.finalMimeType(fileName, type) }
+        if (isPrivate) {
+            val cookies = WebViewProfileCookies.managerFor(webView)
+            return privateDownloadTransfer.start(
+                SystemWebViewPrivateDownloadRequest(
+                    url = safeUri.toString(),
+                    fileName = fileName,
+                    mimeType = effectiveMimeType ?: "application/octet-stream",
+                    pageUrl = webView.url,
+                    userAgent = webView.settings.userAgentString,
+                    cookiesFor = { hop -> runCatching { cookies?.getCookie(hop) }.getOrNull() },
+                ),
+                listener,
+            )
+        }
         val request = DownloadManager.Request(safeUri)
             .setMimeType(effectiveMimeType)
             .setTitle(fileName)
