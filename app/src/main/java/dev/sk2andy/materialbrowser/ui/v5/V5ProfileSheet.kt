@@ -28,6 +28,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 object V5ProfileSheetTestTags {
+    const val New = "v5_profile_new"
     fun profile(id: String) = "v5_profile:$id"
 }
 
@@ -50,7 +51,8 @@ internal data class V5ProfileItem(
 /**
  * «Profiles» (V11a, system-v5.md section 10): the chip in the middle of the overview's bottom edge
  * opens this sheet, as Safari's profile menu; a profile is chosen with one touch and the overview
- * shows its tabs. Profiles from other devices follow under their own header.
+ * shows its tabs. Profiles from other devices follow under their own header. A long press edits a
+ * profile of this device ([onEdit], V11b); «New profile» ([onNew]) makes one.
  */
 @Composable
 internal fun V5ProfileSheet(
@@ -58,6 +60,8 @@ internal fun V5ProfileSheet(
     profiles: List<V5ProfileItem>,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
+    onNew: (() -> Unit)? = null,
+    onEdit: ((String) -> Unit)? = null,
 ) {
     val title = stringResource(R.string.v5_profiles_title)
     V5Sheet(visible = visible, onDismiss = onDismiss, title = title) {
@@ -70,11 +74,22 @@ internal fun V5ProfileSheet(
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
         ) {
             V5ListGroup {
-                local.forEach { profile -> ProfileRow(profile, onSelect) }
+                local.forEach { profile -> ProfileRow(profile, onSelect, onEdit) }
+            }
+            if (onNew != null) {
+                V5ListGroup {
+                    V5ListRow(
+                        title = stringResource(R.string.v5_profile_new),
+                        icon = V5RowIcon(VolaIcons.Add),
+                        titleColor = V5Theme.colors.accent,
+                        onClick = onNew,
+                        modifier = Modifier.testTag(V5ProfileSheetTestTags.New),
+                    )
+                }
             }
             if (synced.isNotEmpty()) {
                 V5ListGroup(header = stringResource(R.string.v5_profiles_other_devices)) {
-                    synced.forEach { profile -> ProfileRow(profile, onSelect) }
+                    synced.forEach { profile -> ProfileRow(profile, onSelect, onEdit = null) }
                 }
             }
         }
@@ -82,7 +97,7 @@ internal fun V5ProfileSheet(
 }
 
 @Composable
-private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit) {
+private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit, onEdit: ((String) -> Unit)?) {
     val tabs = pluralStringResource(R.plurals.workspace_sheet_tabs, profile.tabCount, profile.tabCount)
     V5ListRow(
         title = profile.name,
@@ -90,6 +105,8 @@ private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit) {
         leading = { ProfileTile(profile) },
         trailing = if (profile.active) V5RowTrailing.Check else V5RowTrailing.None,
         onClick = { onSelect(profile.id) },
+        onLongClick = onEdit?.let { edit -> { edit(profile.id) } },
+        onLongClickLabel = stringResource(R.string.v5_profile_edit_action),
         modifier = Modifier
             .semantics { selected = profile.active }
             .testTag(V5ProfileSheetTestTags.profile(profile.id)),
@@ -118,7 +135,7 @@ private fun ProfileTile(profile: V5ProfileItem) {
         if (profile.locked) {
             Icon(
                 VolaIcons.Lock,
-                contentDescription = stringResource(R.string.profile_locked_title),
+                contentDescription = stringResource(R.string.v5_profile_locked),
                 tint = V5Theme.colors.labelSecondary,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

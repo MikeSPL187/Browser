@@ -194,7 +194,7 @@ private fun OverviewContent(
                     privateSegment = privateSegment,
                     counts = counts,
                     query = query,
-                    profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.workspace_untitled),
+                    profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.v5_profile_untitled),
                     profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
                 ),

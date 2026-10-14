@@ -1,16 +1,36 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.WorkspaceIconResources
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
+import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
+import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.isSynced
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileDraft
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileEditSheet
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileIconChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileItem
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfilePrivacy
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSheet
 
 /** Profiles as v5 shows them (V11a, system-v5.md 1.2 and 10). */
@@ -26,6 +46,16 @@ internal object V5ProfileRules {
         WorkspaceAccent.Amber, WorkspaceAccent.Coral -> V5Accent.Orange
         WorkspaceAccent.Rose -> V5Accent.Pink
         WorkspaceAccent.Graphite -> V5Accent.Graphite
+    }
+
+    /** The stored color for a v5 accent the user chose (its twin among the stored ones). */
+    fun stored(accent: V5Accent): WorkspaceAccent = when (accent) {
+        V5Accent.Blue -> WorkspaceAccent.Blue
+        V5Accent.Green -> WorkspaceAccent.Green
+        V5Accent.Orange -> WorkspaceAccent.Amber
+        V5Accent.Pink -> WorkspaceAccent.Rose
+        V5Accent.Purple -> WorkspaceAccent.Violet
+        V5Accent.Graphite -> WorkspaceAccent.Graphite
     }
 
     /** The sheet's rows: this device's profiles in their order, then those from other devices. */
@@ -52,15 +82,26 @@ internal object V5ProfileRules {
     }
 }
 
+/** Which profile the edit sheet is open for (V11b). */
+private sealed interface ProfileEdit {
+    data object New : ProfileEdit
+
+    data class Existing(val id: String) : ProfileEdit
+}
+
 /**
  * The profiles sheet of the v5 overview: a touch switches to the profile (a locked one asks to
- * sign in first) and the sheet goes, leaving the overview on the new profile's tabs.
+ * sign in first) and the sheet goes, leaving the overview on the new profile's tabs. «New profile»
+ * and a long press open the edit sheet in its place, one layer at a time.
  */
 @Composable
 internal fun BrowserProfileSheetV5(controller: BrowserController, visible: Boolean, onDismiss: () -> Unit) {
-    val untitled = stringResource(R.string.workspace_untitled)
+    val untitled = stringResource(R.string.v5_profile_untitled)
+    var edit by remember { mutableStateOf<ProfileEdit?>(null) }
+    LaunchedEffect(visible) { if (!visible) edit = null }
+    val local = controller.localBrowserProfiles
     V5ProfileSheet(
-        visible = visible,
+        visible = visible && edit == null,
         profiles = V5ProfileRules.items(
             profiles = controller.profiles,
             tabs = controller.tabs.filterNot(BrowserTab::isIncognito),
@@ -76,5 +117,143 @@ internal fun BrowserProfileSheetV5(controller: BrowserController, visible: Boole
             }
         },
         onDismiss = onDismiss,
+        onNew = { edit = ProfileEdit.New },
+        onEdit = { id ->
+            // Only this device's profiles are edited here, and a locked one only after it is opened.
+            if (local.any { it.id == id } && id !in controller.lockedProfileIds) edit = ProfileEdit.Existing(id)
+        },
     )
+    BrowserProfileEditSheetV5(
+        controller = controller,
+        edit = edit,
+        onBack = { edit = null },
+        onFinished = {
+            edit = null
+            onDismiss()
+        },
+    )
+}
+
+/** «New profile» and «Edit profile» bound to the browser's profiles. */
+@Composable
+private fun BrowserProfileEditSheetV5(
+    controller: BrowserController,
+    edit: ProfileEdit?,
+    onBack: () -> Unit,
+    onFinished: () -> Unit,
+) {
+    val view = LocalView.current
+    val profile = (edit as? ProfileEdit.Existing)?.let { target ->
+        controller.localBrowserProfiles.firstOrNull { it.id == target.id }
+    }
+    val iconKeys = controller.syncIconCatalog.icons.map { it.emoji }
+    val icons = iconKeys.map { key ->
+        V5ProfileIconChoice(key, WorkspaceIcons.vector(key), stringResource(WorkspaceIconResources.nameFor(key)))
+    }
+    var newOwnStorage by remember(edit) { mutableStateOf(controller.isProfileIsolationSupported) }
+    var deleting by remember { mutableStateOf<BrowserProfile?>(null) }
+    var storageChange by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    val initial = remember(edit, profile?.id) {
+        profile?.let { V5ProfileDraft(it.name, it.emoji, V5ProfileRules.accent(it.accent)) }
+            ?: V5ProfileDraft(
+                name = "",
+                iconKey = iconKeys.firstOrNull() ?: DEFAULT_PROFILE_EMOJI,
+                accent = V5Accent.Default,
+            )
+    }
+    V5ProfileEditSheet(
+        visible = edit == ProfileEdit.New || profile != null,
+        creating = edit == ProfileEdit.New,
+        initial = initial,
+        icons = icons,
+        privacy = if (profile == null) {
+            V5ProfilePrivacy(
+                ownStorage = newOwnStorage.takeIf { controller.isProfileIsolationSupported },
+                biometricLock = null,
+            )
+        } else {
+            V5ProfilePrivacy(
+                ownStorage = profile.isolationEnabled.takeIf { controller.isProfileIsolationSupported },
+                biometricLock = (profile.protection != null).takeIf { controller.isProfileProtectionSupported },
+            )
+        },
+        onSave = { draft ->
+            if (profile == null) {
+                val created = controller.createProfile(
+                    emoji = draft.iconKey,
+                    isolationEnabled = newOwnStorage && controller.isProfileIsolationSupported,
+                    name = draft.name,
+                    accent = V5ProfileRules.stored(draft.accent),
+                )
+                if (created != null) view.performV5Haptic(V5Haptic.Confirm)
+                onFinished()
+            } else {
+                if (draft.name != profile.name) controller.updateProfileName(profile.id, draft.name)
+                if (draft.iconKey != profile.emoji) controller.updateProfileEmoji(profile.id, draft.iconKey)
+                if (draft.accent != initial.accent) {
+                    controller.updateProfileAccent(profile.id, V5ProfileRules.stored(draft.accent))
+                }
+                onBack()
+            }
+        },
+        onOwnStorageChange = { on ->
+            if (profile == null) newOwnStorage = on else storageChange = profile.id to on
+        },
+        onBiometricLockChange = { on ->
+            profile?.let { target ->
+                val protection = if (on) ProfileProtection(ProfileLockTrigger.AppBackgrounded) else null
+                controller.updateProfileProtection(target.id, protection) { changed ->
+                    if (changed) view.performV5Haptic(if (on) V5Haptic.ToggleOn else V5Haptic.ToggleOff)
+                }
+            }
+        },
+        onDismiss = onBack,
+        onDelete = profile?.takeIf { controller.canDeleteProfile(it.id) }?.let { target -> { deleting = target } },
+    )
+    deleting?.let { target ->
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = {
+                val name = target.name.ifBlank { stringResource(R.string.v5_profile_untitled) }
+                Text(stringResource(R.string.workspace_delete_confirm_title, name))
+            },
+            text = { Text(stringResource(R.string.v5_profile_delete_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleting = null
+                        onBack()
+                        controller.deleteProfileAsync(target.id) { deleted ->
+                            if (deleted) view.performV5Haptic(V5Haptic.Confirm)
+                        }
+                    },
+                ) { Text(stringResource(R.string.action_delete), color = V5Theme.colors.danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+    storageChange?.let { (profileId, on) ->
+        AlertDialog(
+            onDismissRequest = { storageChange = null },
+            title = { Text(stringResource(R.string.v5_profile_storage_title)) },
+            text = {
+                Text(stringResource(if (on) R.string.v5_profile_storage_on else R.string.v5_profile_storage_off))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        storageChange = null
+                        controller.setProfileIsolationAsync(profileId, on) { changed ->
+                            if (changed) view.performV5Haptic(V5Haptic.Confirm)
+                        }
+                    },
+                ) { Text(stringResource(R.string.action_switch_storage)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { storageChange = null }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
 }
