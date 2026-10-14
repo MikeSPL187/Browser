@@ -82,6 +82,7 @@ import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserIntent
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserRequestKind
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutPublisher
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutRules
+import dev.sk2andy.materialbrowser.browser.integration.openUrlFromOtherApp
 import dev.sk2andy.materialbrowser.capsule.CapsuleIntentRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleLaunchResolution
 import dev.sk2andy.materialbrowser.data.AppDataArchiveEnvironment
@@ -1436,12 +1437,7 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             browserController.dismissExternalLinkPreview()
-            if (
-                !browserController.openUrl(
-                    url = request.url,
-                    inNewTab = true,
-                )
-            ) return
+            if (!browserController.openUrlFromOtherApp(request.url)) return
             externalLaunchTabId = browserController.selectedTabId
             incomingBrowserNavigationRequestId++
         }
