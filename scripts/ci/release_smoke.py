@@ -10,8 +10,9 @@ Markdown file for the issue comment and to the job summary.
   scripts/ci/release_smoke.py --apk app-full-localRelease.apk --package io.github.mikespl187.vola.preview \\
       --report smoke.md
 Exits 1 when any site crashed the browser. When the emulator itself hangs (adb gets no answer or
-says the device is offline), the site is marked as not checked, the emulator gets a few minutes to
-come back and the run goes on; a hang is never counted as a crash of the browser.
+says the device is offline, or Android's own system_server dies and takes every app with it), the
+site is marked as not checked, the emulator gets a few minutes to come back and the run goes on; a
+hang is never counted as a crash of the browser.
 """
 
 import argparse
@@ -81,7 +82,7 @@ class SiteResult:
 
 
 class EmulatorStuck(Exception):
-    """adb got no answer: the emulator, not the browser, stopped working."""
+    """adb got no answer or Android itself restarted: the emulator, not the browser, stopped working."""
 
 
 # What adb says on stderr when it lost the emulator, rather than when the command failed on it.
@@ -183,12 +184,31 @@ def system_log_tail(log, package, limit=120):
     return "\n".join(lines[-limit:])
 
 
+def system_server_pid():
+    return adb("shell", "pidof", "system_server").strip()
+
+
+def system_restart(before, after):
+    """How Android's system_server changed while a site was open, or "" when it stayed.
+
+    When it dies (ANR, then killed) every app goes with it and leaves no crash log of its own: the
+    night of 14.10 counted six such deaths as crashes of the browser (#134).
+    """
+    if not before or after == before:
+        return ""
+    return f"system_server перезапустился (pid {before} → {after or 'нет'})"
+
+
 def check_site(package, name, url, settle):
+    system_before = system_server_pid()
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
     before = set(adb("shell", "ls", "/data/tombstones").split())
     start_output = adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", f"'{url}'", "-p", package)
     time.sleep(settle)
+    restart = system_restart(system_before, system_server_pid())
+    if restart:
+        raise EmulatorStuck(restart)
     alive = bool(adb("shell", "pidof", package).strip())
     # Gecko renders pages in "<package>:tabN"; without one the page never started loading.
     # No screencap here: on the emulator's software GPU it hangs the system while a video plays.

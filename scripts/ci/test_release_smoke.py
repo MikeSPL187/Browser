@@ -120,6 +120,27 @@ class ReportTest(unittest.TestCase):
         self.assertEqual(6 + smoke.MAX_STALLS, len(results))
         self.assertIn("эмулятор перестал отвечать", aborted)
 
+    def test_a_system_server_that_died_is_a_stuck_emulator(self):
+        self.assertEqual("", smoke.system_restart("612", "612"))
+        self.assertEqual("", smoke.system_restart("", "700"))
+        self.assertEqual("system_server перезапустился (pid 612 → 7569)", smoke.system_restart("612", "7569"))
+        self.assertEqual("system_server перезапустился (pid 612 → нет)", smoke.system_restart("612", ""))
+
+    def test_a_site_during_which_the_system_restarted_is_not_a_crash(self):
+        answers = {"pidof system_server": iter(["612", "7569"])}
+        def adb(*args, **kwargs):
+            command = " ".join(args[-2:])
+            if command in answers:
+                return next(answers[command])
+            return ""
+        real_adb, real_sleep = smoke.adb, smoke.time.sleep
+        smoke.adb, smoke.time.sleep = adb, lambda seconds: None
+        try:
+            with self.assertRaisesRegex(smoke.EmulatorStuck, "system_server перезапустился"):
+                smoke.check_site("x", "Т-Банк", "https://www.tbank.ru/login/", 0)
+        finally:
+            smoke.adb, smoke.time.sleep = real_adb, real_sleep
+
     def test_a_quiet_death_keeps_why_the_process_ended(self):
         dead = smoke.SiteResult("Т-Банк", "https://www.tbank.ru/login/", alive=False,
                                 exit_info="ApplicationExitInfo #0:\nreason=3 (LOW_MEMORY)",
