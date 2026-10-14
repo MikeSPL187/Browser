@@ -94,6 +94,7 @@ object V5OverviewTestTags {
     const val SegmentPrivate = "v5_tab_overview_segment_private"
     const val NewTab = "v5_tab_overview_new_tab"
     const val Done = "v5_tab_overview_done"
+    const val Profile = "v5_tab_overview_profile"
     fun card(id: String) = "v5_tab_card:$id"
     fun close(id: String) = "v5_tab_card_close:$id"
 }
@@ -143,6 +144,8 @@ fun V5TabOverview(
     onCardLongPress: ((String) -> Unit)? = null,
     /** A group's header or collapsed row was long-pressed: the group is edited (V12b). */
     onGroupLongPress: ((String) -> Unit)? = null,
+    /** The profile chip was tapped: the profiles sheet opens (V11a); null keeps the chip a label. */
+    onProfiles: (() -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -228,7 +231,7 @@ fun V5TabOverview(
                     }
                 }
             }
-            Toolbar(state.profileLabel, onNewTab, onDone)
+            Toolbar(state.profileLabel, onNewTab, onDone, onProfiles)
         }
     }
 }
@@ -492,7 +495,7 @@ private fun Favicon(card: V5TabCard, size: Dp) {
 }
 
 @Composable
-private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Unit) {
+private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Unit, onProfiles: (() -> Unit)?) {
     val colors = V5Theme.colors
     Row(
         Modifier
@@ -507,17 +510,29 @@ private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Un
             Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.accent)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Text(
-                profileLabel,
-                style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.label,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.fill)
-                    .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
-            )
+            // The chip keeps its look; tapping it lists the profiles, its touch target is the bar's.
+            val chooseLabel = stringResource(R.string.v5_profiles_choose)
+            val chip = if (onProfiles != null) {
+                Modifier
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clickable(role = Role.Button, onClickLabel = chooseLabel, onClick = onProfiles)
+                    .testTag(V5OverviewTestTags.Profile)
+            } else {
+                Modifier
+            }
+            Box(chip, contentAlignment = Alignment.Center) {
+                Text(
+                    profileLabel,
+                    style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.label,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .clip(V5Theme.shapes.full)
+                        .background(colors.fill)
+                        .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
+                )
+            }
         }
         Box(
             Modifier

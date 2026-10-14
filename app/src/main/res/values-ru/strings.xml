@@ -2209,6 +2209,9 @@
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>
     <string name="v5_overview_search">Поиск по вкладкам</string>
+    <string name="v5_profiles_title">Профили</string>
+    <string name="v5_profiles_other_devices">С других устройств</string>
+    <string name="v5_profiles_choose">Выбрать профиль</string>
     <string name="v5_specimen_title">Образец v5</string>
     <string name="v5_specimen_close">Закрыть</string>
     <string name="v5_specimen_theme_light">Светлая</string>

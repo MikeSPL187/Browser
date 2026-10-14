@@ -183,6 +183,7 @@ private fun OverviewContent(
     // The profile's tab groups (V12a): the same groups the data keeps, in their order.
     val groups = controller.tabStackController.activeStacks.map { it.v5Group() }
     var groupSheet by remember { mutableStateOf<TabGroupSheetTarget?>(null) }
+    var profileSheet by remember { mutableStateOf(false) }
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
@@ -241,6 +242,7 @@ private fun OverviewContent(
                 onToggleGroup = { id -> if (!exiting) controller.tabStackController.toggleCollapsed(id) },
                 onCardLongPress = { id -> if (!exiting) groupSheet = TabGroupSheetTarget.Move(id) },
                 onGroupLongPress = { id -> if (!exiting) groupSheet = TabGroupSheetTarget.Edit(id) },
+                onProfiles = { if (!exiting) profileSheet = true }.takeIf { controller.profilesEnabled },
             )
             val heroId = heroTabId
             val heroBitmap = heroId?.let { heroPreview(controller, it) }
@@ -253,6 +255,7 @@ private fun OverviewContent(
                 )
             }
             BrowserTabGroupSheetsV5(controller, groupSheet, onTargetChange = { groupSheet = it })
+            BrowserProfileSheetV5(controller, visible = profileSheet, onDismiss = { profileSheet = false })
         }
     }
     // «Close all tabs» asks first, like the current overview's menu.
