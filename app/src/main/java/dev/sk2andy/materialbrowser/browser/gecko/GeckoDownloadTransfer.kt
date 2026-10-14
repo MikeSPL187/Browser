@@ -30,7 +30,23 @@ internal data class GeckoDownloadOwner(
     val profileId: String,
     val isPrivate: Boolean,
     val sessionKey: Any,
+    /** The owner tab's own cookie jar ([GeckoProfileStorageRules.contextId]); null for the shared one. */
+    val contextId: String? = null,
 )
+
+internal object GeckoDownloadFetchRules {
+    /**
+     * Gecko's fetch always runs in the shared cookie jar (or the shared private one) and cannot
+     * reach a tab's own: an isolated profile's or a private tab's. Rather than send another jar's
+     * cookies and keep the ones the site sets in it, such a fetch goes without cookies (V29).
+     */
+    fun flags(requested: Int, owner: GeckoDownloadOwner): Int {
+        var flags = requested
+        if (owner.isPrivate) flags = flags or GeckoWebExecutor.FETCH_FLAGS_PRIVATE
+        if (owner.contextId != null) flags = flags or GeckoWebExecutor.FETCH_FLAGS_ANONYMOUS
+        return flags
+    }
+}
 
 internal data class GeckoDownloadTransferRequest(
     val owner: GeckoDownloadOwner,
@@ -199,8 +215,8 @@ private class MediaStoreDownloadStreamEntry(
 }
 
 /**
- * Fetches downloads inside Gecko, retaining its authenticated/private request context, then streams
- * into scoped storage. No cookie material crosses the engine boundary.
+ * Fetches downloads inside Gecko, then streams into scoped storage. No cookie material crosses the
+ * engine boundary; a tab with its own cookie jar fetches without cookies ([GeckoDownloadFetchRules]).
  */
 internal class GeckoDownloadTransferManager(
     context: Context,
@@ -239,11 +255,7 @@ internal class GeckoDownloadTransferManager(
         val id = DownloadRuntimeRegistry.nextTransferId()
         val operation = Operation(transfer.owner.sessionKey)
         operations[id] = operation
-        val flags = transfer.fetchFlags or if (transfer.owner.isPrivate) {
-            GeckoWebExecutor.FETCH_FLAGS_PRIVATE
-        } else {
-            GeckoWebExecutor.FETCH_FLAGS_NONE
-        }
+        val flags = GeckoDownloadFetchRules.flags(transfer.fetchFlags, transfer.owner)
         executor.fetch(transfer.request, flags).accept(
             { response ->
                 if (response == null) {
