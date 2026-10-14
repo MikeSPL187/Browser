@@ -220,12 +220,12 @@ private fun IconGrid(icons: List<V5ProfileIconChoice>, selected: Int, accent: V5
 
 /** An accent's name for TalkBack. */
 internal fun V5Accent.nameRes(): Int = when (this) {
-    V5Accent.Blue -> R.string.workspace_accent_blue
-    V5Accent.Green -> R.string.workspace_accent_green
+    V5Accent.Blue -> R.string.v5_accent_blue
+    V5Accent.Green -> R.string.v5_accent_green
     V5Accent.Orange -> R.string.v5_accent_orange
     V5Accent.Pink -> R.string.v5_accent_pink
     V5Accent.Purple -> R.string.v5_accent_purple
-    V5Accent.Graphite -> R.string.workspace_accent_graphite
+    V5Accent.Graphite -> R.string.v5_accent_graphite
 }
 
 /** A profile's name fits a chip in the overview. */
