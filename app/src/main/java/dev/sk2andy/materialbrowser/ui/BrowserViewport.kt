@@ -574,6 +574,7 @@ internal fun BrowserViewport(
                         title = controller.profiles
                             .firstOrNull { profile -> profile.id == profileId }
                             ?.workspaceDisplayName(),
+                        titleIconKey = controller.profiles.firstOrNull { profile -> profile.id == profileId }?.emoji,
                     )
                 }
             }

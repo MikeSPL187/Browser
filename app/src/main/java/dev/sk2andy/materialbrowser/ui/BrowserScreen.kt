@@ -1396,7 +1396,7 @@ internal fun BrowserScreen(
             .background(VolaTheme.auraBrush)
             .hiddenUnderModal(controller.contentActions.isLinkPeekVisible || LocalBrowserUnderFirstRun.current).linkGlancePageScale(),
     ) {
-        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
+        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime, ProfileAccentV5 provides controller.v5Accent) {
             Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible || tabOverviewVisible || snoozedTabsVisible)) {
                 if (showFirefoxExtensionOptionsChrome) {
                     FirefoxExtensionOptionsTopBar(
@@ -1661,7 +1661,7 @@ internal fun BrowserScreen(
             controller.selectTab(tabId)
         }
 
-        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
+        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime, ProfileAccentV5 provides controller.v5Accent) {
             if (afterFirstFrame || tabOverviewVisible) StartupComposition("TabOverview") { TabOverview(
                 controller = controller,
                 backgroundWallpaper = tabSwitcherWallpaperRuntime,

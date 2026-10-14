@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,313 +68,316 @@ internal fun BoxScope.BrowserModalSurfaces(
     onFavoriteFeedbackFinished: (Int) -> Unit,
     onSnoozedTabsDismiss: () -> Unit,
 ) {
-    controller.pendingDownloadChoice?.let { choice ->
-        DownloadManagerChooserDialog(
-            choice = choice,
-            onSelect = controller::confirmDownloadChoice,
-            onDismiss = controller::dismissDownloadChoice,
-        )
-    }
+    // v5 sheets over the browser take the active profile's accent (V11c).
+    CompositionLocalProvider(ProfileAccentV5 provides controller.v5Accent) {
+        controller.pendingDownloadChoice?.let { choice ->
+            DownloadManagerChooserDialog(
+                choice = choice,
+                onSelect = controller::confirmDownloadChoice,
+                onDismiss = controller::dismissDownloadChoice,
+            )
+        }
 
-    val accessibilityManager = LocalAccessibilityManager.current
-    val rootView = LocalView.current
-    controller.downloadSafety.pending?.let { pending ->
-        DownloadSafetySheet(
-            pending = pending,
-            onDownload = controller.downloadSafety::save,
-            onCancel = controller.downloadSafety::cancel,
-        )
-    }
+        val accessibilityManager = LocalAccessibilityManager.current
+        val rootView = LocalView.current
+        controller.downloadSafety.pending?.let { pending ->
+            DownloadSafetySheet(
+                pending = pending,
+                onDownload = controller.downloadSafety::save,
+                onCancel = controller.downloadSafety::cancel,
+            )
+        }
 
-    // Under v5 the shield opens the v5 site protection panel (V17); its «Permissions and site info»
-    // opens this sheet for the same tab.
-    val uiV5 by rememberUiV5Flag()
-    var siteInfoTabId by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(privacyXRayTabId) { if (privacyXRayTabId == null) siteInfoTabId = null }
-    if (uiV5) {
-        BrowserSiteProtectionV5(
-            controller = controller,
-            tabId = privacyXRayTabId?.takeIf { it != siteInfoTabId },
-            onDismiss = onPrivacyXRayDismiss,
-            onSiteInfo = { siteInfoTabId = privacyXRayTabId },
-            onOpenProtectionSettings = onOpenProtectionSettings,
-        )
-    }
-    privacyXRayTabId?.takeIf { !uiV5 || it == siteInfoTabId }?.let { tabId ->
-        val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
-        if (xRayTab != null) {
-            val permissionSnapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
-            val workspaceName = controller.profiles
-                .firstOrNull { it.id == xRayTab.profileId }
-                ?.workspaceDisplayName()
-                .orEmpty()
-            PrivacyXRaySheet(
-                pageUrl = xRayTab.url,
-                connectionKind = SiteConnectionRules.kind(
-                    pageUrl = xRayTab.url,
-                    isLoading = xRayTab.isLoading,
-                    hasError = xRayTab.error != null || xRayTab.failureKind != null,
-                ),
-                snapshot = controller.privacySnapshot(tabId),
-                siteState = controller.siteProtectionState(tabId),
-                permissionSnapshot = permissionSnapshot,
-                workspaceName = workspaceName,
-                supportedPermissions =
-                    AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
-                backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
-                onPause = { persistently ->
-                    controller.pauseSiteProtection(tabId, persistently)
-                },
-                onResume = { controller.resumeSiteProtection(tabId) },
-                onRevokeThirdPartyCookieCompatibility = {
-                    controller.revokeThirdPartyCookieCompatibility(tabId)
-                },
-                onRuleAction = { domain, action, siteScoped ->
-                    val rule = controller.addFilterRuleFromXRay(
-                        tabId = tabId,
-                        requestHost = domain,
-                        action = action,
-                        siteScoped = siteScoped,
-                    )
-                    if (rule != null) {
-                        onOpenFilterStudio(rule.id)
-                    }
-                },
-                onOpenStudio = onOpenFilterStudio,
-                onPermissionOriginSelected = onPermissionOriginSelected,
-                onPermissionDecisionChanged = { permission, decision ->
-                    permissionSnapshot.site?.let { site ->
-                        controller.setSitePermissionDecision(
-                            tabId = tabId,
-                            origin = site.origin,
-                            permission = permission,
-                            decision = decision,
-                        )
-                    }
-                },
-                onResetSitePermissions = {
-                    permissionSnapshot.site?.let { site ->
-                        controller.resetSitePermissions(tabId, site.origin)
-                    }
-                },
+        // Under v5 the shield opens the v5 site protection panel (V17); its «Permissions and site info»
+        // opens this sheet for the same tab.
+        val uiV5 by rememberUiV5Flag()
+        var siteInfoTabId by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(privacyXRayTabId) { if (privacyXRayTabId == null) siteInfoTabId = null }
+        if (uiV5) {
+            BrowserSiteProtectionV5(
+                controller = controller,
+                tabId = privacyXRayTabId?.takeIf { it != siteInfoTabId },
                 onDismiss = onPrivacyXRayDismiss,
-                canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
-                popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
-                onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
-                pageFixes = controller.siteProtectionState(tabId)
-                    .takeIf { site -> controller.supportsPageContentActions && site.host != null }
-                    ?.let { site ->
-                        SiteInfoPageFixes(
-                            cookieBannersHidden = (!site.cookieBannerRemovalDisabled).takeIf {
-                                controller.blockerSettings.hideCookieConsent && !site.isPaused
-                            },
-                            forceVerticalScrolling = site.forceVerticalScrolling,
-                            forcePageZooming = site.forcePageZooming,
-                            forceSafeArea = site.forceSafeArea,
-                            onChange = { fix, on ->
-                                val changed = when (fix) {
-                                    SiteInfoPageFix.CookieBanners ->
-                                        controller.setCookieBannerRemovalDisabled(tabId, !on)
-                                    SiteInfoPageFix.VerticalScrolling ->
-                                        controller.setForceVerticalScrolling(tabId, on)
-                                    SiteInfoPageFix.PageZooming -> controller.setForcePageZooming(tabId, on)
-                                    SiteInfoPageFix.SafeArea -> controller.setForceSafeArea(tabId, on)
-                                }
-                                if (changed) rootView.performConfirmHaptic()
-                            },
-                        )
-                    },
-                siteData = SiteDomainRules.domainForUrl(xRayTab.url)
-                    ?.takeIf { domain ->
-                        SiteDataDeletionRules.offers(
-                            supported = controller.isSiteDataDeletionSupported,
-                            baseDomain = domain,
-                            isPrivate = xRayTab.isIncognito,
-                        )
-                    }
-                    ?.let { domain ->
-                        SiteInfoSiteData(
-                            baseDomain = domain,
-                            // The engine clears every workspace's data, shown or not.
-                            allWorkspaces = controller.localBrowserProfiles.size > 1,
-                            onDelete = {
-                                // TalkBack users get the longer window Android recommends.
-                                val window = SiteDataDeletionRules.UNDO_WINDOW_MILLIS
-                                controller.siteDataDeletion.request(
-                                    baseDomain = domain,
-                                    undoWindowMillis = accessibilityManager
-                                        ?.calculateRecommendedTimeoutMillis(
-                                            window,
-                                            containsText = true,
-                                            containsControls = true,
-                                        )
-                                        ?: window,
-                                )
-                                onPrivacyXRayDismiss()
-                            },
-                        )
-                    },
-                certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
-                week = controller.protectionReport.week,
+                onSiteInfo = { siteInfoTabId = privacyXRayTabId },
                 onOpenProtectionSettings = onOpenProtectionSettings,
             )
         }
-    }
-
-    permissionRadarTabId?.let { tabId ->
-        val radarTab = controller.tabs.firstOrNull { it.id == tabId }
-        if (radarTab != null) {
-            val snapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
-            val workspaceName = controller.profiles
-                .firstOrNull { it.id == radarTab.profileId }
-                ?.workspaceDisplayName()
-                .orEmpty()
-            PermissionRadarSheet(
-                snapshot = snapshot,
-                workspaceName = workspaceName,
-                supportedPermissions =
-                    AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
-                onOriginSelected = onPermissionOriginSelected,
-                onDecisionChanged = { permission, decision ->
-                    snapshot.site?.let { site ->
-                        controller.setSitePermissionDecision(
+        privacyXRayTabId?.takeIf { !uiV5 || it == siteInfoTabId }?.let { tabId ->
+            val xRayTab = controller.tabs.firstOrNull { it.id == tabId }
+            if (xRayTab != null) {
+                val permissionSnapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
+                val workspaceName = controller.profiles
+                    .firstOrNull { it.id == xRayTab.profileId }
+                    ?.workspaceDisplayName()
+                    .orEmpty()
+                PrivacyXRaySheet(
+                    pageUrl = xRayTab.url,
+                    connectionKind = SiteConnectionRules.kind(
+                        pageUrl = xRayTab.url,
+                        isLoading = xRayTab.isLoading,
+                        hasError = xRayTab.error != null || xRayTab.failureKind != null,
+                    ),
+                    snapshot = controller.privacySnapshot(tabId),
+                    siteState = controller.siteProtectionState(tabId),
+                    permissionSnapshot = permissionSnapshot,
+                    workspaceName = workspaceName,
+                    supportedPermissions =
+                        AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
+                    backdropSource = browserContentBlurTarget.asCandyChromeBackdropSource(),
+                    onPause = { persistently ->
+                        controller.pauseSiteProtection(tabId, persistently)
+                    },
+                    onResume = { controller.resumeSiteProtection(tabId) },
+                    onRevokeThirdPartyCookieCompatibility = {
+                        controller.revokeThirdPartyCookieCompatibility(tabId)
+                    },
+                    onRuleAction = { domain, action, siteScoped ->
+                        val rule = controller.addFilterRuleFromXRay(
                             tabId = tabId,
-                            origin = site.origin,
-                            permission = permission,
-                            decision = decision,
+                            requestHost = domain,
+                            action = action,
+                            siteScoped = siteScoped,
                         )
-                    }
-                },
-                onResetSite = {
-                    snapshot.site?.let { site ->
-                        controller.resetSitePermissions(tabId, site.origin)
-                    }
-                },
-                onDismiss = onPermissionRadarDismiss,
+                        if (rule != null) {
+                            onOpenFilterStudio(rule.id)
+                        }
+                    },
+                    onOpenStudio = onOpenFilterStudio,
+                    onPermissionOriginSelected = onPermissionOriginSelected,
+                    onPermissionDecisionChanged = { permission, decision ->
+                        permissionSnapshot.site?.let { site ->
+                            controller.setSitePermissionDecision(
+                                tabId = tabId,
+                                origin = site.origin,
+                                permission = permission,
+                                decision = decision,
+                            )
+                        }
+                    },
+                    onResetSitePermissions = {
+                        permissionSnapshot.site?.let { site ->
+                            controller.resetSitePermissions(tabId, site.origin)
+                        }
+                    },
+                    onDismiss = onPrivacyXRayDismiss,
+                    canTogglePopups = controller.canToggleAlwaysBlockPopups(tabId),
+                    popupsBlocked = controller.isAlwaysBlockPopupsEnabled(tabId),
+                    onPopupsBlockedChange = { enabled -> controller.setAlwaysBlockPopups(tabId, enabled) },
+                    pageFixes = controller.siteProtectionState(tabId)
+                        .takeIf { site -> controller.supportsPageContentActions && site.host != null }
+                        ?.let { site ->
+                            SiteInfoPageFixes(
+                                cookieBannersHidden = (!site.cookieBannerRemovalDisabled).takeIf {
+                                    controller.blockerSettings.hideCookieConsent && !site.isPaused
+                                },
+                                forceVerticalScrolling = site.forceVerticalScrolling,
+                                forcePageZooming = site.forcePageZooming,
+                                forceSafeArea = site.forceSafeArea,
+                                onChange = { fix, on ->
+                                    val changed = when (fix) {
+                                        SiteInfoPageFix.CookieBanners ->
+                                            controller.setCookieBannerRemovalDisabled(tabId, !on)
+                                        SiteInfoPageFix.VerticalScrolling ->
+                                            controller.setForceVerticalScrolling(tabId, on)
+                                        SiteInfoPageFix.PageZooming -> controller.setForcePageZooming(tabId, on)
+                                        SiteInfoPageFix.SafeArea -> controller.setForceSafeArea(tabId, on)
+                                    }
+                                    if (changed) rootView.performConfirmHaptic()
+                                },
+                            )
+                        },
+                    siteData = SiteDomainRules.domainForUrl(xRayTab.url)
+                        ?.takeIf { domain ->
+                            SiteDataDeletionRules.offers(
+                                supported = controller.isSiteDataDeletionSupported,
+                                baseDomain = domain,
+                                isPrivate = xRayTab.isIncognito,
+                            )
+                        }
+                        ?.let { domain ->
+                            SiteInfoSiteData(
+                                baseDomain = domain,
+                                // The engine clears every workspace's data, shown or not.
+                                allWorkspaces = controller.localBrowserProfiles.size > 1,
+                                onDelete = {
+                                    // TalkBack users get the longer window Android recommends.
+                                    val window = SiteDataDeletionRules.UNDO_WINDOW_MILLIS
+                                    controller.siteDataDeletion.request(
+                                        baseDomain = domain,
+                                        undoWindowMillis = accessibilityManager
+                                            ?.calculateRecommendedTimeoutMillis(
+                                                window,
+                                                containsText = true,
+                                                containsControls = true,
+                                            )
+                                            ?: window,
+                                    )
+                                    onPrivacyXRayDismiss()
+                                },
+                            )
+                        },
+                    certificate = SiteCertificateRules.forPage(controller.siteCertificate(tabId), xRayTab.url),
+                    week = controller.protectionReport.week,
+                    onOpenProtectionSettings = onOpenProtectionSettings,
+                )
+            }
+        }
+
+        permissionRadarTabId?.let { tabId ->
+            val radarTab = controller.tabs.firstOrNull { it.id == tabId }
+            if (radarTab != null) {
+                val snapshot = controller.permissionRadarSnapshot(tabId, permissionRadarOrigin)
+                val workspaceName = controller.profiles
+                    .firstOrNull { it.id == radarTab.profileId }
+                    ?.workspaceDisplayName()
+                    .orEmpty()
+                PermissionRadarSheet(
+                    snapshot = snapshot,
+                    workspaceName = workspaceName,
+                    supportedPermissions =
+                        AndroidBrowserEngineRules.capabilities(controller.browserEngineKind).sitePermissions,
+                    onOriginSelected = onPermissionOriginSelected,
+                    onDecisionChanged = { permission, decision ->
+                        snapshot.site?.let { site ->
+                            controller.setSitePermissionDecision(
+                                tabId = tabId,
+                                origin = site.origin,
+                                permission = permission,
+                                decision = decision,
+                            )
+                        }
+                    },
+                    onResetSite = {
+                        snapshot.site?.let { site ->
+                            controller.resetSitePermissions(tabId, site.origin)
+                        }
+                    },
+                    onDismiss = onPermissionRadarDismiss,
+                )
+            }
+        }
+
+        controller.permissionPrompt?.let { prompt ->
+            PermissionPromptSheet(
+                prompt = prompt,
+                onChoice = { choice -> controller.respondToPermissionPrompt(prompt.id, choice) },
+                onShown = { controller.onPermissionPromptShown(prompt.id) },
             )
         }
-    }
 
-    controller.permissionPrompt?.let { prompt ->
-        PermissionPromptSheet(
-            prompt = prompt,
-            onChoice = { choice -> controller.respondToPermissionPrompt(prompt.id, choice) },
-            onShown = { controller.onPermissionPromptShown(prompt.id) },
-        )
-    }
-
-    controller.httpAuthPrompt?.let { prompt ->
-        HttpAuthPromptDialog(
-            prompt = prompt,
-            onSubmit = { username, password ->
-                controller.respondToHttpAuthPrompt(prompt.id, username, password)
-            },
-            onCancel = { controller.cancelHttpAuthPrompt(prompt.id) },
-        )
-    }
-
-    // Vola's own «Save password?» and «Sign in to …» sheets (Q20b).
-    VaultLoginPromptSheets()
-
-    controller.webPrompt?.let { prompt ->
-        BrowserWebPromptDialog(
-            prompt = prompt,
-            onConfirm = { value -> controller.confirmWebPrompt(prompt.id, value) },
-            onCancel = { controller.cancelWebPrompt(prompt.id) },
-        )
-    }
-
-    controller.externalAppPrompt?.let { prompt ->
-        ExternalAppPromptDialog(
-            prompt = prompt,
-            onConfirm = { controller.confirmExternalAppPrompt(prompt.id) },
-            onCancel = { controller.dismissExternalAppPrompt(prompt.id) },
-        )
-    }
-
-    controller.federatedLoginOffer
-        ?.takeIf(FederatedLoginOffer::showDialog)
-        ?.let { offer ->
-            FederatedLoginPromptDialog(
-                offer = offer,
-                onChoice = { choice ->
-                    controller.respondToFederatedLoginOffer(offer.token, choice)
+        controller.httpAuthPrompt?.let { prompt ->
+            HttpAuthPromptDialog(
+                prompt = prompt,
+                onSubmit = { username, password ->
+                    controller.respondToHttpAuthPrompt(prompt.id, username, password)
                 },
+                onCancel = { controller.cancelHttpAuthPrompt(prompt.id) },
             )
         }
 
-    controller.captchaCompatibilityOffer
-        ?.takeIf(CaptchaCompatibilityOffer::showDialog)
-        ?.let { offer ->
-            CaptchaCompatibilityPromptDialog(
-                offer = offer,
-                onChoice = { choice ->
-                    controller.respondToCaptchaCompatibilityOffer(offer.token, choice)
-                },
+        // Vola's own «Save password?» and «Sign in to …» sheets (Q20b).
+        VaultLoginPromptSheets()
+
+        controller.webPrompt?.let { prompt ->
+            BrowserWebPromptDialog(
+                prompt = prompt,
+                onConfirm = { value -> controller.confirmWebPrompt(prompt.id, value) },
+                onCancel = { controller.cancelWebPrompt(prompt.id) },
             )
         }
 
-    if (filterStudioVisible) {
-        FilterStudioScreen(
-            rules = controller.filterRulesFor(controller.selectedTabId),
-            subscriptionRules = controller.filterSubscriptionRulesFor(
-                controller.selectedTabId,
-            ),
-            isIncognito = controller.selectedTab.isIncognito,
-            profiles = visibleProfiles,
-            currentProfileId = controller.selectedTab.profileId,
-            currentUrl = controller.filterStudioTestUrl(controller.selectedTabId),
-            recentDomain = controller.privacySnapshot(controller.selectedTabId)
-                .domains.firstOrNull()?.host,
-            selectedRuleId = filterStudioSelectedRuleId,
-            onTest = { controller.testFilterRule(controller.selectedTabId, it) },
-            onAdd = controller::addFilterRule,
-            onUpdate = controller::updateFilterRule,
-            onToggle = controller::setFilterRuleActive,
-            onDelete = controller::deleteFilterRule,
-            onParseImport = controller::importFilterRules,
-            onApplyImport = controller::applyFilterImport,
-            onApplySubscription = controller::applyFilterSubscription,
-            onExport = controller::exportFilterRules,
-            onDismiss = onFilterStudioDismiss,
-        )
-    }
+        controller.externalAppPrompt?.let { prompt ->
+            ExternalAppPromptDialog(
+                prompt = prompt,
+                onConfirm = { controller.confirmExternalAppPrompt(prompt.id) },
+                onCancel = { controller.dismissExternalAppPrompt(prompt.id) },
+            )
+        }
 
-    favoriteFeedbackEvent?.let { event ->
-        FavoriteToggleFeedback(
-            event = event,
-            onFinished = onFavoriteFeedbackFinished,
+        controller.federatedLoginOffer
+            ?.takeIf(FederatedLoginOffer::showDialog)
+            ?.let { offer ->
+                FederatedLoginPromptDialog(
+                    offer = offer,
+                    onChoice = { choice ->
+                        controller.respondToFederatedLoginOffer(offer.token, choice)
+                    },
+                )
+            }
+
+        controller.captchaCompatibilityOffer
+            ?.takeIf(CaptchaCompatibilityOffer::showDialog)
+            ?.let { offer ->
+                CaptchaCompatibilityPromptDialog(
+                    offer = offer,
+                    onChoice = { choice ->
+                        controller.respondToCaptchaCompatibilityOffer(offer.token, choice)
+                    },
+                )
+            }
+
+        if (filterStudioVisible) {
+            FilterStudioScreen(
+                rules = controller.filterRulesFor(controller.selectedTabId),
+                subscriptionRules = controller.filterSubscriptionRulesFor(
+                    controller.selectedTabId,
+                ),
+                isIncognito = controller.selectedTab.isIncognito,
+                profiles = visibleProfiles,
+                currentProfileId = controller.selectedTab.profileId,
+                currentUrl = controller.filterStudioTestUrl(controller.selectedTabId),
+                recentDomain = controller.privacySnapshot(controller.selectedTabId)
+                    .domains.firstOrNull()?.host,
+                selectedRuleId = filterStudioSelectedRuleId,
+                onTest = { controller.testFilterRule(controller.selectedTabId, it) },
+                onAdd = controller::addFilterRule,
+                onUpdate = controller::updateFilterRule,
+                onToggle = controller::setFilterRuleActive,
+                onDelete = controller::deleteFilterRule,
+                onParseImport = controller::importFilterRules,
+                onApplyImport = controller::applyFilterImport,
+                onApplySubscription = controller::applyFilterSubscription,
+                onExport = controller::exportFilterRules,
+                onDismiss = onFilterStudioDismiss,
+            )
+        }
+
+        favoriteFeedbackEvent?.let { event ->
+            FavoriteToggleFeedback(
+                event = event,
+                onFinished = onFavoriteFeedbackFinished,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(end = 24.dp, bottom = 104.dp)
+                    .zIndex(5f),
+            )
+        }
+
+        SnackbarHost(
+            hostState = feedbackSnackbarHostState,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(end = 24.dp, bottom = 104.dp)
-                .zIndex(5f),
+                .padding(horizontal = 16.dp, vertical = 84.dp)
+                .zIndex(30f),
         )
-    }
 
-    SnackbarHost(
-        hostState = feedbackSnackbarHostState,
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 84.dp)
-            .zIndex(30f),
-    )
-
-    AnimatedVisibility(
-        visible = snoozedTabsVisible,
-        enter = fadeIn(tween(120)),
-        exit = fadeOut(tween(90)),
-    ) {
-        SnoozedTabsScreen(
-            snoozedTabs = visibleSnoozedTabs,
-            profiles = visibleProfiles,
-            onBack = onSnoozedTabsDismiss,
-            onReschedule = controller::rescheduleSnoozedTab,
-            onOpenNow = { tabId ->
-                controller.openSnoozedTabNow(tabId)
-            },
-            onDelete = controller::deleteSnoozedTab,
-        )
+        AnimatedVisibility(
+            visible = snoozedTabsVisible,
+            enter = fadeIn(tween(120)),
+            exit = fadeOut(tween(90)),
+        ) {
+            SnoozedTabsScreen(
+                snoozedTabs = visibleSnoozedTabs,
+                profiles = visibleProfiles,
+                onBack = onSnoozedTabsDismiss,
+                onReschedule = controller::rescheduleSnoozedTab,
+                onOpenNow = { tabId ->
+                    controller.openSnoozedTabNow(tabId)
+                },
+                onDelete = controller::deleteSnoozedTab,
+            )
+        }
     }
 }

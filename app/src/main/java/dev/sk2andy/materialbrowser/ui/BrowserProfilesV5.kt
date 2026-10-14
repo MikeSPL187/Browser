@@ -22,6 +22,7 @@ import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.isSynced
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -32,6 +33,13 @@ import dev.sk2andy.materialbrowser.ui.v5.V5ProfileIconChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileItem
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfilePrivacy
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSheet
+
+/** The active profile's v5 accent, which every v5 screen takes (V11c, system-v5.md 1.2). */
+internal val BrowserController.v5Accent: V5Accent
+    get() = profiles.firstOrNull { it.id == activeProfileId }?.let { V5ProfileRules.accent(it.accent) } ?: V5Accent.Default
+
+/** [LocalV5ProfileAccent] under the browser's own name, where the browser's screens provide it. */
+internal val ProfileAccentV5 get() = LocalV5ProfileAccent
 
 /** Profiles as v5 shows them (V11a, system-v5.md 1.2 and 10). */
 internal object V5ProfileRules {

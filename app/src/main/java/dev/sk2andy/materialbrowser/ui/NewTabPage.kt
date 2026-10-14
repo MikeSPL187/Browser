@@ -117,6 +117,8 @@ internal fun NewTabPage(
     bottomContentPadding: Dp = VolaSpacing.x12,
     /** The workspace name shown above the page, as on the NewTab board. */
     title: String? = null,
+    /** The workspace's stored symbol key, drawn before [title] on the v5 new tab. */
+    titleIconKey: String? = null,
     /** Recently used tabs for the Continue card, newest first. */
     recentTabs: List<BrowserTab> = emptyList(),
     recentTabFavicons: Map<String, Bitmap> = emptyMap(),
@@ -148,6 +150,7 @@ internal fun NewTabPage(
             onOpenEssential = onOpenEssential,
             editor = editor,
             profileLabel = title,
+            profileIconKey = titleIconKey,
             recentTabs = recentTabs,
             recentTabFavicons = recentTabFavicons,
             onRecentTab = onRecentTab,

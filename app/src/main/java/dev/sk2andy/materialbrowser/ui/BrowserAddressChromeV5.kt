@@ -27,6 +27,7 @@ import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -111,7 +112,7 @@ internal fun BrowserV5Bar(
     val siteColor = controller.selectedSiteThemeColor
         ?.takeIf { siteTint }
         ?.takeUnless { tab.isIncognito || tab.url == BLANK_URL || tab.error != null || tab.failureKind != null }
-    VolaV5Theme(dark = darkShell, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = darkShell, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         val chrome = V5Theme.colors.chrome
         val label = V5Theme.colors.label
         val tint = remember(siteColor, chrome, label) { V5SiteTints.of(siteColor, chrome, label) }
@@ -254,6 +255,8 @@ internal fun BrowserV5Bar(
 @Composable
 internal fun BrowserV5AddressEditor(
     selectedTab: BrowserTab,
+    /** The active profile's accent: «Go» and the cursor take it. */
+    accent: V5Accent,
     suggestionItems: List<AddressSuggestionItem>,
     highlightedIndex: Int,
     value: TextFieldValue,
@@ -272,7 +275,7 @@ internal fun BrowserV5AddressEditor(
     val layout = remember(suggestionItems, value.text) {
         V5SuggestionLayoutRules.layout(suggestionItems, value.text)
     }
-    VolaV5Theme(dark = darkShell, privateBrowsing = selectedTab.isIncognito) {
+    VolaV5Theme(dark = darkShell, accent = accent, privateBrowsing = selectedTab.isIncognito) {
         V5AddressEditor(
             state = V5EditorState(
                 value = value,
