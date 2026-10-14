@@ -10,6 +10,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -40,13 +41,19 @@ object V5Theme {
 }
 
 /**
+ * The active profile's accent (system-v5.md 1.2), provided once where the browser's screens start;
+ * every [VolaV5Theme] takes it unless told otherwise.
+ */
+val LocalV5ProfileAccent = compositionLocalOf { V5Accent.Default }
+
+/**
  * Applies v5 to [content]: light or dark from the system unless [dark] says otherwise, the
  * profile's [accent], and the private palette (always dark) when [privateBrowsing] is set.
  */
 @Composable
 fun VolaV5Theme(
     dark: Boolean = isSystemInDarkTheme(),
-    accent: V5Accent = V5Accent.Default,
+    accent: V5Accent = LocalV5ProfileAccent.current,
     privateBrowsing: Boolean = false,
     highContrast: Boolean = false,
     content: @Composable () -> Unit,

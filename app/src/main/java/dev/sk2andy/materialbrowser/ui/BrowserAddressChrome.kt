@@ -546,6 +546,7 @@ internal fun BoxScope.BrowserAddressChrome(
     if (v5Editor) {
         BrowserV5AddressEditor(
             selectedTab = selectedTab,
+            accent = controller.v5Accent,
             suggestionItems = suggestionItems,
             highlightedIndex = highlightedSuggestionIndex,
             value = addressValue,

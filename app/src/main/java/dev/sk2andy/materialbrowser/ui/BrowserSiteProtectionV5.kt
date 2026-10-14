@@ -135,7 +135,7 @@ internal fun BrowserSiteProtectionV5(
         onSiteInfo = onSiteInfo,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
-    VolaV5Theme(dark = dark, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         V5SiteProtection(visible = visible, state = state, actions = actions, onDismiss = onDismiss)
     }
 }

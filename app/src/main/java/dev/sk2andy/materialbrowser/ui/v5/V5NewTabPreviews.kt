@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 new tab as canvas screen «а», in light and dark, and the add sheet. Preview text is not localized. */
@@ -11,6 +12,7 @@ private const val PREVIEW_HEIGHT_DP = 844
 
 private val PreviewState = V5NewTabState(
     profileLabel = "Личный",
+    profileIcon = WorkspaceIcons.vector("🏔"),
     pinned = listOf(
         V5PinnedSite("wiki", "Википедия", null),
         V5PinnedSite("mail", "Почта", null),

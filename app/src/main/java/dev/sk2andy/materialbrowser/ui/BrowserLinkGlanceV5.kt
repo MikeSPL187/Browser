@@ -114,7 +114,7 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
         onDismiss = dismiss,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
-    VolaV5Theme(dark = dark, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         V5LinkGlance(
             state = state,
             actions = actions,
