@@ -93,4 +93,13 @@ class FileChooserRulesTest {
             FileChooserRules.captureAction(BrowserEngineFileCapture.None, listOf("image/*")),
         )
     }
+
+    @Test
+    fun aPrivateTabsCaptureLeavesTheGalleryOnceItsCopyIsStaged() {
+        assertTrue(FileChooserRules.keepsCapture(delivered = true, stagedCopy = true, privateTab = false))
+        assertFalse(FileChooserRules.keepsCapture(delivered = true, stagedCopy = true, privateTab = true))
+        // Without a staged copy the upload still reads the capture itself, so it has to stay.
+        assertTrue(FileChooserRules.keepsCapture(delivered = true, stagedCopy = false, privateTab = true))
+        assertFalse(FileChooserRules.keepsCapture(delivered = false, stagedCopy = false, privateTab = false))
+    }
 }
