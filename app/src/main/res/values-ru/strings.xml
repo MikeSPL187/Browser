@@ -797,7 +797,7 @@
     <string name="settings_browser_engine_change_blocked_by_downloads">Дождитесь окончания загрузок или отмените их, прежде чем менять движок: перезапуск их прервёт.</string>
     <string name="settings_browser_engine_change_save_failed">Не удалось сохранить вкладки, поэтому движок не сменился. Попробуйте ещё раз.</string>
     <string name="settings_external_app_links_title">Открывать ссылки в приложениях</string>
-    <string name="settings_external_app_links_summary">Открывать поддерживаемые ссылки в других приложениях сразу или сначала спрашивать.</string>
+    <string name="settings_external_app_links_summary">Открывать поддерживаемые ссылки в других приложениях сразу или сначала спрашивать. В частных вкладках Vola всегда спрашивает.</string>
     <string name="settings_external_app_links_automatic">Автоматически</string>
     <string name="settings_external_app_links_ask_every_time">Всегда спрашивать</string>
     <string name="external_app_prompt_title">Открыть в другом приложении?</string>

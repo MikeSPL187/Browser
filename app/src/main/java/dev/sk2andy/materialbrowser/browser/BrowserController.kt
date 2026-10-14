@@ -6994,16 +6994,14 @@ class BrowserController(
         grant: ExternalNavigationGrant?,
         isRedirect: Boolean,
     ): ExternalAppNavigationHandling {
+        val isPrivate = (source as? ExternalAppHandoffSource.Tab)?.isPrivate == true
+        val handling = ExternalAppLinkHandling.forSource(externalAppLinkHandling, isPrivate)
         if (
             safeHttpUrl != null &&
-            externalAppLinkHandling == ExternalAppLinkHandling.AskEveryTime &&
+            handling == ExternalAppLinkHandling.AskEveryTime &&
             !externalApps.canOpenWebUrlExternally(safeHttpUrl)
-        ) {
-            return ExternalAppNavigationHandling.Unavailable
-        }
-        if (externalAppLinkHandling == ExternalAppLinkHandling.Automatic) {
-            return ExternalAppNavigationHandling.Automatic
-        }
+        ) return ExternalAppNavigationHandling.Unavailable
+        if (handling == ExternalAppLinkHandling.Automatic) return ExternalAppNavigationHandling.Automatic
         val destination = BrowserUriPolicy.displayHttpHost(webTargetUrl)
             .ifBlank { runCatching { Uri.parse(requestUrl).scheme }.getOrNull().orEmpty() }
             .ifBlank { activity.getString(R.string.external_app_prompt_fallback_destination) }

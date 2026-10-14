@@ -765,7 +765,7 @@
     <string name="settings_browser_engine_change_blocked_by_downloads">Finish or cancel the active downloads before changing the engine. The restart would interrupt them.</string>
     <string name="settings_browser_engine_change_save_failed">Couldn\'t save your tabs, so the engine wasn\'t changed. Try again.</string>
     <string name="settings_external_app_links_title">Open links in apps</string>
-    <string name="settings_external_app_links_summary">Controls whether Vola opens supported links in other apps immediately or asks first.</string>
+    <string name="settings_external_app_links_summary">Controls whether Vola opens supported links in other apps immediately or asks first. Private tabs always ask.</string>
     <string name="settings_external_app_links_automatic">Automatically</string>
     <string name="settings_external_app_links_ask_every_time">Always ask</string>
     <string name="external_app_prompt_title">Open in another app?</string>
