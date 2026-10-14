@@ -851,6 +851,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
     return undefined;
   }
   if (message.type === "login-field-focus") {
+    // The vault offers the top-level site's logins, so only the top frame may ask: a sign-in field
+    // in an embedded frame, often another site's, must not bring them up.
+    if (sender.frameId !== 0) return undefined;
     const token = tokenByTab.get(sender.tab.id);
     const policy = token && policiesByToken.get(token);
     if (policy && nativePort) {
