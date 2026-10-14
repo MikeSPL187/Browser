@@ -1188,7 +1188,7 @@ private class GeckoViewBrowserSession(
                         ),
                         startTransfer = { transferListener ->
                             downloadTransfers.startResponse(
-                                owner = GeckoDownloadOwner(profileId, isPrivate, session),
+                                owner = GeckoDownloadOwner(profileId, isPrivate, session, session.settings.contextId),
                                 response = response,
                                 referrer = currentPageUrl,
                                 listener = transferListener,
@@ -2143,7 +2143,7 @@ private class GeckoViewBrowserSession(
         }
         return downloadTransfers.start(
             transfer = GeckoDownloadTransferRequest(
-                owner = GeckoDownloadOwner(profileId, isPrivate, session),
+                owner = GeckoDownloadOwner(profileId, isPrivate, session, session.settings.contextId),
                 request = webRequest,
                 fetchFlags = GeckoWebExecutor.FETCH_FLAGS_NONE,
                 suggestedFileName = request.suggestedFileName,
