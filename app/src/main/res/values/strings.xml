@@ -2103,6 +2103,12 @@
         <item quantity="one">%d file downloading</item>
         <item quantity="other">%d files downloading</item>
     </plurals>
+    <string name="v5_downloads_done">Download complete</string>
+    <string name="v5_downloads_failed">Download failed</string>
+    <string name="v5_download_done">Downloaded: %1$s</string>
+    <string name="v5_download_done_private">Saved to the shared Downloads folder: %1$s</string>
+    <string name="v5_download_failed">Couldn\'t download: %1$s</string>
+    <string name="v5_download_open">Open</string>
     <string name="v5_menu_all_actions">All actions</string>
     <string name="v5_overview_tabs">Tabs · %1$d</string>
     <string name="v5_overview_private">Private · %1$d</string>

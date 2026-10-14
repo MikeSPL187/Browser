@@ -2,8 +2,7 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.TextFieldValue
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
@@ -30,7 +27,6 @@ import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -40,8 +36,6 @@ import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
-import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRing
-import dev.sk2andy.materialbrowser.ui.v5.v5DownloadsSummary
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
 import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
@@ -133,25 +127,23 @@ internal fun BrowserV5Bar(
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
                 onTabs = onTabs,
                 onBarPositioned = onBarPositioned,
-                accessory = { BrowserListenAccessory(selectedTabPrivate = tab.isIncognito) },
-                menuButton = {
-                    Box(contentAlignment = Alignment.Center) {
-                        val downloadsState = downloadRing?.let { v5DownloadsSummary(it) }
-                        IconButton(
-                            onClick = { menuExpanded = true },
-                            modifier = Modifier.semantics { downloadsState?.let { stateDescription = it } },
-                        ) {
-                            Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
-                        }
-                        downloadRing?.let { ring ->
-                            // On the site's color the accent may not show; the bar's own ink does.
-                            V5DownloadRing(
-                                state = ring,
-                                color = if (siteColor != null) tint.onTint else V5Theme.colors.accent,
-                                modifier = Modifier.matchParentSize(),
-                            )
-                        }
+                accessory = {
+                    Column {
+                        BrowserListenAccessory(selectedTabPrivate = tab.isIncognito)
+                        BrowserDownloadNoticeAccessory(
+                            downloads = downloadRing,
+                            selectedTabPrivate = tab.isIncognito,
+                            onDownloads = actions.onDownloads,
+                        )
                     }
+                },
+                menuButton = {
+                    // On the site's color the accent may not show; the bar's own ink does.
+                    DownloadsMenuButton(
+                        downloads = downloadRing,
+                        ink = if (siteColor != null) tint.onTint else V5Theme.colors.accent,
+                        onClick = { menuExpanded = true },
+                    )
                     BrowserMainMenu(
                         expanded = allActionsExpanded,
                         backdropSource = backdropSource,
@@ -236,7 +228,7 @@ internal fun BrowserV5Bar(
                 actions = actions,
                 onDismiss = { menuExpanded = false },
                 onAllActions = { allActionsExpanded = true },
-                downloads = downloadRing,
+                downloads = downloadRing.progress,
             )
             // «Hide distracting items» (V20): while the page chooses, the hint sits at the top edge.
             val distractions = controller.hiddenDistractions

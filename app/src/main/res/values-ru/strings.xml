@@ -2199,6 +2199,12 @@
         <item quantity="many">Загружаются %d файлов</item>
         <item quantity="other">Загружаются %d файла</item>
     </plurals>
+    <string name="v5_downloads_done">Загрузка завершена</string>
+    <string name="v5_downloads_failed">Загрузка не удалась</string>
+    <string name="v5_download_done">Загружено: %1$s</string>
+    <string name="v5_download_done_private">В общей папке «Загрузки»: %1$s</string>
+    <string name="v5_download_failed">Не загрузилось: %1$s</string>
+    <string name="v5_download_open">Открыть</string>
     <string name="v5_menu_all_actions">Все действия</string>
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>

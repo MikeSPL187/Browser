@@ -57,6 +57,8 @@ object V5Motion {
     val press = V5Spring(Spring.DampingRatioNoBouncy, 1500f)
     const val PRESS_SCALE_BUTTON = 0.97f
     const val PRESS_SCALE_CARD = 0.985f
+    /** «•••» grows this much and springs back (on [glance]) when a download finishes (V22b). */
+    const val DOWNLOAD_DONE_PULSE_SCALE = 1.15f
 
     // Gesture constants of the moments above.
     /** A tab swipe commits past 30 % of the width or 1000 dp/s. */

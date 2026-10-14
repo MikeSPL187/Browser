@@ -26,6 +26,7 @@ import dev.sk2andy.materialbrowser.R
 import kotlin.math.roundToInt
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 internal object V5DownloadRingTestTags {
     const val Ring = "v5_download_ring"
@@ -40,6 +41,16 @@ sealed interface V5DownloadRingState {
 
     /** Some size is unknown: the ring runs instead of filling. */
     data class Indeterminate(override val count: Int) : V5DownloadRingState
+
+    /** A download has just finished: the ring closes, then fades (V22b). */
+    data object Done : V5DownloadRingState {
+        override val count: Int = 0
+    }
+
+    /** A download has just failed: a whole ring in the danger color while its line shows. */
+    data object Failed : V5DownloadRingState {
+        override val count: Int = 0
+    }
 }
 
 /**
@@ -51,7 +62,11 @@ sealed interface V5DownloadRingState {
 internal fun V5DownloadRing(state: V5DownloadRingState, color: Color, modifier: Modifier = Modifier) {
     val animated = V5Motion.animationsEnabled
     val fraction by animateFloatAsState(
-        targetValue = (state as? V5DownloadRingState.Progress)?.fraction?.coerceIn(0f, 1f) ?: 0f,
+        targetValue = when (state) {
+            is V5DownloadRingState.Progress -> state.fraction.coerceIn(0f, 1f)
+            V5DownloadRingState.Done, V5DownloadRingState.Failed -> 1f
+            is V5DownloadRingState.Indeterminate -> 0f
+        },
         animationSpec = if (animated) V5Motion.effects.spec() else V5Motion.reducedFade(),
         label = "v5 download ring",
     )
@@ -81,7 +96,8 @@ internal fun V5DownloadRing(state: V5DownloadRingState, color: Color, modifier: 
             style = Stroke(stroke),
         )
         val sweep = when (state) {
-            is V5DownloadRingState.Progress -> FULL_TURN * fraction
+            is V5DownloadRingState.Progress, V5DownloadRingState.Done, V5DownloadRingState.Failed ->
+                FULL_TURN * fraction
             is V5DownloadRingState.Indeterminate -> if (running) RUNNING_ARC else 0f
         }
         if (sweep > 0f) {
@@ -98,17 +114,23 @@ internal fun V5DownloadRing(state: V5DownloadRingState, color: Color, modifier: 
     }
 }
 
+/** The ring's color: [ink] (the accent, or the bar's ink on a site color); a failure is danger. */
+@Composable
+internal fun v5DownloadRingColor(state: V5DownloadRingState, ink: Color): Color =
+    if (state == V5DownloadRingState.Failed) V5Theme.colors.danger else ink
+
 /** «2 files downloading · 45 %», for the menu row and TalkBack. */
 @Composable
-internal fun v5DownloadsSummary(state: V5DownloadRingState): String {
-    val files = pluralStringResource(R.plurals.v5_downloads_active, state.count, state.count)
-    return when (state) {
-        is V5DownloadRingState.Progress -> {
-            val percent = stringResource(R.string.settings_value_percent, (state.fraction * PERCENT).roundToInt())
-            "$files · $percent"
-        }
-        is V5DownloadRingState.Indeterminate -> files
+internal fun v5DownloadsSummary(state: V5DownloadRingState): String = when (state) {
+    is V5DownloadRingState.Progress -> {
+        val files = pluralStringResource(R.plurals.v5_downloads_active, state.count, state.count)
+        val percent = stringResource(R.string.settings_value_percent, (state.fraction * PERCENT).roundToInt())
+        "$files · $percent"
     }
+    is V5DownloadRingState.Indeterminate ->
+        pluralStringResource(R.plurals.v5_downloads_active, state.count, state.count)
+    V5DownloadRingState.Done -> stringResource(R.string.v5_downloads_done)
+    V5DownloadRingState.Failed -> stringResource(R.string.v5_downloads_failed)
 }
 
 private const val FULL_TURN = 360f
