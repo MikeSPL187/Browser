@@ -137,6 +137,10 @@ internal class GeckoViewRuntimeHandle private constructor(
         runtime.storageController,
     )
 
+    init {
+        GeckoPromptOnlyPermissions(runtime.storageController).resetAll()
+    }
+
     override fun createSession(
         profileId: String,
         isolationEnabled: Boolean,
@@ -957,6 +961,7 @@ private class GeckoViewBrowserSession(
     )
 
     private val storageController = runtime.storageController
+    private val promptOnlyPermissions = GeckoPromptOnlyPermissions(storageController)
     private val contentBlockingController = runtime.contentBlockingController
     private val mainHandler = Handler(Looper.getMainLooper())
     private val mediaRestorationReadback = GeckoMediaRestorationReadback(mainHandler)
@@ -1448,6 +1453,7 @@ private class GeckoViewBrowserSession(
                                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
                                         },
                                     )
+                                    promptOnlyPermissions.resetAfterAnswer(perm)
                                 },
                                 onPromptShown = perm::notifyShown,
                             ),
