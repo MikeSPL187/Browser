@@ -13310,7 +13310,7 @@ class BrowserController(
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
         }
-        return when (downloadSettings.managerMode) {
+        return when (DownloadManagerMode.forSource(downloadSettings.managerMode, tabs.any { it.id == tabId && it.isIncognito })) {
             DownloadManagerMode.BuiltIn -> startBuiltInDownload()
             DownloadManagerMode.AskEveryTime -> {
                 val apps = discoverExternalDownloadManagers(request)
