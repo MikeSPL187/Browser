@@ -146,6 +146,7 @@ function applyPolicy(policy) {
   else globalThis.__candyReconcileContentTopInset?.();
   globalThis.__candyConfigureCssSafeArea?.();
   globalThis.__candyReportSiteColor?.();
+  globalThis.__candyReportReaderAvailable?.();
   scheduleScrollMetrics();
 }
 
@@ -190,6 +191,17 @@ globalThis.CandyContentTopInset = Object.freeze({
       revision,
       themeColor,
     }).catch(() => {});
+  },
+  // Whether the page reads as an article (reader_probe.js); false until the policy arrives.
+  readerAvailable: (available) => {
+    if (!policyReady || typeof available !== "boolean") return false;
+    browser.runtime.sendMessage({
+      type: "reader-available",
+      navigationGeneration: state.navigationGeneration,
+      revision: state.revision,
+      readerAvailable: available,
+    }).catch(() => {});
+    return true;
   },
   // The page's theme-color for the v5 bar (content_site_color.js); false until the policy arrives.
   siteColor: (themeColor) => {

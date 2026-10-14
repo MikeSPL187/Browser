@@ -170,7 +170,7 @@ test("privacy host uses required MV2 web origins for document-start scripts", ()
   assert.equal(manifest.content_scripts[0].all_frames, false);
   assert.deepEqual(
     manifest.content_scripts[0].js,
-    ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js", "hide_distractions.js"],
+    ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js", "reader_probe.js", "hide_distractions.js"],
   );
   assert.equal(manifest.content_scripts[1].all_frames, true);
 });
@@ -608,6 +608,14 @@ test("newer privacy policy wins while older cookie rules are still loading", asy
   assert.equal(
     postedNativeMessages.filter((message) => message.type === "site-color").at(-1).themeColor,
     "#1da1f2",
+  );
+  await sendRuntimeMessage(
+    { type: "reader-available", navigationGeneration: 0, revision: 2, readerAvailable: true },
+    { tab: { id: 7 } },
+  );
+  assert.equal(
+    postedNativeMessages.filter((message) => message.type === "reader-available").at(-1).readerAvailable,
+    true,
   );
   assert.ok(
     postedNativeMessages.some((message) =>

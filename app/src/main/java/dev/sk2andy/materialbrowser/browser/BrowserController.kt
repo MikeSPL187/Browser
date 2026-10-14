@@ -45,6 +45,7 @@ import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
 import dev.sk2andy.materialbrowser.blocking.CandyHostCanonicalizer
 import dev.sk2andy.materialbrowser.blocking.CandyImportScope
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshot
+import dev.sk2andy.materialbrowser.blocking.CandyRuleSemantics
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshots
 import dev.sk2andy.materialbrowser.blocking.CandyPublicSuffixRules
 import dev.sk2andy.materialbrowser.blocking.CandyRule
@@ -634,10 +635,13 @@ class BrowserController(
     internal val selectedWebContentTopBarState: WebContentTopBarState?
         get() = webContentTopBarStates[selectedTabId]
 
-    internal val selectedWebContentStatusBarBackdrop get() = pageColors.statusBarBackdrop(selectedTabId)
+    internal val selectedWebContentStatusBarBackdrop get() = pageSignals.statusBarBackdrop(selectedTabId)
 
     /** The selected page's theme-color (ARGB) for the v5 bar, or null when it declares none. */
-    internal val selectedSiteThemeColor: Int? get() = pageColors.themeColor(selectedTabId)
+    internal val selectedSiteThemeColor: Int? get() = pageSignals.themeColor(selectedTabId)
+
+    /** Whether the selected page reads as an article (Gecko only); puts «Read» in the v5 capsule. */
+    internal val selectedReaderAvailable: Boolean get() = pageSignals.readerAvailable(selectedTabId)
 
     internal val canMinimizeFullscreenVideo: Boolean
         get() = presentationIsPrivate() == false
@@ -1118,7 +1122,7 @@ class BrowserController(
     private var nextBrowserEngineLoadRequestId = 0L
     private val automaticNativeTopSafeAreaTabIds = mutableSetOf<String>()
     private val webContentTopBarStates = mutableStateMapOf<String, WebContentTopBarState>()
-    private val pageColors = WebContentPageColors()
+    private val pageSignals = WebContentPageSignals()
     private val firefoxExtensionOptionsTabs =
         mutableMapOf<String, FirefoxExtensionOptionsTabChrome>()
     private val externalNavigationGrants = mutableMapOf<String, ExternalNavigationGrant>()
@@ -1973,7 +1977,7 @@ class BrowserController(
                 existing.cosmeticSelector == validated.cosmeticSelector &&
                 existing.profileId == validated.profileId)
         }
-        if (duplicate != null) return duplicate.takeIf { sameRuleSemantics(it, validated) }
+        if (duplicate != null) return duplicate.takeIf { CandyRuleSemantics.same(it, validated) }
         if (filterRules.size >= CandyRuleValidator.MAX_RULES) return null
         if (validated.kind == CandyRuleKind.CosmeticCss &&
             filterRules.count { it.kind == CandyRuleKind.CosmeticCss } >=
@@ -1998,7 +2002,7 @@ class BrowserController(
         if (index < 0) return null
         val validated = (CandyRuleValidator.validate(candidate) as? CandyRuleValidation.Valid)?.rule
             ?: return null
-        if (filterRules.any { it.id != validated.id && sameRuleSemantics(it, validated) }) return null
+        if (filterRules.any { it.id != validated.id && CandyRuleSemantics.same(it, validated) }) return null
         val previous = filterRules[index]
         if (previous.kind != CandyRuleKind.CosmeticCss &&
             validated.kind == CandyRuleKind.CosmeticCss &&
@@ -2063,7 +2067,7 @@ class BrowserController(
         val imported = CandyRuleValidator.normalizeAll(
             preview.rules.mapIndexed { index, rule ->
                 rule.copy(
-                    id = "$sourcePrefix-$index-${semanticRuleKey(rule).hashCode().toUInt().toString(16)}",
+                    id = "$sourcePrefix-$index-${CandyRuleSemantics.key(rule).hashCode().toUInt().toString(16)}",
                     origin = CandyRuleOrigin.Subscription,
                     sourceUrl = sourceUrl,
                     updatedAtMillis = System.currentTimeMillis(),
@@ -2150,18 +2154,6 @@ class BrowserController(
         }
         return additions
     }
-
-    private fun semanticRuleKey(rule: CandyRule): String = listOf(
-        rule.action.name,
-        rule.kind.name,
-        rule.requestHost.orEmpty(),
-        rule.firstPartyHost.orEmpty(),
-        rule.cosmeticSelector.orEmpty(),
-        rule.profileId.orEmpty(),
-    ).joinToString("\u0000")
-
-    private fun sameRuleSemantics(left: CandyRule, right: CandyRule): Boolean =
-        semanticRuleKey(left) == semanticRuleKey(right)
 
     init {
         fileChooserValidationExecutor.execute(geckoFileUploadStager::clearOrphans)
@@ -10251,7 +10243,7 @@ class BrowserController(
         navigationGenerations.clear()
         automaticNativeTopSafeAreaTabIds.clear()
         webContentTopBarStates.clear()
-        pageColors.clearAll()
+        pageSignals.clearAll()
         firefoxExtensionOptionsTabs.clear()
         externalNavigationGrants.clear()
         pendingInitialExternalNavigationGrants.clear()
@@ -11785,11 +11777,15 @@ class BrowserController(
     private fun onGeckoPrivacyEvent(tabId: String, event: GeckoPrivacyEvent) {
         event.statusBarBackdropNavigationGeneration?.let { navigationGeneration ->
             if (navigationGenerations[tabId] != navigationGeneration) return
-            return pageColors.onStatusBarBackdrop(tabId, event.statusBarBackdropThemeColor)
+            return pageSignals.onStatusBarBackdrop(tabId, event.statusBarBackdropThemeColor)
         }
         event.siteThemeColorNavigationGeneration?.let { navigationGeneration ->
             if (navigationGenerations[tabId] != navigationGeneration) return
-            return pageColors.onThemeColor(tabId, event.siteThemeColor)
+            return pageSignals.onThemeColor(tabId, event.siteThemeColor)
+        }
+        event.readerAvailableNavigationGeneration?.let { navigationGeneration ->
+            if (navigationGenerations[tabId] != navigationGeneration) return
+            return pageSignals.onReaderAvailable(tabId, event.readerAvailable)
         }
         event.safeAreaFallbackNavigationGeneration?.let { navigationGeneration ->
             if (event.safeAreaFallbackIsTopHeader) {
@@ -11903,7 +11899,7 @@ class BrowserController(
         val session = browserEngineSessions[tabId] ?: return
         val nextNavigationGeneration = navigationGenerations.getOrDefault(tabId, 0) + 1
         val clearedTopHeaderSafeArea = webContentTopBarStates.remove(tabId) != null
-        pageColors.onSameDocumentNavigation(tabId)
+        pageSignals.onSameDocumentNavigation(tabId)
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
@@ -12003,7 +11999,7 @@ class BrowserController(
                     browserEngineSessions[event.tabId] === navigatingSession &&
                     navigationGenerations[event.tabId] == nextNavigationGeneration
                 val clearedTopHeaderSafeArea = webContentTopBarStates.remove(event.tabId) != null
-                pageColors.onNavigation(event.tabId, event.address)
+                pageSignals.onNavigation(event.tabId, event.address)
                 val restoreDocumentTopSafeArea =
                     event.tabId in automaticNativeTopSafeAreaTabIds ||
                         clearedTopHeaderSafeArea
@@ -14695,7 +14691,7 @@ class BrowserController(
         navigationGenerations.remove(tabId)
         automaticNativeTopSafeAreaTabIds.remove(tabId)
         webContentTopBarStates.remove(tabId)
-        pageColors.clear(tabId)
+        pageSignals.clear(tabId)
         firefoxExtensionOptionsTabs.remove(tabId)
         clearExternalNavigationAuthorization(tabId)
         pageUrls.remove(tabId)

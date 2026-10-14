@@ -1,6 +1,11 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -81,6 +86,10 @@ import kotlin.math.roundToInt
  * The strip is neutral `chrome` until V8 tints it with the site's color.
  */
 
+internal object V5BarTestTags {
+    const val Read = "v5_bar_read"
+}
+
 /** What the bar shows; everything else arrives as callbacks. */
 @Immutable
 internal data class V5BarState(
@@ -94,6 +103,8 @@ internal data class V5BarState(
     val permissionActivity: Boolean,
     val connectionKind: SiteConnectionKind,
     val blockedCount: Int,
+    /** The page reads as an article: «Read» joins the capsule (system-v5.md, section 5.1). */
+    val readerAvailable: Boolean = false,
 )
 
 /** The gestures the bar shares with the current one. */
@@ -122,6 +133,7 @@ internal fun BoxScope.V5BottomBar(
     onBarPositioned: (boundsInRoot: Rect, topInWindowPx: Int) -> Unit,
     menuButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    onRead: () -> Unit = {},
     /**
      * A second row above the bar, such as the listening mini player (V19b). It is part of the bar:
      * the page ends above it, and it folds away with the bar while scrolling.
@@ -220,6 +232,7 @@ internal fun BoxScope.V5BottomBar(
                                 onAddress = onAddress,
                                 onShield = onShield,
                                 onReloadOrStop = onReloadOrStop,
+                                onRead = onRead,
                                 onTabs = onTabs,
                                 modifier = Modifier.weight(1f),
                             )
@@ -281,6 +294,7 @@ private fun AddressCapsule(
     onAddress: () -> Unit,
     onShield: () -> Unit,
     onReloadOrStop: () -> Unit,
+    onRead: () -> Unit,
     onTabs: () -> Unit,
     modifier: Modifier,
 ) {
@@ -333,6 +347,28 @@ private fun AddressCapsule(
             modifier = Modifier.weight(1f),
         )
         if (state.domain != null) {
+            val animated = V5Motion.animationsEnabled
+            AnimatedVisibility(
+                visible = state.readerAvailable,
+                enter = if (animated) {
+                    expandHorizontally(V5Motion.effects.spec()) + fadeIn(V5Motion.effects.spec())
+                } else {
+                    fadeIn(V5Motion.reducedFade())
+                },
+                exit = if (animated) {
+                    shrinkHorizontally(V5Motion.effects.spec()) + fadeOut(V5Motion.effects.spec())
+                } else {
+                    fadeOut(V5Motion.reducedFade())
+                },
+            ) {
+                IconButton(onClick = onRead, modifier = Modifier.testTag(V5BarTestTags.Read)) {
+                    Icon(
+                        imageVector = VolaIcons.FormatAlignLeft,
+                        contentDescription = stringResource(R.string.v5_menu_read),
+                        tint = bar.onTint,
+                    )
+                }
+            }
             IconButton(onClick = onReloadOrStop) {
                 Icon(
                     imageVector = if (state.isLoading) VolaIcons.Close else VolaIcons.Refresh,

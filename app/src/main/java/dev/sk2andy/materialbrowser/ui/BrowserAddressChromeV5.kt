@@ -101,6 +101,7 @@ internal fun BrowserV5Bar(
             hasError = tab.error != null || tab.failureKind != null,
         ),
         blockedCount = tab.blockedCount,
+        readerAvailable = controller.selectedReaderAvailable && ReaderStudioSessionRules.isSupportedSource(tab.url),
     )
     var menuExpanded by remember { mutableStateOf(false) }
     // V22: what is downloading, as a ring around «•••» and a row at the top of the menu.
@@ -126,6 +127,7 @@ internal fun BrowserV5Bar(
                 onAddress = onAddress,
                 onShield = actions.onPrivacyXRay,
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
+                onRead = actions.onReaderStudio,
                 onTabs = onTabs,
                 onBarPositioned = onBarPositioned,
                 accessory = {
