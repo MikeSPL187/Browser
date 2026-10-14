@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -31,11 +31,12 @@ object V5ProfileSheetTestTags {
     fun profile(id: String) = "v5_profile:$id"
 }
 
-/** One profile in the sheet (V11a): its emoji on its color, its name and how many tabs it holds. */
+/** One profile in the sheet (V11a): its symbol on its color, its name and how many tabs it holds. */
 @Immutable
 internal data class V5ProfileItem(
     val id: String,
-    val emoji: String,
+    /** The profile's symbol: Vola draws a Material Symbol for its stored emoji key, never the emoji. */
+    val icon: ImageVector,
     val name: String,
     val accent: V5Accent,
     val tabCount: Int,
@@ -95,19 +96,24 @@ private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit) {
     )
 }
 
-/** The profile's emoji on a soft disc of its color; a lock badge when it is locked. */
+/** The profile's symbol, white on a disc of its color (`accentFill`, 1.2); a lock badge when locked. */
 @Composable
 private fun ProfileTile(profile: V5ProfileItem) {
-    val dark = V5Theme.colors.isDark
+    val colors = V5Theme.colors
     Box(Modifier.size(V5Sizes.rowTile), contentAlignment = Alignment.Center) {
         Box(
             Modifier
                 .size(V5Sizes.rowTile)
                 .clip(V5Theme.shapes.full)
-                .background(profile.accent.fill(dark).copy(alpha = PROFILE_TILE_ALPHA)),
+                .background(profile.accent.fill(colors.isDark)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(profile.emoji, style = V5Theme.type.callout)
+            Icon(
+                profile.icon,
+                contentDescription = null,
+                tint = colors.onAccentFill,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
         }
         if (profile.locked) {
             Icon(
@@ -123,6 +129,3 @@ private fun ProfileTile(profile: V5ProfileItem) {
         }
     }
 }
-
-/** How strongly the profile's color shows behind its emoji. */
-private const val PROFILE_TILE_ALPHA = 0.22f

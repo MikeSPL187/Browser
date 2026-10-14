@@ -59,6 +59,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
@@ -117,10 +118,12 @@ data class V5OverviewState(
     val privateSegment: Boolean,
     val counts: V5OverviewCounts,
     val query: String,
-    /** The profile chip: its emoji and name. */
+    /** The profile chip: the profile's name, after its symbol. */
     val profileLabel: String,
     /** The profile's tab groups (V12); empty keeps one flat grid. */
     val groups: List<V5OverviewGroup> = emptyList(),
+    /** The profile's symbol on the chip (a Material Symbol for its stored emoji key). */
+    val profileIcon: ImageVector? = null,
 )
 
 @Composable
@@ -231,7 +234,7 @@ fun V5TabOverview(
                     }
                 }
             }
-            Toolbar(state.profileLabel, onNewTab, onDone, onProfiles)
+            Toolbar(state.profileLabel, state.profileIcon, onNewTab, onDone, onProfiles)
         }
     }
 }
@@ -495,7 +498,13 @@ private fun Favicon(card: V5TabCard, size: Dp) {
 }
 
 @Composable
-private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Unit, onProfiles: (() -> Unit)?) {
+private fun Toolbar(
+    profileLabel: String,
+    profileIcon: ImageVector?,
+    onNewTab: () -> Unit,
+    onDone: () -> Unit,
+    onProfiles: (() -> Unit)?,
+) {
     val colors = V5Theme.colors
     Row(
         Modifier
@@ -521,17 +530,30 @@ private fun Toolbar(profileLabel: String, onNewTab: () -> Unit, onDone: () -> Un
                 Modifier
             }
             Box(chip, contentAlignment = Alignment.Center) {
-                Text(
-                    profileLabel,
-                    style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
+                Row(
+                    Modifier
                         .clip(V5Theme.shapes.full)
                         .background(colors.fill)
                         .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
-                )
+                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (profileIcon != null) {
+                        Icon(
+                            profileIcon,
+                            contentDescription = null,
+                            tint = colors.accent,
+                            modifier = Modifier.size(V5Sizes.iconSmall),
+                        )
+                    }
+                    Text(
+                        profileLabel,
+                        style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         Box(

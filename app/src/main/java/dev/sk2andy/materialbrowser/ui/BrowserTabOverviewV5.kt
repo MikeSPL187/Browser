@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
@@ -193,7 +194,8 @@ private fun OverviewContent(
                     privateSegment = privateSegment,
                     counts = counts,
                     query = query,
-                    profileLabel = profile?.let { "${it.emoji} ${it.name}".trim() }.orEmpty(),
+                    profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.workspace_untitled),
+                    profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
                 ),
                 onQueryChange = { query = it },

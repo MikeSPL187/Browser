@@ -8,6 +8,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.isSynced
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileItem
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSheet
@@ -39,7 +40,7 @@ internal object V5ProfileRules {
         return profiles.sortedBy(BrowserProfile::isSynced).map { profile ->
             V5ProfileItem(
                 id = profile.id,
-                emoji = profile.emoji,
+                icon = WorkspaceIcons.vector(profile.emoji),
                 name = profile.name.ifBlank { profile.syncedDisplayName.orEmpty() }.ifBlank { untitled },
                 accent = accent(profile.accent),
                 tabCount = counts[profile.id] ?: 0,
