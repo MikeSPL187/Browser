@@ -20,4 +20,15 @@ class ExternalAppLinkHandlingTest {
             )
         }
     }
+
+    @Test
+    fun `a private tab always asks before another app opens`() {
+        ExternalAppLinkHandling.entries.forEach { chosen ->
+            assertEquals(
+                ExternalAppLinkHandling.AskEveryTime,
+                ExternalAppLinkHandling.forSource(chosen, isPrivate = true),
+            )
+            assertEquals(chosen, ExternalAppLinkHandling.forSource(chosen, isPrivate = false))
+        }
+    }
 }
