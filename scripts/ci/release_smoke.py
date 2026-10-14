@@ -143,6 +143,13 @@ def newest_tombstone(since):
 
 def stuck_diagnostics():
     """What the emulator was doing when adb stopped answering, for the job log; each probe may hang too."""
+    # The runner's own memory first: a runner swapping to disk stalls the emulator's disk.
+    print("::group::stuck emulator: runner memory", flush=True)
+    try:
+        print(subprocess.run(["free", "-m"], capture_output=True, text=True, timeout=10).stdout, flush=True)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        print(error, flush=True)
+    print("::endgroup::", flush=True)
     for title, command in (
         ("memory", ["shell", "cat", "/proc/meminfo"]),
         ("load", ["shell", "top", "-b", "-n", "1", "-m", "15"]),
