@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
@@ -611,13 +612,27 @@ class AppScreenWalkInstrumentedTest(
                 "window ${window.width}×${window.height}, configuration orientation " +
                     "${activity.resources.configuration.orientation}, requested ${activity.requestedOrientation}"
             }.getOrDefault("no activity")
+            val settings = listOf("user_rotation", "accelerometer_rotation")
+                .joinToString { key -> "$key ${shellOutput("settings get system $key").trim()}" }
+            val windowManager = shellOutput("dumpsys window displays").lineSequence()
+                .filter { line -> "otation" in line }
+                .map(String::trim)
+                .distinct()
+                .take(ROTATION_DUMP_LINES)
+                .joinToString(" | ")
             throw AssertionError(
                 "the app's window did not turn ${if (landscape) "landscape" else "upright"} in " +
-                    "${ROTATION_TIMEOUT_MILLIS / 1000} s: $shape, display rotation ${device.displayRotation}",
+                    "${ROTATION_TIMEOUT_MILLIS / 1000} s: $shape, display rotation ${device.displayRotation}, " +
+                    "$settings; window manager: $windowManager",
             )
         }
         visited += "orientation ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         idle()
+    }
+
+    private fun shellOutput(command: String): String {
+        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        return ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes().decodeToString() }
     }
 
     private fun dismissReleaseNotes() {
@@ -845,6 +860,7 @@ class AppScreenWalkInstrumentedTest(
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
         private const val ROTATION_TIMEOUT_MILLIS = 60_000L
+        private const val ROTATION_DUMP_LINES = 12
         private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
