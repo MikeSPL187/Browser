@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
-import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
@@ -156,8 +155,10 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun walk(auditConfig: AuditConfig, firstRun: Boolean = false, steps: () -> Unit) {
-        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
+        // Before the environment: the grant asks UiAutomation with flags of its own, and the
+        // reconnect would put the rotation back (AuditEnvironment.turnScreen).
         grantNotificationPermissionForTests()
+        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitOrientation()
         if (firstRun) walkFirstRun()
@@ -722,6 +723,7 @@ class AppScreenWalkInstrumentedTest(
      */
     private fun awaitOrientation() {
         val landscape = config.layout == AuditLayout.PhoneLandscape
+        AuditEnvironment.turnScreen(config.layout)
         val started = SystemClock.elapsedRealtime()
         val turned = runCatching {
             composeRule.waitUntil(ROTATION_TIMEOUT_MILLIS) {
@@ -757,10 +759,7 @@ class AppScreenWalkInstrumentedTest(
         idle()
     }
 
-    private fun shellOutput(command: String): String {
-        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
-        return ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes().decodeToString() }
-    }
+    private fun shellOutput(command: String): String = device.executeShellCommand(command)
 
     private fun dismissReleaseNotes() {
         idle()
