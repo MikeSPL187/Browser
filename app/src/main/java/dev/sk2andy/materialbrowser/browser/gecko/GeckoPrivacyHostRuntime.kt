@@ -1387,7 +1387,10 @@ internal class GeckoViewPrivacyHostRuntime(
                 connectedPort.disconnect()
                 return
             }
-            port?.takeIf { existing -> existing !== connectedPort }?.disconnect()
+            // A new port means the background page started again. The old port is left to Gecko,
+            // which disconnects it with the old page. Disconnecting it here as well crashes when
+            // Gecko's own disconnect is already queued: GeckoView then shuts the port's dispatcher
+            // down twice (NullHandle in EventDispatcher.shutdownNative). Its messages are ignored.
             port = connectedPort
             connectedPort.setDelegate(object : WebExtension.PortDelegate {
                 override fun onPortMessage(message: Any, sourcePort: WebExtension.Port) {
