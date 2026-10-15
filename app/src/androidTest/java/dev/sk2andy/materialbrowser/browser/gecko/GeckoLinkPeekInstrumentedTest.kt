@@ -14,6 +14,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.ui.LinkPeekTestTags
 import java.io.Closeable
@@ -45,6 +46,9 @@ class GeckoLinkPeekInstrumentedTest {
 
     @Before
     fun setUp() {
+        // The private tab the test opens asks for notifications; the system dialog would take
+        // the taps on the preview ("Failed to inject touch input").
+        grantNotificationPermissionForTests()
         preferences.edit().clear().commit()
         GestureOnboardingStore(context).markCompleted()
     }
