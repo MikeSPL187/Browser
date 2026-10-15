@@ -2188,10 +2188,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
     }
 
     @Test
-    fun automaticAppLinkUsesInstalledAppEvenWhenAndroidHasNoDefault() {
+    fun automaticAppLinkLeavesAppsAndroidWouldNotOpenToTheBrowser() {
         val redditUrl = "https://www.reddit.com/r/candy/"
         lateinit var recordingContext: RecordingContext
-        lateinit var lookupThreadName: String
         composeRule.runOnIdle {
             val activity = composeRule.activity
             val store = BrowserSessionStore(activity)
@@ -2203,8 +2202,8 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 activity = activity,
                 externalApps = ExternalAppLauncher(
                     context = recordingContext,
+                    // The app claims the domain without a verified link and is not the default.
                     findExternalWebPackages = { target ->
-                        lookupThreadName = Thread.currentThread().name
                         if (target.dataString == redditUrl) listOf("com.reddit.frontpage") else emptyList()
                     },
                     canResolveExternalActivity = { false },
@@ -2228,8 +2227,10 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
 
+            // Like Android 12+ and Chrome, the link stays in the browser: the page opens as it is,
+            // with its target, method and referrer, rather than being cancelled and loaded again.
             assertEquals(
-                GeckoNavigationRequestDecision.Deny,
+                GeckoNavigationRequestDecision.Allow,
                 browserController.dispatchSelectedGeckoNavigationRequestForTesting(
                     GeckoMainFrameNavigationRequest(
                         url = redditUrl,
@@ -2239,14 +2240,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     ),
                 ),
             )
-            assertNull(recordingContext.lastIntent)
         }
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
-            recordingContext.lastIntent != null
-        }
-        assertEquals("external-app-lookup", lookupThreadName)
-        assertEquals(redditUrl, recordingContext.lastIntent?.dataString)
-        assertEquals("com.reddit.frontpage", recordingContext.lastIntent?.`package`)
+        composeRule.waitForIdle()
+        assertNull(recordingContext.lastIntent)
     }
 
     @Test

@@ -6992,9 +6992,9 @@ class BrowserController(
     ): ExternalAppNavigationHandling {
         val isPrivate = (source as? ExternalAppHandoffSource.Tab)?.isPrivate == true
         val handling = ExternalAppLinkHandling.forSource(externalAppLinkHandling, isPrivate)
+        // Only a link Android itself would open in an app leaves the page (canOpenWebUrlExternally).
         if (
             safeHttpUrl != null &&
-            handling == ExternalAppLinkHandling.AskEveryTime &&
             !externalApps.canOpenWebUrlExternally(safeHttpUrl)
         ) return ExternalAppNavigationHandling.Unavailable
         if (handling == ExternalAppLinkHandling.Automatic) return ExternalAppNavigationHandling.Automatic
