@@ -1830,7 +1830,7 @@ private class GeckoViewBrowserSession(
                 requestListener.onAuthPrompt(
                     BrowserEngineAuthPromptRequest(
                         uri = prompt.authOptions.uri,
-                        realm = prompt.message ?: prompt.title,
+                        realm = GeckoAuthPromptRealm.fromMessage(prompt.message),
                         onlyPassword = flags and
                             GeckoSession.PromptDelegate.AuthPrompt.AuthOptions.Flags.ONLY_PASSWORD != 0,
                         isProxy = flags and

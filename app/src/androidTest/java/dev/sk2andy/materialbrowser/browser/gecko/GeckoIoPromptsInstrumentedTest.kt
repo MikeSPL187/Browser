@@ -76,6 +76,15 @@ class GeckoIoPromptsInstrumentedTest {
                         true.takeIf { server.downloadRequested.get() }
                     } == true,
                 )
+                // An APK waits for the safety sheet (DownloadSafetyGate) before anything is written.
+                val held = awaitValue("APK held for the safety sheet") {
+                    scenario.value { controller -> controller.downloadSafety.pending }
+                }
+                assertEquals(DOWNLOAD_FILE_NAME, held?.fileName)
+                assertTrue(held?.findings.orEmpty().isNotEmpty())
+                scenario.onActivity { activity ->
+                    activity.browserControllerForTesting().downloadSafety.save()
+                }
 
                 val body = awaitValue("Gecko download body") {
                     storedDownload(DOWNLOAD_FILE_NAME)
@@ -273,6 +282,8 @@ class GeckoIoPromptsInstrumentedTest {
 
     @Test
     fun privatePageNotificationRequestIsDeniedWithoutPrompt() {
+        // The first private tab asks Android for notifications; its dialog would take the tap.
+        grantRuntimePermission(Manifest.permission.POST_NOTIFICATIONS)
         FixtureServer().use { server ->
             seedSelectedTab("about:blank")
             launchMainActivity().use { scenario ->
@@ -282,7 +293,7 @@ class GeckoIoPromptsInstrumentedTest {
                     ))
                 }
                 navigateAndAwaitView(scenario, server.localhostUrl("/notification"))
-                tapAttachedGeckoView()
+                tapUntilPageLeaves(scenario, "notification-ready")
                 assertEquals("notification-denied", awaitValue("private notification denial") {
                     scenario.value { it.selectedTab.title.takeIf { title ->
                         title == "notification-denied"
