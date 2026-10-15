@@ -595,12 +595,26 @@ class AppScreenWalkInstrumentedTest(
     private fun awaitOrientation() {
         val landscape = config.layout == AuditLayout.PhoneLandscape
         val started = SystemClock.elapsedRealtime()
-        composeRule.waitUntil("the app's window to turn ${if (landscape) "landscape" else "upright"}", ROTATION_TIMEOUT_MILLIS) {
-            // Between the old activity and the turned one there is a moment with none.
-            runCatching {
-                val window = currentActivity().window.decorView
-                window.width > 0 && (window.width > window.height) == landscape
-            }.getOrDefault(false)
+        val turned = runCatching {
+            composeRule.waitUntil(ROTATION_TIMEOUT_MILLIS) {
+                // Between the old activity and the turned one there is a moment with none.
+                runCatching {
+                    val window = currentActivity().window.decorView
+                    window.width > 0 && (window.width > window.height) == landscape
+                }.getOrDefault(false)
+            }
+        }.isSuccess
+        if (!turned) {
+            val shape = runCatching {
+                val activity = currentActivity()
+                val window = activity.window.decorView
+                "window ${window.width}×${window.height}, configuration orientation " +
+                    "${activity.resources.configuration.orientation}, requested ${activity.requestedOrientation}"
+            }.getOrDefault("no activity")
+            throw AssertionError(
+                "the app's window did not turn ${if (landscape) "landscape" else "upright"} in " +
+                    "${ROTATION_TIMEOUT_MILLIS / 1000} s: $shape, display rotation ${device.displayRotation}",
+            )
         }
         visited += "orientation ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         idle()
