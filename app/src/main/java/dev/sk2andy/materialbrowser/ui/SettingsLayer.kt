@@ -26,12 +26,12 @@ internal enum class SettingsLayer {
 
 internal object SettingsLayerRules {
     /**
-     * Whether settings speak for the v5 interface: the flag is on and the window is narrow enough
-     * for v5 to draw the browser. A wider window keeps the current bar and overview, so its
-     * settings stay as they are (the v5 tablet layout comes later).
+     * Whether settings speak for the v5 interface: the flag is on and v5 draws the browser, which
+     * it does on a phone in either orientation ([AddressBarWideLayoutRules.isWide]). A tablet keeps
+     * the current bar and overview, so its settings stay as they are (the v5 tablet layout comes later).
      */
-    fun speaksForV5(flag: Boolean, windowWidthDp: Float): Boolean =
-        flag && !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp)
+    fun speaksForV5(flag: Boolean, smallestWidthDp: Float): Boolean =
+        flag && !AddressBarWideLayoutRules.usesTabStrip(smallestWidthDp)
 
     /** The «More» screen of each page that has one, and the page it belongs to. */
     val moreOf: Map<SettingsDestination, SettingsDestination> = mapOf(
@@ -51,7 +51,7 @@ internal object SettingsLayerRules {
 @Composable
 internal fun rememberSettingsUiV5(): Boolean {
     val flag by rememberUiV5Flag()
-    return SettingsLayerRules.speaksForV5(flag, LocalConfiguration.current.screenWidthDp.toFloat())
+    return SettingsLayerRules.speaksForV5(flag, LocalConfiguration.current.smallestScreenWidthDp.toFloat())
 }
 
 /** One row of a settings card that knows whether a line follows it. */

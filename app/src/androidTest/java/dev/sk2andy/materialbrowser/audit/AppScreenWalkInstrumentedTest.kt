@@ -1069,9 +1069,14 @@ class AppScreenWalkInstrumentedTest(
             val walks = groups.flatMap { group -> AuditConfig.All.map { config -> arrayOf<Any>(group, config) } }
             // After the others, so the indices of those (and the known failures listed by index) stay.
             val v5Configs = AuditConfig.All.filter { config -> config.layout == AuditLayout.PhonePortrait }
-            return walks + V5_GROUPS.sortedDescending().flatMap { group ->
+            val v5Walks = V5_GROUPS.sortedDescending().flatMap { group ->
                 v5Configs.map { config -> arrayOf<Any>(group, config) }
             }
+            // A phone turned sideways keeps v5 (decision 2026-10-15): walked once, in Russian.
+            val v5Landscape = V5_GROUPS.sortedDescending().map { group ->
+                arrayOf<Any>(group, AuditConfig.RussianLightLandscape)
+            }
+            return walks + v5Walks + v5Landscape
         }
     }
 }
