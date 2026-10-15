@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.LocaleManager
+import android.app.UiAutomation
 import android.content.Context
 import android.os.Build
 import android.os.LocaleList
@@ -105,9 +106,15 @@ internal object AuditEnvironment {
     }
 
     private fun setLayout(layout: AuditLayout) {
-        // The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
-        shell("settings put system accelerometer_rotation 0")
-        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
+        // Frozen through the window manager: writing the rotation settings was picked up late or
+        // not at all, and a walk ran in the shape the previous one left (runs of 15.10).
+        InstrumentationRegistry.getInstrumentation().uiAutomation.setRotation(
+            if (layout == AuditLayout.PhoneLandscape) {
+                UiAutomation.ROTATION_FREEZE_90
+            } else {
+                UiAutomation.ROTATION_FREEZE_0
+            },
+        )
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")

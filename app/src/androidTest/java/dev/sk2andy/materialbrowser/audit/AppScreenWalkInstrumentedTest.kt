@@ -580,7 +580,7 @@ class AppScreenWalkInstrumentedTest(
     }
 
     /**
-     * The rotation setting turns the screen only once the app is in front (the launcher holds it
+     * The frozen rotation turns the screen only once the app is in front (the launcher holds it
      * upright before), and a walk that went on at once walked the shape the previous test left:
      * a portrait walk once ran in a landscape window.
      */
