@@ -107,7 +107,7 @@ internal fun V5ProfileEditSheet(
         onSave(draft())
     }
     val title = stringResource(if (creating) R.string.v5_profile_new else R.string.v5_profile_edit)
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
         Column(
             Modifier

@@ -67,6 +67,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -261,14 +263,17 @@ private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: (
             horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
         ) {
             Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+            val hint = stringResource(R.string.v5_overview_search)
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (query.isEmpty()) {
+                    // The field carries the hint for TalkBack; this is only what the eye reads.
                     Text(
-                        stringResource(R.string.v5_overview_search),
+                        hint,
                         style = V5Theme.type.body,
                         color = colors.labelTertiary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
                 BasicTextField(
@@ -277,7 +282,10 @@ private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: (
                     singleLine = true,
                     textStyle = V5Theme.type.body.copy(color = colors.label),
                     cursorBrush = SolidColor(colors.accent),
-                    modifier = Modifier.fillMaxWidth().testTag(V5OverviewTestTags.Search),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = hint }
+                        .testTag(V5OverviewTestTags.Search),
                 )
             }
             if (query.isNotEmpty()) {
