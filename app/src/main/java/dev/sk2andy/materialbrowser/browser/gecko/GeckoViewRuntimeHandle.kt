@@ -3931,6 +3931,10 @@ private class CandyGeckoEngineView(context: Context) : CandyGeckoViewSafeAreaBri
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         post(::dispatchRendererSafeAreaOverride)
+        // Shrunk for the keyboard: the focused field may now lie under it.
+        if (height < oldHeight && windowInsets?.isVisible(WindowInsetsCompat.Type.ime()) == true) {
+            post { zoomCandyFocusedInput() }
+        }
     }
 
     fun captureContentPixels(): GeckoResult<Bitmap> = capturePixels()
