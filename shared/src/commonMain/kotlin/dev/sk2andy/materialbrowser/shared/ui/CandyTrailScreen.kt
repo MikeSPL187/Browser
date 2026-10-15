@@ -396,6 +396,9 @@ fun CandyTrailScreenContent(
                     modifier = Modifier
                         // The whole graph, wider than the screen: `size` would squeeze it into the
                         // viewport, and nodes past it got empty bounds, out of TalkBack's reach.
+                        // The wrapper fills the viewport, since it clips semantics bounds in screen
+                        // space, where a small graph sits centred, away from its own corner.
+                        .fillMaxSize()
                         .wrapContentSize(Alignment.TopStart, unbounded = true)
                         .requiredSize(layout.width.dp, layout.height.dp)
                         .graphicsLayer {
