@@ -3845,7 +3845,6 @@ class BrowserController(
                 tab = sourceTab,
                 pageUrl = url,
                 context = initialContext,
-                cssSafeAreaTopInsetPx = 0,
             ),
             privacyEventSink = GeckoPrivacyEventSink { },
             eventSink = { event ->
@@ -3858,7 +3857,6 @@ class BrowserController(
                             tab = sourceTab,
                             pageUrl = committedUrl,
                             context = protectionRequestContextFor(sourceTab, committedUrl),
-                            cssSafeAreaTopInsetPx = 0,
                         ),
                     )
                     onCommittedUrlChanged(committedUrl)
@@ -9133,7 +9131,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
                 if (revision == privacySignalRevision && geckoLinkPeekBindings[view] === binding) {
@@ -9269,7 +9266,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
                 if (revision == animationPolicyRevision && geckoLinkPeekBindings[view] === binding) {
@@ -9461,7 +9457,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             )
         }
@@ -11608,9 +11603,6 @@ class BrowserController(
         context: ProtectionRequestContext,
         topInsetPx: Int = 0,
         navigationGeneration: Int = 0,
-        // The top safe area is a native margin of the engine view (#123, H4): the page never
-        // lies under the status bar, so the CSS fallback has nothing to move down.
-        cssSafeAreaTopInsetPx: Int = 0,
     ): GeckoPrivacyPolicy {
         val site = sitePolicyFor(tab, pageUrl, isSiteProtectionPaused(tab.id, context, pageUrl))
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
@@ -11653,8 +11645,6 @@ class BrowserController(
                 activity.getString(R.string.action_candy_player_show_controls),
             inlineMediaPlayerHideControlsLabel =
                 activity.getString(R.string.action_candy_player_hide_controls),
-            cssSafeAreaTopInsetPx = cssSafeAreaTopInsetPx,
-            geckoSafeAreaSettings = developerSettings.geckoSafeAreaSettings,
             safeAreaLayoutQuietPeriodMillis =
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,

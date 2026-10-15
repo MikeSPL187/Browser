@@ -190,12 +190,11 @@ function queuedInlineOpenHarness() {
   const sender = { tab: { id: 7 }, frameId: 0 };
   const policy = background.context.policiesByToken.get("token");
   policy.inlineMediaPlayerMode = "button_fullscreen";
-  background.context.boundedSafeAreaInteger = (_value, _min, _max, fallback) => fallback;
   const backgroundSource = asset("background.js");
   vm.runInContext(
     `function contentPolicy(policy) {${backgroundSource
       .split("function contentPolicy(policy) {")[1]
-      .split("function boundedSafeAreaInteger")[0]}`,
+      .split("function publishContentPolicy(token, policy) {")[0]}`,
     background.context,
   );
   vm.runInContext(

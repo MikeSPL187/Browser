@@ -397,18 +397,6 @@ function contentPolicy(policy) {
     ready: Boolean(policy),
     revision: Number.isSafeInteger(policy?.revision) ? Math.max(0, policy.revision) : 0,
     topInsetPx: Number.isSafeInteger(policy?.topInsetPx) ? Math.max(0, policy.topInsetPx) : 0,
-    cssSafeAreaTopInsetPx: Number.isSafeInteger(policy?.cssSafeAreaTopInsetPx) ?
-      Math.max(0, policy.cssSafeAreaTopInsetPx) : 0,
-    geckoSafeAreaEnabled: policy?.geckoSafeAreaEnabled === true,
-    recheckAddedElements: policy?.recheckAddedElements === true,
-    recheckChangedElements: policy?.recheckChangedElements === true,
-    requireInteractionForUpdates: policy?.requireInteractionForUpdates !== false,
-    recheckOnResize: policy?.recheckOnResize === true,
-    interactionWindowMillis: boundedSafeAreaInteger(policy?.interactionWindowMillis, 100, 5000, 1000),
-    mutationDebounceMillis: boundedSafeAreaInteger(policy?.mutationDebounceMillis, 50, 1000, 150),
-    maxElementsPerBatch: boundedSafeAreaInteger(policy?.maxElementsPerBatch, 4, 64, 16),
-    maxBatchDurationMillis: boundedSafeAreaInteger(policy?.maxBatchDurationMillis, 1, 8, 4),
-    maxInitialElements: boundedSafeAreaInteger(policy?.maxInitialElements, 64, 2048, 512),
     navigationGeneration: Number.isSafeInteger(policy?.navigationGeneration) ?
       Math.max(0, policy.navigationGeneration) : 0,
     scrollMetricsEnabled: policy?.scrollMetricsEnabled === true,
@@ -460,10 +448,6 @@ function contentPolicy(policy) {
       Number.isSafeInteger(policy?.safeAreaRequiredFailureCount) ?
         Math.min(5, Math.max(2, policy.safeAreaRequiredFailureCount)) : 3,
   };
-}
-
-function boundedSafeAreaInteger(value, minimum, maximum, fallback) {
-  return Number.isSafeInteger(value) ? Math.min(maximum, Math.max(minimum, value)) : fallback;
 }
 
 function publishContentPolicy(token, policy) {

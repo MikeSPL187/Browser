@@ -9,7 +9,6 @@ import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginRules
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
-import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
 import dev.sk2andy.materialbrowser.data.HiddenDistractionsRules
 import org.json.JSONArray
 import org.json.JSONObject
@@ -91,8 +90,6 @@ internal data class GeckoPrivacyPolicy(
     val inlineMediaPlayerCloseLabel: String = "Close Vola Player",
     val inlineMediaPlayerShowControlsLabel: String = "Show controls",
     val inlineMediaPlayerHideControlsLabel: String = "Hide controls",
-    val cssSafeAreaTopInsetPx: Int = 0,
-    val geckoSafeAreaSettings: GeckoSafeAreaSettings = GeckoSafeAreaSettings(),
     val safeAreaLayoutQuietPeriodMillis: Int =
         DeveloperSettings.DEFAULT_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
     val safeAreaRequiredFailureCount: Int =
@@ -143,8 +140,6 @@ internal object GeckoPrivacyPolicyRules {
         inlineMediaPlayerCloseLabel: String = "Close Vola Player",
         inlineMediaPlayerShowControlsLabel: String = "Show controls",
         inlineMediaPlayerHideControlsLabel: String = "Hide controls",
-        cssSafeAreaTopInsetPx: Int = 0,
-        geckoSafeAreaSettings: GeckoSafeAreaSettings = GeckoSafeAreaSettings(),
         safeAreaLayoutQuietPeriodMillis: Int =
             DeveloperSettings.DEFAULT_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
         safeAreaRequiredFailureCount: Int =
@@ -186,8 +181,6 @@ internal object GeckoPrivacyPolicyRules {
             inlineMediaPlayerCloseLabel = inlineMediaPlayerCloseLabel.take(80),
             inlineMediaPlayerShowControlsLabel = inlineMediaPlayerShowControlsLabel.take(80),
             inlineMediaPlayerHideControlsLabel = inlineMediaPlayerHideControlsLabel.take(80),
-            cssSafeAreaTopInsetPx = cssSafeAreaTopInsetPx.coerceAtLeast(0),
-            geckoSafeAreaSettings = geckoSafeAreaSettings.normalized(),
             safeAreaLayoutQuietPeriodMillis =
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
@@ -250,17 +243,6 @@ internal fun GeckoPrivacyPolicy.toMessage(token: String, revision: Long): JSONOb
     .put("inlineMediaPlayerCloseLabel", inlineMediaPlayerCloseLabel)
     .put("inlineMediaPlayerShowControlsLabel", inlineMediaPlayerShowControlsLabel)
     .put("inlineMediaPlayerHideControlsLabel", inlineMediaPlayerHideControlsLabel)
-    .put("cssSafeAreaTopInsetPx", cssSafeAreaTopInsetPx)
-    .put("geckoSafeAreaEnabled", geckoSafeAreaSettings.enabled)
-    .put("recheckAddedElements", geckoSafeAreaSettings.recheckAddedElements)
-    .put("recheckChangedElements", geckoSafeAreaSettings.recheckChangedElements)
-    .put("requireInteractionForUpdates", geckoSafeAreaSettings.requireInteractionForUpdates)
-    .put("recheckOnResize", geckoSafeAreaSettings.recheckOnResize)
-    .put("interactionWindowMillis", geckoSafeAreaSettings.interactionWindowMillis)
-    .put("mutationDebounceMillis", geckoSafeAreaSettings.mutationDebounceMillis)
-    .put("maxElementsPerBatch", geckoSafeAreaSettings.maxElementsPerBatch)
-    .put("maxBatchDurationMillis", geckoSafeAreaSettings.maxBatchDurationMillis)
-    .put("maxInitialElements", geckoSafeAreaSettings.maxInitialElements)
     .put("safeAreaLayoutQuietPeriodMillis", safeAreaLayoutQuietPeriodMillis)
     .put("safeAreaRequiredFailureCount", safeAreaRequiredFailureCount)
     .put(
