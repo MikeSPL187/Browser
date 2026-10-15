@@ -197,7 +197,17 @@ class AppScreenWalkInstrumentedTest(
                             .joinToString { node ->
                                 "id ${node.id} at ${node.boundsInWindow} in root ${node.rootBounds()}"
                             }
-                        val actionMoved = runCatching {
+                        // A real input event through the system, at the middle of the live node.
+                        val systemTapMoved = runCatching {
+                            val node = composeRule.onAllNodes(hasTestTag(forward))
+                                .fetchSemanticsNodes(atLeastOneRootRequired = false)[liveIndex(hasTestTag(forward)) ?: 0]
+                            val center = node.boundsInWindow.center
+                            val location = IntArray(2)
+                            currentActivity().window.decorView.getLocationOnScreen(location)
+                            device.click(location[0] + center.x.toInt(), location[1] + center.y.toInt())
+                            composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
+                        }.isSuccess
+                        val actionMoved = systemTapMoved || runCatching {
                             composeRule.onAllNodes(hasTestTag(forward))[liveIndex(hasTestTag(forward)) ?: 0]
                                 .performSemanticsAction(SemanticsActions.OnClick)
                             composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
@@ -207,7 +217,7 @@ class AppScreenWalkInstrumentedTest(
                             config.name,
                             AuditKind.Navigation,
                             "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — " +
-                                "nodes: [$nodes]; its click action moved on: $actionMoved — on screen: $before",
+                                "nodes: [$nodes]; a system tap moved on: $systemTapMoved; its click action moved on: $actionMoved — on screen: $before",
                         )
                     }
                     idle()
