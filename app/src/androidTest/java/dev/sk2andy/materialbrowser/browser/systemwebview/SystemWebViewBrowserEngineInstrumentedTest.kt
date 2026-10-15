@@ -34,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,6 +42,8 @@ import org.junit.runner.RunWith
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -360,11 +363,21 @@ class SystemWebViewBrowserEngineInstrumentedTest {
                 browserController.submitAddress(server.url)
             }
 
-            composeRule.waitUntil(timeoutMillis = 10_000L) {
-                browserController.selectedTab.httpStatusCode == 404
-            }
+            val committed = runCatching {
+                composeRule.waitUntil(timeoutMillis = 10_000L) {
+                    browserController.selectedTab.httpStatusCode == 404
+                }
+            }.isSuccess
 
             composeRule.runOnIdle {
+                if (!committed) {
+                    val tab = browserController.selectedTab
+                    fail(
+                        "404 status was not committed: requests=${server.requests}, url=${tab.url}, " +
+                            "title=${tab.title}, loading=${tab.isLoading}, error=${tab.error}, " +
+                            "failureKind=${tab.failureKind}, status=${tab.httpStatusCode}",
+                    )
+                }
                 assertEquals(server.url, browserController.selectedTab.url)
                 assertEquals("Missing", browserController.selectedTab.title)
                 assertEquals(null, browserController.selectedTab.error)
@@ -567,30 +580,45 @@ class SystemWebViewBrowserEngineInstrumentedTest {
         }
         val url = "http://127.0.0.1:${server.localPort}/missing"
 
+        /** Request lines in arrival order, so a failure says what WebView asked for. */
+        val requests: MutableList<String> = CopyOnWriteArrayList()
+
+        /**
+         * Answers each connection on its own thread: WebView may open one ahead of the request and
+         * send nothing on it, and waiting on that one would leave the page unanswered.
+         */
         private fun serve() {
             while (!server.isClosed) {
                 val socket = runCatching { server.accept() }.getOrNull() ?: return
-                socket.use { connection ->
-                    runCatching {
-                        connection.getInputStream().bufferedReader().apply {
-                            readLine()
-                            while (!readLine().isNullOrEmpty()) {
-                                // Drain request headers before deterministic response.
-                            }
+                Thread({ respond(socket) }, "system-webview-404-connection").apply {
+                    isDaemon = true
+                    start()
+                }
+            }
+        }
+
+        private fun respond(socket: Socket) {
+            socket.use { connection ->
+                runCatching {
+                    connection.soTimeout = 30_000
+                    connection.getInputStream().bufferedReader().apply {
+                        requests += readLine().orEmpty()
+                        while (!readLine().isNullOrEmpty()) {
+                            // Drain request headers before deterministic response.
                         }
-                        val body = "<html><head><title>Missing</title></head><body>404</body></html>"
-                            .toByteArray()
-                        connection.getOutputStream().buffered().use { output ->
-                            output.write(
-                                "HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=utf-8\r\n"
-                                    .toByteArray(),
-                            )
-                            output.write(
-                                "Content-Length: ${body.size}\r\nConnection: close\r\n\r\n"
-                                    .toByteArray(),
-                            )
-                            output.write(body)
-                        }
+                    }
+                    val body = "<html><head><title>Missing</title></head><body>404</body></html>"
+                        .toByteArray()
+                    connection.getOutputStream().buffered().use { output ->
+                        output.write(
+                            "HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=utf-8\r\n"
+                                .toByteArray(),
+                        )
+                        output.write(
+                            "Content-Length: ${body.size}\r\nConnection: close\r\n\r\n"
+                                .toByteArray(),
+                        )
+                        output.write(body)
                     }
                 }
             }
