@@ -209,8 +209,8 @@ fun V5Sheet(
                     paneTitle = title
                     isTraversalGroup = true
                 }
-                // A name typed in a sheet stays above the keyboard.
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                // A name typed in a sheet stays above the keyboard, and clear of the sides sideways.
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).union(V5SafeSides))
                 .testTag(V5SheetTestTags.Sheet),
         ) {
             Box(

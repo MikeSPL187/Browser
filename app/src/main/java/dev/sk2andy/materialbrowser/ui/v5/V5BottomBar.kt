@@ -47,6 +47,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
@@ -193,7 +194,8 @@ internal fun BoxScope.V5BottomBar(
                             coordinates.boundsInRoot(),
                             coordinates.boundsInWindow().top.roundToInt(),
                         )
-                    },
+                    }
+                    .windowInsetsPadding(V5SafeSides),
             ) {
                 if (accessory != null && expanded > 0f) {
                     Box(
