@@ -16,6 +16,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRepository
 import dev.sk2andy.materialbrowser.ui.DownloadsScreen
+import dev.sk2andy.materialbrowser.ui.openDownloadPage
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import kotlinx.coroutines.Dispatchers
@@ -77,6 +78,7 @@ class DownloadsActivity : ComponentActivity() {
                     onCancelDownload = { entry -> controller.cancel(entry, ::reportControl) },
                     onTogglePauseDownload = { entry -> controller.togglePause(entry, ::reportControl) },
                     onRetryDownload = { entry -> controller.retry(entry, ::reportControl) },
+                    onOpenDownloadPage = { url -> openDownloadPage(this, url) },
                 )
             }
         }

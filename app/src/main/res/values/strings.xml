@@ -995,6 +995,8 @@
     <string name="downloads_resume">Resume</string>
     <string name="downloads_retry">Retry</string>
     <string name="downloads_retry_named">Retry %1$s</string>
+    <string name="downloads_open_page">Open page</string>
+    <string name="downloads_open_page_named">Open the page of %1$s</string>
     <string name="downloads_control_failed">Download could not be updated</string>
     <string name="downloads_open_failed">No app can open this download</string>
     <string name="downloads_status_pending">Pending · %1$s</string>

@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -83,7 +84,12 @@ internal object DownloadRingRules {
     fun notice(ended: List<DownloadEntry>): V5DownloadNotice? {
         ended.lastOrNull { entry -> entry.status == DownloadStatus.Failed }
             ?.let { entry ->
-                return V5DownloadNotice.Failed(entry.id, entry.name, canRetry = entry.retry == DownloadRetry.Available)
+                return V5DownloadNotice.Failed(
+                    id = entry.id,
+                    name = entry.name,
+                    canRetry = entry.retry == DownloadRetry.Available,
+                    pageUrl = page(entry),
+                )
             }
         return ended.lastOrNull { entry -> entry.status == DownloadStatus.Successful }
             ?.let { entry -> V5DownloadNotice.Done(entry.id, entry.name) }
@@ -98,6 +104,16 @@ internal object DownloadRingRules {
             notice is V5DownloadNotice.Failed -> V5DownloadRingState.Failed
             justDone -> V5DownloadRingState.Done
             else -> null
+        }
+
+    /**
+     * The page to open instead when a failed download cannot start again (V22): a `blob:` file, or
+     * one the site now answers with another file. Only a web page; a private tab's is never named.
+     */
+    fun page(entry: DownloadEntry): String? = (entry.retry as? DownloadRetry.Unavailable)
+        ?.pageUrl
+        ?.takeIf { url ->
+            url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true)
         }
 
     /** Polls a little longer after a download is asked for: its row can take a moment to appear. */
@@ -268,7 +284,18 @@ internal fun BrowserDownloadNoticeAccessory(
             downloads.notice = null
             downloads.retry(notice.id)
         },
+        onOpenPage = { url ->
+            downloads.notice = null
+            openDownloadPage(context, url)
+        },
     )
+}
+
+/** Opens a download's page in a new tab of Vola, as a link from another app would. */
+internal fun openDownloadPage(context: Context, url: String) {
+    runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(context.packageName))
+    }.onFailure { Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show() }
 }
 
 /** Opens a finished download as the Downloads screen does; the store is read off the main thread. */

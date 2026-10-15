@@ -99,7 +99,21 @@ class DownloadRingRulesTest {
             DownloadRingRules.notice(listOf(failed.copy(retry = DownloadRetry.Available))),
         )
         val blob = failed.copy(retry = DownloadRetry.Unavailable(DownloadRetryUnavailable.Blob, "https://example.com/"))
-        assertEquals(V5DownloadNotice.Failed(2, "file2.pdf"), DownloadRingRules.notice(listOf(blob)))
+        assertEquals(
+            V5DownloadNotice.Failed(2, "file2.pdf", pageUrl = "https://example.com/"),
+            DownloadRingRules.notice(listOf(blob)),
+        )
+    }
+
+    @Test
+    fun `only a web page is offered instead of a retry`() {
+        fun failed(retry: DownloadRetry) = entry(3, DownloadStatus.Failed, 0, 0).copy(retry = retry)
+        val changed = DownloadRetry.Unavailable(DownloadRetryUnavailable.ResponseChanged, "http://example.com/report")
+        assertEquals("http://example.com/report", DownloadRingRules.page(failed(changed)))
+        assertNull(DownloadRingRules.page(failed(DownloadRetry.Available)))
+        assertNull(DownloadRingRules.page(failed(DownloadRetry.Unavailable(DownloadRetryUnavailable.PrivateClosed))))
+        val extension = DownloadRetry.Unavailable(DownloadRetryUnavailable.Blob, "moz-extension://abc/page.html")
+        assertNull(DownloadRingRules.page(failed(extension)))
     }
 
     @Test

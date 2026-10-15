@@ -72,6 +72,7 @@ internal fun DownloadsScreen(
     onCancelDownload: (DownloadEntry) -> Unit = {},
     onTogglePauseDownload: (DownloadEntry) -> Unit = {},
     onRetryDownload: (DownloadEntry) -> Unit = {},
+    onOpenDownloadPage: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
@@ -261,6 +262,7 @@ internal fun DownloadsScreen(
                             ),
                             onOpen = { onOpenDownload(entry) },
                             onRetry = { onRetryDownload(entry) },
+                            onOpenPage = onOpenDownloadPage,
                         )
                     }
                 }
@@ -374,6 +376,7 @@ private fun DownloadRow(
     time: String,
     onOpen: () -> Unit,
     onRetry: () -> Unit,
+    onOpenPage: (String) -> Unit,
 ) {
     val kind = LibraryFileRules.kind(entry.name, entry.mime)
     val failed = entry.status == DownloadStatus.Failed || entry.status == DownloadStatus.Cancelled
@@ -392,6 +395,8 @@ private fun DownloadRow(
         leading = { DownloadTile(kind = kind, failed = failed) },
         trailing = {
             // Only where the browser still knows how to fetch it again (V22); it starts from zero.
+            // Otherwise its page, where the file can be asked for again.
+            val page = DownloadRingRules.page(entry)
             if (failed && entry.retry == DownloadRetry.Available) {
                 IconButton(
                     onClick = onRetry,
@@ -400,6 +405,16 @@ private fun DownloadRow(
                     Icon(
                         VolaIcons.Refresh,
                         contentDescription = stringResource(R.string.downloads_retry_named, entry.name),
+                    )
+                }
+            } else if (failed && page != null) {
+                IconButton(
+                    onClick = { onOpenPage(page) },
+                    modifier = Modifier.testTag(DownloadsScreenTestTags.openPage(entry.id)),
+                ) {
+                    Icon(
+                        VolaIcons.OpenInNew,
+                        contentDescription = stringResource(R.string.downloads_open_page_named, entry.name),
                     )
                 }
             }
@@ -520,4 +535,6 @@ internal object DownloadsScreenTestTags {
     fun pause(id: Long): String = "downloads_pause:$id"
 
     fun retry(id: Long): String = "downloads_retry:$id"
+
+    fun openPage(id: Long): String = "downloads_open_page:$id"
 }
