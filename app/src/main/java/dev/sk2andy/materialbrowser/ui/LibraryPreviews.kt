@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.DownloadEntry
+import dev.sk2andy.materialbrowser.data.DownloadRetry
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteFolder
@@ -164,6 +165,7 @@ private fun DownloadsScreenPreview() {
                 DownloadEntry(3, "olkhon-grotto.jpg", "", DownloadStatus.Successful, 3_400_000, 3_400_000, now - 2 * PREVIEW_HOUR, "image/jpeg"),
                 DownloadEntry(4, "Отчёт по метрикам.xlsx", "", DownloadStatus.Successful, 86_000, 86_000, now - 3 * PREVIEW_HOUR, ""),
                 DownloadEntry(5, "ice-report.exe", "https://ice.example/", DownloadStatus.Failed, 0, 0, now - 4 * PREVIEW_HOUR, ""),
+                DownloadEntry(6, "Расписание паромов.pdf", "https://north-guide.ru/ferry", DownloadStatus.Failed, 0, 0, now - 5 * PREVIEW_HOUR, "application/pdf", retry = DownloadRetry.Available),
             ),
             onClearFinished = {},
             onOpenDownload = {},

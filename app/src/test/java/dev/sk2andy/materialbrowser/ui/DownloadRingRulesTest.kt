@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.data.DownloadEntry
+import dev.sk2andy.materialbrowser.data.DownloadRetry
+import dev.sk2andy.materialbrowser.data.DownloadRetryUnavailable
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.ui.v5.V5DownloadNotice
 import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
@@ -86,6 +88,18 @@ class DownloadRingRulesTest {
         assertEquals(V5DownloadNotice.Failed(2, "file2.pdf"), DownloadRingRules.notice(listOf(done, failed)))
         assertEquals(V5DownloadNotice.Done(1, "file1.pdf"), DownloadRingRules.notice(listOf(done)))
         assertNull(DownloadRingRules.notice(emptyList()))
+    }
+
+    @Test
+    fun `a failure offers a retry only when the browser can fetch it again`() {
+        val failed = entry(2, DownloadStatus.Failed, 0, 0)
+        assertEquals(V5DownloadNotice.Failed(2, "file2.pdf"), DownloadRingRules.notice(listOf(failed)))
+        assertEquals(
+            V5DownloadNotice.Failed(2, "file2.pdf", canRetry = true),
+            DownloadRingRules.notice(listOf(failed.copy(retry = DownloadRetry.Available))),
+        )
+        val blob = failed.copy(retry = DownloadRetry.Unavailable(DownloadRetryUnavailable.Blob, "https://example.com/"))
+        assertEquals(V5DownloadNotice.Failed(2, "file2.pdf"), DownloadRingRules.notice(listOf(blob)))
     }
 
     @Test

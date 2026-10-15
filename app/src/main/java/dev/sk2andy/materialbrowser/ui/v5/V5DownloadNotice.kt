@@ -45,12 +45,18 @@ internal sealed interface V5DownloadNotice {
 
     data class Done(override val id: Long, override val name: String) : V5DownloadNotice
 
-    data class Failed(override val id: Long, override val name: String) : V5DownloadNotice
+    /** [canRetry]: the browser can still fetch it again (V22), so the line offers that first. */
+    data class Failed(
+        override val id: Long,
+        override val name: String,
+        val canRetry: Boolean = false,
+    ) : V5DownloadNotice
 }
 
 /**
- * «Downloaded: file — Open» or «Couldn't download: file — Downloads» (V22b, system-v5.md
- * section 10): a line above the bar in the bar's colors, said by TalkBack when it appears.
+ * «Downloaded: file — Open» or «Couldn't download: file — Retry» («— Downloads» when it cannot
+ * start again) (V22, system-v5.md section 10): a line above the bar in the bar's colors, said by
+ * TalkBack when it appears.
  */
 @Composable
 internal fun V5DownloadNoticeRow(
@@ -60,8 +66,10 @@ internal fun V5DownloadNoticeRow(
     modifier: Modifier = Modifier,
     /** In a private tab: the file is not private, it lies in the shared Downloads folder. */
     privateTab: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     val failed = notice is V5DownloadNotice.Failed
+    val canRetry = notice is V5DownloadNotice.Failed && notice.canRetry
     Row(
         modifier
             .fillMaxWidth()
@@ -92,11 +100,21 @@ internal fun V5DownloadNoticeRow(
             modifier = Modifier.weight(1f),
         )
         TextButton(
-            onClick = if (failed) onDownloads else onOpen,
+            onClick = when {
+                canRetry -> onRetry
+                failed -> onDownloads
+                else -> onOpen
+            },
             modifier = Modifier.testTag(V5DownloadNoticeTestTags.Action),
         ) {
             Text(
-                stringResource(if (failed) R.string.v5_menu_downloads else R.string.v5_download_open),
+                stringResource(
+                    when {
+                        canRetry -> R.string.downloads_retry
+                        failed -> R.string.v5_menu_downloads
+                        else -> R.string.v5_download_open
+                    },
+                ),
                 style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
             )
         }
@@ -110,6 +128,7 @@ internal fun V5DownloadNoticeAccessory(
     onOpen: (V5DownloadNotice) -> Unit,
     onDownloads: () -> Unit,
     privateTab: Boolean = false,
+    onRetry: (V5DownloadNotice) -> Unit = {},
 ) {
     val last = remember { LastNotice() }
     if (notice != null) last.notice = notice
@@ -133,6 +152,7 @@ internal fun V5DownloadNoticeAccessory(
                 onOpen = { onOpen(shown) },
                 onDownloads = onDownloads,
                 privateTab = privateTab,
+                onRetry = { onRetry(shown) },
             )
         }
     }

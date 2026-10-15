@@ -1031,6 +1031,8 @@
     <string name="downloads_clear_failed">Не удалось очистить загрузки</string>
     <string name="downloads_pause">Пауза</string>
     <string name="downloads_resume">Продолжить</string>
+    <string name="downloads_retry">Повторить</string>
+    <string name="downloads_retry_named">Повторить загрузку %1$s</string>
     <string name="downloads_control_failed">Не удалось изменить загрузку</string>
     <string name="downloads_open_failed">Нет приложения, чтобы открыть этот файл</string>
     <string name="downloads_status_pending">В очереди · %1$s</string>
