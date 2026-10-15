@@ -55,6 +55,8 @@ internal fun DeveloperOptionsSettingsPage(
     settings: DeveloperSettings,
     isHttpPasswordAutofillEnabled: Boolean = false,
     isHttpPasswordAutofillSupported: Boolean = false,
+    /** Whether the engine has the page-level safe-area fallback these rows tune (System WebView). */
+    isSafeAreaFallbackSupported: Boolean = true,
     isInputDiagnosticsEnabled: Boolean = false,
     onSettingsChanged: (DeveloperSettings) -> Unit,
     onHttpPasswordAutofillEnabledChanged: (Boolean) -> Unit = {},
@@ -140,20 +142,22 @@ internal fun DeveloperOptionsSettingsPage(
             }
             SettingsCardHeader(stringResource(R.string.developer_options_experiments_section))
             SettingsCard(containerColor = cardColor) {
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.developer_options_force_safe_area_fallback),
-                    summary = stringResource(
-                        R.string.developer_options_force_safe_area_fallback_summary,
-                    ),
-                    checked = settings.forceSafeAreaFallback,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onCheckedChange = { enabled ->
-                        onSettingsChanged(settings.copy(forceSafeAreaFallback = enabled))
-                    },
-                    modifier = Modifier.testTag(DeveloperOptionsTestTags.ForceSafeAreaFallback),
-                )
+                if (isSafeAreaFallbackSupported) {
+                    SettingsCardSwitchRow(
+                        title = stringResource(R.string.developer_options_force_safe_area_fallback),
+                        summary = stringResource(
+                            R.string.developer_options_force_safe_area_fallback_summary,
+                        ),
+                        checked = settings.forceSafeAreaFallback,
+                        summaryMaxLines = Int.MAX_VALUE,
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onCheckedChange = { enabled ->
+                            onSettingsChanged(settings.copy(forceSafeAreaFallback = enabled))
+                        },
+                        modifier = Modifier.testTag(DeveloperOptionsTestTags.ForceSafeAreaFallback),
+                    )
+                }
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.developer_options_vola_gecko_blocker),
                     summary = stringResource(R.string.developer_options_vola_gecko_blocker_summary),
@@ -202,57 +206,59 @@ internal fun DeveloperOptionsSettingsPage(
                     ),
                 )
             }
-            SettingsCardHeader(stringResource(R.string.developer_options_safe_area_section))
-            CardFootnote(stringResource(R.string.developer_options_safe_area_summary))
-            SettingsCard(containerColor = cardColor) {
-                DeveloperSliderRow(
-                    title = stringResource(R.string.developer_options_layout_quiet_period),
-                    summary = stringResource(
-                        R.string.developer_options_layout_quiet_period_summary,
-                    ),
-                    valueLabel = { value ->
-                        stringResource(R.string.developer_options_milliseconds_value, value)
-                    },
-                    value = settings.safeAreaLayoutQuietPeriodMillis,
-                    range = DeveloperSettings.MIN_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS..
-                        DeveloperSettings.MAX_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
-                    step = DeveloperSettings.SAFE_AREA_LAYOUT_QUIET_PERIOD_STEP_MILLIS,
-                    testTag = DeveloperOptionsTestTags.LayoutQuietPeriod,
-                    onValueChanged = { value ->
-                        onSettingsChanged(
-                            settings.copy(safeAreaLayoutQuietPeriodMillis = value),
-                        )
-                    },
-                    dividerColor = dividerColor,
-                    divider = true,
-                )
-                DeveloperSliderRow(
-                    title = stringResource(R.string.developer_options_required_failures),
-                    summary = stringResource(R.string.developer_options_required_failures_summary),
-                    valueLabel = { value ->
-                        pluralStringResource(R.plurals.developer_options_failed_checks_value, value, value)
-                    },
-                    value = settings.safeAreaRequiredFailureCount,
-                    range = DeveloperSettings.MIN_SAFE_AREA_REQUIRED_FAILURE_COUNT..
-                        DeveloperSettings.MAX_SAFE_AREA_REQUIRED_FAILURE_COUNT,
-                    step = 1,
-                    testTag = DeveloperOptionsTestTags.RequiredFailures,
-                    onValueChanged = { value ->
-                        onSettingsChanged(
-                            settings.copy(safeAreaRequiredFailureCount = value),
-                        )
-                    },
-                    dividerColor = dividerColor,
-                )
-            }
-            TextButton(
-                onClick = { onSettingsChanged(settings.withDefaultSafeAreaSettings()) },
-                enabled = !settings.hasDefaultSafeAreaSettings,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .testTag(DeveloperOptionsTestTags.Reset),
-            ) {
-                Text(stringResource(R.string.developer_options_reset_safe_area))
+            if (isSafeAreaFallbackSupported) {
+                SettingsCardHeader(stringResource(R.string.developer_options_safe_area_section))
+                CardFootnote(stringResource(R.string.developer_options_safe_area_summary))
+                SettingsCard(containerColor = cardColor) {
+                    DeveloperSliderRow(
+                        title = stringResource(R.string.developer_options_layout_quiet_period),
+                        summary = stringResource(
+                            R.string.developer_options_layout_quiet_period_summary,
+                        ),
+                        valueLabel = { value ->
+                            stringResource(R.string.developer_options_milliseconds_value, value)
+                        },
+                        value = settings.safeAreaLayoutQuietPeriodMillis,
+                        range = DeveloperSettings.MIN_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS..
+                            DeveloperSettings.MAX_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
+                        step = DeveloperSettings.SAFE_AREA_LAYOUT_QUIET_PERIOD_STEP_MILLIS,
+                        testTag = DeveloperOptionsTestTags.LayoutQuietPeriod,
+                        onValueChanged = { value ->
+                            onSettingsChanged(
+                                settings.copy(safeAreaLayoutQuietPeriodMillis = value),
+                            )
+                        },
+                        dividerColor = dividerColor,
+                        divider = true,
+                    )
+                    DeveloperSliderRow(
+                        title = stringResource(R.string.developer_options_required_failures),
+                        summary = stringResource(R.string.developer_options_required_failures_summary),
+                        valueLabel = { value ->
+                            pluralStringResource(R.plurals.developer_options_failed_checks_value, value, value)
+                        },
+                        value = settings.safeAreaRequiredFailureCount,
+                        range = DeveloperSettings.MIN_SAFE_AREA_REQUIRED_FAILURE_COUNT..
+                            DeveloperSettings.MAX_SAFE_AREA_REQUIRED_FAILURE_COUNT,
+                        step = 1,
+                        testTag = DeveloperOptionsTestTags.RequiredFailures,
+                        onValueChanged = { value ->
+                            onSettingsChanged(
+                                settings.copy(safeAreaRequiredFailureCount = value),
+                            )
+                        },
+                        dividerColor = dividerColor,
+                    )
+                }
+                TextButton(
+                    onClick = { onSettingsChanged(settings.withDefaultSafeAreaSettings()) },
+                    enabled = !settings.hasDefaultSafeAreaSettings,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .testTag(DeveloperOptionsTestTags.Reset),
+                ) {
+                    Text(stringResource(R.string.developer_options_reset_safe_area))
+                }
             }
         }
     }
