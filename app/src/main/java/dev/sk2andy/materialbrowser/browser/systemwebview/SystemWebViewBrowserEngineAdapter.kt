@@ -438,6 +438,11 @@ private class SystemWebViewBrowserEngineSession(
     private var lastFindQuery: String? = null
     private var lastLoadFailed = false
     private var lastLoadFailureKind: BrowserEngineFailureKind? = null
+    /**
+     * The main frame's HTTP error, kept from its response to the page's end. WebView reports it
+     * when the response arrives, before onPageStarted; a new main-frame request clears it.
+     */
+    @Volatile
     private var lastMainFrameHttpResponse: Pair<String, Int>? = null
     @Volatile
     private var currentPageUrl: String? = initialPrivacyPolicy.pageHost
@@ -1117,7 +1122,10 @@ private class SystemWebViewBrowserEngineSession(
             val requestState = requestPrivacyState
             val policy = requestState.policy
             val url = request.url.toString()
-            if (request.isForMainFrame) return null
+            if (request.isForMainFrame) {
+                lastMainFrameHttpResponse = null
+                return null
+            }
             val candyDecision = if (policy.blockAdsAndTrackers) {
                 requestState.candyMatcher.decide(
                     requestUrl = url,
@@ -1167,7 +1175,6 @@ private class SystemWebViewBrowserEngineSession(
             blobDownloadTransfer.cancelAll()
             lastLoadFailed = false
             lastLoadFailureKind = null
-            lastMainFrameHttpResponse = null
             currentPageUrl = url
             toppingRuntime.clearMenuCommands(webView)
             latestMediaState = GeckoMediaSessionState()
