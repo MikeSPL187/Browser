@@ -255,11 +255,24 @@ class BrowserControllerApkDownloadInstrumentedTest {
         throw AssertionError("External preview did not load $expectedUrl")
     }
 
+    /**
+     * Taps the middle of the fixture's link. A fixed pixel offset from a view at the top of the
+     * screen could land in the status bar, which belongs to SystemUI, and the injection fails there.
+     */
     private fun tapDownloadLink(webView: WebView) {
         val location = IntArray(2)
-        activityRule.scenario.onActivity {
-            webView.getLocationOnScreen(location)
+        var linkCenterPx = 0f
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MILLIS
+        while (SystemClock.uptimeMillis() < deadline && linkCenterPx == 0f) {
+            activityRule.scenario.onActivity {
+                if (webView.isLaidOut && webView.width > 0) {
+                    webView.getLocationOnScreen(location)
+                    linkCenterPx = LINK_CENTER_DP * webView.resources.displayMetrics.density
+                }
+            }
+            if (linkCenterPx == 0f) SystemClock.sleep(POLL_INTERVAL_MILLIS)
         }
+        check(linkCenterPx > 0f) { "Preview WebView was never laid out" }
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val downTime = SystemClock.uptimeMillis()
         listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP).forEach { action ->
@@ -267,8 +280,8 @@ class BrowserControllerApkDownloadInstrumentedTest {
                 downTime,
                 SystemClock.uptimeMillis(),
                 action,
-                location[0] + TAP_COORDINATE,
-                location[1] + TAP_COORDINATE,
+                location[0] + linkCenterPx,
+                location[1] + linkCenterPx,
                 0,
             ).let { event ->
                 instrumentation.sendPointerSync(event)
@@ -354,7 +367,8 @@ class BrowserControllerApkDownloadInstrumentedTest {
         const val SOURCE_URL = "https://example.invalid/source"
         const val TIMEOUT_MILLIS = 10_000L
         const val POLL_INTERVAL_MILLIS = 50L
-        const val TAP_COORDINATE = 100f
+        /** The fixture link is a 200 dp block after the body's 8 dp margin. */
+        const val LINK_CENTER_DP = 108f
         const val ANDROID_PACKAGE_MIME_TYPE = "application/vnd.android.package-archive"
     }
 
