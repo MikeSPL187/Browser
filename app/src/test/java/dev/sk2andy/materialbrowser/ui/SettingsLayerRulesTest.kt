@@ -26,8 +26,8 @@ class SettingsLayerRulesTest {
 
     @Test
     fun `settings speak for v5 only where v5 draws the browser`() {
-        assertTrue(SettingsLayerRules.speaksForV5(flag = true, windowWidthDp = 411f))
-        assertTrue(!SettingsLayerRules.speaksForV5(flag = true, windowWidthDp = 800f))
-        assertTrue(!SettingsLayerRules.speaksForV5(flag = false, windowWidthDp = 411f))
+        assertTrue(SettingsLayerRules.speaksForV5(flag = true, smallestWidthDp = 411f))
+        assertTrue(!SettingsLayerRules.speaksForV5(flag = true, smallestWidthDp = 800f))
+        assertTrue(!SettingsLayerRules.speaksForV5(flag = false, smallestWidthDp = 411f))
     }
 }

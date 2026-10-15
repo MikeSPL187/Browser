@@ -28,7 +28,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,7 +41,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.ui.v5.V5PullRefreshIndicator
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -204,12 +202,9 @@ internal class V5PullRefreshState(private val scope: CoroutineScope, private val
     }
 }
 
-/** Pull to refresh is v5's where v5 draws the browser: the flag is on and the window is narrow. */
+/** Pull to refresh is v5's where v5 draws the browser ([rememberDrawsV5]). */
 @Composable
-internal fun rememberPullRefreshV5(): Boolean {
-    val flag by rememberUiV5Flag()
-    return flag && !AddressBarWideLayoutRules.usesTabStrip(LocalConfiguration.current.screenWidthDp.toFloat())
-}
+internal fun rememberPullRefreshV5(): Boolean = rememberDrawsV5()
 
 @Composable
 internal fun rememberV5PullRefresh(selectedTabId: String, isLoading: Boolean, topInsetPx: Int): V5PullRefreshState {

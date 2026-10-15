@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -27,7 +25,6 @@ import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioStyle
 import dev.sk2andy.materialbrowser.ui.theme.LiterataFontFamily
 import dev.sk2andy.materialbrowser.ui.theme.ManropeFontFamily
 import dev.sk2andy.materialbrowser.ui.theme.VolaReader
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioScreen as SharedReaderStudioScreen
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioTestTags as SharedReaderStudioTestTags
 
@@ -130,12 +127,9 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
     }
 }
 
-/** Whether v5 draws the browser around the reader: the flag is on and the window is a phone's. */
+/** Whether v5 draws the browser around the reader ([rememberDrawsV5]). */
 @Composable
-private fun rememberReaderUiV5(): Boolean {
-    val flag by rememberUiV5Flag()
-    return flag && !AddressBarWideLayoutRules.usesTabStrip(LocalConfiguration.current.screenWidthDp.toFloat())
-}
+private fun rememberReaderUiV5(): Boolean = rememberDrawsV5()
 
 /**
  * The reader's look from the design tokens (board W-Reader), with the browser's accent. Under

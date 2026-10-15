@@ -1365,7 +1365,7 @@ internal fun BrowserScreen(
         !linkPeekAddressBarExpanded &&
         commandFeedback == null &&
         !tabOverviewVisible &&
-        !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp = browserWidthPx / density.density)
+        !rememberWideBrowserWindow(windowWidthDp = browserWidthPx / density.density)
     val pageFrames = rememberBrowserPageFrames(
         controller = controller,
         selectedTab = selectedTab,
