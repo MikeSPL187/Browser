@@ -44,8 +44,15 @@ class EngineViewParentInstrumentedTest {
         lateinit var destination: FrameLayout
         composeRule.setContent {
             Column {
+                // Only rows past the visible ones take focus, so a focus search has to lay the
+                // list out beyond its bounds, as the app's lists do.
                 LazyColumn(Modifier.fillMaxWidth().height(160.dp)) {
-                    items(count = 40) { Box(Modifier.size(48.dp).focusable()) }
+                    items(count = 40) { index ->
+                        Box(
+                            Modifier.size(48.dp)
+                                .then(if (index >= 20) Modifier.focusable() else Modifier),
+                        )
+                    }
                 }
                 AndroidView(
                     factory = { context ->
