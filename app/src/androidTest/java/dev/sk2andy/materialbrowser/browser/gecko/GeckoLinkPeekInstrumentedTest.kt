@@ -95,7 +95,9 @@ class GeckoLinkPeekInstrumentedTest {
                 scenario.onActivity { activity ->
                     initialTabId = activity.browserControllerForTesting().selectedTabId
                 }
-                composeRule.onNodeWithTag("overview_tab:$initialTabId").performClick()
+                // The card's tag sits on a node merged into the card's own semantics.
+                composeRule.onNodeWithTag("overview_tab:$initialTabId", useUnmergedTree = true)
+                    .performClick()
                 awaitCondition {
                     var attached = false
                     scenario.onActivity { activity ->
