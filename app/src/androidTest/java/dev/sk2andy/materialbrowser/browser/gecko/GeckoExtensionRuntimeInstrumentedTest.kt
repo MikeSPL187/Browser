@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -118,36 +119,45 @@ class GeckoExtensionRuntimeInstrumentedTest {
         val googleMarked = CountDownLatch(1)
         val redditMarked = CountDownLatch(1)
         val seenStates = java.util.concurrent.ConcurrentLinkedQueue<String>()
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            regularSession = runtime.createSession("firefox-extension-regular", isPrivate = false)
-            regularView = regularSession.createView(context)
-            // A session starts inactive (#123, H7); a tab the user sees is active.
-            regularSession.setActive(true)
-            regularSession.setStateListener { state ->
-                seenStates += "${state.url} | ${state.title} | loading=${state.isLoading}"
-                when (state.title) {
-                    "$MARKER_PREFIX$GOOGLE_HOST" -> googleMarked.countDown()
-                    "$MARKER_PREFIX$REDDIT_HOST" -> redditMarked.countDown()
+        // A tab as the browser runs it: bound to the extension chrome, shown, and active
+        // (a session starts inactive, #123 H7). On CI a bare, unshown session never started
+        // the cross-site page (no state for it at all) while ext-android.js logged
+        // "this.browser.webProgress is undefined".
+        ActivityScenario.launch(GeckoScrollTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                regularSession = runtime.createSession("firefox-extension-regular", isPrivate = false)
+                regularSession.bindExtensionTab("firefox-extension-regular", 1)
+                regularView = regularSession.createView(activity)
+                activity.setContentView(regularView)
+                regularSession.setActive(true)
+                regularSession.setStateListener { state ->
+                    seenStates += "${state.url} | ${state.title} | loading=${state.isLoading}"
+                    when (state.title) {
+                        "$MARKER_PREFIX$GOOGLE_HOST" -> googleMarked.countDown()
+                        "$MARKER_PREFIX$REDDIT_HOST" -> redditMarked.countDown()
+                    }
                 }
+                assertTrue(regularSession.loadUrl(server.url(GOOGLE_HOST)))
             }
-            assertTrue(regularSession.loadUrl(server.url(GOOGLE_HOST)))
-        }
 
-        try {
-            assertTrue("Fixture did not run on Google-like page", googleMarked.await(20, TimeUnit.SECONDS))
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                assertTrue(regularSession.loadUrl(server.url(REDDIT_HOST)))
+            try {
+                assertTrue("Fixture did not run on Google-like page", googleMarked.await(20, TimeUnit.SECONDS))
+                scenario.onActivity {
+                    assertTrue(regularSession.loadUrl(server.url(REDDIT_HOST)))
+                }
+                assertTrue(
+                    "Fixture did not run after Reddit-like navigation; " +
+                        "states: ${seenStates.toList().takeLast(8)}",
+                    redditMarked.await(20, TimeUnit.SECONDS),
+                )
+            } finally {
+                scenario.onActivity {
+                    regularSession.releaseView(regularView)
+                    regularSession.setActive(false)
+                    regularSession.close()
+                }
+                server.close()
             }
-            assertTrue(
-                "Fixture did not run after Reddit-like navigation; states: ${seenStates.toList().takeLast(8)}",
-                redditMarked.await(20, TimeUnit.SECONDS),
-            )
-        } finally {
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                regularSession.releaseView(regularView)
-                regularSession.close()
-            }
-            server.close()
         }
     }
 
