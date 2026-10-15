@@ -93,22 +93,17 @@ class GeckoIoPromptsInstrumentedTest {
             seedSelectedTab("about:blank")
             launchMainActivity().use { scenario ->
                 navigateAndAwaitView(scenario, server.url("/upload"))
-                tapAttachedGeckoView()
+                tapUntilFileChooserIsAsked(scenario)
+                // The picker takes keys only once its window has focus; a back key sent while it
+                // still opens goes to the browser and leaves the picker up.
                 assertTrue(
-                    awaitValue("Gecko file chooser launch") {
-                        true.takeIf {
-                            shellOutput("dumpsys activity activities")
-                                .contains("com.google.android.documentsui")
-                        }
+                    awaitValue("focused Gecko file chooser") {
+                        true.takeIf { focusedWindow().contains(DOCUMENTS_UI_PACKAGE) }
                     } == true,
                 )
-                instrumentation.uiAutomation.executeShellCommand("input keyevent 4").close()
                 assertTrue(
-                    awaitValue("cancelled Gecko file chooser delivery") {
-                        scenario.value { controller ->
-                            true.takeIf { !controller.hasPendingFileChooserForTesting() }
-                        }
-                    } == true,
+                    "cancelled Gecko file chooser was not delivered",
+                    cancelFileChooser(scenario),
                 )
             }
         }
@@ -398,6 +393,45 @@ class GeckoIoPromptsInstrumentedTest {
         throw AssertionError("Page did not react to $TAP_ATTEMPTS taps, title=$title")
     }
 
+    /** Like [tapUntilPageLeaves], until Gecko asks for files: a tap before Gecko takes input is lost. */
+    private fun tapUntilFileChooserIsAsked(scenario: ActivityScenario<MainActivity>) {
+        val asked = { scenario.value { controller -> controller.hasPendingFileChooserForTesting() } == true }
+        repeat(TAP_ATTEMPTS) {
+            // Never tap again once Gecko asked: the tap would land in the picker.
+            if (asked()) return
+            tapAttachedGeckoView()
+            val deadline = SystemClock.elapsedRealtime() + TAP_REACTION_MILLIS
+            while (SystemClock.elapsedRealtime() < deadline) {
+                instrumentation.waitForIdleSync()
+                if (asked()) return
+                SystemClock.sleep(50)
+            }
+        }
+        throw AssertionError("Gecko did not ask for files after $TAP_ATTEMPTS taps")
+    }
+
+    /** Backs out of the focused picker, again if a key was lost, until the browser hears it was cancelled. */
+    private fun cancelFileChooser(scenario: ActivityScenario<MainActivity>): Boolean {
+        val pending = { scenario.value { controller -> controller.hasPendingFileChooserForTesting() } == true }
+        repeat(TAP_ATTEMPTS) {
+            if (focusedWindow().contains(DOCUMENTS_UI_PACKAGE)) {
+                instrumentation.uiAutomation.executeShellCommand("input keyevent 4").close()
+            }
+            val deadline = SystemClock.elapsedRealtime() + FILE_CHOOSER_CANCEL_MILLIS
+            while (SystemClock.elapsedRealtime() < deadline) {
+                instrumentation.waitForIdleSync()
+                if (!pending()) return true
+                SystemClock.sleep(50)
+            }
+        }
+        return !pending()
+    }
+
+    private fun focusedWindow(): String = shellOutput("dumpsys window")
+        .lineSequence()
+        .firstOrNull { line -> line.contains("mCurrentFocus") }
+        .orEmpty()
+
     private fun storedDownload(name: String): ByteArray? = context.contentResolver.query(
         MediaStore.Downloads.EXTERNAL_CONTENT_URI,
         arrayOf(MediaStore.Downloads._ID),
@@ -567,6 +601,8 @@ class GeckoIoPromptsInstrumentedTest {
         const val DOWNLOAD_FILE_NAME = "gecko.apk"
         const val TAP_ATTEMPTS = 3
         const val TAP_REACTION_MILLIS = 5_000L
+        const val FILE_CHOOSER_CANCEL_MILLIS = 10_000L
+        const val DOCUMENTS_UI_PACKAGE = "com.google.android.documentsui"
         const val TEST_ACTIVITY_ACTION = "dev.sk2andy.materialbrowser.test.GECKO_IO"
     }
 }
