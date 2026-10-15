@@ -190,11 +190,24 @@ class AppScreenWalkInstrumentedTest(
                         }.isSuccess
                     }
                     if (!moved) {
+                        // EXPERIMENT (branch only): what the tapped node looked like, and whether the
+                        // button's own action moves the lesson on where the touch did not.
+                        val nodes = composeRule.onAllNodes(hasTestTag(forward))
+                            .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                            .joinToString { node ->
+                                "id ${node.id} at ${node.boundsInWindow} in root ${node.rootBounds()}"
+                            }
+                        val actionMoved = runCatching {
+                            composeRule.onAllNodes(hasTestTag(forward))[liveIndex(hasTestTag(forward)) ?: 0]
+                                .performSemanticsAction(SemanticsActions.OnClick)
+                            composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
+                        }.isSuccess
                         findings += AuditFinding(
                             screen,
                             config.name,
                             AuditKind.Navigation,
-                            "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — on screen: $before",
+                            "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — " +
+                                "nodes: [$nodes]; its click action moved on: $actionMoved — on screen: $before",
                         )
                     }
                     idle()
