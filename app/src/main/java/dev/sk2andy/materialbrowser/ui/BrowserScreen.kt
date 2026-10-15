@@ -1379,7 +1379,7 @@ internal fun BrowserScreen(
     val contentFramed = pageFrames.framed
     val contentFrame = pageFrames.primary
     val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
-    val fullWindowHeightPx = remember(context) {
+    val fullWindowHeightPx = remember(context, browserHeightPx) { // the root turns with the window, the metrics too
         context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
     }
 

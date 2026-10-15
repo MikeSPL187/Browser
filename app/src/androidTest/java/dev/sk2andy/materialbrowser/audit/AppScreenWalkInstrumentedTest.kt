@@ -155,9 +155,12 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun walk(auditConfig: AuditConfig, firstRun: Boolean = false, steps: () -> Unit) {
-        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
+        // Before the environment: the grant asks UiAutomation with flags of its own, and the
+        // reconnect would put the rotation back (AuditEnvironment.turnScreen).
         grantNotificationPermissionForTests()
+        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        awaitOrientation()
         if (firstRun) walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(newTabTag()) }
@@ -706,9 +709,57 @@ class AppScreenWalkInstrumentedTest(
     private fun relaunch() {
         runCatching { scenario.close() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        awaitOrientation()
         dismissReleaseNotes()
         awaitTag(newTabTag())
     }
+
+    /**
+     * The rotation setting turns the screen only once the app is in front (the launcher holds it
+     * upright before), and late at that: a walk that went on at once walked the shape the previous
+     * test left, a portrait walk in a landscape window. The walk waits until the app's window has
+     * the configuration's shape and notes how long that took. (Freezing the rotation through
+     * UiAutomation or `wm user-rotation lock` did not turn the app at all on the CI emulator.)
+     */
+    private fun awaitOrientation() {
+        val landscape = config.layout == AuditLayout.PhoneLandscape
+        AuditEnvironment.turnScreen(config.layout)
+        val started = SystemClock.elapsedRealtime()
+        val turned = runCatching {
+            composeRule.waitUntil(ROTATION_TIMEOUT_MILLIS) {
+                // Between the old activity and the turned one there is a moment with none.
+                runCatching {
+                    val window = currentActivity().window.decorView
+                    window.width > 0 && (window.width > window.height) == landscape
+                }.getOrDefault(false)
+            }
+        }.isSuccess
+        if (!turned) {
+            val shape = runCatching {
+                val activity = currentActivity()
+                val window = activity.window.decorView
+                "window ${window.width}×${window.height}, configuration orientation " +
+                    "${activity.resources.configuration.orientation}, requested ${activity.requestedOrientation}"
+            }.getOrDefault("no activity")
+            val settings = listOf("user_rotation", "accelerometer_rotation")
+                .joinToString { key -> "$key ${shellOutput("settings get system $key").trim()}" }
+            val windowManager = shellOutput("dumpsys window displays").lineSequence()
+                .filter { line -> "otation" in line }
+                .map(String::trim)
+                .distinct()
+                .take(ROTATION_DUMP_LINES)
+                .joinToString(" | ")
+            throw AssertionError(
+                "the app's window did not turn ${if (landscape) "landscape" else "upright"} in " +
+                    "${ROTATION_TIMEOUT_MILLIS / 1000} s: $shape, display rotation ${device.displayRotation}, " +
+                    "$settings; window manager: $windowManager",
+            )
+        }
+        visited += "orientation ${(SystemClock.elapsedRealtime() - started) / 1000}s"
+        idle()
+    }
+
+    private fun shellOutput(command: String): String = device.executeShellCommand(command)
 
     private fun dismissReleaseNotes() {
         idle()
@@ -934,6 +985,8 @@ class AppScreenWalkInstrumentedTest(
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
+        private const val ROTATION_TIMEOUT_MILLIS = 60_000L
+        private const val ROTATION_DUMP_LINES = 12
         private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L

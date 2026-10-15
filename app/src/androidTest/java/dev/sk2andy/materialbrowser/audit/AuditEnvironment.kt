@@ -4,8 +4,8 @@ import android.app.LocaleManager
 import android.content.Context
 import android.os.Build
 import android.os.LocaleList
-import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -111,9 +111,7 @@ internal object AuditEnvironment {
     }
 
     private fun setLayout(layout: AuditLayout) {
-        // The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
-        shell("settings put system accelerometer_rotation 0")
-        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
+        turnScreen(layout)
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")
@@ -121,6 +119,21 @@ internal object AuditEnvironment {
             shell("wm size reset")
             shell("wm density reset")
         }
+    }
+
+    /**
+     * The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
+     *
+     * Each new UiAutomation connection puts back the rotation it found when it connected
+     * (`UiAutomationConnection` stores it on connect and restores it on disconnect), and asking
+     * for UiAutomation with other flags than the last caller reconnects it: a landscape walk had
+     * `user_rotation` back at 0 a minute after it was set (runs of 15.10). So every shell command
+     * here goes through UiDevice's own connection, and the walk turns the screen once more after
+     * the app is up.
+     */
+    fun turnScreen(layout: AuditLayout) {
+        shell("settings put system accelerometer_rotation 0")
+        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
     }
 
     private fun setAppLanguage(context: Context, languageTag: String?) {
@@ -136,8 +149,6 @@ internal object AuditEnvironment {
     private const val TABLET_DENSITY = 320
 
     private fun shell(command: String) {
-        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation
-            .executeShellCommand(command)
-        ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes() }
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).executeShellCommand(command)
     }
 }
