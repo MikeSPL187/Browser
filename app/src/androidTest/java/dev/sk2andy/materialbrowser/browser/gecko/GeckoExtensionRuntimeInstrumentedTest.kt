@@ -117,10 +117,14 @@ class GeckoExtensionRuntimeInstrumentedTest {
         lateinit var regularView: View
         val googleMarked = CountDownLatch(1)
         val redditMarked = CountDownLatch(1)
+        val seenStates = java.util.concurrent.ConcurrentLinkedQueue<String>()
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             regularSession = runtime.createSession("firefox-extension-regular", isPrivate = false)
             regularView = regularSession.createView(context)
+            // A session starts inactive (#123, H7); a tab the user sees is active.
+            regularSession.setActive(true)
             regularSession.setStateListener { state ->
+                seenStates += "${state.url} | ${state.title} | loading=${state.isLoading}"
                 when (state.title) {
                     "$MARKER_PREFIX$GOOGLE_HOST" -> googleMarked.countDown()
                     "$MARKER_PREFIX$REDDIT_HOST" -> redditMarked.countDown()
@@ -134,7 +138,10 @@ class GeckoExtensionRuntimeInstrumentedTest {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 assertTrue(regularSession.loadUrl(server.url(REDDIT_HOST)))
             }
-            assertTrue("Fixture did not run after Reddit-like navigation", redditMarked.await(20, TimeUnit.SECONDS))
+            assertTrue(
+                "Fixture did not run after Reddit-like navigation; states: ${seenStates.toList().takeLast(8)}",
+                redditMarked.await(20, TimeUnit.SECONDS),
+            )
         } finally {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 regularSession.releaseView(regularView)
