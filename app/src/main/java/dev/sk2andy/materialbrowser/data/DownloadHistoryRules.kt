@@ -15,6 +15,7 @@ internal data class DownloadEntry(
     val mime: String,
     val supportsPause: Boolean = false,
     val supportsCancel: Boolean = id >= 0L,
+    val retry: DownloadRetry = DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered),
 )
 
 internal enum class DownloadStatus(val isActive: Boolean) {
