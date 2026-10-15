@@ -158,16 +158,21 @@ class GeckoKeyboardInsetsInstrumentedTest {
                         .hide(WindowInsetsCompat.Type.ime())
                 }
                 awaitImeVisibility(scenario, false)
-                awaitReport(scenario) { report ->
-                    var engineHeight = 0
+                // At rest the visual viewport fills the engine view, less at most the band the
+                // address bar may cover (Gecko's dynamic toolbar), never more.
+                var engineHeight = 0
+                var dynamicBandHeight = 0
+                awaitReport(scenario, describe = { "engine=$engineHeight band=$dynamicBandHeight" }) { report ->
                     scenario.onActivity { activity ->
                         val host = requireNotNull(
                             activity.browserControllerForTesting().selectedGeckoViewForTesting(),
-                        )
-                        engineHeight = (host as ViewGroup).getChildAt(0).height
+                        ) as CandyGeckoView
+                        engineHeight = host.getChildAt(0).height
+                        dynamicBandHeight = host.dynamicToolbarMaxHeightPx
                     }
-                    kotlin.math.abs(report.getDouble("visualHeight") *
-                        report.getDouble("density") - engineHeight) < 2
+                    val shortfall = engineHeight -
+                        report.getDouble("visualHeight") * report.getDouble("density")
+                    shortfall > -2 && shortfall < dynamicBandHeight + 2
                 }
                 block(scenario)
             }
@@ -176,6 +181,7 @@ class GeckoKeyboardInsetsInstrumentedTest {
 
     private fun awaitReport(
         scenario: ActivityScenario<MainActivity>,
+        describe: () -> String = { "" },
         matches: (JSONObject) -> Boolean,
     ): JSONObject {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
@@ -188,7 +194,7 @@ class GeckoKeyboardInsetsInstrumentedTest {
             }
             SystemClock.sleep(50)
         }
-        throw AssertionError("Gecko keyboard viewport did not settle; last report=$lastTitle")
+        throw AssertionError("Gecko keyboard viewport did not settle ${describe()}; last report=$lastTitle")
     }
 
     private fun awaitImeVisibility(scenario: ActivityScenario<MainActivity>, visible: Boolean) {
