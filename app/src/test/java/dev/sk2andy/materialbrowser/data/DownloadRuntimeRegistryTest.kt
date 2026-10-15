@@ -87,6 +87,96 @@ class DownloadRuntimeRegistryTest {
         assertFalse(DownloadRuntimeRegistry.togglePause(entry.id))
     }
 
+    @Test
+    fun `failed rows start again once and wait as pending until the attempt ends`() {
+        start(cancel = {})
+        DownloadRuntimeRegistry.failed(id, cancelled = false, updatedAt = 20L)
+        assertEquals(NOT_REMEMBERED, entry().retry)
+        var attempts = 0
+        assertTrue(DownloadRuntimeRegistry.offerRetry(id) { attempts++; true })
+        assertEquals(DownloadRetry.Available, entry().retry)
+
+        assertTrue(DownloadRuntimeRegistry.retry(-43L))
+        assertEquals(1, attempts)
+        assertEquals(DownloadStatus.Pending, entry().status)
+        assertFalse(entry().supportsCancel)
+        assertFalse(entry().supportsPause)
+        assertFalse("a pending row does not start twice", DownloadRuntimeRegistry.retry(-43L))
+        assertEquals(1, attempts)
+
+        DownloadRuntimeRegistry.retryFailed(id, updatedAt = 30L)
+        assertEquals(DownloadStatus.Failed, entry().status)
+        assertEquals(30L, entry().lastModified)
+        assertEquals(DownloadRetry.Available, entry().retry)
+        assertTrue(DownloadRuntimeRegistry.retry(-43L))
+        assertEquals(2, attempts)
+
+        DownloadRuntimeRegistry.completed(id)
+        assertFalse(DownloadRuntimeRegistry.retry(-43L))
+    }
+
+    @Test
+    fun `a changed file withholds the retry and names the page`() {
+        start()
+        DownloadRuntimeRegistry.failed(id, cancelled = true, updatedAt = 20L)
+        assertTrue(DownloadRuntimeRegistry.offerRetry(id) { true })
+        assertTrue(DownloadRuntimeRegistry.retry(-43L))
+        val changed = DownloadRetry.Unavailable(
+            DownloadRetryUnavailable.ResponseChanged,
+            pageUrl = "https://example.com/report",
+        )
+        DownloadRuntimeRegistry.retryFailed(id, updatedAt = 30L, retry = changed)
+        assertEquals(DownloadStatus.Failed, entry().status)
+        assertEquals(changed, entry().retry)
+        assertFalse(DownloadRuntimeRegistry.retry(-43L))
+        assertFalse(id in DownloadRuntimeRegistry.retryableTransferIds())
+    }
+
+    @Test
+    fun `active and finished rows take no retry`() {
+        start()
+        assertFalse(DownloadRuntimeRegistry.offerRetry(id) { true })
+        assertFalse(DownloadRuntimeRegistry.retry(-43L))
+        DownloadRuntimeRegistry.completed(id)
+        assertFalse(DownloadRuntimeRegistry.offerRetry(id) { true })
+    }
+
+    @Test
+    fun `only the latest rows keep their retry`() {
+        val ids = List(DownloadRuntimeRegistry.MAX_RETRIES + 1) { DownloadRuntimeRegistry.nextTransferId() }
+        try {
+            ids.forEachIndexed { index, transferId ->
+                DownloadRuntimeRegistry.started(
+                    id = transferId,
+                    name = "file-$index.bin",
+                    source = "https://example.com/$index",
+                    mime = "application/octet-stream",
+                    total = -1L,
+                    startedAt = index.toLong(),
+                )
+                DownloadRuntimeRegistry.failed(transferId, cancelled = false, updatedAt = index.toLong())
+                assertTrue(DownloadRuntimeRegistry.offerRetry(transferId) { true })
+            }
+            assertEquals(NOT_REMEMBERED, DownloadRuntimeRegistry.entryForTransfer(ids.first())?.retry)
+            assertEquals(ids.drop(1).toSet(), DownloadRuntimeRegistry.retryableTransferIds() intersect ids.toSet())
+            assertEquals(DownloadRetry.Available, DownloadRuntimeRegistry.entryForTransfer(ids.last())?.retry)
+        } finally {
+            ids.forEach(DownloadRuntimeRegistry::completed)
+        }
+    }
+
+    @Test
+    fun `clearing a row forgets its retry`() {
+        start()
+        DownloadRuntimeRegistry.failed(id, cancelled = false, updatedAt = 20L)
+        assertTrue(DownloadRuntimeRegistry.offerRetry(id) { true })
+        DownloadRuntimeRegistry.clear(listOf(-43L))
+        assertFalse(id in DownloadRuntimeRegistry.retryableTransferIds())
+        assertFalse(DownloadRuntimeRegistry.retry(-43L))
+    }
+
+    private fun entry() = requireNotNull(DownloadRuntimeRegistry.entryForTransfer(id))
+
     private fun start(
         cancel: (() -> Unit)? = null,
         pause: (() -> Boolean)? = null,
@@ -103,4 +193,8 @@ class DownloadRuntimeRegistryTest {
         pause = pause,
         resume = resume,
     )
+
+    private companion object {
+        val NOT_REMEMBERED = DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered)
+    }
 }
