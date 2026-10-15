@@ -180,7 +180,14 @@ class AppScreenWalkInstrumentedTest(
                 } else {
                     auditScrolling(screen)
                     val before = auditor.describeScreen()
-                    click(hasTestTag(forward))
+                    click(hasTestTag(forward), systemTap = true)
+                    // The walk's own scroll action (auditScrolling) can leave the lesson's list
+                    // scrolling when nothing else on screen animates, and the first touch only stops
+                    // it, as on any list; a second press 3 s later then moves on (runs of 15.10).
+                    val settled = runCatching {
+                        composeRule.waitUntil(SECOND_PRESS_AFTER_MILLIS) { auditor.describeScreen() != before }
+                    }.isSuccess
+                    if (!settled && exists(hasTestTag(forward))) click(hasTestTag(forward), systemTap = true)
                     // The next screen fades in over this one, and a screen that left can linger in
                     // a detached root: the walk once pressed «Next» nine times on a screen it had
                     // left. What it waits for is what is shown, as a user does.
@@ -625,7 +632,12 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
-    private fun click(matcher: SemanticsMatcher) {
+    /**
+     * [systemTap] taps through the system, as a finger does, instead of Compose's injected touch:
+     * on the gesture lesson standing still (animations removed) the injected touch on «Skip» never
+     * arrived, while a system tap and the button's own action both worked (runs of 15.10).
+     */
+    private fun click(matcher: SemanticsMatcher, systemTap: Boolean = false) {
         // Screens still animating in get a moment first; only then are lists scrolled to look.
         timed("find ${matcher.description}") {
             val shown = runCatching { composeRule.waitUntil(REVEAL_AFTER_MILLIS) { exists(matcher) } }.isSuccess
@@ -637,7 +649,16 @@ class AppScreenWalkInstrumentedTest(
         if (!fullyShown(target.fetchSemanticsNode())) {
             timed("scroll to ${matcher.description}") { scrollIntoView(matcher) }
         }
-        timed("tap ${matcher.description}") { target.performClick() }
+        timed("tap ${matcher.description}") {
+            if (systemTap) {
+                val center = target.fetchSemanticsNode().boundsInWindow.center
+                val window = IntArray(2)
+                currentActivity().window.decorView.getLocationOnScreen(window)
+                device.click(window[0] + center.x.toInt(), window[1] + center.y.toInt())
+            } else {
+                target.performClick()
+            }
+        }
         idle()
     }
 
@@ -786,6 +807,7 @@ class AppScreenWalkInstrumentedTest(
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
+        private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
         private const val SLOWEST_SHOWN = 4
