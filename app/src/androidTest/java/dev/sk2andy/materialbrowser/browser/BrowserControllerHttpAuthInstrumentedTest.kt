@@ -2,6 +2,8 @@ package dev.sk2andy.materialbrowser.browser
 
 import android.content.Context
 import android.os.SystemClock
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -121,6 +123,16 @@ class BrowserControllerHttpAuthInstrumentedTest {
                 // MainActivity: onStart before onResume.
                 browserController.onStart()
                 browserController.onResume()
+                // The first load of a tab waits until its page view is laid out on screen.
+                val host = FrameLayout(activity)
+                activity.setContentView(
+                    host,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+                browserController.attachSelectedBrowserEngineView(host)
                 browserController.submitAddress(url)
             }
         }
