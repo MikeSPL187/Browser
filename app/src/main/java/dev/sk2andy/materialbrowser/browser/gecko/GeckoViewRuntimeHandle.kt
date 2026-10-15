@@ -2147,6 +2147,7 @@ private class GeckoViewBrowserSession(
                 request = webRequest,
                 fetchFlags = GeckoWebExecutor.FETCH_FLAGS_NONE,
                 suggestedFileName = request.suggestedFileName,
+                retryable = true,
             ),
             listener = listener,
         )
