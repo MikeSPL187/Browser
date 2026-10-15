@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.Dialog
@@ -15,19 +16,23 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 
 /**
- * A [V5Sheet] over the whole window, for a screen that sits inside the page (the new tab) while the
- * v5 bar floats above it: the sheet and its scrim cover the bar too. The window stays until the
- * sheet has left, so it goes on the same spring it came in on. Previews show the sheet in place.
+ * How every v5 sheet is shown: a [V5Sheet] in a window of its own over the whole app, so the sheet
+ * and its scrim cover the bar too and what lies under it is out of reach of touch and of TalkBack,
+ * as under a sheet on iOS. Drawn inside the browser, the bar and the new tab under the menu stayed
+ * in TalkBack's order and overlapped the sheet's rows (the v5 screen walk, 15.10). The window stays
+ * until the sheet has left, so it goes on the same spring it came in on. Previews show the sheet in
+ * place.
  */
 @Composable
 fun V5WindowSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     title: String,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (LocalInspectionMode.current) {
-        V5Sheet(visible = visible, onDismiss = onDismiss, title = title, content = content)
+        V5Sheet(visible = visible, onDismiss = onDismiss, title = title, modifier = modifier, content = content)
         return
     }
     var leaving by remember { mutableStateOf(false) }
@@ -52,6 +57,7 @@ fun V5WindowSheet(
             visible = visible,
             onDismiss = onDismiss,
             title = title,
+            modifier = modifier,
             onHidden = { leaving = false },
             content = content,
         )
