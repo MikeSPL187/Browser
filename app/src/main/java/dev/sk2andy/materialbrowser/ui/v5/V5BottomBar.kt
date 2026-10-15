@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -337,6 +339,12 @@ private fun AddressCapsule(
                 tabId = state.tabId,
             )
         }
+        if (state.domain != null) {
+            // Mirrors «Read» on the right, so the domain stays in the middle of the capsule.
+            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
+                Spacer(Modifier.width(V5Sizes.barCapsule))
+            }
+        }
         Text(
             text = state.domain ?: openLabel,
             style = if (state.domain != null) V5Theme.type.headline else V5Theme.type.body,
@@ -347,20 +355,7 @@ private fun AddressCapsule(
             modifier = Modifier.weight(1f),
         )
         if (state.domain != null) {
-            val animated = V5Motion.animationsEnabled
-            AnimatedVisibility(
-                visible = state.readerAvailable,
-                enter = if (animated) {
-                    expandHorizontally(V5Motion.effects.spec()) + fadeIn(V5Motion.effects.spec())
-                } else {
-                    fadeIn(V5Motion.reducedFade())
-                },
-                exit = if (animated) {
-                    shrinkHorizontally(V5Motion.effects.spec()) + fadeOut(V5Motion.effects.spec())
-                } else {
-                    fadeOut(V5Motion.reducedFade())
-                },
-            ) {
+            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
                 IconButton(onClick = onRead, modifier = Modifier.testTag(V5BarTestTags.Read)) {
                     Icon(
                         imageVector = VolaIcons.FormatAlignLeft,
@@ -382,6 +377,19 @@ private fun AddressCapsule(
             Spacer(Modifier.width(V5Sizes.barCapsule))
         }
     }
+}
+
+/** How «Read» and its mirror on the other side come in: v5 springs, or only a fade without animations. */
+private fun readEnter(): EnterTransition = if (V5Motion.animationsEnabled) {
+    expandHorizontally(V5Motion.effects.spec()) + fadeIn(V5Motion.effects.spec())
+} else {
+    fadeIn(V5Motion.reducedFade())
+}
+
+private fun readExit(): ExitTransition = if (V5Motion.animationsEnabled) {
+    shrinkHorizontally(V5Motion.effects.spec()) + fadeOut(V5Motion.effects.spec())
+} else {
+    fadeOut(V5Motion.reducedFade())
 }
 
 @Composable
