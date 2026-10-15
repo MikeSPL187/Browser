@@ -40,7 +40,7 @@ internal class WebContentPageSignals {
 
     /**
      * A same-document navigation keeps the theme-color, which the page reports again, and the reader
-     * answer: an app-like site that swaps its article in place still holds one.
+     * answer until the page's probe looks again (at once and a moment later, reader_probe.js).
      */
     fun onSameDocumentNavigation(tabId: String) {
         statusBarBackdrops.remove(tabId)
