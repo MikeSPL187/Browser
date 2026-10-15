@@ -1,6 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -211,6 +218,7 @@ internal fun SettingsScreen(
         destination = destination,
         modifier = modifier,
     ) { currentDestination ->
+        SettingsCutoutPadding {
             when (currentDestination) {
                 SettingsDestination.Home -> SettingsHomePage(
                     state = SettingsHomeState(
@@ -561,8 +569,25 @@ internal fun SettingsScreen(
                 }
             }
         }
+        }
     }
     }
+
+/**
+ * In landscape the camera cutout sits on a side edge, and the pages' own padding knows only the
+ * system bars: rows ran under the cutout (the landscape screen walk, 15.10). The page keeps clear
+ * of the cutout on the sides; the surface behind it still fills the screen.
+ */
+@Composable
+private fun SettingsCutoutPadding(content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
+    ) {
+        content()
+    }
+}
 
 private fun LinkPeekAction.labelRes(): Int = when (this) {
     LinkPeekAction.ReaderLater -> R.string.reader_save_offline
