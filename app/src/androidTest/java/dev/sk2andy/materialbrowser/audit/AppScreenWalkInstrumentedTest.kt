@@ -181,6 +181,13 @@ class AppScreenWalkInstrumentedTest(
                     auditScrolling(screen)
                     val before = auditor.describeScreen()
                     click(hasTestTag(forward), systemTap = true)
+                    // The walk's own scroll action (auditScrolling) can leave the lesson's list
+                    // scrolling when nothing else on screen animates, and the first touch only stops
+                    // it, as on any list; a second press 3 s later then moves on (runs of 15.10).
+                    val settled = runCatching {
+                        composeRule.waitUntil(SECOND_PRESS_AFTER_MILLIS) { auditor.describeScreen() != before }
+                    }.isSuccess
+                    if (!settled && exists(hasTestTag(forward))) click(hasTestTag(forward), systemTap = true)
                     // The next screen fades in over this one, and a screen that left can linger in
                     // a detached root: the walk once pressed «Next» nine times on a screen it had
                     // left. What it waits for is what is shown, as a user does.
@@ -800,6 +807,7 @@ class AppScreenWalkInstrumentedTest(
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
+        private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
         private const val SLOWEST_SHOWN = 4
