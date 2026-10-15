@@ -194,24 +194,54 @@ class GeckoKeyboardInsetsInstrumentedTest {
             }
             SystemClock.sleep(50)
         }
-        throw AssertionError("Gecko keyboard viewport did not settle ${describe()}; last report=$lastTitle")
+        // The summary keeps a failure's first 160 characters: the numbers that matter come first.
+        throw AssertionError(
+            "Keyboard viewport did not settle at line ${callerLine()} ${describe()} " +
+                "${compact(lastTitle)}; last report=$lastTitle",
+        )
     }
 
     private fun awaitImeVisibility(scenario: ActivityScenario<MainActivity>, visible: Boolean) {
+        var lastTitle = ""
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             var matches = false
             scenario.onActivity {
                 matches = ViewCompat.getRootWindowInsets(it.window.decorView)
                     ?.isVisible(WindowInsetsCompat.Type.ime()) == visible
+                lastTitle = it.browserControllerForTesting().selectedTabForTesting().title
             }
             if (matches) return
             SystemClock.sleep(50)
         }
-        throw AssertionError("Expected keyboard visible=$visible")
+        throw AssertionError(
+            "Expected keyboard visible=$visible at line ${callerLine()} tap=$lastTap ${compact(lastTitle)}",
+        )
     }
 
+    /** Where the last tap went, in screen pixels, for failure messages. */
+    private var lastTap = "none"
+
+    /** The line in this test that started the wait that timed out. */
+    private fun callerLine(): Int = Throwable().stackTrace.firstOrNull { frame ->
+        frame.className.startsWith(GeckoKeyboardInsetsInstrumentedTest::class.java.name) &&
+            frame.methodName.substringBefore('$') !in WAIT_HELPERS
+    }?.lineNumber ?: -1
+
+    /** The report's numbers in a few characters: visual height and top, input top and bottom, focus. */
+    private fun compact(title: String): String = runCatching {
+        val report = JSONObject(title.removePrefix(REPORT_PREFIX))
+        "vh=%.1f vt=%.1f in=%.1f..%.1f f=%s".format(
+            report.getDouble("visualHeight"),
+            report.getDouble("visualTop"),
+            report.getDouble("inputTop"),
+            report.getDouble("inputBottom"),
+            report.getBoolean("focused"),
+        )
+    }.getOrDefault("no report")
+
     private fun tap(x: Float, y: Float) {
+        lastTap = "%.0f,%.0f".format(x, y)
         val downTime = SystemClock.uptimeMillis()
         for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
             val event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
@@ -229,6 +259,7 @@ class GeckoKeyboardInsetsInstrumentedTest {
         const val KEYBOARD_HEIGHT_PX = 600
         const val TIMEOUT_MILLIS = 20_000L
         const val REPORT_PREFIX = "Candy keyboard: "
+        val WAIT_HELPERS = setOf("callerLine", "awaitReport", "awaitImeVisibility")
         val HTML = """
             <!doctype html>
             <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
