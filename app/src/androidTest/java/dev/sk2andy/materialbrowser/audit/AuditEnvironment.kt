@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.LocaleManager
-import android.app.UiAutomation
 import android.content.Context
 import android.os.Build
 import android.os.LocaleList
@@ -106,15 +105,10 @@ internal object AuditEnvironment {
     }
 
     private fun setLayout(layout: AuditLayout) {
-        // Frozen through the window manager: writing the rotation settings was picked up late or
-        // not at all, and a walk ran in the shape the previous one left (runs of 15.10).
-        InstrumentationRegistry.getInstrumentation().uiAutomation.setRotation(
-            if (layout == AuditLayout.PhoneLandscape) {
-                UiAutomation.ROTATION_FREEZE_90
-            } else {
-                UiAutomation.ROTATION_FREEZE_0
-            },
-        )
+        // Locked through the window manager: writing the rotation settings was picked up late or
+        // not at all, and a walk ran in the shape the previous one left. UiAutomation.setRotation
+        // held only for the first test of a run, as if each new connection undid it (runs of 15.10).
+        shell("wm user-rotation lock ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")
