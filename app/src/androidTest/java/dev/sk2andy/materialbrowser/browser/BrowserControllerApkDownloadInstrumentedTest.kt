@@ -13,6 +13,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.net.InetAddress
@@ -22,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +56,12 @@ class BrowserControllerApkDownloadInstrumentedTest {
         }
     }
 
+    @Before
+    fun setUp() {
+        // A started download asks Android for notifications; its dialog would take the tap.
+        grantNotificationPermissionForTests()
+    }
+
     @Test
     fun externalPreviewRoutesTappedApkBeforeWebViewNavigation() {
         val apkUrl = "https://downloads.example.invalid/Candy-${System.nanoTime()}.apk"
@@ -83,6 +91,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
 
             assertTrue(handled)
         }
+        saveHeldApk()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
         val rows = downloadRows(apkUrl)
@@ -133,6 +142,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
                 ),
             )
         }
+        saveHeldApk()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
         val rows = downloadRows(apkUrl)
@@ -169,6 +179,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
             awaitPreviewLoaded(server.startUrl)
 
             tapDownloadLink(previewWebView)
+            saveHeldApk()
 
             val rows = awaitDownloadRows(server.downloadUrl)
             assertEquals(1, rows.size)
@@ -209,6 +220,25 @@ class BrowserControllerApkDownloadInstrumentedTest {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
         assertTrue(downloadRows(apkUrl).isEmpty())
+    }
+
+    /** An APK waits for the safety sheet (DownloadSafetyGate) before any manager gets it. */
+    private fun saveHeldApk() {
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MILLIS
+        while (SystemClock.uptimeMillis() < deadline) {
+            var saved = false
+            activityRule.scenario.onActivity {
+                val gate = requireNotNull(controller).downloadSafety
+                val held = gate.pending ?: return@onActivity
+                assertTrue(held.fileName.endsWith(".apk", ignoreCase = true))
+                assertTrue(held.findings.isNotEmpty())
+                gate.save()
+                saved = true
+            }
+            if (saved) return
+            SystemClock.sleep(POLL_INTERVAL_MILLIS)
+        }
+        throw AssertionError("The APK was not held for the safety sheet")
     }
 
     private fun awaitPreviewLoaded(expectedUrl: String) {
