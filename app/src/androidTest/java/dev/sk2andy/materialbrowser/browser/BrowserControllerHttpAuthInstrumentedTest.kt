@@ -117,6 +117,9 @@ class BrowserControllerHttpAuthInstrumentedTest {
                 Context.MODE_PRIVATE,
             ).edit().clear().commit()
             controller = BrowserController(activity).also { browserController ->
+                // A challenge reaches the user only while the activity is started, as in
+                // MainActivity: onStart before onResume.
+                browserController.onStart()
                 browserController.onResume()
                 browserController.submitAddress(url)
             }
