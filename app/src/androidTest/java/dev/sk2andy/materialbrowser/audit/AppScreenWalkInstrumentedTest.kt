@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
-import android.content.res.Configuration
 import android.os.SystemClock
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
@@ -587,20 +586,23 @@ class AppScreenWalkInstrumentedTest(
     }
 
     /**
-     * The frozen rotation turns the screen only once the app is in front (the launcher holds it
-     * upright before), and a walk that went on at once walked the shape the previous test left:
-     * a portrait walk once ran in a landscape window.
+     * The rotation setting turns the screen only once the app is in front (the launcher holds it
+     * upright before), and late at that: a walk that went on at once walked the shape the previous
+     * test left, a portrait walk in a landscape window. The walk waits until the app's window has
+     * the configuration's shape and notes how long that took. (Freezing the rotation through
+     * UiAutomation or `wm user-rotation lock` did not turn the app at all on the CI emulator.)
      */
     private fun awaitOrientation() {
-        val expected = if (config.layout == AuditLayout.PhoneLandscape) {
-            Configuration.ORIENTATION_LANDSCAPE
-        } else {
-            Configuration.ORIENTATION_PORTRAIT
-        }
-        composeRule.waitUntil("the app to lay out in orientation $expected", ROTATION_TIMEOUT_MILLIS) {
+        val landscape = config.layout == AuditLayout.PhoneLandscape
+        val started = SystemClock.elapsedRealtime()
+        composeRule.waitUntil("the app's window to turn ${if (landscape) "landscape" else "upright"}", ROTATION_TIMEOUT_MILLIS) {
             // Between the old activity and the turned one there is a moment with none.
-            runCatching { currentActivity().resources.configuration.orientation == expected }.getOrDefault(false)
+            runCatching {
+                val window = currentActivity().window.decorView
+                window.width > 0 && (window.width > window.height) == landscape
+            }.getOrDefault(false)
         }
+        visited += "orientation ${(SystemClock.elapsedRealtime() - started) / 1000}s"
         idle()
     }
 
@@ -828,7 +830,7 @@ class AppScreenWalkInstrumentedTest(
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
-        private const val ROTATION_TIMEOUT_MILLIS = 15_000L
+        private const val ROTATION_TIMEOUT_MILLIS = 60_000L
         private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
