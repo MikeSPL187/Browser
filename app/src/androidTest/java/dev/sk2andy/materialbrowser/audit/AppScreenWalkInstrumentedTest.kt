@@ -52,6 +52,11 @@ import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
 import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
@@ -74,6 +79,8 @@ import org.junit.runners.model.TestTimedOutException
  * by [ScreenAuditor] from top to bottom. Every group runs in six configurations — English and
  * Russian, light and dark, normal and double font size, the phone upright and on its side, and a
  * tablet — so each screen is gone through six times. A screen the walk cannot reach is a finding too. The test fails with the full list.
+ * The v5 interface (`ui.v5`) has walks of its own in the four upright phone configurations: a wider
+ * window keeps the current interface.
  */
 @RunWith(Parameterized::class)
 class AppScreenWalkInstrumentedTest(
@@ -124,6 +131,7 @@ class AppScreenWalkInstrumentedTest(
     private val visited = mutableListOf<String>()
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
+    private val uiV5 = group in V5_GROUPS
 
     @After
     fun tearDown() {
@@ -139,18 +147,20 @@ class AppScreenWalkInstrumentedTest(
             FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
             PAGE_GROUP -> walk(config, steps = ::walkPage)
             PAGE_STATES_GROUP -> walk(config, steps = ::walkPageStates)
+            V5_BROWSER_GROUP -> walk(config, steps = ::walkV5Browser)
+            V5_PAGE_GROUP -> walk(config, steps = ::walkV5Page)
             in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
         }
     }
 
     private fun walk(auditConfig: AuditConfig, firstRun: Boolean = false, steps: () -> Unit) {
-        AuditEnvironment.enter(context, auditConfig, firstRun)
+        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         if (firstRun) walkFirstRun()
         dismissReleaseNotes()
-        step("launch") { awaitTag(NewTabPageTestTags.Header) }
+        step("launch") { awaitTag(newTabTag()) }
         steps()
         if (findings.isNotEmpty()) fail(report())
     }
@@ -377,10 +387,117 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
+    /**
+     * The v5 interface on a phone: new tab, address editor, menu, the overview with its private
+     * side and the profiles, the privacy report, settings and a private tab.
+     */
+    private fun walkV5Browser() {
+        val sheet = hasTestTag(V5SheetTestTags.Sheet)
+        step("v5 new tab") { auditScrolling("v5 new tab") }
+        step("v5 address editor") {
+            click(hasTestTag(AddressBarTestTags.PrimaryField))
+            awaitTag(V5EditorTestTags.Editor)
+            audit("v5 address editor, empty")
+            composeRule.onAllNodes(hasSetTextAction()).onFirst().performTextInput("vola test")
+            audit("v5 address editor, typed")
+            backUntilGone(hasTestTag(V5EditorTestTags.Editor))
+        }
+        step("v5 menu") {
+            openV5Menu()
+            auditScrolling("v5 menu")
+            backUntilGone(sheet)
+        }
+        step("v5 tab overview") {
+            openOverview()
+            auditScrolling("v5 tab overview")
+            click(hasTestTag(V5OverviewTestTags.SegmentPrivate))
+            audit("v5 tab overview, private")
+            click(hasTestTag(V5OverviewTestTags.SegmentTabs))
+            tapUntil(hasTestTag(V5OverviewTestTags.Profile), "the profiles to open") { exists(sheet) }
+            auditScrolling("v5 profiles")
+            backUntilGone(sheet)
+            backUntilGone(overview())
+        }
+        step("v5 privacy report") {
+            // The new tab shows the report's card until the user hides it.
+            if (exists(hasTestTag(V5NewTabTestTags.Report)) || revealInLazyList(hasTestTag(V5NewTabTestTags.Report))) {
+                tapUntil(hasTestTag(V5NewTabTestTags.Report), "the privacy report to open") { exists(sheet) }
+                auditScrolling("v5 privacy report")
+                backUntilGone(sheet)
+            } else {
+                throw AssertionError("the new tab shows no privacy report card")
+            }
+        }
+        step("v5 settings home") {
+            openV5Menu()
+            tapUntil(hasText(string(R.string.action_settings)) and hasClickAction(), "the settings to open") {
+                atSettingsHome()
+            }
+            auditScrolling("v5 settings home")
+            backUntilGone(hasTestTag(SettingsSearchTestTags.Open))
+        }
+        step("v5 private tab") {
+            scenario.onActivity { activity ->
+                activity.browserControllerForTesting().createTab(isIncognito = true)
+            }
+            awaitTag(V5PrivateNewTabTestTags.Page)
+            auditScrolling("v5 private tab")
+        }
+    }
+
+    /** A real web page under v5: the page, its menu, the site's protection, find in page, two tabs. */
+    private fun walkV5Page() {
+        val sheet = hasTestTag(V5SheetTestTags.Sheet)
+        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
+            step("v5 web page") {
+                openTyped(server.fixtureUrl("/article"))
+                auditScrolling("v5 web page")
+            }
+            step("v5 menu on a page") {
+                openV5Menu()
+                auditScrolling("v5 menu on a page")
+                backUntilGone(sheet)
+            }
+            step("v5 site protection") {
+                tapUntil(hasTestTag(PermissionRadarTestTags.ActivityBadge), "the site's protection to open") {
+                    exists(sheet)
+                }
+                auditScrolling("v5 site protection")
+                backUntilGone(sheet)
+            }
+            step("v5 find in page") {
+                openV5Menu()
+                tapUntil(hasText(string(R.string.action_find_in_page)) and hasClickAction(), "find in page to open") {
+                    exists(hasTestTag(FindInPageBarTestTags.Bar))
+                }
+                audit("v5 find in page")
+                click(hasTestTag(FindInPageBarTestTags.Close))
+                composeRule.waitUntil("find in page to close", TIMEOUT_MILLIS) {
+                    !exists(hasTestTag(FindInPageBarTestTags.Bar))
+                }
+            }
+            step("v5 tab overview, two tabs") {
+                scenario.onActivity { activity ->
+                    activity.browserControllerForTesting().createTab(isIncognito = false)
+                }
+                idle()
+                openOverview()
+                auditScrolling("v5 tab overview, two tabs")
+                backUntilGone(overview())
+            }
+        }
+    }
+
+    private fun openV5Menu() {
+        tapUntil(hasContentDescription(string(R.string.cd_more_options)), "the menu to open") {
+            exists(hasTestTag(V5SheetTestTags.Sheet))
+        }
+    }
+
     /** Types [url] into the address bar and submits it from the keyboard, as a user does. */
     private fun openTyped(url: String, expectFailure: Boolean = false) {
         click(hasTestTag(AddressBarTestTags.PrimaryField))
-        awaitShown(closeAddressInput())
+        awaitShown(addressEditor())
         val field = composeRule.onAllNodes(hasSetTextAction()).onFirst()
         field.performTextInput(url)
         val typed = runCatching {
@@ -433,9 +550,18 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun openOverview() {
-        val overview = hasTestTag(TabOverviewChromeTestTags.Root)
+        val overview = overview()
         tapUntil(hasTestTag(AddressBarTestTags.TabButton), "the tab overview to open") { exists(overview) }
     }
+
+    private fun overview(): SemanticsMatcher =
+        hasTestTag(if (uiV5) V5OverviewTestTags.Overview else TabOverviewChromeTestTags.Root)
+
+    /** What the browser shows on a new tab: the v5 new tab has a header of its own. */
+    private fun newTabTag(): String = if (uiV5) V5NewTabTestTags.Page else NewTabPageTestTags.Header
+
+    private fun addressEditor(): SemanticsMatcher =
+        if (uiV5) hasTestTag(V5EditorTestTags.Editor) else closeAddressInput()
 
     private fun atSettingsHome(): Boolean = exists(hasTestTag(SettingsSearchTestTags.Open))
 
@@ -483,7 +609,7 @@ class AppScreenWalkInstrumentedTest(
             idle()
             if (exists(hasTestTag(SettingsSearchTestTags.Open))) return
         }
-        if (!exists(hasTestTag(NewTabPageTestTags.Header))) relaunch()
+        if (!exists(hasTestTag(newTabTag()))) relaunch()
         openSettings()
     }
 
@@ -571,16 +697,17 @@ class AppScreenWalkInstrumentedTest(
 
     /** The new tab with nothing over it: its header stays in the tree under the editor. */
     private fun atBareNewTab(): Boolean =
-        exists(hasTestTag(NewTabPageTestTags.Header)) &&
-            !exists(closeAddressInput()) &&
+        exists(hasTestTag(newTabTag())) &&
+            !exists(addressEditor()) &&
             !exists(hasTestTag(BrowserMainMenuTestTags.Menu)) &&
-            !exists(hasTestTag(TabOverviewChromeTestTags.Root))
+            !exists(hasTestTag(V5SheetTestTags.Sheet)) &&
+            !exists(overview())
 
     private fun relaunch() {
         runCatching { scenario.close() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         dismissReleaseNotes()
-        awaitTag(NewTabPageTestTags.Header)
+        awaitTag(newTabTag())
     }
 
     private fun dismissReleaseNotes() {
@@ -821,6 +948,9 @@ class AppScreenWalkInstrumentedTest(
         private const val PAGE_GROUP = -4
         private const val PAGE_STATES_GROUP = -5
         private const val SUBPAGE_GROUP_BASE = -10
+        private const val V5_BROWSER_GROUP = -6
+        private const val V5_PAGE_GROUP = -7
+        private val V5_GROUPS = setOf(V5_BROWSER_GROUP, V5_PAGE_GROUP)
         private const val PAGE_TIMEOUT_MILLIS = 30_000L
         private const val TAP_ATTEMPTS = 2
         private const val RETAP_AFTER_MILLIS = 4_000L
@@ -883,7 +1013,12 @@ class AppScreenWalkInstrumentedTest(
         fun parameters(): List<Array<Any>> {
             val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP, PAGE_GROUP, PAGE_STATES_GROUP) +
                 settingsSlices().indices + subpageGroups()
-            return groups.flatMap { group -> AuditConfig.All.map { config -> arrayOf<Any>(group, config) } }
+            val walks = groups.flatMap { group -> AuditConfig.All.map { config -> arrayOf<Any>(group, config) } }
+            // After the others, so the indices of those (and the known failures listed by index) stay.
+            val v5Configs = AuditConfig.All.filter { config -> config.layout == AuditLayout.PhonePortrait }
+            return walks + V5_GROUPS.sortedDescending().flatMap { group ->
+                v5Configs.map { config -> arrayOf<Any>(group, config) }
+            }
         }
     }
 }

@@ -51,7 +51,7 @@ fun V5TabGroupMoveSheet(
     onRemoveFromGroup: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.v5_group_move_title)) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.v5_group_move_title)) {
         V5SheetHeader(
             title = stringResource(R.string.v5_group_move_title),
             subtitle = tabTitle,
@@ -126,7 +126,7 @@ fun V5TabGroupEditSheet(
         onDismiss()
         onSave(name.trim().ifEmpty { initialName }, colorIndex)
     }
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
         Column(
             Modifier

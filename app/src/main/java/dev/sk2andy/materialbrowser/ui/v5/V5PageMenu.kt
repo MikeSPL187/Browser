@@ -125,7 +125,7 @@ fun V5PageMenu(
         onDismiss()
         action()
     }
-    V5Sheet(
+    V5WindowSheet(
         visible = visible,
         onDismiss = onDismiss,
         title = stringResource(R.string.v5_menu_title),

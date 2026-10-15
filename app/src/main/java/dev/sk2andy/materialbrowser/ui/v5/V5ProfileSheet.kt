@@ -64,7 +64,7 @@ internal fun V5ProfileSheet(
     onEdit: ((String) -> Unit)? = null,
 ) {
     val title = stringResource(R.string.v5_profiles_title)
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
         val (local, synced) = profiles.partition { it.device == null }
         Column(
