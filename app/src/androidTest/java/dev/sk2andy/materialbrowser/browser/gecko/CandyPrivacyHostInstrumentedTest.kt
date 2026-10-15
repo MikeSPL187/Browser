@@ -766,51 +766,59 @@ class CandyPrivacyHostInstrumentedTest {
         private fun serve() {
             while (!socket.isClosed) {
                 try {
-                    socket.accept().use { connection ->
-                        val reader = connection.getInputStream().bufferedReader()
-                        val requestLine = reader.readLine().orEmpty()
-                        var host = ""
-                        while (true) {
-                            val header = reader.readLine() ?: break
-                            if (header.isEmpty()) break
-                            if (header.startsWith("Host:", ignoreCase = true)) {
-                                host = header.substringAfter(':').substringBefore(':').trim()
+                    // Each connection gets its own thread: Gecko may open one ahead of a navigation and send
+                    // nothing on it, and a server waiting on that one never answers the next request.
+                    val accepted = socket.accept()
+                    Thread {
+                        runCatching {
+                            accepted.use { connection ->
+                                connection.soTimeout = 30_000
+                                val reader = connection.getInputStream().bufferedReader()
+                                val requestLine = reader.readLine().orEmpty()
+                                var host = ""
+                                while (true) {
+                                    val header = reader.readLine() ?: break
+                                    if (header.isEmpty()) break
+                                    if (header.startsWith("Host:", ignoreCase = true)) {
+                                        host = header.substringAfter(':').substringBefore(':').trim()
+                                    }
+                                }
+                                val isScript = requestLine.contains(" /probe.js ")
+                                val isCookieFrame = requestLine.contains(" /cookie-frame ")
+                                val isSlowCookiePage = requestLine.contains(" /slow-cookie-page ")
+                                val isCookiePage = requestLine.contains(" /cookie-page ")
+                                val responseGate = if (isCookiePage) nextCookiePageGate.getAndSet(null) else null
+                                val body = when {
+                                    isScript -> "document.title='$ALLOWED_TITLE';"
+                                    isCookieFrame -> cookieFrame()
+                                    isSlowCookiePage -> cookiePage()
+                                    isCookiePage -> cookiePage()
+                                    requestLine.contains(" /developer-safe-area") ->
+                                        developerSafeAreaPage(developerDocumentCount.incrementAndGet())
+                                    requestLine.contains(" /dynamic-safe-area ") -> dynamicSafeAreaPage()
+                                    requestLine.contains(" /safe-area ") -> safeAreaPage()
+                                    else -> page(host)
+                                }.toByteArray()
+                                connection.getOutputStream().apply {
+                                    write("HTTP/1.1 200 OK\r\n".toByteArray())
+                                    write(
+                                        "Content-Type: ${if (isScript) "text/javascript" else "text/html"}; charset=utf-8\r\n"
+                                            .toByteArray(),
+                                    )
+                                    write("Content-Length: ${body.size}\r\n".toByteArray())
+                                    write("Connection: close\r\n\r\n".toByteArray())
+                                    flush()
+                                    responseGate?.started?.countDown()
+                                    responseGate?.release?.await(20, TimeUnit.SECONDS)
+                                    if (isSlowCookiePage) {
+                                        slowCookiePageRelease.await(20, TimeUnit.SECONDS)
+                                    }
+                                    write(body)
+                                    flush()
+                                }
                             }
                         }
-                        val isScript = requestLine.contains(" /probe.js ")
-                        val isCookieFrame = requestLine.contains(" /cookie-frame ")
-                        val isSlowCookiePage = requestLine.contains(" /slow-cookie-page ")
-                        val isCookiePage = requestLine.contains(" /cookie-page ")
-                        val responseGate = if (isCookiePage) nextCookiePageGate.getAndSet(null) else null
-                        val body = when {
-                            isScript -> "document.title='$ALLOWED_TITLE';"
-                            isCookieFrame -> cookieFrame()
-                            isSlowCookiePage -> cookiePage()
-                            isCookiePage -> cookiePage()
-                            requestLine.contains(" /developer-safe-area") ->
-                                developerSafeAreaPage(developerDocumentCount.incrementAndGet())
-                            requestLine.contains(" /dynamic-safe-area ") -> dynamicSafeAreaPage()
-                            requestLine.contains(" /safe-area ") -> safeAreaPage()
-                            else -> page(host)
-                        }.toByteArray()
-                        connection.getOutputStream().apply {
-                            write("HTTP/1.1 200 OK\r\n".toByteArray())
-                            write(
-                                "Content-Type: ${if (isScript) "text/javascript" else "text/html"}; charset=utf-8\r\n"
-                                    .toByteArray(),
-                            )
-                            write("Content-Length: ${body.size}\r\n".toByteArray())
-                            write("Connection: close\r\n\r\n".toByteArray())
-                            flush()
-                            responseGate?.started?.countDown()
-                            responseGate?.release?.await(20, TimeUnit.SECONDS)
-                            if (isSlowCookiePage) {
-                                slowCookiePageRelease.await(20, TimeUnit.SECONDS)
-                            }
-                            write(body)
-                            flush()
-                        }
-                    }
+                    }.apply { isDaemon = true }.start()
                 } catch (error: SocketException) {
                     if (socket.isClosed) return
                     // Gecko may cancel an in-flight fixture response while applying a policy
