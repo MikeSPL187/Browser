@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -34,6 +35,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.DownloadsController
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRepository
+import dev.sk2andy.materialbrowser.data.DownloadRetry
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
@@ -80,7 +82,9 @@ internal object DownloadRingRules {
     /** The line for what has just ended: a failure first, it asks for attention. */
     fun notice(ended: List<DownloadEntry>): V5DownloadNotice? {
         ended.lastOrNull { entry -> entry.status == DownloadStatus.Failed }
-            ?.let { entry -> return V5DownloadNotice.Failed(entry.id, entry.name) }
+            ?.let { entry ->
+                return V5DownloadNotice.Failed(entry.id, entry.name, canRetry = entry.retry == DownloadRetry.Available)
+            }
         return ended.lastOrNull { entry -> entry.status == DownloadStatus.Successful }
             ?.let { entry -> V5DownloadNotice.Done(entry.id, entry.name) }
     }
@@ -120,6 +124,12 @@ internal class DownloadRing {
     var donePulse by mutableIntStateOf(0)
         internal set
 
+    /** Bumped when a failed download starts again: the store is watched until it ends. */
+    internal var retries by mutableIntStateOf(0)
+
+    /** Starts the failed download [id] again (V22); set by [rememberDownloadRing]. */
+    internal var retry: (id: Long) -> Unit = {}
+
     val ring: V5DownloadRingState?
         get() = DownloadRingRules.shown(progress, notice, justDone)
 }
@@ -135,7 +145,20 @@ internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
     val scope = rememberCoroutineScope()
     val downloads = remember(context) { downloadsController(context.applicationContext, scope) }
     val state = remember { DownloadRing() }
-    LaunchedEffect(downloads, controller.contentActions.downloadRevision) {
+    SideEffect {
+        state.retry = { id ->
+            downloads.downloads.firstOrNull { entry -> entry.id == id }?.let { entry ->
+                downloads.retry(entry) { started ->
+                    if (started) {
+                        state.retries++
+                    } else {
+                        Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+    LaunchedEffect(downloads, controller.contentActions.downloadRevision, state.retries) {
         var polls = 0
         do {
             downloads.refresh()
@@ -221,7 +244,7 @@ internal fun DownloadsMenuButton(downloads: DownloadRing, ink: Color, onClick: (
     }
 }
 
-/** The line above the bar when a download ends: open the file, or the Downloads screen. */
+/** The line above the bar when a download ends: open the file, retry it, or the Downloads screen. */
 @Composable
 internal fun BrowserDownloadNoticeAccessory(
     downloads: DownloadRing,
@@ -241,6 +264,10 @@ internal fun BrowserDownloadNoticeAccessory(
             onDownloads()
         },
         privateTab = selectedTabPrivate,
+        onRetry = { notice ->
+            downloads.notice = null
+            downloads.retry(notice.id)
+        },
     )
 }
 
@@ -275,6 +302,7 @@ private fun downloadsController(context: Context, scope: CoroutineScope): Downlo
             override fun clear(entries: Collection<DownloadEntry>) = repository.clear(entries)
             override fun cancel(entry: DownloadEntry) = repository.cancel(entry)
             override fun togglePause(entry: DownloadEntry) = repository.togglePause(entry)
+            override fun retry(entry: DownloadEntry) = repository.retry(entry)
         },
         worker = object : DownloadsController.Worker {
             override fun <T> run(work: () -> T, onResult: (T) -> Unit) {

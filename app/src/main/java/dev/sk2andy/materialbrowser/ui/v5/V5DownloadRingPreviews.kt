@@ -68,6 +68,11 @@ private fun NoticesPreview(dark: Boolean) {
             V5DownloadNoticeRow(V5DownloadNotice.Done(1, "annual-report-2026.pdf"), onOpen = {}, onDownloads = {})
             V5DownloadNoticeRow(V5DownloadNotice.Failed(2, "holiday-photos.zip"), onOpen = {}, onDownloads = {})
             V5DownloadNoticeRow(
+                V5DownloadNotice.Failed(4, "ferry-timetable.pdf", canRetry = true),
+                onOpen = {},
+                onDownloads = {},
+            )
+            V5DownloadNoticeRow(
                 V5DownloadNotice.Done(3, "boarding-pass.pdf"),
                 onOpen = {},
                 onDownloads = {},

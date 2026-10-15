@@ -33,6 +33,7 @@ class DownloadsActivity : ComponentActivity() {
                 override fun clear(entries: Collection<DownloadEntry>) = repository.clear(entries)
                 override fun cancel(entry: DownloadEntry) = repository.cancel(entry)
                 override fun togglePause(entry: DownloadEntry) = repository.togglePause(entry)
+                override fun retry(entry: DownloadEntry) = repository.retry(entry)
             },
             worker = object : DownloadsController.Worker {
                 override fun <T> run(work: () -> T, onResult: (T) -> Unit) {
@@ -75,6 +76,7 @@ class DownloadsActivity : ComponentActivity() {
                     onBack = ::finish,
                     onCancelDownload = { entry -> controller.cancel(entry, ::reportControl) },
                     onTogglePauseDownload = { entry -> controller.togglePause(entry, ::reportControl) },
+                    onRetryDownload = { entry -> controller.retry(entry, ::reportControl) },
                 )
             }
         }
