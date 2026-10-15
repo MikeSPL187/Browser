@@ -5,10 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.LocaleList
 import android.os.ParcelFileDescriptor
-import android.os.SystemClock
-import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -109,31 +106,14 @@ internal object AuditEnvironment {
 
     private fun setLayout(layout: AuditLayout) {
         // The rotation holds only with auto-rotate off; a fixed one is what a test needs anyway.
-        val rotation = if (layout == AuditLayout.PhoneLandscape) Surface.ROTATION_90 else Surface.ROTATION_0
         shell("settings put system accelerometer_rotation 0")
-        shell("settings put system user_rotation $rotation")
-        awaitRotation(rotation)
+        shell("settings put system user_rotation ${if (layout == AuditLayout.PhoneLandscape) 1 else 0}")
         if (layout == AuditLayout.Tablet) {
             shell("wm size $TABLET_SIZE")
             shell("wm density $TABLET_DENSITY")
         } else {
             shell("wm size reset")
             shell("wm density reset")
-        }
-    }
-
-    /**
-     * The setting turns the screen a moment later, and a test launched before that starts in the
-     * old shape: a portrait walk once ran in the landscape window the previous test left behind.
-     */
-    private fun awaitRotation(rotation: Int) {
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val deadline = SystemClock.uptimeMillis() + ROTATION_TIMEOUT_MILLIS
-        while (device.displayRotation != rotation) {
-            check(SystemClock.uptimeMillis() < deadline) {
-                "The screen stayed at rotation ${device.displayRotation} instead of $rotation"
-            }
-            SystemClock.sleep(ROTATION_POLL_MILLIS)
         }
     }
 
@@ -148,9 +128,6 @@ internal object AuditEnvironment {
     /** 900 by 1440 dp: wider than the 840 dp where the expanded window size class starts. */
     private const val TABLET_SIZE = "1800x2880"
     private const val TABLET_DENSITY = 320
-
-    private const val ROTATION_TIMEOUT_MILLIS = 10_000L
-    private const val ROTATION_POLL_MILLIS = 100L
 
     private fun shell(command: String) {
         val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation

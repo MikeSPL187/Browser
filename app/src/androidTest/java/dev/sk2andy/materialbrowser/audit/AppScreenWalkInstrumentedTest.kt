@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.audit
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.os.SystemClock
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
@@ -148,6 +149,7 @@ class AppScreenWalkInstrumentedTest(
         AuditEnvironment.enter(context, auditConfig, firstRun)
         grantNotificationPermissionForTests()
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        awaitOrientation()
         if (firstRun) walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(NewTabPageTestTags.Header) }
@@ -572,8 +574,27 @@ class AppScreenWalkInstrumentedTest(
     private fun relaunch() {
         runCatching { scenario.close() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        awaitOrientation()
         dismissReleaseNotes()
         awaitTag(NewTabPageTestTags.Header)
+    }
+
+    /**
+     * The rotation setting turns the screen only once the app is in front (the launcher holds it
+     * upright before), and a walk that went on at once walked the shape the previous test left:
+     * a portrait walk once ran in a landscape window.
+     */
+    private fun awaitOrientation() {
+        val expected = if (config.layout == AuditLayout.PhoneLandscape) {
+            Configuration.ORIENTATION_LANDSCAPE
+        } else {
+            Configuration.ORIENTATION_PORTRAIT
+        }
+        composeRule.waitUntil("the app to lay out in orientation $expected", ROTATION_TIMEOUT_MILLIS) {
+            // Between the old activity and the turned one there is a moment with none.
+            runCatching { currentActivity().resources.configuration.orientation == expected }.getOrDefault(false)
+        }
+        idle()
     }
 
     private fun dismissReleaseNotes() {
@@ -786,6 +807,7 @@ class AppScreenWalkInstrumentedTest(
         )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
+        private const val ROTATION_TIMEOUT_MILLIS = 15_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
         private const val SLOWEST_SHOWN = 4
