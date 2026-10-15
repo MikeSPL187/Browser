@@ -26,6 +26,9 @@ class DownloadsController internal constructor(
         fun cancel(entry: DownloadEntry): Boolean
 
         fun togglePause(entry: DownloadEntry): Boolean
+
+        /** Starts a failed or cancelled download again; see [DownloadEntry.retry]. */
+        fun retry(entry: DownloadEntry): Boolean = false
     }
 
     /** Runs [work] off the main thread and hands its result back on it. */
@@ -78,6 +81,10 @@ class DownloadsController internal constructor(
 
     internal fun togglePause(entry: DownloadEntry, onResult: (Boolean) -> Unit = {}) =
         change({ store.togglePause(entry) }, onResult)
+
+    /** [onResult] hears whether the attempt began; the row then shows how it went. */
+    internal fun retry(entry: DownloadEntry, onResult: (Boolean) -> Unit = {}) =
+        change({ store.retry(entry) }, onResult)
 
     private fun change(action: () -> Boolean, onResult: (Boolean) -> Unit) {
         worker.run(action) { changed ->

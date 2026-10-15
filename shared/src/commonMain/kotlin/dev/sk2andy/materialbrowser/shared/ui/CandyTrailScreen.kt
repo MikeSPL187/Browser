@@ -26,9 +26,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledIconButton
@@ -392,7 +394,13 @@ fun CandyTrailScreenContent(
             } else {
                 Box(
                     modifier = Modifier
-                        .size(layout.width.dp, layout.height.dp)
+                        // The whole graph, wider than the screen: `size` would squeeze it into the
+                        // viewport, and nodes past it got empty bounds, out of TalkBack's reach.
+                        // The wrapper fills the viewport, since it clips semantics bounds in screen
+                        // space, where a small graph sits centred, away from its own corner.
+                        .fillMaxSize()
+                        .wrapContentSize(Alignment.TopStart, unbounded = true)
+                        .requiredSize(layout.width.dp, layout.height.dp)
                         .graphicsLayer {
                             translationX = panX
                             translationY = panY

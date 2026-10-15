@@ -65,6 +65,11 @@ internal class DownloadRepository(
         DownloadRuntimeRegistry.togglePause(entry.id)
     }.getOrDefault(false)
 
+    /** Starts a failed or cancelled engine transfer again when [DownloadEntry.retry] allows it. */
+    fun retry(entry: DownloadEntry): Boolean = runCatching {
+        DownloadRuntimeRegistry.retry(entry.id)
+    }.getOrDefault(false)
+
     private fun querySystemDownloads(): List<SystemRow> = runCatching {
         manager.query(DownloadManager.Query())?.use { cursor ->
             buildList {
