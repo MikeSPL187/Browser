@@ -180,7 +180,7 @@ class AppScreenWalkInstrumentedTest(
                 } else {
                     auditScrolling(screen)
                     val before = auditor.describeScreen()
-                    click(hasTestTag(forward))
+                    click(hasTestTag(forward), systemTap = true)
                     // The next screen fades in over this one, and a screen that left can linger in
                     // a detached root: the walk once pressed «Next» nine times on a screen it had
                     // left. What it waits for is what is shown, as a user does.
@@ -625,7 +625,12 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
-    private fun click(matcher: SemanticsMatcher) {
+    /**
+     * [systemTap] taps through the system, as a finger does, instead of Compose's injected touch:
+     * on the gesture lesson standing still (animations removed) the injected touch on «Skip» never
+     * arrived, while a system tap and the button's own action both worked (runs of 15.10).
+     */
+    private fun click(matcher: SemanticsMatcher, systemTap: Boolean = false) {
         // Screens still animating in get a moment first; only then are lists scrolled to look.
         timed("find ${matcher.description}") {
             val shown = runCatching { composeRule.waitUntil(REVEAL_AFTER_MILLIS) { exists(matcher) } }.isSuccess
@@ -637,7 +642,16 @@ class AppScreenWalkInstrumentedTest(
         if (!fullyShown(target.fetchSemanticsNode())) {
             timed("scroll to ${matcher.description}") { scrollIntoView(matcher) }
         }
-        timed("tap ${matcher.description}") { target.performClick() }
+        timed("tap ${matcher.description}") {
+            if (systemTap) {
+                val center = target.fetchSemanticsNode().boundsInWindow.center
+                val window = IntArray(2)
+                currentActivity().window.decorView.getLocationOnScreen(window)
+                device.click(window[0] + center.x.toInt(), window[1] + center.y.toInt())
+            } else {
+                target.performClick()
+            }
+        }
         idle()
     }
 
