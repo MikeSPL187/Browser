@@ -136,6 +136,7 @@ import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
 import dev.sk2andy.materialbrowser.data.SafeDownloadValues
+import dev.sk2andy.materialbrowser.data.SystemDownloadRetries
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript
@@ -1902,27 +1903,35 @@ private class SystemWebViewBrowserEngineSession(
                 listener,
             )
         }
-        val request = DownloadManager.Request(safeUri)
-            .setMimeType(effectiveMimeType)
-            .setTitle(fileName)
-            .setNotificationVisibility(
-                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED,
-            )
-            .setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_DOWNLOADS,
-                DownloadDirectoryRules.downloadManagerFilePath(
-                    BrowserSessionStore(appContext).loadDownloadSettings().downloadSubdirectory,
-                    fileName,
-                ),
-            )
-        WebViewProfileCookies.managerFor(webView)?.getCookie(url)
-            ?.let { request.addRequestHeader("Cookie", it) }
-        request.addRequestHeader("User-Agent", webView.settings.userAgentString)
         val manager = appContext.getSystemService(DownloadManager::class.java) ?: return null
-        val id = runCatching { manager.enqueue(request) }.getOrElse {
+        val cookies = WebViewProfileCookies.managerFor(webView)
+        val userAgent = webView.settings.userAgentString
+        // Reads this tab's profile's cookies at every call, so a retry sends the current ones.
+        val enqueue = {
+            val request = DownloadManager.Request(safeUri)
+                .setMimeType(effectiveMimeType)
+                .setTitle(fileName)
+                .setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED,
+                )
+                .setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    DownloadDirectoryRules.downloadManagerFilePath(
+                        BrowserSessionStore(appContext).loadDownloadSettings().downloadSubdirectory,
+                        fileName,
+                    ),
+                )
+            runCatching { cookies?.getCookie(url) }.getOrNull()
+                ?.let { request.addRequestHeader("Cookie", it) }
+            request.addRequestHeader("User-Agent", userAgent)
+            manager.enqueue(request)
+        }
+        val id = runCatching(enqueue).getOrElse {
             listener.onFailed(GeckoDownloadFailure.Storage)
             return null
         }
+        // A failed row may start again while the app runs (V22).
+        SystemDownloadRetries.remember(id, enqueue)
         listener.onStarted(
             GeckoDownloadTransferStart(
                 id = id.toInt(),
