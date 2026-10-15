@@ -209,7 +209,10 @@ class AppearanceSettingsScreenInstrumentedTest {
             .performClick()
         assertEquals(BrowserAddressBarColorPreset.Graphite, settings.addressBarColorPreset)
 
+        // The reset button sits below the color row, which performScrollTo left at the bottom
+        // edge: a click on a node past the edge lands outside the window and changes nothing.
         composeRule.onNodeWithTag(AppearanceSettingsTestTags.AddressBarColorReset)
+            .performScrollTo()
             .performClick()
 
         assertEquals(BrowserAddressBarColorPreset.Theme, settings.addressBarColorPreset)
