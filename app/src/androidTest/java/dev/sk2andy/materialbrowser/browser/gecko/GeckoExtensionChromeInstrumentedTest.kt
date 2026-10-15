@@ -331,28 +331,20 @@ class GeckoExtensionChromeInstrumentedTest {
         private fun serve() {
             while (!socket.isClosed) {
                 try {
-                    // Each connection gets its own thread: Gecko may open one ahead of a navigation and send
-                    // nothing on it, and a server waiting on that one never answers the next request.
-                    val accepted = socket.accept()
-                    Thread {
-                        runCatching {
-                            accepted.use { connection ->
-                                connection.soTimeout = 30_000
-                                val reader = connection.getInputStream().bufferedReader()
-                                while (!reader.readLine().isNullOrEmpty()) Unit
-                                val body = "<html><head><title>fixture</title></head><body>fixture</body></html>"
-                                    .toByteArray()
-                                connection.getOutputStream().apply {
-                                    write("HTTP/1.1 200 OK\r\n".toByteArray())
-                                    write("Content-Type: text/html; charset=utf-8\r\n".toByteArray())
-                                    write("Content-Length: ${body.size}\r\n".toByteArray())
-                                    write("Connection: close\r\n\r\n".toByteArray())
-                                    write(body)
-                                    flush()
-                                }
-                            }
+                    socket.accept().use { connection ->
+                        val reader = connection.getInputStream().bufferedReader()
+                        while (!reader.readLine().isNullOrEmpty()) Unit
+                        val body = "<html><head><title>fixture</title></head><body>fixture</body></html>"
+                            .toByteArray()
+                        connection.getOutputStream().apply {
+                            write("HTTP/1.1 200 OK\r\n".toByteArray())
+                            write("Content-Type: text/html; charset=utf-8\r\n".toByteArray())
+                            write("Content-Length: ${body.size}\r\n".toByteArray())
+                            write("Connection: close\r\n\r\n".toByteArray())
+                            write(body)
+                            flush()
                         }
-                    }.apply { isDaemon = true }.start()
+                    }
                 } catch (error: SocketException) {
                     if (socket.isClosed) return
                 }

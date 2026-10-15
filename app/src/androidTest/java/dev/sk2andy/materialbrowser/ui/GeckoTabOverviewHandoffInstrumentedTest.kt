@@ -387,32 +387,24 @@ class GeckoTabOverviewHandoffInstrumentedTest {
         private val thread = Thread {
             while (!server.isClosed) {
                 runCatching {
-                    // Each connection gets its own thread: Gecko may open one ahead of a navigation and send
-                    // nothing on it, and a server waiting on that one never answers the next request.
-                    val accepted = server.accept()
-                    Thread {
-                        runCatching {
-                            accepted.use { socket ->
-                                socket.soTimeout = 30_000
-                                socket.getInputStream().bufferedReader().readLine()
-                                val body = """
-                                    <!doctype html>
-                                    <meta name="viewport" content="width=device-width,initial-scale=1">
-                                    <title>Hero stripes</title>
-                                    <style>
-                                      html,body{margin:0;width:100%;height:100%;overflow:hidden}
-                                      body{background:linear-gradient(to bottom,#e62626 0 33%,#23bd55 33% 66%,#2955dc 66% 100%)}
-                                    </style>
-                                """.trimIndent()
-                                val response = "HTTP/1.1 200 OK\r\n" +
-                                    "Content-Type: text/html; charset=utf-8\r\n" +
-                                    "Content-Length: ${body.toByteArray().size}\r\n" +
-                                    "Connection: close\r\n\r\n" +
-                                    body
-                                socket.getOutputStream().write(response.toByteArray())
-                            }
-                        }
-                    }.apply { isDaemon = true }.start()
+                    server.accept().use { socket ->
+                        socket.getInputStream().bufferedReader().readLine()
+                        val body = """
+                            <!doctype html>
+                            <meta name="viewport" content="width=device-width,initial-scale=1">
+                            <title>Hero stripes</title>
+                            <style>
+                              html,body{margin:0;width:100%;height:100%;overflow:hidden}
+                              body{background:linear-gradient(to bottom,#e62626 0 33%,#23bd55 33% 66%,#2955dc 66% 100%)}
+                            </style>
+                        """.trimIndent()
+                        val response = "HTTP/1.1 200 OK\r\n" +
+                            "Content-Type: text/html; charset=utf-8\r\n" +
+                            "Content-Length: ${body.toByteArray().size}\r\n" +
+                            "Connection: close\r\n\r\n" +
+                            body
+                        socket.getOutputStream().write(response.toByteArray())
+                    }
                 }
             }
         }.apply {
