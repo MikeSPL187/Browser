@@ -9,6 +9,7 @@ import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
+import dev.sk2andy.materialbrowser.data.SystemDownloadRetries
 
 class BrowserDownloadManager(context: Context) {
     private val applicationContext = context.applicationContext
@@ -27,33 +28,39 @@ class BrowserDownloadManager(context: Context) {
         )
 
         return runCatching {
-            val platformRequest = DownloadManager.Request(Uri.parse(safeRequest.url))
-                .setMimeType(safeRequest.mimeType)
-                .setTitle(safeRequest.fileName)
-                .setDescription(
-                    Uri.parse(safeRequest.url).host
-                        ?: applicationContext.getString(R.string.download_notification_description),
-                )
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(false)
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(
-                    Environment.DIRECTORY_DOWNLOADS,
-                    DownloadDirectoryRules.downloadManagerFilePath(
-                        settingsStore.loadDownloadSettings().downloadSubdirectory,
-                        safeRequest.fileName,
-                    ),
-                )
-            safeRequest.userAgent?.let { platformRequest.addRequestHeader("User-Agent", it) }
-            safeRequest.cookies?.let { platformRequest.addRequestHeader("Cookie", it) }
-            safeRequest.referrer?.let { platformRequest.addRequestHeader("Referer", it) }
-            val manager = applicationContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val id = manager.enqueue(platformRequest)
+            val id = enqueuePlatform(safeRequest)
+            // A failed row may start again while the app runs, with the same request (V22).
+            SystemDownloadRetries.remember(id) { enqueuePlatform(safeRequest) }
             DownloadActionResult.Enqueued(id, safeRequest.fileName)
         }.getOrElse {
             DownloadActionResult.Failed(
                 applicationContext.getString(R.string.error_download_start_failed),
             )
         }
+    }
+
+    private fun enqueuePlatform(safeRequest: BrowserDownloadRequest): Long {
+        val platformRequest = DownloadManager.Request(Uri.parse(safeRequest.url))
+            .setMimeType(safeRequest.mimeType)
+            .setTitle(safeRequest.fileName)
+            .setDescription(
+                Uri.parse(safeRequest.url).host
+                    ?: applicationContext.getString(R.string.download_notification_description),
+            )
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(false)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                DownloadDirectoryRules.downloadManagerFilePath(
+                    settingsStore.loadDownloadSettings().downloadSubdirectory,
+                    safeRequest.fileName,
+                ),
+            )
+        safeRequest.userAgent?.let { platformRequest.addRequestHeader("User-Agent", it) }
+        safeRequest.cookies?.let { platformRequest.addRequestHeader("Cookie", it) }
+        safeRequest.referrer?.let { platformRequest.addRequestHeader("Referer", it) }
+        val manager = applicationContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        return manager.enqueue(platformRequest)
     }
 }
