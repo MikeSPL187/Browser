@@ -661,9 +661,11 @@ class GeckoDownloadTransferInstrumentedTest {
             waitFor { storedDownload("candy-retry-fixture.bin")?.contentEquals(body) == true },
         )
         assertTrue("the old row stayed", waitFor { DownloadRuntimeRegistry.entryForTransfer(firstId.get()) == null })
-        val second = server.requests[1]
+        val (first, second) = server.requests
         assertTrue(second.requestLine, second.requestLine.startsWith("GET /file "))
-        assertEquals(page, second.headers["referer"])
+        // Gecko trims the referrer by its policy (to the origin here); the retry sends what the first did.
+        assertNotNull(first.headers["referer"])
+        assertEquals(first.headers["referer"], second.headers["referer"])
         manager.close()
         server.close()
     }
