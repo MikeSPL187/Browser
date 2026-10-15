@@ -15,39 +15,12 @@ class DeveloperSettingsTest {
         assertEquals(400, settings.safeAreaLayoutQuietPeriodMillis)
         assertEquals(3, settings.safeAreaRequiredFailureCount)
         assertEquals(false, settings.forceSafeAreaFallback)
-        assertEquals(GeckoSafeAreaSettings(), settings.geckoSafeAreaSettings)
     }
 
     @Test
     fun `vola's own gecko blocker is on by default`() {
         assertEquals(true, DeveloperSettings().volaGeckoBlocker)
         assertEquals(true, DeveloperSettings().normalized().volaGeckoBlocker)
-    }
-
-    @Test
-    fun `gecko budgets normalize without changing chrome or fallback settings`() {
-        val settings = DeveloperSettings(
-            browserChromeScrollDispatchMode = BrowserChromeScrollDispatchMode.Fixed15Hz,
-            safeAreaLayoutQuietPeriodMillis = 250,
-            safeAreaRequiredFailureCount = 4,
-            forceSafeAreaFallback = true,
-            geckoSafeAreaSettings = GeckoSafeAreaSettings(
-                enabled = false,
-                interactionWindowMillis = 0,
-                maxElementsPerBatch = 99,
-            ),
-        )
-
-        assertEquals(
-            settings.copy(
-                geckoSafeAreaSettings = GeckoSafeAreaSettings(
-                    enabled = false,
-                    interactionWindowMillis = 100,
-                    maxElementsPerBatch = 64,
-                ),
-            ),
-            settings.normalized(),
-        )
     }
 
     @Test

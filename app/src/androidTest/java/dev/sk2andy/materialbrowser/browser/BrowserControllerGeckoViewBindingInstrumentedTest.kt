@@ -37,7 +37,6 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
-import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import java.util.concurrent.CountDownLatch
@@ -1014,7 +1013,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         composeRule.runOnIdle {
             session = prepareFullscreenInlineSession()
             val browserController = requireNotNull(controller)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             session.commands.clear()
 
@@ -1022,7 +1020,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.mediaRestorationCount == 1 }
         composeRule.runOnIdle {
-            assertEquals(listOf(0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(1, session.privacyPolicies.size)
             requireNotNull(controller).reportSelectedGeckoFullscreenStateForTesting(false)
             assertEquals(1, session.privacyPolicies.size)
             assertTrue(session.commands.isEmpty())
@@ -1068,7 +1066,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
 
             // A policy published before the inset arrives cannot authorize content restoration.
             // A direct return may instead defer its first publication until layout is ready.
-            assertTrue(session.privacyPolicies.all { it.cssSafeAreaTopInsetPx == 0 })
             session.acknowledgePrivacyPolicies()
             assertTrue(browserController.isMediaLayoutRestorationPending)
 
@@ -1080,7 +1077,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             val view = requireNotNull(session.createdView)
             fun awaitHostFrames(remaining: Int) {
                 if (remaining == 0) hostFrames.countDown()
@@ -1290,7 +1286,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.policyReadyCallbacks.isNotEmpty() }
         composeRule.runOnUiThread {
-            assertEquals(listOf(0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(1, session.privacyPolicies.size)
             assertTrue(requireNotNull(controller).isMediaLayoutRestorationPending)
             session.acknowledgePrivacyPolicies()
             assertEquals(1, session.mediaRestorationCount)
@@ -1314,7 +1310,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
 
             session.acknowledgePrivacyPolicies(returnRevision)
 
@@ -1432,7 +1427,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
             assertEquals(0, session.privacyPolicies.last().topInsetPx)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.commands.clear()
             session.privacyPolicies.clear()
 
@@ -1454,7 +1448,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             )
             assertEquals(1, session.privacyPolicies.size)
             assertEquals(0, session.privacyPolicies.single().topInsetPx)
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
 
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
@@ -1474,10 +1468,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 DeveloperSettings(
                     safeAreaLayoutQuietPeriodMillis = 250,
                     safeAreaRequiredFailureCount = 4,
-                    geckoSafeAreaSettings = GeckoSafeAreaSettings(
-                        recheckChangedElements = false,
-                        mutationDebounceMillis = 250,
-                    ),
                 ),
             )
             assertEquals(
@@ -1491,8 +1481,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 session.privacyPolicies.single().safeAreaLayoutQuietPeriodMillis,
             )
             assertEquals(4, session.privacyPolicies.single().safeAreaRequiredFailureCount)
-            assertEquals(250, session.privacyPolicies.single().geckoSafeAreaSettings.mutationDebounceMillis)
-            assertEquals(false, session.privacyPolicies.single().geckoSafeAreaSettings.recheckChangedElements)
             session.privacyPolicies.clear()
 
             browserController.dispatchGeckoEngineEventForTesting(
@@ -1508,8 +1496,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             )
             assertEquals(0, session.privacyPolicies.last().topInsetPx)
             assertEquals(2, session.privacyPolicies.size)
-            assertEquals(0, session.privacyPolicies.first().cssSafeAreaTopInsetPx)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
@@ -1579,13 +1565,12 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     ?.statusBarAppearance
                     ?.colorArgb,
             )
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
 
             session.privacyPolicies.clear()
             navigate("second")
 
             assertEquals(null, browserController.selectedWebContentTopBarState)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         }
     }
 
@@ -1638,7 +1623,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     safeAreaFallbackIsTopHeader = true,
                 ),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
                     requestUrl = "",
@@ -1658,7 +1642,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             assertEquals(null, browserController.selectedWebContentTopBarState)
             assertEquals(null, browserController.selectedWebContentStatusBarBackdrop)
             assertEquals(2, session.privacyPolicies.last().navigationGeneration)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
                     requestUrl = "",
@@ -1688,10 +1671,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     safeAreaFallbackNavigationGeneration = 2,
                 ),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             engineEvent(BrowserEngineEventType.StateChanged, detailUrl)
-            assertEquals(listOf(0, 0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(2, session.privacyPolicies.size)
             assertEquals(3, session.privacyPolicies.last().navigationGeneration)
         }
     }
@@ -1800,7 +1782,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
             assertEquals(null, browserController.selectedWebContentStatusBarBackdrop)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         }
     }
 
@@ -1859,11 +1840,11 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             assertTrue(session.privacyPolicies.isEmpty())
 
             session.policyReadyCallbacks.last()()
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
             session.deferPolicyReadyCallbacks = false
             session.privacyPolicies.clear()
             fallback(3)
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
             session.privacyPolicies.clear()
             obsoleteReady()
             assertTrue(session.privacyPolicies.isEmpty())
@@ -2783,7 +2764,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                 .build(),
         )
-        assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         assertTrue(session.policyReadyCallbacks.isNotEmpty())
         return session
     }
