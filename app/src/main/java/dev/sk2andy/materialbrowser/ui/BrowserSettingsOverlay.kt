@@ -204,6 +204,9 @@ internal fun BrowserSettingsOverlay(
                 startupAddressFocusMode = controller.addressBar.startupFocusMode,
                 isHttpPasswordAutofillEnabled = controller.isHttpPasswordAutofillEnabled,
                 isHttpPasswordAutofillSupported = controller.isHttpPasswordAutofillSupported,
+                // Gecko pages sit on the host's native margin (#123): the page-level fallback and
+                // its tuning are System WebView's only.
+                isSafeAreaFallbackSupported = !controller.usesGeckoEngine,
                 isOpenHomeOnStartupEnabled = controller.isOpenHomeOnStartupEnabled,
                 isScrollBarEnabled = controller.isScrollBarEnabled,
                 isVideoAutoplayBlocked = controller.isVideoAutoplayBlocked,

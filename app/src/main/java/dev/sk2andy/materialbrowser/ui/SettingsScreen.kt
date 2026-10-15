@@ -109,6 +109,7 @@ internal fun SettingsScreen(
     startupAddressFocusMode: StartupAddressFocusMode = StartupAddressFocusMode.Default,
     isHttpPasswordAutofillEnabled: Boolean = false,
     isHttpPasswordAutofillSupported: Boolean = false,
+    isSafeAreaFallbackSupported: Boolean = true,
     isOpenHomeOnStartupEnabled: Boolean = false,
     isScrollBarEnabled: Boolean,
     isVideoAutoplayBlocked: Boolean,
@@ -550,6 +551,7 @@ internal fun SettingsScreen(
                     settings = developerSettings,
                     isHttpPasswordAutofillEnabled = isHttpPasswordAutofillEnabled,
                     isHttpPasswordAutofillSupported = isHttpPasswordAutofillSupported,
+                    isSafeAreaFallbackSupported = isSafeAreaFallbackSupported,
                     isInputDiagnosticsEnabled = isInputDiagnosticsEnabled,
                     onSettingsChanged = onDeveloperSettingsChanged,
                     onHttpPasswordAutofillEnabledChanged =
