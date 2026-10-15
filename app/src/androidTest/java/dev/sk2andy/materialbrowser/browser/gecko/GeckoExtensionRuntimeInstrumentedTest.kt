@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.net.Socket
 import java.net.SocketException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -153,27 +154,41 @@ class GeckoExtensionRuntimeInstrumentedTest {
 
         fun url(host: String): String = "http://$host:${socket.localPort}/feed"
 
+        // Each connection gets its own thread: Gecko may open one ahead of a navigation and send
+        // nothing on it, and a server waiting on that one never answers the next page.
         private fun serve() {
             while (!socket.isClosed) {
-                try {
-                    socket.accept().use { connection ->
-                        val reader = connection.getInputStream().bufferedReader()
-                        while (!reader.readLine().isNullOrEmpty()) {
-                            // Consume request headers.
-                        }
-                        val body = "<html><head><title>$ORIGINAL_TITLE</title></head><body>feed</body></html>"
-                            .toByteArray()
-                        connection.getOutputStream().apply {
-                            write("HTTP/1.1 200 OK\r\n".toByteArray())
-                            write("Content-Type: text/html; charset=utf-8\r\n".toByteArray())
-                            write("Content-Length: ${body.size}\r\n".toByteArray())
-                            write("Connection: close\r\n\r\n".toByteArray())
-                            write(body)
-                            flush()
-                        }
-                    }
+                val connection = try {
+                    socket.accept()
                 } catch (error: SocketException) {
-                    if (socket.isClosed) return
+                    if (socket.isClosed) return else continue
+                }
+                Thread({ respond(connection) }, "gecko-extension-fixture-connection").apply {
+                    isDaemon = true
+                    start()
+                }
+            }
+        }
+
+        private fun respond(connection: Socket) {
+            runCatching {
+                connection.use {
+                    connection.soTimeout = READ_TIMEOUT_MILLIS
+                    val reader = connection.getInputStream().bufferedReader()
+                    if (reader.readLine().isNullOrEmpty()) return@use
+                    while (!reader.readLine().isNullOrEmpty()) {
+                        // Consume request headers.
+                    }
+                    val body = "<html><head><title>$ORIGINAL_TITLE</title></head><body>feed</body></html>"
+                        .toByteArray()
+                    connection.getOutputStream().apply {
+                        write("HTTP/1.1 200 OK\r\n".toByteArray())
+                        write("Content-Type: text/html; charset=utf-8\r\n".toByteArray())
+                        write("Content-Length: ${body.size}\r\n".toByteArray())
+                        write("Connection: close\r\n\r\n".toByteArray())
+                        write(body)
+                        flush()
+                    }
                 }
             }
         }
@@ -186,6 +201,7 @@ class GeckoExtensionRuntimeInstrumentedTest {
 
     private companion object {
         const val FIXTURE_ID = "candy-firefox-fixture@sk2andy.dev"
+        const val READ_TIMEOUT_MILLIS = 30_000
         const val SIGNED_EXTENSION_URI =
             "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
         const val GOOGLE_HOST = "google.candy.localhost"
