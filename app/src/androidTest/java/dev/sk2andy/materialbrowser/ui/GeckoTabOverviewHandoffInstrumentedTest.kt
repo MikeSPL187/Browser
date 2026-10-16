@@ -23,6 +23,7 @@ import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
+import dev.sk2andy.materialbrowser.browser.gecko.CandyGeckoView
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
@@ -121,11 +122,15 @@ class GeckoTabOverviewHandoffInstrumentedTest {
                 SystemClock.sleep(PAGE_SETTLE_MILLIS)
                 awaitPreview(scenario)
                 scenario.onActivity { activity ->
-                    val view = activity.browserControllerForTesting().selectedGeckoViewForTesting()
-                    assertTrue("The selected tab has no GeckoView: $view", view is GeckoView)
+                    // The selected engine view is Vola's host; the GeckoView is its first child.
+                    val host = activity.browserControllerForTesting().selectedGeckoViewForTesting()
+                    assertTrue(
+                        "The selected tab has no GeckoView: $host",
+                        host is CandyGeckoView && host.getChildAt(0) is GeckoView,
+                    )
                     // Since H4 (#123) the page keeps clear of the status bar by its host's place,
                     // not by a CSS inset: the safe area the handoff must keep is the host's top.
-                    val host = requireNotNull(view)
+                    requireNotNull(host)
                     val statusTop = ViewCompat.getRootWindowInsets(host)
                         ?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
                     val hostTop = IntArray(2).also(host::getLocationOnScreen)[1]
