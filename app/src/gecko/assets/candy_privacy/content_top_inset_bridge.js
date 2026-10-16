@@ -8,17 +8,6 @@ const state = {
   scrollMetricsEnabled: false,
   performanceDiagnosticsEnabled: false,
   domDiagnosticsEnabled: false,
-  cssSafeAreaTopInsetPx: 0,
-  enabled: false,
-  recheckAddedElements: false,
-  recheckChangedElements: false,
-  requireInteractionForUpdates: true,
-  recheckOnResize: false,
-  interactionWindowMillis: 1000,
-  mutationDebounceMillis: 150,
-  maxElementsPerBatch: 16,
-  maxBatchDurationMillis: 4,
-  maxInitialElements: 512,
   safeAreaLayoutQuietPeriodMillis: 400,
   safeAreaRequiredFailureCount: 3,
 };
@@ -128,35 +117,19 @@ function applyPolicy(policy) {
   state.scrollMetricsEnabled = policy.scrollMetricsEnabled === true;
   state.performanceDiagnosticsEnabled = policy.performanceDiagnosticsEnabled === true;
   state.domDiagnosticsEnabled = policy.domDiagnosticsEnabled === true;
-  state.cssSafeAreaTopInsetPx = Number.isSafeInteger(policy.cssSafeAreaTopInsetPx) ?
-    Math.max(0, policy.cssSafeAreaTopInsetPx) : 0;
-  state.enabled = policy.geckoSafeAreaEnabled === true;
-  state.recheckAddedElements = policy.recheckAddedElements === true;
-  state.recheckChangedElements = policy.recheckChangedElements === true;
-  state.requireInteractionForUpdates = policy.requireInteractionForUpdates !== false;
-  state.recheckOnResize = policy.recheckOnResize === true;
-  state.interactionWindowMillis = boundedSafeAreaInteger(policy.interactionWindowMillis, 100, 5000, 1000);
-  state.mutationDebounceMillis = boundedSafeAreaInteger(policy.mutationDebounceMillis, 50, 1000, 150);
-  state.maxElementsPerBatch = boundedSafeAreaInteger(policy.maxElementsPerBatch, 4, 64, 16);
-  state.maxBatchDurationMillis = boundedSafeAreaInteger(policy.maxBatchDurationMillis, 1, 8, 4);
-  state.maxInitialElements = boundedSafeAreaInteger(policy.maxInitialElements, 64, 2048, 512);
   state.safeAreaLayoutQuietPeriodMillis = safeAreaLayoutQuietPeriodMillis;
   state.safeAreaRequiredFailureCount = safeAreaRequiredFailureCount;
   if (safeAreaSettingsChanged) globalThis.__candyReconfigureContentTopInset?.();
   else globalThis.__candyReconcileContentTopInset?.();
-  globalThis.__candyConfigureCssSafeArea?.();
   globalThis.__candyReportSiteColor?.();
+  globalThis.__candyReportReaderAvailable?.();
   scheduleScrollMetrics();
 }
 
-function boundedSafeAreaInteger(value, minimum, maximum, fallback) {
-  return Number.isSafeInteger(value) ? Math.min(maximum, Math.max(minimum, value)) : fallback;
-}
-
 globalThis.CandyContentTopInset = Object.freeze({
-  // Gecko uses its bounded CSS layer; retain shared DOM repair only for System WebView.
+  // A Gecko page sits below the status bar on its host's native margin (#123, H4); the shared
+  // DOM repair is for System WebView only.
   nativeSafeAreaOnly: () => true,
-  cssSafeAreaConfiguration: () => ({ ...state, ready: policyReady }),
   topInsetPx: () => state.topInsetPx,
   viewportCoverAllowed: () => true,
   navigationGeneration: () => state.navigationGeneration,
@@ -190,6 +163,17 @@ globalThis.CandyContentTopInset = Object.freeze({
       revision,
       themeColor,
     }).catch(() => {});
+  },
+  // Whether the page reads as an article (reader_probe.js); false until the policy arrives.
+  readerAvailable: (available) => {
+    if (!policyReady || typeof available !== "boolean") return false;
+    browser.runtime.sendMessage({
+      type: "reader-available",
+      navigationGeneration: state.navigationGeneration,
+      revision: state.revision,
+      readerAvailable: available,
+    }).catch(() => {});
+    return true;
   },
   // The page's theme-color for the v5 bar (content_site_color.js); false until the policy arrives.
   siteColor: (themeColor) => {

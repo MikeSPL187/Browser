@@ -60,4 +60,16 @@ class AddressBarGestureRulesTest {
         assertEquals(true, AddressBarWideLayoutRules.usesTabStrip(840f))
         assertEquals(false, AddressBarWideLayoutRules.usesTabStrip(Float.NaN))
     }
+
+    @Test
+    fun `under v5 only a tablet is wide, a phone turned sideways is not`() {
+        // A phone sideways: 891 dp wide, its narrow side 411 dp.
+        assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = false, windowWidthDp = 891f, smallestWidthDp = 411f))
+        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 891f, smallestWidthDp = 411f))
+        // A tablet either way.
+        assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 800f, smallestWidthDp = 800f))
+        assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 1280f, smallestWidthDp = 800f))
+        // A phone upright.
+        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 411f, smallestWidthDp = 411f))
+    }
 }

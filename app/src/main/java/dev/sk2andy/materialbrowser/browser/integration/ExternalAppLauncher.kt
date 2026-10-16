@@ -124,9 +124,15 @@ class ExternalAppLauncher(
         }
     }
 
+    /**
+     * Whether Android itself would open [url] in an app: a verified app link, the handler the person
+     * chose as default, or Google Play. An app that only claims the domain does not count; the link
+     * stays in the browser, as on Android 12+ and in Chrome. «Open in app» still offers it.
+     */
     fun canOpenWebUrlExternally(url: String): Boolean {
         val normalized = BrowserUriPolicy.normalizeHttpUrl(url) ?: return false
-        return canResolveExternalActivity(webIntent(normalized))
+        return GooglePlayAppLinkRules.shouldOpenInPlayStore(normalized) ||
+            canResolveExternalActivity(webIntent(normalized))
     }
 
     fun open(

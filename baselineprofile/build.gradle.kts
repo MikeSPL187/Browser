@@ -10,7 +10,7 @@ plugins {
 android {
     namespace = "dev.sk2andy.materialbrowser.baselineprofile"
     compileSdk = 37
-    compileSdkMinor = 1
+    compileSdkMinor = 2
     targetProjectPath = ":app"
 
     defaultConfig {

@@ -18,6 +18,9 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
     private var engine: TextToSpeech? = null
     private var text: String = ""
 
+    /** What [play] was asked to read before the engine was ready; it starts once it is. */
+    private var pendingContent: String? = null
+
     /** Bumped on every play, pause, stop and close; callbacks of older queues are ignored. */
     private var generation = 0
 
@@ -32,7 +35,12 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
                 if (result == TextToSpeech.SUCCESS) {
                     engine?.setOnUtteranceProgressListener(listener)
                     dispatch(ReaderSpeechEvent.Initialized)
+                    pendingContent?.let { content ->
+                        pendingContent = null
+                        play(content)
+                    }
                 } else {
+                    pendingContent = null
                     dispatch(ReaderSpeechEvent.InitializationFailed)
                 }
             }
@@ -40,6 +48,10 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
     }
 
     override fun play(content: String) {
+        if (state.status == ReaderSpeechStatus.Initializing) {
+            pendingContent = content
+            return
+        }
         if (state.status != ReaderSpeechStatus.Ready && state.status != ReaderSpeechStatus.Paused) return
         text = content
         val start = state.characterOffset.coerceIn(0, text.length)
@@ -77,12 +89,14 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
     }
 
     override fun stop() {
+        pendingContent = null
         generation++
         engine?.stop()
         dispatch(ReaderSpeechEvent.Stop)
     }
 
     override fun close() {
+        pendingContent = null
         generation++
         engine?.stop()
         engine?.shutdown()

@@ -56,6 +56,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -207,14 +209,17 @@ private fun EditorField(
                 tint = colors.labelSecondary,
                 modifier = Modifier.size(V5Sizes.iconSmall),
             )
+            val hint = stringResource(R.string.address_empty_hint)
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (state.value.text.isEmpty()) {
+                    // The field carries the hint for TalkBack; this is only what the eye reads.
                     Text(
-                        stringResource(R.string.address_empty_hint),
+                        hint,
                         style = V5Theme.type.body,
                         color = colors.labelTertiary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
                 PrivateKeyboard(isPrivate = state.isPrivate) {
@@ -233,6 +238,7 @@ private fun EditorField(
                                     else -> false
                                 }
                             }
+                            .semantics { contentDescription = hint }
                             .testTag(V5EditorTestTags.Field),
                         singleLine = true,
                         textStyle = V5Theme.type.body.copy(color = colors.label),

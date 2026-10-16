@@ -56,6 +56,14 @@ class V5LinkGlanceRulesTest {
     }
 
     @Test
+    fun `the page comes in over the flight after the card leaves the link`() {
+        assertEquals(0f, V5LinkGlanceRules.pageAlpha(0f), 0.0001f)
+        assertEquals(0f, V5LinkGlanceRules.pageAlpha(V5LinkGlanceRules.PAGE_FADE_FROM), 0.0001f)
+        assertEquals(0.5f, V5LinkGlanceRules.pageAlpha(0.65f), 0.0001f)
+        assertEquals(1f, V5LinkGlanceRules.pageAlpha(1.05f), 0.0001f)
+    }
+
+    @Test
     fun `the buttons come in over the second half`() {
         assertEquals(0f, V5LinkGlanceRules.actionsAlpha(0.4f), 0.0001f)
         assertEquals(0.5f, V5LinkGlanceRules.actionsAlpha(0.75f), 0.0001f)

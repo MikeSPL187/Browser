@@ -58,6 +58,9 @@ enum class V5Accent(
     Graphite(Color(0xFF4B4B53), Color(0xFF66666F), Color(0xFFC9C9D1)),
     ;
 
+    /** The deep tone a profile's emoji tile and buttons are filled with. */
+    fun fill(dark: Boolean): Color = if (dark) darkFill else light
+
     companion object {
         val Default = Blue
     }

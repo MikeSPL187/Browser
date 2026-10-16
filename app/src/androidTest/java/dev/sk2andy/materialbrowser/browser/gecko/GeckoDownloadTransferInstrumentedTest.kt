@@ -5,6 +5,8 @@ import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.data.DownloadRetry
+import dev.sk2andy.materialbrowser.data.DownloadRetryUnavailable
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import java.io.ByteArrayInputStream
@@ -593,6 +595,232 @@ class GeckoDownloadTransferInstrumentedTest {
         assertEquals(GeckoDownloadFailure.Cancelled, failure.get())
         assertTrue(DownloadRuntimeRegistry.snapshot().isEmpty())
         manager.close()
+    }
+
+    @Test
+    fun cancelledLinkDownloadStartsAgainByGetAndSavesTheSameFile() {
+        val body = ByteArray(64 * 1024) { index -> (index % 251).toByte() }
+        val server = SequentialFixtureServer(
+            // The first answer sends a little and waits until the test has cancelled it.
+            { output, release ->
+                output.write(fileHeaders("candy-retry-fixture.bin", "application/octet-stream", body.size))
+                output.write(body, 0, 1024)
+                output.flush()
+                release.await(20, TimeUnit.SECONDS)
+            },
+            { output, _ ->
+                output.write(fileHeaders("candy-retry-fixture.bin", "application/octet-stream", body.size))
+                output.write(body)
+                output.flush()
+            },
+        )
+        val manager = createManager()
+        val started = CountDownLatch(1)
+        val cancelled = CountDownLatch(1)
+        val firstId = AtomicReference<Int>()
+        val cancellation = AtomicReference<GeckoDownloadCancellation?>()
+        val page = "http://127.0.0.1:${server.port}/page"
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            cancellation.set(
+                manager.start(
+                    GeckoDownloadTransferRequest(
+                        owner = GeckoDownloadOwner("test-profile", isPrivate = false, sessionKey = this),
+                        request = WebRequest.Builder("http://127.0.0.1:${server.port}/file")
+                            .method("GET")
+                            .referrer(page)
+                            .build(),
+                        fetchFlags = GeckoWebExecutor.FETCH_FLAGS_NONE,
+                        retryable = true,
+                    ),
+                    object : GeckoDownloadTransferListener {
+                        override fun onStarted(start: GeckoDownloadTransferStart) {
+                            firstId.set(start.id)
+                            savedNames += start.fileName
+                            started.countDown()
+                        }
+
+                        override fun onFailed(reason: GeckoDownloadFailure) {
+                            if (reason == GeckoDownloadFailure.Cancelled) cancelled.countDown()
+                        }
+                    },
+                ),
+            )
+        }
+        assertTrue("download did not start", started.await(20, TimeUnit.SECONDS))
+        checkNotNull(cancellation.get()).cancel()
+        assertTrue("download was not cancelled", cancelled.await(10, TimeUnit.SECONDS))
+        server.releaseFirst()
+        val failedRow = checkNotNull(DownloadRuntimeRegistry.entryForTransfer(firstId.get()))
+        assertEquals(DownloadStatus.Cancelled, failedRow.status)
+        assertEquals(DownloadRetry.Available, failedRow.retry)
+
+        assertTrue(DownloadRuntimeRegistry.retry(failedRow.id))
+
+        assertTrue(
+            "retried file was not saved",
+            waitFor { storedDownload("candy-retry-fixture.bin")?.contentEquals(body) == true },
+        )
+        assertTrue("the old row stayed", waitFor { DownloadRuntimeRegistry.entryForTransfer(firstId.get()) == null })
+        val (first, second) = server.requests
+        assertTrue(second.requestLine, second.requestLine.startsWith("GET /file "))
+        // Gecko trims the referrer by its policy (to the origin here); the retry sends what the first did.
+        assertNotNull(first.headers["referer"])
+        assertEquals(first.headers["referer"], second.headers["referer"])
+        manager.close()
+        server.close()
+    }
+
+    @Test
+    fun retryThatGetsAnotherFileSavesNothingAndNamesThePage() {
+        val server = SequentialFixtureServer(
+            // A page's form answered by GET: the server sends its HTML page, not the report.
+            { output, _ ->
+                val page = "<html><body>Sign in again</body></html>".encodeToByteArray()
+                output.write(
+                    (
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n" +
+                            "Content-Length: ${page.size}\r\nConnection: close\r\n\r\n"
+                        ).encodeToByteArray(),
+                )
+                output.write(page)
+                output.flush()
+            },
+        )
+        val manager = createManager()
+        val release = CountDownLatch(1)
+        val started = CountDownLatch(1)
+        val cancelled = CountDownLatch(1)
+        val firstId = AtomicReference<Int>()
+        val cancellation = AtomicReference<GeckoDownloadCancellation?>()
+        val page = "http://127.0.0.1:${server.port}/form"
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            cancellation.set(
+                manager.startResponse(
+                    owner = GeckoDownloadOwner("test-profile", isPrivate = false, sessionKey = this),
+                    response = WebResponse.Builder("http://127.0.0.1:${server.port}/report")
+                        .statusCode(200)
+                        .header("Content-Type", "application/pdf")
+                        .header("Content-Disposition", "attachment; filename=\"candy-retry-report.pdf\"")
+                        .body(BlockingInputStream(release))
+                        .build(),
+                    referrer = page,
+                    listener = object : GeckoDownloadTransferListener {
+                        override fun onStarted(start: GeckoDownloadTransferStart) {
+                            firstId.set(start.id)
+                            savedNames += start.fileName
+                            started.countDown()
+                        }
+
+                        override fun onFailed(reason: GeckoDownloadFailure) {
+                            if (reason == GeckoDownloadFailure.Cancelled) cancelled.countDown()
+                        }
+                    },
+                ),
+            )
+        }
+        assertTrue("download did not start", started.await(20, TimeUnit.SECONDS))
+        checkNotNull(cancellation.get()).cancel()
+        release.countDown()
+        assertTrue("download was not cancelled", cancelled.await(10, TimeUnit.SECONDS))
+        val failedRow = checkNotNull(DownloadRuntimeRegistry.entryForTransfer(firstId.get()))
+        assertEquals(DownloadRetry.Available, failedRow.retry)
+
+        assertTrue(DownloadRuntimeRegistry.retry(failedRow.id))
+
+        assertTrue(
+            "the retry did not end",
+            waitFor { DownloadRuntimeRegistry.entryForTransfer(firstId.get())?.status == DownloadStatus.Failed },
+        )
+        assertEquals(
+            DownloadRetry.Unavailable(DownloadRetryUnavailable.ResponseChanged, pageUrl = page),
+            DownloadRuntimeRegistry.entryForTransfer(firstId.get())?.retry,
+        )
+        assertFalse(DownloadRuntimeRegistry.retry(failedRow.id))
+        assertNull(storedDownload("candy-retry-report.pdf"))
+        assertTrue(server.requests.single().requestLine.startsWith("GET /report "))
+        DownloadRuntimeRegistry.completed(firstId.get())
+        manager.close()
+        server.close()
+    }
+
+    private fun createManager(): GeckoDownloadTransferManager {
+        val managerRef = AtomicReference<GeckoDownloadTransferManager>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            managerRef.set(GeckoDownloadTransferManager(context, testExecutor()))
+        }
+        return checkNotNull(managerRef.get())
+    }
+
+    private fun fileHeaders(name: String, mimeType: String, length: Int): ByteArray = (
+        "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: $mimeType\r\n" +
+            "Content-Disposition: attachment; filename=\"$name\"\r\n" +
+            "Content-Length: $length\r\n" +
+            "Connection: close\r\n\r\n"
+        ).encodeToByteArray()
+
+    private fun waitFor(timeoutMillis: Long = 20_000L, condition: () -> Boolean): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
+            if (condition()) return true
+            Thread.sleep(100)
+        }
+        return condition()
+    }
+
+    /** Sends a few bytes, then blocks reading until [release]; a transfer stays open until cancelled. */
+    private class BlockingInputStream(private val release: CountDownLatch) : java.io.InputStream() {
+        private var sent = 0
+
+        override fun read(): Int {
+            if (sent < 512) return (sent++ % 251)
+            release.await(20, TimeUnit.SECONDS)
+            return -1
+        }
+    }
+
+    private class FixtureRequest(val requestLine: String, val headers: Map<String, String>)
+
+    /** Answers one connection after another with [responders]; each gets the output and a release latch. */
+    private class SequentialFixtureServer(
+        vararg responders: (java.io.OutputStream, CountDownLatch) -> Unit,
+    ) : AutoCloseable {
+        private val socket = ServerSocket(0)
+        private val firstRelease = CountDownLatch(1)
+        val port: Int = socket.localPort
+        val requests: MutableList<FixtureRequest> = java.util.concurrent.CopyOnWriteArrayList()
+
+        init {
+            Thread {
+                runCatching {
+                    responders.forEach { respond ->
+                        socket.accept().use { client ->
+                            val input = client.getInputStream().bufferedReader()
+                            val requestLine = input.readLine().orEmpty()
+                            val headers = linkedMapOf<String, String>()
+                            while (true) {
+                                val line = input.readLine()
+                                if (line.isNullOrEmpty()) break
+                                val separator = line.indexOf(':')
+                                if (separator > 0) {
+                                    headers[line.substring(0, separator).lowercase()] =
+                                        line.substring(separator + 1).trim()
+                                }
+                            }
+                            requests += FixtureRequest(requestLine, headers)
+                            respond(client.getOutputStream(), firstRelease)
+                        }
+                    }
+                }
+            }.apply { isDaemon = true }.start()
+        }
+
+        fun releaseFirst() = firstRelease.countDown()
+
+        override fun close() {
+            firstRelease.countDown()
+            runCatching(socket::close)
+        }
     }
 
     private fun storedDownload(name: String): ByteArray? = context.contentResolver.query(

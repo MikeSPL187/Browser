@@ -47,6 +47,7 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object ProtectionSettingsTestTags {
@@ -66,11 +67,14 @@ internal object ProtectionSettingsTestTags {
     const val ProtectionCard = "protection_settings_protection_card"
     const val PrivateTabsLock = "protection_settings_private_tabs_lock"
     const val CustomDnsEndpoint = "protection_settings_custom_dns_endpoint"
+    const val More = "protection_settings_more"
 }
 
 @Composable
 internal fun ProtectionAndDataSettingsPage(
     blockerSettings: BlockerSettings,
+    layer: SettingsLayer = SettingsLayer.All,
+    onOpenMore: () -> Unit = {},
     blockedCount: Int,
     browserEngineKind: AndroidBrowserEngineKind = AndroidBrowserEngineKind.GeckoView,
     isDnsOverHttpsSupported: Boolean = browserEngineKind == AndroidBrowserEngineKind.GeckoView,
@@ -129,247 +133,279 @@ internal fun ProtectionAndDataSettingsPage(
     val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
     val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
-        title = stringResource(R.string.settings_protection_data_title),
+        title = stringResource(
+            if (layer == SettingsLayer.More) {
+                R.string.settings_appearance_advanced
+            } else {
+                R.string.settings_protection_data_title
+            },
+        ),
         onBack = onBack,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
-            PrivacyXRaySettingsCounter(
-                blockedCount = blockedCount,
-                onClick = onPrivacyXRay,
-            )
-            if (trustsUserCertificates) {
-                UserCaTrustWarning()
-            }
-            SettingsCardHeader(stringResource(R.string.settings_section_protection))
-            SettingsCard(containerColor = cardColor) {
-                Box {
-                    SettingsCardValueRow(
-                        title = stringResource(R.string.settings_https_only_title),
-                        value = if (isHttpsOnlySupported) {
-                            httpsOnlyMode.displayName()
-                        } else {
-                            stringResource(R.string.settings_https_only_unavailable)
-                        },
-                        summary = stringResource(
-                            if (isHttpsOnlySupported) {
-                                R.string.settings_https_only_summary
+            if (layer.main) {
+                PrivacyXRaySettingsCounter(
+                    blockedCount = blockedCount,
+                    onClick = onPrivacyXRay,
+                )
+                if (trustsUserCertificates) {
+                    UserCaTrustWarning()
+                }
+                SettingsCardHeader(stringResource(R.string.settings_section_protection))
+                SettingsCard(containerColor = cardColor) {
+                    Box {
+                        SettingsCardValueRow(
+                            title = stringResource(R.string.settings_https_only_title),
+                            value = if (isHttpsOnlySupported) {
+                                httpsOnlyMode.displayName()
                             } else {
-                                R.string.settings_https_only_system_webview_summary
+                                stringResource(R.string.settings_https_only_unavailable)
                             },
-                        ),
-                        dividerColor = dividerColor,
-                        divider = true,
-                        enabled = isHttpsOnlySupported,
-                        onClick = { httpsOnlyMenuExpanded = true },
-                        modifier = Modifier.testTag(ProtectionSettingsTestTags.HttpsOnly),
-                    )
-                    SettingsDropdown(
-                        expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
-                        onDismissRequest = { httpsOnlyMenuExpanded = false },
-                    ) {
-                        HttpsOnlyMode.entries.forEach { mode ->
-                            SettingsDropdownItem(
-                                label = mode.displayName(),
-                                selected = mode == httpsOnlyMode,
-                                onClick = {
-                                    httpsOnlyMenuExpanded = false
-                                    if (mode != httpsOnlyMode) onHttpsOnlyModeChanged(mode)
+                            summary = stringResource(
+                                if (isHttpsOnlySupported) {
+                                    R.string.settings_https_only_summary
+                                } else {
+                                    R.string.settings_https_only_system_webview_summary
                                 },
-                            )
+                            ),
+                            dividerColor = dividerColor,
+                            divider = true,
+                            enabled = isHttpsOnlySupported,
+                            onClick = { httpsOnlyMenuExpanded = true },
+                            modifier = Modifier.testTag(ProtectionSettingsTestTags.HttpsOnly),
+                        )
+                        SettingsDropdown(
+                            expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
+                            onDismissRequest = { httpsOnlyMenuExpanded = false },
+                        ) {
+                            HttpsOnlyMode.entries.forEach { mode ->
+                                SettingsDropdownItem(
+                                    label = mode.displayName(),
+                                    selected = mode == httpsOnlyMode,
+                                    onClick = {
+                                        httpsOnlyMenuExpanded = false
+                                        if (mode != httpsOnlyMode) onHttpsOnlyModeChanged(mode)
+                                    },
+                                )
+                            }
                         }
                     }
-                }
-                // Vola blocks ads itself on both engines (blocker step 5b); on Gecko a note points
-                // to Firefox extensions, where an earlier uBlock Origin may still be installed.
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_block_ads_title),
-                    summary = stringResource(R.string.settings_block_ads_subtitle),
-                    checked = blockerSettings.blockAdsAndTrackers,
-                    dividerColor = dividerColor,
-                    onCheckedChange = {
-                        onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
-                    },
-                )
-                if (openExtensions != null) {
-                    SettingsCardLinkRow(
-                        title = stringResource(R.string.gecko_extensions_title),
-                        summary = stringResource(R.string.settings_block_ads_extension_summary),
+                    // Vola blocks ads itself on both engines (blocker step 5b); on Gecko a note points
+                    // to Firefox extensions, where an earlier uBlock Origin may still be installed.
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_block_ads_title),
+                        summary = stringResource(R.string.settings_block_ads_subtitle),
+                        checked = blockerSettings.blockAdsAndTrackers,
                         dividerColor = dividerColor,
-                        divider = true,
-                        summaryMaxLines = Int.MAX_VALUE,
-                        onClick = openExtensions,
+                        onCheckedChange = {
+                            onBlockerSettingsChanged(blockerSettings.copy(blockAdsAndTrackers = it))
+                        },
+                    )
+                    if (openExtensions != null && layer == SettingsLayer.All) {
+                        SettingsCardLinkRow(
+                            title = stringResource(R.string.gecko_extensions_title),
+                            summary = stringResource(R.string.settings_block_ads_extension_summary),
+                            dividerColor = dividerColor,
+                            divider = true,
+                            summaryMaxLines = Int.MAX_VALUE,
+                            onClick = openExtensions,
+                        )
+                    }
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_hide_cookie_banners_title),
+                        summary = stringResource(
+                            if (openExtensions != null) {
+                                R.string.settings_hide_cookie_banners_extension_summary
+                            } else {
+                                R.string.settings_hide_cookie_banners_subtitle
+                            },
+                        ),
+                        checked = blockerSettings.hideCookieConsent,
+                        dividerColor = dividerColor,
+                        onCheckedChange = {
+                            onBlockerSettingsChanged(blockerSettings.copy(hideCookieConsent = it))
+                        },
+                    )
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_block_third_party_cookies_title),
+                        summary = stringResource(
+                            R.string.settings_block_third_party_cookies_subtitle,
+                        ),
+                        checked = blockerSettings.blockThirdPartyCookies,
+                        dividerColor = dividerColor,
+                        divider = layer == SettingsLayer.All,
+                        onCheckedChange = {
+                            onBlockerSettingsChanged(blockerSettings.copy(blockThirdPartyCookies = it))
+                        },
+                    )
+                    if (layer == SettingsLayer.All) {
+                        SettingsCardLinkRow(
+                            title = stringResource(R.string.filter_studio_title),
+                            summary = stringResource(R.string.filter_studio_settings_summary),
+                            dividerColor = dividerColor,
+                            onClick = onFilterStudio,
+                        )
+                    }
+                }
+            }
+            if (layer.more) {
+                SettingsCardHeader(stringResource(R.string.settings_protection_group_network))
+                SettingsCard(containerColor = cardColor) {
+                    Box {
+                        SettingsCardValueRow(
+                            title = stringResource(R.string.settings_dns_over_https_title),
+                            value = if (isDnsOverHttpsSupported) {
+                                dnsOverHttpsSettings.provider.displayName()
+                            } else {
+                                stringResource(R.string.settings_dns_over_https_unavailable)
+                            },
+                            summary = stringResource(
+                                if (!isDnsOverHttpsSupported) {
+                                    R.string.settings_dns_over_https_system_webview_summary
+                                } else if (dnsOverHttpsSettings.provider == DnsOverHttpsProvider.System) {
+                                    R.string.settings_dns_over_https_system_summary
+                                } else {
+                                    R.string.settings_dns_over_https_gecko_summary
+                                },
+                            ),
+                            dividerColor = dividerColor,
+                            divider = true,
+                            enabled = isDnsOverHttpsSupported,
+                            onClick = { dnsMenuExpanded = true },
+                            modifier = Modifier.testTag(ProtectionSettingsTestTags.DnsOverHttps),
+                        )
+                        SettingsDropdown(
+                            expanded = isDnsOverHttpsSupported && dnsMenuExpanded,
+                            onDismissRequest = { dnsMenuExpanded = false },
+                        ) {
+                            DnsOverHttpsProvider.entries.forEach { provider ->
+                                SettingsDropdownItem(
+                                    label = provider.displayName(),
+                                    selected = provider == dnsOverHttpsSettings.provider,
+                                    onClick = {
+                                        dnsMenuExpanded = false
+                                        if (provider == DnsOverHttpsProvider.Custom) {
+                                            customDnsDialogVisible = true
+                                        } else if (provider != dnsOverHttpsSettings.provider) {
+                                            onDnsOverHttpsSettingsChanged(
+                                                dnsOverHttpsSettings.copy(provider = provider),
+                                            )
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
+                    Box {
+                        SettingsCardValueRow(
+                            title = stringResource(R.string.settings_webrtc_protection_title),
+                            value = webRtcProtectionMode.displayName(),
+                            summary = stringResource(
+                                webRtcSummary(webRtcProtectionMode, browserEngineKind),
+                            ),
+                            dividerColor = dividerColor,
+                            divider = true,
+                            onClick = { webRtcMenuExpanded = true },
+                            modifier = Modifier.testTag(ProtectionSettingsTestTags.WebRtcProtection),
+                        )
+                        SettingsDropdown(
+                            expanded = webRtcMenuExpanded,
+                            onDismissRequest = { webRtcMenuExpanded = false },
+                        ) {
+                            WebRtcProtectionMode.entries.forEach { mode ->
+                                SettingsDropdownItem(
+                                    label = mode.displayName(),
+                                    selected = mode == webRtcProtectionMode,
+                                    onClick = {
+                                        webRtcMenuExpanded = false
+                                        if (mode != webRtcProtectionMode) {
+                                            onWebRtcProtectionModeChanged(mode)
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_global_privacy_control_title),
+                        summary = stringResource(R.string.settings_global_privacy_control_summary),
+                        checked = privacySignalSettings.globalPrivacyControlEnabled,
+                        dividerColor = dividerColor,
+                        onCheckedChange = { enabled ->
+                            onPrivacySignalSettingsChanged(
+                                privacySignalSettings.copy(globalPrivacyControlEnabled = enabled),
+                            )
+                        },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.GlobalPrivacyControl),
+                    )
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_do_not_track_title),
+                        summary = stringResource(R.string.settings_do_not_track_summary),
+                        checked = privacySignalSettings.doNotTrackEnabled,
+                        dividerColor = dividerColor,
+                        onCheckedChange = { enabled ->
+                            onPrivacySignalSettingsChanged(
+                                privacySignalSettings.copy(doNotTrackEnabled = enabled),
+                            )
+                        },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.DoNotTrack),
+                    )
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_auto_de_amp_title),
+                        summary = stringResource(R.string.settings_auto_de_amp_summary),
+                        checked = isAutoDeAmpEnabled,
+                        dividerColor = dividerColor,
+                        divider = false,
+                        onCheckedChange = onAutoDeAmpEnabledChanged,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.AutoDeAmp),
                     )
                 }
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_hide_cookie_banners_title),
-                    summary = stringResource(
+                Text(
+                    stringResource(R.string.settings_protection_disclaimer),
+                    modifier = Modifier.padding(SettingsCardTokens.headerPadding),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                SettingsCardHeader(stringResource(R.string.settings_protection_group_tools))
+                SettingsCard(containerColor = cardColor) {
+                    if (layer == SettingsLayer.More) {
+                        SettingsCardLinkRow(
+                            title = stringResource(R.string.filter_studio_title),
+                            summary = stringResource(R.string.filter_studio_settings_summary),
+                            dividerColor = dividerColor,
+                            divider = true,
+                            onClick = onFilterStudio,
+                        )
                         if (openExtensions != null) {
-                            R.string.settings_hide_cookie_banners_extension_summary
-                        } else {
-                            R.string.settings_hide_cookie_banners_subtitle
-                        },
-                    ),
-                    checked = blockerSettings.hideCookieConsent,
-                    dividerColor = dividerColor,
-                    onCheckedChange = {
-                        onBlockerSettingsChanged(blockerSettings.copy(hideCookieConsent = it))
-                    },
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_block_third_party_cookies_title),
-                    summary = stringResource(
-                        R.string.settings_block_third_party_cookies_subtitle,
-                    ),
-                    checked = blockerSettings.blockThirdPartyCookies,
-                    dividerColor = dividerColor,
-                    onCheckedChange = {
-                        onBlockerSettingsChanged(blockerSettings.copy(blockThirdPartyCookies = it))
-                    },
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.filter_studio_title),
-                    summary = stringResource(R.string.filter_studio_settings_summary),
-                    dividerColor = dividerColor,
-                    onClick = onFilterStudio,
-                )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_protection_group_network))
-            SettingsCard(containerColor = cardColor) {
-                Box {
-                    SettingsCardValueRow(
-                        title = stringResource(R.string.settings_dns_over_https_title),
-                        value = if (isDnsOverHttpsSupported) {
-                            dnsOverHttpsSettings.provider.displayName()
-                        } else {
-                            stringResource(R.string.settings_dns_over_https_unavailable)
-                        },
-                        summary = stringResource(
-                            if (!isDnsOverHttpsSupported) {
-                                R.string.settings_dns_over_https_system_webview_summary
-                            } else if (dnsOverHttpsSettings.provider == DnsOverHttpsProvider.System) {
-                                R.string.settings_dns_over_https_system_summary
-                            } else {
-                                R.string.settings_dns_over_https_gecko_summary
-                            },
-                        ),
-                        dividerColor = dividerColor,
-                        divider = true,
-                        enabled = isDnsOverHttpsSupported,
-                        onClick = { dnsMenuExpanded = true },
-                        modifier = Modifier.testTag(ProtectionSettingsTestTags.DnsOverHttps),
-                    )
-                    SettingsDropdown(
-                        expanded = isDnsOverHttpsSupported && dnsMenuExpanded,
-                        onDismissRequest = { dnsMenuExpanded = false },
-                    ) {
-                        DnsOverHttpsProvider.entries.forEach { provider ->
-                            SettingsDropdownItem(
-                                label = provider.displayName(),
-                                selected = provider == dnsOverHttpsSettings.provider,
-                                onClick = {
-                                    dnsMenuExpanded = false
-                                    if (provider == DnsOverHttpsProvider.Custom) {
-                                        customDnsDialogVisible = true
-                                    } else if (provider != dnsOverHttpsSettings.provider) {
-                                        onDnsOverHttpsSettingsChanged(
-                                            dnsOverHttpsSettings.copy(provider = provider),
-                                        )
-                                    }
-                                },
+                            SettingsCardLinkRow(
+                                title = stringResource(R.string.gecko_extensions_title),
+                                summary = stringResource(R.string.settings_block_ads_extension_summary),
+                                dividerColor = dividerColor,
+                                divider = true,
+                                summaryMaxLines = Int.MAX_VALUE,
+                                onClick = openExtensions,
                             )
                         }
                     }
-                }
-                Box {
-                    SettingsCardValueRow(
-                        title = stringResource(R.string.settings_webrtc_protection_title),
-                        value = webRtcProtectionMode.displayName(),
-                        summary = stringResource(
-                            webRtcSummary(webRtcProtectionMode, browserEngineKind),
-                        ),
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.permission_radar_title),
+                        summary = stringResource(R.string.permission_radar_settings_summary),
                         dividerColor = dividerColor,
                         divider = true,
-                        onClick = { webRtcMenuExpanded = true },
-                        modifier = Modifier.testTag(ProtectionSettingsTestTags.WebRtcProtection),
+                        onClick = onPermissionRadar,
                     )
-                    SettingsDropdown(
-                        expanded = webRtcMenuExpanded,
-                        onDismissRequest = { webRtcMenuExpanded = false },
-                    ) {
-                        WebRtcProtectionMode.entries.forEach { mode ->
-                            SettingsDropdownItem(
-                                label = mode.displayName(),
-                                selected = mode == webRtcProtectionMode,
-                                onClick = {
-                                    webRtcMenuExpanded = false
-                                    if (mode != webRtcProtectionMode) {
-                                        onWebRtcProtectionModeChanged(mode)
-                                    }
-                                },
-                            )
-                        }
-                    }
+                    ProtectionSwitch(
+                        title = stringResource(R.string.settings_protection_card_title),
+                        summary = stringResource(R.string.settings_protection_card_subtitle),
+                        checked = isProtectionCardVisible,
+                        dividerColor = dividerColor,
+                        divider = false,
+                        onCheckedChange = onProtectionCardVisibleChanged,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.ProtectionCard),
+                    )
                 }
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_global_privacy_control_title),
-                    summary = stringResource(R.string.settings_global_privacy_control_summary),
-                    checked = privacySignalSettings.globalPrivacyControlEnabled,
-                    dividerColor = dividerColor,
-                    onCheckedChange = { enabled ->
-                        onPrivacySignalSettingsChanged(
-                            privacySignalSettings.copy(globalPrivacyControlEnabled = enabled),
-                        )
-                    },
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.GlobalPrivacyControl),
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_do_not_track_title),
-                    summary = stringResource(R.string.settings_do_not_track_summary),
-                    checked = privacySignalSettings.doNotTrackEnabled,
-                    dividerColor = dividerColor,
-                    onCheckedChange = { enabled ->
-                        onPrivacySignalSettingsChanged(
-                            privacySignalSettings.copy(doNotTrackEnabled = enabled),
-                        )
-                    },
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.DoNotTrack),
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_auto_de_amp_title),
-                    summary = stringResource(R.string.settings_auto_de_amp_summary),
-                    checked = isAutoDeAmpEnabled,
-                    dividerColor = dividerColor,
-                    divider = false,
-                    onCheckedChange = onAutoDeAmpEnabledChanged,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.AutoDeAmp),
-                )
             }
-            Text(
-                stringResource(R.string.settings_protection_disclaimer),
-                modifier = Modifier.padding(SettingsCardTokens.headerPadding),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            SettingsCardHeader(stringResource(R.string.settings_protection_group_tools))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.permission_radar_title),
-                    summary = stringResource(R.string.permission_radar_settings_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onPermissionRadar,
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.settings_protection_card_title),
-                    summary = stringResource(R.string.settings_protection_card_subtitle),
-                    checked = isProtectionCardVisible,
-                    dividerColor = dividerColor,
-                    divider = false,
-                    onCheckedChange = onProtectionCardVisibleChanged,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ProtectionCard),
-                )
-            }
-            if (privateTabsLock != null) {
+            if (privateTabsLock != null && layer.main) {
                 SettingsCardHeader(stringResource(R.string.settings_section_private_tabs))
                 SettingsCard(containerColor = cardColor) {
                     ProtectionSwitch(
@@ -392,93 +428,114 @@ internal fun ProtectionAndDataSettingsPage(
             }
             SettingsCardHeader(stringResource(R.string.history_title))
             SettingsCard(containerColor = cardColor) {
-                ProtectionSwitch(
-                    title = stringResource(R.string.history_save_title),
-                    summary = stringResource(R.string.history_save_summary),
-                    checked = historyRecordingMode != HistoryRecordingMode.Disabled,
-                    dividerColor = dividerColor,
-                    onCheckedChange = { enabled ->
-                        onHistoryRecordingModeChanged(
-                            if (enabled) {
-                                HistoryRecordingMode.Enabled
-                            } else {
-                                HistoryRecordingMode.Disabled
-                            },
-                        )
-                    },
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.SaveHistory),
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.history_clear_on_exit_title),
-                    summary = stringResource(R.string.history_clear_on_exit_summary),
-                    checked = historyRecordingMode == HistoryRecordingMode.ClearOnExit,
-                    enabled = historyRecordingMode != HistoryRecordingMode.Disabled,
-                    dividerColor = dividerColor,
-                    onCheckedChange = { enabled ->
-                        onHistoryRecordingModeChanged(
-                            if (enabled) {
-                                HistoryRecordingMode.ClearOnExit
-                            } else {
-                                HistoryRecordingMode.Enabled
-                            },
-                        )
-                    },
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ClearHistoryOnExit),
-                )
-                ProtectionSwitch(
-                    title = stringResource(R.string.recall_settings_title),
-                    summary = stringResource(R.string.recall_settings_summary),
-                    checked = isRecallEnabled,
-                    dividerColor = dividerColor,
-                    divider = false,
-                    onCheckedChange = onRecallEnabledChanged,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.Recall),
-                )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_protection_group_app_data))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.passwords_import_title),
-                    summary = stringResource(R.string.settings_move_to_vola_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onMoveToVola,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.MoveToVola),
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.data_archive_export_title),
-                    summary = stringResource(R.string.data_archive_export_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onClick = onExportAppData,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ExportAppData),
-                )
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.data_archive_import_title),
-                    summary = stringResource(R.string.data_archive_import_summary),
-                    dividerColor = dividerColor,
-                    onClick = onImportAppData,
-                    modifier = Modifier.testTag(ProtectionSettingsTestTags.ImportAppData),
-                )
-            }
-            Surface(
-                onClick = onClearData,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .sizeIn(minHeight = SettingsCardTokens.rowMinHeight),
-                shape = SettingsCardTokens.shape,
-                color = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-            ) {
-                Box(
-                    modifier = Modifier.padding(SettingsCardTokens.rowPadding),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(
-                        stringResource(R.string.action_clear_browsing_data),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                if (layer.main) {
+                    ProtectionSwitch(
+                        title = stringResource(R.string.history_save_title),
+                        summary = stringResource(R.string.history_save_summary),
+                        checked = historyRecordingMode != HistoryRecordingMode.Disabled,
+                        dividerColor = dividerColor,
+                        onCheckedChange = { enabled ->
+                            onHistoryRecordingModeChanged(
+                                if (enabled) {
+                                    HistoryRecordingMode.Enabled
+                                } else {
+                                    HistoryRecordingMode.Disabled
+                                },
+                            )
+                        },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.SaveHistory),
                     )
+                    ProtectionSwitch(
+                        title = stringResource(R.string.history_clear_on_exit_title),
+                        summary = stringResource(R.string.history_clear_on_exit_summary),
+                        checked = historyRecordingMode == HistoryRecordingMode.ClearOnExit,
+                        enabled = historyRecordingMode != HistoryRecordingMode.Disabled,
+                        dividerColor = dividerColor,
+                        divider = layer == SettingsLayer.All,
+                        onCheckedChange = { enabled ->
+                            onHistoryRecordingModeChanged(
+                                if (enabled) {
+                                    HistoryRecordingMode.ClearOnExit
+                                } else {
+                                    HistoryRecordingMode.Enabled
+                                },
+                            )
+                        },
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.ClearHistoryOnExit),
+                    )
+                }
+                if (layer.more) {
+                    ProtectionSwitch(
+                        title = stringResource(R.string.recall_settings_title),
+                        summary = stringResource(R.string.recall_settings_summary),
+                        checked = isRecallEnabled,
+                        dividerColor = dividerColor,
+                        divider = false,
+                        onCheckedChange = onRecallEnabledChanged,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.Recall),
+                    )
+                }
+            }
+            if (layer.more) {
+                SettingsCardHeader(stringResource(R.string.settings_protection_group_app_data))
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.passwords_import_title),
+                        summary = stringResource(R.string.settings_move_to_vola_summary),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onClick = onMoveToVola,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.MoveToVola),
+                    )
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.data_archive_export_title),
+                        summary = stringResource(R.string.data_archive_export_summary),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onClick = onExportAppData,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.ExportAppData),
+                    )
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.data_archive_import_title),
+                        summary = stringResource(R.string.data_archive_import_summary),
+                        dividerColor = dividerColor,
+                        onClick = onImportAppData,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.ImportAppData),
+                    )
+                }
+            }
+            if (layer == SettingsLayer.Main) {
+                // One layer (V15d-3): the less used half waits behind «More».
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.settings_appearance_advanced),
+                        summary = stringResource(R.string.settings_protection_more_summary),
+                        dividerColor = dividerColor,
+                        onClick = onOpenMore,
+                        modifier = Modifier.testTag(ProtectionSettingsTestTags.More),
+                    )
+                }
+            }
+            if (layer.main) {
+                Surface(
+                    onClick = onClearData,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sizeIn(minHeight = SettingsCardTokens.rowMinHeight),
+                    shape = SettingsCardTokens.shape,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                ) {
+                    Box(
+                        modifier = Modifier.padding(SettingsCardTokens.rowPadding),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        Text(
+                            stringResource(R.string.action_clear_browsing_data),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
         }
@@ -693,4 +750,40 @@ private fun ProtectionSettingsPageSystemWebViewPreview() {
             onBack = {},
         )
     }
+}
+
+/** V15d-3 under ui.v5: the main layer (with «More») and the More page, drawn by the v5 skin. */
+@Composable
+private fun ProtectionSettingsV5Preview(layer: SettingsLayer) {
+    MaterialBrowserTheme {
+        ProvideV5SettingsSkin(enabled = true) {
+            ProtectionAndDataSettingsPage(
+                blockerSettings = BlockerSettings(),
+                layer = layer,
+                blockedCount = 128,
+                httpsOnlyMode = HttpsOnlyMode.Always,
+                privateTabsLock = PrivateTabLock(checked = true, available = true, onCheckedChange = {}),
+                trustsUserCertificates = false,
+                onBlockerSettingsChanged = {},
+                onPrivacyXRay = {},
+                onPermissionRadar = {},
+                onFilterStudio = {},
+                onClearData = {},
+                onBack = {},
+                onOpenFirefoxExtensions = {},
+            )
+        }
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun ProtectionSettingsV5MainPreview() {
+    ProtectionSettingsV5Preview(SettingsLayer.Main)
+}
+
+@VolaPreviews
+@Composable
+private fun ProtectionSettingsV5MorePreview() {
+    ProtectionSettingsV5Preview(SettingsLayer.More)
 }

@@ -1,5 +1,9 @@
 package dev.sk2andy.materialbrowser.browser.gecko
 
+import android.view.SurfaceView
+import android.view.TextureView
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -13,6 +17,8 @@ import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import org.junit.Assume.assumeTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -49,6 +55,78 @@ class GeckoLinkPeekPreviewInstrumentedTest {
             assertEquals(1, controller.activeLinkPeekPreviewCountForTesting)
             controller.destroy()
             assertEquals(0, controller.activeLinkPeekPreviewCountForTesting)
+        }
+    }
+
+    @Test
+    fun previewDrawsThroughTextureViewSoItFliesWithItsCard() {
+        activityRule.scenario.onActivity { activity ->
+            val controller = BrowserController(activity)
+            val preview = controller.createLinkPeekPreviewView(
+                url = "https://example.com/texture",
+                onProgressChanged = {},
+                onCommittedUrlChanged = {},
+            )
+
+            assertNotNull("The preview page must fade and clip with its card", preview.findChild<TextureView>())
+            assertNull("Only tabs keep the SurfaceView", preview.findChild<SurfaceView>())
+            controller.destroy()
+        }
+    }
+
+    @Test
+    fun backgroundHandOverMovesTheLivePreviewIntoANewTabNextToItsSource() {
+        activityRule.scenario.onActivity { activity ->
+            val controller = BrowserController(activity)
+            val sourceTabId = controller.selectedTabId
+            val laterTabId = requireNotNull(controller.createBackgroundTab("https://example.com/later"))
+            val url = "https://example.com/hand-over"
+            controller.contentActions.show(target = WebContentTarget(linkUrl = url), sourceTabId = sourceTabId)
+            val preview = controller.createLinkPeekPreviewView(
+                url = url,
+                onProgressChanged = {},
+                onCommittedUrlChanged = {},
+            )
+            val tabsBefore = controller.tabs.map(BrowserTab::id).toSet()
+
+            assertTrue(controller.openLinkPreviewInNewTab(preview, url, foreground = false))
+
+            val created = controller.tabs.single { tab -> tab.id !in tabsBefore }
+            assertEquals("The preview's session moved, none is left", 0, controller.activeLinkPeekPreviewCountForTesting)
+            assertTrue("The tab took the live session", created.id in controller.residentTabIdsForTesting())
+            assertEquals(url, created.url)
+            assertEquals(sourceTabId, created.openerTabId)
+            assertEquals(sourceTabId, controller.selectedTabId)
+            assertEquals(
+                listOf(sourceTabId, created.id, laterTabId),
+                controller.activeTabs.map(BrowserTab::id).filter { id -> id in setOf(sourceTabId, created.id, laterTabId) },
+            )
+            controller.destroy()
+        }
+    }
+
+    @Test
+    fun newTabHandOverSelectsTheTabThatTookThePreview() {
+        activityRule.scenario.onActivity { activity ->
+            val controller = BrowserController(activity)
+            val sourceTabId = controller.selectedTabId
+            val url = "https://example.com/hand-over-foreground"
+            controller.contentActions.show(target = WebContentTarget(linkUrl = url), sourceTabId = sourceTabId)
+            val preview = controller.createLinkPeekPreviewView(
+                url = url,
+                onProgressChanged = {},
+                onCommittedUrlChanged = {},
+            )
+
+            assertTrue(controller.openLinkPreviewInNewTab(preview, url, foreground = true))
+
+            val created = controller.selectedTab
+            assertTrue(created.id != sourceTabId)
+            assertEquals(url, created.url)
+            assertEquals(sourceTabId, created.openerTabId)
+            assertEquals(0, controller.activeLinkPeekPreviewCountForTesting)
+            assertTrue(created.id in controller.residentTabIdsForTesting())
+            controller.destroy()
         }
     }
 
@@ -337,5 +415,13 @@ class GeckoLinkPeekPreviewInstrumentedTest {
             )
             controller.destroy()
         }
+    }
+
+    private inline fun <reified T : View> View.findChild(): T? = findChild(T::class.java)
+
+    private fun <T : View> View.findChild(type: Class<T>): T? = when {
+        type.isInstance(this) -> type.cast(this)
+        this is ViewGroup -> (0 until childCount).firstNotNullOfOrNull { index -> getChildAt(index).findChild(type) }
+        else -> null
     }
 }

@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.platform.LocalConfiguration
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
@@ -45,7 +44,7 @@ internal fun TabOverview(
     onHeroPagerSnapshotObserved: ((HeroPagerSnapshotObservation) -> Unit)? = null,
 ) {
     val uiV5 by rememberUiV5Flag()
-    val wide = AddressBarWideLayoutRules.usesTabStrip(LocalConfiguration.current.screenWidthDp.toFloat())
+    val wide = rememberWideBrowserWindow()
     if (uiV5 && !wide) {
         BrowserTabOverviewV5(
             controller = controller,

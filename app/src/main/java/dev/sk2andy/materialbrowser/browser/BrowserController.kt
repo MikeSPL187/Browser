@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -46,6 +45,7 @@ import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
 import dev.sk2andy.materialbrowser.blocking.CandyHostCanonicalizer
 import dev.sk2andy.materialbrowser.blocking.CandyImportScope
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshot
+import dev.sk2andy.materialbrowser.blocking.CandyRuleSemantics
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshots
 import dev.sk2andy.materialbrowser.blocking.CandyPublicSuffixRules
 import dev.sk2andy.materialbrowser.blocking.CandyRule
@@ -183,6 +183,7 @@ import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationRollbac
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrant
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrantRules
 import dev.sk2andy.materialbrowser.browser.integration.PageShareLauncher
+import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 import dev.sk2andy.materialbrowser.browser.integration.PageShareRequest
 import dev.sk2andy.materialbrowser.browser.integration.PageShareResult
 import dev.sk2andy.materialbrowser.browser.integration.PreparedWebAppLaunch
@@ -207,14 +208,12 @@ import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogEntry
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogRules
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
-import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyFailureReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyResolution
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParseResult
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptGrant
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptOpenTabRequest
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
-import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
@@ -314,67 +313,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
-
-internal data class FullscreenVideoState(
-    val tabId: String,
-    val minimizedByUser: Boolean,
-    val sourceRevision: Int,
-    val source: FullscreenVideoSource,
-    val host: FullscreenVideoHost,
-)
-
-internal enum class FullscreenVideoSource {
-    GeckoView,
-}
-
-internal enum class FullscreenVideoHost {
-    BrowserViewport,
-    Overlay,
-}
-
-internal sealed interface UserScriptSaveOutcome {
-    data object Saved : UserScriptSaveOutcome
-    data object LimitReached : UserScriptSaveOutcome
-    data object Missing : UserScriptSaveOutcome
-    data object PersistenceFailed : UserScriptSaveOutcome
-    data class Rejected(val reason: UserScriptRejectionReason) : UserScriptSaveOutcome
-    data class DependencyFailed(
-        val reason: UserScriptDependencyFailureReason,
-    ) : UserScriptSaveOutcome
-}
-
-internal data class BrowserActivityResultIdentity(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val navigationGeneration: Int,
-)
-
-private data class ExternalNavigationRollback(
-    val tabId: String,
-    val session: AndroidBrowserEngineSessionPort,
-    val navigationGeneration: Int,
-    val sourceUrl: String,
-    var restoringSource: Boolean = false,
-)
-
-private data class ExternalAppNavigationRecovery(
-    val session: AndroidBrowserEngineSessionPort,
-    val targetUrl: String,
-    val sourceTab: BrowserTab,
-    val navigationGeneration: Int,
-    var restored: Boolean = false,
-)
-
-private data class AutoDeAmpReplacementGuard(
-    val publisherUrl: String,
-    val expiresAtElapsedRealtime: Long,
-)
-
-enum class BrowserGestureHapticFeedback {
-    RubberbandStart,
-    RubberbandStop,
-    Confirm,
-}
 
 class BrowserController(
     private val activity: Activity,
@@ -697,10 +635,13 @@ class BrowserController(
     internal val selectedWebContentTopBarState: WebContentTopBarState?
         get() = webContentTopBarStates[selectedTabId]
 
-    internal val selectedWebContentStatusBarBackdrop get() = pageColors.statusBarBackdrop(selectedTabId)
+    internal val selectedWebContentStatusBarBackdrop get() = pageSignals.statusBarBackdrop(selectedTabId)
 
     /** The selected page's theme-color (ARGB) for the v5 bar, or null when it declares none. */
-    internal val selectedSiteThemeColor: Int? get() = pageColors.themeColor(selectedTabId)
+    internal val selectedSiteThemeColor: Int? get() = pageSignals.themeColor(selectedTabId)
+
+    /** Whether the selected page reads as an article (Gecko only); puts «Read» in the v5 capsule. */
+    internal val selectedReaderAvailable: Boolean get() = pageSignals.readerAvailable(selectedTabId)
 
     internal val canMinimizeFullscreenVideo: Boolean
         get() = presentationIsPrivate() == false
@@ -1181,7 +1122,7 @@ class BrowserController(
     private var nextBrowserEngineLoadRequestId = 0L
     private val automaticNativeTopSafeAreaTabIds = mutableSetOf<String>()
     private val webContentTopBarStates = mutableStateMapOf<String, WebContentTopBarState>()
-    private val pageColors = WebContentPageColors()
+    private val pageSignals = WebContentPageSignals()
     private val firefoxExtensionOptionsTabs =
         mutableMapOf<String, FirefoxExtensionOptionsTabChrome>()
     private val externalNavigationGrants = mutableMapOf<String, ExternalNavigationGrant>()
@@ -1260,6 +1201,7 @@ class BrowserController(
     }
     private var automaticExternalAppRequestId = 0L
     private val geckoFileUploadStager = GeckoFileUploadStager(activity.applicationContext)
+    private val fileCaptures = FileCaptureStore(activity)
     private val profileWallpaperExecutor = Executors.newSingleThreadExecutor { task ->
         Thread(task, "profile-wallpaper")
     }
@@ -1858,7 +1800,7 @@ class BrowserController(
         val pending = pendingFileChooser ?: return
         if (!isFileChooserCurrent(pending.identity)) {
             pendingFileChooser = null
-            finalizeFileCapture(pending.captureOutput, keep = false)
+            fileCaptures.settle(pending.captureOutput, keep = false)
             pending.delivery.complete(null)
             scheduleResidentSessionTrim()
             return
@@ -1895,7 +1837,7 @@ class BrowserController(
                     ) {
                         if (pendingFileChooser === pending) pendingFileChooser = null
                         stagedUpload?.delete()
-                        finalizeFileCapture(pending.captureOutput, keep = false)
+                        fileCaptures.settle(pending.captureOutput, keep = false)
                         pending.delivery.complete(null)
                         scheduleResidentSessionTrim()
                     } else {
@@ -1903,7 +1845,12 @@ class BrowserController(
                         if (stagedUpload != null) {
                             geckoFileUploadStager.retain(pending.identity.tabId, stagedUpload)
                         }
-                        finalizeFileCapture(pending.captureOutput, keep = deliverUris != null)
+                        val privateTab = tabs.firstOrNull { it.id == pending.identity.tabId }
+                            ?.isIncognito != false
+                        fileCaptures.settle(
+                            pending.captureOutput,
+                            FileChooserRules.keepsCapture(deliverUris != null, stagedUpload != null, privateTab),
+                        )
                         pending.delivery.complete(deliverUris)
                         scheduleResidentSessionTrim()
                     }
@@ -1911,7 +1858,7 @@ class BrowserController(
             }
         }.onFailure {
             if (pendingFileChooser === pending) pendingFileChooser = null
-            finalizeFileCapture(pending.captureOutput, keep = false)
+            fileCaptures.settle(pending.captureOutput, keep = false)
             pending.delivery.complete(null)
             scheduleResidentSessionTrim()
         }
@@ -2030,7 +1977,7 @@ class BrowserController(
                 existing.cosmeticSelector == validated.cosmeticSelector &&
                 existing.profileId == validated.profileId)
         }
-        if (duplicate != null) return duplicate.takeIf { sameRuleSemantics(it, validated) }
+        if (duplicate != null) return duplicate.takeIf { CandyRuleSemantics.same(it, validated) }
         if (filterRules.size >= CandyRuleValidator.MAX_RULES) return null
         if (validated.kind == CandyRuleKind.CosmeticCss &&
             filterRules.count { it.kind == CandyRuleKind.CosmeticCss } >=
@@ -2055,7 +2002,7 @@ class BrowserController(
         if (index < 0) return null
         val validated = (CandyRuleValidator.validate(candidate) as? CandyRuleValidation.Valid)?.rule
             ?: return null
-        if (filterRules.any { it.id != validated.id && sameRuleSemantics(it, validated) }) return null
+        if (filterRules.any { it.id != validated.id && CandyRuleSemantics.same(it, validated) }) return null
         val previous = filterRules[index]
         if (previous.kind != CandyRuleKind.CosmeticCss &&
             validated.kind == CandyRuleKind.CosmeticCss &&
@@ -2120,7 +2067,7 @@ class BrowserController(
         val imported = CandyRuleValidator.normalizeAll(
             preview.rules.mapIndexed { index, rule ->
                 rule.copy(
-                    id = "$sourcePrefix-$index-${semanticRuleKey(rule).hashCode().toUInt().toString(16)}",
+                    id = "$sourcePrefix-$index-${CandyRuleSemantics.key(rule).hashCode().toUInt().toString(16)}",
                     origin = CandyRuleOrigin.Subscription,
                     sourceUrl = sourceUrl,
                     updatedAtMillis = System.currentTimeMillis(),
@@ -2207,18 +2154,6 @@ class BrowserController(
         }
         return additions
     }
-
-    private fun semanticRuleKey(rule: CandyRule): String = listOf(
-        rule.action.name,
-        rule.kind.name,
-        rule.requestHost.orEmpty(),
-        rule.firstPartyHost.orEmpty(),
-        rule.cosmeticSelector.orEmpty(),
-        rule.profileId.orEmpty(),
-    ).joinToString("\u0000")
-
-    private fun sameRuleSemantics(left: CandyRule, right: CandyRule): Boolean =
-        semanticRuleKey(left) == semanticRuleKey(right)
 
     init {
         fileChooserValidationExecutor.execute(geckoFileUploadStager::clearOrphans)
@@ -2808,7 +2743,7 @@ class BrowserController(
                         geckoViewBindings.remove(container)
                         releaseGeckoView(currentBinding.session, currentBinding.view)
                     }
-                (binding.view.parent as? ViewGroup)?.removeView(binding.view)
+                binding.view.removeFromParentWithoutFocusHandoff()
                 geckoViewBindings.remove(transferablePresentation.key)
                 container.removeAllViews()
                 container.addView(
@@ -2851,7 +2786,7 @@ class BrowserController(
             val sourceContainer = transferable.key
             val binding = transferable.value
             geckoViewMutationHosts += sourceContainer
-            (binding.view.parent as? ViewGroup)?.removeView(binding.view)
+            binding.view.removeFromParentWithoutFocusHandoff()
             geckoViewBindings.remove(sourceContainer)
             attachGeckoViewBinding(container, binding)
             dispatchCurrentWindowInsets(binding.view, binding.tabId)
@@ -3254,7 +3189,7 @@ class BrowserController(
             )
             return
         }
-        (videoView.parent as? ViewGroup)?.removeView(videoView)
+        videoView.removeFromParentWithoutFocusHandoff()
         geckoViewBindings.remove(bindingEntry.key)
         container.removeAllViews()
         container.addView(
@@ -3910,7 +3845,6 @@ class BrowserController(
                 tab = sourceTab,
                 pageUrl = url,
                 context = initialContext,
-                cssSafeAreaTopInsetPx = 0,
             ),
             privacyEventSink = GeckoPrivacyEventSink { },
             eventSink = { event ->
@@ -3923,7 +3857,6 @@ class BrowserController(
                             tab = sourceTab,
                             pageUrl = committedUrl,
                             context = protectionRequestContextFor(sourceTab, committedUrl),
-                            cssSafeAreaTopInsetPx = 0,
                         ),
                     )
                     onCommittedUrlChanged(committedUrl)
@@ -4155,7 +4088,7 @@ class BrowserController(
         runtime.geckoBinding.session.setBackdropBlurRegion(runtime.backdropBlurRegion)
         val view = runtime.binding.view
         if (view.parent === container && container.childCount == 1) return
-        (view.parent as? ViewGroup)?.removeView(view)
+        view.removeFromParentWithoutFocusHandoff()
         container.removeAllViews()
         container.addView(
             view,
@@ -6735,7 +6668,6 @@ class BrowserController(
         fun report(result: DownloadActionResult) {
             if (reported) return
             reported = true
-            contentActions.reportDownload(result)
             showDownloadResult(result)
         }
         fun reportFailure() = report(
@@ -6860,6 +6792,54 @@ class BrowserController(
             openerTabId = sourceTab.id,
         )
         return tabId != sourceTab.id && selectedTabId == tabId
+    }
+
+    /**
+     * Opens the link a v5 preview shows in a new tab next to its source, behind it or [foreground].
+     * A live Gecko preview moves into the tab as it is, with no reload; the tab's history,
+     * protection and extensions take it over. Otherwise the tab loads [url] itself.
+     */
+    fun openLinkPreviewInNewTab(previewView: View?, url: String, foreground: Boolean): Boolean {
+        val sourceTab = contextLinkSourceTab() ?: return false
+        val safeUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return false
+        val binding = previewView?.let(geckoLinkPeekBindings::get)?.takeIf { binding ->
+            binding.sourceTabId == sourceTab.id &&
+                binding.contentRevision == contentActions.revision &&
+                binding.committedUrl == safeUrl &&
+                LinkPeekPreviewRules.canHandOver(binding.status)
+        }
+        val tabId = createBackgroundTab(
+            initialUrl = if (binding == null) safeUrl else BLANK_URL,
+            openerTabId = sourceTab.id,
+            isIncognito = sourceTab.isIncognito,
+        ) ?: return false
+        if (binding != null) adoptLinkPeekPreview(binding, tabId, safeUrl)
+        activeTabs.indexOfFirst { tab -> tab.id == sourceTab.id }
+            .takeIf { index -> index >= 0 }
+            ?.let { index -> tabOrder.positionCreatedTab(tabId, index + 1) }
+        if (foreground) selectTab(tabId) else contentActions.requestLinkPeekNewTabPulse()
+        return true
+    }
+
+    private fun adoptLinkPeekPreview(binding: GeckoLinkPeekBinding, tabId: String, url: String) {
+        geckoLinkPeekBindings.remove(binding.view)
+        releaseGeckoView(binding.session, binding.view)
+        val tab = tabs.first { candidate -> candidate.id == tabId }
+        val adopted = browserEngineSessionFactory.prepareAdoption(
+            tabId = tabId,
+            preview = binding.session,
+            profileId = tab.profileId,
+            isolationEnabled = profileForId(tab.profileId)?.isolationEnabled == true,
+            isPrivate = tab.isIncognito,
+        )
+        if (adopted) {
+            browserEngineSessionFor(tabId).announceAdoptedPage()
+        } else {
+            binding.session.execute(BrowserEngineCommands.close())
+        }
+        // A preview not yet at its page keeps loading it, or the tab loads it: either way, show it.
+        if (tabs.first { it.id == tabId }.url == BLANK_URL) updateTab(tabId) { it.startingLoad(url = url) }
+        persist()
     }
 
     private fun handleWebContentLongPress(target: WebContentTarget, tabId: String) {
@@ -7010,16 +6990,14 @@ class BrowserController(
         grant: ExternalNavigationGrant?,
         isRedirect: Boolean,
     ): ExternalAppNavigationHandling {
+        val isPrivate = (source as? ExternalAppHandoffSource.Tab)?.isPrivate == true
+        val handling = ExternalAppLinkHandling.forSource(externalAppLinkHandling, isPrivate)
+        // Only a link Android itself would open in an app leaves the page (canOpenWebUrlExternally).
         if (
             safeHttpUrl != null &&
-            externalAppLinkHandling == ExternalAppLinkHandling.AskEveryTime &&
             !externalApps.canOpenWebUrlExternally(safeHttpUrl)
-        ) {
-            return ExternalAppNavigationHandling.Unavailable
-        }
-        if (externalAppLinkHandling == ExternalAppLinkHandling.Automatic) {
-            return ExternalAppNavigationHandling.Automatic
-        }
+        ) return ExternalAppNavigationHandling.Unavailable
+        if (handling == ExternalAppLinkHandling.Automatic) return ExternalAppNavigationHandling.Automatic
         val destination = BrowserUriPolicy.displayHttpHost(webTargetUrl)
             .ifBlank { runCatching { Uri.parse(requestUrl).scheme }.getOrNull().orEmpty() }
             .ifBlank { activity.getString(R.string.external_app_prompt_fallback_destination) }
@@ -7863,11 +7841,9 @@ class BrowserController(
 
     fun copyLink(url: String) {
         val safeUrl = BrowserUriPolicy.normalizeHttpUrl(url) ?: return
+        val label = activity.getString(R.string.external_link_preview_copy_label)
         activity.getSystemService(ClipboardManager::class.java).setPrimaryClip(
-            ClipData.newPlainText(
-                activity.getString(R.string.external_link_preview_copy_label),
-                safeUrl,
-            ),
+            ClipData.newPlainText(label, safeUrl).markedSensitive(selectedTab.isIncognito),
         )
         Toast.makeText(activity, R.string.toast_link_copied, Toast.LENGTH_SHORT).show()
     }
@@ -9155,7 +9131,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
                 if (revision == privacySignalRevision && geckoLinkPeekBindings[view] === binding) {
@@ -9291,7 +9266,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             ) {
                 if (revision == animationPolicyRevision && geckoLinkPeekBindings[view] === binding) {
@@ -9483,7 +9457,6 @@ class BrowserController(
                     tab = sourceTab,
                     pageUrl = pageUrl,
                     context = protectionRequestContextFor(sourceTab, pageUrl),
-                    cssSafeAreaTopInsetPx = 0,
                 ),
             )
         }
@@ -10265,7 +10238,7 @@ class BrowserController(
         navigationGenerations.clear()
         automaticNativeTopSafeAreaTabIds.clear()
         webContentTopBarStates.clear()
-        pageColors.clearAll()
+        pageSignals.clearAll()
         firefoxExtensionOptionsTabs.clear()
         externalNavigationGrants.clear()
         pendingInitialExternalNavigationGrants.clear()
@@ -10828,7 +10801,7 @@ class BrowserController(
             request.response.complete(uris?.map(Uri::toString))
         }
         val captureAction = FileChooserRules.captureAction(request.capture, request.mimeTypes)
-        val captureOutput = captureAction?.let(::createFileCaptureOutput)
+        val captureOutput = captureAction?.let(fileCaptures::create)
         pendingFileChooser = PendingFileChooser(
             identity = identity,
             delivery = delivery,
@@ -10942,7 +10915,7 @@ class BrowserController(
             deny()
             return
         }
-        val normalizedOrigin = PermissionOrigin.normalize(origin)
+        val normalizedOrigin = PermissionRequestRules.siteOrigin(origin, pageUrls[tabId] ?: tabs.firstOrNull { it.id == tabId }?.url)
         val identity = permissionRequestIdentity(tabId, normalizedOrigin)
         if (
             identity == null ||
@@ -11630,9 +11603,6 @@ class BrowserController(
         context: ProtectionRequestContext,
         topInsetPx: Int = 0,
         navigationGeneration: Int = 0,
-        // The top safe area is a native margin of the engine view (#123, H4): the page never
-        // lies under the status bar, so the CSS fallback has nothing to move down.
-        cssSafeAreaTopInsetPx: Int = 0,
     ): GeckoPrivacyPolicy {
         val site = sitePolicyFor(tab, pageUrl, isSiteProtectionPaused(tab.id, context, pageUrl))
         val policy = GeckoPrivacyPolicyRules.extensionOwnedAdFilteringWithCandyCookieDefaults(
@@ -11675,8 +11645,6 @@ class BrowserController(
                 activity.getString(R.string.action_candy_player_show_controls),
             inlineMediaPlayerHideControlsLabel =
                 activity.getString(R.string.action_candy_player_hide_controls),
-            cssSafeAreaTopInsetPx = cssSafeAreaTopInsetPx,
-            geckoSafeAreaSettings = developerSettings.geckoSafeAreaSettings,
             safeAreaLayoutQuietPeriodMillis =
                 developerSettings.safeAreaLayoutQuietPeriodMillis,
             safeAreaRequiredFailureCount = developerSettings.safeAreaRequiredFailureCount,
@@ -11799,11 +11767,15 @@ class BrowserController(
     private fun onGeckoPrivacyEvent(tabId: String, event: GeckoPrivacyEvent) {
         event.statusBarBackdropNavigationGeneration?.let { navigationGeneration ->
             if (navigationGenerations[tabId] != navigationGeneration) return
-            return pageColors.onStatusBarBackdrop(tabId, event.statusBarBackdropThemeColor)
+            return pageSignals.onStatusBarBackdrop(tabId, event.statusBarBackdropThemeColor)
         }
         event.siteThemeColorNavigationGeneration?.let { navigationGeneration ->
             if (navigationGenerations[tabId] != navigationGeneration) return
-            return pageColors.onThemeColor(tabId, event.siteThemeColor)
+            return pageSignals.onThemeColor(tabId, event.siteThemeColor)
+        }
+        event.readerAvailableNavigationGeneration?.let { navigationGeneration ->
+            if (navigationGenerations[tabId] != navigationGeneration) return
+            return pageSignals.onReaderAvailable(tabId, event.readerAvailable)
         }
         event.safeAreaFallbackNavigationGeneration?.let { navigationGeneration ->
             if (event.safeAreaFallbackIsTopHeader) {
@@ -11917,7 +11889,7 @@ class BrowserController(
         val session = browserEngineSessions[tabId] ?: return
         val nextNavigationGeneration = navigationGenerations.getOrDefault(tabId, 0) + 1
         val clearedTopHeaderSafeArea = webContentTopBarStates.remove(tabId) != null
-        pageColors.onSameDocumentNavigation(tabId)
+        pageSignals.onSameDocumentNavigation(tabId)
         val restoreDocumentTopSafeArea =
             tabId in automaticNativeTopSafeAreaTabIds || clearedTopHeaderSafeArea
         navigationGenerations[tabId] = nextNavigationGeneration
@@ -12017,7 +11989,7 @@ class BrowserController(
                     browserEngineSessions[event.tabId] === navigatingSession &&
                     navigationGenerations[event.tabId] == nextNavigationGeneration
                 val clearedTopHeaderSafeArea = webContentTopBarStates.remove(event.tabId) != null
-                pageColors.onNavigation(event.tabId, event.address)
+                pageSignals.onNavigation(event.tabId, event.address)
                 val restoreDocumentTopSafeArea =
                     event.tabId in automaticNativeTopSafeAreaTabIds ||
                         clearedTopHeaderSafeArea
@@ -13093,37 +13065,9 @@ class BrowserController(
         val pending = pendingFileChooser ?: return
         if (tabId != null && pending.identity.tabId != tabId) return
         pendingFileChooser = null
-        finalizeFileCapture(pending.captureOutput, keep = false)
+        fileCaptures.settle(pending.captureOutput, keep = false)
         pending.delivery.complete(null)
         scheduleResidentSessionTrim()
-    }
-
-    private fun createFileCaptureOutput(action: String): FileCaptureOutput? {
-        val isVideo = action == MediaStore.ACTION_VIDEO_CAPTURE
-        val mimeType = if (isVideo) "video/mp4" else "image/jpeg"
-        val collection = if (isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val name = "candy-capture-${System.currentTimeMillis()}.${if (isVideo) "mp4" else "jpg"}"
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.IS_PENDING, 1)
-        }
-        val uri = runCatching { activity.contentResolver.insert(collection, values) }.getOrNull()
-            ?: return null
-        return FileCaptureOutput(uri = uri, mimeType = mimeType)
-    }
-
-    private fun finalizeFileCapture(output: FileCaptureOutput?, keep: Boolean) {
-        output ?: return
-        runCatching {
-            if (keep) {
-                ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
-                    .let { values -> activity.contentResolver.update(output.uri, values, null, null) }
-            } else {
-                activity.contentResolver.delete(output.uri, null, null)
-            }
-        }
     }
 
     private fun publishFullscreenVideoState() {
@@ -13350,7 +13294,7 @@ class BrowserController(
             runCatching(requestDownloadNotificationPermission)
             builtInDownload()
         }
-        return when (downloadSettings.managerMode) {
+        return when (DownloadManagerMode.forSource(downloadSettings.managerMode, tabs.any { it.id == tabId && it.isIncognito })) {
             DownloadManagerMode.BuiltIn -> startBuiltInDownload()
             DownloadManagerMode.AskEveryTime -> {
                 val apps = discoverExternalDownloadManagers(request)
@@ -13421,6 +13365,7 @@ class BrowserController(
         externalDownloadDiscoveryForTesting?.invoke(request) ?: externalDownloadManager.discover(request)
 
     private fun showDownloadResult(result: DownloadActionResult) {
+        contentActions.reportDownload(result)
         Toast.makeText(
             activity,
             when (result) {
@@ -14736,7 +14681,7 @@ class BrowserController(
         navigationGenerations.remove(tabId)
         automaticNativeTopSafeAreaTabIds.remove(tabId)
         webContentTopBarStates.remove(tabId)
-        pageColors.clear(tabId)
+        pageSignals.clear(tabId)
         firefoxExtensionOptionsTabs.remove(tabId)
         clearExternalNavigationAuthorization(tabId)
         pageUrls.remove(tabId)
@@ -15549,11 +15494,6 @@ class BrowserController(
         val allowMultiple: Boolean,
         val acceptTypes: Array<String>,
         val captureOutput: FileCaptureOutput?,
-    )
-
-    private data class FileCaptureOutput(
-        val uri: Uri,
-        val mimeType: String,
     )
 
     private data class ProtectionRequestContext(

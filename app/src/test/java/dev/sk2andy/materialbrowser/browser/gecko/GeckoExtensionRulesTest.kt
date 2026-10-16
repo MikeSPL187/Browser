@@ -154,4 +154,10 @@ class GeckoExtensionRulesTest {
         origins = origins,
         dataCollectionPermissions = dataCollectionPermissions,
     )
+
+    @Test
+    fun `install prompts are shown only during an install from the manager`() {
+        assertFalse(GeckoExtensionRules.acceptsInstallPrompt(userInstallsInFlight = 0))
+        assertTrue(GeckoExtensionRules.acceptsInstallPrompt(userInstallsInFlight = 1))
+    }
 }

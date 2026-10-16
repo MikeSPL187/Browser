@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import dev.sk2andy.materialbrowser.reader.ReaderFont
 import dev.sk2andy.materialbrowser.reader.ReaderTheme
 
 /** The colors of one reading theme. */
@@ -33,6 +34,7 @@ data class ReaderStudioStyle(
     val dark: ReaderPalette,
     val serifFontFamily: FontFamily,
     val sansFontFamily: FontFamily,
+    val monoFontFamily: FontFamily,
     val titleFontSize: TextUnit,
     val titleLineHeight: TextUnit,
     val progressHeight: Dp,
@@ -60,6 +62,12 @@ data class ReaderStudioStyle(
     val handleWidth: Dp,
     val handleHeight: Dp,
 ) {
+    fun fontFamily(font: ReaderFont): FontFamily = when (font) {
+        ReaderFont.Sans -> sansFontFamily
+        ReaderFont.Serif -> serifFontFamily
+        ReaderFont.Mono -> monoFontFamily
+    }
+
     fun palette(theme: ReaderTheme, browserDark: Boolean): ReaderPalette =
         when (theme.resolved(browserDark)) {
             ReaderTheme.Paper -> paper

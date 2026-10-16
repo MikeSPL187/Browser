@@ -139,6 +139,19 @@ object PermissionOrigin {
 }
 
 object PermissionRequestRules {
+    /**
+     * Whose decision a request is: the site in the address bar, as in Safari and Chrome. A frame from
+     * another site asks on behalf of the page that embeds it (whose `allow` attribute delegated the
+     * permission), so the prompt names the top-level site and the decision is kept for it: a grant
+     * to an embedded map or call widget no longer carries over to every site that embeds it (V29).
+     * The asking frame itself must still be secure.
+     */
+    fun siteOrigin(requestOrigin: String?, topLevelUrl: String?): String? {
+        val requester = PermissionOrigin.normalize(requestOrigin) ?: return null
+        if (!PermissionOrigin.isPotentiallyTrustworthy(requester)) return null
+        return PermissionOrigin.normalize(topLevelUrl)
+    }
+
     fun isCurrent(identity: PermissionRequestIdentity, state: PermissionRequestState): Boolean =
         state.tabExists &&
             state.isSelected &&

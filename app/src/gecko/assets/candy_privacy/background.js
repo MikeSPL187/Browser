@@ -397,18 +397,6 @@ function contentPolicy(policy) {
     ready: Boolean(policy),
     revision: Number.isSafeInteger(policy?.revision) ? Math.max(0, policy.revision) : 0,
     topInsetPx: Number.isSafeInteger(policy?.topInsetPx) ? Math.max(0, policy.topInsetPx) : 0,
-    cssSafeAreaTopInsetPx: Number.isSafeInteger(policy?.cssSafeAreaTopInsetPx) ?
-      Math.max(0, policy.cssSafeAreaTopInsetPx) : 0,
-    geckoSafeAreaEnabled: policy?.geckoSafeAreaEnabled === true,
-    recheckAddedElements: policy?.recheckAddedElements === true,
-    recheckChangedElements: policy?.recheckChangedElements === true,
-    requireInteractionForUpdates: policy?.requireInteractionForUpdates !== false,
-    recheckOnResize: policy?.recheckOnResize === true,
-    interactionWindowMillis: boundedSafeAreaInteger(policy?.interactionWindowMillis, 100, 5000, 1000),
-    mutationDebounceMillis: boundedSafeAreaInteger(policy?.mutationDebounceMillis, 50, 1000, 150),
-    maxElementsPerBatch: boundedSafeAreaInteger(policy?.maxElementsPerBatch, 4, 64, 16),
-    maxBatchDurationMillis: boundedSafeAreaInteger(policy?.maxBatchDurationMillis, 1, 8, 4),
-    maxInitialElements: boundedSafeAreaInteger(policy?.maxInitialElements, 64, 2048, 512),
     navigationGeneration: Number.isSafeInteger(policy?.navigationGeneration) ?
       Math.max(0, policy.navigationGeneration) : 0,
     scrollMetricsEnabled: policy?.scrollMetricsEnabled === true,
@@ -460,10 +448,6 @@ function contentPolicy(policy) {
       Number.isSafeInteger(policy?.safeAreaRequiredFailureCount) ?
         Math.min(5, Math.max(2, policy.safeAreaRequiredFailureCount)) : 3,
   };
-}
-
-function boundedSafeAreaInteger(value, minimum, maximum, fallback) {
-  return Number.isSafeInteger(value) ? Math.min(maximum, Math.max(minimum, value)) : fallback;
 }
 
 function publishContentPolicy(token, policy) {
@@ -822,7 +806,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
   if (
     (message.type === "safe-area-fallback" || message.type === "status-bar-backdrop" ||
-      message.type === "site-color") &&
+      message.type === "site-color" || message.type === "reader-available") &&
     Number.isSafeInteger(message.navigationGeneration) &&
     Number.isSafeInteger(message.revision)
   ) {
@@ -842,6 +826,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
         navigationGeneration: message.navigationGeneration,
         themeColor: typeof message.themeColor === "string" ? message.themeColor : null,
         topHeader: message.topHeader === true,
+        readerAvailable: message.readerAvailable === true,
       });
     }
     return undefined;
@@ -851,6 +836,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
     return undefined;
   }
   if (message.type === "login-field-focus") {
+    // The vault offers the top-level site's logins, so only the top frame may ask: a sign-in field
+    // in an embedded frame, often another site's, must not bring them up.
+    if (sender.frameId !== 0) return undefined;
     const token = tokenByTab.get(sender.tab.id);
     const policy = token && policiesByToken.get(token);
     if (policy && nativePort) {

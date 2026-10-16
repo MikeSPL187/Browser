@@ -19,7 +19,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -45,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.paneTitle
@@ -155,8 +160,12 @@ fun V5Sheet(
     val dragState = rememberDraggableState { delta -> dragPx = V5SheetRules.drag(dragPx, delta) }
     BoxWithConstraints(modifier.fillMaxSize()) {
         val maxSheetHeight = maxHeight * V5Motion.SHEET_MAX_HEIGHT_FRACTION
+        // A tap outside closes the sheet; TalkBack closes it with the header's «Close» or back, so
+        // the scrim is no second unlabelled control over the whole screen (the v5 walk, 15.10).
         Box(
             Modifier
+                .testTag(V5SheetTestTags.Scrim)
+                .clearAndSetSemantics {}
                 .fillMaxSize()
                 .graphicsLayer {
                     alpha = V5SheetRules.scrimAlpha(presence.value, dragPx, heightPx)
@@ -167,8 +176,7 @@ fun V5Sheet(
                     indication = null,
                     enabled = visible,
                     onClick = { dismiss() },
-                )
-                .testTag(V5SheetTestTags.Scrim),
+                ),
         )
         val shape = V5Theme.shapes.sheet
         Column(
@@ -201,7 +209,8 @@ fun V5Sheet(
                     paneTitle = title
                     isTraversalGroup = true
                 }
-                .navigationBarsPadding()
+                // A name typed in a sheet stays above the keyboard, and clear of the sides sideways.
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).union(V5SafeSides))
                 .testTag(V5SheetTestTags.Sheet),
         ) {
             Box(

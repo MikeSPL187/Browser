@@ -27,6 +27,10 @@ class WebContentActionState {
         private set
     var lastDownload by mutableStateOf<DownloadActionResult?>(null)
         private set
+
+    /** Bumped by every download asked for, even the same file twice: the v5 ring starts watching. */
+    var downloadRevision by mutableIntStateOf(0)
+        private set
     var addressBarPulseNonce by mutableIntStateOf(0)
         private set
     var longPressActionHapticNonce by mutableIntStateOf(0)
@@ -82,6 +86,7 @@ class WebContentActionState {
 
     fun reportDownload(result: DownloadActionResult) {
         lastDownload = result
+        downloadRevision++
     }
 
     fun consumeDownloadResult() {

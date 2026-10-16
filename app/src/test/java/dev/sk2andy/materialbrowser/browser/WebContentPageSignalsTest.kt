@@ -6,8 +6,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class WebContentPageColorsTest {
-    private val colors = WebContentPageColors()
+class WebContentPageSignalsTest {
+    private val colors = WebContentPageSignals()
 
     @Test
     fun `the reported theme-color becomes an opaque color and none clears it`() {
@@ -70,5 +70,22 @@ class WebContentPageColorsTest {
     private companion object {
         const val TAB = "tab"
         const val OTHER = "other"
+    }
+
+    @Test
+    fun `a readable page offers Read until a new document or the tab goes`() {
+        assertFalse(colors.readerAvailable(TAB))
+        colors.onReaderAvailable(TAB, true)
+        assertTrue(colors.readerAvailable(TAB))
+        colors.onSameDocumentNavigation(TAB)
+        assertTrue(colors.readerAvailable(TAB))
+        colors.onNavigation(TAB, "https://example.com/next")
+        assertFalse(colors.readerAvailable(TAB))
+        colors.onReaderAvailable(TAB, true)
+        colors.onReaderAvailable(TAB, false)
+        assertFalse(colors.readerAvailable(TAB))
+        colors.onReaderAvailable(TAB, true)
+        colors.clear(TAB)
+        assertFalse(colors.readerAvailable(TAB))
     }
 }

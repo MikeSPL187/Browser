@@ -19,10 +19,15 @@ internal class DownloadRepository(
 
     fun snapshot(): List<DownloadEntry> {
         val systemRows = querySystemDownloads()
-        val systemEntries = systemRows.map(SystemRow::entry)
+        systemRows?.let { rows ->
+            SystemDownloadRetries.retainUnfinished(
+                rows.filter { row -> row.entry.status != DownloadStatus.Successful }.map { row -> row.entry.id },
+            )
+        }
+        val systemEntries = systemRows.orEmpty().map { row -> row.entry.withSystemRetry() }
         val mediaEntries = queryMediaStoreDownloads()
             .filterNot { mediaRow ->
-                systemRows.any { systemRow ->
+                systemRows.orEmpty().any { systemRow ->
                     DownloadIndexRules.isSameFile(systemRow.localUri, mediaRow.location)
                 }
             }
@@ -37,6 +42,7 @@ internal class DownloadRepository(
     fun clear(entries: Collection<DownloadEntry>): Boolean = runCatching {
         val ids = DownloadHistoryRules.clearableTerminalIds(entries.toList())
         val systemIds = ids.filter { id -> id >= 0L }
+        SystemDownloadRetries.forget(systemIds)
         var removedAll = systemIds.isEmpty() ||
             manager.remove(*systemIds.toLongArray()) == systemIds.size
         ids.filter { id -> id < 0L && !DownloadRuntimeRegistry.isRuntimeId(id) }.forEach { id ->
@@ -65,13 +71,37 @@ internal class DownloadRepository(
         DownloadRuntimeRegistry.togglePause(entry.id)
     }.getOrDefault(false)
 
-    private fun querySystemDownloads(): List<SystemRow> = runCatching {
-        manager.query(DownloadManager.Query())?.use { cursor ->
+    /**
+     * Starts a failed or cancelled download again when [DownloadEntry.retry] allows it. A failed
+     * DownloadManager row gives way to the new one: it is removed once the new one is enqueued.
+     */
+    fun retry(entry: DownloadEntry): Boolean = runCatching {
+        if (entry.id < 0L) return@runCatching DownloadRuntimeRegistry.retry(entry.id)
+        val current = querySystemDownloads(DownloadManager.Query().setFilterById(entry.id))
+            ?.firstOrNull()?.entry
+        if (current?.status != DownloadStatus.Failed) return@runCatching false
+        SystemDownloadRetries.retry(entry.id) ?: return@runCatching false
+        manager.remove(entry.id)
+        true
+    }.getOrDefault(false)
+
+    /** Null when Android's download list could not be read. */
+    private fun querySystemDownloads(
+        query: DownloadManager.Query = DownloadManager.Query(),
+    ): List<SystemRow>? = runCatching {
+        manager.query(query)?.use { cursor ->
             buildList {
                 while (cursor.moveToNext()) cursor.systemDownload()?.let(::add)
             }
-        }.orEmpty()
-    }.getOrDefault(emptyList())
+        }
+    }.getOrNull()
+
+    private fun DownloadEntry.withSystemRetry(): DownloadEntry =
+        if (status == DownloadStatus.Failed && SystemDownloadRetries.canRetry(id)) {
+            copy(retry = DownloadRetry.Available)
+        } else {
+            this
+        }
 
     private fun queryMediaStoreDownloads(): List<MediaRow> = runCatching {
         resolver.query(

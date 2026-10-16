@@ -1365,7 +1365,7 @@ internal fun BrowserScreen(
         !linkPeekAddressBarExpanded &&
         commandFeedback == null &&
         !tabOverviewVisible &&
-        !AddressBarWideLayoutRules.usesTabStrip(windowWidthDp = browserWidthPx / density.density)
+        !rememberWideBrowserWindow(windowWidthDp = browserWidthPx / density.density)
     val pageFrames = rememberBrowserPageFrames(
         controller = controller,
         selectedTab = selectedTab,
@@ -1379,7 +1379,7 @@ internal fun BrowserScreen(
     val contentFramed = pageFrames.framed
     val contentFrame = pageFrames.primary
     val framedBottomBarTopPx = remember { mutableFloatStateOf(Float.NaN) }
-    val fullWindowHeightPx = remember(context) {
+    val fullWindowHeightPx = remember(context, browserHeightPx) { // the root turns with the window, the metrics too
         context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
     }
 
@@ -1396,8 +1396,8 @@ internal fun BrowserScreen(
             .background(VolaTheme.auraBrush)
             .hiddenUnderModal(controller.contentActions.isLinkPeekVisible || LocalBrowserUnderFirstRun.current).linkGlancePageScale(),
     ) {
-        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
-            Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible || tabOverviewVisible || snoozedTabsVisible)) {
+        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime, ProfileAccentV5 provides controller.v5Accent) {
+            Column(modifier = Modifier.fillMaxSize().hiddenUnderModal(settingsVisible || tabOverviewVisible || snoozedTabsVisible || (addressEditorVisible && !showInteractiveBlankStart))) {
                 if (showFirefoxExtensionOptionsChrome) {
                     FirefoxExtensionOptionsTopBar(
                         title = requireNotNull(firefoxExtensionOptionsTitle),
@@ -1661,7 +1661,7 @@ internal fun BrowserScreen(
             controller.selectTab(tabId)
         }
 
-        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime) {
+        CompositionLocalProvider(LocalProfileWallpaper provides profileWallpaperRuntime, ProfileAccentV5 provides controller.v5Accent) {
             if (afterFirstFrame || tabOverviewVisible) StartupComposition("TabOverview") { TabOverview(
                 controller = controller,
                 backgroundWallpaper = tabSwitcherWallpaperRuntime,

@@ -49,6 +49,14 @@ internal object LinkPeekPreviewRules {
     }
 
     /**
+     * A preview that is loading or loaded moves into a new tab as it is. A failed one loads again
+     * there (the tab can retry and explain); a crashed one has no page; a blocked one gets the
+     * tab's own dangerous-site warning.
+     */
+    fun canHandOver(status: LinkPeekPreviewStatus): Boolean =
+        status == LinkPeekPreviewStatus.Loading || status == LinkPeekPreviewStatus.Loaded
+
+    /**
      * A blocked preview stays blocked: nothing the stopped page does may bring it back. A crashed
      * one has no session left. A failure is not a loaded page: the card says what went wrong, and
      * Safe Browsing's refusal is the dangerous-site warning, as in a tab.

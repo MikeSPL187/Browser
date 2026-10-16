@@ -32,7 +32,7 @@ kotlin {
 android {
     namespace = "dev.sk2andy.materialbrowser.shared"
     compileSdk = 37
-    compileSdkMinor = 1
+    compileSdkMinor = 2
 
     defaultConfig {
         minSdk = 31
