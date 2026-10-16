@@ -2743,7 +2743,7 @@ class BrowserController(
                         geckoViewBindings.remove(container)
                         releaseGeckoView(currentBinding.session, currentBinding.view)
                     }
-                (binding.view.parent as? ViewGroup)?.removeView(binding.view)
+                binding.view.removeFromParentWithoutFocusHandoff()
                 geckoViewBindings.remove(transferablePresentation.key)
                 container.removeAllViews()
                 container.addView(
@@ -2786,7 +2786,7 @@ class BrowserController(
             val sourceContainer = transferable.key
             val binding = transferable.value
             geckoViewMutationHosts += sourceContainer
-            (binding.view.parent as? ViewGroup)?.removeView(binding.view)
+            binding.view.removeFromParentWithoutFocusHandoff()
             geckoViewBindings.remove(sourceContainer)
             attachGeckoViewBinding(container, binding)
             dispatchCurrentWindowInsets(binding.view, binding.tabId)
@@ -3189,7 +3189,7 @@ class BrowserController(
             )
             return
         }
-        (videoView.parent as? ViewGroup)?.removeView(videoView)
+        videoView.removeFromParentWithoutFocusHandoff()
         geckoViewBindings.remove(bindingEntry.key)
         container.removeAllViews()
         container.addView(
@@ -4088,7 +4088,7 @@ class BrowserController(
         runtime.geckoBinding.session.setBackdropBlurRegion(runtime.backdropBlurRegion)
         val view = runtime.binding.view
         if (view.parent === container && container.childCount == 1) return
-        (view.parent as? ViewGroup)?.removeView(view)
+        view.removeFromParentWithoutFocusHandoff()
         container.removeAllViews()
         container.addView(
             view,
