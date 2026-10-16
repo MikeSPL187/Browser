@@ -197,7 +197,10 @@ internal fun <T : View> LinkPeekOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 920, easing = FastOutSlowInEasing),
+                animation = tween(
+                    durationMillis = VolaMotion.LINK_PEEK_TARGET_RING_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
             ),
             label = "linkPeekPlusRing",
         )
@@ -205,7 +208,10 @@ internal fun <T : View> LinkPeekOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 560, easing = FastOutSlowInEasing),
+                animation = tween(
+                    durationMillis = VolaMotion.LINK_PEEK_TARGET_BREATH_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
                 repeatMode = RepeatMode.Reverse,
             ),
             label = "linkPeekPlusBreath",
