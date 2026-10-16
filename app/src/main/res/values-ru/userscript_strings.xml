@@ -92,4 +92,10 @@
     <string name="topping_catalog_install_description">Установить и включить %1$s</string>
     <string name="topping_catalog_enable_description">Включить %1$s</string>
     <string name="topping_catalog_disable_description">Выключить %1$s</string>
+    <string name="userscript_v5_on">Вкл.</string>
+    <string name="userscript_v5_off">Выкл.</string>
+    <string name="userscript_v5_enabled">Включён</string>
+    <string name="userscript_v5_matches">Подходящие адреса</string>
+    <string name="userscript_v5_edit">Изменить скрипт</string>
+    <string name="userscript_v5_delete">Удалить скрипт</string>
 </resources>

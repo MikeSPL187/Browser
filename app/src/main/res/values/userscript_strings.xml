@@ -90,4 +90,10 @@
     <string name="topping_catalog_install_description">Install and enable %1$s</string>
     <string name="topping_catalog_enable_description">Enable %1$s</string>
     <string name="topping_catalog_disable_description">Disable %1$s</string>
+    <string name="userscript_v5_on">On</string>
+    <string name="userscript_v5_off">Off</string>
+    <string name="userscript_v5_enabled">Enabled</string>
+    <string name="userscript_v5_matches">Matching addresses</string>
+    <string name="userscript_v5_edit">Edit Topping</string>
+    <string name="userscript_v5_delete">Delete Topping</string>
 </resources>

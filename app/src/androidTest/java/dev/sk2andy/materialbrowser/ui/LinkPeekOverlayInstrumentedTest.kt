@@ -29,6 +29,7 @@ import dev.sk2andy.materialbrowser.browser.LinkPeekActionLayout
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -241,9 +242,13 @@ class LinkPeekOverlayInstrumentedTest {
     @Test
     fun newTabTargetPulsesBeforeArmingAndStrengthensWithoutMovingWhenArmed() {
         val armed = mutableStateOf(false)
+        // Read in composition, as the overlay does: before the window opens the test process
+        // still reports animators on (androidTest/CLAUDE.md). The CI emulator runs without them.
+        var animated = true
         composeRule.mainClock.autoAdvance = false
         try {
             composeRule.setContent {
+                animated = V5Motion.animationsEnabled
                 MaterialBrowserTheme {
                     LinkPeekOverlay(
                         url = "https://example.com/pulse",
@@ -284,6 +289,21 @@ class LinkPeekOverlayInstrumentedTest {
                     bounds,
                     composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot,
                 )
+            }
+            if (!animated) {
+                // Without system animations the target stands still (#308): no growth over time,
+                // and arming keeps the ring where it is.
+                assertEquals(restingWidth, guidingWidth, 0.5f)
+                assertEquals(restingRingWidth, guidingRingBounds.width, 0.5f)
+                composeRule.runOnIdle { armed.value = true }
+                composeRule.mainClock.advanceTimeBy(220)
+                val armedStillRing = composeRule
+                    .onNodeWithTag(LinkPeekTestTags.NewTabTargetPulseRing)
+                    .fetchSemanticsNode().boundsInRoot
+                assertEquals(guidingRingBounds.width, armedStillRing.width, 0.5f)
+                assertEquals(guidingRingBounds.center.x, armedStillRing.center.x, 1f)
+                assertEquals(guidingRingBounds.center.y, armedStillRing.center.y, 1f)
+                return
             }
             assertTrue(guidingWidth > restingWidth)
             assertTrue(guidingRingBounds.width > restingRingWidth)
