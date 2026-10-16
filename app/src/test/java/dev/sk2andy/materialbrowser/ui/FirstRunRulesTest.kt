@@ -48,8 +48,15 @@ class FirstRunRulesTest {
     @Test
     fun `v5 asks only about the default browser after the welcome`() {
         assertEquals(FirstRunStage.DefaultBrowser, FirstRunRules.v5AfterWelcome(isDefaultBrowser = false))
-        // Already the default browser: the first run ends with the welcome.
-        assertNull(FirstRunRules.v5AfterWelcome(isDefaultBrowser = true))
+        // Already the default browser: straight to the two gestures.
+        assertEquals(FirstRunStage.GestureSheet, FirstRunRules.v5AfterWelcome(isDefaultBrowser = true))
+    }
+
+    @Test
+    fun `back on the gesture sheet closes the first run`() {
+        assertTrue(FirstRunRules.handlesBack(FirstRunStage.GestureSheet))
+        assertNull(FirstRunRules.back(FirstRunStage.GestureSheet, showIntro = true))
+        assertNull(FirstRunRules.back(FirstRunStage.GestureSheet, showIntro = false))
     }
 
     @Test

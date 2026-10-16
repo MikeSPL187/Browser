@@ -141,6 +141,8 @@ object V5Sizes {
     // First run (canvas screen «п1»): Vola's mark on its accent tile.
     val firstRunMark: Dp = 88.dp
     val firstRunMarkIcon: Dp = 40.dp
+    /** The plate of a gesture's hand on the two-gesture sheet (canvas screen «п3»). */
+    val firstRunGesture: Dp = 52.dp
 
     // Link preview (canvas screen «н1»).
     /** The address line over the live page in the preview card. */

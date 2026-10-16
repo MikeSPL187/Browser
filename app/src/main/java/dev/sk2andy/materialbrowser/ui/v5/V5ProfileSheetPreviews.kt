@@ -37,3 +37,18 @@ private fun V5ProfileSheetLightPreview() = SheetPreview(dark = false)
 @Preview(name = "Profiles · dark", heightDp = 640)
 @Composable
 private fun V5ProfileSheetDarkPreview() = SheetPreview(dark = true)
+
+/** V28 B11: «Move to profile» — the same sheet, only the profiles the tab can go to, no counts. */
+@Preview(name = "Move to profile · dark", heightDp = 480)
+@Composable
+private fun V5MoveToProfileDarkPreview() {
+    VolaV5Theme(dark = true) {
+        V5ProfileSheet(
+            visible = true,
+            profiles = previewProfiles.drop(1).take(2).map { it.copy(tabCount = null) },
+            onSelect = {},
+            onDismiss = {},
+            title = "Переместить в профиль",
+        )
+    }
+}
