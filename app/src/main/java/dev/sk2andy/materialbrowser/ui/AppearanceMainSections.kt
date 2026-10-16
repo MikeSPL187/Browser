@@ -52,7 +52,6 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaThemesTokens
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 
 internal object AppearanceMainTestTags {
@@ -133,8 +132,8 @@ internal fun ColumnScope.AppearanceMainSections(
             onSelect = { mode -> onSettingsChanged(settings.copy(appearanceMode = mode)) },
         )
     }
-    val uiV5 by rememberUiV5Flag()
-    if (uiV5) {
+    val drawsV5 = rememberDrawsV5()
+    if (drawsV5) {
         // The v5 bar's site color (system-v5.md, section 1.3); moves to the v5 settings with them.
         var siteTint by rememberV5Preference(V5SiteTintSetting)
         Spacer(Modifier.height(VolaAppearance.sectionGap))

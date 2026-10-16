@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -80,10 +79,11 @@ internal fun rememberBrowserPageFrames(
         chromeVisible &&
         !controller.isActiveProfileLocked &&
         !controller.privateTabsLock.hides(companion)
-    // v5 (ui.v5 flag) has no page card: the page runs edge to edge above the opaque bar strip.
-    val uiV5 by rememberUiV5Flag()
+    // v5 (ui.v5 on a phone; a tablet stays on v4) has no page card: the page runs edge to edge
+    // above the opaque bar strip.
+    val drawsV5 = rememberDrawsV5()
     // Split View is always framed: two cards on the aura, whatever the shell's style.
-    val contentFramed = splitShown || !uiV5 && BrowserContentFrameRules.isFramed(
+    val contentFramed = splitShown || !drawsV5 && BrowserContentFrameRules.isFramed(
         chromeStyle = controller.appearanceSettings.chromeStyle,
         browserChromeVisible = chromeVisible,
         isBlankPage = selectedTab.url == BLANK_URL,
