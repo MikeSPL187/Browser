@@ -78,6 +78,8 @@ import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.data.FavoriteLibrarySignal
 import dev.sk2andy.materialbrowser.browser.integration.HistoryActivityContract
+import dev.sk2andy.materialbrowser.ui.LibrarySwitch
+import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserIntent
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserRequestKind
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutPublisher
@@ -221,7 +223,7 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null && ::browserController.isInitialized) stageAppDataImport(uri)
     }
-    private val historyLauncher = registerForActivityResult(
+    internal val historyLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (!::browserController.isInitialized) return@registerForActivityResult
@@ -229,6 +231,7 @@ class MainActivity : AppCompatActivity() {
         browserController.applyHistoryClearRequests(
             HistoryActivityContract.clearRequestsFrom(result.data),
         )
+        LibrarySwitch.from(result.data)?.let { openLibrary(it, instant = true) }
         if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
         HistoryActivityContract.navigationRequestFrom(result.data)?.let { request ->
             browserController.openHistoryEntry(request.url, request.profileId) { opened ->
@@ -236,11 +239,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    private val favoritesLauncher = registerForActivityResult(
+    internal val favoritesLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (!::browserController.isInitialized) return@registerForActivityResult
         browserController.reloadFavorites()
+        LibrarySwitch.from(result.data)?.let { openLibrary(it, instant = true) }
         if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
         FavoritesActivityContract.navigationUrlFrom(result.data)?.let { url ->
             if (browserController.openFavorite(url)) incomingBrowserNavigationRequestId++
@@ -644,19 +648,9 @@ class MainActivity : AppCompatActivity() {
                                 externalLaunchTabId = tabId
                             },
                             onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
-                            onOpenFavorites = {
-                                favoritesLauncher.launch(
-                                    FavoritesActivityContract.launchIntent(this@MainActivity),
-                                )
-                            },
-                            onOpenDownloads = {
-                                startActivity(Intent(this@MainActivity, DownloadsActivity::class.java))
-                            },
-                            onOpenHistory = {
-                                historyLauncher.launch(
-                                    HistoryActivityContract.launchIntent(this@MainActivity),
-                                )
-                            },
+                            onOpenFavorites = { openLibrary(V5LibrarySegment.Favorites) },
+                            onOpenDownloads = { openLibrary(V5LibrarySegment.Downloads) },
+                            onOpenHistory = { openLibrary(V5LibrarySegment.History) },
                             onImportUserScript = {
                                 userScriptImportLauncher.launch(
                                     arrayOf(

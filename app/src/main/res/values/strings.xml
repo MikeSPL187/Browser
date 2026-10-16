@@ -2126,4 +2126,11 @@
     <string name="v5_library_search_downloads">Search downloads</string>
     <string name="v5_library_delete">Delete</string>
     <string name="v5_library_retry">Retry</string>
+    <string name="v5_history_clear">Clear…</string>
+    <string name="v5_history_clear_title">Clear history</string>
+    <string name="v5_history_clear_subtitle">Only in this profile</string>
+    <string name="v5_history_clear_hour">The last hour</string>
+    <string name="v5_history_clear_today">Today</string>
+    <string name="v5_history_clear_two_days">Today and yesterday</string>
+    <string name="v5_history_clear_all">All time</string>
 </resources>
