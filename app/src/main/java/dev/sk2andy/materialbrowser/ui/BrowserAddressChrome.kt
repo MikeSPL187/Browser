@@ -455,11 +455,11 @@ internal fun BoxScope.BrowserAddressChrome(
         selectedTab.url != BLANK_URL &&
         !linkPeekAddressBarExpanded &&
         !wideWindow
-    // V7: the v5 bar replaces the bar at rest and while collapsed; editing, docking, feedback, the
-    // overview morph and wide windows stay on the current bar until their v5 steps.
+    // V7: the v5 bar replaces the bar at rest and while collapsed; command feedback is a line above
+    // it (V28, B6b). Editing, docking, the overview morph and wide windows stay on the current bar
+    // until their v5 steps.
     val showV5Bar = uiV5 &&
         !addressEditorVisible &&
-        commandFeedback == null &&
         !wideWindow &&
         effectiveAddressBarDockPlacement == null &&
         !linkPeekAddressBarExpanded &&
@@ -488,6 +488,7 @@ internal fun BoxScope.BrowserAddressChrome(
             ),
             permissionActivityVisible = permissionActivityVisible,
             canDock = addressBarDockingAvailable,
+            commandFeedback = commandFeedback,
             snoozedTabCount = visibleSnoozedTabCount,
             onAddress = openAddressEditor,
             onTabs = onTabs,
