@@ -42,6 +42,9 @@ class AppearanceWebThemeInstrumentedTest {
 
     @Before
     fun setUp() {
+        // The private tab below asks for notifications; the system dialog would pause the activity
+        // and its WebView while the test waits for the page.
+        grantNotificationPermissionForTests()
         preferences.edit()
             .clear()
             .putString(
@@ -89,19 +92,19 @@ class AppearanceWebThemeInstrumentedTest {
                         isIncognito = true,
                     )
                 }
-                assertTrue(awaitWebsiteColorScheme(scenario, expected = "light"))
+                assertTrue("private page never reported light", awaitWebsiteColorScheme(scenario, expected = "light"))
                 val firstWebView = selectedWebView(scenario)
 
                 scenario.onActivity { activity ->
                     assertTrue(activity.browserControllerForTesting().openUrl("${server.url}second"))
                 }
-                assertTrue(awaitSelectedWebView(scenario) { view ->
+                assertTrue("second page not loaded with history", awaitSelectedWebView(scenario) { view ->
                     view.url?.endsWith("/second") == true && view.canGoBack()
                 })
 
                 updateAppearance(scenario, BrowserAppearanceMode.Dark)
 
-                assertTrue(awaitSelectedWebView(scenario) { view ->
+                assertTrue("no new WebView kept the private history", awaitSelectedWebView(scenario) { view ->
                     view !== firstWebView &&
                         view.url?.endsWith("/second") == true &&
                         view.canGoBack()
@@ -109,7 +112,7 @@ class AppearanceWebThemeInstrumentedTest {
                 scenario.onActivity { activity ->
                     assertTrue(activity.browserControllerForTesting().selectedTabForTesting().isIncognito)
                 }
-                assertTrue(awaitWebsiteColorScheme(scenario, expected = "dark"))
+                assertTrue("private page never reported dark", awaitWebsiteColorScheme(scenario, expected = "dark"))
             }
         }
     }

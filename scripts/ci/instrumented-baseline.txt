@@ -23,7 +23,6 @@ dev.sk2andy.materialbrowser.browser.gecko.GeckoKeyboardInsetsInstrumentedTest#im
 dev.sk2andy.materialbrowser.browser.gecko.GeckoLinkPeekInstrumentedTest#longPressedGeckoLinkShowsPreviewOpensPrivateBackgroundTabAndDismisses
 
 # System WebView engine, external previews and APK downloads.
-dev.sk2andy.materialbrowser.AppearanceWebThemeInstrumentedTest#appearanceChangesPreservePrivateSystemWebViewHistoryInMemory
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#coverAwarePageUsesExactlyOneSupportedSafeAreaMode -- needs System WebView 144+, the CI emulator has 124 (#299)
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#forcedSafeAreaMovesSystemWebViewBottomIntoNativeSafeFrame -- needs System WebView 144+, the CI emulator has 124 (#299)
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#requestedSiteLayoutsAndFocusedSearchesStaySafeAndEdgeToEdge -- needs System WebView 144+, the CI emulator has 124 (#299)
