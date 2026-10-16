@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -109,6 +110,11 @@ data class V5EditorState(
     val isPrivate: Boolean = false,
     /** Changes every time the editor opens, to focus the field and raise the keyboard. */
     val focusNonce: Int = 0,
+    /**
+     * Over a new tab: while nothing is typed, the tab's pinned sites show through and take taps,
+     * as Safari keeps Favorites under an empty field; the editor keeps only its field.
+     */
+    val overStart: Boolean = false,
 )
 
 @Composable
@@ -134,11 +140,18 @@ fun V5AddressEditor(
         )
     }
     val moves = V5Motion.animationsEnabled
+    val seeThrough = V5EditorRules.seeThrough(state)
     Box(
         modifier
             .fillMaxSize()
             .graphicsLayer { alpha = appear.value.coerceIn(0f, 1f) }
-            .background(V5Materials.thick.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false))
+            .background(
+                if (seeThrough) {
+                    Color.Transparent
+                } else {
+                    V5Materials.thick.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false)
+                },
+            )
             .testTag(V5EditorTestTags.Editor),
     ) {
         Column(
@@ -150,15 +163,20 @@ fun V5AddressEditor(
                     if (moves) translationY = (1f - appear.value) * V5Sizes.bar.toPx()
                 },
         ) {
-            SuggestionList(
-                state = state,
-                onSelect = onSelect,
-                onFill = onFill,
-                onClipboard = onClipboard,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-            )
+            if (seeThrough) {
+                // Nothing here takes a touch, so a tap reaches the pinned site under it.
+                Spacer(Modifier.weight(1f))
+            } else {
+                SuggestionList(
+                    state = state,
+                    onSelect = onSelect,
+                    onFill = onFill,
+                    onClipboard = onClipboard,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+            }
             EditorField(
                 state = state,
                 onValueChange = onValueChange,
@@ -538,3 +556,12 @@ private fun Modifier.fadingTop(mask: Color): Modifier = this
             blendMode = BlendMode.DstIn,
         )
     }
+
+internal object V5EditorRules {
+    /**
+     * The new tab shows through while nothing is typed; a clip on offer keeps the list, since the
+     * offer lives there.
+     */
+    fun seeThrough(state: V5EditorState): Boolean =
+        state.overStart && state.value.text.isEmpty() && state.clipboard == null
+}
