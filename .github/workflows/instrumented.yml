@@ -170,6 +170,8 @@ jobs:
             -Pandroid.testInstrumentationRunnerArguments.numShards="$SHARDS"
             -Pandroid.testInstrumentationRunnerArguments.shardIndex="$SHARD"
           )
+          # Probe (not for merge): a diagnostics filter runs on the diagnostics build.
+          if [[ "$FILTER" == *Diagnostics* ]]; then args+=(-Pvola.performanceDiagnostics=true); fi
           if [[ -n "$FILTER" ]]; then
             if [[ "$FILTER" =~ ^[a-z0-9_.]+$ ]]; then
               args+=(-Pandroid.testInstrumentationRunnerArguments.package="$FILTER")

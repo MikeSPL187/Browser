@@ -88,7 +88,11 @@ class GeckoPerformanceDiagnosticsInstrumentedTest {
             val json = requireNotNull(file).inputStream().use { input ->
                 GZIPInputStream(input).bufferedReader().use { it.readText() }
             }
-            assertTrue("Page gap marker is required in the actual native profile", json.contains("Candy.Diagnostics.UserObservedGap"))
+            val candyMarks = Regex("Candy\\.[A-Za-z.]+").findAll(json).map { it.value }.toSortedSet()
+            val probe = "candyMarks=$candyMarks userTiming=${Regex("UserTiming").findAll(json).count()} " +
+                "processes=${JSONObject(json).optJSONArray("processes")?.length()} " +
+                "threads=${JSONObject(json).optJSONArray("threads")?.length()} length=${json.length}"
+            assertTrue("Page gap marker is required in the actual native profile; $probe", json.contains("Candy.Diagnostics.UserObservedGap"))
             assertTrue("A real sampled thread is required", hasSamples(JSONObject(json)))
             assertFalse(GeckoPerformanceDiagnostics.isRecording)
         }
