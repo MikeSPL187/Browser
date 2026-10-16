@@ -12,7 +12,6 @@
 # Gecko engine: page insets, CSS safe area, keyboard, prompts, extensions, media.
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea -- Gecko viewport pixels across the v4 overview morph
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredDismissAnchorAttachesGeckoOnlyAfterOverviewCloses -- swipe-up dismiss in the v4 overview
-dev.sk2andy.materialbrowser.browser.gecko.GeckoKeyboardInsetsInstrumentedTest#immersiveLowerWebsiteInputStaysVisibleWithoutShrinkingNativeHost -- host 63 px shorter with the keyboard: page frame takes systemBars bottom (ui/BrowserPageFrames.kt:92), issue for H
 
 # System WebView engine, external previews and APK downloads.
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#coverAwarePageUsesExactlyOneSupportedSafeAreaMode -- needs System WebView 144+, the CI emulator has 124 (#299)
