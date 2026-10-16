@@ -98,9 +98,11 @@ class GeckoKeyboardInsetsInstrumentedTest {
             val initial = awaitReport(scenario) { true }
             val coordinates = FloatArray(2)
             var initialHostHeight = 0
+            var initialHostTop = 0
             scenario.onActivity { activity ->
                 val host = requireNotNull(activity.browserControllerForTesting().selectedGeckoViewForTesting())
                 initialHostHeight = host.height
+                initialHostTop = IntArray(2).also(host::getLocationInWindow)[1]
                 val view = (host as ViewGroup).getChildAt(0)
                 val location = IntArray(2)
                 view.getLocationOnScreen(location)
@@ -136,9 +138,10 @@ class GeckoKeyboardInsetsInstrumentedTest {
             scenario.onActivity { activity ->
                 val host = requireNotNull(activity.browserControllerForTesting().selectedGeckoViewForTesting())
                 if (immersive) assertEquals(initialHostHeight, host.height)
+                // The page sits below the status bar since H4 (#123); the keyboard must not move it.
                 val location = IntArray(2)
                 host.getLocationInWindow(location)
-                assertEquals(0, location[1])
+                assertEquals(initialHostTop, location[1])
                 WindowCompat.getInsetsController(activity.window, activity.window.decorView)
                     .hide(WindowInsetsCompat.Type.ime())
             }
