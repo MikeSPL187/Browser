@@ -138,6 +138,10 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // First run (canvas screen «п1»): Vola's mark on its accent tile.
+    val firstRunMark: Dp = 88.dp
+    val firstRunMarkIcon: Dp = 40.dp
+
     // Link preview (canvas screen «н1»).
     /** The address line over the live page in the preview card. */
     val glanceHeader: Dp = 40.dp
