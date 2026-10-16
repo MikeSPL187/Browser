@@ -1581,6 +1581,12 @@
     <string name="gecko_extension_uninstall">Uninstall extension</string>
     <string name="gecko_extension_permission_intro">The extension requests the following access:</string>
     <string name="gecko_extension_no_permissions">No additional permissions reported.</string>
+    <string name="gecko_extension_v5_on">On</string>
+    <string name="gecko_extension_v5_off">Off</string>
+    <string name="gecko_extension_v5_enabled">Enabled</string>
+    <string name="gecko_extension_v5_options">Extension settings</string>
+    <string name="gecko_extension_v5_built_in">Built into Vola. It can’t be turned off or removed.</string>
+    <string name="gecko_extension_v5_address">XPI address</string>
     <string name="gecko_address_or_search">Address or search</string>
     <string name="gecko_stop_loading">Stop loading</string>
     <string name="gecko_reload">Reload</string>
