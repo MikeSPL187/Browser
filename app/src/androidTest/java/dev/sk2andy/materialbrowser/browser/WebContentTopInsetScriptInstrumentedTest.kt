@@ -1540,9 +1540,11 @@ class WebContentTopInsetScriptInstrumentedTest {
             "document.querySelector('#scroller').scrollTop = 400",
         )
 
+        // The fallback must come once the scroll settles; how soon depends on the device. The
+        // short stale-timer window is for checks that nothing arrives, not for this wait.
         assertTrue(
             "Unstable sticky header did not request native top fallback",
-            fallbackReceived.await(STALE_TIMER_WINDOW_MILLIS, TimeUnit.MILLISECONDS),
+            fallbackReceived.await(PAGE_TIMEOUT_SECONDS, TimeUnit.SECONDS),
         )
     }
 
