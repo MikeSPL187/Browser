@@ -57,6 +57,12 @@
   `Application Not Responding: com.android.systemui` забирает фокус, и все касания через систему
   (`input tap`, `injectInputEvent`) уходят в него: «Page did not react to 3 taps», «drag did not scroll»,
   падают подряд тесты одного шарда (16.10). Перед таким касанием — `dismissNotRespondingDialogForTests()`.
+  «Назад» его не закрывает (10 с, #356): помощник нажимает «Подождать» по `android:id/aerr_wait`. Поле
+  получает фокус и клавиатура показывается только при фокусе окна — перед касанием поля
+  `awaitWindowFocusForTests(activity)`; при падении он называет окно с фокусом.
+- Кнопка панели, которая видна и включена, ещё может ехать вместе с панелью: касание теряется
+  («docked=false, placement=null, dockingEnabled=true», #356). Перед касанием ждать, пока границы узла
+  не перестанут меняться (`awaitSettledBounds` в `AddressBarDockInstrumentedTest`).
 - `ValueAnimator.areAnimatorsEnabled()` в потоке теста до запуска активности всегда `true`: масштаб анимаций
   процесс узнаёт от WindowManager, когда открывает первое окно (на эмуляторе CI анимации выключены). Из-за этого
   `assumeTrue` в начале теста его не пропускал, и проверка «анимация идёт» падала. Читать внутри `onActivity`.
