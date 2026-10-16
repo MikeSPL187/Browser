@@ -89,7 +89,13 @@ internal fun rememberBrowserPageFrames(
         isBlankPage = selectedTab.url == BLANK_URL,
         compactMode = controller.addressBar.compactMode,
     )
-    val frameSafeInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    // In full immersive mode the system bars only come over the page for a moment (with the
+    // keyboard, or a swipe from the edge); counting them moved the page by a navigation bar (#317).
+    val frameSafeInsets = if (controller.isFullImmersiveModeEnabled) {
+        WindowInsets.displayCutout
+    } else {
+        WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    }
     val unframedGeckoPage = !contentFramed && chromeVisible && controller.usesGeckoEngine &&
         selectedTab.url != BLANK_URL
     fun framedContent(addressBarHeight: Dp): BrowserContentFrame = if (unframedGeckoPage) {
