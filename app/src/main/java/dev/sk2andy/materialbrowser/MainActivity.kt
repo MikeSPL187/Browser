@@ -78,6 +78,7 @@ import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.data.FavoriteLibrarySignal
 import dev.sk2andy.materialbrowser.browser.integration.HistoryActivityContract
+import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserIntent
 import dev.sk2andy.materialbrowser.browser.integration.IncomingBrowserRequestKind
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutPublisher
@@ -102,6 +103,7 @@ import dev.sk2andy.materialbrowser.ui.AppDataImportPreview
 import dev.sk2andy.materialbrowser.ui.BrowserScreen
 import dev.sk2andy.materialbrowser.ui.CandyAnimationRules
 import dev.sk2andy.materialbrowser.ui.LaunchScreen
+import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.FirefoxExtensionManagerOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoOverlay
 import dev.sk2andy.materialbrowser.ui.FullscreenVideoSystemControls
@@ -221,31 +223,28 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null && ::browserController.isInitialized) stageAppDataImport(uri)
     }
-    private val historyLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        if (!::browserController.isInitialized) return@registerForActivityResult
+    internal val historyLauncher = libraryLauncher { result ->
+        if (!::browserController.isInitialized) return@libraryLauncher
         browserController.reloadHistory()
         browserController.applyHistoryClearRequests(
             HistoryActivityContract.clearRequestsFrom(result.data),
         )
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != Activity.RESULT_OK) return@libraryLauncher
         HistoryActivityContract.navigationRequestFrom(result.data)?.let { request ->
             browserController.openHistoryEntry(request.url, request.profileId) { opened ->
                 if (opened) incomingBrowserNavigationRequestId++
             }
         }
     }
-    private val favoritesLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        if (!::browserController.isInitialized) return@registerForActivityResult
+    internal val favoritesLauncher = libraryLauncher { result ->
+        if (!::browserController.isInitialized) return@libraryLauncher
         browserController.reloadFavorites()
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != Activity.RESULT_OK) return@libraryLauncher
         FavoritesActivityContract.navigationUrlFrom(result.data)?.let { url ->
             if (browserController.openFavorite(url)) incomingBrowserNavigationRequestId++
         }
     }
+    internal val downloadsLauncher = libraryLauncher {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowsingHistoryLifecycle.install(application)
@@ -644,19 +643,9 @@ class MainActivity : AppCompatActivity() {
                                 externalLaunchTabId = tabId
                             },
                             onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
-                            onOpenFavorites = {
-                                favoritesLauncher.launch(
-                                    FavoritesActivityContract.launchIntent(this@MainActivity),
-                                )
-                            },
-                            onOpenDownloads = {
-                                startActivity(Intent(this@MainActivity, DownloadsActivity::class.java))
-                            },
-                            onOpenHistory = {
-                                historyLauncher.launch(
-                                    HistoryActivityContract.launchIntent(this@MainActivity),
-                                )
-                            },
+                            onOpenFavorites = { openLibrary(V5LibrarySegment.Favorites) },
+                            onOpenDownloads = { openLibrary(V5LibrarySegment.Downloads) },
+                            onOpenHistory = { openLibrary(V5LibrarySegment.History) },
                             onImportUserScript = {
                                 userScriptImportLauncher.launch(
                                     arrayOf(
@@ -824,6 +813,7 @@ class MainActivity : AppCompatActivity() {
         showAppDataTransferResult(intent)
         openIntent(intent)
         openHomePageForLauncherLaunch(intent)
+        LibrarySwitch.from(intent)?.let { openLibrary(it, instant = true) }
         if (FirstRunPresentationRules.showOnNewIntent(intent.action == Intent.ACTION_MAIN, GestureOnboardingStore(this).isCompleted())) {
             onboardingVisible = true
         }

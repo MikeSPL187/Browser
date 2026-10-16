@@ -46,6 +46,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -123,7 +124,7 @@ internal object FilterStudioTestTags {
     const val BuiltInProtection = "filter_studio_builtin_protection"
 }
 
-private enum class StudioTypeFilter { All, Block, Allow, Css }
+internal enum class StudioTypeFilter { All, Block, Allow, Css }
 
 private const val RULE_ITEMS_START_INDEX = 11
 
@@ -149,6 +150,29 @@ internal fun FilterStudioScreen(
     onExport: () -> String,
     onDismiss: () -> Unit,
 ) {
+    if (rememberSettingsUiV5()) {
+        FilterStudioV5(
+            rules = rules,
+            subscriptionRules = subscriptionRules,
+            isIncognito = isIncognito,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            currentUrl = currentUrl,
+            recentDomain = recentDomain,
+            selectedRuleId = selectedRuleId,
+            onTest = onTest,
+            onAdd = onAdd,
+            onUpdate = onUpdate,
+            onToggle = onToggle,
+            onDelete = onDelete,
+            onParseImport = onParseImport,
+            onApplyImport = onApplyImport,
+            onApplySubscription = onApplySubscription,
+            onExport = onExport,
+            onDismiss = onDismiss,
+        )
+        return
+    }
     var query by rememberSaveable { mutableStateOf("") }
     var typeFilter by rememberSaveable { mutableStateOf(StudioTypeFilter.All) }
     var profileOnly by rememberSaveable { mutableStateOf(false) }
@@ -156,32 +180,11 @@ internal fun FilterStudioScreen(
         mutableStateOf(recentDomain.orEmpty().ifBlank { currentUrl })
     }
     var liveDecision by remember { mutableStateOf<CandyRuleDecision?>(null) }
-    var addVisible by remember { mutableStateOf(false) }
-    var editingRule by remember { mutableStateOf<CandyRule?>(null) }
-    var importVisible by remember { mutableStateOf(false) }
-    var exportVisible by remember { mutableStateOf(false) }
-    var subscriptionVisible by remember { mutableStateOf(false) }
+    val dialogs = remember { FilterStudioDialogState() }
     val listState = rememberLazyListState()
     val view = LocalView.current
     val filtered = remember(rules, query, typeFilter, profileOnly, currentProfileId) {
-        rules.filter { rule ->
-            val matchesType = when (typeFilter) {
-                StudioTypeFilter.All -> true
-                StudioTypeFilter.Block -> rule.action == CandyRuleAction.Block
-                StudioTypeFilter.Allow -> rule.action == CandyRuleAction.Allow
-                StudioTypeFilter.Css -> rule.action == CandyRuleAction.Cosmetic
-            }
-            val matchesProfile = !profileOnly || rule.profileId == currentProfileId
-            val needle = query.trim().lowercase()
-            val matchesQuery = needle.isEmpty() || listOfNotNull(
-                rule.requestHost,
-                rule.firstPartyHost,
-                rule.cosmeticSelector,
-                rule.group,
-                rule.sourceUrl,
-            ).any { needle in it.lowercase() }
-            matchesType && matchesProfile && matchesQuery
-        }
+        filterStudioRules(rules, query, typeFilter, profileOnly, currentProfileId)
     }
     LaunchedEffect(selectedRuleId, filtered.map(CandyRule::id)) {
         val index = filtered.indexOfFirst { it.id == selectedRuleId }
@@ -235,7 +238,7 @@ internal fun FilterStudioScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
-                            onClick = { addVisible = true },
+                            onClick = { dialogs.addVisible = true },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .sizeIn(minHeight = 52.dp)
@@ -307,12 +310,12 @@ internal fun FilterStudioScreen(
                 }
                 item {
                     RuleTransferCard(
-                        onImport = { importVisible = true },
-                        onExport = { exportVisible = true },
+                        onImport = { dialogs.importVisible = true },
+                        onExport = { dialogs.exportVisible = true },
                     )
                 }
                 item {
-                    WebFilterListCard(onOpen = { subscriptionVisible = true })
+                    WebFilterListCard(onOpen = { dialogs.subscriptionVisible = true })
                 }
                 item {
                     StudioSectionHeader(
@@ -338,7 +341,7 @@ internal fun FilterStudioScreen(
                                 },
                             ),
                             actionVisible = rules.isEmpty(),
-                            onAdd = { addVisible = true },
+                            onAdd = { dialogs.addVisible = true },
                         )
                     }
                 } else {
@@ -350,7 +353,7 @@ internal fun FilterStudioScreen(
                             } ?: stringResource(R.string.filter_scope_global),
                             selected = rule.id == selectedRuleId,
                             onToggle = { onToggle(rule.id, it) },
-                            onEdit = { editingRule = rule },
+                            onEdit = { dialogs.editingRule = rule },
                             onDelete = { onDelete(rule.id) },
                         )
                     }
@@ -359,15 +362,78 @@ internal fun FilterStudioScreen(
         }
     }
 
-    if (addVisible) {
+    FilterStudioDialogs(
+        dialogs = dialogs,
+        subscriptionRules = subscriptionRules,
+        isIncognito = isIncognito,
+        profiles = profiles,
+        currentProfileId = currentProfileId,
+        onAdd = onAdd,
+        onUpdate = onUpdate,
+        onParseImport = onParseImport,
+        onApplyImport = onApplyImport,
+        onApplySubscription = onApplySubscription,
+        onExport = onExport,
+    )
+}
+
+/** Which of the studio's dialogs is open; the v4 screen and the v5 page share them. */
+@Stable
+internal class FilterStudioDialogState {
+    var addVisible by mutableStateOf(false)
+    var editingRule by mutableStateOf<CandyRule?>(null)
+    var importVisible by mutableStateOf(false)
+    var exportVisible by mutableStateOf(false)
+    var subscriptionVisible by mutableStateOf(false)
+}
+
+/** The rule editor, import, export and web-list dialogs, opened through [dialogs]. */
+@Composable
+internal fun FilterStudioDialogs(
+    dialogs: FilterStudioDialogState,
+    subscriptionRules: List<CandyRule>,
+    isIncognito: Boolean,
+    profiles: List<BrowserProfile>,
+    currentProfileId: String,
+    onAdd: (CandyRule) -> CandyRule?,
+    onUpdate: (CandyRule) -> CandyRule?,
+    onParseImport: (String) -> CandyRulePreview,
+    onApplyImport: (CandyRulePreview) -> Int,
+    onApplySubscription: (String, CandyRulePreview) -> Int,
+    onExport: () -> String,
+    /** The editor, import, web list and export as v5 sheets; the caller draws them inside the v5 theme. */
+    uiV5: Boolean = false,
+) {
+    val view = LocalView.current
+    if (uiV5) {
+        FilterRuleSheetV5(
+            initialRule = dialogs.editingRule,
+            visible = dialogs.addVisible || dialogs.editingRule != null,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            onDismiss = {
+                dialogs.addVisible = false
+                dialogs.editingRule = null
+            },
+            onSave = { rule ->
+                val saved = if (dialogs.editingRule == null) onAdd(rule) else onUpdate(rule)
+                if (saved != null) {
+                    dialogs.addVisible = false
+                    dialogs.editingRule = null
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                }
+                saved != null
+            },
+        )
+    } else if (dialogs.addVisible) {
         AddFilterRuleDialog(
             initialRule = null,
             profiles = profiles,
             currentProfileId = currentProfileId,
-            onDismiss = { addVisible = false },
+            onDismiss = { dialogs.addVisible = false },
             onAdd = { rule ->
                 if (onAdd(rule) != null) {
-                    addVisible = false
+                    dialogs.addVisible = false
                     view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     true
                 } else {
@@ -376,15 +442,15 @@ internal fun FilterStudioScreen(
             },
         )
     }
-    editingRule?.let { rule ->
+    if (!uiV5) dialogs.editingRule?.let { rule ->
         AddFilterRuleDialog(
             initialRule = rule,
             profiles = profiles,
             currentProfileId = currentProfileId,
-            onDismiss = { editingRule = null },
+            onDismiss = { dialogs.editingRule = null },
             onAdd = { updated ->
                 if (onUpdate(updated) != null) {
-                    editingRule = null
+                    dialogs.editingRule = null
                     view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     true
                 } else {
@@ -393,16 +459,59 @@ internal fun FilterStudioScreen(
             },
         )
     }
-    if (importVisible) {
-        FilterImportDialog(
+    if (uiV5) {
+        FilterImportSheetV5(
+            visible = dialogs.importVisible,
             profiles = profiles,
             currentProfileId = currentProfileId,
-            onDismiss = { importVisible = false },
+            onDismiss = { dialogs.importVisible = false },
             onParse = onParseImport,
             onApply = {
                 val applied = onApplyImport(it)
                 if (applied > 0) {
-                    importVisible = false
+                    dialogs.importVisible = false
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    true
+                } else {
+                    false
+                }
+            },
+        )
+        FilterExportSheetV5(
+            visible = dialogs.exportVisible,
+            text = onExport,
+            onDismiss = { dialogs.exportVisible = false },
+        )
+        FilterSubscriptionSheetV5(
+            visible = dialogs.subscriptionVisible,
+            existingRules = subscriptionRules,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            isIncognito = isIncognito,
+            onDismiss = { dialogs.subscriptionVisible = false },
+            onApply = { source, preview ->
+                val applied = onApplySubscription(source, preview)
+                if (applied > 0) {
+                    dialogs.subscriptionVisible = false
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    true
+                } else {
+                    false
+                }
+            },
+        )
+        return
+    }
+    if (dialogs.importVisible) {
+        FilterImportDialog(
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            onDismiss = { dialogs.importVisible = false },
+            onParse = onParseImport,
+            onApply = {
+                val applied = onApplyImport(it)
+                if (applied > 0) {
+                    dialogs.importVisible = false
                     view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     true
                 } else {
@@ -411,24 +520,24 @@ internal fun FilterStudioScreen(
             },
         )
     }
-    if (exportVisible) {
+    if (dialogs.exportVisible) {
         TextPreviewDialog(
             title = stringResource(R.string.filter_export),
             text = onExport(),
-            onDismiss = { exportVisible = false },
+            onDismiss = { dialogs.exportVisible = false },
         )
     }
-    if (subscriptionVisible) {
+    if (dialogs.subscriptionVisible) {
         FilterSubscriptionDialog(
             existingRules = subscriptionRules,
             profiles = profiles,
             currentProfileId = currentProfileId,
             isIncognito = isIncognito,
-            onDismiss = { subscriptionVisible = false },
+            onDismiss = { dialogs.subscriptionVisible = false },
             onApply = { source, preview ->
                 val applied = onApplySubscription(source, preview)
                 if (applied > 0) {
-                    subscriptionVisible = false
+                    dialogs.subscriptionVisible = false
                     view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     true
                 } else {
@@ -436,6 +545,34 @@ internal fun FilterStudioScreen(
                 }
             },
         )
+    }
+}
+
+/** The rules [typeFilter], [profileOnly] and the search [query] leave, in their order. */
+internal fun filterStudioRules(
+    rules: List<CandyRule>,
+    query: String,
+    typeFilter: StudioTypeFilter,
+    profileOnly: Boolean,
+    currentProfileId: String,
+): List<CandyRule> {
+    val needle = query.trim().lowercase()
+    return rules.filter { rule ->
+        val matchesType = when (typeFilter) {
+            StudioTypeFilter.All -> true
+            StudioTypeFilter.Block -> rule.action == CandyRuleAction.Block
+            StudioTypeFilter.Allow -> rule.action == CandyRuleAction.Allow
+            StudioTypeFilter.Css -> rule.action == CandyRuleAction.Cosmetic
+        }
+        val matchesProfile = !profileOnly || rule.profileId == currentProfileId
+        val matchesQuery = needle.isEmpty() || listOfNotNull(
+            rule.requestHost,
+            rule.firstPartyHost,
+            rule.cosmeticSelector,
+            rule.group,
+            rule.sourceUrl,
+        ).any { needle in it.lowercase() }
+        matchesType && matchesProfile && matchesQuery
     }
 }
 
@@ -758,6 +895,48 @@ private fun FilterRuleCard(
     }
 }
 
+/** The rule's kind after its action changes: hiding is always CSS, the others never are. */
+internal fun filterRuleKindFor(action: CandyRuleAction, kind: CandyRuleKind): CandyRuleKind = when {
+    action == CandyRuleAction.Cosmetic -> CandyRuleKind.CosmeticCss
+    kind == CandyRuleKind.CosmeticCss -> CandyRuleKind.RequestHost
+    else -> kind
+}
+
+/**
+ * The rule the editor saves: [initialRule] (a new personal rule when null) with the fields as
+ * edited, blanks as none. A profile that is gone falls back to every profile, unless it is the
+ * current one.
+ */
+internal fun editedFilterRule(
+    initialRule: CandyRule?,
+    action: CandyRuleAction,
+    kind: CandyRuleKind,
+    requestHost: String,
+    firstPartyHost: String,
+    selector: String,
+    profileId: String?,
+    profiles: List<BrowserProfile>,
+    currentProfileId: String,
+    personalGroup: String,
+    nowMillis: Long,
+): CandyRule = (
+    initialRule ?: CandyRule.new(
+        action = action,
+        kind = kind,
+        group = personalGroup,
+        origin = CandyRuleOrigin.User,
+    )
+).copy(
+    action = action,
+    kind = kind,
+    requestHost = requestHost.takeIf(String::isNotBlank),
+    firstPartyHost = firstPartyHost.takeIf(String::isNotBlank),
+    cosmeticSelector = selector.takeIf(String::isNotBlank),
+    profileId = profileId?.takeIf { id -> profiles.any { it.id == id } }
+        ?: profileId?.takeIf { it == currentProfileId },
+    updatedAtMillis = nowMillis,
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AddFilterRuleDialog(
@@ -804,11 +983,7 @@ private fun AddFilterRuleDialog(
                                 selected = action == value,
                                 onClick = {
                                     action = value
-                                    if (value == CandyRuleAction.Cosmetic) {
-                                        kind = CandyRuleKind.CosmeticCss
-                                    } else if (kind == CandyRuleKind.CosmeticCss) {
-                                        kind = CandyRuleKind.RequestHost
-                                    }
+                                    kind = filterRuleKindFor(value, kind)
                                 },
                                 modifier = if (value == CandyRuleAction.Cosmetic) {
                                     Modifier.testTag(FilterStudioTestTags.CssAction)
@@ -934,20 +1109,18 @@ private fun AddFilterRuleDialog(
             Button(
                 onClick = {
                     invalid = !onAdd(
-                        (initialRule ?: CandyRule.new(
+                        editedFilterRule(
+                            initialRule = initialRule,
                             action = action,
                             kind = kind,
-                            group = personalGroup,
-                            origin = CandyRuleOrigin.User,
-                        )).copy(
-                            action = action,
-                            kind = kind,
-                            requestHost = requestHost.takeIf(String::isNotBlank),
-                            firstPartyHost = firstPartyHost.takeIf(String::isNotBlank),
-                            cosmeticSelector = selector.takeIf(String::isNotBlank),
-                            profileId = profileId?.takeIf { id -> profiles.any { it.id == id } }
-                                ?: profileId?.takeIf { it == currentProfileId },
-                            updatedAtMillis = System.currentTimeMillis(),
+                            requestHost = requestHost,
+                            firstPartyHost = firstPartyHost,
+                            selector = selector,
+                            profileId = profileId,
+                            profiles = profiles,
+                            currentProfileId = currentProfileId,
+                            personalGroup = personalGroup,
+                            nowMillis = System.currentTimeMillis(),
                         ),
                     )
                 },
@@ -1506,7 +1679,7 @@ private fun TextPreviewDialog(title: String, text: String, onDismiss: () -> Unit
 }
 
 @Composable
-private fun StudioTypeFilter.label(): String = stringResource(
+internal fun StudioTypeFilter.label(): String = stringResource(
     when (this) {
         StudioTypeFilter.All -> R.string.filter_all
         StudioTypeFilter.Block -> R.string.filter_block
@@ -1516,7 +1689,7 @@ private fun StudioTypeFilter.label(): String = stringResource(
 )
 
 @Composable
-private fun CandyImportFormat.label(): String = stringResource(
+internal fun CandyImportFormat.label(): String = stringResource(
     when (this) {
         CandyImportFormat.CandyRulesV1 -> R.string.filter_import_format_candy
         CandyImportFormat.AdblockCompatible -> R.string.filter_import_format_adblock
@@ -1524,7 +1697,7 @@ private fun CandyImportFormat.label(): String = stringResource(
 )
 
 @Composable
-private fun CandyRuleAction.label(): String = stringResource(
+internal fun CandyRuleAction.label(): String = stringResource(
     when (this) {
         CandyRuleAction.Block -> R.string.filter_block
         CandyRuleAction.Allow -> R.string.filter_allow
@@ -1533,14 +1706,14 @@ private fun CandyRuleAction.label(): String = stringResource(
 )
 
 @Composable
-private fun CandyRule.scopeLabel(): String = if (profileId == null) {
+internal fun CandyRule.scopeLabel(): String = if (profileId == null) {
     stringResource(R.string.filter_scope_global)
 } else {
     stringResource(R.string.filter_scope_profile)
 }
 
 @Composable
-private fun CandyRuleOrigin.label(): String = stringResource(
+internal fun CandyRuleOrigin.label(): String = stringResource(
     when (this) {
         CandyRuleOrigin.User -> R.string.filter_origin_user
         CandyRuleOrigin.PrivacyXRay -> R.string.filter_origin_xray
@@ -1550,7 +1723,7 @@ private fun CandyRuleOrigin.label(): String = stringResource(
 )
 
 @Composable
-private fun filterErrorLabel(code: String): String = stringResource(
+internal fun filterErrorLabel(code: String): String = stringResource(
     when {
         code == "https-required" || code == "invalid-url" -> R.string.filter_error_https
         code == "network" || code.startsWith("http-") -> R.string.filter_error_network
@@ -1563,7 +1736,7 @@ private fun filterErrorLabel(code: String): String = stringResource(
     },
 )
 
-private fun CandyRule.displayTarget(): String = when (kind) {
+internal fun CandyRule.displayTarget(): String = when (kind) {
     CandyRuleKind.RequestHost -> requestHost.orEmpty()
     CandyRuleKind.HostPair -> "${firstPartyHost.orEmpty()} → ${requestHost.orEmpty()}"
     CandyRuleKind.CosmeticCss -> "${firstPartyHost.orEmpty()} · ${cosmeticSelector.orEmpty()}"

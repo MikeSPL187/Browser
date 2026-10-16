@@ -81,6 +81,11 @@ internal fun ReleaseNotesScreen(
     onDone: () -> Unit,
     onOpenLink: (String) -> Unit,
 ) {
+    // V28, B14b: under v5 on a phone the v5 screen, the same notes in v5 type and colors.
+    if (rememberDrawsV5()) {
+        ReleaseNotesScreenV5(versionName, document, onDone, onOpenLink)
+        return
+    }
     BackHandler(onBack = onDone)
     Surface(
         modifier = Modifier
@@ -301,7 +306,12 @@ private fun ReleaseNotesBlock(
 }
 
 @Composable
-private fun ReleaseNotesImage(block: ReleaseNotesBlock.Image) {
+internal fun ReleaseNotesImage(
+    block: ReleaseNotesBlock.Image,
+    container: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    altColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(24.dp), // token-exempt: the v4 corner, moved here unchanged
+) {
     val context = LocalContext.current
     val image by produceState<ImageBitmap?>(initialValue = null, key1 = block.assetPath) {
         value = withContext(Dispatchers.IO) {
@@ -311,8 +321,8 @@ private fun ReleaseNotesImage(block: ReleaseNotesBlock.Image) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            .clip(shape),
+        color = container,
         tonalElevation = 3.dp,
     ) {
         if (image != null) {
@@ -335,7 +345,7 @@ private fun ReleaseNotesImage(block: ReleaseNotesBlock.Image) {
                     .padding(24.dp)
                     .semantics { contentDescription = block.altText },
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = altColor,
             )
         }
     }
@@ -343,21 +353,24 @@ private fun ReleaseNotesImage(block: ReleaseNotesBlock.Image) {
 
 @Suppress("DEPRECATION")
 @Composable
-private fun MarkdownText(
+internal fun MarkdownText(
     content: ReleaseNotesInline,
     style: TextStyle,
     onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier,
+    textColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
+    linkColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
+    codeBackground: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceContainerHighest,
 ) {
     val annotated = releaseNotesAnnotatedString(
         content = content,
-        linkColor = MaterialTheme.colorScheme.primary,
-        codeBackground = MaterialTheme.colorScheme.surfaceContainerHighest,
+        linkColor = linkColor,
+        codeBackground = codeBackground,
     )
     ClickableText(
         text = annotated,
         modifier = modifier,
-        style = style.copy(color = MaterialTheme.colorScheme.onSurface),
+        style = style.copy(color = textColor),
         onClick = { offset ->
             annotated.getStringAnnotations(tag = LINK_TAG, start = offset, end = offset)
                 .firstOrNull()

@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
@@ -30,6 +33,39 @@ internal fun FederatedLoginPromptDialog(
     offer: FederatedLoginOffer,
     onChoice: (FederatedLoginPromptChoice) -> Unit,
 ) {
+    // V28, B9a: under v5 on a phone the one v5 prompt sheet; closing it does not allow.
+    if (rememberDrawsV5()) {
+        val message = stringResource(R.string.federated_login_dialog_message, offer.pageHost)
+        val privateNote = stringResource(R.string.federated_login_private_note)
+        V5PromptTheme {
+            V5PromptSheet(
+                visible = true,
+                title = stringResource(R.string.federated_login_dialog_title, offer.provider.displayName),
+                message = if (offer.isPrivate) "$message\n\n$privateNote" else message,
+                actions = listOfNotNull(
+                    V5PromptAction(
+                        stringResource(R.string.federated_login_allow_for_tab),
+                        { onChoice(FederatedLoginPromptChoice.AllowForTab) },
+                        V5PromptRole.Primary,
+                        FederatedLoginPromptTestTags.AllowForTab,
+                    ),
+                    V5PromptAction(
+                        stringResource(R.string.federated_login_allow_for_profile),
+                        { onChoice(FederatedLoginPromptChoice.AllowForProfile) },
+                        testTag = FederatedLoginPromptTestTags.AllowForProfile,
+                    ).takeUnless { offer.isPrivate },
+                    V5PromptAction(
+                        stringResource(R.string.federated_login_deny),
+                        { onChoice(FederatedLoginPromptChoice.Deny) },
+                        testTag = FederatedLoginPromptTestTags.Deny,
+                    ),
+                ),
+                onDismiss = { onChoice(FederatedLoginPromptChoice.Deny) },
+                testTag = FederatedLoginPromptTestTags.Dialog,
+            )
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = { onChoice(FederatedLoginPromptChoice.Deny) },
         modifier = Modifier.testTag(FederatedLoginPromptTestTags.Dialog),

@@ -339,10 +339,11 @@ internal fun TabsAndGesturesSettingsPage(
             ),
             R.string.settings_browser_group_links to listOf(linkLongPressRow),
         )
-        // The page menu's «All actions» is the current menu, and docking drops back to it.
+        // The page menu's «All actions» is the current menu. Docking is a v4 gesture the v5 bar
+        // does not have (V28, B7), so v5 offers no switch for it.
         SettingsLayer.More -> listOf(
             R.string.settings_section_tabs to listOf(residentLimitRow, profilesRow),
-            R.string.v5_menu_all_actions to listOf(menuActionsRow, dockingRow),
+            R.string.v5_menu_all_actions to listOf(menuActionsRow),
         )
     }
     SettingsPage(

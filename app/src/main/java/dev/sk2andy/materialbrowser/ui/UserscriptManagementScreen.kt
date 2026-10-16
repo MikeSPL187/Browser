@@ -81,6 +81,7 @@ internal object UserscriptManagementTestTags {
     const val DeleteConfirmation = "userscript_management_delete_confirmation"
     const val DeleteConfirm = "userscript_management_delete_confirm"
     const val FrameScopeDialog = "userscript_management_frame_scope_dialog"
+    const val RuntimeUnsupported = "userscript_management_runtime_unsupported"
 
     fun script(id: String) = "userscript_management_script_$id"
     fun toggle(id: String) = "userscript_management_toggle_$id"
@@ -108,6 +109,21 @@ internal fun UserscriptManagementScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (rememberSettingsUiV5()) {
+        UserscriptManagementV5(
+            scripts = scripts,
+            isRuntimeSupported = isRuntimeSupported,
+            onToggle = onToggle,
+            onSetFrameScope = onSetFrameScope,
+            onSave = onSave,
+            onDelete = onDelete,
+            onImport = onImport,
+            onDiscover = onDiscover,
+            onDismiss = onDismiss,
+            modifier = modifier,
+        )
+        return
+    }
     val newScriptName = stringResource(R.string.userscript_new_script_name)
     var editorVisible by remember { mutableStateOf(false) }
     var editorId by remember { mutableStateOf<String?>(null) }
@@ -664,7 +680,7 @@ private fun userscriptPatternSummary(patterns: List<String>): String = when {
 }
 
 @Composable
-private fun frameScopeLabel(scope: ToppingFrameScope): String = stringResource(
+internal fun frameScopeLabel(scope: ToppingFrameScope): String = stringResource(
     when (scope) {
         ToppingFrameScope.Top -> R.string.userscript_frame_scope_top
         ToppingFrameScope.SameOrigin -> R.string.userscript_frame_scope_same_origin
@@ -672,7 +688,7 @@ private fun frameScopeLabel(scope: ToppingFrameScope): String = stringResource(
     },
 )
 
-private fun userscriptTemplate(name: String): String = """
+internal fun userscriptTemplate(name: String): String = """
     // ==UserScript==
     // @name $name
     // @match https://example.com/*
