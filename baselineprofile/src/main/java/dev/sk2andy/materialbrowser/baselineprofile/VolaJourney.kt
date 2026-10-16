@@ -13,10 +13,14 @@ internal const val TARGET_PACKAGE = "io.github.mikespl187.vola.benchmark"
 private const val UI_TIMEOUT_MILLIS = 5_000L
 private const val PAGE_SETTLE_MILLIS = 6_000L
 
-/** A fresh install first shows the welcome and setup screens; step past them like a person. */
+/** A fresh install first shows the welcome and setup screens (v4 or v5); step past them like a person. */
 internal fun MacrobenchmarkScope.passFirstRun() {
-    repeat(4) {
-        val button = listOf("Get started", "Next", "Skip", "Explore Vola", "Начать", "Далее", "Пропустить", "К браузеру")
+    repeat(6) {
+        // v4: welcome, setup, lesson; v5 (ui.v5): welcome, «make Vola the default», gesture lesson.
+        val button = listOf(
+            "Get started", "Next", "Skip", "Not now", "Got it", "Explore Vola",
+            "Начать", "Далее", "Пропустить", "Не сейчас", "Понятно", "К браузеру",
+        )
             .firstNotNullOfOrNull { label -> device.wait(Until.findObject(By.text(label)), UI_TIMEOUT_MILLIS / 4) }
             ?: return
         // The screen can move on between finding the button and tapping it; look again.

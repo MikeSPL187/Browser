@@ -297,7 +297,7 @@ def step(name, action):
 
 
 def dismiss_first_run():
-    for _ in range(6):
+    for _ in range(8):
         if find("Get started", "Начать"):
             # Q23b: the welcome (W-Welcome), setup (W-Setup), then the first lesson step with its
             # pretend address bar, which is skipped.
@@ -305,15 +305,25 @@ def dismiss_first_run():
             save_ui("first-run-welcome")
             tap("Get started", "Начать")
             time.sleep(2)
-            shot("first-run-setup")
-            save_ui("first-run-setup")
-            tap("Next", "Далее")
-            time.sleep(2)
-            shot("first-run-lesson")
-            tap("Skip", "Пропустить")
+            if find("Next", "Далее"):
+                shot("first-run-setup")
+                save_ui("first-run-setup")
+                tap("Next", "Далее")
+                time.sleep(2)
+                shot("first-run-lesson")
+                tap("Skip", "Пропустить")
         elif find("Skip", "Пропустить"):
             shot("onboarding")
             tap("Skip", "Пропустить")
+        elif find("Not now", "Не сейчас"):
+            # The v5 first run (ui.v5): «make Vola the default», then the gesture lesson.
+            shot("first-run-default")
+            save_ui("first-run-default")
+            tap("Not now", "Не сейчас")
+        elif find("Got it", "Понятно"):
+            shot("first-run-gestures")
+            save_ui("first-run-gestures")
+            tap("Got it", "Понятно")
         elif find("Explore Vola", "К браузеру"):
             shot("whats-new")
             tap("Explore Vola", "К браузеру")
