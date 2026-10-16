@@ -245,9 +245,9 @@ jobs:
                 | while read -r package; do adb shell am force-stop "$package" < /dev/null; done
             done
           fi
-          # Tests the run above always skips. Each runs on its own, one Gradle call per class or
-          # method (with the orchestrator a comma-separated list runs only its first entry); the
-          # results are read as first-run results. Full Gecko runs only.
+          # Tests the run above always skips. Each runs on its own, one Gradle call per class (with
+          # the orchestrator a comma-separated list runs only its first entry); the results are
+          # read as first-run results. Full Gecko runs only.
           extra="$RUNNER_TEMP/extra-runs"
           run_extra() {
             local name=$1
@@ -260,17 +260,6 @@ jobs:
             mkdir -p "$extra"
             cp -r app/build/outputs/androidTest-results "$extra/$name" 2>/dev/null || true
           }
-          # The YouTube-host PiP fixtures load local DNS into a fresh Gecko runtime, so each needs
-          # an instrumentation run of its single method.
-          if [[ -z "$FILTER" && "$SHARD" == 0 && "$FLAVOR" == Full ]]; then
-            pip=dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest
-            for method in \
-              youtubePlayerKeepsVideoGeometryThroughDelayedSystemPictureInPictureReturn \
-              youtubeClippedPlayerKeepsDecodedVideoThroughDirectFullscreenReturn \
-              youtubeClippedPlayerKeepsDecodedVideoThroughFirstSwipeFullscreenReturn; do
-              run_extra "pip-$method" -Pandroid.testInstrumentationRunnerArguments.class="$pip#$method"
-            done
-          fi
           # The performance diagnostics need the diagnostics build, which is a different app from
           # the one tested above: it is rebuilt for these two classes only, after everything else.
           if [[ -z "$FILTER" && "$SHARD" == 1 && "$FLAVOR" == Full ]]; then
