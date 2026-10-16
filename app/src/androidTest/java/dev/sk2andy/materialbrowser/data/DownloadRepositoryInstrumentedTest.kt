@@ -9,7 +9,11 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.browser.actions.BrowserDownloadManager
+import dev.sk2andy.materialbrowser.browser.actions.DownloadActionResult
+import java.net.ServerSocket
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.After
 import org.junit.Before
 import org.junit.Assert.assertEquals
@@ -115,6 +119,68 @@ class DownloadRepositoryInstrumentedTest {
     }
 
     @Test
+    fun failedSystemDownloadStartsAgainAndGivesWayToTheNewRow() {
+        val name = "candy-retry-${UUID.randomUUID()}.bin"
+        val body = ByteArray(16 * 1024) { index -> (index % 251).toByte() }
+        // Android's download manager gives up on a 404 at once; the second request gets the file.
+        val server = FixtureServer(
+            "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encodeToByteArray(),
+            (
+                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n" +
+                    "Content-Length: ${body.size}\r\nConnection: close\r\n\r\n"
+                ).encodeToByteArray() + body,
+        )
+        server.use {
+            val result = BrowserDownloadManager(context).enqueue(
+                BrowserDownloadRequest(
+                    url = "http://127.0.0.1:${server.port}/$name",
+                    fileName = name,
+                    mimeType = "application/octet-stream",
+                    userAgent = "CandyRetryTest/1.0",
+                ),
+            )
+            val failedId = (result as DownloadActionResult.Enqueued).id
+            managerIds += failedId
+            val failed = awaitEntry { entry -> entry.id == failedId && entry.status == DownloadStatus.Failed }
+            assertEquals(DownloadRetry.Available, failed.retry)
+
+            assertTrue(repository.retry(failed))
+
+            val saved = awaitEntry { entry -> entry.name == name && entry.status == DownloadStatus.Successful }
+            managerIds += saved.id
+            assertFalse("the failed row stayed", repository.snapshot().any { entry -> entry.id == failedId })
+            managerIds.remove(failedId)
+            assertEquals(body.size.toLong(), saved.bytes)
+            assertEquals(2, server.requests.size)
+            assertTrue(server.requests.all { request -> request.startsWith("GET /$name ") })
+            assertFalse("a saved row does not start again", repository.retry(saved))
+        }
+    }
+
+    @Test
+    fun systemDownloadFromBeforeThisRunDoesNotStartAgain() {
+        val manager = context.getSystemService(DownloadManager::class.java)
+        val name = "candy-unknown-${UUID.randomUUID()}.bin"
+        val server = FixtureServer(
+            "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encodeToByteArray(),
+        )
+        server.use {
+            // Enqueued around the browser, as rows from before a restart look to it.
+            val id = manager.enqueue(
+                DownloadManager.Request(Uri.parse("http://127.0.0.1:${server.port}/$name"))
+                    .setTitle(name)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name),
+            )
+            managerIds += id
+            val failed = awaitEntry { entry -> entry.id == id && entry.status == DownloadStatus.Failed }
+
+            assertEquals(DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered), failed.retry)
+            assertFalse(repository.retry(failed))
+            assertEquals(1, server.requests.size)
+        }
+    }
+
+    @Test
     fun readsLiveGeckoProgressFromProcessRegistry() {
         DownloadRuntimeRegistry.started(
             id = 42,
@@ -176,6 +242,52 @@ class DownloadRepositoryInstrumentedTest {
         assertTrue(repository.clear(DownloadRuntimeRegistry.snapshot()))
         assertFalse(repository.snapshot().any { entry -> entry.name == name })
         mediaUris.remove(uri)
+    }
+
+    private fun awaitEntry(condition: (DownloadEntry) -> Boolean): DownloadEntry {
+        val deadline = System.currentTimeMillis() + 30_000L
+        while (System.currentTimeMillis() < deadline) {
+            repository.snapshot().firstOrNull(condition)?.let { entry -> return entry }
+            Thread.sleep(200)
+        }
+        return checkNotNull(repository.snapshot().firstOrNull(condition)) {
+            "no such download: ${repository.snapshot()}"
+        }
+    }
+
+    /** Answers one connection after another with [responses], each on its own thread. */
+    private class FixtureServer(vararg responses: ByteArray) : AutoCloseable {
+        private val socket = ServerSocket(0)
+        val port: Int = socket.localPort
+        val requests: MutableList<String> = CopyOnWriteArrayList()
+
+        init {
+            Thread {
+                runCatching {
+                    responses.forEach { response ->
+                        val client = socket.accept()
+                        Thread {
+                            client.use {
+                                client.soTimeout = 30_000
+                                val input = client.getInputStream().bufferedReader()
+                                requests += input.readLine().orEmpty()
+                                while (true) {
+                                    if (input.readLine().isNullOrEmpty()) break
+                                }
+                                client.getOutputStream().apply {
+                                    write(response)
+                                    flush()
+                                }
+                            }
+                        }.apply { isDaemon = true }.start()
+                    }
+                }
+            }.apply { isDaemon = true }.start()
+        }
+
+        override fun close() {
+            runCatching(socket::close)
+        }
     }
 
     private fun ownerPackage(uri: Uri): String = requireNotNull(

@@ -296,11 +296,14 @@ class GeckoExtensionChromeInstrumentedTest {
             return tabId
         }
 
+        // The fixture sets its title and badge without a tab, so Gecko reports one action for every
+        // tab (no tab id) and sends a tab's own only after that tab navigates; either is the action
+        // the primary tab shows, and a click on either opens the popup there.
         override fun onActionsChanged(actions: List<GeckoExtensionActionState>) {
             actions.firstOrNull { action ->
                 action.key.extensionId == FIXTURE_ID &&
                     action.key.kind == GeckoExtensionActionKind.Browser &&
-                    action.key.tabId == PRIMARY_TAB_ID
+                    (action.key.tabId == null || action.key.tabId == PRIMARY_TAB_ID)
             }?.let { action ->
                 actionKey.set(action.key)
                 actionLatch.countDown()

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
@@ -13,10 +14,12 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
+import dev.sk2andy.materialbrowser.reader.ListenSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuActions
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuState
@@ -34,9 +37,12 @@ internal fun BrowserPageMenuV5(
     actions: V5MenuActions,
     onDismiss: () -> Unit,
     onAllActions: () -> Unit,
+    downloads: V5DownloadRingState? = null,
 ) {
     val blank = tab.url == BLANK_URL
     val view = LocalView.current
+    val context = LocalContext.current
+    val listenSession = remember(context) { ListenSession.get(context) }
     val accentArgb = V5Theme.colors.accent.toArgb()
     // Only GeckoView can choose and hide page blocks; WebView keeps the menu without the item.
     val canHideDistractions = !blank && controller.browserEngineCapabilities.hideDistractions
@@ -61,6 +67,7 @@ internal fun BrowserPageMenuV5(
         canCloseTab = TabDeletionRules.canDelete(tab),
         canHideDistractions = canHideDistractions,
         hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
+        downloads = downloads,
     )
     V5PageMenu(
         visible = visible,
@@ -92,6 +99,7 @@ internal fun BrowserPageMenuV5(
                 if (!controller.hiddenDistractions.startPicking(tab, accentArgb)) view.performV5Haptic(V5Haptic.Reject)
             },
             onShowHidden = { controller.hiddenDistractions.showAll(tab) },
+            onListen = { listenToSelectedPage(controller, listenSession, title = state.title) },
         ),
         onDismiss = onDismiss,
     )

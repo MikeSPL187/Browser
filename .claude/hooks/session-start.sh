@@ -17,7 +17,7 @@ systemProp.org.gradle.internal.repository.initial.backoff=3000
 PROPS
 
 SDK="${ANDROID_HOME:-$HOME/android-sdk}"
-PLATFORM="platforms;android-37.1" # build.yml: ANDROID_PLATFORM
+PLATFORM="platforms;android-37.2" # build.yml: ANDROID_PLATFORM
 READY="$SDK/.vola-sdk-ready"
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   {

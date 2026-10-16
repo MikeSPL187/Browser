@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.data
 
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyCheck
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyFinding
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -124,6 +126,50 @@ class BrowserDownloadRequestFactoryTest {
         assertEquals("session=safe", request?.cookies)
         assertTrue(requireNotNull(request).fileName.length <= 120)
         assertTrue(request.fileName.endsWith(".png"))
+    }
+
+    @Test
+    fun `lookalike dots cannot hide an app behind a document name`() {
+        val name = SafeDownloadValues.fileName(
+            url = "https://example.com/fallback",
+            contentDisposition = "attachment; filename*=UTF-8''invoice%E2%80%A4pdf%EF%BC%8Eapk",
+            mimeType = "application/octet-stream",
+        )
+
+        assertEquals("invoice.pdf.apk", name)
+        assertTrue(
+            DownloadSafetyFinding.DisguisedName in
+                DownloadSafetyCheck.findings("https://example.com/fallback", name, "application/octet-stream"),
+        )
+    }
+
+    @Test
+    fun `C1 controls and line separators are replaced like ASCII ones`() {
+        val name = SafeDownloadValues.fileName(
+            url = "https://example.com/fallback",
+            contentDisposition = "attachment; filename*=UTF-8''a%C2%85b%E2%80%A8c.txt",
+            mimeType = "text/plain",
+        )
+
+        assertEquals("a_b_c.txt", name)
+    }
+
+    @Test
+    fun `long names fit the file system in bytes and keep whole characters`() {
+        val emoji = SafeDownloadValues.fileName(
+            url = "https://example.com/${"%F0%9F%93%84".repeat(100)}.pdf",
+            contentDisposition = null,
+            mimeType = "application/pdf",
+        )
+        val cjk = SafeDownloadValues.fileName(
+            url = "https://example.com/${"%E6%96%87".repeat(100)}.pdf",
+            contentDisposition = null,
+            mimeType = "application/pdf",
+        )
+
+        assertEquals("\uD83D\uDCC4".repeat(58) + ".pdf", emoji)
+        assertEquals("\u6587".repeat(78) + ".pdf", cjk)
+        assertTrue(cjk.toByteArray(Charsets.UTF_8).size <= 240)
     }
 
     @Test

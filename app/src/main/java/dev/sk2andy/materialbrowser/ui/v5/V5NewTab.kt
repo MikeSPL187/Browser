@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
@@ -50,6 +51,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -102,6 +104,8 @@ data class V5NewTabState(
     /** Null when the user hid the card. */
     val report: V5NewTabReport?,
     val recent: List<V5RecentTab>,
+    /** The profile's symbol on its accent; null shows the name's first letter. */
+    val profileIcon: ImageVector? = null,
 )
 
 /**
@@ -146,10 +150,11 @@ fun V5NewTab(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
+                .windowInsetsPadding(V5SafeSides)
                 .padding(horizontal = V5Spacing.marginPhone, vertical = V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),
         ) {
-            state.profileLabel?.let { ProfileChip(it) }
+            state.profileLabel?.let { ProfileChip(it, state.profileIcon) }
             Pinned(
                 state = state,
                 editing = editing,
@@ -166,7 +171,7 @@ fun V5NewTab(
 }
 
 @Composable
-private fun ProfileChip(label: String) {
+private fun ProfileChip(label: String, icon: ImageVector?) {
     val colors = V5Theme.colors
     Row(
         Modifier
@@ -183,7 +188,16 @@ private fun ProfileChip(label: String) {
                 .background(colors.accentFill),
             contentAlignment = Alignment.Center,
         ) {
-            Text(V5NewTabRules.letter(label), style = V5Theme.type.footnote, color = colors.onAccentFill)
+            if (icon != null) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = colors.onAccentFill,
+                    modifier = Modifier.size(V5Sizes.iconSmall),
+                )
+            } else {
+                Text(V5NewTabRules.letter(label), style = V5Theme.type.footnote, color = colors.onAccentFill)
+            }
         }
         Text(label, style = V5Theme.type.headline, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }

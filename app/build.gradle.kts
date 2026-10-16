@@ -204,7 +204,7 @@ val performanceDiagnostics = providers.gradleProperty("vola.performanceDiagnosti
 android {
     namespace = "dev.sk2andy.materialbrowser"
     compileSdk = 37
-    compileSdkMinor = 1
+    compileSdkMinor = 2
 
     defaultConfig {
         applicationId = "io.github.mikespl187.vola"

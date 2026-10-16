@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -100,8 +101,13 @@ class BrowserFindInPageInstrumentedTest {
         }
     }
 
+    /**
+     * The find bar's query field owns the keyboard (BrowserImeOwnershipEffect): like the address
+     * editor, the page keeps its layout under it and never sees the keyboard inset, while other
+     * inset changes still reach it. Once the find bar closes, the page owns the keyboard again.
+     */
     @Test
-    fun findModeForwardsImeInsetsToWebView() {
+    fun findBarOwnsTheKeyboardAndThePageGetsItBackOnClose() {
         lateinit var browserController: BrowserController
         val forwardedImeBottom = AtomicInteger(-1)
         composeRule.runOnIdle {
@@ -140,23 +146,41 @@ class BrowserFindInPageInstrumentedTest {
                 )
                 insets
             }
-            browserController.onWindowInsetsChanged(imeInsets(bottom = 0, visible = false))
+            browserController.onWindowInsetsChanged(windowInsets(imeBottom = 0))
             assertTrue(browserController.openFindInPage())
         }
         composeRule.onNodeWithTag(FindInPageBarTestTags.Bar).assertExists()
+
+        // Each step dispatches and reads in one main-thread block, so the emulator's own inset
+        // changes (its keyboard opening for the find field) cannot land in between.
         composeRule.runOnIdle {
+            forwardedImeBottom.set(-1)
+            browserController.onWindowInsetsChanged(windowInsets(imeBottom = IME_BOTTOM))
+            assertNotEquals(IME_BOTTOM, forwardedImeBottom.get())
+
             browserController.onWindowInsetsChanged(
-                imeInsets(bottom = EXPECTED_IME_BOTTOM, visible = true),
+                windowInsets(imeBottom = IME_BOTTOM, navigationBottom = NAVIGATION_BOTTOM),
             )
+            assertEquals(0, forwardedImeBottom.get())
         }
 
-        assertEquals(EXPECTED_IME_BOTTOM, forwardedImeBottom.get())
+        composeRule.runOnIdle { browserController.closeFindInPage() }
+        composeRule.onNodeWithTag(FindInPageBarTestTags.Bar).assertDoesNotExist()
+        composeRule.runOnIdle {
+            forwardedImeBottom.set(-1)
+            browserController.onWindowInsetsChanged(windowInsets(imeBottom = IME_BOTTOM))
+            assertEquals(IME_BOTTOM, forwardedImeBottom.get())
+        }
     }
 
-    private fun imeInsets(bottom: Int, visible: Boolean): WindowInsetsCompat =
+    private fun windowInsets(imeBottom: Int, navigationBottom: Int = 0): WindowInsetsCompat =
         WindowInsetsCompat.Builder()
-            .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, bottom))
-            .setVisible(WindowInsetsCompat.Type.ime(), visible)
+            .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, imeBottom))
+            .setVisible(WindowInsetsCompat.Type.ime(), imeBottom > 0)
+            .setInsets(
+                WindowInsetsCompat.Type.navigationBars(),
+                Insets.of(0, 0, 0, navigationBottom),
+            )
             .build()
 
     private fun clearSession() {
@@ -167,6 +191,7 @@ class BrowserFindInPageInstrumentedTest {
     }
 
     private companion object {
-        const val EXPECTED_IME_BOTTOM = 731
+        const val IME_BOTTOM = 731
+        const val NAVIGATION_BOTTOM = 63
     }
 }

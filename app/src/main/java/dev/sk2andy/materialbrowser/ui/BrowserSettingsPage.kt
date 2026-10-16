@@ -24,6 +24,7 @@ import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 
 internal object BrowserSettingsTestTags {
+    const val More = "browser_settings_more"
     const val StartupAnimation = "browser_settings_startup_animation"
     const val StartupAddressFocus = "browser_settings_startup_address_focus"
     const val OpenHomeOnStartup = "browser_settings_open_home_on_startup"
@@ -66,70 +67,71 @@ internal fun BrowserSettingsPage(
     onPageTranslationProviderChanged: (PageTranslationProvider) -> Unit,
     onOpenDefaultBrowserSettings: () -> Unit,
     onBack: () -> Unit,
+    layer: SettingsLayer = SettingsLayer.All,
+    onOpenMore: () -> Unit = {},
 ) {
     val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
     val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-    SettingsPage(
-        title = stringResource(R.string.settings_section_browser),
-        onBack = onBack,
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
-            SettingsCardHeader(stringResource(R.string.settings_browser_group_general))
-            SettingsCard(containerColor = cardColor) {
-                if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
-                    SettingsCardDropdownRow(
-                        title = stringResource(R.string.settings_browser_engine_title),
-                        selected = browserEngineKind,
-                        options = AndroidBrowserEngineKind.entries,
-                        label = { kind -> kind.displayName() },
-                        summary = stringResource(
-                            when (browserEngineKind) {
-                                AndroidBrowserEngineKind.GeckoView ->
-                                    R.string.settings_browser_engine_gecko_summary
-                                AndroidBrowserEngineKind.SystemWebView ->
-                                    R.string.settings_browser_engine_system_summary
-                            },
-                        ),
-                        dividerColor = dividerColor,
-                        divider = true,
-                        onSelected = onBrowserEngineKindChanged,
-                        modifier = Modifier.testTag(BrowserSettingsTestTags.BrowserEngine),
-                    )
-                }
-                SettingsCardLinkRow(
-                    title = stringResource(R.string.settings_default_browser),
-                    summary = stringResource(
-                        if (isDefaultBrowser) {
-                            R.string.settings_default_browser_active
-                        } else {
-                            R.string.settings_make_default_browser
-                        },
-                    ),
-                    dividerColor = dividerColor,
-                    onClick = onOpenDefaultBrowserSettings,
-                )
-            }
-            if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
-                // Switching the engine restarts Vola; said under the card, in the error color.
-                Text(
-                    text = stringResource(R.string.settings_browser_engine_restart_warning),
-                    modifier = Modifier.padding(SettingsCardTokens.headerPadding),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_browser_group_startup))
-            SettingsCard(containerColor = cardColor) {
+    // Under ui.v5 (V15d-4) a setting the engine lacks is left out instead of shown disabled.
+    val hidesUnsupported = layer != SettingsLayer.All
+    val engineRow: CardRow? = if (!BuildConfig.SYSTEM_WEBVIEW_ONLY && layer.more) {
+        { divider ->
+            SettingsCardDropdownRow(
+                title = stringResource(R.string.settings_browser_engine_title),
+                selected = browserEngineKind,
+                options = AndroidBrowserEngineKind.entries,
+                label = { kind -> kind.displayName() },
+                summary = stringResource(
+                    when (browserEngineKind) {
+                        AndroidBrowserEngineKind.GeckoView ->
+                            R.string.settings_browser_engine_gecko_summary
+                        AndroidBrowserEngineKind.SystemWebView ->
+                            R.string.settings_browser_engine_system_summary
+                    },
+                ),
+                dividerColor = dividerColor,
+                divider = divider,
+                onSelected = onBrowserEngineKindChanged,
+                modifier = Modifier.testTag(BrowserSettingsTestTags.BrowserEngine),
+            )
+        }
+    } else {
+        null
+    }
+    val defaultBrowserRow: CardRow? = if (layer.main) {
+        { divider ->
+            SettingsCardLinkRow(
+                title = stringResource(R.string.settings_default_browser),
+                summary = stringResource(
+                    if (isDefaultBrowser) {
+                        R.string.settings_default_browser_active
+                    } else {
+                        R.string.settings_make_default_browser
+                    },
+                ),
+                dividerColor = dividerColor,
+                divider = divider,
+                onClick = onOpenDefaultBrowserSettings,
+            )
+        }
+    } else {
+        null
+    }
+    val startupRows: List<CardRow> = if (layer.more) {
+        listOf(
+            { divider ->
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.settings_startup_animation_title),
                     summary = stringResource(R.string.settings_startup_animation_subtitle),
                     checked = isStartupAnimationEnabled,
                     summaryMaxLines = Int.MAX_VALUE,
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onCheckedChange = onStartupAnimationEnabledChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAnimation),
                 )
+            },
+            { divider ->
                 SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_startup_address_focus_title),
                     selected = startupAddressFocusMode,
@@ -137,51 +139,55 @@ internal fun BrowserSettingsPage(
                     label = { mode -> mode.displayName() },
                     summary = stringResource(R.string.settings_startup_address_focus_summary),
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onSelected = onStartupAddressFocusModeChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.StartupAddressFocus),
                 )
+            },
+            { divider ->
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.settings_open_home_on_startup_title),
                     summary = stringResource(R.string.settings_open_home_on_startup_subtitle),
                     checked = isOpenHomeOnStartupEnabled,
                     summaryMaxLines = Int.MAX_VALUE,
                     dividerColor = dividerColor,
+                    divider = divider,
                     onCheckedChange = onOpenHomeOnStartupEnabledChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.OpenHomeOnStartup),
                 )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_browser_group_favorites))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardLinkRow(
-                    // Bookmarks come in through «Move to Vola», with passwords (Q22b).
-                    title = stringResource(R.string.passwords_import_title),
-                    summary = stringResource(R.string.settings_move_to_vola_summary),
-                    dividerColor = dividerColor,
-                    onClick = onImportFavoriteBookmarks,
-                )
-            }
-            SettingsCardHeader(stringResource(R.string.settings_browser_group_websites))
-            SettingsCard(containerColor = cardColor) {
+            },
+        )
+    } else {
+        emptyList()
+    }
+    val websiteRows: List<CardRow> = buildList<CardRow> {
+        if (layer.more) {
+            add { divider ->
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.settings_full_immersive_mode_title),
                     summary = stringResource(R.string.settings_full_immersive_mode_subtitle),
                     checked = isFullImmersiveModeEnabled,
                     summaryMaxLines = Int.MAX_VALUE,
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onCheckedChange = onFullImmersiveModeEnabledChanged,
                 )
+            }
+            add { divider ->
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.settings_scroll_bar_title),
                     summary = stringResource(R.string.settings_scroll_bar_subtitle),
                     checked = isScrollBarEnabled,
                     summaryMaxLines = Int.MAX_VALUE,
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onCheckedChange = onScrollBarEnabledChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.ScrollBar),
                 )
+            }
+        }
+        if (layer.main && (isVideoAutoplayBlockingSupported || !hidesUnsupported)) {
+            add { divider ->
                 SettingsCardSwitchRow(
                     title = stringResource(R.string.settings_video_autoplay_title),
                     summary = stringResource(
@@ -195,9 +201,13 @@ internal fun BrowserSettingsPage(
                     summaryMaxLines = Int.MAX_VALUE,
                     enabled = isVideoAutoplayBlockingSupported,
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onCheckedChange = onVideoAutoplayBlockedChanged,
                 )
+            }
+        }
+        if (layer.more && (isInlineMediaPlayerSupported || !hidesUnsupported)) {
+            add { divider ->
                 SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_inline_media_player_title),
                     selected = inlineMediaPlayerMode,
@@ -212,10 +222,14 @@ internal fun BrowserSettingsPage(
                     ),
                     enabled = isInlineMediaPlayerSupported,
                     dividerColor = dividerColor,
-                    divider = true,
+                    divider = divider,
                     onSelected = onInlineMediaPlayerModeChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.InlineMediaPlayer),
                 )
+            }
+        }
+        if (layer.main) {
+            add { divider ->
                 SettingsCardDropdownRow(
                     title = stringResource(R.string.settings_translation_provider),
                     selected = pageTranslationProvider,
@@ -223,38 +237,95 @@ internal fun BrowserSettingsPage(
                     label = { provider -> provider.displayName },
                     summary = stringResource(translationSummary(pageTranslationProvider)),
                     dividerColor = dividerColor,
+                    divider = divider,
                     onSelected = onPageTranslationProviderChanged,
                     modifier = Modifier.testTag(BrowserSettingsTestTags.TranslationProvider),
                 )
             }
-            SettingsCardHeader(stringResource(R.string.settings_browser_group_links))
-            SettingsCard(containerColor = cardColor) {
-                SettingsCardDropdownRow(
-                    title = stringResource(R.string.settings_external_app_links_title),
-                    selected = externalAppLinkHandling,
-                    options = ExternalAppLinkHandling.entries,
-                    label = { handling -> handling.displayName() },
-                    summary = stringResource(R.string.settings_external_app_links_summary),
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onSelected = onExternalAppLinkHandlingChanged,
-                    modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalAppLinks),
+        }
+    }
+    SettingsPage(
+        title = stringResource(
+            if (layer == SettingsLayer.More) R.string.settings_appearance_advanced else R.string.settings_section_browser,
+        ),
+        onBack = onBack,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(SettingsCardTokens.cardGap)) {
+            val generalRows = listOfNotNull(engineRow, defaultBrowserRow)
+            if (generalRows.isNotEmpty()) {
+                SettingsCardHeader(stringResource(R.string.settings_browser_group_general))
+                SettingsCard(containerColor = cardColor) { CardRows(generalRows) }
+            }
+            if (engineRow != null) {
+                // Switching the engine restarts Vola; said under the card, in the error color.
+                Text(
+                    text = stringResource(R.string.settings_browser_engine_restart_warning),
+                    modifier = Modifier.padding(SettingsCardTokens.headerPadding),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.settings_external_link_preview_title),
-                    summary = stringResource(R.string.settings_external_link_preview_subtitle),
-                    checked = isExternalLinkPreviewEnabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    onCheckedChange = onExternalLinkPreviewEnabledChanged,
-                    modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalLinkPreview),
-                )
+            }
+            if (startupRows.isNotEmpty()) {
+                SettingsCardHeader(stringResource(R.string.settings_browser_group_startup))
+                SettingsCard(containerColor = cardColor) { CardRows(startupRows) }
+            }
+            if (layer.more) {
+                SettingsCardHeader(stringResource(R.string.settings_browser_group_favorites))
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        // Bookmarks come in through «Move to Vola», with passwords (Q22b).
+                        title = stringResource(R.string.passwords_import_title),
+                        summary = stringResource(R.string.settings_move_to_vola_summary),
+                        dividerColor = dividerColor,
+                        onClick = onImportFavoriteBookmarks,
+                    )
+                }
+            }
+            if (websiteRows.isNotEmpty()) {
+                SettingsCardHeader(stringResource(R.string.settings_browser_group_websites))
+                SettingsCard(containerColor = cardColor) { CardRows(websiteRows) }
+            }
+            if (layer.main) {
+                SettingsCardHeader(stringResource(R.string.settings_browser_group_links))
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardDropdownRow(
+                        title = stringResource(R.string.settings_external_app_links_title),
+                        selected = externalAppLinkHandling,
+                        options = ExternalAppLinkHandling.entries,
+                        label = { handling -> handling.displayName() },
+                        summary = stringResource(R.string.settings_external_app_links_summary),
+                        dividerColor = dividerColor,
+                        divider = true,
+                        onSelected = onExternalAppLinkHandlingChanged,
+                        modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalAppLinks),
+                    )
+                    SettingsCardSwitchRow(
+                        title = stringResource(R.string.settings_external_link_preview_title),
+                        summary = stringResource(R.string.settings_external_link_preview_subtitle),
+                        checked = isExternalLinkPreviewEnabled,
+                        summaryMaxLines = Int.MAX_VALUE,
+                        dividerColor = dividerColor,
+                        onCheckedChange = onExternalLinkPreviewEnabledChanged,
+                        modifier = Modifier.testTag(BrowserSettingsTestTags.ExternalLinkPreview),
+                    )
+                }
+            }
+            if (layer == SettingsLayer.Main) {
+                // One layer (V15d-4): the engine, startup and the rarer site settings wait behind «More».
+                SettingsCard(containerColor = cardColor) {
+                    SettingsCardLinkRow(
+                        title = stringResource(R.string.settings_appearance_advanced),
+                        summary = stringResource(R.string.settings_browser_more_summary),
+                        dividerColor = dividerColor,
+                        onClick = onOpenMore,
+                        modifier = Modifier.testTag(BrowserSettingsTestTags.More),
+                    )
+                }
             }
         }
     }
 }
 
-/** What the chosen translation service does with the page. */
 private fun translationSummary(provider: PageTranslationProvider): Int = when (provider) {
     PageTranslationProvider.Google -> R.string.settings_translation_provider_google_summary
     PageTranslationProvider.Yandex -> R.string.settings_translation_provider_summary

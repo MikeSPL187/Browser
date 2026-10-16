@@ -13,6 +13,9 @@ internal object DownloadRuntimeRegistry {
     )
     private val controls = linkedMapOf<Int, Controls>()
 
+    /** How failed or cancelled rows start again, oldest first; see [offerRetry]. */
+    private val retries = linkedMapOf<Int, () -> Boolean>()
+
     fun nextTransferId(): Int = nextId.getAndUpdate { value ->
         if (value == Int.MAX_VALUE) 1 else value + 1
     }
@@ -59,6 +62,7 @@ internal object DownloadRuntimeRegistry {
     fun completed(id: Int) {
         entries.remove(id)
         controls.remove(id)
+        retries.remove(id)
     }
 
     @Synchronized
@@ -69,6 +73,65 @@ internal object DownloadRuntimeRegistry {
             lastModified = updatedAt,
         )
         controls.remove(id)
+    }
+
+    /**
+     * Lets the failed or cancelled row of transfer [id] start again through [start], which runs off
+     * the lock once [retry] has turned the row pending. [start] answers whether the attempt began;
+     * whatever comes of it, it ends in [completed] (a new row took over) or [retryFailed]. Only the
+     * latest [MAX_RETRIES] rows keep theirs: each holds an address in memory. Answers whether the
+     * row took it; one that never started writing has no row.
+     */
+    @Synchronized
+    fun offerRetry(id: Int, start: () -> Boolean): Boolean {
+        val current = entries[id]?.takeIf { entry -> entry.status.isRetryable } ?: return false
+        entries[id] = current.copy(retry = DownloadRetry.Available)
+        retries.remove(id)
+        retries[id] = start
+        while (retries.size > MAX_RETRIES) {
+            val oldest = retries.keys.first()
+            withholdRetry(oldest, NOT_REMEMBERED)
+        }
+        return true
+    }
+
+    /** The transfers whose rows may still start again. */
+    @Synchronized
+    fun retryableTransferIds(): Set<Int> = retries.keys.toSet()
+
+    @Synchronized
+    fun withholdRetry(id: Int, retry: DownloadRetry.Unavailable) {
+        retries.remove(id)
+        val current = entries[id] ?: return
+        entries[id] = current.copy(retry = retry)
+    }
+
+    /** Starts the row [entryId] again; it waits as pending, without controls, until the attempt ends. */
+    fun retry(entryId: Long): Boolean {
+        val start = synchronized(this) {
+            val (id, entry) = entries.entries.firstOrNull { (_, entry) ->
+                entry.id == entryId && entry.status.isRetryable
+            } ?: return false
+            val start = retries[id] ?: return false
+            entries[id] = entry.copy(
+                status = DownloadStatus.Pending,
+                supportsPause = false,
+                supportsCancel = false,
+            )
+            start
+        }
+        return start()
+    }
+
+    /** The attempt to start transfer [id] again ended without a new row; [retry] says whether it may run again. */
+    @Synchronized
+    fun retryFailed(id: Int, updatedAt: Long, retry: DownloadRetry = DownloadRetry.Available) {
+        val current = entries[id]?.takeIf { entry -> entry.status == DownloadStatus.Pending } ?: return
+        entries[id] = current.copy(status = DownloadStatus.Failed, lastModified = updatedAt)
+        when {
+            retry is DownloadRetry.Unavailable -> withholdRetry(id, retry)
+            id !in retries -> withholdRetry(id, NOT_REMEMBERED)
+        }
     }
 
     @Synchronized
@@ -133,7 +196,10 @@ internal object DownloadRuntimeRegistry {
 
     @Synchronized
     fun clear(ids: Collection<Long>) {
-        entries.entries.filter { (_, entry) -> entry.id in ids }.forEach { (id, _) -> controls.remove(id) }
+        entries.entries.filter { (_, entry) -> entry.id in ids }.forEach { (id, _) ->
+            controls.remove(id)
+            retries.remove(id)
+        }
         entries.entries.removeAll { (_, entry) -> entry.id in ids }
     }
 
@@ -142,8 +208,14 @@ internal object DownloadRuntimeRegistry {
 
     fun isRuntimeId(id: Long): Boolean = id <= RUNTIME_ID_MAX
 
+    private val DownloadStatus.isRetryable: Boolean
+        get() = this == DownloadStatus.Failed || this == DownloadStatus.Cancelled
+
     private fun encodeRuntimeId(id: Int): Long = Long.MIN_VALUE + id.toLong()
     private const val RUNTIME_ID_MAX = Long.MIN_VALUE + Int.MAX_VALUE.toLong()
+    private val NOT_REMEMBERED = DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered)
+
+    const val MAX_RETRIES = 20
 }
 
 internal object DownloadEntryIds {

@@ -146,9 +146,7 @@ internal fun BoxScope.BrowserAddressChrome(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val wideWindow = AddressBarWideLayoutRules.usesTabStrip(
-        windowWidthDp = browserWidthPx / density.density,
-    )
+    val wideWindow = rememberWideBrowserWindow(windowWidthDp = browserWidthPx / density.density)
     val wideTabStripEnabled = wideWindow && !linkPeekAddressBarExpanded
     val tabSwipeEnabled = !wideWindow
     val blankTabTitle = stringResource(R.string.new_tab_title)
@@ -546,6 +544,7 @@ internal fun BoxScope.BrowserAddressChrome(
     if (v5Editor) {
         BrowserV5AddressEditor(
             selectedTab = selectedTab,
+            accent = controller.v5Accent,
             suggestionItems = suggestionItems,
             highlightedIndex = highlightedSuggestionIndex,
             value = addressValue,

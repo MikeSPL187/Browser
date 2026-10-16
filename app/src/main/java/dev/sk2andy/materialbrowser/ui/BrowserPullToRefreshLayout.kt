@@ -173,4 +173,5 @@ internal object BrowserPullGestureRules {
     }
 }
 
-private const val PULL_ZONE_HEIGHT_DP = 160f
+/** The pull starts only this far below the top inset: inner scrollers lower down keep their gestures. */
+internal const val PULL_ZONE_HEIGHT_DP = 160f

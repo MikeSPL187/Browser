@@ -99,6 +99,36 @@ class DownloadsControllerTest {
         assertEquals(listOf(true, true, false), outcomes)
     }
 
+    @Test
+    fun `a retry goes to the store and the list shows the pending row`() {
+        val failed = entry(3, DownloadStatus.Failed)
+        val store = FakeStore(listOf(failed))
+        val controller = DownloadsController(store, ImmediateWorker)
+        val outcomes = mutableListOf<Boolean>()
+
+        controller.retry(failed) { outcomes += it }
+        assertEquals(DownloadStatus.Pending, controller.downloads.single().status)
+        controller.retry(failed) { outcomes += it }
+
+        assertEquals(listOf(true, false), outcomes)
+    }
+
+    @Test
+    fun `a store that cannot retry says so`() {
+        val failed = entry(3, DownloadStatus.Failed)
+        val store = object : DownloadsController.DownloadStore {
+            override fun snapshot() = listOf(failed)
+            override fun clear(entries: Collection<DownloadEntry>) = false
+            override fun cancel(entry: DownloadEntry) = false
+            override fun togglePause(entry: DownloadEntry) = false
+        }
+        var outcome: Boolean? = null
+
+        DownloadsController(store, ImmediateWorker).retry(failed) { outcome = it }
+
+        assertEquals(false, outcome)
+    }
+
     private class FakeStore(var entries: List<DownloadEntry>) : DownloadsController.DownloadStore {
         var clears = 0
         var snapshots = 0
@@ -128,6 +158,18 @@ class DownloadsControllerTest {
                 )
             }
             return true
+        }
+
+        override fun retry(entry: DownloadEntry): Boolean {
+            val before = entries
+            entries = entries.map { current ->
+                if (current.id == entry.id && current.status == DownloadStatus.Failed) {
+                    current.copy(status = DownloadStatus.Pending)
+                } else {
+                    current
+                }
+            }
+            return entries != before
         }
     }
 

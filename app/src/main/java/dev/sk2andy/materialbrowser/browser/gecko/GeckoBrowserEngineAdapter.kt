@@ -121,6 +121,13 @@ internal interface AndroidBrowserEngineSessionPort :
     BrowserEngineViewPort {
     fun setActive(active: Boolean)
 
+    /**
+     * For a tab that adopted a link preview's live page: reports that page as a navigation that
+     * started (and finished, if it had), so the tab, its history and its protection catch up
+     * without loading it again. Sessions that adopted nothing ignore it.
+     */
+    fun announceAdoptedPage() = Unit
+
     /** The certificate the current page came with; none over plain HTTP or before it is known. */
     fun siteCertificate(): SiteCertificate? = null
 
@@ -279,6 +286,7 @@ internal class GeckoBrowserEngineSessionFactory(
     private val extensionSessionGenerations = mutableMapOf<String, Long>()
     private val extensionSessionIdentities = mutableMapOf<String, GeckoExtensionSessionIdentity>()
     private val preparedSessions = mutableMapOf<String, GeckoSession>()
+    private val adoptedSessions = mutableMapOf<String, GeckoBrowserSession>()
     private val sessions = mutableMapOf<GeckoBrowserSession, GeckoBrowserEngineSessionAdapter>()
 
     constructor(context: Context) : this(GeckoRuntimeOwner.getOrCreate(context.applicationContext))
@@ -411,6 +419,36 @@ internal class GeckoBrowserEngineSessionFactory(
         return true
     }
 
+    /**
+     * Hands a link preview's live session to the next [create] of tab [tabId], which adopts it
+     * as it is: no reload, the tab's own listeners, protection, extensions and toppings. Only a
+     * preview of the tab's own context (profile, isolation, private) can be adopted.
+     */
+    @UiThread
+    override fun prepareAdoption(
+        tabId: String,
+        preview: AndroidBrowserEngineSessionPort,
+        profileId: String,
+        isolationEnabled: Boolean,
+        isPrivate: Boolean,
+    ): Boolean {
+        val adapter = preview as? GeckoBrowserEngineSessionAdapter ?: return false
+        if (
+            tabId.isBlank() ||
+            extensionSessionIdentities.containsKey(tabId) ||
+            preparedSessions.containsKey(tabId) ||
+            adoptedSessions.containsKey(tabId) ||
+            !adapter.sharesContext(profileId, isolationEnabled, isPrivate)
+        ) {
+            return false
+        }
+        val session = adapter.detachForAdoption() ?: return false
+        extensionSessionIdentities.remove(adapter.tabId)
+        extensionSessionGenerations.remove(adapter.tabId)
+        adoptedSessions[tabId] = session
+        return true
+    }
+
     override fun createExtensionPopupView(
         context: Context,
         session: BrowserEnginePreparedSession,
@@ -436,42 +474,44 @@ internal class GeckoBrowserEngineSessionFactory(
         eventSink: BrowserEngineEventSink,
     ): AndroidBrowserEngineSessionPort {
         require(tabId.isNotBlank()) { "A Gecko engine session needs a tab ID" }
+        val adoptedSession = adoptedSessions.remove(tabId)?.also { adopted ->
+            adopted.setPrivacyEventSink(privacyEventSink)
+            adopted.updatePrivacyPolicy(privacyPolicy)
+        }
         val preparedSession = preparedSessions.remove(tabId)
-        val session = if (preparedSession == null) {
-            runtime.createSession(
-                profileId = profileId,
-                isolationEnabled = isolationEnabled,
-                isPrivate = isPrivate,
-                privacyPolicy = privacyPolicy,
-                privacyEventSink = privacyEventSink,
-            )
-        } else {
+        val session = adoptedSession ?: preparedSession?.let { prepared ->
             runtime.adoptExtensionSession(
-                session = preparedSession,
+                session = prepared,
                 profileId = profileId,
                 isolationEnabled = isolationEnabled,
                 isPrivate = isPrivate,
                 privacyPolicy = privacyPolicy,
                 privacyEventSink = privacyEventSink,
             ) ?: error("Prepared extension session does not match Vola tab context")
-        }.also { created ->
-            val generation = extensionSessionGenerations.getOrDefault(tabId, 0L) + 1L
-            extensionSessionGenerations[tabId] = generation
-            val identity = GeckoExtensionSessionIdentity(
-                tabId = tabId,
-                profileId = profileId,
-                isPrivate = isPrivate,
-                generation = generation,
-                isolationEnabled = isolationEnabled,
-            )
-            extensionSessionIdentities[tabId] = identity
-            created.bindExtensionTab(tabId, generation)
-            created.bindToppingSession(tabId, contentKind)
-        }
+        } ?: runtime.createSession(
+            profileId = profileId,
+            isolationEnabled = isolationEnabled,
+            isPrivate = isPrivate,
+            privacyPolicy = privacyPolicy,
+            privacyEventSink = privacyEventSink,
+        )
+        val generation = extensionSessionGenerations.getOrDefault(tabId, 0L) + 1L
+        extensionSessionGenerations[tabId] = generation
+        extensionSessionIdentities[tabId] = GeckoExtensionSessionIdentity(
+            tabId = tabId,
+            profileId = profileId,
+            isPrivate = isPrivate,
+            generation = generation,
+            isolationEnabled = isolationEnabled,
+        )
+        session.bindExtensionTab(tabId, generation)
+        session.bindToppingSession(tabId, contentKind)
         return GeckoBrowserEngineSessionAdapter(
             tabId = tabId,
             session = session,
             eventSink = eventSink,
+            contentKind = contentKind,
+            adopted = adoptedSession != null,
             trailHistoryEventSink = trailHistoryEventSink,
             onActiveChanged = { active ->
                 runtime.toppings.setActiveTab(tabId.takeIf { active })
@@ -491,6 +531,9 @@ internal class GeckoBrowserEngineSessionAdapter(
     override val tabId: String,
     private val session: GeckoBrowserSession,
     private val eventSink: BrowserEngineEventSink,
+    private val contentKind: BrowserEngineContentKind = BrowserEngineContentKind.RegularTab,
+    /** The session is a link preview's live page that this tab took over ([announceAdoptedPage]). */
+    private val adopted: Boolean = false,
     trailHistoryEventSink: GeckoCandyTrailHistoryEventSink =
         GeckoCandyTrailHistoryEventSink { _, _ -> },
     private val onActiveChanged: (Boolean) -> Unit = {},
@@ -535,7 +578,12 @@ internal class GeckoBrowserEngineSessionAdapter(
     @UiThread
     override fun createView(context: Context): View {
         check(!closed) { "Cannot bind a closed browser engine session" }
-        return session.createView(context)
+        // The link preview's page flies, fades and clips with its card; tabs keep the faster surface.
+        return if (contentKind == BrowserEngineContentKind.LinkPeek) {
+            session.createAnimatableView(context)
+        } else {
+            session.createView(context)
+        }
     }
 
     @UiThread
@@ -896,9 +944,56 @@ internal class GeckoBrowserEngineSessionAdapter(
         )
     }
 
-    private fun close() {
-        if (closed) return
+    /** Whether a tab of this profile, isolation and privacy may adopt this session's page. */
+    fun sharesContext(profileId: String, isolationEnabled: Boolean, isPrivate: Boolean): Boolean =
+        session.profileId == profileId &&
+            session.isolationEnabled == isolationEnabled &&
+            session.isPrivate == isPrivate
+
+    /**
+     * Lets go of a link preview's session without closing it, so a tab can adopt the live page.
+     * This adapter is closed afterwards and reports nothing more; null if it can't hand over.
+     */
+    @UiThread
+    fun detachForAdoption(): GeckoBrowserSession? {
+        if (closed || contentKind != BrowserEngineContentKind.LinkPeek) return null
         closed = true
+        clearSessionListeners()
+        onClosed()
+        return session
+    }
+
+    @UiThread
+    override fun announceAdoptedPage() {
+        if (closed || !adopted) return
+        val current = previousState
+        if (current.url == null) return
+        eventSink.onEngineEvent(
+            current.copy(isLoading = true).toEngineEvent(tabId, BrowserEngineEventType.NavigationStarted),
+        )
+        // The history the preview built (its redirects) becomes the tab's, saved for restore.
+        trailHistoryTracker.forget()
+        session.setHistoryStateListener(trailHistoryTracker::onHistoryStateChanged)
+        if (current.isLoading) return
+        val type = when (current.lastNavigationSucceeded) {
+            true -> BrowserEngineEventType.NavigationCommitted
+            false -> BrowserEngineEventType.NavigationFailed
+            null -> BrowserEngineEventType.StateChanged
+        }
+        eventSink.onEngineEvent(
+            current.toEngineEvent(
+                tabId = tabId,
+                type = type,
+                failureDescription = if (type == BrowserEngineEventType.NavigationFailed) {
+                    current.failureDescription ?: LOAD_FAILURE
+                } else {
+                    null
+                },
+            ),
+        )
+    }
+
+    private fun clearSessionListeners() {
         session.setStateListener(null)
         session.setHistoryStateListener(null)
         session.setMediaStateListener(null)
@@ -915,6 +1010,12 @@ internal class GeckoBrowserEngineSessionAdapter(
         session.setMediaPermissionRequestListener(null)
         session.setAuthPromptListener(null)
         session.setWebPromptListener(null)
+    }
+
+    private fun close() {
+        if (closed) return
+        closed = true
+        clearSessionListeners()
         session.close()
         onClosed()
         eventSink.onEngineEvent(
@@ -930,22 +1031,7 @@ internal class GeckoBrowserEngineSessionAdapter(
         if (state.crashed && !previousState.crashed) {
             previousState = state
             closed = true
-            session.setStateListener(null)
-            session.setHistoryStateListener(null)
-            session.setMediaStateListener(null)
-            session.setInlineVideoOpenRequestListener(null)
-            session.setFullscreenStateListener(null)
-            session.setScrollListener(null)
-            session.setContentTargetListener(null)
-            session.setNavigationRequestListener(null)
-            session.setNewSessionListener(null)
-            session.setDownloadResponseListener(null)
-            session.setFilePromptListener(null)
-            session.setAndroidPermissionRequestListener(null)
-            session.setContentPermissionRequestListener(null)
-            session.setMediaPermissionRequestListener(null)
-            session.setAuthPromptListener(null)
-            session.setWebPromptListener(null)
+            clearSessionListeners()
             session.close()
             onClosed()
             eventSink.onEngineEvent(

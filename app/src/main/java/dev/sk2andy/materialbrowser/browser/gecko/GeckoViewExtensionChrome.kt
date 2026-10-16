@@ -380,7 +380,12 @@ internal class GeckoViewExtensionChrome(
         var cancellation: GeckoDownloadCancellation? = null
         cancellation = downloadTransfers.start(
             transfer = GeckoDownloadTransferRequest(
-                owner = GeckoDownloadOwner(validOwner.profileId, validOwner.isPrivate, ownerSession),
+                owner = GeckoDownloadOwner(
+                    profileId = validOwner.profileId,
+                    isPrivate = validOwner.isPrivate,
+                    sessionKey = ownerSession,
+                    contextId = ownerSession.settings.contextId,
+                ),
                 request = request.request,
                 fetchFlags = request.downloadFlags,
                 suggestedFileName = request.filename,

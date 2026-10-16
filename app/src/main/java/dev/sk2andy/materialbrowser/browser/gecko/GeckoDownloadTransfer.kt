@@ -13,10 +13,13 @@ import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadDirectoryRules
+import dev.sk2andy.materialbrowser.data.DownloadRetry
+import dev.sk2andy.materialbrowser.data.DownloadRetryUnavailable
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 import java.io.Closeable
 import java.io.OutputStream
+import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,7 +33,23 @@ internal data class GeckoDownloadOwner(
     val profileId: String,
     val isPrivate: Boolean,
     val sessionKey: Any,
+    /** The owner tab's own cookie jar ([GeckoProfileStorageRules.contextId]); null for the shared one. */
+    val contextId: String? = null,
 )
+
+internal object GeckoDownloadFetchRules {
+    /**
+     * Gecko's fetch always runs in the shared cookie jar (or the shared private one) and cannot
+     * reach a tab's own: an isolated profile's or a private tab's. Rather than send another jar's
+     * cookies and keep the ones the site sets in it, such a fetch goes without cookies (V29).
+     */
+    fun flags(requested: Int, owner: GeckoDownloadOwner): Int {
+        var flags = requested
+        if (owner.isPrivate) flags = flags or GeckoWebExecutor.FETCH_FLAGS_PRIVATE
+        if (owner.contextId != null) flags = flags or GeckoWebExecutor.FETCH_FLAGS_ANONYMOUS
+        return flags
+    }
+}
 
 internal data class GeckoDownloadTransferRequest(
     val owner: GeckoDownloadOwner,
@@ -38,6 +57,11 @@ internal data class GeckoDownloadTransferRequest(
     val fetchFlags: Int,
     val suggestedFileName: String? = null,
     val allowHttpErrors: Boolean = false,
+    /**
+     * Whether a failed or cancelled transfer may start again by the same GET ([GeckoDownloadRetryRules]).
+     * An extension's own download is not: the extension follows it and would not see a retry.
+     */
+    val retryable: Boolean = false,
 )
 
 internal data class GeckoDownloadTransferStart(
@@ -100,6 +124,29 @@ internal object GeckoDownloadResponseRules {
         if (allowHttpErrors || statusCode in 200..299) return false
         return statusCode != 0 || !uri.startsWith("blob:", ignoreCase = true)
     }
+}
+
+/** What a failed transfer may do again (V22): a retry fetches the file from the start by GET. */
+internal object GeckoDownloadRetryRules {
+    /** A `blob:` address lives only as long as its page, which [pageUrl] names. */
+    fun offer(url: String, pageUrl: String?): DownloadRetry = when {
+        url.startsWith("blob:", ignoreCase = true) ->
+            DownloadRetry.Unavailable(DownloadRetryUnavailable.Blob, pageUrl)
+        url.startsWith("https:", ignoreCase = true) || url.startsWith("http:", ignoreCase = true) ->
+            DownloadRetry.Available
+        else -> DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered)
+    }
+
+    /**
+     * A retry saves only the file the first attempt was writing. A page's response may have come
+     * from a POST, which the retry cannot repeat: answered by GET, the server may send an error page
+     * or another file, and saving that under the download's name would be a lie.
+     */
+    fun isSameFile(expected: GeckoDownloadTransferMetadata, actual: GeckoDownloadTransferMetadata): Boolean =
+        expected.fileName == actual.fileName && expected.mimeType == actual.mimeType
+
+    /** A private tab's download is not retried once the tab is closed; its rows never name its page. */
+    val privateClosed = DownloadRetry.Unavailable(DownloadRetryUnavailable.PrivateClosed)
 }
 
 internal object GeckoDownloadStreamRules {
@@ -199,8 +246,8 @@ private class MediaStoreDownloadStreamEntry(
 }
 
 /**
- * Fetches downloads inside Gecko, retaining its authenticated/private request context, then streams
- * into scoped storage. No cookie material crosses the engine boundary.
+ * Fetches downloads inside Gecko, then streams into scoped storage. No cookie material crosses the
+ * engine boundary; a tab with its own cookie jar fetches without cookies ([GeckoDownloadFetchRules]).
  */
 internal class GeckoDownloadTransferManager(
     context: Context,
@@ -210,11 +257,14 @@ internal class GeckoDownloadTransferManager(
 ) : AutoCloseable {
     private class Operation(
         val ownerKey: Any,
+        /** How to fetch it again, or null when it may not be retried. */
+        val retrySource: RetrySource?,
         val cancelled: AtomicBoolean = AtomicBoolean(false),
         val terminal: AtomicBoolean = AtomicBoolean(false),
     ) {
         @Volatile var response: WebResponse? = null
         @Volatile var entry: GeckoDownloadStreamEntry? = null
+        @Volatile var metadata: GeckoDownloadTransferMetadata? = null
         val pauseLock = ReentrantLock()
         val pauseChanged = pauseLock.newCondition()
         var paused = false
@@ -224,6 +274,32 @@ internal class GeckoDownloadTransferManager(
         Thread(runnable, "candy-gecko-download").apply { isDaemon = true }
     }
     private val operations = ConcurrentHashMap<Int, Operation>()
+
+    private class RetrySource(
+        val owner: GeckoDownloadOwner,
+        val url: String,
+        val referrer: String?,
+        val fetchFlags: Int,
+    ) {
+        /** The page a row may offer to open instead; a private tab's is not named outside it. */
+        val pageUrl: String? get() = referrer.takeUnless { owner.isPrivate }
+    }
+
+    /**
+     * A failed row's way back, in memory only. The tab is held weakly: a closed tab's download is
+     * still retried (by the profile's jar), a closed private tab's is not.
+     */
+    private class RetryTicket(
+        val profileId: String,
+        val isPrivate: Boolean,
+        val contextId: String?,
+        val ownerKey: WeakReference<Any>,
+        val url: String,
+        val referrer: String?,
+        val fetchFlags: Int,
+        val expected: GeckoDownloadTransferMetadata,
+    )
+    private val retryTickets = ConcurrentHashMap<Int, RetryTicket>()
     private val closed = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -237,13 +313,14 @@ internal class GeckoDownloadTransferManager(
             return null
         }
         val id = DownloadRuntimeRegistry.nextTransferId()
-        val operation = Operation(transfer.owner.sessionKey)
-        operations[id] = operation
-        val flags = transfer.fetchFlags or if (transfer.owner.isPrivate) {
-            GeckoWebExecutor.FETCH_FLAGS_PRIVATE
+        val retrySource = if (transfer.retryable) {
+            RetrySource(transfer.owner, transfer.request.uri, transfer.request.referrer, transfer.fetchFlags)
         } else {
-            GeckoWebExecutor.FETCH_FLAGS_NONE
+            null
         }
+        val operation = Operation(transfer.owner.sessionKey, retrySource)
+        operations[id] = operation
+        val flags = GeckoDownloadFetchRules.flags(transfer.fetchFlags, transfer.owner)
         executor.fetch(transfer.request, flags).accept(
             { response ->
                 if (response == null) {
@@ -280,7 +357,9 @@ internal class GeckoDownloadTransferManager(
             return null
         }
         val id = DownloadRuntimeRegistry.nextTransferId()
-        val operation = Operation(owner.sessionKey)
+        // Gecko does not say how the page asked for it; a retry asks by GET (GeckoDownloadRetryRules).
+        val retrySource = RetrySource(owner, response.uri, referrer, GeckoWebExecutor.FETCH_FLAGS_NONE)
+        val operation = Operation(owner.sessionKey, retrySource)
         operations[id] = operation
         receiveResponse(
             id = id,
@@ -298,12 +377,119 @@ internal class GeckoDownloadTransferManager(
         operations.entries
             .filter { (_, operation) -> operation.ownerKey === ownerKey }
             .forEach { (id, operation) -> cancel(id, operation, null) }
+        retryTickets.entries
+            .filter { (_, ticket) -> ticket.isPrivate && ticket.ownerKey.get() === ownerKey }
+            .forEach { (id, _) -> forgetRetry(id, GeckoDownloadRetryRules.privateClosed) }
     }
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         operations.entries.toList().forEach { (id, operation) -> cancel(id, operation, null) }
+        retryTickets.keys.toList().forEach { id ->
+            forgetRetry(id, DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered))
+        }
         io.shutdownNow()
+    }
+
+    /** Lets the failed row of [id] start again, if its transfer had begun writing and may be retried. */
+    private fun offerRetry(id: Int, operation: Operation) {
+        val source = operation.retrySource ?: return
+        val metadata = operation.metadata ?: return
+        when (val offer = GeckoDownloadRetryRules.offer(source.url, source.pageUrl)) {
+            is DownloadRetry.Unavailable -> DownloadRuntimeRegistry.withholdRetry(id, offer)
+            DownloadRetry.Available -> {
+                // Rows the registry stopped remembering, or the user cleared, drop their tickets.
+                retryTickets.keys.retainAll(DownloadRuntimeRegistry.retryableTransferIds())
+                retryTickets[id] = RetryTicket(
+                    profileId = source.owner.profileId,
+                    isPrivate = source.owner.isPrivate,
+                    contextId = source.owner.contextId,
+                    ownerKey = WeakReference(source.owner.sessionKey),
+                    url = source.url,
+                    referrer = source.referrer,
+                    fetchFlags = source.fetchFlags,
+                    expected = metadata,
+                )
+                if (!DownloadRuntimeRegistry.offerRetry(id) { retry(id) }) retryTickets.remove(id)
+            }
+        }
+    }
+
+    private fun forgetRetry(id: Int, reason: DownloadRetry.Unavailable) {
+        retryTickets.remove(id)
+        DownloadRuntimeRegistry.withholdRetry(id, reason)
+    }
+
+    /** Fetches the failed row [failedId] again; its row stays until a new one starts writing. */
+    private fun retry(failedId: Int): Boolean {
+        val ticket = retryTickets[failedId]
+        val ownerKey = ticket?.ownerKey?.get() ?: if (ticket?.isPrivate == false) Any() else null
+        if (closed.get() || ticket == null || ownerKey == null) {
+            retryTickets.remove(failedId)
+            val reason = if (ticket?.isPrivate == true) {
+                GeckoDownloadRetryRules.privateClosed
+            } else {
+                DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered)
+            }
+            DownloadRuntimeRegistry.retryFailed(failedId, System.currentTimeMillis(), reason)
+            return false
+        }
+        // Gecko answers a fetch on the looper that asked for it.
+        mainHandler.post { startRetry(failedId, ticket, ownerKey) }
+        return true
+    }
+
+    private fun startRetry(failedId: Int, ticket: RetryTicket, ownerKey: Any) {
+        val request = runCatching {
+            WebRequest.Builder(ticket.url)
+                .method("GET")
+                .apply { ticket.referrer?.let(::referrer) }
+                .build()
+        }.getOrNull()
+        if (request == null) {
+            forgetRetry(failedId, DownloadRetry.Unavailable(DownloadRetryUnavailable.NotRemembered))
+            DownloadRuntimeRegistry.retryFailed(failedId, System.currentTimeMillis())
+            return
+        }
+        start(
+            transfer = GeckoDownloadTransferRequest(
+                owner = GeckoDownloadOwner(ticket.profileId, ticket.isPrivate, ownerKey, ticket.contextId),
+                request = request,
+                fetchFlags = ticket.fetchFlags,
+                suggestedFileName = ticket.expected.fileName,
+                retryable = true,
+            ),
+            listener = object : GeckoDownloadTransferListener {
+                override fun onMetadata(
+                    metadata: GeckoDownloadTransferMetadata,
+                    decision: GeckoDownloadMetadataDecision,
+                ) {
+                    if (GeckoDownloadRetryRules.isSameFile(ticket.expected, metadata)) {
+                        decision.proceed()
+                    } else {
+                        decision.abort()
+                        retryTickets.remove(failedId)
+                        DownloadRuntimeRegistry.retryFailed(
+                            id = failedId,
+                            updatedAt = System.currentTimeMillis(),
+                            retry = DownloadRetry.Unavailable(
+                                DownloadRetryUnavailable.ResponseChanged,
+                                pageUrl = ticket.referrer.takeUnless { ticket.isPrivate },
+                            ),
+                        )
+                    }
+                }
+
+                override fun onStarted(start: GeckoDownloadTransferStart) {
+                    retryTickets.remove(failedId)
+                    DownloadRuntimeRegistry.completed(failedId)
+                }
+
+                // Before a new row: the old one may try again. After: the new row has its own ticket.
+                override fun onFailed(reason: GeckoDownloadFailure) =
+                    DownloadRuntimeRegistry.retryFailed(failedId, System.currentTimeMillis())
+            },
+        )
     }
 
     private fun receiveResponse(
@@ -380,6 +566,7 @@ internal class GeckoDownloadTransferManager(
         }
         val safeFileName = metadata.fileName
         val safeMimeType = metadata.mimeType
+        operation.metadata = metadata
         val entry = runCatching { sink.open(safeFileName, safeMimeType) }.getOrElse {
             runCatching(body::close)
             fail(id, operation, listener, GeckoDownloadFailure.Storage)
@@ -518,6 +705,7 @@ internal class GeckoDownloadTransferManager(
                 cancelled = true,
                 updatedAt = System.currentTimeMillis(),
             )
+            offerRetry(id, operation)
             notifier.cancel(id)
             listener?.let { target -> dispatch { target.onFailed(GeckoDownloadFailure.Cancelled) } }
         }
@@ -554,6 +742,7 @@ internal class GeckoDownloadTransferManager(
                 cancelled = failure == GeckoDownloadFailure.Cancelled,
                 updatedAt = System.currentTimeMillis(),
             )
+            offerRetry(id, operation)
             dispatch { listener.onFailed(failure) }
             notifier.cancel(id)
         }
@@ -575,6 +764,7 @@ internal class GeckoDownloadTransferManager(
                 cancelled = failure == GeckoDownloadFailure.Cancelled,
                 updatedAt = System.currentTimeMillis(),
             )
+            offerRetry(id, operation)
             dispatch { listener.onFailed(failure) }
             notifier.cancel(id)
         }

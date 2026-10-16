@@ -244,6 +244,12 @@ internal interface GeckoBrowserSession {
     val profileId: String
     val isPrivate: Boolean
 
+    /** Whether the profile's storage is isolated; with [profileId] and [isPrivate] it names the context. */
+    val isolationEnabled: Boolean get() = false
+
+    /** Sends this session's privacy events to [sink] from now on: a tab adopting a link preview. */
+    fun setPrivacyEventSink(sink: GeckoPrivacyEventSink) = Unit
+
     fun setStateListener(listener: GeckoBrowserSessionStateListener?)
 
     fun setHistoryStateListener(listener: GeckoBrowserHistoryStateListener?)
@@ -365,6 +371,13 @@ internal interface GeckoBrowserSession {
 
     /** Creates and binds the one View currently rendering this session. */
     fun createView(context: Context): View
+
+    /**
+     * Like [createView], but the page is drawn through a TextureView, so it fades, clips and moves
+     * with the views around it. It costs more than the default SurfaceView: only for a page that
+     * flies inside a card (the link preview), never for a tab.
+     */
+    fun createAnimatableView(context: Context): View = createView(context)
 
     /**
      * Runs after Gecko has both started its compositor and painted valid page content.

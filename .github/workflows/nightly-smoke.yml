@@ -58,7 +58,7 @@ jobs:
           export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
-          sdkmanager "emulator" "platform-tools" "platforms;android-37.1" \
+          sdkmanager "emulator" "platform-tools" "platforms;android-37.2" \
             "system-images;android-35;google_apis;x86_64"
           printf 'no\n' | avdmanager create avd --force --name vola_smoke \
             --package "system-images;android-35;google_apis;x86_64" --device pixel_6
@@ -77,6 +77,15 @@ jobs:
           ./gradlew --no-daemon --stacktrace --max-workers=2
           "-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8"
           assembleFullLocalRelease
+
+      # The Gradle and Kotlin daemons keep gigabytes after the build. With the emulator's 4 GB the
+      # runner then swaps to disk, and the emulator's own disk stalls (rcu stalls in kblockd, adb
+      # stops answering) on a heavy page: the nightly lost most sites that way since 11.10 (#134).
+      - name: Free the runner's memory
+        run: |
+          ./gradlew --stop || true
+          pkill -f KotlinCompileDaemon || true
+          free -m
 
       - name: Open the sites
         id: smoke

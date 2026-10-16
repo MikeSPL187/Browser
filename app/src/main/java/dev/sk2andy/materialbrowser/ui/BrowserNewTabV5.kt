@@ -17,6 +17,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.data.ProtectionReportRules
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTab
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabReport
@@ -38,6 +39,8 @@ internal fun BrowserNewTabV5(
     onOpenEssential: (String) -> Unit,
     editor: NewTabEssentialsEditor?,
     profileLabel: String?,
+    /** The profile's stored symbol key; Vola draws its Material Symbol. */
+    profileIconKey: String?,
     recentTabs: List<BrowserTab>,
     recentTabFavicons: Map<String, Bitmap>,
     onRecentTab: (String) -> Unit,
@@ -64,6 +67,7 @@ internal fun BrowserNewTabV5(
             )
         },
         recent = recentTabs.map { tab -> tab.v5Recent(recentIcons[tab.id]) },
+        profileIcon = profileIconKey?.let(WorkspaceIcons::vector),
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark) {

@@ -36,7 +36,8 @@ class GeckoReaderViewInstrumentedTest {
         assertTrue(background.contains("{ frameId: 0 }"))
         assertTrue(background.contains("policy.revision !== message.revision"))
         assertTrue(background.contains("Number.isSafeInteger(message.requestId)"))
-        assertTrue(content.contains("self !== top"))
+        // Only the top frame answers a reader request; subframes ignore it.
+        assertTrue(content.contains("self === top && message.type === \"reader-extract\""))
         assertTrue(content.contains("content, 500"))
         assertTrue(content.contains("content, 200"))
         assertTrue(content.contains("textContent, 300"))

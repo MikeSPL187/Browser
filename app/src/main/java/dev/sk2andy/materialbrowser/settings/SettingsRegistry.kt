@@ -428,15 +428,112 @@ internal object SettingsRegistry {
     )
 
     /** Pages and settings in the interface language, for [SettingsSearchRules]. */
-    fun searchCandidates(resources: Resources): List<SettingSearchCandidate> {
+    /**
+     * The current interface's frame, glass and address bar colours, and its «Themes» page: the v5
+     * interface draws none of them, so under ui.v5 search does not lead there (V15d-2).
+     */
+    private val currentInterfaceOnlyKeys = setOf(
+        "chrome_style",
+        "address_bar_color",
+        "address_bar_style",
+        "surface_style",
+        "frosted_transparency",
+        "frosted_address_bar_transparency",
+        "frosted_blur",
+        // The v5 bar, overview and link glance have fixed gestures and buttons (V15d-5).
+        "tab_overview_mode",
+        "tab_list_starts_at_bottom",
+        "tab_stack_folder_mode",
+        "tab_dismiss_resistance",
+        "address_bar_long_press",
+        "address_bar_actions",
+        "link_peek_actions",
+    )
+
+    /** The current interface's own pages, which the v5 interface has no use for. */
+    private val currentInterfaceOnlyPages = setOf(
+        Themes,
+        SettingsDestination.AddressBarLongPressActions,
+        SettingsDestination.AddressBarActions,
+        SettingsDestination.LinkPeekActions,
+    )
+
+    /** «Protection and data» settings that under ui.v5 live on its «More» page (V15d-3). */
+    private val protectionMoreKeys = setOf(
+        "do_not_track",
+        "global_privacy_control",
+        "auto_de_amp",
+        "dns_over_https",
+        "webrtc_protection",
+        "recall",
+        "data_archive_export",
+        "data_archive_import",
+        "filter_studio",
+        "permission_radar",
+        "protection_card",
+    )
+
+    /** «Browser» settings that under ui.v5 live on its «More» page (V15d-4). */
+    private val browserMoreKeys = setOf(
+        "browser_engine",
+        "startup_animation",
+        "startup_address_focus",
+        "open_home_on_startup",
+        "favorite_bookmark_import",
+        "full_immersive_mode",
+        "scroll_bar",
+        "inline_media_player",
+    )
+
+    /** «Tabs» settings that under ui.v5 live on its «More» page (V15d-5). */
+    private val tabsMoreKeys = setOf(
+        "resident_tab_limit",
+        "profiles",
+        "menu_actions",
+        "address_bar_docking",
+    )
+
+    /** Each page split in two layers under ui.v5: its «More» page and the keys that live there. */
+    private val moreLayers: Map<SettingsDestination, Pair<SettingsDestination, Set<String>>> = mapOf(
+        ProtectionAndData to (SettingsDestination.ProtectionMore to protectionMoreKeys),
+        Browser to (SettingsDestination.BrowserMore to browserMoreKeys),
+        TabsAndGestures to (SettingsDestination.TabsMore to tabsMoreKeys),
+    )
+
+    /** Where search under ui.v5 opens the setting [key] that the registry keeps on [destination]. */
+    fun v5Destination(key: String, destination: SettingsDestination): SettingsDestination {
+        val (more, keys) = moreLayers[destination] ?: return destination
+        return if (key in keys) more else destination
+    }
+
+    /** Whether search under ui.v5 offers the setting [key] (or a page) on [destination]. */
+    fun searchableInV5(key: String, destination: SettingsDestination): Boolean =
+        destination !in currentInterfaceOnlyPages && key !in currentInterfaceOnlyKeys
+
+    /** Pages that ui.v5 names differently: its gestures are the interface's own, so «Tabs». */
+    private val v5PageTitles = mapOf(TabsAndGestures to R.string.settings_section_tabs)
+
+    fun searchCandidates(resources: Resources, uiV5: Boolean = false): List<SettingSearchCandidate> =
+        allSearchCandidates(resources, if (uiV5) v5PageTitles else emptyMap()).mapNotNull { candidate ->
+            when {
+                !uiV5 -> candidate
+                !searchableInV5(candidate.key, candidate.destination) -> null
+                else -> candidate.copy(destination = v5Destination(candidate.key, candidate.destination))
+            }
+        }
+
+    private fun allSearchCandidates(
+        resources: Resources,
+        titles: Map<SettingsDestination, Int>,
+    ): List<SettingSearchCandidate> {
         val pageTitles = pages.associate { page ->
-            page.destination to resources.getString(page.title)
+            page.destination to resources.getString(titles[page.destination] ?: page.title)
         }
         return pages.map { page ->
             SettingSearchCandidate(
                 key = "page:${page.destination.name}",
                 destination = page.destination,
-                title = resources.getString(page.title),
+                title = pageTitles.getValue(page.destination),
                 summary = page.summary?.let(resources::getString),
                 page = "",
             )

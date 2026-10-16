@@ -586,11 +586,17 @@ internal class GeckoViewPrivacyHostRuntime(
             "events" -> acceptEvents(value)
             "main-frame-response" -> acceptMainFrameResponse(value)
             "safe-area-fallback" -> acceptSafeAreaFallback(value)
-            "status-bar-backdrop" -> acceptPageColor(value) { generation, color ->
+            "status-bar-backdrop" -> acceptPageSignal(value) { generation, color ->
                 copy(statusBarBackdropNavigationGeneration = generation, statusBarBackdropThemeColor = color)
             }
-            "site-color" -> acceptPageColor(value) { generation, color ->
+            "site-color" -> acceptPageSignal(value) { generation, color ->
                 copy(siteThemeColorNavigationGeneration = generation, siteThemeColor = color)
+            }
+            "reader-available" -> acceptPageSignal(value) { generation, _ ->
+                copy(
+                    readerAvailableNavigationGeneration = generation,
+                    readerAvailable = value.optBoolean("readerAvailable"),
+                )
             }
             "scroll-metrics" -> acceptScrollMetrics(value)
             "inline-video-state" -> acceptInlineVideoState(value)
@@ -853,8 +859,8 @@ internal class GeckoViewPrivacyHostRuntime(
         )
     }
 
-    /** A color the page reports for the chrome: the status bar backdrop or its theme-color. */
-    private fun acceptPageColor(
+    /** What the page reports for the chrome: a color, or whether it reads as an article. */
+    private fun acceptPageSignal(
         value: JSONObject,
         report: GeckoPrivacyEvent.(navigationGeneration: Int, themeColor: String?) -> GeckoPrivacyEvent,
     ) {
@@ -1381,7 +1387,10 @@ internal class GeckoViewPrivacyHostRuntime(
                 connectedPort.disconnect()
                 return
             }
-            port?.takeIf { existing -> existing !== connectedPort }?.disconnect()
+            // A new port means the background page started again. The old port is left to Gecko,
+            // which disconnects it with the old page. Disconnecting it here as well crashes when
+            // Gecko's own disconnect is already queued: GeckoView then shuts the port's dispatcher
+            // down twice (NullHandle in EventDispatcher.shutdownNative). Its messages are ignored.
             port = connectedPort
             connectedPort.setDelegate(object : WebExtension.PortDelegate {
                 override fun onPortMessage(message: Any, sourcePort: WebExtension.Port) {

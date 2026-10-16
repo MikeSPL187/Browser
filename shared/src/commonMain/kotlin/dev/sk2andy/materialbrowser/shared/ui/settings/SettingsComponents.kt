@@ -54,6 +54,10 @@ fun SettingsPage(
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Page(title, backContentDescription, onBack, actions, content)
+        return
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -151,6 +155,10 @@ fun SettingsLink(
 
 @Composable
 fun SettingsSectionTitle(text: String) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Header(text, Modifier)
+        return
+    }
     Text(
         text,
         modifier = Modifier.semantics { heading() },

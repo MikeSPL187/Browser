@@ -78,6 +78,7 @@ import dev.sk2andy.materialbrowser.reader.ReaderBlockKind
 import dev.sk2andy.materialbrowser.reader.ReaderDocument
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
+import dev.sk2andy.materialbrowser.reader.ReaderFont
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryDataSource
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRules
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryState
@@ -138,6 +139,7 @@ enum class ReaderStudioLabel {
     TextSize,
     FontSerif,
     FontSans,
+    FontMono,
     WideMargins,
     Listen,
     SpeechStart,
@@ -197,6 +199,7 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.TextSize -> "Text size"
         ReaderStudioLabel.FontSerif -> "Serif"
         ReaderStudioLabel.FontSans -> "Sans serif"
+        ReaderStudioLabel.FontMono -> "Monospace"
         ReaderStudioLabel.WideMargins -> "Wide margins"
         ReaderStudioLabel.Listen -> "Listen"
         ReaderStudioLabel.SpeechStart -> "Read aloud"
@@ -304,7 +307,8 @@ fun ReaderStudioScreen(
     repository: ReaderLibraryDataSource,
     resources: ReaderStudioResources,
     style: ReaderStudioStyle,
-    speechFactory: () -> ReaderSpeech,
+    /** The voice for one article; the app's may go on speaking after the reader closes. */
+    speechFactory: (ReaderDocument) -> ReaderSpeech,
     /** Registers a system back handler; shared code has none of its own. */
     backHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit,
     onRetry: () -> Unit,
@@ -653,7 +657,7 @@ private fun ReaderArticle(
     resources: ReaderStudioResources,
     style: ReaderStudioStyle,
     browserDark: Boolean,
-    speechFactory: () -> ReaderSpeech,
+    speechFactory: (ReaderDocument) -> ReaderSpeech,
     colors: ReaderPalette,
     settingsVisible: Boolean,
     onSettingsDismiss: () -> Unit,
@@ -664,10 +668,10 @@ private fun ReaderArticle(
     onOpenLink: (String) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    val speech = remember(document.sourceUrl) { speechFactory() }
+    val speech = remember(document.sourceUrl) { speechFactory(document) }
     var restored by remember(document.sourceUrl) { mutableStateOf(false) }
     val progress = ReaderLibraryRules.progress(scrollState.value, scrollState.maxValue)
-    val fontFamily = if (settings.serif) style.serifFontFamily else style.sansFontFamily
+    val fontFamily = style.fontFamily(settings.font)
 
     DisposableEffect(speech) { onDispose(speech::close) }
     LaunchedEffect(document.sourceUrl, scrollState.maxValue, libraryLoaded) {
@@ -1085,6 +1089,7 @@ private fun ReaderThemeSwatches(
 }
 
 private val READER_SWATCH_THEMES = listOf(ReaderTheme.Light, ReaderTheme.Paper, ReaderTheme.Dark)
+private val READER_FONTS = listOf(ReaderFont.Sans, ReaderFont.Serif, ReaderFont.Mono)
 
 @Composable
 private fun ReaderTextSize(
@@ -1139,19 +1144,26 @@ private fun ReaderFontFamilyChoice(
             .fillMaxWidth()
             .testTag(ReaderStudioTestTags.FontFamily),
     ) {
-        listOf(true, false).forEachIndexed { index, serif ->
+        // Each typeface shows itself as «Aa»; its name is for TalkBack, so three fit at any text size.
+        READER_FONTS.forEachIndexed { index, font ->
+            val name = resources.text(
+                when (font) {
+                    ReaderFont.Sans -> ReaderStudioLabel.FontSans
+                    ReaderFont.Serif -> ReaderStudioLabel.FontSerif
+                    ReaderFont.Mono -> ReaderStudioLabel.FontMono
+                },
+            )
             SegmentedButton(
-                selected = settings.serif == serif,
-                onClick = { onSettingsChanged(settings.copy(serif = serif)) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                selected = settings.font == font,
+                onClick = { onSettingsChanged(settings.copy(font = font)) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = READER_FONTS.size),
+                modifier = Modifier.semantics { contentDescription = name },
                 label = {
                     Text(
-                        resources.text(
-                            if (serif) ReaderStudioLabel.FontSerif else ReaderStudioLabel.FontSans,
-                        ),
-                        fontFamily = if (serif) style.serifFontFamily else style.sansFontFamily,
+                        "Aa",
+                        modifier = Modifier.clearAndSetSemantics { },
+                        fontFamily = style.fontFamily(font),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 },
             )

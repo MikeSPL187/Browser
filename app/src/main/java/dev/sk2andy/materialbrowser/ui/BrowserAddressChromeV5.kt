@@ -2,8 +2,7 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,7 +27,7 @@ import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -102,8 +101,11 @@ internal fun BrowserV5Bar(
             hasError = tab.error != null || tab.failureKind != null,
         ),
         blockedCount = tab.blockedCount,
+        readerAvailable = controller.selectedReaderAvailable && ReaderStudioSessionRules.isSupportedSource(tab.url),
     )
     var menuExpanded by remember { mutableStateOf(false) }
+    // V22: what is downloading, as a ring around «•••» and a row at the top of the menu.
+    val downloadRing = rememberDownloadRing(controller)
     var allActionsExpanded by remember { mutableStateOf(false) }
     // The page's color (system-v5.md, section 1.3), unless turned off in Appearance. Private tabs,
     // a new tab and error pages keep the neutral bar (step 7).
@@ -111,7 +113,7 @@ internal fun BrowserV5Bar(
     val siteColor = controller.selectedSiteThemeColor
         ?.takeIf { siteTint }
         ?.takeUnless { tab.isIncognito || tab.url == BLANK_URL || tab.error != null || tab.failureKind != null }
-    VolaV5Theme(dark = darkShell, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = darkShell, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         val chrome = V5Theme.colors.chrome
         val label = V5Theme.colors.label
         val tint = remember(siteColor, chrome, label) { V5SiteTints.of(siteColor, chrome, label) }
@@ -125,12 +127,26 @@ internal fun BrowserV5Bar(
                 onAddress = onAddress,
                 onShield = actions.onPrivacyXRay,
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
+                onRead = actions.onReaderStudio,
                 onTabs = onTabs,
                 onBarPositioned = onBarPositioned,
-                menuButton = {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(VolaIcons.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
+                accessory = {
+                    Column {
+                        BrowserListenAccessory(selectedTabPrivate = tab.isIncognito)
+                        BrowserDownloadNoticeAccessory(
+                            downloads = downloadRing,
+                            selectedTabPrivate = tab.isIncognito,
+                            onDownloads = actions.onDownloads,
+                        )
                     }
+                },
+                menuButton = {
+                    // On the site's color the accent may not show; the bar's own ink does.
+                    DownloadsMenuButton(
+                        downloads = downloadRing,
+                        ink = if (siteColor != null) tint.onTint else V5Theme.colors.accent,
+                        onClick = { menuExpanded = true },
+                    )
                     BrowserMainMenu(
                         expanded = allActionsExpanded,
                         backdropSource = backdropSource,
@@ -215,6 +231,7 @@ internal fun BrowserV5Bar(
                 actions = actions,
                 onDismiss = { menuExpanded = false },
                 onAllActions = { allActionsExpanded = true },
+                downloads = downloadRing.progress,
             )
             // «Hide distracting items» (V20): while the page chooses, the hint sits at the top edge.
             val distractions = controller.hiddenDistractions
@@ -240,6 +257,8 @@ internal fun BrowserV5Bar(
 @Composable
 internal fun BrowserV5AddressEditor(
     selectedTab: BrowserTab,
+    /** The active profile's accent: «Go» and the cursor take it. */
+    accent: V5Accent,
     suggestionItems: List<AddressSuggestionItem>,
     highlightedIndex: Int,
     value: TextFieldValue,
@@ -258,7 +277,7 @@ internal fun BrowserV5AddressEditor(
     val layout = remember(suggestionItems, value.text) {
         V5SuggestionLayoutRules.layout(suggestionItems, value.text)
     }
-    VolaV5Theme(dark = darkShell, privateBrowsing = selectedTab.isIncognito) {
+    VolaV5Theme(dark = darkShell, accent = accent, privateBrowsing = selectedTab.isIncognito) {
         V5AddressEditor(
             state = V5EditorState(
                 value = value,

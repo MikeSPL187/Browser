@@ -16,6 +16,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRepository
 import dev.sk2andy.materialbrowser.ui.DownloadsScreen
+import dev.sk2andy.materialbrowser.ui.openDownloadPage
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ class DownloadsActivity : ComponentActivity() {
                 override fun clear(entries: Collection<DownloadEntry>) = repository.clear(entries)
                 override fun cancel(entry: DownloadEntry) = repository.cancel(entry)
                 override fun togglePause(entry: DownloadEntry) = repository.togglePause(entry)
+                override fun retry(entry: DownloadEntry) = repository.retry(entry)
             },
             worker = object : DownloadsController.Worker {
                 override fun <T> run(work: () -> T, onResult: (T) -> Unit) {
@@ -75,6 +77,8 @@ class DownloadsActivity : ComponentActivity() {
                     onBack = ::finish,
                     onCancelDownload = { entry -> controller.cancel(entry, ::reportControl) },
                     onTogglePauseDownload = { entry -> controller.togglePause(entry, ::reportControl) },
+                    onRetryDownload = { entry -> controller.retry(entry, ::reportControl) },
+                    onOpenDownloadPage = { url -> openDownloadPage(this, url) },
                 )
             }
         }

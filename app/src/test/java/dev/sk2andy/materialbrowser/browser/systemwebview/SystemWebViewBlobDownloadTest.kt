@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.browser.systemwebview
 
+import dev.sk2andy.materialbrowser.data.SafeDownloadValues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -108,5 +109,25 @@ class SystemWebViewBlobDownloadTest {
             ),
         )
         assertNull(SystemWebViewBlobDownloadMessage.parse("not-json", expectedToken = "safe"))
+    }
+
+    @Test
+    fun `a page cannot turn a checked blob into an app the check never saw`() {
+        val blobUrl = "blob:https://example.test/93a7a1f2-7405-4f27-a3bc-4335cc9a3bfd"
+        val apk = "application/vnd.android.package-archive"
+        val apkName = SafeDownloadValues.fileName(blobUrl, null, apk)
+
+        assertTrue(
+            SystemWebViewBlobDownloadRules.addsFindings(
+                blobUrl, null, "application/octet-stream", apkName, apk,
+            ),
+        )
+        // The same app WebView already reported was checked, and warned about, before.
+        assertFalse(SystemWebViewBlobDownloadRules.addsFindings(blobUrl, null, apk, apkName, apk))
+        // A document the page names more precisely stays an ordinary download.
+        val pdfName = SafeDownloadValues.fileName(blobUrl, null, "application/pdf")
+        assertFalse(
+            SystemWebViewBlobDownloadRules.addsFindings(blobUrl, null, null, pdfName, "application/pdf"),
+        )
     }
 }
