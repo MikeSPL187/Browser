@@ -19,7 +19,6 @@ dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredD
 dev.sk2andy.materialbrowser.browser.gecko.GeckoContentGestureInstrumentedTest#homeSwipeEndsGeckoTouchBeforeActivityStops -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#notificationRadarRevocationPersistsAcrossActivityRestart -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoKeyboardInsetsInstrumentedTest#immersiveLowerWebsiteInputStaysVisibleWithoutShrinkingNativeHost
-dev.sk2andy.materialbrowser.browser.gecko.GeckoLinkPeekInstrumentedTest#longPressedGeckoLinkShowsPreviewOpensPrivateBackgroundTabAndDismisses
 
 # System WebView engine, external previews and APK downloads.
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#coverAwarePageUsesExactlyOneSupportedSafeAreaMode -- needs System WebView 144+, the CI emulator has 124 (#299)
