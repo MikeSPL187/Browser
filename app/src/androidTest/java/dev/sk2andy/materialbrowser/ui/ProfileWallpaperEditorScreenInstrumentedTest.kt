@@ -19,7 +19,6 @@ import dev.sk2andy.materialbrowser.browser.ProfileWallpaper
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -31,12 +30,9 @@ class ProfileWallpaperEditorScreenInstrumentedTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
+    // Not recycled by the test: @After runs while the rule's activity still draws the editor,
+    // and a frame drawn after recycle() fails with "Canvas: trying to use a recycled bitmap".
     private var bitmap: Bitmap? = null
-
-    @After
-    fun tearDown() {
-        bitmap?.recycle()
-    }
 
     @Test
     fun editorShowsCropControlsAndReturnsTransform() {

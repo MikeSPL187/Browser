@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.isInvisible
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
@@ -36,8 +35,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5LinkGlanceState
 
 /**
  * The v5 link preview (V21) bound to the browser: the same ephemeral engine page as the current
- * preview (no tab, nothing in history), shown in the v5 card. «Open» loads the link in this tab,
- * «In background» opens a tab behind it; the card's other actions are the link's usual ones.
+ * preview (no tab, nothing in history), shown in the v5 card. «In background» and «New tab» move
+ * that page into a new tab next to this one without loading it again (V21c); «Open» still loads
+ * the link in this tab, so Back returns to this page. The other actions are the link's usual ones.
  */
 @Composable
 internal fun BrowserLinkGlanceV5(controller: BrowserController) {
@@ -57,6 +57,8 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
     var title by remember { mutableStateOf<String?>(null) }
     // Retry builds a fresh engine page; a released one must not report into it.
     var attempt by remember { mutableIntStateOf(0) }
+    // The live page, handed to the new tab by «In background» and «New tab» instead of a reload.
+    var page by remember { mutableStateOf<View?>(null) }
     val origin = remember { PageTouchPoint.lastDownInWindow }
     val host = BrowserUriPolicy.displayHttpHost(committedUrl)
     val message = linkPeekMessageText(status, host)?.let {
@@ -80,12 +82,12 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
             if (sourceIsCurrent) controller.openUrl(committedUrl)
         },
         onOpenInBackground = {
-            if (controller.openContextLinkInBackground(committedUrl)) {
+            if (controller.openLinkPreviewInNewTab(page, committedUrl, foreground = false)) {
                 view.performV5Haptic(V5Haptic.Confirm)
                 Toast.makeText(view.context, openedInBackground, Toast.LENGTH_SHORT).show()
             }
         },
-        onOpenInNewTab = { controller.openContextLinkInForeground(committedUrl) },
+        onOpenInNewTab = { controller.openLinkPreviewInNewTab(page, committedUrl, foreground = true) },
         onOpenInPrivate = { controller.openLinkInPrivate(committedUrl) },
         onCopy = {
             dismiss()
@@ -112,13 +114,13 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
         onDismiss = dismiss,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
-    VolaV5Theme(dark = dark, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         V5LinkGlance(
             state = state,
             actions = actions,
             origin = origin,
             onPageScale = { LinkGlancePage.scale = it },
-        ) { shown, modifier ->
+        ) { modifier ->
             key(attempt) {
                 AndroidView(
                     factory = {
@@ -130,14 +132,13 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
                             onCommittedUrlChanged = { if (reports()) committedUrl = it },
                             onStatusChanged = { if (reports()) status = it },
                             onTitleChanged = { if (reports()) title = it },
-                        )
+                        ).also { created -> page = created }
                     },
-                    update = { it.isInvisible = !shown },
                     onRelease = controller::releaseLinkPeekPreviewView,
                     // The engine's own tree stays hidden (the preview takes no input); TalkBack reads
                     // which page it shows, and nothing while a message covers it.
                     modifier = modifier
-                        .clearSemanticsWhen(!shown || status.coversPage)
+                        .clearSemanticsWhen(status.coversPage)
                         .semantics { contentDescription = title ?: host },
                 )
             }

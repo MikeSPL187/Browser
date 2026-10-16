@@ -1,43 +1,21 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
@@ -73,7 +51,7 @@ fun V5TabGroupMoveSheet(
     onRemoveFromGroup: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.v5_group_move_title)) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.v5_group_move_title)) {
         V5SheetHeader(
             title = stringResource(R.string.v5_group_move_title),
             subtitle = tabTitle,
@@ -148,7 +126,7 @@ fun V5TabGroupEditSheet(
         onDismiss()
         onSave(name.trim().ifEmpty { initialName }, colorIndex)
     }
-    V5Sheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
         Column(
             Modifier
@@ -156,8 +134,21 @@ fun V5TabGroupEditSheet(
                 .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
         ) {
-            NameField(name, onNameChange = { name = it }, onDone = save)
-            ColorRow(colors, colorIndex, onSelect = { colorIndex = it })
+            V5NameField(
+                value = name,
+                placeholder = stringResource(R.string.v5_group_name),
+                onValueChange = { name = it },
+                onDone = save,
+                maxLength = V5_GROUP_NAME_MAX,
+                modifier = Modifier.testTag(V5TabGroupSheetTestTags.NameField),
+            )
+            V5SwatchRow(
+                title = stringResource(R.string.v5_group_color),
+                swatches = colors.map { V5Swatch(it.color, stringResource(it.groupColorName())) },
+                selected = colorIndex,
+                onSelect = { colorIndex = it },
+                testTag = V5TabGroupSheetTestTags::color,
+            )
             V5ListGroup {
                 V5ListRow(
                     title = stringResource(R.string.v5_group_save),
@@ -174,85 +165,6 @@ fun V5TabGroupEditSheet(
                             onUngroup()
                         },
                         modifier = Modifier.testTag(V5TabGroupSheetTestTags.Ungroup),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun NameField(name: String, onNameChange: (String) -> Unit, onDone: () -> Unit) {
-    val colors = V5Theme.colors
-    val label = stringResource(R.string.v5_group_name)
-    Box(
-        Modifier
-            .padding(horizontal = V5Spacing.marginPhone)
-            .fillMaxWidth()
-            .heightIn(min = V5Sizes.rowSingleLine)
-            .clip(V5Theme.shapes.s)
-            .background(colors.surface)
-            .padding(horizontal = V5Spacing.space4),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        if (name.isEmpty()) {
-            Text(label, style = V5Theme.type.body, color = colors.labelTertiary)
-        }
-        BasicTextField(
-            value = name,
-            onValueChange = { onNameChange(it.take(V5_GROUP_NAME_MAX)) },
-            singleLine = true,
-            textStyle = V5Theme.type.body.copy(color = colors.label),
-            cursorBrush = SolidColor(colors.accent),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onDone() }),
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = label }
-                .testTag(V5TabGroupSheetTestTags.NameField),
-        )
-    }
-}
-
-/** The group colors as round swatches; the chosen one is ringed in the label color. */
-@Composable
-private fun ColorRow(colors: List<V5Tile>, selected: Int, onSelect: (Int) -> Unit) {
-    val names = colors.map { stringResource(it.groupColorName()) }
-    Column(Modifier.padding(horizontal = V5Spacing.marginPhone)) {
-        Text(
-            stringResource(R.string.v5_group_color),
-            style = V5Theme.type.footnote,
-            color = V5Theme.colors.labelSecondary,
-            modifier = Modifier.padding(start = V5Spacing.space4, bottom = V5Spacing.space2),
-        )
-        Row(
-            Modifier.fillMaxWidth().selectableGroup(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            colors.forEachIndexed { index, tile ->
-                val chosen = index == selected
-                Box(
-                    Modifier
-                        .size(V5Sizes.touchTarget)
-                        .clip(V5Theme.shapes.full)
-                        .selectable(selected = chosen, role = Role.RadioButton, onClick = { onSelect(index) })
-                        .semantics { contentDescription = names[index] }
-                        .testTag(V5TabGroupSheetTestTags.color(index)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        Modifier
-                            .size(V5Sizes.suggestionTile)
-                            .then(
-                                if (chosen) {
-                                    Modifier.border(V5Sizes.groupBorder, V5Theme.colors.label, V5Theme.shapes.full)
-                                } else {
-                                    Modifier
-                                },
-                            )
-                            .padding(V5Sizes.groupBorder * 2)
-                            .clip(V5Theme.shapes.full)
-                            .background(tile.color),
                     )
                 }
             }

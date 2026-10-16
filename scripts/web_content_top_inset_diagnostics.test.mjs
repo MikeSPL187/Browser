@@ -229,43 +229,6 @@ test('background content policy does not coerce truthy diagnostic input', () => 
   }
 });
 
-test('Gecko CSS configuration is bounded, hot-applied and independent of the dormant legacy inset', () => {
-  const harness = bridgeHarness(performanceFixture().api);
-  let configurations = 0;
-  harness.__candyConfigureCssSafeArea = () => configurations++;
-  assert.equal(harness.CandyContentTopInset.cssSafeAreaConfiguration().ready, false);
-  harness.applyPolicy({
-    type: 'content-policy', ready: true, revision: 3, navigationGeneration: 8,
-    topInsetPx: 0, cssSafeAreaTopInsetPx: 172, geckoSafeAreaEnabled: true,
-    recheckAddedElements: true, recheckChangedElements: true, recheckOnResize: true,
-    requireInteractionForUpdates: false,
-    interactionWindowMillis: Number.MAX_SAFE_INTEGER,
-    mutationDebounceMillis: -100,
-    maxElementsPerBatch: 1000, maxBatchDurationMillis: 0, maxInitialElements: '512',
-  });
-  const config = harness.CandyContentTopInset.cssSafeAreaConfiguration();
-  assert.equal(config.ready, true);
-  assert.equal(config.enabled, true);
-  assert.equal(config.cssSafeAreaTopInsetPx, 172);
-  assert.equal(config.topInsetPx, 0);
-  assert.equal(config.navigationGeneration, 8);
-  assert.equal(config.revision, 3);
-  assert.equal(config.requireInteractionForUpdates, false);
-  assert.equal(config.interactionWindowMillis, 5000);
-  assert.equal(config.mutationDebounceMillis, 50);
-  assert.equal(config.maxElementsPerBatch, 64);
-  assert.equal(config.maxBatchDurationMillis, 1);
-  assert.equal(config.maxInitialElements, 512);
-  assert.equal(harness.CandyContentTopInset.nativeSafeAreaOnly(), true);
-  config.enabled = false;
-  assert.equal(harness.CandyContentTopInset.cssSafeAreaConfiguration().enabled, true);
-  harness.applyPolicy({ type: 'content-policy', ready: true, revision: 2, geckoSafeAreaEnabled: false });
-  assert.equal(configurations, 1);
-  harness.applyPolicy({ type: 'content-policy', ready: true, revision: 4, geckoSafeAreaEnabled: false });
-  assert.equal(configurations, 2);
-  assert.equal(harness.CandyContentTopInset.cssSafeAreaConfiguration().enabled, false);
-});
-
 test('diagnostic state messages require current revision without triggering reconciliation', () => {
   const fixture = performanceFixture();
   const harness = bridgeHarness(fixture.api);

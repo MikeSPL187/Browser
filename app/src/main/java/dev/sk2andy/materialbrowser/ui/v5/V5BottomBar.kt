@@ -1,6 +1,13 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -40,6 +47,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
@@ -49,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -80,6 +89,10 @@ import kotlin.math.roundToInt
  * The strip is neutral `chrome` until V8 tints it with the site's color.
  */
 
+internal object V5BarTestTags {
+    const val Read = "v5_bar_read"
+}
+
 /** What the bar shows; everything else arrives as callbacks. */
 @Immutable
 internal data class V5BarState(
@@ -93,6 +106,8 @@ internal data class V5BarState(
     val permissionActivity: Boolean,
     val connectionKind: SiteConnectionKind,
     val blockedCount: Int,
+    /** The page reads as an article: «Read» joins the capsule (system-v5.md, section 5.1). */
+    val readerAvailable: Boolean = false,
 )
 
 /** The gestures the bar shares with the current one. */
@@ -121,6 +136,12 @@ internal fun BoxScope.V5BottomBar(
     onBarPositioned: (boundsInRoot: Rect, topInWindowPx: Int) -> Unit,
     menuButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    onRead: () -> Unit = {},
+    /**
+     * A second row above the bar, such as the listening mini player (V19b). It is part of the bar:
+     * the page ends above it, and it folds away with the bar while scrolling.
+     */
+    accessory: (@Composable () -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     // The site's color follows navigation on the effects spring; text and icons switch at once,
@@ -164,56 +185,80 @@ internal fun BoxScope.V5BottomBar(
         CompositionLocalProvider(LocalV5BarColors provides barColors, LocalContentColor provides barColors.onTint) {
             Box(Modifier.fillMaxWidth().height(V5Spacing.hairline).background(colors.edge))
             LoadingLine(visible = state.isLoading, progress = state.progress)
-            Box(
+            // The bar's top, which the page ends at, is the accessory's when there is one.
+            Column(
                 Modifier
                     .fillMaxWidth()
-                    .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
-                    .clipToBounds()
                     .onGloballyPositioned { coordinates ->
                         onBarPositioned(
                             coordinates.boundsInRoot(),
                             coordinates.boundsInWindow().top.roundToInt(),
                         )
-                    },
+                    }
+                    .windowInsetsPadding(V5SafeSides),
             ) {
-                if (expanded > 0f) {
-                    Row(
+                if (accessory != null && expanded > 0f) {
+                    Box(
                         Modifier
                             .fillMaxWidth()
-                            .wrapContentHeight(Alignment.Top, unbounded = true)
-                            .heightIn(min = fullHeight)
-                            .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
+                            .clipToBounds()
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(placeable.width, (placeable.height * expanded).roundToInt()) {
+                                    placeable.place(0, 0)
+                                }
+                            }
                             .graphicsLayer { alpha = expanded },
-                        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AddressCapsule(
-                            state = state,
-                            gestures = gestures,
-                            onAddress = onAddress,
-                            onShield = onShield,
-                            onReloadOrStop = onReloadOrStop,
-                            onTabs = onTabs,
-                            modifier = Modifier.weight(1f),
-                        )
-                        RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
-                        RoundButton { menuButton() }
+                        accessory()
                     }
                 }
-                if (expanded < 1f) {
-                    Text(
-                        text = state.domain ?: stringResource(R.string.address_empty_hint),
-                        style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
-                        color = barColors.onTint,
-                        maxLines = 1,
-                        overflow = TextOverflow.MiddleEllipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .fillMaxWidth()
-                            .padding(horizontal = V5Spacing.space6)
-                            .graphicsLayer { alpha = 1f - expanded },
-                    )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(lerp(V5Sizes.barCollapsed, fullHeight, expanded))
+                        .clipToBounds(),
+                ) {
+                    if (expanded > 0f) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(Alignment.Top, unbounded = true)
+                                .heightIn(min = fullHeight)
+                                .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2)
+                                .graphicsLayer { alpha = expanded },
+                            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            AddressCapsule(
+                                state = state,
+                                gestures = gestures,
+                                onAddress = onAddress,
+                                onShield = onShield,
+                                onReloadOrStop = onReloadOrStop,
+                                onRead = onRead,
+                                onTabs = onTabs,
+                                modifier = Modifier.weight(1f),
+                            )
+                            RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
+                            RoundButton { menuButton() }
+                        }
+                    }
+                    if (expanded < 1f) {
+                        Text(
+                            text = state.domain ?: stringResource(R.string.address_empty_hint),
+                            style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
+                            color = barColors.onTint,
+                            maxLines = 1,
+                            overflow = TextOverflow.MiddleEllipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .padding(horizontal = V5Spacing.space6)
+                                .graphicsLayer { alpha = 1f - expanded },
+                        )
+                    }
                 }
             }
             // The strip runs on under the system navigation (edge to edge).
@@ -253,6 +298,7 @@ private fun AddressCapsule(
     onAddress: () -> Unit,
     onShield: () -> Unit,
     onReloadOrStop: () -> Unit,
+    onRead: () -> Unit,
     onTabs: () -> Unit,
     modifier: Modifier,
 ) {
@@ -295,6 +341,12 @@ private fun AddressCapsule(
                 tabId = state.tabId,
             )
         }
+        if (state.domain != null) {
+            // Mirrors «Read» on the right, so the domain stays in the middle of the capsule.
+            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
+                Spacer(Modifier.width(V5Sizes.barCapsule))
+            }
+        }
         Text(
             text = state.domain ?: openLabel,
             style = if (state.domain != null) V5Theme.type.headline else V5Theme.type.body,
@@ -305,6 +357,15 @@ private fun AddressCapsule(
             modifier = Modifier.weight(1f),
         )
         if (state.domain != null) {
+            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
+                IconButton(onClick = onRead, modifier = Modifier.testTag(V5BarTestTags.Read)) {
+                    Icon(
+                        imageVector = VolaIcons.FormatAlignLeft,
+                        contentDescription = stringResource(R.string.v5_menu_read),
+                        tint = bar.onTint,
+                    )
+                }
+            }
             IconButton(onClick = onReloadOrStop) {
                 Icon(
                     imageVector = if (state.isLoading) VolaIcons.Close else VolaIcons.Refresh,
@@ -318,6 +379,19 @@ private fun AddressCapsule(
             Spacer(Modifier.width(V5Sizes.barCapsule))
         }
     }
+}
+
+/** How «Read» and its mirror on the other side come in: v5 springs, or only a fade without animations. */
+private fun readEnter(): EnterTransition = if (V5Motion.animationsEnabled) {
+    expandHorizontally(V5Motion.effects.spec()) + fadeIn(V5Motion.effects.spec())
+} else {
+    fadeIn(V5Motion.reducedFade())
+}
+
+private fun readExit(): ExitTransition = if (V5Motion.animationsEnabled) {
+    shrinkHorizontally(V5Motion.effects.spec()) + fadeOut(V5Motion.effects.spec())
+} else {
+    fadeOut(V5Motion.reducedFade())
 }
 
 @Composable

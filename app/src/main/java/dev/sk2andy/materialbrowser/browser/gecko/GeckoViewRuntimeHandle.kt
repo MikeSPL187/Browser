@@ -90,6 +90,7 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import java.net.URI
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -136,6 +137,10 @@ internal class GeckoViewRuntimeHandle private constructor(
     private val trackingPermissions = GeckoTrackingPermissionCoordinator(
         runtime.storageController,
     )
+
+    init {
+        GeckoPromptOnlyPermissions(runtime.storageController).resetAll()
+    }
 
     override fun createSession(
         profileId: String,
@@ -649,6 +654,7 @@ internal class GeckoViewExtensionRuntime(
 ) : GeckoExtensionRuntime {
     private var chrome: GeckoViewExtensionChrome? = null
     private val defaultExtensionStartup: GeckoDefaultExtensionStartup
+    private val userInstallsInFlight = AtomicInteger()
 
     @Volatile
     private var permissionPrompt = GeckoExtensionPermissionPrompt {
@@ -737,6 +743,7 @@ internal class GeckoViewExtensionRuntime(
         require(installationMethod == WebExtensionController.INSTALLATION_METHOD_MANAGER) {
             "Signed user extensions must use the add-on manager installation method"
         }
+        userInstallsInFlight.incrementAndGet()
         val installed = try {
             controller.install(
                 uri,
@@ -744,6 +751,8 @@ internal class GeckoViewExtensionRuntime(
             ).await()
         } catch (error: WebExtension.InstallException) {
             throw error.toCandyInstallException()
+        } finally {
+            userInstallsInFlight.decrementAndGet()
         }
         if (!defaultExtensionStartup.markUserInstallSucceeded(installed.id)) {
             controller.uninstall(installed).awaitCompletion()
@@ -861,6 +870,9 @@ internal class GeckoViewExtensionRuntime(
                     ),
                 )
             }
+            if (!GeckoExtensionRules.acceptsInstallPrompt(userInstallsInFlight.get())) {
+                return GeckoResult.fromValue(WebExtension.PermissionPromptResponse(false, false, false))
+            }
             return promptResult(
                 extension = extension,
                 kind = GeckoExtensionPermissionRequestKind.Install,
@@ -926,7 +938,7 @@ private class GeckoViewBrowserSession(
     private val extensionController: WebExtensionController,
     private val extensionRuntime: GeckoExtensionRuntime,
     override val profileId: String,
-    private val isolationEnabled: Boolean,
+    override val isolationEnabled: Boolean,
     override val isPrivate: Boolean,
     private val toppingHost: GeckoToppingHostRuntime,
     private val privacyHost: GeckoViewPrivacyHostRuntime,
@@ -957,6 +969,7 @@ private class GeckoViewBrowserSession(
     )
 
     private val storageController = runtime.storageController
+    private val promptOnlyPermissions = GeckoPromptOnlyPermissions(storageController)
     private val contentBlockingController = runtime.contentBlockingController
     private val mainHandler = Handler(Looper.getMainLooper())
     private val mediaRestorationReadback = GeckoMediaRestorationReadback(mainHandler)
@@ -1096,6 +1109,10 @@ private class GeckoViewBrowserSession(
     private val notificationPermissionRevisions = mutableMapOf<String, Int>()
     private var privacyBound = false
     private var privacyFailureDescription: String? = null
+
+    // A link preview's session keeps its privacy binding when a tab adopts it; only the sink moves.
+    @Volatile
+    private var privacyEventSink = privacyEventSink
     private val privacyBinding: GeckoPrivacyBinding
     private var toppingBinding: GeckoToppingSessionBinding = GeckoToppingSessionBinding.None
     init {
@@ -1171,7 +1188,7 @@ private class GeckoViewBrowserSession(
                         ),
                         startTransfer = { transferListener ->
                             downloadTransfers.startResponse(
-                                owner = GeckoDownloadOwner(profileId, isPrivate, session),
+                                owner = GeckoDownloadOwner(profileId, isPrivate, session, session.settings.contextId),
                                 response = response,
                                 referrer = currentPageUrl,
                                 listener = transferListener,
@@ -1444,6 +1461,7 @@ private class GeckoViewBrowserSession(
                                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY
                                         },
                                     )
+                                    promptOnlyPermissions.resetAfterAnswer(perm)
                                 },
                                 onPromptShown = perm::notifyShown,
                             ),
@@ -1812,7 +1830,7 @@ private class GeckoViewBrowserSession(
                 requestListener.onAuthPrompt(
                     BrowserEngineAuthPromptRequest(
                         uri = prompt.authOptions.uri,
-                        realm = prompt.message ?: prompt.title,
+                        realm = GeckoAuthPromptRealm.fromMessage(prompt.message),
                         onlyPassword = flags and
                             GeckoSession.PromptDelegate.AuthPrompt.AuthOptions.Flags.ONLY_PASSWORD != 0,
                         isProxy = flags and
@@ -2012,7 +2030,7 @@ private class GeckoViewBrowserSession(
         privacyBinding = privacyHost.bind(
             session = session,
             policy = initialPrivacyPolicy,
-            sink = privacyEventSink,
+            sink = { event -> this.privacyEventSink.onEvent(event) },
             onScrollMetrics = { metrics ->
                 BrowserPerformanceTrace.section(
                     BrowserPerformanceTrace.Phase.GeckoDocumentMetrics,
@@ -2074,6 +2092,10 @@ private class GeckoViewBrowserSession(
         if (privacyBound) privacyBinding.cancelDomProbe()
     }
 
+    override fun setPrivacyEventSink(sink: GeckoPrivacyEventSink) {
+        privacyEventSink = sink
+    }
+
     override fun setStateListener(listener: GeckoBrowserSessionStateListener?) {
         this.listener = listener
         listener?.onStateChanged(state)
@@ -2121,10 +2143,11 @@ private class GeckoViewBrowserSession(
         }
         return downloadTransfers.start(
             transfer = GeckoDownloadTransferRequest(
-                owner = GeckoDownloadOwner(profileId, isPrivate, session),
+                owner = GeckoDownloadOwner(profileId, isPrivate, session, session.settings.contextId),
                 request = webRequest,
                 fetchFlags = GeckoWebExecutor.FETCH_FLAGS_NONE,
                 suggestedFileName = request.suggestedFileName,
+                retryable = true,
             ),
             listener = listener,
         )
@@ -2796,10 +2819,16 @@ private class GeckoViewBrowserSession(
     }
 
     @UiThread
-    override fun createView(context: Context): View {
+    override fun createView(context: Context): View = createBoundView(context, animatable = false)
+
+    @UiThread
+    override fun createAnimatableView(context: Context): View = createBoundView(context, animatable = true)
+
+    private fun createBoundView(context: Context, animatable: Boolean): View {
         check(!closed) { "Cannot bind a closed Gecko session" }
         check(boundView == null) { "Gecko session already has a bound View" }
         return CandyGeckoView(context).also { view ->
+            if (animatable) view.useTextureBackend()
             view.setBackdropBlurRegion(backdropBlurRegion)
             view.setAnimationsEnabled(privacyPolicy.animationsEnabled)
             view.configureAutofill(isPrivate)
@@ -3565,7 +3594,9 @@ internal class CandyGeckoView(context: Context) :
     FrameLayout(context),
     GeckoViewInsetHost,
     BrowserDynamicToolbarHost {
-    private var dynamicToolbarMaxHeightPx = 0
+    /** The bottom band of the card the address bar may cover; Gecko's visual viewport leaves it out. */
+    internal var dynamicToolbarMaxHeightPx = 0
+        private set
     private var dynamicToolbarCoveredPx = 0
     private var autofillEnabled = true
     private var animationsEnabled = true
@@ -3595,6 +3626,11 @@ internal class CandyGeckoView(context: Context) :
 
     fun setBackdropBlurRegion(region: BrowserBackdropBlurRegion?) {
         engineView.setBackdropBlurRegion(region)
+    }
+
+    /** Draws through a TextureView, before the session attaches; the backdrop blur then has no surface. */
+    fun useTextureBackend() {
+        engineView.setViewBackend(GeckoView.BACKEND_TEXTURE_VIEW)
     }
 
     override fun updateDynamicToolbar(maxHeightPx: Int, coveredPx: Int) {

@@ -126,7 +126,6 @@ class BrowserControllerFullscreenReturnInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(0, session.policies.last().cssSafeAreaTopInsetPx)
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.restoreCount == 2 }
         composeRule.runOnUiThread {

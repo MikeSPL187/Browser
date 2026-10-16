@@ -79,6 +79,14 @@ object FileChooserRules {
         }
     }
 
+    /**
+     * Whether a camera capture stays in the gallery once the site's file prompt is answered: only
+     * when it was [delivered], and never for a [privateTab] whose upload already travels as a
+     * [stagedCopy] in Vola's cache (V29), so the private photo leaves nothing behind.
+     */
+    internal fun keepsCapture(delivered: Boolean, stagedCopy: Boolean, privateTab: Boolean): Boolean =
+        delivered && !(privateTab && stagedCopy)
+
     private fun isStructuredContentUri(value: String): Boolean = runCatching {
         val uri = URI(value)
         uri.scheme.equals("content", ignoreCase = true) &&

@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrides
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionLevel
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
@@ -124,7 +125,7 @@ internal fun BrowserSiteProtectionV5(
                 ),
             )
             context.getSystemService(ClipboardManager::class.java)
-                ?.setPrimaryClip(ClipData.newPlainText(copied, report))
+                ?.setPrimaryClip(ClipData.newPlainText(copied, report).markedSensitive(tab.isIncognito))
             // Android 13 and later confirm a copy themselves.
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
         },
@@ -135,7 +136,7 @@ internal fun BrowserSiteProtectionV5(
         onSiteInfo = onSiteInfo,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
-    VolaV5Theme(dark = dark, privateBrowsing = tab.isIncognito) {
+    VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         V5SiteProtection(visible = visible, state = state, actions = actions, onDismiss = onDismiss)
     }
 }

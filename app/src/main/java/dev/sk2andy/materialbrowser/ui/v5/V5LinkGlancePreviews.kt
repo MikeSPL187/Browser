@@ -55,7 +55,7 @@ private fun GlancePreview(
                 origin = null,
                 onPageScale = {},
                 entered = true,
-            ) { _, modifier ->
+            ) { modifier ->
                 Column(modifier.background(V5Theme.colors.background).padding(V5Spacing.space4)) {
                     Text("Northern lights forecast", style = V5Theme.type.title, color = V5Theme.colors.label)
                     Text(

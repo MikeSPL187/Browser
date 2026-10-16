@@ -52,15 +52,37 @@ enum class ReaderTheme {
 
 enum class ReaderTextAlignment { Start, Justified }
 
+/** The reader's typefaces (V19, system-v5.md section 10): without serifs, Literata, monospace. */
+enum class ReaderFont {
+    Sans,
+    Serif,
+    Mono,
+    ;
+
+    companion object {
+        /** A saved typeface; saves before V19 only said whether it had serifs. */
+        fun fromStored(name: String?, serif: Boolean): ReaderFont =
+            entries.firstOrNull { it.name == name } ?: if (serif) Serif else Sans
+    }
+}
+
 data class ReaderSettings(
     val fontScale: Float = 1f,
     val theme: ReaderTheme = ReaderTheme.System,
     val textAlignment: ReaderTextAlignment = ReaderTextAlignment.Start,
-    /** Literata (with serifs) or the interface font (without). */
-    val serif: Boolean = true,
+    val font: ReaderFont = ReaderFont.Serif,
     /** Wider page margins: shorter lines on a wide or large screen. */
     val wideMargins: Boolean = false,
-)
+) {
+    /** Settings written before V19, when the typeface was only serif or not. */
+    constructor(
+        fontScale: Float,
+        theme: ReaderTheme,
+        textAlignment: ReaderTextAlignment = ReaderTextAlignment.Start,
+        serif: Boolean,
+        wideMargins: Boolean = false,
+    ) : this(fontScale, theme, textAlignment, if (serif) ReaderFont.Serif else ReaderFont.Sans, wideMargins)
+}
 
 data class ReaderSnapshot(
     val id: String,
@@ -145,10 +167,12 @@ object ReaderLibraryRules {
     }
 
     const val MIN_FONT_SCALE = 0.8f
-    const val MAX_FONT_SCALE = 1.6f
+
+    /** Text up to 250 % (V19, system-v5.md section 10). */
+    const val MAX_FONT_SCALE = 2.5f
 
     /** Stops between the ends of the text size slider, so sizes go 0.1 apart. */
-    const val FONT_SCALE_STEPS = 7
+    const val FONT_SCALE_STEPS = 16
     private const val WORDS_PER_MINUTE = 200
 
     fun progress(scrollValue: Int, maxScrollValue: Int): Float = when {

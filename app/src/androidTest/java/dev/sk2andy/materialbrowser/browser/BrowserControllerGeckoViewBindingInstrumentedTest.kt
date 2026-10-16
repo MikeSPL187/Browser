@@ -37,7 +37,6 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
-import dev.sk2andy.materialbrowser.data.GeckoSafeAreaSettings
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import java.util.concurrent.CountDownLatch
@@ -505,6 +504,12 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     TextInputOcclusionProbeResult.FocusedTextInputClear
                 },
             )
+            // The first retry follows 150 ms after the first answer. Waiting for the answer and
+            // then for idle let a busy emulator run the whole burst before the pause (5 probes
+            // in CI), so the app pauses right after the first answer, with the retry pending.
+            session.afterTextInputOcclusionProbe = {
+                if (session.textInputOcclusionProbeCount == 1) browserController.onPause()
+            }
             browserController.installGeckoEngineSessionForTesting(session)
             browserController.dispatchGeckoEngineEventForTesting(
                 BrowserEngineEvent(
@@ -535,11 +540,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         composeRule.waitUntil(timeoutMillis = 5_000L) {
             session.textInputOcclusionProbeCount == 1
         }
-        composeRule.runOnIdle {
-            requireNotNull(controller).onPause()
-        }
 
-        Thread.sleep(700L)
+        // Longer than all four retries together (150 + 200 + 350 + 500 ms).
+        Thread.sleep(1_500L)
         composeRule.runOnIdle {
             assertEquals(1, session.textInputOcclusionProbeCount)
             assertFalse(requireNotNull(controller).addressBar.isDocked)
@@ -837,46 +840,85 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
     }
 
+    /** A minimized presentation plays in the overlay; another browser host gets no second view. */
     @Test
     fun fullscreenPresentationPreventsSecondGeckoViewForAnotherHost() {
         composeRule.runOnIdle {
-            val activity = composeRule.activity
-            val browserController = BrowserController(activity)
-            controller = browserController
-            val browserHost = FrameLayout(activity)
-            val fullscreenHost = FrameLayout(activity)
-            val replacementBrowserHost = FrameLayout(activity)
-            val root = FrameLayout(activity).apply {
-                addView(browserHost)
-                addView(fullscreenHost)
-                addView(replacementBrowserHost)
-            }
-            activity.addContentView(
-                root,
-                FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                ),
-            )
-            val session = ReentrantAttachSession(
-                tabId = browserController.selectedTabId,
-                onFirstAttach = {},
-            )
-            browserController.installGeckoEngineSessionForTesting(session)
-            val attached = browserController.attachSelectedBrowserEngineView(browserHost)
-            browserController.reportSelectedGeckoMediaStateForTesting(eligibleMediaState())
-            browserController.prepareForPictureInPicture()
-            browserController.attachFullscreenVideoView(fullscreenHost)
-            browserController.detachBrowserEngineView(browserHost)
+            val fixture = presentFullscreenVideo()
+            val browserController = requireNotNull(controller)
+            browserController.minimizeFullscreenVideo()
+            browserController.attachFullscreenVideoView(fixture.fullscreenHost)
+            browserController.detachBrowserEngineView(fixture.browserHost)
 
             val replacement =
-                browserController.attachSelectedBrowserEngineView(replacementBrowserHost)
+                browserController.attachSelectedBrowserEngineView(fixture.replacementBrowserHost)
 
             assertNull(replacement)
-            assertEquals(1, session.createCount)
-            assertSame(attached, session.createdView)
-            assertSame(fullscreenHost, attached?.parent)
+            assertEquals(1, fixture.session.createCount)
+            assertSame(fixture.attached, fixture.session.createdView)
+            assertSame(fixture.fullscreenHost, fixture.attached?.parent)
         }
+    }
+
+    /**
+     * The selected tab's presentation plays in the browser viewport (since 6c8f531d): another
+     * browser host takes the same view over instead of making a second one.
+     */
+    @Test
+    fun viewportPresentationMovesIntoAnotherBrowserHostWithoutSecondGeckoView() {
+        composeRule.runOnIdle {
+            val fixture = presentFullscreenVideo()
+            val browserController = requireNotNull(controller)
+            browserController.attachFullscreenVideoView(fixture.fullscreenHost)
+            browserController.detachBrowserEngineView(fixture.browserHost)
+
+            val replacement =
+                browserController.attachSelectedBrowserEngineView(fixture.replacementBrowserHost)
+
+            assertEquals(1, fixture.session.createCount)
+            assertSame(fixture.attached, replacement)
+            assertSame(fixture.replacementBrowserHost, replacement?.parent)
+            assertEquals(0, fixture.fullscreenHost.childCount)
+        }
+    }
+
+    private class FullscreenVideoFixture(
+        val session: ReentrantAttachSession,
+        val attached: View?,
+        val browserHost: FrameLayout,
+        val fullscreenHost: FrameLayout,
+        val replacementBrowserHost: FrameLayout,
+    )
+
+    /** A Gecko tab attached to a browser host and presenting its video, ready for PiP. */
+    private fun presentFullscreenVideo(): FullscreenVideoFixture {
+        val activity = composeRule.activity
+        val browserController = BrowserController(activity)
+        controller = browserController
+        val browserHost = FrameLayout(activity)
+        val fullscreenHost = FrameLayout(activity)
+        val replacementBrowserHost = FrameLayout(activity)
+        val root = FrameLayout(activity).apply {
+            addView(browserHost)
+            addView(fullscreenHost)
+            addView(replacementBrowserHost)
+        }
+        activity.addContentView(root, matchParentLayoutParams())
+        val session = ReentrantAttachSession(
+            tabId = browserController.selectedTabId,
+            onFirstAttach = {},
+        )
+        browserController.installGeckoEngineSessionForTesting(session)
+        val attached = browserController.attachSelectedBrowserEngineView(browserHost)
+        browserController.reportSelectedGeckoMediaStateForTesting(eligibleMediaState())
+        browserController.prepareForPictureInPicture()
+        return FullscreenVideoFixture(
+            session = session,
+            attached = attached,
+            browserHost = browserHost,
+            fullscreenHost = fullscreenHost,
+            replacementBrowserHost = replacementBrowserHost,
+        )
     }
 
     @Test
@@ -1014,7 +1056,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         composeRule.runOnIdle {
             session = prepareFullscreenInlineSession()
             val browserController = requireNotNull(controller)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             session.commands.clear()
 
@@ -1022,7 +1063,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.mediaRestorationCount == 1 }
         composeRule.runOnIdle {
-            assertEquals(listOf(0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(1, session.privacyPolicies.size)
             requireNotNull(controller).reportSelectedGeckoFullscreenStateForTesting(false)
             assertEquals(1, session.privacyPolicies.size)
             assertTrue(session.commands.isEmpty())
@@ -1068,7 +1109,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
 
             // A policy published before the inset arrives cannot authorize content restoration.
             // A direct return may instead defer its first publication until layout is ready.
-            assertTrue(session.privacyPolicies.all { it.cssSafeAreaTopInsetPx == 0 })
             session.acknowledgePrivacyPolicies()
             assertTrue(browserController.isMediaLayoutRestorationPending)
 
@@ -1080,7 +1120,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             val view = requireNotNull(session.createdView)
             fun awaitHostFrames(remaining: Int) {
                 if (remaining == 0) hostFrames.countDown()
@@ -1290,7 +1329,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
         composeRule.waitUntil(timeoutMillis = 5_000L) { session.policyReadyCallbacks.isNotEmpty() }
         composeRule.runOnUiThread {
-            assertEquals(listOf(0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(1, session.privacyPolicies.size)
             assertTrue(requireNotNull(controller).isMediaLayoutRestorationPending)
             session.acknowledgePrivacyPolicies()
             assertEquals(1, session.mediaRestorationCount)
@@ -1314,7 +1353,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                     .build(),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
 
             session.acknowledgePrivacyPolicies(returnRevision)
 
@@ -1432,7 +1470,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
             assertEquals(0, session.privacyPolicies.last().topInsetPx)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.commands.clear()
             session.privacyPolicies.clear()
 
@@ -1454,7 +1491,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             )
             assertEquals(1, session.privacyPolicies.size)
             assertEquals(0, session.privacyPolicies.single().topInsetPx)
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
 
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
@@ -1474,10 +1511,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 DeveloperSettings(
                     safeAreaLayoutQuietPeriodMillis = 250,
                     safeAreaRequiredFailureCount = 4,
-                    geckoSafeAreaSettings = GeckoSafeAreaSettings(
-                        recheckChangedElements = false,
-                        mutationDebounceMillis = 250,
-                    ),
                 ),
             )
             assertEquals(
@@ -1491,8 +1524,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 session.privacyPolicies.single().safeAreaLayoutQuietPeriodMillis,
             )
             assertEquals(4, session.privacyPolicies.single().safeAreaRequiredFailureCount)
-            assertEquals(250, session.privacyPolicies.single().geckoSafeAreaSettings.mutationDebounceMillis)
-            assertEquals(false, session.privacyPolicies.single().geckoSafeAreaSettings.recheckChangedElements)
             session.privacyPolicies.clear()
 
             browserController.dispatchGeckoEngineEventForTesting(
@@ -1508,8 +1539,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             )
             assertEquals(0, session.privacyPolicies.last().topInsetPx)
             assertEquals(2, session.privacyPolicies.size)
-            assertEquals(0, session.privacyPolicies.first().cssSafeAreaTopInsetPx)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
@@ -1579,13 +1608,12 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     ?.statusBarAppearance
                     ?.colorArgb,
             )
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
 
             session.privacyPolicies.clear()
             navigate("second")
 
             assertEquals(null, browserController.selectedWebContentTopBarState)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         }
     }
 
@@ -1638,7 +1666,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     safeAreaFallbackIsTopHeader = true,
                 ),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
                     requestUrl = "",
@@ -1658,7 +1685,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             assertEquals(null, browserController.selectedWebContentTopBarState)
             assertEquals(null, browserController.selectedWebContentStatusBarBackdrop)
             assertEquals(2, session.privacyPolicies.last().navigationGeneration)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             browserController.dispatchSelectedGeckoPrivacyEventForTesting(
                 GeckoPrivacyEvent(
                     requestUrl = "",
@@ -1688,10 +1714,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     safeAreaFallbackNavigationGeneration = 2,
                 ),
             )
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
             session.privacyPolicies.clear()
             engineEvent(BrowserEngineEventType.StateChanged, detailUrl)
-            assertEquals(listOf(0, 0), session.privacyPolicies.map { it.cssSafeAreaTopInsetPx })
+            assertEquals(2, session.privacyPolicies.size)
             assertEquals(3, session.privacyPolicies.last().navigationGeneration)
         }
     }
@@ -1800,7 +1825,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
             assertEquals(null, browserController.selectedWebContentStatusBarBackdrop)
-            assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         }
     }
 
@@ -1859,11 +1883,11 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
             assertTrue(session.privacyPolicies.isEmpty())
 
             session.policyReadyCallbacks.last()()
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
             session.deferPolicyReadyCallbacks = false
             session.privacyPolicies.clear()
             fallback(3)
-            assertEquals(0, session.privacyPolicies.single().cssSafeAreaTopInsetPx)
+            assertEquals(1, session.privacyPolicies.size)
             session.privacyPolicies.clear()
             obsoleteReady()
             assertTrue(session.privacyPolicies.isEmpty())
@@ -2207,10 +2231,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
     }
 
     @Test
-    fun automaticAppLinkUsesInstalledAppEvenWhenAndroidHasNoDefault() {
+    fun automaticAppLinkLeavesAppsAndroidWouldNotOpenToTheBrowser() {
         val redditUrl = "https://www.reddit.com/r/candy/"
         lateinit var recordingContext: RecordingContext
-        lateinit var lookupThreadName: String
         composeRule.runOnIdle {
             val activity = composeRule.activity
             val store = BrowserSessionStore(activity)
@@ -2222,8 +2245,8 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 activity = activity,
                 externalApps = ExternalAppLauncher(
                     context = recordingContext,
+                    // The app claims the domain without a verified link and is not the default.
                     findExternalWebPackages = { target ->
-                        lookupThreadName = Thread.currentThread().name
                         if (target.dataString == redditUrl) listOf("com.reddit.frontpage") else emptyList()
                     },
                     canResolveExternalActivity = { false },
@@ -2247,8 +2270,10 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 ),
             )
 
+            // Like Android 12+ and Chrome, the link stays in the browser: the page opens as it is,
+            // with its target, method and referrer, rather than being cancelled and loaded again.
             assertEquals(
-                GeckoNavigationRequestDecision.Deny,
+                GeckoNavigationRequestDecision.Allow,
                 browserController.dispatchSelectedGeckoNavigationRequestForTesting(
                     GeckoMainFrameNavigationRequest(
                         url = redditUrl,
@@ -2258,14 +2283,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     ),
                 ),
             )
-            assertNull(recordingContext.lastIntent)
         }
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
-            recordingContext.lastIntent != null
-        }
-        assertEquals("external-app-lookup", lookupThreadName)
-        assertEquals(redditUrl, recordingContext.lastIntent?.dataString)
-        assertEquals("com.reddit.frontpage", recordingContext.lastIntent?.`package`)
+        composeRule.waitForIdle()
+        assertNull(recordingContext.lastIntent)
     }
 
     @Test
@@ -2783,7 +2803,6 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                 .setVisible(WindowInsetsCompat.Type.statusBars(), true)
                 .build(),
         )
-        assertEquals(0, session.privacyPolicies.last().cssSafeAreaTopInsetPx)
         assertTrue(session.policyReadyCallbacks.isNotEmpty())
         return session
     }
@@ -2898,6 +2917,8 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         @Volatile
         var textInputOcclusionProbeCount = 0
             private set
+        /** Runs on the main thread once a probe has answered, while its retry is pending. */
+        var afterTextInputOcclusionProbe: (() -> Unit)? = null
         @Volatile
         var lastTextInputOcclusionViewportRect: BrowserViewportRect? = null
             private set
@@ -3056,6 +3077,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     textInputOcclusionProbeResults.removeAt(0)
                 },
             )
+            afterTextInputOcclusionProbe?.invoke()
         }
 
         override fun updatePrivacyPolicy(

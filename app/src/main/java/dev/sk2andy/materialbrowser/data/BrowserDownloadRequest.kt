@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.data
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import java.text.Normalizer
 import java.util.Locale
 
 data class BrowserDownloadRequest(
@@ -46,9 +47,13 @@ object BrowserDownloadRequestFactory {
 }
 
 internal object SafeDownloadValues {
-    private val invalidFileNameCharacters = Regex("[\\\\/:*?\"<>|\\p{Cntrl}\\p{Cf}]")
+    // `\p{Cc}` is every control character, C1 included; `\p{Cntrl}` is only the ASCII ones.
+    private val invalidFileNameCharacters = Regex("[\\\\/:*?\"<>|\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]")
     private val mimeTypePattern = Regex("^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+*-]+$")
     private const val MAX_FILE_NAME_LENGTH = 120
+
+    /** Under the 255 bytes a file system allows a name, with room for Android's ` (1)`. */
+    private const val MAX_FILE_NAME_BYTES = 240
 
     fun isHttpUrl(value: String): Boolean = runCatching {
         val uri = URI(value.trim())
@@ -120,7 +125,9 @@ internal object SafeDownloadValues {
         val candidate = contentDispositionFileName(contentDisposition)
             ?: urlFileName(url)
             ?: "download"
-        val sanitized = candidate
+        // NFKC first: a lookalike dot (U+2024, U+FF0E) or slash becomes the real one, so the
+        // checks below and the download safety check see `invoice.pdf.apk` for what it is.
+        val sanitized = Normalizer.normalize(candidate, Normalizer.Form.NFKC)
             .replace(invalidFileNameCharacters, "_")
             .trim()
             .trim('.')
@@ -131,12 +138,51 @@ internal object SafeDownloadValues {
         } else {
             sanitized
         }
-        if (withExtension.length <= MAX_FILE_NAME_LENGTH) return withExtension
+        if (withExtension.length <= MAX_FILE_NAME_LENGTH && utf8Size(withExtension) <= MAX_FILE_NAME_BYTES) {
+            return withExtension
+        }
         val suffix = withExtension.substringAfterLast('.', missingDelimiterValue = "")
             .takeIf { it.isNotEmpty() && it.length <= 10 }
             ?.let { ".$it" }
             .orEmpty()
-        return withExtension.take(MAX_FILE_NAME_LENGTH - suffix.length).trimEnd() + suffix
+        return prefixWithin(
+            withExtension,
+            maxChars = MAX_FILE_NAME_LENGTH - suffix.length,
+            maxBytes = MAX_FILE_NAME_BYTES - utf8Size(suffix),
+        ).trimEnd() + suffix
+    }
+
+    /** The longest start of [value] within both limits that never splits a character in two. */
+    private fun prefixWithin(value: String, maxChars: Int, maxBytes: Int): String {
+        var end = 0
+        var bytes = 0
+        while (end < value.length) {
+            val codePoint = value.codePointAt(end)
+            val next = end + Character.charCount(codePoint)
+            val size = utf8Size(codePoint)
+            if (next > maxChars || bytes + size > maxBytes) break
+            bytes += size
+            end = next
+        }
+        return value.substring(0, end)
+    }
+
+    private fun utf8Size(value: String): Int {
+        var bytes = 0
+        var index = 0
+        while (index < value.length) {
+            val codePoint = value.codePointAt(index)
+            bytes += utf8Size(codePoint)
+            index += Character.charCount(codePoint)
+        }
+        return bytes
+    }
+
+    private fun utf8Size(codePoint: Int): Int = when {
+        codePoint < 0x80 -> 1
+        codePoint < 0x800 -> 2
+        codePoint < 0x10000 -> 3
+        else -> 4
     }
 
     private fun contentDispositionFileName(value: String?): String? {

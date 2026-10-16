@@ -62,6 +62,9 @@ sealed interface V5RowTrailing {
     /** Opens a page or a sheet. */
     data object Chevron : V5RowTrailing
 
+    /** The chosen one of a list, in the accent. */
+    data object Check : V5RowTrailing
+
     /** The whole row is the switch. */
     data class Toggle(
         val checked: Boolean,
@@ -185,6 +188,8 @@ fun V5ListRow(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     icon: V5RowIcon? = null,
+    /** In place of [icon]: a leading of the row's own, such as a profile's emoji on its color. */
+    leading: (@Composable () -> Unit)? = null,
     value: String? = null,
     trailing: V5RowTrailing = V5RowTrailing.None,
     titleColor: Color = V5Theme.colors.label,
@@ -246,7 +251,7 @@ fun V5ListRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
-        if (icon != null) RowIcon(icon)
+        if (icon != null) RowIcon(icon) else leading?.invoke()
         Column(Modifier.weight(1f)) {
             Text(title, style = V5Theme.type.body, color = titleColor)
             if (subtitle != null) {
@@ -268,6 +273,12 @@ fun V5ListRow(
                 VolaIcons.KeyboardArrowRight,
                 contentDescription = null,
                 tint = colors.labelTertiary,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
+            V5RowTrailing.Check -> Icon(
+                VolaIcons.Check,
+                contentDescription = null,
+                tint = colors.accent,
                 modifier = Modifier.size(V5Sizes.iconSmall),
             )
             is V5RowTrailing.Toggle -> V5Toggle(

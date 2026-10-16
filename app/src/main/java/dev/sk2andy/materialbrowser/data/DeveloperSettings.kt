@@ -25,12 +25,10 @@ data class DeveloperSettings(
     val safeAreaLayoutQuietPeriodMillis: Int = DEFAULT_SAFE_AREA_LAYOUT_QUIET_PERIOD_MILLIS,
     val safeAreaRequiredFailureCount: Int = DEFAULT_SAFE_AREA_REQUIRED_FAILURE_COUNT,
     val forceSafeAreaFallback: Boolean = false,
-    val geckoSafeAreaSettings: GeckoSafeAreaSettings = GeckoSafeAreaSettings(),
     /** Vola's own Gecko blocker (on by default; turning it off is the emergency switch). */
     val volaGeckoBlocker: Boolean = true,
 ) {
     fun normalized(): DeveloperSettings = copy(
-        geckoSafeAreaSettings = geckoSafeAreaSettings.normalized(),
         safeAreaLayoutQuietPeriodMillis = normalizedLayoutQuietPeriodMillis(),
         safeAreaRequiredFailureCount = safeAreaRequiredFailureCount.coerceIn(
             MIN_SAFE_AREA_REQUIRED_FAILURE_COUNT,

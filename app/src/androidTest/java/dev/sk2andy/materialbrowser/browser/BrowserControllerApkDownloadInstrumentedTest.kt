@@ -13,6 +13,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
+import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.net.InetAddress
@@ -22,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +56,12 @@ class BrowserControllerApkDownloadInstrumentedTest {
         }
     }
 
+    @Before
+    fun setUp() {
+        // A started download asks Android for notifications; its dialog would take the tap.
+        grantNotificationPermissionForTests()
+    }
+
     @Test
     fun externalPreviewRoutesTappedApkBeforeWebViewNavigation() {
         val apkUrl = "https://downloads.example.invalid/Candy-${System.nanoTime()}.apk"
@@ -83,6 +91,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
 
             assertTrue(handled)
         }
+        saveHeldApk()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
         val rows = downloadRows(apkUrl)
@@ -133,6 +142,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
                 ),
             )
         }
+        saveHeldApk()
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
         val rows = downloadRows(apkUrl)
@@ -169,6 +179,7 @@ class BrowserControllerApkDownloadInstrumentedTest {
             awaitPreviewLoaded(server.startUrl)
 
             tapDownloadLink(previewWebView)
+            saveHeldApk()
 
             val rows = awaitDownloadRows(server.downloadUrl)
             assertEquals(1, rows.size)
@@ -211,6 +222,25 @@ class BrowserControllerApkDownloadInstrumentedTest {
         assertTrue(downloadRows(apkUrl).isEmpty())
     }
 
+    /** An APK waits for the safety sheet (DownloadSafetyGate) before any manager gets it. */
+    private fun saveHeldApk() {
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MILLIS
+        while (SystemClock.uptimeMillis() < deadline) {
+            var saved = false
+            activityRule.scenario.onActivity {
+                val gate = requireNotNull(controller).downloadSafety
+                val held = gate.pending ?: return@onActivity
+                assertTrue(held.fileName.endsWith(".apk", ignoreCase = true))
+                assertTrue(held.findings.isNotEmpty())
+                gate.save()
+                saved = true
+            }
+            if (saved) return
+            SystemClock.sleep(POLL_INTERVAL_MILLIS)
+        }
+        throw AssertionError("The APK was not held for the safety sheet")
+    }
+
     private fun awaitPreviewLoaded(expectedUrl: String) {
         val deadline = SystemClock.uptimeMillis() + TIMEOUT_MILLIS
         while (SystemClock.uptimeMillis() < deadline) {
@@ -225,11 +255,24 @@ class BrowserControllerApkDownloadInstrumentedTest {
         throw AssertionError("External preview did not load $expectedUrl")
     }
 
+    /**
+     * Taps the middle of the fixture's link. A fixed pixel offset from a view at the top of the
+     * screen could land in the status bar, which belongs to SystemUI, and the injection fails there.
+     */
     private fun tapDownloadLink(webView: WebView) {
         val location = IntArray(2)
-        activityRule.scenario.onActivity {
-            webView.getLocationOnScreen(location)
+        var linkCenterPx = 0f
+        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MILLIS
+        while (SystemClock.uptimeMillis() < deadline && linkCenterPx == 0f) {
+            activityRule.scenario.onActivity {
+                if (webView.isLaidOut && webView.width > 0) {
+                    webView.getLocationOnScreen(location)
+                    linkCenterPx = LINK_CENTER_DP * webView.resources.displayMetrics.density
+                }
+            }
+            if (linkCenterPx == 0f) SystemClock.sleep(POLL_INTERVAL_MILLIS)
         }
+        check(linkCenterPx > 0f) { "Preview WebView was never laid out" }
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val downTime = SystemClock.uptimeMillis()
         listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP).forEach { action ->
@@ -237,8 +280,8 @@ class BrowserControllerApkDownloadInstrumentedTest {
                 downTime,
                 SystemClock.uptimeMillis(),
                 action,
-                location[0] + TAP_COORDINATE,
-                location[1] + TAP_COORDINATE,
+                location[0] + linkCenterPx,
+                location[1] + linkCenterPx,
                 0,
             ).let { event ->
                 instrumentation.sendPointerSync(event)
@@ -324,7 +367,8 @@ class BrowserControllerApkDownloadInstrumentedTest {
         const val SOURCE_URL = "https://example.invalid/source"
         const val TIMEOUT_MILLIS = 10_000L
         const val POLL_INTERVAL_MILLIS = 50L
-        const val TAP_COORDINATE = 100f
+        /** The fixture link is a 200 dp block after the body's 8 dp margin. */
+        const val LINK_CENTER_DP = 108f
         const val ANDROID_PACKAGE_MIME_TYPE = "application/vnd.android.package-archive"
     }
 

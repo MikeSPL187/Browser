@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -169,7 +170,8 @@ class ReaderStudioScreenInstrumentedTest {
             .assertIsOff()
             .performClick()
             .assertIsOn()
-        composeRule.onNodeWithText(context.getString(R.string.reader_font_sans))
+        // Each typeface shows «Aa»; its name is the button's description (V19a).
+        composeRule.onNodeWithContentDescription(context.getString(R.string.reader_font_sans))
             .performScrollTo()
             .performClick()
             .assertIsSelected()

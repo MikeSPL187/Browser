@@ -10,6 +10,8 @@ import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryDataSource
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryState
+import dev.sk2andy.materialbrowser.reader.ReaderFont
+import dev.sk2andy.materialbrowser.reader.ReaderLibraryRules
 import dev.sk2andy.materialbrowser.reader.ReaderSettings
 import dev.sk2andy.materialbrowser.reader.ReaderSpeech
 import dev.sk2andy.materialbrowser.reader.ReaderSpeechState
@@ -84,6 +86,7 @@ private fun ReaderPreview(
     settings: ReaderSettings,
     settingsVisible: Boolean,
     result: ReaderExtractionResult = ReaderExtractionResult.Success(previewArticle),
+    v5: Boolean = false,
 ) {
     MaterialBrowserTheme(
         settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System),
@@ -94,7 +97,7 @@ private fun ReaderPreview(
             isPrivate = false,
             repository = PreviewReaderLibrary(settings),
             resources = AndroidReaderStudioResources,
-            style = rememberReaderStudioStyle(),
+            style = rememberReaderStudioStyle(v5 = v5),
             speechFactory = { PreviewReaderSpeech },
             backHandler = { _, _ -> },
             onRetry = {},
@@ -129,4 +132,26 @@ private fun ReaderErrorPreview() {
         settingsVisible = false,
         result = ReaderExtractionResult.Failure(ReaderExtractionFailure.EmptyArticle),
     )
+}
+
+/** V19 under ui.v5: the dark gray theme, the monospace typeface and the largest text, 250 %. */
+@VolaPreviews
+@Composable
+private fun ReaderV5MonoLargePreview() {
+    ReaderPreview(
+        ReaderSettings(
+            fontScale = ReaderLibraryRules.MAX_FONT_SCALE,
+            theme = ReaderTheme.Dark,
+            font = ReaderFont.Mono,
+        ),
+        settingsVisible = false,
+        v5 = true,
+    )
+}
+
+/** V19: «Reading view» with three typefaces, each shown as «Aa». */
+@VolaPreviews
+@Composable
+private fun ReaderV5SettingsPreview() {
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Dark, font = ReaderFont.Sans), settingsVisible = true, v5 = true)
 }

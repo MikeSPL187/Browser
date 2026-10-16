@@ -13,7 +13,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_safe_area_reddit.js", "content_safe_area_prototype.js", "content_site_color.js", "hide_distractions.js"],
+      "js": ["content_top_inset_bridge.js", "text_input_occlusion.js", "content_top_inset.js", "content_site_color.js", "reader_probe.js", "hide_distractions.js"],
       "run_at": "document_start",
       "all_frames": false
     },

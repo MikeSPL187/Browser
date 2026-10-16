@@ -3,7 +3,8 @@
 
 Lint already reports missing translations; this adds the checks lint cannot do reliably for
 Russian: identical format placeholders, safe apostrophes and quotes, and complete
-one/few/many/other plural forms.
+one/few/many/other plural forms. It also catches a name defined twice, which only fails much
+later, in the resource merge of the Gradle build.
 """
 
 import re
@@ -38,6 +39,37 @@ def load(directory):
             elif element.tag == "plurals":
                 plurals[name] = {item.get("quantity"): inner_text(item) for item in element}
     return strings, plurals
+
+
+def duplicate_names(directory):
+    """Resource names defined more than once among the directory's files, per resource type."""
+    seen = Counter()
+    for path in sorted(directory.glob("*.xml")):
+        for element in ElementTree.parse(path).getroot():
+            name = element.get("name")
+            if name is not None:
+                seen[(element.tag, name)] += 1
+    return sorted(f"{tag} {name}" for (tag, name), count in seen.items() if count > 1)
+
+
+class DuplicateNamesTest(unittest.TestCase):
+    def test_no_name_is_defined_twice(self):
+        for directory in [RES / "values", *(RES / f"values-{locale}" for locale in LOCALES)]:
+            with self.subTest(directory=directory.name):
+                self.assertEqual([], duplicate_names(directory))
+
+    def test_a_twin_is_found(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "strings.xml").write_text(
+                '<resources><string name="a">A</string><string name="b">B</string>'
+                '<string name="a">A again</string><plurals name="a"><item quantity="other">A</item></plurals>'
+                "</resources>",
+                encoding="utf-8",
+            )
+            self.assertEqual(["string a"], duplicate_names(directory))
 
 
 class TranslationTest(unittest.TestCase):

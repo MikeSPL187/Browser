@@ -32,11 +32,12 @@ class CandyRuleStoreInstrumentedTest {
         assertTrue(store.save(listOf(rule)))
         assertEquals(listOf(rule), store.load())
 
-        File(context.noBackupFilesDir, CandyRuleStore.FILE_NAME).writeBytes(
-            ByteArray(CandyRuleStore.MAX_FILE_BYTES + 1),
-        )
+        // The store moved from noBackupFilesDir to filesDir (BackedUpAtomicFileMigration).
+        val file = File(context.filesDir, CandyRuleStore.FILE_NAME)
+        assertTrue(file.exists())
+        file.writeBytes(ByteArray(CandyRuleStore.MAX_FILE_BYTES + 1))
         assertTrue(store.load().isEmpty())
-        assertTrue(!File(context.noBackupFilesDir, CandyRuleStore.FILE_NAME).exists())
+        assertTrue(!file.exists())
     }
 
     @Test

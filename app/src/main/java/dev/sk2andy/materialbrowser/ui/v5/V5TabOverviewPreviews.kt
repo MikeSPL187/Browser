@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
@@ -34,7 +35,8 @@ private fun OverviewPreview(
             privateSegment = privateSegment,
             counts = V5OverviewCounts(regular = 10, private = 2),
             query = query,
-            profileLabel = "🏔 Личный",
+            profileLabel = "Личный",
+            profileIcon = WorkspaceIcons.vector("🏔"),
             groups = groups,
         ),
         onQueryChange = {},

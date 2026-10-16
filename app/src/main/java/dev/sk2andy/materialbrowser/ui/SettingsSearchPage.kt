@@ -66,8 +66,9 @@ internal fun SettingsSearchPage(
     BackHandler(onBack = onBack)
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
-    val candidates = remember(configuration) {
-        SettingsRegistry.searchCandidates(context.resources)
+    val uiV5 = rememberSettingsUiV5()
+    val candidates = remember(configuration, uiV5) {
+        SettingsRegistry.searchCandidates(context.resources, uiV5)
     }
     var query by rememberSaveable { mutableStateOf("") }
     val results = remember(query, candidates) { SettingsSearchRules.search(query, candidates) }
