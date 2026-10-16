@@ -157,6 +157,13 @@ internal object VolaMotion {
     /** Color, opacity and blur: no overshoot. */
     fun <T> effects(visibilityThreshold: T? = null): SpringSpec<T> =
         spring(EFFECTS_DAMPING_RATIO, EFFECTS_STIFFNESS, visibilityThreshold)
+
+    /**
+     * The link preview's drag target pulses while animations are on: one ring sweep, and a breath
+     * in and out that repeats in reverse.
+     */
+    const val LINK_PEEK_TARGET_RING_MILLIS = 920
+    const val LINK_PEEK_TARGET_BREATH_MILLIS = 560
 }
 
 /** Essentials on the new tab (boards NewTab and EssentialsEdit). */
