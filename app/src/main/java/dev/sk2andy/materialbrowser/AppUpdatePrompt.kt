@@ -1,5 +1,12 @@
 package dev.sk2andy.materialbrowser
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
+import dev.sk2andy.materialbrowser.ui.rememberDrawsV5
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
@@ -103,6 +110,22 @@ internal fun AppUpdateDialog(
     onDownload: () -> Unit,
     onOpenReleaseNotes: () -> Unit,
 ) {
+    // V28, B14a: under v5 on a phone the question is the one v5 prompt sheet; «Close» is «Later».
+    if (rememberDrawsV5()) {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < UPDATE_DARK_LUMINANCE) {
+            V5PromptSheet(
+                visible = true,
+                title = stringResource(R.string.update_available_title),
+                message = stringResource(R.string.update_available_message, update.versionName),
+                actions = listOf(
+                    V5PromptAction(stringResource(R.string.action_download_update), onDownload, V5PromptRole.Primary),
+                    V5PromptAction(stringResource(R.string.action_view_release_notes), onOpenReleaseNotes),
+                ),
+                onDismiss = onDismiss,
+            )
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.update_available_title)) },
@@ -131,3 +154,5 @@ internal fun AppUpdateDialog(
         },
     )
 }
+
+private const val UPDATE_DARK_LUMINANCE = 0.5f

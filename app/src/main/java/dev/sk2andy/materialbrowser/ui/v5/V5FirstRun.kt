@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -24,6 +26,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,6 +54,8 @@ object V5FirstRunTestTags {
     const val DefaultBrowser = "v5_first_run_default_browser"
     const val MakeDefault = "v5_first_run_make_default"
     const val NotNow = "v5_first_run_not_now"
+    const val Gestures = "v5_first_run_gestures"
+    const val GesturesDone = "v5_first_run_gestures_done"
 }
 
 /** One promise on the welcome: what Vola does without a single setting. */
@@ -277,3 +282,110 @@ private fun FirstRunActions(
         }
     }
 }
+
+/**
+ * Canvas screen «п3»: the two gestures of the v5 bar on a card over the browser, so the bar it
+ * points at stays in sight under the scrim: a swipe along the bar switches tabs, a swipe up opens
+ * the overview. One «Got it» closes it; there is nothing to practise.
+ */
+@Composable
+fun V5FirstRunGestures(onDone: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    Box(
+        modifier
+            .fillMaxSize()
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
+            .background(colors.scrim)
+            .testTag(V5FirstRunTestTags.Gestures),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Column(
+            Modifier
+                .navigationBarsPadding()
+                // The card ends above the bar, which the two gestures are about.
+                .padding(start = V5Spacing.space3, end = V5Spacing.space3, bottom = V5Sizes.bar + V5Spacing.space2)
+                .fillMaxWidth()
+                .clip(V5Theme.shapes.xl)
+                .background(colors.surfaceElevated)
+                .padding(V5Spacing.space4),
+            verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+        ) {
+            Text(
+                stringResource(R.string.v5_first_run_gestures_title),
+                style = V5Theme.type.title,
+                color = colors.label,
+                modifier = Modifier.padding(horizontal = V5Spacing.space1).semantics { heading() },
+            )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(V5Theme.shapes.s)
+                    .background(colors.surface),
+            ) {
+                GestureRow(
+                    rotation = 0f,
+                    title = stringResource(R.string.v5_first_run_gesture_tabs_title),
+                    caption = stringResource(R.string.v5_first_run_gesture_tabs_caption),
+                )
+                GestureRow(
+                    // The same hand, turned to point up.
+                    rotation = SWIPE_UP_ROTATION,
+                    title = stringResource(R.string.v5_first_run_gesture_overview_title),
+                    caption = stringResource(R.string.v5_first_run_gesture_overview_caption),
+                )
+            }
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.accentFill)
+                    .clickable(role = Role.Button, onClick = onDone)
+                    .testTag(V5FirstRunTestTags.GesturesDone),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(R.string.v5_first_run_gestures_done),
+                    style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.onAccentFill,
+                    modifier = Modifier.padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GestureRow(rotation: Float, title: String, caption: String) {
+    val colors = V5Theme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = V5Sizes.rowThreeLine)
+            .semantics(mergeDescendants = true) {}
+            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space2),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
+        Box(
+            Modifier
+                .size(V5Sizes.firstRunGesture)
+                .clip(V5Theme.shapes.m)
+                .background(colors.fill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                VolaIcons.Swipe,
+                contentDescription = null,
+                tint = colors.accent,
+                modifier = Modifier.size(V5Sizes.iconMax).rotate(rotation),
+            )
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = V5Theme.type.body, color = colors.label)
+            Text(caption, style = V5Theme.type.footnote, color = colors.labelSecondary)
+        }
+    }
+}
+
+private const val SWIPE_UP_ROTATION = -90f
