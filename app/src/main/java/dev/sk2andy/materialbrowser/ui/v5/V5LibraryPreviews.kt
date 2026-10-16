@@ -102,3 +102,14 @@ private fun V5LibraryEmptyPreview() = LibraryPreview(
     History.copy(sections = emptyList(), emptyMessage = "Здесь появятся сайты, которые вы откроете. Частные вкладки сюда не попадают.", actions = V5LibraryActions()),
     dark = false,
 )
+
+@Preview(name = "Library v5 · favorites, folder open, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryFolderDarkPreview() = LibraryPreview(
+    Favorites.copy(
+        sections = listOf(Favorites.sections.last()),
+        folder = "Поездка на север",
+        actions = V5LibraryActions(start = "Новая папка"),
+    ),
+    dark = true,
+)
