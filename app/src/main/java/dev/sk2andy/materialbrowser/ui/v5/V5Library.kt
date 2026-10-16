@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,6 +73,7 @@ object V5LibraryTestTags {
     const val Close = "v5_library_close"
     const val Search = "v5_library_search"
     const val Empty = "v5_library_empty"
+    const val Up = "v5_library_up"
     fun row(key: String) = "v5_library_row:$key"
     fun retry(key: String) = "v5_library_retry:$key"
 }
@@ -143,6 +145,8 @@ data class V5LibraryState(
     /** Shown when [sections] hold no row: nothing yet, or nothing found for [query]. */
     val emptyMessage: String,
     val actions: V5LibraryActions = V5LibraryActions(),
+    /** The open folder's name, with a way back up; null at the top. */
+    val folder: String? = null,
 )
 
 @Composable
@@ -155,8 +159,11 @@ fun V5Library(
     onRetry: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Back up out of [V5LibraryState.folder]; system back does the same. */
+    onUp: () -> Unit = {},
 ) {
     val colors = V5Theme.colors
+    BackHandler(enabled = state.folder != null, onBack = onUp)
     Column(
         modifier
             .fillMaxSize()
@@ -203,6 +210,29 @@ fun V5Library(
             modifier = Modifier.fillMaxWidth().padding(horizontal = V5Spacing.marginPhone),
             fieldModifier = Modifier.testTag(V5LibraryTestTags.Search),
         )
+        if (state.folder != null) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = V5Spacing.space1, end = V5Spacing.marginPhone, top = V5Spacing.space2)
+                    .clip(V5Theme.shapes.full)
+                    .clickable(role = Role.Button, onClickLabel = stringResource(R.string.v5_library_up), onClick = onUp)
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .testTag(V5LibraryTestTags.Up),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+            ) {
+                Icon(VolaIcons.KeyboardArrowLeft, contentDescription = null, tint = colors.accent)
+                Text(
+                    state.folder,
+                    style = V5Theme.type.headline,
+                    color = colors.label,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { heading() },
+                )
+            }
+        }
         val rows = state.sections.sumOf { section -> section.rows.size }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (rows == 0) {
@@ -300,13 +330,16 @@ private fun LibraryRow(
             Leading(row.leading)
             Column(Modifier.weight(1f)) {
                 Text(row.title, style = V5Theme.type.body, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    row.subtitle,
-                    style = V5Theme.type.footnote,
-                    color = colors.labelSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                // A folder has no second line: its count sits at the end.
+                if (row.subtitle.isNotEmpty()) {
+                    Text(
+                        row.subtitle,
+                        style = V5Theme.type.footnote,
+                        color = colors.labelSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Trailing(row, onRetry)
         }

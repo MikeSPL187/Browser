@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -37,6 +38,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.awaitWindowFocusForTests
+import dev.sk2andy.materialbrowser.focusedWindowForTests
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.AddressBarAction
@@ -199,6 +202,8 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        // A field takes focus, and the keyboard shows, only while the window holds the focus.
+        awaitWindowFocusForTests(composeRule.activity)
         composeRule.onNodeWithTag(ImeTargetTag).performClick()
         assertImeVisible()
         composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
@@ -535,6 +540,7 @@ class AddressBarDockInstrumentedTest {
             }
             composeRule.onNodeWithText("example.test").performClick()
         }
+        awaitWindowFocusForTests(composeRule.activity)
         // The editor takes focus once its expand motion has started, not on the tap's frame.
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
@@ -676,11 +682,16 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
-        // A tap during the bar's entry motion is lost: tap once the action is on screen.
+        // A tap during the bar's entry motion is lost, and a disabled action ignores it (it is off
+        // until docking is available for the restored tab): tap once the action is enabled and has
+        // stopped moving. Shown and enabled alone still lost the tap once (dockingEnabled=true).
         val parkRight = AddressBarActionTestTags.action(AddressBarAction.ParkRight)
         composeRule.waitUntil(timeoutMillis = 10_000L) {
-            runCatching { composeRule.onNodeWithTag(parkRight).assertIsDisplayed() }.isSuccess
+            runCatching {
+                composeRule.onNodeWithTag(parkRight).assertIsDisplayed().assertIsEnabled()
+            }.isSuccess
         }
+        awaitSettledBounds(parkRight)
         composeRule.onNodeWithTag(parkRight).performClick()
 
         // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
@@ -694,7 +705,9 @@ class AddressBarDockInstrumentedTest {
             var state = ""
             composeRule.runOnIdle {
                 state = "docked=${browserController.addressBar.isDocked}, " +
-                    "placement=${browserController.addressBar.dockPlacement}"
+                    "placement=${browserController.addressBar.dockPlacement}, " +
+                    "dockingEnabled=${browserController.addressBar.isDockingEnabled}, " +
+                    "url=${browserController.selectedTab.url}"
             }
             throw AssertionError("The bar did not park on the right after the tap: $state")
         }
@@ -744,6 +757,7 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        awaitWindowFocusForTests(composeRule.activity)
         composeRule.onNodeWithText(composeRule.activity.getString(R.string.address_empty_hint))
             .performClick()
         composeRule.waitUntil(timeoutMillis = 5_000L) {
@@ -937,11 +951,14 @@ class AddressBarDockInstrumentedTest {
     }
 
     /** Waits until the parked pill is on screen and two frames apart in the same place. */
-    private fun awaitSettledEdgeTabBounds(): Rect {
+    private fun awaitSettledEdgeTabBounds(): Rect = awaitSettledBounds(AddressBarDockTestTags.EdgeTab)
+
+    /** Waits until the node tagged [tag] is on screen and two frames apart in the same place. */
+    private fun awaitSettledBounds(tag: String): Rect {
         var last: Rect? = null
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             val bounds = runCatching {
-                composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
+                composeRule.onNodeWithTag(tag)
                     .assertIsDisplayed()
                     .fetchSemanticsNode()
                     .boundsInRoot
@@ -962,9 +979,14 @@ class AddressBarDockInstrumentedTest {
 
     private fun assertImeVisible() {
         // The keyboard can take several seconds to show on a loaded emulator.
-        composeRule.waitUntil(timeoutMillis = 10_000L) {
-            ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
-                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        val shown = runCatching {
+            composeRule.waitUntil(timeoutMillis = 10_000L) {
+                ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
+                    ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            }
+        }.isSuccess
+        if (!shown) {
+            throw AssertionError("The keyboard did not show; focus is on ${focusedWindowForTests()}")
         }
     }
 

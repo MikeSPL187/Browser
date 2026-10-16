@@ -53,6 +53,7 @@ import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5FindInPageTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabTestTags
@@ -470,13 +471,14 @@ class AppScreenWalkInstrumentedTest(
             }
             step("v5 find in page") {
                 openV5Menu()
+                // Under v5 find in page is the capsule above the keyboard (V28, B5), not the v4 bar.
                 tapUntil(hasText(string(R.string.action_find_in_page)) and hasClickAction(), "find in page to open") {
-                    exists(hasTestTag(FindInPageBarTestTags.Bar))
+                    exists(hasTestTag(V5FindInPageTestTags.Bar))
                 }
                 audit("v5 find in page")
-                click(hasTestTag(FindInPageBarTestTags.Close))
+                click(hasTestTag(V5FindInPageTestTags.Done))
                 composeRule.waitUntil("find in page to close", TIMEOUT_MILLIS) {
-                    !exists(hasTestTag(FindInPageBarTestTags.Bar))
+                    !exists(hasTestTag(V5FindInPageTestTags.Bar))
                 }
             }
             step("v5 tab overview, two tabs") {

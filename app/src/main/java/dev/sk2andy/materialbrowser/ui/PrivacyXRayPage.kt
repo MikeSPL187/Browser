@@ -25,6 +25,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,8 +46,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
 import dev.sk2andy.materialbrowser.blocking.PrivacyDomainSummary
@@ -64,6 +70,11 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaPrivacyXRay
 import dev.sk2andy.materialbrowser.ui.theme.VolaSiteInfo
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /**
  * Privacy X-Ray, the tracker page of Site info (board W-PrivacyXRay): how many requests were
@@ -85,6 +96,7 @@ internal fun PrivacyXRayContent(
 ) {
     var showAll by rememberSaveable(host) { mutableStateOf(false) }
     val colors = categoryColors()
+    val skin = xRaySkin()
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(VolaPrivacyXRay.sectionGap),
@@ -111,23 +123,20 @@ internal fun PrivacyXRayContent(
                     }
                     if (snapshot.domains.size > VolaPrivacyXRay.COLLAPSED_DOMAINS) {
                         SiteInfoDivider()
-                        TextButton(
+                        XRayTextButton(
+                            text = if (showAll) {
+                                stringResource(R.string.privacy_xray_hide_details)
+                            } else {
+                                stringResource(
+                                    R.string.privacy_xray_show_all,
+                                    snapshot.domains.size,
+                                )
+                            },
                             onClick = { showAll = !showAll },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag(PrivacyXRayTestTags.ToggleDetails),
-                        ) {
-                            Text(
-                                if (showAll) {
-                                    stringResource(R.string.privacy_xray_hide_details)
-                                } else {
-                                    stringResource(
-                                        R.string.privacy_xray_show_all,
-                                        snapshot.domains.size,
-                                    )
-                                },
-                            )
-                        }
+                        )
                     }
                 }
             }
@@ -138,8 +147,8 @@ internal fun PrivacyXRayContent(
                         snapshot.omittedDomainRequests,
                     ),
                     modifier = Modifier.padding(horizontal = VolaSiteInfo.labelPadding),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = skin.caption,
+                    color = skin.secondary,
                 )
             }
         }
@@ -177,16 +186,31 @@ internal object XRayHeroRules {
         return if (start < 0) null else start until start + number.length
     }
 
-    fun emphasizeCount(text: String, count: Int): AnnotatedString = buildAnnotatedString {
+    fun emphasizeCount(
+        text: String,
+        count: Int,
+        style: SpanStyle = VolaTypeScale.display.toSpanStyle(),
+    ): AnnotatedString = buildAnnotatedString {
         append(text)
         countRange(text, count)?.let { range ->
-            addStyle(VolaTypeScale.display.toSpanStyle(), range.first, range.last + 1)
+            addStyle(style, range.first, range.last + 1)
         }
     }
 }
 
 @Composable
 private fun categoryColors(): Map<PrivacyRequestCategory, Color> {
+    if (LocalSiteInfoV5.current) {
+        val v5 = V5Theme.colors
+        return remember(v5) {
+            mapOf(
+                PrivacyRequestCategory.Advertising to v5.accent,
+                PrivacyRequestCategory.Analytics to V5Tile.Teal.color,
+                PrivacyRequestCategory.Social to V5Tile.Purple.color,
+                PrivacyRequestCategory.Other to v5.labelTertiary,
+            )
+        }
+    }
     val scheme = MaterialTheme.colorScheme
     return remember(scheme) {
         mapOf(
@@ -198,29 +222,97 @@ private fun categoryColors(): Map<PrivacyRequestCategory, Color> {
     }
 }
 
+/**
+ * The type and colors of the X-Ray page: Material 3 in v4, the v5 scale and palette under ui.v5
+ * (V28, B8b), so each piece below is written once. [primary] Unspecified keeps v4's content color.
+ */
+@Immutable
+private data class XRaySkin(
+    val v5: Boolean,
+    val heroTitle: TextStyle,
+    /** The blocked count inside the hero's first line. */
+    val countStyle: TextStyle,
+    val heroBody: TextStyle,
+    val heroContainer: Color,
+    val heroContent: Color,
+    val body: TextStyle,
+    val caption: TextStyle,
+    val value: TextStyle,
+    val label: TextStyle,
+    val primary: Color,
+    val secondary: Color,
+    val link: Color,
+)
+
+@Composable
+private fun xRaySkin(): XRaySkin {
+    if (LocalSiteInfoV5.current) {
+        val colors = V5Theme.colors
+        val type = V5Theme.type
+        return XRaySkin(
+            v5 = true,
+            heroTitle = type.headline,
+            countStyle = type.largeTitle,
+            heroBody = type.callout,
+            heroContainer = colors.accentSoft,
+            heroContent = colors.label,
+            body = type.body,
+            caption = type.footnote,
+            value = type.callout,
+            label = type.footnote,
+            primary = colors.label,
+            secondary = colors.labelSecondary,
+            link = colors.accent,
+        )
+    }
+    val colors = MaterialTheme.colorScheme
+    val type = MaterialTheme.typography
+    return XRaySkin(
+        v5 = false,
+        heroTitle = type.titleMedium,
+        countStyle = VolaTypeScale.display,
+        heroBody = type.bodyMedium,
+        heroContainer = colors.primaryContainer,
+        heroContent = colors.onPrimaryContainer,
+        body = type.bodyLarge,
+        caption = type.bodySmall,
+        value = type.labelLarge,
+        label = type.titleSmall,
+        primary = Color.Unspecified,
+        secondary = colors.onSurfaceVariant,
+        link = colors.primary,
+    )
+}
+
 @Composable
 private fun XRayHero(snapshot: PrivacyXRaySnapshot, host: String?, paused: Boolean) {
-    val colors = MaterialTheme.colorScheme
+    val skin = xRaySkin()
     val total = snapshot.totalBlocked
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(PrivacyXRayTestTags.Total),
-        shape = VolaPrivacyXRay.heroShape,
-        color = colors.primaryContainer,
-        contentColor = colors.onPrimaryContainer,
+        shape = if (skin.v5) V5Theme.shapes.m else VolaPrivacyXRay.heroShape,
+        color = skin.heroContainer,
+        contentColor = skin.heroContent,
     ) {
         Column(
             modifier = Modifier
                 .semantics(mergeDescendants = true) {}
-                .padding(VolaPrivacyXRay.heroPadding),
+                .padding(if (skin.v5) V5Spacing.space4 else VolaPrivacyXRay.heroPadding),
             verticalArrangement = Arrangement.spacedBy(VolaSpacing.x1),
         ) {
             if (total > 0) {
                 val requests = pluralStringResource(R.plurals.privacy_xray_requests, total, total)
                 Text(
-                    text = remember(requests, total) { XRayHeroRules.emphasizeCount(requests, total) },
-                    style = MaterialTheme.typography.titleMedium,
+                    text = remember(requests, total, skin.v5) {
+                        if (skin.v5) {
+                            XRayHeroRules.emphasizeCount(requests, total, skin.countStyle.toSpanStyle())
+                        } else {
+                            XRayHeroRules.emphasizeCount(requests, total)
+                        }
+                    },
+                    style = skin.heroTitle,
                 )
                 Text(
                     text = if (host.isNullOrEmpty()) {
@@ -229,13 +321,13 @@ private fun XRayHero(snapshot: PrivacyXRaySnapshot, host: String?, paused: Boole
                         stringResource(R.string.privacy_xray_blocked_on, host)
                     },
                     modifier = Modifier.semantics { heading() },
-                    style = MaterialTheme.typography.titleMedium,
+                    style = skin.heroTitle,
                 )
             } else {
                 Text(
                     text = stringResource(R.string.site_info_nothing_blocked),
                     modifier = Modifier.semantics { heading() },
-                    style = MaterialTheme.typography.titleMedium,
+                    style = skin.heroTitle,
                 )
             }
             Text(
@@ -246,7 +338,7 @@ private fun XRayHero(snapshot: PrivacyXRaySnapshot, host: String?, paused: Boole
                         else -> R.string.privacy_xray_waiting
                     },
                 ),
-                style = MaterialTheme.typography.bodyMedium,
+                style = skin.heroBody,
             )
         }
     }
@@ -260,6 +352,7 @@ private fun CategoryBreakdown(
     val categories = PrivacyRequestCategory.entries
         .filter { (snapshot.categoryCounts[it] ?: 0) > 0 }
     if (categories.isEmpty()) return
+    val skin = xRaySkin()
     Column(verticalArrangement = Arrangement.spacedBy(VolaPrivacyXRay.legendGap)) {
         Row(
             modifier = Modifier
@@ -295,11 +388,13 @@ private fun CategoryBreakdown(
                         Text(
                             category.label(),
                             modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = skin.heroBody,
+                            color = skin.primary,
                         )
                         Text(
                             snapshot.categoryCounts.getValue(category).toString(),
-                            style = MaterialTheme.typography.labelLarge,
+                            style = skin.value,
+                            color = skin.secondary,
                         )
                     }
                 }
@@ -317,6 +412,7 @@ private fun TrackerRow(
     onOpenStudio: (ruleId: String?) -> Unit,
 ) {
     var actionsVisible by rememberSaveable(domain.host) { mutableStateOf(false) }
+    val skin = xRaySkin()
     val total = domain.blockedCount + domain.allowedCount
     val party = domain.partyRelation.label()
     val description = stringResource(
@@ -355,20 +451,21 @@ private fun TrackerRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     domain.host,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = skin.body,
+                    color = skin.primary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     "${domain.category.label()} · $party",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = skin.caption,
+                    color = skin.secondary,
                 )
             }
             Text(
                 stringResource(R.string.privacy_xray_times, total),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = skin.value,
+                color = skin.secondary,
             )
         }
         AnimatedVisibility(
@@ -385,21 +482,18 @@ private fun TrackerRow(
                 verticalArrangement = Arrangement.spacedBy(VolaSpacing.x1),
             ) {
                 domain.ruleDecision?.let { decision ->
-                    TextButton(onClick = { onOpenStudio(decision.ruleId) }) {
-                        Text(
-                            stringResource(
-                                R.string.filter_deciding_rule_action,
-                                if (decision.action == PrivacyRuleDecisionAction.Block) {
-                                    stringResource(R.string.filter_block)
-                                } else {
-                                    stringResource(R.string.filter_allow)
-                                },
-                                decision.label,
-                            ),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    XRayTextButton(
+                        text = stringResource(
+                            R.string.filter_deciding_rule_action,
+                            if (decision.action == PrivacyRuleDecisionAction.Block) {
+                                stringResource(R.string.filter_block)
+                            } else {
+                                stringResource(R.string.filter_allow)
+                            },
+                            decision.label,
+                        ),
+                        onClick = { onOpenStudio(decision.ruleId) },
+                    )
                 }
                 RuleButtons(
                     everywhere = R.string.filter_block_everywhere,
@@ -423,18 +517,75 @@ private fun RuleButtons(
     @StringRes onSite: Int,
     onClick: (siteScoped: Boolean) -> Unit,
 ) {
+    val v5 = LocalSiteInfoV5.current
     Row(horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x2)) {
         listOf(everywhere to false, onSite to true).forEach { (label, siteScoped) ->
-            OutlinedButton(onClick = { onClick(siteScoped) }, modifier = Modifier.weight(1f)) {
-                Text(stringResource(label), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (v5) {
+                XRayCapsule(stringResource(label), { onClick(siteScoped) }, Modifier.weight(1f))
+            } else {
+                OutlinedButton(onClick = { onClick(siteScoped) }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(label), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
+    }
+}
+
+/** A quiet action in the accent: a text button in v4, accent text on a full-width target in v5. */
+@Composable
+private fun XRayTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    if (!LocalSiteInfoV5.current) {
+        TextButton(onClick = onClick, modifier = modifier) {
+            Text(text, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        return
+    }
+    Box(
+        modifier = modifier
+            .heightIn(min = V5Sizes.touchTarget)
+            .clip(V5Theme.shapes.full)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space2),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text,
+            style = V5Theme.type.body,
+            color = V5Theme.colors.accent,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** A v5 rule action: accent text on a filled capsule, as the secondary buttons of the menu. */
+@Composable
+private fun XRayCapsule(text: String, onClick: () -> Unit, modifier: Modifier) {
+    val colors = V5Theme.colors
+    Box(
+        modifier = modifier
+            .heightIn(min = V5Sizes.touchTarget)
+            .clip(V5Theme.shapes.full)
+            .background(colors.fill)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text,
+            style = V5Theme.type.callout,
+            color = colors.accent,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
 @Composable
 private fun WeekRow(week: ProtectionWeek) {
     val locale = LocalConfiguration.current.locales[0]
+    val skin = xRaySkin()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -450,12 +601,13 @@ private fun WeekRow(week: ProtectionWeek) {
                 week.total,
                 formatCount(week.total, locale),
             ),
-            style = MaterialTheme.typography.bodyLarge,
+            style = skin.body,
+            color = skin.primary,
         )
         Text(
             pluralStringResource(R.plurals.protection_card_sites, week.siteCount, week.siteCount),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = skin.caption,
+            color = skin.secondary,
         )
     }
     SiteInfoDivider()
@@ -463,6 +615,7 @@ private fun WeekRow(week: ProtectionWeek) {
 
 @Composable
 private fun XRayLinkRow(title: String, onClick: () -> Unit, action: String? = null) {
+    val skin = xRaySkin()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -475,20 +628,16 @@ private fun XRayLinkRow(title: String, onClick: () -> Unit, action: String? = nu
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(title, style = skin.body, color = skin.primary)
             action?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Text(it, style = skin.caption, color = skin.link)
             }
         }
         if (action == null) {
             Icon(
                 painter = painterResource(R.drawable.ic_symbol_chevron_right),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (skin.v5) V5Theme.colors.labelTertiary else skin.secondary,
             )
         }
     }
@@ -496,13 +645,14 @@ private fun XRayLinkRow(title: String, onClick: () -> Unit, action: String? = nu
 
 @Composable
 private fun XRaySectionLabel(text: String) {
+    val skin = xRaySkin()
     Text(
         text = text,
         modifier = Modifier
             .padding(start = VolaSiteInfo.labelPadding)
             .semantics { heading() },
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = skin.label,
+        color = skin.secondary,
     )
 }
 
@@ -532,41 +682,66 @@ private fun PrivacyXRayContentPreview() {
         settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System),
     ) {
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            PrivacyXRayContent(
-                snapshot = PrivacyXRaySnapshot(
-                    totalBlocked = 14,
-                    categoryCounts = mapOf(
-                        PrivacyRequestCategory.Advertising to 6,
-                        PrivacyRequestCategory.Analytics to 5,
-                        PrivacyRequestCategory.Social to 2,
-                        PrivacyRequestCategory.Other to 1,
-                    ),
-                    domains = listOf(
-                        PrivacyDomainSummary(
-                            "ads.example-network.com", 4,
-                            category = PrivacyRequestCategory.Advertising,
-                            partyRelation = PrivacyPartyRelation.ThirdParty,
-                        ),
-                        PrivacyDomainSummary(
-                            "metrics.example.net", 3,
-                            category = PrivacyRequestCategory.Analytics,
-                            partyRelation = PrivacyPartyRelation.ThirdParty,
-                        ),
-                    ),
-                ),
-                host = "north-guide.ru",
-                siteState = SiteProtectionState(host = "north-guide.ru"),
-                week = ProtectionWeek(
-                    total = 1284,
-                    siteCount = 96,
-                    daily = List(7) { 0 },
-                    topSites = emptyList(),
-                    firstEpochDay = 0L,
-                    lastEpochDay = 6L,
-                ),
-                onOpenProtectionSettings = {},
-                modifier = Modifier.padding(VolaSiteInfo.sidePadding),
-            )
+            PrivacyXRaySample(Modifier.padding(VolaSiteInfo.sidePadding))
         }
     }
+}
+
+/** V28 B8b: the same page under v5, in both themes. */
+@Preview(name = "X-Ray v5 · light", heightDp = 900)
+@Composable
+private fun PrivacyXRayContentV5LightPreview() = PrivacyXRayV5Preview(dark = false)
+
+@Preview(name = "X-Ray v5 · dark", heightDp = 900)
+@Composable
+private fun PrivacyXRayContentV5DarkPreview() = PrivacyXRayV5Preview(dark = true)
+
+@Composable
+private fun PrivacyXRayV5Preview(dark: Boolean) {
+    VolaV5Theme(dark = dark) {
+        CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+            Box(Modifier.background(V5Theme.colors.background)) {
+                PrivacyXRaySample(Modifier.padding(V5Spacing.marginPhone))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyXRaySample(modifier: Modifier) {
+    PrivacyXRayContent(
+        snapshot = PrivacyXRaySnapshot(
+            totalBlocked = 14,
+            categoryCounts = mapOf(
+                PrivacyRequestCategory.Advertising to 6,
+                PrivacyRequestCategory.Analytics to 5,
+                PrivacyRequestCategory.Social to 2,
+                PrivacyRequestCategory.Other to 1,
+            ),
+            domains = listOf(
+                PrivacyDomainSummary(
+                    "ads.example-network.com", 4,
+                    category = PrivacyRequestCategory.Advertising,
+                    partyRelation = PrivacyPartyRelation.ThirdParty,
+                ),
+                PrivacyDomainSummary(
+                    "metrics.example.net", 3,
+                    category = PrivacyRequestCategory.Analytics,
+                    partyRelation = PrivacyPartyRelation.ThirdParty,
+                ),
+            ),
+        ),
+        host = "north-guide.ru",
+        siteState = SiteProtectionState(host = "north-guide.ru"),
+        week = ProtectionWeek(
+            total = 1284,
+            siteCount = 96,
+            daily = List(7) { 0 },
+            topSites = emptyList(),
+            firstEpochDay = 0L,
+            lastEpochDay = 6L,
+        ),
+        onOpenProtectionSettings = {},
+        modifier = modifier,
+    )
 }

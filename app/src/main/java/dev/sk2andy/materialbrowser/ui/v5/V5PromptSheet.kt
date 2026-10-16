@@ -26,6 +26,8 @@ data class V5PromptAction(
     val label: String,
     val onClick: () -> Unit,
     val role: V5PromptRole = V5PromptRole.Default,
+    /** The tag the current dialog's button had, so tests find the action under v5 too. */
+    val testTag: String? = null,
 )
 
 /**
@@ -38,27 +40,36 @@ data class V5PromptAction(
 fun V5PromptSheet(
     visible: Boolean,
     title: String,
-    message: String,
+    /** Null when the actions say it all, as a choice between apps does. */
+    message: String?,
     actions: List<V5PromptAction>,
     onDismiss: () -> Unit,
+    /** The tag the current dialog had. */
+    testTag: String? = null,
 ) {
     val colors = V5Theme.colors
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
-        V5SheetHeader(title = title, onClose = onDismiss)
+        V5SheetHeader(
+            title = title,
+            onClose = onDismiss,
+            modifier = if (testTag != null) Modifier.testTag(testTag) else Modifier,
+        )
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(top = V5Spacing.space2, bottom = V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
         ) {
-            Text(
-                message,
-                style = V5Theme.type.body,
-                color = colors.labelSecondary,
-                modifier = Modifier
-                    .padding(horizontal = V5Spacing.space4)
-                    .testTag(V5PromptSheetTestTags.Message),
-            )
+            if (message != null) {
+                Text(
+                    message,
+                    style = V5Theme.type.body,
+                    color = colors.labelSecondary,
+                    modifier = Modifier
+                        .padding(horizontal = V5Spacing.space4)
+                        .testTag(V5PromptSheetTestTags.Message),
+                )
+            }
             V5ListGroup {
                 actions.forEachIndexed { index, action ->
                     V5ListRow(
@@ -69,7 +80,7 @@ fun V5PromptSheet(
                             V5PromptRole.Destructive -> colors.danger
                         },
                         onClick = action.onClick,
-                        modifier = Modifier.testTag(V5PromptSheetTestTags.action(index)),
+                        modifier = Modifier.testTag(action.testTag ?: V5PromptSheetTestTags.action(index)),
                     )
                 }
             }
