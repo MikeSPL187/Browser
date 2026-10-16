@@ -13,6 +13,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeUp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -28,6 +30,7 @@ import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncCacheStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncVaultStore
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
@@ -75,6 +78,8 @@ class GeckoTabOverviewHandoffInstrumentedTest {
             // The handoff is measured edge to edge; Vola's default frame starts the page card
             // below the status bar, where there is no safe-area inset to keep.
             saveAppearanceSettings(AppearanceSettings(chromeStyle = BrowserChromeStyle.Air))
+            // Both tests follow the hero morph and its swipe-up dismiss; the v4 default is the grid.
+            saveTabOverviewMode(TabOverviewMode.Hero)
         }
         ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
     }
@@ -116,9 +121,18 @@ class GeckoTabOverviewHandoffInstrumentedTest {
                 SystemClock.sleep(PAGE_SETTLE_MILLIS)
                 awaitPreview(scenario)
                 scenario.onActivity { activity ->
-                    val controller = activity.browserControllerForTesting()
-                    assertTrue(controller.previewTopInsetPx(tabId) > 0)
-                    assertTrue(controller.selectedGeckoViewForTesting() is GeckoView)
+                    val view = activity.browserControllerForTesting().selectedGeckoViewForTesting()
+                    assertTrue("The selected tab has no GeckoView: $view", view is GeckoView)
+                    // Since H4 (#123) the page keeps clear of the status bar by its host's place,
+                    // not by a CSS inset: the safe area the handoff must keep is the host's top.
+                    val host = requireNotNull(view)
+                    val statusTop = ViewCompat.getRootWindowInsets(host)
+                        ?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+                    val hostTop = IntArray(2).also(host::getLocationOnScreen)[1]
+                    assertTrue(
+                        "Gecko host at $hostTop starts above the status bar ($statusTop)",
+                        statusTop > 0 && hostTop >= statusTop,
+                    )
                 }
 
                 val liveBefore = takeStableScreenshot()
