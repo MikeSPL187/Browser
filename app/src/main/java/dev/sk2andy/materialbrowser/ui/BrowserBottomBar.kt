@@ -1025,7 +1025,7 @@ private fun AddressCommandFeedbackContent(
 }
 
 @Composable
-private fun AddressCommandFeedback.localizedText(): String = when (message) {
+internal fun AddressCommandFeedback.localizedText(): String = when (message) {
     AddressCommandFeedbackMessage.CacheCleared ->
         stringResource(R.string.command_feedback_cache_cleared)
     AddressCommandFeedbackMessage.CookiesCleared ->
