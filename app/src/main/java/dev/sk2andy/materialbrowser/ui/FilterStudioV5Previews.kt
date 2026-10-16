@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
 import dev.sk2andy.materialbrowser.blocking.CandyRule
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
 import dev.sk2andy.materialbrowser.blocking.CandyRuleKind
@@ -8,6 +10,7 @@ import dev.sk2andy.materialbrowser.blocking.CandyRuleOrigin
 import dev.sk2andy.materialbrowser.blocking.CandyRulePreview
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* Б12a: the filter studio under ui.v5. Preview-only sample hosts are not localized. */
 
@@ -83,4 +86,34 @@ private fun FilterStudioEmptyV5Preview() {
 @Composable
 private fun FilterRulePageV5Preview() {
     StudioPreview(selectedRuleId = "cdn")
+}
+
+@Composable
+private fun RuleSheetPreview(rule: CandyRule?) {
+    MaterialBrowserTheme {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+            FilterRuleSheetV5(
+                initialRule = rule,
+                visible = true,
+                profiles = emptyList(),
+                currentProfileId = "default",
+                onDismiss = {},
+                onSave = { true },
+            )
+        }
+    }
+}
+
+/** A new rule: block a request host, for every workspace. */
+@VolaPreviews
+@Composable
+private fun FilterRuleAddSheetV5Preview() {
+    RuleSheetPreview(rule = null)
+}
+
+/** Editing a hiding rule: the site, the CSS selector and its examples. */
+@VolaPreviews
+@Composable
+private fun FilterRuleCssSheetV5Preview() {
+    RuleSheetPreview(rule = previewRules.last())
 }
