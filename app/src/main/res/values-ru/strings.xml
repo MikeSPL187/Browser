@@ -2227,4 +2227,17 @@
     <string name="v5_history_clear_today">За сегодня</string>
     <string name="v5_history_clear_two_days">За сегодня и вчера</string>
     <string name="v5_history_clear_all">За всё время</string>
+    <!-- V28 B1: знакомство v5 (холст п1, п2) -->
+    <string name="v5_first_run_tagline">Браузер, который не мешает странице.</string>
+    <string name="v5_first_run_protection_title">Защита сразу</string>
+    <string name="v5_first_run_protection_caption">Реклама и трекеры блокируются, только HTTPS</string>
+    <string name="v5_first_run_protection_caption_no_https">Реклама и трекеры блокируются</string>
+    <string name="v5_first_run_profiles_title">Профили</string>
+    <string name="v5_first_run_profiles_caption">У работы и дома свои вкладки, история и закреплённые</string>
+    <string name="v5_first_run_device_title">Всё на устройстве</string>
+    <string name="v5_first_run_device_caption">Никакой аналитики и рекламных SDK</string>
+    <string name="v5_first_run_default_title">Открывать ссылки в Vola?</string>
+    <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
+    <string name="v5_first_run_default_action">Сделать основным</string>
+    <string name="v5_first_run_not_now">Не сейчас</string>
 </resources>
