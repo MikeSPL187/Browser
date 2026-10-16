@@ -2145,4 +2145,11 @@
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
     <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
     <string name="v5_first_run_gestures_done">Got it</string>
+    <string name="filter_v5_on">On</string>
+    <string name="filter_v5_off">Off</string>
+    <string name="filter_v5_active">Enabled</string>
+    <string name="filter_v5_action">Action</string>
+    <string name="filter_v5_group">Group</string>
+    <string name="filter_v5_origin">Origin</string>
+    <string name="filter_v5_profile_only">Only this workspace\'s rules</string>
 </resources>
