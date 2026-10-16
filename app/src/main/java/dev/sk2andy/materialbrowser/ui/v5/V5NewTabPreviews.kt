@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
@@ -71,5 +73,29 @@ private fun V5PinnedAddSheetPreview() {
             onAdd = {},
             onDismiss = {},
         )
+    }
+}
+
+/** V28 B6a: the field open over the new tab; with nothing typed the pinned sites show through. */
+@Preview(name = "New tab v5 · empty editor, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5NewTabEditorDarkPreview() {
+    VolaV5Theme(dark = true) {
+        Box {
+            NewTabPreview(dark = true)
+            V5AddressEditor(
+                state = V5EditorState(
+                    value = TextFieldValue(""),
+                    layout = V5SuggestionLayout.Empty,
+                    overStart = true,
+                ),
+                onValueChange = {},
+                onSubmit = {},
+                onSelect = {},
+                onFill = {},
+                onClipboard = {},
+                onCancel = {},
+            )
+        }
     }
 }
