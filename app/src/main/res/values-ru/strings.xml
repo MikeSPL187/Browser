@@ -2220,6 +2220,8 @@
     <string name="v5_library_search_downloads">Поиск в загрузках</string>
     <string name="v5_library_delete">Удалить</string>
     <string name="v5_library_retry">Повторить</string>
+    <string name="v5_library_up">Назад в папку выше</string>
+    <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>
     <string name="v5_history_clear_title">Очистить историю</string>
     <string name="v5_history_clear_subtitle">Только в этом профиле</string>
