@@ -1,5 +1,11 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.ui.draw.clip
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +65,11 @@ internal fun PermissionPromptSheet(
     onShown: () -> Unit = {},
 ) {
     LaunchedEffect(prompt.id) { onShown() }
+    // V28, B9c: under v5 on a phone the one v5 prompt sheet; closing it does not allow.
+    if (rememberDrawsV5()) {
+        PermissionPromptSheetV5(prompt, onChoice)
+        return
+    }
     ModalBottomSheet(
         onDismissRequest = { onChoice(PermissionPromptChoice.Block) },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -145,6 +156,51 @@ private fun PermissionPromptContent(
                 }
             }
         }
+    }
+}
+
+/** The permission question on the v5 prompt sheet: its glyph, the site and the three answers. */
+@Composable
+private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (PermissionPromptChoice) -> Unit) {
+    val host = SiteConnectionRules.host(prompt.site.origin).ifEmpty { prompt.site.origin }
+    val names = prompt.permissions.map { it.displayName() }.joinToString()
+    val message = stringResource(R.string.permission_radar_request_message, host, names)
+    val note = stringResource(
+        if (prompt.isPrivate) R.string.permission_radar_private_request_note else R.string.permission_prompt_change_later,
+    )
+    val icon = PermissionPromptRules.heroPermission(prompt.permissions).icon()
+    V5PromptTheme {
+        val colors = V5Theme.colors
+        V5PromptSheet(
+            visible = true,
+            title = stringResource(PermissionPromptRules.question(prompt.permissions).title()),
+            message = "$message\n\n$note",
+            actions = PermissionPromptRules.choices(prompt.permissions).map { choice ->
+                V5PromptAction(
+                    label = stringResource(choice.label(prompt.isPrivate)),
+                    onClick = { onChoice(choice) },
+                    role = if (choice == PermissionPromptChoice.AllowAlways) V5PromptRole.Primary else V5PromptRole.Default,
+                )
+            },
+            onDismiss = { onChoice(PermissionPromptChoice.Block) },
+            testTag = PermissionRadarTestTags.Prompt,
+            leading = {
+                Box(
+                    Modifier
+                        .size(V5Sizes.rowTile)
+                        .clip(V5Theme.shapes.full)
+                        .background(colors.accentFill),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        tint = colors.onAccentFill,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                }
+            },
+        )
     }
 }
 

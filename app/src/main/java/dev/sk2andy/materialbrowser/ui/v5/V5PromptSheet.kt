@@ -47,6 +47,8 @@ fun V5PromptSheet(
     onDismiss: () -> Unit,
     /** The tag the current dialog had. */
     testTag: String? = null,
+    /** A glyph before the title, such as the permission a site asks for. */
+    leading: (@Composable () -> Unit)? = null,
     /** What the question asks to fill in or pick, between the message and the actions. */
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -56,6 +58,7 @@ fun V5PromptSheet(
             title = title,
             onClose = onDismiss,
             modifier = if (testTag != null) Modifier.testTag(testTag) else Modifier,
+            leading = leading,
         )
         Column(
             Modifier
