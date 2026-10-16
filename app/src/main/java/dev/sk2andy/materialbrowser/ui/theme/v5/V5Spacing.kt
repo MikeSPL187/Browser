@@ -32,6 +32,8 @@ object V5Spacing {
 object V5Sizes {
     /** Smallest touch target; in the bar the visible capsule and buttons are this size themselves. */
     val touchTarget: Dp = 48.dp
+    /** The widest a full-screen state's content gets (a lock screen, B13), so lines stay readable. */
+    val stateContentMax: Dp = 480.dp
 
     // Bottom bar on a phone (section 5.1).
     /** The bar: 8 + 48 + 8, plus the system navigation under it. */
