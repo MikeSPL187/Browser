@@ -225,10 +225,10 @@ internal fun BoxScope.BrowserAddressChrome(
         }
     }
     val uiV5 by rememberUiV5Flag()
-    // V9a: under ui.v5 typing an address happens in the v5 editor on a phone; the new tab's start
-    // content and command feedback stay on the current editor until their v5 steps.
-    val v5Editor = uiV5 && addressEditorVisible && commandFeedback == null && !wideWindow &&
-        !showInteractiveBlankStart
+    // V9a: under ui.v5 typing an address happens in the v5 editor on a phone; over a new tab with
+    // pinned sites it lets them show through while empty (V28, B6a). Command feedback stays on the
+    // current bar until its v5 step.
+    val v5Editor = uiV5 && addressEditorVisible && commandFeedback == null && !wideWindow
     if (addressEditorVisible && !v5Editor) {
         if (!showInteractiveBlankStart) {
             AddressEditorBackdrop(
@@ -456,12 +456,12 @@ internal fun BoxScope.BrowserAddressChrome(
         selectedTab.url != BLANK_URL &&
         !linkPeekAddressBarExpanded &&
         !wideWindow
-    // V7: the v5 bar replaces the bar at rest and while collapsed; editing, feedback, the overview
-    // morph and wide windows stay on the current bar until their v5 steps. The v5 link preview
-    // (V21) keeps the v5 bar under it: the current bar's expanded state is for the current preview.
+    // V7: the v5 bar replaces the bar at rest and while collapsed; command feedback is a line above
+    // it (V28, B6b). Editing, the overview morph and wide windows stay on the current bar until their
+    // v5 steps. The v5 link preview (V21) keeps the v5 bar under it: the current bar's expanded state
+    // is for the current preview.
     val showV5Bar = uiV5 &&
         !addressEditorVisible &&
-        commandFeedback == null &&
         !wideWindow &&
         effectiveAddressBarDockPlacement == null &&
         !tabOverviewOpening &&
@@ -489,6 +489,7 @@ internal fun BoxScope.BrowserAddressChrome(
             ),
             permissionActivityVisible = permissionActivityVisible,
             canDock = addressBarDockingAvailable,
+            commandFeedback = commandFeedback,
             snoozedTabCount = visibleSnoozedTabCount,
             onAddress = openAddressEditor,
             onTabs = onTabs,
@@ -558,6 +559,7 @@ internal fun BoxScope.BrowserAddressChrome(
             onClipboard = onClipboardOffer,
             onCancel = onAddressEditorDismiss,
             onHighlightChange = onHighlightedSuggestionChanged,
+            overStart = showInteractiveBlankStart,
         )
     }
     // V10a: the v5 overview has its own toolbar, so no bar shows while it opens or is open.

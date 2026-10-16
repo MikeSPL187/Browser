@@ -6,7 +6,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 first run as canvas screens «п1» and «п2», light and dark. Not localized. */
+/* The v5 first run as canvas screens «п1»–«п3», light and dark. Not localized. */
 
 private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
@@ -39,4 +39,16 @@ private fun V5FirstRunDefaultPreview() {
 @Composable
 private fun V5FirstRunDefaultDarkPreview() {
     VolaV5Theme(dark = true) { V5FirstRunDefaultBrowser(onMakeDefault = {}, onNotNow = {}) }
+}
+
+@Preview(name = "First run v5 · two gestures", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5FirstRunGesturesPreview() {
+    VolaV5Theme(dark = false) { V5FirstRunGestures(onDone = {}) }
+}
+
+@Preview(name = "First run v5 · two gestures, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5FirstRunGesturesDarkPreview() {
+    VolaV5Theme(dark = true) { V5FirstRunGestures(onDone = {}) }
 }

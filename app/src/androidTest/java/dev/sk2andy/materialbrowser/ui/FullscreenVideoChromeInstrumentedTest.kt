@@ -147,7 +147,9 @@ class FullscreenVideoChromeInstrumentedTest {
                     .openUrl("https://media.example/"),
             )
         }
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
+        // Each test runs in a fresh process, so this first page also brings up the engine; on the
+        // loaded CI emulator that took longer than five seconds (night of 15.10).
+        composeRule.waitUntil(timeoutMillis = ENGINE_VIEW_ATTACH_TIMEOUT_MILLIS) {
             composeRule.activity.browserControllerForTesting()
                 .selectedBrowserEngineViewForTesting()
                 ?.isAttachedToWindow == true
@@ -169,3 +171,5 @@ class FullscreenVideoChromeInstrumentedTest {
         }
     }
 }
+
+private const val ENGINE_VIEW_ATTACH_TIMEOUT_MILLIS = 20_000L
