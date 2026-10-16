@@ -2240,4 +2240,10 @@
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
     <string name="v5_first_run_default_action">Сделать основным</string>
     <string name="v5_first_run_not_now">Не сейчас</string>
+    <string name="v5_first_run_gestures_title">Два жеста</string>
+    <string name="v5_first_run_gesture_tabs_title">Свайп по панели</string>
+    <string name="v5_first_run_gesture_tabs_caption">Влево и вправо — соседние вкладки</string>
+    <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
+    <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
+    <string name="v5_first_run_gestures_done">Понятно</string>
 </resources>
