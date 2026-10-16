@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
+import dev.sk2andy.materialbrowser.dismissNotRespondingDialogForTests
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPrompt
@@ -378,6 +379,7 @@ class GeckoIoPromptsInstrumentedTest {
     }
 
     private fun tapAttachedGeckoView() {
+        dismissNotRespondingDialogForTests()
         val target = requireNotNull(testEngineView)
         instrumentation.runOnMainSync { target.requestFocus() }
         val location = IntArray(2)
@@ -385,8 +387,12 @@ class GeckoIoPromptsInstrumentedTest {
         val x = location[0] + target.width / 2
         val y = location[1] + target.height / 2
         instrumentation.uiAutomation.executeShellCommand("input tap $x $y").close()
+        lastTap = "tap=$x,$y windowFocus=${target.hasWindowFocus()} ${focusedWindow().trim()}"
         SystemClock.sleep(250)
     }
+
+    /** Where the last tap went and which window had the focus, for the failure message. */
+    private var lastTap = "no tap"
 
     /** A tap that lands before Gecko is ready to take input is lost, so tap until the page reacts. */
     private fun tapUntilPageLeaves(scenario: ActivityScenario<MainActivity>, readyTitle: String) {
@@ -401,7 +407,7 @@ class GeckoIoPromptsInstrumentedTest {
             }
         }
         val title = scenario.value { controller -> controller.selectedTab.title }
-        throw AssertionError("Page did not react to $TAP_ATTEMPTS taps, title=$title")
+        throw AssertionError("Page did not react to $TAP_ATTEMPTS taps, title=$title; $lastTap")
     }
 
     /** Like [tapUntilPageLeaves], until Gecko asks for files: a tap before Gecko takes input is lost. */
@@ -418,7 +424,7 @@ class GeckoIoPromptsInstrumentedTest {
                 SystemClock.sleep(50)
             }
         }
-        throw AssertionError("Gecko did not ask for files after $TAP_ATTEMPTS taps")
+        throw AssertionError("Gecko did not ask for files after $TAP_ATTEMPTS taps; $lastTap")
     }
 
     /** Backs out of the focused picker, again if a key was lost, until the browser hears it was cancelled. */

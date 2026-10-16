@@ -638,6 +638,10 @@ implements them.
   `GeckoExtensionPersistencePhaseTwoInstrumentedTest` creates a fresh runtime and must inventory the
   same enabled non-built-in ID without calling install or downloading an XPI. Do not use Android Test
   Orchestrator, `pm clear`, APK reinstall or test cleanup between these two phases.
+  The full instrumented run clears app data before every test, so there phase two skips itself
+  (no phase-one record); shard 0 of every full Gecko run then runs both phases in order with
+  `clearPackageData=false`, the APKs left installed and the app force-stopped between them
+  (`instrumented.yml`, results under the shard's `extension-phases`).
 - Candy's bundled MV3 Topping host is separate from user-installed Firefox extensions. It uses
   GeckoView 155 `browser.userScripts` registrations for the supported local JS/CSS subset, remains
   disabled in private browsing, and is hidden from the Firefox extension manager. Regular first
