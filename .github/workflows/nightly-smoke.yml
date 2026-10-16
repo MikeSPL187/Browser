@@ -68,9 +68,11 @@ jobs:
       - name: Start emulator
         run: |
           # 4 GB and every runner core: a release Gecko playing video on a software GPU is heavy.
-          nohup "$ANDROID_HOME/emulator/emulator" -avd vola_smoke -port 5554 -no-window -noaudio \
-            -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores "$(nproc)" \
-            > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          # release_smoke.py starts the same command again when Android's system_server dies.
+          command='"$ANDROID_HOME/emulator/emulator" -avd vola_smoke -port 5554 -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 4096 -cores "$(nproc)"'
+          echo "SMOKE_EMULATOR_COMMAND=$command" >> "$GITHUB_ENV"
+          echo "SMOKE_EMULATOR_LOG=$RUNNER_TEMP/emulator.log" >> "$GITHUB_ENV"
+          nohup bash -c "$command" > "$RUNNER_TEMP/emulator.log" 2>&1 &
 
       - name: Build the release APK
         run: >-
@@ -121,7 +123,7 @@ jobs:
 
       - name: Upload the logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nightly-smoke
           path: |

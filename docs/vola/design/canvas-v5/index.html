@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..500,0..1,-25..0&icon_names=add,arrow_back,arrow_forward,article,backspace,battery_full,bolt,bookmark,cancel,check_circle,chevron_right,close,content_copy,cookie,do_not_disturb_on,domino_mask,download,expand_more,find_in_page,fingerprint,format_color_fill,format_size,group,headphones,history,info,key,keyboard_capslock,left_panel_close,left_panel_open,lock,menu_book,mic,more_horiz,north_west,open_in_full,palette,pause,public,push_pin,radar,record_voice_over,refresh,restart_alt,rule_settings,save,search,settings,share,shield,signal_cellular_alt,sync,tab,text_fields,touch_app,translate,tune,visibility_off,wifi&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..500,0..1,-25..0&icon_names=add,arrow_back,arrow_forward,article,backspace,battery_full,bolt,bookmark,cancel,check_circle,chevron_right,close,content_copy,cookie,description,do_not_disturb_on,domino_mask,download,error,expand_more,find_in_page,fingerprint,folder,format_color_fill,format_size,group,headphones,history,image,info,key,keyboard_arrow_down,keyboard_arrow_up,keyboard_capslock,left_panel_close,left_panel_open,lock,menu_book,mic,more_horiz,north_west,open_in_browser,open_in_full,palette,pause,picture_as_pdf,public,push_pin,radar,record_voice_over,refresh,restart_alt,rule_settings,save,search,settings,share,shield,signal_cellular_alt,stop,swipe,swipe_up,sync,tab,text_fields,touch_app,translate,travel_explore,tune,visibility_off,wifi&display=block">
 <style>
 /* ===== Tokens: light (default) ===== */
 :root{
@@ -518,6 +518,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 <main class="wrap">
   <div class="intro">
     <h1>Vola v5 — холст на утверждение</h1>
+    <p><b>Версия 3 (16.10):</b> добавлены экраны «п», «р», «с» — знакомство, библиотека, поиск на странице (V28, на утверждение); «а»–«о» не менялись и утверждены 11.10.</p>
     <p>Версия 2: учтены <b>решения владельца по черновику</b> и исследование «Дизайн Vola v5: ориентиры». Главное: над страницей нет живого стекла (GeckoView рисует её в отдельной поверхности), поэтому панель — <b>непрозрачная лента цвета сайта</b>; размытие — только над экранами самой Vola и над снимком страницы.</p>
     <p>Каждый экран — в рамке телефона 390 × 844 dp, тема переключается вверху. Значения — из <b>system-v5.md</b>; движения — из плана v5, раздел 5. Раздел «Движение» можно трогать пальцем.</p>
     <nav class="chips" aria-label="Разделы">
@@ -525,7 +526,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <a href="#s-a">а · Новая вкладка</a><a href="#s-b">б · Страница</a><a href="#s-c">в · Ввод адреса</a>
       <a href="#s-d">г · Обзор</a><a href="#s-e">д · Меню</a><a href="#s-f">е · Защита</a>
       <a href="#s-g">ж · Настройки</a><a href="#s-h">з · Частный</a><a href="#s-i">и · Планшет</a>
-      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#system">Система</a>
+      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#system">Система</a>
     </nav>
   </div>
 
@@ -653,12 +654,40 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
     <div class="row"><figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr dk" id="scr-n1"></div></div><figcaption><b>Шесть акцентов.</b> Кнопка «Готово» — заливка; «Изменить» и галочка — яркий тон.</figcaption></figure></div>
   </section>
 
+  <section class="scn" id="s-p">
+    <h2><small>п</small>Знакомство</h2>
+    <p class="lede">Версия 3, на утверждение. Из трёх шагов v4 остаются два, и оба можно пропустить. Тему, блокировку трекеров и HTTPS <b>не спрашиваем</b>: защита включена с первого запуска (как у Brave), тема — как в системе (как у Safari). Вместо 30-секундного урока — <b>один лист «Два жеста»</b> над новой вкладкой. Он открывается после знакомства, а после обновления — только если жесты изменились.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-p1"></div></div><figcaption><b>Привет.</b> Три обещания — то, что Vola делает без настроек. «Перенести из другого браузера» — тихая вторая кнопка.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-p2"></div></div><figcaption><b>Основной браузер.</b> Один вопрос; «Не сейчас» ничего не теряет — пункт есть в настройках.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-p3"></div></div><figcaption><b>Два жеста.</b> Лист над новой вкладкой: свайп по панели и вверх. Панель под листом видна — жест показан там, где его делать.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="scn" id="s-q">
+    <h2><small>р</small>Библиотека</h2>
+    <p class="lede">Как у Safari: <b>один лист с сегментом</b> «Избранное · История · Загрузки» вместо трёх отдельных экранов. Меню открывает его сразу на нужном сегменте. Поиск — по текущему сегменту. Строку можно смахнуть влево, чтобы удалить. Пустой сегмент — одна строка текста и значок, без иллюстраций.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-q1"></div></div><figcaption><b>История.</b> По дням; время справа. «Очистить…» спрашивает период: час, сегодня, всё.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-q2"></div></div><figcaption><b>Избранное.</b> Папки сверху, затем сайты; «Изменить» — порядок и папки.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-q3"></div></div><figcaption><b>Загрузки.</b> Идущая загрузка — кольцо, как вокруг «•••»; неудачная — «Повторить» (V22c).</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="scn" id="s-r">
+    <h2><small>с</small>Поиск на странице</h2>
+    <p class="lede">Поле — <b>капсула над клавиатурой</b>, как ввод адреса (экран «в»): та же высота, тот же «Отмена» справа. Счётчик и стрелки — внутри капсулы. Все совпадения подсвечены, текущее — ярче и прокручено к середине экрана. Клавиатура закрыта — капсула опускается на место панели.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-r1"></div></div><figcaption><b>Набрано «сияни».</b> 2 из 7; «↑» и «↓» — 44 dp, касание по счётчику ничего не делает.</figcaption></figure>
+    </div>
+  </section>
+
   <section class="scn" id="system">
     <h2>Система</h2>
     <p class="lede">Токены из <b>system-v5.md</b> — в текущей теме холста. Цвет сайта можно проверить своим цветом.</p>
     <div class="sys" id="sys"></div>
   </section>
-  <footer>Vola v5 — черновик холста, версия 2. Сайты, домены и данные выдуманы. Код и изображения — оригинальные; шрифты Inter и Material Symbols Rounded подключены с Google Fonts.</footer>
+  <footer>Vola v5 — черновик холста, версия 3. Сайты, домены и данные выдуманы. Код и изображения — оригинальные; шрифты Inter и Material Symbols Rounded подключены с Google Fonts.</footer>
 </main>
 
 <script>
@@ -1046,6 +1075,66 @@ S.n1=()=>{
   return sbar()+`<div style="padding:52px 16px 0"><div class="t-title">Два тона акцента</div><p class="t-foot l2" style="margin:6px 0 16px">Заливка — глубокий тон, текст на ней белый. Текст и значки — яркий тон.</p>
   ${A.map(([c,n])=>`<div class="card acc-${c} sq" style="border-radius:16px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:12px"><span class="av" style="width:36px;height:36px">${n[0]}</span><div style="flex:1;min-width:0"><div class="t-hl">${n}</div><div class="t-foot acc" style="font-weight:600">Изменить</div></div>${I('check_circle','f acc')}<span style="height:40px;border-radius:20px;padding:0 16px;display:grid;place-items:center;background:var(--acc-fill);color:var(--on-acc-fill);font:600 15px/20px Inter">Готово</span></div>`).join('')}
   </div><div class="gh" style="color:var(--l1)"></div>`;
+};
+/* ---------- V28: first run, library, find in page (version 3) ---------- */
+S.p1=()=>`<div style="position:absolute;inset:0;background:radial-gradient(120% 55% at 50% 0%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%),var(--bg)"></div>`+sbar()+`<div style="position:absolute;left:24px;right:24px;top:132px">
+<div class="sq" style="width:88px;height:88px;border-radius:24px;margin:0 0 24px;display:grid;place-items:center;background:var(--acc-fill);color:var(--on-acc-fill)">${I('travel_explore','f s40')}</div>
+<div class="t-lt">Vola</div>
+<p class="t-call l2" style="margin:8px 0 28px">Браузер, который не мешает странице.</p>
+<div class="grp sq">
+ <div class="rw noi" style="min-height:64px"><span class="it" style="background:${TILE.green}">${I('shield','s20 f')}</span><div class="tx"><div class="t-body">Защита сразу</div><div class="t-foot l2">Реклама и трекеры блокируются, только HTTPS</div></div></div>
+ <div class="rw noi" style="min-height:64px"><span class="it" style="background:${TILE.indigo}">${I('group','s20 f')}</span><div class="tx"><div class="t-body">Профили</div><div class="t-foot l2">Работа и дом — свои вкладки и cookie</div></div></div>
+ <div class="rw noi" style="min-height:64px"><span class="it" style="background:${TILE.gray}">${I('lock','s20 f')}</span><div class="tx"><div class="t-body">Всё на устройстве</div><div class="t-foot l2">Никакой аналитики и рекламных SDK</div></div></div>
+</div></div>
+<div style="position:absolute;left:24px;right:24px;bottom:44px"><div class="pill-btn">Начать</div><div style="height:48px;display:grid;place-items:center;margin-top:8px;color:var(--acc);font:500 17px/22px Inter">Перенести из другого браузера</div></div><div class="gh" style="color:var(--l1)"></div>`;
+S.p2=()=>`<div style="position:absolute;inset:0;background:var(--bg)"></div>`+sbar()+`<div style="position:absolute;left:24px;right:24px;top:220px;text-align:center">
+<div style="width:80px;height:80px;border-radius:50%;margin:0 auto 24px;display:grid;place-items:center;background:var(--sf2);color:var(--acc)">${I('open_in_browser','s40')}</div>
+<div class="t-title">Открывать ссылки в Vola?</div>
+<p class="t-call l2" style="margin:10px 0 0">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</p></div>
+<div style="position:absolute;left:24px;right:24px;bottom:44px"><div class="pill-btn">Сделать основным</div><div style="height:48px;display:grid;place-items:center;margin-top:8px;color:var(--acc);font:500 17px/22px Inter">Не сейчас</div></div><div class="gh" style="color:var(--l1)"></div>`;
+S.p3=()=>{
+  const g=(ic,t,d)=>`<div class="rw noi" style="min-height:76px"><span class="it n" style="width:52px;height:52px;border-radius:16px;color:var(--acc)">${I(ic,'s28')}</span><div class="tx"><div class="t-body">${t}</div><div class="t-foot l2">${d}</div></div></div>`;
+  return newTab()+sbar()+bar({})+`<div class="scrim"></div><div class="sheet" style="bottom:96px;left:12px;right:12px;border-radius:32px;padding:6px 16px 16px">
+<div class="handle"></div>
+<div class="t-title" style="margin:6px 4px 12px">Два жеста</div>
+<div class="grp sq">${g('swipe','Свайп по панели','Влево и вправо — соседние вкладки')}${g('swipe_up','Вверх от панели','Все вкладки и группы')}</div>
+<div class="pill-btn" style="margin-top:14px">Понятно</div></div>`;
+};
+function libSheet(seg,body){
+  return`<div class="snapshot">${page('polar')}${bar({k:'polar'})}</div>`+sbar(1)+`<div class="scrim"></div><div class="sheet" style="top:52px;padding-bottom:0">
+<div class="handle"></div>
+<div style="display:flex;align-items:center;gap:8px;height:44px;margin-bottom:6px"><div class="t-title" style="flex:1">Библиотека</div><span class="xbtn">${I('close','s20 w5')}</span></div>
+<div class="segc"><span${seg===0?' class="on"':''}>Избранное</span><span${seg===1?' class="on"':''}>История</span><span${seg===2?' class="on"':''}>Загрузки</span></div>
+<div class="search" style="flex:none;margin:12px 0 4px">${I('search','s20')}${['Поиск в избранном','Поиск в истории','Поиск в загрузках'][seg]}</div>
+${body}</div>`;
+}
+const libRow=(k,t,d,right)=>`<div class="rw" style="min-height:60px">${fav(k,32)}<div class="tx"><div class="t-body ell">${t}</div><div class="t-foot l2 ell">${d}</div></div>${right||''}</div>`;
+S.q1=()=>libSheet(1,`<div class="sec-h" style="margin:14px 4px 8px"><span class="t-hl">Сегодня</span></div>
+<div class="grp sq">${libRow('polar','Северное сияние в марте','polar-notes.ru','<span class="t-foot l2">12:24</span>')}${libRow('kp','Прогноз сияний на неделю','polar-notes.ru/prognoz','<span class="t-foot l2">12:20</span>')}${libRow('train','Поезд до Мурманска','rzd-tickets.ru','<span class="t-foot l2">11:02</span>')}</div>
+<div class="sec-h" style="margin:18px 4px 8px"><span class="t-hl">Вчера</span></div>
+<div class="grp sq">${libRow('recipe','Пирог с брусникой на кефире','recepty-doma.ru','<span class="t-foot l2">21:40</span>')}${libRow('dev','Журнал разработчика: пружины','devlog.io','<span class="t-foot l2">18:15</span>')}</div>
+<div class="toolbar" style="position:absolute;left:0;right:0;bottom:0;height:72px;display:flex;align-items:center;justify-content:flex-end;padding:0 16px 20px"><span style="color:var(--danger);font:500 17px/22px Inter">Очистить…</span></div>`);
+S.q2=()=>libSheet(0,`<div class="grp sq" style="margin-top:14px">
+ <div class="rw" style="min-height:56px"><span class="it n">${I('folder','s20 f')}</span><div class="tx t-body">Поездка на север</div><span class="val">6</span>${I('chevron_right','s20 chev')}</div>
+ <div class="rw" style="min-height:56px"><span class="it n">${I('folder','s20 f')}</span><div class="tx t-body">Рецепты</div><span class="val">14</span>${I('chevron_right','s20 chev')}</div></div>
+<div class="grp sq" style="margin-top:14px">${libRow('polar','Полярные заметки','polar-notes.ru')}${libRow('weather','Погода на неделю','pogoda.example')}${libRow('metro','Схема метро','metro.example')}${libRow('dev','devlog','devlog.io')}</div>
+<div class="toolbar" style="position:absolute;left:0;right:0;bottom:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 20px"><span class="acc" style="font:500 17px/22px Inter">Новая папка</span><span class="acc" style="font:600 17px/22px Inter">Изменить</span></div>`);
+S.q3=()=>{
+  const ring=`<span style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--acc) 0 62%,var(--fill) 62% 100%)"><span style="width:26px;height:26px;border-radius:50%;background:var(--sf);display:grid;place-items:center;color:var(--l1)">${I('stop','s16 f')}</span></span>`;
+  const file=(ic,c,t,d,right)=>`<div class="rw" style="min-height:60px"><span class="it" style="background:${c}">${I(ic,'s20 f')}</span><div class="tx"><div class="t-body ell">${t}</div><div class="t-foot l2 ell">${d}</div></div>${right||''}</div>`;
+  return libSheet(2,`<div class="grp sq" style="margin-top:14px">
+${file('picture_as_pdf',TILE.red,'gid-po-severu.pdf','12,4 из 20 МБ · осталось 8 с',ring)}
+${file('error',TILE.orange,'karta-oblakov.png','Не загрузилось · 2,3 МБ',`<span class="acc" style="font:600 15px/20px Inter;padding:0 4px">Повторить</span>`)}
+${file('image',TILE.blue,'siyanie-teriberka.jpg','3,1 МБ · polar-notes.ru · вчера')}
+${file('description',TILE.gray,'bilet-murmansk.pdf','184 КБ · rzd-tickets.ru · вчера')}</div>`);
+};
+S.r1=()=>{
+  const hl=h=>h.replace(/сияни/g,'<mark style="background:#FFE36E;color:inherit;border-radius:3px;padding:0 1px">сияни</mark>');
+  let pg=hl(page('polar'));let n=0;pg=pg.replace(/<mark style="background:#FFE36E;/g,m=>++n===2?'<mark style="background:#FF9F0A;box-shadow:0 0 0 2px #FF9F0A;':m);
+  const fy=844-20-262-8-48;
+  return`<div style="transform:translateY(-150px)">${pg}</div>`+sbar(0,`color:var(--on-tint);background:var(--tint);${tintStyle('polar')}`)+
+  `<div style="position:absolute;left:0;right:0;top:${fy-10}px;height:68px;background:var(--mat-thick);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);box-shadow:inset 0 .5px 0 var(--hair);z-index:5"></div><div class="afield sq" style="position:absolute;left:12px;top:${fy}px;width:290px;z-index:6">${I('search','s20 l2')}<span class="t-body" style="flex:1">сияни<i class="caret"></i></span><span class="t-foot l2 tnum" style="padding:0 2px">2 из 7</span><span style="width:44px;height:44px;display:grid;place-items:center;color:var(--l1)">${I('keyboard_arrow_up','s20 w5')}</span><span style="width:44px;height:44px;display:grid;place-items:center;color:var(--l1);margin-right:-6px">${I('keyboard_arrow_down','s20 w5')}</span></div>
+  <div style="position:absolute;right:8px;top:${fy}px;width:72px;height:48px;display:grid;place-items:center;color:var(--acc);font:500 17px/22px Inter;z-index:6">Отмена</div>`+kbdHTML(false);
 };
 function renderStatic(){for(const k of Object.keys(S)){const el=document.getElementById('scr-'+k);if(el)el.innerHTML=S[k]()}}
 

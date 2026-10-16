@@ -47,8 +47,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,6 +92,7 @@ import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaGlance
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import java.net.URI
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -184,24 +187,41 @@ internal fun <T : View> LinkPeekOverlay(
         label = "linkPeekProgress",
     )
     val targetPulseScale = remember { Animatable(1f) }
-    val targetPulseTransition = rememberInfiniteTransition(label = "linkPeekPlusPulse")
-    val targetRingProgress by targetPulseTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 920, easing = FastOutSlowInEasing),
-        ),
-        label = "linkPeekPlusRing",
-    )
-    val targetBreathProgress by targetPulseTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 560, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "linkPeekPlusBreath",
-    )
+    // The target pulses to invite the drag. With system animations removed it stands still: no
+    // endless motion, and the window can go idle (the CI emulator runs without animations).
+    val targetRingState: State<Float>
+    val targetBreathState: State<Float>
+    if (V5Motion.animationsEnabled) {
+        val targetPulseTransition = rememberInfiniteTransition(label = "linkPeekPlusPulse")
+        targetRingState = targetPulseTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = VolaMotion.LINK_PEEK_TARGET_RING_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
+            ),
+            label = "linkPeekPlusRing",
+        )
+        targetBreathState = targetPulseTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = VolaMotion.LINK_PEEK_TARGET_BREATH_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "linkPeekPlusBreath",
+        )
+    } else {
+        targetRingState = remember { mutableFloatStateOf(0f) }
+        targetBreathState = remember { mutableFloatStateOf(0f) }
+    }
+    val targetRingProgress by targetRingState
+    val targetBreathProgress by targetBreathState
     val commitRingProgress = remember(committing) { targetRingProgress }
     val commitBreathProgress = remember(committing) { targetBreathProgress }
     val commitTargetPulseScale = remember(committing) { targetPulseScale.value }
