@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -676,10 +677,13 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
-        // A tap during the bar's entry motion is lost: tap once the action is on screen.
+        // A tap during the bar's entry motion is lost, and a disabled action ignores it (it is off
+        // until docking is available for the restored tab): tap once the action is shown and enabled.
         val parkRight = AddressBarActionTestTags.action(AddressBarAction.ParkRight)
         composeRule.waitUntil(timeoutMillis = 10_000L) {
-            runCatching { composeRule.onNodeWithTag(parkRight).assertIsDisplayed() }.isSuccess
+            runCatching {
+                composeRule.onNodeWithTag(parkRight).assertIsDisplayed().assertIsEnabled()
+            }.isSuccess
         }
         composeRule.onNodeWithTag(parkRight).performClick()
 
@@ -694,7 +698,9 @@ class AddressBarDockInstrumentedTest {
             var state = ""
             composeRule.runOnIdle {
                 state = "docked=${browserController.addressBar.isDocked}, " +
-                    "placement=${browserController.addressBar.dockPlacement}"
+                    "placement=${browserController.addressBar.dockPlacement}, " +
+                    "dockingEnabled=${browserController.addressBar.isDockingEnabled}, " +
+                    "url=${browserController.selectedTab.url}"
             }
             throw AssertionError("The bar did not park on the right after the tap: $state")
         }
