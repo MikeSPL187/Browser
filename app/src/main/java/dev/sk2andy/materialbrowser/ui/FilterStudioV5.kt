@@ -62,9 +62,8 @@ import java.util.Date
  * The filter studio under ui.v5 (V28, Б12a), as a v5 settings page: the rules first (type
  * segments, search, only this profile's), each a row that says whether it is on and opens its own
  * page (the switch, what it does, where it came from, edit, delete); then the request test, the
- * tools and the built-in protection note. The rule editor is a v5 sheet; import, export and the
- * web list are still the v4 dialogs, shared with the v4 screen, until their v5 sheets (Б12a-5).
- * What each action does is the v4 screen's, through the same callbacks; v4 is unchanged.
+ * tools and the built-in protection note. The rule editor, import, the web list and export are v5
+ * sheets. What each action does is the v4 screen's, through the same callbacks; v4 is unchanged.
  */
 @Composable
 internal fun FilterStudioV5(

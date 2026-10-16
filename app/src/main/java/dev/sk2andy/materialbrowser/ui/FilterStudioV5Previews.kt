@@ -117,3 +117,56 @@ private fun FilterRuleAddSheetV5Preview() {
 private fun FilterRuleCssSheetV5Preview() {
     RuleSheetPreview(rule = previewRules.last())
 }
+
+@Composable
+private fun SheetPreview(content: @Composable () -> Unit) {
+    MaterialBrowserTheme {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < 0.5f) { content() }
+    }
+}
+
+/** Import: paste rules, then analyze. */
+@VolaPreviews
+@Composable
+private fun FilterImportSheetV5Preview() {
+    SheetPreview {
+        FilterImportSheetV5(
+            visible = true,
+            profiles = emptyList(),
+            currentProfileId = "default",
+            onDismiss = {},
+            onParse = { CandyRulePreview(rules = emptyList(), errors = emptyList()) },
+            onApply = { true },
+        )
+    }
+}
+
+/** The web list in a private tab: the note, uBlock's source, the address and the scope. */
+@VolaPreviews
+@Composable
+private fun FilterSubscriptionSheetV5Preview() {
+    SheetPreview {
+        FilterSubscriptionSheetV5(
+            visible = true,
+            existingRules = previewRules,
+            profiles = emptyList(),
+            currentProfileId = "default",
+            isIncognito = true,
+            onDismiss = {},
+            onApply = { _, _ -> true },
+        )
+    }
+}
+
+/** Export: the rules as text to select and copy. */
+@VolaPreviews
+@Composable
+private fun FilterExportSheetV5Preview() {
+    SheetPreview {
+        FilterExportSheetV5(
+            visible = true,
+            text = { "# Vola rules v1\nblock ads.example\nallow news.example cdn.example" },
+            onDismiss = {},
+        )
+    }
+}
