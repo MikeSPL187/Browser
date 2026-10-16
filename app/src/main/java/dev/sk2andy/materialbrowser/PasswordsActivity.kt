@@ -83,6 +83,8 @@ import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
+import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
+import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 
 /** Where the Passwords screen is. A recovery phrase lives only here, in memory, while it is shown. */
 internal sealed interface PasswordsRoute {
@@ -195,7 +197,11 @@ class PasswordsActivity : FragmentActivity() {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
             CandyTheme(settings = appearanceSettings, workspaceAccent = workspaceAccent) {
-                Content()
+                // V28 B3: under ui.v5 on a phone the screens take the v5 palette, type and shapes
+                // through Material; the full v5 passwords screen comes with V24.
+                ProvideV5SettingsSkin(enabled = rememberSettingsUiV5()) {
+                    Content()
+                }
             }
         }
     }
