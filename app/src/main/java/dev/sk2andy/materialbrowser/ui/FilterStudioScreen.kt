@@ -401,9 +401,31 @@ internal fun FilterStudioDialogs(
     onApplyImport: (CandyRulePreview) -> Int,
     onApplySubscription: (String, CandyRulePreview) -> Int,
     onExport: () -> String,
+    /** The rule editor as a v5 sheet; the caller draws it inside the v5 theme. */
+    uiV5: Boolean = false,
 ) {
     val view = LocalView.current
-    if (dialogs.addVisible) {
+    if (uiV5) {
+        FilterRuleSheetV5(
+            initialRule = dialogs.editingRule,
+            visible = dialogs.addVisible || dialogs.editingRule != null,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            onDismiss = {
+                dialogs.addVisible = false
+                dialogs.editingRule = null
+            },
+            onSave = { rule ->
+                val saved = if (dialogs.editingRule == null) onAdd(rule) else onUpdate(rule)
+                if (saved != null) {
+                    dialogs.addVisible = false
+                    dialogs.editingRule = null
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                }
+                saved != null
+            },
+        )
+    } else if (dialogs.addVisible) {
         AddFilterRuleDialog(
             initialRule = null,
             profiles = profiles,
@@ -420,7 +442,7 @@ internal fun FilterStudioDialogs(
             },
         )
     }
-    dialogs.editingRule?.let { rule ->
+    if (!uiV5) dialogs.editingRule?.let { rule ->
         AddFilterRuleDialog(
             initialRule = rule,
             profiles = profiles,
@@ -830,6 +852,48 @@ private fun FilterRuleCard(
     }
 }
 
+/** The rule's kind after its action changes: hiding is always CSS, the others never are. */
+internal fun filterRuleKindFor(action: CandyRuleAction, kind: CandyRuleKind): CandyRuleKind = when {
+    action == CandyRuleAction.Cosmetic -> CandyRuleKind.CosmeticCss
+    kind == CandyRuleKind.CosmeticCss -> CandyRuleKind.RequestHost
+    else -> kind
+}
+
+/**
+ * The rule the editor saves: [initialRule] (a new personal rule when null) with the fields as
+ * edited, blanks as none. A profile that is gone falls back to every profile, unless it is the
+ * current one.
+ */
+internal fun editedFilterRule(
+    initialRule: CandyRule?,
+    action: CandyRuleAction,
+    kind: CandyRuleKind,
+    requestHost: String,
+    firstPartyHost: String,
+    selector: String,
+    profileId: String?,
+    profiles: List<BrowserProfile>,
+    currentProfileId: String,
+    personalGroup: String,
+    nowMillis: Long,
+): CandyRule = (
+    initialRule ?: CandyRule.new(
+        action = action,
+        kind = kind,
+        group = personalGroup,
+        origin = CandyRuleOrigin.User,
+    )
+).copy(
+    action = action,
+    kind = kind,
+    requestHost = requestHost.takeIf(String::isNotBlank),
+    firstPartyHost = firstPartyHost.takeIf(String::isNotBlank),
+    cosmeticSelector = selector.takeIf(String::isNotBlank),
+    profileId = profileId?.takeIf { id -> profiles.any { it.id == id } }
+        ?: profileId?.takeIf { it == currentProfileId },
+    updatedAtMillis = nowMillis,
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AddFilterRuleDialog(
@@ -876,11 +940,7 @@ private fun AddFilterRuleDialog(
                                 selected = action == value,
                                 onClick = {
                                     action = value
-                                    if (value == CandyRuleAction.Cosmetic) {
-                                        kind = CandyRuleKind.CosmeticCss
-                                    } else if (kind == CandyRuleKind.CosmeticCss) {
-                                        kind = CandyRuleKind.RequestHost
-                                    }
+                                    kind = filterRuleKindFor(value, kind)
                                 },
                                 modifier = if (value == CandyRuleAction.Cosmetic) {
                                     Modifier.testTag(FilterStudioTestTags.CssAction)
@@ -1006,20 +1066,18 @@ private fun AddFilterRuleDialog(
             Button(
                 onClick = {
                     invalid = !onAdd(
-                        (initialRule ?: CandyRule.new(
+                        editedFilterRule(
+                            initialRule = initialRule,
                             action = action,
                             kind = kind,
-                            group = personalGroup,
-                            origin = CandyRuleOrigin.User,
-                        )).copy(
-                            action = action,
-                            kind = kind,
-                            requestHost = requestHost.takeIf(String::isNotBlank),
-                            firstPartyHost = firstPartyHost.takeIf(String::isNotBlank),
-                            cosmeticSelector = selector.takeIf(String::isNotBlank),
-                            profileId = profileId?.takeIf { id -> profiles.any { it.id == id } }
-                                ?: profileId?.takeIf { it == currentProfileId },
-                            updatedAtMillis = System.currentTimeMillis(),
+                            requestHost = requestHost,
+                            firstPartyHost = firstPartyHost,
+                            selector = selector,
+                            profileId = profileId,
+                            profiles = profiles,
+                            currentProfileId = currentProfileId,
+                            personalGroup = personalGroup,
+                            nowMillis = System.currentTimeMillis(),
                         ),
                     )
                 },

@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,8 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -41,8 +36,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
@@ -69,9 +62,9 @@ import java.util.Date
  * The filter studio under ui.v5 (V28, Б12a), as a v5 settings page: the rules first (type
  * segments, search, only this profile's), each a row that says whether it is on and opens its own
  * page (the switch, what it does, where it came from, edit, delete); then the request test, the
- * tools and the built-in protection note. The rule editor, import, export and the web list are
- * still the v4 dialogs, shared with the v4 screen, until their v5 sheets (Б12a-4, Б12a-5). What
- * each action does is the v4 screen's, through the same callbacks; v4 is unchanged.
+ * tools and the built-in protection note. The rule editor is a v5 sheet; import, export and the
+ * web list are still the v4 dialogs, shared with the v4 screen, until their v5 sheets (Б12a-5).
+ * What each action does is the v4 screen's, through the same callbacks; v4 is unchanged.
  */
 @Composable
 internal fun FilterStudioV5(
@@ -179,20 +172,21 @@ internal fun FilterStudioV5(
                 }
             }
         }
+        FilterStudioDialogs(
+            dialogs = dialogs,
+            subscriptionRules = subscriptionRules,
+            isIncognito = isIncognito,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            onAdd = onAdd,
+            onUpdate = onUpdate,
+            onParseImport = onParseImport,
+            onApplyImport = onApplyImport,
+            onApplySubscription = onApplySubscription,
+            onExport = onExport,
+            uiV5 = true,
+        )
     }
-    FilterStudioDialogs(
-        dialogs = dialogs,
-        subscriptionRules = subscriptionRules,
-        isIncognito = isIncognito,
-        profiles = profiles,
-        currentProfileId = currentProfileId,
-        onAdd = onAdd,
-        onUpdate = onUpdate,
-        onParseImport = onParseImport,
-        onApplyImport = onApplyImport,
-        onApplySubscription = onApplySubscription,
-        onExport = onExport,
-    )
 }
 
 /** The last request test; [decision] null means no rule matched. */
@@ -330,36 +324,13 @@ private fun RequestTest(
                 .padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4)
                 .semantics { heading() },
         )
-        Box(
-            Modifier
-                .padding(horizontal = V5Spacing.marginPhone)
-                .fillMaxWidth()
-                .heightIn(min = V5Sizes.rowSingleLine)
-                .clip(V5Theme.shapes.s)
-                .background(colors.surface)
-                .padding(horizontal = V5Spacing.space4),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            if (input.isEmpty()) Text(label, style = V5Theme.type.body, color = colors.labelTertiary)
-            // Hosts and addresses: no capital, no autocorrect, «Go» checks.
-            BasicTextField(
-                value = input,
-                onValueChange = onInputChange,
-                singleLine = true,
-                textStyle = V5Theme.type.body.copy(color = colors.label),
-                cursorBrush = SolidColor(colors.accent),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Uri,
-                    imeAction = ImeAction.Go,
-                ),
-                keyboardActions = KeyboardActions(onGo = { onTest() }),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = label },
-            )
-        }
+        FilterTextField(
+            value = input,
+            placeholder = label,
+            onValueChange = onInputChange,
+            onDone = onTest,
+            imeAction = ImeAction.Go,
+        )
         V5ListGroup(
             footer = result?.let { FilterStudioV5Rules.testResult(it) }?.let { (res, group) ->
                 if (group == null) stringResource(res) else stringResource(res, group)
