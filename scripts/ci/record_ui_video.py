@@ -42,6 +42,9 @@ DEFAULT_SCREEN = (1080, 2400)
 FIRST_RUN_START = ("Get started", "Начать")
 FIRST_RUN_NEXT = ("Next", "Далее")
 FIRST_RUN_SKIP = ("Skip", "Пропустить")
+# The v5 first run (ui.v5): «make Vola the default» and the gesture lesson after the welcome.
+FIRST_RUN_NOT_NOW = ("Not now", "Не сейчас")
+FIRST_RUN_GOT_IT = ("Got it", "Понятно")
 WHATS_NEW_CLOSE = ("Explore Vola", "К браузеру")
 MENU_LABELS = ("More options", "Другие действия")
 
@@ -273,8 +276,8 @@ class Recorder:
         self.dismiss_first_run()
 
     def dismiss_first_run(self):
-        """Welcome, setup and the gesture lesson; then "What's new" if it shows."""
-        for _ in range(6):
+        """Welcome, setup and the gesture lesson (v4 or v5); then "What's new" if it shows."""
+        for _ in range(8):
             nodes = self.nodes()
             if find_node(nodes, FIRST_RUN_START):
                 self.tap(FIRST_RUN_START)
@@ -284,6 +287,10 @@ class Recorder:
                 self.tap(FIRST_RUN_SKIP)
             elif find_node(nodes, FIRST_RUN_SKIP):
                 self.tap(FIRST_RUN_SKIP)
+            elif find_node(nodes, FIRST_RUN_NOT_NOW):
+                self.tap(FIRST_RUN_NOT_NOW)
+            elif find_node(nodes, FIRST_RUN_GOT_IT):
+                self.tap(FIRST_RUN_GOT_IT)
             elif find_node(nodes, WHATS_NEW_CLOSE):
                 self.tap(WHATS_NEW_CLOSE)
             else:
