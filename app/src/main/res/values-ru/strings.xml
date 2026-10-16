@@ -2220,6 +2220,13 @@
     <string name="v5_library_search_downloads">Поиск в загрузках</string>
     <string name="v5_library_delete">Удалить</string>
     <string name="v5_library_retry">Повторить</string>
+    <string name="v5_history_clear">Очистить…</string>
+    <string name="v5_history_clear_title">Очистить историю</string>
+    <string name="v5_history_clear_subtitle">Только в этом профиле</string>
+    <string name="v5_history_clear_hour">За последний час</string>
+    <string name="v5_history_clear_today">За сегодня</string>
+    <string name="v5_history_clear_two_days">За сегодня и вчера</string>
+    <string name="v5_history_clear_all">За всё время</string>
     <!-- V28 B1: знакомство v5 (холст п1, п2) -->
     <string name="v5_first_run_tagline">Браузер, который не мешает странице.</string>
     <string name="v5_first_run_protection_title">Защита сразу</string>

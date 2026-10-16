@@ -24,9 +24,13 @@ import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SnoozedTabStore
+import dev.sk2andy.materialbrowser.ui.HistoryLibraryV5
 import dev.sk2andy.materialbrowser.ui.HistoryScreen
+import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
+import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
+import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.recall.RecallRules
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +55,7 @@ class HistoryActivity : ComponentActivity() {
     private var hasHistoryMutations = false
     private var isFullImmersiveModeEnabled = false
     private var accessibleProfileIds: Set<String> = emptySet()
+    private var recallEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowsingHistoryLifecycle.install(application)
@@ -85,7 +90,10 @@ class HistoryActivity : ComponentActivity() {
         history = accessibleHistory()
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
-        val recallEnabled = store.loadRecallEnabled()
+        recallEnabled = store.loadRecallEnabled()
+        // v5 draws the library on a phone (V28, B2b); a tablet keeps the current screen.
+        val drawsV5 = UiV5Flag.isEnabled(this) &&
+            resources.configuration.smallestScreenWidthDp < BrowserWindowStateRules.LARGE_SCREEN_MIN_WIDTH_DP
 
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
@@ -94,40 +102,29 @@ class HistoryActivity : ComponentActivity() {
                 settings = appearanceSettings,
                 workspaceAccent = workspaceAccent,
             ) {
+                if (drawsV5) {
+                    HistoryLibraryV5(
+                        profileId = activeProfileId,
+                        history = history,
+                        recallMatches = recallMatches,
+                        onRecallQuery = ::searchRecall,
+                        onDelete = { entry -> mutations.enqueue { deleteEntries(listOf(entry)) } },
+                        onClear = { request -> mutations.enqueue { clearHistory(request) } },
+                        onOpen = ::openEntry,
+                        onSwitch = ::switchLibrary,
+                        onClose = { whenMutationsSaved(::finishWithResult) },
+                    )
+                    return@CandyTheme
+                }
                 HistoryScreen(
                     profiles = profiles,
                     activeProfileId = activeProfileId,
                     history = history,
                     recallMatches = recallMatches,
-                    onRecallCriteriaChanged = { query, profileIds ->
-                        val requestId = ++recallRequestId
-                        val recallQuery = RecallRules.historyQuery(query)
-                        if (!recallEnabled || recallQuery == null) {
-                            recallMatches = emptyList()
-                        } else {
-                            recallMatches = emptyList()
-                            recallRepository.search(
-                                profileIds = profileIds,
-                                query = recallQuery,
-                                limit = RecallRules.MAX_HISTORY_RESULTS,
-                            ) { matches ->
-                                if (requestId == recallRequestId && !isFinishing) {
-                                    recallMatches = matches
-                                }
-                            }
-                        }
-                    },
+                    onRecallCriteriaChanged = ::searchRecall,
                     onDeleteEntries = { entries -> mutations.enqueue { deleteEntries(entries) } },
                     onClearHistory = { request -> mutations.enqueue { clearHistory(request) } },
-                    onOpenEntry = { entry ->
-                        whenMutationsSaved {
-                            setResult(
-                                Activity.RESULT_OK,
-                                HistoryActivityContract.resultIntent(entry, clearRequests),
-                            )
-                            finish()
-                        }
-                    },
+                    onOpenEntry = ::openEntry,
                     onBack = { whenMutationsSaved(::finishWithResult) },
                     onOpenNewTab = ::openNewTab,
                     isChangingConfigurations = { isChangingConfigurations },
@@ -213,6 +210,39 @@ class HistoryActivity : ComponentActivity() {
                 match.visitedAt >= request.sinceInclusiveMillis &&
                 match.visitedAt < request.untilExclusiveMillis
         }
+    }
+
+    /** Pages whose text matches [query] («Page memory»), when it is on; a newer query wins. */
+    private fun searchRecall(query: String, profileIds: Set<String>) {
+        val requestId = ++recallRequestId
+        val recallQuery = RecallRules.historyQuery(query)
+        recallMatches = emptyList()
+        if (!recallEnabled || recallQuery == null) return
+        recallRepository.search(
+            profileIds = profileIds,
+            query = recallQuery,
+            limit = RecallRules.MAX_HISTORY_RESULTS,
+        ) { matches ->
+            if (requestId == recallRequestId && !isFinishing) {
+                recallMatches = matches
+            }
+        }
+    }
+
+    private fun openEntry(entry: HistoryEntry) = whenMutationsSaved {
+        setResult(Activity.RESULT_OK, HistoryActivityContract.resultIntent(entry, clearRequests))
+        finish()
+    }
+
+    /** Another segment of the v5 library: the browser starts it once this screen's edits are saved. */
+    private fun switchLibrary(segment: V5LibrarySegment) = whenMutationsSaved {
+        setResult(
+            Activity.RESULT_OK,
+            LibrarySwitch.request(segment, HistoryActivityContract.resultIntent(clearRequests = clearRequests)),
+        )
+        finish()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
     }
 
     private fun showMutationFailed() {
