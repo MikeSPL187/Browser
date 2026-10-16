@@ -54,6 +54,9 @@
   `Application Not Responding: com.android.systemui` забирает фокус, и все касания через систему
   (`input tap`, `injectInputEvent`) уходят в него: «Page did not react to 3 taps», «drag did not scroll»,
   падают подряд тесты одного шарда (16.10). Перед таким касанием — `dismissNotRespondingDialogForTests()`.
+- `ValueAnimator.areAnimatorsEnabled()` в потоке теста до запуска активности всегда `true`: масштаб анимаций
+  процесс узнаёт от WindowManager, когда открывает первое окно (на эмуляторе CI анимации выключены). Из-за этого
+  `assumeTrue` в начале теста его не пропускал, и проверка «анимация идёт» падала. Читать внутри `onActivity`.
 
 ## Семантика и поиск узлов
 - `testTag` после `clearAndSetSemantics {}` в той же цепочке **отбрасывается** — `assertDoesNotExist()`
