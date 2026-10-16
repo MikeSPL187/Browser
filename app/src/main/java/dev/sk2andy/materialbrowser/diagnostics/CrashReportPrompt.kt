@@ -1,5 +1,12 @@
 package dev.sk2andy.materialbrowser.diagnostics
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
+import dev.sk2andy.materialbrowser.ui.rememberDrawsV5
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -73,6 +80,22 @@ internal fun CrashReportDialog(
     onShare: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // V28, B14a: under v5 on a phone the question is the one v5 prompt sheet.
+    if (rememberDrawsV5()) {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE) {
+            V5PromptSheet(
+                visible = true,
+                title = stringResource(R.string.crash_report_title),
+                message = stringResource(R.string.crash_report_message),
+                actions = listOf(
+                    V5PromptAction(stringResource(R.string.action_share), onShare, V5PromptRole.Primary),
+                    V5PromptAction(stringResource(R.string.crash_report_copy), onCopy),
+                ),
+                onDismiss = onDismiss,
+            )
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.crash_report_title)) },
@@ -96,6 +119,8 @@ internal fun CrashReportDialog(
         },
     )
 }
+
+private const val DARK_LUMINANCE = 0.5f
 
 private fun copyReport(context: Context, text: String) {
     val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
