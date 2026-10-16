@@ -23,6 +23,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserMediaTraceOwner
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
+import dev.sk2andy.materialbrowser.dismissNotRespondingDialogForTests
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -96,9 +97,22 @@ class GeckoMedia3ActivityE2eInstrumentedTest {
                     point[0] += ((button.getDouble(0) + button.getDouble(2) / 2) * scale).toInt()
                     point[1] += ((button.getDouble(1) + button.getDouble(3) / 2) * scale).toInt()
                 }
-                assertTrue(UiDevice.getInstance(instrumentation).click(point[0], point[1]))
+                // A system tap can land in a hung System UI dialog or reach Gecko before it takes
+                // input: tap again until the page reports it. The page starts playback only once.
+                var pageTapped = false
+                var taps = 0
+                while (!pageTapped && taps < PLAY_TAP_ATTEMPTS) {
+                    taps++
+                    dismissNotRespondingDialogForTests()
+                    assertTrue(UiDevice.getInstance(instrumentation).click(point[0], point[1]))
+                    val deadline = SystemClock.uptimeMillis() + PLAY_TAP_SETTLE_MILLIS
+                    while (!pageTapped && SystemClock.uptimeMillis() < deadline) {
+                        pageTapped = server.samples.any { it.optString("phase").startsWith("site-") }
+                        if (!pageTapped) SystemClock.sleep(50L)
+                    }
+                }
                 await(
-                    description = "trusted Gecko play; samples=${server.samples}",
+                    description = "trusted Gecko play after $taps tap(s); samples=${server.samples}",
                     diagnostics = { BrowserMediaPlaybackService.lifecycleTraceForTesting() },
                 ) {
                     server.samples.any { sample ->
@@ -355,6 +369,8 @@ class GeckoMedia3ActivityE2eInstrumentedTest {
     }
 
     private companion object {
+        const val PLAY_TAP_ATTEMPTS = 3
+        const val PLAY_TAP_SETTLE_MILLIS = 3_000L
         val AUDIO: ByteArray by lazy {
             val sampleRate = 8_000
             val data = ByteArray(sampleRate * 20) { index ->

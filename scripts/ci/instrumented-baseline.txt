@@ -10,8 +10,7 @@
 # instead: a new failure that passes on it is reported as flaky and does not fail the run.
 
 # Gecko engine: page insets, CSS safe area, keyboard, prompts, extensions, media.
-dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea -- Gecko viewport pixels across the v4 overview morph
-dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredDismissAnchorAttachesGeckoOnlyAfterOverviewCloses -- swipe-up dismiss in the v4 overview
+dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea -- hero entry moves the stripes 117/23 px two frames in (overview morph, ui/**, issue for H)
 dev.sk2andy.materialbrowser.browser.gecko.GeckoKeyboardInsetsInstrumentedTest#immersiveLowerWebsiteInputStaysVisibleWithoutShrinkingNativeHost
 
 # System WebView engine, external previews and APK downloads.
