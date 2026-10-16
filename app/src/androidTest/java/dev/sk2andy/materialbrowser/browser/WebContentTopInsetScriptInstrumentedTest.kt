@@ -1539,10 +1539,19 @@ class WebContentTopInsetScriptInstrumentedTest {
             view,
             "document.querySelector('#scroller').scrollTop = 400",
         )
-
+        val probeStart = SystemClock.uptimeMillis()
+        val probeReceived = fallbackReceived.await(10_000, TimeUnit.MILLISECONDS)
+        val probeElapsed = SystemClock.uptimeMillis() - probeStart
+        val probeState = evaluate(
+            view,
+            "JSON.stringify({top: document.querySelector('#header').getBoundingClientRect().top, " +
+                "scroll: document.querySelector('#scroller').scrollTop, " +
+                "style: document.querySelector('#header').getAttribute('style'), " +
+                "ua: navigator.userAgent})",
+        )
         assertTrue(
-            "Unstable sticky header did not request native top fallback",
-            fallbackReceived.await(STALE_TIMER_WINDOW_MILLIS, TimeUnit.MILLISECONDS),
+            "PROBE fallback received=$probeReceived after ${probeElapsed}ms; state=$probeState",
+            probeReceived && probeElapsed <= STALE_TIMER_WINDOW_MILLIS,
         )
     }
 
