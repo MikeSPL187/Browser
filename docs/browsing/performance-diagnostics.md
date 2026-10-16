@@ -119,20 +119,9 @@ Change one variable per comparison, using the same page, scroll pattern and sign
 
 ## Emulator scaling fixture
 
-| Owner | Contract |
-| --- | --- |
-| `app/src/androidTest/assets/gecko_safe_area_scaling_fixture.html` | Identical page for Android instrumentation and minified Release; retained open-Shadow-DOM feed, nonleaf additions, virtualization, late sticky header and tiny fixed control |
-| `GeckoSafeAreaScalingInstrumentedTest` | Diagnostic Debug geometry/coverage checks at 256/1024/4096 retained feed elements; 96 bidirectional programmatic scroll steps |
-| `scripts/gecko_safe_area_scaling_server.mjs` | Loopback-only host server; serves the unchanged fixture and retains at most 100 reports, each bounded to 64 KiB |
-| Release workflow | Start the host server, reverse its explicit port on the exclusively owned emulator, start diagnostics, navigate the Release app to the fixture and read `/reports` |
-| Input parameters | `scale=256\|1024\|4096`, `steps=24\|96\|192`, `stepMs=100..1000`, `run=1`; 96 steps at 550 ms fits a typical 120-second capture, but verify recording remained active |
-| Coverage | Require actual Reconcile and PointDiscovery measures, not just an available `PerformanceObserver`; missing phases are missing evidence, not free work |
-| Geometry | Sticky containment naturally ends when its containing section leaves the viewport; inactive samples are not repair failures |
-| Scope | Programmatic scrolling and settled geometry do not prove native APZ-fling continuity or absence of white drawing gaps; verify these separately with native input and render traces |
-
-Phase timings are nested/inclusive; never sum them into total CPU. Compare query/pass counts across
-size and duration independently from wall time and native restyle cost. Capture/export must preserve
-the existing privacy and explicit-serial rules above.
+Removed with the Gecko CSS safe-area layer (#279): since H4 (#123) a Gecko page gets no renderer top
+inset, so the fixture's protected-inset geometry and its Reconcile/PointDiscovery phases could no
+longer occur. The System WebView top-inset script keeps its own tests.
 
 ## Gecko 155 sampler lifecycle
 

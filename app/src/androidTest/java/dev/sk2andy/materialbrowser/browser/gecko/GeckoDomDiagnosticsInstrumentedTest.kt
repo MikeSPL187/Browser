@@ -324,21 +324,23 @@ class GeckoDomDiagnosticsInstrumentedTest {
                     assertTrue(session.loadUrl(server.fixtureUrl("/site-matrix/dom-probe")))
                 }
                 try {
-                    await { settled.get() }
+                    await { settled.get() && authorInset.get() != null }
+                    // Since H4 (#123) the status bar is the host's native top margin: the renderer
+                    // gets no top inset, so the page's env(safe-area-inset-top) stays 0.
                     scenario.onActivity {
                         (view as GeckoViewInsetHost).updateInsets(
                             GeckoViewInsetRules.resolve(GeckoViewInsets(0, 144, 0, 0), false, false, false, false),
                             WindowInsetsCompat.Builder().setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, 144, 0, 0)).build(),
                         )
                     }
-                    await { authorInset.get()?.let { kotlin.math.abs(it - 144) <= 0.5 } == true }
                     scenario.onActivity { GeckoDomDiagnostics.request() }
                     await { GeckoDomDiagnostics.snapshot.status != "pending" }
                     assertEquals("ready", GeckoDomDiagnostics.snapshot.status)
                     val report = JSONObject(requireNotNull(GeckoDomDiagnostics.snapshot.payload))
-                    assertEquals(144.0, report.getJSONObject("env").getDouble("top") * report.getJSONObject("viewport").getDouble("density"), 0.5)
-                    assertEquals(144, report.getJSONObject("native").getInt("topPx"))
-                    assertEquals(0, report.getJSONObject("native").getInt("marginTopPx"))
+                    assertEquals(0.0, report.getJSONObject("env").getDouble("top"), 0.5)
+                    assertEquals(0.0, authorInset.get() ?: Double.NaN, 0.5)
+                    assertEquals(0, report.getJSONObject("native").getInt("topPx"))
+                    assertEquals(144, report.getJSONObject("native").getInt("marginTopPx"))
                     val candidates = report.getJSONArray("candidates")
                     val header = (0 until candidates.length()).map { candidates.getJSONObject(it) }.first { it.getString("tag") == "HEADER" }
                     assertEquals("fixed", header.getString("position"))

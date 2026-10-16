@@ -272,9 +272,9 @@ jobs:
             done
           fi
           # The performance diagnostics need the diagnostics build, which is a different app from
-          # the one tested above: it is rebuilt for these three classes only, after everything else.
+          # the one tested above: it is rebuilt for these two classes only, after everything else.
           if [[ -z "$FILTER" && "$SHARD" == 1 && "$FLAVOR" == Full ]]; then
-            for class in GeckoDomDiagnostics GeckoPerformanceDiagnostics GeckoSafeAreaScaling; do
+            for class in GeckoDomDiagnostics GeckoPerformanceDiagnostics; do
               run_extra "diagnostics-$class" -Pvola.performanceDiagnostics=true \
                 -Pandroid.testInstrumentationRunnerArguments.class="dev.sk2andy.materialbrowser.browser.gecko.${class}InstrumentedTest"
             done
