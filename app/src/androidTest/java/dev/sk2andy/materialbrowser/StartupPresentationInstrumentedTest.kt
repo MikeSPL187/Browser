@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser
 
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -44,6 +45,7 @@ class StartupPresentationInstrumentedTest {
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        awaitWindowFocus()
         composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 
@@ -71,6 +73,24 @@ class StartupPresentationInstrumentedTest {
         assertImeVisible()
     }
 
+    /**
+     * Waits for the browser window to hold the focus: the editor takes focus only then. On the
+     * loaded CI emulator a hung System UI "isn't responding" dialog can hold it instead (16.10), so
+     * the wait closes such a dialog; a timeout names the window that kept the focus.
+     */
+    private fun awaitWindowFocus() {
+        val deadline = SystemClock.elapsedRealtime() + WINDOW_FOCUS_TIMEOUT_MILLIS
+        while (!composeRule.activity.window.decorView.hasWindowFocus()) {
+            if (SystemClock.elapsedRealtime() >= deadline) {
+                throw AssertionError(
+                    "Browser window never got focus; focus is on ${focusedWindowForTests()}",
+                )
+            }
+            dismissNotRespondingDialogForTests()
+            SystemClock.sleep(100)
+        }
+    }
+
     private fun assertImeVisible() {
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
@@ -87,3 +107,5 @@ class StartupPresentationInstrumentedTest {
         }
     }
 }
+
+private const val WINDOW_FOCUS_TIMEOUT_MILLIS = 10_000L
