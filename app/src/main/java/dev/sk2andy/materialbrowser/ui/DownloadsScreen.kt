@@ -298,7 +298,7 @@ internal fun DownloadsScreen(
 }
 
 /** «18.6 of 30 MB» while it downloads; just the size so far when the total is unknown. */
-private fun downloadProgressLabel(context: android.content.Context, entry: DownloadEntry): String {
+internal fun downloadProgressLabel(context: android.content.Context, entry: DownloadEntry): String {
     val bytes = Formatter.formatShortFileSize(context, entry.bytes)
     return if (entry.total > 0L) {
         context.getString(
@@ -467,7 +467,7 @@ private fun DownloadsEmptyState(searching: Boolean, modifier: Modifier = Modifie
     )
 }
 
-private fun DownloadEntry.sourceHost(): String? = source.takeIf(String::isNotBlank)
+internal fun DownloadEntry.sourceHost(): String? = source.takeIf(String::isNotBlank)
     ?.let(Uri::parse)
     ?.host
     ?.takeIf(String::isNotBlank)
@@ -493,7 +493,7 @@ private fun downloadKindFilterLabel(filter: DownloadKindFilter): String = string
 )
 
 @Composable
-private fun downloadKindLabel(kind: DownloadKind): String? = when (kind) {
+internal fun downloadKindLabel(kind: DownloadKind): String? = when (kind) {
     DownloadKind.Pdf -> "PDF"
     DownloadKind.Document -> stringResource(R.string.downloads_kind_document)
     DownloadKind.Spreadsheet -> stringResource(R.string.downloads_kind_spreadsheet)
@@ -505,7 +505,7 @@ private fun downloadKindLabel(kind: DownloadKind): String? = when (kind) {
     DownloadKind.Other -> null
 }
 
-private fun downloadStatusLabel(status: DownloadStatus): Int = when (status) {
+internal fun downloadStatusLabel(status: DownloadStatus): Int = when (status) {
     DownloadStatus.Pending -> R.string.downloads_status_pending
     DownloadStatus.Running -> R.string.downloads_status_running
     DownloadStatus.Paused -> R.string.downloads_status_paused
