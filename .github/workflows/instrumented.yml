@@ -264,6 +264,7 @@ jobs:
           run_extra() {
             local name=$1
             shift
+            ensure_device "the extra run $name" < /dev/null
             rm -rf app/build/outputs/androidTest-results
             ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
               -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
