@@ -48,3 +48,36 @@ private fun V5PromptCrashDarkPreview() {
         )
     }
 }
+
+/** V28 B9a: a site's question with three answers, and a choice without a message. */
+@Preview(name = "Prompt · site sign-in, light", heightDp = 560)
+@Composable
+private fun V5PromptSiteLightPreview() {
+    VolaV5Theme(dark = false) {
+        V5PromptSheet(
+            visible = true,
+            title = "Войти через Google?",
+            message = "Сайт shop.example хочет открыть вход через Google. Для этого ему нужны cookie Google.",
+            actions = listOf(
+                V5PromptAction("Разрешить в этой вкладке", {}, V5PromptRole.Primary),
+                V5PromptAction("Разрешить в профиле", {}),
+                V5PromptAction("Не разрешать", {}),
+            ),
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview(name = "Prompt · download manager, dark", heightDp = 420)
+@Composable
+private fun V5PromptChooserDarkPreview() {
+    VolaV5Theme(dark = true) {
+        V5PromptSheet(
+            visible = true,
+            title = "Чем скачать",
+            message = null,
+            actions = listOf(V5PromptAction("Vola", {}), V5PromptAction("1DM", {}), V5PromptAction("ADM", {})),
+            onDismiss = {},
+        )
+    }
+}
