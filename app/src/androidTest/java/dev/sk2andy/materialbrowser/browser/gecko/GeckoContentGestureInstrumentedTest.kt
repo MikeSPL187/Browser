@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.sk2andy.materialbrowser.dismissNotRespondingDialogForTests
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
@@ -328,6 +329,7 @@ class GeckoContentGestureInstrumentedTest {
         x: Float,
         y: Float,
     ) {
+        if (action == MotionEvent.ACTION_DOWN) dismissNotRespondingDialogForTests()
         MotionEvent.obtain(downTime, eventTime, action, x, y, 0).also { event ->
             event.source = InputDevice.SOURCE_TOUCHSCREEN
             try {
