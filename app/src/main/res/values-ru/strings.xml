@@ -2252,4 +2252,11 @@
     <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
     <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
     <string name="v5_first_run_gestures_done">Понятно</string>
+    <string name="filter_v5_on">Вкл.</string>
+    <string name="filter_v5_off">Выкл.</string>
+    <string name="filter_v5_active">Включено</string>
+    <string name="filter_v5_action">Действие</string>
+    <string name="filter_v5_group">Группа</string>
+    <string name="filter_v5_origin">Откуда</string>
+    <string name="filter_v5_profile_only">Только правила этого пространства</string>
 </resources>
