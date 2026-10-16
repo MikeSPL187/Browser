@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -115,15 +116,14 @@ class GeckoTabOverviewHandoffInstrumentedTest {
                     controller.selectedTab.url == server.url &&
                         controller.selectedGeckoViewForTesting()?.isAttachedToWindow == true
                 }
-                scenario.onActivity { activity ->
-                    activity.onBackPressedDispatcher.onBackPressed()
-                }
-                composeRule.waitForIdle()
                 SystemClock.sleep(PAGE_SETTLE_MILLIS)
                 awaitPreview(scenario)
                 scenario.onActivity { activity ->
+                    val controller = activity.browserControllerForTesting()
+                    // The screenshots below must show the stripe fixture, not the tab's previous page.
+                    assertEquals(server.url, controller.selectedTab.url)
                     // The selected engine view is Vola's host; the GeckoView is its first child.
-                    val host = activity.browserControllerForTesting().selectedGeckoViewForTesting()
+                    val host = controller.selectedGeckoViewForTesting()
                     assertTrue(
                         "The selected tab has no GeckoView: $host",
                         host is CandyGeckoView && host.getChildAt(0) is GeckoView,
@@ -389,9 +389,17 @@ class GeckoTabOverviewHandoffInstrumentedTest {
             }
         }
         val greenStart = (bitmap.height / 5 until bitmap.height * 3 / 5)
-            .first { y -> labels[y] == GREEN_STRIPE_INDEX }
-        val blueStart = (greenStart + 1 until bitmap.height * 9 / 10)
-            .first { y -> labels[y] == BLUE_STRIPE_INDEX }
+            .firstOrNull { y -> labels[y] == GREEN_STRIPE_INDEX }
+        val blueStart = greenStart?.let { start ->
+            (start + 1 until bitmap.height * 9 / 10).firstOrNull { y -> labels[y] == BLUE_STRIPE_INDEX }
+        }
+        if (greenStart == null || blueStart == null) {
+            val column = (1..9).joinToString { tenth ->
+                val y = bitmap.height * tenth / 10
+                "$y:#%06X".format(bitmap.getPixel(x, y) and 0xFFFFFF)
+            }
+            throw AssertionError("No stripes in the screenshot (green=$greenStart, blue=$blueStart): $column")
+        }
         return listOf(greenStart, blueStart)
     }
 
