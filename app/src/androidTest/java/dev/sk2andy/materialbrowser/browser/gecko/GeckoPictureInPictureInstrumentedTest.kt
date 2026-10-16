@@ -368,8 +368,9 @@ class GeckoPictureInPictureInstrumentedTest {
                 }
                 var needsTap = false
                 scenario.onActivity { activity ->
-                    needsTap = activity.browserControllerForTesting().selectedTab.title !=
-                        INLINE_READY_TITLE
+                    needsTap = !inlineVideoStarted(
+                        activity.browserControllerForTesting().selectedTab.title,
+                    )
                 }
                 if (needsTap) {
                     repeat(3) {
@@ -632,7 +633,7 @@ class GeckoPictureInPictureInstrumentedTest {
                     reloadedTitle in setOf(INLINE_LOADED_TITLE, INLINE_READY_TITLE) ||
                         reloadedTitle.startsWith(INLINE_ACTION_GEOMETRY_PREFIX)
                 }
-                if (reloadedTitle != INLINE_READY_TITLE) {
+                if (!inlineVideoStarted(reloadedTitle)) {
                     repeat(3) {
                         tap(x = tapPoint[0], y = tapPoint[1])
                         SystemClock.sleep(250)
@@ -1295,6 +1296,14 @@ class GeckoPictureInPictureInstrumentedTest {
         }
         assertTrue("Visible return geometry changed:\n${failures.joinToString("\n")}", failures.isEmpty())
     }
+
+    /**
+     * The inline fixture plays on its first click and reports the Vola Player action only once.
+     * A tap after the video started (or after the action was reported) plays it again and turns
+     * the title back to [INLINE_READY_TITLE], so the action geometry never comes back.
+     */
+    private fun inlineVideoStarted(title: String): Boolean =
+        title == INLINE_READY_TITLE || title.startsWith(INLINE_ACTION_GEOMETRY_PREFIX)
 
     private fun tap(x: Float, y: Float) {
         assertTrue(UiDevice.getInstance(instrumentation).click(x.toInt(), y.toInt()))

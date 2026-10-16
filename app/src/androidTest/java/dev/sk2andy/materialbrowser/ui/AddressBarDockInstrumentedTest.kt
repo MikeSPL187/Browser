@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsEqualTo
@@ -593,6 +594,12 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        // The parked pill arrives with the chrome's entry motion, not on the first frame.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
+            runCatching {
+                composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab).assertIsDisplayed()
+            }.isSuccess
+        }
         val initialBounds = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
@@ -669,14 +676,27 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(
-            AddressBarActionTestTags.action(AddressBarAction.ParkRight),
-        ).performClick()
+        // A tap during the bar's entry motion is lost: tap once the action is on screen.
+        val parkRight = AddressBarActionTestTags.action(AddressBarAction.ParkRight)
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
+            runCatching { composeRule.onNodeWithTag(parkRight).assertIsDisplayed() }.isSuccess
+        }
+        composeRule.onNodeWithTag(parkRight).performClick()
 
         // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
-        composeRule.waitUntil(timeoutMillis = 10_000L) {
-            composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
-                .fetchSemanticsNodes().isNotEmpty()
+        val parked = runCatching {
+            composeRule.waitUntil(timeoutMillis = 10_000L) {
+                composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        }.isSuccess
+        if (!parked) {
+            var state = ""
+            composeRule.runOnIdle {
+                state = "docked=${browserController.addressBar.isDocked}, " +
+                    "placement=${browserController.addressBar.dockPlacement}"
+            }
+            throw AssertionError("The bar did not park on the right after the tap: $state")
         }
         composeRule.runOnIdle {
             assertEquals(
@@ -852,10 +872,8 @@ class AddressBarDockInstrumentedTest {
                 BrowserScreen(browserController)
             }
         }
-        composeRule.waitUntil(timeoutMillis = 5_000L) {
-            composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
-                .fetchSemanticsNodes().isNotEmpty()
-        }
+        // The pill slides in with the chrome's entry motion: grab it where it comes to rest.
+        val pillBounds = awaitSettledEdgeTabBounds()
 
         composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
             .performTouchInput {
@@ -870,7 +888,7 @@ class AddressBarDockInstrumentedTest {
         composeRule.waitForIdle()
         val placement = requireNotNull(browserController.addressBar.dockPlacement)
         assertTrue(
-            "Unexpected placement after full-host drag: $placement",
+            "Unexpected placement after full-host drag: $placement; pill was at $pillBounds",
             placement.edge == AddressBarDockEdge.Left,
         )
         assertTrue(
@@ -916,6 +934,23 @@ class AddressBarDockInstrumentedTest {
             browserController.addressBar.updateDocked(true)
             assertEquals(rememberedPlacement, browserController.addressBar.dockPlacement)
         }
+    }
+
+    /** Waits until the parked pill is on screen and two frames apart in the same place. */
+    private fun awaitSettledEdgeTabBounds(): Rect {
+        var last: Rect? = null
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
+            val bounds = runCatching {
+                composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
+                    .assertIsDisplayed()
+                    .fetchSemanticsNode()
+                    .boundsInRoot
+            }.getOrNull()
+            val settled = bounds != null && bounds == last
+            last = bounds
+            settled
+        }
+        return requireNotNull(last)
     }
 
     private fun clearSession() {

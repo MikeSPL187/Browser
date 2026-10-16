@@ -2,6 +2,7 @@ package org.mozilla.geckoview;
 
 import android.content.Context;
 import androidx.core.view.WindowInsetsCompat;
+import org.mozilla.gecko.util.GeckoBundle;
 
 /**
  * Exposes an explicit safe-area override for Candy-owned native and Compose safe-area hosts.
@@ -41,5 +42,20 @@ public abstract class CandyGeckoViewSafeAreaBridge extends GeckoView {
         if (display != null) {
             display.windowInsetsChanged(insets);
         }
+    }
+
+    /**
+     * Asks the page to bring its focused field into view, as GeckoView does when it asks for the
+     * keyboard. Candy shrinks this view for the keyboard only once the keyboard is up, after
+     * GeckoView's own request, so the field could stay under the keyboard.
+     */
+    protected final void zoomCandyFocusedInput() {
+        GeckoSession session = getSession();
+        if (session == null) {
+            return;
+        }
+        GeckoBundle bundle = new GeckoBundle();
+        bundle.putBoolean("force", true);
+        session.getEventDispatcher().dispatch("GeckoView:ZoomToInput", bundle);
     }
 }
