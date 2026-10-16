@@ -3594,7 +3594,9 @@ internal class CandyGeckoView(context: Context) :
     FrameLayout(context),
     GeckoViewInsetHost,
     BrowserDynamicToolbarHost {
-    private var dynamicToolbarMaxHeightPx = 0
+    /** The bottom band of the card the address bar may cover; Gecko's visual viewport leaves it out. */
+    internal var dynamicToolbarMaxHeightPx = 0
+        private set
     private var dynamicToolbarCoveredPx = 0
     private var autofillEnabled = true
     private var animationsEnabled = true
