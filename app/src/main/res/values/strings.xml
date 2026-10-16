@@ -2128,4 +2128,10 @@
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
+    <string name="v5_first_run_gestures_title">Two gestures</string>
+    <string name="v5_first_run_gesture_tabs_title">Swipe along the bar</string>
+    <string name="v5_first_run_gesture_tabs_caption">Left and right go to the next tabs</string>
+    <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
+    <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
+    <string name="v5_first_run_gestures_done">Got it</string>
 </resources>

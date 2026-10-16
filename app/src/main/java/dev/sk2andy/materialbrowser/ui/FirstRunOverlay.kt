@@ -20,6 +20,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunDefaultBrowser
+import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunPromise
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunWelcome
 
@@ -34,6 +35,9 @@ internal enum class FirstRunStage {
 
     /** v5 only (canvas screen «п2»): «Open links in Vola?», in place of setup. */
     DefaultBrowser,
+
+    /** v5 only (canvas screen «п3»): the two gestures of the bar, in place of the v4 lesson. */
+    GestureSheet,
 }
 
 internal object FirstRunRules {
@@ -51,6 +55,8 @@ internal object FirstRunRules {
     fun back(stage: FirstRunStage, showIntro: Boolean): FirstRunStage? = when (stage) {
         FirstRunStage.Welcome -> null
         FirstRunStage.Setup, FirstRunStage.DefaultBrowser -> FirstRunStage.Welcome
+        // The sheet is the last word: «Back» closes it as «Got it» does.
+        FirstRunStage.GestureSheet -> null
         FirstRunStage.Gestures -> FirstRunStage.Setup.takeIf { showIntro }
     }
 
@@ -61,22 +67,25 @@ internal object FirstRunRules {
      */
     fun stepCount(showGestures: Boolean): Int = if (showGestures) 3 else 2
 
-    /** The overlay catches «Back» on setup and «п2»: the welcome lets it through, the lesson has its own. */
+    /**
+     * The overlay catches «Back» on setup, «п2» and «п3»: the welcome lets it through, the lesson
+     * has its own.
+     */
     fun handlesBack(stage: FirstRunStage): Boolean =
-        stage == FirstRunStage.Setup || stage == FirstRunStage.DefaultBrowser
+        stage == FirstRunStage.Setup || stage == FirstRunStage.DefaultBrowser || stage == FirstRunStage.GestureSheet
 
     /**
-     * v5 (V28, B1): after the welcome only «Open links in Vola?», skipped when Vola already is the
-     * default browser; null ends the first run. Nothing else is asked: protection is on from the
-     * start and the theme follows the system.
+     * v5 (V28, B1): after the welcome «Open links in Vola?», skipped when Vola already is the
+     * default browser, then the two-gesture sheet. Nothing else is asked: protection is on from
+     * the start and the theme follows the system.
      */
-    fun v5AfterWelcome(isDefaultBrowser: Boolean): FirstRunStage? =
-        FirstRunStage.DefaultBrowser.takeUnless { isDefaultBrowser }
+    fun v5AfterWelcome(isDefaultBrowser: Boolean): FirstRunStage =
+        if (isDefaultBrowser) FirstRunStage.GestureSheet else FirstRunStage.DefaultBrowser
 
     /**
      * Where v5 starts: always the welcome. The v4 gesture lesson teaches v4 gestures, so where v4
      * would show only the lesson (after an update that brings one, or «Show gesture lesson» in
-     * developer options) v5 shows its own first run; its two-gesture sheet (B1b) takes that place.
+     * developer options) v5 shows its whole first run, which ends with its own two gestures.
      */
     fun v5FirstStage(): FirstRunStage = FirstRunStage.Welcome
 }
@@ -137,22 +146,23 @@ internal fun FirstRunOverlay(
                 onBack = { FirstRunRules.back(FirstRunStage.Gestures, showIntro)?.let { stage = it } ?: onCompleted() },
                 showWelcome = !showIntro,
             )
-            // v5 only; the v4 first run never reaches it.
-            FirstRunStage.DefaultBrowser -> Unit
+            // v5 only; the v4 first run never reaches them.
+            FirstRunStage.DefaultBrowser, FirstRunStage.GestureSheet -> Unit
         }
     }
 }
 
 /**
- * The v5 first run on a phone (V28, B1; canvas screens «п1», «п2»): the welcome with three promises,
- * then «Open links in Vola?» unless Vola already is the default browser.
+ * The v5 first run on a phone (V28, B1; canvas screens «п1»–«п3»): the welcome with three promises,
+ * «Open links in Vola?» unless Vola already is the default browser, then the two gestures of the
+ * bar over the browser.
  */
 @Composable
 private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean, onCompleted: () -> Unit) {
     val context = LocalContext.current
     var stage by rememberSaveable { mutableStateOf(FirstRunRules.v5FirstStage()) }
     BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
-        FirstRunRules.back(stage, showIntro)?.let { stage = it }
+        FirstRunRules.back(stage, showIntro)?.let { stage = it } ?: onCompleted()
     }
     val promises = listOf(
         V5FirstRunPromise(
@@ -188,15 +198,14 @@ private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean,
                 FirstRunStage.DefaultBrowser -> V5FirstRunDefaultBrowser(
                     onMakeDefault = {
                         controller.openDefaultBrowserSettings()
-                        onCompleted()
+                        stage = FirstRunStage.GestureSheet
                     },
-                    onNotNow = onCompleted,
+                    onNotNow = { stage = FirstRunStage.GestureSheet },
                 )
+                FirstRunStage.GestureSheet -> V5FirstRunGestures(onDone = onCompleted)
                 else -> V5FirstRunWelcome(
                     promises = promises,
-                    onStart = {
-                        FirstRunRules.v5AfterWelcome(controller.isDefaultBrowser)?.let { stage = it } ?: onCompleted()
-                    },
+                    onStart = { stage = FirstRunRules.v5AfterWelcome(controller.isDefaultBrowser) },
                     // «Move from another browser» opens over the welcome, which waits for the user to come back.
                     onImport = { context.startActivity(PasswordsActivityContract.importIntent(context)) },
                 )
