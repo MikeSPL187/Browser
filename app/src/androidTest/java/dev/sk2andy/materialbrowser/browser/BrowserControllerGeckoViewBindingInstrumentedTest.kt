@@ -504,6 +504,12 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     TextInputOcclusionProbeResult.FocusedTextInputClear
                 },
             )
+            // The first retry follows 150 ms after the first answer. Waiting for the answer and
+            // then for idle let a busy emulator run the whole burst before the pause (5 probes
+            // in CI), so the app pauses right after the first answer, with the retry pending.
+            session.afterTextInputOcclusionProbe = {
+                if (session.textInputOcclusionProbeCount == 1) browserController.onPause()
+            }
             browserController.installGeckoEngineSessionForTesting(session)
             browserController.dispatchGeckoEngineEventForTesting(
                 BrowserEngineEvent(
@@ -534,11 +540,9 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         composeRule.waitUntil(timeoutMillis = 5_000L) {
             session.textInputOcclusionProbeCount == 1
         }
-        composeRule.runOnIdle {
-            requireNotNull(controller).onPause()
-        }
 
-        Thread.sleep(700L)
+        // Longer than all four retries together (150 + 200 + 350 + 500 ms).
+        Thread.sleep(1_500L)
         composeRule.runOnIdle {
             assertEquals(1, session.textInputOcclusionProbeCount)
             assertFalse(requireNotNull(controller).addressBar.isDocked)
@@ -836,46 +840,85 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         }
     }
 
+    /** A minimized presentation plays in the overlay; another browser host gets no second view. */
     @Test
     fun fullscreenPresentationPreventsSecondGeckoViewForAnotherHost() {
         composeRule.runOnIdle {
-            val activity = composeRule.activity
-            val browserController = BrowserController(activity)
-            controller = browserController
-            val browserHost = FrameLayout(activity)
-            val fullscreenHost = FrameLayout(activity)
-            val replacementBrowserHost = FrameLayout(activity)
-            val root = FrameLayout(activity).apply {
-                addView(browserHost)
-                addView(fullscreenHost)
-                addView(replacementBrowserHost)
-            }
-            activity.addContentView(
-                root,
-                FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                ),
-            )
-            val session = ReentrantAttachSession(
-                tabId = browserController.selectedTabId,
-                onFirstAttach = {},
-            )
-            browserController.installGeckoEngineSessionForTesting(session)
-            val attached = browserController.attachSelectedBrowserEngineView(browserHost)
-            browserController.reportSelectedGeckoMediaStateForTesting(eligibleMediaState())
-            browserController.prepareForPictureInPicture()
-            browserController.attachFullscreenVideoView(fullscreenHost)
-            browserController.detachBrowserEngineView(browserHost)
+            val fixture = presentFullscreenVideo()
+            val browserController = requireNotNull(controller)
+            browserController.minimizeFullscreenVideo()
+            browserController.attachFullscreenVideoView(fixture.fullscreenHost)
+            browserController.detachBrowserEngineView(fixture.browserHost)
 
             val replacement =
-                browserController.attachSelectedBrowserEngineView(replacementBrowserHost)
+                browserController.attachSelectedBrowserEngineView(fixture.replacementBrowserHost)
 
             assertNull(replacement)
-            assertEquals(1, session.createCount)
-            assertSame(attached, session.createdView)
-            assertSame(fullscreenHost, attached?.parent)
+            assertEquals(1, fixture.session.createCount)
+            assertSame(fixture.attached, fixture.session.createdView)
+            assertSame(fixture.fullscreenHost, fixture.attached?.parent)
         }
+    }
+
+    /**
+     * The selected tab's presentation plays in the browser viewport (since 6c8f531d): another
+     * browser host takes the same view over instead of making a second one.
+     */
+    @Test
+    fun viewportPresentationMovesIntoAnotherBrowserHostWithoutSecondGeckoView() {
+        composeRule.runOnIdle {
+            val fixture = presentFullscreenVideo()
+            val browserController = requireNotNull(controller)
+            browserController.attachFullscreenVideoView(fixture.fullscreenHost)
+            browserController.detachBrowserEngineView(fixture.browserHost)
+
+            val replacement =
+                browserController.attachSelectedBrowserEngineView(fixture.replacementBrowserHost)
+
+            assertEquals(1, fixture.session.createCount)
+            assertSame(fixture.attached, replacement)
+            assertSame(fixture.replacementBrowserHost, replacement?.parent)
+            assertEquals(0, fixture.fullscreenHost.childCount)
+        }
+    }
+
+    private class FullscreenVideoFixture(
+        val session: ReentrantAttachSession,
+        val attached: View?,
+        val browserHost: FrameLayout,
+        val fullscreenHost: FrameLayout,
+        val replacementBrowserHost: FrameLayout,
+    )
+
+    /** A Gecko tab attached to a browser host and presenting its video, ready for PiP. */
+    private fun presentFullscreenVideo(): FullscreenVideoFixture {
+        val activity = composeRule.activity
+        val browserController = BrowserController(activity)
+        controller = browserController
+        val browserHost = FrameLayout(activity)
+        val fullscreenHost = FrameLayout(activity)
+        val replacementBrowserHost = FrameLayout(activity)
+        val root = FrameLayout(activity).apply {
+            addView(browserHost)
+            addView(fullscreenHost)
+            addView(replacementBrowserHost)
+        }
+        activity.addContentView(root, matchParentLayoutParams())
+        val session = ReentrantAttachSession(
+            tabId = browserController.selectedTabId,
+            onFirstAttach = {},
+        )
+        browserController.installGeckoEngineSessionForTesting(session)
+        val attached = browserController.attachSelectedBrowserEngineView(browserHost)
+        browserController.reportSelectedGeckoMediaStateForTesting(eligibleMediaState())
+        browserController.prepareForPictureInPicture()
+        return FullscreenVideoFixture(
+            session = session,
+            attached = attached,
+            browserHost = browserHost,
+            fullscreenHost = fullscreenHost,
+            replacementBrowserHost = replacementBrowserHost,
+        )
     }
 
     @Test
@@ -2874,6 +2917,8 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
         @Volatile
         var textInputOcclusionProbeCount = 0
             private set
+        /** Runs on the main thread once a probe has answered, while its retry is pending. */
+        var afterTextInputOcclusionProbe: (() -> Unit)? = null
         @Volatile
         var lastTextInputOcclusionViewportRect: BrowserViewportRect? = null
             private set
@@ -3032,6 +3077,7 @@ class BrowserControllerGeckoViewBindingInstrumentedTest {
                     textInputOcclusionProbeResults.removeAt(0)
                 },
             )
+            afterTextInputOcclusionProbe?.invoke()
         }
 
         override fun updatePrivacyPolicy(

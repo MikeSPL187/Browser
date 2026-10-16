@@ -47,15 +47,23 @@ class GeckoKeyboardInsetsInstrumentedTest {
     fun forwardedKeyboardInsetsResizeVisualViewportAndRespectChromeOwnership() {
         withFixture { scenario ->
             val initial = awaitReport(scenario) { true }
-            val expectedHeight = initial.getDouble("visualHeight") -
-                KEYBOARD_HEIGHT_PX / initial.getDouble("density")
+            val restingMargin = engineBottomMargin(scenario)
             val insets = WindowInsetsCompat.Builder()
                 .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, KEYBOARD_HEIGHT_PX))
                 .setVisible(WindowInsetsCompat.Type.ime(), true)
                 .build()
 
             scenario.onActivity { it.browserControllerForTesting().onWindowInsetsChanged(insets) }
-            awaitReport(scenario) { kotlin.math.abs(it.getDouble("visualHeight") - expectedHeight) < 1 }
+            // The keyboard first covers what lies below the page card; the engine gives up only
+            // the rest, as a bottom margin, and the visual viewport shrinks by exactly that.
+            var keyboardMargin = 0
+            awaitReport(scenario, describe = { "margin=$restingMargin->$keyboardMargin" }) {
+                keyboardMargin = engineBottomMargin(scenario)
+                val expectedHeight = initial.getDouble("visualHeight") -
+                    (keyboardMargin - restingMargin) / initial.getDouble("density")
+                keyboardMargin in (restingMargin + 1)..(restingMargin + KEYBOARD_HEIGHT_PX) &&
+                    kotlin.math.abs(it.getDouble("visualHeight") - expectedHeight) < 1
+            }
 
             scenario.onActivity { assertTrue(it.browserControllerForTesting().openFindInPage()) }
             awaitImeVisibility(scenario, true)
@@ -104,7 +112,16 @@ class GeckoKeyboardInsetsInstrumentedTest {
                 // engine view detaches must not break Candy's explicit per-session forwarding.
                 ViewCompat.setOnApplyWindowInsetsListener(activity.window.decorView.rootView, null)
             }
-            tap(coordinates[0], coordinates[1])
+            // A tap before Gecko takes input is lost: tap again until the field has focus.
+            var tapFocused = false
+            var taps = 0
+            while (!tapFocused && taps < TAP_ATTEMPTS) {
+                taps++
+                tap(coordinates[0], coordinates[1])
+                tapFocused = runCatching {
+                    awaitReport(scenario, timeoutMillis = TAP_SETTLE_MILLIS) { it.getBoolean("focused") }
+                }.isSuccess
+            }
             awaitImeVisibility(scenario, true)
             val focused = awaitReport(scenario) {
                 it.getBoolean("focused") &&
@@ -158,27 +175,44 @@ class GeckoKeyboardInsetsInstrumentedTest {
                         .hide(WindowInsetsCompat.Type.ime())
                 }
                 awaitImeVisibility(scenario, false)
-                awaitReport(scenario) { report ->
-                    var engineHeight = 0
+                // At rest the visual viewport fills the engine view, less at most the band the
+                // address bar may cover (Gecko's dynamic toolbar), never more.
+                var engineHeight = 0
+                var dynamicBandHeight = 0
+                awaitReport(scenario, describe = { "engine=$engineHeight band=$dynamicBandHeight" }) { report ->
                     scenario.onActivity { activity ->
                         val host = requireNotNull(
                             activity.browserControllerForTesting().selectedGeckoViewForTesting(),
-                        )
-                        engineHeight = (host as ViewGroup).getChildAt(0).height
+                        ) as CandyGeckoView
+                        engineHeight = host.getChildAt(0).height
+                        dynamicBandHeight = host.dynamicToolbarMaxHeightPx
                     }
-                    kotlin.math.abs(report.getDouble("visualHeight") *
-                        report.getDouble("density") - engineHeight) < 2
+                    val shortfall = engineHeight -
+                        report.getDouble("visualHeight") * report.getDouble("density")
+                    shortfall > -2 && shortfall < dynamicBandHeight + 2
                 }
                 block(scenario)
             }
         }
     }
 
+    /** The bottom margin Vola gives the selected engine view, in pixels. */
+    private fun engineBottomMargin(scenario: ActivityScenario<MainActivity>): Int {
+        var margin = 0
+        scenario.onActivity { activity ->
+            val host = activity.browserControllerForTesting().selectedGeckoViewForTesting() as CandyGeckoView
+            margin = host.domDiagnosticInsets().getInt("marginBottomPx")
+        }
+        return margin
+    }
+
     private fun awaitReport(
         scenario: ActivityScenario<MainActivity>,
+        describe: () -> String = { "" },
+        timeoutMillis: Long = TIMEOUT_MILLIS,
         matches: (JSONObject) -> Boolean,
     ): JSONObject {
-        val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
+        val deadline = SystemClock.elapsedRealtime() + timeoutMillis
         var lastTitle = ""
         while (SystemClock.elapsedRealtime() < deadline) {
             scenario.onActivity { lastTitle = it.browserControllerForTesting().selectedTabForTesting().title }
@@ -188,24 +222,54 @@ class GeckoKeyboardInsetsInstrumentedTest {
             }
             SystemClock.sleep(50)
         }
-        throw AssertionError("Gecko keyboard viewport did not settle; last report=$lastTitle")
+        // The summary keeps a failure's first 160 characters: the numbers that matter come first.
+        throw AssertionError(
+            "Keyboard viewport did not settle at line ${callerLine()} ${describe()} " +
+                "${compact(lastTitle)}; last report=$lastTitle",
+        )
     }
 
     private fun awaitImeVisibility(scenario: ActivityScenario<MainActivity>, visible: Boolean) {
+        var lastTitle = ""
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             var matches = false
             scenario.onActivity {
                 matches = ViewCompat.getRootWindowInsets(it.window.decorView)
                     ?.isVisible(WindowInsetsCompat.Type.ime()) == visible
+                lastTitle = it.browserControllerForTesting().selectedTabForTesting().title
             }
             if (matches) return
             SystemClock.sleep(50)
         }
-        throw AssertionError("Expected keyboard visible=$visible")
+        throw AssertionError(
+            "Expected keyboard visible=$visible at line ${callerLine()} tap=$lastTap ${compact(lastTitle)}",
+        )
     }
 
+    /** Where the last tap went, in screen pixels, for failure messages. */
+    private var lastTap = "none"
+
+    /** The line in this test that started the wait that timed out. */
+    private fun callerLine(): Int = Throwable().stackTrace.firstOrNull { frame ->
+        frame.className.startsWith(GeckoKeyboardInsetsInstrumentedTest::class.java.name) &&
+            frame.methodName.substringBefore('$') !in WAIT_HELPERS
+    }?.lineNumber ?: -1
+
+    /** The report's numbers in a few characters: visual height and top, input top and bottom, focus. */
+    private fun compact(title: String): String = runCatching {
+        val report = JSONObject(title.removePrefix(REPORT_PREFIX))
+        "vh=%.1f vt=%.1f in=%.1f..%.1f f=%s".format(
+            report.getDouble("visualHeight"),
+            report.getDouble("visualTop"),
+            report.getDouble("inputTop"),
+            report.getDouble("inputBottom"),
+            report.getBoolean("focused"),
+        )
+    }.getOrDefault("no report")
+
     private fun tap(x: Float, y: Float) {
+        lastTap = "%.0f,%.0f".format(x, y)
         val downTime = SystemClock.uptimeMillis()
         for (action in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
             val event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
@@ -222,7 +286,10 @@ class GeckoKeyboardInsetsInstrumentedTest {
         const val TEST_ACTIVITY_ACTION = "dev.sk2andy.materialbrowser.test.GECKO_KEYBOARD_INSETS"
         const val KEYBOARD_HEIGHT_PX = 600
         const val TIMEOUT_MILLIS = 20_000L
+        const val TAP_ATTEMPTS = 5
+        const val TAP_SETTLE_MILLIS = 3_000L
         const val REPORT_PREFIX = "Candy keyboard: "
+        val WAIT_HELPERS = setOf("callerLine", "awaitReport", "awaitImeVisibility")
         val HTML = """
             <!doctype html>
             <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
