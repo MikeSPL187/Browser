@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser
 
+import android.app.Activity
 import android.app.UiAutomation
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
@@ -26,6 +27,22 @@ internal fun dismissNotRespondingDialogForTests(): Boolean {
     return true
 }
 
+/**
+ * Waits for [activity]'s window to hold the focus: a text field takes focus, and the keyboard
+ * shows, only then. On the loaded CI emulator a hung System UI "isn't responding" dialog can hold
+ * it instead (16.10), so the wait closes such a dialog; a timeout names the window that kept it.
+ */
+internal fun awaitWindowFocusForTests(activity: Activity, timeoutMillis: Long = WINDOW_FOCUS_TIMEOUT_MILLIS) {
+    val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+    while (!activity.window.decorView.hasWindowFocus()) {
+        if (SystemClock.elapsedRealtime() >= deadline) {
+            throw AssertionError("The activity window never got focus; focus is on ${focusedWindowForTests()}")
+        }
+        dismissNotRespondingDialogForTests()
+        SystemClock.sleep(100)
+    }
+}
+
 /** Names the window that holds the input focus, as `dumpsys window` reports it. */
 internal fun focusedWindowForTests(): String =
     InstrumentationRegistry.getInstrumentation().uiAutomation.currentFocusLine()?.trim() ?: "unknown"
@@ -46,3 +63,4 @@ private fun UiAutomation.shell(command: String): String =
 private const val NOT_RESPONDING_WINDOW = "Application Not Responding"
 private const val DISMISS_ATTEMPTS = 3
 private const val DISMISS_WAIT_MILLIS = 2_000L
+private const val WINDOW_FOCUS_TIMEOUT_MILLIS = 10_000L

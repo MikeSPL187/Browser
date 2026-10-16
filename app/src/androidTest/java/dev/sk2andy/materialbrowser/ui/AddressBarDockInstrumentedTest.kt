@@ -38,6 +38,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.awaitWindowFocusForTests
+import dev.sk2andy.materialbrowser.focusedWindowForTests
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.AddressBarAction
@@ -200,6 +202,8 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        // A field takes focus, and the keyboard shows, only while the window holds the focus.
+        awaitWindowFocusForTests(composeRule.activity)
         composeRule.onNodeWithTag(ImeTargetTag).performClick()
         assertImeVisible()
         composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
@@ -536,6 +540,7 @@ class AddressBarDockInstrumentedTest {
             }
             composeRule.onNodeWithText("example.test").performClick()
         }
+        awaitWindowFocusForTests(composeRule.activity)
         // The editor takes focus once its expand motion has started, not on the tap's frame.
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
@@ -750,6 +755,7 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        awaitWindowFocusForTests(composeRule.activity)
         composeRule.onNodeWithText(composeRule.activity.getString(R.string.address_empty_hint))
             .performClick()
         composeRule.waitUntil(timeoutMillis = 5_000L) {
@@ -968,9 +974,14 @@ class AddressBarDockInstrumentedTest {
 
     private fun assertImeVisible() {
         // The keyboard can take several seconds to show on a loaded emulator.
-        composeRule.waitUntil(timeoutMillis = 10_000L) {
-            ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
-                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+        val shown = runCatching {
+            composeRule.waitUntil(timeoutMillis = 10_000L) {
+                ViewCompat.getRootWindowInsets(composeRule.activity.window.decorView)
+                    ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            }
+        }.isSuccess
+        if (!shown) {
+            throw AssertionError("The keyboard did not show; focus is on ${focusedWindowForTests()}")
         }
     }
 
