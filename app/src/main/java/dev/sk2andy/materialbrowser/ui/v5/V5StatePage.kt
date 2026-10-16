@@ -63,11 +63,12 @@ fun V5StatePage(
     modifier: Modifier = Modifier,
     secondary: List<V5StateAction> = emptyList(),
 ) {
+    val colors = V5Theme.colors
     Box(
         modifier
             .fillMaxSize()
             .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
-            .background(V5Theme.colors.background)
+            .background(colors.background)
             .safeDrawingPadding(),
         contentAlignment = Alignment.Center,
     ) {
