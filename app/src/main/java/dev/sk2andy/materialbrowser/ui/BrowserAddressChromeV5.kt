@@ -13,19 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
-import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ClipboardOffer
-import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
-import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
@@ -46,7 +42,7 @@ import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 
 /*
  * Binds the v5 bottom bar (ui/v5/V5BottomBar.kt) to the browser while the ui.v5 flag is on. «•••»
- * opens the v5 page menu (V15b); its «All actions» opens the current menu for the rest.
+ * opens the v5 page menu (V15b), the only menu under v5 (V28, B4).
  */
 
 /** Menu actions that need more than a controller call. */
@@ -58,29 +54,21 @@ internal class V5MenuActions(
     val onTogglePinned: () -> Unit,
     val onFindInPage: () -> Unit,
     val onReaderStudio: () -> Unit,
-    val onOpenCandyTrail: () -> Unit,
-    val onSnooze: () -> Unit,
-    val onSnoozedTabs: () -> Unit,
-    val onAddSiteCapsule: () -> Unit,
     val onFavorites: () -> Unit,
     val onDownloads: () -> Unit,
     val onHistory: () -> Unit,
     val onSettings: () -> Unit,
     val onPrivacyXRay: () -> Unit,
-    val onSplitViewChange: (Boolean) -> Unit,
 )
 
 @Composable
 internal fun BrowserV5Bar(
     controller: BrowserController,
     selectedTab: BrowserTab,
-    backdropSource: CandyChromeBackdropSource?,
     collapsed: Boolean,
     onExpand: () -> Unit,
     gestures: V5BarGestures,
     permissionActivityVisible: Boolean,
-    canDock: Boolean,
-    snoozedTabCount: Int,
     onAddress: () -> Unit,
     onTabs: () -> Unit,
     onBarPositioned: (Rect, Int) -> Unit,
@@ -110,7 +98,6 @@ internal fun BrowserV5Bar(
     var menuExpanded by remember { mutableStateOf(false) }
     // V22: what is downloading, as a ring around «•••» and a row at the top of the menu.
     val downloadRing = rememberDownloadRing(controller)
-    var allActionsExpanded by remember { mutableStateOf(false) }
     // The page's color (system-v5.md, section 1.3), unless turned off in Appearance. Private tabs,
     // a new tab and error pages keep the neutral bar (step 7).
     val siteTint by rememberV5Preference(V5SiteTintSetting)
@@ -159,80 +146,6 @@ internal fun BrowserV5Bar(
                         ink = if (siteColor != null) tint.onTint else V5Theme.colors.accent,
                         onClick = { menuExpanded = true },
                     )
-                    BrowserMainMenu(
-                        expanded = allActionsExpanded,
-                        backdropSource = backdropSource,
-                        onDismissRequest = { allActionsExpanded = false },
-                        pageSubtitle = if (tab.url == BLANK_URL) {
-                            stringResource(R.string.new_tab_title)
-                        } else {
-                            AddressResolver.displayText(tab.url)
-                        },
-                        canGoBack = tab.canGoBack,
-                        canGoForward = tab.canGoForward,
-                        isLoading = tab.isLoading,
-                        canToggleFavorite = tab.url != BLANK_URL && !tab.isIncognito,
-                        isFavorite = controller.isSelectedTabFavorite,
-                        isPinned = tab.isPinned,
-                        canUsePageActions = tab.url != BLANK_URL,
-                        canOpenReader = ReaderStudioSessionRules.isSupportedSource(tab.url),
-                        canTranslatePage = PageTranslationRules.canTranslate(
-                            provider = controller.pageTranslationProvider,
-                            sourceUrl = tab.url,
-                        ),
-                        canToggleDomainMute = controller.canToggleSelectedDomainMute,
-                        isDomainMuted = controller.isSelectedDomainMuted,
-                        canToggleDesktopView = controller.canToggleSelectedDesktopView,
-                        isDesktopView = controller.isSelectedDesktopView,
-                        canAddSiteCapsule = tab.url != BLANK_URL &&
-                            !tab.isIncognito &&
-                            (tab.url.startsWith("https://") || tab.url.startsWith("http://")),
-                        canSnooze = controller.canSnoozeSelectedTab,
-                        snoozedTabCount = snoozedTabCount,
-                        canCloseTab = TabDeletionRules.canDelete(tab),
-                        userScriptMenuCommands = if (controller.isUserScriptSupported) {
-                            controller.selectedUserScriptMenuCommands
-                        } else {
-                            emptyList()
-                        },
-                        onTabs = onTabs,
-                        onNewTab = actions.onNewTab,
-                        onDuplicateTab = actions.onDuplicateTab,
-                        onCloseTab = actions.onCloseTab,
-                        onBack = controller::goBack,
-                        onForward = controller::goForward,
-                        onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
-                        onToggleFavorite = actions.onToggleFavorite,
-                        onTogglePinned = actions.onTogglePinned,
-                        onShare = controller::shareSelectedPage,
-                        onOpenExternal = controller::openSelectedPageExternally,
-                        onPrint = controller::printSelectedPage,
-                        onOpenReader = actions.onReaderStudio,
-                        onTranslate = controller::translateSelectedPage,
-                        splitView = controller.splitView.state != null,
-                        onSplitViewChange = actions.onSplitViewChange,
-                        onFindInPage = actions.onFindInPage,
-                        onDomainMutedChange = controller::setSelectedDomainMuted,
-                        onDesktopViewChange = controller::setSelectedDesktopView,
-                        compactMode = controller.addressBar.compactMode,
-                        onCompactModeChange = controller.addressBar::updateCompactMode,
-                        onOpenCandyTrail = actions.onOpenCandyTrail,
-                        onAddSiteCapsule = actions.onAddSiteCapsule,
-                        onSummarize = controller::summarizeSelectedPageWithAssistant,
-                        onSnooze = actions.onSnooze,
-                        onSnoozedTabs = actions.onSnoozedTabs,
-                        onUserScriptMenuCommand = controller::invokeUserScriptMenuCommand,
-                        canDockAddressBar = canDock,
-                        onDockAddressBar = { controller.addressBar.updateDocked(true) },
-                        onParkAddressBarRight = controller.addressBar::parkOnRight,
-                        onFavorites = actions.onFavorites,
-                        onDownloads = actions.onDownloads,
-                        onHistory = actions.onHistory,
-                        firefoxExtensionActions = controller.firefoxExtensionActions,
-                        menuLayout = controller.browserMenuLayout,
-                        onFirefoxExtensionAction = controller::clickFirefoxExtensionAction,
-                        onSettings = actions.onSettings,
-                    )
                 },
             )
             // Over the whole browser, above the bar: the bar's box fills the window.
@@ -242,7 +155,6 @@ internal fun BrowserV5Bar(
                 visible = menuExpanded,
                 actions = actions,
                 onDismiss = { menuExpanded = false },
-                onAllActions = { allActionsExpanded = true },
                 downloads = downloadRing.progress,
             )
             // «Hide distracting items» (V20): while the page chooses, the hint sits at the top edge.

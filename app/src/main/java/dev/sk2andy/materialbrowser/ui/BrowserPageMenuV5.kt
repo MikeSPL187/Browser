@@ -22,12 +22,13 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuActions
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuExtra
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuState
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 
 /**
  * The v5 page menu (V15b) bound to the selected tab: the same actions as the current menu, through
- * the same callbacks. [onAllActions] opens the current menu for everything the v5 one leaves out.
+ * the same callbacks, and the commands extensions and user scripts add to the page (V28, B4).
  */
 @Composable
 internal fun BrowserPageMenuV5(
@@ -36,7 +37,6 @@ internal fun BrowserPageMenuV5(
     visible: Boolean,
     actions: V5MenuActions,
     onDismiss: () -> Unit,
-    onAllActions: () -> Unit,
     downloads: V5DownloadRingState? = null,
 ) {
     val blank = tab.url == BLANK_URL
@@ -68,6 +68,7 @@ internal fun BrowserPageMenuV5(
         canHideDistractions = canHideDistractions,
         hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
         downloads = downloads,
+        extras = pageMenuExtras(controller),
     )
     V5PageMenu(
         visible = visible,
@@ -93,7 +94,8 @@ internal fun BrowserPageMenuV5(
             onHistory = actions.onHistory,
             onDownloads = actions.onDownloads,
             onSettings = actions.onSettings,
-            onAllActions = onAllActions,
+            onDuplicateTab = actions.onDuplicateTab,
+            onOpenInApp = controller::openSelectedPageExternally,
             // The page outlines in the profile's accent; a page not ready to choose refuses.
             onHideDistractions = {
                 if (!controller.hiddenDistractions.startPicking(tab, accentArgb)) view.performV5Haptic(V5Haptic.Reject)
@@ -103,4 +105,30 @@ internal fun BrowserPageMenuV5(
         ),
         onDismiss = onDismiss,
     )
+}
+
+/**
+ * The page's extension actions, then its user-script commands, as rows of the v5 menu. User scripts
+ * count only where the engine runs them; an extension action the page disables stays, faded.
+ */
+private fun pageMenuExtras(controller: BrowserController): List<V5PageMenuExtra> {
+    val extensions = controller.firefoxExtensionActions.toList().map { action ->
+        V5PageMenuExtra(
+            key = "ext_${action.key.hashCode()}",
+            title = action.title,
+            subtitle = action.badgeText,
+            enabled = action.enabled,
+            onClick = { controller.clickFirefoxExtensionAction(action.key) },
+        )
+    }
+    val scripts = if (controller.isUserScriptSupported) controller.selectedUserScriptMenuCommands else emptyList()
+    return extensions + scripts.map { command ->
+        V5PageMenuExtra(
+            key = "script_${command.scriptId}_${command.commandId}",
+            title = command.caption,
+            subtitle = command.scriptName,
+            enabled = true,
+            onClick = { controller.invokeUserScriptMenuCommand(command) },
+        )
+    }
 }

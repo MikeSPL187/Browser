@@ -471,7 +471,6 @@ internal fun BoxScope.BrowserAddressChrome(
         BrowserV5Bar(
             controller = controller,
             selectedTab = selectedTab,
-            backdropSource = chromeBackdropSource.takeIf { pageBehindAddressBar },
             collapsed = compactBar,
             onExpand = controller::expandBottomBar,
             gestures = V5BarGestures(
@@ -488,9 +487,7 @@ internal fun BoxScope.BrowserAddressChrome(
                 onOverviewCancelled = onOverviewGestureCancelled,
             ),
             permissionActivityVisible = permissionActivityVisible,
-            canDock = addressBarDockingAvailable,
             commandFeedback = commandFeedback,
-            snoozedTabCount = visibleSnoozedTabCount,
             onAddress = openAddressEditor,
             onTabs = onTabs,
             onBarPositioned = onBarPositioned,
@@ -509,10 +506,6 @@ internal fun BoxScope.BrowserAddressChrome(
                     controller.openFindInPage()
                 },
                 onReaderStudio = onReaderStudio,
-                onOpenCandyTrail = onOpenCandyTrail,
-                onSnooze = onSnooze,
-                onSnoozedTabs = onSnoozedTabs,
-                onAddSiteCapsule = onAddSiteCapsule,
                 onFavorites = onOpenFavorites,
                 onDownloads = onOpenDownloads,
                 onHistory = onOpenHistory,
@@ -520,17 +513,6 @@ internal fun BoxScope.BrowserAddressChrome(
                 onPrivacyXRay = {
                     onPrivacyXRay()
                     rootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                },
-                onSplitViewChange = { enabled ->
-                    if (!enabled) {
-                        controller.splitView.close()
-                    } else if (!controller.openSplitView()) {
-                        Toast.makeText(
-                            rootView.context,
-                            R.string.split_view_no_companion,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
                 },
             ),
             modifier = Modifier
