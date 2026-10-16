@@ -222,6 +222,29 @@ jobs:
                 2>/dev/null || true
             done < "$RUNNER_TEMP/rerun.txt"
           fi
+          # Extension persistence: phase two must find, in the same app data after a cold start,
+          # the extension phase one installed. The run above clears app data before every test,
+          # so phase two skips itself there; here the two phases run in order without clearing,
+          # the app stays installed between them and is stopped in between. Full Gecko runs only.
+          if [[ -z "$FILTER" && "$SHARD" == 0 && "$FLAVOR" == Full ]]; then
+            phases="$RUNNER_TEMP/extension-phases"
+            persistence=dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPersistence
+            for phase in One Two; do
+              rm -rf app/build/outputs/androidTest-results
+              ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
+                -Pandroid.testInstrumentationRunnerArguments.clearPackageData=false \
+                -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
+                -Pandroid.testInstrumentationRunnerArguments.class="${persistence}Phase${phase}InstrumentedTest" \
+                -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
+                < /dev/null || true
+              mkdir -p "$phases"
+              cp -r app/build/outputs/androidTest-results "$phases/$phase" 2>/dev/null || true
+              # A cold start for phase two: stop the app, keep its data.
+              adb shell pm list packages | sed -n 's/^package://p' | tr -d '\r' \
+                | grep '^io\.github\.mikespl187\.vola' | grep -v '\.test$' \
+                | while read -r package; do adb shell am force-stop "$package" < /dev/null; done
+            done
+          fi
           kill "$progress" "$monitor" 2>/dev/null || true
           pkill -f "logcat -v brief" || true
           pkill -x -f "sleep 300" || true
@@ -240,6 +263,8 @@ jobs:
             cp -r app/build/outputs/androidTest-results "$out/results" 2>/dev/null || true
           # instrumented_summary.py reads a shard's rerun from its "retry" directory.
           cp -r "$RUNNER_TEMP/rerun-results" "$out/retry" 2>/dev/null || true
+          # Read as first-run results, next to the shard's own.
+          cp -r "$RUNNER_TEMP/extension-phases" "$out/extension-phases" 2>/dev/null || true
           cp -r app/build/reports/androidTests "$out/report" 2>/dev/null || true
           pkill -f "adb logcat" || true
           gzip -c "$RUNNER_TEMP/logcat.txt" > "$out/logcat.txt.gz" 2>/dev/null || true
