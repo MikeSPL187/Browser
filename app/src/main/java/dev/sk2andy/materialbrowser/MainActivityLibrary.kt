@@ -1,8 +1,12 @@
 package dev.sk2andy.materialbrowser
 
 import android.content.Intent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
 import dev.sk2andy.materialbrowser.browser.integration.HistoryActivityContract
+import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 
 /**
@@ -14,8 +18,20 @@ internal fun MainActivity.openLibrary(segment: V5LibrarySegment, instant: Boolea
     when (segment) {
         V5LibrarySegment.Favorites -> favoritesLauncher.launch(FavoritesActivityContract.launchIntent(this))
         V5LibrarySegment.History -> historyLauncher.launch(HistoryActivityContract.launchIntent(this))
-        V5LibrarySegment.Downloads -> startActivity(Intent(this, DownloadsActivity::class.java))
+        V5LibrarySegment.Downloads -> downloadsLauncher.launch(DownloadsActivity.launchIntent(this))
     }
     @Suppress("DEPRECATION")
     if (instant) overridePendingTransition(0, 0)
 }
+
+/**
+ * A launcher for one segment of the library: [onResult] reads what the screen returned, then a
+ * request to show another segment (the v5 segmented control) opens it.
+ */
+internal fun MainActivity.libraryLauncher(
+    onResult: (ActivityResult) -> Unit,
+): ActivityResultLauncher<Intent> =
+    registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        onResult(result)
+        LibrarySwitch.from(result.data)?.let { openLibrary(it, instant = true) }
+    }
