@@ -15,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -93,10 +94,12 @@ class GeckoExtensionPersistencePhaseTwoInstrumentedTest {
     @Test
     fun freshRuntimeInventoriesPersistedExtensionWithoutInstalling() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val expectedId = checkNotNull(
-            context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-                .getString(KEY_EXTENSION_ID, null),
-        )
+        val expectedId = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .getString(KEY_EXTENSION_ID, null)
+        // This phase needs the app data phase one left. The suite clears app data before every
+        // test, so there it cannot run; the workflow's "extension persistence" step runs both
+        // phases in order without clearing (docs/browsing/platform-engines.md).
+        assumeTrue("Phase one did not run in this app data", expectedId != null)
         val completed = CountDownLatch(1)
         val listed = AtomicReference<List<GeckoExtension>>()
         lateinit var runtime: GeckoViewRuntimeHandle
