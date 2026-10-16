@@ -48,6 +48,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5ListDefaults
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
 import dev.sk2andy.materialbrowser.ui.v5.V5NameField
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
@@ -289,6 +292,7 @@ private fun InstallSheet(visible: Boolean, onInstall: (String) -> Unit, onDismis
                 onDone = install,
                 maxLength = FirefoxExtensionManagerV5Rules.MAX_ADDRESS_LENGTH,
                 modifier = Modifier.testTag(FirefoxExtensionManagerTestTags.InstallUrl),
+                capitalize = false,
             )
             V5ListGroup {
                 V5ListRow(
@@ -312,46 +316,38 @@ private fun PermissionSheet(request: GeckoExtensionPermissionRequest?, onDecisio
     var allowPrivate by remember(asked.extensionId) { mutableStateOf(false) }
     val title = asked.extensionName ?: asked.extensionId
     val access = FirefoxExtensionManagerV5Rules.requestedAccess(asked)
-    V5WindowSheet(
+    // The extension's question on the browser's one prompt form: what it asks for, private tabs
+    // too, then «Allow» in the accent; «Close» and a swipe down deny, as «Deny» does.
+    V5PromptSheet(
         visible = request != null,
-        onDismiss = { onDecision(false, false) },
         title = title,
-        modifier = Modifier.testTag(FirefoxExtensionManagerTestTags.PermissionPrompt),
+        message = stringResource(R.string.gecko_extension_permission_intro),
+        actions = listOf(
+            V5PromptAction(
+                label = stringResource(R.string.action_allow),
+                onClick = { onDecision(true, allowPrivate) },
+                role = V5PromptRole.Primary,
+            ),
+            V5PromptAction(
+                label = stringResource(R.string.action_deny),
+                onClick = { onDecision(false, false) },
+            ),
+        ),
+        onDismiss = { onDecision(false, false) },
+        testTag = FirefoxExtensionManagerTestTags.PermissionPrompt,
     ) {
-        V5SheetHeader(title = title, onClose = { onDecision(false, false) })
-        Column(
-            Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
-            verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
-        ) {
-            V5ListGroup(
-                header = stringResource(R.string.gecko_extension_permission_intro),
-                dividerInset = V5ListDefaults.dividerInsetText,
-            ) {
-                if (access.isEmpty()) {
-                    V5ListRow(title = stringResource(R.string.gecko_extension_no_permissions))
-                } else {
-                    access.forEach { value -> V5ListRow(title = value) }
-                }
+        V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+            if (access.isEmpty()) {
+                V5ListRow(title = stringResource(R.string.gecko_extension_no_permissions))
+            } else {
+                access.forEach { value -> V5ListRow(title = value) }
             }
-            V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
-                V5ListRow(
-                    title = stringResource(R.string.gecko_extension_allow_private_too),
-                    trailing = V5RowTrailing.Toggle(allowPrivate, { allowPrivate = it }),
-                )
-            }
-            V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
-                V5ListRow(
-                    title = stringResource(R.string.action_allow),
-                    titleColor = V5Theme.colors.accent,
-                    onClick = { onDecision(true, allowPrivate) },
-                )
-                V5ListRow(
-                    title = stringResource(R.string.action_deny),
-                    onClick = { onDecision(false, false) },
-                )
-            }
+        }
+        V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+            V5ListRow(
+                title = stringResource(R.string.gecko_extension_allow_private_too),
+                trailing = V5RowTrailing.Toggle(allowPrivate, { allowPrivate = it }),
+            )
         }
     }
 }
