@@ -16,6 +16,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
+import dev.sk2andy.materialbrowser.awaitWindowFocusForTests
+import dev.sk2andy.materialbrowser.focusedWindowForTests
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
@@ -115,6 +117,11 @@ class GeckoKeyboardInsetsInstrumentedTest {
                 // engine view detaches must not break Candy's explicit per-session forwarding.
                 ViewCompat.setOnApplyWindowInsetsListener(activity.window.decorView.rootView, null)
             }
+            // The keyboard shows only while the window holds the focus; a hung System UI dialog
+            // can hold it on the CI emulator (#356).
+            lateinit var activity: MainActivity
+            scenario.onActivity { activity = it }
+            awaitWindowFocusForTests(activity)
             // A tap before Gecko takes input is lost: tap again until the field has focus.
             var tapFocused = false
             var taps = 0
@@ -257,7 +264,8 @@ class GeckoKeyboardInsetsInstrumentedTest {
             SystemClock.sleep(50)
         }
         throw AssertionError(
-            "Expected keyboard visible=$visible at line ${callerLine()} tap=$lastTap ${compact(lastTitle)}",
+            "Expected keyboard visible=$visible at line ${callerLine()} tap=$lastTap ${compact(lastTitle)}; " +
+                "focus is on ${focusedWindowForTests()}",
         )
     }
 
