@@ -73,7 +73,6 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 internal object NewTabPageTestTags {
     const val Header = "new_tab_header"
@@ -128,10 +127,10 @@ internal fun NewTabPage(
     /** What the private new tab shows; `null` in previews of regular tabs. */
     privateTab: NewTabPrivate? = null,
 ) {
-    val uiV5 by rememberUiV5Flag()
+    val drawsV5 = rememberDrawsV5()
     // Under v5 the live new tab is the v5 one: regular (V13a) or private (V14a); the overview's
     // miniature stays as it is.
-    if (uiV5 && interactive && incognito && privateTab != null) {
+    if (drawsV5 && interactive && incognito && privateTab != null) {
         val safeDrawing = explicitSafeDrawingPadding ?: WindowInsets.safeDrawing.asPaddingValues()
         BrowserPrivateNewTabV5(
             privateTab = privateTab,
@@ -142,7 +141,7 @@ internal fun NewTabPage(
         )
         return
     }
-    if (uiV5 && interactive && !incognito) {
+    if (drawsV5 && interactive && !incognito) {
         val safeDrawing = explicitSafeDrawingPadding ?: WindowInsets.safeDrawing.asPaddingValues()
         BrowserNewTabV5(
             essentials = essentials,
@@ -279,7 +278,7 @@ internal fun NewTabPage(
             }
         }
     }
-    if (uiV5 && protection != null && !incognito) {
+    if (drawsV5 && protection != null && !incognito) {
         BrowserPrivacyReportV5(
             protection = protection,
             visible = protectionReportVisible,

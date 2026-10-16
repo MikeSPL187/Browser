@@ -16,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalView
@@ -31,7 +30,6 @@ import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 @Composable
 internal fun BrowserTransientOverlays(
@@ -141,8 +139,8 @@ internal fun BrowserTransientOverlays(
         )
     }
 
-    val uiV5 by rememberUiV5Flag()
-    if (uiV5 && controller.contentActions.isLinkPeekVisible) {
+    val drawsV5 = rememberDrawsV5()
+    if (drawsV5 && controller.contentActions.isLinkPeekVisible) {
         BrowserLinkGlanceV5(controller)
     } else if (controller.contentActions.isLinkPeekVisible) {
         val linkTarget = controller.contentActions.target
