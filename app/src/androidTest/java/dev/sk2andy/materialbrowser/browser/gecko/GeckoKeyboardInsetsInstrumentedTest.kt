@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import android.content.Context
 import android.content.Intent
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.MotionEvent
@@ -152,6 +153,12 @@ class GeckoKeyboardInsetsInstrumentedTest {
         }
     }
 
+    private fun shell(command: String) {
+        ParcelFileDescriptor.AutoCloseInputStream(
+            instrumentation.uiAutomation.executeShellCommand(command),
+        ).use { it.readBytes() }
+    }
+
     private fun withFixture(
         immersive: Boolean = false,
         block: (ActivityScenario<MainActivity>) -> Unit,
@@ -162,6 +169,10 @@ class GeckoKeyboardInsetsInstrumentedTest {
             store.saveStartupAnimationEnabled(false)
             store.saveAndroidBrowserEngineKind(AndroidBrowserEngineKind.GeckoView)
             store.saveFullImmersiveModeEnabled(immersive)
+            // The first app to go immersive on a device gets Android's "Viewing full screen" cling,
+            // a system window that takes input focus: the keyboard is then served to the cling, not
+            // to the page. A user dismisses it once; the CI emulator starts fresh every run.
+            if (immersive) shell("settings put secure immersive_mode_confirmations confirmed")
             ReleaseNotesStore(context).markHandled(BuildConfig.VERSION_CODE.toLong())
             val tab = BrowserTab(
                 id = "gecko-keyboard-fixture",

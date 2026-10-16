@@ -1,5 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.ui.graphics.luminance
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
+import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -122,6 +127,42 @@ internal fun PrivateTabsLockedScreen(
     onCloseAll: () -> Unit,
 ) {
     LaunchedEffect(Unit) { onShown() }
+    // V28, B13: under v5 on a phone the one v5 lock screen, in the private palette.
+    if (rememberDrawsV5()) {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < LOCK_DARK_LUMINANCE, privateBrowsing = true) {
+            V5StatePage(
+                icon = VolaIcons.Fingerprint,
+                title = stringResource(R.string.private_tabs_locked_title),
+                message = if (unlockAvailable) {
+                    pluralStringResource(R.plurals.private_tabs_locked_message, privateTabCount, privateTabCount)
+                } else {
+                    stringResource(R.string.profile_protection_unavailable)
+                },
+                primary = V5StateAction(
+                    label = stringResource(R.string.private_tabs_unlock_action),
+                    onClick = onUnlock,
+                    icon = VolaIcons.Fingerprint,
+                    enabled = unlockAvailable,
+                    testTag = PrivateTabsLockTestTags.Unlock,
+                ),
+                secondary = listOf(
+                    V5StateAction(
+                        stringResource(R.string.private_tabs_locked_regular_tabs),
+                        onRegularTabs,
+                        testTag = PrivateTabsLockTestTags.RegularTabs,
+                    ),
+                    V5StateAction(
+                        pluralStringResource(R.plurals.private_tab_close_all, privateTabCount, privateTabCount),
+                        onCloseAll,
+                        testTag = PrivateTabsLockTestTags.CloseAll,
+                        destructive = true,
+                    ),
+                ),
+                modifier = Modifier.testTag(PrivateTabsLockTestTags.LockedScreen),
+            )
+        }
+        return
+    }
     val colors = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
@@ -244,3 +285,6 @@ private fun PrivateTabsLockedScreenUnavailablePreview() {
         )
     }
 }
+
+/** Below this background luminance the shell is dark. */
+private const val LOCK_DARK_LUMINANCE = 0.5f
