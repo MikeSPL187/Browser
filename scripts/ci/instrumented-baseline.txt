@@ -9,15 +9,9 @@
 # to remove it until it passes on several nights in a row. Tests outside this list get one rerun
 # instead: a new failure that passes on it is reported as flaky and does not fail the run.
 
-# Menu, address bar and tabs still open (S5 follow-up, not yet understood).
-dev.sk2andy.materialbrowser.MainActivityIncomingNavigationInstrumentedTest#coldIncomingViewLoadsExternalPreviewPage -- flaky
-dev.sk2andy.materialbrowser.ui.GeckoSettingsExtensionFlowInstrumentedTest#settingsExtensionBackReturnsToSettingsHome -- flaky
-
 # Gecko engine: page insets, CSS safe area, keyboard, prompts, extensions, media.
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#heroEntryAndExitKeepGeckoViewportPixelStableAcrossSafeArea -- Gecko viewport pixels across the v4 overview morph
 dev.sk2andy.materialbrowser.ui.GeckoTabOverviewHandoffInstrumentedTest#restoredDismissAnchorAttachesGeckoOnlyAfterOverviewCloses -- swipe-up dismiss in the v4 overview
-dev.sk2andy.materialbrowser.browser.gecko.GeckoContentGestureInstrumentedTest#homeSwipeEndsGeckoTouchBeforeActivityStops -- flaky
-dev.sk2andy.materialbrowser.browser.gecko.GeckoIoPromptsInstrumentedTest#notificationRadarRevocationPersistsAcrossActivityRestart -- flaky
 dev.sk2andy.materialbrowser.browser.gecko.GeckoKeyboardInsetsInstrumentedTest#immersiveLowerWebsiteInputStaysVisibleWithoutShrinkingNativeHost
 
 # System WebView engine, external previews and APK downloads.
@@ -25,6 +19,3 @@ dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrum
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#forcedSafeAreaMovesSystemWebViewBottomIntoNativeSafeFrame -- needs System WebView 144+, the CI emulator has 124 (#299)
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#requestedSiteLayoutsAndFocusedSearchesStaySafeAndEdgeToEdge -- needs System WebView 144+, the CI emulator has 124 (#299)
 dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewEdgeToEdgeInstrumentedTest#youtubeAndGoogleTouchFocusKeepSearchBelowStatusBarWhileImeResizes -- needs System WebView 144+, the CI emulator has 124 (#299)
-
-# Other screens.
-dev.sk2andy.materialbrowser.ui.CandyTrailScreenInstrumentedTest#graphRendersCurrentNodeAndFallbackFavicon
