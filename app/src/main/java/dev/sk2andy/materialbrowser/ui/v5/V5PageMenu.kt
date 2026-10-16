@@ -44,8 +44,8 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 /*
  * The v5 page menu (canvas screen «д», system-v5.md section 10): a sheet over the page with the
  * page's title, a row of round actions (Forward, Favorite, Share, Print), «Read», the page's tools,
- * tabs, and the library. «All actions» opens the current menu, so extensions, user scripts and the
- * rarer actions stay one tap away while the v5 menu keeps to what is used most.
+ * tabs, the commands of extensions and user scripts when they offer any, and the library. There is
+ * no second, older menu behind it (V28, B4: `design/v28-b4-all-actions.md`).
  */
 
 object V5PageMenuTestTags {
@@ -55,10 +55,25 @@ object V5PageMenuTestTags {
     const val Print = "v5_menu_print"
     const val Read = "v5_menu_read"
     const val Listen = "v5_menu_listen"
-    const val AllActions = "v5_menu_all_actions"
+    const val DuplicateTab = "v5_menu_duplicate_tab"
+    const val OpenInApp = "v5_menu_open_in_app"
+    fun extra(key: String) = "v5_menu_extra_$key"
     const val HideDistractions = "v5_menu_hide_distractions"
     const val ShowHidden = "v5_menu_show_hidden"
 }
+
+/**
+ * A command an extension or a user script adds to the page (V28, B4): its [title], who offers it as
+ * [subtitle], and whether it can run now.
+ */
+@Immutable
+data class V5PageMenuExtra(
+    val key: String,
+    val title: String,
+    val subtitle: String?,
+    val enabled: Boolean,
+    val onClick: () -> Unit,
+)
 
 /** What the menu shows about the selected tab. A null toggle is not available for this page. */
 @Immutable
@@ -84,6 +99,8 @@ data class V5PageMenuState(
     val hiddenCount: Int = 0,
     /** What is downloading now (V22): a row above the rest while there is something. */
     val downloads: V5DownloadRingState? = null,
+    /** Commands of extensions and user scripts for this page; the group shows only when there are some. */
+    val extras: List<V5PageMenuExtra> = emptyList(),
 )
 
 /** The menu's actions. Each one but the toggles closes the menu first. */
@@ -105,7 +122,9 @@ class V5PageMenuActions(
     val onHistory: () -> Unit,
     val onDownloads: () -> Unit,
     val onSettings: () -> Unit,
-    val onAllActions: () -> Unit,
+    val onDuplicateTab: () -> Unit,
+    /** The page in the app that handles its address, as Android offers it. */
+    val onOpenInApp: () -> Unit,
     val onHideDistractions: () -> Unit = {},
     val onShowHidden: () -> Unit = {},
     /** «Listen» (V19c): the article read aloud without opening the reader. */
@@ -169,6 +188,14 @@ fun V5PageMenu(
                     icon = V5RowIcon(VolaIcons.Lock),
                     onClick = closing(actions.onNewPrivateTab),
                 )
+                if (state.hasPage) {
+                    V5ListRow(
+                        stringResource(R.string.action_duplicate_tab),
+                        icon = V5RowIcon(VolaIcons.ContentCopy),
+                        onClick = closing(actions.onDuplicateTab),
+                        modifier = Modifier.testTag(V5PageMenuTestTags.DuplicateTab),
+                    )
+                }
                 if (state.canCloseTab) {
                     V5ListRow(
                         stringResource(R.string.cd_close_tab),
@@ -176,6 +203,20 @@ fun V5PageMenu(
                         titleColor = V5Theme.colors.danger,
                         onClick = closing(actions.onCloseTab),
                     )
+                }
+            }
+            if (state.extras.isNotEmpty()) {
+                V5ListGroup {
+                    state.extras.forEach { extra ->
+                        V5ListRow(
+                            extra.title,
+                            subtitle = extra.subtitle,
+                            icon = V5RowIcon(VolaIcons.Apps),
+                            enabled = extra.enabled,
+                            onClick = closing(extra.onClick),
+                            modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
+                        )
+                    }
                 }
             }
             V5ListGroup {
@@ -199,13 +240,6 @@ fun V5PageMenu(
                     icon = V5RowIcon(VolaIcons.Settings),
                     trailing = V5RowTrailing.Chevron,
                     onClick = closing(actions.onSettings),
-                )
-                V5ListRow(
-                    stringResource(R.string.v5_menu_all_actions),
-                    icon = V5RowIcon(VolaIcons.MoreHoriz),
-                    trailing = V5RowTrailing.Chevron,
-                    onClick = closing(actions.onAllActions),
-                    modifier = Modifier.testTag(V5PageMenuTestTags.AllActions),
                 )
             }
         }
@@ -231,6 +265,12 @@ private fun PageGroup(
             stringResource(R.string.action_find_in_page),
             icon = V5RowIcon(VolaIcons.Search),
             onClick = closing(actions.onFindInPage),
+        )
+        V5ListRow(
+            stringResource(R.string.action_open_in_app),
+            icon = V5RowIcon(VolaIcons.OpenInNew),
+            onClick = closing(actions.onOpenInApp),
+            modifier = Modifier.testTag(V5PageMenuTestTags.OpenInApp),
         )
         if (state.canHideDistractions) {
             V5ListRow(

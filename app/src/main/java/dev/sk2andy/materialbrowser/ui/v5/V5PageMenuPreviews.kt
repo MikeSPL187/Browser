@@ -34,7 +34,7 @@ private val NoActions = V5PageMenuActions(
     onForward = {}, onToggleFavorite = {}, onShare = {}, onPrint = {}, onRead = {}, onTranslate = {},
     onFindInPage = {}, onTogglePinned = {}, onDesktopViewChange = {}, onSiteMutedChange = {},
     onNewTab = {}, onNewPrivateTab = {}, onCloseTab = {}, onFavorites = {}, onHistory = {},
-    onDownloads = {}, onSettings = {}, onAllActions = {},
+    onDownloads = {}, onSettings = {}, onDuplicateTab = {}, onOpenInApp = {},
 )
 
 @Composable
@@ -54,6 +54,22 @@ private fun V5PageMenuLightPreview() {
 @Composable
 private fun V5PageMenuDarkPreview() {
     VolaV5Theme(dark = true) { MenuPreview(PageState) }
+}
+
+/** V28 B4: a page with an extension's action and a user script's command. */
+@Preview(name = "Page menu · extensions", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuExtrasPreview() {
+    VolaV5Theme(dark = true) {
+        MenuPreview(
+            PageState.copy(
+                extras = listOf(
+                    V5PageMenuExtra("ext", "Dark Reader", subtitle = null, enabled = true, onClick = {}),
+                    V5PageMenuExtra("script", "Show comments", subtitle = "Forum tweaks", enabled = true, onClick = {}),
+                ),
+            ),
+        )
+    }
 }
 
 @Preview(name = "Page menu · new tab", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
