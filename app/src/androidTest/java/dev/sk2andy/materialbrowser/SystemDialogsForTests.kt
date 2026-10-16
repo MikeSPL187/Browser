@@ -26,11 +26,17 @@ internal fun dismissNotRespondingDialogForTests(): Boolean {
     return true
 }
 
+/** Names the window that holds the input focus, as `dumpsys window` reports it. */
+internal fun focusedWindowForTests(): String =
+    InstrumentationRegistry.getInstrumentation().uiAutomation.currentFocusLine()?.trim() ?: "unknown"
+
 private fun UiAutomation.notRespondingDialogHasFocus(): Boolean =
+    currentFocusLine()?.contains(NOT_RESPONDING_WINDOW) == true
+
+private fun UiAutomation.currentFocusLine(): String? =
     shell("dumpsys window")
         .lineSequence()
         .firstOrNull { line -> line.contains("mCurrentFocus") }
-        ?.contains(NOT_RESPONDING_WINDOW) == true
 
 private fun UiAutomation.shell(command: String): String =
     ParcelFileDescriptor.AutoCloseInputStream(executeShellCommand(command))
