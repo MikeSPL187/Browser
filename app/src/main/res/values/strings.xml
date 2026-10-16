@@ -2128,4 +2128,6 @@
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
+    <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
+    <string name="v5_web_prompt_answer">Answer</string>
 </resources>

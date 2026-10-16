@@ -2222,4 +2222,6 @@
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
     <string name="v5_first_run_default_action">Сделать основным</string>
     <string name="v5_first_run_not_now">Не сейчас</string>
+    <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
+    <string name="v5_web_prompt_answer">Ответ</string>
 </resources>

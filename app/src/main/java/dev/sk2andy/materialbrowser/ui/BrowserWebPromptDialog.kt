@@ -1,5 +1,12 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
+import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
+import dev.sk2andy.materialbrowser.ui.v5.V5NameField
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
+import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -32,6 +39,24 @@ internal fun BrowserWebPromptDialog(
     var value by remember(prompt.id) { mutableStateOf(prompt.defaultValue.orEmpty()) }
     var selectedChoices by remember(prompt.id) {
         mutableStateOf(prompt.choices.filter(BrowserWebPromptChoice::selected).map(BrowserWebPromptChoice::id).toSet())
+    }
+    // V28, B9b: under v5 on a phone the one v5 prompt sheet; closing it cancels, as Back did.
+    if (rememberDrawsV5()) {
+        BrowserWebPromptSheetV5(
+            prompt = prompt,
+            value = value,
+            onValueChange = { value = it },
+            selectedChoices = selectedChoices,
+            onToggleChoice = { id ->
+                val selected = id in selectedChoices
+                selectedChoices = if (prompt.allowMultiple) {
+                    if (selected) selectedChoices - id else selectedChoices + id
+                } else setOf(id)
+            },
+            onConfirm = onConfirm,
+            onCancel = onCancel,
+        )
+        return
     }
     AlertDialog(
         onDismissRequest = onCancel,
@@ -138,4 +163,88 @@ internal object BrowserWebPromptTestTags {
     const val Dialog = "browser_web_prompt_dialog"
     const val Input = "browser_web_prompt_input"
     const val Confirm = "browser_web_prompt_confirm"
+}
+
+private val TEXT_KINDS = setOf(BrowserWebPromptKind.Text, BrowserWebPromptKind.Color, BrowserWebPromptKind.DateTime)
+
+/** The page's alert, confirm, prompt or select on the v5 prompt sheet (V28, B9b). */
+@Composable
+private fun BrowserWebPromptSheetV5(
+    prompt: BrowserWebPrompt,
+    value: String,
+    onValueChange: (String) -> Unit,
+    selectedChoices: Set<String>,
+    onToggleChoice: (String) -> Unit,
+    onConfirm: (String?) -> Unit,
+    onCancel: () -> Unit,
+) {
+    val confirm = {
+        onConfirm(
+            when (prompt.kind) {
+                in TEXT_KINDS -> value
+                BrowserWebPromptKind.Choice -> selectedChoices.joinToString("\u001F")
+                else -> null
+            },
+        )
+    }
+    val title = prompt.title ?: stringResource(
+        when (prompt.kind) {
+            BrowserWebPromptKind.BeforeUnload -> R.string.web_prompt_leave_title
+            BrowserWebPromptKind.Repost -> R.string.web_prompt_repost_title
+            else -> R.string.web_prompt_title
+        },
+    )
+    val message = prompt.message ?: when (prompt.kind) {
+        BrowserWebPromptKind.BeforeUnload -> stringResource(R.string.web_prompt_leave_message)
+        BrowserWebPromptKind.Repost -> stringResource(R.string.web_prompt_repost_message)
+        else -> null
+    }
+    val confirmLabel = stringResource(
+        when (prompt.kind) {
+            BrowserWebPromptKind.BeforeUnload -> R.string.web_prompt_leave
+            BrowserWebPromptKind.Repost -> R.string.web_prompt_resend
+            else -> R.string.web_prompt_ok
+        },
+    )
+    // An alert only informs; every other question keeps its way out as a row too.
+    val cancelLabel = stringResource(
+        if (prompt.kind == BrowserWebPromptKind.BeforeUnload) R.string.web_prompt_stay else R.string.action_cancel,
+    )
+    V5PromptTheme {
+        V5PromptSheet(
+            visible = true,
+            title = title,
+            message = message,
+            actions = listOfNotNull(
+                V5PromptAction(confirmLabel, confirm, V5PromptRole.Primary, BrowserWebPromptTestTags.Confirm),
+                V5PromptAction(cancelLabel, onCancel).takeUnless { prompt.kind == BrowserWebPromptKind.Alert },
+            ),
+            onDismiss = onCancel,
+            testTag = BrowserWebPromptTestTags.Dialog,
+        ) {
+            if (prompt.kind in TEXT_KINDS) {
+                V5NameField(
+                    value = value,
+                    placeholder = stringResource(R.string.v5_web_prompt_answer),
+                    onValueChange = onValueChange,
+                    onDone = confirm,
+                    maxLength = BrowserWebPromptRules.MAX_INPUT_LENGTH,
+                    modifier = Modifier.testTag(BrowserWebPromptTestTags.Input),
+                    capitalize = false,
+                )
+            }
+            if (prompt.kind == BrowserWebPromptKind.Choice) {
+                V5ListGroup {
+                    prompt.choices.filterNot(BrowserWebPromptChoice::separator).forEach { choice ->
+                        V5ListRow(
+                            title = choice.label,
+                            trailing = if (choice.id in selectedChoices) V5RowTrailing.Check else V5RowTrailing.None,
+                            enabled = !choice.disabled,
+                            onClick = { onToggleChoice(choice.id) },
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1,5 +1,9 @@
 package dev.sk2andy.materialbrowser.ui
 
+import dev.sk2andy.materialbrowser.ui.v5.V5NameField
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +41,56 @@ internal fun HttpAuthPromptDialog(
     var username by remember(prompt.id) { mutableStateOf("") }
     var password by remember(prompt.id) { mutableStateOf("") }
     var passwordVisible by remember(prompt.id) { mutableStateOf(false) }
+    // V28, B9b: under v5 on a phone the one v5 prompt sheet with the two fields; closing it cancels.
+    if (rememberDrawsV5()) {
+        val message = stringResource(
+            if (prompt.isProxy) R.string.http_auth_proxy_dialog_message else R.string.http_auth_dialog_message,
+            prompt.host,
+        )
+        val realm = prompt.realm?.let { stringResource(R.string.http_auth_dialog_realm, it) }
+        val insecure = stringResource(
+            if (prompt.isProxy) R.string.http_auth_proxy_insecure_warning else R.string.http_auth_dialog_insecure_warning,
+        ).takeUnless { prompt.isPageSecure }
+        V5PromptTheme {
+            V5PromptSheet(
+                visible = true,
+                title = stringResource(
+                    if (prompt.isProxy) R.string.http_auth_proxy_dialog_title else R.string.http_auth_dialog_title,
+                ),
+                message = listOfNotNull(message, realm, insecure).joinToString("\n\n"),
+                actions = listOf(
+                    V5PromptAction(
+                        stringResource(R.string.http_auth_sign_in),
+                        { onSubmit(username, password) },
+                        V5PromptRole.Primary,
+                        HttpAuthPromptTestTags.Submit,
+                    ),
+                ),
+                onDismiss = onCancel,
+                testTag = HttpAuthPromptTestTags.Dialog,
+            ) {
+                V5NameField(
+                    value = username,
+                    placeholder = stringResource(R.string.http_auth_username),
+                    onValueChange = { username = it },
+                    onDone = {},
+                    maxLength = MAX_HTTP_AUTH_USERNAME_LENGTH,
+                    modifier = Modifier.testTag(HttpAuthPromptTestTags.Username),
+                    capitalize = false,
+                )
+                V5NameField(
+                    value = password,
+                    placeholder = stringResource(R.string.http_auth_password),
+                    onValueChange = { password = it },
+                    onDone = { onSubmit(username, password) },
+                    maxLength = MAX_HTTP_AUTH_PASSWORD_LENGTH,
+                    modifier = Modifier.testTag(HttpAuthPromptTestTags.Password),
+                    password = true,
+                )
+            }
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = onCancel,
         modifier = Modifier.testTag(HttpAuthPromptTestTags.Dialog),

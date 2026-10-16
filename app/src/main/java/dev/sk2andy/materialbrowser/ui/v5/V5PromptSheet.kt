@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -46,6 +47,8 @@ fun V5PromptSheet(
     onDismiss: () -> Unit,
     /** The tag the current dialog had. */
     testTag: String? = null,
+    /** What the question asks to fill in or pick, between the message and the actions. */
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val colors = V5Theme.colors
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
@@ -70,6 +73,7 @@ fun V5PromptSheet(
                         .testTag(V5PromptSheetTestTags.Message),
                 )
             }
+            content()
             V5ListGroup {
                 actions.forEachIndexed { index, action ->
                     V5ListRow(

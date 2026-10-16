@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +50,10 @@ internal fun V5NameField(
     onDone: () -> Unit,
     maxLength: Int,
     modifier: Modifier = Modifier,
+    /** A password: dots on screen and the password keyboard (B9b, signing in to a site). */
+    password: Boolean = false,
+    /** A name starts with a capital; a site's answer or a user name does not. */
+    capitalize: Boolean = true,
 ) {
     val colors = V5Theme.colors
     Box(
@@ -68,7 +75,13 @@ internal fun V5NameField(
             singleLine = true,
             textStyle = V5Theme.type.body.copy(color = colors.label),
             cursorBrush = SolidColor(colors.accent),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(
+                capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
+                autoCorrectEnabled = !password && capitalize,
+                keyboardType = if (password) KeyboardType.Password else KeyboardType.Text,
+                imeAction = ImeAction.Done,
+            ),
+            visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardActions = KeyboardActions(onDone = { onDone() }),
             modifier = modifier
                 .fillMaxWidth()
