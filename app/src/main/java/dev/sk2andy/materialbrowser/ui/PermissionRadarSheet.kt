@@ -99,6 +99,18 @@ internal fun PermissionRadarContent(
     onResetSite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (LocalSiteInfoV5.current) {
+        PermissionRadarContentV5(
+            snapshot = snapshot,
+            workspaceName = workspaceName,
+            supportedPermissions = supportedPermissions,
+            onOriginSelected = onOriginSelected,
+            onDecisionChanged = onDecisionChanged,
+            onResetSite = onResetSite,
+            modifier = modifier,
+        )
+        return
+    }
     val site = snapshot.site
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -241,19 +253,7 @@ private fun PermissionRadarRow(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        when {
-                            notificationsUnavailable ->
-                                stringResource(
-                                    R.string.permission_notifications_system_webview_unavailable,
-                                )
-                            entry.activity == SitePermissionActivity.Active ->
-                                stringResource(R.string.permission_radar_active)
-                            entry.activity == SitePermissionActivity.Pending ->
-                                stringResource(R.string.permission_radar_pending)
-                            entry.allowedForSession ->
-                                stringResource(R.string.permission_radar_session_allowed)
-                            else -> entry.decision.displayName()
-                        },
+                        radarStatus(entry, notificationsUnavailable),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -286,6 +286,20 @@ private fun PermissionRadarRow(
             }
         }
     }
+}
+
+/** What a permission row says under its name: unavailable, in use, waiting, or the decision. */
+@Composable
+internal fun radarStatus(entry: PermissionRadarEntry, notificationsUnavailable: Boolean): String = when {
+    notificationsUnavailable ->
+        stringResource(R.string.permission_notifications_system_webview_unavailable)
+    entry.activity == SitePermissionActivity.Active ->
+        stringResource(R.string.permission_radar_active)
+    entry.activity == SitePermissionActivity.Pending ->
+        stringResource(R.string.permission_radar_pending)
+    entry.allowedForSession ->
+        stringResource(R.string.permission_radar_session_allowed)
+    else -> entry.decision.displayName()
 }
 
 @Composable
