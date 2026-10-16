@@ -593,6 +593,12 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
+        // The parked pill arrives with the chrome's entry motion, not on the first frame.
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
+            runCatching {
+                composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab).assertIsDisplayed()
+            }.isSuccess
+        }
         val initialBounds = composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
             .assertIsDisplayed()
             .fetchSemanticsNode()
@@ -669,14 +675,27 @@ class AddressBarDockInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithTag(
-            AddressBarActionTestTags.action(AddressBarAction.ParkRight),
-        ).performClick()
+        // A tap during the bar's entry motion is lost: tap once the action is on screen.
+        val parkRight = AddressBarActionTestTags.action(AddressBarAction.ParkRight)
+        composeRule.waitUntil(timeoutMillis = 10_000L) {
+            runCatching { composeRule.onNodeWithTag(parkRight).assertIsDisplayed() }.isSuccess
+        }
+        composeRule.onNodeWithTag(parkRight).performClick()
 
         // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
-        composeRule.waitUntil(timeoutMillis = 10_000L) {
-            composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
-                .fetchSemanticsNodes().isNotEmpty()
+        val parked = runCatching {
+            composeRule.waitUntil(timeoutMillis = 10_000L) {
+                composeRule.onAllNodesWithTag(AddressBarDockTestTags.EdgeTab)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        }.isSuccess
+        if (!parked) {
+            var state = ""
+            composeRule.runOnIdle {
+                state = "docked=${browserController.addressBar.isDocked}, " +
+                    "placement=${browserController.addressBar.dockPlacement}"
+            }
+            throw AssertionError("The bar did not park on the right after the tap: $state")
         }
         composeRule.runOnIdle {
             assertEquals(
