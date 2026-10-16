@@ -1627,6 +1627,12 @@
     <string name="gecko_extension_uninstall">Удалить расширение</string>
     <string name="gecko_extension_permission_intro">Расширение запрашивает следующий доступ:</string>
     <string name="gecko_extension_no_permissions">Дополнительных разрешений не заявлено.</string>
+    <string name="gecko_extension_v5_on">Вкл.</string>
+    <string name="gecko_extension_v5_off">Выкл.</string>
+    <string name="gecko_extension_v5_enabled">Включено</string>
+    <string name="gecko_extension_v5_options">Настройки расширения</string>
+    <string name="gecko_extension_v5_built_in">Встроено в Vola: его нельзя выключить или удалить.</string>
+    <string name="gecko_extension_v5_address">Адрес XPI</string>
     <string name="gecko_address_or_search">Адрес или поиск</string>
     <string name="gecko_stop_loading">Остановить загрузку</string>
     <string name="gecko_reload">Обновить</string>
@@ -2209,6 +2215,26 @@
     <string name="v5_accent_pink">Розовый</string>
     <string name="v5_accent_purple">Фиолетовый</string>
     <string name="v5_accent_graphite">Графит</string>
+    <!-- V28 B2: библиотека v5 (холст р1-р3) -->
+    <string name="v5_library_title">Библиотека</string>
+    <string name="v5_library_close">Закрыть библиотеку</string>
+    <string name="v5_library_favorites">Избранное</string>
+    <string name="v5_library_history">История</string>
+    <string name="v5_library_downloads">Загрузки</string>
+    <string name="v5_library_search_favorites">Поиск в избранном</string>
+    <string name="v5_library_search_history">Поиск в истории</string>
+    <string name="v5_library_search_downloads">Поиск в загрузках</string>
+    <string name="v5_library_delete">Удалить</string>
+    <string name="v5_library_retry">Повторить</string>
+    <string name="v5_library_up">Назад в папку выше</string>
+    <string name="v5_favorites_new_folder">Новая папка</string>
+    <string name="v5_history_clear">Очистить…</string>
+    <string name="v5_history_clear_title">Очистить историю</string>
+    <string name="v5_history_clear_subtitle">Только в этом профиле</string>
+    <string name="v5_history_clear_hour">За последний час</string>
+    <string name="v5_history_clear_today">За сегодня</string>
+    <string name="v5_history_clear_two_days">За сегодня и вчера</string>
+    <string name="v5_history_clear_all">За всё время</string>
     <!-- V28 B1: знакомство v5 (холст п1, п2) -->
     <string name="v5_first_run_tagline">Браузер, который не мешает странице.</string>
     <string name="v5_first_run_protection_title">Защита сразу</string>
@@ -2224,4 +2250,17 @@
     <string name="v5_first_run_not_now">Не сейчас</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
     <string name="v5_web_prompt_answer">Ответ</string>
+    <string name="v5_first_run_gestures_title">Два жеста</string>
+    <string name="v5_first_run_gesture_tabs_title">Свайп по панели</string>
+    <string name="v5_first_run_gesture_tabs_caption">Влево и вправо — соседние вкладки</string>
+    <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
+    <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
+    <string name="v5_first_run_gestures_done">Понятно</string>
+    <string name="filter_v5_on">Вкл.</string>
+    <string name="filter_v5_off">Выкл.</string>
+    <string name="filter_v5_active">Включено</string>
+    <string name="filter_v5_action">Действие</string>
+    <string name="filter_v5_group">Группа</string>
+    <string name="filter_v5_origin">Откуда</string>
+    <string name="filter_v5_profile_only">Только правила этого пространства</string>
 </resources>

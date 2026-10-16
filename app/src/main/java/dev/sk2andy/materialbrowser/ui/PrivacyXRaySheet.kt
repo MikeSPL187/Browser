@@ -2,6 +2,11 @@
 
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.luminance
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
+import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import androidx.activity.compose.BackHandler
 import dev.sk2andy.materialbrowser.browser.SiteCertificate
 
@@ -111,38 +116,7 @@ internal fun PrivacyXRaySheet(
     // On a wide window the sheet is a card that fits whole; opened half-way on a tall tablet, its
     // last rows sat under the navigation bar.
     val wideWindow = LocalConfiguration.current.screenWidthDp >= AddressBarWideLayoutRules.MIN_WINDOW_WIDTH_DP
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = wideWindow),
-        modifier = Modifier
-            .testTag(PrivacyXRayTestTags.Sheet)
-            .semantics { paneTitle = title },
-        containerColor = Color.Transparent,
-        dragHandle = {
-            CandyChromeSurface(
-                backdropSource = backdropSource,
-                tokens = chromeTokens,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RectangleShape,
-                blurCornerRadius = 0.dp,
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    BottomSheetDefaults.DragHandle()
-                }
-            }
-        },
-    ) {
-        CandyChromeSurface(
-            backdropSource = backdropSource,
-            tokens = chromeTokens,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RectangleShape,
-            blurCornerRadius = 0.dp,
-        ) {
-            Column {
+    val pages: @Composable () -> Unit = {
                 // Inside the sheet's window, so Back returns to the overview before it closes.
                 BackHandler(enabled = page != SiteInfoPage.Overview) { page = SiteInfoPage.Overview }
                 if (page != SiteInfoPage.Overview) {
@@ -245,7 +219,54 @@ internal fun PrivacyXRaySheet(
                             .padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
                     )
                 }
+    }
+    // V28, B8: under v5 on a phone the same pages in a v5 sheet, their pieces drawn the v5 way.
+    if (rememberDrawsV5()) {
+        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < SITE_INFO_DARK_LUMINANCE) {
+            CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+                V5WindowSheet(
+                    visible = true,
+                    onDismiss = onDismiss,
+                    title = title,
+                    modifier = Modifier.testTag(PrivacyXRayTestTags.Sheet),
+                ) {
+                    V5SheetHeader(title = title, onClose = onDismiss)
+                    pages()
+                }
             }
+        }
+    } else ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = wideWindow),
+        modifier = Modifier
+            .testTag(PrivacyXRayTestTags.Sheet)
+            .semantics { paneTitle = title },
+        containerColor = Color.Transparent,
+        dragHandle = {
+            CandyChromeSurface(
+                backdropSource = backdropSource,
+                tokens = chromeTokens,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RectangleShape,
+                blurCornerRadius = 0.dp,
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BottomSheetDefaults.DragHandle()
+                }
+            }
+        },
+    ) {
+        CandyChromeSurface(
+            backdropSource = backdropSource,
+            tokens = chromeTokens,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RectangleShape,
+            blurCornerRadius = 0.dp,
+        ) {
+            Column { pages() }
         }
     }
 
@@ -306,6 +327,9 @@ internal fun siteConnectionLabel(kind: SiteConnectionKind): String = stringResou
         SiteConnectionKind.Other -> R.string.site_connection_other
     },
 )
+
+/** Below this background luminance the shell is dark. */
+private const val SITE_INFO_DARK_LUMINANCE = 0.5f
 
 internal fun siteConnectionIcon(kind: SiteConnectionKind): ImageVector = when (kind) {
     SiteConnectionKind.Https -> VolaIcons.Lock

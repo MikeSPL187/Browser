@@ -38,6 +38,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
+import dev.sk2andy.materialbrowser.ui.v5.V5CommandNotice
+import dev.sk2andy.materialbrowser.ui.v5.V5CommandNoticeAccessory
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
 import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
@@ -84,6 +86,8 @@ internal fun BrowserV5Bar(
     onBarPositioned: (Rect, Int) -> Unit,
     actions: V5MenuActions,
     modifier: Modifier = Modifier,
+    /** What an address bar command just answered, shown above the bar (V28, B6b). */
+    commandFeedback: AddressCommandFeedback? = null,
 ) {
     val tab = selectedTab
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
@@ -132,6 +136,14 @@ internal fun BrowserV5Bar(
                 onBarPositioned = onBarPositioned,
                 accessory = {
                     Column {
+                        V5CommandNoticeAccessory(
+                            commandFeedback?.let { feedback ->
+                                V5CommandNotice(
+                                    text = feedback.localizedText(),
+                                    rejected = feedback.tone == AddressCommandFeedbackTone.Reject,
+                                )
+                            },
+                        )
                         BrowserListenAccessory(selectedTabPrivate = tab.isIncognito)
                         BrowserDownloadNoticeAccessory(
                             downloads = downloadRing,
@@ -271,6 +283,8 @@ internal fun BrowserV5AddressEditor(
     onClipboard: () -> Unit,
     onCancel: () -> Unit,
     onHighlightChange: (Int) -> Unit,
+    /** A new tab with pinned sites: they show through the empty editor. */
+    overStart: Boolean = false,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
@@ -286,6 +300,7 @@ internal fun BrowserV5AddressEditor(
                 clipboard = clipboard,
                 isPrivate = selectedTab.isIncognito,
                 focusNonce = focusNonce,
+                overStart = overStart,
             ),
             onValueChange = onValueChange,
             // Enter opens what the arrow keys picked, else the typed text, like the current editor.

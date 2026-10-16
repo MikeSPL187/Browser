@@ -40,7 +40,8 @@ internal data class V5ProfileItem(
     val icon: ImageVector,
     val name: String,
     val accent: V5Accent,
-    val tabCount: Int,
+    /** How many tabs it holds; null where the count is beside the point (moving a tab, B11). */
+    val tabCount: Int?,
     val active: Boolean,
     /** Behind a biometric lock: choosing it asks to sign in first. */
     val locked: Boolean = false,
@@ -62,8 +63,9 @@ internal fun V5ProfileSheet(
     onDismiss: () -> Unit,
     onNew: (() -> Unit)? = null,
     onEdit: ((String) -> Unit)? = null,
+    /** «Move to profile» (V28, B11) reuses the sheet under its own title. */
+    title: String = stringResource(R.string.v5_profiles_title),
 ) {
-    val title = stringResource(R.string.v5_profiles_title)
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
         val (local, synced) = profiles.partition { it.device == null }
@@ -98,10 +100,10 @@ internal fun V5ProfileSheet(
 
 @Composable
 private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit, onEdit: ((String) -> Unit)?) {
-    val tabs = pluralStringResource(R.plurals.workspace_sheet_tabs, profile.tabCount, profile.tabCount)
+    val tabs = profile.tabCount?.let { count -> pluralStringResource(R.plurals.workspace_sheet_tabs, count, count) }
     V5ListRow(
         title = profile.name,
-        subtitle = profile.device?.let { "$it · $tabs" } ?: tabs,
+        subtitle = listOfNotNull(profile.device, tabs).joinToString(" · ").ifEmpty { null },
         leading = { ProfileTile(profile) },
         trailing = if (profile.active) V5RowTrailing.Check else V5RowTrailing.None,
         onClick = { onSelect(profile.id) },

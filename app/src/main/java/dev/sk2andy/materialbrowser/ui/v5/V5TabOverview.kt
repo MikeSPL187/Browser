@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -62,13 +61,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -252,53 +248,13 @@ private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: (
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
     ) {
-        Row(
-            Modifier
-                .weight(1f)
-                .heightIn(min = V5Sizes.touchTarget)
-                .clip(V5Theme.shapes.full)
-                .background(colors.fill)
-                .padding(horizontal = V5Spacing.space3),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-        ) {
-            Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
-            val hint = stringResource(R.string.v5_overview_search)
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (query.isEmpty()) {
-                    // The field carries the hint for TalkBack; this is only what the eye reads.
-                    Text(
-                        hint,
-                        style = V5Theme.type.body,
-                        color = colors.labelTertiary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clearAndSetSemantics {},
-                    )
-                }
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    singleLine = true,
-                    textStyle = V5Theme.type.body.copy(color = colors.label),
-                    cursorBrush = SolidColor(colors.accent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = hint }
-                        .testTag(V5OverviewTestTags.Search),
-                )
-            }
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        VolaIcons.Close,
-                        contentDescription = stringResource(R.string.v5_editor_clear),
-                        tint = colors.labelSecondary,
-                        modifier = Modifier.size(V5Sizes.iconSmall),
-                    )
-                }
-            }
-        }
+        V5SearchField(
+            query = query,
+            onQueryChange = onQueryChange,
+            hint = stringResource(R.string.v5_overview_search),
+            modifier = Modifier.weight(1f),
+            fieldModifier = Modifier.testTag(V5OverviewTestTags.Search),
+        )
         Box {
             IconButton(onClick = { menu = true }) {
                 Icon(VolaIcons.MoreHoriz, contentDescription = stringResource(R.string.cd_more_options), tint = colors.label)
