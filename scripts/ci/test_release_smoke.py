@@ -3,6 +3,7 @@
 
 import contextlib
 import io
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -161,6 +162,29 @@ class ReportTest(unittest.TestCase):
             self.assertNotIn(("reboot",), calls)
         finally:
             smoke.adb, smoke.time.sleep = real_adb, real_sleep
+
+    def test_a_dead_system_server_starts_the_workflows_emulator_again(self):
+        calls, started = [], []
+        def adb(*args, **kwargs):
+            calls.append(args)
+            if args[-1] == "sys.boot_completed":
+                return "1"
+            return "ok" if args[-1] == "ok" else ""
+        real = smoke.adb, smoke.time.sleep, smoke.emulator_running, smoke.subprocess.Popen
+        smoke.adb, smoke.time.sleep = adb, lambda seconds: None
+        smoke.emulator_running = lambda: False
+        smoke.subprocess.Popen = lambda command, **kwargs: started.append(command)
+        os.environ[smoke.EMULATOR_COMMAND] = "emulator -avd vola_smoke"
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertTrue(smoke.recover("system_server перезапустился (pid 597 → 7697)"))
+        finally:
+            smoke.adb, smoke.time.sleep, smoke.emulator_running, smoke.subprocess.Popen = real
+            del os.environ[smoke.EMULATOR_COMMAND]
+        self.assertIn(("emu", "kill"), calls)
+        self.assertNotIn(("reboot",), calls)
+        self.assertEqual(started, [["bash", "-c", "emulator -avd vola_smoke"]])
+        self.assertIn(("root",), calls)
 
     def test_a_failed_recovery_says_why_in_the_log(self):
         def adb(*args, **kwargs):

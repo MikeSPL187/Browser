@@ -121,10 +121,50 @@ def wait_for_boot(timeout=300):
     raise SystemExit("the emulator did not boot")
 
 
+# The workflow's own emulator command (nightly-smoke.yml), so a dead system can be started again cold.
+EMULATOR_COMMAND = "SMOKE_EMULATOR_COMMAND"
+EMULATOR_LOG = "SMOKE_EMULATOR_LOG"
+
+
+def emulator_running():
+    return subprocess.run(["pgrep", "-f", "qemu-system"], capture_output=True).returncode == 0
+
+
+def restart_emulator(step):
+    """Starts the emulator again after system_server died.
+
+    adb reboot never finished booting after such a death (#218, #316: no boot_completed in 378 s),
+    while a cold start of the same AVD boots in about a minute. Without the workflow's command
+    (a local run) the emulator is rebooted through adb as before.
+    """
+    command = os.environ.get(EMULATOR_COMMAND)
+    if not command:
+        step("adb reboot")
+        adb("reboot", timeout=60)
+        time.sleep(10)
+        return
+    step("adb emu kill")
+    try:
+        adb("emu", "kill", timeout=30)
+    except EmulatorStuck:
+        pass
+    deadline = time.time() + 30
+    while emulator_running() and time.time() < deadline:
+        time.sleep(2)
+    if emulator_running():
+        step("the emulator did not quit, killing it")
+        subprocess.run(["pkill", "-9", "-f", "qemu-system"], check=False)
+        time.sleep(2)
+    step("starting the emulator again")
+    log = open(os.environ.get(EMULATOR_LOG, os.devnull), "a")
+    subprocess.Popen(["bash", "-c", command], stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                     start_new_session=True)
+
+
 def recover(reason="", timeout=240):
     """Whether the emulator answers again after a hang; it gets [timeout] seconds.
 
-    After system_server died the emulator is rebooted: its graphics services, which outlive
+    After system_server died the emulator is started again: its graphics services, which outlive
     system_server, kept spinning at 100 % CPU (#264) and every later site died with the system.
     """
     started = time.time()
@@ -139,10 +179,8 @@ def recover(reason="", timeout=240):
         pass
     try:
         if SYSTEM_RESTART in reason:
-            step("adb reboot")
-            adb("reboot", timeout=60)
-            time.sleep(10)
-            step("waiting for the reboot")
+            restart_emulator(step)
+            step("waiting for the restart")
             wait_for_boot(timeout)
             adb("root")  # adbd comes back unprivileged; tombstones are readable only as root
         step("waiting for boot")
