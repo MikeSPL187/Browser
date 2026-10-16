@@ -22,12 +22,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +55,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -76,7 +73,6 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
-import dev.sk2andy.materialbrowser.browser.FindInPageRules
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoRules
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.CapsuleSaveResult
@@ -119,7 +115,6 @@ import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.shared.browser.AddressBarLongPressAction
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
-import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
 import eightbitlab.com.blurview.BlurTarget
@@ -1484,45 +1479,15 @@ internal fun BrowserScreen(
         controller.findInPageState
             ?.takeIf { firefoxExtensionOptionsTitle == null && !hideBrowserChrome }
             ?.let { findState ->
-            val matchPosition = FindInPageRules.displayPosition(findState)
-            FindInPageBar(
-                query = findState.query,
-                onQueryChange = controller::updateFindInPageQuery,
-                matchText = findInPageMatchText(matchPosition),
-                isCounting = findState.query.isNotEmpty() && !findState.isDoneCounting,
-                canNavigate = FindInPageRules.canNavigate(findState),
-                focusNonce = 0,
-                autoFocus = true,
-                placeholder = stringResource(R.string.action_find_in_page),
-                queryContentDescription = stringResource(R.string.cd_find_in_page_query),
-                countingContentDescription = stringResource(R.string.cd_find_in_page_counting),
-                previousMatchContentDescription = stringResource(
-                    R.string.cd_find_in_page_previous,
-                ),
-                nextMatchContentDescription = stringResource(R.string.cd_find_in_page_next),
-                closeContentDescription = stringResource(R.string.cd_find_in_page_close),
-                onPreviousMatch = { controller.findNextInPage(forward = false) },
-                onNextMatch = { controller.findNextInPage(forward = true) },
-                onClose = controller::closeFindInPage,
-                options = findState.options,
-                optionsAvailable = controller.supportsFindInPageOptions,
-                matchCaseLabel = stringResource(R.string.find_in_page_match_case),
-                wholeWordLabel = stringResource(R.string.find_in_page_whole_word),
-                onOptionsChange = controller::updateFindInPageOptions,
-                isPrivate = selectedTab.isIncognito,
-                // The find bar takes the island's place in the thumb zone, above the keyboard.
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .addressBarWindowInsetsPadding(
-                        fullWindowHeightPx = fullWindowHeightPx,
-                        rootBottomInWindowPx = browserRootBottomInWindowPx,
-                        imeInsets = WindowInsets.ime,
-                        navigationBarInsets = WindowInsets.addressBarEdges,
-                    )
-                    .padding(horizontal = VolaSpacing.x2, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
-                    .zIndex(25f),
-            )
-        }
+                BrowserFindInPage(
+                    controller = controller,
+                    findState = findState,
+                    isPrivate = selectedTab.isIncognito,
+                    fullWindowHeightPx = fullWindowHeightPx,
+                    rootBottomInWindowPx = browserRootBottomInWindowPx,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
 
         if (
             firefoxExtensionOptionsTitle == null &&
