@@ -683,13 +683,15 @@ class AddressBarDockInstrumentedTest {
         }
 
         // A tap during the bar's entry motion is lost, and a disabled action ignores it (it is off
-        // until docking is available for the restored tab): tap once the action is shown and enabled.
+        // until docking is available for the restored tab): tap once the action is enabled and has
+        // stopped moving. Shown and enabled alone still lost the tap once (dockingEnabled=true).
         val parkRight = AddressBarActionTestTags.action(AddressBarAction.ParkRight)
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             runCatching {
                 composeRule.onNodeWithTag(parkRight).assertIsDisplayed().assertIsEnabled()
             }.isSuccess
         }
+        awaitSettledBounds(parkRight)
         composeRule.onNodeWithTag(parkRight).performClick()
 
         // The bar parks with a spring; on a loaded CI emulator that can take a few seconds.
@@ -949,11 +951,14 @@ class AddressBarDockInstrumentedTest {
     }
 
     /** Waits until the parked pill is on screen and two frames apart in the same place. */
-    private fun awaitSettledEdgeTabBounds(): Rect {
+    private fun awaitSettledEdgeTabBounds(): Rect = awaitSettledBounds(AddressBarDockTestTags.EdgeTab)
+
+    /** Waits until the node tagged [tag] is on screen and two frames apart in the same place. */
+    private fun awaitSettledBounds(tag: String): Rect {
         var last: Rect? = null
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             val bounds = runCatching {
-                composeRule.onNodeWithTag(AddressBarDockTestTags.EdgeTab)
+                composeRule.onNodeWithTag(tag)
                     .assertIsDisplayed()
                     .fetchSemanticsNode()
                     .boundsInRoot
