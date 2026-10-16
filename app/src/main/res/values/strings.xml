@@ -2115,4 +2115,15 @@
     <string name="v5_accent_pink">Pink</string>
     <string name="v5_accent_purple">Purple</string>
     <string name="v5_accent_graphite">Graphite</string>
+    <!-- V28 B2: v5 library (canvas screens r1-r3) -->
+    <string name="v5_library_title">Library</string>
+    <string name="v5_library_close">Close library</string>
+    <string name="v5_library_favorites">Favorites</string>
+    <string name="v5_library_history">History</string>
+    <string name="v5_library_downloads">Downloads</string>
+    <string name="v5_library_search_favorites">Search favorites</string>
+    <string name="v5_library_search_history">Search history</string>
+    <string name="v5_library_search_downloads">Search downloads</string>
+    <string name="v5_library_delete">Delete</string>
+    <string name="v5_library_retry">Retry</string>
 </resources>

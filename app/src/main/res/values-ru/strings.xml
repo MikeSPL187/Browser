@@ -2209,4 +2209,15 @@
     <string name="v5_accent_pink">Розовый</string>
     <string name="v5_accent_purple">Фиолетовый</string>
     <string name="v5_accent_graphite">Графит</string>
+    <!-- V28 B2: библиотека v5 (холст р1-р3) -->
+    <string name="v5_library_title">Библиотека</string>
+    <string name="v5_library_close">Закрыть библиотеку</string>
+    <string name="v5_library_favorites">Избранное</string>
+    <string name="v5_library_history">История</string>
+    <string name="v5_library_downloads">Загрузки</string>
+    <string name="v5_library_search_favorites">Поиск в избранном</string>
+    <string name="v5_library_search_history">Поиск в истории</string>
+    <string name="v5_library_search_downloads">Поиск в загрузках</string>
+    <string name="v5_library_delete">Удалить</string>
+    <string name="v5_library_retry">Повторить</string>
 </resources>

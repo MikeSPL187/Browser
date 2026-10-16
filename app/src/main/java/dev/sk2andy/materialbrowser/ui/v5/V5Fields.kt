@@ -15,6 +15,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -24,19 +26,85 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
+import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 /*
  * Fields of the v5 sheets that name and color things (tab groups V12b, profiles V11b): one name
- * field and one row of color swatches, so every such sheet looks and behaves the same.
+ * field and one row of color swatches, so every such sheet looks and behaves the same. The search
+ * capsule is the one of the overview and the library.
  */
+
+/**
+ * A search capsule on the fill: the glass, the [hint] while [query] is empty (read by TalkBack as
+ * the field's name) and a clear button once something is typed. [fieldModifier] reaches the text
+ * field itself, for its test tag.
+ */
+@Composable
+fun V5SearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    hint: String,
+    modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
+) {
+    val colors = V5Theme.colors
+    Row(
+        modifier
+            .heightIn(min = V5Sizes.touchTarget)
+            .clip(V5Theme.shapes.full)
+            .background(colors.fill)
+            .padding(horizontal = V5Spacing.space3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
+        Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (query.isEmpty()) {
+                // The field carries the hint for TalkBack; this is only what the eye reads.
+                Text(
+                    hint,
+                    style = V5Theme.type.body,
+                    color = colors.labelTertiary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clearAndSetSemantics {},
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = V5Theme.type.body.copy(color = colors.label),
+                cursorBrush = SolidColor(colors.accent),
+                modifier = fieldModifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = hint },
+            )
+        }
+        if (query.isNotEmpty()) {
+            IconButton(onClick = { onQueryChange("") }) {
+                Icon(
+                    VolaIcons.Close,
+                    contentDescription = stringResource(R.string.v5_editor_clear),
+                    tint = colors.labelSecondary,
+                    modifier = Modifier.size(V5Sizes.iconSmall),
+                )
+            }
+        }
+    }
+}
 
 /** A one-line name on a rounded card, its [placeholder] shown while it is empty and read by TalkBack. */
 @Composable
