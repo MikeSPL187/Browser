@@ -44,6 +44,7 @@ class StartupPresentationInstrumentedTest {
     @Test
     fun disabledAnimationOpensFocusedAddressEditorOnLauncherStart() {
         composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        awaitWindowFocusForTests(composeRule.activity)
         composeRule.awaitAddressEditorFocused()
         assertImeVisible()
 

@@ -350,6 +350,7 @@ class MainActivityIncomingNavigationInstrumentedTest {
         var currentUrl: String? = null
         var isLoading = true
         var contentVisible = false
+        var centerColor = "none"
         while (SystemClock.elapsedRealtime() < deadline) {
             instrumentation.runOnMainSync {
                 val preview = activity.browserControllerForTesting().externalLinkPreviewState
@@ -357,9 +358,12 @@ class MainActivityIncomingNavigationInstrumentedTest {
                 isLoading = preview?.isLoading != false
             }
             if (currentUrl == server.url && !isLoading && server.requests.get() > 0) {
+                // A hung System UI dialog would cover the middle of the screenshot.
+                dismissNotRespondingDialogForTests()
                 val screenshot = instrumentation.uiAutomation.takeScreenshot()
                 if (screenshot != null) {
                     val center = screenshot.getPixel(screenshot.width / 2, screenshot.height / 2)
+                    centerColor = "#%06X".format(center and 0xFFFFFF)
                     contentVisible = Color.red(center) > 180 &&
                         Color.green(center) < 100 &&
                         Color.blue(center) < 140
@@ -372,7 +376,7 @@ class MainActivityIncomingNavigationInstrumentedTest {
         assertEquals(server.url, currentUrl)
         assertTrue("Incoming preview did not finish loading", !isLoading)
         assertTrue("Incoming preview was not requested", server.requests.get() > 0)
-        assertTrue("Incoming preview page was not visible", contentVisible)
+        assertTrue("Incoming preview page was not visible; screen centre $centerColor", contentVisible)
     }
 
     private companion object {

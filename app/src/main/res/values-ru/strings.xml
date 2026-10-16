@@ -1627,6 +1627,12 @@
     <string name="gecko_extension_uninstall">Удалить расширение</string>
     <string name="gecko_extension_permission_intro">Расширение запрашивает следующий доступ:</string>
     <string name="gecko_extension_no_permissions">Дополнительных разрешений не заявлено.</string>
+    <string name="gecko_extension_v5_on">Вкл.</string>
+    <string name="gecko_extension_v5_off">Выкл.</string>
+    <string name="gecko_extension_v5_enabled">Включено</string>
+    <string name="gecko_extension_v5_options">Настройки расширения</string>
+    <string name="gecko_extension_v5_built_in">Встроено в Vola: его нельзя выключить или удалить.</string>
+    <string name="gecko_extension_v5_address">Адрес XPI</string>
     <string name="gecko_address_or_search">Адрес или поиск</string>
     <string name="gecko_stop_loading">Остановить загрузку</string>
     <string name="gecko_reload">Обновить</string>
@@ -2242,4 +2248,17 @@
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
     <string name="v5_first_run_default_action">Сделать основным</string>
     <string name="v5_first_run_not_now">Не сейчас</string>
+    <string name="v5_first_run_gestures_title">Два жеста</string>
+    <string name="v5_first_run_gesture_tabs_title">Свайп по панели</string>
+    <string name="v5_first_run_gesture_tabs_caption">Влево и вправо — соседние вкладки</string>
+    <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
+    <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
+    <string name="v5_first_run_gestures_done">Понятно</string>
+    <string name="filter_v5_on">Вкл.</string>
+    <string name="filter_v5_off">Выкл.</string>
+    <string name="filter_v5_active">Включено</string>
+    <string name="filter_v5_action">Действие</string>
+    <string name="filter_v5_group">Группа</string>
+    <string name="filter_v5_origin">Откуда</string>
+    <string name="filter_v5_profile_only">Только правила этого пространства</string>
 </resources>

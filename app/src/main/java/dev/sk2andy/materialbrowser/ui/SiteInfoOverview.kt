@@ -1,5 +1,11 @@
 package dev.sk2andy.materialbrowser.ui
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.heading
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5Toggle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -135,12 +141,7 @@ internal fun SiteInfoOverview(
             )
         }
 
-        Text(
-            text = stringResource(R.string.site_info_permissions_title),
-            modifier = Modifier.padding(start = VolaSiteInfo.labelPadding),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        SiteInfoSectionLabel(stringResource(R.string.site_info_permissions_title))
         SiteInfoCard {
             permissions.forEach { entry ->
                 SitePermissionRow(
@@ -284,6 +285,36 @@ private fun SiteDataCard(data: SiteInfoSiteData) {
 
 @Composable
 private fun SiteInfoHeader(host: String, connectionKind: SiteConnectionKind) {
+    if (LocalSiteInfoV5.current) {
+        val colors = V5Theme.colors
+        Row(
+            modifier = Modifier.padding(horizontal = V5Spacing.space4),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(V5Sizes.rowTile)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.accentFill),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = SiteInfoRules.initial(host),
+                    style = V5Theme.type.headline,
+                    color = colors.onAccentFill,
+                )
+            }
+            Text(
+                text = host.ifEmpty { siteConnectionLabel(connectionKind) },
+                style = V5Theme.type.title,
+                color = colors.label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        return
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(VolaSiteInfo.headerGap),
@@ -317,6 +348,16 @@ internal fun SiteInfoCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (LocalSiteInfoV5.current) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(V5Theme.shapes.s)
+                .background(V5Theme.colors.surface),
+            content = content,
+        )
+        return
+    }
     Surface(
         shape = VolaSiteInfo.cardShape,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -328,6 +369,14 @@ internal fun SiteInfoCard(
 
 @Composable
 internal fun SiteInfoDivider() {
+    if (LocalSiteInfoV5.current) {
+        HorizontalDivider(
+            modifier = Modifier.padding(start = V5Spacing.space4 + V5Sizes.iconSmall + V5Spacing.space3),
+            thickness = V5Spacing.hairline,
+            color = V5Theme.colors.separator,
+        )
+        return
+    }
     HorizontalDivider(
         modifier = Modifier.padding(
             start = VolaSiteInfo.dividerInset,
@@ -343,7 +392,7 @@ private fun SiteInfoChevron() {
     Icon(
         painter = painterResource(R.drawable.ic_symbol_chevron_right),
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = if (LocalSiteInfoV5.current) V5Theme.colors.labelTertiary else MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -357,6 +406,10 @@ private fun SiteInfoRow(
     showIcon: Boolean = true,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
+    if (LocalSiteInfoV5.current) {
+        SiteInfoRowV5(icon, title, modifier, supporting, onClick, showIcon, trailing)
+        return
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -413,7 +466,13 @@ private fun SiteInfoSwitchRow(
             role = Role.Switch,
             onValueChange = onCheckedChange,
         ),
-        trailing = { Switch(checked = checked, onCheckedChange = null) },
+        trailing = {
+            if (LocalSiteInfoV5.current) {
+                V5Toggle(checked = checked, onCheckedChange = null)
+            } else {
+                Switch(checked = checked, onCheckedChange = null)
+            }
+        },
     )
 }
 
@@ -469,9 +528,87 @@ private fun SitePermissionRow(
     }
 }
 
+/** A group's name over its card, in the footnote style under v5. */
+@Composable
+internal fun SiteInfoSectionLabel(text: String) {
+    if (LocalSiteInfoV5.current) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(start = V5Spacing.space4).semantics { heading() },
+            style = V5Theme.type.footnote,
+            color = V5Theme.colors.labelSecondary,
+        )
+        return
+    }
+    Text(
+        text = text,
+        modifier = Modifier.padding(start = VolaSiteInfo.labelPadding),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** [SiteInfoRow] the v5 way: 17 sp title, footnote below, at least 52 dp, the v5 label colors. */
+@Composable
+private fun SiteInfoRowV5(
+    icon: Painter,
+    title: String,
+    modifier: Modifier,
+    supporting: String?,
+    onClick: (() -> Unit)?,
+    showIcon: Boolean,
+    trailing: @Composable RowScope.() -> Unit,
+) {
+    val colors = V5Theme.colors
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = V5Sizes.rowSingleLine)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space2),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
+        Box(Modifier.size(V5Sizes.iconSmall)) {
+            if (showIcon) {
+                Icon(painter = icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.iconSmall))
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = V5Theme.type.body, color = colors.label)
+            supporting?.let { Text(text = it, style = V5Theme.type.footnote, color = colors.labelSecondary) }
+        }
+        trailing()
+    }
+}
+
 /** The bar over a page the overview leads to: Back returns to the overview. */
 @Composable
 internal fun SiteInfoPageBar(title: String, onBack: () -> Unit) {
+    if (LocalSiteInfoV5.current) {
+        val colors = V5Theme.colors
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = V5Spacing.space1, end = V5Spacing.space4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = VolaIcons.ArrowBack,
+                    contentDescription = stringResource(R.string.action_back),
+                    tint = colors.accent,
+                )
+            }
+            Text(
+                text = title,
+                style = V5Theme.type.headline,
+                color = colors.label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -547,6 +684,41 @@ private fun SiteInfoOverviewPreview() {
                     onDelete = {},
                 ),
             )
+        }
+    }
+}
+
+/** V28 B8: the overview under v5, its pieces drawn the v5 way. */
+@androidx.compose.ui.tooling.preview.Preview(name = "Site info v5 · dark", heightDp = 900)
+@Composable
+private fun SiteInfoOverviewV5Preview() {
+    dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme(dark = true) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+            Box(Modifier.background(V5Theme.colors.background)) {
+                SiteInfoOverview(
+                    pageUrl = "https://north-guide.ru/baikal",
+                    connectionKind = SiteConnectionKind.Https,
+                    blockedCount = 14,
+                    permissions = listOf(
+                        PermissionRadarEntry(
+                            SitePermission.Location,
+                            SitePermissionDecision.Allow,
+                            allowedForSession = false,
+                            activity = SitePermissionActivity.Idle,
+                        ),
+                    ),
+                    canChangePermissions = true,
+                    protectionOn = true,
+                    canTogglePopups = true,
+                    popupsBlocked = true,
+                    onOpenPrivacyXRay = {},
+                    onOpenPermissions = {},
+                    onPermissionDecisionChanged = { _, _ -> },
+                    onProtectionChange = {},
+                    onPopupsBlockedChange = {},
+                    modifier = Modifier.padding(V5Spacing.marginPhone),
+                )
+            }
         }
     }
 }

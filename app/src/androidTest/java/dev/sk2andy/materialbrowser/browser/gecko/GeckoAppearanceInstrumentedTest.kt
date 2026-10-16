@@ -35,12 +35,16 @@ class GeckoAppearanceInstrumentedTest {
 
     @Test
     fun coldSystemDarkAndLiveAppOverridesReachWebsiteMediaQuery() {
-        assumeTrue(
-            "Set system dark before starting instrumentation",
-            shell("cmd uimode night").substringAfter(':').trim() == "yes",
-        )
         assumeTrue("Cold-start check requires a fresh process", !GeckoRuntimeOwner.hasRuntimeForTesting())
-        exerciseAppearanceTransitions(coldStart = true)
+        // The system goes dark before Gecko and the browser start, so the runtime is created
+        // under a dark system. CI never starts the instrumentation dark, so the test does it.
+        val nightModeBefore = shell("cmd uimode night").substringAfter(':').trim()
+        setSystemNightMode("yes")
+        try {
+            exerciseAppearanceTransitions(coldStart = true)
+        } finally {
+            setSystemNightMode(nightModeBefore)
+        }
     }
 
     @Test
