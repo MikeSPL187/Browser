@@ -53,9 +53,8 @@ class FirstRunRulesTest {
     }
 
     @Test
-    fun `v5 starts with the welcome on a new install and skips the v4 lesson after an update`() {
-        assertEquals(FirstRunStage.Welcome, FirstRunRules.v5FirstStage(showIntro = true))
-        assertNull(FirstRunRules.v5FirstStage(showIntro = false))
+    fun `v5 always starts with the welcome, never with the v4 lesson`() {
+        assertEquals(FirstRunStage.Welcome, FirstRunRules.v5FirstStage())
     }
 
     @Test

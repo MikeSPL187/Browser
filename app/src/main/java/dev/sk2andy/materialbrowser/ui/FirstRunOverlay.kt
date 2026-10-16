@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,10 +74,11 @@ internal object FirstRunRules {
         FirstRunStage.DefaultBrowser.takeUnless { isDefaultBrowser }
 
     /**
-     * Where v5 starts: the welcome on a new install. The v4 gesture lesson teaches v4 gestures, so
-     * after an update v5 shows nothing (null) until its own two-gesture sheet (B1b).
+     * Where v5 starts: always the welcome. The v4 gesture lesson teaches v4 gestures, so where v4
+     * would show only the lesson (after an update that brings one, or «Show gesture lesson» in
+     * developer options) v5 shows its own first run; its two-gesture sheet (B1b) takes that place.
      */
-    fun v5FirstStage(showIntro: Boolean): FirstRunStage? = FirstRunStage.Welcome.takeIf { showIntro }
+    fun v5FirstStage(): FirstRunStage = FirstRunStage.Welcome
 }
 
 /**
@@ -150,12 +150,7 @@ internal fun FirstRunOverlay(
 @Composable
 private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean, onCompleted: () -> Unit) {
     val context = LocalContext.current
-    val first = FirstRunRules.v5FirstStage(showIntro)
-    if (first == null) {
-        LaunchedEffect(Unit) { onCompleted() }
-        return
-    }
-    var stage by rememberSaveable { mutableStateOf(first) }
+    var stage by rememberSaveable { mutableStateOf(FirstRunRules.v5FirstStage()) }
     BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
         FirstRunRules.back(stage, showIntro)?.let { stage = it }
     }
