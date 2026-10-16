@@ -271,6 +271,8 @@ internal fun BrowserV5AddressEditor(
     onClipboard: () -> Unit,
     onCancel: () -> Unit,
     onHighlightChange: (Int) -> Unit,
+    /** A new tab with pinned sites: they show through the empty editor. */
+    overStart: Boolean = false,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
@@ -286,6 +288,7 @@ internal fun BrowserV5AddressEditor(
                 clipboard = clipboard,
                 isPrivate = selectedTab.isIncognito,
                 focusNonce = focusNonce,
+                overStart = overStart,
             ),
             onValueChange = onValueChange,
             // Enter opens what the arrow keys picked, else the typed text, like the current editor.
