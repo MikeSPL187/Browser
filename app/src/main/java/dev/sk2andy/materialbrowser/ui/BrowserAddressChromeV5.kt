@@ -38,6 +38,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
+import dev.sk2andy.materialbrowser.ui.v5.V5CommandNotice
+import dev.sk2andy.materialbrowser.ui.v5.V5CommandNoticeAccessory
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorState
 import dev.sk2andy.materialbrowser.ui.v5.V5SuggestionLayoutRules
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
@@ -84,6 +86,8 @@ internal fun BrowserV5Bar(
     onBarPositioned: (Rect, Int) -> Unit,
     actions: V5MenuActions,
     modifier: Modifier = Modifier,
+    /** What an address bar command just answered, shown above the bar (V28, B6b). */
+    commandFeedback: AddressCommandFeedback? = null,
 ) {
     val tab = selectedTab
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
@@ -132,6 +136,14 @@ internal fun BrowserV5Bar(
                 onBarPositioned = onBarPositioned,
                 accessory = {
                     Column {
+                        V5CommandNoticeAccessory(
+                            commandFeedback?.let { feedback ->
+                                V5CommandNotice(
+                                    text = feedback.localizedText(),
+                                    rejected = feedback.tone == AddressCommandFeedbackTone.Reject,
+                                )
+                            },
+                        )
                         BrowserListenAccessory(selectedTabPrivate = tab.isIncognito)
                         BrowserDownloadNoticeAccessory(
                             downloads = downloadRing,
