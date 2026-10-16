@@ -267,7 +267,8 @@ internal fun BoxScope.BrowserAddressChrome(
         }
     }
 
-    val addressBarDockingAvailable = AddressBarDockingRules.isAvailable(
+    // Docking to a side edge is a v4 gesture: the v5 bar has its own place on a phone (V28, B7).
+    val addressBarDockingAvailable = !(uiV5 && !wideWindow) && AddressBarDockingRules.isAvailable(
         settingEnabled = controller.addressBar.isDockingEnabled,
         isBlankTab = selectedTab.url == BLANK_URL,
     )
@@ -455,14 +456,14 @@ internal fun BoxScope.BrowserAddressChrome(
         selectedTab.url != BLANK_URL &&
         !linkPeekAddressBarExpanded &&
         !wideWindow
-    // V7: the v5 bar replaces the bar at rest and while collapsed; editing, docking, feedback, the
-    // overview morph and wide windows stay on the current bar until their v5 steps.
+    // V7: the v5 bar replaces the bar at rest and while collapsed; editing, feedback, the overview
+    // morph and wide windows stay on the current bar until their v5 steps. The v5 link preview
+    // (V21) keeps the v5 bar under it: the current bar's expanded state is for the current preview.
     val showV5Bar = uiV5 &&
         !addressEditorVisible &&
         commandFeedback == null &&
         !wideWindow &&
         effectiveAddressBarDockPlacement == null &&
-        !linkPeekAddressBarExpanded &&
         !tabOverviewOpening &&
         !tabOverviewVisible &&
         !addressBarMorphInFront
