@@ -2154,6 +2154,8 @@
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
+    <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
+    <string name="v5_web_prompt_answer">Answer</string>
     <string name="v5_first_run_gestures_title">Two gestures</string>
     <string name="v5_first_run_gesture_tabs_title">Swipe along the bar</string>
     <string name="v5_first_run_gesture_tabs_caption">Left and right go to the next tabs</string>
