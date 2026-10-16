@@ -9,15 +9,18 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Both tests run with and without system animations. Whether animators run is read inside the
+ * activity: a test process learns the system's animator scale only when its first window opens,
+ * so before that ValueAnimator.areAnimatorsEnabled() is true even with animations off (CI).
+ */
 @RunWith(AndroidJUnit4::class)
 class WebContentTopInsetTransitionInstrumentedTest {
     @Test
     fun nativeHeaderTransitionKeepsTopEdgeAndSettlesAtFinalLayout() {
-        assumeTrue(ValueAnimator.areAnimatorsEnabled())
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var content: View
             scenario.onActivity { activity ->
@@ -44,7 +47,9 @@ class WebContentTopInsetTransitionInstrumentedTest {
                     animateChange = true,
                 )
 
-                assertEquals(-96f, content.translationY, 0.5f)
+                // Without animations the content takes its new place at once.
+                val startTranslationY = if (ValueAnimator.areAnimatorsEnabled()) -96f else 0f
+                assertEquals(startTranslationY, content.translationY, 0.5f)
             }
 
             SystemClock.sleep(WebContentTopInsetTransitionRules.DURATION_MILLIS + 100L)
@@ -57,7 +62,6 @@ class WebContentTopInsetTransitionInstrumentedTest {
 
     @Test
     fun nonHeaderInsetChangeCancelsRunningTransitionAndSnaps() {
-        assumeTrue(ValueAnimator.areAnimatorsEnabled())
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var content: View
             scenario.onActivity { activity ->
