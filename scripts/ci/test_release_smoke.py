@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests for release_smoke.py: verdicts and the report posted to the nightly issue."""
 
+import contextlib
+import io
 import sys
 import unittest
 from pathlib import Path
@@ -159,6 +161,24 @@ class ReportTest(unittest.TestCase):
             self.assertNotIn(("reboot",), calls)
         finally:
             smoke.adb, smoke.time.sleep = real_adb, real_sleep
+
+    def test_a_failed_recovery_says_why_in_the_log(self):
+        def adb(*args, **kwargs):
+            if args[0] == "wait-for-device":
+                raise smoke.EmulatorStuck("adb wait-for-device: no answer in 240 s")
+            return ""
+        real_adb, real_sleep = smoke.adb, smoke.time.sleep
+        smoke.adb, smoke.time.sleep = adb, lambda seconds: None
+        output = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(output):
+                self.assertFalse(smoke.recover("system_server перезапустился (pid 612 → 7569)"))
+        finally:
+            smoke.adb, smoke.time.sleep = real_adb, real_sleep
+        log = output.getvalue()
+        self.assertIn("RECOVER", log)
+        self.assertIn("adb reboot", log)
+        self.assertIn("gave up: adb wait-for-device: no answer in 240 s", log)
 
     def test_an_unopened_page_shows_what_was_in_front(self):
         empty = smoke.SiteResult("Сбербанк Онлайн", "https://online.sberbank.ru/", alive=True, loaded=False,

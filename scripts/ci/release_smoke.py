@@ -127,19 +127,31 @@ def recover(reason="", timeout=240):
     After system_server died the emulator is rebooted: its graphics services, which outlive
     system_server, kept spinning at 100 % CPU (#264) and every later site died with the system.
     """
+    started = time.time()
+
+    def step(what):
+        # Each step goes to the job log: a recovery that printed nothing left only its duration (#218).
+        print(f"RECOVER +{time.time() - started:.0f} s: {what}", flush=True)
+
     try:
         adb("reconnect", "offline", timeout=30)
     except EmulatorStuck:
         pass
     try:
         if SYSTEM_RESTART in reason:
+            step("adb reboot")
             adb("reboot", timeout=60)
             time.sleep(10)
+            step("waiting for the reboot")
             wait_for_boot(timeout)
             adb("root")  # adbd comes back unprivileged; tombstones are readable only as root
+        step("waiting for boot")
         wait_for_boot(timeout)
-        return adb("shell", "echo", "ok", timeout=30).strip() == "ok"
-    except (EmulatorStuck, SystemExit):
+        answered = adb("shell", "echo", "ok", timeout=30).strip() == "ok"
+        step("the emulator answers" if answered else "the emulator does not answer")
+        return answered
+    except (EmulatorStuck, SystemExit) as error:
+        step(f"gave up: {error}")
         return False
 
 
