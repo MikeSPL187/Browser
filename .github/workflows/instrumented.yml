@@ -191,6 +191,16 @@ jobs:
           done &
           monitor=$!
           started=$(date +%s)
+          # The emulator sometimes drops off adb mid-shard ("device offline"); every Gradle call
+          # after that fails at once without running a test. Bring it back before each later call.
+          ensure_device() {
+            if [[ "$(adb get-state 2>/dev/null)" == device ]]; then return 0; fi
+            echo "::warning::Shard $SHARD: emulator offline before $1, reconnecting adb"
+            adb reconnect offline || true
+            timeout 120 adb wait-for-device || true
+            timeout 180 bash -c 'until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" == 1 ]]; do sleep 2; done' \
+              || echo "::warning::Shard $SHARD: emulator still not back for $1"
+          }
           # Failing tests are judged by the Report job against the baseline; this step fails only
           # when the shard produced no results at all.
           ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" "${args[@]}" || true
@@ -211,6 +221,7 @@ jobs:
             index=0
             while read -r test; do
               index=$((index + 1))
+              ensure_device "the rerun of $test" < /dev/null
               rm -rf app/build/outputs/androidTest-results
               ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
                 -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
@@ -230,6 +241,7 @@ jobs:
             phases="$RUNNER_TEMP/extension-phases"
             persistence=dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPersistence
             for phase in One Two; do
+              ensure_device "extension phase $phase" < /dev/null
               rm -rf app/build/outputs/androidTest-results
               ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
                 -Pandroid.testInstrumentationRunnerArguments.clearPackageData=false \

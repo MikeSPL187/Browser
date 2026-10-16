@@ -2115,6 +2115,24 @@
     <string name="v5_accent_pink">Pink</string>
     <string name="v5_accent_purple">Purple</string>
     <string name="v5_accent_graphite">Graphite</string>
+    <!-- V28 B2: v5 library (canvas screens r1-r3) -->
+    <string name="v5_library_title">Library</string>
+    <string name="v5_library_close">Close library</string>
+    <string name="v5_library_favorites">Favorites</string>
+    <string name="v5_library_history">History</string>
+    <string name="v5_library_downloads">Downloads</string>
+    <string name="v5_library_search_favorites">Search favorites</string>
+    <string name="v5_library_search_history">Search history</string>
+    <string name="v5_library_search_downloads">Search downloads</string>
+    <string name="v5_library_delete">Delete</string>
+    <string name="v5_library_retry">Retry</string>
+    <string name="v5_history_clear">Clear…</string>
+    <string name="v5_history_clear_title">Clear history</string>
+    <string name="v5_history_clear_subtitle">Only in this profile</string>
+    <string name="v5_history_clear_hour">The last hour</string>
+    <string name="v5_history_clear_today">Today</string>
+    <string name="v5_history_clear_two_days">Today and yesterday</string>
+    <string name="v5_history_clear_all">All time</string>
     <!-- V28 B1: v5 first run (canvas screens p1, p2) -->
     <string name="v5_first_run_tagline">The browser that stays out of the page\'s way.</string>
     <string name="v5_first_run_protection_title">Protection from the start</string>
@@ -2128,4 +2146,10 @@
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
+    <string name="v5_first_run_gestures_title">Two gestures</string>
+    <string name="v5_first_run_gesture_tabs_title">Swipe along the bar</string>
+    <string name="v5_first_run_gesture_tabs_caption">Left and right go to the next tabs</string>
+    <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
+    <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
+    <string name="v5_first_run_gestures_done">Got it</string>
 </resources>

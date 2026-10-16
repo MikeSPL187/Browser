@@ -32,6 +32,8 @@ object V5Spacing {
 object V5Sizes {
     /** Smallest touch target; in the bar the visible capsule and buttons are this size themselves. */
     val touchTarget: Dp = 48.dp
+    /** The widest a full-screen state's content gets (a lock screen, B13), so lines stay readable. */
+    val stateContentMax: Dp = 480.dp
 
     // Bottom bar on a phone (section 5.1).
     /** The bar: 8 + 48 + 8, plus the system navigation under it. */
@@ -141,6 +143,8 @@ object V5Sizes {
     // First run (canvas screen «п1»): Vola's mark on its accent tile.
     val firstRunMark: Dp = 88.dp
     val firstRunMarkIcon: Dp = 40.dp
+    /** The plate of a gesture's hand on the two-gesture sheet (canvas screen «п3»). */
+    val firstRunGesture: Dp = 52.dp
 
     // Link preview (canvas screen «н1»).
     /** The address line over the live page in the preview card. */
