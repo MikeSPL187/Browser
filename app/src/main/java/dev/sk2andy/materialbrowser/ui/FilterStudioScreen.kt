@@ -401,7 +401,7 @@ internal fun FilterStudioDialogs(
     onApplyImport: (CandyRulePreview) -> Int,
     onApplySubscription: (String, CandyRulePreview) -> Int,
     onExport: () -> String,
-    /** The rule editor as a v5 sheet; the caller draws it inside the v5 theme. */
+    /** The editor, import, web list and export as v5 sheets; the caller draws them inside the v5 theme. */
     uiV5: Boolean = false,
 ) {
     val view = LocalView.current
@@ -458,6 +458,49 @@ internal fun FilterStudioDialogs(
                 }
             },
         )
+    }
+    if (uiV5) {
+        FilterImportSheetV5(
+            visible = dialogs.importVisible,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            onDismiss = { dialogs.importVisible = false },
+            onParse = onParseImport,
+            onApply = {
+                val applied = onApplyImport(it)
+                if (applied > 0) {
+                    dialogs.importVisible = false
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    true
+                } else {
+                    false
+                }
+            },
+        )
+        FilterExportSheetV5(
+            visible = dialogs.exportVisible,
+            text = onExport,
+            onDismiss = { dialogs.exportVisible = false },
+        )
+        FilterSubscriptionSheetV5(
+            visible = dialogs.subscriptionVisible,
+            existingRules = subscriptionRules,
+            profiles = profiles,
+            currentProfileId = currentProfileId,
+            isIncognito = isIncognito,
+            onDismiss = { dialogs.subscriptionVisible = false },
+            onApply = { source, preview ->
+                val applied = onApplySubscription(source, preview)
+                if (applied > 0) {
+                    dialogs.subscriptionVisible = false
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    true
+                } else {
+                    false
+                }
+            },
+        )
+        return
     }
     if (dialogs.importVisible) {
         FilterImportDialog(
@@ -1646,7 +1689,7 @@ internal fun StudioTypeFilter.label(): String = stringResource(
 )
 
 @Composable
-private fun CandyImportFormat.label(): String = stringResource(
+internal fun CandyImportFormat.label(): String = stringResource(
     when (this) {
         CandyImportFormat.CandyRulesV1 -> R.string.filter_import_format_candy
         CandyImportFormat.AdblockCompatible -> R.string.filter_import_format_adblock
@@ -1680,7 +1723,7 @@ internal fun CandyRuleOrigin.label(): String = stringResource(
 )
 
 @Composable
-private fun filterErrorLabel(code: String): String = stringResource(
+internal fun filterErrorLabel(code: String): String = stringResource(
     when {
         code == "https-required" || code == "invalid-url" -> R.string.filter_error_https
         code == "network" || code.startsWith("http-") -> R.string.filter_error_network

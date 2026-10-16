@@ -63,8 +63,7 @@ internal fun FilterRuleSheetV5(
 ) {
     // Every opening starts from the rule (or blank); the sheet leaves on its spring after saving,
     // still showing what was saved.
-    val openings = remember { intArrayOf(0) }
-    val edited = remember(visible, initialRule?.id) { if (visible) ++openings[0] else openings[0] }
+    val edited = rememberFilterSheetOpening(visible, initialRule?.id)
     if (edited == 0) return
     var shownRule by remember { mutableStateOf(initialRule) }
     LaunchedEffect(visible, initialRule) { if (visible) shownRule = initialRule }
@@ -220,6 +219,17 @@ internal fun FilterRuleSheetV5(
             }
         }
     }
+}
+
+/**
+ * Which opening of a sheet this is: 0 until it first shows, then a new number each time it shows
+ * (or shows for another [subject]). Keyed on it, a sheet's fields start fresh every time while it
+ * keeps what it showed on its way out.
+ */
+@Composable
+internal fun rememberFilterSheetOpening(visible: Boolean, subject: Any? = null): Int {
+    val openings = remember { intArrayOf(0) }
+    return remember(visible, subject) { if (visible) ++openings[0] else openings[0] }
 }
 
 /**
