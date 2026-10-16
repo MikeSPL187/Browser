@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,10 +34,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -147,21 +144,7 @@ fun V5FirstRunDefaultBrowser(
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space3, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                Modifier
-                    .padding(bottom = V5Spacing.space3)
-                    .size(V5Sizes.privateGem)
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.surfaceElevated),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    VolaIcons.OpenInNew,
-                    contentDescription = null,
-                    tint = colors.accent,
-                    modifier = Modifier.size(V5Sizes.privateGemIcon),
-                )
-            }
+            V5StateGlyph(VolaIcons.OpenInNew, Modifier.padding(bottom = V5Spacing.space3))
             Text(
                 stringResource(R.string.v5_first_run_default_title),
                 style = V5Theme.type.title,
@@ -230,7 +213,7 @@ private fun FirstRunPage(
     }
 }
 
-/** The filled main action and the quiet text action under it, both a full row wide. */
+/** The filled main action and the quiet text action under it: the state screens' own buttons. */
 @Composable
 private fun FirstRunActions(
     primary: String,
@@ -240,47 +223,11 @@ private fun FirstRunActions(
     secondaryTag: String,
     onSecondary: () -> Unit,
 ) {
-    val colors = V5Theme.colors
-    Column(
-        Modifier.fillMaxWidth().padding(top = V5Spacing.space4),
-        verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = V5Sizes.touchTarget)
-                .clip(V5Theme.shapes.full)
-                .background(colors.accentFill)
-                .clickable(role = Role.Button, onClick = onPrimary)
-                .testTag(primaryTag),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                primary,
-                style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.onAccentFill,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
-            )
-        }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = V5Sizes.touchTarget)
-                .clip(V5Theme.shapes.full)
-                .clickable(role = Role.Button, onClick = onSecondary)
-                .testTag(secondaryTag),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                secondary,
-                style = V5Theme.type.body,
-                color = colors.accent,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
-            )
-        }
-    }
+    V5StateActions(
+        primary = V5StateAction(primary, onPrimary, testTag = primaryTag),
+        secondary = listOf(V5StateAction(secondary, onSecondary, testTag = secondaryTag)),
+        modifier = Modifier.padding(top = V5Spacing.space4),
+    )
 }
 
 /**
@@ -334,23 +281,13 @@ fun V5FirstRunGestures(onDone: () -> Unit, modifier: Modifier = Modifier) {
                     caption = stringResource(R.string.v5_first_run_gesture_overview_caption),
                 )
             }
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = V5Sizes.touchTarget)
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.accentFill)
-                    .clickable(role = Role.Button, onClick = onDone)
-                    .testTag(V5FirstRunTestTags.GesturesDone),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    stringResource(R.string.v5_first_run_gestures_done),
-                    style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.onAccentFill,
-                    modifier = Modifier.padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
-                )
-            }
+            V5StatePrimaryAction(
+                V5StateAction(
+                    label = stringResource(R.string.v5_first_run_gestures_done),
+                    onClick = onDone,
+                    testTag = V5FirstRunTestTags.GesturesDone,
+                ),
+            )
         }
     }
 }

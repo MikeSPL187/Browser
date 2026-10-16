@@ -81,16 +81,7 @@ fun V5StatePage(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
         ) {
-            Box(
-                Modifier
-                    .padding(bottom = V5Spacing.space3)
-                    .size(V5Sizes.privateGem)
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.surfaceElevated),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.privateGemIcon))
-            }
+            V5StateGlyph(icon, Modifier.padding(bottom = V5Spacing.space3))
             Text(
                 title,
                 style = V5Theme.type.title,
@@ -99,19 +90,48 @@ fun V5StatePage(
                 modifier = Modifier.semantics { heading() },
             )
             Text(message, style = V5Theme.type.callout, color = colors.labelSecondary, textAlign = TextAlign.Center)
-            Column(
-                Modifier.fillMaxWidth().padding(top = V5Spacing.space4),
-                verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
-            ) {
-                PrimaryAction(primary)
-                secondary.forEach { action -> QuietAction(action) }
-            }
+            V5StateActions(primary, secondary, Modifier.padding(top = V5Spacing.space4))
         }
     }
 }
 
+/** The glyph of a state screen on its disc, in the accent. */
 @Composable
-private fun PrimaryAction(action: V5StateAction) {
+internal fun V5StateGlyph(icon: ImageVector, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    Box(
+        modifier
+            .size(V5Sizes.privateGem)
+            .clip(V5Theme.shapes.full)
+            .background(colors.surfaceElevated),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.privateGemIcon))
+    }
+}
+
+/**
+ * The filled main action over the quiet ones, each a full row wide: the same buttons on every state
+ * screen and on the first run (V28), so they look and press alike.
+ */
+@Composable
+internal fun V5StateActions(
+    primary: V5StateAction,
+    secondary: List<V5StateAction> = emptyList(),
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
+        V5StatePrimaryAction(primary)
+        secondary.forEach { action -> QuietAction(action) }
+    }
+}
+
+/** The filled main action alone, for a card that has nothing else to offer. */
+@Composable
+internal fun V5StatePrimaryAction(action: V5StateAction) {
     val colors = V5Theme.colors
     Row(
         Modifier
