@@ -44,4 +44,22 @@ class FirstRunRulesTest {
         assertFalse(FirstRunRules.handlesBack(FirstRunStage.Welcome))
         assertFalse(FirstRunRules.handlesBack(FirstRunStage.Gestures))
     }
+
+    @Test
+    fun `v5 asks only about the default browser after the welcome`() {
+        assertEquals(FirstRunStage.DefaultBrowser, FirstRunRules.v5AfterWelcome(isDefaultBrowser = false))
+        // Already the default browser: the first run ends with the welcome.
+        assertNull(FirstRunRules.v5AfterWelcome(isDefaultBrowser = true))
+    }
+
+    @Test
+    fun `v5 always starts with the welcome, never with the v4 lesson`() {
+        assertEquals(FirstRunStage.Welcome, FirstRunRules.v5FirstStage())
+    }
+
+    @Test
+    fun `back from the default browser question returns to the welcome`() {
+        assertTrue(FirstRunRules.handlesBack(FirstRunStage.DefaultBrowser))
+        assertEquals(FirstRunStage.Welcome, FirstRunRules.back(FirstRunStage.DefaultBrowser, showIntro = true))
+    }
 }
