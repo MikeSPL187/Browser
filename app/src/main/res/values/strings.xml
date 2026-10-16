@@ -2115,4 +2115,17 @@
     <string name="v5_accent_pink">Pink</string>
     <string name="v5_accent_purple">Purple</string>
     <string name="v5_accent_graphite">Graphite</string>
+    <!-- V28 B1: v5 first run (canvas screens p1, p2) -->
+    <string name="v5_first_run_tagline">The browser that stays out of the page\'s way.</string>
+    <string name="v5_first_run_protection_title">Protection from the start</string>
+    <string name="v5_first_run_protection_caption">Ads and trackers are blocked, HTTPS only</string>
+    <string name="v5_first_run_protection_caption_no_https">Ads and trackers are blocked</string>
+    <string name="v5_first_run_profiles_title">Profiles</string>
+    <string name="v5_first_run_profiles_caption">Work and home keep their own tabs, history and pinned sites</string>
+    <string name="v5_first_run_device_title">Everything stays on the device</string>
+    <string name="v5_first_run_device_caption">No analytics and no ad SDKs</string>
+    <string name="v5_first_run_default_title">Open links in Vola?</string>
+    <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
+    <string name="v5_first_run_default_action">Make default</string>
+    <string name="v5_first_run_not_now">Not now</string>
 </resources>
