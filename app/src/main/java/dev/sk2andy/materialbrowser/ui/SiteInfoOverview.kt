@@ -397,7 +397,7 @@ private fun SiteInfoChevron() {
 }
 
 @Composable
-private fun SiteInfoRow(
+internal fun SiteInfoRow(
     icon: Painter,
     title: String,
     modifier: Modifier = Modifier,
