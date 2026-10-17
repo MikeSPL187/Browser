@@ -17,9 +17,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * cache, bounded waits and a bounded body.
  */
 internal class OkHttpWebDavTransport(
-    private val client: OkHttpClient = defaultClient,
+    clientOnFirstUse: Lazy<OkHttpClient> = lazy(::defaultClient),
     private val maxBodyBytes: Long = WebDavSyncFormat.MAX_DEVICE_FILE_CHARS.toLong(),
 ) : WebDavTransport {
+    /** Built on the first request, on the sync's thread: the app start never pays for OkHttp's setup. */
+    private val client by clientOnFirstUse
+
     override fun send(request: WebDavRequest): WebDavResponse {
         require(request.url.startsWith("https://")) { "HTTPS only" }
         val contentType = request.headers["Content-Type"]
@@ -38,7 +41,7 @@ internal class OkHttpWebDavTransport(
     }
 
     private companion object {
-        val defaultClient: OkHttpClient = OkHttpClient.Builder()
+        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .followRedirects(false)
             .followSslRedirects(false)
             .connectTimeout(15, TimeUnit.SECONDS)
