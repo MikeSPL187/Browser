@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModel
 import dev.sk2andy.materialbrowser.ui.v5.V5LanguagePack
 import org.junit.Assert.assertEquals
@@ -32,5 +33,17 @@ class BrowserTranslationSettingsRulesTest {
         assertEquals(true, BrowserTranslationSettingsRules.packs(listOf(waiting), setOf("fr"), name).single().downloading)
         assertEquals(false, BrowserTranslationSettingsRules.packs(listOf(done), setOf("fr"), name).single().downloading)
         assertEquals(false, BrowserTranslationSettingsRules.packs(listOf(waiting), emptySet(), name).single().downloading)
+    }
+
+    @Test
+    fun neverListsOnlyNeverLanguagesInOrder() {
+        val settings = mapOf(
+            "fr" to TranslationLanguageSetting.Never,
+            "de" to TranslationLanguageSetting.Never,
+            "es" to TranslationLanguageSetting.Always,
+            "it" to TranslationLanguageSetting.Offer,
+        )
+        assertEquals(listOf("de", "fr"), BrowserTranslationSettingsRules.never(settings).toList())
+        assertEquals(emptySet<String>(), BrowserTranslationSettingsRules.never(null))
     }
 }

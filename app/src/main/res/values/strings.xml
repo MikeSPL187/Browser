@@ -2190,6 +2190,7 @@
     <string name="v5_translation_offer_hint">When a page isn’t in your language</string>
     <string name="v5_translation_into">Translate into</string>
     <string name="v5_translation_never">Never translate</string>
+    <string name="v5_translation_never_footer">Pages in these languages have no “Translate” in the page menu.</string>
     <string name="v5_translation_never_none">None</string>
     <string name="v5_translation_packs">Language packs · %1$s</string>
     <string name="v5_translation_pack_downloaded">%1$s · downloaded</string>

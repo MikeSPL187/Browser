@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationUiState
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationState
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
 import java.util.Locale
@@ -80,5 +81,25 @@ class BrowserTranslateRulesTest {
     fun languageNameComesFromTheSystemInTheAppLanguage() {
         assertEquals("German", BrowserTranslateRules.languageName("de", Locale.ENGLISH))
         assertEquals("", BrowserTranslateRules.languageName("", Locale.ENGLISH))
+    }
+
+    @Test
+    fun menuOffersTranslationUnlessThePageLanguageIsNever() {
+        val settings = mapOf("de" to TranslationLanguageSetting.Never, "fr" to TranslationLanguageSetting.Always)
+        assertFalse(BrowserTranslateRules.offers("de", settings))
+        assertTrue(BrowserTranslateRules.offers("fr", settings))
+        assertTrue(BrowserTranslateRules.offers(null, settings))
+        assertTrue(BrowserTranslateRules.offers("de", null))
+    }
+
+    @Test
+    fun alwaysShowsWhenSetOrWhenThePacksAreOnThePhone() {
+        val always = mapOf("de" to TranslationLanguageSetting.Always)
+        assertEquals(true, BrowserTranslateRules.always("de", always, downloadBytes = 40_000_000L))
+        assertEquals(false, BrowserTranslateRules.always("fr", always, downloadBytes = 0L))
+        assertNull(BrowserTranslateRules.always("fr", always, downloadBytes = 40_000_000L))
+        assertNull(BrowserTranslateRules.always("fr", always, downloadBytes = null))
+        assertNull(BrowserTranslateRules.always("de", settings = null, downloadBytes = 0L))
+        assertNull(BrowserTranslateRules.always(null, always, downloadBytes = 0L))
     }
 }

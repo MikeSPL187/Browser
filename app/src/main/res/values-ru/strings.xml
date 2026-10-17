@@ -2284,6 +2284,7 @@
     <string name="v5_translation_offer_hint">Когда язык страницы не ваш</string>
     <string name="v5_translation_into">Переводить на</string>
     <string name="v5_translation_never">Не переводить</string>
+    <string name="v5_translation_never_footer">У страниц на этих языках нет пункта «Перевести» в меню страницы.</string>
     <string name="v5_translation_never_none">Нет</string>
     <string name="v5_translation_packs">Языковые пакеты · %1$s</string>
     <string name="v5_translation_pack_downloaded">%1$s · скачан</string>
