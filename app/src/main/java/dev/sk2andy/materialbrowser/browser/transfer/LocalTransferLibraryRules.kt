@@ -106,7 +106,7 @@ internal object LocalTransferLibraryRules {
     }
 
     /** The folder at [path] (titles from the top), created where missing; null for the top level. */
-    private fun ensureFolder(library: FavoriteLibrary, path: String, newFolderId: () -> String): Pair<FavoriteLibrary, String?> {
+    fun ensureFolder(library: FavoriteLibrary, path: String, newFolderId: () -> String): Pair<FavoriteLibrary, String?> {
         var current = library
         var parent: String? = null
         val titles = path.split(PATH_SEPARATOR)

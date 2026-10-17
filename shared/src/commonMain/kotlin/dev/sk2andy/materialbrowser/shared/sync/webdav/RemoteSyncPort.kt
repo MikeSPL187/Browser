@@ -16,9 +16,10 @@ interface RemoteSyncPort {
     /**
      * Connects to the server at the HTTPS [address] with [login] and an app password, then syncs
      * once. On a server that already holds Vola's data, [phrase] must open it: otherwise the
-     * result is [RemoteSyncFailure.PhraseMismatch] and nothing on the server is touched. The port
-     * keeps neither [phrase] nor [appPassword] in memory after the call; the keystore holds the
-     * app password and the key derived from the phrase, never the phrase itself.
+     * result is [RemoteSyncFailure.PhraseMismatch] and nothing on the server is touched. The
+     * keystore holds the app password and the key derived from the phrase, never the phrase
+     * itself; after a [RemoteSyncFailure.PhraseMismatch] the port holds the typed values in memory
+     * for [startOver] until the next [connect], [startOver] or [disconnect].
      */
     fun connect(
         address: String,

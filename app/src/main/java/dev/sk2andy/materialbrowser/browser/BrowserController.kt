@@ -73,6 +73,7 @@ import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionPolicy
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionRules
 import dev.sk2andy.materialbrowser.browser.protection.TemporarySitePrivacyOverrides
+import dev.sk2andy.materialbrowser.browser.sync.webdav.VolaRemoteSync
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrideRules
 import dev.sk2andy.materialbrowser.blocking.SiteProtectionState
 import dev.sk2andy.materialbrowser.capsule.CapsuleDeletionRules
@@ -10033,10 +10034,8 @@ class BrowserController(
             if (externalLinkPreviewState == null) {
                 browserEngineSessions[selectedTabId]?.setActive(true)
             }
-            externalLinkPreviewRuntime?.geckoBinding
-                ?.takeIf { binding -> binding.view.isAttachedToWindow }
-                ?.session
-                ?.setActive(true)
+            externalLinkPreviewRuntime?.geckoBinding?.takeIf { it.view.isAttachedToWindow }?.session?.setActive(true)
+            VolaRemoteSync.attach(activity, this)
         }
         syncRepository.startRealtime()
         mainHandler.removeCallbacks(syncRefreshRunnable)
