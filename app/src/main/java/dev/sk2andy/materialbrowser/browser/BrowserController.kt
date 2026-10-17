@@ -205,6 +205,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.permissions.runtimePermissions
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
+import dev.sk2andy.materialbrowser.browser.translation.androidOnDeviceTranslationController
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogEntry
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogRules
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
@@ -1048,6 +1049,7 @@ class BrowserController(
         require(tabs.any { tab -> tab.id == session.tabId })
         removePendingInitialBrowserEngineNavigation(session.tabId)
         browserEngineSessions.put(session.tabId, session)?.execute(BrowserEngineCommands.close())
+        onDeviceTranslation.attach(session.tabId, session.pageTranslation())
         connectBrowserEngineScrollListener(session.tabId, session)
     }
 
@@ -1327,6 +1329,7 @@ class BrowserController(
     }
     val protectionReport = androidProtectionReportController(activity, mainHandler)
     internal val hiddenDistractions = androidHiddenDistractionsController(activity, mainHandler, { browserEngineSessions[it]?.pageDistractions() }, ::refreshGeckoContentTopInsetPolicies)
+    internal val onDeviceTranslation = androidOnDeviceTranslationController(activity) { browserEngineSessionFactory.translationModels }
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
     private val snoozedTabStore = SnoozedTabStore(activity)
@@ -10291,6 +10294,7 @@ class BrowserController(
                 trailHistoryEventSink = ::onGeckoTrailHistoryEvent,
                 eventSink = ::onGeckoEngineEvent,
             ).also { session ->
+                onDeviceTranslation.attach(tab.id, session.pageTranslation())
                 session.setFaviconListener { pageUrl, bitmap ->
                     mainHandler.post {
                         onEngineFavicon(tab.id, session, pageUrl, bitmap)
@@ -12204,7 +12208,7 @@ class BrowserController(
                     releaseGeckoView(binding.session, binding.view)
                     (binding.view.parent as? ViewGroup)?.removeView(binding.view)
                 }
-                browserEngineSessions.remove(event.tabId)?.let(browserEngineMediaSessionIds::remove)
+                removeBrowserEngineSession(event.tabId)
                 reconcileInlineVideoGestureHapticOwner()
                 updateTab(event.tabId) { tab ->
                     tab.copy(
@@ -12229,7 +12233,7 @@ class BrowserController(
                 geckoMediaStates.remove(event.tabId)
                 inlineMediaPlayerReadyTabIds.remove(event.tabId)
                 browserEngineContentFullscreenTabIds.remove(event.tabId)
-                browserEngineSessions.remove(event.tabId)?.let(browserEngineMediaSessionIds::remove)
+                removeBrowserEngineSession(event.tabId)
                 reconcileInlineVideoGestureHapticOwner()
             }
         }
@@ -12486,13 +12490,17 @@ class BrowserController(
             releaseGeckoView(binding.session, binding.view)
             (binding.view.parent as? ViewGroup)?.removeView(binding.view)
         }
-        browserEngineSessions.remove(tabId)?.let { session ->
-            browserEngineMediaSessionIds.remove(session)
+        removeBrowserEngineSession(tabId)?.let { session ->
             persistBrowserEngineSessionState(tabId, session)
             session.execute(BrowserEngineCommands.close())
         }
         geckoFileUploadStager.release(tabId)
     }
+
+    /** Lets go of [tabId]'s engine session and what follows it; closing it is the caller's. */
+    private fun removeBrowserEngineSession(tabId: String): AndroidBrowserEngineSessionPort? =
+        browserEngineSessions.remove(tabId)?.also(browserEngineMediaSessionIds::remove)
+            .also { onDeviceTranslation.detach(tabId) }
 
     private fun persistBrowserEngineSessionState(
         tabId: String,
@@ -15539,17 +15547,6 @@ class BrowserController(
 // Private by default: typed text is only sent to a suggestion provider after the user opts in.
 private fun defaultSearchSuggestionProvider(): SearchSuggestionProvider =
     SearchSuggestionProvider.None
-
-enum class CapsuleSaveResult {
-    PinRequested,
-    PinningUnsupported,
-    PinRequestFailed,
-    Updated,
-    UpdateFailed,
-    IconSaveFailed,
-    LimitReached,
-    Invalid,
-}
 
 private fun BrowserTab.toCandyTrailForkTab() = CandyTrailForkTab(
     id = id,

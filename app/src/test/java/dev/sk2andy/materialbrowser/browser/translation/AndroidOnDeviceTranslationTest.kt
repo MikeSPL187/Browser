@@ -1,0 +1,54 @@
+package dev.sk2andy.materialbrowser.browser.translation
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class AndroidOnDeviceTranslationTest {
+    @Test
+    fun `the app's locales become the languages the user reads, first one first`() {
+        assertEquals(listOf("ru-RU", "en-US"), OnDeviceTranslationLanguages.fromLanguageTags("ru-RU,en-US"))
+        assertEquals(listOf("de"), OnDeviceTranslationLanguages.fromLanguageTags(" de , ,de"))
+        assertEquals(emptyList<String>(), OnDeviceTranslationLanguages.fromLanguageTags(""))
+    }
+
+    @Test
+    fun `the engine's models are not asked for until a screen needs them`() {
+        var resolved = 0
+        val models = LazyTranslationModels {
+            resolved++
+            TranslationModelsPort.Unavailable
+        }
+        assertEquals(0, resolved)
+
+        var supported: Boolean? = null
+        models.isSupportedOnDevice { supported = it }
+        var size: Long? = 1
+        models.downloadSize(TranslationPair("de", "ru")) { size = it }
+
+        assertEquals(1, resolved)
+        assertFalse(supported!!)
+        assertEquals(null, size)
+    }
+
+    @Test
+    fun `a tab's page reaches the controller through the lazy models and back out on close`() {
+        var resolved = false
+        val controller = OnDeviceTranslationController(
+            LazyTranslationModels {
+                resolved = true
+                TranslationModelsPort.Unavailable
+            },
+        ) { listOf("ru") }
+
+        controller.attach("tab", PageTranslationPort.Unavailable)
+        controller.detach("tab")
+
+        assertFalse(resolved)
+        var answered: Long? = 1
+        controller.downloadSize(TranslationPair("de", "ru")) { answered = it }
+        assertTrue(resolved)
+        assertEquals(null, answered)
+    }
+}
