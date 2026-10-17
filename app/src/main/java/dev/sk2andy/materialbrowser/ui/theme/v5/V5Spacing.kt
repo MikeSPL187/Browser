@@ -140,6 +140,10 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // Password check (canvas screen «у1»): the status mark beside the summary.
+    val passwordStatus: Dp = 44.dp
+    val passwordStatusIcon: Dp = 28.dp
+
     // First run (canvas screen «п1»): Vola's mark on its accent tile.
     val firstRunMark: Dp = 88.dp
     val firstRunMarkIcon: Dp = 40.dp

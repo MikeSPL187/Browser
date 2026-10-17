@@ -38,4 +38,18 @@ internal class LazyTranslationModels(resolve: () -> TranslationModelsPort) : Tra
 
     override fun delete(languageCode: String, onResult: (PageTranslationResult) -> Unit) =
         port.delete(languageCode, onResult)
+
+    override fun languageSettings(onResult: (Map<String, TranslationLanguageSetting>?) -> Unit) =
+        port.languageSettings(onResult)
+
+    override fun setLanguageSetting(
+        languageCode: String,
+        setting: TranslationLanguageSetting,
+        onResult: (PageTranslationResult) -> Unit,
+    ) = port.setLanguageSetting(languageCode, setting, onResult)
+
+    override fun neverTranslateSites(onResult: (List<NeverTranslateSite>?) -> Unit) = port.neverTranslateSites(onResult)
+
+    override fun setNeverTranslateSite(origin: String, never: Boolean, onResult: (PageTranslationResult) -> Unit) =
+        port.setNeverTranslateSite(origin, never, onResult)
 }

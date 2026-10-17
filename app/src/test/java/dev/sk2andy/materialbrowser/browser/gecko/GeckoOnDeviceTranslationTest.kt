@@ -4,6 +4,7 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineCapabilities
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationError
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationState
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModel
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
 import org.junit.Assert.assertEquals
@@ -85,6 +86,24 @@ class GeckoOnDeviceTranslationTest {
         assertEquals(emptyList<TranslationLanguage>(), languages?.to)
         assertNull(GeckoTranslationMapping.languages(null))
         assertEquals(listOf(TranslationModel(TranslationLanguage("de", "German"), true, 42_000_000L)), models)
+    }
+
+    @Test
+    fun `gecko language settings map to always, offer and never`() {
+        val mapped = GeckoTranslationMapping.languageSettings(
+            mapOf("de" to RuntimeTranslation.ALWAYS, "fr" to RuntimeTranslation.NEVER, "es" to RuntimeTranslation.OFFER, "it" to "unknown"),
+        )
+
+        assertEquals(
+            mapOf(
+                "de" to TranslationLanguageSetting.Always,
+                "fr" to TranslationLanguageSetting.Never,
+                "es" to TranslationLanguageSetting.Offer,
+                "it" to TranslationLanguageSetting.Offer,
+            ),
+            mapped,
+        )
+        assertNull(GeckoTranslationMapping.languageSettings(null))
     }
 
     @Test

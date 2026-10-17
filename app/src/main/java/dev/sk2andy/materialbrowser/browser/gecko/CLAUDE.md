@@ -6,6 +6,15 @@
 - **Новая возможность движка:** сначала порт (interface) в общем коде, затем реализация для Gecko и
   System WebView; если в WebView невозможно — фича явно скрыта в UI для flavor `systemwebview`.
 - **Настройки Gecko без публичного API** — через `CandyGeckoPrefsBridge` (пакет `org.mozilla.geckoview`).
+  Мост задаёт только **значение по умолчанию** (`RuntimeSettings` → `setDefaultPrefs`): пользовательское
+  значение, которое Gecko записал сам, его перекрывает. Снять пользовательское —
+  `GeckoPreferenceController.clearGeckoUserPref` (экспериментальный API: `@OptIn(markerClass = …)` из
+  androidx, иначе lint `UnsafeOptInUsageError`).
+- **Частные вкладки и настройки профиля.** Код Gecko сам пишет пользовательские настройки, и частные
+  вкладки он не исключает. Пример: перевод запоминает язык в `browser.translations.mostRecentTargetLanguages`.
+  `prefs.js` сохраняется через 500 мс после первого изменения (`Preferences::HandleDirty`); очистка,
+  отправленная сразу, успевает раньше (`GeckoTranslationPrivacy`, V23). Новую функцию Gecko проверяй на
+  такие записи по исходнику (`TranslationsParent`, `Services.prefs.set*`).
 - **WebAuthn (passkeys, вариант A):** GeckoView зовёт Google Play services FIDO, которых в Vola нет; без
   классов Gecko падал (SIGSEGV в `libxul`, #127). Теперь вызовы GeckoView принимают отказывающие заглушки
   `src/full/java/com/google/**`, и WebAuthn включён только на Android 14+ с Credential Manager

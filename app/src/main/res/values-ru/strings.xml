@@ -2290,4 +2290,34 @@
     <string name="v5_translation_pack_download">Скачать</string>
     <string name="v5_translation_pack_delete">Удалить пакет</string>
     <string name="v5_translation_footer">Перевод работает на устройстве: страницы никуда не отправляются. Пакет удаляется смахиванием влево. В частных вкладках пакеты не скачиваются — только те, что уже есть.</string>
+    <string name="v5_password_health_fine_of">%1$d из %2$d в порядке</string>
+    <string name="v5_password_health_insecure">Без шифрования</string>
+    <string name="v5_password_health_insecure_site">сайт принимает пароль по http://</string>
+    <string name="v5_password_health_insecure_form">форма отправляет пароль по http://</string>
+    <string name="v5_password_health_check_leaks">Проверить утечки</string>
+    <string name="v5_password_health_checking">Проверяем утечки… %1$d%%</string>
+    <string name="v5_password_health_leaks">Утечки</string>
+    <string name="v5_password_health_checked_at">Проверено в %1$s</string>
+    <string name="v5_password_health_check_again">Проверить ещё раз</string>
+    <string name="v5_password_health_note">Отправляются только первые 5 символов хеша каждого пароля — не пароль и не адрес сайта. Повторы и слабые пароли проверяются на телефоне.</string>
+    <string name="v5_password_health_all_fine">Без повторов и утечек, все пароли надёжные.</string>
+    <string name="v5_password_health_all_fine_unchecked">Без повторов, все пароли надёжные. Утечки ещё не проверялись.</string>
+    <string name="v5_password_health_open_login">Все данные записи</string>
+    <string name="v5_password_health_change">Сменить пароль на сайте</string>
+    <string name="v5_password_finding_breached">Этот пароль уже есть в утечках. Смените его как можно скорее.</string>
+    <string name="v5_password_finding_weak">Этот пароль легко подобрать. Длинный случайный пароль надёжнее.</string>
+    <string name="v5_password_finding_insecure_site">Сайт принимает этот пароль без шифрования, его можно прочитать в сети. Новый пароль не поможет — исправить может только сайт.</string>
+    <string name="v5_password_finding_insecure_form">Форма входа отправляет этот пароль без шифрования, его можно прочитать в сети. Новый пароль не поможет — исправить может только сайт.</string>
+    <plurals name="v5_password_health_attention">
+        <item quantity="one">%d пароль требует внимания</item>
+        <item quantity="few">%d пароля требуют внимания</item>
+        <item quantity="many">%d паролей требуют внимания</item>
+        <item quantity="other">%d пароля требуют внимания</item>
+    </plurals>
+    <plurals name="v5_password_finding_reused">
+        <item quantity="one">Этот пароль повторяется ещё на %d сайте. Если один из них утечёт, откроются и другие.</item>
+        <item quantity="few">Этот пароль повторяется ещё на %d сайтах. Если один из них утечёт, откроются и другие.</item>
+        <item quantity="many">Этот пароль повторяется ещё на %d сайтах. Если один из них утечёт, откроются и другие.</item>
+        <item quantity="other">Этот пароль повторяется ещё на %d сайта. Если один из них утечёт, откроются и другие.</item>
+    </plurals>
 </resources>
