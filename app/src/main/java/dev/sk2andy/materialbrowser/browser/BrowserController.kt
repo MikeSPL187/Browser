@@ -180,7 +180,6 @@ import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrant
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrantRules
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationPolicy
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationRollbackRules
-import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrant
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrantRules
 import dev.sk2andy.materialbrowser.browser.integration.PageShareLauncher
 import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
@@ -217,6 +216,7 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptOpenTabRequest
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParser
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
+import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferTab
 import dev.sk2andy.materialbrowser.data.BrowserChromeScrollDispatchMode
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequest
 import dev.sk2andy.materialbrowser.data.BrowserDownloadRequestFactory
@@ -5764,6 +5764,27 @@ class BrowserController(
             contentActions.dismiss()
         }
         return tab.id
+    }
+
+    /**
+     * Opens tabs received from another phone (V26) unloaded, in one new group named after the
+     * sending device, within the tab limit. Returns how many opened; they load when first shown.
+     */
+    internal fun openTransferredTabs(transferred: List<LocalTransferTab>, deviceName: String): Int {
+        pruneStaleTabs()
+        val now = System.currentTimeMillis()
+        val opened = transferred.take((MAX_TABS - tabs.size).coerceAtLeast(0)).map { item ->
+            newTabState(url = item.url, nowMillis = now).copy(title = item.title, isLoading = false)
+        }
+        if (opened.isEmpty()) return 0
+        tabs += opened
+        opened.forEach { tab ->
+            markSyncedTabPending(tab)
+            enqueueSyncedTab(tab.id)
+        }
+        persist()
+        tabStackController.create(opened.map(BrowserTab::id), deviceName.trim(), TabStackColor.Grape)
+        return opened.size
     }
 
     fun openBlockedPopup(token: Long) {
@@ -15518,30 +15539,6 @@ class BrowserController(
         val pageUrl: String,
         val requestContext: ProtectionRequestContext,
     )
-
-    private sealed interface ExternalLinkPreviewEngineBinding {
-        val view: View
-
-        data class Gecko(
-            val session: AndroidBrowserEngineSessionPort,
-            override val view: View,
-        ) : ExternalLinkPreviewEngineBinding
-    }
-
-    private data class ExternalLinkPreviewRuntime(
-        val sessionId: Long,
-        val generation: Int,
-        val policyTab: BrowserTab,
-        val binding: ExternalLinkPreviewEngineBinding,
-        var hasStarted: Boolean = false,
-        var downloadGrant: ExternalPreviewDownloadGrant? = null,
-        var pendingInternalNavigationUrl: String? = null,
-        var downloadNavigationRevision: Int = 0,
-        var backdropBlurRegion: BrowserBackdropBlurRegion? = null,
-    ) {
-        val geckoBinding: ExternalLinkPreviewEngineBinding.Gecko
-            get() = binding as ExternalLinkPreviewEngineBinding.Gecko
-    }
 }
 
 // Private by default: typed text is only sent to a suggestion provider after the user opts in.
