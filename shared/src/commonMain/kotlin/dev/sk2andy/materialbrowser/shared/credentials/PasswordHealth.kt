@@ -10,14 +10,23 @@ data class ReusedLogin(val login: VaultLogin, val otherSites: Int)
 data class WeakLogin(val login: VaultLogin, val length: Int, val kind: WeakPasswordKind)
 
 /**
+ * A login whose password goes over plain HTTP: the site itself ([formOnly] false) or only the form
+ * it is sent with. Changing the password does not help; only the site can fix it.
+ */
+data class InsecureLogin(val login: VaultLogin, val formOnly: Boolean)
+
+/**
  * What the password check found. A login shows in one section only, the most urgent one: leaks,
- * then repeats, then weak passwords.
+ * then repeats, then weak passwords. [insecure] stands apart, since a new password does not fix
+ * it: every login sent over plain HTTP, whatever its other sections. It is not counted in
+ * [needsAttention] until the screen has a section for it.
  */
 data class PasswordHealthReport(
     val total: Int,
     val breached: List<BreachedLogin>,
     val reused: List<ReusedLogin>,
     val weak: List<WeakLogin>,
+    val insecure: List<InsecureLogin> = emptyList(),
 ) {
     val needsAttention: Int get() = breached.size + reused.size + weak.size
     val fine: Int get() = total - needsAttention
@@ -34,6 +43,7 @@ object PasswordHealthRules {
     const val HASH_PREFIX_LENGTH = 5
     private const val MIN_LENGTH = 12
     private const val CHANGE_PASSWORD_PATH = "/.well-known/change-password"
+    private const val HTTP_SCHEME = "http://"
 
     /** [breaches] maps a login id to how often its password was seen in leaks; 0 or absent is clean. */
     fun report(logins: List<VaultLogin>, breaches: Map<String, Int>): PasswordHealthReport {
@@ -53,8 +63,35 @@ object PasswordHealthRules {
             if (login.id in flagged || !isWeak(login.password)) null
             else WeakLogin(login, login.password.length, weakKind(login.password))
         }
-        return PasswordHealthReport(logins.size, breached, reused, weak)
+        val insecure = logins.mapNotNull { login ->
+            when {
+                isPlainHttp(login.origin) -> InsecureLogin(login, formOnly = false)
+                login.formActionOrigin?.let(::isPlainHttp) == true -> InsecureLogin(login, formOnly = true)
+                else -> null
+            }
+        }
+        return PasswordHealthReport(logins.size, breached, reused, weak, insecure)
     }
+
+    /**
+     * Whether [origin] sends what it gets over plain HTTP to another machine. The phone's own
+     * loopback addresses (a local server or router setup page on the device) do not leave it.
+     */
+    fun isPlainHttp(origin: String): Boolean {
+        val trimmed = origin.trim()
+        if (!trimmed.startsWith(HTTP_SCHEME, ignoreCase = true)) return false
+        val authority = trimmed.substring(HTTP_SCHEME.length).substringBefore('/').substringAfterLast('@')
+        val host = if (authority.startsWith('[')) {
+            authority.substringBefore(']') + "]"
+        } else {
+            authority.substringBefore(':')
+        }.lowercase().trimEnd('.')
+        return host.isNotEmpty() && !isLoopback(host)
+    }
+
+    private fun isLoopback(host: String): Boolean =
+        host == "localhost" || host.endsWith(".localhost") || host == "[::1]" ||
+            host.split('.').let { parts -> parts.size == 4 && parts[0] == "127" && parts.all { it.toIntOrNull() in 0..255 } }
 
     fun isWeak(password: String): Boolean =
         PasswordGeneratorRules.strength(PasswordGeneratorRules.estimatedBits(password)) < PasswordStrength.Strong
