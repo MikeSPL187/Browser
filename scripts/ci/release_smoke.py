@@ -44,6 +44,12 @@ SITES = (
     ("YouTube: видео", "https://www.youtube.com/watch?v=jNQXAC9IVRw"),
 )
 
+# Sites after which the emulator needs a breather: two nights running, Sberbank and T-Bank right
+# after YouTube found system_server stalled and the kernel reporting a workqueue lockup, with
+# memory to spare (#80, I's analysis of run 39003181223) - the software GPU leaves the CPU behind.
+HEAVY_SITES = {"YouTube", "YouTube: видео"}
+COOLDOWN_SECONDS = 30
+
 
 @dataclasses.dataclass
 class SiteResult:
@@ -276,7 +282,27 @@ def focus_lines(dump):
                      if "mCurrentFocus" in line or "mFocusedApp" in line)
 
 
+def wait_until_responsive(timeout=90, probe_timeout=5, pause=5, clock=time.monotonic, sleep=time.sleep):
+    """Waits until the emulator answers a trivial adb command quickly; EmulatorStuck when it never does.
+
+    A site opened while the emulator is still busy with the previous one fails for the emulator's
+    sake, not the browser's, so each site starts only once adb answers within [probe_timeout].
+    """
+    deadline = clock() + timeout
+    last = ""
+    while True:
+        try:
+            adb("shell", "true", timeout=probe_timeout)
+            return
+        except EmulatorStuck as error:
+            last = str(error)
+        if clock() >= deadline:
+            raise EmulatorStuck(f"not responsive for {timeout} s before the site ({last})")
+        sleep(pause)
+
+
 def check_site(package, name, url, settle):
+    wait_until_responsive()
     system_before = system_server_pid()
     adb("shell", "am", "force-stop", package)
     adb("logcat", "-b", "all", "-c")
@@ -301,6 +327,10 @@ def check_site(package, name, url, settle):
     if result.unopened:
         result.screen = focus_lines(adb("shell", "dumpsys", "window", "windows"))
         result.system_log = system_log_tail(adb("logcat", "-d", "-b", "main,system", "-t", "2000"), package)
+    if name in HEAVY_SITES:
+        # Stop the video before the next site, and give the emulator time to catch up.
+        adb("shell", "am", "force-stop", package)
+        time.sleep(COOLDOWN_SECONDS)
     return result
 
 
