@@ -45,8 +45,9 @@ class BrowserControllerTransferredTabsInstrumentedTest {
 
             val opened = browserController.openTransferredTabs(transferred, deviceName = " Pixel 8 ")
 
-            assertEquals(2, opened)
+            assertEquals(2, opened.size)
             val tabs = browserController.tabs.filter { tab -> transferred.any { it.url == tab.url } }
+            assertEquals(tabs.map { it.id }, opened)
             assertEquals(listOf("Page A", "Page B"), tabs.map { it.title })
             tabs.forEach { tab -> assertFalse("${tab.url} started loading before it was shown", tab.isLoading) }
             assertEquals("the selected tab must stay", selectedBefore, browserController.selectedTabForTesting().id)
@@ -62,7 +63,7 @@ class BrowserControllerTransferredTabsInstrumentedTest {
             val browserController = requireNotNull(controller)
             val tabCount = browserController.tabs.size
 
-            assertEquals(0, browserController.openTransferredTabs(emptyList(), deviceName = "Pixel 8"))
+            assertEquals(emptyList<String>(), browserController.openTransferredTabs(emptyList(), deviceName = "Pixel 8"))
             assertEquals(tabCount, browserController.tabs.size)
             assertFalse(browserController.tabStacks.any { it.name == "Pixel 8" })
         }

@@ -5768,15 +5768,15 @@ class BrowserController(
 
     /**
      * Opens tabs received from another phone (V26) unloaded, in one new group named after the
-     * sending device, within the tab limit. Returns how many opened; they load when first shown.
+     * sending device, within the tab limit. Returns the opened tabs' ids (for undo); they load when shown.
      */
-    internal fun openTransferredTabs(transferred: List<LocalTransferTab>, deviceName: String): Int {
+    internal fun openTransferredTabs(transferred: List<LocalTransferTab>, deviceName: String): List<String> {
         pruneStaleTabs()
         val now = System.currentTimeMillis()
         val opened = transferred.take((MAX_TABS - tabs.size).coerceAtLeast(0)).map { item ->
             newTabState(url = item.url, nowMillis = now).copy(title = item.title, isLoading = false)
         }
-        if (opened.isEmpty()) return 0
+        if (opened.isEmpty()) return emptyList()
         tabs += opened
         opened.forEach { tab ->
             markSyncedTabPending(tab)
@@ -5784,7 +5784,7 @@ class BrowserController(
         }
         persist()
         tabStackController.create(opened.map(BrowserTab::id), deviceName.trim(), TabStackColor.Grape)
-        return opened.size
+        return opened.map(BrowserTab::id)
     }
 
     fun openBlockedPopup(token: Long) {
