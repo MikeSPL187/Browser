@@ -131,6 +131,7 @@ internal fun BrowserV5Bar(
                                 )
                             },
                         )
+                        BrowserTranslatedAccessory(controller = controller, tab = tab)
                         BrowserListenAccessory(selectedTabPrivate = tab.isIncognito)
                         BrowserDownloadNoticeAccessory(
                             downloads = downloadRing,
