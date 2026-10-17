@@ -262,7 +262,10 @@ internal fun V5TranslationNeverPage(
                 state.neverOptions.forEach { language ->
                     V5ListRow(
                         title = V5TranslateRules.displayName(language.name, locale),
-                        trailing = V5RowTrailing.Toggle(language.code in state.neverCodes) { on -> onChange(language.code, on) },
+                        trailing = V5RowTrailing.Toggle(
+                            checked = language.code in state.neverCodes,
+                            onCheckedChange = { on -> onChange(language.code, on) },
+                        ),
                         modifier = Modifier.testTag(V5TranslationSettingsTestTags.never(language.code)),
                     )
                 }
