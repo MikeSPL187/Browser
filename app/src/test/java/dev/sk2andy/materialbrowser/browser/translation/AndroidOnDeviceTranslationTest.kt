@@ -51,4 +51,21 @@ class AndroidOnDeviceTranslationTest {
         assertTrue(resolved)
         assertEquals(null, answered)
     }
+
+    @Test
+    fun `the sheet's language lists come from the engine's models`() {
+        val languages = TranslationLanguages(
+            from = listOf(TranslationLanguage("de", "German")),
+            to = listOf(TranslationLanguage("ru", "Russian")),
+        )
+        val models = object : TranslationModelsPort by TranslationModelsPort.Unavailable {
+            override fun languages(onResult: (TranslationLanguages?) -> Unit) = onResult(languages)
+        }
+        val controller = OnDeviceTranslationController(models) { listOf("ru") }
+
+        var listed: TranslationLanguages? = null
+        controller.languages { listed = it }
+
+        assertEquals(languages, listed)
+    }
 }
