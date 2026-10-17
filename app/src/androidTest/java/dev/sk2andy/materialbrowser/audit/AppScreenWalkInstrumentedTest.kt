@@ -351,8 +351,8 @@ class AppScreenWalkInstrumentedTest(
                     exists(hasTestTag(FindInPageBarTestTags.MatchCount))
                 }
                 audit("find in page, matches")
-                click(hasTestTag(FindInPageBarTestTags.Close))
-                composeRule.waitUntil("find in page to close", TIMEOUT_MILLIS) {
+                // A tap right after typing was lost once (night of 17.10, walk[22]): tap again until it closes.
+                tapUntil(hasTestTag(FindInPageBarTestTags.Close), "find in page to close") {
                     !exists(hasTestTag(FindInPageBarTestTags.Bar))
                 }
             }
@@ -476,8 +476,7 @@ class AppScreenWalkInstrumentedTest(
                     exists(hasTestTag(V5FindInPageTestTags.Bar))
                 }
                 audit("v5 find in page")
-                click(hasTestTag(V5FindInPageTestTags.Done))
-                composeRule.waitUntil("find in page to close", TIMEOUT_MILLIS) {
+                tapUntil(hasTestTag(V5FindInPageTestTags.Done), "find in page to close") {
                     !exists(hasTestTag(V5FindInPageTestTags.Bar))
                 }
             }
