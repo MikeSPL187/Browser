@@ -28,6 +28,23 @@ class DownloadSafetyGateTest {
     }
 
     @Test
+    fun `a second tap on a sheet does not answer for the next download`() {
+        val gate = DownloadSafetyGate()
+        val events = mutableListOf<String>()
+        val findings = listOf(DownloadSafetyFinding.AndroidApp)
+        gate.hold("first.apk", "files.example", findings, { events += "save first" }, { events += "cancel first" })
+        gate.hold("second.apk", "files.example", findings, { events += "save second" }, { events += "cancel second" })
+
+        val first = requireNotNull(gate.pending)
+        gate.save(first)
+        gate.save(first)
+        gate.cancel(first)
+
+        assertEquals(listOf("save first"), events)
+        assertEquals("second.apk", gate.pending?.fileName)
+    }
+
+    @Test
     fun `a file checked by its caller is held by its own name and host`() {
         val gate = DownloadSafetyGate()
         val events = mutableListOf<String>()

@@ -73,16 +73,25 @@ class DownloadSafetyGate {
         return hold(final.fileName, hostOf(final.url), findings, save, cancel)
     }
 
-    fun save() {
-        val item = pending ?: return
-        pending = queue.removeFirstOrNull()
-        item.onSave()
+    /**
+     * Saves [item], the download a sheet shows. A second tap on the same sheet arrives after the
+     * next download has taken its place; naming the item keeps it from answering for that one.
+     */
+    fun save(item: PendingDownloadSafety? = pending) {
+        if (!advancePast(item)) return
+        item?.onSave()
     }
 
-    fun cancel() {
-        val item = pending ?: return
+    /** Cancels [item], the download a sheet shows; see [save]. */
+    fun cancel(item: PendingDownloadSafety? = pending) {
+        if (!advancePast(item)) return
+        item?.onCancel()
+    }
+
+    private fun advancePast(item: PendingDownloadSafety?): Boolean {
+        if (item == null || item !== pending) return false
         pending = queue.removeFirstOrNull()
-        item.onCancel()
+        return true
     }
 
     /** Drops every held download, as when the browser closes. */

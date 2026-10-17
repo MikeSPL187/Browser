@@ -79,8 +79,9 @@ internal fun BoxScope.BrowserModalSurfaces(
     controller.downloadSafety.pending?.let { pending ->
         DownloadSafetySheet(
             pending = pending,
-            onDownload = controller.downloadSafety::save,
-            onCancel = controller.downloadSafety::cancel,
+            // The sheet answers for its own download, not for the next one a second tap would reach.
+            onDownload = { controller.downloadSafety.save(pending) },
+            onCancel = { controller.downloadSafety.cancel(pending) },
         )
     }
 

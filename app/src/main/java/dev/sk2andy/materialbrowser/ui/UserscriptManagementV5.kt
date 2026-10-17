@@ -3,9 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -15,8 +13,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,18 +29,16 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PageBar
 import dev.sk2andy.materialbrowser.ui.v5.V5ListDefaults
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
@@ -100,7 +94,7 @@ internal fun UserscriptManagementV5(
                 .navigationBarsPadding()
                 .testTag(UserscriptManagementTestTags.Screen),
         ) {
-            UserscriptPageBar(
+            V5PageBar(
                 title = open?.name ?: stringResource(R.string.userscript_title),
                 onBack = { if (open != null) openId = null else onDismiss() },
             )
@@ -196,29 +190,6 @@ internal fun UserscriptManagementV5(
 
 /** What the editor opens with: the script to replace ([id], none for a new one) and its source. */
 internal data class UserscriptEditorRequest(val id: String?, val source: String)
-
-/** The page's bar: back and the title in the middle, as on the other v5 settings pages. */
-@Composable
-private fun UserscriptPageBar(title: String, onBack: () -> Unit) {
-    val colors = V5Theme.colors
-    Box(Modifier.fillMaxWidth().heightIn(min = V5Sizes.touchTarget)) {
-        IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).padding(start = V5Spacing.space1)) {
-            Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = colors.accent)
-        }
-        Text(
-            title,
-            style = V5Theme.type.headline,
-            color = colors.label,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = V5Spacing.space12)
-                .semantics { heading() },
-        )
-    }
-}
 
 @Composable
 private fun UserscriptList(
