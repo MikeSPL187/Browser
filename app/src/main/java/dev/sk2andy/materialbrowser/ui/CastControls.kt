@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.v5.V5Slider
 
 internal object CastControlsTestTags {
     const val RouteButton = "cast_route_button"
@@ -229,7 +230,7 @@ private fun CastExpandedController(
                 ),
                 style = MaterialTheme.typography.labelMedium,
             )
-            Slider(
+            CastSlider(
                 value = seekPosition,
                 onValueChange = { seekPosition = it },
                 valueRange = 0f..duration.coerceAtLeast(1L).toFloat(),
@@ -241,7 +242,7 @@ private fun CastExpandedController(
                 text = stringResource(R.string.cast_volume),
                 style = MaterialTheme.typography.labelMedium,
             )
-            Slider(
+            CastSlider(
                 value = volume,
                 onValueChange = {
                     volume = it
@@ -289,4 +290,37 @@ private fun formattedMediaTime(millis: Long): String {
     val minutes = totalSeconds / 60L
     val seconds = totalSeconds % 60L
     return "$minutes:${seconds.toString().padStart(2, '0')}"
+}
+
+/** Position and volume: the v5 slider where v5 draws the browser (canvas «ц3»), Material's elsewhere. */
+@Composable
+private fun CastSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
+) {
+    if (rememberDrawsV5()) {
+        V5PromptTheme {
+            V5Slider(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = modifier,
+                enabled = enabled,
+                valueRange = valueRange,
+                onValueChangeFinished = onValueChangeFinished,
+            )
+        }
+    } else {
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier,
+            enabled = enabled,
+            valueRange = valueRange,
+            onValueChangeFinished = onValueChangeFinished,
+        )
+    }
 }

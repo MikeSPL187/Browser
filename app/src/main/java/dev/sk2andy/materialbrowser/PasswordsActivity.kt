@@ -89,10 +89,13 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditV5
+<<<<<<< HEAD
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsIntroV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseV5
+=======
+>>>>>>> origin/main
 import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
@@ -262,6 +265,7 @@ class PasswordsActivity : FragmentActivity() {
         val v5 = rememberSettingsUiV5()
         BackHandler { back(route) }
         when (route) {
+<<<<<<< HEAD
             PasswordsRoute.Intro -> if (v5) {
                 PasswordsIntroV5(model.busy, message, ::startSetup, ::finish)
             } else {
@@ -280,6 +284,21 @@ class PasswordsActivity : FragmentActivity() {
             } else {
                 RecoveryConfirmScreen(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
             }
+=======
+            PasswordsRoute.Intro -> PasswordsIntroScreen(model.busy, message, ::startSetup, ::finish)
+            is PasswordsRoute.Phrase -> RecoveryPhraseScreen(
+                words = route.phrase.split(' '),
+                onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) },
+                onBack = { back(route) },
+            )
+            is PasswordsRoute.Confirm -> RecoveryConfirmScreen(
+                positions = route.positions,
+                wrong = route.wrong,
+                busy = model.busy,
+                onCheck = { answers -> confirm(route, answers) },
+                onBack = { back(route) },
+            )
+>>>>>>> origin/main
             PasswordsRoute.Locked -> if (v5) {
                 PasswordsLockedV5(
                     busy = model.busy,
@@ -297,11 +316,15 @@ class PasswordsActivity : FragmentActivity() {
                 onBack = ::finish,
                 onErase = ::eraseVault,
             )
+<<<<<<< HEAD
             is PasswordsRoute.Recover -> if (v5) {
                 RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
             } else {
                 RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
             }
+=======
+            is PasswordsRoute.Recover -> RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
+>>>>>>> origin/main
             PasswordsRoute.Logins -> if (v5) {
                 PasswordsListV5(
                     logins = logins,
