@@ -1454,15 +1454,6 @@ def tour_v5(suffix):
     library("favorites", "Favorites", "Избранное")
     library("downloads", "Downloads", "Загрузки")
 
-    def private_tab():
-        if not v5_menu_item(f"v5-private-menu-{suffix}", "New private tab", "Новая частная вкладка"):
-            return
-        time.sleep(3)
-        settle()
-        shot(f"v5-private-tab-{suffix}")
-        adb("shell", "input", "keyevent", "BACK")
-        time.sleep(2)
-    step("v5-private-tab", private_tab)
 
     def settings():
         if not v5_menu_item(f"v5-settings-menu-{suffix}", "Settings", "Настройки"):
@@ -1474,11 +1465,25 @@ def tour_v5(suffix):
         time.sleep(2)
     step("v5-settings", settings)
 
+    def private_tab():
+        # The launcher shortcut «New private tab», as a person long-presses the icon: the menu row
+        # sits below the sheet's first screen, and swiping the sheet does not reach it.
+        adb("shell", "pm", "grant", PACKAGE, "android.permission.POST_NOTIFICATIONS", check=False)
+        adb("shell", "am", "start", "-n", f"{PACKAGE}/dev.sk2andy.materialbrowser.LauncherShortcutActivity",
+            "-a", "dev.sk2andy.materialbrowser.action.NEW_PRIVATE_TAB", check=False, capture=True)
+        time.sleep(4)
+        settle()
+        shot(f"v5-private-tab-{suffix}")
+    # Last: the private tab stays open for the rest of the pass.
+    step("v5-private-tab", private_tab)
+
 
 def run_v5_tours():
     """Both themes of v5 in English, on a fresh start of the app with the flag on."""
     adb("shell", "cmd", "locale", "set-app-locales", PACKAGE, "--locales", "en-US", check=False)
     for suffix, night in (("light", "no"), ("dark", "yes")):
+        # The emulator drops offline now and then late in the job; wait for it to come back.
+        adb("wait-for-device", check=False, timeout=180)
         adb("shell", "cmd", "uimode", "night", night, check=False)
         set_ui_v5(True)
         launch()
