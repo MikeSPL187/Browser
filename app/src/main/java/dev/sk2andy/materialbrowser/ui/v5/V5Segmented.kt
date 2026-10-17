@@ -16,7 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import dev.sk2andy.materialbrowser.ui.clearSemanticsWhen
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
@@ -37,6 +41,10 @@ fun V5Segmented(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** What TalkBack reads for each segment when its label is a sample, such as «Aa» in a typeface. */
+    descriptions: List<String>? = null,
+    /** Each label's own typeface, so a typeface choice shows itself. */
+    fontFamilies: List<FontFamily>? = null,
 ) {
     val colors = V5Theme.colors
     val view = LocalView.current
@@ -66,6 +74,7 @@ fun V5Segmented(
                             }
                         },
                     )
+                    .then(descriptions?.getOrNull(index)?.let { Modifier.semantics { contentDescription = it } } ?: Modifier)
                     .testTag(V5SegmentedTestTags.segment(index)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -73,7 +82,9 @@ fun V5Segmented(
                     label,
                     style = V5Theme.type.callout.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
                     color = if (selected) colors.label else colors.labelSecondary,
+                    fontFamily = fontFamilies?.getOrNull(index),
                     maxLines = 1,
+                    modifier = Modifier.clearSemanticsWhen(descriptions != null),
                 )
             }
         }

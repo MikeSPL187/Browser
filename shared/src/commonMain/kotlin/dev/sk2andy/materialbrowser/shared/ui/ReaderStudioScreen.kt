@@ -1112,17 +1112,25 @@ private fun ReaderTextSize(
             fontFamily = style.serifFontFamily,
             style = MaterialTheme.typography.bodyMedium,
         )
-        Slider(
-            value = settings.fontScale,
-            onValueChange = { scale ->
-                if (scale != settings.fontScale) onSettingsChanged(settings.copy(fontScale = scale))
-            },
-            modifier = Modifier
-                .weight(1f)
-                .semantics { contentDescription = description },
-            valueRange = ReaderLibraryRules.MIN_FONT_SCALE..ReaderLibraryRules.MAX_FONT_SCALE,
-            steps = ReaderLibraryRules.FONT_SCALE_STEPS,
-        )
+        val onScale = { scale: Float ->
+            if (scale != settings.fontScale) onSettingsChanged(settings.copy(fontScale = scale))
+        }
+        val sliderModifier = Modifier
+            .weight(1f)
+            .semantics { contentDescription = description }
+        val range = ReaderLibraryRules.MIN_FONT_SCALE..ReaderLibraryRules.MAX_FONT_SCALE
+        val controls = style.controls
+        if (controls != null) {
+            controls.Slider(settings.fontScale, onScale, range, ReaderLibraryRules.FONT_SCALE_STEPS, sliderModifier)
+        } else {
+            Slider(
+                value = settings.fontScale,
+                onValueChange = onScale,
+                modifier = sliderModifier,
+                valueRange = range,
+                steps = ReaderLibraryRules.FONT_SCALE_STEPS,
+            )
+        }
         Text(
             "A",
             modifier = Modifier.clearAndSetSemantics { },
@@ -1139,6 +1147,29 @@ private fun ReaderFontFamilyChoice(
     settings: ReaderSettings,
     onSettingsChanged: (ReaderSettings) -> Unit,
 ) {
+    val controls = style.controls
+    if (controls != null) {
+        val names = READER_FONTS.map { font ->
+            resources.text(
+                when (font) {
+                    ReaderFont.Sans -> ReaderStudioLabel.FontSans
+                    ReaderFont.Serif -> ReaderStudioLabel.FontSerif
+                    ReaderFont.Mono -> ReaderStudioLabel.FontMono
+                },
+            )
+        }
+        controls.Choice(
+            labels = READER_FONTS.map { "Aa" },
+            descriptions = names,
+            fontFamilies = READER_FONTS.map(style::fontFamily),
+            selected = READER_FONTS.indexOf(settings.font),
+            onSelect = { index -> onSettingsChanged(settings.copy(font = READER_FONTS[index])) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(ReaderStudioTestTags.FontFamily),
+        )
+        return
+    }
     SingleChoiceSegmentedButtonRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -1206,7 +1237,8 @@ private fun ReaderWideMargins(
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
             )
-            Switch(checked = settings.wideMargins, onCheckedChange = null)
+            val controls = style.controls
+            if (controls != null) controls.Switch(settings.wideMargins) else Switch(checked = settings.wideMargins, onCheckedChange = null)
         }
     }
 }
