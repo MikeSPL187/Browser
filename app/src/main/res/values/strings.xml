@@ -2324,4 +2324,8 @@
         <item quantity="one">%d tab</item>
         <item quantity="other">%d tabs</item>
     </plurals>
+    <string name="identity_sign_in_with">Sign in with %1$s</string>
+    <string name="identity_privacy_policy">Privacy policy: %1$s</string>
+    <string name="identity_terms_of_service">Terms of service: %1$s</string>
+    <string name="identity_continue">Continue</string>
 </resources>
