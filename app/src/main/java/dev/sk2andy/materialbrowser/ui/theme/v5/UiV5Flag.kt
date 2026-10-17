@@ -41,11 +41,12 @@ open class V5Preference internal constructor(
 }
 
 /**
- * The ui.v5 flag (plan-v5.md, section 9): the new interface replaces the current one screen by
- * screen while this is on. Off by default and only reachable from developer options until v5 is
- * the default (V28).
+ * The ui.v5 flag (plan-v5.md, section 9): the new interface on a phone. On by default since V28,
+ * step 2; a tablet stays on the current interface whatever it says (`rememberDrawsV5`). Developer
+ * options can still turn it off until the current interface leaves the phone (V28, step 4); a
+ * choice made there is kept.
  */
-object UiV5Flag : V5Preference(key = "ui.v5", default = false)
+object UiV5Flag : V5Preference(key = "ui.v5", default = true)
 
 /**
  * «Tint the bar with the site's color» (system-v5.md, section 1.3): on by default; off keeps the
