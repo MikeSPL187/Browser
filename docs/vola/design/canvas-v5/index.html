@@ -696,7 +696,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 
   <section class="scn" id="s-u">
     <h2><small>у</small>Проверка паролей</h2>
-    <p class="lede">На утверждение. Как «Рекомендации безопасности» в Safari и «Проверка паролей» в Chrome: <b>повторы, слабые пароли и вход без шифрования</b> находятся на телефоне, сразу и без сети. <b>Утечки — только по нажатию</b>: наружу уходят первые 5 символов хеша, не пароль и не адрес сайта (Have I Been Pwned). Одна запись — в одном разделе, самом срочном: утечка, повтор, без шифрования, слабый. Действие одно — сменить пароль на сайте.</p>
+    <p class="lede">На утверждение. Как «Рекомендации безопасности» в Safari и «Проверка паролей» в Chrome: <b>повторы, слабые пароли и вход без шифрования</b> находятся на телефоне, сразу и без сети. <b>Утечки — только по нажатию</b>: наружу уходят первые 5 символов хеша, не пароль и не адрес сайта (Have I Been Pwned). Утечка, повтор и слабый пароль — одна запись в одном разделе, самом срочном; действие одно — сменить пароль на сайте. <b>Вход без шифрования</b> — отдельный раздел: новый пароль тут не поможет, исправить может только сайт, поэтому у такой записи нет кнопки смены.</p>
     <div class="row">
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-u1"></div></div><figcaption><b>Итог проверки.</b> Сверху — сколько требует внимания; дальше разделы по срочности. Утечки ещё не проверялись — кнопка с честной строкой о том, что уходит в сеть.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-u2"></div></div><figcaption><b>Запись с замечанием.</b> Что не так — одной фразой; «Сменить пароль на сайте» открывает страницу смены пароля сайта (<code>/.well-known/change-password</code>), если её нет — главную.</figcaption></figure>
@@ -1203,7 +1203,7 @@ S.u1=()=>{
 <div style="height:44px;display:flex;align-items:center;margin-left:-8px"><span class="tbtn" style="color:var(--acc)">${I('arrow_back','w5')}</span><div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">Проверка паролей</div></div>
 <div class="grp sq" style="margin-top:12px;padding:16px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)">${I('error','s28 f')}</span><div style="flex:1;min-width:0"><div class="t-title">4 пароля требуют внимания</div><div class="t-foot l2">42 из 46 в порядке</div></div></div>
 ${head('ПОВТОРЯЮТСЯ · 2')}<div class="grp sq">${row('m',TILE.indigo,'mail.example.ru','anna.k · ещё на 2 сайтах')}${row('s',TILE.teal,'shop.example.com','anna.k · ещё на 2 сайтах')}</div>
-${head('БЕЗ ШИФРОВАНИЯ · 1')}<div class="grp sq">${row('r',TILE.amber,'router.local','admin · вход по http://')}</div>
+${head('БЕЗ ШИФРОВАНИЯ · 1')}<div class="grp sq">${row('r',TILE.amber,'router.example.net','admin · сайт принимает пароль по http://')}</div>
 ${head('СЛАБЫЕ · 1')}<div class="grp sq">${row('f',TILE.pink,'forum.example.org','anna · 8 символов, только буквы')}</div>
 <div class="grp sq" style="margin-top:22px"><div class="rw noi"><span class="it" style="background:${TILE.red}">${I('shield','s20')}</span><div class="tx t-body acc">Проверить утечки</div></div></div>
 <div class="t-foot l2" style="padding:8px 16px 0">Отправляются только первые 5 символов хеша пароля — не пароль и не адрес сайта. Повторы и слабые пароли проверяются на телефоне.</div>
