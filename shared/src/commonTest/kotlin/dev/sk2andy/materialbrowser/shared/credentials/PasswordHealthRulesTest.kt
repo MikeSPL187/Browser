@@ -2,6 +2,8 @@ package dev.sk2andy.materialbrowser.shared.credentials
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class PasswordHealthRulesTest {
     private val logins = listOf(
@@ -26,6 +28,38 @@ class PasswordHealthRulesTest {
     }
 
     @Test
+    fun passwordsSentOverPlainHttpAreListedApartFromTheOtherSections() {
+        val report = PasswordHealthRules.report(
+            listOf(
+                login("site", "http://shop.example.com", "sunshine"),
+                login("form", "https://news.example.com", "kV7#qe2Lm!Tz9pWf", formActionOrigin = "http://news.example.com"),
+                login("safe", "https://bank.example.com", "Tr0ub4dor&3-horse!", formActionOrigin = "https://bank.example.com"),
+                login("router", "http://127.0.0.1:8080", "Same-Strong-Pass-42!"),
+            ),
+            breaches = emptyMap(),
+        )
+
+        assertEquals(listOf("site" to false, "form" to true), report.insecure.map { it.login.id to it.formOnly })
+        assertEquals(listOf("site"), report.weak.map { it.login.id })
+        assertEquals(1, report.needsAttention)
+    }
+
+    @Test
+    fun onlyPlainHttpToAnotherMachineIsInsecure() {
+        assertTrue(PasswordHealthRules.isPlainHttp("http://example.com"))
+        assertTrue(PasswordHealthRules.isPlainHttp("HTTP://Example.com:8080/login"))
+        assertTrue(PasswordHealthRules.isPlainHttp("http://192.168.0.1"))
+        assertTrue(PasswordHealthRules.isPlainHttp("http://127.example.com"))
+        assertFalse(PasswordHealthRules.isPlainHttp("https://example.com"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://localhost:3000"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://app.localhost"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://127.0.0.1"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://[::1]:8080"))
+        assertFalse(PasswordHealthRules.isPlainHttp("android://hash@com.example.app/"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://"))
+    }
+
+    @Test
     fun noLoginsIsAllFine() {
         assertEquals(100, PasswordHealthRules.report(emptyList(), emptyMap()).finePercent)
     }
@@ -39,10 +73,10 @@ class PasswordHealthRulesTest {
         assertEquals("https://a.example/.well-known/change-password", PasswordHealthRules.changePasswordUrl("https://a.example"))
     }
 
-    private fun login(id: String, origin: String, password: String) = VaultLogin(
+    private fun login(id: String, origin: String, password: String, formActionOrigin: String? = null) = VaultLogin(
         id = id,
         origin = origin,
-        formActionOrigin = null,
+        formActionOrigin = formActionOrigin,
         httpRealm = null,
         username = "anna",
         password = password,
