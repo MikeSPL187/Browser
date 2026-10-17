@@ -39,6 +39,7 @@ import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.PrivacySignalSettings
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
+import dev.sk2andy.materialbrowser.shared.ui.settings.LocalSettingsSkin
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
@@ -47,8 +48,10 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardValueRow
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
-import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
+import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
 
 internal object ProtectionSettingsTestTags {
     const val UserCaWarning = "protection_settings_user_ca_warning"
@@ -516,7 +519,16 @@ internal fun ProtectionAndDataSettingsPage(
                     )
                 }
             }
-            if (layer.main) {
+            if (layer.main && LocalSettingsSkin.current != null) {
+                // Under the v5 skin: a red row in its own group, as Safari's «Clear History».
+                SettingsCard(containerColor = cardColor) {
+                    V5ListRow(
+                        title = stringResource(R.string.action_clear_browsing_data),
+                        titleColor = V5Theme.colors.danger,
+                        onClick = onClearData,
+                    )
+                }
+            } else if (layer.main) {
                 Surface(
                     onClick = onClearData,
                     modifier = Modifier

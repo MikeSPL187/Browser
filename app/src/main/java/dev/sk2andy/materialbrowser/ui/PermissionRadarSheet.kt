@@ -3,6 +3,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import android.os.SystemClock
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -18,9 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,9 +57,9 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
+import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import kotlinx.coroutines.delay
-import androidx.compose.ui.res.painterResource
-import androidx.annotation.DrawableRes
 
 @Composable
 internal fun PermissionRadarSheet(
@@ -68,6 +71,33 @@ internal fun PermissionRadarSheet(
     onResetSite: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // Opened from settings under v5 on a phone: the v5 sheet with the radar's v5 content, as the
+    // site information sheet shows it (V28, B8).
+    if (rememberDrawsV5()) {
+        val title = stringResource(R.string.permission_radar_title)
+        V5PromptTheme {
+            CompositionLocalProvider(LocalSiteInfoV5 provides true) {
+                V5WindowSheet(
+                    visible = true,
+                    onDismiss = onDismiss,
+                    title = title,
+                    modifier = Modifier.testTag(PermissionRadarTestTags.Sheet),
+                ) {
+                    V5SheetHeader(title = title, onClose = onDismiss)
+                    PermissionRadarContent(
+                        snapshot = snapshot,
+                        workspaceName = workspaceName,
+                        supportedPermissions = supportedPermissions,
+                        onOriginSelected = onOriginSelected,
+                        onDecisionChanged = onDecisionChanged,
+                        onResetSite = onResetSite,
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                    )
+                }
+            }
+        }
+        return
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(PermissionRadarTestTags.Sheet),

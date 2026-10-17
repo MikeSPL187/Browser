@@ -81,3 +81,25 @@ private fun V5PromptChooserDarkPreview() {
         )
     }
 }
+
+@Preview(name = "Choice · site permission, light", heightDp = 420)
+@Composable
+private fun V5ChoiceLightPreview() = ChoicePreview(dark = false)
+
+@Preview(name = "Choice · site permission, dark", heightDp = 420)
+@Composable
+private fun V5ChoiceDarkPreview() = ChoicePreview(dark = true)
+
+@Composable
+private fun ChoicePreview(dark: Boolean) {
+    VolaV5Theme(dark = dark) {
+        V5ChoiceSheet(
+            visible = true,
+            title = "Местоположение",
+            options = listOf("Спрашивать", "Разрешать", "Блокировать"),
+            selected = 0,
+            onSelect = {},
+            onDismiss = {},
+        )
+    }
+}
