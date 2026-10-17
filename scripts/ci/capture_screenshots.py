@@ -1634,6 +1634,12 @@ def main():
     time.sleep(15)
     shot("launch")
     dismiss_first_run()
+    # v5 first, while the emulator is fresh: it is the default interface, and late in this hour-long
+    # job the emulator has dropped offline and cost the v5 passes.
+    step("v5-tours", run_v5_tours)
+    launch()
+    time.sleep(12)
+    dismiss_first_run()
     tour("light")
 
     adb("shell", "cmd", "uimode", "night", "yes", check=False)
@@ -1652,7 +1658,6 @@ def main():
     tour("ru")
     step("air", lambda: air_layout("ru"))
     step("probe-air", lambda: probe_page("air"))
-    step("v5-tours", run_v5_tours)
 
     crashes = (adb("logcat", "-d", "-b", "crash", check=False, capture=True) or b"").decode(
         "utf-8", "replace"
