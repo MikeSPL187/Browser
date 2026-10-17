@@ -41,6 +41,7 @@ internal fun <T> SettingsCardDropdownRow(
         SettingsDropdown(
             expanded = enabled && expanded,
             onDismissRequest = { expanded = false },
+            title = title,
         ) {
             options.forEach { option ->
                 SettingsDropdownItem(

@@ -238,6 +238,33 @@ internal class V5SettingsSkin(private val view: View) : SettingsSkin {
         }
     }
 
+    @Composable
+    override fun Choices(
+        title: String?,
+        expanded: Boolean,
+        onDismissRequest: () -> Unit,
+        content: @Composable ColumnScope.() -> Unit,
+    ) {
+        // The menu of the current interface becomes v5's choice: the prompt sheet with the values
+        // as rows on one card, the chosen one checked (V5ChoiceSheet's look).
+        V5PromptSheet(
+            visible = expanded,
+            title = title.orEmpty(),
+            message = null,
+            actions = emptyList(),
+            onDismiss = onDismissRequest,
+        ) {
+            Column(
+                Modifier
+                    .padding(horizontal = V5Spacing.marginPhone)
+                    .fillMaxWidth()
+                    .clip(V5Theme.shapes.s)
+                    .background(V5Theme.colors.surface),
+                content = content,
+            )
+        }
+    }
+
     override fun onToggled(checked: Boolean) {
         view.performV5Haptic(if (checked) V5Haptic.ToggleOn else V5Haptic.ToggleOff)
     }

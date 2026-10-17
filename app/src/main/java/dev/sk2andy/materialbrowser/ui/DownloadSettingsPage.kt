@@ -148,7 +148,35 @@ internal fun DownloadsSettingsPage(
             }
         }
     }
-    if (directoryDialogVisible) {
+    if (directoryDialogVisible && rememberDrawsV5()) {
+        val validDirectory = DownloadDirectoryRules.isValidSubdirectoryInput(directoryDraft)
+        val save = {
+            directoryDialogVisible = false
+            onSettingsChanged(
+                settings.copy(downloadSubdirectory = DownloadDirectoryRules.normalizedSubdirectory(directoryDraft)),
+            )
+        }
+        SettingsPromptV5(
+            title = stringResource(R.string.settings_download_folder_title),
+            message = null,
+            confirm = stringResource(R.string.action_save),
+            onConfirm = save,
+            onDismiss = { directoryDialogVisible = false },
+            testTag = DownloadSettingsTestTags.DirectoryDialog,
+            confirmTestTag = DownloadSettingsTestTags.DirectoryConfirm,
+            confirmEnabled = validDirectory,
+        ) {
+            SettingsPromptFieldV5(
+                value = directoryDraft,
+                onValueChange = { directoryDraft = it },
+                placeholder = stringResource(R.string.settings_download_folder_input),
+                maxLength = DOWNLOAD_FOLDER_MAX_LENGTH,
+                onDone = { if (validDirectory) save() },
+                modifier = Modifier.testTag(DownloadSettingsTestTags.DirectoryInput),
+                problem = if (validDirectory) null else stringResource(R.string.settings_download_folder_invalid),
+            )
+        }
+    } else if (directoryDialogVisible) {
         val validDirectory = DownloadDirectoryRules.isValidSubdirectoryInput(directoryDraft)
         AlertDialog(
             onDismissRequest = { directoryDialogVisible = false },
@@ -194,6 +222,9 @@ internal fun DownloadsSettingsPage(
         )
     }
 }
+
+/** A folder name typed under v5: longer than any path Android's download folder takes. */
+private const val DOWNLOAD_FOLDER_MAX_LENGTH = 255
 
 internal object DownloadSettingsTestTags {
     const val Directory = "download_settings_directory"

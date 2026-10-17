@@ -250,11 +250,13 @@ internal fun SettingsChoice(
 internal fun SettingsDropdown(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
+    title: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     dev.sk2andy.materialbrowser.shared.ui.settings.SettingsDropdown(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
+        title = title,
         content = content,
     )
 }

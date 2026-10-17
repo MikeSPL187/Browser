@@ -27,6 +27,7 @@ import dev.sk2andy.materialbrowser.browser.SearxngRules
 import dev.sk2andy.materialbrowser.browser.SearxngSettings
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
+import dev.sk2andy.materialbrowser.shared.ui.settings.LocalSettingsSkin
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCard
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardChoiceRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardHeader
@@ -224,6 +225,7 @@ private fun SuggestionProviderRow(
         SettingsDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            title = title,
         ) {
             providers.forEach { provider ->
                 SettingsDropdownItem(
@@ -248,21 +250,34 @@ private fun SearxngServerField(
     var instanceUrlDraft by remember { mutableStateOf(searxngSettings.instanceUrl) }
     val invalid = instanceUrlDraft.isNotBlank() &&
         SearxngRules.normalizedInstanceUrl(instanceUrlDraft) == null
+    val onValueChange = { value: String ->
+        val boundedValue = value.take(SearxngRules.MAX_INSTANCE_URL_LENGTH)
+        val normalizedValue = SearxngRules.normalizedInstanceUrl(boundedValue)
+        instanceUrlDraft = boundedValue
+        when {
+            boundedValue.isBlank() -> onSearxngSettingsChanged(searxngSettings.copy(instanceUrl = ""))
+            normalizedValue != null -> onSearxngSettingsChanged(searxngSettings.copy(instanceUrl = normalizedValue))
+        }
+    }
+    // Under the v5 skin: the v5 field with its hint, or the problem in red, under it.
+    if (LocalSettingsSkin.current != null) {
+        SettingsPromptFieldV5(
+            value = instanceUrlDraft,
+            onValueChange = onValueChange,
+            placeholder = stringResource(R.string.settings_searxng_instance_url),
+            maxLength = SearxngRules.MAX_INSTANCE_URL_LENGTH,
+            onDone = {},
+            modifier = Modifier.testTag(SearchSettingsTestTags.SearxngInstanceUrl),
+            hint = stringResource(R.string.settings_searxng_instance_url_summary),
+            problem = if (invalid) stringResource(R.string.settings_searxng_instance_url_invalid) else null,
+            keyboardType = KeyboardType.Uri,
+            inPage = true,
+        )
+        return
+    }
     OutlinedTextField(
         value = instanceUrlDraft,
-        onValueChange = { value ->
-            val boundedValue = value.take(SearxngRules.MAX_INSTANCE_URL_LENGTH)
-            val normalizedValue = SearxngRules.normalizedInstanceUrl(boundedValue)
-            instanceUrlDraft = boundedValue
-            when {
-                boundedValue.isBlank() -> onSearxngSettingsChanged(
-                    searxngSettings.copy(instanceUrl = ""),
-                )
-                normalizedValue != null -> onSearxngSettingsChanged(
-                    searxngSettings.copy(instanceUrl = normalizedValue),
-                )
-            }
-        },
+        onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
             .testTag(SearchSettingsTestTags.SearxngInstanceUrl),

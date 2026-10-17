@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -239,8 +240,14 @@ fun SettingsChoice(
 fun SettingsDropdown(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
+    /** The setting's name: a skin that draws the list as a sheet titles it with it. */
+    title: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Choices(title, expanded, onDismissRequest, content)
+        return
+    }
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -255,6 +262,22 @@ fun SettingsDropdownItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    LocalSettingsSkin.current?.let { skin ->
+        skin.Row(
+            title = label,
+            summary = null,
+            summaryMaxLines = 1,
+            enabled = true,
+            divider = false,
+            interaction = Modifier
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { this.selected = selected },
+            modifier = Modifier,
+            leading = null,
+            end = SettingsRowEnd.Check(selected),
+        )
+        return
+    }
     DropdownMenuItem(
         text = { Text(label) },
         onClick = onClick,

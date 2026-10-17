@@ -78,6 +78,18 @@ interface SettingsSkin {
         slider: @Composable () -> Unit,
     )
 
+    /**
+     * The list a value row opens ([SettingsDropdown]): [content] is its [SettingsDropdownItem]s,
+     * drawn as this skin's [Row]s with a check on the chosen one. [title] names the setting.
+     */
+    @Composable
+    fun Choices(
+        title: String?,
+        expanded: Boolean,
+        onDismissRequest: () -> Unit,
+        content: @Composable ColumnScope.() -> Unit,
+    )
+
     /** Feedback as a switch row flips, such as a haptic tick; called before the change. */
     fun onToggled(checked: Boolean) = Unit
 }

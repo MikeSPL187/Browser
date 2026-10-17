@@ -30,6 +30,8 @@ data class V5PromptAction(
     val role: V5PromptRole = V5PromptRole.Default,
     /** The tag the current dialog's button had, so tests find the action under v5 too. */
     val testTag: String? = null,
+    /** False while what the sheet asks for is not filled in right, such as an address. */
+    val enabled: Boolean = true,
 )
 
 /**
@@ -87,6 +89,7 @@ fun V5PromptSheet(
                             V5PromptRole.Default -> colors.label
                             V5PromptRole.Destructive -> colors.danger
                         },
+                        enabled = action.enabled,
                         onClick = action.onClick,
                         modifier = Modifier.testTag(action.testTag ?: V5PromptSheetTestTags.action(index)),
                     )
