@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -172,7 +173,7 @@ private fun MainPage(
     onOpen: (V5TranslateRules.Page) -> Unit,
 ) {
     val colors = V5Theme.colors
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
         V5ListRow(
             title = stringResource(R.string.v5_translate_from),
@@ -251,7 +252,7 @@ private fun LanguagePage(
     chosen: V5TranslateLanguage?,
     onChoose: (String) -> Unit,
 ) {
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
         options.forEach { language ->
             V5ListRow(
