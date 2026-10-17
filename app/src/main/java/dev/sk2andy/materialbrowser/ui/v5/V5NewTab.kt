@@ -37,8 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -523,15 +521,21 @@ private fun ReportCard(report: V5NewTabReport, onOpen: () -> Unit, onHide: () ->
                 ) {
                     Icon(VolaIcons.MoreHoriz, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
                 }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.v5_report_hide_card)) },
-                        onClick = {
-                            menu = false
-                            onHide()
-                        },
-                    )
-                }
+                V5PromptSheet(
+                    visible = menu,
+                    title = stringResource(R.string.v5_report_title),
+                    message = null,
+                    actions = listOf(
+                        V5PromptAction(
+                            label = stringResource(R.string.v5_report_hide_card),
+                            onClick = {
+                                menu = false
+                                onHide()
+                            },
+                        ),
+                    ),
+                    onDismiss = { menu = false },
+                )
             }
         }
         Column(
