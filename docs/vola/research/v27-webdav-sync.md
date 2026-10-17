@@ -125,12 +125,13 @@
 
 ## Дальше (шаг 3, I)
 Android-адаптер:
-- HTTP-клиент на `HttpsURLConnection`: PROPFIND/MKCOL через переопределение метода, без
-  перенаправлений, с тайм-аутами и лимитом тела;
+- HTTP-клиент на OkHttp (уже в зависимостях приложения): любые методы WebDAV,
+  `followRedirects(false)` и `followSslRedirects(false)`, тайм-ауты, лимит тела, системные корневые
+  сертификаты;
 - `WebDavSyncCrypto` — `AndroidLocalTransferCrypto` плюс Argon2 из `SyncCrypto`;
-- Keystore для аккаунта (пароль приложения, ключ); память синхронизации — в данных приложения,
-  без резервной копии;
+- Keystore для аккаунта (пароль приложения, ключ) — как `AndroidSyncSecretProtector`, файлы в
+  `noBackupFilesDir`; память синхронизации (чужие вкладки и закладки) — там же и тоже зашифрована;
 - Argon2 и сеть — вне главного потока;
 - синхронизация при открытии и уходе из Vola.
 
-Новых зависимостей не нужно: Argon2 и `kotlinx.serialization` уже есть.
+Новых зависимостей не нужно: OkHttp, Argon2 и `kotlinx.serialization` уже есть.
