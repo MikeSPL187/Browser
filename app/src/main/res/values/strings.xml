@@ -2184,4 +2184,16 @@
     <string name="v5_translated_from_to">Translated: %1$s → %2$s</string>
     <string name="v5_translate_original">Original</string>
     <string name="v5_translated_hide">Hide</string>
+    <string name="v5_translation_settings_title">Translation</string>
+    <string name="v5_translation_offer">Offer translation in the menu</string>
+    <string name="v5_translation_offer_hint">When a page isn’t in your language</string>
+    <string name="v5_translation_into">Translate into</string>
+    <string name="v5_translation_never">Never translate</string>
+    <string name="v5_translation_never_none">None</string>
+    <string name="v5_translation_packs">Language packs · %1$s</string>
+    <string name="v5_translation_pack_downloaded">%1$s · downloaded</string>
+    <string name="v5_translation_pack_downloading">%1$s · downloading…</string>
+    <string name="v5_translation_pack_download">Download</string>
+    <string name="v5_translation_pack_delete">Delete pack</string>
+    <string name="v5_translation_footer">Translation runs on this phone: pages are not sent anywhere. Swipe a pack to the left to delete it. Private tabs don’t download packs; they use the ones already here.</string>
 </resources>

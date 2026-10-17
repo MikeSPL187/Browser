@@ -2278,4 +2278,16 @@
     <string name="v5_translated_from_to">Перевод: %1$s → %2$s</string>
     <string name="v5_translate_original">Оригинал</string>
     <string name="v5_translated_hide">Скрыть</string>
+    <string name="v5_translation_settings_title">Перевод</string>
+    <string name="v5_translation_offer">Предлагать перевод в меню</string>
+    <string name="v5_translation_offer_hint">Когда язык страницы не ваш</string>
+    <string name="v5_translation_into">Переводить на</string>
+    <string name="v5_translation_never">Не переводить</string>
+    <string name="v5_translation_never_none">Нет</string>
+    <string name="v5_translation_packs">Языковые пакеты · %1$s</string>
+    <string name="v5_translation_pack_downloaded">%1$s · скачан</string>
+    <string name="v5_translation_pack_downloading">%1$s · скачивается…</string>
+    <string name="v5_translation_pack_download">Скачать</string>
+    <string name="v5_translation_pack_delete">Удалить пакет</string>
+    <string name="v5_translation_footer">Перевод работает на устройстве: страницы никуда не отправляются. Пакет удаляется смахиванием влево. В частных вкладках пакеты не скачиваются — только те, что уже есть.</string>
 </resources>
