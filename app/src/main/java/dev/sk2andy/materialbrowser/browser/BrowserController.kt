@@ -476,6 +476,7 @@ class BrowserController(
         private set
     var residentTabLimit by mutableIntStateOf(BrowserSessionResidencyRules.DEFAULT_LIMIT)
         private set
+    private val memoryPressure = BrowserMemoryPressure(activity, { residentTabLimit }, ::trimResidentSessions)
     var searchEngine by mutableStateOf(SearchEngine.Google)
         private set
     var pageTranslationProvider by mutableStateOf(PageTranslationProvider.Google)
@@ -10173,9 +10174,8 @@ class BrowserController(
             releaseFirefoxExtensionPopupView()
         }
         browserEngineSessionFactory.setToppingHostStateListener {}
-        browserEngineSessionFactory.setToppingInteractionDelegate(
-            GeckoToppingInteractionDelegate.None,
-        )
+        browserEngineSessionFactory.setToppingInteractionDelegate(GeckoToppingInteractionDelegate.None)
+        memoryPressure.close()
         SnoozeRuntimeRegistry.unregister(snoozeRestoreCallback)
         PrivateTabsRuntimeRegistry.unregister(closeAllPrivateTabsCallback)
         mainHandler.removeCallbacks(syncRefreshRunnable)
@@ -12616,13 +12616,13 @@ class BrowserController(
         }
     }
 
-    private fun trimResidentSessions() {
+    private fun trimResidentSessions(limit: Int = residentTabLimit) {
         residentSessionAccessOrder.keys.retainAll(browserEngineSessions.keys)
         val evictionIds = BrowserSessionResidencyRules.evictionOrder(
             residentTabIds = browserEngineSessions.keys,
             accessOrder = residentSessionAccessOrder,
             protectedTabIds = protectedResidentTabIds(),
-            limit = residentTabLimit,
+            limit = limit,
         )
         if (evictionIds.isEmpty()) return
         evictionIds.forEach(::evictResidentSession)
