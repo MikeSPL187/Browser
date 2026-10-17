@@ -140,6 +140,10 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // A Firefox extension's popup in a v5 sheet: room for a small panel, never past the screen.
+    val extensionPopupMin: Dp = 160.dp
+    val extensionPopupMax: Dp = 560.dp
+
     // Password check (canvas screen «у1»): the status mark beside the summary.
     val passwordStatus: Dp = 44.dp
     val passwordStatusIcon: Dp = 28.dp
