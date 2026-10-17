@@ -7,10 +7,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.DocumentsContract
-import android.view.Gravity
-import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.browser.gecko.currentGeckoIdentity
 import dev.sk2andy.materialbrowser.browser.systemwebview.currentSystemWebViewIdentity
 import dev.sk2andy.materialbrowser.data.AppDataArchiveCodec
@@ -23,6 +25,8 @@ import dev.sk2andy.materialbrowser.data.AppDataArchiveRules
 import dev.sk2andy.materialbrowser.data.AppDataArchiveStaging
 import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.RecallRepository
+import dev.sk2andy.materialbrowser.ui.AppDataTransferStatus
+import dev.sk2andy.materialbrowser.ui.AppDataTransferStatusState
 import java.io.File
 import java.io.FileInputStream
 import java.util.UUID
@@ -88,7 +92,7 @@ internal fun currentBrowserEngineIdentity(): String =
     }
 
 class AppDataTransferActivity : ComponentActivity() {
-    private lateinit var statusView: TextView
+    private var status by mutableStateOf(AppDataTransferStatusState(R.string.data_archive_restore_progress, export = false))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,19 +122,16 @@ class AppDataTransferActivity : ComponentActivity() {
         if (AppDataArchiveRestore.hasInterruptedRestore(restoreRecoveryMarker())) {
             request = TransferRequest.Recover(request.mainProcessId)
         }
-        statusView = TextView(this).apply {
-            gravity = Gravity.CENTER
-            text = getString(
-                when (request) {
-                    is TransferRequest.Export -> R.string.data_archive_export_progress
-                    is TransferRequest.Import,
-                    is TransferRequest.Recover,
-                    -> R.string.data_archive_restore_progress
-                },
-            )
-            textSize = 18f
-        }
-        setContentView(statusView)
+        status = AppDataTransferStatusState(
+            message = when (request) {
+                is TransferRequest.Export -> R.string.data_archive_export_progress
+                is TransferRequest.Import,
+                is TransferRequest.Recover,
+                -> R.string.data_archive_restore_progress
+            },
+            export = request is TransferRequest.Export,
+        )
+        setContent { AppDataTransferStatus(status) }
         Thread {
             waitForMainActivityToStop()
             val attempt = runCatching {
@@ -143,7 +144,7 @@ class AppDataTransferActivity : ComponentActivity() {
             }
             if (attempt.isFailure && request is TransferRequest.Recover) {
                 runOnUiThread {
-                    statusView.setText(R.string.data_archive_recovery_failed)
+                    status = status.copy(message = R.string.data_archive_recovery_failed, failed = true)
                 }
                 return@Thread
             }
