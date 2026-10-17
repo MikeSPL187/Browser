@@ -29,7 +29,8 @@ internal class BrowserMemoryPressure(
     }
 
     @Deprecated("Deprecated in Android; kept for the systems that still call it.")
-    override fun onLowMemory() = onTrimMemory(COMPLETE)
+    @Suppress("DEPRECATION") // TRIM_MEMORY_COMPLETE is deprecated on Android 14 but still the most severe level.
+    override fun onLowMemory() = onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE)
 
     override fun onConfigurationChanged(newConfig: Configuration) = Unit
 
@@ -37,10 +38,5 @@ internal class BrowserMemoryPressure(
         if (!listening) return
         listening = false
         application.unregisterComponentCallbacks(this)
-    }
-
-    private companion object {
-        /** `ComponentCallbacks2.TRIM_MEMORY_COMPLETE`, deprecated on Android 14 but the most severe level. */
-        const val COMPLETE = 80
     }
 }
