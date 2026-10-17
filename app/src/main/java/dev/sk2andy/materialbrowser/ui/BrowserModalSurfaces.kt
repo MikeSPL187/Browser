@@ -371,7 +371,7 @@ internal fun BoxScope.BrowserModalSurfaces(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 84.dp)
+                .padding(horizontal = 16.dp, vertical = 84.dp) // token-exempt: the v4 snackbar keeps its old place
                 .zIndex(30f),
         )
     }
