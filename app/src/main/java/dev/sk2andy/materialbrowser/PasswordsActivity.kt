@@ -39,6 +39,8 @@ import dev.sk2andy.materialbrowser.shared.credentials.VaultSaveResult
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditError
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditScreen
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordFindingV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsIntroScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedScreen
@@ -85,6 +87,7 @@ import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
 import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
+import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
 
 /** Where the Passwords screen is. A recovery phrase lives only here, in memory, while it is shown. */
 internal sealed interface PasswordsRoute {
@@ -107,6 +110,9 @@ internal sealed interface PasswordsRoute {
     /** The password check (board W-PasswordHealth). */
     data object Health : PasswordsRoute
 
+    /** Under v5: one finding of the check (canvas «у2»). */
+    data class HealthFinding(val id: String, val kind: V5PasswordFindingKind) : PasswordsRoute
+
     /** «Move to Vola» (board W-Import): where the passwords come from. */
     data object Import : PasswordsRoute
 
@@ -122,7 +128,8 @@ internal sealed interface PasswordsRoute {
     ) : PasswordsRoute
 
     /** Screens that show logins: they need the vault open. Moving bookmarks in does not. */
-    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit || this is Health
+    val needsOpenVault: Boolean get() = this is Logins || this is Detail || this is Edit || this is Health ||
+        this is HealthFinding
 }
 
 /** Files picked for «Move to Vola» that hold passwords, waiting for the vault to be set up or opened. */
@@ -154,6 +161,9 @@ internal class PasswordsViewModel : ViewModel() {
     /** Share of hash prefixes the running leak check has answered, 0 to 1. */
     var leakProgress by mutableFloatStateOf(0f)
     var breaches by mutableStateOf<Map<String, Int>>(emptyMap())
+
+    /** When the last leak check finished, for «Checked at» under v5. */
+    var leakCheckedAt by mutableStateOf<Long?>(null)
 }
 
 /**
@@ -313,7 +323,19 @@ class PasswordsActivity : FragmentActivity() {
                 conflictState = route.conflictState,
                 onUseFilePasswords = { useFilePasswords(route) },
             )
-            PasswordsRoute.Health -> {
+            // V24: the v5 check runs the leak check only when asked, never on opening.
+            PasswordsRoute.Health -> if (rememberSettingsUiV5()) {
+                PasswordHealthV5(
+                    logins = logins,
+                    breaches = model.breaches,
+                    leakCheck = model.leakStatus,
+                    leakProgress = model.leakProgress,
+                    checkedAt = model.leakCheckedAt,
+                    onCheckLeaks = { checkLeaks(logins) },
+                    onFinding = { finding -> use { model.route = PasswordsRoute.HealthFinding(finding.loginId, finding.kind) } },
+                    onBack = { back(route) },
+                )
+            } else {
                 LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
                 PasswordHealthScreen(
                     report = remember(logins, model.breaches) { PasswordHealthRules.report(logins, model.breaches) },
@@ -325,6 +347,16 @@ class PasswordsActivity : FragmentActivity() {
                     onBack = { back(route) },
                 )
             }
+            is PasswordsRoute.HealthFinding -> PasswordFindingV5(
+                logins = logins,
+                breaches = model.breaches,
+                loginId = route.id,
+                kind = route.kind,
+                onChange = { login -> use { openChangePassword(login.origin) } },
+                onOpenLogin = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
+                onBack = { back(route) },
+                onGone = { model.route = PasswordsRoute.Health },
+            )
             is PasswordsRoute.Detail -> {
                 val login = logins.firstOrNull { it.id == route.id }
                 if (login == null) {
@@ -361,6 +393,7 @@ class PasswordsActivity : FragmentActivity() {
             is PasswordsRoute.Recover -> PasswordsRoute.Locked
             is PasswordsRoute.Detail -> PasswordsRoute.Logins
             PasswordsRoute.Health -> PasswordsRoute.Logins
+            is PasswordsRoute.HealthFinding -> PasswordsRoute.Health
             PasswordsRoute.Import -> if (model.launchedForImport) {
                 finish()
                 return
@@ -415,6 +448,7 @@ class PasswordsActivity : FragmentActivity() {
             if (model.leakStatus != LeakCheckStatus.Checking) return@launch
             model.breaches = result.breaches
             model.leakStatus = if (result.complete) LeakCheckStatus.Done else LeakCheckStatus.Failed
+            if (result.complete) model.leakCheckedAt = System.currentTimeMillis()
         }
     }
 
