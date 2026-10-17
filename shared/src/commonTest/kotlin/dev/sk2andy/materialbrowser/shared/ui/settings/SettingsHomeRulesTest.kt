@@ -38,6 +38,7 @@ class SettingsHomeRulesTest {
         val destinations = SettingsHomeRules.items(
             hasFirefoxExtensions = true,
             hasDeveloperOptions = true,
+            hasTranslation = true,
         ).mapNotNull(SettingsHomeItem::destination).toSet()
 
         val pagesOfTheHome = SettingsDestination.entries.toSet() - setOf(

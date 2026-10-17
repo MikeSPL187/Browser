@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -13,8 +14,10 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationUiState
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationResult
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5TranslateInto
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateRules
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheet
@@ -46,10 +49,16 @@ internal fun BrowserTranslateSheetV5(
     LaunchedEffect(visible) {
         if (visible && languages == null) translation.languages { languages = it }
     }
-    val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), locale.language)
+    val preferredTarget = rememberV5TranslateInto().ifEmpty { null }
+    val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), preferredTarget, locale.language)
     var fromCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.from) }
     var toCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.to) }
     var downloadBytes by remember { mutableStateOf<Long?>(null) }
+    var languageSettings by remember { mutableStateOf<Map<String, TranslationLanguageSetting>?>(null) }
+    var settingsRead by remember { mutableIntStateOf(0) }
+    LaunchedEffect(visible, settingsRead) {
+        if (visible) translation.models.languageSettings { languageSettings = it }
+    }
     LaunchedEffect(visible, fromCode, toCode) {
         downloadBytes = null
         val from = fromCode
@@ -70,8 +79,7 @@ internal fun BrowserTranslateSheetV5(
         to = toCode?.let { BrowserTranslateRules.pick(it, toOptions, name) },
         fromOptions = fromOptions,
         toOptions = toOptions,
-        // The engine port keeps no «always translate this language» choice yet: the row stays hidden.
-        alwaysTranslate = null,
+        alwaysTranslate = BrowserTranslateRules.always(fromCode, languageSettings, downloadBytes),
         downloadBytes = downloadBytes,
         inProgress = ui.inProgress,
         error = V5TranslateRules.error(ui.error),
@@ -82,7 +90,13 @@ internal fun BrowserTranslateSheetV5(
         actions = V5TranslateSheetActions(
             onFromChange = { fromCode = it },
             onToChange = { toCode = it },
-            onAlwaysTranslateChange = {},
+            onAlwaysTranslateChange = { on ->
+                fromCode?.let { code ->
+                    val setting = if (on) TranslationLanguageSetting.Always else TranslationLanguageSetting.Offer
+                    // A refusal (packs missing) leaves the switch as the engine reads it back.
+                    translation.models.setLanguageSetting(code, setting) { settingsRead++ }
+                }
+            },
             onTranslate = {
                 val from = fromCode
                 val to = toCode
@@ -130,15 +144,39 @@ internal object BrowserTranslateRules {
         onDeviceTranslation && (url.startsWith("https://") || url.startsWith("http://"))
 
     /**
-     * The languages the sheet opens with: the pair asked for last, else the one the engine suggests,
-     * else the page's detected language into the one the user reads (the app's, at worst).
+     * The languages the sheet opens with: the pair asked for last, else the page's language as the
+     * engine suggests or detected it into [preferredTarget] (Settings → Translation), else into the
+     * language the engine suggests, the user reads, or the app's, at worst.
      */
-    fun initialPair(ui: OnDeviceTranslationUiState, suggested: TranslationPair?, appLanguage: String): Codes {
+    fun initialPair(
+        ui: OnDeviceTranslationUiState,
+        suggested: TranslationPair?,
+        preferredTarget: String?,
+        appLanguage: String,
+    ): Codes {
         val last = ui.pair ?: ui.page.requested
         return Codes(
             from = last?.from ?: suggested?.from ?: ui.page.pageLanguage,
-            to = last?.to ?: suggested?.to ?: ui.page.userLanguage ?: appLanguage,
+            to = last?.to ?: preferredTarget ?: suggested?.to ?: ui.page.userLanguage ?: appLanguage,
         )
+    }
+
+    /** Whether the menu offers translating a page in [pageLanguage]: not when the user set it to «never». */
+    fun offers(pageLanguage: String?, settings: Map<String, TranslationLanguageSetting>?): Boolean =
+        pageLanguage == null || settings?.get(pageLanguage) != TranslationLanguageSetting.Never
+
+    /**
+     * «Always translate this language» in the sheet: on when it is set; offered to turn on only when
+     * the pair's packs are on the phone ([downloadBytes] is 0), since the engine would otherwise
+     * download them by itself, without asking. Null hides the row.
+     */
+    fun always(fromCode: String?, settings: Map<String, TranslationLanguageSetting>?, downloadBytes: Long?): Boolean? {
+        if (fromCode == null || settings == null) return null
+        return when {
+            settings[fromCode] == TranslationLanguageSetting.Always -> true
+            downloadBytes == 0L -> false
+            else -> null
+        }
     }
 
     /** The pair the row names: only while the page is translated, and not the one the user closed. */

@@ -55,6 +55,7 @@ internal fun SettingsHomePage(
     onOpenFirefoxExtensions: (() -> Unit)? = null,
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
+    hasTranslation: Boolean = false,
 ) {
     var searching by rememberSaveable { mutableStateOf(false) }
     if (searching) {
@@ -67,13 +68,15 @@ internal fun SettingsHomePage(
         )
         return
     }
+    // V15c: under ui.v5 the same pages in the v5 grouped list; V15d draws the pages as v5 lists too.
+    val uiV5 = rememberSettingsUiV5()
     val items = SettingsHomeRules.items(
         hasFirefoxExtensions = onOpenFirefoxExtensions != null,
         hasDeveloperOptions = developerOptionsUnlocked,
+        // Translation on the phone has only a v5 page (V23).
+        hasTranslation = hasTranslation && uiV5,
     )
     val entries = items.map { item -> settingsHomeEntry(item, state) }
-    // V15c: under ui.v5 the same pages in the v5 grouped list; V15d draws the pages as v5 lists too.
-    val uiV5 = rememberSettingsUiV5()
     if (uiV5) {
         // The v5 interface has no frame style; under Appearance only the theme counts.
         val appearanceSummary = stringResource(SettingsHomeSummaryRules.theme(state.appearance.appearanceMode))
@@ -163,6 +166,12 @@ internal fun settingsHomeEntry(item: SettingsHomeItem, state: SettingsHomeState)
             title = stringResource(R.string.developer_options_title),
             summary = stringResource(R.string.developer_options_summary),
         )
+        // Only v5 with GeckoView has the page, so the registry and its search leave it out.
+        destination == SettingsDestination.Translation -> SettingsHomeEntry(
+            item = item,
+            title = stringResource(R.string.v5_translation_settings_title),
+            summary = stringResource(R.string.v5_translation_settings_summary),
+        )
         destination != null -> SettingsHomeEntry(
             item = item,
             title = SettingsRegistry.page(destination)?.title?.let { stringResource(it) }.orEmpty(),
@@ -188,6 +197,7 @@ internal fun settingsHomeIcon(icon: SettingsHomeIcon): ImageVector = when (icon)
     SettingsHomeIcon.ProtectionAndData -> VolaIcons.Verified
     SettingsHomeIcon.DeveloperOptions -> VolaIcons.Build
     SettingsHomeIcon.AboutLegal -> VolaIcons.Info
+    SettingsHomeIcon.Translation -> VolaIcons.Language
 }
 
 /**

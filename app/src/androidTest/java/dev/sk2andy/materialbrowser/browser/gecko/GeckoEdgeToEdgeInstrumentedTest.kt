@@ -22,6 +22,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
+import dev.sk2andy.materialbrowser.awaitWindowFocusForTests
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
@@ -630,6 +631,11 @@ class GeckoEdgeToEdgeInstrumentedTest {
     }
 
     private fun tapSearchField(scenario: ActivityScenario<MainActivity>) {
+        // The page's field takes focus, and the keyboard shows, only while the window has focus;
+        // a tap before that focuses nothing ("Expected IME visible=true", night of 17.10).
+        lateinit var focused: MainActivity
+        scenario.onActivity { activity -> focused = activity }
+        awaitWindowFocusForTests(focused)
         val coordinates = FloatArray(2)
         scenario.onActivity { activity ->
             val engineView = requireNotNull(
