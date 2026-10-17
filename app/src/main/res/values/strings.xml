@@ -2196,4 +2196,36 @@
     <string name="v5_translation_pack_download">Download</string>
     <string name="v5_translation_pack_delete">Delete pack</string>
     <string name="v5_translation_footer">Translation runs on this phone: pages are not sent anywhere. Swipe a pack to the left to delete it. Private tabs don’t download packs; they use the ones already here.</string>
+    <string name="v5_sync_title">Sync</string>
+    <string name="v5_sync_show_title">Show code</string>
+    <string name="v5_sync_show_hint">Open “Scan code” on the other device</string>
+    <string name="v5_sync_same_wifi">Both devices on the same Wi-Fi “%1$s”</string>
+    <string name="v5_sync_same_wifi_unnamed">Both devices on the same Wi-Fi</string>
+    <string name="v5_sync_code_description">Code for the other device</string>
+    <string name="v5_sync_no_wifi_title">Connect to Wi-Fi</string>
+    <string name="v5_sync_no_wifi">Tabs and bookmarks move only within one Wi-Fi network, without the internet.</string>
+    <string name="v5_sync_what_moves">What will move</string>
+    <string name="v5_sync_tabs">Tabs</string>
+    <string name="v5_sync_bookmarks">Bookmarks</string>
+    <string name="v5_sync_code_note">The code works for 2 minutes and only once. The data is encrypted with a key from the code and does not go to the internet.</string>
+    <string name="v5_sync_scan_title">Scan code</string>
+    <string name="v5_sync_scan_hint">Point at the code</string>
+    <string name="v5_sync_scan_where">It is on the “Show code” screen of the other device, on the same Wi-Fi</string>
+    <string name="v5_sync_scan_privacy">The camera works only on this screen. Frames are not saved or sent anywhere.</string>
+    <string name="v5_sync_receiving">Receiving tabs and bookmarks…</string>
+    <string name="v5_sync_error_expired">The code has expired</string>
+    <string name="v5_sync_error_expired_hint">Show a new one on the other device.</string>
+    <string name="v5_sync_error_not_found">Device not found</string>
+    <string name="v5_sync_error_not_found_hint">Both devices must be on the same Wi-Fi.</string>
+    <string name="v5_sync_error_failed">Could not move the data. Try again.</string>
+    <string name="v5_sync_error_camera">No access to the camera</string>
+    <string name="v5_sync_error_camera_hint">Allow the camera in Android settings to scan the code.</string>
+    <string name="v5_sync_done_title">Moved from “%1$s”</string>
+    <string name="v5_sync_group">Group “%1$s”</string>
+    <string name="v5_sync_added">+%1$d</string>
+    <string name="v5_sync_undo">Undo transfer</string>
+    <plurals name="v5_sync_done_existing">
+        <item quantity="one">%d bookmark was already here</item>
+        <item quantity="other">%d bookmarks were already here</item>
+    </plurals>
 </resources>
