@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import android.os.Handler
 import android.os.Looper
+import androidx.annotation.OptIn
 import androidx.annotation.UiThread
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationError
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationListener
@@ -173,7 +174,7 @@ internal class GeckoTranslationModels : TranslationModelsPort {
 internal object GeckoTranslationPrivacy {
     const val MOST_RECENT_TARGET_LANGUAGES_PREF = "browser.translations.mostRecentTargetLanguages"
 
-    @ExperimentalGeckoViewApi
+    @OptIn(markerClass = [ExperimentalGeckoViewApi::class])
     fun forgetTargetLanguages() {
         runCatching { GeckoPreferenceController.clearGeckoUserPref(MOST_RECENT_TARGET_LANGUAGES_PREF) }
     }
