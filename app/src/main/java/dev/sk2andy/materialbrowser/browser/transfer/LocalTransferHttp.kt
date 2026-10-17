@@ -90,7 +90,7 @@ internal object LocalTransferHttp {
         while (line.size() <= MAX_LINE_BYTES) {
             when (val byte = input.read()) {
                 -1 -> return null
-                '\r'.code -> return if (input.read() == '\n'.code) line.toString(Charsets.US_ASCII) else null
+                '\r'.code -> return if (input.read() == '\n'.code) String(line.toByteArray(), Charsets.US_ASCII) else null
                 '\n'.code -> return null
                 else -> if (byte < 0x20 && byte != '\t'.code || byte > 0x7E) return null else line.write(byte)
             }
