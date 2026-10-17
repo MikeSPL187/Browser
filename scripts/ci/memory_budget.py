@@ -8,11 +8,15 @@ Usage:
 
 measure drives the emulator with adb (ANDROID_SERIAL): it opens URL as a link from another app (a
 new tab each time), waits for the pages to settle and sums the PSS of every Vola process, Gecko's
-content and GPU processes included. compare averages the rounds of each build and flags a pull
-request that takes noticeably more memory. Until a week of numbers calibrates the budget it only
-warns; --enforce turns a regression into a failure. On the first CI run the same build measured
-737 and 938 MB, and memory one minute after start fell below the first sample, so the numbers are
-not yet steady enough to fail a pull request on.
+content and GPU processes included. compare takes the median of each build's rounds and flags a
+pull request that takes noticeably more memory. It only warns; --enforce turns a regression into a
+failure.
+
+Calibration (13 runs, 2026-10-16 and 17): two rounds of the same build differed by 28 MB at the
+median and by up to 100 MB, and pull requests that touch no app code moved the browser by up to
++75 MB, so the browser's threshold sits above that noise and the rounds went from two to three.
+What a further tab adds stayed between -21 and +8 MB on the small fixture page: below the noise,
+so it is reported but never flagged until a measurement that loads each tab replaces it.
 """
 
 from __future__ import annotations
@@ -25,14 +29,13 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from statistics import mean, median
+from statistics import median
 
 APPROVAL_LABEL = "perf-approved"
 TARGET_BROWSER_MB = 250.0
 TARGET_PER_TAB_MB = 40.0
 # A regression must exceed both the ratio and the absolute growth to count.
-BROWSER_MAX_RATIO, BROWSER_MIN_DELTA_MB = 1.10, 15.0
-PER_TAB_MAX_RATIO, PER_TAB_MIN_DELTA_MB = 1.15, 5.0
+BROWSER_MAX_RATIO, BROWSER_MIN_DELTA_MB = 1.10, 40.0
 PAGE_SETTLE_SECONDS = 8
 MEMORY_SETTLE_SECONDS = 25
 SAMPLES = 3
@@ -85,11 +88,12 @@ def measure(package: str, url: str, tabs: int) -> dict[str, float]:
     return {"browser_mb": one_tab / 1024, "per_tab_mb": (all_tabs - one_tab) / tabs / 1024}
 
 
-def averaged(paths: list[Path]) -> dict[str, float]:
+def combined(paths: list[Path]) -> dict[str, float]:
+    """The median of a build's rounds: one round the emulator slowed down does not move it."""
     rounds = [json.loads(path.read_text()) for path in paths if path.is_file()]
     if not rounds:
         return {}
-    return {key: mean(round_[key] for round_ in rounds) for key in ("browser_mb", "per_tab_mb")}
+    return {key: median(round_[key] for round_ in rounds) for key in ("browser_mb", "per_tab_mb")}
 
 
 def compare(base: dict[str, float], head: dict[str, float], approved: bool,
@@ -103,17 +107,19 @@ def compare(base: dict[str, float], head: dict[str, float], approved: bool,
     ]
     errors: list[str] = []
     warnings: list[str] = []
+    # The tab's number is below the emulator's noise (see the module's docstring): reported only.
     budgets = (
-        ("browser with one page, MB", "browser_mb", TARGET_BROWSER_MB, BROWSER_MAX_RATIO, BROWSER_MIN_DELTA_MB),
-        ("each further tab, MB", "per_tab_mb", TARGET_PER_TAB_MB, PER_TAB_MAX_RATIO, PER_TAB_MIN_DELTA_MB),
+        ("browser with one page, MB", "browser_mb", TARGET_BROWSER_MB, True),
+        ("each further tab, MB", "per_tab_mb", TARGET_PER_TAB_MB, False),
     )
-    for label, key, target, max_ratio, min_delta in budgets:
+    for label, key, target, gated in budgets:
         before, after = base.get(key), head.get(key)
         if after is None:
             errors.append(f"no {label} result for this pull request")
             lines.append(f"| {label} | ≤ {target:.0f} | {fmt(before)} | — | — |")
             continue
-        worse = before is not None and after > before * max_ratio and after - before > min_delta
+        worse = (gated and before is not None and after > before * BROWSER_MAX_RATIO
+                 and after - before > BROWSER_MIN_DELTA_MB)
         change = "—" if before is None else f"{after - before:+.1f}"
         mark = " ⚠️" if worse else ""
         lines.append(f"| {label} | ≤ {target:.0f} | {fmt(before)} | {after:.1f} | {change}{mark} |")
@@ -121,13 +127,12 @@ def compare(base: dict[str, float], head: dict[str, float], approved: bool,
             (errors if enforce else warnings).append(f"{label} went from {before:.1f} to {after:.1f}")
     lines.append("")
     lines.append(
-        f"A pull request fails when the browser grows by over {(BROWSER_MAX_RATIO - 1) * 100:.0f} % and "
-        f"{BROWSER_MIN_DELTA_MB:.0f} MB, or each tab by over {(PER_TAB_MAX_RATIO - 1) * 100:.0f} % and "
-        f"{PER_TAB_MIN_DELTA_MB:.0f} MB. Targets are reported until a week of numbers calibrates them."
+        f"Each build's number is the median of its rounds. The browser is flagged when it grows by over "
+        f"{(BROWSER_MAX_RATIO - 1) * 100:.0f} % and {BROWSER_MIN_DELTA_MB:.0f} MB; what a further tab adds "
+        f"is below the emulator's noise on the fixture page, so it is reported, not flagged."
     )
     if not enforce:
-        lines.append("Calibration: a regression only warns for now; it fails the job once the budget "
-                     "is enforced.")
+        lines.append("A regression only warns for now; it fails the job once the budget is enforced.")
     if errors and not approved:
         lines.append(f"To let a known regression through, the owner adds the `{APPROVAL_LABEL}` label "
                      "and re-runs this job.")
@@ -160,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result))
         return 0
 
-    lines, errors, warnings = compare(averaged(args.base), averaged(args.head), args.approved, args.enforce)
+    lines, errors, warnings = compare(combined(args.base), combined(args.head), args.approved, args.enforce)
     text = "\n".join(lines) + "\n"
     print(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")

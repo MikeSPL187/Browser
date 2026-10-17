@@ -36,36 +36,47 @@ class MemoryBudgetTest(unittest.TestCase):
     def test_no_section_means_nothing(self):
         self.assertEqual(memory_budget.process_pss_kb("nothing here", PACKAGE), 0)
 
-    def test_rounds_are_averaged(self):
+    def test_rounds_are_combined_by_median(self):
         with tempfile.TemporaryDirectory() as directory:
-            first, second = Path(directory) / "1.json", Path(directory) / "2.json"
-            first.write_text(json.dumps({"browser_mb": 200.0, "per_tab_mb": 30.0}))
-            second.write_text(json.dumps({"browser_mb": 220.0, "per_tab_mb": 34.0}))
-            self.assertEqual(memory_budget.averaged([first, second, Path(directory) / "absent.json"]),
-                             {"browser_mb": 210.0, "per_tab_mb": 32.0})
-            self.assertEqual(memory_budget.averaged([Path(directory) / "absent.json"]), {})
+            paths = [Path(directory) / f"{index}.json" for index in range(3)]
+            # The third round is the spike seen on #400 (747.8 against 647.7): the median ignores it.
+            for path, browser, tab in zip(paths, (650.0, 660.0, 750.0), (2.0, -1.0, -21.0)):
+                path.write_text(json.dumps({"browser_mb": browser, "per_tab_mb": tab}))
+            self.assertEqual(memory_budget.combined([*paths, Path(directory) / "absent.json"]),
+                             {"browser_mb": 660.0, "per_tab_mb": -1.0})
+            self.assertEqual(memory_budget.combined([Path(directory) / "absent.json"]), {})
 
     def test_within_budget_passes(self):
-        _, errors, warnings = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30},
-                                          {"browser_mb": 214, "per_tab_mb": 34}, approved=False)
+        _, errors, warnings = memory_budget.compare({"browser_mb": 660, "per_tab_mb": 1},
+                                                    {"browser_mb": 695, "per_tab_mb": 2}, approved=False)
         self.assertEqual((errors, warnings), ([], []))
 
-    def test_per_tab_regression_only_warns_while_calibrating(self):
-        base, head = {"browser_mb": 200, "per_tab_mb": 30}, {"browser_mb": 200, "per_tab_mb": 40}
+    def test_browser_regression_only_warns_unless_enforced(self):
+        base, head = {"browser_mb": 660, "per_tab_mb": 1}, {"browser_mb": 760, "per_tab_mb": 1}
         _, errors, warnings = memory_budget.compare(base, head, approved=False)
-        self.assertEqual((errors, warnings), ([], ["each further tab, MB went from 30.0 to 40.0"]))
+        self.assertEqual((errors, warnings), ([], ["browser with one page, MB went from 660.0 to 760.0"]))
 
     def test_enforced_regression_fails_unless_approved(self):
-        base, head = {"browser_mb": 200, "per_tab_mb": 30}, {"browser_mb": 200, "per_tab_mb": 40}
+        base, head = {"browser_mb": 660, "per_tab_mb": 1}, {"browser_mb": 760, "per_tab_mb": 1}
         _, errors, _ = memory_budget.compare(base, head, approved=False, enforce=True)
-        self.assertEqual(errors, ["each further tab, MB went from 30.0 to 40.0"])
+        self.assertEqual(errors, ["browser with one page, MB went from 660.0 to 760.0"])
         self.assertEqual(memory_budget.compare(base, head, approved=True, enforce=True)[1], [])
 
-    def test_small_absolute_growth_is_noise(self):
-        _, errors, warnings = memory_budget.compare({"browser_mb": 100, "per_tab_mb": 10},
-                                                    {"browser_mb": 114, "per_tab_mb": 14}, approved=False,
+    def test_noise_seen_in_calibration_is_not_a_regression(self):
+        # #403 touched tests only and moved the browser by +74.9 MB on two rounds a build; the
+        # threshold needs both the ratio and the absolute growth, so 10 % of a 300 MB browser is not enough.
+        _, errors, warnings = memory_budget.compare({"browser_mb": 300, "per_tab_mb": 1},
+                                                    {"browser_mb": 339, "per_tab_mb": 1}, approved=False,
                                                     enforce=True)
         self.assertEqual((errors, warnings), ([], []))
+
+    def test_what_a_tab_adds_is_reported_but_never_flagged(self):
+        # #400: -9.9 against 1.3 MB per tab flagged the old budget, though the tab's number is noise.
+        lines, errors, warnings = memory_budget.compare({"browser_mb": 660, "per_tab_mb": -9.9},
+                                                        {"browser_mb": 660, "per_tab_mb": 40.0},
+                                                        approved=False, enforce=True)
+        self.assertEqual((errors, warnings), ([], []))
+        self.assertIn("| each further tab, MB | ≤ 40 | -9.9 | 40.0 | +49.9 |", lines)
 
     def test_missing_pull_request_result_fails(self):
         _, errors, _ = memory_budget.compare({"browser_mb": 200, "per_tab_mb": 30}, {}, approved=True)
@@ -76,9 +87,8 @@ class MemoryBudgetTest(unittest.TestCase):
         base = {"browser_mb": 838.0, "per_tab_mb": -12.7}
         head = {"browser_mb": 747.4, "per_tab_mb": -2.8}
         lines, errors, warnings = memory_budget.compare(base, head, approved=False)
-        self.assertEqual(errors, [])
-        self.assertEqual(len(warnings), 1)
-        self.assertTrue(any(line.startswith("Calibration") for line in lines))
+        self.assertEqual((errors, warnings), ([], []))
+        self.assertTrue(any(line.startswith("A regression only warns") for line in lines))
 
     def test_compare_command_prints_targets(self):
         with tempfile.TemporaryDirectory() as directory:
