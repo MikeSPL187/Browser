@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
@@ -95,9 +96,9 @@ fun V5StatePage(
     }
 }
 
-/** The glyph of a state screen on its disc, in the accent. */
+/** The glyph of a state screen on its disc, in the accent unless [tint] says otherwise. */
 @Composable
-internal fun V5StateGlyph(icon: ImageVector, modifier: Modifier = Modifier) {
+internal fun V5StateGlyph(icon: ImageVector, modifier: Modifier = Modifier, tint: Color = V5Theme.colors.accent) {
     val colors = V5Theme.colors
     Box(
         modifier
@@ -106,7 +107,7 @@ internal fun V5StateGlyph(icon: ImageVector, modifier: Modifier = Modifier) {
             .background(colors.surfaceElevated),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.privateGemIcon))
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(V5Sizes.privateGemIcon))
     }
 }
 
@@ -125,16 +126,16 @@ internal fun V5StateActions(
         verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
     ) {
         V5StatePrimaryAction(primary)
-        secondary.forEach { action -> QuietAction(action) }
+        secondary.forEach { action -> V5StateQuietAction(action) }
     }
 }
 
 /** The filled main action alone, for a card that has nothing else to offer. */
 @Composable
-internal fun V5StatePrimaryAction(action: V5StateAction) {
+internal fun V5StatePrimaryAction(action: V5StateAction, modifier: Modifier = Modifier) {
     val colors = V5Theme.colors
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .heightIn(min = V5Sizes.touchTarget)
             .clip(V5Theme.shapes.full)
@@ -158,11 +159,12 @@ internal fun V5StatePrimaryAction(action: V5StateAction) {
     }
 }
 
+/** A quiet action under the main one: accent text, red when it removes. */
 @Composable
-private fun QuietAction(action: V5StateAction) {
+internal fun V5StateQuietAction(action: V5StateAction, modifier: Modifier = Modifier) {
     val colors = V5Theme.colors
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .heightIn(min = V5Sizes.touchTarget)
             .clip(V5Theme.shapes.full)
