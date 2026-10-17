@@ -678,10 +678,14 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.webkit)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
     implementation(libs.guava)
     implementation(libs.blurview)
     implementation(libs.okhttp)
     implementation(libs.argon2kt)
+    implementation(libs.zxing.core)
     implementation(libs.kotlinx.serialization.json)
     // Vola ships without Google Play services. GeckoView uses the framework Credential Manager for
     // WebAuthn on API 34+, so its optional Play services FIDO provider is excluded; the classes
