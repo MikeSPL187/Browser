@@ -119,6 +119,26 @@ class WebDavSyncFormatTest {
     }
 
     @Test
+    fun aHostileMultistatusCostsLinearTime() {
+        val unclosed = "<d:multistatus>" + "<d:response><d:href>".repeat(200_000)
+        val many = "<d:multistatus>" + "<d:response><d:href>/x</d:href></d:response>".repeat(WebDavMultistatus.MAX_RESOURCES + 1)
+
+        assertEquals(emptyList(), WebDavMultistatus.parse(unclosed))
+        assertNull(WebDavMultistatus.parse(many), "too many resources")
+        assertEquals(
+            listOf(WebDavResource("a", null, isCollection = false)),
+            WebDavMultistatus.parse("<multistatus><response><responsedescription/><href>/a</href></response></multistatus>"),
+        )
+    }
+
+    @Test
+    fun anotherDevicesNameCannotHideItsText() {
+        val json = WebDavSyncFormat.encodeRecord(record.copy(name = "Pixel\u202E8\u0007"))
+
+        assertEquals("Pixel8", WebDavSyncFormat.decodeRecord(json)?.name)
+    }
+
+    @Test
     fun theMergeIsTheSameInAnyOrder() {
         val now = 1_000_000L
         val a = mapOf(entry("https://a.example/", "A", 10), entry("https://b.example/", "B", 20))
