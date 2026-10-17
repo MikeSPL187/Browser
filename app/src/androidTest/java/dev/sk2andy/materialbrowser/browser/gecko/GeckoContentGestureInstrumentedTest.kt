@@ -244,8 +244,17 @@ class GeckoContentGestureInstrumentedTest {
                 scenario.state == Lifecycle.State.CREATED
             }
             SystemClock.sleep(LONG_PRESS_SETTLE_MILLIS)
-            assertEquals(MotionEvent.ACTION_DOWN, actions.firstOrNull())
-            assertEquals(1, actions.count { action -> action == MotionEvent.ACTION_CANCEL })
+            val seen = "attempts=$attempts, actions=${actions.map(MotionEvent::actionToString)}"
+            assertEquals(seen, MotionEvent.ACTION_DOWN, actions.firstOrNull())
+            // No Gecko touch may stay pressed once the Activity stopped. A swipe that did not reach
+            // Home arrives whole (DOWN … UP); the one that did may be taken by the system before
+            // its DOWN, leaving nothing to cancel. So every DOWN must end, and a single swipe that
+            // went Home must end in exactly one CANCEL.
+            val downs = actions.count { action -> action == MotionEvent.ACTION_DOWN }
+            val cancels = actions.count { action -> action == MotionEvent.ACTION_CANCEL }
+            val ups = actions.count { action -> action == MotionEvent.ACTION_UP }
+            assertEquals("A Gecko touch was left pressed: $seen", downs, ups + cancels)
+            if (attempts == 1) assertEquals(seen, 1, cancels)
             assertTrue("Window focus never left Gecko Activity", focusChanges.contains(false))
             assertTrue("Home swipe became Gecko context target", contentTargets.isEmpty())
         }
