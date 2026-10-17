@@ -42,9 +42,9 @@ open class V5Preference internal constructor(
 
 /**
  * The ui.v5 flag (plan-v5.md, section 9): the new interface on a phone. On by default since V28,
- * step 2; a tablet stays on the current interface whatever it says (`rememberDrawsV5`). Developer
- * options can still turn it off until the current interface leaves the phone (V28, step 4); a
- * choice made there is kept.
+ * step 2; a tablet stays on the current interface whatever it says (`rememberDrawsV5`). Since
+ * V28, step 4 nothing in the app turns it off: only instrumented tests of the current interface
+ * do (`VolaTestRunner`), until that interface leaves with the tablet's v5.
  */
 object UiV5Flag : V5Preference(key = "ui.v5", default = true)
 
