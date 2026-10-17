@@ -198,6 +198,8 @@ internal fun BrowserV5AddressEditor(
     onHighlightChange: (Int) -> Unit,
     /** A new tab with pinned sites: they show through the empty editor. */
     overStart: Boolean = false,
+    /** A command's answer while the editor stays open: «No such command», «New tab». */
+    commandFeedback: AddressCommandFeedback? = null,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
@@ -223,6 +225,12 @@ internal fun BrowserV5AddressEditor(
             onClipboard = onClipboard,
             onCancel = onCancel,
             onHighlight = { item -> onHighlightChange(suggestionItems.indexOf(item)) },
+            notice = commandFeedback?.let { feedback ->
+                V5CommandNotice(
+                    text = feedback.localizedText(),
+                    rejected = feedback.tone == AddressCommandFeedbackTone.Reject,
+                )
+            },
         )
     }
 }
