@@ -8,12 +8,12 @@ import org.junit.Test
 
 class OnDeviceTranslationControllerTest {
     private class FakePort : PageTranslationPort {
-        var listener: PageTranslationListener? = null
+        var heard: PageTranslationListener? = null
         var translated: Pair<TranslationPair, Boolean>? = null
         var answer: ((PageTranslationResult) -> Unit)? = null
 
         override fun setListener(listener: PageTranslationListener?) {
-            this.listener = listener
+            heard = listener
         }
 
         override fun translate(
@@ -41,7 +41,7 @@ class OnDeviceTranslationControllerTest {
     @Test
     fun `the page's language from the engine makes the menu offer a pair`() {
         controller.attach("tab", port)
-        port.listener?.onStateChanged(english)
+        port.heard?.onStateChanged(english)
 
         assertEquals(pair, controller.suggestedPair("tab"))
         assertNull(controller.suggestedPair("other"))
@@ -50,13 +50,13 @@ class OnDeviceTranslationControllerTest {
     @Test
     fun `translating waits for the engine and ends when the page changed`() {
         controller.attach("tab", port)
-        port.listener?.onStateChanged(english)
+        port.heard?.onStateChanged(english)
 
         controller.translate("tab", pair, allowModelDownload = true)
         assertEquals(pair to true, port.translated)
         assertTrue(controller.stateOf("tab").inProgress)
 
-        port.listener?.onStateChanged(english.copy(requested = pair, isTranslated = true))
+        port.heard?.onStateChanged(english.copy(requested = pair, isTranslated = true))
         assertFalse(controller.stateOf("tab").inProgress)
         assertTrue(controller.stateOf("tab").isTranslated)
         port.answer?.invoke(PageTranslationResult.Done)
@@ -81,7 +81,7 @@ class OnDeviceTranslationControllerTest {
         assertNull(controller.stateOf("tab").pair)
 
         controller.detach("tab")
-        assertNull(port.listener)
+        assertNull(port.heard)
         assertEquals(OnDeviceTranslationUiState(), controller.stateOf("tab"))
     }
 
