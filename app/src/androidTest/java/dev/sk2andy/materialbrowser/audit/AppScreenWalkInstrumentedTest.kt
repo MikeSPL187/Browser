@@ -58,6 +58,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettingsTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
@@ -81,7 +83,7 @@ import org.junit.runners.model.TestTimedOutException
  * Russian, light and dark, normal and double font size, the phone upright and on its side, and a
  * tablet — so each screen is gone through six times. A screen the walk cannot reach is a finding too. The test fails with the full list.
  * The v5 interface (`ui.v5`) has walks of its own in the four upright phone configurations: a wider
- * window keeps the current interface.
+ * window keeps the current interface. Its settings pages are walked too, a few per test.
  */
 @RunWith(Parameterized::class)
 class AppScreenWalkInstrumentedTest(
@@ -132,7 +134,7 @@ class AppScreenWalkInstrumentedTest(
     private val visited = mutableListOf<String>()
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
-    private val uiV5 = group in V5_GROUPS
+    private val uiV5 = group in V5_GROUPS || group in v5SettingsGroups()
 
     @After
     fun tearDown() {
@@ -151,6 +153,7 @@ class AppScreenWalkInstrumentedTest(
             V5_BROWSER_GROUP -> walk(config, steps = ::walkV5Browser)
             V5_PAGE_GROUP -> walk(config, steps = ::walkV5Page)
             in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
+            in v5SettingsGroups() -> walk(config) { walkV5Settings(V5_SETTINGS_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
         }
     }
@@ -433,10 +436,7 @@ class AppScreenWalkInstrumentedTest(
             }
         }
         step("v5 settings home") {
-            openV5Menu()
-            tapUntil(hasText(string(R.string.action_settings)) and hasClickAction(), "the settings to open") {
-                atSettingsHome()
-            }
+            openSettings()
             auditScrolling("v5 settings home")
             backUntilGone(hasTestTag(SettingsSearchTestTags.Open))
         }
@@ -446,6 +446,36 @@ class AppScreenWalkInstrumentedTest(
             }
             awaitTag(V5PrivateNewTabTestTags.Page)
             auditScrolling("v5 private tab")
+        }
+    }
+
+    /**
+     * Pages of the v5 settings home, as a user opens them: each row, then back. Under «Sync» also
+     * «Own server» (V27), which a GeckoView build offers until a server is connected.
+     */
+    private fun walkV5Settings(slice: Int) {
+        val translation = AtomicReference(false)
+        scenario.onActivity { activity ->
+            translation.set(activity.browserControllerForTesting().browserEngineCapabilities.onDeviceTranslation)
+        }
+        for (page in v5SettingsSlices().getOrElse(slice) { emptyList() }) {
+            // Only GeckoView translates on the device; the System WebView build has no such row.
+            if (page == R.string.v5_translation_settings_title && !translation.get()) continue
+            val title = string(page)
+            step("v5 settings: $title") {
+                ensureSettingsHome()
+                tapUntil(hasText(title) and hasClickAction(), "the $title page to open") { !atSettingsHome() }
+                auditScrolling("v5 settings: $title")
+                if (page == R.string.sync_settings_title && exists(hasTestTag(V5SyncSettingsTestTags.Server))) {
+                    tapUntil(hasTestTag(V5SyncSettingsTestTags.Server), "the own server to open") {
+                        exists(hasTestTag(V5WebDavTestTags.Connect))
+                    }
+                    auditScrolling("v5 settings: own server")
+                    backUntilGone(hasTestTag(V5WebDavTestTags.Connect))
+                }
+                back()
+                idle()
+            }
         }
     }
 
@@ -550,7 +580,11 @@ class AppScreenWalkInstrumentedTest(
 
     /** The menu's Settings, in its short view or under More, the way a user finds it. */
     private fun openSettings() {
-        openMenuItem(BrowserMainMenuTestTags.Settings) { atSettingsHome() }
+        if (!uiV5) return openMenuItem(BrowserMainMenuTestTags.Settings) { atSettingsHome() }
+        openV5Menu()
+        tapUntil(hasText(string(R.string.action_settings)) and hasClickAction(), "the settings to open") {
+            atSettingsHome()
+        }
     }
 
     private fun openOverview() {
@@ -1005,6 +1039,7 @@ class AppScreenWalkInstrumentedTest(
         private const val V5_BROWSER_GROUP = -6
         private const val V5_PAGE_GROUP = -7
         private val V5_GROUPS = setOf(V5_BROWSER_GROUP, V5_PAGE_GROUP)
+        private const val V5_SETTINGS_GROUP_BASE = -20
         private const val PAGE_TIMEOUT_MILLIS = 30_000L
         private const val TAP_ATTEMPTS = 2
         private const val RETAP_AFTER_MILLIS = 4_000L
@@ -1056,6 +1091,30 @@ class AppScreenWalkInstrumentedTest(
 
         private fun subpageGroups() = subpageSlices().indices.map { slice -> SUBPAGE_GROUP_BASE - slice }
 
+        /**
+         * The v5 settings home's pages by their row titles, in its order (V5SettingsHomeRules). The
+         * Firefox extensions row opens Gecko's own manager, not a page; developer options show only
+         * once unlocked. A row missing from the home fails the walk, so this list cannot quietly
+         * drift from the screen.
+         */
+        private val v5SettingsPages = listOf(
+            R.string.sync_settings_title,
+            R.string.settings_section_search,
+            R.string.settings_tabs_gestures_title,
+            R.string.settings_appearance_title,
+            R.string.settings_section_browser,
+            R.string.v5_translation_settings_title,
+            R.string.settings_protection_data_title,
+            R.string.passwords_title,
+            R.string.userscript_title,
+            R.string.settings_downloads_title,
+            R.string.settings_section_about_legal,
+        )
+
+        private fun v5SettingsSlices() = v5SettingsPages.chunked(PAGES_PER_TEST)
+
+        private fun v5SettingsGroups() = v5SettingsSlices().indices.map { slice -> V5_SETTINGS_GROUP_BASE - slice }
+
         /** The settings pages opened from the settings home, a few per test to stay in time. */
         private fun settingsSlices() = SettingsRegistry.pages
             .filter { page -> page.destination.parent == SettingsDestination.Home }
@@ -1077,7 +1136,11 @@ class AppScreenWalkInstrumentedTest(
             val v5Landscape = V5_GROUPS.sortedDescending().map { group ->
                 arrayOf<Any>(group, AuditConfig.RussianLightLandscape)
             }
-            return walks + v5Walks + v5Landscape
+            // Last again, for the same reason: the v5 settings pages in the upright phone configurations.
+            val v5SettingsWalks = v5SettingsGroups().flatMap { group ->
+                v5Configs.map { config -> arrayOf<Any>(group, config) }
+            }
+            return walks + v5Walks + v5Landscape + v5SettingsWalks
         }
     }
 }
