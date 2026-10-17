@@ -1327,6 +1327,168 @@ def tour(suffix):
     step("settings", menu_and_settings)
 
 
+UI_V5_PREFS = "shared_prefs/vola_ui_v5.xml"
+
+
+def set_ui_v5(enabled):
+    """Sets the ui.v5 flag the way developer options do, so each tour shows the interface it names
+    whatever the build's default is. The debug build lets run-as write the app's preferences; the
+    app is stopped first, or it would write its own copy back."""
+    adb("shell", "am", "force-stop", PACKAGE, check=False)
+    value = "true" if enabled else "false"
+    # No XML declaration: its quotes would end the quoted shell command, and Android reads the
+    # map without one.
+    xml = f'<map><boolean name=\\"ui.v5\\" value=\\"{value}\\" /></map>'
+    adb("shell", f"run-as {PACKAGE} sh -c 'mkdir -p shared_prefs && echo \"{xml}\" > {UI_V5_PREFS}'",
+        check=False, capture=True)
+    log(f"ui.v5 = {value}")
+
+
+V5_MENU = ("More options", "Другие действия")
+V5_TABS = ("Open tab overview", "Открыть обзор вкладок")
+V5_SHIELD = ("Open site information", "Открыть сведения о сайте")
+
+
+def v5_menu_item(name, *labels):
+    """Opens the v5 page menu from the bar and taps one of its rows."""
+    if not tap(*V5_MENU):
+        log(f"not found: v5 menu for {name}")
+        return False
+    time.sleep(2)
+    return tap_scrolling(*labels, name=name)
+
+
+def tour_v5(suffix):
+    """The v5 interface on a phone (V28): the screens a person meets first, shot by name with a
+    v5- prefix so they sit next to the v4 tour until v4 leaves the phone."""
+    width, height = screen_size()
+    step("v5-new-tab", lambda: (settle(), shot(f"v5-new-tab-{suffix}")))
+
+    def page():
+        open_url("https://en.wikipedia.org/wiki/Zen")
+        time.sleep(15)
+        shot(f"v5-page-{suffix}")
+        for _ in range(2):
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.7)),
+                str(width // 2), str(int(height * 0.4)), "600")
+            time.sleep(1)
+        time.sleep(2)
+        shot(f"v5-page-scrolled-{suffix}")
+        # The collapsed strip comes back on a tap, as a person would bring it back.
+        if not tap("Show the bar", "Показать панель"):
+            adb("shell", "input", "tap", str(width // 2), str(int(height * 0.97)))
+        time.sleep(2)
+    step("v5-page", page)
+
+    def menu():
+        if not tap(*V5_MENU):
+            log("not found: v5 menu")
+            return
+        time.sleep(2)
+        settle()
+        shot(f"v5-menu-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-menu", menu)
+
+    def find_in_page():
+        if not v5_menu_item(f"v5-find-menu-{suffix}", "Find on page", "Найти на странице"):
+            return
+        time.sleep(2)
+        adb("shell", "input", "text", "Zen")
+        time.sleep(3)
+        shot(f"v5-find-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+    step("v5-find", find_in_page)
+
+    def site_protection():
+        if not tap(*V5_SHIELD, contains=True):
+            log("not found: v5 shield")
+            return
+        time.sleep(3)
+        settle()
+        shot(f"v5-site-protection-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-site-protection", site_protection)
+
+    def address_editor():
+        if not tap("en.wikipedia.org", contains=True):
+            log("not found: v5 address capsule")
+            return
+        time.sleep(3)
+        adb("shell", "input", "text", "zen")
+        time.sleep(3)
+        shot(f"v5-address-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(1)
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-address", address_editor)
+
+    def overview():
+        if not tap(*V5_TABS, contains=True):
+            log("not found: v5 tab button")
+            return
+        time.sleep(3)
+        settle()
+        shot(f"v5-overview-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-overview", overview)
+
+    def library(name, *labels):
+        def run():
+            if not v5_menu_item(f"v5-{name}-menu-{suffix}", *labels):
+                return
+            time.sleep(3)
+            settle()
+            shot(f"v5-{name}-{suffix}")
+            adb("shell", "input", "keyevent", "BACK")
+            time.sleep(2)
+        step(f"v5-{name}", run)
+    library("history", "History", "История")
+    library("favorites", "Favorites", "Избранное")
+    library("downloads", "Downloads", "Загрузки")
+
+    def private_tab():
+        if not v5_menu_item(f"v5-private-menu-{suffix}", "New private tab", "Новая частная вкладка"):
+            return
+        time.sleep(3)
+        settle()
+        shot(f"v5-private-tab-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-private-tab", private_tab)
+
+    def settings():
+        if not v5_menu_item(f"v5-settings-menu-{suffix}", "Settings", "Настройки"):
+            return
+        time.sleep(3)
+        settle()
+        shot(f"v5-settings-{suffix}")
+        adb("shell", "input", "keyevent", "BACK")
+        time.sleep(2)
+    step("v5-settings", settings)
+
+
+def run_v5_tours():
+    """Both themes of v5 in English, on a fresh start of the app with the flag on."""
+    adb("shell", "cmd", "locale", "set-app-locales", PACKAGE, "--locales", "en-US", check=False)
+    for suffix, night in (("light", "no"), ("dark", "yes")):
+        adb("shell", "cmd", "uimode", "night", night, check=False)
+        set_ui_v5(True)
+        launch()
+        time.sleep(12)
+        dismiss_first_run()
+        tour_v5(suffix)
+    adb("shell", "cmd", "uimode", "night", "no", check=False)
+    set_ui_v5(False)
+
+
 def accessibility_pass():
     """Key screens with the largest system font (200 %). The workflow already turns animations off
     for the whole tour, so these shots also show the reduced-motion state."""
@@ -1461,6 +1623,8 @@ def main():
     match = re.search(r"(\d+)\s*$", density.strip())
     (DUMPS / "density.txt").write_text((match.group(1) if match else "420") + "\n")
     adb("shell", "cmd", "uimode", "night", "no", check=False)
+    # The v4 tours below name v4 screens: pin v4 whatever the build's default is (V28).
+    set_ui_v5(False)
     launch()
     time.sleep(15)
     shot("launch")
@@ -1483,6 +1647,7 @@ def main():
     tour("ru")
     step("air", lambda: air_layout("ru"))
     step("probe-air", lambda: probe_page("air"))
+    step("v5-tours", run_v5_tours)
 
     crashes = (adb("logcat", "-d", "-b", "crash", check=False, capture=True) or b"").decode(
         "utf-8", "replace"
