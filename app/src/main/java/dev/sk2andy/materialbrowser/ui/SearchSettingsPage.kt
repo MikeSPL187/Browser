@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -113,9 +114,13 @@ internal fun SearchSettingsPage(
                             SettingsCardTile(
                                 colors = settingsTileColors(SearchSettingsRules.accent(index)),
                             ) { _, tint ->
+                                // The letter is the engine's icon: it keeps its size, as icons do,
+                                // while the title beside it grows with the font (audit, 200 %).
+                                val letterStyle = MaterialTheme.typography.titleMedium
                                 Text(
                                     SearchSettingsRules.letter(engine),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = letterStyle,
+                                    fontSize = letterStyle.fontSize / LocalDensity.current.fontScale,
                                     fontWeight = FontWeight.Bold,
                                     color = tint,
                                 )
