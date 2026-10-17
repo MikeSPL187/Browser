@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -53,9 +54,11 @@ fun V5Slider(
     val view = LocalView.current
     val lastStop = remember { intArrayOf(V5SliderRules.stop(value, valueRange, steps)) }
     val fraction = V5SliderRules.fraction(value, valueRange)
+    val state = remember(steps, valueRange) { SliderState(value, steps, valueRange) }
+    state.value = value
     Slider(
-        value = value,
-        onValueChange = { candidate ->
+        state = state,
+        onValueChange = { candidate: Float ->
             if (steps > 0) {
                 val stop = V5SliderRules.stop(candidate, valueRange, steps)
                 if (stop != lastStop[0]) {
@@ -68,10 +71,8 @@ fun V5Slider(
         modifier = modifier,
         enabled = enabled,
         onValueChangeFinished = onValueChangeFinished,
-        steps = steps,
-        thumb = { V5SliderThumb(enabled) },
-        track = { V5SliderTrack(fraction, enabled) },
-        valueRange = valueRange,
+        thumb = { _ -> V5SliderThumb(enabled) },
+        track = { _ -> V5SliderTrack(fraction, enabled) },
     )
 }
 
