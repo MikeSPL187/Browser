@@ -208,6 +208,8 @@ internal fun SettingsScreen(
     onDismiss: () -> Unit,
     onOpenFirefoxExtensions: (() -> Unit)? = null,
     translationSettings: (@Composable (onBack: () -> Unit) -> Unit)? = null,
+    /** Settings → Sync in v5 (V26): the local transfer, with the sync server's page passed in. */
+    syncSettings: (@Composable (onBack: () -> Unit, serverPage: @Composable (onBack: () -> Unit) -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
@@ -494,17 +496,23 @@ internal fun SettingsScreen(
                     }
                 }
 
-                SettingsDestination.Sync -> SyncSettingsPage(
-                    state = syncState,
-                    iconCatalog = syncIconCatalog,
-                    localProfiles = profiles.filterNot(BrowserProfile::isSynced),
-                    activeProfileId = activeProfileId,
-                    onConfigure = onConfigureSync,
-                    onEnroll = onEnrollSync,
-                    onRefresh = onRefreshSync,
-                    onOpenDocumentation = onOpenLegalUrl,
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
-                )
+                SettingsDestination.Sync -> {
+                    val toHome = { onDestinationChanged(SettingsDestination.Home) }
+                    val serverPage: @Composable (() -> Unit) -> Unit = { back ->
+                        SyncSettingsPage(
+                            state = syncState,
+                            iconCatalog = syncIconCatalog,
+                            localProfiles = profiles.filterNot(BrowserProfile::isSynced),
+                            activeProfileId = activeProfileId,
+                            onConfigure = onConfigureSync,
+                            onEnroll = onEnrollSync,
+                            onRefresh = onRefreshSync,
+                            onOpenDocumentation = onOpenLegalUrl,
+                            onBack = back,
+                        )
+                    }
+                    if (uiV5 && syncSettings != null) syncSettings(toHome, serverPage) else serverPage(toHome)
+                }
 
                 SettingsDestination.ProtectionAndData,
                 SettingsDestination.ProtectionMore,
