@@ -9,10 +9,8 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -36,13 +33,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.core.content.ContextCompat
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.transfer.AndroidLocalTransferPort
-import dev.sk2andy.materialbrowser.browser.transfer.LocalTransferLibraryRules
 import dev.sk2andy.materialbrowser.browser.transfer.LocalTransferViewfinder
+import dev.sk2andy.materialbrowser.browser.transfer.applyTransfer
+import dev.sk2andy.materialbrowser.browser.transfer.localTransferDeviceName
+import dev.sk2andy.materialbrowser.browser.transfer.localTransferPayload
 import dev.sk2andy.materialbrowser.browser.transfer.localTransferQrBitmap
-import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferFailure
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferHandle
-import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferMergePlan
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferMergeRules
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferOfferState
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferPayload
@@ -60,10 +57,6 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SyncScanStatus
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettings
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncShowCode
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncShowState
-import java.util.UUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /*
  * Settings → Sync in v5 (V26, canvas «ф») bound to the local transfer: show a code, scan one,
@@ -81,7 +74,8 @@ internal fun BrowserSyncSettingsV5(
 ) {
     var page by rememberSaveable { mutableStateOf(BrowserSyncRules.Page.Main) }
     var sent by rememberSaveable { mutableStateOf(false) }
-    var done by remember { mutableStateOf<V5SyncDoneState?>(null) }
+    var done by remember { mutableStateOf<BrowserSyncRules.Applied?>(null) }
+    var undoFailed by remember { mutableStateOf(false) }
     val toMain = { page = BrowserSyncRules.Page.Main }
     when (page) {
         BrowserSyncRules.Page.Main -> V5SyncSettings(
@@ -112,23 +106,34 @@ internal fun BrowserSyncSettingsV5(
             BackHandler(onBack = toMain)
             SyncScan(controller, onClose = toMain) { result ->
                 done = result
+                undoFailed = false
                 page = BrowserSyncRules.Page.Done
             }
         }
         BrowserSyncRules.Page.Done -> {
-            val state = done
-            if (state == null) {
+            val applied = done
+            if (applied == null) {
                 // The result does not outlive the process; the page it was on goes with it.
                 LaunchedEffect(Unit) { toMain() }
             } else {
                 val finish = {
                     done = null
+                    undoFailed = false
                     toMain()
                 }
                 BackHandler(onBack = finish)
                 V5SyncDone(
-                    state = state,
-                    actions = V5SyncDoneActions(onOpenGroup = null, onOpenFavorites = null, onDone = finish, onUndo = null),
+                    state = applied.state.copy(undoFailed = undoFailed),
+                    actions = V5SyncDoneActions(
+                        onOpenGroup = null,
+                        onOpenFavorites = null,
+                        onDone = finish,
+                        // A failed undo stays on the page and says so; the button goes, as trying
+                        // again would meet the same favorites.
+                        onUndo = if (undoFailed) null else {
+                            { if (applied.undo()) finish() else undoFailed = true }
+                        },
+                    ),
                 )
             }
         }
@@ -140,13 +145,7 @@ internal fun BrowserSyncSettingsV5(
 private fun SyncShowCode(controller: BrowserController, onBack: () -> Unit, onSent: () -> Unit) {
     val context = LocalContext.current
     val port = remember(context) { AndroidLocalTransferPort.create(context.applicationContext) }
-    val payload = remember(controller) {
-        LocalTransferPayload(
-            deviceName = deviceName(context),
-            tabs = LocalTransferLibraryRules.tabs(controller.activeTabs),
-            bookmarks = LocalTransferLibraryRules.bookmarks(controller.favoriteLibrary),
-        )
-    }
+    val payload = remember(controller) { controller.localTransferPayload(localTransferDeviceName(context)) }
     val sizePx = with(LocalDensity.current) { V5Sizes.syncCode.roundToPx() }
     val currentOnSent by rememberUpdatedState(onSent)
     var code by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -190,10 +189,9 @@ private fun SyncShowCode(controller: BrowserController, onBack: () -> Unit, onSe
 
 /** «Scan code»: the camera after its permission, then the confirm sheet before anything lands. */
 @Composable
-private fun SyncScan(controller: BrowserController, onClose: () -> Unit, onApplied: (V5SyncDoneState) -> Unit) {
+private fun SyncScan(controller: BrowserController, onClose: () -> Unit, onApplied: (BrowserSyncRules.Applied) -> Unit) {
     val context = LocalContext.current
     val port = remember(context) { AndroidLocalTransferPort.create(context.applicationContext) }
-    val scope = rememberCoroutineScope()
     var granted by remember { mutableStateOf(hasCameraPermission(context)) }
     var status by rememberSaveable { mutableStateOf(V5SyncScanStatus.Scanning) }
     var received by remember { mutableStateOf<LocalTransferPayload?>(null) }
@@ -233,46 +231,25 @@ private fun SyncScan(controller: BrowserController, onClose: () -> Unit, onAppli
             val payload = received
             if (plan != null && payload != null && !applying) {
                 applying = true
-                scope.launch { onApplied(applyTransfer(context, controller, payload, plan)) }
+                val applied = controller.applyTransfer(plan)
+                onApplied(
+                    BrowserSyncRules.Applied(
+                        state = V5SyncDoneState(
+                            deviceName = plan.tabGroupDeviceName,
+                            tabs = applied.tabsOpened,
+                            bookmarksAdded = applied.bookmarksAdded,
+                            bookmarksExisting = payload.bookmarks.size - plan.bookmarks.size,
+                            bookmarksSkipped = applied.bookmarksSkipped,
+                        ),
+                        undo = applied.undo,
+                    ),
+                )
             }
         },
         onDismiss = {
             received = null
             onClose()
         },
-    )
-}
-
-/**
- * Adds the confirmed [plan]: bookmarks into the current profile's library (only if nothing changed
- * it meanwhile), then the tabs, unloaded, as one group named after the sending device.
- */
-private suspend fun applyTransfer(
-    context: Context,
-    controller: BrowserController,
-    payload: LocalTransferPayload,
-    plan: LocalTransferMergePlan,
-): V5SyncDoneState {
-    val store = BrowserSessionStore(context.applicationContext)
-    val profileId = controller.activeProfileId
-    val added = if (plan.bookmarks.isEmpty()) {
-        0
-    } else {
-        withContext(Dispatchers.IO) {
-            val before = store.loadFavoriteLibrary(profileId)
-            val applied = LocalTransferLibraryRules.apply(before, plan.bookmarks, System.currentTimeMillis()) {
-                UUID.randomUUID().toString()
-            }
-            if (applied.added > 0 && store.saveFavoriteLibraryCommitted(applied.library, before, profileId)) applied.added else 0
-        }
-    }
-    if (added > 0) controller.reloadFavorites()
-    val tabs = controller.openTransferredTabs(plan.tabs, plan.tabGroupDeviceName)
-    return V5SyncDoneState(
-        deviceName = plan.tabGroupDeviceName,
-        tabs = tabs,
-        bookmarksAdded = added,
-        bookmarksExisting = payload.bookmarks.size - plan.bookmarks.size,
     )
 }
 
@@ -308,11 +285,6 @@ private fun WifiArrivals(onAvailable: () -> Unit) {
 private fun hasCameraPermission(context: Context): Boolean =
     ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
-/** The name the other phone shows: the one set in Android's «About phone», else the model. */
-private fun deviceName(context: Context): String =
-    Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)?.takeIf(String::isNotBlank)
-        ?: Build.MODEL
-
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -322,6 +294,9 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 /** Pure decisions of the sync binding, for unit tests. */
 internal object BrowserSyncRules {
     enum class Page { Main, Server, Show, Scan, Done }
+
+    /** A transfer that landed: what the done page shows and how to take it back. */
+    class Applied(val state: V5SyncDoneState, val undo: () -> Boolean)
 
     /** Whether a failed offer is simply replaced by a new code rather than shown as «no Wi-Fi». */
     fun offersAgain(reason: LocalTransferFailure): Boolean =

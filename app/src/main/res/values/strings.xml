@@ -2247,6 +2247,11 @@
         <item quantity="one">%d new bookmark</item>
         <item quantity="other">%d new bookmarks</item>
     </plurals>
+    <string name="v5_sync_undo_failed">Could not undo: the favorites could not be saved. Remove the bookmarks in Favorites.</string>
+    <plurals name="v5_sync_done_skipped">
+        <item quantity="one">%d bookmark did not fit in Favorites</item>
+        <item quantity="other">%d bookmarks did not fit in Favorites</item>
+    </plurals>
     <string name="v5_password_health_fine_of">%1$d of %2$d are fine</string>
     <string name="v5_password_health_insecure">Without encryption</string>
     <string name="v5_password_health_insecure_site">the site takes the password over http://</string>

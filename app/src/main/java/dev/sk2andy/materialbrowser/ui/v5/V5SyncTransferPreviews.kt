@@ -58,11 +58,14 @@ private fun V5SyncDoneDarkPreview() {
     VolaV5Theme(dark = true) { V5SyncDone(Done.copy(bookmarksExisting = 0), NoActions) }
 }
 
-@Preview(name = "Done, without undo · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Preview(name = "Done, some did not fit, undo failed · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun V5SyncDoneWithoutUndoPreview() {
+private fun V5SyncDoneUndoFailedPreview() {
     VolaV5Theme(dark = false) {
-        V5SyncDone(Done, V5SyncDoneActions(onOpenGroup = null, onOpenFavorites = null, onDone = {}, onUndo = null))
+        V5SyncDone(
+            Done.copy(bookmarksSkipped = 6, undoFailed = true),
+            V5SyncDoneActions(onOpenGroup = null, onOpenFavorites = null, onDone = {}, onUndo = null),
+        )
     }
 }
 

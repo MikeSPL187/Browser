@@ -68,13 +68,19 @@ data class V5SyncShowState(
 /** Where the receiving side is (canvas «ф2»). */
 enum class V5SyncScanStatus { Scanning, Receiving, CodeExpired, NotFound, Failed, NoCamera }
 
-/** What came over (canvas «ф3»): from [deviceName], [tabs] in a new group, [bookmarksAdded] new favorites. */
+/**
+ * What came over (canvas «ф3»): from [deviceName], [tabs] in a new group, [bookmarksAdded] new
+ * favorites; [bookmarksSkipped] did not fit the favorites, and [undoFailed] says an undo could
+ * not write the favorites back.
+ */
 @Immutable
 data class V5SyncDoneState(
     val deviceName: String,
     val tabs: Int,
     val bookmarksAdded: Int,
     val bookmarksExisting: Int,
+    val bookmarksSkipped: Int = 0,
+    val undoFailed: Boolean = false,
 )
 
 /** A null action leaves its row without a chevron, or the undo button out, where the binding has none. */
@@ -287,6 +293,18 @@ fun V5SyncDone(
                         textAlign = TextAlign.Center,
                     )
                 }
+                if (state.bookmarksSkipped > 0) {
+                    Text(
+                        pluralStringResource(
+                            R.plurals.v5_sync_done_skipped,
+                            state.bookmarksSkipped,
+                            state.bookmarksSkipped,
+                        ),
+                        style = V5Theme.type.callout,
+                        color = colors.warning,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
             if (state.tabs > 0 || state.bookmarksAdded > 0) {
                 V5ListGroup(dividerInset = V5ListDefaults.dividerInsetWithIcon) {
@@ -322,6 +340,18 @@ fun V5SyncDone(
                             )
                         },
                     ),
+                )
+            }
+            if (state.undoFailed) {
+                Text(
+                    stringResource(R.string.v5_sync_undo_failed),
+                    style = V5Theme.type.footnote,
+                    color = colors.danger,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = V5Spacing.space6)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
         }
