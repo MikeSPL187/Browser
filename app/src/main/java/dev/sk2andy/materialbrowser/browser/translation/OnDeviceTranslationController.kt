@@ -50,6 +50,9 @@ internal class OnDeviceTranslationController(
     fun suggestedPair(tabId: String): TranslationPair? =
         OnDeviceTranslationRules.suggestedPair(stateOf(tabId).page, appLanguageTags())
 
+    /** Languages pages can be translated from and to, for the sheet's lists; null when the engine could not say. */
+    fun languages(onResult: (TranslationLanguages?) -> Unit) = models.languages(onResult)
+
     /** Bytes to download before [pair] can be translated, so the sheet can say so first; null when unknown. */
     fun downloadSize(pair: TranslationPair, onResult: (Long?) -> Unit) = models.downloadSize(pair, onResult)
 
