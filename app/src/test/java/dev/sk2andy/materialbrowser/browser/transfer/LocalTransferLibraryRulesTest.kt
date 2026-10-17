@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.transfer
 
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
 import dev.sk2andy.materialbrowser.data.BrowsingLibraryRules
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteFolder
@@ -91,5 +92,41 @@ class LocalTransferLibraryRulesTest {
         assertEquals(1, applied.added)
         assertEquals(2, applied.skipped)
         assertEquals(BrowsingLibraryRules.MAX_FAVORITES, applied.library.favorites.size)
+    }
+
+    @Test
+    fun undoTakesBackOnlyWhatTheTransferAdded() {
+        var ids = 0
+        val incoming = listOf(
+            LocalTransferBookmark("https://example.net/a", "A", "Work"),
+            LocalTransferBookmark("https://example.net/b", "B", "Trip/Rome"),
+        )
+        val applied = LocalTransferLibraryRules.apply(library, incoming, nowMillis = 5) { "new-${ids++}" }
+        assertEquals(2, applied.addedEntryIds.size)
+        assertEquals(2, applied.createdFolderIds.size)
+
+        assertEquals(
+            BrowsingFavoritesRules.normalizeLibrary(library),
+            LocalTransferLibraryRules.undo(applied.library, applied),
+        )
+    }
+
+    @Test
+    fun undoKeepsACreatedFolderThePersonFilledMeanwhile() {
+        var ids = 0
+        val applied = LocalTransferLibraryRules.apply(
+            FavoriteLibrary(),
+            listOf(LocalTransferBookmark("https://example.net/a", "A", "Trip")),
+            nowMillis = 5,
+        ) { "new-${ids++}" }
+        val trip = applied.library.folders.single().id
+        val edited = applied.library.copy(
+            entries = applied.library.entries + FavoriteEntry(url = "https://example.org/mine", title = "Mine", addedAt = 6, parentFolderId = trip),
+        )
+
+        val undone = LocalTransferLibraryRules.undo(edited, applied)
+
+        assertEquals(listOf("Mine"), undone.favorites.map { it.title })
+        assertEquals(listOf(trip), undone.folders.map { it.id })
     }
 }

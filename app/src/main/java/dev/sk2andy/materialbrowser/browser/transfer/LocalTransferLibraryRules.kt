@@ -33,8 +33,17 @@ internal object LocalTransferLibraryRules {
             .map { LocalTransferBookmark(it.url, it.title, folderPath(it.parentFolderId, folders)) }
     }
 
-    /** [library] with [bookmarks] added, and how many of them did not fit. */
-    class Applied(val library: FavoriteLibrary, val added: Int, val skipped: Int)
+    /**
+     * [library] with [bookmarks] added, how many of them did not fit, and what was added
+     * ([addedEntryIds], [createdFolderIds]) so [undo] can take exactly that back.
+     */
+    class Applied(
+        val library: FavoriteLibrary,
+        val added: Int,
+        val skipped: Int,
+        val addedEntryIds: Set<String> = emptySet(),
+        val createdFolderIds: Set<String> = emptySet(),
+    )
 
     /**
      * Adds [bookmarks] (already free of duplicates, see `LocalTransferMergeRules.plan`) into
@@ -57,7 +66,32 @@ internal object LocalTransferLibraryRules {
             current = BrowsingFavoritesRules.normalizeLibrary(withFolders.copy(entries = withFolders.entries + entry))
         }
         val added = current.favorites.size - before.favorites.size
-        return Applied(current, added, bookmarks.size - added)
+        return Applied(
+            library = current,
+            added = added,
+            skipped = bookmarks.size - added,
+            addedEntryIds = current.favorites.map { it.id }.toSet() - before.favorites.map { it.id }.toSet(),
+            createdFolderIds = current.folders.map { it.id }.toSet() - before.folders.map { it.id }.toSet(),
+        )
+    }
+
+    /**
+     * Takes a transfer back (the done screen's «Undo»): removes the bookmarks [applied] added and
+     * the folders it created, from [library] as it is now. A created folder that now holds
+     * something else — the person moved a bookmark into it — stays, with that bookmark.
+     */
+    fun undo(library: FavoriteLibrary, applied: Applied): FavoriteLibrary {
+        var entries = BrowsingFavoritesRules.normalizeLibrary(library).entries
+            .filterNot { it is FavoriteEntry && it.id in applied.addedEntryIds }
+        while (true) {
+            val emptyCreated = entries.filter { entry ->
+                entry is FavoriteFolder && entry.id in applied.createdFolderIds &&
+                    entries.none { it.parentFolderId == entry.id }
+            }.map { it.id }.toSet()
+            if (emptyCreated.isEmpty()) break
+            entries = entries.filterNot { it.id in emptyCreated }
+        }
+        return BrowsingFavoritesRules.normalizeLibrary(FavoriteLibrary(entries))
     }
 
     private fun folderPath(folderId: String?, folders: Map<String, FavoriteFolder>): String {
