@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.ViewGroup
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -138,6 +139,13 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
             }
             optionsReady
         }
+        // The options chrome replaces the normal one a recomposition after the tab is ready.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
+                .fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                    .fetchSemanticsNodes().isEmpty()
+        }
         composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
             .assertIsDisplayed()
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertDoesNotExist()
@@ -228,6 +236,14 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
             }
             externalPageSelected
         }
+        // The normal chrome comes back a recomposition after the tab's address changes, later
+        // still on a loaded emulator: wait for it instead of checking the first frame.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
+                .fetchSemanticsNodes().isEmpty() &&
+                composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
             .assertDoesNotExist()
         composeRule.onNodeWithContentDescription(context.getString(R.string.cd_more_options))
@@ -276,6 +292,12 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         val closeAddressButton = closeAddressInputButton(context)
         if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
             composeRule.onNode(closeAddressButton).performClick()
+        }
+        // While the address editor closes, the bar's button can sit merged into another node for
+        // a frame (the merged tree has none, the unmerged one has it): wait for it on its own.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                .fetchSemanticsNodes().size == 1
         }
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),

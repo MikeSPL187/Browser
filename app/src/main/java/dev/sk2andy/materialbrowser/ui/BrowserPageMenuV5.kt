@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,11 +17,14 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.reader.ListenSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5TranslateOfferSetting
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
@@ -52,6 +56,13 @@ internal fun BrowserPageMenuV5(
     // On GeckoView the page translates on the phone, through the sheet (V23); elsewhere through the provider.
     val onDeviceTranslate = BrowserTranslateRules.usesOnDevice(controller.browserEngineCapabilities.onDeviceTranslation, tab.url)
     var translateSheet by remember { mutableStateOf(false) }
+    val translateOffer by rememberV5Preference(V5TranslateOfferSetting)
+    // «Never translate» (Settings → Translation) takes the item away for pages in those languages.
+    var languageSettings by remember { mutableStateOf<Map<String, TranslationLanguageSetting>?>(null) }
+    LaunchedEffect(visible, onDeviceTranslate) {
+        if (visible && onDeviceTranslate) controller.onDeviceTranslation.models.languageSettings { languageSettings = it }
+    }
+    val pageLanguage = controller.onDeviceTranslation.stateOf(tab.id).page.pageLanguage
     val faviconBitmap = controller.favicons[tab.id]
     val favicon = remember(faviconBitmap) { faviconBitmap?.asImageBitmap() }
     val state = V5PageMenuState(
@@ -63,10 +74,12 @@ internal fun BrowserPageMenuV5(
         canFavorite = !blank && !tab.isIncognito,
         isFavorite = controller.isSelectedTabFavorite,
         canRead = !blank && ReaderStudioSessionRules.isSupportedSource(tab.url),
-        canTranslate = onDeviceTranslate || !blank && PageTranslationRules.canTranslate(
-            provider = controller.pageTranslationProvider,
-            sourceUrl = tab.url,
-        ),
+        // Settings → Translation can take the item out of the menu.
+        canTranslate = if (onDeviceTranslate) {
+            translateOffer && BrowserTranslateRules.offers(pageLanguage, languageSettings)
+        } else {
+            !blank && PageTranslationRules.canTranslate(provider = controller.pageTranslationProvider, sourceUrl = tab.url)
+        },
         isPinned = tab.isPinned,
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },

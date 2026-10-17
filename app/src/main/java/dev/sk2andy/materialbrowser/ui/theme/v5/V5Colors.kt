@@ -87,6 +87,18 @@ enum class V5Tile(val color: Color) {
     val glyph: Color get() = Color.White
 }
 
+/**
+ * Sync over QR (canvas «ф»): the scanner is a camera screen, dark in either theme as the system
+ * camera is, and a QR code reads only dark on light, so its plate stays white in the dark theme.
+ */
+object V5SyncColors {
+    val scanBackground = Color(0xFF1B1D21)
+    val scanVeil = Color(0x73000000)
+    val scanInk = Color(0xFFFFFFFF)
+    val scanInkSoft = Color(0xCCFFFFFF)
+    val codePaper = Color(0xFFFFFFFF)
+}
+
 /** Control colors that do not change with the theme: the toggle thumb is white in both, as on the canvas. */
 object V5ControlColors {
     val toggleThumb = Color(0xFFFFFFFF)

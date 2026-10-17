@@ -162,4 +162,9 @@ object V5Sizes {
     val glancePageRadius: Dp = 36.dp
     /** Space between the card and its buttons. */
     val glanceActionsGap: Dp = 14.dp
+
+    // Sync over QR (canvas screens «ф1», «ф2»): the code on its white plate and the scanner frame.
+    val syncCode: Dp = 232.dp
+    val syncScanFrame: Dp = 252.dp
+    val syncScanFrameBorder: Dp = 3.dp
 }

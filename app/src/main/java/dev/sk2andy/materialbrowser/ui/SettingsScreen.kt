@@ -207,6 +207,7 @@ internal fun SettingsScreen(
     onOpenLegalUrl: (String) -> Unit,
     onDismiss: () -> Unit,
     onOpenFirefoxExtensions: (() -> Unit)? = null,
+    translationSettings: (@Composable (onBack: () -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
@@ -243,6 +244,7 @@ internal fun SettingsScreen(
                     onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                     developerOptionsUnlocked = isDeveloperOptionsUnlocked,
                     onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+                    hasTranslation = translationSettings != null,
                 )
 
                 SettingsDestination.Search -> SearchSettingsPage(
@@ -562,6 +564,12 @@ internal fun SettingsScreen(
                     onShowReleaseNotes = onShowReleaseNotes,
                     onBack = { onDestinationChanged(SettingsDestination.Home) },
                 )
+
+                SettingsDestination.Translation -> {
+                    val back = { onDestinationChanged(SettingsDestination.Home) }
+                    // The home offers the page only where it exists; a stale route goes home.
+                    if (translationSettings != null) translationSettings(back) else LaunchedEffect(Unit) { back() }
+                }
 
                 SettingsDestination.AboutLegal -> SettingsPage(
                     title = stringResource(R.string.settings_section_about_legal),
