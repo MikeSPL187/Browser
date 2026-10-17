@@ -24,6 +24,7 @@ import dev.sk2andy.materialbrowser.browser.FederatedLoginPromptChoice
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityOffer
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityPromptChoice
 import dev.sk2andy.materialbrowser.browser.PageTranslationRecoveryAction
+import dev.sk2andy.materialbrowser.ui.v5.V5FeedbackVisuals
 
 @Composable
 internal fun BrowserOfferSnackbarEffects(
@@ -153,6 +154,7 @@ internal fun WorkspaceDeletionFailureSnackbarEffect(
     val failures = controller.workspaceDeletionFailures
     LaunchedEffect(failures) {
         if (failures == 0) return@LaunchedEffect
-        hostState.showSnackbar(message = message, withDismissAction = true)
+        // An error: the v5 line shows its red mark; Material's snackbar reads the same message.
+        hostState.showSnackbar(V5FeedbackVisuals(message = message, withDismissAction = true, error = true))
     }
 }
