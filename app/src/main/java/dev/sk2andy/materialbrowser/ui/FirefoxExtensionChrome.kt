@@ -128,13 +128,19 @@ internal fun FirefoxExtensionChrome(controller: BrowserController) {
 }
 
 /**
- * The popup under v5: a v5 sheet titled «Firefox extensions» with «Close», the extension's own
- * page under the header. A swipe down or «Close» dismisses it, as the v4 dialog's back does.
+ * The popup under v5: a v5 sheet titled with the extension's name (or «Firefox extensions») and
+ * «Close», the extension's own page under the header. A swipe down or «Close» dismisses it, as the v4 dialog's back does.
  */
 @Composable
 private fun FirefoxExtensionPopupV5(controller: BrowserController) {
     val popupView = controller.firefoxExtensionPopupView
-    val title = stringResource(R.string.gecko_extensions_title)
+    // The extension's own name when its action has one; the identity is set with the view.
+    val extensionId = controller.firefoxExtensionPopupIdentity?.extensionId
+    val title = controller.firefoxExtensionActions
+        .firstOrNull { it.key.extensionId == extensionId }
+        ?.title
+        ?.takeIf(String::isNotBlank)
+        ?: stringResource(R.string.gecko_extensions_title)
     V5PromptTheme {
         V5WindowSheet(
             visible = popupView != null,
@@ -147,7 +153,9 @@ private fun FirefoxExtensionPopupV5(controller: BrowserController) {
                 key(view) {
                     AndroidView(
                         factory = { view },
+                        // On a short screen the sheet's own limit wins over the popup's maximum.
                         modifier = Modifier
+                            .weight(1f, fill = false)
                             .fillMaxWidth()
                             .heightIn(min = V5Sizes.extensionPopupMin, max = V5Sizes.extensionPopupMax)
                             .padding(top = V5Spacing.space2)
