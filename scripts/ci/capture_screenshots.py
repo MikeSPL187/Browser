@@ -208,7 +208,11 @@ def scroll_to(*labels, name, attempts=5):
 
 
 def screen_size():
-    output = (adb("shell", "wm", "size", capture=True) or b"").decode()
+    # A briefly offline emulator fails `wm size`: wait for it once, then fall back to the default.
+    output = (adb("shell", "wm", "size", capture=True, check=False) or b"").decode()
+    if "x" not in output:
+        adb("wait-for-device", check=False, timeout=180)
+        output = (adb("shell", "wm", "size", capture=True, check=False) or b"").decode()
     match = re.search(r"(\d+)x(\d+)", output)
     return (int(match.group(1)), int(match.group(2))) if match else (1080, 2400)
 
@@ -1637,6 +1641,7 @@ def main():
     # v5 first, while the emulator is fresh: it is the default interface, and late in this hour-long
     # job the emulator has dropped offline and cost the v5 passes.
     step("v5-tours", run_v5_tours)
+    adb("wait-for-device", check=False, timeout=180)
     launch()
     time.sleep(12)
     dismiss_first_run()
