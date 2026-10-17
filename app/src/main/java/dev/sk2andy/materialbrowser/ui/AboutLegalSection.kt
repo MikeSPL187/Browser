@@ -2,10 +2,12 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,10 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardLinkRow
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaSettingsAboutTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 
 internal object AboutLegalTestTags {
     const val Section = "about_legal_section"
@@ -346,6 +353,26 @@ private fun LegalDialog(
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // Under v5 on a phone the text reads in the v5 sheet; «Close» and a swipe down are «Done».
+    if (rememberDrawsV5()) {
+        V5PromptTheme {
+            V5PromptSheet(
+                visible = true,
+                title = title,
+                message = null,
+                actions = emptyList(),
+                onDismiss = onDismiss,
+                testTag = tag,
+            ) {
+                Column(
+                    Modifier.padding(horizontal = V5Spacing.space4),
+                    verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                    content = content,
+                )
+            }
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(tag),
@@ -369,6 +396,26 @@ private fun LegalDialog(
 
 @Composable
 private fun LegalLinkButton(text: String, tag: String, onClick: () -> Unit) {
+    if (rememberDrawsV5()) {
+        val accent = V5Theme.colors.accent
+        Row(
+            Modifier
+                .heightIn(min = V5Sizes.touchTarget)
+                .clickable(role = Role.Button, onClick = onClick)
+                .testTag(tag),
+            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text, style = V5Theme.type.body, color = accent)
+            Icon(
+                VolaIcons.ArrowForward,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
+        }
+        return
+    }
     TextButton(
         onClick = onClick,
         modifier = Modifier.testTag(tag),

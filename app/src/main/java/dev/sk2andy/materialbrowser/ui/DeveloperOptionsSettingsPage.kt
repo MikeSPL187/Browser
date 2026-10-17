@@ -252,7 +252,19 @@ internal fun DeveloperOptionsSettingsPage(
     if (v5SpecimenVisible) {
         V5SpecimenDialog(onDismiss = { v5SpecimenVisible = false })
     }
-    if (httpAutofillConfirmationVisible) {
+    if (httpAutofillConfirmationVisible && rememberDrawsV5()) {
+        SettingsPromptV5(
+            title = stringResource(R.string.developer_options_http_warning_title),
+            message = stringResource(R.string.developer_options_http_warning_message),
+            confirm = stringResource(R.string.developer_options_http_warning_confirm),
+            onConfirm = {
+                httpAutofillConfirmationVisible = false
+                onHttpPasswordAutofillEnabledChanged(true)
+            },
+            onDismiss = { httpAutofillConfirmationVisible = false },
+            destructive = true,
+        )
+    } else if (httpAutofillConfirmationVisible) {
         AlertDialog(
             onDismissRequest = { httpAutofillConfirmationVisible = false },
             title = { Text(stringResource(R.string.developer_options_http_warning_title)) },

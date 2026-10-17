@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -124,11 +125,13 @@ internal fun V5NameField(
     capitalize: Boolean = true,
     /** An address takes the address keyboard; null picks the text or password one. */
     keyboardType: KeyboardType? = null,
+    /** The margin to the screen's sides; none on a page that already keeps it, as settings do. */
+    sideMargin: Dp = V5Spacing.marginPhone,
 ) {
     val colors = V5Theme.colors
     Box(
         Modifier
-            .padding(horizontal = V5Spacing.marginPhone)
+            .padding(horizontal = sideMargin)
             .fillMaxWidth()
             .heightIn(min = V5Sizes.rowSingleLine)
             .clip(V5Theme.shapes.s)

@@ -74,6 +74,10 @@ internal fun SettingsSearchPage(
     val results = remember(query, candidates) { SettingsSearchRules.search(query, candidates) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    if (uiV5) {
+        SettingsSearchPageV5(query, { query = it }, results, focusRequester, onOpen, onBack)
+        return
+    }
 
     Column(
         modifier = Modifier

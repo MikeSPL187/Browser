@@ -180,6 +180,7 @@ internal fun ProtectionAndDataSettingsPage(
                         SettingsDropdown(
                             expanded = isHttpsOnlySupported && httpsOnlyMenuExpanded,
                             onDismissRequest = { httpsOnlyMenuExpanded = false },
+                            title = stringResource(R.string.settings_https_only_title),
                         ) {
                             HttpsOnlyMode.entries.forEach { mode ->
                                 SettingsDropdownItem(
@@ -280,6 +281,7 @@ internal fun ProtectionAndDataSettingsPage(
                         SettingsDropdown(
                             expanded = isDnsOverHttpsSupported && dnsMenuExpanded,
                             onDismissRequest = { dnsMenuExpanded = false },
+                            title = stringResource(R.string.settings_dns_over_https_title),
                         ) {
                             DnsOverHttpsProvider.entries.forEach { provider ->
                                 SettingsDropdownItem(
@@ -314,6 +316,7 @@ internal fun ProtectionAndDataSettingsPage(
                         SettingsDropdown(
                             expanded = webRtcMenuExpanded,
                             onDismissRequest = { webRtcMenuExpanded = false },
+                            title = stringResource(R.string.settings_webrtc_protection_title),
                         ) {
                             WebRtcProtectionMode.entries.forEach { mode ->
                                 SettingsDropdownItem(
@@ -613,6 +616,30 @@ private fun CustomDnsEndpointDialog(
 ) {
     var endpointDraft by rememberSaveable(initialEndpoint) { mutableStateOf(initialEndpoint) }
     val normalizedEndpoint = DnsOverHttpsRules.normalizedCustomEndpoint(endpointDraft)
+    val invalid = endpointDraft.isNotBlank() && normalizedEndpoint == null
+    if (rememberDrawsV5()) {
+        SettingsPromptV5(
+            title = stringResource(R.string.settings_dns_over_https_custom_dialog_title),
+            message = null,
+            confirm = stringResource(R.string.action_save),
+            onConfirm = { normalizedEndpoint?.let(onConfirm) },
+            onDismiss = onDismiss,
+            confirmEnabled = normalizedEndpoint != null,
+        ) {
+            SettingsPromptFieldV5(
+                value = endpointDraft,
+                onValueChange = { value -> endpointDraft = value.take(DnsOverHttpsRules.MAX_ENDPOINT_LENGTH) },
+                placeholder = stringResource(R.string.settings_dns_over_https_custom_endpoint),
+                maxLength = DnsOverHttpsRules.MAX_ENDPOINT_LENGTH,
+                onDone = { normalizedEndpoint?.let(onConfirm) },
+                modifier = Modifier.testTag(ProtectionSettingsTestTags.CustomDnsEndpoint),
+                hint = stringResource(R.string.settings_dns_over_https_custom_summary),
+                problem = if (invalid) stringResource(R.string.settings_dns_over_https_custom_invalid) else null,
+                keyboardType = KeyboardType.Uri,
+            )
+        }
+        return
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_dns_over_https_custom_dialog_title)) },
