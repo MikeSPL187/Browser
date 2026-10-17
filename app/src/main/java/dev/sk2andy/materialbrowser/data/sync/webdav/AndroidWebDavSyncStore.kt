@@ -22,9 +22,11 @@ internal class AndroidWebDavSyncStore(
     context: Context,
     private val protector: AndroidSyncSecretProtector = AndroidSyncSecretProtector(KEY_ALIAS),
 ) : WebDavSyncStore {
-    private val directory = context.applicationContext.noBackupFilesDir
-    private val accountFile = AtomicFile(File(directory, "vola_webdav_account_v1"))
-    private val memoryFile = AtomicFile(File(directory, "vola_webdav_memory_v1"))
+    private val context = context.applicationContext
+
+    /** Resolved on first use, on the sync's thread: `noBackupFilesDir` touches the disk. */
+    private val accountFile by lazy { AtomicFile(File(this.context.noBackupFilesDir, "vola_webdav_account_v1")) }
+    private val memoryFile by lazy { AtomicFile(File(this.context.noBackupFilesDir, "vola_webdav_memory_v1")) }
 
     @Synchronized
     override fun loadAccount(): WebDavStoredAccount? =
