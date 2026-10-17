@@ -118,7 +118,7 @@ data class V5EditorState(
 )
 
 @Composable
-fun V5AddressEditor(
+internal fun V5AddressEditor(
     state: V5EditorState,
     onValueChange: (TextFieldValue) -> Unit,
     onSubmit: (String) -> Unit,
