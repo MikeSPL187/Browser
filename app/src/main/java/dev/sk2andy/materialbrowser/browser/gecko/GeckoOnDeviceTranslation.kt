@@ -4,12 +4,15 @@ import android.os.Handler
 import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.annotation.UiThread
+import dev.sk2andy.materialbrowser.browser.translation.NeverTranslateSite
+import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationRules
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationError
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationListener
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationResult
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationState
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModel
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
@@ -41,7 +44,7 @@ internal class GeckoPageTranslation(
     @UiThread
     override fun setListener(listener: PageTranslationListener?) {
         if (closed) return
-        session.translationsSessionDelegate = listener?.let(::Delegate)
+        session.translationsSessionDelegate = listener?.let { Delegate(it, isPrivate) }
     }
 
     @UiThread
@@ -97,14 +100,23 @@ internal class GeckoPageTranslation(
     private fun deliver(onResult: (PageTranslationResult) -> Unit, request: () -> GeckoResult<Void>) =
         GeckoTranslationResults.deliver(mainHandler, onResult, request)
 
-    private class Delegate(private val listener: PageTranslationListener) : SessionTranslation.Delegate {
+    private class Delegate(
+        private val listener: PageTranslationListener,
+        private val isPrivate: Boolean,
+    ) : SessionTranslation.Delegate {
         override fun onOfferTranslate(session: GeckoSession) = listener.onOffer()
 
         override fun onTranslationStateChange(
             session: GeckoSession,
             translationState: SessionTranslation.TranslationState?,
         ) {
-            translationState?.let { listener.onStateChanged(GeckoTranslationMapping.state(it)) }
+            translationState ?: return
+            // A language set to «always» is translated by Gecko itself, without [translate]; the
+            // language is stored once the translation starts, so every later state clears it too.
+            if (isPrivate && translationState.requestedTranslationPair != null) {
+                GeckoTranslationPrivacy.forgetTargetLanguages()
+            }
+            listener.onStateChanged(GeckoTranslationMapping.state(translationState))
         }
     }
 }
@@ -148,6 +160,61 @@ internal class GeckoTranslationModels : TranslationModelsPort {
             .operationLevel(RuntimeTranslation.LANGUAGE)
             .build()
         GeckoTranslationResults.deliver(mainHandler, onResult) { RuntimeTranslation.manageLanguageModel(options) }
+    }
+
+    @UiThread
+    override fun languageSettings(onResult: (Map<String, TranslationLanguageSetting>?) -> Unit) =
+        query(RuntimeTranslation::getLanguageSettings, GeckoTranslationMapping::languageSettings, null, onResult)
+
+    @UiThread
+    override fun setLanguageSetting(
+        languageCode: String,
+        setting: TranslationLanguageSetting,
+        onResult: (PageTranslationResult) -> Unit,
+    ) {
+        if (languageCode.isBlank()) return onResult(PageTranslationResult.Failed(PageTranslationError.LanguageNotSupported))
+        val apply = {
+            GeckoTranslationResults.deliver(mainHandler, onResult) {
+                when (setting) {
+                    TranslationLanguageSetting.Always ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.ALWAYS)
+                    TranslationLanguageSetting.Offer ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.OFFER)
+                    TranslationLanguageSetting.Never ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.NEVER)
+                }
+            }
+        }
+        if (setting != TranslationLanguageSetting.Always) return apply()
+        // Gecko translates «always» languages by itself and downloads what is missing without
+        // asking, so the models must already be on the phone (the port's contract).
+        query(RuntimeTranslation::preferredLanguages, { it?.firstOrNull() }, null) { userLanguage ->
+            userLanguage ?: return@query onResult(PageTranslationResult.Failed(PageTranslationError.Unknown))
+            downloadSize(TranslationPair(languageCode, userLanguage)) { missing ->
+                when {
+                    missing == null -> onResult(PageTranslationResult.Failed(PageTranslationError.Unknown))
+                    missing > 0 -> onResult(PageTranslationResult.Failed(PageTranslationError.ModelDownloadRequired))
+                    else -> apply()
+                }
+            }
+        }
+    }
+
+    @UiThread
+    override fun neverTranslateSites(onResult: (List<NeverTranslateSite>?) -> Unit) =
+        query(
+            RuntimeTranslation::getNeverTranslateSiteList,
+            { origins -> origins?.mapNotNull(OnDeviceTranslationRules::neverTranslateSite) },
+            null,
+            onResult,
+        )
+
+    @UiThread
+    override fun setNeverTranslateSite(origin: String, never: Boolean, onResult: (PageTranslationResult) -> Unit) {
+        if (origin.isBlank()) return onResult(PageTranslationResult.Failed(PageTranslationError.Unknown))
+        GeckoTranslationResults.deliver(mainHandler, onResult) {
+            RuntimeTranslation.setNeverTranslateSpecifiedSite(never, origin)
+        }
     }
 
     /** Runs a Gecko query and hands [onResult] its mapped value, or [fallback] when it fails. */
@@ -245,6 +312,15 @@ internal object GeckoTranslationMapping {
         TranslationsException.ERROR_COULD_NOT_RESTORE -> PageTranslationError.CouldNotRestore
         TranslationsException.ERROR_COULD_NOT_LOAD_LANGUAGES -> PageTranslationError.CouldNotLoadLanguages
         else -> PageTranslationError.Unknown
+    }
+
+    fun languageSettings(settings: Map<String, String>?): Map<String, TranslationLanguageSetting>? =
+        settings?.mapValues { (_, setting) -> languageSetting(setting) }
+
+    fun languageSetting(setting: String?): TranslationLanguageSetting = when (setting) {
+        RuntimeTranslation.ALWAYS -> TranslationLanguageSetting.Always
+        RuntimeTranslation.NEVER -> TranslationLanguageSetting.Never
+        else -> TranslationLanguageSetting.Offer
     }
 
     private fun language(language: Language) = TranslationLanguage(language.code, language.localizedDisplayName)

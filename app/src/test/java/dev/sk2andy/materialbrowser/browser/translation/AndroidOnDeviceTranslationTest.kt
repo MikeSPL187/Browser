@@ -53,6 +53,44 @@ class AndroidOnDeviceTranslationTest {
     }
 
     @Test
+    fun `language and site choices reach the engine through the lazy models`() {
+        val calls = mutableListOf<String>()
+        val engine = object : TranslationModelsPort by TranslationModelsPort.Unavailable {
+            override fun languageSettings(onResult: (Map<String, TranslationLanguageSetting>?) -> Unit) {
+                calls += "settings"
+                onResult(mapOf("de" to TranslationLanguageSetting.Never))
+            }
+
+            override fun setLanguageSetting(
+                languageCode: String,
+                setting: TranslationLanguageSetting,
+                onResult: (PageTranslationResult) -> Unit,
+            ) {
+                calls += "set $languageCode $setting"
+                onResult(PageTranslationResult.Done)
+            }
+
+            override fun neverTranslateSites(onResult: (List<NeverTranslateSite>?) -> Unit) {
+                calls += "sites"
+                onResult(listOf(NeverTranslateSite("https://example.com", "example.com")))
+            }
+
+            override fun setNeverTranslateSite(origin: String, never: Boolean, onResult: (PageTranslationResult) -> Unit) {
+                calls += "site $origin $never"
+                onResult(PageTranslationResult.Done)
+            }
+        }
+        val models = LazyTranslationModels { engine }
+
+        models.languageSettings { }
+        models.setLanguageSetting("de", TranslationLanguageSetting.Always) { }
+        models.neverTranslateSites { }
+        models.setNeverTranslateSite("https://example.com", never = false) { }
+
+        assertEquals(listOf("settings", "set de Always", "sites", "site https://example.com false"), calls)
+    }
+
+    @Test
     fun `the sheet's language lists come from the engine's models`() {
         val languages = TranslationLanguages(
             from = listOf(TranslationLanguage("de", "German")),
