@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import android.text.format.Formatter
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,8 +49,14 @@ object V5TranslationSettingsTestTags {
     const val Offer = "v5_translation_offer"
     const val TranslateInto = "v5_translation_into"
     const val NeverTranslate = "v5_translation_never"
+    const val IntoPage = "v5_translation_into_page"
+    const val NeverPage = "v5_translation_never_page"
 
     fun pack(code: String) = "v5_translation_pack_$code"
+
+    fun into(code: String) = "v5_translation_into_$code"
+
+    fun never(code: String) = "v5_translation_never_$code"
 }
 
 /** One language pack: the language's models on the phone, or ready to download. */
@@ -60,22 +71,27 @@ data class V5LanguagePack(
 
 /**
  * Settings → Translation (V23, canvas «т3»): whether the menu offers translation, the language
- * pages are translated into, the languages never to translate, and the language packs. Null
- * [packs] while the engine has not listed them.
+ * pages are translated into (by name, [translateIntoCode] checked among [intoOptions]), the
+ * languages never to translate (null where the engine keeps no such list: the row is hidden), and
+ * the language packs. Null [packs] while the engine has not listed them.
  */
 @Immutable
 data class V5TranslationSettingsState(
     val offerInMenu: Boolean,
     val translateInto: String,
-    val neverTranslate: List<String>,
+    val neverTranslate: List<String>?,
     val packs: List<V5LanguagePack>?,
+    val translateIntoCode: String? = null,
+    val intoOptions: List<V5TranslateLanguage> = emptyList(),
+    val neverOptions: List<V5TranslateLanguage> = emptyList(),
+    val neverCodes: Set<String> = emptySet(),
 )
 
 class V5TranslationSettingsActions(
     val onBack: () -> Unit,
     val onOfferChange: (Boolean) -> Unit,
-    val onTranslateInto: () -> Unit,
-    val onNeverTranslate: () -> Unit,
+    val onTranslateInto: (String) -> Unit,
+    val onNeverTranslate: (code: String, never: Boolean) -> Unit,
     val onDownload: (String) -> Unit,
     val onDelete: (String) -> Unit,
 )
@@ -91,6 +107,25 @@ fun V5TranslationSettings(
     actions: V5TranslationSettingsActions,
     modifier: Modifier = Modifier,
 ) {
+    // «Translate into» and «Never translate» are pages of their own, as a language list is in the
+    // translate sheet.
+    var page by rememberSaveable { mutableStateOf(V5TranslationSettingsRules.Page.Main) }
+    when (page) {
+        V5TranslationSettingsRules.Page.Main -> Unit
+        V5TranslationSettingsRules.Page.Into -> {
+            BackHandler { page = V5TranslationSettingsRules.Page.Main }
+            V5TranslationIntoPage(state, onBack = { page = V5TranslationSettingsRules.Page.Main }) { code ->
+                actions.onTranslateInto(code)
+                page = V5TranslationSettingsRules.Page.Main
+            }
+            return
+        }
+        V5TranslationSettingsRules.Page.Never -> {
+            BackHandler { page = V5TranslationSettingsRules.Page.Main }
+            V5TranslationNeverPage(state, onBack = { page = V5TranslationSettingsRules.Page.Main }, onChange = actions.onNeverTranslate)
+            return
+        }
+    }
     val colors = V5Theme.colors
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
@@ -121,17 +156,21 @@ fun V5TranslationSettings(
                     title = stringResource(R.string.v5_translation_into),
                     value = V5TranslateRules.displayName(state.translateInto, locale),
                     trailing = V5RowTrailing.Chevron,
-                    onClick = actions.onTranslateInto,
+                    enabled = state.intoOptions.isNotEmpty(),
+                    onClick = { page = V5TranslationSettingsRules.Page.Into },
                     modifier = Modifier.testTag(V5TranslationSettingsTestTags.TranslateInto),
                 )
-                V5ListRow(
-                    title = stringResource(R.string.v5_translation_never),
-                    value = V5TranslationSettingsRules.neverSummary(state.neverTranslate, locale)
-                        ?: stringResource(R.string.v5_translation_never_none),
-                    trailing = V5RowTrailing.Chevron,
-                    onClick = actions.onNeverTranslate,
-                    modifier = Modifier.testTag(V5TranslationSettingsTestTags.NeverTranslate),
-                )
+                state.neverTranslate?.let { never ->
+                    V5ListRow(
+                        title = stringResource(R.string.v5_translation_never),
+                        value = V5TranslationSettingsRules.neverSummary(never, locale)
+                            ?: stringResource(R.string.v5_translation_never_none),
+                        trailing = V5RowTrailing.Chevron,
+                        enabled = state.neverOptions.isNotEmpty(),
+                        onClick = { page = V5TranslationSettingsRules.Page.Never },
+                        modifier = Modifier.testTag(V5TranslationSettingsTestTags.NeverTranslate),
+                    )
+                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
                 Text(
@@ -155,6 +194,88 @@ fun V5TranslationSettings(
                     modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4),
                 )
             }
+        }
+    }
+}
+
+/** The languages pages can be translated into, the chosen one checked; a touch picks it and goes back. */
+@Composable
+internal fun V5TranslationIntoPage(state: V5TranslationSettingsState, onBack: () -> Unit, onChoose: (String) -> Unit) {
+    val locale = LocalConfiguration.current.locales[0]
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(V5Theme.colors.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .testTag(V5TranslationSettingsTestTags.IntoPage),
+    ) {
+        V5PageBar(title = stringResource(R.string.v5_translation_into), onBack = onBack)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = V5Spacing.space4, bottom = V5Spacing.space8),
+        ) {
+            V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+                state.intoOptions.forEach { language ->
+                    V5ListRow(
+                        title = V5TranslateRules.displayName(language.name, locale),
+                        trailing = if (language.code == state.translateIntoCode) V5RowTrailing.Check else V5RowTrailing.None,
+                        onClick = { onChoose(language.code) },
+                        modifier = Modifier.testTag(V5TranslationSettingsTestTags.into(language.code)),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The languages whose pages are never offered a translation, each with its own switch: unlike
+ * «Translate into», several can be on at once.
+ */
+@Composable
+internal fun V5TranslationNeverPage(
+    state: V5TranslationSettingsState,
+    onBack: () -> Unit,
+    onChange: (code: String, never: Boolean) -> Unit,
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(V5Theme.colors.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .testTag(V5TranslationSettingsTestTags.NeverPage),
+    ) {
+        V5PageBar(title = stringResource(R.string.v5_translation_never), onBack = onBack)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = V5Spacing.space4, bottom = V5Spacing.space8),
+            verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+        ) {
+            V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+                state.neverOptions.forEach { language ->
+                    V5ListRow(
+                        title = V5TranslateRules.displayName(language.name, locale),
+                        trailing = V5RowTrailing.Toggle(
+                            checked = language.code in state.neverCodes,
+                            onCheckedChange = { on -> onChange(language.code, on) },
+                        ),
+                        modifier = Modifier.testTag(V5TranslationSettingsTestTags.never(language.code)),
+                    )
+                }
+            }
+            Text(
+                stringResource(R.string.v5_translation_never_footer),
+                style = V5Theme.type.footnote,
+                color = V5Theme.colors.labelSecondary,
+                modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4),
+            )
         }
     }
 }
@@ -237,6 +358,8 @@ private fun PackRow(pack: V5LanguagePack, locale: Locale, actions: V5Translation
 
 /** Pure decisions of the translation settings, for unit tests. */
 internal object V5TranslationSettingsRules {
+    enum class Page { Main, Into, Never }
+
     /** Downloaded packs first, then by name, so what takes space is on top. */
     fun ordered(packs: List<V5LanguagePack>?): List<V5LanguagePack> =
         packs.orEmpty().sortedWith(compareByDescending<V5LanguagePack> { it.downloaded }.thenBy { it.name })

@@ -24,6 +24,7 @@ enum class SettingsHomeIcon {
     ProtectionAndData,
     DeveloperOptions,
     AboutLegal,
+    Translation,
 }
 
 /**
@@ -60,6 +61,7 @@ object SettingsHomeRules {
     fun items(
         hasFirefoxExtensions: Boolean,
         hasDeveloperOptions: Boolean = false,
+        hasTranslation: Boolean = false,
     ): List<SettingsHomeItem> = buildList {
         add(item(SettingsHomeCard.Protection, SettingsDestination.Passwords, SettingsHomeIcon.Passwords, WorkspaceAccent.Amber))
         add(item(SettingsHomeCard.Protection, SettingsDestination.ProtectionAndData, SettingsHomeIcon.ProtectionAndData, WorkspaceAccent.Green))
@@ -81,6 +83,9 @@ object SettingsHomeRules {
         }
         add(item(SettingsHomeCard.Features, SettingsDestination.SiteCapsules, SettingsHomeIcon.SiteCapsules, WorkspaceAccent.Amber))
         add(item(SettingsHomeCard.Features, SettingsDestination.Downloads, SettingsHomeIcon.Downloads, WorkspaceAccent.Green))
+        if (hasTranslation) {
+            add(item(SettingsHomeCard.Features, SettingsDestination.Translation, SettingsHomeIcon.Translation, WorkspaceAccent.Blue))
+        }
         add(item(SettingsHomeCard.About, SettingsDestination.Browser, SettingsHomeIcon.Browser, WorkspaceAccent.Coral))
         if (hasDeveloperOptions) {
             add(item(SettingsHomeCard.About, SettingsDestination.DeveloperOptions, SettingsHomeIcon.DeveloperOptions, WorkspaceAccent.Graphite))

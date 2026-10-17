@@ -7,12 +7,13 @@ import androidx.compose.runtime.mutableStateMapOf
  * whether it is translated, and the two actions the v5 screens offer — translate and show the
  * original. The browser [attach]es a tab's engine port when the tab gets a page and [detach]es it
  * when the page closes; screens read [stateOf], which recomposes them as the engine reports.
- * [appLanguageTags] are the languages the user reads, the app's first.
+ * [appLanguageTags] are the languages the user reads, the app's first. Settings → Translation
+ * lists, downloads and deletes the language packs through [models].
  *
  * Every call and callback is on the main thread, as the engine ports promise.
  */
 internal class OnDeviceTranslationController(
-    private val models: TranslationModelsPort,
+    val models: TranslationModelsPort,
     private val appLanguageTags: () -> List<String>,
 ) {
     private val ports = mutableMapOf<String, PageTranslationPort>()

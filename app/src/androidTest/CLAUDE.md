@@ -17,6 +17,12 @@
   (параметр или возвращаемое значение, даже у `@RequiresApi`-помощника) роняет рефлексию JUnit →
   `initializationError`, и класс целиком не запускается ни в одном шарде. Такие типы — только внутри
   тела метода; наружу отдавай свой data class. Сводка ловит это по `logcat.txt.gz` шарда.
+- **Видео на эмуляторе API 37** (`android-37.0;google_apis;x86_64`, ручной прогон с `api_level` = 37):
+  VP8-фикстура не декодируется (`cyan=0`, нет `loadedmetadata`), в logcat `Codec2-ComponentInterface:
+  We have a failed config`. Gecko отдаёт VP8 системному MediaCodec, только когда устройство заявляет
+  аппаратный VP8 (`AndroidDecoderModule::SupportsMimeType`, `UseVP8HwDecode`), иначе декодирует сам
+  (ffvpx). Эмулятор заявляет аппаратный декодер goldfish, и на API 37 его настройка падает. Это среда,
+  а не PiP Vola: строки в baseline не добавлять, Gecko на программный декодер не переключать.
 - **Тесты широкой раскладки** (`assumeTrue(screenWidthDp >= 600)`, например `WideAddressBarInstrumentedTest`)
   на эмуляторе CI (телефон, книжно) **всегда пропускаются**. Планшет и альбомную ориентацию в CI проверяет
   только обход экранов (`AuditLayout.Tablet`/`PhoneLandscape`, #163) — так нашлись планшетные пробелы.

@@ -29,6 +29,9 @@ enum class SettingsDestination {
     ProtectionMore,
     DeveloperOptions,
     AboutLegal,
+
+    /** Under ui.v5 with an engine that translates on the phone: languages and packs (V23). */
+    Translation,
     ;
 
     /** The page that back returns to: the page a subpage opens from, the home for the rest. */
