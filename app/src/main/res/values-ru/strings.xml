@@ -2263,4 +2263,19 @@
     <string name="filter_v5_group">Группа</string>
     <string name="filter_v5_origin">Откуда</string>
     <string name="filter_v5_profile_only">Только правила этого пространства</string>
+    <string name="v5_translate_title">Перевести страницу</string>
+    <string name="v5_translate_from">С языка</string>
+    <string name="v5_translate_to">На язык</string>
+    <string name="v5_translate_always">Всегда переводить этот язык</string>
+    <string name="v5_translate_action">Перевести</string>
+    <string name="v5_translate_in_progress">Перевожу…</string>
+    <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
+    <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
+    <string name="v5_translate_error">Не удалось перевести страницу. Попробуйте ещё раз.</string>
+    <string name="v5_translate_error_download">Пакет не скачался. Проверьте сеть и попробуйте ещё раз.</string>
+    <string name="v5_translate_error_language">Этот язык пока нельзя перевести на устройстве.</string>
+    <string name="v5_translate_language_unknown">Не определён</string>
+    <string name="v5_translated_from_to">Перевод: %1$s → %2$s</string>
+    <string name="v5_translate_original">Оригинал</string>
+    <string name="v5_translated_hide">Скрыть</string>
 </resources>

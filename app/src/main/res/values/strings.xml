@@ -2169,4 +2169,19 @@
     <string name="filter_v5_group">Group</string>
     <string name="filter_v5_origin">Origin</string>
     <string name="filter_v5_profile_only">Only this workspace\'s rules</string>
+    <string name="v5_translate_title">Translate page</string>
+    <string name="v5_translate_from">From</string>
+    <string name="v5_translate_to">To</string>
+    <string name="v5_translate_always">Always translate this language</string>
+    <string name="v5_translate_action">Translate</string>
+    <string name="v5_translate_in_progress">Translating…</string>
+    <string name="v5_translate_note">Translated on this phone: the page text goes nowhere.</string>
+    <string name="v5_translate_note_download">Translated on this phone: the page text goes nowhere. The %1$s language pack downloads once.</string>
+    <string name="v5_translate_error">Couldn’t translate this page. Try again.</string>
+    <string name="v5_translate_error_download">The language pack didn’t download. Check the connection and try again.</string>
+    <string name="v5_translate_error_language">This language can’t be translated on the phone yet.</string>
+    <string name="v5_translate_language_unknown">Not detected</string>
+    <string name="v5_translated_from_to">Translated: %1$s → %2$s</string>
+    <string name="v5_translate_original">Original</string>
+    <string name="v5_translated_hide">Hide</string>
 </resources>
