@@ -1132,6 +1132,7 @@ internal fun BlankTabPreview(
     essentials: EssentialsController? = null,
     essentialsAlpha: () -> Float,
 ) {
+    val drawsV5 = rememberDrawsV5()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val rootView = LocalView.current
@@ -1176,6 +1177,26 @@ internal fun BlankTabPreview(
                     transformOrigin = TransformOrigin(0f, 0f)
                 },
         ) {
+            // While tabs are swiped under v5, a new tab next door previews as the v5 page it opens to.
+            if (drawsV5) {
+                BrowserNewTabV5(
+                    essentials = essentials?.entriesFor(profileId).orEmpty(),
+                    essentialIcons = essentials?.iconsByUrl.orEmpty(),
+                    onOpenEssential = {},
+                    editor = null,
+                    profileLabel = null,
+                    profileIconKey = null,
+                    recentTabs = emptyList(),
+                    recentTabFavicons = emptyMap(),
+                    onRecentTab = {},
+                    protection = null,
+                    contentPadding = PaddingValues(
+                        top = rootSafeDrawingPadding.calculateTopPadding(),
+                        bottom = rootSafeDrawingPadding.calculateBottomPadding(),
+                    ),
+                )
+                return@Box
+            }
             NewTabPage(
                 essentials = essentials?.entriesFor(profileId).orEmpty(),
                 essentialIcons = essentials?.iconsByUrl.orEmpty(),
