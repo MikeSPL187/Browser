@@ -16,6 +16,7 @@ private const val PREVIEW_HEIGHT_DP = 844
 
 private val Show = V5SyncShowState(code = null, onWifi = true, networkName = "Дом", tabs = 12, bookmarks = 34)
 private val Done = V5SyncDoneState(deviceName = "Pixel Анны", tabs = 12, bookmarksAdded = 30, bookmarksExisting = 4)
+private val NoServerActions = V5SyncServerActions(onConnect = {}, onSyncNow = {}, onOpenDevice = {}, onDisconnect = {})
 private val NoActions = V5SyncDoneActions(onOpenGroup = {}, onOpenFavorites = {}, onDone = {}, onUndo = {})
 
 @Preview(name = "Show code · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
@@ -72,13 +73,28 @@ private fun V5SyncDoneUndoFailedPreview() {
 @Preview(name = "Sync settings · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun V5SyncSettingsLightPreview() {
-    VolaV5Theme(dark = false) { V5SyncSettings(sent = false, onBack = {}, onShowCode = {}, onScanCode = {}, onServer = {}) }
+    VolaV5Theme(dark = false) { V5SyncSettings(sent = false, server = V5SyncServer.NotConnected, serverActions = NoServerActions, onBack = {}, onShowCode = {}, onScanCode = {}) }
 }
 
-@Preview(name = "Sync settings, sent · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Preview(name = "Sync settings, own server connected, sent · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun V5SyncSettingsSentDarkPreview() {
-    VolaV5Theme(dark = true) { V5SyncSettings(sent = true, onBack = {}, onShowCode = {}, onScanCode = {}, onServer = {}) }
+    VolaV5Theme(dark = true) { V5SyncSettings(
+            sent = true,
+            server = V5SyncServer.Connected(
+                V5WebDavStatusState(
+                    host = "cloud.anna.ru",
+                    lastSynced = "2 минуты назад",
+                    syncing = false,
+                    error = null,
+                    devices = listOf(V5WebDavDevice("tablet", "Планшет Анны", tabs = 8, updated = "сегодня в 12:10")),
+                ),
+            ),
+            serverActions = NoServerActions,
+            onBack = {},
+            onShowCode = {},
+            onScanCode = {},
+        ) }
 }
 
 @Preview(name = "Confirm transfer · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

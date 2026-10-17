@@ -30,18 +30,36 @@ object V5SyncSettingsTestTags {
     const val ConfirmAccept = "v5_sync_confirm_accept"
 }
 
+/** The own server's part of Settings → Sync (V27): none in a build without it, a row to connect, or its state. */
+sealed interface V5SyncServer {
+    data object Unavailable : V5SyncServer
+
+    data object NotConnected : V5SyncServer
+
+    data class Connected(val state: V5WebDavStatusState) : V5SyncServer
+}
+
+class V5SyncServerActions(
+    val onConnect: () -> Unit,
+    val onSyncNow: () -> Unit,
+    val onOpenDevice: (String) -> Unit,
+    val onDisconnect: () -> Unit,
+)
+
 /**
- * Settings → Sync in v5 (V26): moving tabs and bookmarks to a device on the same Wi-Fi comes
- * first, the sync server keeps its own page below. [sent] says the last code shown here was
- * taken, so the page tells it arrived.
+ * Settings → Sync in v5 (V26, V27; canvas «ф» and «х2»). Once connected, the own server comes
+ * first: how it synced and the other devices' tabs; the QR transfer follows, «Disconnect» closes
+ * the page. Not connected, the transfer comes first and a row offers the own server. [sent] says
+ * the last code shown here was taken, so the page tells it arrived.
  */
 @Composable
 fun V5SyncSettings(
     sent: Boolean,
+    server: V5SyncServer,
+    serverActions: V5SyncServerActions,
     onBack: () -> Unit,
     onShowCode: () -> Unit,
     onScanCode: () -> Unit,
-    onServer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = V5Theme.colors
@@ -61,6 +79,9 @@ fun V5SyncSettings(
                 .padding(top = V5Spacing.space4, bottom = V5Spacing.space8),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),
         ) {
+            if (server is V5SyncServer.Connected) {
+                V5WebDavStatus(server.state, onSyncNow = serverActions.onSyncNow, onOpenDevice = serverActions.onOpenDevice)
+            }
             V5ListGroup(
                 header = stringResource(R.string.v5_sync_transfer_header),
                 footer = stringResource(if (sent) R.string.v5_sync_sent else R.string.v5_sync_transfer_footer),
@@ -80,14 +101,18 @@ fun V5SyncSettings(
                     modifier = Modifier.testTag(V5SyncSettingsTestTags.ScanCode),
                 )
             }
-            V5ListGroup(footer = stringResource(R.string.v5_sync_server_footer)) {
-                V5ListRow(
-                    title = stringResource(R.string.v5_sync_server),
-                    icon = V5RowIcon(VolaIcons.Sync, V5Tile.Sky),
-                    trailing = V5RowTrailing.Chevron,
-                    onClick = onServer,
-                    modifier = Modifier.testTag(V5SyncSettingsTestTags.Server),
-                )
+            when (server) {
+                V5SyncServer.Unavailable -> Unit
+                V5SyncServer.NotConnected -> V5ListGroup(footer = stringResource(R.string.v5_sync_server_footer)) {
+                    V5ListRow(
+                        title = stringResource(R.string.v5_sync_server),
+                        icon = V5RowIcon(VolaIcons.Sync, V5Tile.Sky),
+                        trailing = V5RowTrailing.Chevron,
+                        onClick = serverActions.onConnect,
+                        modifier = Modifier.testTag(V5SyncSettingsTestTags.Server),
+                    )
+                }
+                is V5SyncServer.Connected -> V5WebDavDisconnectRow(serverActions.onDisconnect)
             }
         }
     }

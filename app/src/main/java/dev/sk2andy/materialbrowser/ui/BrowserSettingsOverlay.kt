@@ -399,8 +399,8 @@ internal fun BrowserSettingsOverlay(
                     null
                 },
                 // The local transfer (V26) does not depend on the engine: both builds have it.
-                syncSettings = { onBack, serverPage ->
-                    BrowserSyncSettingsV5(controller, onBack, serverPage, onOpenTabOverview, onOpenFavorites)
+                syncSettings = { onBack ->
+                    BrowserSyncSettingsV5(controller, onBack, onOpenTabOverview, onOpenFavorites, onOpenUrl = onOpenLegalUrl)
                 },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,
