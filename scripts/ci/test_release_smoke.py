@@ -68,6 +68,38 @@ class ReportTest(unittest.TestCase):
         finally:
             smoke.subprocess.run = real
 
+    def run_wait(self, answers):
+        """wait_until_responsive against adb answering in turn from [answers] (True: answered)."""
+        calls, now, slept = [], [0.0], []
+        real = smoke.adb
+        def adb(*args, **kwargs):
+            calls.append(args)
+            if not answers.pop(0):
+                raise smoke.EmulatorStuck("adb shell true: no answer in 5 s")
+            return ""
+        def sleep(seconds):
+            slept.append(seconds)
+            now[0] += seconds
+        smoke.adb = adb
+        try:
+            smoke.wait_until_responsive(timeout=20, pause=5, clock=lambda: now[0], sleep=sleep)
+        finally:
+            smoke.adb = real
+        return calls, slept
+
+    def test_a_site_waits_until_the_emulator_answers_again(self):
+        calls, slept = self.run_wait([False, False, True])
+        self.assertEqual(3, len(calls))
+        self.assertEqual([5, 5], slept)
+
+    def test_an_emulator_that_stays_busy_is_stuck_before_the_site(self):
+        with self.assertRaisesRegex(smoke.EmulatorStuck, "not responsive for 20 s"):
+            self.run_wait([False] * 10)
+
+    def test_heavy_sites_are_in_the_list(self):
+        names = {name for name, _ in smoke.SITES}
+        self.assertTrue(smoke.HEAVY_SITES <= names)
+
     def test_a_lost_device_is_a_stuck_emulator_not_an_empty_answer(self):
         real = smoke.subprocess.run
         smoke.subprocess.run = lambda *args, **kwargs: smoke.subprocess.CompletedProcess(
