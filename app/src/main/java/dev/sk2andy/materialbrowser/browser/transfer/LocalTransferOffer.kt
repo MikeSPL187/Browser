@@ -22,7 +22,9 @@ internal class LocalTransferOffer(
 
     private val path = LocalTransferProtocol.path(pairing)
     private var wrongRequests = 0
-    private var outcome = Outcome.Open
+    /** [Outcome.Open] while the offer still answers. */
+    var outcome = Outcome.Open
+        private set
 
     fun answer(request: LocalTransferHttp.Request?): Reply {
         if (outcome != Outcome.Open) return Reply(410, "", outcome)

@@ -89,6 +89,7 @@ class AndroidLocalTransferPortTest {
 
         assertEquals(200, reply.status)
         assertEquals(LocalTransferOffer.Outcome.Sent, reply.outcome)
+        assertEquals(LocalTransferOffer.Outcome.Sent, offer.outcome)
         assertEquals(payload, LocalTransferProtocol.open(pairing, request.nonce, reply.body, AndroidLocalTransferCrypto))
         assertEquals(410, offer.answer(LocalTransferHttp.Request("POST", LocalTransferProtocol.path(pairing), request.body)).status)
     }
