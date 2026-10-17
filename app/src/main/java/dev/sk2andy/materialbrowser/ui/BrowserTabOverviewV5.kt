@@ -34,10 +34,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -58,6 +55,9 @@ import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewState
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTab
 import dev.sk2andy.materialbrowser.ui.v5.V5TabCard
 import dev.sk2andy.materialbrowser.ui.v5.V5TabOverview
@@ -260,22 +260,23 @@ private fun OverviewContent(
             BrowserProfileSheetV5(controller, visible = profileSheet, onDismiss = { profileSheet = false })
         }
     }
-    // «Close all tabs» asks first, like the current overview's menu.
-    if (closeAllCount > 0) {
-        val dismiss = { closeAllCount = 0 }
-        AlertDialog(
-            onDismissRequest = dismiss,
-            title = { Text(pluralStringResource(R.plurals.close_all_tabs_title, closeAllCount, closeAllCount)) },
-            text = { Text(stringResource(R.string.close_all_tabs_pinned_supporting_text)) },
-            confirmButton = {
-                TextButton(
+    // «Close all tabs» asks first, in red as an action that removes.
+    VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
+        V5PromptSheet(
+            visible = closeAllCount > 0,
+            title = pluralStringResource(R.plurals.close_all_tabs_title, closeAllCount, closeAllCount),
+            message = stringResource(R.string.close_all_tabs_pinned_supporting_text),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.action_close_all_tabs),
+                    role = V5PromptRole.Destructive,
                     onClick = {
                         closeAllCount = 0
                         if (controller.closeAllTabs() > 0) rootView.performConfirmHaptic()
                     },
-                ) { Text(stringResource(R.string.action_close_all_tabs)) }
-            },
-            dismissButton = { TextButton(onClick = dismiss) { Text(stringResource(R.string.action_cancel)) } },
+                ),
+            ),
+            onDismiss = { closeAllCount = 0 },
         )
     }
 }
