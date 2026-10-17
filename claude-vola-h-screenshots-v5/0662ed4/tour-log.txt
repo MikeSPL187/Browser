@@ -1,0 +1,396 @@
+ui.v5 = false
+screenshot 01-launch.png
+screenshot 02-first-run-welcome.png
+saved ui-first-run-welcome.xml
+tap 'Get started' at 540,2043
+screenshot 03-first-run-setup.png
+saved ui-first-run-setup.xml
+tap 'Next' at 540,2222
+screenshot 04-first-run-lesson.png
+tap 'Skip' at 941,412
+screenshot 05-new-tab-light.png
+screenshot 06-page-light.png
+screenshot 07-page-scrolled-light.png
+saved ui-first-paint-frame-1.xml
+screenshot 08-first-paint-frame-1.png
+first paint frame-1: OK: card spread at 5/10/15/20 s [45.0, 51.0, 51.0, 51.0], page text in tree True, after a small scroll 51.7
+saved ui-first-paint-frame-2.xml
+screenshot 09-first-paint-frame-2.png
+first paint frame-2: OK: card spread at 5/10/15/20 s [45.0, 41.2, 41.2, 41.2], page text in tree True, after a small scroll 44.8
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site frame-wikipedia: 29 frames, 29 janky (100%), p50 300 ms, p90 450 ms, p99 800 ms
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site frame-local: 8 frames, 8 janky (100%), p50 400 ms, p90 750 ms, p99 750 ms
+touch frame-top: OK: finger on band 4 at y=1254 (band drawn 1130-1379), page got (4, 125, 250), offset 1 px; page says: PROBE tap 4 y 125 of 250 at 1127 safe 0 inner 2009 vv 0 client 2009 screenY 128
+screenshot 10-touch-frame-top.png
+touch frame-scrolled: OK: finger on band 10 at y=1288 (band drawn 1163-1413), page got (10, 126, 250), offset 1 px; page says: PROBE tap 10 y 126 of 250 at 1161 safe 0 inner 2009 vv 0 client 2009 screenY 128
+screenshot 11-touch-frame-scrolled.png
+tap feedback frame: shown: band colour (80, 180, 60) -> (69, 155, 52)
+keyboard frame: keyboard shown=True, address bar hidden, field at y=801
+screenshot 12-keyboard-frame.png
+tap 'More options' at 964,2232
+tap 'Compact mode' at 414,917
+touch compact-light-top: no screenshot: unexpected screencap layout: 25936 bytes for 1080x2400
+step probe-compact failed: Command '['adb', 'shell', 'wm', 'size']' returned non-zero exit status 1.
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+screenshot 13-compact-no-menu-light.png
+saved ui-compact-no-menu-light.xml
+window focus: mCurrentFocus=Window{3232f1c u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{62d2893 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t8}
+tap 'More options' at 964,2232
+tap 'Find on page' at 414,675
+screenshot 14-find-light.png
+find counter light: 0/0
+tap 'Open site information' at 711,2232
+screenshot 15-site-info-light.png
+saved ui-site-info-light.xml
+not found: ('Certificate', 'Сертификат')
+tap 'Privacy X-Ray' at 290,1706
+screenshot 16-site-info-xray-light.png
+tap 'Back' at 84,1467
+screenshot 17-site-info-fixes-light.png
+saved ui-site-info-data-light.xml
+not found: address field
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+screenshot 18-https-upgrade-light.png
+saved ui-glance-page-light.xml
+not found: link for glance
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 10-17 02:18:35.497  4316  4316 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 19-https-only-light.png
+screenshot 20-page-unknown-host-light.png
+screenshot 21-page-insecure-light.png
+screenshot 22-dangerous-site-light.png
+not found: ('Back to safety', 'Вернуться в безопасное место')
+screenshot 23-page-offline-light.png
+screenshot 24-page-back-online-light.png
+screenshot 25-workspace-locked-light.png
+tap 'Go to another workspace' at 540,2212
+screenshot 26-download-check-light.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 27-tab-overview-light.png
+saved ui-tab-overview-light.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+not found: ('New tab', 'Новая вкладка')
+saved ui-essentials-overview-light.xml
+screenshot 28-tab-overview-essentials-light.png
+saved ui-tab-overview-essentials-light.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 29-protection-card-light.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-light.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-light.xml
+screenshot 30-private-locked-light.png
+screenshot 31-permission-prompt-light.png
+tap 'Don’t allow' at 540,2212
+not found: ('Search or enter an address', 'Поиск или адрес')
+not found: address bar for voice search
+screenshot 32-voice-listening-light.png
+screenshot 33-voice-explain-light.png
+tap 'Not now' at 549,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+screenshot 34-current-dark.png
+screenshot 35-new-tab-dark.png
+screenshot 36-page-dark.png
+screenshot 37-page-scrolled-dark.png
+not found: ('More options', 'Другие действия')
+screenshot 38-compact-no-menu-dark.png
+saved ui-compact-no-menu-dark.xml
+window focus: mCurrentFocus=Window{c9e4b59 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{62d2893 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t8}
+not found: ('More options', 'Другие действия')
+not found: menu for find in page
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: site information badge
+not found: address field
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+screenshot 39-https-upgrade-dark.png
+saved ui-glance-page-dark.xml
+not found: link for glance
+not found: ('More options', 'Другие действия')
+not found: menu for split view
+https-only probe httpforever.com: 10-17 02:25:56.454  4316  4316 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 40-https-only-dark.png
+screenshot 41-page-unknown-host-dark.png
+screenshot 42-page-insecure-dark.png
+screenshot 43-dangerous-site-dark.png
+not found: ('Back to safety', 'Вернуться в безопасное место')
+screenshot 44-page-offline-dark.png
+screenshot 45-page-back-online-dark.png
+screenshot 46-workspace-locked-dark.png
+tap 'Go to another workspace' at 540,2212
+screenshot 47-download-check-dark.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 48-tab-overview-dark.png
+saved ui-tab-overview-dark.xml
+not found: workspace switcher entry
+not found: ('Add workspace', 'Добавить пространство')
+not found: add workspace
+not found: ('Add workspace', 'Добавить пространство')
+not found: ('New tab', 'Новая вкладка')
+saved ui-essentials-overview-dark.xml
+screenshot 49-tab-overview-essentials-dark.png
+saved ui-tab-overview-essentials-dark.xml
+not found: ('Tab actions', 'Действия со вкладкой')
+not found: ('Search tabs', 'Найти вкладку')
+screenshot 50-protection-card-dark.png
+not found: ('this week', 'за неделю', 'Tracker protection is on', 'Защита от трекеров')
+saved ui-protection-card-dark.xml
+not found: ('Search or enter an address', 'Поиск или адрес')
+saved ui-private-start-dark.xml
+screenshot 51-private-locked-dark.png
+screenshot 52-permission-prompt-dark.png
+tap 'Don’t allow' at 540,2212
+not found: ('Search or enter an address', 'Поиск или адрес')
+not found: address bar for voice search
+screenshot 53-voice-listening-dark.png
+screenshot 54-voice-explain-dark.png
+tap 'Not now' at 549,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+tap 'New tab' at 797,379
+screenshot 55-new-tab-a11y.png
+screenshot 56-page-a11y.png
+not found: ('More options', 'Другие действия')
+screenshot 57-page-unknown-host-a11y.png
+Cold start (am start -W, 5 runs): average 3401 ms, min 3273 ms, max 3520 ms
+Startup timeline (median of 5 runs, ms since process start):
+  ProviderCreated: 603
+  ActivityCreateStart: 801
+  ActivityCreateEnd: 1193
+  ActivityResumed: 1374
+  FirstFrame: 2348
+  BrowserScreenComposeStart: 1683
+  Composed.AddressChrome: 2074
+  Composed.FirefoxExtensionChrome: 2075
+  Composed.ModalSurfaces: 3747
+  Composed.SettingsOverlay: 3747
+  Composed.TabOverview: 3747
+  Composed.TransientOverlays: 3747
+  Composed.Viewport: 2074
+  ContentComposeStart: 1570
+Durations (median, ms):
+  Compose.AddressChrome (main): 67
+  Compose.FirefoxExtensionChrome (main): 1
+  Compose.ModalSurfaces (main): 15
+  Compose.SettingsOverlay (main): 6
+  Compose.TabOverview (main): 102
+  Compose.TransientOverlays (main): 4
+  Compose.Viewport (main): 153
+  ControllerCreate (main): 226
+  GeckoRuntimeCreate (main): 39
+  LoadFavorites (main): 0
+  LoadFilterRules (main): 1
+  LoadHistory (main): 8
+  LoadProfiles (main): 1
+  LoadSnoozedTabs (main): 0
+  LoadTabs (main): 11
+  LoadUserScripts (main): 1
+  RestoreEssentials (main): 1
+  RestoreProtectionReport (main): 4
+  TrailRedactions (main): 0
+Slowest main-thread messages in the first 15 s (worst run, ms, top 8):
+  1757: Handler (android.view.Choreographer$FrameHandler)  android.view.Choreographer$FrameDisplayEventReceiver: 0
+  690: Handler (android.app.ActivityThread$H)  null: 159
+  93: Handler (android.os.Handler)  androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1: 0
+screenshot 58-new-tab-ru.png
+screenshot 59-page-ru.png
+screenshot 60-page-scrolled-ru.png
+not found: ('More options', 'Другие действия')
+screenshot 61-compact-no-menu-ru.png
+saved ui-compact-no-menu-ru.xml
+window focus: mCurrentFocus=Window{3d0cf91 u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity}
+window focus: mFocusedApp=ActivityRecord{1b300c u0 io.github.mikespl187.vola.debug/dev.sk2andy.materialbrowser.MainActivity t15}
+tap 'More options' at 964,2232
+tap 'Find on page' at 414,686
+step find failed: Command '['adb', 'exec-out', 'screencap', '-p']' returned non-zero exit status 255.
+ui dump failed: 
+ui dump failed: 
+step site-info failed: Command '['adb', 'shell', 'input', 'tap', '540', '2256']' returned non-zero exit status 1.
+ui dump failed: 
+ui dump failed: 
+not found: address field
+not found: ('More options', 'Другие действия')
+not found: menu for reader mode
+screenshot 63-https-upgrade-ru.png
+screenshot 64-glance-ru.png
+saved ui-glance-ru.xml
+tap 'More options' at 964,2232
+tap 'Split View' at 166,939
+screenshot 65-split-view-ru.png
+saved ui-split-view-ru.xml
+tap 'Bottom tab' at 540,1645
+screenshot 66-split-view-bottom-active-ru.png
+tap 'Close Split View' at 656,1133
+https-only probe httpforever.com: 10-17 02:36:22.182 14265 14265 D VolaLoadError: onLoadError httpsOnly=true uri=https://httpforever.com/ category=3 code=163
+screenshot 67-https-only-ru.png
+screenshot 68-page-unknown-host-ru.png
+screenshot 69-page-insecure-ru.png
+screenshot 70-dangerous-site-ru.png
+tap 'Back to safety' at 540,1875
+screenshot 71-page-offline-ru.png
+screenshot 72-page-back-online-ru.png
+screenshot 73-workspace-locked-ru.png
+tap 'Go to another workspace' at 540,2212
+screenshot 74-download-check-ru.png
+tap 'Don’t download' at 309,2227
+not found: ('More options', 'Другие действия')
+not found: menu for history
+screenshot 75-tab-overview-ru.png
+saved ui-tab-overview-ru.xml
+screenshot 76-workspace-options-ru.png
+saved ui-workspace-options-ru.xml
+tap 'Add workspace' at 442,2232
+screenshot 77-workspace-new-ru.png
+tap 'All icons' at 540,1630
+screenshot 78-workspace-new-icons-ru.png
+tap 'Add workspace' at 442,2232
+tap 'Work' at 456,1356
+tap 'Coral' at 728,1132
+tap 'Create workspace' at 540,2211
+screenshot 79-workspace-swipe-ru.png
+tap 'Personal' at 106,2232
+tap 'New tab' at 974,2231
+screenshot 80-essentials-start-ru.png
+tap 'Add a site' at 540,1048
+screenshot 81-essentials-add-ru.png
+screenshot 82-essentials-ru.png
+tap 'Edit' at 908,363
+screenshot 83-essentials-edit-ru.png
+tap 'Done' at 914,280
+screenshot 84-tab-overview-essentials-ru.png
+saved ui-tab-overview-essentials-ru.xml
+tap 'Tab actions' at 996,202
+screenshot 85-tab-actions-ru.png
+tap 'More' at 540,1494
+screenshot 86-tab-actions-more-ru.png
+tap 'Search tabs' at 744,202
+screenshot 87-tab-search-ru.png
+tap 'Close search' at 996,202
+screenshot 88-protection-card-ru.png
+tap 'this week' at 447,1421
+screenshot 89-protection-report-ru.png
+tap 'Search or enter an address' at 477,2232
+tap 'Make blank tab incognito' at 696,1412
+not found: ('Don’t allow', "Don't allow", 'Не разрешать')
+screenshot 90-private-new-tab-ru.png
+screenshot 91-private-lock-row-ru.png
+tap 'Close 1 private' at 388,1653
+screenshot 92-private-closed-ru.png
+screenshot 93-private-locked-ru.png
+screenshot 94-permission-prompt-ru.png
+tap 'Don’t allow' at 540,2212
+not found: ('Search or enter an address', 'Поиск или адрес')
+not found: address bar for voice search
+screenshot 95-voice-listening-ru.png
+screenshot 96-voice-explain-ru.png
+tap 'Not now' at 469,1487
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: ('More options', 'Другие действия')
+not found: menu for the Air layout
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site air-wikipedia: address bar not found
+not found: ('Search or enter an address', 'Поиск или адрес')
+open site air-local: address bar not found
+touch air-top: no screenshot: unexpected screencap layout: 1128848 bytes for 1080x2400
+step probe-air failed: Command '['adb', 'shell', 'wm', 'size']' returned non-zero exit status 1.
+ui dump failed: 
+ui.v5 = true
+screenshot 97-v5-new-tab-light.png
+screenshot 98-v5-page-light.png
+step v5-page failed: Command '['adb', 'exec-out', 'screencap', '-p']' returned non-zero exit status 255.
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-find-menu-light
+ui dump failed: 
+ui dump failed: 
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: v5 shield
+ui dump failed: 
+ui dump failed: 
+not found: ('en.wikipedia.org',)
+not found: v5 address capsule
+ui dump failed: 
+ui dump failed: 
+not found: ('Open tab overview', 'Открыть обзор вкладок')
+not found: v5 tab button
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-history-menu-light
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-favorites-menu-light
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-downloads-menu-light
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-settings-menu-light
+ui dump failed: 
+screenshot 100-v5-private-tab-light.png
+ui.v5 = true
+screenshot 101-v5-new-tab-dark.png
+step v5-page failed: Command '['adb', 'exec-out', 'screencap', '-p']' returned non-zero exit status 255.
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-find-menu-dark
+ui dump failed: 
+ui dump failed: 
+not found: ('Open site information', 'Открыть сведения о сайте')
+not found: v5 shield
+ui dump failed: 
+ui dump failed: 
+not found: ('en.wikipedia.org',)
+not found: v5 address capsule
+ui dump failed: 
+ui dump failed: 
+not found: ('Open tab overview', 'Открыть обзор вкладок')
+not found: v5 tab button
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-history-menu-dark
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-favorites-menu-dark
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-downloads-menu-dark
+ui dump failed: 
+ui dump failed: 
+not found: ('More options', 'Другие действия')
+not found: v5 menu for v5-settings-menu-dark
+ui dump failed: 
+screenshot 103-v5-private-tab-dark.png
+ui.v5 = false
