@@ -105,6 +105,10 @@ object V5Sizes {
     val toggleThumb: Dp = 27.dp
     val toggleThumbInset: Dp = 2.dp
 
+    // Slider (canvas screen «ц3»): a 4 dp track and the toggle's white 28 dp knob, as on iOS.
+    val sliderTrack: Dp = 4.dp
+    val sliderThumb: Dp = 28.dp
+
     // Icons (section 6): next to 17 sp text, next to 15-12 sp text, the cap at 200 % font.
     val icon: Dp = 24.dp
     val iconSmall: Dp = 20.dp
