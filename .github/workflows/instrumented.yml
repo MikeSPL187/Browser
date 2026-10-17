@@ -28,6 +28,13 @@ on:
         type: choice
         options: [full, systemwebview]
         default: full
+      api_level:
+        description: >-
+          Emulator Android version. 37 runs the tests that need Android 17, such as picture in
+          picture with YouTube (GeckoPictureInPicture); filter to their class, the rest is for 35.
+        type: choice
+        options: ["35", "37"]
+        default: "35"
 
 permissions:
   contents: read
@@ -46,6 +53,8 @@ env:
   FLAVOR: >-
     ${{ (github.event.inputs.flavor == 'systemwebview' || github.event.schedule == '53 2 * * *')
     && 'Systemwebview' || 'Full' }}
+  # The emulator's system image: API 35 unless a manual run asks for 37.
+  SYSTEM_IMAGE: system-images;android-${{ github.event.inputs.api_level || '35' }};google_apis;x86_64
   # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
   # eight shards keep each one well under the 16 GB a hosted runner has.
   SHARDS: 8
@@ -93,7 +102,7 @@ jobs:
               "emulator" \
               "platform-tools" \
               "platforms;android-37.2" \
-              "system-images;android-35;google_apis;x86_64"; then
+              "$SYSTEM_IMAGE"; then
               break
             fi
             if [ "$attempt" -eq 3 ]; then
@@ -106,7 +115,7 @@ jobs:
           printf 'no\n' | avdmanager create avd \
             --force \
             --name vola_test \
-            --package "system-images;android-35;google_apis;x86_64" \
+            --package "$SYSTEM_IMAGE" \
             --device pixel_6
           sudo chmod 666 /dev/kvm
           echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
