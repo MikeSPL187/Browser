@@ -78,7 +78,7 @@ internal fun BrowserSyncSettingsV5(
     onBack: () -> Unit,
     onOpenTabOverview: () -> Unit = {},
     onOpenFavorites: () -> Unit = {},
-    /** Opens a page in a new tab and leaves Settings: another device's tab. */
+    /** Opens another device's tab as a new ordinary tab and leaves Settings. */
     onOpenUrl: (String) -> Unit = {},
 ) {
     var page by rememberSaveable { mutableStateOf(BrowserSyncRules.Page.Main) }
