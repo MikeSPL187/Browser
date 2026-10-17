@@ -111,7 +111,8 @@ internal class GeckoPageTranslation(
             translationState: SessionTranslation.TranslationState?,
         ) {
             translationState ?: return
-            // A language set to «always» is translated by Gecko itself, without [translate].
+            // A language set to «always» is translated by Gecko itself, without [translate]; the
+            // language is stored once the translation starts, so every later state clears it too.
             if (isPrivate && translationState.requestedTranslationPair != null) {
                 GeckoTranslationPrivacy.forgetTargetLanguages()
             }
@@ -174,14 +175,14 @@ internal class GeckoTranslationModels : TranslationModelsPort {
         if (languageCode.isBlank()) return onResult(PageTranslationResult.Failed(PageTranslationError.LanguageNotSupported))
         val apply = {
             GeckoTranslationResults.deliver(mainHandler, onResult) {
-                RuntimeTranslation.setLanguageSettings(
-                    languageCode,
-                    when (setting) {
-                        TranslationLanguageSetting.Always -> RuntimeTranslation.ALWAYS
-                        TranslationLanguageSetting.Offer -> RuntimeTranslation.OFFER
-                        TranslationLanguageSetting.Never -> RuntimeTranslation.NEVER
-                    },
-                )
+                when (setting) {
+                    TranslationLanguageSetting.Always ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.ALWAYS)
+                    TranslationLanguageSetting.Offer ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.OFFER)
+                    TranslationLanguageSetting.Never ->
+                        RuntimeTranslation.setLanguageSettings(languageCode, RuntimeTranslation.NEVER)
+                }
             }
         }
         if (setting != TranslationLanguageSetting.Always) return apply()
