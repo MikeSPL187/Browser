@@ -19,8 +19,8 @@ on:
     inputs:
       filter:
         description: >-
-          Package (dev.sk2andy.materialbrowser.ui) or class, optionally #method; several classes
-          separated by commas. Empty runs everything.
+          Package (dev.sk2andy.materialbrowser.ui) or class, optionally #method; several entries
+          separated by commas, each run on its own. Empty runs everything.
         required: false
         default: ""
       flavor:
@@ -195,13 +195,6 @@ jobs:
             -Pandroid.testInstrumentationRunnerArguments.numShards="$SHARDS"
             -Pandroid.testInstrumentationRunnerArguments.shardIndex="$SHARD"
           )
-          if [[ -n "$FILTER" ]]; then
-            if [[ "$FILTER" =~ ^[a-z0-9_.]+$ ]]; then
-              args+=(-Pandroid.testInstrumentationRunnerArguments.package="$FILTER")
-            else
-              args+=(-Pandroid.testInstrumentationRunnerArguments.class="$FILTER")
-            fi
-          fi
           adb logcat -c || true
           nohup adb logcat -v threadtime > "$RUNNER_TEMP/logcat.txt" 2>&1 &
           # Gradle prints nothing until the shard ends. Show each test as it starts and ends, and
@@ -228,10 +221,28 @@ jobs:
           }
           # Failing tests are judged by the Report job against the baseline; this step fails only
           # when the shard produced no results at all.
-          ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" "${args[@]}" || true
+          # With the orchestrator a comma-separated class list ran only its first class (run
+          # 39043135809), so a manual filter runs one Gradle call per entry, results side by side.
           first="$RUNNER_TEMP/first-results"
           rm -rf "$first"
-          cp -r app/build/outputs/androidTest-results "$first" 2>/dev/null || true
+          mkdir -p "$first"
+          filters=("")
+          if [[ -n "$FILTER" ]]; then IFS=',' read -r -a filters <<< "${FILTER// /}"; fi
+          index=0
+          for entry in "${filters[@]}"; do
+            index=$((index + 1))
+            filter_args=()
+            if [[ "$entry" =~ ^[a-z0-9_.]+$ ]]; then
+              filter_args=(-Pandroid.testInstrumentationRunnerArguments.package="$entry")
+            elif [[ -n "$entry" ]]; then
+              filter_args=(-Pandroid.testInstrumentationRunnerArguments.class="$entry")
+            fi
+            if (( index > 1 )); then ensure_device "the filter entry $entry" < /dev/null; fi
+            rm -rf app/build/outputs/androidTest-results
+            ./gradlew --no-daemon --stacktrace "connected${FLAVOR}DebugAndroidTest" \
+              "${args[@]}" "${filter_args[@]}" < /dev/null || true
+            cp -r app/build/outputs/androidTest-results "$first/$index" 2>/dev/null || true
+          done
           # A new failure gets one rerun on its own; the Report job lists it as flaky when the
           # rerun passes. Known failures are not rerun, and a long list means a real breakage.
           # One Gradle call per test: with the orchestrator, a comma-separated class list ran
