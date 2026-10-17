@@ -118,7 +118,7 @@ data class V5EditorState(
 )
 
 @Composable
-fun V5AddressEditor(
+internal fun V5AddressEditor(
     state: V5EditorState,
     onValueChange: (TextFieldValue) -> Unit,
     onSubmit: (String) -> Unit,
@@ -128,6 +128,8 @@ fun V5AddressEditor(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     onHighlight: (AddressSuggestionItem?) -> Unit = {},
+    /** A command's answer, a line right above the field while the editor stays open. */
+    notice: V5CommandNotice? = null,
 ) {
     val colors = V5Theme.colors
     // A first step of the morph (V9b draws the capsule stretching out of the bar): the editor rises
@@ -177,6 +179,7 @@ fun V5AddressEditor(
                         .fillMaxWidth(),
                 )
             }
+            V5CommandNoticeAccessory(notice)
             EditorField(
                 state = state,
                 onValueChange = onValueChange,
