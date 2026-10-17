@@ -85,6 +85,10 @@ import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditV5
 import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
@@ -250,6 +254,8 @@ class PasswordsActivity : FragmentActivity() {
         }
         val logins = remember(model.revision, lockGeneration, route) { vault.allLogins() }
         val message = model.message?.let { stringResource(it) }
+        // Canvas «ц4»–«ц7»: on the phone under v5 the vault's pages are v5 (the tablet keeps these).
+        val v5 = rememberSettingsUiV5()
         BackHandler { back(route) }
         when (route) {
             PasswordsRoute.Intro -> PasswordsIntroScreen(model.busy, message, ::startSetup, ::finish)
@@ -265,7 +271,16 @@ class PasswordsActivity : FragmentActivity() {
                 onCheck = { answers -> confirm(route, answers) },
                 onBack = { back(route) },
             )
-            PasswordsRoute.Locked -> PasswordsLockedScreen(
+            PasswordsRoute.Locked -> if (v5) {
+                PasswordsLockedV5(
+                    busy = model.busy,
+                    message = message,
+                    onUnlock = ::unlock,
+                    onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
+                    onBack = ::finish,
+                    onErase = ::eraseVault,
+                )
+            } else PasswordsLockedScreen(
                 busy = model.busy,
                 message = message,
                 onUnlock = ::unlock,
@@ -274,7 +289,29 @@ class PasswordsActivity : FragmentActivity() {
                 onErase = ::eraseVault,
             )
             is PasswordsRoute.Recover -> RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
-            PasswordsRoute.Logins -> PasswordsListScreen(
+            PasswordsRoute.Logins -> if (v5) {
+                PasswordsListV5(
+                    logins = logins,
+                    onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
+                    onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
+                    onLock = ::lockNow,
+                    onBack = ::finish,
+                    systemFillNote = systemFillOnly,
+                    passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
+                    healthIssues = remember(logins, model.breaches) {
+                        PasswordHealthRules.report(logins, model.breaches).needsAttention
+                    },
+                    onHealth = { use { model.route = PasswordsRoute.Health } },
+                    onImport = {
+                        use {
+                            model.launchedForImport = false
+                            model.route = PasswordsRoute.Import
+                        }
+                    },
+                    busy = model.busy,
+                    onTurnOff = ::eraseVault,
+                )
+            } else PasswordsListScreen(
                 logins = logins,
                 onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
                 onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
@@ -361,6 +398,18 @@ class PasswordsActivity : FragmentActivity() {
                 val login = logins.firstOrNull { it.id == route.id }
                 if (login == null) {
                     LaunchedEffect(route) { model.route = PasswordsRoute.Logins }
+                } else if (v5) {
+                    PasswordDetailV5(
+                        login = login,
+                        onCopyUsername = { use { copy(login.username) } },
+                        onCopyPassword = { use { copy(login.password) } },
+                        onEdit = { use { model.route = PasswordsRoute.Edit(login.id) } },
+                        onDelete = { delete(login.id) },
+                        onBack = { back(route) },
+                        onCopyCode = { code -> use { copy(code) } },
+                        onSetTotp = { input -> setTotp(login.id, input) },
+                        onRemoveTotp = { writeTotp(login.id, null) },
+                    )
                 } else {
                     PasswordDetailScreen(
                         login = login,
@@ -375,7 +424,15 @@ class PasswordsActivity : FragmentActivity() {
                     )
                 }
             }
-            is PasswordsRoute.Edit -> PasswordEditScreen(
+            is PasswordsRoute.Edit -> if (v5) {
+                PasswordEditV5(
+                    initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
+                    error = route.error,
+                    busy = model.busy,
+                    onSave = { site, username, password -> save(route, site, username, password) },
+                    onBack = { back(route) },
+                )
+            } else PasswordEditScreen(
                 initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
                 error = route.error,
                 busy = model.busy,
