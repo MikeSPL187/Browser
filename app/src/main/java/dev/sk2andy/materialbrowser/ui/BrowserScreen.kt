@@ -1761,6 +1761,10 @@ internal fun BrowserScreen(
             onDismiss = { moveTabToProfileId = null },
         )
 
+        val leaveSettings: (() -> Unit) -> Unit = { then ->
+            settingsVisible = false
+            then()
+        }
         if (afterFirstFrame || settingsVisible) StartupComposition("SettingsOverlay") { BrowserSettingsOverlay(
             controller = controller,
             visible = settingsVisible,
@@ -1792,14 +1796,10 @@ internal fun BrowserScreen(
             },
             onExportAppData = onExportAppData,
             onImportAppData = onImportAppData,
-            onShowGestureOnboarding = {
-                settingsVisible = false
-                onShowGestureOnboarding()
-            },
-            onShowReleaseNotes = {
-                settingsVisible = false
-                onShowReleaseNotes()
-            },
+            onShowGestureOnboarding = { leaveSettings(onShowGestureOnboarding) },
+            onShowReleaseNotes = { leaveSettings(onShowReleaseNotes) },
+            onOpenTabOverview = { leaveSettings(openTabOverview) },
+            onOpenFavorites = { leaveSettings(onOpenFavorites) },
             onClearData = { clearDialogVisible = true },
             onOpenLegalUrl = { url ->
                 settingsVisible = false

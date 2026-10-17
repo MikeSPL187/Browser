@@ -122,6 +122,8 @@ internal fun V5NameField(
     password: Boolean = false,
     /** A name starts with a capital; a site's answer or a user name does not. */
     capitalize: Boolean = true,
+    /** An address takes the address keyboard; null picks the text or password one. */
+    keyboardType: KeyboardType? = null,
 ) {
     val colors = V5Theme.colors
     Box(
@@ -146,7 +148,7 @@ internal fun V5NameField(
             keyboardOptions = KeyboardOptions(
                 capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
                 autoCorrectEnabled = !password && capitalize,
-                keyboardType = if (password) KeyboardType.Password else KeyboardType.Text,
+                keyboardType = keyboardType ?: if (password) KeyboardType.Password else KeyboardType.Text,
                 imeAction = ImeAction.Done,
             ),
             visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,

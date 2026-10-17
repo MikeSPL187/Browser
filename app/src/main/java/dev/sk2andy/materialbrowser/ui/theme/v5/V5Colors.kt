@@ -97,6 +97,8 @@ object V5SyncColors {
     val scanInk = Color(0xFFFFFFFF)
     val scanInkSoft = Color(0xCCFFFFFF)
     val codePaper = Color(0xFFFFFFFF)
+    /** The code's modules: near black on white paper in both themes, as the canvas draws it. */
+    val codeInk = Color(0xFF111111)
 }
 
 /** Control colors that do not change with the theme: the toggle thumb is white in both, as on the canvas. */

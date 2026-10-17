@@ -144,6 +144,10 @@ object V5Sizes {
     val passwordStatus: Dp = 44.dp
     val passwordStatusIcon: Dp = 28.dp
 
+    // Own server sync (canvas screen «х2»): the status mark beside «Synced».
+    val syncStatus: Dp = 44.dp
+    val syncStatusIcon: Dp = 28.dp
+
     // First run (canvas screen «п1»): Vola's mark on its accent tile.
     val firstRunMark: Dp = 88.dp
     val firstRunMarkIcon: Dp = 40.dp

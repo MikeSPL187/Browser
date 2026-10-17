@@ -33,4 +33,11 @@ class V5SyncRulesTest {
         assertEquals(R.string.v5_sync_error_camera_hint, V5SyncRules.scanMessage(V5SyncScanStatus.NoCamera))
         assertNull(V5SyncRules.scanMessage(V5SyncScanStatus.Receiving))
     }
+
+    @Test
+    fun confirmNamesOnlyWhatTheTransferBrings() {
+        assertEquals("2 tabs, 3 bookmarks", V5SyncRules.confirmMessage("2 tabs", "3 bookmarks", true, true, "none"))
+        assertEquals("3 bookmarks", V5SyncRules.confirmMessage("0 tabs", "3 bookmarks", false, true, "none"))
+        assertEquals("none", V5SyncRules.confirmMessage("0 tabs", "0 bookmarks", false, false, "none"))
+    }
 }
