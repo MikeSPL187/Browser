@@ -151,8 +151,8 @@ fun V5SyncShowCode(
 fun V5SyncScan(
     status: V5SyncScanStatus,
     onClose: () -> Unit,
-    viewfinder: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    viewfinder: @Composable () -> Unit,
 ) {
     Box(
         modifier
