@@ -15,6 +15,7 @@ import dev.sk2andy.materialbrowser.browser.translation.PageTranslationResult
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5TranslateInto
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateRules
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheet
@@ -46,7 +47,8 @@ internal fun BrowserTranslateSheetV5(
     LaunchedEffect(visible) {
         if (visible && languages == null) translation.languages { languages = it }
     }
-    val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), locale.language)
+    val preferredTarget = rememberV5TranslateInto().ifEmpty { null }
+    val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), preferredTarget, locale.language)
     var fromCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.from) }
     var toCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.to) }
     var downloadBytes by remember { mutableStateOf<Long?>(null) }
@@ -130,14 +132,20 @@ internal object BrowserTranslateRules {
         onDeviceTranslation && (url.startsWith("https://") || url.startsWith("http://"))
 
     /**
-     * The languages the sheet opens with: the pair asked for last, else the one the engine suggests,
-     * else the page's detected language into the one the user reads (the app's, at worst).
+     * The languages the sheet opens with: the pair asked for last, else the page's language as the
+     * engine suggests or detected it into [preferredTarget] (Settings → Translation), else into the
+     * language the engine suggests, the user reads, or the app's, at worst.
      */
-    fun initialPair(ui: OnDeviceTranslationUiState, suggested: TranslationPair?, appLanguage: String): Codes {
+    fun initialPair(
+        ui: OnDeviceTranslationUiState,
+        suggested: TranslationPair?,
+        preferredTarget: String?,
+        appLanguage: String,
+    ): Codes {
         val last = ui.pair ?: ui.page.requested
         return Codes(
             from = last?.from ?: suggested?.from ?: ui.page.pageLanguage,
-            to = last?.to ?: suggested?.to ?: ui.page.userLanguage ?: appLanguage,
+            to = last?.to ?: preferredTarget ?: suggested?.to ?: ui.page.userLanguage ?: appLanguage,
         )
     }
 

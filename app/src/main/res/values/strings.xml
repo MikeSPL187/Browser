@@ -2185,6 +2185,7 @@
     <string name="v5_translate_original">Original</string>
     <string name="v5_translated_hide">Hide</string>
     <string name="v5_translation_settings_title">Translation</string>
+    <string name="v5_translation_settings_summary">Languages and packs on the phone</string>
     <string name="v5_translation_offer">Offer translation in the menu</string>
     <string name="v5_translation_offer_hint">When a page isn’t in your language</string>
     <string name="v5_translation_into">Translate into</string>
