@@ -53,8 +53,8 @@ env:
   FLAVOR: >-
     ${{ (github.event.inputs.flavor == 'systemwebview' || github.event.schedule == '53 2 * * *')
     && 'Systemwebview' || 'Full' }}
-  # The emulator's system image: API 35 unless a manual run asks for 37.
-  SYSTEM_IMAGE: system-images;android-${{ github.event.inputs.api_level || '35' }};google_apis;x86_64
+  # The emulator's Android version: 35 unless a manual run asks for 37.
+  API_LEVEL: ${{ github.event.inputs.api_level || '35' }}
   # The runner's memory grows through a shard (emulator graphics, about 7 GB over 250 tests);
   # eight shards keep each one well under the 16 GB a hosted runner has.
   SHARDS: 8
@@ -96,6 +96,22 @@ jobs:
           export ANDROID_AVD_HOME="$RUNNER_TEMP/vola-avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          SYSTEM_IMAGE="system-images;android-35;google_apis;x86_64"
+          if [ "$API_LEVEL" != "35" ]; then
+            # Since Android 16 images carry a minor version (android-37.2), and which ones exist
+            # changes with each release: take the newest Google APIs x86_64 image of the level.
+            images="$(sdkmanager --list 2>/dev/null \
+              | grep -oE "system-images;android-${API_LEVEL}(\.[0-9]+)?;[a-z0-9_]+;x86_64" \
+              | sort -uV)"
+            echo "x86_64 system images for API $API_LEVEL:"
+            echo "${images:-none}"
+            SYSTEM_IMAGE="$(echo "$images" | grep -E ";google_apis;" | tail -n 1)"
+            if [ -z "$SYSTEM_IMAGE" ]; then
+              echo "::error::No Google APIs x86_64 system image for API $API_LEVEL in the SDK"
+              exit 1
+            fi
+          fi
+          echo "SYSTEM_IMAGE=$SYSTEM_IMAGE" >> "$GITHUB_ENV"
           # The SDK mirror sometimes cuts a download short: drop the partial file and retry.
           for attempt in 1 2 3; do
             if sdkmanager \
