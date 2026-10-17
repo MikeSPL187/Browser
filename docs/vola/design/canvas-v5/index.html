@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..500,0..1,-25..0&icon_names=add,arrow_back,arrow_forward,article,backspace,battery_full,bolt,bookmark,cancel,check_circle,chevron_right,close,content_copy,cookie,description,do_not_disturb_on,domino_mask,download,error,expand_more,find_in_page,fingerprint,folder,format_color_fill,format_size,group,headphones,history,image,info,key,keyboard_arrow_down,keyboard_arrow_up,keyboard_capslock,left_panel_close,left_panel_open,lock,menu_book,mic,more_horiz,north_west,open_in_browser,open_in_full,palette,pause,picture_as_pdf,public,push_pin,radar,record_voice_over,refresh,restart_alt,rule_settings,save,search,settings,share,shield,signal_cellular_alt,stop,swipe,swipe_up,sync,tab,text_fields,touch_app,translate,travel_explore,tune,visibility_off,wifi&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..500,0..1,-25..0&icon_names=add,arrow_back,arrow_forward,article,backspace,battery_full,bolt,bookmark,cancel,check_circle,chevron_right,close,cloud,cloud_done,content_copy,cookie,description,devices,do_not_disturb_on,domino_mask,download,error,expand_more,find_in_page,fingerprint,folder,format_color_fill,format_size,group,headphones,history,image,info,key,keyboard_arrow_down,keyboard_arrow_up,keyboard_capslock,left_panel_close,left_panel_open,lock,menu_book,mic,more_horiz,north_west,open_in_browser,open_in_full,palette,pause,picture_as_pdf,public,push_pin,radar,record_voice_over,refresh,restart_alt,rule_settings,save,search,settings,share,shield,signal_cellular_alt,stop,swipe,swipe_up,sync,tab,tablet_android,text_fields,touch_app,translate,travel_explore,tune,visibility_off,wifi&display=block">
 <style>
 /* ===== Tokens: light (default) ===== */
 :root{
@@ -518,6 +518,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 <main class="wrap">
   <div class="intro">
     <h1>Vola v5 — холст на утверждение</h1>
+    <p><b>Версия 7 (17.10):</b> добавлен экран «х» — синхронизация через свой сервер WebDAV (V27), на утверждение; «ф» утверждён 17.10.</p>
     <p><b>Версия 6 (17.10):</b> добавлен экран «ф» — синхронизация по QR (V26), на утверждение; «у» утверждён 17.10.</p>
     <p><b>Версия 5 (17.10):</b> добавлен экран «у» — проверка паролей (V24).</p>
     <p><b>Версия 4 (17.10):</b> добавлен экран «т» — перевод на устройстве (V23).</p>
@@ -529,7 +530,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <a href="#s-a">а · Новая вкладка</a><a href="#s-b">б · Страница</a><a href="#s-c">в · Ввод адреса</a>
       <a href="#s-d">г · Обзор</a><a href="#s-e">д · Меню</a><a href="#s-f">е · Защита</a>
       <a href="#s-g">ж · Настройки</a><a href="#s-h">з · Частный</a><a href="#s-i">и · Планшет</a>
-      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#s-ph">ф · Синхронизация по QR</a><a href="#system">Система</a>
+      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#s-ph">ф · Синхронизация по QR</a><a href="#s-kh">х · Свой сервер</a><a href="#system">Система</a>
     </nav>
   </div>
 
@@ -712,6 +713,17 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph1"></div></div><figcaption><b>Отдать.</b> Настройки → Синхронизация → «Показать код». Что уйдёт — названо до переноса; код обновляется сам, пока экран открыт.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph2"></div></div><figcaption><b>Принять.</b> «Считать код» на втором устройстве: рамка и подсказка; фонарик не нужен — QR на экране светится сам. Разрешение на камеру спрашивается здесь, при первом входе.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph3"></div></div><figcaption><b>Готово.</b> Вкладки — новой группой с именем устройства, закладки — в «Избранное» без повторов. Отменить можно сразу, одной кнопкой.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="scn" id="s-kh">
+    <h2><small>х</small>Синхронизация через свой сервер</h2>
+    <p class="lede">На утверждение. <b>Вкладки и закладки</b> живут на вашем сервере WebDAV или Nextcloud — <b>в зашифрованном виде</b>: ключ получается из фразы, которую знаете только вы, и сервер видит лишь зашифрованные файлы (решения владельца 17.10). Синхронизация — <b>при открытии Vola, при уходе из неё и по кнопке</b>, без работы в фоне. В v5 это место прежнего «Сервера синхронизации»; перенос по QR остаётся рядом.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh1"></div></div><figcaption><b>Подключение.</b> Настройки → Синхронизация → «Свой сервер». Адрес, логин и пароль приложения; затем фраза дважды и прямое предупреждение: забытую фразу не восстановить. «Подключить» доступна, когда всё заполнено и фразы совпадают; только HTTPS.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh2"></div></div><figcaption><b>Подключено.</b> Когда синхронизировалось и с каким сервером, «Синхронизировать сейчас». Ниже — вкладки других ваших устройств, как в Safari; закладки просто общие. «Отключить» оставляет данные на сервере; удалить их — отдельным подтверждением.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh3"></div></div><figcaption><b>Вкладки устройства.</b> Нажатие открывает страницу новой вкладкой здесь; на том устройстве ничего не меняется.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh4"></div></div><figcaption><b>Фраза не подходит.</b> На сервере уже есть данные Vola с другой фразой — ничего не перезаписано. Ввести ту же фразу, что на первом устройстве, или начать заново (удаляет данные Vola на сервере, после подтверждения). Нет сервера и отказ во входе — та же карточка со своим текстом.</figcaption></figure>
     </div>
   </section>
 
@@ -1264,6 +1276,37 @@ S.ph3=()=>sbar()+`<div style="padding:40px 16px 0">${syncTop('Синхрониз
 <div class="grp sq" style="margin-top:28px"><div class="rw"><span class="it" style="background:${TILE.blue}">${I('tab','s20')}</span><div class="tx t-body">Группа «Pixel Анны»</div><span class="val">12</span>${I('chevron_right','s20 chev')}</div><div class="rw"><span class="it" style="background:${TILE.amber}">${I('bookmark','s20 f')}</span><div class="tx t-body">Избранное</div><span class="val">+30</span>${I('chevron_right','s20 chev')}</div></div>
 <span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:18px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">Готово</span>
 <div style="text-align:center;margin-top:10px"><span class="acc" style="font:400 17px/22px Inter">Отменить перенос</span></div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+const khTop=(t,a)=>`<div style="height:44px;display:flex;align-items:center;margin-left:-8px"><span class="tbtn" style="color:var(--acc)">${I('arrow_back','w5')}</span><div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">${t}</div>${a?`<span style="margin-left:auto;font:600 17px/22px Inter;color:${a[1]?'var(--acc)':'var(--l3)'}">${a[0]}</span>`:''}</div>`;
+const khField=(label,value,dim)=>`<div class="rw noi" style="min-height:52px"><div class="t-body" style="width:96px;flex:none">${label}</div><div class="t-body ell" style="flex:1;min-width:0;color:${dim?'var(--l3)':'var(--l1)'}">${value}</div></div>`;
+const khTab=(c,t,d)=>`<div class="rw"><span class="it" style="background:${c}">${I('public','s20')}</span><div class="tx"><div class="t-body ell">${t}</div><div class="t-foot l2">${d}</div></div></div>`;
+S.kh1=()=>sbar()+`<div style="padding:40px 16px 0">${khTop('Свой сервер',['Подключить',true])}
+<div class="t-foot l2" style="padding:14px 16px 6px">СЕРВЕР WEBDAV ИЛИ NEXTCLOUD</div>
+<div class="grp sq">${khField('Адрес','https://cloud.anna.ru')}${khField('Логин','anna')}${khField('Пароль','••••••••••••••••')}</div>
+<div class="t-foot l2" style="padding:8px 16px 0">Для Nextcloud — пароль приложения: Настройки → Безопасность → «Создать пароль приложения». Только HTTPS.</div>
+<div class="t-foot l2" style="padding:22px 16px 6px">ФРАЗА ДЛЯ ШИФРОВАНИЯ</div>
+<div class="grp sq">${khField('Фраза','••••••••••••••••••••')}${khField('Ещё раз','••••••••••••••••••••')}</div>
+<div class="grp sq" style="margin-top:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--warn);margin-top:1px">${I('key','s20 f')}</span><div class="t-call">Фразу знаете только вы — сервер её не получает. <b>Если её забыть, данные с сервера не восстановить.</b> На других устройствах введите ту же фразу.</div></div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.kh2=()=>sbar()+`<div style="padding:40px 16px 0">${khTop('Синхронизация')}
+<div class="grp sq" style="margin-top:12px;padding:16px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">${I('cloud_done','s28 f')}</span><div style="flex:1;min-width:0"><div class="t-title">Синхронизировано</div><div class="t-foot l2 ell">Сегодня в 13:42 · cloud.anna.ru</div></div></div>
+<div class="grp sq" style="margin-top:10px"><div class="rw"><span class="it" style="background:${TILE.cyan}">${I('sync','s20')}</span><div class="tx t-body acc">Синхронизировать сейчас</div></div></div>
+<div class="t-foot l2" style="padding:22px 16px 6px">ВКЛАДКИ НА ДРУГИХ УСТРОЙСТВАХ</div>
+<div class="grp sq"><div class="rw"><span class="it" style="background:${TILE.indigo}">${I('tablet_android','s20')}</span><div class="tx"><div class="t-body">Планшет Анны</div><div class="t-foot l2">8 вкладок · сегодня в 12:10</div></div>${I('chevron_right','s20 chev')}</div><div class="rw"><span class="it" style="background:${TILE.indigo}">${I('devices','s20')}</span><div class="tx"><div class="t-body">Pixel 7</div><div class="t-foot l2">3 вкладки · вчера</div></div>${I('chevron_right','s20 chev')}</div></div>
+<div class="t-foot l2" style="padding:8px 16px 0">Закладки общие для всех устройств. Синхронизация — при открытии Vola, при уходе из неё и по кнопке; в фоне не работает.</div>
+<div class="t-foot l2" style="padding:22px 16px 6px">НА ДРУГОЕ УСТРОЙСТВО</div>
+<div class="grp sq"><div class="rw"><span class="it" style="background:${TILE.blue}">${I('share','s20')}</span><div class="tx t-body">Показать код</div>${I('chevron_right','s20 chev')}</div><div class="rw"><span class="it" style="background:${TILE.green}">${I('download','s20')}</span><div class="tx t-body">Считать код</div>${I('chevron_right','s20 chev')}</div></div>
+<div class="grp sq" style="margin-top:22px"><div class="rw"><div class="tx t-body" style="color:var(--danger)">Отключить</div></div></div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.kh3=()=>sbar()+`<div style="padding:40px 16px 0">${khTop('Планшет Анны')}
+<div class="grp sq" style="margin-top:12px">${khTab(TILE.red,'Как устроены пружины в Compose','developer.android.com')}${khTab(TILE.teal,'Nextcloud — Пароли приложений','docs.nextcloud.com')}${khTab(TILE.orange,'Рецепт: сырники на рисовой муке','eda.ru')}${khTab(TILE.blue,'Расписание электричек','yandex.ru')}${khTab(TILE.violet,'Inter — шрифт для экранов','rsms.me')}${khTab(TILE.gray,'GeckoView: TranslationsController','firefox-source-docs.mozilla.org')}</div>
+<div class="t-foot l2" style="padding:8px 16px 0">Обновлено сегодня в 12:10, когда на «Планшете Анны» закрыли Vola.</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.kh4=()=>sbar()+`<div style="padding:40px 16px 0">${khTop('Свой сервер')}
+<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 24px 0;gap:10px"><span style="width:72px;height:72px;border-radius:36px;display:grid;place-items:center;background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)">${I('key','s40 f')}</span><div class="t-title" style="margin-top:6px">Фраза не подходит</div><div class="t-call l2">На cloud.anna.ru уже есть данные Vola, зашифрованные другой фразой. Введите ту же фразу, что на первом устройстве. Ничего не перезаписано.</div></div>
+<span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:28px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">Ввести фразу ещё раз</span>
+<div style="text-align:center;margin-top:14px"><span style="font:400 17px/22px Inter;color:var(--danger)">Начать заново</span></div>
+<div class="t-foot l2" style="text-align:center;padding:10px 24px 0">Удалит данные Vola на сервере для всех устройств — после подтверждения.</div>
 </div><div class="gh" style="color:var(--l1)"></div>`;
 function renderStatic(){for(const k of Object.keys(S)){const el=document.getElementById('scr-'+k);if(el)el.innerHTML=S[k]()}}
 
