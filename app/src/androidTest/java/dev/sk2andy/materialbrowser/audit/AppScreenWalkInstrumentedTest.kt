@@ -1100,7 +1100,8 @@ class AppScreenWalkInstrumentedTest(
         private val v5SettingsPages = listOf(
             R.string.sync_settings_title,
             R.string.settings_section_search,
-            R.string.settings_tabs_gestures_title,
+            // Its gestures are the v5 interface's own, so the row is just «Tabs».
+            R.string.settings_section_tabs,
             R.string.settings_appearance_title,
             R.string.settings_section_browser,
             R.string.v5_translation_settings_title,
