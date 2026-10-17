@@ -266,6 +266,7 @@ figcaption b{color:var(--doc-t);font-weight:600}
 .rw .chev{color:var(--l3)}
 .it{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;flex:none}
 .it.n{background:var(--sf2);color:var(--l1)}
+.sl{position:relative;height:28px;flex:1;min-width:0}.sl i{position:absolute;left:0;right:0;top:12px;height:4px;border-radius:2px;background:var(--sf3)}.sl b{position:absolute;left:0;top:12px;height:4px;border-radius:2px;background:var(--acc-fill)}.sl u{position:absolute;top:0;width:28px;height:28px;margin-left:-14px;border-radius:14px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.22),0 0 0 .5px rgba(0,0,0,.06)}
 .sw{width:51px;height:31px;border-radius:16px;background:var(--sf3);position:relative;flex:none}
 .sw::after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2)}
 .sw.on{background:var(--ok)}.sw.on::after{left:22px}
@@ -518,6 +519,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 <main class="wrap">
   <div class="intro">
     <h1>Vola v5 — холст на утверждение</h1>
+    <p><b>Версия 8 (17.10):</b> добавлен экран «ц» — последние места телефона, где ещё Material: уведомления «Отменить», ползунок, менеджер паролей; на утверждение.</p>
     <p><b>Версия 7 (17.10):</b> добавлен экран «х» — синхронизация через свой сервер WebDAV (V27), на утверждение; «ф» утверждён 17.10.</p>
     <p><b>Версия 6 (17.10):</b> добавлен экран «ф» — синхронизация по QR (V26), на утверждение; «у» утверждён 17.10.</p>
     <p><b>Версия 5 (17.10):</b> добавлен экран «у» — проверка паролей (V24).</p>
@@ -530,7 +532,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <a href="#s-a">а · Новая вкладка</a><a href="#s-b">б · Страница</a><a href="#s-c">в · Ввод адреса</a>
       <a href="#s-d">г · Обзор</a><a href="#s-e">д · Меню</a><a href="#s-f">е · Защита</a>
       <a href="#s-g">ж · Настройки</a><a href="#s-h">з · Частный</a><a href="#s-i">и · Планшет</a>
-      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#s-ph">ф · Синхронизация по QR</a><a href="#s-kh">х · Свой сервер</a><a href="#system">Система</a>
+      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#s-ph">ф · Синхронизация по QR</a><a href="#s-kh">х · Свой сервер</a><a href="#s-ts">ц · Уведомления, ползунок, пароли</a><a href="#system">Система</a>
     </nav>
   </div>
 
@@ -724,6 +726,23 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh2"></div></div><figcaption><b>Подключено.</b> Когда синхронизировалось и с каким сервером, «Синхронизировать сейчас». Ниже — вкладки других ваших устройств, как в Safari; закладки просто общие. «Отключить» оставляет данные на сервере; удалить их — отдельным подтверждением.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh3"></div></div><figcaption><b>Вкладки устройства.</b> Нажатие открывает страницу новой вкладкой здесь; на том устройстве ничего не меняется.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-kh4"></div></div><figcaption><b>Фраза не подходит.</b> На сервере уже есть данные Vola с другой фразой — ничего не перезаписано. Ввести ту же фразу, что на первом устройстве, или начать заново (удаляет данные Vola на сервере, после подтверждения). Нет сервера и отказ во входе — та же карточка со своим текстом.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="scn" id="s-ts">
+    <h2><small>ц</small>Уведомления, ползунок, пароли</h2>
+    <p class="lede">На утверждение. Проверка кода (17.10) нашла на телефоне три места, где v5 ещё рисует Material: <b>снэкбары</b> («Вкладка закрыта · Отменить» и ещё десять), <b>ползунок</b> (размер текста, загруженные вкладки, генератор) и <b>менеджер паролей</b> (кроме проверки паролей «у»). Новых компонентов нет: уведомление — та же строка над панелью, что у загрузки и ответа команды; ползунок — дорожка 4 dp и белая ручка 28 dp, как в iOS; пароли — страницы, группы и листы v5. Включение паролей, фраза восстановления и перенос из других менеджеров собираются из тех же состояния (ц4) и списков (ц5) — их кадры покажу на видео сценария в PR.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts1"></div></div><figcaption><b>«Отменить».</b> Вместо снэкбара — строка над панелью, на её материале: что случилось и «Отменить» акцентом. Держится, сколько длится возможность отмены, и не меньше времени из настроек доступности; смахнуть вниз — скрыть. Так же: удалённые данные сайта, закладка, отложенная вкладка, «Главное».</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts2"></div></div><figcaption><b>Предложения и ошибки.</b> Заблокированное окно — «Открыть»; вход через другой сайт и проверка «я не робот» — «Настроить». Ошибка — красный знак и «Повторить». Строк больше одной не бывает: новая сменяет старую. TalkBack читает строку сразу.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts3"></div></div><figcaption><b>Ползунок.</b> Настройки → Внешний вид → «Размер текста на сайтах»: маленькая и большая «А» по краям, значение справа, образец текста под ним. Шаг — лёгкий щелчок; кнопки громкости TalkBack меняют на шаг. Тот же ползунок — у загруженных вкладок, в генераторе, в трансляции.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts4"></div></div><figcaption><b>Пароли закрыты.</b> Состояние v5: замок, «Разблокировать» отпечатком или блокировкой экрана, вход по фразе восстановления. «Удалить все пароли» — внизу красным и только с подтверждением.</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts5"></div></div><figcaption><b>Пароли.</b> Поиск по сайту и логину, проверка паролей первой строкой («у»), затем все пароли по алфавиту. «+» — добавить, замок — закрыть сразу. Пусто — «Паролей пока нет» и «Перенести из другого менеджера».</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts6"></div></div><figcaption><b>Пароль.</b> Логин и пароль копируются нажатием; пароль скрыт, глаз показывает. Код 2FA с оставшимися секундами. «Изменить» справа сверху, «Удалить пароль» — внизу красным, с подтверждением.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts7"></div></div><figcaption><b>Новый пароль.</b> Сайт, логин, пароль; «Сохранить» доступна, когда есть сайт и пароль. «Создать надёжный пароль» открывает генератор. Ошибки (такой уже есть, неверный адрес) — строкой под группой.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ts8"></div></div><figcaption><b>Генератор.</b> Лист v5: пароль или фраза из слов, длина ползунком, цифры и символы, без похожих знаков. Надёжность словом и цветом. «Использовать» вставляет пароль; на сайте — «Использовать и сохранить».</figcaption></figure>
     </div>
   </section>
 
@@ -1308,6 +1327,64 @@ S.kh4=()=>sbar()+`<div style="padding:40px 16px 0">${khTop('Свой серве�
 <div style="text-align:center;margin-top:14px"><span style="font:400 17px/22px Inter;color:var(--danger)">Начать заново</span></div>
 <div class="t-foot l2" style="text-align:center;padding:10px 24px 0">Удалит данные Vola на сервере для всех устройств — после подтверждения.</div>
 </div><div class="gh" style="color:var(--l1)"></div>`;
+const tsNotice=(k,ic,t,a,err)=>`<div style="position:absolute;left:0;right:0;bottom:84px;height:44px;${tintStyle(k)};background:var(--tint);color:var(--on-tint);display:flex;align-items:center;gap:10px;padding:0 8px 0 16px;z-index:21;box-shadow:inset 0 .5px 0 var(--hair)"><span style="color:${err?'var(--danger)':'var(--on-tint2)'}">${I(ic,'s20'+(err?' f':''))}</span><span class="t-foot ell" style="flex:1;min-width:0;font-weight:600">${t}</span><span style="font:600 15px/20px Inter;padding:0 8px;color:${err?'var(--on-tint)':'var(--acc)'}">${a}</span></div>`;
+const tsTop=(t,right,left)=>`<div style="height:44px;display:flex;align-items:center;margin-left:-8px;position:relative">${left?`<span style="font:400 17px/22px Inter;color:var(--acc);padding-left:8px">${left}</span>`:`<span class="tbtn" style="color:var(--acc)">${I('arrow_back','w5')}</span>`}<div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">${t}</div><span style="margin-left:auto;display:flex;gap:4px;align-items:center;color:var(--acc)">${right||''}</span></div>`;
+const tsSl=(pct)=>`<div class="sl"><i></i><b style="width:${pct}%"></b><u style="left:${pct}%"></u></div>`;
+const tsSite=(l,c,site,login)=>`<div class="rw" style="min-height:60px"><span class="it" style="background:${c};font:600 15px/20px Inter">${l}</span><div class="tx"><div class="t-body ell">${site}</div><div class="t-foot l2 ell">${login}</div></div>${I('chevron_right','s20 chev')}</div>`;
+S.ts1=()=>page('polar')+sbar(1)+tsNotice('polar','tab','Вкладка закрыта','Отменить')+bar({k:'polar',tabs:2});
+S.ts2=()=>page('north')+sbar(1)+tsNotice('north','open_in_browser','Окно заблокировано','Открыть')+bar({k:'north'});
+S.ts3=()=>sbar()+`<div style="padding:40px 16px 0">${tsTop('Внешний вид')}
+<div class="t-foot l2" style="padding:18px 16px 6px">РАЗМЕР ТЕКСТА НА САЙТАХ</div>
+<div class="grp sq" style="padding:6px 16px 14px"><div style="display:flex;align-items:center;min-height:44px"><div class="t-body" style="flex:1">Размер текста</div><span class="t-body l2 tnum">115 %</span></div>
+<div style="display:flex;align-items:center;gap:14px"><span style="font:500 13px/18px Inter;color:var(--l2)">А</span>${tsSl(43)}<span style="font:500 22px/28px Inter;color:var(--l2)">А</span></div></div>
+<div class="grp sq" style="margin-top:10px;padding:14px 16px"><div style="font:400 19.5px/27px Inter;letter-spacing:-.25px">Северное сияние лучше всего видно в марте, вдали от городских огней.</div></div>
+<div class="t-foot l2" style="padding:8px 16px 0">Так будет выглядеть текст на сайтах. Сайт, который вы увеличили щипком, сохраняет свой масштаб.</div>
+<div class="t-foot l2" style="padding:22px 16px 6px">ВКЛАДКИ</div>
+<div class="grp sq" style="padding:6px 16px 14px"><div style="display:flex;align-items:center;min-height:44px"><div class="t-body" style="flex:1">Держать загруженными</div><span class="t-body l2 tnum">10</span></div>${tsSl(47)}</div>
+<div class="t-foot l2" style="padding:8px 16px 0">Остальные вкладки засыпают и загружаются снова, когда вы к ним вернётесь.</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.ts4=()=>sbar()+`<div style="padding:40px 16px 0">${tsTop('Пароли')}
+<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 24px 0;gap:10px"><span style="width:72px;height:72px;border-radius:36px;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)">${I('lock','s40 f')}</span><div class="t-title" style="margin-top:6px">Пароли закрыты</div><div class="t-call l2">Подтвердите, что это вы.</div></div>
+<span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:28px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">${I('fingerprint','s20')}Разблокировать</span>
+<div style="text-align:center;margin-top:14px"><span class="acc" style="font:400 17px/22px Inter">Ввести фразу восстановления</span></div>
+<div style="position:absolute;left:0;right:0;bottom:56px;text-align:center"><span style="font:400 15px/20px Inter;color:var(--danger)">Удалить все пароли</span></div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.ts5=()=>sbar()+`<div style="padding:40px 16px 0">${tsTop('Пароли',`<span class="tbtn">${I('lock','s20 w5')}</span><span class="tbtn">${I('add','w5')}</span>`)}
+<div class="afield sq" style="margin-top:10px;box-shadow:none;background:var(--fill);height:40px;border-radius:12px">${I('search','s20 l2')}<span class="t-body l3" style="flex:1">Сайт или логин</span></div>
+<div class="grp sq" style="margin-top:14px"><div class="rw"><span class="it" style="background:${TILE.amber}">${I('key','s20 f')}</span><div class="tx"><div class="t-body">Проверка паролей</div><div class="t-foot l2">4 требуют внимания</div></div>${I('chevron_right','s20 chev')}</div></div>
+<div class="t-foot l2" style="padding:18px 16px 6px">ВСЕ · 46</div>
+<div class="grp sq">${tsSite('a',TILE.blue,'avito.ru','anna.k')}${tsSite('g',TILE.gray,'github.com','anna-k')}${tsSite('g',TILE.green,'gosuslugi.ru','+7 916 •••-••-12')}${tsSite('m',TILE.indigo,'mail.example.ru','anna.k')}${tsSite('o',TILE.orange,'ozon.ru','anna.k@mail.example.ru')}${tsSite('s',TILE.teal,'shop.example.com','anna.k')}${tsSite('y',TILE.red,'yandex.ru','anna.kuz')}</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.ts6=()=>sbar()+`<div style="padding:40px 16px 0">${tsTop('github.com','<span style="font:400 17px/22px Inter;padding-right:8px">Изменить</span>')}
+<div style="display:flex;flex-direction:column;align-items:center;padding:14px 0 18px;gap:8px"><span class="it" style="width:60px;height:60px;border-radius:16px;background:${TILE.gray};font:600 26px/32px Inter">g</span><div class="t-title">github.com</div></div>
+<div class="grp sq">
+ <div class="rw noi"><div class="tx t-body">Логин</div><span class="val">anna-k</span>${I('content_copy','s20 l2')}</div>
+ <div class="rw noi"><div class="tx t-body">Пароль</div><span class="val" style="letter-spacing:2px">••••••••••</span>${I('visibility_off','s20 l2')}</div>
+ <div class="rw noi"><div class="tx t-body">Код 2FA</div><span class="val tnum" style="color:var(--l1);font-weight:600">482 913</span><span class="t-foot l2 tnum" style="width:28px;text-align:right">18 с</span></div>
+ <div class="rw noi"><div class="tx t-body">Сайт</div><span class="val">github.com</span></div>
+</div>
+<div class="t-foot l2" style="padding:8px 16px 0">Нажмите на логин, пароль или код, чтобы скопировать. Буфер очистится через минуту.</div>
+<div class="grp sq" style="margin-top:22px"><div class="rw noi"><div class="tx t-body" style="color:var(--danger)">Удалить пароль</div></div></div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+const tsEdit=()=>`<div style="padding:40px 16px 0">${tsTop('Новый пароль','<span style="font:600 17px/22px Inter;padding-right:8px">Сохранить</span>','Отмена')}
+<div class="grp sq" style="margin-top:18px">${khField('Сайт','avito.ru')}${khField('Логин','anna.k')}${khField('Пароль','k7#Rq-vW2p!Lm9z@xT4e',0)}</div>
+<div class="grp sq" style="margin-top:10px"><div class="rw"><span class="it" style="background:${TILE.amber}">${I('key','s20 f')}</span><div class="tx t-body acc">Создать надёжный пароль</div></div></div>
+<div class="t-foot l2" style="padding:8px 16px 0">Vola подставит пароль на avito.ru и его поддоменах.</div>
+</div>`;
+S.ts7=()=>sbar()+tsEdit()+`<div class="gh" style="color:var(--l1)"></div>`;
+S.ts8=()=>`<div class="snapshot" style="position:absolute;inset:0;background:var(--bg)">${tsEdit()}</div>`+sbar()+`<div class="scrim"></div><div class="sheet" style="top:250px">
+<div class="handle"></div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="t-title" style="flex:1">Надёжный пароль</div><span class="xbtn">${I('close','s20 w5')}</span></div>
+<div class="segc two"><span class="on">Пароль</span><span>Фраза</span></div>
+<div class="grp sq" style="margin-top:12px;padding:16px;display:flex;align-items:center;gap:10px"><span style="flex:1;min-width:0;font:500 20px/28px ui-monospace,Menlo,monospace;letter-spacing:.5px;word-break:break-all">k7#Rq-vW2p!Lm9z@xT4e</span><span style="color:var(--acc)">${I('refresh','s28')}</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:8px 4px 0"><i style="width:8px;height:8px;border-radius:4px;background:var(--ok)"></i><span class="t-foot l2">Очень надёжный</span></div>
+<div class="grp sq" style="margin-top:12px"><div style="padding:6px 16px 12px"><div style="display:flex;align-items:center;min-height:44px"><div class="t-body" style="flex:1">Длина</div><span class="t-body l2 tnum">20</span></div>${tsSl(21)}</div>
+ <div class="rw noi"><div class="tx t-body">Цифры и символы</div><span class="sw acc-on"></span></div>
+ <div class="rw noi"><div class="tx t-body">Без похожих: l, 1, O, 0</div><span class="sw"></span></div>
+</div>
+<span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:14px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">Использовать</span>
+<div style="text-align:center;margin-top:12px"><span class="acc" style="font:400 17px/22px Inter">Скопировать</span></div>
+</div>`;
 function renderStatic(){for(const k of Object.keys(S)){const el=document.getElementById('scr-'+k);if(el)el.innerHTML=S[k]()}}
 
 /* ---------- frame scaling ---------- */
