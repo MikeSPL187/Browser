@@ -2432,4 +2432,8 @@
         <item quantity="many">%d вкладок</item>
         <item quantity="other">%d вкладки</item>
     </plurals>
+    <string name="identity_sign_in_with">Войти через %1$s</string>
+    <string name="identity_privacy_policy">Политика конфиденциальности: %1$s</string>
+    <string name="identity_terms_of_service">Условия использования: %1$s</string>
+    <string name="identity_continue">Продолжить</string>
 </resources>

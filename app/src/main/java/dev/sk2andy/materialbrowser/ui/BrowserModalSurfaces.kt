@@ -274,6 +274,8 @@ internal fun BoxScope.BrowserModalSurfaces(
 
     // Vola's own «Save password?» and «Sign in to …» sheets (Q20b).
     VaultLoginPromptSheets()
+    // FedCM's provider, account and policy questions, as v5 sheets on the phone.
+    IdentityCredentialPromptSheets()
 
     controller.webPrompt?.let { prompt ->
         BrowserWebPromptDialog(
