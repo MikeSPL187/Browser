@@ -77,11 +77,12 @@ data class V5SyncDoneState(
     val bookmarksExisting: Int,
 )
 
+/** A null action leaves its row without a chevron, or the undo button out, where the binding has none. */
 class V5SyncDoneActions(
-    val onOpenGroup: () -> Unit,
-    val onOpenFavorites: () -> Unit,
+    val onOpenGroup: (() -> Unit)?,
+    val onOpenFavorites: (() -> Unit)?,
     val onDone: () -> Unit,
-    val onUndo: () -> Unit,
+    val onUndo: (() -> Unit)?,
 )
 
 /**
@@ -287,35 +288,39 @@ fun V5SyncDone(
                     )
                 }
             }
-            V5ListGroup(dividerInset = V5ListDefaults.dividerInsetWithIcon) {
-                if (state.tabs > 0) {
-                    V5ListRow(
-                        title = stringResource(R.string.v5_sync_group, state.deviceName),
-                        icon = V5RowIcon(VolaIcons.Tab, V5Tile.Blue),
-                        value = state.tabs.toString(),
-                        trailing = V5RowTrailing.Chevron,
-                        onClick = actions.onOpenGroup,
-                    )
-                }
-                if (state.bookmarksAdded > 0) {
-                    V5ListRow(
-                        title = stringResource(R.string.favorites_title),
-                        icon = V5RowIcon(VolaIcons.Bookmark, V5Tile.Amber),
-                        value = stringResource(R.string.v5_sync_added, state.bookmarksAdded),
-                        trailing = V5RowTrailing.Chevron,
-                        onClick = actions.onOpenFavorites,
-                    )
+            if (state.tabs > 0 || state.bookmarksAdded > 0) {
+                V5ListGroup(dividerInset = V5ListDefaults.dividerInsetWithIcon) {
+                    if (state.tabs > 0) {
+                        V5ListRow(
+                            title = stringResource(R.string.v5_sync_group, state.deviceName),
+                            icon = V5RowIcon(VolaIcons.Tab, V5Tile.Blue),
+                            value = state.tabs.toString(),
+                            trailing = if (actions.onOpenGroup != null) V5RowTrailing.Chevron else V5RowTrailing.None,
+                            onClick = actions.onOpenGroup,
+                        )
+                    }
+                    if (state.bookmarksAdded > 0) {
+                        V5ListRow(
+                            title = stringResource(R.string.favorites_title),
+                            icon = V5RowIcon(VolaIcons.Bookmark, V5Tile.Amber),
+                            value = stringResource(R.string.v5_sync_added, state.bookmarksAdded),
+                            trailing = if (actions.onOpenFavorites != null) V5RowTrailing.Chevron else V5RowTrailing.None,
+                            onClick = actions.onOpenFavorites,
+                        )
+                    }
                 }
             }
             Box(Modifier.padding(horizontal = V5Spacing.marginPhone)) {
                 V5StateActions(
                     primary = V5StateAction(label = stringResource(R.string.action_done), onClick = actions.onDone),
-                    secondary = listOf(
-                        V5StateAction(
-                            label = stringResource(R.string.v5_sync_undo),
-                            onClick = actions.onUndo,
-                            testTag = V5SyncTestTags.Undo,
-                        ),
+                    secondary = listOfNotNull(
+                        actions.onUndo?.let { onUndo ->
+                            V5StateAction(
+                                label = stringResource(R.string.v5_sync_undo),
+                                onClick = onUndo,
+                                testTag = V5SyncTestTags.Undo,
+                            )
+                        },
                     ),
                 )
             }
@@ -428,4 +433,13 @@ internal object V5SyncRules {
         V5SyncScanStatus.NoCamera -> R.string.v5_sync_error_camera_hint
         V5SyncScanStatus.Receiving, V5SyncScanStatus.Failed -> null
     }
+
+    /**
+     * The confirm sheet's line: what the transfer adds, naming only the kinds it brings, or
+     * [nothing] when this phone already has all of it.
+     */
+    fun confirmMessage(tabs: String, bookmarks: String, hasTabs: Boolean, hasBookmarks: Boolean, nothing: String): String =
+        listOfNotNull(tabs.takeIf { hasTabs }, bookmarks.takeIf { hasBookmarks })
+            .joinToString(", ")
+            .ifEmpty { nothing }
 }

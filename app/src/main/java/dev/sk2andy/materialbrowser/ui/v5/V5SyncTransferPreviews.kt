@@ -57,3 +57,39 @@ private fun V5SyncDoneLightPreview() {
 private fun V5SyncDoneDarkPreview() {
     VolaV5Theme(dark = true) { V5SyncDone(Done.copy(bookmarksExisting = 0), NoActions) }
 }
+
+@Preview(name = "Done, without undo · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncDoneWithoutUndoPreview() {
+    VolaV5Theme(dark = false) {
+        V5SyncDone(Done, V5SyncDoneActions(onOpenGroup = null, onOpenFavorites = null, onDone = {}, onUndo = null))
+    }
+}
+
+@Preview(name = "Sync settings · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncSettingsLightPreview() {
+    VolaV5Theme(dark = false) { V5SyncSettings(sent = false, onBack = {}, onShowCode = {}, onScanCode = {}, onServer = {}) }
+}
+
+@Preview(name = "Sync settings, sent · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncSettingsSentDarkPreview() {
+    VolaV5Theme(dark = true) { V5SyncSettings(sent = true, onBack = {}, onShowCode = {}, onScanCode = {}, onServer = {}) }
+}
+
+@Preview(name = "Confirm transfer · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncConfirmLightPreview() {
+    VolaV5Theme(dark = false) {
+        V5SyncConfirmSheet(V5SyncConfirmState("Pixel Анны", tabs = 12, bookmarks = 30), onAccept = {}, onDismiss = {})
+    }
+}
+
+@Preview(name = "Confirm transfer · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncConfirmDarkPreview() {
+    VolaV5Theme(dark = true) {
+        V5SyncConfirmSheet(V5SyncConfirmState("Pixel Анны", tabs = 0, bookmarks = 3), onAccept = {}, onDismiss = {})
+    }
+}

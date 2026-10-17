@@ -2326,6 +2326,27 @@
         <item quantity="many">%d закладок уже были</item>
         <item quantity="other">%d закладки уже были</item>
     </plurals>
+    <string name="v5_sync_transfer_header">На другое устройство</string>
+    <string name="v5_sync_transfer_footer">Вкладки и закладки переносятся на устройство в той же Wi-Fi, без интернета. Пока другое устройство не считает код, с телефона ничего не уходит.</string>
+    <string name="v5_sync_sent">Вкладки и закладки ушли на другое устройство.</string>
+    <string name="v5_sync_server">Сервер синхронизации</string>
+    <string name="v5_sync_server_footer">Держит вкладки в синхронизации между вашими устройствами через ваш собственный сервер.</string>
+    <string name="v5_sync_confirm_title">Принять с «%1$s»?</string>
+    <string name="v5_sync_confirm_title_unnamed">Принять вкладки и закладки?</string>
+    <string name="v5_sync_confirm_nothing">Всё это уже есть на телефоне.</string>
+    <string name="v5_sync_confirm_accept">Принять</string>
+    <plurals name="v5_sync_confirm_tabs">
+        <item quantity="one">%d вкладка новой группой</item>
+        <item quantity="few">%d вкладки новой группой</item>
+        <item quantity="many">%d вкладок новой группой</item>
+        <item quantity="other">%d вкладки новой группой</item>
+    </plurals>
+    <plurals name="v5_sync_confirm_bookmarks">
+        <item quantity="one">%d новая закладка</item>
+        <item quantity="few">%d новые закладки</item>
+        <item quantity="many">%d новых закладок</item>
+        <item quantity="other">%d новой закладки</item>
+    </plurals>
     <string name="v5_password_health_fine_of">%1$d из %2$d в порядке</string>
     <string name="v5_password_health_insecure">Без шифрования</string>
     <string name="v5_password_health_insecure_site">сайт принимает пароль по http://</string>

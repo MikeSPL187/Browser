@@ -395,6 +395,8 @@ internal fun BrowserSettingsOverlay(
                 } else {
                     null
                 },
+                // The local transfer (V26) does not depend on the engine: both builds have it.
+                syncSettings = { onBack, serverPage -> BrowserSyncSettingsV5(controller, onBack, serverPage) },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,
                         predictiveBackEdgeSign,
