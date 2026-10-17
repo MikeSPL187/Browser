@@ -39,6 +39,9 @@ for gate in $gates; do
   fi
 done
 
+# Conflict markers a merge left behind: --fast reads no Kotlin, so nothing else here sees them.
+step "no conflict markers" bash -c '! git grep -nE "^(<<<<<<<|>>>>>>>) " -- .'
+
 # Script tests: the list build.yml runs (the APK checks need built APKs and stay in CI).
 for test in scripts/test_compile_*.py scripts/test_generate_gecko_default_extensions.py \
   scripts/test_translations.py scripts/test_geckoview_latest.py \
