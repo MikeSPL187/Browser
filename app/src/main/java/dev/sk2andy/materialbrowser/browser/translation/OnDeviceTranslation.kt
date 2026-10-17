@@ -55,7 +55,10 @@ internal interface PageTranslationPort {
     }
 }
 
-/** Language models, shared by every tab: what can be translated and what is on the phone. */
+/**
+ * Language models and the user's translation choices, shared by every tab: what can be translated,
+ * what is on the phone, and which languages and sites to always or never translate.
+ */
 internal interface TranslationModelsPort {
     /** Whether this device can run the models (the engine checks the processor); false hides the feature. */
     fun isSupportedOnDevice(onResult: (Boolean) -> Unit)
@@ -74,6 +77,39 @@ internal interface TranslationModelsPort {
 
     /** Deletes the models of one language to free space. */
     fun delete(languageCode: String, onResult: (PageTranslationResult) -> Unit)
+
+    /**
+     * What the user chose for each language they set: always, offer (the default, so usually
+     * absent) or never. Keys are BCP 47 tags; null when unknown.
+     */
+    fun languageSettings(onResult: (Map<String, TranslationLanguageSetting>?) -> Unit) = onResult(null)
+
+    /**
+     * Sets [setting] for pages in [languageCode].
+     *
+     * [TranslationLanguageSetting.Always] makes the engine translate such pages by itself, without
+     * asking and downloading any missing model as it does. So it is refused with
+     * [PageTranslationError.ModelDownloadRequired] while the models from [languageCode] into the
+     * user's language are not on the phone: the screen downloads them first, with the user's yes.
+     */
+    fun setLanguageSetting(
+        languageCode: String,
+        setting: TranslationLanguageSetting,
+        onResult: (PageTranslationResult) -> Unit,
+    ) = onResult(PageTranslationResult.Unsupported)
+
+    /**
+     * Sites set to «never translate this site» from regular tabs; null when unknown. A private
+     * tab's choice lasts only while private tabs are open and is not listed.
+     */
+    fun neverTranslateSites(onResult: (List<NeverTranslateSite>?) -> Unit) = onResult(null)
+
+    /** Sets or clears «never translate» for a site of [neverTranslateSites], by its [NeverTranslateSite.origin]. */
+    fun setNeverTranslateSite(
+        origin: String,
+        never: Boolean,
+        onResult: (PageTranslationResult) -> Unit,
+    ) = onResult(PageTranslationResult.Unsupported)
 
     /** The engine without on-device translation (System WebView). */
     object Unavailable : TranslationModelsPort {
@@ -102,6 +138,24 @@ internal interface PageTranslationListener {
     fun onOffer() = Unit
 
     fun onStateChanged(state: PageTranslationState) = Unit
+}
+
+/**
+ * A site set to «never translate». [origin] is the engine's key, to hand back to
+ * [TranslationModelsPort.setNeverTranslateSite]; [host] is what a screen shows.
+ */
+internal data class NeverTranslateSite(val origin: String, val host: String)
+
+/** What the engine does with pages in one language. */
+internal enum class TranslationLanguageSetting {
+    /** Translates them by itself, without asking. */
+    Always,
+
+    /** Offers a translation (the default). */
+    Offer,
+
+    /** Never offers one. */
+    Never,
 }
 
 /** A BCP 47 language tag pair, such as `de` → `ru`. */

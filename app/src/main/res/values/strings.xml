@@ -2196,4 +2196,30 @@
     <string name="v5_translation_pack_download">Download</string>
     <string name="v5_translation_pack_delete">Delete pack</string>
     <string name="v5_translation_footer">Translation runs on this phone: pages are not sent anywhere. Swipe a pack to the left to delete it. Private tabs don’t download packs; they use the ones already here.</string>
+    <string name="v5_password_health_fine_of">%1$d of %2$d are fine</string>
+    <string name="v5_password_health_insecure">Without encryption</string>
+    <string name="v5_password_health_insecure_site">the site takes the password over http://</string>
+    <string name="v5_password_health_insecure_form">the form sends the password over http://</string>
+    <string name="v5_password_health_check_leaks">Check for leaks</string>
+    <string name="v5_password_health_checking">Checking for leaks… %1$d%%</string>
+    <string name="v5_password_health_leaks">Leaks</string>
+    <string name="v5_password_health_checked_at">Checked at %1$s</string>
+    <string name="v5_password_health_check_again">Check again</string>
+    <string name="v5_password_health_note">Only the first 5 characters of each password’s hash are sent — not the password and not the site. Repeats and weak passwords are checked on the phone.</string>
+    <string name="v5_password_health_all_fine">No repeats, no leaks, every password is strong.</string>
+    <string name="v5_password_health_all_fine_unchecked">No repeats, every password is strong. Leaks have not been checked yet.</string>
+    <string name="v5_password_health_open_login">Login details</string>
+    <string name="v5_password_health_change">Change password on the site</string>
+    <string name="v5_password_finding_breached">This password is already in leaks. Change it as soon as you can.</string>
+    <string name="v5_password_finding_weak">This password is easy to guess. A long random one is safer.</string>
+    <string name="v5_password_finding_insecure_site">The site takes this password without encryption, so it can be read on the network. A new password does not help — only the site can fix it.</string>
+    <string name="v5_password_finding_insecure_form">The sign-in form sends this password without encryption, so it can be read on the network. A new password does not help — only the site can fix it.</string>
+    <plurals name="v5_password_health_attention">
+        <item quantity="one">%d password needs attention</item>
+        <item quantity="other">%d passwords need attention</item>
+    </plurals>
+    <plurals name="v5_password_finding_reused">
+        <item quantity="one">This password repeats on %d other site. If one of them leaks, the other opens too.</item>
+        <item quantity="other">This password repeats on %d other sites. If one of them leaks, the others open too.</item>
+    </plurals>
 </resources>

@@ -54,6 +54,21 @@ internal object OnDeviceTranslationRules {
         return a.language == b.language && (a.script == null || b.script == null || a.script == b.script)
     }
 
+    /**
+     * The site of an engine origin (`https://example.com^privateBrowsingId=1&…`): the part before
+     * `^` is the address and the part after it the origin's attributes. Null for a private tab's
+     * origin, which a settings list must not show, and for one without a host.
+     */
+    fun neverTranslateSite(origin: String): NeverTranslateSite? {
+        val address = origin.substringBefore('^')
+        val attributes = origin.substringAfter('^', missingDelimiterValue = "").split('&')
+        if (attributes.any { it.startsWith("privateBrowsingId=") && it != "privateBrowsingId=0" }) return null
+        val authority = address.substringAfter("://", missingDelimiterValue = "").substringBefore('/')
+        val host = (if (authority.startsWith('[')) authority.substringBefore(']') + "]" else authority.substringBefore(':'))
+            .takeIf { it.isNotBlank() && it != "]" } ?: return null
+        return NeverTranslateSite(origin, host)
+    }
+
     /** Whether translating needs a download first, so the UI should say how much. */
     fun needsDownload(downloadBytes: Long?): Boolean = downloadBytes != null && downloadBytes > 0
 
