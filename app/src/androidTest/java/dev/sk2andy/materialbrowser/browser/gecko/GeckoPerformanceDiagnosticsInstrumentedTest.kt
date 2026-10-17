@@ -76,9 +76,11 @@ class GeckoPerformanceDiagnosticsInstrumentedTest {
         withFixture { scenario ->
             startCapture(scenario)
             // Exercise repeated observations while the asynchronous content-state relay settles.
-            repeat(10) {
+            // At the end of a loaded CI shard the relay took longer than two seconds (#335), so
+            // the marks go on for GAP_MARK_COUNT * GAP_MARK_INTERVAL_MILLIS.
+            repeat(GAP_MARK_COUNT) {
                 scenario.onActivity { assertTrue(GeckoPerformanceDiagnostics.markGap()) }
-                SystemClock.sleep(200)
+                SystemClock.sleep(GAP_MARK_INTERVAL_MILLIS)
             }
             scenario.onActivity { GeckoPerformanceDiagnostics.stop(context) }
             awaitStatus("ready")
@@ -88,7 +90,12 @@ class GeckoPerformanceDiagnosticsInstrumentedTest {
             val json = requireNotNull(file).inputStream().use { input ->
                 GZIPInputStream(input).bufferedReader().use { it.readText() }
             }
-            assertTrue("Page gap marker is required in the actual native profile", json.contains("Candy.Diagnostics.UserObservedGap"))
+            // A miss names the page marks the profile did hold, so a lost relay and a lost mark differ.
+            val candyMarks = Regex("Candy\\.[A-Za-z.]+").findAll(json).map { it.value }.toSortedSet()
+            assertTrue(
+                "Page gap marker is required in the actual native profile; marks there: $candyMarks",
+                json.contains("Candy.Diagnostics.UserObservedGap"),
+            )
             assertTrue("A real sampled thread is required", hasSamples(JSONObject(json)))
             assertFalse(GeckoPerformanceDiagnostics.isRecording)
         }
@@ -221,3 +228,6 @@ class GeckoPerformanceDiagnosticsInstrumentedTest {
         return false
     }
 }
+
+private const val GAP_MARK_COUNT = 30
+private const val GAP_MARK_INTERVAL_MILLIS = 300L

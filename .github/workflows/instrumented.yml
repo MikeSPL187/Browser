@@ -257,6 +257,30 @@ jobs:
                 | while read -r package; do adb shell am force-stop "$package" < /dev/null; done
             done
           fi
+          # Tests the run above always skips. Each runs on its own, one Gradle call per class (with
+          # the orchestrator a comma-separated list runs only its first entry); the results are
+          # read as first-run results. Full Gecko runs only.
+          extra="$RUNNER_TEMP/extra-runs"
+          run_extra() {
+            local name=$1
+            shift
+            ensure_device "the extra run $name" < /dev/null
+            rm -rf app/build/outputs/androidTest-results
+            ./gradlew --no-daemon "connected${FLAVOR}DebugAndroidTest" \
+              -Pandroid.testInstrumentationRunnerArguments.clearPackageData=true \
+              -Pandroid.testInstrumentationRunnerArguments.timeout_msec=120000 \
+              "$@" < /dev/null || true
+            mkdir -p "$extra"
+            cp -r app/build/outputs/androidTest-results "$extra/$name" 2>/dev/null || true
+          }
+          # The performance diagnostics need the diagnostics build, which is a different app from
+          # the one tested above: it is rebuilt for these two classes only, after everything else.
+          if [[ -z "$FILTER" && "$SHARD" == 1 && "$FLAVOR" == Full ]]; then
+            for class in GeckoDomDiagnostics GeckoPerformanceDiagnostics; do
+              run_extra "diagnostics-$class" -Pvola.performanceDiagnostics=true \
+                -Pandroid.testInstrumentationRunnerArguments.class="dev.sk2andy.materialbrowser.browser.gecko.${class}InstrumentedTest"
+            done
+          fi
           kill "$progress" "$monitor" 2>/dev/null || true
           pkill -f "logcat -v brief" || true
           pkill -x -f "sleep 300" || true
@@ -277,6 +301,7 @@ jobs:
           cp -r "$RUNNER_TEMP/rerun-results" "$out/retry" 2>/dev/null || true
           # Read as first-run results, next to the shard's own.
           cp -r "$RUNNER_TEMP/extension-phases" "$out/extension-phases" 2>/dev/null || true
+          cp -r "$RUNNER_TEMP/extra-runs" "$out/extra-runs" 2>/dev/null || true
           cp -r app/build/reports/androidTests "$out/report" 2>/dev/null || true
           pkill -f "adb logcat" || true
           gzip -c "$RUNNER_TEMP/logcat.txt" > "$out/logcat.txt.gz" 2>/dev/null || true
