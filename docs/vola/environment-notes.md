@@ -116,3 +116,17 @@
   `fetch`. Проверка глазами — лист «было → стало» (SVG из путей, рендер в Chromium).
 - Иконки пространств генерирует `scripts/workspace-icons/generate.py`
   (нужен доступ к raw.githubusercontent.com).
+- **Быстрая проверка Kotlin без SDK и без Gradle (сессия I, 17.10):** компилятор напрямую —
+  `kotlin-compiler-embeddable` 2.2.20 с Maven Central и его зависимости (`kotlin-stdlib`,
+  `kotlin-script-runtime`, `kotlin-reflect` 1.6.10, `kotlin-daemon-embeddable`, `trove4j`,
+  `kotlinx-coroutines-core-jvm`, `annotations`), запуск
+  `java -cp <jar-ы> org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -Xmulti-platform
+  -opt-in=kotlin.time.ExperimentalTime -cp <библиотеки> -d out <файлы>`, тесты —
+  `org.junit.runner.JUnitCore` с `kotlin-test-junit`; сборка и прогон ≈10 с.
+  - `shared`: все файлы `commonMain` без Compose (`grep -rL "androidx.compose\|org.jetbrains.compose"`)
+    плюс `kotlinx-serialization-*-jvm` — компилируются целиком; `commonTest` идёт тем же вызовом.
+  - Android-файлы приложения: classpath `org.robolectric:android-all:14-robolectric-10818077`
+    (Maven Central, ≈130 МБ) вместо `android.jar`, OkHttp/okio — `*-jvm` с Maven Central, `.aar`
+    Maven Central — `classes.jar` из архива. Классы с Google Maven (`androidx.lifecycle` и т. п.) и
+    тяжёлые классы приложения (`BrowserController`) — маленькими заглушками с теми же сигнатурами;
+    проверка типов и видимости честная, но полную сборку всё равно подтверждает CI.
