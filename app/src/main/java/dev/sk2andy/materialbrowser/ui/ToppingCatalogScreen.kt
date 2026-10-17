@@ -83,6 +83,10 @@ internal fun ToppingCatalogScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (rememberSettingsUiV5()) {
+        ToppingCatalogV5(state, onToggle, onUpdate, onRetry, onDismiss, modifier)
+        return
+    }
     Surface(
         modifier = modifier
             .fillMaxSize()
@@ -364,7 +368,7 @@ private fun ToppingCatalogCard(
 }
 
 @Composable
-private fun toppingStatus(topping: ToppingCatalogItem): String = when {
+internal fun toppingStatus(topping: ToppingCatalogItem): String = when {
     topping.busy -> stringResource(R.string.topping_catalog_working)
     !topping.installed -> stringResource(R.string.topping_catalog_not_installed)
     topping.enabled -> stringResource(R.string.topping_catalog_active)
@@ -372,14 +376,14 @@ private fun toppingStatus(topping: ToppingCatalogItem): String = when {
 }
 
 @Composable
-private fun toppingToggleDescription(topping: ToppingCatalogItem): String = when {
+internal fun toppingToggleDescription(topping: ToppingCatalogItem): String = when {
     !topping.installed -> stringResource(R.string.topping_catalog_install_description, topping.name)
     topping.enabled -> stringResource(R.string.topping_catalog_disable_description, topping.name)
     else -> stringResource(R.string.topping_catalog_enable_description, topping.name)
 }
 
 @Composable
-private fun toppingScopeSummary(scopes: List<String>): String =
+internal fun toppingScopeSummary(scopes: List<String>): String =
     scopes.takeIf { it.isNotEmpty() }
         ?.joinToString(limit = 3, truncated = " …")
         ?: stringResource(R.string.topping_catalog_scope_unknown)

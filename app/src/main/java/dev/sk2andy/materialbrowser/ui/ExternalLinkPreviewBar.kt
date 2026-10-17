@@ -89,6 +89,23 @@ internal fun ExternalLinkPreviewBar(
     onBackdropBlurRegionChanged: (BrowserBackdropBlurRegion?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    if (rememberDrawsV5()) {
+        ExternalLinkPreviewBarV5(
+            state = state,
+            profiles = profiles,
+            isDesktopView = isDesktopView,
+            onDismissPreview = onDismissPreview,
+            onOpenInCandy = onOpenInCandy,
+            onSelectProfile = onSelectProfile,
+            onShare = onShare,
+            onCopyLink = onCopyLink,
+            onFindInPage = onFindInPage,
+            onDesktopViewChange = onDesktopViewChange,
+            onBackdropBlurRegionChanged = onBackdropBlurRegionChanged,
+            modifier = modifier,
+        )
+        return
+    }
     var profileMenuExpanded by remember(state.sessionId) { mutableStateOf(false) }
     var overflowMenuExpanded by remember(state.sessionId) { mutableStateOf(false) }
     val targetProfile = profiles.firstOrNull { it.id == state.targetProfileId }

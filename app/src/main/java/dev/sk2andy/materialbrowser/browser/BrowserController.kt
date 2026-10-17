@@ -422,7 +422,7 @@ class BrowserController(
             ?.title
     internal var firefoxExtensionPopupView by mutableStateOf<View?>(null)
         private set
-    private var firefoxExtensionPopupIdentity: GeckoExtensionPopupIdentity? = null
+    internal var firefoxExtensionPopupIdentity: GeckoExtensionPopupIdentity? = null
     val externalDownloadManagers = mutableStateListOf<ExternalDownloadManagerApp>()
     var activeProfileWallpaperBitmap by mutableStateOf<Bitmap?>(null)
         private set
