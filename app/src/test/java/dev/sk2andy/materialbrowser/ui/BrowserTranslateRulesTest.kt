@@ -26,20 +26,24 @@ class BrowserTranslateRulesTest {
     }
 
     @Test
-    fun sheetOpensWithTheLastPairThenTheSuggestionThenThePageLanguage() {
+    fun sheetOpensWithTheLastPairThenThePreferredTargetThenTheSuggestion() {
         val page = PageTranslationState(pageLanguage = "fr", userLanguage = "en")
         val last = OnDeviceTranslationUiState(page = page, pair = deRu)
-        assertEquals(BrowserTranslateRules.Codes("de", "ru"), BrowserTranslateRules.initialPair(last, null, "ru"))
+        assertEquals(BrowserTranslateRules.Codes("de", "ru"), BrowserTranslateRules.initialPair(last, null, "es", "ru"))
 
         val fresh = OnDeviceTranslationUiState(page = page)
         assertEquals(
             BrowserTranslateRules.Codes("it", "es"),
-            BrowserTranslateRules.initialPair(fresh, TranslationPair("it", "es"), "ru"),
+            BrowserTranslateRules.initialPair(fresh, TranslationPair("it", "es"), null, "ru"),
         )
-        assertEquals(BrowserTranslateRules.Codes("fr", "en"), BrowserTranslateRules.initialPair(fresh, null, "ru"))
+        assertEquals(
+            BrowserTranslateRules.Codes("it", "uk"),
+            BrowserTranslateRules.initialPair(fresh, TranslationPair("it", "es"), "uk", "ru"),
+        )
+        assertEquals(BrowserTranslateRules.Codes("fr", "en"), BrowserTranslateRules.initialPair(fresh, null, null, "ru"))
         assertEquals(
             BrowserTranslateRules.Codes(null, "ru"),
-            BrowserTranslateRules.initialPair(OnDeviceTranslationUiState(), null, "ru"),
+            BrowserTranslateRules.initialPair(OnDeviceTranslationUiState(), null, null, "ru"),
         )
     }
 

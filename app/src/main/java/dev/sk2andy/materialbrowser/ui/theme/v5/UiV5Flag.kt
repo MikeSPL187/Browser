@@ -35,7 +35,7 @@ open class V5Preference internal constructor(
     private fun preferences(context: Context) =
         context.applicationContext.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
 
-    private companion object {
+    internal companion object {
         const val PREFERENCES = "vola_ui_v5"
     }
 }
@@ -53,6 +53,12 @@ object UiV5Flag : V5Preference(key = "ui.v5", default = true)
  * neutral bar on every site, as Safari allows after complaints about unreadable bars.
  */
 object V5SiteTintSetting : V5Preference(key = "ui.v5.site_tint", default = true)
+
+/**
+ * «Offer translation in the menu» (V23, Settings → Translation): on by default; off takes
+ * «Translate» out of the page menu.
+ */
+object V5TranslateOfferSetting : V5Preference(key = "ui.v5.translate_offer", default = true)
 
 /** The flag as Compose state; writing the state stores it. */
 @Composable

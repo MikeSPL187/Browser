@@ -2279,6 +2279,7 @@
     <string name="v5_translate_original">Оригинал</string>
     <string name="v5_translated_hide">Скрыть</string>
     <string name="v5_translation_settings_title">Перевод</string>
+    <string name="v5_translation_settings_summary">Языки и пакеты на телефоне</string>
     <string name="v5_translation_offer">Предлагать перевод в меню</string>
     <string name="v5_translation_offer_hint">Когда язык страницы не ваш</string>
     <string name="v5_translation_into">Переводить на</string>

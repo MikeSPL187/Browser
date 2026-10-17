@@ -20,6 +20,12 @@ private val Sample = V5TranslationSettingsState(
         V5LanguagePack("fr", "французский", 31 * MEGABYTE, downloaded = false),
         V5LanguagePack("es", "испанский", 30 * MEGABYTE, downloaded = false, downloading = true),
     ),
+    translateIntoCode = "ru",
+    intoOptions = listOf(
+        V5TranslateLanguage("en", "английский"),
+        V5TranslateLanguage("de", "немецкий"),
+        V5TranslateLanguage("ru", "русский"),
+    ),
 )
 
 private val NoActions = V5TranslationSettingsActions(
@@ -41,4 +47,16 @@ private fun V5TranslationSettingsLightPreview() {
 @Composable
 private fun V5TranslationSettingsDarkPreview() {
     VolaV5Theme(dark = true) { V5TranslationSettings(Sample, NoActions) }
+}
+
+@Preview(name = "Translate into · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TranslationIntoLightPreview() {
+    VolaV5Theme(dark = false) { V5TranslationIntoPage(Sample, onBack = {}, onChoose = {}) }
+}
+
+@Preview(name = "Translate into · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TranslationIntoDarkPreview() {
+    VolaV5Theme(dark = true) { V5TranslationIntoPage(Sample, onBack = {}, onChoose = {}) }
 }

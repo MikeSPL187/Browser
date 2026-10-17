@@ -21,6 +21,8 @@ import dev.sk2andy.materialbrowser.reader.ListenSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5TranslateOfferSetting
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
@@ -52,6 +54,7 @@ internal fun BrowserPageMenuV5(
     // On GeckoView the page translates on the phone, through the sheet (V23); elsewhere through the provider.
     val onDeviceTranslate = BrowserTranslateRules.usesOnDevice(controller.browserEngineCapabilities.onDeviceTranslation, tab.url)
     var translateSheet by remember { mutableStateOf(false) }
+    val translateOffer by rememberV5Preference(V5TranslateOfferSetting)
     val faviconBitmap = controller.favicons[tab.id]
     val favicon = remember(faviconBitmap) { faviconBitmap?.asImageBitmap() }
     val state = V5PageMenuState(
@@ -63,10 +66,12 @@ internal fun BrowserPageMenuV5(
         canFavorite = !blank && !tab.isIncognito,
         isFavorite = controller.isSelectedTabFavorite,
         canRead = !blank && ReaderStudioSessionRules.isSupportedSource(tab.url),
-        canTranslate = onDeviceTranslate || !blank && PageTranslationRules.canTranslate(
-            provider = controller.pageTranslationProvider,
-            sourceUrl = tab.url,
-        ),
+        // Settings → Translation can take the item out of the menu.
+        canTranslate = if (onDeviceTranslate) {
+            translateOffer
+        } else {
+            !blank && PageTranslationRules.canTranslate(provider = controller.pageTranslationProvider, sourceUrl = tab.url)
+        },
         isPinned = tab.isPinned,
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },

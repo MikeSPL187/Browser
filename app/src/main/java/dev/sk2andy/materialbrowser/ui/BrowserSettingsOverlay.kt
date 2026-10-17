@@ -389,6 +389,12 @@ internal fun BrowserSettingsOverlay(
                 onOpenLegalUrl = onOpenLegalUrl,
                 onDismiss = onDismiss,
                 onOpenFirefoxExtensions = onOpenFirefoxExtensions,
+                // Translation on the phone (V23): GeckoView only; the home adds it under ui.v5.
+                translationSettings = if (controller.browserEngineCapabilities.onDeviceTranslation) {
+                    { onBack -> BrowserTranslationSettingsV5(controller, onBack) }
+                } else {
+                    null
+                },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,
                         predictiveBackEdgeSign,
