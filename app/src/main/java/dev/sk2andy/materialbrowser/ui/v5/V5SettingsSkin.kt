@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,31 +101,12 @@ internal class V5SettingsSkin(private val view: View) : SettingsSkin {
                 .navigationBarsPadding()
                 .imePadding(),
         ) {
-            Box(Modifier.fillMaxWidth().heightIn(min = V5Sizes.touchTarget)) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.align(Alignment.CenterStart).padding(start = V5Spacing.space1),
-                ) {
-                    Icon(VolaIcons.ArrowBack, contentDescription = backContentDescription, tint = colors.accent)
-                }
-                Text(
-                    title,
-                    style = V5Theme.type.headline,
-                    color = colors.label,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = V5Spacing.space12)
-                        .semantics { heading() },
-                )
-                LayoutRow(
-                    Modifier.align(Alignment.CenterEnd).padding(end = V5Spacing.space1),
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = actions,
-                )
-            }
+            V5PageBar(
+                title = title,
+                onBack = onBack,
+                backContentDescription = backContentDescription,
+                actions = actions,
+            )
             CompositionLocalProvider(LocalIndication provides highlight) {
                 Column(
                     Modifier

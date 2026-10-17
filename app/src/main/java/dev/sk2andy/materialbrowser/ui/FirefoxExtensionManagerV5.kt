@@ -3,12 +3,9 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,25 +22,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PageBar
 import dev.sk2andy.materialbrowser.ui.v5.V5ListDefaults
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
@@ -92,10 +85,10 @@ internal fun FirefoxExtensionManagerV5(
                 .testTag(FirefoxExtensionManagerTestTags.Overlay),
         ) {
             if (open == null) {
-                PageBar(
+                V5PageBar(
                     title = stringResource(R.string.gecko_extensions_title),
                     onBack = onDismiss,
-                    action = {
+                    actions = {
                         IconButton(onClick = { installing = true }, enabled = state.canManage) {
                             Icon(
                                 VolaIcons.Add,
@@ -106,7 +99,7 @@ internal fun FirefoxExtensionManagerV5(
                     },
                 )
             } else {
-                PageBar(title = FirefoxExtensionManagerV5Rules.name(open), onBack = { openId = null })
+                V5PageBar(title = FirefoxExtensionManagerV5Rules.name(open), onBack = { openId = null })
             }
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = colors.accent)
             Column(
@@ -151,32 +144,6 @@ internal fun FirefoxExtensionManagerV5(
             onDismiss = { installing = false },
         )
         PermissionSheet(state.permissionRequest, onPermissionDecision)
-    }
-}
-
-/** The page's bar: back, the title in the middle, an optional action at the end. */
-@Composable
-private fun PageBar(title: String, onBack: () -> Unit, action: (@Composable () -> Unit)? = null) {
-    val colors = V5Theme.colors
-    Box(Modifier.fillMaxWidth().heightIn(min = V5Sizes.touchTarget)) {
-        IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).padding(start = V5Spacing.space1)) {
-            Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = colors.accent)
-        }
-        Text(
-            title,
-            style = V5Theme.type.headline,
-            color = colors.label,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = V5Spacing.space12)
-                .semantics { heading() },
-        )
-        if (action != null) {
-            Row(Modifier.align(Alignment.CenterEnd).padding(end = V5Spacing.space1)) { action() }
-        }
     }
 }
 
