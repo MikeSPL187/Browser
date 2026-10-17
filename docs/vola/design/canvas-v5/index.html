@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vola v5 — холст</title>
+<title>Холст Vola v5</title>
 <meta name="description" content="Холст дизайна Vola v5 на утверждение: экраны в светлой и тёмной теме и живые фирменные движения.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -518,6 +518,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 <main class="wrap">
   <div class="intro">
     <h1>Vola v5 — холст на утверждение</h1>
+    <p><b>Версия 4 (17.10):</b> добавлен экран «т» — перевод на устройстве (V23), на утверждение.</p>
     <p><b>Версия 3 (16.10):</b> добавлены экраны «п», «р», «с» — знакомство, библиотека, поиск на странице (V28, на утверждение); «а»–«о» не менялись и утверждены 11.10.</p>
     <p>Версия 2: учтены <b>решения владельца по черновику</b> и исследование «Дизайн Vola v5: ориентиры». Главное: над страницей нет живого стекла (GeckoView рисует её в отдельной поверхности), поэтому панель — <b>непрозрачная лента цвета сайта</b>; размытие — только над экранами самой Vola и над снимком страницы.</p>
     <p>Каждый экран — в рамке телефона 390 × 844 dp, тема переключается вверху. Значения — из <b>system-v5.md</b>; движения — из плана v5, раздел 5. Раздел «Движение» можно трогать пальцем.</p>
@@ -526,7 +527,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <a href="#s-a">а · Новая вкладка</a><a href="#s-b">б · Страница</a><a href="#s-c">в · Ввод адреса</a>
       <a href="#s-d">г · Обзор</a><a href="#s-e">д · Меню</a><a href="#s-f">е · Защита</a>
       <a href="#s-g">ж · Настройки</a><a href="#s-h">з · Частный</a><a href="#s-i">и · Планшет</a>
-      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#system">Система</a>
+      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#system">Система</a>
     </nav>
   </div>
 
@@ -682,12 +683,22 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
     </div>
   </section>
 
+  <section class="scn" id="s-t">
+    <h2><small>т</small>Перевод</h2>
+    <p class="lede">На утверждение. Перевод — <b>на устройстве</b> (модели Gecko, как в Firefox): текст страницы никуда не уходит, в отличие от нынешнего веб-переводчика. Без всплывающих предложений: если язык страницы не ваш, в меню первой строкой стоит «Перевести на русский». Перевод заменяет текст на месте, вёрстка та же. Из v4 ничего не переносим.</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-t1"></div></div><figcaption><b>Перевести страницу.</b> Язык страницы определён сам, язык перевода — системный; оба можно сменить. Первый раз пакет пары скачивается — размер назван заранее.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-t2"></div></div><figcaption><b>Страница переведена.</b> Строка над панелью, как у «Слушать»: откуда переведено и «Оригинал». Новые блоки при прокрутке переводятся сами.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-t3"></div></div><figcaption><b>Настройки → Перевод.</b> Скачанные пакеты с размером — смахнуть, чтобы удалить; языки, которые не переводить; в частных вкладках пакеты не скачиваются.</figcaption></figure>
+    </div>
+  </section>
+
   <section class="scn" id="system">
     <h2>Система</h2>
     <p class="lede">Токены из <b>system-v5.md</b> — в текущей теме холста. Цвет сайта можно проверить своим цветом.</p>
     <div class="sys" id="sys"></div>
   </section>
-  <footer>Vola v5 — черновик холста, версия 3. Сайты, домены и данные выдуманы. Код и изображения — оригинальные; шрифты Inter и Material Symbols Rounded подключены с Google Fonts.</footer>
+  <footer>Vola v5 — черновик холста, версия 4. Сайты, домены и данные выдуманы. Код и изображения — оригинальные; шрифты Inter и Material Symbols Rounded подключены с Google Fonts.</footer>
 </main>
 
 <script>
@@ -795,6 +806,17 @@ const SITES={
   metro:{d:'metro-karta.ru',n:'Метро',logo:'М',theme:'#6B4FA0',hfg:'#FFFFFF',body:'#FFFFFF',fg:'#221A30',acc:'#6B4FA0',blk:2,kick:'Схема',t:'Карта метро и МЦК',hero:'shape',hc:['#6B4FA0','#B39DDB'],p:['Постройте маршрут между станциями.']},
   report:{d:'docs.local',n:'Документы',logo:'Д',theme:'#F7F7F8',hfg:'#222222',body:'#FFFFFF',fg:'#222222',acc:'#2563D9',blk:0,kick:'Черновик',t:'Отчёт за третий квартал',hero:'chart',p:['Выручка выросла на 12 %, расходы — на 4 %.']},
 };
+SITES.north={d:'northern-notes.com',n:'Northern Notes',logo:'NN',theme:'#1F4E5F',hfg:'#FFFFFF',body:'#FFFFFF',fg:'#18252A',acc:'#1F6F86',blk:11,
+  kick:'Field notes · 6 min read',t:'Northern lights in March: where and when to look',hero:'aurora',
+  p:['March is one of the best months for the aurora: the nights are still long, and the frost is milder. The farther from city lights, the brighter it gets.',
+     'Before the trip, check the weekly activity forecast: an index above four usually means a visible aurora even near town.',
+     'The best hours are from 10 pm to 2 am. Bring a thermos, a spare battery and a tripod — batteries drain twice as fast in the cold.',
+     'If the sky is cloudy, do not hurry to leave: clouds in the north change within half an hour.']};
+SITES.northRu=Object.assign({},SITES.north,{kick:'Полевые заметки · 6 минут',t:'Северное сияние в марте: где и когда смотреть',
+  p:['Март — один из лучших месяцев для сияния: ночи ещё длинные, а морозы мягче. Чем дальше от городских огней, тем ярче.',
+     'Перед поездкой проверьте прогноз активности на неделю: индекс выше четырёх обычно означает видимое сияние даже у города.',
+     'Лучшее время — с 22:00 до 02:00. Возьмите термос, запасной аккумулятор и штатив — на холоде батареи садятся вдвое быстрее.',
+     'Если небо затянуто, не спешите уезжать: облачность на севере меняется за полчаса.']});
 const PINS=[['П','Почта','#3D6FB6'],['К','Календарь','#C0533A'],['М','Карты','#2F8C6A'],['Н','Новости','#5E5CC4'],['В','Видео','#B23B5E'],['Р','Рецепты','#A3462B'],['Д','Документы','#4B4B53']];
 const TILE={blue:'#2F6FE4',indigo:'#4F5BD5',violet:'#7B57E0',cyan:'#1C8FD6',teal:'#0E8C8C',green:'#1F9D55',amber:'#C27A00',orange:'#E0620D',red:'#E5383B',pink:'#D93A7A',gray:'#7A7A82'};
 const TRIP='#E0620D';
@@ -1135,6 +1157,32 @@ S.r1=()=>{
   return`<div style="transform:translateY(-150px)">${pg}</div>`+sbar(0,`color:var(--on-tint);background:var(--tint);${tintStyle('polar')}`)+
   `<div style="position:absolute;left:0;right:0;top:${fy-10}px;height:68px;background:var(--mat-thick);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);box-shadow:inset 0 .5px 0 var(--hair);z-index:5"></div><div class="afield sq" style="position:absolute;left:12px;top:${fy}px;width:290px;z-index:6">${I('search','s20 l2')}<span class="t-body" style="flex:1">сияни<i class="caret"></i></span><span class="t-foot l2 tnum" style="padding:0 2px">2 из 7</span><span style="width:44px;height:44px;display:grid;place-items:center;color:var(--l1)">${I('keyboard_arrow_up','s20 w5')}</span><span style="width:44px;height:44px;display:grid;place-items:center;color:var(--l1);margin-right:-6px">${I('keyboard_arrow_down','s20 w5')}</span></div>
   <div style="position:absolute;right:8px;top:${fy}px;width:72px;height:48px;display:grid;place-items:center;color:var(--acc);font:500 17px/22px Inter;z-index:6">Отмена</div>`+kbdHTML(false);
+};
+S.t1=()=>`<div class="snapshot">${page('north')}${bar({k:'north'})}</div>`+sbar(1)+`<div class="scrim"></div><div class="sheet" style="top:380px">
+<div class="handle"></div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="it" style="width:44px;height:44px;border-radius:12px;background:${TILE.blue}">${I('translate','s28')}</span><div style="flex:1;min-width:0"><div class="t-title">Перевести страницу</div><div class="t-call l2 ell">northern-notes.com</div></div><span class="xbtn">${I('close','s20 w5')}</span></div>
+<div class="grp sq">
+ <div class="rw"><div class="tx t-body">С языка</div><span class="val">Английский</span>${I('chevron_right','s20 chev')}</div>
+ <div class="rw"><div class="tx t-body">На язык</div><span class="val">Русский</span>${I('chevron_right','s20 chev')}</div>
+ <div class="rw noi"><div class="tx t-body">Всегда переводить с английского</div><span class="sw"></span></div>
+</div>
+<span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:14px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">Перевести</span>
+<div class="t-foot l2" style="padding:10px 4px 0;text-align:center">Перевод на устройстве — текст никуда не уходит. Пакет 32 МБ скачается один раз.</div>
+</div>`;
+S.t2=()=>page('northRu')+sbar(1)+`<div style="position:absolute;left:12px;right:12px;bottom:92px;height:48px;border-radius:24px;background:var(--mat-thick);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);box-shadow:var(--e2),inset 0 .5px 0 var(--hair);display:flex;align-items:center;gap:10px;padding:0 6px 0 14px;z-index:31;color:var(--l1)">${I('translate','s20 l2')}<span class="t-call ell" style="flex:1;min-width:0">С английского</span><span class="acc" style="font:600 15px/20px Inter;padding:0 8px">Оригинал</span><span style="width:36px;height:36px;display:grid;place-items:center;color:var(--l2)">${I('close','s20')}</span></div>`+bar({k:'north'});
+S.t3=()=>{
+  const pack=(t,d,ok)=>`<div class="rw" style="min-height:60px"><div class="tx"><div class="t-body">${t}</div><div class="t-foot l2">${d}</div></div>${ok?I('check_circle','s20 f acc'):`<span class="acc" style="font:600 15px/20px Inter">Скачать</span>`}</div>`;
+  return sbar()+`<div style="padding:40px 16px 0">
+<div style="height:44px;display:flex;align-items:center;margin-left:-8px"><span class="tbtn" style="color:var(--acc)">${I('arrow_back','w5')}</span><div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">Перевод</div></div>
+<div class="grp sq" style="margin-top:12px">
+ <div class="rw noi"><div class="tx"><div class="t-body">Предлагать перевод в меню</div><div class="t-foot l2">Когда язык страницы не ваш</div></div><span class="sw acc-on"></span></div>
+ <div class="rw"><div class="tx t-body">Переводить на</div><span class="val">Русский</span>${I('chevron_right','s20 chev')}</div>
+ <div class="rw"><div class="tx t-body">Не переводить</div><span class="val">Английский</span>${I('chevron_right','s20 chev')}</div>
+</div>
+<div class="t-foot l2" style="padding:18px 16px 6px">ЯЗЫКОВЫЕ ПАКЕТЫ · 64 МБ</div>
+<div class="grp sq">${pack('Английский ↔ русский','32 МБ · скачан','ok')}${pack('Немецкий ↔ русский','32 МБ · скачан','ok')}${pack('Французский ↔ русский','31 МБ')}</div>
+<div class="t-foot l2" style="padding:8px 16px 0">Перевод работает на устройстве: страницы никуда не отправляются. Пакет удаляется смахиванием влево. В частных вкладках пакеты не скачиваются — только те, что уже есть.</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
 };
 function renderStatic(){for(const k of Object.keys(S)){const el=document.getElementById('scr-'+k);if(el)el.innerHTML=S[k]()}}
 
