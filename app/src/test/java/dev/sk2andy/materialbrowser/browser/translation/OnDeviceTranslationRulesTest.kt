@@ -90,12 +90,41 @@ class OnDeviceTranslationRulesTest {
     }
 
     @Test
+    fun `a never-translate site shows its host and a private tab's site is not listed`() {
+        assertEquals(
+            NeverTranslateSite("https://example.com", "example.com"),
+            OnDeviceTranslationRules.neverTranslateSite("https://example.com"),
+        )
+        assertEquals(
+            "news.example.org",
+            OnDeviceTranslationRules.neverTranslateSite("https://news.example.org:8443^geckoViewSessionContextId=work")?.host,
+        )
+        assertEquals("[::1]", OnDeviceTranslationRules.neverTranslateSite("http://[::1]:8080")?.host)
+        assertEquals(
+            "https://example.com^privateBrowsingId=0",
+            OnDeviceTranslationRules.neverTranslateSite("https://example.com^privateBrowsingId=0")?.origin,
+        )
+        assertNull(OnDeviceTranslationRules.neverTranslateSite("https://secret.example^privateBrowsingId=1"))
+        assertNull(OnDeviceTranslationRules.neverTranslateSite("https://secret.example^userContextId=2&privateBrowsingId=1"))
+        assertNull(OnDeviceTranslationRules.neverTranslateSite("about:blank"))
+        assertNull(OnDeviceTranslationRules.neverTranslateSite("https://"))
+    }
+
+    @Test
     fun `the unavailable engine answers every call without translating`() {
         val results = mutableListOf<PageTranslationResult>()
 
         PageTranslationPort.Unavailable.translate(TranslationPair("de", "ru"), allowModelDownload = true) { results += it }
         TranslationModelsPort.Unavailable.download("de") { results += it }
+        TranslationModelsPort.Unavailable.setLanguageSetting("de", TranslationLanguageSetting.Never) { results += it }
+        TranslationModelsPort.Unavailable.setNeverTranslateSite("https://example.com", never = true) { results += it }
+        var settings: Map<String, TranslationLanguageSetting>? = emptyMap()
+        TranslationModelsPort.Unavailable.languageSettings { settings = it }
+        var sites: List<NeverTranslateSite>? = emptyList()
+        TranslationModelsPort.Unavailable.neverTranslateSites { sites = it }
 
-        assertEquals(List(2) { PageTranslationResult.Failed(PageTranslationError.Unsupported) }, results)
+        assertEquals(List(4) { PageTranslationResult.Failed(PageTranslationError.Unsupported) }, results)
+        assertNull(settings)
+        assertNull(sites)
     }
 }
