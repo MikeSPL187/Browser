@@ -2027,7 +2027,7 @@
         <item quantity="other">Пропущено %d закладки: уже есть или не веб-страницы</item>
     </plurals>
     <string name="developer_options_ui_v5">Интерфейс v5</string>
-    <string name="developer_options_ui_v5_summary">Включает экраны нового интерфейса по мере готовности. Пока готовых нет: образец ниже показывает, из чего они будут сделаны.</string>
+    <string name="developer_options_ui_v5_summary">Новый интерфейс на телефоне (на планшете — прежний). Выключите, чтобы вернуться к прежнему, пока он ещё есть.</string>
     <string name="developer_options_ui_v5_specimen">Образец дизайна v5</string>
     <string name="developer_options_ui_v5_specimen_summary">Цвета, шрифт Inter, формы и плитки настроек v5 в светлой, тёмной и частной теме.</string>
     <string name="settings_protection_more_summary">Зашифрованный DNS, WebRTC, студия фильтров, память страниц, импорт и экспорт</string>
