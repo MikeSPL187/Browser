@@ -1,7 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +49,9 @@ internal fun BrowserPageMenuV5(
     val accentArgb = V5Theme.colors.accent.toArgb()
     // Only GeckoView can choose and hide page blocks; WebView keeps the menu without the item.
     val canHideDistractions = !blank && controller.browserEngineCapabilities.hideDistractions
+    // On GeckoView the page translates on the phone, through the sheet (V23); elsewhere through the provider.
+    val onDeviceTranslate = BrowserTranslateRules.usesOnDevice(controller.browserEngineCapabilities.onDeviceTranslation, tab.url)
+    var translateSheet by remember { mutableStateOf(false) }
     val faviconBitmap = controller.favicons[tab.id]
     val favicon = remember(faviconBitmap) { faviconBitmap?.asImageBitmap() }
     val state = V5PageMenuState(
@@ -57,7 +63,7 @@ internal fun BrowserPageMenuV5(
         canFavorite = !blank && !tab.isIncognito,
         isFavorite = controller.isSelectedTabFavorite,
         canRead = !blank && ReaderStudioSessionRules.isSupportedSource(tab.url),
-        canTranslate = !blank && PageTranslationRules.canTranslate(
+        canTranslate = onDeviceTranslate || !blank && PageTranslationRules.canTranslate(
             provider = controller.pageTranslationProvider,
             sourceUrl = tab.url,
         ),
@@ -79,7 +85,7 @@ internal fun BrowserPageMenuV5(
             onShare = controller::shareSelectedPage,
             onPrint = controller::printSelectedPage,
             onRead = actions.onReaderStudio,
-            onTranslate = controller::translateSelectedPage,
+            onTranslate = { if (onDeviceTranslate) translateSheet = true else controller.translateSelectedPage() },
             onFindInPage = actions.onFindInPage,
             onTogglePinned = actions.onTogglePinned,
             onDesktopViewChange = controller::setSelectedDesktopView,
@@ -104,6 +110,12 @@ internal fun BrowserPageMenuV5(
             onListen = { listenToSelectedPage(controller, listenSession, title = state.title) },
         ),
         onDismiss = onDismiss,
+    )
+    BrowserTranslateSheetV5(
+        controller = controller,
+        tab = tab,
+        visible = translateSheet,
+        onDismiss = { translateSheet = false },
     )
 }
 
