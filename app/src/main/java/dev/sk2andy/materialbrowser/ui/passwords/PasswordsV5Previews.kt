@@ -87,3 +87,31 @@ private fun PasswordDetailV5DarkPreview() = PreviewScheme(dark = true) {
 private fun PasswordEditV5Preview() = PreviewScheme(dark = false) {
     PasswordEditV5(initial = previewLogins[1], error = null, busy = false, onSave = { _, _, _ -> }, onBack = {})
 }
+
+@Preview(name = "Passwords v5 · first visit", heightDp = 720)
+@Composable
+private fun PasswordsIntroV5Preview() = PreviewScheme(dark = false) {
+    PasswordsIntroV5(busy = false, message = null, onStart = {}, onBack = {})
+}
+
+@Preview(name = "Passwords v5 · recovery phrase, dark", heightDp = 720)
+@Composable
+private fun RecoveryPhraseV5DarkPreview() = PreviewScheme(dark = true) {
+    RecoveryPhraseV5(
+        words = "acid acorn acre acts afar affix aged agent agile aging agony ahead".split(' '),
+        onDone = {},
+        onBack = {},
+    )
+}
+
+@Preview(name = "Passwords v5 · confirm, wrong", heightDp = 720)
+@Composable
+private fun RecoveryConfirmV5Preview() = PreviewScheme(dark = false) {
+    RecoveryConfirmV5(positions = listOf(2, 6, 10), wrong = true, busy = false, onCheck = {}, onBack = {})
+}
+
+@Preview(name = "Passwords v5 · recover", heightDp = 640)
+@Composable
+private fun RecoveryEntryV5Preview() = PreviewScheme(dark = false) {
+    RecoveryEntryV5(wrong = false, busy = false, onOpen = {}, onBack = {})
+}
