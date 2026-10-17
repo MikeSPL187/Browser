@@ -293,6 +293,12 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
             composeRule.onNode(closeAddressButton).performClick()
         }
+        // While the address editor closes, the bar's button can sit merged into another node for
+        // a frame (the merged tree has none, the unmerged one has it): wait for it on its own.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                .fetchSemanticsNodes().size == 1
+        }
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),
         ).performClick()
