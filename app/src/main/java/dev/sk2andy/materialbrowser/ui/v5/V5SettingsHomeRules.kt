@@ -17,6 +17,7 @@ object V5SettingsHomeRules {
             SettingsDestination.TabsAndGestures,
             SettingsDestination.Appearance,
             SettingsDestination.Browser,
+            SettingsDestination.Translation,
         ),
         listOf(
             SettingsDestination.ProtectionAndData,
@@ -47,6 +48,7 @@ object V5SettingsHomeRules {
         SettingsDestination.Search,
         SettingsDestination.TabsAndGestures,
         SettingsDestination.Browser,
+        SettingsDestination.Translation,
         -> V5Tile.Blue
         SettingsDestination.Appearance -> V5Tile.Pink
         SettingsDestination.ProtectionAndData,
