@@ -118,9 +118,12 @@ jobs:
       - name: Dependency policy
         run: ./gradlew --no-daemon --stacktrace verifyNoPlayServicesDependencies
 
+      # Both flavors compile the large app module; with the default 3 GB heap and a worker per core
+      # the Kotlin compiler ran out of memory (GC overhead limit, 17.10). Same budget as the previews.
       - name: Unit tests
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --no-daemon --stacktrace --max-workers=2
+          "-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8"
           testFullDebugUnitTest
           testSystemwebviewDebugUnitTest
           :shared:testDebugUnitTest
