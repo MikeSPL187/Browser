@@ -518,7 +518,8 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
 <main class="wrap">
   <div class="intro">
     <h1>Vola v5 — холст на утверждение</h1>
-    <p><b>Версия 5 (17.10):</b> добавлен экран «у» — проверка паролей (V24), на утверждение; «т» утверждён 17.10.</p>
+    <p><b>Версия 6 (17.10):</b> добавлен экран «ф» — синхронизация по QR (V26), на утверждение; «у» утверждён 17.10.</p>
+    <p><b>Версия 5 (17.10):</b> добавлен экран «у» — проверка паролей (V24).</p>
     <p><b>Версия 4 (17.10):</b> добавлен экран «т» — перевод на устройстве (V23).</p>
     <p><b>Версия 3 (16.10):</b> добавлены экраны «п», «р», «с» — знакомство, библиотека, поиск на странице (V28, на утверждение); «а»–«о» не менялись и утверждены 11.10.</p>
     <p>Версия 2: учтены <b>решения владельца по черновику</b> и исследование «Дизайн Vola v5: ориентиры». Главное: над страницей нет живого стекла (GeckoView рисует её в отдельной поверхности), поэтому панель — <b>непрозрачная лента цвета сайта</b>; размытие — только над экранами самой Vola и над снимком страницы.</p>
@@ -528,7 +529,7 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <a href="#s-a">а · Новая вкладка</a><a href="#s-b">б · Страница</a><a href="#s-c">в · Ввод адреса</a>
       <a href="#s-d">г · Обзор</a><a href="#s-e">д · Меню</a><a href="#s-f">е · Защита</a>
       <a href="#s-g">ж · Настройки</a><a href="#s-h">з · Частный</a><a href="#s-i">и · Планшет</a>
-      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#system">Система</a>
+      <a href="#s-j">к · Чтение</a><a href="#s-k">л · Скрыть отвлекающее</a><a href="#s-l">м · Отчёт</a><a href="#s-m">н · Предпросмотр</a><a href="#s-n">о · Акценты</a><a href="#s-p">п · Знакомство</a><a href="#s-q">р · Библиотека</a><a href="#s-r">с · Поиск на странице</a><a href="#s-t">т · Перевод</a><a href="#s-u">у · Проверка паролей</a><a href="#s-ph">ф · Синхронизация по QR</a><a href="#system">Система</a>
     </nav>
   </div>
 
@@ -701,6 +702,16 @@ footer{margin-top:56px;color:var(--doc-t2);font:400 13px/18px Inter;border-top:.
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-u1"></div></div><figcaption><b>Итог проверки.</b> Сверху — сколько требует внимания; дальше разделы по срочности. Утечки ещё не проверялись — кнопка с честной строкой о том, что уходит в сеть.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-u2"></div></div><figcaption><b>Запись с замечанием.</b> Что не так — одной фразой; «Сменить пароль на сайте» открывает страницу смены пароля сайта (<code>/.well-known/change-password</code>), если её нет — главную.</figcaption></figure>
       <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-u3"></div></div><figcaption><b>Всё в порядке.</b> Утечки проверены, замечаний нет: зелёная галочка и время проверки. Пустой список паролей — та же страница без разделов.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="scn" id="s-ph">
+    <h2><small>ф</small>Синхронизация по QR</h2>
+    <p class="lede">На утверждение. Перенос <b>вкладок и закладок</b> между телефоном и планшетом в <b>одной Wi-Fi</b> — по нажатию, без сервера и без фоновой работы (решения владельца 17.10). Одно устройство показывает QR, второе его считывает: в QR — адрес в сети и одноразовый ключ, сам пакет шифруется этим ключом и в сеть ключ не уходит. Код живёт 2 минуты и годится один раз. Камера включается только на экране «Считать код».</p>
+    <div class="row">
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph1"></div></div><figcaption><b>Отдать.</b> Настройки → Синхронизация → «Показать код». Что уйдёт — названо до переноса; код обновляется сам, пока экран открыт.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph2"></div></div><figcaption><b>Принять.</b> «Считать код» на втором устройстве: рамка и подсказка; фонарик не нужен — QR на экране светится сам. Разрешение на камеру спрашивается здесь, при первом входе.</figcaption></figure>
+      <figure class="dv"><div class="dev" data-w="390" data-h="844"><div class="scr" id="scr-ph3"></div></div><figcaption><b>Готово.</b> Вкладки — новой группой с именем устройства, закладки — в «Избранное» без повторов. Отменить можно сразу, одной кнопкой.</figcaption></figure>
     </div>
   </section>
 
@@ -1225,6 +1236,34 @@ S.u3=()=>sbar()+`<div style="padding:40px 16px 0">
 <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:72px 24px 0;gap:10px"><span style="width:72px;height:72px;border-radius:36px;display:grid;place-items:center;background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">${I('check_circle','s40 f')}</span><div class="t-title" style="margin-top:6px">Всё в порядке</div><div class="t-call l2">46 паролей: без повторов, без утечек, все надёжные.</div></div>
 <div class="grp sq" style="margin-top:32px"><div class="rw noi"><div class="tx t-body">Утечки</div><span class="val">Проверено в 08:12</span></div><div class="rw noi"><div class="tx t-body acc">Проверить ещё раз</div></div></div>
 <div class="t-foot l2" style="padding:8px 16px 0">Отправляются только первые 5 символов хеша пароля — не пароль и не адрес сайта.</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+function qrSvg(n){
+  let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
+  const cell=(x,y)=>{const f=(fx,fy)=>x>=fx&&x<fx+7&&y>=fy&&y<fy+7;
+    for(const [fx,fy] of [[0,0],[n-7,0],[0,n-7]])if(f(fx,fy)){const dx=x-fx,dy=y-fy;return dx==0||dy==0||dx==6||dy==6||(dx>=2&&dx<=4&&dy>=2&&dy<=4)}
+    if((x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9))return false;return rnd()<.48};
+  let r='';for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(cell(x,y))r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02"/>`;
+  return`<svg viewBox="-2 -2 ${n+4} ${n+4}" width="100%" height="100%" style="display:block;background:#fff;border-radius:12px" fill="#111">${r}</svg>`;
+}
+const syncTop=t=>`<div style="height:44px;display:flex;align-items:center;margin-left:-8px"><span class="tbtn" style="color:var(--acc)">${I('arrow_back','w5')}</span><div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">${t}</div></div>`;
+S.ph1=()=>sbar()+`<div style="padding:40px 16px 0">${syncTop('Показать код')}
+<div style="width:232px;height:232px;margin:28px auto 0;padding:8px;border-radius:20px;background:#fff;box-shadow:var(--e2)">${qrSvg(29)}</div>
+<div style="text-align:center;margin-top:18px"><div class="t-title">Откройте «Считать код» на планшете</div><div class="t-call l2" style="margin-top:6px">Оба устройства — в одной Wi-Fi «Дом»</div></div>
+<div class="t-foot l2" style="padding:22px 16px 6px">ЧТО ПЕРЕНЕСЁТСЯ</div>
+<div class="grp sq"><div class="rw noi"><span class="it" style="background:${TILE.blue}">${I('tab','s20')}</span><div class="tx t-body">Вкладки</div><span class="val">12</span></div><div class="rw noi"><span class="it" style="background:${TILE.amber}">${I('bookmark','s20 f')}</span><div class="tx t-body">Закладки</div><span class="val">34</span></div></div>
+<div class="t-foot l2" style="padding:8px 16px 0">Код действует 2 минуты и годится один раз. Данные шифруются ключом из кода и не уходят в интернет.</div>
+</div><div class="gh" style="color:var(--l1)"></div>`;
+S.ph2=()=>`<div style="position:absolute;inset:0;background:linear-gradient(160deg,#3a3f46,#1b1d21)"></div>`+sbar(1)+`<div style="position:absolute;left:0;right:0;top:40px;padding:0 16px;z-index:3;color:#fff"><div style="height:44px;display:flex;align-items:center;margin-left:-8px"><span class="tbtn" style="color:#fff">${I('close','w5')}</span><div class="t-hl" style="position:absolute;left:0;right:0;text-align:center;pointer-events:none;color:#fff">Считать код</div></div></div>
+<div style="position:absolute;left:69px;top:250px;width:252px;height:252px;border-radius:28px;box-shadow:0 0 0 2000px rgba(0,0,0,.45);z-index:2"></div>
+<div style="position:absolute;left:69px;top:250px;width:252px;height:252px;border-radius:28px;border:3px solid #fff;z-index:3;opacity:.95"></div>
+<div style="position:absolute;left:105px;top:286px;width:180px;height:180px;opacity:.55;transform:rotate(-4deg);z-index:1">${qrSvg(29)}</div>
+<div style="position:absolute;left:24px;right:24px;top:530px;text-align:center;color:#fff;z-index:3"><div class="t-title" style="color:#fff">Наведите на код</div><div class="t-call" style="opacity:.8;margin-top:6px">Он на экране «Показать код» другого устройства в той же Wi-Fi</div></div>
+<div class="t-foot" style="position:absolute;left:24px;right:24px;bottom:48px;text-align:center;color:#fff;opacity:.7;z-index:3">Камера работает только на этом экране. Кадры не сохраняются и никуда не отправляются.</div>`;
+S.ph3=()=>sbar()+`<div style="padding:40px 16px 0">${syncTop('Синхронизация')}
+<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px 0;gap:10px"><span style="width:72px;height:72px;border-radius:36px;display:grid;place-items:center;background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">${I('check_circle','s40 f')}</span><div class="t-title" style="margin-top:6px">Перенесено с «Pixel Анны»</div><div class="t-call l2">12 вкладок — новой группой, 30 закладок (4 уже были)</div></div>
+<div class="grp sq" style="margin-top:28px"><div class="rw"><span class="it" style="background:${TILE.blue}">${I('tab','s20')}</span><div class="tx t-body">Группа «Pixel Анны»</div><span class="val">12</span>${I('chevron_right','s20 chev')}</div><div class="rw"><span class="it" style="background:${TILE.amber}">${I('bookmark','s20 f')}</span><div class="tx t-body">Избранное</div><span class="val">+30</span>${I('chevron_right','s20 chev')}</div></div>
+<span class="pchip" style="width:100%;justify-content:center;height:50px;margin-top:18px;background:var(--acc-fill);color:var(--on-acc-fill);font:600 17px/22px Inter">Готово</span>
+<div style="text-align:center;margin-top:10px"><span class="acc" style="font:400 17px/22px Inter">Отменить перенос</span></div>
 </div><div class="gh" style="color:var(--l1)"></div>`;
 function renderStatic(){for(const k of Object.keys(S)){const el=document.getElementById('scr-'+k);if(el)el.innerHTML=S[k]()}}
 
