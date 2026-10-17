@@ -39,8 +39,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels its older run. Manual runs never cancel one another (two
+# runs of one branch did, runs 768 and 769), and the two nightly runs each keep their own group.
 concurrency:
-  group: instrumented-${{ github.ref }}
+  group: >-
+    instrumented-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.run_id ||
+    github.event.schedule || 'pr' }}
   cancel-in-progress: true
 
 defaults:
