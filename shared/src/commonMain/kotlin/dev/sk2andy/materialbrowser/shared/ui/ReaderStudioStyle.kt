@@ -61,6 +61,8 @@ data class ReaderStudioStyle(
     val iconSize: Dp,
     val handleWidth: Dp,
     val handleHeight: Dp,
+    /** The panel's slider, choice and switch in the app's design system; null keeps Material's. */
+    val controls: ReaderStudioControls? = null,
 ) {
     fun fontFamily(font: ReaderFont): FontFamily = when (font) {
         ReaderFont.Sans -> sansFontFamily

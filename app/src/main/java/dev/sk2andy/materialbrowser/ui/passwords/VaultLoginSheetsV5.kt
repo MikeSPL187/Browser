@@ -23,17 +23,27 @@ import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 /*
  * Vola's password sheets over the page as v5 asks every question (owner 17.10: the phone all v5):
  * the v5 prompt sheet with the account rows in a group. «Close» and a swipe down say «Not now».
- * The generator stays on the current sheet until the password screens move to v5.
  */
 
-/** [request] as a v5 sheet; false for a request v5 does not draw yet (the generator). */
+/** [request] as a v5 sheet; true once it is drawn. */
 @Composable
 internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -> Unit): Boolean {
     when (request) {
         is VaultLoginRequest.Save -> V5PromptTheme { SaveSheet(request, onDismiss) }
         is VaultLoginRequest.Select -> V5PromptTheme { SelectSheet(request, onDismiss) }
         is VaultLoginRequest.Offer -> V5PromptTheme { OfferSheet(request, onDismiss) }
-        is VaultLoginRequest.Generate -> return false
+        is VaultLoginRequest.Generate -> V5PromptTheme {
+            PasswordGeneratorSheetV5(
+                visible = true,
+                subtitle = request.site,
+                useLabel = stringResource(
+                    if (request.canSave) R.string.passwords_generator_use_and_save else R.string.passwords_generator_use,
+                ),
+                useNeedsFingerprint = request.canSave,
+                onUse = { password -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Use(password)) },
+                onDismiss = onDismiss,
+            )
+        }
     }
     return true
 }

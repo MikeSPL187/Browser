@@ -80,6 +80,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import android.view.WindowManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -120,6 +121,11 @@ internal fun ExternalLinkPreviewScreen(
 ) {
     var rootBottomInWindowPx by remember { mutableIntStateOf(0) }
     var blurTarget by remember { mutableStateOf<BlurTarget?>(null) }
+    val drawsV5 = rememberDrawsV5()
+    val context = LocalContext.current
+    val fullWindowHeightPx = remember(context) {
+        context.getSystemService(WindowManager::class.java).currentWindowMetrics.bounds.height()
+    }
     val profiles = if (controller.profilesEnabled) {
         controller.localBrowserProfiles
     } else {
@@ -152,7 +158,19 @@ internal fun ExternalLinkPreviewScreen(
                 if (blurTarget === target) blurTarget = null
             },
         )
-        controller.findInPageState?.let { findState ->
+        // Under v5 on a phone, find takes the bar's place as in the browser (canvas «с1»).
+        val findV5 = drawsV5 && controller.findInPageState != null
+        controller.findInPageState?.takeIf { drawsV5 }?.let { findState ->
+            BrowserFindInPage(
+                controller = controller,
+                findState = findState,
+                isPrivate = false,
+                fullWindowHeightPx = fullWindowHeightPx,
+                rootBottomInWindowPx = rootBottomInWindowPx,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+        controller.findInPageState?.takeIf { !drawsV5 }?.let { findState ->
             val matchPosition = FindInPageRules.displayPosition(findState)
             FindInPageBar(
                 query = findState.query,
@@ -180,7 +198,7 @@ internal fun ExternalLinkPreviewScreen(
                     .zIndex(25f),
             )
         }
-        ExternalLinkPreviewChrome(
+        if (!findV5) ExternalLinkPreviewChrome(
             controller = controller,
             state = state,
             profiles = profiles,
@@ -1114,6 +1132,7 @@ internal fun BlankTabPreview(
     essentials: EssentialsController? = null,
     essentialsAlpha: () -> Float,
 ) {
+    val drawsV5 = rememberDrawsV5()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val rootView = LocalView.current
@@ -1158,6 +1177,26 @@ internal fun BlankTabPreview(
                     transformOrigin = TransformOrigin(0f, 0f)
                 },
         ) {
+            // While tabs are swiped under v5, a new tab next door previews as the v5 page it opens to.
+            if (drawsV5) {
+                BrowserNewTabV5(
+                    essentials = essentials?.entriesFor(profileId).orEmpty(),
+                    essentialIcons = essentials?.iconsByUrl.orEmpty(),
+                    onOpenEssential = {},
+                    editor = null,
+                    profileLabel = null,
+                    profileIconKey = null,
+                    recentTabs = emptyList(),
+                    recentTabFavicons = emptyMap(),
+                    onRecentTab = {},
+                    protection = null,
+                    contentPadding = PaddingValues(
+                        top = rootSafeDrawingPadding.calculateTopPadding(),
+                        bottom = rootSafeDrawingPadding.calculateBottomPadding(),
+                    ),
+                )
+                return@Box
+            }
             NewTabPage(
                 essentials = essentials?.entriesFor(profileId).orEmpty(),
                 essentialIcons = essentials?.iconsByUrl.orEmpty(),

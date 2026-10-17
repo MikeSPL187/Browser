@@ -200,6 +200,7 @@ internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
             iconSize = VolaReader.iconSize,
             handleWidth = VolaReader.handleWidth,
             handleHeight = VolaReader.handleHeight,
+            controls = if (v5) V5ReaderStudioControls else null,
         )
     }
 }

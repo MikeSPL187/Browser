@@ -114,6 +114,7 @@ fun SiteCapsuleBrowserScreen(
     videoOnlyPresentation: Boolean = webViewVideoOnlyPresentation,
 ) {
     val tab = controller.selectedTab
+    val v5 = rememberDrawsV5()
     val entrance = remember(capsule.id) { Animatable(0f) }
     LaunchedEffect(capsule.id) {
         entrance.animateTo(1f, spring(dampingRatio = 0.84f, stiffness = 520f))
@@ -141,6 +142,28 @@ fun SiteCapsuleBrowserScreen(
             statusBarTint = MaterialTheme.colorScheme.surface.toArgb(),
             showStatusBarOverlay = !videoOnlyPresentation,
         )
+        val controls = !videoOnlyPresentation && capsule.chromeMode.showsControls
+        if (v5) {
+            V5PromptTheme {
+                tab.error?.takeIf { controls }?.let { error -> CapsuleErrorV5(error, controller::reload) }
+                if (controls && tab.isLoading) {
+                    CapsuleLoadingLineV5(tab.progress / 100f, Modifier.statusBarsPadding().align(Alignment.TopCenter))
+                }
+                if (controls) {
+                    CapsuleChromeV5(
+                        name = capsule.name,
+                        address = AddressResolver.displayText(tab.url).takeIf { capsule.chromeMode == CapsuleChromeMode.Compact },
+                        canGoBack = tab.canGoBack,
+                        isLoading = tab.isLoading,
+                        onBack = controller::goBack,
+                        onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
+                        onOpenFull = controller::openSiteCapsuleInFullCandy,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
+            }
+            return@Box
+        }
         tab.error?.takeIf {
             !videoOnlyPresentation && capsule.chromeMode.showsControls
         }?.let { error ->
