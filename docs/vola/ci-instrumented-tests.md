@@ -5,6 +5,9 @@
 - **Workflow** `.github/workflows/instrumented.yml`: эмулятор API 35 x86_64 (как в `screenshots.yml`),
   **8 шардов**, swap 8 ГБ. Запуск: метка `instrumented` на PR, каждую ночь на `main`, вручную с
   фильтром (пакет `dev.sk2andy.materialbrowser.ui` или класс, можно `Класс#метод`, через запятую).
+- **Образ Android 17 (API 37)** — только вручную: поле `api_level` = 37 и фильтр по классу. Так идут
+  тесты с `@SdkSuppress(minSdkVersion = 37)`, например PiP с YouTube
+  (`dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPictureInstrumentedTest`). Ночью и на PR — API 35.
 - **AndroidX Test Orchestrator** (`testOptions` в `app/build.gradle.kts`): каждый тест в своём процессе,
   данные приложения очищаются, тайм-аут 2 мин на тест. Падение одного теста не роняет остальные.
 - **Задача Report** собирает JUnit XML всех шардов и пишет сводку на страницу запуска: сколько тестов,
