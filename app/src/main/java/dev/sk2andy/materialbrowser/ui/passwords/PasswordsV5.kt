@@ -53,10 +53,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5RowIcon
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5SearchField
-import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
-import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import kotlinx.coroutines.delay
 
 /*
@@ -399,20 +397,18 @@ internal fun PasswordEditV5(
                 }
             }
         }
-        // The generator as a v5 sheet over the form; «Use» puts the password in the field.
-        val generatorTitle = stringResource(R.string.passwords_generator_open)
-        V5WindowSheet(visible = generating, onDismiss = { generating = false }, title = generatorTitle) {
-            V5SheetHeader(title = generatorTitle, onClose = { generating = false })
-            PasswordGeneratorContent(
-                subtitle = null,
-                useLabel = stringResource(R.string.passwords_generator_use),
-                useNeedsFingerprint = false,
-                onUse = { generated ->
-                    password = generated
-                    generating = false
-                },
-            )
-        }
+        // The v5 generator sheet over the form; «Use» puts the password in the field.
+        PasswordGeneratorSheetV5(
+            visible = generating,
+            subtitle = null,
+            useLabel = stringResource(R.string.passwords_generator_use),
+            useNeedsFingerprint = false,
+            onUse = { generated ->
+                password = generated
+                generating = false
+            },
+            onDismiss = { generating = false },
+        )
     }
 }
 

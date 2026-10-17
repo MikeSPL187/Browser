@@ -89,6 +89,10 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsIntroV5
+import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmV5
+import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryV5
+import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseV5
 import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
@@ -258,19 +262,24 @@ class PasswordsActivity : FragmentActivity() {
         val v5 = rememberSettingsUiV5()
         BackHandler { back(route) }
         when (route) {
-            PasswordsRoute.Intro -> PasswordsIntroScreen(model.busy, message, ::startSetup, ::finish)
-            is PasswordsRoute.Phrase -> RecoveryPhraseScreen(
-                words = route.phrase.split(' '),
-                onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) },
-                onBack = { back(route) },
-            )
-            is PasswordsRoute.Confirm -> RecoveryConfirmScreen(
-                positions = route.positions,
-                wrong = route.wrong,
-                busy = model.busy,
-                onCheck = { answers -> confirm(route, answers) },
-                onBack = { back(route) },
-            )
+            PasswordsRoute.Intro -> if (v5) {
+                PasswordsIntroV5(model.busy, message, ::startSetup, ::finish)
+            } else {
+                PasswordsIntroScreen(model.busy, message, ::startSetup, ::finish)
+            }
+            is PasswordsRoute.Phrase -> {
+                val onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) }
+                if (v5) {
+                    RecoveryPhraseV5(route.phrase.split(' '), onDone) { back(route) }
+                } else {
+                    RecoveryPhraseScreen(route.phrase.split(' '), onDone) { back(route) }
+                }
+            }
+            is PasswordsRoute.Confirm -> if (v5) {
+                RecoveryConfirmV5(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
+            } else {
+                RecoveryConfirmScreen(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
+            }
             PasswordsRoute.Locked -> if (v5) {
                 PasswordsLockedV5(
                     busy = model.busy,
@@ -288,7 +297,11 @@ class PasswordsActivity : FragmentActivity() {
                 onBack = ::finish,
                 onErase = ::eraseVault,
             )
-            is PasswordsRoute.Recover -> RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
+            is PasswordsRoute.Recover -> if (v5) {
+                RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
+            } else {
+                RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
+            }
             PasswordsRoute.Logins -> if (v5) {
                 PasswordsListV5(
                     logins = logins,
