@@ -30,6 +30,9 @@ import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 
 @Composable
 internal fun BrowserTransientOverlays(
@@ -50,96 +53,56 @@ internal fun BrowserTransientOverlays(
     val readerUnsupportedMessage = stringResource(R.string.reader_extraction_unsupported)
     val readerEmptyMessage = stringResource(R.string.reader_extraction_empty)
     val readerInvalidMessage = stringResource(R.string.reader_extraction_invalid)
+    val drawsV5 = rememberDrawsV5()
     if (clearDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { onClearDialogDismiss() },
-            title = { Text(stringResource(R.string.clear_data_title)) },
-            text = { Text(stringResource(R.string.clear_data_scope_message)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        controller.clearBrowsingData()
-                        onClearDialogDismiss()
-                    },
-                ) { Text(stringResource(R.string.action_delete)) }
+        ConfirmPrompt(
+            v5 = drawsV5,
+            title = stringResource(R.string.clear_data_title),
+            message = stringResource(R.string.clear_data_scope_message),
+            confirm = stringResource(R.string.action_delete),
+            onConfirm = {
+                controller.clearBrowsingData()
+                onClearDialogDismiss()
             },
-            dismissButton = {
-                TextButton(onClick = { onClearDialogDismiss() }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
+            onDismiss = onClearDialogDismiss,
         )
     }
 
     pendingCommand?.let { pending ->
         val isCookieCommand = pending.command.confirmation == CommandConfirmation.ClearCookies
-        AlertDialog(
-            onDismissRequest = {
-                onPendingCommandDismiss()
-            },
-            title = {
-                Text(
-                    stringResource(
-                        if (isCookieCommand) {
-                            R.string.command_cookie_confirm_title
-                        } else {
-                            R.string.command_duplicates_confirm_title
-                        },
-                    ),
-                )
-            },
-            text = {
-                Text(
-                    if (isCookieCommand) {
-                        stringResource(
-                            when (controller.commandCookieScope) {
-                                CommandCookieScope.SharedRegularProfile ->
-                                    R.string.command_cookie_confirm_regular
-                                CommandCookieScope.IsolatedRegularProfile ->
-                                    R.string.command_cookie_confirm_isolated
-                                CommandCookieScope.PrivateProfile ->
-                                    R.string.command_cookie_confirm_private
-                                CommandCookieScope.AllBrowserProfiles ->
-                                    R.string.command_cookie_confirm_all
-                            },
-                        )
-                    } else {
-                        pluralStringResource(
-                            R.plurals.command_duplicates_confirm_message,
-                            pending.command.duplicateCount,
-                            pending.command.duplicateCount,
-                        )
+        ConfirmPrompt(
+            v5 = drawsV5,
+            title = stringResource(
+                if (isCookieCommand) {
+                    R.string.command_cookie_confirm_title
+                } else {
+                    R.string.command_duplicates_confirm_title
+                },
+            ),
+            message = if (isCookieCommand) {
+                stringResource(
+                    when (controller.commandCookieScope) {
+                        CommandCookieScope.SharedRegularProfile -> R.string.command_cookie_confirm_regular
+                        CommandCookieScope.IsolatedRegularProfile -> R.string.command_cookie_confirm_isolated
+                        CommandCookieScope.PrivateProfile -> R.string.command_cookie_confirm_private
+                        CommandCookieScope.AllBrowserProfiles -> R.string.command_cookie_confirm_all
                     },
                 )
+            } else {
+                pluralStringResource(
+                    R.plurals.command_duplicates_confirm_message,
+                    pending.command.duplicateCount,
+                    pending.command.duplicateCount,
+                )
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onPendingCommandConfirmed(pending.command)
-                    },
-                ) {
-                    Text(
-                        stringResource(
-                            if (isCookieCommand) {
-                                R.string.action_delete
-                            } else {
-                                R.string.command_close_duplicates_name
-                            },
-                        ),
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        onPendingCommandDismiss()
-                    },
-                ) { Text(stringResource(R.string.action_cancel)) }
-            },
+            confirm = stringResource(
+                if (isCookieCommand) R.string.action_delete else R.string.command_close_duplicates_name,
+            ),
+            onConfirm = { onPendingCommandConfirmed(pending.command) },
+            onDismiss = onPendingCommandDismiss,
         )
     }
 
-    val drawsV5 = rememberDrawsV5()
     if (drawsV5 && controller.contentActions.isLinkPeekVisible) {
         BrowserLinkGlanceV5(controller)
     } else if (controller.contentActions.isLinkPeekVisible) {
@@ -296,4 +259,39 @@ internal fun BrowserTransientOverlays(
             },
         )
     }
+}
+
+/**
+ * A question before something that cannot be taken back: the v5 prompt sheet on a phone under v5
+ * (its «Close» and a swipe down cancel), the current dialog elsewhere. Both questions here remove
+ * data, so the action is red under v5.
+ */
+@Composable
+private fun ConfirmPrompt(
+    v5: Boolean,
+    title: String,
+    message: String,
+    confirm: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (v5) {
+        V5PromptTheme {
+            V5PromptSheet(
+                visible = true,
+                title = title,
+                message = message,
+                actions = listOf(V5PromptAction(confirm, onConfirm, V5PromptRole.Destructive)),
+                onDismiss = onDismiss,
+            )
+        }
+        return
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = { Button(onClick = onConfirm) { Text(confirm) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }

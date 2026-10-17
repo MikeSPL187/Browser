@@ -24,6 +24,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,9 +44,22 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
 import dev.sk2andy.materialbrowser.ui.theme.auraBrush
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
+import dev.sk2andy.materialbrowser.ui.v5.V5StateGlyph
+import dev.sk2andy.materialbrowser.ui.v5.V5StatePrimaryAction
+import dev.sk2andy.materialbrowser.ui.v5.V5StateQuietAction
 
 /** The color of a [VolaStatePageIcon]: plain, a warning, a danger, or the page's accent. */
 internal enum class VolaStatePageTone { Neutral, Warning, Error, Accent }
+
+/**
+ * True inside a [VolaStatePage] drawn as v5 (a phone under v5; owner 17.10: nothing of the current
+ * interface on the phone). Its icon and buttons then take v5's glyph and actions.
+ */
+private val LocalStatePageV5 = staticCompositionLocalOf { false }
 
 /**
  * A whole page in one state (boards W-Offline, W-HttpsOnly, W-Locked), the full-screen sibling
@@ -65,6 +80,14 @@ internal fun VolaStatePage(
     details: (@Composable ColumnScope.() -> Unit)? = null,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
+    if (rememberDrawsV5()) {
+        V5PromptTheme {
+            CompositionLocalProvider(LocalStatePageV5 provides true) {
+                V5StatePageLayout(title, message, icon, modifier, announce, details, actions)
+            }
+        }
+        return
+    }
     val colors = MaterialTheme.colorScheme
     Column(modifier = modifier.fillMaxSize()) {
         Box(
@@ -123,6 +146,66 @@ internal fun VolaStatePage(
     }
 }
 
+/**
+ * The page as v5 draws its state screens (V5StatePage): the glyph on its disc, the title and one
+ * message near the middle on the v5 background, the actions at the bottom where the thumb is.
+ */
+@Composable
+private fun V5StatePageLayout(
+    title: String,
+    message: String?,
+    icon: @Composable () -> Unit,
+    modifier: Modifier,
+    announce: Boolean,
+    details: (@Composable ColumnScope.() -> Unit)?,
+    actions: @Composable ColumnScope.() -> Unit,
+) {
+    val colors = V5Theme.colors
+    Column(modifier.fillMaxSize().background(colors.background)) {
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(
+                Modifier
+                    .widthIn(max = V5Sizes.stateContentMax)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = V5Spacing.space6, vertical = V5Spacing.space4),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+            ) {
+                Box(Modifier.padding(bottom = V5Spacing.space3)) { icon() }
+                Text(
+                    title,
+                    style = V5Theme.type.title,
+                    color = colors.label,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics {
+                        heading()
+                        if (announce) liveRegion = LiveRegionMode.Polite
+                    },
+                )
+                if (message != null) {
+                    Text(
+                        message,
+                        style = V5Theme.type.callout,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                details?.invoke(this)
+            }
+        }
+        Column(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .widthIn(max = V5Sizes.stateContentMax)
+                .fillMaxWidth()
+                .padding(start = V5Spacing.space6, end = V5Spacing.space6, bottom = V5Spacing.space4),
+            verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+            content = actions,
+        )
+    }
+}
+
 /** The icon of a [VolaStatePage] in its rounded square. Decorative: the title says it all. */
 @Composable
 internal fun VolaStatePageIcon(
@@ -130,6 +213,16 @@ internal fun VolaStatePageIcon(
     modifier: Modifier = Modifier,
     tone: VolaStatePageTone = VolaStatePageTone.Neutral,
 ) {
+    if (LocalStatePageV5.current) {
+        val colors = V5Theme.colors
+        val tint = when (tone) {
+            VolaStatePageTone.Error -> colors.danger
+            VolaStatePageTone.Warning -> colors.warning
+            VolaStatePageTone.Neutral, VolaStatePageTone.Accent -> colors.accent
+        }
+        V5StateGlyph(icon, modifier, tint)
+        return
+    }
     VolaStatePageIconContainer(tone = tone, modifier = modifier) {
         Icon(
             imageVector = icon,
@@ -142,6 +235,10 @@ internal fun VolaStatePageIcon(
 /** A [VolaStatePageIcon] that spins while the page tries again. */
 @Composable
 internal fun VolaStatePageProgress(modifier: Modifier = Modifier) {
+    if (LocalStatePageV5.current) {
+        CircularProgressIndicator(modifier = modifier.size(V5Sizes.privateGemIcon), color = V5Theme.colors.accent)
+        return
+    }
     VolaStatePageIconContainer(tone = VolaStatePageTone.Accent, modifier = modifier) {
         CircularProgressIndicator(
             modifier = Modifier.size(VolaStatePageTokens.iconSize),
@@ -183,6 +280,10 @@ internal fun VolaStatePagePrimaryButton(
     icon: ImageVector? = null,
     enabled: Boolean = true,
 ) {
+    if (LocalStatePageV5.current) {
+        V5StatePrimaryAction(V5StateAction(text, onClick, icon, enabled), modifier)
+        return
+    }
     Button(
         onClick = onClick,
         modifier = modifier
@@ -216,6 +317,10 @@ internal fun VolaStatePageSecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (LocalStatePageV5.current) {
+        V5StateQuietAction(V5StateAction(text, onClick), modifier)
+        return
+    }
     OutlinedButton(
         onClick = onClick,
         modifier = modifier
@@ -227,13 +332,21 @@ internal fun VolaStatePageSecondaryButton(
     }
 }
 
-/** A quiet way out of a [VolaStatePage], such as going to another workspace. */
+/**
+ * A quiet way out of a [VolaStatePage], such as going to another workspace. Under v5 one that
+ * goes against the page's advice is red ([destructive]).
+ */
 @Composable
 internal fun VolaStatePageTextButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    destructive: Boolean = false,
 ) {
+    if (LocalStatePageV5.current) {
+        V5StateQuietAction(V5StateAction(text, onClick, destructive = destructive), modifier)
+        return
+    }
     TextButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
