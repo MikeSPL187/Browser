@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.ViewGroup
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -227,6 +228,14 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
                     activity.browserControllerForTesting().selectedTab.url == EXTERNAL_PAGE_URL
             }
             externalPageSelected
+        }
+        // The normal chrome comes back a recomposition after the tab's address changes, later
+        // still on a loaded emulator: wait for it instead of checking the first frame.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
+                .fetchSemanticsNodes().isEmpty() &&
+                composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                    .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
             .assertDoesNotExist()
