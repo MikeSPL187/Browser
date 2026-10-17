@@ -377,7 +377,7 @@ private class LastTranslatedRow {
 }
 
 /** Pure decisions of the translate screens, for unit tests. */
-object V5TranslateRules {
+internal object V5TranslateRules {
     enum class Page { Main, From, To }
 
     /** «Translate» works once both languages are known, differ, and nothing is under way. */
