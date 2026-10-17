@@ -46,6 +46,7 @@ import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.LibraryRow
 import dev.sk2andy.materialbrowser.ui.LibrarySiteTile
+import dev.sk2andy.materialbrowser.ui.rememberDrawsV5
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPasswords
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
@@ -74,6 +75,7 @@ internal fun VaultLoginPromptSheets() {
     val activity = AndroidCredentialPromptHost.activityContext(LocalContext.current)
     if (activity == null || System.identityHashCode(activity) != request.windowId) return
     val dismiss = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Dismiss) }
+    if (rememberDrawsV5() && VaultLoginPromptSheetV5(request, dismiss)) return
     ModalBottomSheet(
         onDismissRequest = dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),

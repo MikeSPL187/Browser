@@ -17,6 +17,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 object V5PromptSheetTestTags {
     const val Message = "v5_prompt_message"
     fun action(index: Int) = "v5_prompt_action:$index"
+    fun option(index: Int) = "v5_prompt_option:$index"
 }
 
 /** How an action of a prompt reads: the one it suggests, an ordinary one, or one that removes. */
@@ -77,7 +78,7 @@ fun V5PromptSheet(
                 )
             }
             content()
-            V5ListGroup {
+            if (actions.isNotEmpty()) V5ListGroup {
                 actions.forEachIndexed { index, action ->
                     V5ListRow(
                         title = action.label,
@@ -90,6 +91,42 @@ fun V5PromptSheet(
                         modifier = Modifier.testTag(action.testTag ?: V5PromptSheetTestTags.action(index)),
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * A choice of one value, as the menus of the current interface offer (owner 17.10: the phone all
+ * v5): the prompt sheet with the values as rows, the chosen one checked in the accent. A pick
+ * closes it through [onSelect]; «Close» and a swipe down keep the value.
+ */
+@Composable
+fun V5ChoiceSheet(
+    visible: Boolean,
+    title: String,
+    options: List<String>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    testTag: String? = null,
+) {
+    V5PromptSheet(
+        visible = visible,
+        title = title,
+        message = null,
+        actions = emptyList(),
+        onDismiss = onDismiss,
+        testTag = testTag,
+    ) {
+        V5ListGroup {
+            options.forEachIndexed { index, option ->
+                V5ListRow(
+                    title = option,
+                    trailing = if (index == selected) V5RowTrailing.Check else V5RowTrailing.None,
+                    onClick = { onSelect(index) },
+                    modifier = Modifier.testTag(V5PromptSheetTestTags.option(index)),
+                )
             }
         }
     }

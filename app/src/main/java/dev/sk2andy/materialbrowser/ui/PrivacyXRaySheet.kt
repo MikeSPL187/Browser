@@ -5,6 +5,9 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.luminance
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import androidx.activity.compose.BackHandler
@@ -270,7 +273,37 @@ internal fun PrivacyXRaySheet(
         }
     }
 
-    if (pauseWarningVisible) {
+    if (pauseWarningVisible && rememberDrawsV5()) {
+        val pause = { persistent: Boolean ->
+            pauseWarningVisible = false
+            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            onPause(persistent)
+        }
+        // Under v5 the question is the v5 prompt sheet: both answers turn protection off, so red.
+        V5PromptTheme {
+            V5PromptSheet(
+                visible = true,
+                title = stringResource(R.string.privacy_pause_warning_title),
+                message = stringResource(R.string.privacy_pause_warning_message, siteState.host.orEmpty()),
+                actions = listOfNotNull(
+                    V5PromptAction(
+                        stringResource(R.string.privacy_pause_temporary),
+                        { pause(false) },
+                        V5PromptRole.Destructive,
+                        PrivacyXRayTestTags.PauseTemporary,
+                    ),
+                    V5PromptAction(
+                        stringResource(R.string.privacy_pause_persistent),
+                        { pause(true) },
+                        V5PromptRole.Destructive,
+                        PrivacyXRayTestTags.PausePersistent,
+                    ).takeIf { siteState.canPersist },
+                ),
+                onDismiss = { pauseWarningVisible = false },
+                testTag = PrivacyXRayTestTags.Warning,
+            )
+        }
+    } else if (pauseWarningVisible) {
         AlertDialog(
             onDismissRequest = { pauseWarningVisible = false },
             modifier = Modifier.testTag(PrivacyXRayTestTags.Warning),

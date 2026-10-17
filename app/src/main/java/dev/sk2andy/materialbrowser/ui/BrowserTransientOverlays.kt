@@ -216,6 +216,28 @@ internal fun BrowserTransientOverlays(
             isPrivate = controller.selectedTab.isIncognito,
             onDismiss = controller.contentActions::dismiss,
         )
+    } else if (drawsV5 && controller.contentActions.isVisible) {
+        // A long press with no link under it, such as an image: the actions as a v5 sheet.
+        controller.contentActions.target?.let { target ->
+            V5PromptTheme {
+                V5PromptSheet(
+                    visible = true,
+                    title = stringResource(R.string.content_actions_title),
+                    message = null,
+                    actions = listOfNotNull(
+                        V5PromptAction(
+                            stringResource(R.string.action_open_link_background_tab),
+                            controller::openContextLinkInBackground,
+                        ).takeIf { target.canOpenLinkInBackground },
+                        V5PromptAction(
+                            stringResource(R.string.action_download_image),
+                            controller::downloadContextImage,
+                        ).takeIf { target.canDownloadImage },
+                    ),
+                    onDismiss = controller.contentActions::dismiss,
+                )
+            }
+        }
     } else if (controller.contentActions.isVisible) {
         WebContentContextSheet(
             target = controller.contentActions.target,

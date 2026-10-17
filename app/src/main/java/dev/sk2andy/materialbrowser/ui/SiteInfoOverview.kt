@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.heading
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5ChoiceSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5Toggle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -509,7 +510,20 @@ private fun SitePermissionRow(
                 }
             },
         )
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+        if (LocalSiteInfoV5.current) {
+            val decisions = SitePermissionDecision.entries
+            V5ChoiceSheet(
+                visible = menuOpen,
+                title = entry.permission.displayName(),
+                options = decisions.map { it.displayName() },
+                selected = decisions.indexOf(entry.decision),
+                onSelect = { index ->
+                    menuOpen = false
+                    if (decisions[index] != entry.decision) onDecisionChanged(decisions[index])
+                },
+                onDismiss = { menuOpen = false },
+            )
+        } else DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             SitePermissionDecision.entries.forEach { decision ->
                 DropdownMenuItem(
                     text = { Text(decision.displayName()) },
