@@ -97,8 +97,11 @@ object WebDavSyncFormat {
     /** Live bookmarks plus tombstones one device may publish. */
     const val MAX_BOOKMARK_ENTRIES = 2 * LocalTransferPayloadCodec.MAX_BOOKMARKS
 
-    /** The largest device record as UTF-8. */
-    const val MAX_RECORD_BYTES = 16 * 1024 * 1024
+    /**
+     * The largest device record as UTF-8: 500 tabs and the favorites with room to spare. A
+     * bigger file is skipped, so a hostile server cannot fill the phone's memory with one.
+     */
+    const val MAX_RECORD_BYTES = 4 * 1024 * 1024
     const val MAX_HEADER_CHARS = 2_048
 
     private const val TAG_BYTES = 16
@@ -262,13 +265,20 @@ object WebDavSyncFormat {
         require(bookmarks.size == entries.size) { "A bookmark twice" }
         WebDavDeviceRecord(
             deviceId = deviceId,
-            name = root.strictString("name", minimum = 0, maximum = LocalTransferPayloadCodec.MAX_DEVICE_NAME_CHARS),
+            name = displayName(root.strictString("name", minimum = 0, maximum = LocalTransferPayloadCodec.MAX_DEVICE_NAME_CHARS)),
             sequence = root.strictTime("seq"),
             updatedAtMillis = root.strictTime("updated"),
             tabs = tabs,
             bookmarks = bookmarks,
         )
     }.getOrNull()
+
+    /**
+     * [name] without control and bidirectional-override characters: another device's name is
+     * shown on this phone, and such characters could make it read as something else.
+     */
+    internal fun displayName(name: String): String =
+        name.filterNot { it.isISOControl() || it.code in 0x202A..0x202E || it.code in 0x2066..0x2069 || it.code == 0x200F || it.code == 0x200E }
 
     private fun headerFor(spaceId: ByteArray, salt: ByteArray, key: ByteArray, crypto: WebDavSyncCrypto): WebDavSyncHeader {
         val nonce = crypto.randomBytes(LocalTransferProtocol.GCM_NONCE_BYTES)

@@ -169,12 +169,15 @@ class WebDavSyncEngine(
             fetch(account, auth, account.deviceId)?.let { sequence = maxOf(sequence, it.second.sequence) }
         }
         val cache = LinkedHashMap<String, WebDavCachedDevice>()
+        var budget = MAX_FETCH_BYTES
         listed.filterKeys { it != account.deviceId }.entries.take(MAX_DEVICES).forEach { (id, resource) ->
             val cached = memory.devices[id]
             cache[id] = if (cached != null && resource.etag != null && cached.etag == resource.etag) {
                 cached
+            } else if (budget <= 0) {
+                cached ?: return@forEach
             } else {
-                val fetched = fetch(account, auth, id)
+                val fetched = fetch(account, auth, id) { budget -= it }
                 when {
                     fetched == null -> cached ?: return@forEach
                     cached != null && fetched.second.sequence < cached.record.sequence -> cached
@@ -319,10 +322,16 @@ class WebDavSyncEngine(
         if (header != account.header || !WebDavSyncFormat.opens(header, account.key, crypto)) throw Stop(RemoteSyncFailure.PhraseMismatch)
     }
 
-    private fun fetch(account: WebDavAccount, auth: String, deviceId: String): Pair<String?, WebDavDeviceRecord>? {
+    private fun fetch(
+        account: WebDavAccount,
+        auth: String,
+        deviceId: String,
+        spent: (Int) -> Unit = {},
+    ): Pair<String?, WebDavDeviceRecord>? {
         val response = send("GET", WebDavSyncAddressRules.device(account.root, deviceId), auth)
         if (response.status == 404) return null
         if (response.status != 200) throw Stop(failureOf(response.status))
+        spent(response.body.size)
         if (response.body.size > WebDavSyncFormat.MAX_DEVICE_FILE_CHARS) return null
         val record = WebDavSyncFormat.openRecord(response.body.decodeToString(), deviceId, account.header, account.key, crypto)
         return record?.let { response.etag to it }
@@ -376,6 +385,9 @@ class WebDavSyncEngine(
     companion object {
         /** The most other devices one sync reads. */
         const val MAX_DEVICES = 50
+
+        /** The most bytes of device files one sync downloads; the rest waits for the next sync. */
+        const val MAX_FETCH_BYTES = 16 * 1024 * 1024
 
         /** HTTP Basic for [login] and [appPassword], as WebDAV and Nextcloud's app passwords expect. */
         @OptIn(ExperimentalEncodingApi::class)
