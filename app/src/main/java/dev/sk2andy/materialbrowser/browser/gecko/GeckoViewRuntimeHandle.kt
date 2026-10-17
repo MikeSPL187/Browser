@@ -980,7 +980,7 @@ private class GeckoViewBrowserSession(
     private var state = GeckoBrowserSessionState()
 
     private var findInPageOptions = FindInPageOptions()
-    private val pageTranslation = GeckoPageTranslation(session)
+    private val pageTranslation = GeckoPageTranslation(session, isPrivate)
     private val pageDistractions = object : PageDistractionsPort {
         override fun startPicking(highlightArgb: Int, listener: PageDistractionsListener): Boolean =
             !closed && privacyBound && currentPageUrl != null &&

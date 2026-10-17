@@ -13,6 +13,8 @@ import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModel
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
+import org.mozilla.geckoview.ExperimentalGeckoViewApi
+import org.mozilla.geckoview.GeckoPreferenceController
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.TranslationsController.Language
@@ -24,8 +26,14 @@ import org.mozilla.geckoview.TranslationsController.TranslationsException
  * [PageTranslationPort] for one tab on Gecko's `TranslationsController`: Bergamot models translate
  * the page inside Gecko. Gecko downloads a missing model from Mozilla only when [translate] allows
  * it; the page text stays on the phone. Every call and callback is on the main thread.
+ *
+ * Gecko writes the language of every translation to a profile pref on disk; a private tab's
+ * translation clears it again ([GeckoTranslationPrivacy]), so private tabs leave nothing behind.
  */
-internal class GeckoPageTranslation(private val session: GeckoSession) : PageTranslationPort {
+internal class GeckoPageTranslation(
+    private val session: GeckoSession,
+    private val isPrivate: Boolean = false,
+) : PageTranslationPort {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var closed = false
 
@@ -45,7 +53,11 @@ internal class GeckoPageTranslation(private val session: GeckoSession) : PageTra
         val options = SessionTranslation.TranslationOptions.Builder()
             .downloadModel(allowModelDownload)
             .build()
-        deliver(onResult) { translation.translate(pair.from, pair.to, options) }
+        val report = if (!isPrivate) onResult else { result: PageTranslationResult ->
+            GeckoTranslationPrivacy.forgetTargetLanguages()
+            onResult(result)
+        }
+        deliver(report) { translation.translate(pair.from, pair.to, options) }
     }
 
     @UiThread
@@ -148,6 +160,22 @@ internal class GeckoTranslationModels : TranslationModelsPort {
             ?.withHandler(mainHandler)
             ?.accept({ value -> onResult(map(value)) }, { onResult(fallback) })
             ?: onResult(fallback)
+    }
+}
+
+/**
+ * After a translation Gecko stores its target language in [MOST_RECENT_TARGET_LANGUAGES_PREF] (the
+ * last three, `TranslationsParent.storeMostRecentTargetLanguage`), a user pref that Gecko saves to
+ * `prefs.js` 500 ms after the first change. Vola picks the target language from the app's locales,
+ * so it does not need the list; clearing the user value before that save keeps a private tab's
+ * translation off the disk (`docs/vola/research/v23-translations.md`).
+ */
+internal object GeckoTranslationPrivacy {
+    const val MOST_RECENT_TARGET_LANGUAGES_PREF = "browser.translations.mostRecentTargetLanguages"
+
+    @ExperimentalGeckoViewApi
+    fun forgetTargetLanguages() {
+        runCatching { GeckoPreferenceController.clearGeckoUserPref(MOST_RECENT_TARGET_LANGUAGES_PREF) }
     }
 }
 
