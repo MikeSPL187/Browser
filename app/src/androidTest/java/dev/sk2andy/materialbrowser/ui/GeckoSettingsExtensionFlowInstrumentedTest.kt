@@ -139,6 +139,13 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
             }
             optionsReady
         }
+        // The options chrome replaces the normal one a recomposition after the tab is ready.
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
+                .fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithContentDescription(context.getString(R.string.cd_more_options))
+                    .fetchSemanticsNodes().isEmpty()
+        }
         composeRule.onNodeWithTag(FirefoxExtensionChromeTestTags.OptionsTopBar)
             .assertIsDisplayed()
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertDoesNotExist()
