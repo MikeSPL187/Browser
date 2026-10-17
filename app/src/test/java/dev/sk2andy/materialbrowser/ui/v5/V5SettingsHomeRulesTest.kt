@@ -20,7 +20,7 @@ class V5SettingsHomeRulesTest {
                     SettingsDestination.Appearance,
                     SettingsDestination.Browser,
                 ),
-                listOf(SettingsDestination.ProtectionAndData, SettingsDestination.SiteCapsules, SettingsDestination.Passwords),
+                listOf(SettingsDestination.ProtectionAndData, SettingsDestination.Passwords),
                 listOf(SettingsDestination.Userscripts, null, SettingsDestination.Downloads),
                 listOf(SettingsDestination.AboutLegal, SettingsDestination.DeveloperOptions),
             ),
@@ -29,11 +29,12 @@ class V5SettingsHomeRulesTest {
     }
 
     @Test
-    fun `every page the current home lists is in a v5 group, and only those`() {
+    fun `every page the current home lists is in a v5 group, but site capsules`() {
         val items = SettingsHomeRules.items(hasFirefoxExtensions = false, hasDeveloperOptions = false)
         val shown = V5SettingsHomeRules.groups(items).flatten()
-        assertEquals(items.toSet(), shown.toSet())
-        assertEquals(items.size, shown.size)
+        val expected = items.filterNot { it.destination == SettingsDestination.SiteCapsules }
+        assertEquals(expected.toSet(), shown.toSet())
+        assertEquals(expected.size, shown.size)
     }
 
     @Test

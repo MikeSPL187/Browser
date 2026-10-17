@@ -31,7 +31,6 @@ import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSliderRow
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsCardSwitchRow
 import dev.sk2andy.materialbrowser.shared.ui.theme.SettingsCardTokens
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 internal object DeveloperOptionsTestTags {
     const val BrowserChromeScrollDispatchMode = "developer_options_scroll_dispatch_mode"
@@ -39,7 +38,6 @@ internal object DeveloperOptionsTestTags {
     const val RequiredFailures = "developer_options_required_failures"
     const val ForceSafeAreaFallback = "developer_options_force_safe_area_fallback"
     const val VolaGeckoBlocker = "developer_options_vola_gecko_blocker"
-    const val UiV5 = "developer_options_ui_v5"
     const val UiV5Specimen = "developer_options_ui_v5_specimen"
     const val HttpPasswordAutofill = "developer_options_http_password_autofill"
     const val InputDiagnostics = "developer_options_input_diagnostics"
@@ -68,7 +66,6 @@ internal fun DeveloperOptionsSettingsPage(
 ) {
     var httpAutofillConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var v5SpecimenVisible by rememberSaveable { mutableStateOf(false) }
-    var uiV5Enabled by rememberUiV5Flag()
     val cardColor = browserChromeColor(MaterialTheme.colorScheme.surfaceContainerHigh)
     val dividerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     SettingsPage(
@@ -169,16 +166,6 @@ internal fun DeveloperOptionsSettingsPage(
                         onSettingsChanged(settings.copy(volaGeckoBlocker = enabled))
                     },
                     modifier = Modifier.testTag(DeveloperOptionsTestTags.VolaGeckoBlocker),
-                )
-                SettingsCardSwitchRow(
-                    title = stringResource(R.string.developer_options_ui_v5),
-                    summary = stringResource(R.string.developer_options_ui_v5_summary),
-                    checked = uiV5Enabled,
-                    summaryMaxLines = Int.MAX_VALUE,
-                    dividerColor = dividerColor,
-                    divider = true,
-                    onCheckedChange = { enabled -> uiV5Enabled = enabled },
-                    modifier = Modifier.testTag(DeveloperOptionsTestTags.UiV5),
                 )
                 SettingsCardLinkRow(
                     title = stringResource(R.string.developer_options_ui_v5_specimen),

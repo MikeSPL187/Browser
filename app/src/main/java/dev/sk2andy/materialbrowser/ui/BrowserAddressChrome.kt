@@ -451,6 +451,12 @@ internal fun BoxScope.BrowserAddressChrome(
             controller.setPreviewContentBottomInWindowPx(topInWindowPx)
         }
     }
+    // Compact Mode is a v4 setting with no switch under v5 (V28, step 4): a phone that kept it on
+    // would start every page with the v5 bar folded and no way back, so v5 turns it off.
+    val drawsV5Bar = uiV5 && !wideWindow
+    LaunchedEffect(drawsV5Bar, controller.addressBar.compactMode) {
+        if (drawsV5Bar && controller.addressBar.compactMode) controller.addressBar.updateCompactMode(false)
+    }
     val compactBar = controller.isBottomBarCompact &&
         // A new tab is where an address is typed: its bar stays open even in Compact Mode.
         selectedTab.url != BLANK_URL &&
