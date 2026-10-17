@@ -71,6 +71,8 @@ internal fun BrowserSyncSettingsV5(
     controller: BrowserController,
     onBack: () -> Unit,
     serverPage: @Composable (onBack: () -> Unit) -> Unit,
+    onOpenTabOverview: () -> Unit = {},
+    onOpenFavorites: () -> Unit = {},
 ) {
     var page by rememberSaveable { mutableStateOf(BrowserSyncRules.Page.Main) }
     var sent by rememberSaveable { mutableStateOf(false) }
@@ -125,8 +127,15 @@ internal fun BrowserSyncSettingsV5(
                 V5SyncDone(
                     state = applied.state.copy(undoFailed = undoFailed),
                     actions = V5SyncDoneActions(
-                        onOpenGroup = null,
-                        onOpenFavorites = null,
+                        // The tabs came as one group of the tab overview; the bookmarks into Favorites.
+                        onOpenGroup = {
+                            finish()
+                            onOpenTabOverview()
+                        },
+                        onOpenFavorites = {
+                            finish()
+                            onOpenFavorites()
+                        },
                         onDone = finish,
                         // A failed undo stays on the page and says so; the button goes, as trying
                         // again would meet the same favorites.

@@ -65,6 +65,9 @@ internal fun BrowserSettingsOverlay(
     onOpenLegalUrl: (String) -> Unit,
     onDismiss: () -> Unit,
     onOpenFirefoxExtensions: (() -> Unit)? = null,
+    /** Closes Settings and opens the tab overview, or Favorites (the sync done page, V26). */
+    onOpenTabOverview: () -> Unit = {},
+    onOpenFavorites: () -> Unit = {},
 ) {
     val context = LocalContext.current
     // Resolved in composition so callbacks show them in the current language.
@@ -396,7 +399,9 @@ internal fun BrowserSettingsOverlay(
                     null
                 },
                 // The local transfer (V26) does not depend on the engine: both builds have it.
-                syncSettings = { onBack, serverPage -> BrowserSyncSettingsV5(controller, onBack, serverPage) },
+                syncSettings = { onBack, serverPage ->
+                    BrowserSyncSettingsV5(controller, onBack, serverPage, onOpenTabOverview, onOpenFavorites)
+                },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,
                         predictiveBackEdgeSign,
