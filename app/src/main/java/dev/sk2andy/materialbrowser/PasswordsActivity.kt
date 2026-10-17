@@ -90,6 +90,9 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsIntroV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportGuideV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportResultV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseV5
@@ -345,34 +348,53 @@ class PasswordsActivity : FragmentActivity() {
                 busy = model.busy,
                 onTurnOff = ::eraseVault,
             )
-            PasswordsRoute.Import -> PasswordImportScreen(
-                onSource = { source -> model.route = PasswordsRoute.ImportGuide(source) },
-                onPickFile = { pickExport(PasswordImportSource.File) },
-                onBack = { back(route) },
-            )
-            is PasswordsRoute.ImportGuide -> PasswordImportGuideScreen(
-                source = route.source,
-                problem = route.problem,
-                busy = model.busy,
-                onPick = { pickExport(route.source) },
-                onBack = { back(route) },
-            )
-            is PasswordsRoute.ImportDone -> PasswordImportResultScreen(
-                report = route.report,
-                fileState = route.fileState,
-                healthIssues = remember(logins, model.breaches, route.report) {
+            PasswordsRoute.Import -> {
+                val onSource = { source: PasswordImportSource -> model.route = PasswordsRoute.ImportGuide(source) }
+                val onPickFile = { pickExport(PasswordImportSource.File) }
+                if (v5) {
+                    PasswordImportV5(onSource, onPickFile) { back(route) }
+                } else {
+                    PasswordImportScreen(onSource, onPickFile) { back(route) }
+                }
+            }
+            is PasswordsRoute.ImportGuide -> if (v5) {
+                PasswordImportGuideV5(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
+            } else {
+                PasswordImportGuideScreen(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
+            }
+            is PasswordsRoute.ImportDone -> {
+                val healthIssues = remember(logins, model.breaches, route.report) {
                     val added = route.report.addedIds.toSet()
                     val report = PasswordHealthRules.report(logins, model.breaches)
                     (report.breached.map { it.login.id } + report.reused.map { it.login.id } + report.weak.map { it.login.id })
                         .distinct()
                         .count { it in added }
-                },
-                onDeleteFile = { deleteExport(route) },
-                onCheck = { use { model.route = PasswordsRoute.Health } },
-                onDone = { back(route) },
-                conflictState = route.conflictState,
-                onUseFilePasswords = { useFilePasswords(route) },
-            )
+                }
+                val onCheck = { use { model.route = PasswordsRoute.Health } }
+                if (v5) {
+                    PasswordImportResultV5(
+                        report = route.report,
+                        fileState = route.fileState,
+                        healthIssues = healthIssues,
+                        onDeleteFile = { deleteExport(route) },
+                        onCheck = onCheck,
+                        onDone = { back(route) },
+                        conflictState = route.conflictState,
+                        onUseFilePasswords = { useFilePasswords(route) },
+                    )
+                } else {
+                    PasswordImportResultScreen(
+                        report = route.report,
+                        fileState = route.fileState,
+                        healthIssues = healthIssues,
+                        onDeleteFile = { deleteExport(route) },
+                        onCheck = onCheck,
+                        onDone = { back(route) },
+                        conflictState = route.conflictState,
+                        onUseFilePasswords = { useFilePasswords(route) },
+                    )
+                }
+            }
             // V24: the v5 check runs the leak check only when asked, never on opening.
             PasswordsRoute.Health -> if (rememberSettingsUiV5()) {
                 PasswordHealthV5(

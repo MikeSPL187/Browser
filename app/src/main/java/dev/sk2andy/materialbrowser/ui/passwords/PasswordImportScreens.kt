@@ -102,9 +102,9 @@ internal object PasswordImportTestTags {
     fun source(source: PasswordImportSource) = "password_import_source:${source.name}"
 }
 
-private class ImportStep(val title: Int, val detail: Int)
+internal class ImportStep(val title: Int, val detail: Int)
 
-private fun PasswordImportSource.title(): Int = when (this) {
+internal fun PasswordImportSource.title(): Int = when (this) {
     PasswordImportSource.Chrome -> R.string.passwords_import_chrome_title
     PasswordImportSource.Firefox -> R.string.passwords_import_firefox_title
     PasswordImportSource.Samsung -> R.string.passwords_import_samsung_title
@@ -112,7 +112,7 @@ private fun PasswordImportSource.title(): Int = when (this) {
     PasswordImportSource.File -> R.string.passwords_import_file_title
 }
 
-private fun PasswordImportSource.steps(): List<ImportStep> {
+internal fun PasswordImportSource.steps(): List<ImportStep> {
     val pick = ImportStep(R.string.passwords_import_step_pick, R.string.passwords_import_step_pick_detail)
     return when (this) {
         PasswordImportSource.Chrome -> listOf(
@@ -141,7 +141,7 @@ private fun PasswordImportSource.steps(): List<ImportStep> {
     }
 }
 
-private fun PasswordImportProblem.message(): Int = when (this) {
+internal fun PasswordImportProblem.message(): Int = when (this) {
     PasswordImportProblem.NotAnExport -> R.string.passwords_import_not_export
     PasswordImportProblem.Encrypted -> R.string.passwords_import_encrypted
     PasswordImportProblem.TooLarge -> R.string.passwords_import_too_large
@@ -255,7 +255,7 @@ internal fun PasswordImportScreen(
     }
 }
 
-private fun PasswordImportSource.label(): Int = when (this) {
+internal fun PasswordImportSource.label(): Int = when (this) {
     PasswordImportSource.Chrome -> R.string.passwords_import_chrome
     PasswordImportSource.Firefox -> R.string.passwords_import_firefox
     PasswordImportSource.Samsung -> R.string.passwords_import_samsung
