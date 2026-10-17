@@ -2327,8 +2327,8 @@
     <string name="v5_sync_transfer_header">На другое устройство</string>
     <string name="v5_sync_transfer_footer">Вкладки и закладки переносятся на устройство в той же Wi-Fi, без интернета. Пока другое устройство не считает код, с телефона ничего не уходит.</string>
     <string name="v5_sync_sent">Вкладки и закладки ушли на другое устройство.</string>
-    <string name="v5_sync_server">Сервер синхронизации</string>
-    <string name="v5_sync_server_footer">Держит вкладки в синхронизации между вашими устройствами через ваш собственный сервер.</string>
+    <string name="v5_sync_server">Свой сервер</string>
+    <string name="v5_sync_server_footer">Вкладки и закладки — в зашифрованном виде на вашем сервере WebDAV или Nextcloud.</string>
     <string name="v5_sync_confirm_title">Принять с «%1$s»?</string>
     <string name="v5_sync_confirm_title_unnamed">Принять вкладки и закладки?</string>
     <string name="v5_sync_confirm_nothing">Всё это уже есть на телефоне.</string>
@@ -2422,6 +2422,7 @@
     <string name="v5_webdav_error_login">Сервер не принял логин или пароль приложения.</string>
     <string name="v5_webdav_error_not_https">Только адреса https://: иначе пароль ушёл бы открытым текстом.</string>
     <string name="v5_webdav_error_not_webdav">По этому адресу нет WebDAV. Для Nextcloud адрес заканчивается на /remote.php/dav.</string>
+    <string name="v5_webdav_error_phrase">На сервере данные Vola с другой фразой. Отключитесь и подключитесь снова с этой фразой.</string>
     <string name="v5_webdav_status_unreachable">Сервер недоступен</string>
     <string name="v5_webdav_status_login">Вход отклонён</string>
     <string name="v5_webdav_status_failed">Не синхронизировалось</string>

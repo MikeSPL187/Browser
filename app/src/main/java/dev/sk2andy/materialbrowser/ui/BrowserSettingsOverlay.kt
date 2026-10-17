@@ -399,8 +399,12 @@ internal fun BrowserSettingsOverlay(
                     null
                 },
                 // The local transfer (V26) does not depend on the engine: both builds have it.
-                syncSettings = { onBack, serverPage ->
-                    BrowserSyncSettingsV5(controller, onBack, serverPage, onOpenTabOverview, onOpenFavorites)
+                // Another device's tab opens as an ordinary tab, never a private one (V27 security review).
+                syncSettings = { onBack ->
+                    BrowserSyncSettingsV5(controller, onBack, onOpenTabOverview, onOpenFavorites) { url ->
+                        controller.createTab(initialUrl = url, isIncognito = false)
+                        onDismiss()
+                    }
                 },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,

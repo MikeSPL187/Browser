@@ -54,13 +54,19 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SyncDoneActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncDoneState
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncScan
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncScanStatus
+import dev.sk2andy.materialbrowser.ui.v5.V5SyncServerActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettings
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavDisconnectSheet
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavPhraseMismatch
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavStartOverSheet
+import dev.sk2andy.materialbrowser.shared.sync.webdav.RemoteSyncConnectResult
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncShowCode
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncShowState
 
 /*
- * Settings → Sync in v5 (V26, canvas «ф») bound to the local transfer: show a code, scan one,
- * confirm, done. The sync server keeps its page ([serverPage]). The requirements of the transfer's
+ * Settings → Sync in v5 (V26 and V27, canvas «ф» and «х») bound to the local transfer — show a
+ * code, scan one, confirm, done — and to the own server (BrowserRemoteSyncV5.kt), which replaces
+ * the sync server of the current interface in v5 (owner's decision 17.10). The requirements of the transfer's
  * security review hold here: the code's screen is FLAG_SECURE and has no «Copy», a received
  * transfer lands only after «Accept», tabs arrive unloaded, and every offer or receive is
  * cancelled when its screen goes.
@@ -70,11 +76,18 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SyncShowState
 internal fun BrowserSyncSettingsV5(
     controller: BrowserController,
     onBack: () -> Unit,
-    serverPage: @Composable (onBack: () -> Unit) -> Unit,
     onOpenTabOverview: () -> Unit = {},
     onOpenFavorites: () -> Unit = {},
+    /** Opens another device's tab as a new ordinary tab and leaves Settings. */
+    onOpenUrl: (String) -> Unit = {},
 ) {
     var page by rememberSaveable { mutableStateOf(BrowserSyncRules.Page.Main) }
+    val remote = rememberBrowserRemoteSync(controller)
+    val form = remember { BrowserRemoteSyncForm() }
+    var deviceId by rememberRemoteSyncDeviceId()
+    var mismatchHost by rememberSaveable { mutableStateOf("") }
+    var disconnectAsked by remember { mutableStateOf(false) }
+    var startOverAsked by remember { mutableStateOf(false) }
     var sent by rememberSaveable { mutableStateOf(false) }
     var done by remember { mutableStateOf<BrowserSyncRules.Applied?>(null) }
     var undoFailed by remember { mutableStateOf(false) }
@@ -82,6 +95,16 @@ internal fun BrowserSyncSettingsV5(
     when (page) {
         BrowserSyncRules.Page.Main -> V5SyncSettings(
             sent = sent,
+            server = remote.server,
+            serverActions = V5SyncServerActions(
+                onConnect = { page = BrowserSyncRules.Page.Connect },
+                onSyncNow = remote.port::syncNow,
+                onOpenDevice = { id ->
+                    deviceId = id
+                    page = BrowserSyncRules.Page.Device
+                },
+                onDisconnect = { disconnectAsked = true },
+            ),
             onBack = onBack,
             onShowCode = {
                 sent = false
@@ -91,11 +114,28 @@ internal fun BrowserSyncSettingsV5(
                 sent = false
                 page = BrowserSyncRules.Page.Scan
             },
-            onServer = { page = BrowserSyncRules.Page.Server },
         )
-        BrowserSyncRules.Page.Server -> {
+        BrowserSyncRules.Page.Connect -> {
             BackHandler(onBack = toMain)
-            serverPage(toMain)
+            BrowserRemoteSyncConnect(
+                sync = remote,
+                form = form,
+                onBack = toMain,
+                onConnected = toMain,
+                onMismatch = { host ->
+                    mismatchHost = host
+                    page = BrowserSyncRules.Page.Mismatch
+                },
+            )
+        }
+        BrowserSyncRules.Page.Mismatch -> {
+            val retry = { page = BrowserSyncRules.Page.Connect }
+            BackHandler(onBack = retry)
+            V5WebDavPhraseMismatch(mismatchHost, onRetry = retry, onStartOver = { startOverAsked = true })
+        }
+        BrowserSyncRules.Page.Device -> {
+            BackHandler(onBack = toMain)
+            BrowserRemoteSyncDevice(remote, deviceId.orEmpty(), onBack = toMain, onOpenUrl = onOpenUrl)
         }
         BrowserSyncRules.Page.Show -> {
             BackHandler(onBack = toMain)
@@ -147,6 +187,37 @@ internal fun BrowserSyncSettingsV5(
             }
         }
     }
+    // «Disconnect» keeps the server's data unless asked; «Start over» deletes it for every device.
+    V5WebDavDisconnectSheet(
+        visible = disconnectAsked,
+        host = remote.state.server.orEmpty(),
+        onDisconnect = {
+            disconnectAsked = false
+            remote.port.disconnect(deleteServerData = false) {}
+        },
+        onDisconnectAndDelete = {
+            disconnectAsked = false
+            remote.port.disconnect(deleteServerData = true) {}
+        },
+        onDismiss = { disconnectAsked = false },
+    )
+    V5WebDavStartOverSheet(
+        visible = startOverAsked,
+        host = mismatchHost,
+        onConfirm = {
+            startOverAsked = false
+            remote.port.startOver { result ->
+                if (result == RemoteSyncConnectResult.Connected) {
+                    form.clear()
+                    toMain()
+                } else if (result is RemoteSyncConnectResult.Failed) {
+                    form.state = form.state.copy(error = BrowserRemoteSyncRules.error(result.reason))
+                    page = BrowserSyncRules.Page.Connect
+                }
+            }
+        },
+        onDismiss = { startOverAsked = false },
+    )
 }
 
 /** «Show code»: one offer at a time, a new code when the old one expires, cancelled on leaving. */
@@ -302,7 +373,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 /** Pure decisions of the sync binding, for unit tests. */
 internal object BrowserSyncRules {
-    enum class Page { Main, Server, Show, Scan, Done }
+    enum class Page { Main, Show, Scan, Done, Connect, Mismatch, Device }
 
     /** A transfer that landed: what the done page shows and how to take it back. */
     class Applied(val state: V5SyncDoneState, val undo: () -> Boolean)

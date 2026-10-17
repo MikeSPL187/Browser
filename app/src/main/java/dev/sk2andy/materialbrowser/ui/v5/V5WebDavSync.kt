@@ -75,6 +75,9 @@ enum class V5WebDavError {
 
     /** Something answers there, but not as WebDAV. */
     NotWebDav,
+
+    /** The server holds Vola's data under another phrase, as after a «Start over» on another device. */
+    PhraseMismatch,
 }
 
 /** «Own server» (canvas «х1»): what is typed, and whether the connection is being made. */
@@ -554,12 +557,14 @@ internal object V5WebDavRules {
         V5WebDavError.LoginRejected -> R.string.v5_webdav_error_login
         V5WebDavError.NotHttps -> R.string.v5_webdav_error_not_https
         V5WebDavError.NotWebDav -> R.string.v5_webdav_error_not_webdav
+        V5WebDavError.PhraseMismatch -> R.string.v5_webdav_error_phrase
     }
 
     /** The status card's title when the last sync failed. */
     fun errorTitle(error: V5WebDavError): Int = when (error) {
         V5WebDavError.Unreachable -> R.string.v5_webdav_status_unreachable
         V5WebDavError.LoginRejected -> R.string.v5_webdav_status_login
+        V5WebDavError.PhraseMismatch -> R.string.v5_webdav_mismatch_title
         V5WebDavError.NotHttps, V5WebDavError.NotWebDav -> R.string.v5_webdav_status_failed
     }
 }

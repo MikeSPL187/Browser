@@ -2231,8 +2231,8 @@
     <string name="v5_sync_transfer_header">To another device</string>
     <string name="v5_sync_transfer_footer">Tabs and bookmarks move to a device on the same Wi-Fi, without the internet. Nothing leaves the phone until the other device scans the code.</string>
     <string name="v5_sync_sent">Tabs and bookmarks went to the other device.</string>
-    <string name="v5_sync_server">Sync server</string>
-    <string name="v5_sync_server_footer">Keeps tabs in sync across your devices through a server of your own.</string>
+    <string name="v5_sync_server">Own server</string>
+    <string name="v5_sync_server_footer">Tabs and bookmarks, encrypted, on your own WebDAV or Nextcloud server.</string>
     <string name="v5_sync_confirm_title">Accept from “%1$s”?</string>
     <string name="v5_sync_confirm_title_unnamed">Accept tabs and bookmarks?</string>
     <string name="v5_sync_confirm_nothing">This phone already has all of it.</string>
@@ -2316,6 +2316,7 @@
     <string name="v5_webdav_error_login">The server refused the login or the app password.</string>
     <string name="v5_webdav_error_not_https">Only https:// addresses: otherwise the password would travel in the clear.</string>
     <string name="v5_webdav_error_not_webdav">There is no WebDAV at this address. For Nextcloud it ends with /remote.php/dav.</string>
+    <string name="v5_webdav_error_phrase">The server holds Vola data under another phrase. Disconnect and connect again with that phrase.</string>
     <string name="v5_webdav_status_unreachable">Server unreachable</string>
     <string name="v5_webdav_status_login">Login refused</string>
     <string name="v5_webdav_status_failed">Sync failed</string>
