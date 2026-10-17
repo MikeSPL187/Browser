@@ -8,7 +8,7 @@ jetbrains-compose-material3 = "1.9.0"
 # Keep GeckoView on the latest stable release: it carries the engine's security fixes.
 geckoview = "158.0.20261007201254"
 compose-bom = "2026.09.00"
-compose-material3 = "1.5.0-alpha29"
+compose-material3 = "1.5.0-beta01"
 lifecycle = "2.8.7"
 # GeckoView resolves Media3 core at this version; keep the session API aligned with it.
 media3 = "1.11.1"
