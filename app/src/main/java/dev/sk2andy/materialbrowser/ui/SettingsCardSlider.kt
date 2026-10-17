@@ -3,10 +3,14 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import dev.sk2andy.materialbrowser.ui.v5.V5Slider
 import kotlin.math.roundToInt
 
 /** The pure part of a whole-number slider on a settings card. */
@@ -31,6 +35,25 @@ internal fun SettingsCardSlider(
     enabled: Boolean = true,
     onValueChange: (Int) -> Unit = {},
 ) {
+    if (rememberSettingsUiV5()) {
+        // Under v5 the v5 slider (canvas «ц3»), in the theme of the page around it.
+        var current by remember(value, range, step) { mutableFloatStateOf(value.toFloat()) }
+        V5PromptTheme {
+            V5Slider(
+                value = current,
+                onValueChange = { candidate ->
+                    current = candidate
+                    onValueChange(candidate.roundToInt())
+                },
+                modifier = modifier.semantics { contentDescription = label },
+                enabled = enabled,
+                valueRange = range.first.toFloat()..range.last.toFloat(),
+                steps = SettingsSliderRules.steps(range, step),
+                onValueChangeFinished = { onValueChangeFinished(current.roundToInt()) },
+            )
+        }
+        return
+    }
     val state = remember(value, range, step) {
         SliderState(
             value = value.toFloat(),
