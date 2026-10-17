@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.transfer
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
@@ -38,6 +39,8 @@ internal class AndroidLocalTransferPort(
     private val postToMain: (() -> Unit) -> Unit = mainThreadPoster(),
     /** The socket address behind a code's host; tests map the private address to loopback. */
     private val socketAddress: (String) -> InetAddress = InetAddress::getByName,
+    /** A socket for the receiving side, bound to the Wi-Fi so a VPN cannot carry the request elsewhere. */
+    private val clientSocket: () -> Socket = ::Socket,
 ) : LocalTransferPort {
     override fun offer(payload: LocalTransferPayload, onState: (LocalTransferOfferState) -> Unit): LocalTransferHandle {
         val address = localAddress()?.hostAddress?.takeIf(LocalTransferPairingRules::isLocalHost)
@@ -83,7 +86,7 @@ internal class AndroidLocalTransferPort(
             return LocalTransferHandle.Done
         }
         val cancelled = AtomicBoolean(false)
-        val socket = Socket()
+        val socket = clientSocket()
         Thread({
             val result = runCatching { fetch(socket, pairing) }
                 .getOrElse { LocalTransferReceiveResult.Failed(LocalTransferFailure.Corrupt) }
@@ -119,7 +122,13 @@ internal class AndroidLocalTransferPort(
                         val request = LocalTransferHttp.readRequest(client.getInputStream(), LocalTransferProtocol.MAX_REQUEST_CHARS)
                         offer.answer(request).also { LocalTransferHttp.writeResponse(client.getOutputStream(), it.status, it.body) }
                     }.getOrNull()
-                } ?: continue
+                } ?: when (offer.outcome) {
+                    LocalTransferOffer.Outcome.Open -> continue
+                    // The payload was sealed but the answer could not be written: the offer is spent.
+                    LocalTransferOffer.Outcome.Sent -> return deliver(LocalTransferOfferState.Failed(LocalTransferFailure.Unreachable))
+                    LocalTransferOffer.Outcome.TooManyAttempts ->
+                        return deliver(LocalTransferOfferState.Failed(LocalTransferFailure.TooManyAttempts))
+                }
                 when (reply.outcome) {
                     LocalTransferOffer.Outcome.Open -> Unit
                     LocalTransferOffer.Outcome.Sent -> return deliver(LocalTransferOfferState.Sent)
@@ -171,18 +180,24 @@ internal class AndroidLocalTransferPort(
         fun create(context: Context): LocalTransferPort {
             val connectivity = context.applicationContext.getSystemService(ConnectivityManager::class.java)
                 ?: return LocalTransferPort.Unavailable
-            return AndroidLocalTransferPort(localAddress = { wifiAddress(connectivity) })
+            return AndroidLocalTransferPort(
+                localAddress = { wifiAddress(connectivity) },
+                clientSocket = { Socket().also { socket -> wifiNetwork(connectivity)?.bindSocket(socket) } },
+            )
+        }
+
+        /** The active network when it is Wi-Fi or Ethernet; null on mobile data, a VPN-only route or offline. */
+        private fun wifiNetwork(connectivity: ConnectivityManager): Network? {
+            val network = connectivity.activeNetwork ?: return null
+            val capabilities = connectivity.getNetworkCapabilities(network) ?: return null
+            val local = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            return network.takeIf { local }
         }
 
         /** The phone's private IPv4 address on Wi-Fi or Ethernet; null on mobile data or without a network. */
         private fun wifiAddress(connectivity: ConnectivityManager): Inet4Address? {
-            val network = connectivity.activeNetwork ?: return null
-            val capabilities = connectivity.getNetworkCapabilities(network) ?: return null
-            if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
-                !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-            ) {
-                return null
-            }
+            val network = wifiNetwork(connectivity) ?: return null
             return connectivity.getLinkProperties(network)?.linkAddresses
                 ?.map { it.address }
                 ?.filterIsInstance<Inet4Address>()
