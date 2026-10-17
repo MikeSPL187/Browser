@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -32,6 +33,8 @@ data class V5PromptAction(
     val testTag: String? = null,
     /** False while what the sheet asks for is not filled in right, such as an address. */
     val enabled: Boolean = true,
+    /** A glyph before the label, where the sheet stands in for a menu with icons. */
+    val icon: ImageVector? = null,
 )
 
 /**
@@ -84,6 +87,7 @@ fun V5PromptSheet(
                 actions.forEachIndexed { index, action ->
                     V5ListRow(
                         title = action.label,
+                        icon = action.icon?.let { V5RowIcon(it) },
                         titleColor = when (action.role) {
                             V5PromptRole.Primary -> colors.accent
                             V5PromptRole.Default -> colors.label

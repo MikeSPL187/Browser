@@ -14,10 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -111,24 +109,22 @@ fun V5PrivacyReport(
                 )
             }
         }
-        if (confirmClear) {
-            AlertDialog(
-                onDismissRequest = { confirmClear = false },
-                title = { Text(stringResource(R.string.protection_report_clear_title)) },
-                text = { Text(stringResource(R.string.v5_report_clear_body)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            confirmClear = false
-                            onClear()
-                        },
-                    ) { Text(stringResource(R.string.v5_report_clear)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { confirmClear = false }) { Text(stringResource(R.string.action_cancel)) }
-                },
-            )
-        }
+        V5PromptSheet(
+            visible = confirmClear,
+            title = stringResource(R.string.protection_report_clear_title),
+            message = stringResource(R.string.v5_report_clear_body),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.v5_report_clear),
+                    role = V5PromptRole.Destructive,
+                    onClick = {
+                        confirmClear = false
+                        onClear()
+                    },
+                ),
+            ),
+            onDismiss = { confirmClear = false },
+        )
     }
 }
 

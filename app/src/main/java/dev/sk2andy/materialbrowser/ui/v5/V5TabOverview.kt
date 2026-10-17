@@ -26,8 +26,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -259,15 +257,23 @@ private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: (
             IconButton(onClick = { menu = true }) {
                 Icon(VolaIcons.MoreHoriz, contentDescription = stringResource(R.string.cd_more_options), tint = colors.label)
             }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.action_close_all_tabs)) },
-                    onClick = {
-                        menu = false
-                        onCloseAll()
-                    },
-                )
-            }
+            // «More» offers closing every tab here, in red as an action that removes.
+            V5PromptSheet(
+                visible = menu,
+                title = stringResource(R.string.cd_more_options),
+                message = null,
+                actions = listOf(
+                    V5PromptAction(
+                        label = stringResource(R.string.action_close_all_tabs),
+                        role = V5PromptRole.Destructive,
+                        onClick = {
+                            menu = false
+                            onCloseAll()
+                        },
+                    ),
+                ),
+                onDismiss = { menu = false },
+            )
         }
     }
 }

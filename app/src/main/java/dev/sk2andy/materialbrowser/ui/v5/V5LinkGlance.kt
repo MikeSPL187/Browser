@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -409,24 +407,31 @@ private fun GlanceHeader(
                         tint = colors.labelSecondary,
                     )
                 }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    val item: @Composable (Int, ImageVector, () -> Unit) -> Unit = { label, icon, action ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(label)) },
-                            leadingIcon = { Icon(icon, contentDescription = null) },
-                            onClick = {
-                                menu = false
-                                onAction(action)
-                            },
-                        )
-                    }
-                    item(R.string.action_open_in_new_tab, VolaIcons.OpenInNew, actions.onOpenInNewTab)
-                    if (state.canOpenInPrivate) item(R.string.v5_glance_private, VolaIcons.VisibilityOff, actions.onOpenInPrivate)
-                    item(R.string.external_link_preview_copy_link, VolaIcons.ContentCopy, actions.onCopy)
-                    item(R.string.action_share, VolaIcons.Share, actions.onShare)
-                    item(R.string.action_download_link, VolaIcons.Download, actions.onDownloadLink)
-                    if (state.canDownloadImage) item(R.string.action_download_image, VolaIcons.Image, actions.onDownloadImage)
+                // «More» as a v5 sheet of the link's actions, each with its glyph, as the menu had.
+                val item: @Composable (Int, ImageVector, () -> Unit) -> V5PromptAction = { label, icon, action ->
+                    V5PromptAction(
+                        label = stringResource(label),
+                        icon = icon,
+                        onClick = {
+                            menu = false
+                            onAction(action)
+                        },
+                    )
                 }
+                V5PromptSheet(
+                    visible = menu,
+                    title = address,
+                    message = null,
+                    actions = listOfNotNull(
+                        item(R.string.action_open_in_new_tab, VolaIcons.OpenInNew, actions.onOpenInNewTab),
+                        if (state.canOpenInPrivate) item(R.string.v5_glance_private, VolaIcons.VisibilityOff, actions.onOpenInPrivate) else null,
+                        item(R.string.external_link_preview_copy_link, VolaIcons.ContentCopy, actions.onCopy),
+                        item(R.string.action_share, VolaIcons.Share, actions.onShare),
+                        item(R.string.action_download_link, VolaIcons.Download, actions.onDownloadLink),
+                        if (state.canDownloadImage) item(R.string.action_download_image, VolaIcons.Image, actions.onDownloadImage) else null,
+                    ),
+                    onDismiss = { menu = false },
+                )
             }
         }
         if (progress != null) {

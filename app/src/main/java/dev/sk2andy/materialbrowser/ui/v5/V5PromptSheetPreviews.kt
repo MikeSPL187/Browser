@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The one v5 prompt sheet (V28, B14a): an update offer and the crash report. Preview text is not localized. */
@@ -99,6 +100,26 @@ private fun ChoicePreview(dark: Boolean) {
             options = listOf("Спрашивать", "Разрешать", "Блокировать"),
             selected = 0,
             onSelect = {},
+            onDismiss = {},
+        )
+    }
+}
+
+/** A menu as a prompt sheet (the phone all v5): a link's actions, each with its glyph. */
+@Preview(name = "Prompt · link menu, dark", heightDp = 560)
+@Composable
+private fun V5PromptLinkMenuDarkPreview() {
+    VolaV5Theme(dark = true) {
+        V5PromptSheet(
+            visible = true,
+            title = "north-guide.example/baikal",
+            message = null,
+            actions = listOf(
+                V5PromptAction("Открыть в новой вкладке", {}, icon = VolaIcons.OpenInNew),
+                V5PromptAction("Копировать ссылку", {}, icon = VolaIcons.ContentCopy),
+                V5PromptAction("Поделиться", {}, icon = VolaIcons.Share),
+                V5PromptAction("Скачать по ссылке", {}, icon = VolaIcons.Download),
+            ),
             onDismiss = {},
         )
     }

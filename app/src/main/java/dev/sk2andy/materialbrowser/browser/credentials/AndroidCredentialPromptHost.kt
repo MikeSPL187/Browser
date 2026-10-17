@@ -24,6 +24,7 @@ internal class AndroidCredentialPromptHost private constructor(
 ) : CredentialPromptHost {
     private var pending: PendingCompletion<*>? = null
     private var closed = false
+    private val windowId = System.identityHashCode(activity)
 
     override fun saveLogin(
         prompt: CredentialLoginSavePrompt,
@@ -130,6 +131,19 @@ internal class AndroidCredentialPromptHost private constructor(
         onComplete: (Boolean) -> Unit,
     ) {
         val completion = begin(fallback = false, onComplete = onComplete) ?: return
+        if (IdentityCredentialPrompts.drawsFor(windowId)) {
+            val request = IdentityPromptRequest.Privacy(
+                id = IdentityCredentialPrompts.nextRequestId(),
+                windowId = windowId,
+                providerName = prompt.providerName,
+                providerDomain = prompt.providerDomain,
+                privacyPolicyUrl = prompt.privacyPolicyUrl,
+                termsOfServiceUrl = prompt.termsOfServiceUrl,
+            )
+            completion.attach { IdentityCredentialPrompts.answer(request.id, null) }
+            IdentityCredentialPrompts.show(request) { answer -> completion.complete(answer == IdentityPromptRequest.ACCEPT) }
+            return
+        }
         val message = buildString {
             append(prompt.providerDomain)
             append("\n\n")
@@ -170,6 +184,17 @@ internal class AndroidCredentialPromptHost private constructor(
             return
         }
         val completion = begin<Int?>(fallback = null, onComplete = onComplete) ?: return
+        if (IdentityCredentialPrompts.drawsFor(windowId)) {
+            val request = IdentityPromptRequest.Choice(
+                id = IdentityCredentialPrompts.nextRequestId(),
+                windowId = windowId,
+                title = title,
+                options = labels,
+            )
+            completion.attach { IdentityCredentialPrompts.answer(request.id, null) }
+            IdentityCredentialPrompts.show(request) { index -> completion.complete(index?.let(ids::getOrNull)) }
+            return
+        }
         runCatching {
             AlertDialog.Builder(activity)
                 .setTitle(title)
@@ -204,20 +229,23 @@ internal class AndroidCredentialPromptHost private constructor(
     ) {
         private val completed = AtomicBoolean(false)
         private var cancellationSignal: CancellationSignal? = null
-        private var dialog: AlertDialog? = null
+        private var dismiss: (() -> Unit)? = null
 
         fun attach(signal: CancellationSignal) {
             if (completed.get()) signal.cancel() else cancellationSignal = signal
         }
 
-        fun attach(dialog: AlertDialog) {
-            if (completed.get()) dialog.dismiss() else this.dialog = dialog
+        fun attach(dialog: AlertDialog) = attach { dialog.dismiss() }
+
+        /** How to take the question away when it is cancelled: a dialog's or a v5 sheet's. */
+        fun attach(dismiss: () -> Unit) {
+            if (completed.get()) dismiss() else this.dismiss = dismiss
         }
 
         fun complete(value: T) {
             if (!completed.compareAndSet(false, true)) return
             cancellationSignal = null
-            dialog = null
+            dismiss = null
             onFinished(this)
             onComplete(value)
         }
@@ -225,7 +253,7 @@ internal class AndroidCredentialPromptHost private constructor(
         fun cancel() {
             if (completed.get()) return
             cancellationSignal?.cancel()
-            dialog?.dismiss()
+            dismiss?.invoke()
             complete(fallback)
         }
     }
