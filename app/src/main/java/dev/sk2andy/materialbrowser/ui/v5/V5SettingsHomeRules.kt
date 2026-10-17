@@ -21,7 +21,6 @@ object V5SettingsHomeRules {
         ),
         listOf(
             SettingsDestination.ProtectionAndData,
-            SettingsDestination.SiteCapsules,
             SettingsDestination.Passwords,
         ),
         // Null is the Firefox extensions action, which has no page of its own.
@@ -29,16 +28,20 @@ object V5SettingsHomeRules {
         listOf(SettingsDestination.AboutLegal, SettingsDestination.DeveloperOptions),
     )
 
+    /** Pages of v4 features the owner left out of v5 (V28, section Г): site capsules. */
+    private val leftOut = setOf(SettingsDestination.SiteCapsules)
+
     /** The group whose last row the «tint the bar» switch follows. */
     const val APPEARANCE_GROUP = 1
 
     /** [items] in the v5 groups, empty groups dropped; a page v5 does not know joins the last group. */
     fun groups(items: List<SettingsHomeItem>): List<List<SettingsHomeItem>> {
+        val shown = items.filterNot { it.destination in leftOut }
         val grouped = order.map { group ->
-            group.mapNotNull { destination -> items.firstOrNull { it.destination == destination } }
+            group.mapNotNull { destination -> shown.firstOrNull { it.destination == destination } }
         }
         val known = grouped.flatten().toSet()
-        val rest = items.filterNot { it in known }
+        val rest = shown.filterNot { it in known }
         return (grouped.dropLast(1) + listOf(grouped.last() + rest)).filter { it.isNotEmpty() }
     }
 
@@ -51,9 +54,7 @@ object V5SettingsHomeRules {
         SettingsDestination.Translation,
         -> V5Tile.Blue
         SettingsDestination.Appearance -> V5Tile.Pink
-        SettingsDestination.ProtectionAndData,
-        SettingsDestination.SiteCapsules,
-        -> V5Tile.Green
+        SettingsDestination.ProtectionAndData -> V5Tile.Green
         SettingsDestination.Passwords -> V5Tile.Red
         SettingsDestination.Downloads -> V5Tile.Amber
         else -> V5Tile.Gray

@@ -1948,8 +1948,6 @@
         <item quantity="one">%d bookmark skipped: already in Vola or not a web page</item>
         <item quantity="other">%d bookmarks skipped: already in Vola or not web pages</item>
     </plurals>
-    <string name="developer_options_ui_v5">v5 interface</string>
-    <string name="developer_options_ui_v5_summary">The new interface on a phone (a tablet keeps the current one). Turn it off to go back to the current interface while it is still here.</string>
     <string name="developer_options_ui_v5_specimen">v5 design specimen</string>
     <string name="developer_options_ui_v5_specimen_summary">Colors, the Inter font, shapes and settings tiles of v5 in the light, dark and private themes.</string>
     <string name="settings_protection_more_summary">Encrypted DNS, WebRTC, Filter Studio, Recall, import and export</string>

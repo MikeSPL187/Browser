@@ -448,6 +448,9 @@ internal object SettingsRegistry {
         "address_bar_long_press",
         "address_bar_actions",
         "link_peek_actions",
+        // The current menu and docking are not on a phone with v5 (V28, step 4).
+        "menu_actions",
+        "address_bar_docking",
     )
 
     /** The current interface's own pages, which the v5 interface has no use for. */
@@ -456,6 +459,9 @@ internal object SettingsRegistry {
         SettingsDestination.AddressBarLongPressActions,
         SettingsDestination.AddressBarActions,
         SettingsDestination.LinkPeekActions,
+        SettingsDestination.MenuActions,
+        // Site capsules are a v4 feature the owner left out of v5 (V28, section Г).
+        SiteCapsules,
     )
 
     /** «Protection and data» settings that under ui.v5 live on its «More» page (V15d-3). */
@@ -489,8 +495,6 @@ internal object SettingsRegistry {
     private val tabsMoreKeys = setOf(
         "resident_tab_limit",
         "profiles",
-        "menu_actions",
-        "address_bar_docking",
     )
 
     /** Each page split in two layers under ui.v5: its «More» page and the keys that live there. */

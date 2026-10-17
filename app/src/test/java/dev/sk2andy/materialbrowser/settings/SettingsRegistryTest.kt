@@ -96,14 +96,19 @@ class SettingsRegistryTest {
     fun `under v5 tabs keep only what the v5 interface reads`() {
         val tabs = SettingsDestination.TabsAndGestures
         listOf("tab_overview_mode", "tab_list_starts_at_bottom", "tab_dismiss_resistance", "address_bar_long_press",
-            "address_bar_actions", "link_peek_actions")
+            "address_bar_actions", "link_peek_actions", "menu_actions", "address_bar_docking")
             .forEach { key -> assertTrue(key, !SettingsRegistry.searchableInV5(key, tabs)) }
         listOf("auto_close_tabs", "automatic_tab_sorting", "closed_tab_undo", "link_long_press_action")
             .forEach { key ->
                 assertTrue(key, SettingsRegistry.searchableInV5(key, tabs))
                 assertEquals(key, tabs, SettingsRegistry.v5Destination(key, tabs))
             }
-        listOf("resident_tab_limit", "profiles", "menu_actions", "address_bar_docking")
+        listOf("resident_tab_limit", "profiles")
             .forEach { key -> assertEquals(key, SettingsDestination.TabsMore, SettingsRegistry.v5Destination(key, tabs)) }
+    }
+
+    @Test
+    fun `under v5 search does not lead to site capsules`() {
+        assertTrue(!SettingsRegistry.searchableInV5("capsule_settings", SettingsDestination.SiteCapsules))
     }
 }
