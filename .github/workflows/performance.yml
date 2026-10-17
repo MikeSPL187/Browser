@@ -170,10 +170,11 @@ jobs:
             echo "::endgroup::"
           done
 
-      # docs/vola/plan-v5.md, V3: memory with one page open, and what each further tab adds.
+      # docs/vola/plan-v5.md, V3: memory with one page open, and what each further tab adds. Three
+      # rounds a build, compared by their median (memory_budget.py, calibration in its docstring).
       - name: Measure memory in turns
         run: |
-          for turn in base:1 head:1 head:2 base:2; do
+          for turn in base:1 head:1 head:2 base:2 base:3 head:3; do
             build="${turn%%:*}"
             round="${turn##*:}"
             echo "::group::memory, ${build}, round ${round}"
