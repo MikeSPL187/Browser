@@ -1,8 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,7 +22,6 @@ import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileDraft
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileEditSheet
@@ -33,6 +29,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5ProfileIconChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileItem
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfilePrivacy
 import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSheet
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 
 /** The active profile's v5 accent, which every v5 screen takes (V11c, system-v5.md 1.2). */
 internal val BrowserController.v5Accent: V5Accent
@@ -218,16 +217,17 @@ private fun BrowserProfileEditSheetV5(
         onDismiss = onBack,
         onDelete = profile?.takeIf { controller.canDeleteProfile(it.id) }?.let { target -> { deleting = target } },
     )
+    // Both questions are v5 prompt sheets: «Close» and a swipe down keep things as they are.
     deleting?.let { target ->
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            title = {
-                val name = target.name.ifBlank { stringResource(R.string.v5_profile_untitled) }
-                Text(stringResource(R.string.workspace_delete_confirm_title, name))
-            },
-            text = { Text(stringResource(R.string.v5_profile_delete_message)) },
-            confirmButton = {
-                TextButton(
+        val name = target.name.ifBlank { stringResource(R.string.v5_profile_untitled) }
+        V5PromptSheet(
+            visible = true,
+            title = stringResource(R.string.workspace_delete_confirm_title, name),
+            message = stringResource(R.string.v5_profile_delete_message),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.action_delete),
+                    role = V5PromptRole.Destructive,
                     onClick = {
                         deleting = null
                         onBack()
@@ -235,33 +235,29 @@ private fun BrowserProfileEditSheetV5(
                             if (deleted) view.performV5Haptic(V5Haptic.Confirm)
                         }
                     },
-                ) { Text(stringResource(R.string.action_delete), color = V5Theme.colors.danger) }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
+                ),
+            ),
+            onDismiss = { deleting = null },
         )
     }
     storageChange?.let { (profileId, on) ->
-        AlertDialog(
-            onDismissRequest = { storageChange = null },
-            title = { Text(stringResource(R.string.v5_profile_storage_title)) },
-            text = {
-                Text(stringResource(if (on) R.string.v5_profile_storage_on else R.string.v5_profile_storage_off))
-            },
-            confirmButton = {
-                TextButton(
+        V5PromptSheet(
+            visible = true,
+            title = stringResource(R.string.v5_profile_storage_title),
+            message = stringResource(if (on) R.string.v5_profile_storage_on else R.string.v5_profile_storage_off),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.action_switch_storage),
+                    role = V5PromptRole.Primary,
                     onClick = {
                         storageChange = null
                         controller.setProfileIsolationAsync(profileId, on) { changed ->
                             if (changed) view.performV5Haptic(V5Haptic.Confirm)
                         }
                     },
-                ) { Text(stringResource(R.string.action_switch_storage)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { storageChange = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
+                ),
+            ),
+            onDismiss = { storageChange = null },
         )
     }
 }
