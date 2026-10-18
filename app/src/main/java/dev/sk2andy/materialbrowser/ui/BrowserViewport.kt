@@ -616,6 +616,7 @@ internal fun BrowserViewport(
                 state = pageErrorFeedback,
                 url = selectedTab.url,
                 onBack = if (selectedTab.canGoBack) controller::goBack else null,
+                onSearch = { words -> controller.submitAddress(words, forceSearch = true) },
                 onRetry = retry@{
                     val transition = PageErrorFeedbackRules.requestRetry(pageErrorFeedback)
                     if (!transition.shouldReload) return@retry

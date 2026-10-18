@@ -320,7 +320,7 @@
     <string name="action_clear_browsing_data">Clear browsing data</string>
     <string name="clear_data_title">Clear browsing data?</string>
     <string name="clear_data_message">Cookies, site storage, cache, and this session’s history will be deleted.</string>
-    <string name="clear_data_scope_message">Deletes cookies, site storage and cache, and all saved browsing history in every workspace. Snoozed tabs, page previews, site icons, site permissions and site exceptions are cleared too. Favorites and passwords stay.</string>
+    <string name="clear_data_scope_message">Deletes cookies, site storage and cache, and all saved browsing history in every workspace. Snoozed tabs, reading positions, page previews, site icons, site permissions and site exceptions are cleared too. Favorites, articles saved for offline reading and passwords stay.</string>
     <string name="action_delete">Delete</string>
     <string name="action_cancel">Cancel</string>
     <string name="web_prompt_title">Website message</string>
@@ -1048,6 +1048,7 @@
     <string name="page_error_offline_body">The page will open by itself as soon as you’re back online. Check Wi‑Fi or mobile data.</string>
     <string name="page_error_not_found_message">%1$s has no page at this address. It may have been moved or deleted.</string>
     <string name="page_error_unknown_host_message">Couldn’t find %1$s. Check the address for typos.</string>
+    <string name="page_error_search_for">Search for “%1$s”</string>
     <string name="page_error_unreachable_title">Site isn’t responding</string>
     <string name="page_error_unreachable_message">%1$s isn’t responding. It may be overloaded or unavailable on your network.</string>
     <string name="page_error_network_settings">Network settings</string>
@@ -1973,6 +1974,10 @@
     <string name="v5_group_move_title">Move to group</string>
     <string name="v5_group_current">Current</string>
     <string name="v5_group_new">New group</string>
+    <plurals name="v5_group_limit">
+        <item quantity="one">Up to %1$d group</item>
+        <item quantity="other">Up to %1$d groups</item>
+    </plurals>
     <string name="v5_group_remove_tab">Remove from group</string>
     <string name="v5_group_edit_title">Edit group</string>
     <string name="v5_group_default_name">Group</string>
@@ -2066,6 +2071,12 @@
     <string name="v5_site_https">HTTPS only</string>
     <string name="v5_site_reset">Reset site to defaults</string>
     <string name="v5_site_back">Back</string>
+    <string name="v5_site_reload_note">Changes here can reload the page and the site’s other open tabs; anything typed on them is lost.</string>
+    <string name="v5_site_reload_note_private">Changes here can reload the page; anything typed on it is lost.</string>
+    <string name="v5_site_reset_title">Reset %1$s?</string>
+    <string name="v5_site_reset_message">Strict, third-party cookies, cookie banners, AMP, fingerprinting and page fixes for this site go back to the defaults, and protection turns back on. The page and the site’s other open tabs reload.</string>
+    <string name="v5_site_reset_message_private">Strict, third-party cookies, cookie banners, AMP, fingerprinting and page fixes for this site go back to the defaults in this private tab, and protection turns back on. The page reloads.</string>
+    <string name="v5_site_reset_action">Reset</string>
     <string name="v5_glance_open">Open</string>
     <string name="v5_glance_background">In background</string>
     <string name="v5_glance_opened_background">Opened in background</string>
@@ -2100,6 +2111,10 @@
     <string name="v5_profile_untitled">Profile</string>
     <string name="v5_profile_locked">Locked</string>
     <string name="v5_profile_new">New profile</string>
+    <plurals name="v5_profile_limit">
+        <item quantity="one">Up to %1$d profile</item>
+        <item quantity="other">Up to %1$d profiles</item>
+    </plurals>
     <string name="v5_profile_edit">Edit profile</string>
     <string name="v5_profile_edit_action">Edit</string>
     <string name="v5_profile_create">Create</string>
@@ -2263,6 +2278,7 @@
     <string name="v5_password_health_insecure_form">the form sends the password over http://</string>
     <string name="v5_password_health_check_leaks">Check for leaks</string>
     <string name="v5_password_health_checking">Checking for leaks… %1$d%%</string>
+    <string name="v5_password_health_stop">Stop</string>
     <string name="v5_password_health_leaks">Leaks</string>
     <string name="v5_password_health_checked_at">Checked at %1$s</string>
     <string name="v5_password_health_check_again">Check again</string>
@@ -2278,6 +2294,10 @@
     <plurals name="v5_password_health_attention">
         <item quantity="one">%d password needs attention</item>
         <item quantity="other">%d passwords need attention</item>
+    </plurals>
+    <plurals name="v5_password_health_unchecked">
+        <item quantity="one">%d password is not checked for leaks yet. Check again.</item>
+        <item quantity="other">%d passwords are not checked for leaks yet. Check again.</item>
     </plurals>
     <plurals name="v5_password_finding_reused">
         <item quantity="one">This password repeats on %d other site. If one of them leaks, the other opens too.</item>
@@ -2327,6 +2347,21 @@
     <string name="v5_webdav_status_unreachable">Server unreachable</string>
     <string name="v5_webdav_status_login">Login refused</string>
     <string name="v5_webdav_status_failed">Sync failed</string>
+    <string name="v5_webdav_error_newer">Vola’s data on the server was saved by a newer Vola. Update Vola on this phone.</string>
+    <string name="v5_webdav_error_folder">There is no such folder on the server. Check the path in the address.</string>
+    <string name="v5_webdav_error_full">The server did not take the file: it is out of space, or the file is over its limit.</string>
+    <string name="v5_webdav_error_busy">The server is busy or a file on it is locked. Try again later.</string>
+    <string name="v5_webdav_error_server">The server failed on its side. Try again later or look at the server’s log.</string>
+    <string name="v5_webdav_error_address">Check the address: it looks like https://cloud.example.com, with no login, spaces, “?” or “#”.</string>
+    <string name="v5_webdav_connecting">Connecting…</string>
+    <string name="v5_webdav_phrase_simple">Too simple: take a few different words.</string>
+    <string name="v5_webdav_status_newer">Update Vola</string>
+    <string name="v5_webdav_status_folder">Folder not found</string>
+    <string name="v5_webdav_status_full">Server is full</string>
+    <string name="v5_webdav_status_busy">Server is busy</string>
+    <string name="v5_webdav_status_server">Server error</string>
+    <string name="v5_webdav_delete_failed_title">Data not deleted</string>
+    <string name="v5_webdav_delete_failed_message">%1$s did not answer, so Vola’s data is still on it. This phone stays connected: try again when the server is back.</string>
     <plurals name="v5_webdav_tabs">
         <item quantity="one">%d tab</item>
         <item quantity="other">%d tabs</item>

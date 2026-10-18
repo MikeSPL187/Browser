@@ -14,6 +14,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
+import dev.sk2andy.materialbrowser.browser.MAX_PROFILES
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
@@ -125,6 +126,7 @@ internal fun BrowserProfileSheetV5(controller: BrowserController, visible: Boole
         },
         onDismiss = onDismiss,
         onNew = { edit = ProfileEdit.New },
+        profileLimit = MAX_PROFILES.takeIf { local.size >= it },
         onEdit = { id ->
             // Only this device's profiles are edited here, and a locked one only after it is opened.
             if (local.any { it.id == id } && id !in controller.lockedProfileIds) edit = ProfileEdit.Existing(id)

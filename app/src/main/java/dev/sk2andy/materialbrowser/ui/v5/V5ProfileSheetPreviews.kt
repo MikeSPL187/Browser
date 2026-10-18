@@ -24,11 +24,26 @@ private val previewProfiles = listOf(
 )
 
 @Composable
-private fun SheetPreview(dark: Boolean) {
+private fun SheetPreview(dark: Boolean, profileLimit: Int? = null) {
     VolaV5Theme(dark = dark) {
-        V5ProfileSheet(visible = true, profiles = previewProfiles, onSelect = {}, onDismiss = {})
+        V5ProfileSheet(
+            visible = true,
+            profiles = previewProfiles,
+            onSelect = {},
+            onDismiss = {},
+            onNew = {},
+            profileLimit = profileLimit,
+        )
     }
 }
+
+@Preview(name = "Profiles, at the limit · light", heightDp = 640)
+@Composable
+private fun V5ProfileSheetLimitLightPreview() = SheetPreview(dark = false, profileLimit = 12)
+
+@Preview(name = "Profiles, at the limit · dark", heightDp = 640)
+@Composable
+private fun V5ProfileSheetLimitDarkPreview() = SheetPreview(dark = true, profileLimit = 12)
 
 @Preview(name = "Profiles · light", heightDp = 640)
 @Composable

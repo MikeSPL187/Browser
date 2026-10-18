@@ -48,6 +48,7 @@ object V5SiteProtectionTestTags {
     const val TurnOff = "v5_site_turn_off"
     const val Report = "v5_site_report"
     const val Reset = "v5_site_reset"
+    const val ResetConfirm = "v5_site_reset_confirm"
     const val Back = "v5_site_back"
 }
 
@@ -89,7 +90,8 @@ class V5SiteProtectionActions(
  * this site»; «Site not working right?» offers the gentle step first (third-party cookies for this
  * site, protection stays) and turning protection off last. «Details» is the second layer: Standard
  * or Strict, cookie banners, the original instead of AMP, fingerprinting, HTTPS-only, the breakage
- * report and reset. Everything else about the site stays in the full site sheet.
+ * report and reset. Everything else about the site stays in the full site sheet. Its switches say
+ * that they reload the site's pages, and reset asks first: it cannot be undone.
  */
 @Composable
 fun V5SiteProtection(
@@ -99,6 +101,7 @@ fun V5SiteProtection(
     onDismiss: () -> Unit,
 ) {
     var page by rememberSaveable(visible) { mutableStateOf(Page.Main) }
+    var confirmReset by rememberSaveable(visible) { mutableStateOf(false) }
     val title = stringResource(if (state.protectionOn) R.string.v5_site_on else R.string.v5_site_off)
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         // Back steps out of a page before it closes the sheet.
@@ -146,13 +149,58 @@ fun V5SiteProtection(
                     when (shown) {
                         Page.Main -> MainPage(state, actions, onOpen = { page = it })
                         Page.Troubleshoot -> TroubleshootPage(state, actions, onTurnedOff = { page = Page.Main })
-                        Page.Details -> DetailsPage(state, actions)
+                        Page.Details -> DetailsPage(state, actions, onReset = { confirmReset = true })
                     }
                 }
             }
         }
     }
+    V5SiteResetPrompt(
+        visible = visible && confirmReset,
+        host = state.host,
+        privateTab = state.privateTab,
+        onReset = {
+            confirmReset = false
+            actions.onReset()
+        },
+        onDismiss = { confirmReset = false },
+    )
 }
+
+/**
+ * The question before «Reset site to defaults» (SPR-02): it names everything that goes back and that
+ * the pages reload, in red, as the other removing actions of the browser ask.
+ */
+@Composable
+internal fun V5SiteResetPrompt(
+    visible: Boolean,
+    host: String,
+    privateTab: Boolean,
+    onReset: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    V5PromptSheet(
+        visible = visible,
+        title = stringResource(R.string.v5_site_reset_title, host),
+        message = stringResource(
+            if (privateTab) R.string.v5_site_reset_message_private else R.string.v5_site_reset_message,
+        ),
+        actions = listOf(
+            V5PromptAction(
+                label = stringResource(R.string.v5_site_reset_action),
+                onClick = onReset,
+                role = V5PromptRole.Destructive,
+                testTag = V5SiteProtectionTestTags.ResetConfirm,
+            ),
+        ),
+        onDismiss = onDismiss,
+    )
+}
+
+/** What a switch here costs (SPR-01): the page reloads, and outside a private tab so do the site's other tabs. */
+@Composable
+private fun reloadNote(state: V5SiteProtectionState): String =
+    stringResource(if (state.privateTab) R.string.v5_site_reload_note_private else R.string.v5_site_reload_note)
 
 @Composable
 private fun MainPage(state: V5SiteProtectionState, actions: V5SiteProtectionActions, onOpen: (Page) -> Unit) {
@@ -212,7 +260,7 @@ private fun TroubleshootPage(state: V5SiteProtectionState, actions: V5SiteProtec
         modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space1),
     )
     state.thirdPartyCookiesAllowed?.let { allowed ->
-        V5ListGroup {
+        V5ListGroup(footer = reloadNote(state)) {
             V5ListRow(
                 title = stringResource(R.string.v5_site_third_party),
                 subtitle = stringResource(
@@ -241,7 +289,7 @@ private fun TroubleshootPage(state: V5SiteProtectionState, actions: V5SiteProtec
 
 /** The second layer: the level, the site's switches, HTTPS-only, the report and reset. */
 @Composable
-private fun DetailsPage(state: V5SiteProtectionState, actions: V5SiteProtectionActions) {
+private fun DetailsPage(state: V5SiteProtectionState, actions: V5SiteProtectionActions, onReset: () -> Unit) {
     Column(
         Modifier.padding(horizontal = V5Spacing.marginPhone),
         verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
@@ -258,7 +306,7 @@ private fun DetailsPage(state: V5SiteProtectionState, actions: V5SiteProtectionA
             modifier = Modifier.padding(horizontal = V5Spacing.space1),
         )
     }
-    V5ListGroup {
+    V5ListGroup(footer = reloadNote(state)) {
         state.cookieBannersHidden?.let { hidden ->
             V5ListRow(
                 title = stringResource(R.string.v5_site_banners),
@@ -298,7 +346,7 @@ private fun DetailsPage(state: V5SiteProtectionState, actions: V5SiteProtectionA
         V5ListRow(
             title = stringResource(R.string.v5_site_reset),
             titleColor = V5Theme.colors.danger,
-            onClick = actions.onReset,
+            onClick = onReset,
             modifier = Modifier.testTag(V5SiteProtectionTestTags.Reset),
         )
     }

@@ -93,6 +93,11 @@ data class V5PageMenuState(
     val desktopView: Boolean?,
     val siteMuted: Boolean?,
     val canCloseTab: Boolean,
+    /**
+     * False where a private tab cannot be opened: a profile of another device, or an engine
+     * without isolated profiles. The row goes, rather than opening an ordinary tab instead.
+     */
+    val canNewPrivateTab: Boolean = true,
     /** «Hide distracting items» applies: a web page with an engine that can (GeckoView, V20). */
     val canHideDistractions: Boolean = false,
     /** Blocks hidden on this site; «Show hidden items» from one. */
@@ -183,11 +188,13 @@ fun V5PageMenu(
                     icon = V5RowIcon(VolaIcons.Add),
                     onClick = closing(actions.onNewTab),
                 )
-                V5ListRow(
-                    stringResource(R.string.v5_menu_new_private_tab),
-                    icon = V5RowIcon(VolaIcons.Lock),
-                    onClick = closing(actions.onNewPrivateTab),
-                )
+                if (state.canNewPrivateTab) {
+                    V5ListRow(
+                        stringResource(R.string.v5_menu_new_private_tab),
+                        icon = V5RowIcon(VolaIcons.Lock),
+                        onClick = closing(actions.onNewPrivateTab),
+                    )
+                }
                 if (state.hasPage) {
                     V5ListRow(
                         stringResource(R.string.action_duplicate_tab),

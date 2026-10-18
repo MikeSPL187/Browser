@@ -65,6 +65,8 @@ internal fun V5ProfileSheet(
     onEdit: ((String) -> Unit)? = null,
     /** «Move to profile» (V28, B11) reuses the sheet under its own title. */
     title: String = stringResource(R.string.v5_profiles_title),
+    /** Null while a profile can be made; else the most there can be, said on «New profile», which is off. */
+    profileLimit: Int? = null,
 ) {
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         V5SheetHeader(title = title, onClose = onDismiss)
@@ -82,8 +84,10 @@ internal fun V5ProfileSheet(
                 V5ListGroup {
                     V5ListRow(
                         title = stringResource(R.string.v5_profile_new),
+                        subtitle = profileLimit?.let { limit -> pluralStringResource(R.plurals.v5_profile_limit, limit, limit) },
                         icon = V5RowIcon(VolaIcons.Add),
-                        titleColor = V5Theme.colors.accent,
+                        titleColor = if (profileLimit == null) V5Theme.colors.accent else V5Theme.colors.labelTertiary,
+                        enabled = profileLimit == null,
                         onClick = onNew,
                         modifier = Modifier.testTag(V5ProfileSheetTestTags.New),
                     )
@@ -107,7 +111,8 @@ private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit, onEdi
         leading = { ProfileTile(profile) },
         trailing = if (profile.active) V5RowTrailing.Check else V5RowTrailing.None,
         onClick = { onSelect(profile.id) },
-        onLongClick = onEdit?.let { edit -> { edit(profile.id) } },
+        // A locked profile is edited once it is open: no long press that would silently do nothing.
+        onLongClick = onEdit?.takeIf { !profile.locked }?.let { edit -> { edit(profile.id) } },
         onLongClickLabel = stringResource(R.string.v5_profile_edit_action),
         modifier = Modifier
             .semantics { selected = profile.active }

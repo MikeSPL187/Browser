@@ -4,13 +4,16 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,6 +34,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.transfer.AndroidLocalTransferPort
 import dev.sk2andy.materialbrowser.browser.transfer.LocalTransferViewfinder
@@ -53,9 +59,11 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SyncDone
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncDoneActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncDoneState
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncScan
+import dev.sk2andy.materialbrowser.ui.v5.V5SyncScanAction
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncScanStatus
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncServerActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettings
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavDeleteFailedSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavDisconnectSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavPhraseMismatch
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavStartOverSheet
@@ -88,6 +96,7 @@ internal fun BrowserSyncSettingsV5(
     var mismatchHost by rememberSaveable { mutableStateOf("") }
     var disconnectAsked by remember { mutableStateOf(false) }
     var startOverAsked by remember { mutableStateOf(false) }
+    var deleteFailedHost by remember { mutableStateOf<String?>(null) }
     var sent by rememberSaveable { mutableStateOf(false) }
     var done by remember { mutableStateOf<BrowserSyncRules.Applied?>(null) }
     var undoFailed by remember { mutableStateOf(false) }
@@ -197,9 +206,21 @@ internal fun BrowserSyncSettingsV5(
         },
         onDisconnectAndDelete = {
             disconnectAsked = false
-            remote.port.disconnect(deleteServerData = true) {}
+            val host = remote.state.server.orEmpty()
+            remote.port.disconnect(deleteServerData = true) { deleted -> if (!deleted) deleteFailedHost = host }
         },
         onDismiss = { disconnectAsked = false },
+    )
+    // The server was not reached: its data stays, and so does the connection, for another try.
+    V5WebDavDeleteFailedSheet(
+        visible = deleteFailedHost != null,
+        host = deleteFailedHost.orEmpty(),
+        onRetry = {
+            val host = deleteFailedHost.orEmpty()
+            deleteFailedHost = null
+            remote.port.disconnect(deleteServerData = true) { deleted -> if (!deleted) deleteFailedHost = host }
+        },
+        onDismiss = { deleteFailedHost = null },
     )
     V5WebDavStartOverSheet(
         visible = startOverAsked,
@@ -281,12 +302,40 @@ private fun SyncScan(controller: BrowserController, onClose: () -> Unit, onAppli
         granted = allowed
         if (!allowed) status = V5SyncScanStatus.NoCamera
     }
-    LaunchedEffect(Unit) { if (!granted) permission.launch(Manifest.permission.CAMERA) }
+    LaunchedEffect(Unit) {
+        // The status outlives a recreated activity, the request it was waiting for does not.
+        if (status == V5SyncScanStatus.Receiving && handle == null) status = V5SyncScanStatus.Scanning
+        if (!granted) permission.launch(Manifest.permission.CAMERA)
+    }
+    // Back from the system settings with the camera allowed: scan at once.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                granted = hasCameraPermission(context)
+                if (granted && status == V5SyncScanStatus.NoCamera) status = V5SyncScanStatus.Scanning
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     DisposableEffect(port) { onDispose { handle?.cancel() } }
     val plan = remember(received) {
         received?.let { payload -> LocalTransferMergeRules.plan(payload, controller.favorites.map { it.url }) }
     }
-    V5SyncScan(status = status, onClose = onClose) {
+    V5SyncScan(
+        status = status,
+        onClose = onClose,
+        onAction = { action ->
+            when (action) {
+                V5SyncScanAction.Retry -> {
+                    received = null
+                    status = V5SyncScanStatus.Scanning
+                }
+                V5SyncScanAction.OpenSettings -> context.openAppSettings()
+            }
+        },
+    ) {
         if (granted) {
             LocalTransferViewfinder(
                 onCode = { scanned ->
@@ -360,6 +409,12 @@ private fun WifiArrivals(onAvailable: () -> Unit) {
             runCatching { manager.registerNetworkCallback(request, callback, Handler(Looper.getMainLooper())) }.isSuccess
         onDispose { if (registered) runCatching { manager?.unregisterNetworkCallback(callback) } }
     }
+}
+
+private fun Context.openAppSettings() {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { startActivity(intent) }
 }
 
 private fun hasCameraPermission(context: Context): Boolean =

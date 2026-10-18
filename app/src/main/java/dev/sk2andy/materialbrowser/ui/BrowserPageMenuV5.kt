@@ -84,6 +84,7 @@ internal fun BrowserPageMenuV5(
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },
         canCloseTab = TabDeletionRules.canDelete(tab),
+        canNewPrivateTab = controller.canOpenLinkInPrivate,
         canHideDistractions = canHideDistractions,
         hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
         downloads = downloads,
@@ -105,8 +106,11 @@ internal fun BrowserPageMenuV5(
             onSiteMutedChange = controller::setSelectedDomainMuted,
             onNewTab = actions.onNewTab,
             onNewPrivateTab = {
-                actions.onNewTab()
-                controller.setBlankTabIncognito(true)
+                // Checked before the tab is made: a refusal after it left an ordinary tab, unsaid.
+                if (controller.canOpenLinkInPrivate) {
+                    actions.onNewTab()
+                    controller.setBlankTabIncognito(true)
+                }
             },
             onCloseTab = actions.onCloseTab,
             onFavorites = actions.onFavorites,

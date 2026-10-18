@@ -112,3 +112,15 @@ private fun V5SyncConfirmDarkPreview() {
         V5SyncConfirmSheet(V5SyncConfirmState("Pixel Анны", tabs = 0, bookmarks = 3), onAccept = {}, onDismiss = {})
     }
 }
+
+@Preview(name = "Scan code, no camera, with «Open settings» · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncScanNoCameraDarkPreview() {
+    VolaV5Theme(dark = true) { V5SyncScan(V5SyncScanStatus.NoCamera, onClose = {}) {} }
+}
+
+@Preview(name = "Scan code, not found, with «Try again» · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncScanNotFoundDarkPreview() {
+    VolaV5Theme(dark = true) { V5SyncScan(V5SyncScanStatus.NotFound, onClose = {}) {} }
+}
