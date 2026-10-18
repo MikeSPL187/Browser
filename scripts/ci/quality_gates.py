@@ -188,6 +188,20 @@ def literal_findings_in_line(text):
     return findings
 
 
+def literal_tree_findings(files):
+    """The same rule over whole files: the tree stays clean, not only the lines a pull request adds."""
+    findings = []
+    for path in files:
+        posix = relative(path)
+        text = Path(path).read_text(encoding="utf-8")
+        if not token_scope(posix, text[:600]):
+            continue
+        for number, line in enumerate(text.splitlines(), start=1):
+            for literal in literal_findings_in_line(line):
+                findings.append((posix, number, literal))
+    return findings
+
+
 def check_literals(base):
     findings = []
     for path, number, text in scoped_added_lines(base):

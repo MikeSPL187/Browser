@@ -256,6 +256,9 @@ class LiteralsTest(unittest.TestCase):
     def test_message_names_the_literal(self):
         self.assertEqual(gates.literal_findings_in_line('Text("Verbinden")'), ["Verbinden"])
 
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.literal_tree_findings(gates.source_files()), [])
+
 
 class MotionTest(unittest.TestCase):
     PATH = "app/src/main/java/dev/sk2andy/materialbrowser/ui/v5/V5Thing.kt"

@@ -215,7 +215,7 @@ revision baseline to prevent divergent successors.
 | `iosApp/CandyIos/IosSyncPlatform.swift` | CryptoKit, Keychain cache/vault and dispatch adapters |
 | `iosApp/CandyIos/IosSyncTransport.swift` | URLSession REST and WebSocket adapter |
 | `browser/SyncedProfileRuntimeRules.kt` | Runtime profile/tab projection and reconciliation |
-| `shared/.../ui/settings/SyncSettingsPage.kt` | Shared setup, immutable-passphrase warning, status and device list |
+| `app/.../ui/SyncSettingsPage.kt` | Setup, immutable-passphrase warning, status and device list (the shared German page was removed: nothing used it) |
 
 ## Verification
 
