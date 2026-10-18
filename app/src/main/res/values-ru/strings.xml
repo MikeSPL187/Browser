@@ -327,7 +327,7 @@
     <string name="action_clear_browsing_data">Очистить данные браузера</string>
     <string name="clear_data_title">Очистить данные браузера?</string>
     <string name="clear_data_message">Будут удалены куки, хранилище сайтов, кэш и история этого сеанса.</string>
-    <string name="clear_data_scope_message">Будут удалены куки, хранилище сайтов, кэш и вся сохранённая история во всех пространствах. Также очистятся отложенные вкладки, превью страниц, значки сайтов, разрешения и исключения для сайтов. Избранное и пароли сохранятся.</string>
+    <string name="clear_data_scope_message">Будут удалены куки, хранилище сайтов, кэш и вся сохранённая история во всех пространствах. Также очистятся отложенные вкладки, позиции чтения, превью страниц, значки сайтов, разрешения и исключения для сайтов. Избранное, статьи, сохранённые для чтения офлайн, и пароли сохранятся.</string>
     <string name="action_delete">Удалить</string>
     <string name="action_cancel">Отмена</string>
     <string name="web_prompt_title">Сообщение сайта</string>
@@ -2359,6 +2359,7 @@
     <string name="v5_password_health_insecure_form">форма отправляет пароль по http://</string>
     <string name="v5_password_health_check_leaks">Проверить утечки</string>
     <string name="v5_password_health_checking">Проверяем утечки… %1$d%%</string>
+    <string name="v5_password_health_stop">Остановить</string>
     <string name="v5_password_health_leaks">Утечки</string>
     <string name="v5_password_health_checked_at">Проверено в %1$s</string>
     <string name="v5_password_health_check_again">Проверить ещё раз</string>
@@ -2376,6 +2377,12 @@
         <item quantity="few">%d пароля требуют внимания</item>
         <item quantity="many">%d паролей требуют внимания</item>
         <item quantity="other">%d пароля требуют внимания</item>
+    </plurals>
+    <plurals name="v5_password_health_unchecked">
+        <item quantity="one">%d пароль ещё не проверен на утечки. Проверьте ещё раз.</item>
+        <item quantity="few">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="many">%d паролей ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="other">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
     </plurals>
     <plurals name="v5_password_finding_reused">
         <item quantity="one">Этот пароль повторяется ещё на %d сайте. Если один из них утечёт, откроются и другие.</item>
@@ -2427,6 +2434,21 @@
     <string name="v5_webdav_status_unreachable">Сервер недоступен</string>
     <string name="v5_webdav_status_login">Вход отклонён</string>
     <string name="v5_webdav_status_failed">Не синхронизировалось</string>
+    <string name="v5_webdav_error_newer">Данные Vola на сервере сохранены более новой версией Vola. Обновите Vola на этом телефоне.</string>
+    <string name="v5_webdav_error_folder">На сервере нет такой папки. Проверьте путь в адресе.</string>
+    <string name="v5_webdav_error_full">Сервер не принял файл: на нём закончилось место или файл больше его предела.</string>
+    <string name="v5_webdav_error_busy">Сервер занят или файл на нём заблокирован. Попробуйте позже.</string>
+    <string name="v5_webdav_error_server">На сервере произошла ошибка. Попробуйте позже или посмотрите журнал сервера.</string>
+    <string name="v5_webdav_error_address">Проверьте адрес: он выглядит как https://cloud.example.com, без логина, пробелов, «?» и «#».</string>
+    <string name="v5_webdav_connecting">Подключение…</string>
+    <string name="v5_webdav_phrase_simple">Слишком простая фраза: возьмите несколько разных слов.</string>
+    <string name="v5_webdav_status_newer">Обновите Vola</string>
+    <string name="v5_webdav_status_folder">Папка не найдена</string>
+    <string name="v5_webdav_status_full">На сервере нет места</string>
+    <string name="v5_webdav_status_busy">Сервер занят</string>
+    <string name="v5_webdav_status_server">Ошибка сервера</string>
+    <string name="v5_webdav_delete_failed_title">Данные не удалены</string>
+    <string name="v5_webdav_delete_failed_message">%1$s не ответил, и данные Vola остались на нём. Телефон остался подключён: повторите, когда сервер будет доступен.</string>
     <plurals name="v5_webdav_tabs">
         <item quantity="one">%d вкладка</item>
         <item quantity="few">%d вкладки</item>

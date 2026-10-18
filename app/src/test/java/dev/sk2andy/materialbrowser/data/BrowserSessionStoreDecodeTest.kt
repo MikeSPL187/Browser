@@ -59,5 +59,40 @@ class BrowserSessionStoreDecodeTest {
         assertTrue(BrowserSessionStore.decodeTabStacks("{", listOf(tab("a"))).isEmpty())
     }
 
+    @Test
+    fun `a group list over the limit keeps the groups up to it`() {
+        val tabs = listOf(tab("a"))
+        val raw = (1..TabStackRules.MAX_STORED_STACKS + 1).joinToString(prefix = "[", postfix = "]") {
+            """{"id": "g$it", "profileId": "$DEFAULT_PROFILE_ID", "name": "Group $it", "tabIds": ["a"]}"""
+        }
+
+        val stacks = BrowserSessionStore.decodeTabStacks(raw, tabs)
+
+        assertEquals("g1", stacks.first().id)
+        assertTrue(stacks.size <= TabStackRules.MAX_STORED_STACKS)
+    }
+
+    @Test
+    fun `a saved entry that cannot be read hides only itself`() {
+        val raw = """
+            [
+              {"profileId": "p", "host": "kept.example"},
+              {"profileId": "p"},
+              "broken",
+              null,
+              {"profileId": "p", "host": "also-kept.example"}
+            ]
+        """.trimIndent()
+
+        val hosts = BrowserSessionStore.decodeArray(raw) { item -> item.getString("host") }
+
+        assertEquals(listOf("kept.example", "also-kept.example"), hosts)
+    }
+
+    @Test
+    fun `an unreadable saved list decodes as empty`() {
+        assertTrue(BrowserSessionStore.decodeArray("[{not json") { it.getString("host") }.isEmpty())
+    }
+
     private fun tab(id: String) = BrowserTab(id, 1L, url = "https://example.com/$id")
 }

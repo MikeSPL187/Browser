@@ -9880,7 +9880,7 @@ class BrowserController(
         permanentAlwaysBlockPopupDomains.clear()
         store.saveAlwaysBlockPopupDomains(emptyMap())
         siteExceptionRevision++
-
+        ReaderLibraryRepository.get(activity).clearReadingProgress()
         clearIncognitoProfile()
         tabs.indices.forEach { index ->
             tabs[index] = tabs[index].copy(blockedCount = 0, canGoBack = false, canGoForward = false)
