@@ -2086,6 +2086,7 @@
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
+    <string name="v5_menu_favorite_private">Not in private</string>
     <string name="v5_menu_read">Read</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>

@@ -2180,6 +2180,7 @@
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
+    <string name="v5_menu_favorite_private">Не в приватной</string>
     <string name="v5_menu_read">Читать</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
