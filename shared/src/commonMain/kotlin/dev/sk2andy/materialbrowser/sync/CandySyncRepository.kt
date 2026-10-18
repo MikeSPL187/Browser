@@ -1,8 +1,14 @@
 package dev.sk2andy.materialbrowser.sync
 
+import kotlin.concurrent.Volatile
+
 /**
  * Cross-platform Candy Sync decision owner. Stores, crypto, network and scheduling stay outside
  * this class; it only serializes their already-defined protocol operations through [SyncDispatch].
+ *
+ * The work runs on the dispatcher's one thread; a host calls [observe], [currentState] and [close]
+ * from its own. What both sides touch ([state], the listeners, the realtime fields) is therefore
+ * `@Volatile` and replaced whole, never changed in place.
  */
 class CandySyncRepository(
     private val settingsStore: SyncSettingsStore,
@@ -14,23 +20,28 @@ class CandySyncRepository(
     private val recoveryKeyDeriver: SyncRecoveryKeyDeriver,
     private val dispatch: SyncDispatch,
 ) : AutoCloseable {
-    private val listeners = mutableSetOf<(SyncRepositoryState) -> Unit>()
+    @Volatile
+    private var listeners: List<(SyncRepositoryState) -> Unit> = emptyList()
     private var cache = cacheStore.load()
     private var currentDeviceId = loadCurrentDeviceId()
     private var configurationWriteFailed = false
+    @Volatile
     private var realtimeConnection: AutoCloseable? = null
+    @Volatile
     private var realtimeEnabled = false
     private var realtimeAttempt = 0
+    @Volatile
     private var realtimeGeneration = 0L
     private var lastSuccessAt: String? = null
+    @Volatile
     private var state = stateFrom(settingsStore.load(), if (settingsStore.load() == null || !hasVault()) SyncStatus.Unconfigured else SyncStatus.Ready)
 
     fun currentState(): SyncRepositoryState = state
 
     fun observe(listener: (SyncRepositoryState) -> Unit): AutoCloseable {
-        listeners += listener
+        listeners = listeners + listener
         listener(state)
-        return AutoCloseable { listeners -= listener }
+        return AutoCloseable { listeners = listeners - listener }
     }
 
     fun configure(settings: SyncConnectionSettings): Boolean {
@@ -64,7 +75,7 @@ class CandySyncRepository(
     override fun close() {
         realtimeEnabled = false
         closeRealtimeConnection()
-        listeners.clear()
+        listeners = emptyList()
     }
 
     private fun configureNow(settings: SyncConnectionSettings) {
@@ -413,7 +424,9 @@ class CandySyncRepository(
                 onEvent = { event -> dispatch.dispatch { handleRealtimeEvent(event) } },
                 onClosed = { dispatch.dispatch { if (generation == realtimeGeneration) { realtimeConnection = null; scheduleRealtimeReconnect() } } },
             )
-            realtimeAttempt = 0
+            // A host that closed the repository meanwhile did so before this connection existed, so
+            // its close found nothing to close: the connection has to be closed here.
+            if (realtimeEnabled) realtimeAttempt = 0 else closeRealtimeConnection()
         } catch (_: Throwable) { scheduleRealtimeReconnect() } finally { secrets.clear() }
     }
 
@@ -439,7 +452,10 @@ class CandySyncRepository(
 
     private fun closeRealtimeConnection() {
         realtimeGeneration++
-        realtimeConnection?.close(); realtimeConnection = null; realtimeAttempt = 0
+        val connection = realtimeConnection
+        realtimeConnection = null
+        realtimeAttempt = 0
+        connection?.close()
     }
 
     private fun isNextOrDuplicateCursor(current: String, incoming: String): Boolean {
@@ -482,7 +498,7 @@ class CandySyncRepository(
     private fun publish(value: SyncRepositoryState) {
         lastSuccessAt = value.lastSuccessAt
         state = value
-        listeners.toList().forEach { listener -> runCatching { listener(value) } }
+        listeners.forEach { listener -> runCatching { listener(value) } }
     }
 
     private fun statusFor(error: Throwable): SyncStatus = when {
