@@ -1086,6 +1086,7 @@
     <string name="page_error_offline_body">Страница откроется сама, как только сеть вернётся. Проверьте Wi‑Fi или мобильный интернет.</string>
     <string name="page_error_not_found_message">На сайте %1$s нет такой страницы. Возможно, её перенесли или удалили.</string>
     <string name="page_error_unknown_host_message">Не удалось найти %1$s. Проверьте, нет ли в адресе опечатки.</string>
+    <string name="page_error_search_for">Искать «%1$s»</string>
     <string name="page_error_unreachable_title">Сайт не отвечает</string>
     <string name="page_error_unreachable_message">%1$s не отвечает. Возможно, он перегружен или недоступен в вашей сети.</string>
     <string name="page_error_network_settings">Настройки сети</string>
