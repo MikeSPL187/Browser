@@ -26,8 +26,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
@@ -45,6 +47,7 @@ object V5PasswordHealthTestTags {
     const val Summary = "v5_password_health_summary"
     const val AllFine = "v5_password_health_all_fine"
     const val LeakCheck = "v5_password_health_leak_check"
+    const val StopLeakCheck = "v5_password_health_stop_leak_check"
     const val Finding = "v5_password_finding"
     const val Change = "v5_password_finding_change"
     const val OpenLogin = "v5_password_finding_open"
@@ -91,6 +94,8 @@ class V5PasswordHealthActions(
     val onBack: () -> Unit,
     val onFinding: (V5PasswordFinding) -> Unit,
     val onCheckLeaks: () -> Unit,
+    /** «Stop» while the leak check runs: without a network it would otherwise wait out its requests. */
+    val onStopLeakCheck: () -> Unit = {},
 )
 
 /**
@@ -132,7 +137,7 @@ fun V5PasswordHealth(
                     }
                 }
             }
-            LeakCheck(state, actions.onCheckLeaks)
+            LeakCheck(state, actions.onCheckLeaks, actions.onStopLeakCheck)
         }
     }
 }
@@ -300,7 +305,7 @@ private fun FindingRow(finding: V5PasswordFinding, onClick: () -> Unit) {
     val tile = V5NewTabRules.letterTile(finding.site)
     V5ListRow(
         title = finding.site,
-        subtitle = "${finding.username} · ${findingDetail(finding)}",
+        subtitle = listOf(finding.username, findingDetail(finding)).filter(String::isNotEmpty).joinToString(" · "),
         leading = {
             Box(
                 Modifier
@@ -319,7 +324,7 @@ private fun FindingRow(finding: V5PasswordFinding, onClick: () -> Unit) {
 }
 
 @Composable
-private fun LeakCheck(state: V5PasswordHealthState, onCheck: () -> Unit) {
+private fun LeakCheck(state: V5PasswordHealthState, onCheck: () -> Unit, onStop: () -> Unit) {
     val colors = V5Theme.colors
     Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
         V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
@@ -331,21 +336,33 @@ private fun LeakCheck(state: V5PasswordHealthState, onCheck: () -> Unit) {
                     onClick = onCheck,
                     modifier = Modifier.testTag(V5PasswordHealthTestTags.LeakCheck),
                 )
-                V5LeakCheck.Checking -> V5ListRow(
-                    title = stringResource(
-                        R.string.v5_password_health_checking,
-                        V5PasswordHealthRules.percent(state.leakProgress),
-                    ),
-                    titleColor = colors.labelSecondary,
-                    modifier = Modifier
-                        .semantics { liveRegion = LiveRegionMode.Polite }
-                        .testTag(V5PasswordHealthTestTags.LeakCheck),
-                )
+                V5LeakCheck.Checking -> {
+                    // Progress, not a live region: TalkBack would read every percent, up to a hundred times.
+                    val progress = state.leakProgress.coerceIn(0f, 1f)
+                    V5ListRow(
+                        title = stringResource(
+                            R.string.v5_password_health_checking,
+                            V5PasswordHealthRules.percent(progress),
+                        ),
+                        titleColor = colors.labelSecondary,
+                        modifier = Modifier
+                            .semantics { progressBarRangeInfo = ProgressBarRangeInfo(progress, 0f..1f) }
+                            .testTag(V5PasswordHealthTestTags.LeakCheck),
+                    )
+                    V5ListRow(
+                        title = stringResource(R.string.v5_password_health_stop),
+                        titleColor = colors.accent,
+                        onClick = onStop,
+                        modifier = Modifier.testTag(V5PasswordHealthTestTags.StopLeakCheck),
+                    )
+                }
                 V5LeakCheck.Done, V5LeakCheck.Failed -> {
                     state.checkedAt?.let { time ->
                         V5ListRow(
                             title = stringResource(R.string.v5_password_health_leaks),
                             value = stringResource(R.string.v5_password_health_checked_at, time),
+                            // Said once, when the check ends.
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                         )
                     }
                     V5ListRow(

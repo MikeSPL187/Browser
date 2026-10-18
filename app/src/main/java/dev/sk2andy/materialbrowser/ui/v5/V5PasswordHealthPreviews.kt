@@ -74,3 +74,24 @@ private fun V5PasswordHealthUncheckedLightPreview() {
 private fun V5PasswordHealthUncheckedDarkPreview() {
     VolaV5Theme(dark = true) { V5PasswordHealth(AllFine.copy(unchecked = 3), NoActions) }
 }
+
+@Preview(name = "Checking, with Stop and an empty user name · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PasswordHealthCheckingLightPreview() {
+    VolaV5Theme(dark = false) {
+        V5PasswordHealth(
+            Sample.copy(
+                findings = Sample.findings + V5PasswordFinding("5", "wiki.example.org", "", V5PasswordFindingKind.Reused, count = 3),
+                leakCheck = V5LeakCheck.Checking,
+                leakProgress = 0.42f,
+            ),
+            NoActions,
+        )
+    }
+}
+
+@Preview(name = "Checking, with Stop · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PasswordHealthCheckingDarkPreview() {
+    VolaV5Theme(dark = true) { V5PasswordHealth(Sample.copy(leakCheck = V5LeakCheck.Checking, leakProgress = 0.42f), NoActions) }
+}

@@ -2256,6 +2256,7 @@
     <string name="v5_password_health_insecure_form">the form sends the password over http://</string>
     <string name="v5_password_health_check_leaks">Check for leaks</string>
     <string name="v5_password_health_checking">Checking for leaks… %1$d%%</string>
+    <string name="v5_password_health_stop">Stop</string>
     <string name="v5_password_health_leaks">Leaks</string>
     <string name="v5_password_health_checked_at">Checked at %1$s</string>
     <string name="v5_password_health_check_again">Check again</string>
