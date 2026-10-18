@@ -64,7 +64,7 @@ private val Downloads = V5LibraryState(
         V5LibrarySection(
             null,
             listOf(
-                V5LibraryRow("d1", "gid-po-severu.pdf", "12,4 из 20 МБ · осталось 8 с", V5LibraryLeading.File(VolaIcons.PictureAsPdf, V5Tile.Red), V5LibraryTrailing.Progress(0.62f), deletable = false),
+                V5LibraryRow("d1", "gid-po-severu.pdf", "12,4 из 20 МБ · осталось 8 с", V5LibraryLeading.File(VolaIcons.PictureAsPdf, V5Tile.Red), V5LibraryTrailing.Progress(0.62f, paused = false), deleteLabel = "Отменить загрузку", deleteAsks = true),
                 V5LibraryRow("d2", "karta-oblakov.png", "Не загрузилось · 2,3 МБ", V5LibraryLeading.File(VolaIcons.Error, V5Tile.Orange), V5LibraryTrailing.Retry),
                 V5LibraryRow("d3", "siyanie-teriberka.jpg", "3,1 МБ · polar-notes.ru · вчера", V5LibraryLeading.File(VolaIcons.Image, V5Tile.Blue)),
             ),
@@ -95,6 +95,10 @@ private fun V5LibraryFavoritesPreview() = LibraryPreview(Favorites, dark = false
 @Preview(name = "Library v5 · downloads, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun V5LibraryDownloadsDarkPreview() = LibraryPreview(Downloads, dark = true)
+
+@Preview(name = "Library v5 · downloads", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryDownloadsPreview() = LibraryPreview(Downloads, dark = false)
 
 @Preview(name = "Library v5 · empty history", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable

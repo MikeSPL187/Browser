@@ -2224,6 +2224,13 @@
     <string name="v5_library_search_downloads">Поиск в загрузках</string>
     <string name="v5_library_delete">Удалить</string>
     <string name="v5_library_retry">Повторить</string>
+    <string name="v5_downloads_cancel_title">Отменить «%1$s»?</string>
+    <string name="v5_downloads_cancel_message">Уже скачанная часть удалится.</string>
+    <string name="v5_downloads_cancel_action">Отменить загрузку</string>
+    <string name="v5_downloads_delete_title">Удалить «%1$s»?</string>
+    <string name="v5_downloads_delete_message">Файл удалится с этого телефона.</string>
+    <string name="v5_downloads_delete_failed_message">Загрузка уйдёт из списка вместе со всем, что от неё осталось.</string>
+    <string name="v5_downloads_clear_message">Файлы всех завершённых загрузок удалятся с этого телефона, а неудавшиеся и отменённые уйдут из списка. Идущие загрузки останутся.</string>
     <string name="v5_library_up">Назад в папку выше</string>
     <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>

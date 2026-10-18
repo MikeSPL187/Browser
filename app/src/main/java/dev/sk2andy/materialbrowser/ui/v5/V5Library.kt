@@ -61,6 +61,7 @@ object V5LibraryTestTags {
     const val Up = "v5_library_up"
     fun row(key: String) = "v5_library_row:$key"
     fun retry(key: String) = "v5_library_retry:$key"
+    fun pause(key: String) = "v5_library_pause:$key"
 }
 
 /** The segments, in the order the control shows them. */
@@ -89,8 +90,11 @@ sealed interface V5LibraryTrailing {
     /** A folder: how many things it holds, and the chevron. */
     data class Count(val count: Int) : V5LibraryTrailing
 
-    /** A download under way; null while its size is unknown. */
-    data class Progress(val fraction: Float?) : V5LibraryTrailing
+    /**
+     * A download under way; [fraction] is null while its size is unknown. Where it can pause, the
+     * ring is a button with the pause or play glyph inside: [paused] is null where it cannot.
+     */
+    data class Progress(val fraction: Float?, val paused: Boolean? = null) : V5LibraryTrailing
 
     /** A failed download that can start again. */
     data object Retry : V5LibraryTrailing
@@ -105,6 +109,12 @@ data class V5LibraryRow(
     val trailing: V5LibraryTrailing = V5LibraryTrailing.None,
     /** Whether a swipe to the left deletes it (history and favorites; not a download under way). */
     val deletable: Boolean = true,
+    /** What a tap does, for TalkBack, where «open» would not say it (pause, resume, retry). */
+    val openLabel: String? = null,
+    /** The swipe's action for TalkBack where it is not «Delete», such as cancelling a download. */
+    val deleteLabel: String? = null,
+    /** The swipe asks first (a file, a download under way): the row springs back under the question. */
+    val deleteAsks: Boolean = false,
 )
 
 /** A group of rows under an optional header, such as a day of history. */
@@ -290,7 +300,7 @@ private fun LibraryRow(
     onRetry: (String) -> Unit,
 ) {
     val colors = V5Theme.colors
-    val deleteLabel = stringResource(R.string.v5_library_delete)
+    val deleteLabel = row.deleteLabel ?: stringResource(R.string.v5_library_delete)
     val content: @Composable () -> Unit = {
         Row(
             Modifier
@@ -300,7 +310,7 @@ private fun LibraryRow(
                 .clip(V5Theme.shapes.s)
                 .background(colors.surface)
                 .heightIn(min = V5Sizes.rowTwoLine)
-                .clickable(role = Role.Button) { onOpen(row.key) }
+                .clickable(role = Role.Button, onClickLabel = row.openLabel) { onOpen(row.key) }
                 // A swipe is not the only way: TalkBack offers «Delete» as an action of the row.
                 .semantics(mergeDescendants = true) {
                     if (row.deletable) {
@@ -326,7 +336,7 @@ private fun LibraryRow(
                     )
                 }
             }
-            Trailing(row, onRetry)
+            Trailing(row, onOpen, onRetry)
         }
     }
     if (!row.deletable) {
@@ -334,7 +344,7 @@ private fun LibraryRow(
         return
     }
     Box(Modifier.padding(vertical = V5Spacing.hairline)) {
-        V5SwipeToDelete(key = row.key, onDelete = { onDelete(row.key) }, content = content)
+        V5SwipeToDelete(key = row.key, onDelete = { onDelete(row.key) }, springsBack = row.deleteAsks, content = content)
     }
 }
 
@@ -381,7 +391,7 @@ private fun Leading(leading: V5LibraryLeading) {
 }
 
 @Composable
-private fun Trailing(row: V5LibraryRow, onRetry: (String) -> Unit) {
+private fun Trailing(row: V5LibraryRow, onOpen: (String) -> Unit, onRetry: (String) -> Unit) {
     val colors = V5Theme.colors
     when (val trailing = row.trailing) {
         V5LibraryTrailing.None -> Unit
@@ -396,22 +406,27 @@ private fun Trailing(row: V5LibraryRow, onRetry: (String) -> Unit) {
             )
         }
         is V5LibraryTrailing.Progress -> {
-            val fraction = trailing.fraction
-            if (fraction == null) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(V5Sizes.iconSmall),
-                    color = colors.accent,
-                    strokeWidth = V5Sizes.downloadRing,
-                    trackColor = colors.fill,
-                )
+            val paused = trailing.paused
+            if (paused == null) {
+                ProgressRing(trailing.fraction)
             } else {
-                CircularProgressIndicator(
-                    progress = { fraction },
-                    modifier = Modifier.size(V5Sizes.iconSmall),
-                    color = colors.accent,
-                    strokeWidth = V5Sizes.downloadRing,
-                    trackColor = colors.fill,
-                )
+                // Pausing is not only a tap on the row: the ring says it and is a button of its own.
+                Box(
+                    Modifier
+                        .size(V5Sizes.touchTarget)
+                        .clip(V5Theme.shapes.full)
+                        .clickable(role = Role.Button) { onOpen(row.key) }
+                        .testTag(V5LibraryTestTags.pause(row.key)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ProgressRing(trailing.fraction)
+                    Icon(
+                        if (paused) VolaIcons.PlayArrowFilled else VolaIcons.PauseFilled,
+                        contentDescription = stringResource(if (paused) R.string.downloads_resume else R.string.downloads_pause),
+                        tint = colors.accent,
+                        modifier = Modifier.size(V5Sizes.downloadGlyph),
+                    )
+                }
             }
         }
         V5LibraryTrailing.Retry -> Box(
@@ -429,6 +444,27 @@ private fun Trailing(row: V5LibraryRow, onRetry: (String) -> Unit) {
                 color = colors.accent,
             )
         }
+    }
+}
+
+@Composable
+private fun ProgressRing(fraction: Float?) {
+    val colors = V5Theme.colors
+    if (fraction == null) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(V5Sizes.iconSmall),
+            color = colors.accent,
+            strokeWidth = V5Sizes.downloadRing,
+            trackColor = colors.fill,
+        )
+    } else {
+        CircularProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier.size(V5Sizes.iconSmall),
+            color = colors.accent,
+            strokeWidth = V5Sizes.downloadRing,
+            trackColor = colors.fill,
+        )
     }
 }
 
