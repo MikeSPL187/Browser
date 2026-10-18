@@ -105,9 +105,9 @@ jobs:
         run: |
           # Run every gate, then fail once, so one finding does not hide the others.
           status=0
-          gates=(size engine brand semantics)
+          gates=(size engine brand semantics motion secrets prerelease)
           if [ "$EVENT_NAME" = pull_request ]; then
-            gates+=("tokens --base HEAD^1")
+            gates+=("tokens --base HEAD^1" "literals --base HEAD^1")
           fi
           for gate in "${gates[@]}"; do
             # shellcheck disable=SC2086 # the gate carries its own arguments

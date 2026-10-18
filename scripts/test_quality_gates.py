@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Tests for ci/quality_gates.py: size ratchet, token rules, engine boundary, brand and semantics checks."""
+"""Tests for ci/quality_gates.py: size ratchet, token rules, engine boundary, brand, semantics, literals,
+motion, secrets and pre-release checks."""
 
 import sys
 import tempfile
@@ -211,6 +212,169 @@ class SemanticsTest(unittest.TestCase):
 
     def test_repository_has_no_findings(self):
         self.assertEqual(gates.semantics_findings(gates.source_files()), [])
+
+
+class LiteralsTest(unittest.TestCase):
+    def test_words_in_text_and_content_descriptions_are_findings(self):
+        cases = [
+            'Text("Open")',
+            'Text(text = "Привет, мир", style = V5Theme.type.body)',
+            'BasicText("Done")',
+            'Icon(VolaIcons.Close, contentDescription = "Close")',
+            'SettingsPage(title = x, backContentDescription = "Zurück")',
+            'Field(placeholder = "Search", supportingText = "Only for sign-in")',
+            'Row(summary = "Current profile")',
+            'Text("Count: ${count}")',
+            '    Text( "Ok" )',
+        ]
+        for line in cases:
+            with self.subTest(line=line):
+                self.assertTrue(gates.literal_findings_in_line(line), line)
+
+    def test_resources_symbols_urls_and_exemptions_are_not(self):
+        cases = [
+            "Text(stringResource(R.string.action_open))",
+            'Text("${count}")',
+            'Text("…")',
+            'Text("→")',
+            'Text("12:30")',
+            'Text("https://example.org/addon.xpi")',
+            'Text("Open") // literal-exempt: a brand name',
+            '// Text("Open") in a comment',
+            "Icon(VolaIcons.Close, contentDescription = null)",
+            "Icon(VolaIcons.Close, contentDescription = stringResource(R.string.close))",
+            'val tag = "Open"',
+            'val a by animateFloatAsState(1f, label = "stack marker scale")',
+            'Row(title = "Synchronisierung")',
+            'Field(placeholder = "https://host/addon.xpi")',
+            "Row(summary = stringResource(R.string.summary))",
+        ]
+        for line in cases:
+            with self.subTest(line=line):
+                self.assertEqual(gates.literal_findings_in_line(line), [], line)
+
+    def test_message_names_the_literal(self):
+        self.assertEqual(gates.literal_findings_in_line('Text("Verbinden")'), ["Verbinden"])
+
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.literal_tree_findings(gates.source_files()), [])
+
+
+class MotionTest(unittest.TestCase):
+    PATH = "app/src/main/java/dev/sk2andy/materialbrowser/ui/v5/V5Thing.kt"
+
+    def test_animation_without_v5_motion_is_a_finding(self):
+        text = "import androidx.compose.animation.AnimatedVisibility\n\nAnimatedVisibility(visible = x) { }\n"
+        self.assertEqual([(line, ) for _, line, _ in gates.motion_findings_in_text(text, self.PATH)], [(1,)])
+
+    def test_naming_v5_motion_in_code_is_enough(self):
+        text = "AnimatedContent(page) { }\nval moves = V5Motion.animationsEnabled\n"
+        self.assertEqual(gates.motion_findings_in_text(text, self.PATH), [])
+
+    def test_naming_it_only_in_a_comment_is_not(self):
+        text = "// V5Motion is somewhere\nval a by animateFloatAsState(1f)\n"
+        self.assertEqual(len(gates.motion_findings_in_text(text, self.PATH)), 1)
+
+    def test_exemption_and_files_without_animation_pass(self):
+        exempt = "// motion-exempt: the ring spins only while a download runs\nCrossfade(x) { }\n"
+        self.assertEqual(gates.motion_findings_in_text(exempt, self.PATH), [])
+        self.assertEqual(gates.motion_findings_in_text("val a = 1\n", self.PATH), [])
+
+    def test_only_v5_and_passwords_files_are_scanned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("ui/v5/V5A.kt", "ui/v5/V5APreviews.kt", "ui/OldScreen.kt"):
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_text("AnimatedVisibility(x) { }\n", encoding="utf-8")
+            original = gates.ROOT
+            gates.ROOT = root
+            try:
+                found = gates.motion_findings([root / "ui/v5/V5A.kt", root / "ui/v5/V5APreviews.kt", root / "ui/OldScreen.kt"])
+            finally:
+                gates.ROOT = original
+        self.assertEqual([path for path, _, _ in found], [])
+
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.motion_findings(gates.source_files()), [])
+
+
+class SecretsTest(unittest.TestCase):
+    # Built from parts so that this file does not look like a secret to its own gate.
+    KEY = "-----BEGIN " + "RSA PRIVATE KEY-----"
+    TOKEN = "ghp" + "_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8"
+    PASSWORD = "storePassword" + "=" + "hunter2hunter2"
+
+    def test_secrets_are_findings_with_their_line(self):
+        for text in (self.KEY, f"token: {self.TOKEN}", self.PASSWORD, f'keyPassword = "{"s3cretValue!"}"'):
+            with self.subTest(text=text[:12]):
+                found = gates.secret_findings_in_text(f"first\n{text}\n", "a.txt")
+                self.assertEqual([(path, line) for path, line, _ in found], [("a.txt", 2)])
+
+    def test_placeholders_references_and_exemptions_are_not(self):
+        cases = [
+            "storePassword=replace-me",
+            "keyPassword=changeme",
+            'storePassword = requireNotNull(values["storePassword"])',
+            "storePassword = System.getenv(\"VOLA_RELEASE_STORE_PASSWORD\")",
+            "storePassword = $STORE_PASSWORD",
+            "// secret-scan-exempt: a documented test fixture\n" + "keyPassword=" + "fixture-value-1",
+            "val ghp = 12",
+        ]
+        for text in cases:
+            with self.subTest(text=text[:30]):
+                self.assertEqual(gates.secret_findings_in_text(text + "\n", "a.txt"), [])
+
+    def test_signing_files_are_findings_binary_and_large_files_are_skipped(self):
+        files = {
+            "keystore.properties": b"x",
+            "app/release.jks": b"x",
+            "app/local.properties": b"x",
+            "keystore.properties.example": b"storePassword=replace-me\n",
+            "img.png": b"\x89PNG\0" + self.KEY.encode(),
+            "big.txt": b"a" * (gates.SECRET_MAX_BYTES + 1),
+        }
+        found = gates.secret_findings(sorted(files), read=files.__getitem__)
+        self.assertEqual([path for path, _, _ in found], ["app/local.properties", "app/release.jks", "keystore.properties"])
+
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.secret_findings(gates.tracked_files()), [])
+
+
+class PrereleaseTest(unittest.TestCase):
+    CATALOG = """[versions]
+agp = "9.4.1"
+compose-material3 = "1.5.0-beta01"
+media = "1.0.0-rc02"
+ui = "1.7.0-alpha29"
+snapshot-lib = "2.0-SNAPSHOT"
+geckoview = "158.0.20261007201254"
+kotlin = "2.4.21"
+milestone = "3.0.0-M2"
+
+[libraries]
+blur = { module = "a:b", version = "version-3.2.0" }
+beta-lib = { module = "a:c", version = "1.0.0-beta01" }
+"""
+
+    def test_versions_that_are_not_stable_are_found_in_the_versions_table_only(self):
+        self.assertEqual(
+            gates.prerelease_versions(self.CATALOG),
+            {"compose-material3": "1.5.0-beta01", "media": "1.0.0-rc02", "ui": "1.7.0-alpha29",
+             "snapshot-lib": "2.0-SNAPSHOT", "milestone": "3.0.0-M2"},
+        )
+
+    def test_listed_with_a_reason_passes_unlisted_or_stale_or_unexplained_fail(self):
+        allow = "# c\ncompose-material3 -- expressive\nmedia -- rc is fine\nui -- x\nsnapshot-lib -- x\nmilestone -- x\n"
+        self.assertEqual(gates.prerelease_findings(self.CATALOG, allow), [])
+        unlisted = gates.prerelease_findings(self.CATALOG, "media -- x\nui -- x\nsnapshot-lib -- x\nmilestone -- x\n")
+        self.assertIn("compose-material3", unlisted[0][2])
+        stale = gates.prerelease_findings(self.CATALOG, allow + "kotlin -- old\n")
+        self.assertIn("no longer a pre-release", stale[0][2])
+        silent = gates.prerelease_findings(self.CATALOG, allow.replace("media -- rc is fine", "media --"))
+        self.assertIn("without a reason", silent[0][2])
+
+    def test_repository_has_no_findings(self):
+        self.assertEqual(gates.check_prerelease(), [])
 
 
 if __name__ == "__main__":

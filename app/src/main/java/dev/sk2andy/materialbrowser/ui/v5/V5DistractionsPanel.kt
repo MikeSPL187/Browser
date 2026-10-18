@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Materials
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -63,11 +64,13 @@ fun V5DistractionsPanel(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Without system animations the panel only fades (plan-v5.md, section 5).
+    val animated = V5Motion.animationsEnabled
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = slideInVertically { -it } + fadeIn(),
-        exit = slideOutVertically { -it } + fadeOut(),
+        enter = if (animated) slideInVertically { -it } + fadeIn() else fadeIn(V5Motion.reducedFade()),
+        exit = if (animated) slideOutVertically { -it } + fadeOut() else fadeOut(V5Motion.reducedFade()),
     ) {
         val colors = V5Theme.colors
         val shape = V5Theme.shapes.l

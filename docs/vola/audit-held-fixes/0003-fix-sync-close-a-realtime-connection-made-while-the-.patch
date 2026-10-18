@@ -1,0 +1,171 @@
+From 6c7a635668f1ff53125d87301465a3f8db6e0ca0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 18 Oct 2026 10:33:09 +0000
+Subject: [PATCH 3/5] fix(sync): close a realtime connection made while the
+ repository closes; make shared state volatile
+
+CandySyncRepository serializes its work on one dispatcher thread, but observe(), close() and
+currentState() run on the host's thread. state, the realtime fields and the listeners are now
+@Volatile (the listeners a list that is replaced, not changed in place), and a connection that
+finishes after close() is closed instead of staying open: close() found nothing to close.
+
+Test: the transport closes the repository while it is connecting.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SQZTihurw1LavH7Cgs1UnR
+---
+ .../data/sync/CandySyncRepositoryTest.kt      | 31 ++++++++++++++++++-
+ .../sync/CandySyncRepository.kt               | 30 +++++++++++++-----
+ 2 files changed, 53 insertions(+), 8 deletions(-)
+
+diff --git a/app/src/test/java/dev/sk2andy/materialbrowser/data/sync/CandySyncRepositoryTest.kt b/app/src/test/java/dev/sk2andy/materialbrowser/data/sync/CandySyncRepositoryTest.kt
+index 51706a2..1fab024 100644
+--- a/app/src/test/java/dev/sk2andy/materialbrowser/data/sync/CandySyncRepositoryTest.kt
++++ b/app/src/test/java/dev/sk2andy/materialbrowser/data/sync/CandySyncRepositoryTest.kt
+@@ -400,6 +400,27 @@ class CandySyncRepositoryTest {
+         }
+     }
+ 
++    @Test
++    fun `a realtime connection that is made while the repository closes is closed too`() {
++        val transport = FakeTransport(deviceRecord(), crypto).apply {
++            deltaMode = true
++            realtimeMode = true
++        }
++        val cacheStore = MemoryCacheStore(
++            SyncCache("epoch.0", mapOf(profile.deviceId to profile), deltaCursor = "epoch.0"),
++        )
++        val repository = repository(transport, cacheStore)
++        // The host closes the repository from its own thread while the sync thread is still making
++        // the connection: the connection then arrives after the close and nobody holds it.
++        transport.onRealtimeConnect = { repository.close() }
++
++        repository.startRealtime()
++
++        await { transport.realtimeConnects == 1 }
++        await { transport.realtimeCloses == 1 }
++        assertEquals(1, transport.realtimeCloses)
++    }
++
+     private fun repository(
+         transport: FakeTransport,
+         cacheStore: MemoryCacheStore,
+@@ -504,6 +525,9 @@ class CandySyncRepositoryTest {
+         val acknowledged = mutableListOf<String>()
+         var discovered = false
+         var realtimeListener: ((SyncRealtimeEvent) -> Unit)? = null
++        var onRealtimeConnect: (() -> Unit)? = null
++        @Volatile var realtimeConnects = 0
++        @Volatile var realtimeCloses = 0
+ 
+         override fun discover() { discovered = true }
+         override fun bootstrap(username: String, password: ByteArray): SyncBootstrap = error("Not used")
+@@ -554,7 +578,12 @@ class CandySyncRepositoryTest {
+             onClosed: (Throwable?) -> Unit,
+         ): AutoCloseable {
+             realtimeListener = onEvent
+-            return AutoCloseable { realtimeListener = null }
++            realtimeConnects++
++            onRealtimeConnect?.invoke()
++            return AutoCloseable {
++                realtimeListener = null
++                realtimeCloses++
++            }
+         }
+ 
+         fun emit(event: SyncRealtimeEvent) = requireNotNull(realtimeListener).invoke(event)
+diff --git a/shared/src/commonMain/kotlin/dev/sk2andy/materialbrowser/sync/CandySyncRepository.kt b/shared/src/commonMain/kotlin/dev/sk2andy/materialbrowser/sync/CandySyncRepository.kt
+index 258f9c6..fa050b2 100644
+--- a/shared/src/commonMain/kotlin/dev/sk2andy/materialbrowser/sync/CandySyncRepository.kt
++++ b/shared/src/commonMain/kotlin/dev/sk2andy/materialbrowser/sync/CandySyncRepository.kt
+@@ -1,8 +1,14 @@
+ package dev.sk2andy.materialbrowser.sync
+ 
++import kotlin.concurrent.Volatile
++
+ /**
+  * Cross-platform Candy Sync decision owner. Stores, crypto, network and scheduling stay outside
+  * this class; it only serializes their already-defined protocol operations through [SyncDispatch].
++ *
++ * The work runs on the dispatcher's one thread; a host calls [observe], [currentState] and [close]
++ * from its own. What both sides touch ([state], the listeners, the realtime fields) is therefore
++ * `@Volatile` and replaced whole, never changed in place.
+  */
+ class CandySyncRepository(
+     private val settingsStore: SyncSettingsStore,
+@@ -14,23 +20,28 @@ class CandySyncRepository(
+     private val recoveryKeyDeriver: SyncRecoveryKeyDeriver,
+     private val dispatch: SyncDispatch,
+ ) : AutoCloseable {
+-    private val listeners = mutableSetOf<(SyncRepositoryState) -> Unit>()
++    @Volatile
++    private var listeners: List<(SyncRepositoryState) -> Unit> = emptyList()
+     private var cache = cacheStore.load()
+     private var currentDeviceId = loadCurrentDeviceId()
+     private var configurationWriteFailed = false
++    @Volatile
+     private var realtimeConnection: AutoCloseable? = null
++    @Volatile
+     private var realtimeEnabled = false
+     private var realtimeAttempt = 0
++    @Volatile
+     private var realtimeGeneration = 0L
+     private var lastSuccessAt: String? = null
++    @Volatile
+     private var state = stateFrom(settingsStore.load(), if (settingsStore.load() == null || !hasVault()) SyncStatus.Unconfigured else SyncStatus.Ready)
+ 
+     fun currentState(): SyncRepositoryState = state
+ 
+     fun observe(listener: (SyncRepositoryState) -> Unit): AutoCloseable {
+-        listeners += listener
++        listeners = listeners + listener
+         listener(state)
+-        return AutoCloseable { listeners -= listener }
++        return AutoCloseable { listeners = listeners - listener }
+     }
+ 
+     fun configure(settings: SyncConnectionSettings): Boolean {
+@@ -64,7 +75,7 @@ class CandySyncRepository(
+     override fun close() {
+         realtimeEnabled = false
+         closeRealtimeConnection()
+-        listeners.clear()
++        listeners = emptyList()
+     }
+ 
+     private fun configureNow(settings: SyncConnectionSettings) {
+@@ -413,7 +424,9 @@ class CandySyncRepository(
+                 onEvent = { event -> dispatch.dispatch { handleRealtimeEvent(event) } },
+                 onClosed = { dispatch.dispatch { if (generation == realtimeGeneration) { realtimeConnection = null; scheduleRealtimeReconnect() } } },
+             )
+-            realtimeAttempt = 0
++            // A host that closed the repository meanwhile did so before this connection existed, so
++            // its close found nothing to close: the connection has to be closed here.
++            if (realtimeEnabled) realtimeAttempt = 0 else closeRealtimeConnection()
+         } catch (_: Throwable) { scheduleRealtimeReconnect() } finally { secrets.clear() }
+     }
+ 
+@@ -439,7 +452,10 @@ class CandySyncRepository(
+ 
+     private fun closeRealtimeConnection() {
+         realtimeGeneration++
+-        realtimeConnection?.close(); realtimeConnection = null; realtimeAttempt = 0
++        val connection = realtimeConnection
++        realtimeConnection = null
++        realtimeAttempt = 0
++        connection?.close()
+     }
+ 
+     private fun isNextOrDuplicateCursor(current: String, incoming: String): Boolean {
+@@ -482,7 +498,7 @@ class CandySyncRepository(
+     private fun publish(value: SyncRepositoryState) {
+         lastSuccessAt = value.lastSuccessAt
+         state = value
+-        listeners.toList().forEach { listener -> runCatching { listener(value) } }
++        listeners.forEach { listener -> runCatching { listener(value) } }
+     }
+ 
+     private fun statusFor(error: Throwable): SyncStatus = when {
+-- 
+2.43.0
+

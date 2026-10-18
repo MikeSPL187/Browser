@@ -17,9 +17,9 @@ function sha256(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
-test("extension icons stay tied to the reviewed Candy app artwork", () => {
-  const source = path.resolve(root, "../../app/src/main/res/drawable-nodpi/ic_launcher_foreground_art.png");
-  assert.equal(sha256(source), "7fd347d9eb5bb0df158f68f3382a412143144de3688f949608f69fc91a1cb8ad");
+// The icons were cut from the Candy launcher artwork (app/src/main/res/drawable-nodpi, removed with
+// the Vola rebranding), so only the reviewed result is pinned now.
+test("extension icons stay the reviewed artwork", () => {
   assert.deepEqual(
     Object.fromEntries([16, 32, 48, 96, 128].map((size) => [size, sha256(path.join(root, "assets/icons", `icon-${size}.png`))])),
     {

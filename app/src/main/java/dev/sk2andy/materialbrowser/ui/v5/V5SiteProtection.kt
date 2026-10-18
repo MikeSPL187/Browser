@@ -2,6 +2,9 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +32,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -99,7 +103,19 @@ fun V5SiteProtection(
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
         // Back steps out of a page before it closes the sheet.
         BackHandler(enabled = page != Page.Main) { page = Page.Main }
-        AnimatedContent(targetState = page, label = "site protection page") { shown ->
+        // The pages cross-fade; without system animations the fade is the whole of the motion.
+        val animated = V5Motion.animationsEnabled
+        AnimatedContent(
+            targetState = page,
+            transitionSpec = {
+                if (animated) {
+                    fadeIn(V5Motion.effects.spec()) togetherWith fadeOut(V5Motion.effects.spec())
+                } else {
+                    fadeIn(V5Motion.reducedFade()) togetherWith fadeOut(V5Motion.reducedFade())
+                }
+            },
+            label = "site protection page",
+        ) { shown ->
             Column {
                 when (shown) {
                     Page.Main -> V5SheetHeader(

@@ -323,7 +323,7 @@ private fun FindInPageBarPreviewContent(mode: BrowserAppearanceMode) {
                 canNavigate = true,
                 focusNonce = 0,
                 autoFocus = false,
-                placeholder = "Find on page",
+                placeholder = "Find on page", // literal-exempt: preview sample
                 queryContentDescription = "",
                 countingContentDescription = "",
                 previousMatchContentDescription = "",
