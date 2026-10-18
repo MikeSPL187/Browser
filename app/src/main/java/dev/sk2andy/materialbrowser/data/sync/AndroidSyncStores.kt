@@ -52,7 +52,9 @@ class AndroidSyncVaultStore(
 
     @Synchronized
     override fun load(): SyncVaultSecrets? = runCatching {
-        val encrypted = file.openRead().use { it.readBytesLimited(MAX_VAULT_BYTES) }
+        val encrypted = file.openRead().use {
+            it.readBytesLimited(AndroidSyncSecretProtector.maxEnvelopeBytes(MAX_VAULT_BYTES))
+        }
         val plaintext = protector.decrypt(encrypted, VAULT_AAD)
         try {
             SyncStateCodec.decodeVault(plaintext)
@@ -90,7 +92,9 @@ class AndroidSyncCacheStore(
 
     @Synchronized
     override fun load(): SyncCache = runCatching {
-        val encrypted = file.openRead().use { it.readBytesLimited(MAX_ENCRYPTED_CACHE_BYTES) }
+        val encrypted = file.openRead().use {
+            it.readBytesLimited(AndroidSyncSecretProtector.maxEnvelopeBytes(MAX_PLAINTEXT_CACHE_BYTES))
+        }
         val plaintext = protector.decrypt(encrypted, CACHE_AAD)
         try {
             SyncStateCodec.decodeCache(plaintext)
@@ -117,7 +121,6 @@ class AndroidSyncCacheStore(
     private companion object {
         val CACHE_AAD = "candy-sync/android-cache/v1".toByteArray()
         const val MAX_PLAINTEXT_CACHE_BYTES = 8 * 1_024 * 1_024
-        const val MAX_ENCRYPTED_CACHE_BYTES = 9 * 1_024 * 1_024
     }
 }
 
@@ -141,7 +144,10 @@ class AndroidSyncSecretProtector(
         require(value.keys().asSequence().toSet() == setOf("cryptoVersion", "nonce", "ciphertext"))
         require(value.getInt("cryptoVersion") == 1)
         val nonce = SyncBase64.decode(value.getString("nonce"), expectedBytes = 12)
-        val ciphertext = SyncBase64.decode(value.getString("ciphertext"), maxBytes = 9 * 1_024 * 1_024)
+        val ciphertext = SyncBase64.decode(
+            value.getString("ciphertext"),
+            maxBytes = MAX_PLAINTEXT_BYTES + GCM_TAG_BYTES,
+        )
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, nonce))
         cipher.updateAAD(aad)
@@ -166,8 +172,26 @@ class AndroidSyncSecretProtector(
         return generator.generateKey()
     }
 
-    private companion object {
-        const val TRANSFORMATION = "AES/GCM/NoPadding"
+    companion object {
+        private const val TRANSFORMATION = "AES/GCM/NoPadding"
+        private const val GCM_TAG_BYTES = 16
+        private const val NONCE_BYTES = 12
+
+        /** The largest plaintext any store saves (the cache's); a vault is much smaller. */
+        private const val MAX_PLAINTEXT_BYTES = 8 * 1_024 * 1_024
+
+        /** Room for the JSON keys, quotes and the version around the two Base64 values. */
+        private const val ENVELOPE_JSON_BYTES = 128
+
+        /**
+         * The size of the envelope [encrypt] writes for at most [maxPlaintextBytes]: Base64 grows
+         * the ciphertext and its tag by a third, so a store must not read with its plaintext limit.
+         */
+        fun maxEnvelopeBytes(maxPlaintextBytes: Int): Int =
+            base64Length(maxPlaintextBytes + GCM_TAG_BYTES) + base64Length(NONCE_BYTES) +
+                ENVELOPE_JSON_BYTES
+
+        private fun base64Length(bytes: Int): Int = (bytes + 2) / 3 * 4
     }
 }
 
