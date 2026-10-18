@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.baselineprofile
 import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
+import androidx.benchmark.macro.Metric
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.TraceSectionMetric
@@ -48,10 +49,11 @@ class StartupBenchmark {
 
 /**
  * The startup steps StartupTimeline wraps in trace sections. Sum, not First: a step that did not run
- * in an iteration reads as 0 instead of failing the benchmark.
+ * in an iteration reads as 0 instead of failing the benchmark. Typed as the stable [Metric], so the
+ * experimental TraceSectionMetric stays inside this function's opt-in.
  */
 @OptIn(ExperimentalMetricApi::class)
-private fun startupSections() = listOf(
+private fun startupSections(): List<Metric> = listOf(
     "ControllerCreate",
     "GeckoRuntimeCreate",
     "LoadTabs",
