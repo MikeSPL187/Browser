@@ -2053,6 +2053,12 @@
     <string name="v5_group_move_title">Переместить в группу</string>
     <string name="v5_group_current">Текущая</string>
     <string name="v5_group_new">Новая группа</string>
+    <plurals name="v5_group_limit">
+        <item quantity="one">Не больше %1$d группы</item>
+        <item quantity="few">Не больше %1$d групп</item>
+        <item quantity="many">Не больше %1$d групп</item>
+        <item quantity="other">Не больше %1$d группы</item>
+    </plurals>
     <string name="v5_group_remove_tab">Убрать из группы</string>
     <string name="v5_group_edit_title">Изменить группу</string>
     <string name="v5_group_default_name">Группа</string>
@@ -2194,6 +2200,12 @@
     <string name="v5_profile_untitled">Профиль</string>
     <string name="v5_profile_locked">Заблокирован</string>
     <string name="v5_profile_new">Новый профиль</string>
+    <plurals name="v5_profile_limit">
+        <item quantity="one">Не больше %1$d профиля</item>
+        <item quantity="few">Не больше %1$d профилей</item>
+        <item quantity="many">Не больше %1$d профилей</item>
+        <item quantity="other">Не больше %1$d профиля</item>
+    </plurals>
     <string name="v5_profile_edit">Изменить профиль</string>
     <string name="v5_profile_edit_action">Изменить</string>
     <string name="v5_profile_create">Создать</string>
