@@ -44,7 +44,8 @@ import java.time.format.FormatStyle
 /**
  * The downloads segment of the v5 library (V28, B2d; canvas screen «р3»): downloads under way on
  * top with their progress (the ring or a tap pauses or resumes, a swipe cancels), then finished
- * files by day. A tap opens a file; a failed one starts again, or opens the page it came from. A
+ * files by day. A tap opens a file; a failed one starts again, or opens the page it came from, or
+ * its row says why neither can be done. A
  * swipe deletes one file, and «Clear…» all finished ones; each asks first, since what goes is the
  * files themselves, not a list. While searching «Clear…» hides: it never clears what is not shown.
  */
@@ -82,11 +83,13 @@ internal fun DownloadsLibraryV5(
     val resumeLabel = stringResource(R.string.downloads_resume)
     val retryLabel = stringResource(R.string.v5_library_retry)
     val cancelLabel = stringResource(R.string.v5_downloads_cancel_action)
+    val openPageLabel = stringResource(R.string.v5_downloads_open_page)
 
     @Composable
     fun row(entry: DownloadEntry): V5LibraryRow {
         val kind = LibraryFileRules.kind(entry.name, entry.mime)
         val failed = DownloadsLibraryV5Rules.failed(entry)
+        val unavailable = DownloadsLibraryV5Rules.unavailable(entry)
         val time = timeFormatter.format(Instant.ofEpochMilli(entry.lastModified).atZone(zoneId))
         val size = Formatter.formatShortFileSize(context, maxOf(entry.bytes, entry.total))
         return V5LibraryRow(
@@ -94,6 +97,7 @@ internal fun DownloadsLibraryV5(
             title = entry.name,
             subtitle = when {
                 entry.status.isActive -> stringResource(downloadStatusLabel(entry.status), downloadProgressLabel(context, entry))
+                unavailable != null -> stringResource(unavailable.label())
                 failed -> stringResource(downloadStatusLabel(entry.status), time)
                 else -> listOfNotNull(size, entry.sourceHost()).joinToString(" · ")
             },
@@ -108,6 +112,7 @@ internal fun DownloadsLibraryV5(
                     else -> pauseLabel
                 }
                 failed && entry.retry == DownloadRetry.Available -> retryLabel
+                unavailable == DownloadUnavailableHint.OpenPage -> openPageLabel
                 else -> null
             },
             deleteLabel = cancelLabel.takeIf { DownloadsLibraryV5Rules.swipeCancels(entry) },
@@ -157,7 +162,8 @@ internal fun DownloadsLibraryV5(
                     entry.status.isActive -> if (entry.supportsPause) onTogglePause(entry)
                     entry.status == DownloadStatus.Successful -> onOpen(entry)
                     retry == DownloadRetry.Available -> onRetry(entry)
-                    retry is DownloadRetry.Unavailable -> retry.pageUrl?.let(onOpenPage)
+                    // Only a web page; the row says why when there is none (DL-03).
+                    retry is DownloadRetry.Unavailable -> DownloadRingRules.page(entry)?.let(onOpenPage)
                 }
             },
             onDelete = { key ->
@@ -191,6 +197,13 @@ internal fun DownloadsLibraryV5(
             },
         )
     }
+}
+
+/** The row's line for a failed download that cannot start again. */
+private fun DownloadUnavailableHint.label(): Int = when (this) {
+    DownloadUnavailableHint.OpenPage -> R.string.v5_downloads_unavailable_open_page
+    DownloadUnavailableHint.PrivateClosed -> R.string.v5_downloads_unavailable_private
+    DownloadUnavailableHint.FromSite -> R.string.v5_downloads_unavailable_site
 }
 
 /** «Clear…»: says plainly that the files themselves go, then one destructive row. */

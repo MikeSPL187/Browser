@@ -26,6 +26,16 @@ class DownloadsControllerTest {
     }
 
     @Test
+    fun `a paused download is read seldom, and nothing under way needs no reading`() {
+        val paused = entry(3, DownloadStatus.Paused)
+
+        assertEquals(DownloadsController.ACTIVE_POLL_MILLIS, DownloadsController.nextPollMillis(listOf(paused, running)))
+        assertEquals(DownloadsController.ACTIVE_POLL_MILLIS, DownloadsController.nextPollMillis(listOf(entry(4, DownloadStatus.Pending))))
+        assertEquals(DownloadsController.IDLE_POLL_MILLIS, DownloadsController.nextPollMillis(listOf(paused, done)))
+        assertEquals(null, DownloadsController.nextPollMillis(listOf(done)))
+    }
+
+    @Test
     fun `a refresh that finishes late never replaces a newer list`() {
         val store = FakeStore(listOf(running))
         val worker = QueuedWorker()

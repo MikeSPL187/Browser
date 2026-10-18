@@ -31,6 +31,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.DownloadsController
@@ -152,7 +155,8 @@ internal class DownloadRing {
 
 /**
  * The downloads the v5 bar watches: read from the same store as the Downloads screen, only while
- * something downloads or was just asked for, so an idle browser does not poll.
+ * the browser is on screen and something downloads or was just asked for, so an idle browser does
+ * not poll.
  */
 @Composable
 internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
@@ -174,13 +178,18 @@ internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
             }
         }
     }
-    LaunchedEffect(downloads, controller.contentActions.downloadRevision, state.retries) {
+    // Only while the browser is on screen, and seldom while what is left is paused or waits for a
+    // network (DL-04); coming back reads again at once.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val onScreen = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+    LaunchedEffect(downloads, controller.contentActions.downloadRevision, state.retries, onScreen) {
+        if (!onScreen) return@LaunchedEffect
         var polls = 0
         do {
             downloads.refresh()
-            delay(DownloadsController.ACTIVE_POLL_MILLIS)
+            delay(DownloadsController.nextPollMillis(downloads.downloads) ?: DownloadsController.ACTIVE_POLL_MILLIS)
             polls++
-        } while (polls < DownloadRingRules.START_POLLS || downloads.downloads.any { entry -> entry.status.isActive })
+        } while (polls < DownloadRingRules.START_POLLS || DownloadsController.nextPollMillis(downloads.downloads) != null)
     }
     val previous = remember { LastDownloads() }
     val current = downloads.downloads

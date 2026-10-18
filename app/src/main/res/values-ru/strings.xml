@@ -2246,6 +2246,10 @@
     <string name="v5_downloads_cancel_title">Отменить «%1$s»?</string>
     <string name="v5_downloads_cancel_message">Уже скачанная часть удалится.</string>
     <string name="v5_downloads_cancel_action">Отменить загрузку</string>
+    <string name="v5_downloads_open_page">Открыть страницу</string>
+    <string name="v5_downloads_unavailable_open_page">Здесь не скачать заново. Коснитесь, чтобы открыть страницу</string>
+    <string name="v5_downloads_unavailable_private">Не скачать заново: приватная вкладка закрыта</string>
+    <string name="v5_downloads_unavailable_site">Здесь не скачать заново. Скачайте файл с сайта</string>
     <string name="v5_downloads_delete_title">Удалить «%1$s»?</string>
     <string name="v5_downloads_delete_message">Файл удалится с этого телефона.</string>
     <string name="v5_downloads_delete_failed_message">Загрузка уйдёт из списка вместе со всем, что от неё осталось.</string>
