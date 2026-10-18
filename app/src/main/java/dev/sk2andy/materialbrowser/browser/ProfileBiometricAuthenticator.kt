@@ -32,6 +32,12 @@ internal class ProfileBiometricAuthenticator(
             return
         }
         pendingResult = onResult
+        // A prompt that throws (activity finishing, vendor failure) never calls back; without
+        // this the pending result would refuse every later unlock until the process restarts.
+        runCatching { showPrompt(purpose) }.onFailure { complete(success = false) }
+    }
+
+    private fun showPrompt(purpose: ProfileAuthenticationPurpose) {
         val prompt = BiometricPrompt(
             activity,
             ContextCompat.getMainExecutor(activity),
