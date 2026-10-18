@@ -20,9 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -53,7 +50,8 @@ internal data class V5FeedbackVisuals(
  * The browser's short messages under v5 (canvas «ц1», «ц2»): «Tab closed — Undo», an offer with
  * «Open», an error with its red mark. A card just above the bar, over every screen, read like the
  * line of a finished download: the message, then its one action in the accent. TalkBack reads it when it
- * appears. It is the same message channel as before ([SnackbarData]), so timing, the action and
+ * appears: Material's SnackbarHost announces it, so the card adds no live region of its own (two read it
+ * twice). It is the same message channel as before ([SnackbarData]), so timing, the action and
  * dismissing stay as they were.
  */
 @Composable
@@ -69,7 +67,6 @@ internal fun V5FeedbackNotice(data: SnackbarData, modifier: Modifier = Modifier)
             .clip(V5Theme.shapes.s)
             .background(colors.surfaceElevated)
             .padding(start = V5Spacing.space4, end = V5Spacing.space1)
-            .semantics { liveRegion = LiveRegionMode.Polite }
             .testTag(V5FeedbackNoticeTestTags.Row),
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
         verticalAlignment = Alignment.CenterVertically,

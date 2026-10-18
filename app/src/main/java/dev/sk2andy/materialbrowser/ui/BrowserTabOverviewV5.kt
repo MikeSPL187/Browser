@@ -260,11 +260,14 @@ private fun OverviewContent(
             BrowserProfileSheetV5(controller, visible = profileSheet, onDismiss = { profileSheet = false })
         }
     }
-    // «Close all tabs» asks first, in red as an action that removes.
+    // «Close all tabs» asks first, in red as an action that removes. The title keeps its count while
+    // the sheet lowers, so it never reads «Close 0 tabs».
+    var shownCount by remember { mutableIntStateOf(1) }
+    if (closeAllCount > 0) shownCount = closeAllCount
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         V5PromptSheet(
             visible = closeAllCount > 0,
-            title = pluralStringResource(R.plurals.close_all_tabs_title, closeAllCount, closeAllCount),
+            title = pluralStringResource(R.plurals.close_all_tabs_title, shownCount, shownCount),
             message = stringResource(R.string.close_all_tabs_pinned_supporting_text),
             actions = listOf(
                 V5PromptAction(

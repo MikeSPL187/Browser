@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.passwords
 
 import android.text.format.DateUtils
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -32,8 +33,9 @@ internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -
         is VaultLoginRequest.Save -> V5PromptTheme { SaveSheet(request, onDismiss) }
         is VaultLoginRequest.Select -> V5PromptTheme { SelectSheet(request, onDismiss) }
         is VaultLoginRequest.Offer -> V5PromptTheme { OfferSheet(request, onDismiss) }
+        // Keyed by the request: a second «Generate» gets its own generator, not the last one's password.
         is VaultLoginRequest.Generate -> V5PromptTheme {
-            PasswordGeneratorSheetV5(
+            key(request.id) { PasswordGeneratorSheetV5(
                 visible = true,
                 subtitle = request.site,
                 useLabel = stringResource(
@@ -42,7 +44,7 @@ internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -
                 useNeedsFingerprint = request.canSave,
                 onUse = { password -> VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Use(password)) },
                 onDismiss = onDismiss,
-            )
+            ) }
         }
     }
     return true
