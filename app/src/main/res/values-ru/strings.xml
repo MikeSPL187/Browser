@@ -2431,6 +2431,9 @@
     <string name="v5_webdav_error_full">Сервер не принял файл: на нём закончилось место или файл больше его предела.</string>
     <string name="v5_webdav_error_busy">Сервер занят или файл на нём заблокирован. Попробуйте позже.</string>
     <string name="v5_webdav_error_server">На сервере произошла ошибка. Попробуйте позже или посмотрите журнал сервера.</string>
+    <string name="v5_webdav_error_address">Проверьте адрес: он выглядит как https://cloud.example.com, без логина, пробелов, «?» и «#».</string>
+    <string name="v5_webdav_connecting">Подключение…</string>
+    <string name="v5_webdav_phrase_simple">Слишком простая фраза: возьмите несколько разных слов.</string>
     <string name="v5_webdav_status_newer">Обновите Vola</string>
     <string name="v5_webdav_status_folder">Папка не найдена</string>
     <string name="v5_webdav_status_full">На сервере нет места</string>

@@ -27,11 +27,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.sync.webdav.WebDavAddressCheck
+import dev.sk2andy.materialbrowser.shared.sync.webdav.WebDavSyncAddressRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
@@ -93,6 +97,9 @@ enum class V5WebDavError {
 
     /** The server failed on its side. */
     ServerError,
+
+    /** Not an address the sync can use: a login, a space, `?` or `#` in it, or a wrong port. */
+    InvalidAddress,
 }
 
 /** «Own server» (canvas «х1»): what is typed, and whether the connection is being made. */
@@ -162,10 +169,14 @@ fun V5WebDavConnect(
             onBack = actions.onBack,
             actions = {
                 if (state.connecting) {
+                    val connecting = stringResource(R.string.v5_webdav_connecting)
                     CircularProgressIndicator(
                         color = colors.accent,
                         strokeWidth = V5Sizes.barProgress,
-                        modifier = Modifier.padding(end = V5Spacing.space4).size(V5Sizes.iconSmall),
+                        modifier = Modifier
+                            .padding(end = V5Spacing.space4)
+                            .size(V5Sizes.iconSmall)
+                            .semantics { contentDescription = connecting },
                     )
                 } else {
                     TextButton(
@@ -198,6 +209,8 @@ fun V5WebDavConnect(
                 maxLength = V5WebDavRules.MAX_FIELD,
                 capitalize = false,
                 keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                enabled = !state.connecting,
                 modifier = Modifier.testTag(V5WebDavTestTags.Address),
             )
             V5NameField(
@@ -207,6 +220,8 @@ fun V5WebDavConnect(
                 onDone = {},
                 maxLength = V5WebDavRules.MAX_FIELD,
                 capitalize = false,
+                imeAction = ImeAction.Next,
+                enabled = !state.connecting,
                 modifier = Modifier.testTag(V5WebDavTestTags.Login),
             )
             V5NameField(
@@ -216,6 +231,8 @@ fun V5WebDavConnect(
                 onDone = {},
                 maxLength = V5WebDavRules.MAX_FIELD,
                 password = true,
+                imeAction = ImeAction.Next,
+                enabled = !state.connecting,
                 modifier = Modifier.testTag(V5WebDavTestTags.Password),
             )
             val problem = state.error ?: V5WebDavRules.addressProblem(state.address)
@@ -232,6 +249,8 @@ fun V5WebDavConnect(
                 onDone = {},
                 maxLength = V5WebDavRules.MAX_FIELD,
                 password = true,
+                imeAction = ImeAction.Next,
+                enabled = !state.connecting,
                 modifier = Modifier.testTag(V5WebDavTestTags.Phrase),
             )
             V5NameField(
@@ -241,10 +260,13 @@ fun V5WebDavConnect(
                 onDone = { if (canConnect) actions.onConnect() },
                 maxLength = V5WebDavRules.MAX_FIELD,
                 password = true,
+                enabled = !state.connecting,
                 modifier = Modifier.testTag(V5WebDavTestTags.PhraseRepeat),
             )
             if (V5WebDavRules.phrasesDiffer(state)) {
                 Problem(stringResource(R.string.v5_webdav_phrase_differs))
+            } else if (V5WebDavRules.phraseTooSimple(state.phrase)) {
+                Problem(stringResource(R.string.v5_webdav_phrase_simple))
             } else {
                 Footnote(stringResource(R.string.v5_webdav_phrase_footer, V5WebDavRules.MIN_PHRASE))
             }
@@ -564,17 +586,29 @@ internal object V5WebDavRules {
     /** The shortest phrase: long enough that guessing it from the server's files stays out of reach. */
     const val MIN_PHRASE = 10
 
-    /** What is wrong with a typed address before asking the server; null when nothing is. */
-    fun addressProblem(address: String): V5WebDavError? =
-        if (address.trim().lowercase().startsWith("http://")) V5WebDavError.NotHttps else null
+    /** Distinct characters a phrase needs: «aaaaaaaaaa» is ten characters, but guessed at once. */
+    const val MIN_PHRASE_DISTINCT = 5
 
-    /** Whether [address] is an HTTPS address with a host. */
-    fun isHttpsAddress(address: String): Boolean {
-        val trimmed = address.trim()
-        if (!trimmed.lowercase().startsWith("https://")) return false
-        val host = trimmed.substring("https://".length).substringBefore('/').substringAfterLast('@')
-        return host.isNotBlank() && host.none(Char::isWhitespace)
+    /**
+     * What is wrong with a typed address before asking the server; null when nothing is, or
+     * while only the scheme is typed. The same check as the sync's, so «Connect» never sends an
+     * address the sync would refuse as unreachable.
+     */
+    fun addressProblem(address: String): V5WebDavError? = when (WebDavSyncAddressRules.check(address)) {
+        WebDavAddressCheck.NotHttps -> V5WebDavError.NotHttps
+        WebDavAddressCheck.Invalid -> {
+            val rest = address.trim().substringAfter("://", missingDelimiterValue = "")
+            V5WebDavError.InvalidAddress.takeIf { rest.isNotEmpty() }
+        }
+        is WebDavAddressCheck.Valid -> null
     }
+
+    /** Whether [address] is an address the sync can use. */
+    fun isHttpsAddress(address: String): Boolean = WebDavSyncAddressRules.check(address) is WebDavAddressCheck.Valid
+
+    /** Long enough, but made of too few different characters. */
+    fun phraseTooSimple(phrase: String): Boolean =
+        phrase.length >= MIN_PHRASE && phrase.toSet().size < MIN_PHRASE_DISTINCT
 
     /** The repeat is typed and differs from the phrase. */
     fun phrasesDiffer(state: V5WebDavConnectState): Boolean =
@@ -586,6 +620,7 @@ internal object V5WebDavRules {
             state.login.isNotBlank() &&
             state.password.isNotEmpty() &&
             state.phrase.length >= MIN_PHRASE &&
+            !phraseTooSimple(state.phrase) &&
             state.phrase == state.phraseRepeat
 
     /** The line under the server fields. */
@@ -600,6 +635,7 @@ internal object V5WebDavRules {
         V5WebDavError.ServerFull -> R.string.v5_webdav_error_full
         V5WebDavError.ServerBusy -> R.string.v5_webdav_error_busy
         V5WebDavError.ServerError -> R.string.v5_webdav_error_server
+        V5WebDavError.InvalidAddress -> R.string.v5_webdav_error_address
     }
 
     /** The status card's title when the last sync failed. */
@@ -607,7 +643,7 @@ internal object V5WebDavRules {
         V5WebDavError.Unreachable -> R.string.v5_webdav_status_unreachable
         V5WebDavError.LoginRejected -> R.string.v5_webdav_status_login
         V5WebDavError.PhraseMismatch -> R.string.v5_webdav_mismatch_title
-        V5WebDavError.NotHttps, V5WebDavError.NotWebDav -> R.string.v5_webdav_status_failed
+        V5WebDavError.NotHttps, V5WebDavError.NotWebDav, V5WebDavError.InvalidAddress -> R.string.v5_webdav_status_failed
         V5WebDavError.NewerFormat -> R.string.v5_webdav_status_newer
         V5WebDavError.FolderNotFound -> R.string.v5_webdav_status_folder
         V5WebDavError.ServerFull -> R.string.v5_webdav_status_full
