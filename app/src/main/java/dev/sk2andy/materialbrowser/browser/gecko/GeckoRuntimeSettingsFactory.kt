@@ -38,8 +38,15 @@ internal object GeckoRuntimeSettingsFactory {
             applyDnsOverHttpsSettings(dnsOverHttpsSettings)
             applyHttpsOnlyMode(httpsOnlyMode)
             applyWebAuthn(webAuthnEnabled)
+            CandyGeckoPrefsBridge.setStartupPref(this, PROCESS_PRELAUNCH_PREF, false)
         }
 }
+
+/**
+ * Gecko keeps a spare content process started for the next page; with one page open it is a whole
+ * process of memory doing nothing. Off, a page that needs a new process starts one on demand.
+ */
+internal const val PROCESS_PRELAUNCH_PREF = "dom.ipc.processPrelaunch.enabled"
 
 /** The Gecko preference that exposes the Web Authentication API (passkeys, security keys). */
 internal const val WEB_AUTHN_PREF = "security.webauth.webauthn"
