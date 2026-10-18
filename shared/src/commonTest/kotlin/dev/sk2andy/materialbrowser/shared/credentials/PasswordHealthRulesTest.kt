@@ -28,6 +28,17 @@ class PasswordHealthRulesTest {
     }
 
     @Test
+    fun changingThePasswordOpensTheWellKnownPageOnlyWhereTheSiteHasOne() {
+        val origin = "https://shop.example.com"
+
+        assertEquals("$origin/.well-known/change-password", PasswordHealthRules.changePasswordTarget(origin, 200, 404))
+        assertEquals("$origin/", PasswordHealthRules.changePasswordTarget(origin, 404, 404))
+        assertEquals("$origin/", PasswordHealthRules.changePasswordTarget(origin, null, null))
+        // A site that answers every path with a page proves nothing by answering this one.
+        assertEquals("$origin/", PasswordHealthRules.changePasswordTarget(origin, 200, 200))
+    }
+
+    @Test
     fun loginsWithoutAPasswordRepeatNothingAndAreShortNotLettersOnly() {
         val report = PasswordHealthRules.report(
             listOf(login("a", "https://a.example", ""), login("b", "https://b.example", ""), login("c", "https://c.example", "")),

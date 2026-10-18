@@ -54,6 +54,8 @@ object PasswordHealthRules {
     const val HASH_PREFIX_LENGTH = 5
     private const val MIN_LENGTH = 12
     private const val CHANGE_PASSWORD_PATH = "/.well-known/change-password"
+    private const val MISSING_PAGE_PATH = "/.well-known/resource-that-should-not-exist-whose-status-code-should-not-be-200"
+    private val OK_STATUSES = 200..299
     private const val HTTP_SCHEME = "http://"
 
     /** [breaches] maps a login id to how often its password was seen in leaks; 0 or absent is clean. */
@@ -140,4 +142,20 @@ object PasswordHealthRules {
 
     /** The site's own «change password» page (W3C well-known URL). */
     fun changePasswordUrl(origin: String): String = origin.trimEnd('/') + CHANGE_PASSWORD_PATH
+
+    /**
+     * A path no site serves, asked next to [changePasswordUrl]: a site that answers it with a page
+     * answers every path so, and its «change password» answer proves nothing.
+     */
+    fun missingPageUrl(origin: String): String = origin.trimEnd('/') + MISSING_PAGE_PATH
+
+    /**
+     * Where «Change password on the site» goes, after Chrome's check: the well-known page when the
+     * site answers it ([changePasswordStatus], after redirects) and does not answer a missing page
+     * the same way ([missingPageStatus]); otherwise the site's start page, never a 404.
+     */
+    fun changePasswordTarget(origin: String, changePasswordStatus: Int?, missingPageStatus: Int?): String {
+        val supported = changePasswordStatus in OK_STATUSES && missingPageStatus !in OK_STATUSES
+        return if (supported) changePasswordUrl(origin) else origin.trimEnd('/') + "/"
+    }
 }

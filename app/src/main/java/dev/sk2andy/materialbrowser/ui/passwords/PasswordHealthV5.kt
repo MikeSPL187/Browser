@@ -31,6 +31,7 @@ internal fun PasswordHealthV5(
     leakProgress: Float,
     checkedAt: Long?,
     onCheckLeaks: () -> Unit,
+    onStopLeakCheck: () -> Unit,
     onFinding: (V5PasswordFinding) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -45,7 +46,12 @@ internal fun PasswordHealthV5(
             checkedAt = checkedAt?.let { DateFormat.getTimeFormat(context).format(Date(it)) },
             unchecked = unchecked,
         ),
-        actions = V5PasswordHealthActions(onBack = onBack, onFinding = onFinding, onCheckLeaks = onCheckLeaks),
+        actions = V5PasswordHealthActions(
+            onBack = onBack,
+            onFinding = onFinding,
+            onCheckLeaks = onCheckLeaks,
+            onStopLeakCheck = onStopLeakCheck,
+        ),
     )
 }
 
