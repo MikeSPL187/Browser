@@ -6,15 +6,25 @@ import dev.sk2andy.materialbrowser.readUpTo
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 class ReaderLibraryStore(context: Context) {
     private val file = AtomicFile(File(context.filesDir, FILE_NAME))
 
+    /**
+     * Where a library file that cannot be read is moved before the first write after it. Writing
+     * over it would make the loss permanent: settings and every saved article would be gone.
+     */
+    private val unreadableFile = File(context.filesDir, UNREADABLE_FILE_NAME)
+
     @Synchronized
-    fun load(isPrivate: Boolean): ReaderLibraryState =
-        if (isPrivate) ReaderLibraryState() else read()
+    fun load(isPrivate: Boolean): ReaderLibraryState {
+        if (isPrivate) return ReaderLibraryState()
+        val stored = runCatching { readStored() }.getOrNull()
+        return (stored as? StoredLibrary.Readable)?.state ?: ReaderLibraryState()
+    }
 
     @Synchronized
     fun updateSettings(settings: ReaderSettings, isPrivate: Boolean) {
@@ -51,44 +61,65 @@ class ReaderLibraryStore(context: Context) {
     @Synchronized
     fun deleteSnapshot(snapshotId: String, isPrivate: Boolean): Boolean {
         if (isPrivate) return false
-        val before = read()
+        val before = (readStored() as? StoredLibrary.Readable)?.state ?: return false
         val after = ReaderLibraryRules.deleteSnapshot(before, snapshotId, isPrivate = false)
         if (before == after) return false
         write(after)
         return true
     }
 
+    /**
+     * Forgets which pages were read and where reading stopped, as clearing browsing data promises
+     * for all history. Saved articles stay, like favorites. A set-aside unreadable library goes
+     * too: nothing can show it, and it may hold the same history.
+     */
+    @Synchronized
+    fun clearReadingProgress() {
+        mutate(isPrivate = false) { it.copy(progressByUrl = emptyMap()) }
+        unreadableFile.delete()
+    }
+
     @Synchronized
     fun clear() {
         file.delete()
+        unreadableFile.delete()
     }
 
     private fun mutate(isPrivate: Boolean, transform: (ReaderLibraryState) -> ReaderLibraryState) {
         if (isPrivate) return
-        val before = read()
+        val before = when (val stored = readStored()) {
+            StoredLibrary.Missing -> ReaderLibraryState()
+            is StoredLibrary.Readable -> stored.state
+            StoredLibrary.Unreadable -> {
+                setAsideUnreadable()
+                ReaderLibraryState()
+            }
+        }
         val after = transform(before)
         if (after != before) write(after)
     }
 
-    private fun read(): ReaderLibraryState {
-        if (!file.baseFile.isFile || file.baseFile.length() > MAX_JSON_BYTES) {
-            return ReaderLibraryState()
+    /** Throws when the file exists but cannot be read, so no write replaces it on a guess. */
+    private fun readStored(): StoredLibrary {
+        if (!file.baseFile.isFile) return StoredLibrary.Missing
+        if (file.baseFile.length() > MAX_JSON_BYTES) return StoredLibrary.Unreadable
+        val bytes = file.openRead().use { it.readUpTo(MAX_JSON_BYTES + 1) }
+        return decodeLibrary(bytes)?.let(StoredLibrary::Readable) ?: StoredLibrary.Unreadable
+    }
+
+    private fun setAsideUnreadable() {
+        if (!file.baseFile.renameTo(unreadableFile)) {
+            throw IOException("Could not set aside the unreadable reader library")
         }
-        val bytes = runCatching {
-            file.openRead().use { it.readUpTo(MAX_JSON_BYTES + 1) }
-        }.getOrNull() ?: return ReaderLibraryState()
-        if (bytes.size > MAX_JSON_BYTES) return ReaderLibraryState()
-        return runCatching { decode(JSONObject(bytes.toString(StandardCharsets.UTF_8))) }
-            .getOrDefault(ReaderLibraryState())
     }
 
     private fun write(state: ReaderLibraryState) {
         val boundedSnapshots = ReaderStorageBudget.evictOldestUntil(
             newestFirst = state.snapshots,
             maxBytes = MAX_JSON_BYTES,
-        ) { snapshots -> encodedBytes(state.copy(snapshots = snapshots)).size }
+        ) { snapshots -> encodeLibrary(state.copy(snapshots = snapshots)).size }
         val bounded = state.copy(snapshots = boundedSnapshots)
-        val bytes = encodedBytes(bounded)
+        val bytes = encodeLibrary(bounded)
         if (bytes.size > MAX_JSON_BYTES) return
         val output = file.startWrite()
         try {
@@ -100,153 +131,184 @@ class ReaderLibraryStore(context: Context) {
         }
     }
 
-    private fun encodedBytes(state: ReaderLibraryState): ByteArray =
-        encode(state).toString().toByteArray(StandardCharsets.UTF_8)
+    private sealed interface StoredLibrary {
+        data object Missing : StoredLibrary
+        data class Readable(val state: ReaderLibraryState) : StoredLibrary
 
-    private fun encode(state: ReaderLibraryState): JSONObject = JSONObject()
-        .put("version", CURRENT_VERSION)
-        .put(
-            "settings",
-            JSONObject()
-                .put("fontScale", state.settings.fontScale.toDouble())
-                .put("theme", state.settings.theme.name)
-                .put("textAlignment", state.settings.textAlignment.name)
-                .put("font", state.settings.font.name)
-                // Read by builds before V19, which know only serif or not.
-                .put("serif", state.settings.font != ReaderFont.Sans)
-                .put("wideMargins", state.settings.wideMargins),
-        )
-        .put(
-            "progress",
-            JSONObject().apply {
-                state.progressByUrl.forEach { (url, progress) -> put(url, progress.toDouble()) }
-            },
-        )
-        .put("snapshots", JSONArray().apply { state.snapshots.forEach { put(encodeSnapshot(it)) } })
-
-    private fun encodeSnapshot(snapshot: ReaderSnapshot): JSONObject = JSONObject()
-        .put("id", snapshot.id)
-        .put("progress", snapshot.progress.toDouble())
-        .put("savedAt", snapshot.savedAtMillis)
-        .put("document", encodeDocument(snapshot.document))
-
-    private fun encodeDocument(document: ReaderDocument): JSONObject = JSONObject()
-        .put("title", document.title)
-        .put("sourceUrl", document.sourceUrl)
-        .put("siteName", document.siteName)
-        .put(
-            "blocks",
-            JSONArray().apply {
-                document.blocks.forEach { block ->
-                    put(
-                        JSONObject()
-                            .put("kind", block.kind.name)
-                            .put("text", block.text)
-                            .put("level", block.level)
-                            .put(
-                                "links",
-                                JSONArray().apply {
-                                    block.links.forEach { link ->
-                                        put(JSONObject().put("label", link.label).put("url", link.url))
-                                    }
-                                },
-                            ),
-                    )
-                }
-            },
-        )
-
-    private fun decode(root: JSONObject): ReaderLibraryState {
-        if (root.optInt("version") != CURRENT_VERSION) return ReaderLibraryState()
-        val settingsJson = root.optJSONObject("settings") ?: JSONObject()
-        val settings = ReaderSettings(
-            fontScale = settingsJson.optDouble("fontScale", 1.0).toFloat()
-                .coerceIn(ReaderLibraryRules.MIN_FONT_SCALE, ReaderLibraryRules.MAX_FONT_SCALE),
-            theme = ReaderTheme.fromStoredName(settingsJson.optString("theme")),
-            font = ReaderFont.fromStored(
-                settingsJson.optString("font").takeIf(String::isNotEmpty),
-                serif = settingsJson.optBoolean("serif", true),
-            ),
-            wideMargins = settingsJson.optBoolean("wideMargins", false),
-            textAlignment = runCatching {
-                ReaderTextAlignment.valueOf(
-                    settingsJson.optString(
-                        "textAlignment",
-                        ReaderTextAlignment.Start.name,
-                    ),
-                )
-            }.getOrDefault(ReaderTextAlignment.Start),
-        )
-        val progressJson = root.optJSONObject("progress") ?: JSONObject()
-        val progress = buildMap {
-            progressJson.keys().forEach { url ->
-                if (ReaderExtractionContract.safeHttpUrl(url) != null) {
-                    put(url, progressJson.optDouble(url, 0.0).toFloat().coerceIn(0f, 1f))
-                }
-            }
-        }
-        val snapshotsJson = root.optJSONArray("snapshots") ?: JSONArray()
-        val snapshots = buildList {
-            for (index in 0 until minOf(snapshotsJson.length(), ReaderLibraryRules.MAX_SNAPSHOTS)) {
-                decodeSnapshot(snapshotsJson.optJSONObject(index) ?: continue)?.let(::add)
-            }
-        }
-        return ReaderLibraryState(settings, progress, snapshots)
+        /** On disk, but too large, not JSON, or of a version this build does not know. */
+        data object Unreadable : StoredLibrary
     }
 
-    private fun decodeSnapshot(json: JSONObject): ReaderSnapshot? = runCatching {
-        val document = decodeDocument(json.getJSONObject("document")) ?: return null
-        ReaderSnapshot(
-            id = json.getString("id").takeIf { UUID.fromString(it).toString() == it } ?: return null,
-            document = document,
-            progress = json.optDouble("progress", 0.0).toFloat().coerceIn(0f, 1f),
-            savedAtMillis = json.optLong("savedAt", 0L),
-        )
-    }.getOrNull()
+    internal companion object {
+        private const val FILE_NAME = "reader_library_v1.json"
+        private const val UNREADABLE_FILE_NAME = "reader_library_v1.unreadable.json"
+        private const val CURRENT_VERSION = 1
+        private const val MAX_JSON_BYTES = 8 * 1024 * 1024
 
-    private fun decodeDocument(json: JSONObject): ReaderDocument? {
-        val blocksJson = json.optJSONArray("blocks") ?: JSONArray()
-        val blocks = buildList {
-            for (index in 0 until minOf(blocksJson.length(), ReaderExtractionContract.MAX_BLOCKS)) {
-                val block = blocksJson.optJSONObject(index) ?: continue
-                val linksJson = block.optJSONArray("links") ?: JSONArray()
-                val links = buildList {
-                    for (linkIndex in 0 until minOf(linksJson.length(), 40)) {
-                        val link = linksJson.optJSONObject(linkIndex) ?: continue
-                        add(
-                            ReaderExtractionLink(
-                                label = link.optionalString("label"),
-                                url = link.optionalString("url"),
-                            ),
+        fun encodeLibrary(state: ReaderLibraryState): ByteArray =
+            encode(state).toString().toByteArray(StandardCharsets.UTF_8)
+
+        /**
+         * The library in [bytes], or null when it cannot be read as a whole: too large, not JSON,
+         * or of another version. A saved article that cannot be read leaves only itself out.
+         */
+        fun decodeLibrary(bytes: ByteArray): ReaderLibraryState? {
+            if (bytes.size > MAX_JSON_BYTES) return null
+            val root = runCatching { JSONObject(bytes.toString(StandardCharsets.UTF_8)) }
+                .getOrNull() ?: return null
+            return runCatching { decode(root) }.getOrNull()
+        }
+
+        private fun encode(state: ReaderLibraryState): JSONObject = JSONObject()
+            .put("version", CURRENT_VERSION)
+            .put(
+                "settings",
+                JSONObject()
+                    .put("fontScale", state.settings.fontScale.toDouble())
+                    .put("theme", state.settings.theme.name)
+                    .put("textAlignment", state.settings.textAlignment.name)
+                    .put("font", state.settings.font.name)
+                    // Read by builds before V19, which know only serif or not.
+                    .put("serif", state.settings.font != ReaderFont.Sans)
+                    .put("wideMargins", state.settings.wideMargins),
+            )
+            .put(
+                "progress",
+                JSONObject().apply {
+                    state.progressByUrl.forEach { (url, progress) -> put(url, progress.toDouble()) }
+                },
+            )
+            .put(
+                "snapshots",
+                JSONArray().apply { state.snapshots.forEach { put(encodeSnapshot(it)) } },
+            )
+
+        private fun encodeSnapshot(snapshot: ReaderSnapshot): JSONObject = JSONObject()
+            .put("id", snapshot.id)
+            .put("progress", snapshot.progress.toDouble())
+            .put("savedAt", snapshot.savedAtMillis)
+            .put("document", encodeDocument(snapshot.document))
+
+        private fun encodeDocument(document: ReaderDocument): JSONObject = JSONObject()
+            .put("title", document.title)
+            .put("sourceUrl", document.sourceUrl)
+            .put("siteName", document.siteName)
+            .put(
+                "blocks",
+                JSONArray().apply {
+                    document.blocks.forEach { block ->
+                        put(
+                            JSONObject()
+                                .put("kind", block.kind.name)
+                                .put("text", block.text)
+                                .put("level", block.level)
+                                .put(
+                                    "links",
+                                    JSONArray().apply {
+                                        block.links.forEach { link ->
+                                            put(
+                                                JSONObject()
+                                                    .put("label", link.label)
+                                                    .put("url", link.url),
+                                            )
+                                        }
+                                    },
+                                ),
                         )
                     }
+                },
+            )
+
+        private fun decode(root: JSONObject): ReaderLibraryState? {
+            if (root.optInt("version") != CURRENT_VERSION) return null
+            val settingsJson = root.optJSONObject("settings") ?: JSONObject()
+            val settings = ReaderSettings(
+                fontScale = settingsJson.optDouble("fontScale", 1.0).toFloat()
+                    .coerceIn(ReaderLibraryRules.MIN_FONT_SCALE, ReaderLibraryRules.MAX_FONT_SCALE),
+                theme = ReaderTheme.fromStoredName(settingsJson.optString("theme")),
+                font = ReaderFont.fromStored(
+                    settingsJson.optString("font").takeIf(String::isNotEmpty),
+                    serif = settingsJson.optBoolean("serif", true),
+                ),
+                wideMargins = settingsJson.optBoolean("wideMargins", false),
+                textAlignment = runCatching {
+                    ReaderTextAlignment.valueOf(
+                        settingsJson.optString(
+                            "textAlignment",
+                            ReaderTextAlignment.Start.name,
+                        ),
+                    )
+                }.getOrDefault(ReaderTextAlignment.Start),
+            )
+            val progressJson = root.optJSONObject("progress") ?: JSONObject()
+            val progress = buildMap {
+                progressJson.keys().forEach { url ->
+                    if (ReaderExtractionContract.safeHttpUrl(url) != null) {
+                        put(url, progressJson.optDouble(url, 0.0).toFloat().coerceIn(0f, 1f))
+                    }
                 }
-                add(
-                    ReaderExtractionBlock(
-                        kind = block.optionalString("kind"),
-                        text = block.optionalString("text"),
-                        level = block.optInt("level", 0),
-                        links = links,
-                    ),
-                )
             }
+            val snapshotsJson = root.optJSONArray("snapshots") ?: JSONArray()
+            val snapshots = buildList {
+                val count = minOf(snapshotsJson.length(), ReaderLibraryRules.MAX_SNAPSHOTS)
+                for (index in 0 until count) {
+                    decodeSnapshot(snapshotsJson.optJSONObject(index) ?: continue)?.let(::add)
+                }
+            }
+            return ReaderLibraryState(settings, progress, snapshots)
         }
-        return (ReaderExtractionContract.sanitize(
-            ReaderExtractionPayload(
-                title = json.optionalString("title"),
-                sourceUrl = json.optionalString("sourceUrl"),
-                siteName = json.optionalString("siteName"),
-                blocks = blocks,
-            ),
-        ) as? ReaderExtractionResult.Success)?.document
-    }
 
-    private companion object {
-        const val FILE_NAME = "reader_library_v1.json"
-        const val CURRENT_VERSION = 1
-        const val MAX_JSON_BYTES = 8 * 1024 * 1024
-    }
+        private fun decodeSnapshot(json: JSONObject): ReaderSnapshot? = runCatching {
+            val document = decodeDocument(json.getJSONObject("document")) ?: return null
+            ReaderSnapshot(
+                id = json.getString("id")
+                    .takeIf { UUID.fromString(it).toString() == it }
+                    ?: return null,
+                document = document,
+                progress = json.optDouble("progress", 0.0).toFloat().coerceIn(0f, 1f),
+                savedAtMillis = json.optLong("savedAt", 0L),
+            )
+        }.getOrNull()
 
-    private fun JSONObject.optionalString(key: String): String? =
-        if (has(key) && !isNull(key)) optString(key) else null
+        private fun decodeDocument(json: JSONObject): ReaderDocument? {
+            val blocksJson = json.optJSONArray("blocks") ?: JSONArray()
+            val blocks = buildList {
+                val count = minOf(blocksJson.length(), ReaderExtractionContract.MAX_BLOCKS)
+                for (index in 0 until count) {
+                    val block = blocksJson.optJSONObject(index) ?: continue
+                    val linksJson = block.optJSONArray("links") ?: JSONArray()
+                    val links = buildList {
+                        for (linkIndex in 0 until minOf(linksJson.length(), 40)) {
+                            val link = linksJson.optJSONObject(linkIndex) ?: continue
+                            add(
+                                ReaderExtractionLink(
+                                    label = link.optionalString("label"),
+                                    url = link.optionalString("url"),
+                                ),
+                            )
+                        }
+                    }
+                    add(
+                        ReaderExtractionBlock(
+                            kind = block.optionalString("kind"),
+                            text = block.optionalString("text"),
+                            level = block.optInt("level", 0),
+                            links = links,
+                        ),
+                    )
+                }
+            }
+            return (ReaderExtractionContract.sanitize(
+                ReaderExtractionPayload(
+                    title = json.optionalString("title"),
+                    sourceUrl = json.optionalString("sourceUrl"),
+                    siteName = json.optionalString("siteName"),
+                    blocks = blocks,
+                ),
+            ) as? ReaderExtractionResult.Success)?.document
+        }
+
+        private fun JSONObject.optionalString(key: String): String? =
+            if (has(key) && !isNull(key)) optString(key) else null
+    }
 }

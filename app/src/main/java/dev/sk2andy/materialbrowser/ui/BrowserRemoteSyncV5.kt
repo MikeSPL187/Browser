@@ -84,7 +84,12 @@ internal fun BrowserRemoteSyncConnect(
     V5WebDavConnect(
         state = form.state,
         actions = V5WebDavConnectActions(
-            onBack = onBack,
+            onBack = {
+                // A connect still running answers no page: leaving drops its answer (see onConnect).
+                form.attempt++
+                form.state = form.state.copy(connecting = false)
+                onBack()
+            },
             onAddress = { form.state = form.state.copy(address = it, error = null) },
             onLogin = { form.state = form.state.copy(login = it, error = null) },
             onPassword = { form.state = form.state.copy(password = it, error = null) },
@@ -92,8 +97,15 @@ internal fun BrowserRemoteSyncConnect(
             onPhraseRepeat = { form.state = form.state.copy(phraseRepeat = it) },
             onConnect = {
                 val typed = form.state
+                val attempt = ++form.attempt
                 form.state = typed.copy(connecting = true, error = null)
                 sync.port.connect(typed.address.trim(), typed.login.trim(), typed.password, typed.phrase) { result ->
+                    if (attempt != form.attempt) {
+                        // The person left the page meanwhile: a connection shows on the main page,
+                        // and a failure is not thrown at them on another page.
+                        if (result == RemoteSyncConnectResult.Connected) form.clear()
+                        return@connect
+                    }
                     form.state = form.state.copy(connecting = false)
                     when (result) {
                         RemoteSyncConnectResult.Connected -> {
@@ -119,6 +131,9 @@ internal fun BrowserRemoteSyncConnect(
 @Stable
 internal class BrowserRemoteSyncForm {
     var state by mutableStateOf(V5WebDavConnectState())
+
+    /** Counts «Connect» taps and departures from the page; an answer for an older count is dropped. */
+    var attempt = 0
 
     fun clear() {
         state = V5WebDavConnectState()
@@ -171,6 +186,11 @@ internal object BrowserRemoteSyncRules {
         RemoteSyncFailure.NotHttps -> V5WebDavError.NotHttps
         RemoteSyncFailure.NotWebDav -> V5WebDavError.NotWebDav
         RemoteSyncFailure.PhraseMismatch -> V5WebDavError.PhraseMismatch
+        RemoteSyncFailure.NewerFormat -> V5WebDavError.NewerFormat
+        RemoteSyncFailure.FolderNotFound -> V5WebDavError.FolderNotFound
+        RemoteSyncFailure.ServerFull -> V5WebDavError.ServerFull
+        RemoteSyncFailure.ServerBusy -> V5WebDavError.ServerBusy
+        RemoteSyncFailure.ServerError -> V5WebDavError.ServerError
     }
 
     /** The server's host for «The phrase does not fit»: the typed address without scheme and path. */
