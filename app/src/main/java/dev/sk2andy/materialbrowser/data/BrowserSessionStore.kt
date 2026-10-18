@@ -54,38 +54,9 @@ class BrowserSessionStore internal constructor(
 
     fun loadTabs(nowMillis: Long = System.currentTimeMillis()): Pair<List<BrowserTab>, String?> {
         val raw = preferences.getString(KEY_TABS, null) ?: return emptyList<BrowserTab>() to null
-        return runCatching {
-            val array = JSONArray(raw)
-            val tabs = buildList {
-                for (index in 0 until array.length()) {
-                    val item = array.getJSONObject(index)
-                    add(
-                        BrowserTab(
-                            id = item.getString("id"),
-                            lastAccessedAt = item.optLong("lastAccessedAt")
-                                .takeIf { it > 0L }
-                                ?: nowMillis,
-                            openerTabId = item.optString("openerTabId")
-                                .takeIf(String::isNotBlank),
-                            profileId = item.optString("profileId", DEFAULT_PROFILE_ID)
-                                .takeIf(String::isNotBlank)
-                                ?: DEFAULT_PROFILE_ID,
-                            isIncognito = item.optBoolean("isIncognito", false),
-                            isPinned = item.optBoolean("isPinned", false),
-                            title = item.optString("title", ""),
-                            url = item.optString("url", BLANK_URL),
-                            syncCandyId = item.optString("syncCandyId")
-                                .takeIf(SyncTabRules::isValidCandyId),
-                        ),
-                    )
-                }
-            }
-            val persistentTabs = TabPinningRules.orderedTabs(
-                TabPersistenceRules.persistentTabs(tabs),
-            )
-            persistentTabs to preferences.getString(KEY_SELECTED_TAB, null)
-                ?.takeIf { selectedId -> persistentTabs.any { it.id == selectedId } }
-        }.getOrDefault(emptyList<BrowserTab>() to null)
+        val persistentTabs = decodeTabs(raw, nowMillis)
+        return persistentTabs to preferences.getString(KEY_SELECTED_TAB, null)
+            ?.takeIf { selectedId -> persistentTabs.any { it.id == selectedId } }
     }
 
     fun saveTabs(tabs: List<BrowserTab>, selectedTabId: String) {
@@ -155,40 +126,7 @@ class BrowserSessionStore internal constructor(
 
     fun loadTabStacks(tabs: Collection<BrowserTab>): List<TabStack> {
         val raw = preferences.getString(KEY_TAB_STACKS, null) ?: return emptyList()
-        if (raw.length > MAX_TAB_STACKS_JSON_LENGTH) return emptyList()
-        return runCatching {
-            val array = JSONArray(raw)
-            check(array.length() <= TabStackRules.MAX_STORED_STACKS)
-            val stacks = buildList {
-                for (index in 0 until array.length()) {
-                    val item = array.getJSONObject(index)
-                    val tabIdsArray = item.optJSONArray("tabIds") ?: JSONArray()
-                    check(tabIdsArray.length() <= tabs.size)
-                    val tabIds = buildList {
-                        for (tabIndex in 0 until tabIdsArray.length()) {
-                            tabIdsArray.optString(tabIndex)
-                                .takeIf(String::isNotBlank)
-                                ?.let(::add)
-                        }
-                    }
-                    add(
-                        TabStack(
-                            id = item.getString("id"),
-                            profileId = item.getString("profileId"),
-                            name = item.getString("name"),
-                            color = TabStackColor.fromWireValue(item.optString("color")),
-                            tabIds = tabIds,
-                            previewTabId = item.optString("previewTabId")
-                                .takeIf(String::isNotBlank),
-                            collapsedAnchorTabId = item.optString("collapsedAnchorTabId")
-                                .takeIf(String::isNotBlank),
-                            isCollapsed = item.optBoolean("isCollapsed", false),
-                        ),
-                    )
-                }
-            }
-            TabStackRules.persistent(stacks, tabs)
-        }.getOrDefault(emptyList())
+        return decodeTabStacks(raw, tabs)
     }
 
     fun saveTabStacks(stacks: List<TabStack>, tabs: Collection<BrowserTab>) {
@@ -1527,6 +1465,80 @@ class BrowserSessionStore internal constructor(
         const val MIN_DISMISS_RESISTANCE_START_PERCENT = 10
         const val MAX_DISMISS_RESISTANCE_START_PERCENT = 90
         private const val MAX_TAB_STACKS_JSON_LENGTH = 256 * 1024
+
+        /**
+         * The saved tabs, each entry on its own: an entry that cannot be read is left out, not the
+         * whole list, because the next save would write the empty list over every tab.
+         */
+        fun decodeTabs(raw: String, nowMillis: Long): List<BrowserTab> {
+            val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+            val tabs = buildList {
+                for (index in 0 until array.length()) {
+                    val item = array.optJSONObject(index) ?: continue
+                    val id = item.optString("id").takeIf(String::isNotBlank) ?: continue
+                    add(
+                        BrowserTab(
+                            id = id,
+                            lastAccessedAt = item.optLong("lastAccessedAt")
+                                .takeIf { it > 0L }
+                                ?: nowMillis,
+                            openerTabId = item.optString("openerTabId")
+                                .takeIf(String::isNotBlank),
+                            profileId = item.optString("profileId", DEFAULT_PROFILE_ID)
+                                .takeIf(String::isNotBlank)
+                                ?: DEFAULT_PROFILE_ID,
+                            isIncognito = item.optBoolean("isIncognito", false),
+                            isPinned = item.optBoolean("isPinned", false),
+                            title = item.optString("title", ""),
+                            url = item.optString("url", BLANK_URL),
+                            syncCandyId = item.optString("syncCandyId")
+                                .takeIf(SyncTabRules::isValidCandyId),
+                        ),
+                    )
+                }
+            }
+            return TabPinningRules.orderedTabs(TabPersistenceRules.persistentTabs(tabs))
+        }
+
+        /** The saved tab groups; as with tabs, a group that cannot be read leaves only itself out. */
+        fun decodeTabStacks(raw: String, tabs: Collection<BrowserTab>): List<TabStack> {
+            if (raw.length > MAX_TAB_STACKS_JSON_LENGTH) return emptyList()
+            val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+            if (array.length() > TabStackRules.MAX_STORED_STACKS) return emptyList()
+            val stacks = buildList {
+                for (index in 0 until array.length()) {
+                    val item = array.optJSONObject(index) ?: continue
+                    val id = item.optString("id").takeIf(String::isNotBlank) ?: continue
+                    val profileId = item.optString("profileId").takeIf(String::isNotBlank)
+                        ?: continue
+                    if (!item.has("name")) continue
+                    val tabIdsArray = item.optJSONArray("tabIds") ?: JSONArray()
+                    if (tabIdsArray.length() > tabs.size) continue
+                    val tabIds = buildList {
+                        for (tabIndex in 0 until tabIdsArray.length()) {
+                            tabIdsArray.optString(tabIndex)
+                                .takeIf(String::isNotBlank)
+                                ?.let(::add)
+                        }
+                    }
+                    add(
+                        TabStack(
+                            id = id,
+                            profileId = profileId,
+                            name = item.optString("name"),
+                            color = TabStackColor.fromWireValue(item.optString("color")),
+                            tabIds = tabIds,
+                            previewTabId = item.optString("previewTabId")
+                                .takeIf(String::isNotBlank),
+                            collapsedAnchorTabId = item.optString("collapsedAnchorTabId")
+                                .takeIf(String::isNotBlank),
+                            isCollapsed = item.optBoolean("isCollapsed", false),
+                        ),
+                    )
+                }
+            }
+            return TabStackRules.persistent(stacks, tabs)
+        }
     }
 }
 
