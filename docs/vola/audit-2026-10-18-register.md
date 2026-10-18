@@ -29,7 +29,7 @@
 | ID | Уровень | Тип | Раздел | Название | Файлы | Готовое исправление | Статус |
 |---|---|---|---|---|---|---|---|
 | N-02 | Средний | решение | N-02 | История ограничена 250 записями | `data/BrowsingLibrary.kt` | — | открыто |
-| N-03 | Средний | дефект | N-03 | Семейство V-02: чтение «всё или ничего» (кроме вкладок) | `BrowserSessionStore.kt`, `data/HistoryJsonCodec.kt`, `data/SnoozedTabStore.kt` | — | открыто |
+| N-03 | Средний | дефект | N-03 | Семейство V-02: чтение «всё или ничего» (кроме вкладок) | `BrowserSessionStore.kt`, `data/HistoryJsonCodec.kt`, `data/SnoozedTabStore.kt` | — | в работе, PR #459 |
 | N-04 | Средний | дефект | N-04 | Обход экранов не покрывает большую часть v5 | `AppScreenWalkInstrumentedTest.kt` | — | открыто |
 | N-05 | Средний | дефект | N-05 | Цепочка поставок | `gradle/verification-metadata.xml` | — | открыто |
 | N-06 | Средний | дефект | N-06 | Связность и размер ядра | `BrowserController.kt`, `size-baseline.json` | — | открыто |

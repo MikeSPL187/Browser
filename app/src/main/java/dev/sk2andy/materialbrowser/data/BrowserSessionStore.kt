@@ -1291,15 +1291,8 @@ class BrowserSessionStore internal constructor(
         preferences.edit().remove(KEY_WEB_CONTENT_EDGE_TO_EDGE).apply()
     }
 
-    private fun <T> loadArray(key: String, read: (JSONObject) -> T): List<T> {
-        val raw = preferences.getString(key, null) ?: return emptyList()
-        return runCatching {
-            val array = JSONArray(raw)
-            buildList {
-                for (index in 0 until array.length()) add(read(array.getJSONObject(index)))
-            }
-        }.getOrDefault(emptyList())
-    }
+    private fun <T> loadArray(key: String, read: (JSONObject) -> T): List<T> =
+        preferences.getString(key, null)?.let { raw -> decodeArray(raw, read) }.orEmpty()
 
     private fun <T> saveArray(key: String, values: List<T>, write: (T) -> JSONObject) {
         val array = JSONArray()
@@ -1500,13 +1493,29 @@ class BrowserSessionStore internal constructor(
             return TabPinningRules.orderedTabs(TabPersistenceRules.persistentTabs(tabs))
         }
 
-        /** The saved tab groups; as with tabs, a group that cannot be read leaves only itself out. */
+        /**
+         * A saved list of [JSONObject] entries, each read on its own: an entry that cannot be read is
+         * left out, not the whole list, because the next save would write what is left over it.
+         */
+        fun <T> decodeArray(raw: String, read: (JSONObject) -> T): List<T> {
+            val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+            return buildList {
+                for (index in 0 until array.length()) {
+                    val item = array.optJSONObject(index) ?: continue
+                    runCatching { read(item) }.getOrNull()?.let(::add)
+                }
+            }
+        }
+
+        /**
+         * The saved tab groups; as with tabs, a group that cannot be read leaves only itself out, and
+         * a list over the limit keeps the groups up to it.
+         */
         fun decodeTabStacks(raw: String, tabs: Collection<BrowserTab>): List<TabStack> {
             if (raw.length > MAX_TAB_STACKS_JSON_LENGTH) return emptyList()
             val array = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
-            if (array.length() > TabStackRules.MAX_STORED_STACKS) return emptyList()
             val stacks = buildList {
-                for (index in 0 until array.length()) {
+                for (index in 0 until minOf(array.length(), TabStackRules.MAX_STORED_STACKS)) {
                     val item = array.optJSONObject(index) ?: continue
                     val id = item.optString("id").takeIf(String::isNotBlank) ?: continue
                     val profileId = item.optString("profileId").takeIf(String::isNotBlank)
