@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -161,6 +162,14 @@ internal fun FirstRunOverlay(
 private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean, onCompleted: () -> Unit) {
     val context = LocalContext.current
     var stage by rememberSaveable { mutableStateOf(FirstRunRules.v5FirstStage()) }
+    // «Make default» waits for the answer: the page moves on once Vola is the default browser, and
+    // a refusal leaves it in place, where «Not now» still goes on.
+    var askedForDefault by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(askedForDefault, controller.isDefaultBrowser) {
+        if (askedForDefault && controller.isDefaultBrowser && stage == FirstRunStage.DefaultBrowser) {
+            stage = FirstRunStage.GestureSheet
+        }
+    }
     BackHandler(enabled = FirstRunRules.handlesBack(stage)) {
         FirstRunRules.back(stage, showIntro)?.let { stage = it } ?: onCompleted()
     }
@@ -197,8 +206,8 @@ private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean,
             when (current) {
                 FirstRunStage.DefaultBrowser -> V5FirstRunDefaultBrowser(
                     onMakeDefault = {
+                        askedForDefault = true
                         controller.openDefaultBrowserSettings()
-                        stage = FirstRunStage.GestureSheet
                     },
                     onNotNow = { stage = FirstRunStage.GestureSheet },
                 )

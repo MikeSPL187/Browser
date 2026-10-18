@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -248,12 +249,16 @@ fun V5FirstRunGestures(onDone: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Column(
             Modifier
+                .statusBarsPadding()
                 .navigationBarsPadding()
                 // The card ends above the bar, which the two gestures are about.
                 .padding(start = V5Spacing.space3, end = V5Spacing.space3, bottom = V5Sizes.bar + V5Spacing.space2)
                 .fillMaxWidth()
                 .clip(V5Theme.shapes.xl)
                 .background(colors.surfaceElevated)
+                // Landscape or a large font leaves less height than the card: it scrolls, so «Got
+                // it» never gets squeezed out.
+                .verticalScroll(rememberScrollState())
                 .padding(V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
         ) {
