@@ -78,6 +78,21 @@ enum class V5WebDavError {
 
     /** The server holds Vola's data under another phrase, as after a «Start over» on another device. */
     PhraseMismatch,
+
+    /** A newer Vola wrote the data: update, never «Start over», which would delete it. */
+    NewerFormat,
+
+    /** The address's folder is not on the server. */
+    FolderNotFound,
+
+    /** No room on the server, or a file over its limit. */
+    ServerFull,
+
+    /** A locked file, too many requests or maintenance: later. */
+    ServerBusy,
+
+    /** The server failed on its side. */
+    ServerError,
 }
 
 /** «Own server» (canvas «х1»): what is typed, and whether the connection is being made. */
@@ -389,6 +404,24 @@ fun V5WebDavDisconnectSheet(
     )
 }
 
+/**
+ * «Disconnect and delete data» did not reach the server: the data is still there and the phone is
+ * still connected, so the deletion can be asked again from here.
+ */
+@Composable
+fun V5WebDavDeleteFailedSheet(visible: Boolean, host: String, onRetry: () -> Unit, onDismiss: () -> Unit) {
+    V5PromptSheet(
+        visible = visible,
+        title = stringResource(R.string.v5_webdav_delete_failed_title),
+        message = stringResource(R.string.v5_webdav_delete_failed_message, host),
+        actions = listOf(
+            V5PromptAction(stringResource(R.string.action_retry), onRetry, V5PromptRole.Destructive),
+            V5PromptAction(stringResource(R.string.action_cancel), onDismiss),
+        ),
+        onDismiss = onDismiss,
+    )
+}
+
 /** «Start over»: deletes Vola's data on the server for every device; this phone's tabs and bookmarks stay. */
 @Composable
 fun V5WebDavStartOverSheet(visible: Boolean, host: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -444,6 +477,10 @@ private fun StatusCard(state: V5WebDavStatusState) {
         }
         Column(Modifier.weight(1f)) {
             Text(title, style = V5Theme.type.title, color = colors.label, modifier = Modifier.semantics { heading() })
+            // Why it failed and what to do: the title alone («Sync failed») leaves the person guessing.
+            if (!state.syncing && state.error != null) {
+                Text(stringResource(V5WebDavRules.errorText(state.error)), style = V5Theme.type.footnote, color = colors.label)
+            }
             Text(detail, style = V5Theme.type.footnote, color = colors.labelSecondary)
         }
     }
@@ -558,6 +595,11 @@ internal object V5WebDavRules {
         V5WebDavError.NotHttps -> R.string.v5_webdav_error_not_https
         V5WebDavError.NotWebDav -> R.string.v5_webdav_error_not_webdav
         V5WebDavError.PhraseMismatch -> R.string.v5_webdav_error_phrase
+        V5WebDavError.NewerFormat -> R.string.v5_webdav_error_newer
+        V5WebDavError.FolderNotFound -> R.string.v5_webdav_error_folder
+        V5WebDavError.ServerFull -> R.string.v5_webdav_error_full
+        V5WebDavError.ServerBusy -> R.string.v5_webdav_error_busy
+        V5WebDavError.ServerError -> R.string.v5_webdav_error_server
     }
 
     /** The status card's title when the last sync failed. */
@@ -566,5 +608,10 @@ internal object V5WebDavRules {
         V5WebDavError.LoginRejected -> R.string.v5_webdav_status_login
         V5WebDavError.PhraseMismatch -> R.string.v5_webdav_mismatch_title
         V5WebDavError.NotHttps, V5WebDavError.NotWebDav -> R.string.v5_webdav_status_failed
+        V5WebDavError.NewerFormat -> R.string.v5_webdav_status_newer
+        V5WebDavError.FolderNotFound -> R.string.v5_webdav_status_folder
+        V5WebDavError.ServerFull -> R.string.v5_webdav_status_full
+        V5WebDavError.ServerBusy -> R.string.v5_webdav_status_busy
+        V5WebDavError.ServerError -> R.string.v5_webdav_status_server
     }
 }

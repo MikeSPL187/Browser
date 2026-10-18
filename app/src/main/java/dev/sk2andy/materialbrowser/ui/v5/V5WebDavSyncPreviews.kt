@@ -104,3 +104,27 @@ private fun V5WebDavDisconnectSheetPreview() {
         V5WebDavDisconnectSheet(visible = true, host = "cloud.anna.ru", onDisconnect = {}, onDisconnectAndDelete = {}, onDismiss = {})
     }
 }
+
+@Preview(name = "Status, server full · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5WebDavStatusFullLightPreview() {
+    VolaV5Theme(dark = false) { StatusPage(Status.copy(error = V5WebDavError.ServerFull)) }
+}
+
+@Preview(name = "Status, newer format · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5WebDavStatusNewerDarkPreview() {
+    VolaV5Theme(dark = true) { StatusPage(Status.copy(error = V5WebDavError.NewerFormat)) }
+}
+
+@Preview(name = "Delete failed sheet · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5WebDavDeleteFailedLightPreview() {
+    VolaV5Theme(dark = false) { V5WebDavDeleteFailedSheet(visible = true, host = "cloud.anna.ru", onRetry = {}, onDismiss = {}) }
+}
+
+@Preview(name = "Delete failed sheet · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5WebDavDeleteFailedDarkPreview() {
+    VolaV5Theme(dark = true) { V5WebDavDeleteFailedSheet(visible = true, host = "cloud.anna.ru", onRetry = {}, onDismiss = {}) }
+}

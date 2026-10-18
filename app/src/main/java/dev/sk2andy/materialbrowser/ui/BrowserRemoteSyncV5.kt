@@ -171,6 +171,11 @@ internal object BrowserRemoteSyncRules {
         RemoteSyncFailure.NotHttps -> V5WebDavError.NotHttps
         RemoteSyncFailure.NotWebDav -> V5WebDavError.NotWebDav
         RemoteSyncFailure.PhraseMismatch -> V5WebDavError.PhraseMismatch
+        RemoteSyncFailure.NewerFormat -> V5WebDavError.NewerFormat
+        RemoteSyncFailure.FolderNotFound -> V5WebDavError.FolderNotFound
+        RemoteSyncFailure.ServerFull -> V5WebDavError.ServerFull
+        RemoteSyncFailure.ServerBusy -> V5WebDavError.ServerBusy
+        RemoteSyncFailure.ServerError -> V5WebDavError.ServerError
     }
 
     /** The server's host for «The phrase does not fit»: the typed address without scheme and path. */
