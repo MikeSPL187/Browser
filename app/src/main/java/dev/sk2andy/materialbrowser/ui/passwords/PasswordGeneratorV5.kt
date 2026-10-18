@@ -10,6 +10,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5Segmented
 import dev.sk2andy.materialbrowser.ui.v5.V5Slider
+import kotlin.math.roundToInt
 
 /**
  * «Strong password» under v5 (canvas «ц4»): the prompt sheet with the value, how strong it is, the
@@ -54,6 +56,8 @@ internal fun PasswordGeneratorSheetV5(
     onDismiss: () -> Unit,
     state: PasswordGeneratorState = rememberPasswordGeneratorState(),
 ) {
+    // A closed sheet makes the next value now, so opening it again never offers the password just used.
+    LaunchedEffect(visible) { if (!visible) state.regenerate() }
     V5PromptSheet(
         visible = visible,
         title = stringResource(R.string.passwords_generator_title),
@@ -143,7 +147,8 @@ private fun PasswordGeneratorBodyV5(state: PasswordGeneratorState) {
             )
             V5Slider(
                 value = shown.toFloat(),
-                onValueChange = { shown = it.toInt() },
+                // Material can report a stop just below its whole number (15.999…), so round, never truncate.
+                onValueChange = { shown = it.roundToInt() },
                 onValueChangeFinished = {
                     state.update(if (phrase) options.copy(words = shown) else options.copy(length = shown))
                 },

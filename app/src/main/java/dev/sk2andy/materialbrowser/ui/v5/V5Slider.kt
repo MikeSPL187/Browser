@@ -52,7 +52,9 @@ fun V5Slider(
     onValueChangeFinished: (() -> Unit)? = null,
 ) {
     val view = LocalView.current
-    val lastStop = remember { intArrayOf(V5SliderRules.stop(value, valueRange, steps)) }
+    // The stop the last tick was for; it follows the value whenever the caller sets it, not only during a drag.
+    val lastStop = remember(steps, valueRange) { intArrayOf(0) }
+    lastStop[0] = V5SliderRules.stop(value, valueRange, steps)
     val fraction = V5SliderRules.fraction(value, valueRange)
     val state = remember(steps, valueRange) { SliderState(value, steps, valueRange) }
     state.value = value
