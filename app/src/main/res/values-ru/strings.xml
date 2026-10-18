@@ -2119,12 +2119,8 @@
     <string name="v5_private_title">Частный доступ</string>
     <string name="v5_private_body">Vola не запомнит историю, cookie и данные форм. Закройте частные вкладки — и всё исчезнет.</string>
     <string name="v5_distractions_hide">Скрыть отвлекающее</string>
-    <plurals name="v5_distractions_show">
-        <item quantity="one">Показать скрытое (%d)</item>
-        <item quantity="few">Показать скрытое (%d)</item>
-        <item quantity="many">Показать скрытое (%d)</item>
-        <item quantity="other">Показать скрытое (%d)</item>
-    </plurals>
+    <string name="v5_distractions_show_all">Показать скрытое</string>
+    <string name="v5_distractions_undo">Отменить</string>
     <string name="v5_distractions_hint">Коснитесь того, что мешает</string>
     <string name="v5_distractions_site">Второе касание скрывает. Vola запомнит выбор для %1$s.</string>
     <string name="v5_distractions_private">Второе касание скрывает. В частной вкладке — только до закрытия частных вкладок.</string>

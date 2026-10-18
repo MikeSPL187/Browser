@@ -2029,10 +2029,8 @@
     <string name="v5_private_title">Private browsing</string>
     <string name="v5_private_body">Vola won\'t remember history, cookies or form data. Close the private tabs and it\'s all gone.</string>
     <string name="v5_distractions_hide">Hide distracting items</string>
-    <plurals name="v5_distractions_show">
-        <item quantity="one">Show hidden item (%d)</item>
-        <item quantity="other">Show hidden items (%d)</item>
-    </plurals>
+    <string name="v5_distractions_show_all">Show hidden items</string>
+    <string name="v5_distractions_undo">Undo</string>
     <string name="v5_distractions_hint">Tap what gets in the way</string>
     <string name="v5_distractions_site">Tap it again to hide it. Vola remembers this for %1$s.</string>
     <string name="v5_distractions_private">Tap it again to hide it. In a private tab, only until the private tabs close.</string>

@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -288,7 +287,7 @@ private fun PageGroup(
             )
             if (state.hiddenCount > 0) {
                 V5ListRow(
-                    pluralStringResource(R.plurals.v5_distractions_show, state.hiddenCount, state.hiddenCount),
+                    stringResource(R.string.v5_distractions_show_all),
                     icon = V5RowIcon(VolaIcons.Visibility),
                     onClick = closing(actions.onShowHidden),
                     modifier = Modifier.testTag(V5PageMenuTestTags.ShowHidden),
