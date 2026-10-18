@@ -2119,7 +2119,8 @@
     <string name="v5_profile_edit_action">Edit</string>
     <string name="v5_profile_create">Create</string>
     <string name="v5_profile_delete">Delete profile</string>
-    <string name="v5_profile_delete_message">Its tabs move to another profile. Its history and, with separate storage, its cookies and sign-ins are deleted.</string>
+    <string name="v5_profile_delete_message">Its tabs move to “%1$s”, out of their groups. Deleted with the profile: its groups, pinned sites, favorites, hidden page items, site settings and history.</string>
+    <string name="v5_profile_delete_message_storage">Its tabs move to “%1$s”, out of their groups. Deleted with the profile: its groups, pinned sites, favorites, hidden page items, site settings, history, cookies and sign-ins.</string>
     <string name="v5_profile_storage_title">Switch the profile’s storage?</string>
     <string name="v5_profile_storage_on">This profile’s tabs reload with separate storage. Sign-ins you share with other profiles won’t carry over.</string>
     <string name="v5_profile_storage_off">This profile’s tabs reload with shared storage. Sign-ins from its separate storage stop working.</string>

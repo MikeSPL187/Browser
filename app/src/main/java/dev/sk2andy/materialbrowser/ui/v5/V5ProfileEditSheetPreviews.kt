@@ -41,3 +41,26 @@ private fun V5ProfileNewLightPreview() = EditPreview(dark = false, creating = tr
 @Preview(name = "Edit profile · dark", heightDp = 900)
 @Composable
 private fun V5ProfileEditDarkPreview() = EditPreview(dark = true, creating = false)
+
+/** «Delete profile»: where the tabs go and everything that goes with the profile (PF-04). */
+@Composable
+private fun DeletePreview(dark: Boolean) {
+    VolaV5Theme(dark = dark) {
+        V5PromptSheet(
+            visible = true,
+            title = "Удалить «Работа»?",
+            message = "Вкладки перейдут в профиль «Дом», без групп. Вместе с профилем удалятся его группы, " +
+                "закреплённые сайты, избранное, скрытое на сайтах, настройки сайтов, история, cookie и входы.",
+            actions = listOf(V5PromptAction("Удалить", {}, V5PromptRole.Destructive)),
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview(name = "Delete profile · light", heightDp = 520)
+@Composable
+private fun V5ProfileDeleteLightPreview() = DeletePreview(dark = false)
+
+@Preview(name = "Delete profile · dark", heightDp = 520)
+@Composable
+private fun V5ProfileDeleteDarkPreview() = DeletePreview(dark = true)
