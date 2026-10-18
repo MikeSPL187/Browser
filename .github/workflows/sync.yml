@@ -1,0 +1,105 @@
+# CI for what lives in sync/: the Go sync server and the TypeScript browser extension. Until this
+# workflow nothing in CI ran them, and a test of the extension had already stopped passing.
+#
+# - Every pull request and push to main that touches sync/: the server's vet, format check and tests
+#   with the race detector, and the extension's own `npm run verify` (typecheck, tests, protocol
+#   schemas, both builds, manifests, reproducible build).
+# - Weekly: the same, plus a vulnerability scan, because advisories appear without any code change.
+#
+# The runner's own Go and the pinned Node are used; the actions are the ones build.yml pins.
+
+name: Sync
+
+on:
+  pull_request:
+    paths:
+      - "sync/**"
+      - ".github/workflows/sync.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "sync/**"
+      - ".github/workflows/sync.yml"
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  server:
+    name: Server (Go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sync/server
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Go version
+        run: go version
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Format
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [[ -n "$unformatted" ]]; then
+            echo "::error::gofmt would change: $unformatted"
+            exit 1
+          fi
+
+      - name: Tests (race detector)
+        run: go test -race -count=1 ./...
+
+      # The version is pinned: a scanner that changes under the build is a supply-chain risk of its own.
+      - name: Known vulnerabilities in dependencies
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+
+  extension:
+    name: Extension (TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sync/extension
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      # No install scripts: the lockfile pins every package, and the build needs none of them.
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Verify (typecheck, tests, schemas, builds, manifests, reproducible build)
+        run: npm run verify
+
+      # What ships in the extension must be clean; the tooling around it is reported, not blocking.
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit tooling dependencies
+        run: |
+          if ! npm audit --audit-level=high; then
+            echo "::warning title=Tooling dependencies::npm audit reports high-severity findings in dev dependencies; they do not ship in the extension."
+          fi
