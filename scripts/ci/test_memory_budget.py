@@ -148,5 +148,41 @@ class MemoryBudgetTest(unittest.TestCase):
         self.assertNotIn("— Base", text)
         self.assertLess(text.index("| main | 300.0"), text.index("| :tab0 | 100.0"))
 
+    def test_reads_the_detailed_categories_above_the_app_summary(self):
+        process = """\
+** MEMINFO in pid 4100 [io.github.mikespl187.vola.benchmark] **
+                   Pss  Private  Private  SwapPss      Rss     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty    Total     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------   ------
+  Native Heap    18944    18900        0        0    20000    30000    25000     5000
+       Ashmem     2048     2048        0        0     2100
+   Other mmap   122880   120000      100        0   130000
+     .so mmap    40960     1000    20000        0    90000
+      Unknown    81920    81900        0        0    82000
+        TOTAL   266752   223848    20100        0   324100    30000    25000     5000
+
+ App Summary
+                       Pss(KB)                        Rss(KB)
+             Unknown:                                    12,000
+"""
+        self.assertEqual(memory_budget.categories_kb(process), {
+            "Native Heap": 18_944, "Ashmem": 2_048, "Other mmap": 122_880, ".so mmap": 40_960, "Unknown": 81_920,
+        })
+
+    def test_categories_pair_gecko_processes_by_rank_not_by_number(self):
+        def round_(tab_names, other_mmap):
+            return {"processes": [
+                {"process": "main", "pss_mb": 380.0, "categories_mb": {"Other mmap": other_mmap, "Ashmem": 0.4}},
+                {"process": tab_names[0], "pss_mb": 80.0, "categories_mb": {"Unknown": 40.0}},
+                {"process": tab_names[1], "pss_mb": 50.0, "categories_mb": {"Unknown": 20.0}},
+            ]}
+
+        lines = memory_budget.category_lines(round_([":tab_7", ":tab_3"], 100.0), round_([":tab_2", ":tab_9"], 120.0))
+        self.assertIn("| main | Other mmap | 100.0 | 120.0 |", lines)
+        self.assertIn("| :tab_2 | Unknown | 40.0 | 40.0 |", lines)
+        self.assertIn("| :tab_9 | Unknown | 20.0 | 20.0 |", lines)
+        self.assertFalse(any("Ashmem" in line for line in lines))
+        self.assertEqual(memory_budget.category_lines({}, {"processes": [{"process": "main", "pss_mb": 1.0}]}), [])
+
 if __name__ == "__main__":
     unittest.main()
