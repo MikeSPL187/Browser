@@ -20,7 +20,9 @@ so it is reported but never flagged until a measurement that loads each tab repl
 
 measure also keeps what the browser's number is made of: each Vola process's PSS and its
 `dumpsys meminfo <pid>` App Summary (Java heap, native heap, code, graphics...), so memory work can
-aim at the biggest part instead of guessing. compare prints it for the median round of each build.
+aim at the biggest part instead of guessing. compare prints it for the median round of each build,
+and splits each process into the meminfo categories (Other mmap, Unknown, Ashmem, .so mmap...) that
+the App Summary folds into "Private Other" and "System".
 """
 
 from __future__ import annotations
@@ -48,6 +50,13 @@ PSS_LINE = re.compile(r"^\s*([\d,]+)K:\s+(\S+)\s+\(pid (\d+)")
 SUMMARY_LINE = re.compile(r"^\s*(Java Heap|Native Heap|Code|Stack|Graphics|Private Other|System):\s+([\d,]+)")
 # "Unknown" is left out: the App Summary gives it an RSS only, which the PSS column would misread.
 SUMMARY_PARTS = ("Java Heap", "Native Heap", "Code", "Graphics", "Stack", "Private Other", "System")
+# The rows of the detailed `dumpsys meminfo <pid>` table; the first number of each is its PSS.
+CATEGORY_LINE = re.compile(
+    r"^\s*(Native Heap|Dalvik Heap|Dalvik Other|Stack|Ashmem|Gfx dev|Other dev|\.so mmap|\.jar mmap|"
+    r"\.apk mmap|\.ttf mmap|\.dex mmap|\.oat mmap|\.art mmap|Other mmap|EGL mtrack|GL mtrack|Unknown)"
+    r"\s+(\d+)\s"
+)
+CATEGORY_MIN_MB = 1.0
 
 
 def package_processes(meminfo: str, package: str) -> list[tuple[str, int, int]]:
@@ -89,6 +98,18 @@ def app_summary_kb(process_meminfo: str) -> dict[str, int]:
     return summary
 
 
+def categories_kb(process_meminfo: str) -> dict[str, int]:
+    """The PSS of each row of the detailed table in `dumpsys meminfo <pid>`, above the App Summary."""
+    categories: dict[str, int] = {}
+    for line in process_meminfo.splitlines():
+        if line.strip() == "App Summary":
+            break
+        match = CATEGORY_LINE.match(line)
+        if match and match.group(1) not in categories:
+            categories[match.group(1)] = int(match.group(2))
+    return categories
+
+
 def adb(*args: str) -> str:
     return subprocess.run(["adb", *args], check=True, capture_output=True, text=True).stdout
 
@@ -112,13 +133,14 @@ def breakdown(package: str) -> list[dict]:
     parts = []
     for name, pid, pss in package_processes(adb("shell", "dumpsys", "meminfo"), package):
         try:
-            summary = app_summary_kb(adb("shell", "dumpsys", "meminfo", str(pid)))
+            process_meminfo = adb("shell", "dumpsys", "meminfo", str(pid))
         except subprocess.CalledProcessError:
-            summary = {}  # the process went away between the two calls
+            process_meminfo = ""  # the process went away between the two calls
         parts.append({
             "process": name.removeprefix(package) or "main",
             "pss_mb": round(pss / 1024, 1),
-            "summary_mb": {key: round(value / 1024, 1) for key, value in summary.items()},
+            "summary_mb": {key: round(value / 1024, 1) for key, value in app_summary_kb(process_meminfo).items()},
+            "categories_mb": {key: round(value / 1024, 1) for key, value in categories_kb(process_meminfo).items()},
         })
     return parts
 
@@ -166,7 +188,34 @@ def breakdown_lines(base: dict, head: dict) -> list[str]:
         for part in sorted(processes, key=lambda item: -item["pss_mb"]):
             cells = " | ".join(fmt(part["summary_mb"].get(key)) for key in SUMMARY_PARTS)
             lines.append(f"| {part['process']} | {part['pss_mb']:.1f} | {cells} |")
+    return lines + category_lines(base, head)
+
+
+def category_lines(base: dict, head: dict) -> list[str]:
+    """Each process of this pull request's median round split into its meminfo categories, beside
+    the base's matching process: Gecko numbers its content processes anew in every run, so the
+    n-th biggest process of a kind is paired with the base's n-th biggest of that kind."""
+    head_ranked, base_ranked = kind_ranks(head), kind_ranks(base)
+    if not any(part.get("categories_mb") for part in head_ranked.values()):
+        return []
+    lines = ["", "#### Where each process's memory sits (meminfo categories, PSS MB)", "",
+             "| Process | Category | Base | This PR |", "| --- | --- | ---: | ---: |"]
+    for key, part in head_ranked.items():
+        base_categories = base_ranked.get(key, {}).get("categories_mb") or {}
+        for category, value in sorted((part.get("categories_mb") or {}).items(), key=lambda item: -item[1]):
+            if value >= CATEGORY_MIN_MB:
+                lines.append(f"| {part['process']} | {category} | {fmt(base_categories.get(category))} | {value:.1f} |")
     return lines
+
+
+def kind_ranks(round_: dict) -> dict[tuple[str, int], dict]:
+    """A round's processes keyed by (name without its trailing number, rank by PSS), biggest first."""
+    ranked: dict[tuple[str, int], dict] = {}
+    for part in sorted(round_.get("processes") or [], key=lambda item: -item["pss_mb"]):
+        kind = re.sub(r"\d+$", "", part["process"])
+        rank = sum(1 for other_kind, _ in ranked if other_kind == kind)
+        ranked[(kind, rank)] = part
+    return ranked
 
 
 def compare(base: dict[str, float], head: dict[str, float], approved: bool,
