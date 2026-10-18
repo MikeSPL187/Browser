@@ -9,6 +9,9 @@ Each DIR holds the *benchmarkData.json files of every round for that build. A me
 when it is worse relatively, absolutely and with statistical significance (one-sided Mann-Whitney
 U test over all samples), because the same build's cold start varies by tens of percent from round
 to round on a CI emulator. The owner's perf-approved label lets a known regression through.
+
+Next to the budgets it reports, never gates, where cold start goes: the medians of the app's own
+startup steps (StartupTimeline's «Vola.Startup.*» trace sections that StartupBenchmark measures).
 """
 
 from __future__ import annotations
@@ -34,6 +37,8 @@ FRAME_MIN_DELTA_MS = 2.0
 FRAME_PERCENTILE = 90
 # How unlikely the slowdown must be as chance before it counts.
 MAX_P_VALUE = 0.01
+# StartupBenchmark's trace section metrics: "Vola.Startup.<step>" plus Macrobenchmark's unit suffix.
+STEP_PREFIX = "Vola.Startup."
 
 
 def load(directory: Path) -> dict[str, dict[str, list]]:
@@ -164,6 +169,54 @@ def report(rows: list[dict], approved: bool) -> tuple[list[str], list[str]]:
     return lines, errors
 
 
+def step_name(metric: str) -> str | None:
+    """The startup step a trace section metric measures ("Vola.Startup.LoadTabsSumMs" -> "LoadTabs");
+    None for anything else, the sections' "...Count" metrics included."""
+    if not metric.startswith(STEP_PREFIX):
+        return None
+    step = metric[len(STEP_PREFIX):]
+    for suffix in ("SumMs", "Ms"):
+        if step.endswith(suffix):
+            return step[: -len(suffix)]
+    return None
+
+
+def step_lines(base: dict, head: dict) -> list[str]:
+    """Where cold start goes, step by step (median ms, every round), the slowest step of this PR first."""
+    def steps(results: dict) -> dict[str, list[float]]:
+        found: dict[str, list[float]] = {}
+        for metrics in results.values():
+            if STARTUP_METRIC not in metrics:
+                continue
+            for metric, runs in metrics.items():
+                name = step_name(metric)
+                if name is not None:
+                    found.setdefault(name, []).extend(run for run in runs if not isinstance(run, list))
+        return found
+
+    before, after = steps(base), steps(head)
+    if not after and not before:
+        return []
+    names = sorted(set(before) | set(after), key=lambda name: -(median(after[name]) if after.get(name) else 0.0))
+    lines = [
+        "",
+        "#### Where cold start goes (app steps before the first frame, median ms, report only)",
+        "",
+        "| Step | Base | This PR |",
+        "| --- | ---: | ---: |",
+    ]
+    for name in names:
+        lines.append(f"| {name} | {number(median(before[name]) if before.get(name) else None)} | "
+                     f"{number(median(after[name]) if after.get(name) else None)} |")
+    # Android's phases (System.*) contain the app's steps, so only the app's own steps add up.
+    total = sum(median(runs) for name, runs in after.items() if runs and not name.startswith("System."))
+    startup = [run for metrics in head.values() for run in metrics.get(STARTUP_METRIC, [])]
+    if startup:
+        lines += ["", f"The app's own steps take {total:.0f} ms of this PR's {median(startup):.0f} ms cold start. "
+                      "System.* rows are Android's phases of the same start and contain those steps."]
+    return lines
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base", required=True, type=Path)
@@ -171,7 +224,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--approved", action="store_true")
     args = parser.parse_args(argv)
 
-    lines, errors = report(evaluate(load(args.base), load(args.head)), args.approved)
+    base, head = load(args.base), load(args.head)
+    lines, errors = report(evaluate(base, head), args.approved)
+    lines += step_lines(base, head)
     text = "\n".join(lines) + "\n"
     print(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")

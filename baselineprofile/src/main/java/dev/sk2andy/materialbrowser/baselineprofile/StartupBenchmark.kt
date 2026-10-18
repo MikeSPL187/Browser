@@ -2,8 +2,11 @@ package dev.sk2andy.materialbrowser.baselineprofile
 
 import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
+import androidx.benchmark.macro.ExperimentalMetricApi
+import androidx.benchmark.macro.Metric
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
+import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
@@ -12,7 +15,9 @@ import org.junit.runner.RunWith
 
 /**
  * Cold start with and without the baseline profile, so the workflow shows what the profile buys.
- * On an emulator the numbers are a trend, not a budget.
+ * On an emulator the numbers are a trend, not a budget. Next to the start itself it measures the
+ * app's own startup steps (StartupTimeline's «Vola.Startup.*» trace sections), so the performance
+ * job shows where the time goes before the first frame; perf_gate.py reports them, never gates them.
  */
 @RunWith(AndroidJUnit4::class)
 class StartupBenchmark {
@@ -27,7 +32,7 @@ class StartupBenchmark {
 
     private fun coldStart(compilation: CompilationMode) = rule.measureRepeated(
         packageName = TARGET_PACKAGE,
-        metrics = listOf(StartupTimingMetric()),
+        metrics = listOf(StartupTimingMetric()) + startupSections(),
         compilationMode = compilation,
         startupMode = StartupMode.COLD,
         iterations = 5,
@@ -40,4 +45,29 @@ class StartupBenchmark {
     ) {
         startActivityAndWait()
     }
+}
+
+/**
+ * The startup steps StartupTimeline wraps in trace sections, and Android's own phases of the same
+ * start (labelled «Vola.Startup.System.*» so perf_gate.py lists them beside the app's steps). Sum,
+ * not First: a step that did not run in an iteration reads as 0 instead of failing the benchmark.
+ * Typed as the stable [Metric], so the experimental TraceSectionMetric stays inside this opt-in.
+ */
+@OptIn(ExperimentalMetricApi::class)
+private fun startupSections(): List<Metric> = listOf(
+    "ControllerCreate",
+    "GeckoRuntimeCreate",
+    "LoadTabs",
+    "LoadHistory",
+    "LoadProfiles",
+    "LoadFavorites",
+    "LoadFilterRules",
+    "LoadUserScripts",
+    "BlockingListsWait",
+).map { step -> TraceSectionMetric("Vola.Startup.$step", TraceSectionMetric.Mode.Sum) } + listOf(
+    "bindApplication",
+    "activityStart",
+    "activityResume",
+).map { phase ->
+    TraceSectionMetric(phase, TraceSectionMetric.Mode.Sum, label = "Vola.Startup.System.$phase")
 }
