@@ -120,14 +120,18 @@ class PerfGateTest(unittest.TestCase):
         # What load() returns: {benchmark: {metric: runs}}.
         base = {"coldStart": {"timeToInitialDisplayMs": [500, 510], "Vola.Startup.LoadTabsSumMs": [20.0, 22.0]}}
         head = {"coldStart": {"timeToInitialDisplayMs": [500, 510], "Vola.Startup.LoadTabsSumMs": [21.0, 23.0],
-                              "Vola.Startup.GeckoRuntimeCreateSumMs": [180.0, 200.0]}}
+                              "Vola.Startup.GeckoRuntimeCreateSumMs": [180.0, 200.0],
+                              "Vola.Startup.LoadTabsCount": [1.0, 1.0]}}
         lines = perf_gate.step_lines(base, head)
         text = "\n".join(lines)
         self.assertIn("| GeckoRuntimeCreate | — | 190.0 |", text)
         self.assertIn("| LoadTabs | 21.0 | 22.0 |", text)
         self.assertLess(text.index("GeckoRuntimeCreate"), text.index("LoadTabs"))
+        self.assertNotIn("Count", text)
+        self.assertIn("These steps take 212 ms of this PR's 505 ms cold start", text)
         self.assertEqual(perf_gate.step_name("Vola.Startup.LoadTabsMs"), "LoadTabs")
         self.assertIsNone(perf_gate.step_name("timeToInitialDisplayMs"))
+        self.assertIsNone(perf_gate.step_name("Vola.Startup.LoadTabsCount"))
 
     def test_no_steps_no_table(self):
         self.assertEqual(perf_gate.step_lines({}, {}), [])

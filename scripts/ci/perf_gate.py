@@ -170,14 +170,15 @@ def report(rows: list[dict], approved: bool) -> tuple[list[str], list[str]]:
 
 
 def step_name(metric: str) -> str | None:
-    """The startup step a trace section metric measures ("Vola.Startup.LoadTabsSumMs" -> "LoadTabs")."""
+    """The startup step a trace section metric measures ("Vola.Startup.LoadTabsSumMs" -> "LoadTabs");
+    None for anything else, the sections' "...Count" metrics included."""
     if not metric.startswith(STEP_PREFIX):
         return None
     step = metric[len(STEP_PREFIX):]
     for suffix in ("SumMs", "Ms"):
         if step.endswith(suffix):
             return step[: -len(suffix)]
-    return step
+    return None
 
 
 def step_lines(base: dict, head: dict) -> list[str]:
@@ -207,6 +208,11 @@ def step_lines(base: dict, head: dict) -> list[str]:
     for name in names:
         lines.append(f"| {name} | {number(median(before[name]) if before.get(name) else None)} | "
                      f"{number(median(after[name]) if after.get(name) else None)} |")
+    total = sum(median(runs) for runs in after.values() if runs)
+    startup = [run for metrics in head.values() for run in metrics.get(STARTUP_METRIC, [])]
+    if startup:
+        lines += ["", f"These steps take {total:.0f} ms of this PR's {median(startup):.0f} ms cold start; "
+                      "the rest is the process, class loading, Gecko's own threads and the first frame."]
     return lines
 
 
