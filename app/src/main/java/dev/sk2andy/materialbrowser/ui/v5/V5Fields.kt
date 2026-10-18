@@ -127,6 +127,9 @@ internal fun V5NameField(
     keyboardType: KeyboardType? = null,
     /** The margin to the screen's sides; none on a page that already keeps it, as settings do. */
     sideMargin: Dp = V5Spacing.marginPhone,
+    /** [ImeAction.Next] on a form's field that has another after it: the keyboard moves on to it. */
+    imeAction: ImeAction = ImeAction.Done,
+    enabled: Boolean = true,
 ) {
     val colors = V5Theme.colors
     Box(
@@ -146,13 +149,14 @@ internal fun V5NameField(
             value = value,
             onValueChange = { onValueChange(it.take(maxLength)) },
             singleLine = true,
-            textStyle = V5Theme.type.body.copy(color = colors.label),
+            enabled = enabled,
+            textStyle = V5Theme.type.body.copy(color = if (enabled) colors.label else colors.labelSecondary),
             cursorBrush = SolidColor(colors.accent),
             keyboardOptions = KeyboardOptions(
                 capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
                 autoCorrectEnabled = !password && capitalize,
                 keyboardType = keyboardType ?: if (password) KeyboardType.Password else KeyboardType.Text,
-                imeAction = ImeAction.Done,
+                imeAction = imeAction,
             ),
             visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardActions = KeyboardActions(onDone = { onDone() }),

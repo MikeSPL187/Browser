@@ -157,14 +157,30 @@ class WebDavRemoteSync(
     override fun disconnect(deleteServerData: Boolean, onDone: (Boolean) -> Unit) {
         mismatched = null
         val account = stored
+        val keptMemory = memory
+        val keptState = state
+        // Cleared at once either way, so a sync in flight stops at its next step.
         stored = null
         memory = WebDavSyncMemory()
         syncAgain = false
-        update(RemoteSyncState())
+        val keepUntilDeleted = deleteServerData && account != null
+        update(if (keepUntilDeleted) keptState.copy(syncing = true) else RemoteSyncState())
         runner.background {
             val removed = account == null || engine.remove(account.account, deleteServerData)
-            store.clear()
-            runner.main { onDone(removed) }
+            val forget = removed || !deleteServerData
+            if (forget) store.clear()
+            runner.main {
+                if (keepUntilDeleted) {
+                    if (forget) {
+                        update(RemoteSyncState())
+                    } else if (stored == null) {
+                        stored = account
+                        memory = keptMemory
+                        update(keptState.copy(syncing = false))
+                    }
+                }
+                onDone(removed)
+            }
         }
     }
 
