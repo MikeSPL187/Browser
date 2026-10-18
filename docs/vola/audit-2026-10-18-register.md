@@ -87,7 +87,7 @@
 | N-09 | Низкий | дефект | N-09 | «Без анимаций» не везде | `ui/v5/V5DistractionsPanel.kt`, `V5SiteProtection.kt` | — | исправлено: частично: V5DistractionsPanel, V5SiteProtection (PR #456) |
 | N-10 | Низкий | дефект | N-10 | Остатки Candy | `values/userscript_strings.xml` | — | открыто |
 | N-11 | Низкий | дефект | N-11 | CI | `build.yml`, `test_network_security_apks.py`, `test_systemwebview_apk.py` | — | открыто |
-| N-15 | Низкий | дефект | N-15 | `CandySyncRepository`: потокобезопасность держится на соглашении | — | патч 0003 | открыто |
+| N-15 | Низкий | дефект | N-15 | `CandySyncRepository`: потокобезопасность держится на соглашении | — | патч 0003 | в работе, PR #465 |
 | S-05 | Низкий | дефект | N-17 | Перевод: ответ старого запроса затирает состояние нового | `browser/translation/OnDeviceTranslationController.kt` | — | открыто |
 | S-07 | Низкий | дефект | N-17 | Неверный адрес SearXNG тихо превращается в пустой | `browser/SearxngSettings.kt`, `BrowserController.kt` | — | открыто |
 | S-08 | Низкий | решение | N-17 | Состояние ошибки без действия | `ui/CLAUDE.md` | — | открыто |
