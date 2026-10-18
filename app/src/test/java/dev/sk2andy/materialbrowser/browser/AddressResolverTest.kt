@@ -22,6 +22,33 @@ class AddressResolverTest {
     }
 
     @Test
+    fun `words with a dot that are not domains are searches`() {
+        // File names, version numbers and names written with a dot are not addresses.
+        listOf("file.txt", "node.js", "setup.exe", "image.jpg", "notes.pdf", "Dr.Who", "python3.12").forEach { input ->
+            assertTrue(input, AddressResolver.isSearchQuery(input))
+            // Letters, digits and dots stay as they are in a query.
+            assertEquals(input, "https://www.google.com/search?q=$input", AddressResolver.resolve(input))
+        }
+    }
+
+    @Test
+    fun `real top-level domains still open as sites`() {
+        assertEquals("https://example.com", AddressResolver.resolve("example.com"))
+        assertEquals("https://ya.ru", AddressResolver.resolve("ya.ru"))
+        assertEquals("https://example.dev/path", AddressResolver.resolve("example.dev/path"))
+        assertEquals("https://example.app?x=1", AddressResolver.resolve("example.app?x=1"))
+        assertEquals("https://EXAMPLE.COM", AddressResolver.resolve("EXAMPLE.COM"))
+        assertEquals("https://readme.md", AddressResolver.resolve("readme.md"))
+    }
+
+    @Test
+    fun `names of private networks open as sites`() {
+        assertEquals("https://router.local", AddressResolver.resolve("router.local"))
+        assertEquals("https://homeassistant.local:8123", AddressResolver.resolve("homeassistant.local:8123"))
+        assertEquals("https://nas.lan/admin", AddressResolver.resolve("nas.lan/admin"))
+    }
+
+    @Test
     fun `normalizes international host names`() {
         assertEquals("https://xn--mnchen-3ya.de", AddressResolver.resolve("münchen.de"))
     }

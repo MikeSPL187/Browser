@@ -32,6 +32,7 @@ internal object PageErrorFeedbackTestTags {
     const val RetryProgress = "page_error_retry_progress"
     const val Offline = "page_error_offline"
     const val NetworkSettings = "page_error_network_settings"
+    const val Search = "page_error_search"
 }
 
 /** The page in place of a site that failed to load (boards W-States, W-Offline). */
@@ -42,6 +43,8 @@ internal fun PageErrorFeedback(
     modifier: Modifier = Modifier,
     url: String = "",
     onBack: (() -> Unit)? = null,
+    /** Searches the typed words instead: a name that does not exist is rarely meant as an address. */
+    onSearch: ((String) -> Unit)? = null,
 ) {
     AnimatedVisibility(
         visible = state !is PageErrorFeedbackState.Hidden,
@@ -77,12 +80,16 @@ internal fun PageErrorFeedback(
                         onBack = onBack,
                         onRetry = onRetry,
                     )
-                    PageErrorFeedbackState.UnknownHost -> ProblemPage(
-                        icon = VolaIcons.SearchOff,
-                        title = stringResource(R.string.error_page_unreachable),
-                        message = stringResource(R.string.page_error_unknown_host_message, host),
-                        onRetry = onRetry,
-                    )
+                    PageErrorFeedbackState.UnknownHost -> if (onSearch != null && host.isNotBlank()) {
+                        UnknownHostPage(host = host, onSearch = { onSearch(host) }, onRetry = onRetry)
+                    } else {
+                        ProblemPage(
+                            icon = VolaIcons.SearchOff,
+                            title = stringResource(R.string.error_page_unreachable),
+                            message = stringResource(R.string.page_error_unknown_host_message, host),
+                            onRetry = onRetry,
+                        )
+                    }
                     is PageErrorFeedbackState.Error -> ProblemPage(
                         icon = VolaIcons.PublicOff,
                         title = stringResource(R.string.page_error_unreachable_title),
@@ -111,6 +118,31 @@ private fun ProblemPage(
         icon = { VolaStatePageIcon(icon = icon) },
     ) {
         RetryButton(onRetry = onRetry)
+    }
+}
+
+/**
+ * No site has this name: what was typed was most likely a search («file.txt», a typo), so searching
+ * it comes first; trying the same name again rarely helps, but stays for a network that failed.
+ */
+@Composable
+private fun UnknownHostPage(host: String, onSearch: () -> Unit, onRetry: () -> Unit) {
+    VolaStatePage(
+        title = stringResource(R.string.error_page_unreachable),
+        message = stringResource(R.string.page_error_unknown_host_message, host),
+        icon = { VolaStatePageIcon(icon = VolaIcons.SearchOff) },
+    ) {
+        VolaStatePagePrimaryButton(
+            text = stringResource(R.string.page_error_search_for, host),
+            onClick = onSearch,
+            icon = VolaIcons.Search,
+            modifier = Modifier.testTag(PageErrorFeedbackTestTags.Search),
+        )
+        VolaStatePageTextButton(
+            text = stringResource(R.string.action_retry),
+            onClick = onRetry,
+            modifier = Modifier.testTag(PageErrorFeedbackTestTags.Retry),
+        )
     }
 }
 
@@ -219,6 +251,19 @@ private fun UnreachablePagePreview() {
             state = PageErrorFeedbackState.Error("timeout"),
             onRetry = {},
             url = "https://north-guide.ru/routes",
+        )
+    }
+}
+
+@VolaPreviews
+@Composable
+private fun UnknownHostSearchPagePreview() {
+    MaterialBrowserTheme(settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System)) {
+        PageErrorFeedback(
+            state = PageErrorFeedbackState.UnknownHost,
+            onRetry = {},
+            url = "https://file.txt/",
+            onSearch = {},
         )
     }
 }

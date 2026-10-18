@@ -53,9 +53,12 @@ object AddressResolver {
         val isLocalhost = asciiCandidate.startsWith("localhost:") ||
             asciiCandidate == "localhost" ||
             asciiCandidate.startsWith("localhost/")
+        // A word with a dot is a site only when it ends in a real top-level domain: «file.txt» and
+        // «node.js» are searches, «example.com» and «пример.рф» are addresses.
+        val isSite = hostPattern.matches(asciiCandidate) && hasKnownTopLevelDomain(asciiCandidate)
         return if (
             !value.contains(' ') &&
-            (hostPattern.matches(asciiCandidate) || ipPattern.matches(asciiCandidate) || isLocalhost)
+            (isSite || ipPattern.matches(asciiCandidate) || isLocalhost)
         ) {
             AddressTarget.Url("https://$asciiCandidate")
         } else {
@@ -76,6 +79,14 @@ object AddressResolver {
             .takeIf { it >= 0 }
             ?: url.length
         return runCatching { URI(url.substring(0, authorityEnd)).host }.getOrNull()
+    }
+
+    /** Whether the last label of the host in [candidate] (ASCII, as [toAsciiHostCandidate] makes it) can end an address. */
+    private fun hasKnownTopLevelDomain(candidate: String): Boolean {
+        val host = candidate.substringBefore('/').substringBefore('?').substringBefore('#').substringBefore(':')
+        val label = host.substringAfterLast('.')
+        // An international top-level domain arrives in punycode; all of them are real.
+        return label.startsWith("xn--", ignoreCase = true) || KnownTopLevelDomains.contains(label)
     }
 
     private fun String.toAsciiHostCandidate(): String {

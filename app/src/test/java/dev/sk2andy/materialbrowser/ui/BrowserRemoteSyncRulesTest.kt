@@ -41,6 +41,8 @@ class BrowserRemoteSyncRulesTest {
         val errors = RemoteSyncFailure.entries.map(BrowserRemoteSyncRules::error)
         assertEquals(errors.size, errors.toSet().size)
         assertEquals(V5WebDavError.PhraseMismatch, BrowserRemoteSyncRules.error(RemoteSyncFailure.PhraseMismatch))
+        // A newer format must not reach the mismatch page, whose «Start over» deletes the data.
+        assertEquals(V5WebDavError.NewerFormat, BrowserRemoteSyncRules.error(RemoteSyncFailure.NewerFormat))
     }
 
     @Test
