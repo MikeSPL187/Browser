@@ -34,7 +34,7 @@
 | N-05 | Средний | дефект | N-05 | Цепочка поставок | `gradle/verification-metadata.xml` | — | открыто |
 | N-06 | Средний | дефект | N-06 | Связность и размер ядра | `BrowserController.kt`, `size-baseline.json` | — | открыто |
 | N-13 | Средний | дефект | N-13 | CI не проверял сервер и расширение синхронизации (найдено и исправлено при доработке) | `sync/extension/tests/build.test.mjs`, `.github/workflows/sync.yml` | — | исправлено: sync.yml и тест иконок (PR #456) |
-| N-16 | Средний | дефект | N-16 | `govulncheck@v1.1.4` падает на Go 1.27.1 — `Server (Go)` красный | `.github/workflows/sync.yml` | — | открыто |
+| N-16 | Средний | дефект | N-16 | `govulncheck@v1.1.4` падает на Go 1.27.1 — `Server (Go)` красный | `.github/workflows/sync.yml` | — | в работе, PR #457 |
 | S-01 | Средний | дефект | N-17 | Приватная новая вкладка: «Закрыть все приватные» без вопроса | `ui/BrowserPrivateNewTabV5.kt` | патч 0005 | открыто |
 | S-03 | Средний | дефект | N-17 | Экран «Сканировать код»: нет повтора и нет перехода в настройки | `ui/BrowserSyncSettingsV5.kt`, `ui/v5/V5SyncTransfer.kt` | — | открыто |
 | S-04 | Средний | дефект | N-17 | Адресная строка: «слово с точкой» — всегда сайт | `browser/AddressResolver.kt` | патч 0001 | открыто |
