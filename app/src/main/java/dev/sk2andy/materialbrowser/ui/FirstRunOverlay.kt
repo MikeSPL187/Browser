@@ -2,6 +2,9 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +21,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunDefaultBrowser
@@ -202,7 +206,19 @@ private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < V5_FIRST_RUN_DARK_LUMINANCE
     VolaV5Theme(dark = dark, accent = controller.v5Accent) {
-        AnimatedContent(targetState = stage, label = "v5_first_run") { current ->
+        // Without system animations the pages only cross-fade (plan-v5.md, section 5).
+        val animated = V5Motion.animationsEnabled
+        AnimatedContent(
+            targetState = stage,
+            transitionSpec = {
+                if (animated) {
+                    fadeIn(V5Motion.effects.spec()) togetherWith fadeOut(V5Motion.effects.spec())
+                } else {
+                    fadeIn(V5Motion.reducedFade()) togetherWith fadeOut(V5Motion.reducedFade())
+                }
+            },
+            label = "v5_first_run",
+        ) { current ->
             when (current) {
                 FirstRunStage.DefaultBrowser -> V5FirstRunDefaultBrowser(
                     onMakeDefault = {
