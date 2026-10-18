@@ -103,6 +103,51 @@ class PwnedPasswordCheckTest {
     }
 
     @Test
+    fun `without a network the check stops asking after two failures in a row`() = runBlocking {
+        val asked = AtomicInteger()
+        val check = PwnedPasswordCheck(fetchRange = { asked.incrementAndGet(); null }, parallelRequests = 1)
+        val logins = (1..20).map { index -> login("$index", "https://site$index.example", "secret-$index") }
+
+        val result = check.checkLeaks(logins)
+
+        assertEquals(2, asked.get())
+        assertEquals(logins.map { it.id }.toSet(), result.unchecked)
+    }
+
+    @Test
+    fun `one failure between answers does not stop the check`() = runBlocking {
+        val asked = AtomicInteger()
+        val check = PwnedPasswordCheck(
+            fetchRange = { if (asked.incrementAndGet() % 2 == 0) null else "" },
+            parallelRequests = 1,
+        )
+        val logins = (1..10).map { index -> login("$index", "https://site$index.example", "secret-$index") }
+        val prefixes = logins.map { PwnedPasswordsClient.sha1Hex(it.password).take(5) }.distinct().size
+
+        check.checkLeaks(logins)
+
+        assertEquals(prefixes, asked.get())
+    }
+
+    @Test
+    fun `prefixes left after the deadline stay unchecked`() = runBlocking {
+        val clock = AtomicInteger()
+        val asked = AtomicInteger()
+        val check = PwnedPasswordCheck(
+            fetchRange = { asked.incrementAndGet(); "" },
+            parallelRequests = 1,
+            deadlineMillis = 3,
+            nowMillis = { clock.getAndIncrement().toLong() },
+        )
+        val logins = (1..10).map { index -> login("$index", "https://site$index.example", "secret-$index") }
+
+        val result = check.checkLeaks(logins)
+
+        assertTrue("asked ${asked.get()}", asked.get() in 1..4)
+        assertFalse(result.complete)
+    }
+
+    @Test
     fun `the report finds repeats and weak passwords offline and adds the leaks of a check`() {
         val check = PwnedPasswordCheck(fetchRange = { error("the report never goes online") })
         val logins = listOf(

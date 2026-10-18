@@ -39,7 +39,9 @@ interface RemoteSyncPort {
      * Stops sync on this phone and forgets the server and its secrets. This phone's entry leaves
      * the server too, so the other devices stop listing it; with [deleteServerData] all of Vola's
      * data on the server goes, for every device. [onDone] hears false when the server could not
-     * be reached for that: the phone is disconnected anyway.
+     * be reached for that. Without [deleteServerData] the phone is disconnected anyway; with it,
+     * the phone stays connected, so the deletion can be asked again: forgetting the app password
+     * would leave the data on the server with no way to delete it from here.
      */
     fun disconnect(deleteServerData: Boolean, onDone: (Boolean) -> Unit)
 
@@ -136,4 +138,19 @@ enum class RemoteSyncFailure {
      * over from another device, or files that are damaged. Nothing was overwritten.
      */
     PhraseMismatch,
+
+    /** The server holds Vola's data in a newer format than this Vola reads: update Vola. */
+    NewerFormat,
+
+    /** The address's folder is not on the server (404): a typo in the path, or it was removed. */
+    FolderNotFound,
+
+    /** The server has no room left (507) or refuses a file this size (413). */
+    ServerFull,
+
+    /** The server asks to wait: a locked file (423), too many requests (429) or maintenance (503). */
+    ServerBusy,
+
+    /** The server failed on its side (another 5xx). */
+    ServerError,
 }

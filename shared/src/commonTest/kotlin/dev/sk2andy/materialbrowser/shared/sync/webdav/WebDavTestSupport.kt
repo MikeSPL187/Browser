@@ -63,12 +63,16 @@ internal class FakeWebDavServer(
 
     /** Called before each request is served, to change the server under the sync's feet. */
     var beforeRequest: (WebDavRequest) -> Unit = {}
+
+    /** An answer in place of the served one, as a full disk or a busy server would give. */
+    var answer: (WebDavRequest) -> WebDavResponse? = { null }
     private var version = 0
 
     override fun send(request: WebDavRequest): WebDavResponse {
         if (offline) throw IllegalStateException("offline")
         requests += request
         beforeRequest(request)
+        answer(request)?.let { return it }
         if (request.headers["Authorization"] != WebDavSyncEngine.authorization(login, password)) return WebDavResponse(401)
         val url = request.url
         if (!url.startsWith(root)) return WebDavResponse(404)

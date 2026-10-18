@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.browser.transfer
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.Socket
+import java.net.SocketTimeoutException
 
 /**
  * The few bytes of HTTP/1.1 the local transfer speaks: one request, one answer, then the
@@ -107,5 +109,41 @@ internal object LocalTransferHttp {
         410 -> "Gone"
         429 -> "Too Many Requests"
         else -> "Error"
+    }
+}
+
+/**
+ * What [socket] sends, for [budgetMillis] in all. A socket timeout covers one read, so a peer that
+ * sends a byte every few seconds never trips it and, on a server that serves one connection at a
+ * time, holds everyone else out; here every read gets only the time that is left, and the budget
+ * ending is a [SocketTimeoutException].
+ */
+internal class DeadlineSocketInput(
+    private val socket: Socket,
+    budgetMillis: Int,
+    private val nanoTime: () -> Long = System::nanoTime,
+) : InputStream() {
+    private val input = socket.getInputStream()
+    private val deadline = nanoTime() + budgetMillis * NANOS_PER_MILLI
+
+    override fun read(): Int {
+        arm()
+        return input.read()
+    }
+
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+        arm()
+        return input.read(buffer, offset, length)
+    }
+
+    /** A socket timeout of 0 would wait forever, so the time left is at least one millisecond. */
+    private fun arm() {
+        val left = (deadline - nanoTime()) / NANOS_PER_MILLI
+        if (left <= 0) throw SocketTimeoutException("The request took longer than its budget")
+        socket.soTimeout = left.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private companion object {
+        const val NANOS_PER_MILLI = 1_000_000L
     }
 }

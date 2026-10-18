@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
@@ -386,6 +388,12 @@ private fun UserscriptEditorSheet(
                 },
                 textStyle = V5Theme.type.footnote.copy(fontFamily = FontFamily.Monospace, color = colors.label),
                 cursorBrush = SolidColor(colors.accent),
+                // Rules and scripts are code: no autocorrect and no capital at the start of a line, which
+                // can turn `let` into `Let` or replace a word of a rule.
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                ),
                 modifier = Modifier
                     .padding(horizontal = V5Spacing.marginPhone)
                     .fillMaxWidth()
