@@ -42,7 +42,7 @@ private val EmptyWeek = ProtectionSummary(
 )
 
 @Composable
-private fun ReportPreview(dark: Boolean, summary: ProtectionSummary, windowDays: Int) {
+private fun ReportPreview(dark: Boolean, summary: ProtectionSummary, windowDays: Int, hasData: Boolean = summary.total > 0) {
     VolaV5Theme(dark = dark) {
         V5PrivacyReport(
             visible = true,
@@ -52,6 +52,7 @@ private fun ReportPreview(dark: Boolean, summary: ProtectionSummary, windowDays:
             onClear = {},
             onDismiss = {},
             onHideCard = {},
+            hasData = hasData,
         )
     }
 }
@@ -72,4 +73,11 @@ private fun V5PrivacyReportDarkPreview() {
 @Composable
 private fun V5PrivacyReportEmptyPreview() {
     ReportPreview(dark = true, summary = EmptyWeek, windowDays = 7)
+}
+
+/** An empty week with older days kept: «Clear» stays on, since it deletes every kept day (PR-01). */
+@Preview(name = "Privacy report · empty week, older data · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PrivacyReportEmptyWeekOlderDataPreview() {
+    ReportPreview(dark = false, summary = EmptyWeek, windowDays = 7, hasData = true)
 }

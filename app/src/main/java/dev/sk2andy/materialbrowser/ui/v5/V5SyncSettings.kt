@@ -158,7 +158,6 @@ fun V5SyncConfirmSheet(
                 role = V5PromptRole.Primary,
                 testTag = V5SyncSettingsTestTags.ConfirmAccept,
             ),
-            V5PromptAction(label = stringResource(R.string.action_cancel), onClick = onDismiss),
         ),
         onDismiss = onDismiss,
         testTag = V5SyncSettingsTestTags.Confirm,

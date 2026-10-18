@@ -420,7 +420,6 @@ fun V5WebDavDisconnectSheet(
         actions = listOf(
             V5PromptAction(stringResource(R.string.v5_webdav_disconnect), onDisconnect, V5PromptRole.Primary),
             V5PromptAction(stringResource(R.string.v5_webdav_disconnect_delete), onDisconnectAndDelete, V5PromptRole.Destructive),
-            V5PromptAction(stringResource(R.string.action_cancel), onDismiss),
         ),
         onDismiss = onDismiss,
     )
@@ -438,7 +437,6 @@ fun V5WebDavDeleteFailedSheet(visible: Boolean, host: String, onRetry: () -> Uni
         message = stringResource(R.string.v5_webdav_delete_failed_message, host),
         actions = listOf(
             V5PromptAction(stringResource(R.string.action_retry), onRetry, V5PromptRole.Destructive),
-            V5PromptAction(stringResource(R.string.action_cancel), onDismiss),
         ),
         onDismiss = onDismiss,
     )
@@ -453,7 +451,6 @@ fun V5WebDavStartOverSheet(visible: Boolean, host: String, onConfirm: () -> Unit
         message = stringResource(R.string.v5_webdav_start_over_message, host),
         actions = listOf(
             V5PromptAction(stringResource(R.string.v5_webdav_start_over_confirm), onConfirm, V5PromptRole.Destructive),
-            V5PromptAction(stringResource(R.string.action_cancel), onDismiss),
         ),
         onDismiss = onDismiss,
     )

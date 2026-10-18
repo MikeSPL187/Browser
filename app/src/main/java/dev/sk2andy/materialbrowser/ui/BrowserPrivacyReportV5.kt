@@ -28,6 +28,7 @@ internal fun BrowserPrivacyReportV5(
     // The summary reads the report's state, so it follows new blocks while the sheet is open.
     val summarize by rememberUpdatedState(protection.summary)
     val summary by remember { derivedStateOf { summarize(windowDays) } }
+    val hasData by remember { derivedStateOf { summarize(ProtectionReportRules.KEPT_DAYS).total > 0 } }
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark) {
         V5PrivacyReport(
@@ -38,6 +39,7 @@ internal fun BrowserPrivacyReportV5(
             onClear = protection.onClear,
             onDismiss = onDismiss,
             onHideCard = protection.onHideCard,
+            hasData = hasData,
         )
     }
 }

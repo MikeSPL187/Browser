@@ -34,6 +34,15 @@ object V5PrivacyReportRules {
         }
     }
 
+    /** What TalkBack hears of the bars (PR-02): today's blocks, the busiest day's and the daily average. */
+    data class ChartFacts(val today: Int, val most: Int, val average: Int)
+
+    fun chartFacts(daily: List<Int>): ChartFacts = ChartFacts(
+        today = daily.lastOrNull()?.coerceAtLeast(0) ?: 0,
+        most = daily.maxOrNull()?.coerceAtLeast(0) ?: 0,
+        average = if (daily.isEmpty()) 0 else Math.round(daily.sumOf { it.coerceAtLeast(0).toLong() }.toDouble() / daily.size).toInt(),
+    )
+
     /** The tracker blocked most often in the period, if any. */
     fun topTracker(summary: ProtectionSummary): ProtectionTracker? =
         summary.topTrackers.firstOrNull { it.blocked > 0 && it.siteCount > 0 }
