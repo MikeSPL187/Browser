@@ -4,8 +4,10 @@ import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationUiStat
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationState
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
+import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
+import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguagesStatus
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -101,5 +103,23 @@ class BrowserTranslateRulesTest {
         assertNull(BrowserTranslateRules.always("fr", always, downloadBytes = null))
         assertNull(BrowserTranslateRules.always("de", settings = null, downloadBytes = 0L))
         assertNull(BrowserTranslateRules.always(null, always, downloadBytes = 0L))
+    }
+
+    @Test
+    fun anErrorShowsOnlyForThePairItWasAskedFor() {
+        val asked = TranslationPair("en", "ru")
+        assertTrue(BrowserTranslateRules.sameRequest(asked, "en", "ru"))
+        assertFalse(BrowserTranslateRules.sameRequest(asked, "en", "de"))
+        assertFalse(BrowserTranslateRules.sameRequest(null, "en", "ru"))
+    }
+
+    @Test
+    fun theLanguagesListsAreLoadingUntilTheEngineAnswers() {
+        assertEquals(V5TranslateLanguagesStatus.Loading, BrowserTranslateRules.languagesStatus(null, failed = false))
+        assertEquals(V5TranslateLanguagesStatus.Failed, BrowserTranslateRules.languagesStatus(null, failed = true))
+        assertEquals(
+            V5TranslateLanguagesStatus.Ready,
+            BrowserTranslateRules.languagesStatus(TranslationLanguages(emptyList(), emptyList()), failed = false),
+        )
     }
 }

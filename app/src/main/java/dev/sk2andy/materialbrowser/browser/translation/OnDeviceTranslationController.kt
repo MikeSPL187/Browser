@@ -18,6 +18,7 @@ internal class OnDeviceTranslationController(
 ) {
     private val ports = mutableMapOf<String, PageTranslationPort>()
     private val states = mutableStateMapOf<String, OnDeviceTranslationUiState>()
+    private var lastRequest = 0
 
     /** Starts following [tabId]'s page through [port]; a port it had before is let go. */
     fun attach(tabId: String, port: PageTranslationPort) {
@@ -65,9 +66,14 @@ internal class OnDeviceTranslationController(
         onResult: (PageTranslationResult) -> Unit = {},
     ) {
         val port = ports[tabId] ?: return onResult(PageTranslationResult.Unsupported)
-        update(tabId) { it.copy(pair = pair, inProgress = true, error = null) }
+        val request = ++lastRequest
+        update(tabId) { it.copy(pair = pair, inProgress = true, error = null, request = request) }
         port.translate(pair, allowModelDownload) { result ->
-            update(tabId) { it.copy(inProgress = false, error = (result as? PageTranslationResult.Failed)?.error) }
+            // Only the latest request on the same page speaks: an older answer, or one from the
+            // page before a navigation, would end the wait of the request that is still running.
+            if (ports[tabId] === port && stateOf(tabId).request == request) {
+                update(tabId) { it.copy(inProgress = false, error = (result as? PageTranslationResult.Failed)?.error) }
+            }
             onResult(result)
         }
     }
@@ -76,6 +82,7 @@ internal class OnDeviceTranslationController(
     fun showOriginal(tabId: String, onResult: (PageTranslationResult) -> Unit = {}) {
         val port = ports[tabId] ?: return onResult(PageTranslationResult.Unsupported)
         port.restoreOriginal { result ->
+            if (ports[tabId] !== port) return@restoreOriginal onResult(result)
             update(tabId) { current ->
                 when (result) {
                     PageTranslationResult.Done -> current.copy(pair = null, inProgress = false, error = null)
@@ -95,12 +102,14 @@ internal class OnDeviceTranslationController(
 /**
  * One tab's translation as the v5 screens show it: the engine's [page] state, the [pair] the user
  * asked for, whether a request is [inProgress] (a model may be downloading) and the last [error].
+ * [request] numbers the latest request, so an older one's answer is told apart.
  */
 internal data class OnDeviceTranslationUiState(
     val page: PageTranslationState = PageTranslationState(),
     val pair: TranslationPair? = null,
     val inProgress: Boolean = false,
     val error: PageTranslationError? = null,
+    val request: Int = 0,
 ) {
     val isTranslated: Boolean get() = page.isTranslated
 }

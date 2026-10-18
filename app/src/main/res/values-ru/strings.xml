@@ -2295,6 +2295,10 @@
     <string name="v5_translate_in_progress">Перевожу…</string>
     <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
     <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
+    <string name="v5_translate_languages_loading">Загружаю список языков…</string>
+    <string name="v5_translate_languages_failed">Не удалось получить список языков.</string>
+    <string name="v5_translate_same_language">Страница уже на этом языке — выберите другой.</string>
+    <string name="v5_translate_note_download_unknown">Перевод на устройстве: текст страницы никуда не уходит. Для первого перевода может скачаться языковой пакет.</string>
     <string name="v5_translate_error">Не удалось перевести страницу. Попробуйте ещё раз.</string>
     <string name="v5_translate_error_download">Пакет не скачался. Проверьте сеть и попробуйте ещё раз.</string>
     <string name="v5_translate_error_language">Этот язык пока нельзя перевести на устройстве.</string>
