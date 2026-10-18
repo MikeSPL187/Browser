@@ -48,9 +48,10 @@ class StartupBenchmark {
 }
 
 /**
- * The startup steps StartupTimeline wraps in trace sections. Sum, not First: a step that did not run
- * in an iteration reads as 0 instead of failing the benchmark. Typed as the stable [Metric], so the
- * experimental TraceSectionMetric stays inside this function's opt-in.
+ * The startup steps StartupTimeline wraps in trace sections, and Android's own phases of the same
+ * start (labelled «Vola.Startup.System.*» so perf_gate.py lists them beside the app's steps). Sum,
+ * not First: a step that did not run in an iteration reads as 0 instead of failing the benchmark.
+ * Typed as the stable [Metric], so the experimental TraceSectionMetric stays inside this opt-in.
  */
 @OptIn(ExperimentalMetricApi::class)
 private fun startupSections(): List<Metric> = listOf(
@@ -63,4 +64,10 @@ private fun startupSections(): List<Metric> = listOf(
     "LoadFilterRules",
     "LoadUserScripts",
     "BlockingListsWait",
-).map { step -> TraceSectionMetric("Vola.Startup.$step", TraceSectionMetric.Mode.Sum) }
+).map { step -> TraceSectionMetric("Vola.Startup.$step", TraceSectionMetric.Mode.Sum) } + listOf(
+    "bindApplication",
+    "activityStart",
+    "activityResume",
+).map { phase ->
+    TraceSectionMetric(phase, TraceSectionMetric.Mode.Sum, label = "Vola.Startup.System.$phase")
+}

@@ -208,11 +208,12 @@ def step_lines(base: dict, head: dict) -> list[str]:
     for name in names:
         lines.append(f"| {name} | {number(median(before[name]) if before.get(name) else None)} | "
                      f"{number(median(after[name]) if after.get(name) else None)} |")
-    total = sum(median(runs) for runs in after.values() if runs)
+    # Android's phases (System.*) contain the app's steps, so only the app's own steps add up.
+    total = sum(median(runs) for name, runs in after.items() if runs and not name.startswith("System."))
     startup = [run for metrics in head.values() for run in metrics.get(STARTUP_METRIC, [])]
     if startup:
-        lines += ["", f"These steps take {total:.0f} ms of this PR's {median(startup):.0f} ms cold start; "
-                      "the rest is the process, class loading, Gecko's own threads and the first frame."]
+        lines += ["", f"The app's own steps take {total:.0f} ms of this PR's {median(startup):.0f} ms cold start. "
+                      "System.* rows are Android's phases of the same start and contain those steps."]
     return lines
 
 
