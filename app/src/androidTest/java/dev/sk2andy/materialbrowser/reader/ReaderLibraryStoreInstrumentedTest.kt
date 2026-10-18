@@ -4,11 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -74,6 +76,49 @@ class ReaderLibraryStoreInstrumentedTest {
         assertEquals(1, normal.snapshots.size)
         assertEquals(ReaderSettings(), normal.settings)
         assertTrue(normal.progressByUrl.isEmpty())
+    }
+
+    @Test
+    fun unreadableLibraryIsSetAsideInsteadOfOverwritten() {
+        val library = File(context.filesDir, "reader_library_v1.json")
+        library.writeText("{\"version\":1,\"snapshots\":[{\"id\"")
+        val unreadable = library.readBytes()
+
+        store.updateProgress("https://example.com/after", 0.5f, isPrivate = false)
+
+        assertTrue(
+            File(context.filesDir, "reader_library_v1.unreadable.json").readBytes()
+                .contentEquals(unreadable),
+        )
+        assertEquals(0.5f, store.load(isPrivate = false).progressByUrl["https://example.com/after"])
+    }
+
+    @Test
+    fun libraryOfAnotherVersionIsSetAsideInsteadOfOverwritten() {
+        val library = File(context.filesDir, "reader_library_v1.json")
+        library.writeText("{\"version\":2,\"snapshots\":[]}")
+        val newer = library.readBytes()
+
+        store.updateSettings(ReaderSettings(1.6f, ReaderTheme.Dark), isPrivate = false)
+
+        assertTrue(
+            File(context.filesDir, "reader_library_v1.unreadable.json").readBytes()
+                .contentEquals(newer),
+        )
+    }
+
+    @Test
+    fun clearingReadingProgressKeepsSavedArticles() {
+        store.saveSnapshot(document("https://example.com/saved"), 0.3f, isPrivate = false)
+        store.updateProgress("https://example.com/read", 0.7f, isPrivate = false)
+        File(context.filesDir, "reader_library_v1.unreadable.json").writeText("{")
+
+        store.clearReadingProgress()
+
+        val state = store.load(isPrivate = false)
+        assertTrue(state.progressByUrl.isEmpty())
+        assertEquals("https://example.com/saved", state.snapshots.single().document.sourceUrl)
+        assertFalse(File(context.filesDir, "reader_library_v1.unreadable.json").exists())
     }
 
     @Test

@@ -96,6 +96,11 @@ class ReaderLibraryRepository private constructor(context: Context) : ReaderLibr
         }
     }
 
+    /** Part of clearing browsing data: reading positions are history, saved articles stay. */
+    fun clearReadingProgress() {
+        enqueue { store.clearReadingProgress() }
+    }
+
     fun awaitIdle(onIdle: () -> Unit) {
         enqueue { onMain(onIdle) }
     }
