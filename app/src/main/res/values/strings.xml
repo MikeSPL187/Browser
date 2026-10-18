@@ -1974,6 +1974,10 @@
     <string name="v5_group_move_title">Move to group</string>
     <string name="v5_group_current">Current</string>
     <string name="v5_group_new">New group</string>
+    <plurals name="v5_group_limit">
+        <item quantity="one">Up to %1$d group</item>
+        <item quantity="other">Up to %1$d groups</item>
+    </plurals>
     <string name="v5_group_remove_tab">Remove from group</string>
     <string name="v5_group_edit_title">Edit group</string>
     <string name="v5_group_default_name">Group</string>
@@ -2101,6 +2105,10 @@
     <string name="v5_profile_untitled">Profile</string>
     <string name="v5_profile_locked">Locked</string>
     <string name="v5_profile_new">New profile</string>
+    <plurals name="v5_profile_limit">
+        <item quantity="one">Up to %1$d profile</item>
+        <item quantity="other">Up to %1$d profiles</item>
+    </plurals>
     <string name="v5_profile_edit">Edit profile</string>
     <string name="v5_profile_edit_action">Edit</string>
     <string name="v5_profile_create">Create</string>
