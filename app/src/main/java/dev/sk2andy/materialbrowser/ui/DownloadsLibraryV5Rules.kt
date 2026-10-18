@@ -25,19 +25,26 @@ internal object DownloadsLibraryV5Rules {
         entry.status == DownloadStatus.Failed || entry.status == DownloadStatus.Cancelled
 
     /**
-     * A download under way shows its progress; one that failed and can start again, «Retry»; a
-     * finished file, its [time].
+     * A download under way shows its progress, with the pause or play glyph where it can pause; one
+     * that failed and can start again, «Retry»; a finished file, its [time].
      */
     fun trailing(entry: DownloadEntry, time: String): V5LibraryTrailing = when {
-        entry.status.isActive -> V5LibraryTrailing.Progress(DownloadHistoryRules.progress(entry))
+        entry.status.isActive -> V5LibraryTrailing.Progress(
+            DownloadHistoryRules.progress(entry),
+            paused = (entry.status == DownloadStatus.Paused).takeIf { entry.supportsPause },
+        )
         !failed(entry) -> V5LibraryTrailing.Value(time)
         entry.retry == DownloadRetry.Available -> V5LibraryTrailing.Retry
         else -> V5LibraryTrailing.None
     }
 
     /**
-     * A swipe cancels a download under way. A finished file is never swiped away: clearing it deletes
-     * the file itself, so that waits for «Clear…» and its confirmation.
+     * A swipe cancels a download under way and deletes a finished, failed or cancelled one (DL-01):
+     * one file goes without «Clear…» taking all of them. Either way it asks first, since neither
+     * can be undone.
      */
-    fun swipeCancels(entry: DownloadEntry): Boolean = entry.status.isActive && entry.supportsCancel
+    fun swipes(entry: DownloadEntry): Boolean = if (entry.status.isActive) entry.supportsCancel else true
+
+    /** What the question before a swipe is about: a download under way or what is left of one. */
+    fun swipeCancels(entry: DownloadEntry): Boolean = entry.status.isActive
 }

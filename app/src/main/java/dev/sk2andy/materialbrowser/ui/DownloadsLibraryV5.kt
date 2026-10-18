@@ -31,6 +31,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryState
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import java.time.Instant
@@ -40,9 +43,10 @@ import java.time.format.FormatStyle
 
 /**
  * The downloads segment of the v5 library (V28, B2d; canvas screen «р3»): downloads under way on
- * top with their progress (a tap pauses or resumes, a swipe cancels), then finished files by day.
- * A tap opens a file; a failed one starts again, or opens the page it came from. «Clear…» deletes
- * the finished files only after a confirmation: they are the files themselves, not a list.
+ * top with their progress (the ring or a tap pauses or resumes, a swipe cancels), then finished
+ * files by day. A tap opens a file; a failed one starts again, or opens the page it came from. A
+ * swipe deletes one file, and «Clear…» all finished ones; each asks first, since what goes is the
+ * files themselves, not a list. While searching «Clear…» hides: it never clears what is not shown.
  */
 @Composable
 internal fun DownloadsLibraryV5(
@@ -61,6 +65,9 @@ internal fun DownloadsLibraryV5(
     val locale = LocalConfiguration.current.locales[0]
     var query by rememberSaveable { mutableStateOf("") }
     var clearing by rememberSaveable { mutableStateOf(false) }
+    // The download a swipe asks about, by key, so the question survives a rotation.
+    var asking by rememberSaveable { mutableStateOf<String?>(null) }
+    var askingCancels by rememberSaveable { mutableStateOf(false) }
     val today = rememberLocalToday()
     val zoneId = remember(today) { ZoneId.systemDefault() }
     val dateFormatter = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
@@ -70,6 +77,11 @@ internal fun DownloadsLibraryV5(
     }
     val byKey = remember(visible) { visible.associateBy { entry -> entry.id.toString() } }
     val clearable = remember(downloads) { downloads.filter { entry -> entry.status.isTerminal } }
+
+    val pauseLabel = stringResource(R.string.downloads_pause)
+    val resumeLabel = stringResource(R.string.downloads_resume)
+    val retryLabel = stringResource(R.string.v5_library_retry)
+    val cancelLabel = stringResource(R.string.v5_downloads_cancel_action)
 
     @Composable
     fun row(entry: DownloadEntry): V5LibraryRow {
@@ -87,7 +99,19 @@ internal fun DownloadsLibraryV5(
             },
             leading = V5LibraryLeading.File(kind.icon(), DownloadsLibraryV5Rules.tile(kind, failed)),
             trailing = DownloadsLibraryV5Rules.trailing(entry, time),
-            deletable = DownloadsLibraryV5Rules.swipeCancels(entry),
+            // While «Clear…» runs a finished file cannot go on its own: the store takes one clearing at a time.
+            deletable = DownloadsLibraryV5Rules.swipes(entry) && (entry.status.isActive || !isClearing),
+            openLabel = when {
+                entry.status.isActive -> when {
+                    !entry.supportsPause -> null
+                    entry.status == DownloadStatus.Paused -> resumeLabel
+                    else -> pauseLabel
+                }
+                failed && entry.retry == DownloadRetry.Available -> retryLabel
+                else -> null
+            },
+            deleteLabel = cancelLabel.takeIf { DownloadsLibraryV5Rules.swipeCancels(entry) },
+            deleteAsks = true,
         )
     }
 
@@ -115,7 +139,7 @@ internal fun DownloadsLibraryV5(
         sections = sections,
         emptyMessage = stringResource(if (query.isBlank()) R.string.downloads_empty_message else R.string.downloads_no_results),
         actions = V5LibraryActions(
-            end = stringResource(R.string.v5_history_clear).takeIf { clearable.isNotEmpty() && !isClearing },
+            end = stringResource(R.string.v5_history_clear).takeIf { clearable.isNotEmpty() && !isClearing && query.isBlank() },
             onEnd = { clearing = true },
             endDestructive = true,
         ),
@@ -136,9 +160,27 @@ internal fun DownloadsLibraryV5(
                     retry is DownloadRetry.Unavailable -> retry.pageUrl?.let(onOpenPage)
                 }
             },
-            onDelete = { key -> byKey[key]?.let(onCancel) },
+            onDelete = { key ->
+                byKey[key]?.let { entry ->
+                    askingCancels = DownloadsLibraryV5Rules.swipeCancels(entry)
+                    asking = key
+                }
+            },
             onRetry = { key -> byKey[key]?.let(onRetry) },
             onClose = onClose,
+        )
+        // The entry as it is now. One that finished or went while «Cancel?» was open closes the
+        // question rather than turn it into «Delete?» under a tap meant to cancel.
+        val asked = asking
+            ?.let { key -> downloads.firstOrNull { entry -> entry.id.toString() == key } }
+            ?.takeIf { entry -> DownloadsLibraryV5Rules.swipeCancels(entry) == askingCancels }
+        DownloadSwipePrompt(
+            entry = asked,
+            onConfirm = { entry ->
+                asking = null
+                if (DownloadsLibraryV5Rules.swipeCancels(entry)) onCancel(entry) else onClearFinished(listOf(entry))
+            },
+            onDismiss = { asking = null },
         )
         ClearDownloadsSheet(
             visible = clearing,
@@ -156,7 +198,7 @@ internal fun DownloadsLibraryV5(
 private fun ClearDownloadsSheet(visible: Boolean, onDismiss: () -> Unit, onClear: () -> Unit) {
     val title = stringResource(R.string.downloads_clear_title)
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
-        V5SheetHeader(title = title, onClose = onDismiss, subtitle = stringResource(R.string.downloads_clear_message))
+        V5SheetHeader(title = title, onClose = onDismiss, subtitle = stringResource(R.string.v5_downloads_clear_message))
         V5ListGroup {
             V5ListRow(
                 title = stringResource(R.string.downloads_clear),
@@ -165,6 +207,44 @@ private fun ClearDownloadsSheet(visible: Boolean, onDismiss: () -> Unit, onClear
             )
         }
     }
+}
+
+/**
+ * The question after a swipe (DL-01, DL-02): cancelling a download under way loses what it has
+ * fetched, deleting a finished one removes the file from the phone. Neither has an undo, so the
+ * row springs back and nothing happens until the red action.
+ */
+@Composable
+private fun DownloadSwipePrompt(entry: DownloadEntry?, onConfirm: (DownloadEntry) -> Unit, onDismiss: () -> Unit) {
+    // The question keeps its words while the sheet lowers.
+    var shown by remember { mutableStateOf<DownloadEntry?>(null) }
+    if (entry != null) shown = entry
+    val current = shown ?: return
+    val cancels = DownloadsLibraryV5Rules.swipeCancels(current)
+    V5PromptSheet(
+        visible = entry != null,
+        title = stringResource(if (cancels) R.string.v5_downloads_cancel_title else R.string.v5_downloads_delete_title, current.name),
+        message = stringResource(
+            when {
+                cancels -> R.string.v5_downloads_cancel_message
+                current.status == DownloadStatus.Successful -> R.string.v5_downloads_delete_message
+                else -> R.string.v5_downloads_delete_failed_message
+            },
+        ),
+        actions = listOf(
+            V5PromptAction(
+                label = stringResource(if (cancels) R.string.v5_downloads_cancel_action else R.string.v5_library_delete),
+                onClick = { onConfirm(current) },
+                role = V5PromptRole.Destructive,
+                testTag = DownloadsLibraryV5TestTags.Confirm,
+            ),
+        ),
+        onDismiss = onDismiss,
+    )
+}
+
+internal object DownloadsLibraryV5TestTags {
+    const val Confirm = "v5_downloads_confirm"
 }
 
 private fun DownloadKind.icon(): ImageVector = when (this) {

@@ -31,13 +31,16 @@ import kotlinx.coroutines.launch
  * A list row a swipe to the left deletes (the library's rows, language packs): past 40 % of the
  * row it goes, as a card in the overview closes; a shorter swipe springs back. The red under the
  * row shows what the swipe does. Without system animations the row jumps instead of springing.
- * A swipe is not the only way: the [content] row offers «Delete» to TalkBack itself.
+ * A swipe is not the only way: the [content] row offers «Delete» to TalkBack itself. A row that
+ * [springsBack] asks before it goes: it returns to its place under the question, and leaves the list
+ * only when the deletion is confirmed.
  */
 @Composable
 internal fun V5SwipeToDelete(
     key: Any,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    springsBack: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colors = V5Theme.colors
@@ -73,7 +76,12 @@ internal fun V5SwipeToDelete(
                         } else {
                             offset.snapTo(target)
                         }
-                        if (target < 0f) onDelete()
+                        if (target < 0f) {
+                            onDelete()
+                            if (springsBack) {
+                                if (V5Motion.animationsEnabled) offset.animateTo(0f, V5Motion.tabSwipe.spec()) else offset.snapTo(0f)
+                            }
+                        }
                     },
                 ),
         ) { content() }

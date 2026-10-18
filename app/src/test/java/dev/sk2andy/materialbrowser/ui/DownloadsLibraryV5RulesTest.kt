@@ -40,11 +40,24 @@ class DownloadsLibraryV5RulesTest {
     }
 
     @Test
-    fun `only a download under way is swiped away, never a finished file`() {
-        assertTrue(DownloadsLibraryV5Rules.swipeCancels(entry(DownloadStatus.Running)))
-        assertFalse(DownloadsLibraryV5Rules.swipeCancels(entry(DownloadStatus.Running).copy(supportsCancel = false)))
+    fun `a download that can pause shows whether it is paused, one that cannot shows no glyph`() {
+        val running = entry(DownloadStatus.Running, 5, 10).copy(supportsPause = true)
+        assertEquals(V5LibraryTrailing.Progress(0.5f, paused = false), DownloadsLibraryV5Rules.trailing(running, "9:41"))
+        assertEquals(
+            V5LibraryTrailing.Progress(0.5f, paused = true),
+            DownloadsLibraryV5Rules.trailing(running.copy(status = DownloadStatus.Paused), "9:41"),
+        )
+    }
+
+    @Test
+    fun `a swipe cancels a download under way and deletes one file that ended, whatever its end`() {
+        assertTrue(DownloadsLibraryV5Rules.swipes(entry(DownloadStatus.Running)))
+        assertFalse(DownloadsLibraryV5Rules.swipes(entry(DownloadStatus.Running).copy(supportsCancel = false)))
+        assertTrue(DownloadsLibraryV5Rules.swipes(entry(DownloadStatus.Successful)))
+        assertTrue(DownloadsLibraryV5Rules.swipes(entry(DownloadStatus.Failed)))
+        assertTrue(DownloadsLibraryV5Rules.swipes(entry(DownloadStatus.Cancelled)))
+        assertTrue(DownloadsLibraryV5Rules.swipeCancels(entry(DownloadStatus.Paused)))
         assertFalse(DownloadsLibraryV5Rules.swipeCancels(entry(DownloadStatus.Successful)))
-        assertFalse(DownloadsLibraryV5Rules.swipeCancels(entry(DownloadStatus.Failed)))
     }
 
     @Test
