@@ -21,6 +21,16 @@ class V5SyncRulesTest {
     }
 
     @Test
+    fun everyFailedScanHasAWayOn() {
+        listOf(V5SyncScanStatus.CodeExpired, V5SyncScanStatus.NotFound, V5SyncScanStatus.Failed).forEach { status ->
+            assertEquals(status.name, V5SyncScanAction.Retry, V5SyncRules.scanAction(status))
+        }
+        assertEquals(V5SyncScanAction.OpenSettings, V5SyncRules.scanAction(V5SyncScanStatus.NoCamera))
+        assertEquals(null, V5SyncRules.scanAction(V5SyncScanStatus.Scanning))
+        assertEquals(null, V5SyncRules.scanAction(V5SyncScanStatus.Receiving))
+    }
+
+    @Test
     fun everyStatusHasItsOwnTitle() {
         val titles = V5SyncScanStatus.entries.map(V5SyncRules::scanTitle)
         assertEquals(titles.size, titles.toSet().size)

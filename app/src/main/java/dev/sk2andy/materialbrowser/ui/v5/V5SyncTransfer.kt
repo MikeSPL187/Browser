@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -47,6 +48,7 @@ object V5SyncTestTags {
     const val Code = "v5_sync_code"
     const val Scan = "v5_sync_scan"
     const val ScanStatus = "v5_sync_scan_status"
+    const val ScanAction = "v5_sync_scan_action"
     const val Done = "v5_sync_done"
     const val Undo = "v5_sync_undo"
 }
@@ -67,6 +69,9 @@ data class V5SyncShowState(
 
 /** Where the receiving side is (canvas «ф2»). */
 enum class V5SyncScanStatus { Scanning, Receiving, CodeExpired, NotFound, Failed, NoCamera }
+
+/** The way out of a failed scan: scan again, or let the camera in from the system settings. */
+enum class V5SyncScanAction { Retry, OpenSettings }
 
 /**
  * What came over (canvas «ф3»): from [deviceName], [tabs] in a new group, [bookmarksAdded] new
@@ -159,6 +164,7 @@ fun V5SyncScan(
     status: V5SyncScanStatus,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    onAction: (V5SyncScanAction) -> Unit = {},
     viewfinder: @Composable () -> Unit,
 ) {
     Box(
@@ -213,6 +219,24 @@ fun V5SyncScan(
                 )
                 V5SyncRules.scanMessage(status)?.let { message ->
                     Text(stringResource(message), style = V5Theme.type.callout, color = V5SyncColors.scanInkSoft, textAlign = TextAlign.Center)
+                }
+            }
+            // Every failure has its way on: before, the only one was to close the screen and open it again.
+            V5SyncRules.scanAction(status)?.let { action ->
+                TextButton(
+                    onClick = { onAction(action) },
+                    modifier = Modifier.padding(top = V5Spacing.space2).testTag(V5SyncTestTags.ScanAction),
+                ) {
+                    Text(
+                        stringResource(
+                            when (action) {
+                                V5SyncScanAction.Retry -> R.string.action_retry
+                                V5SyncScanAction.OpenSettings -> R.string.voice_search_permission_settings
+                            },
+                        ),
+                        style = V5Theme.type.headline,
+                        color = V5SyncColors.scanInk,
+                    )
                 }
             }
             Text(
@@ -442,6 +466,13 @@ private const val SUCCESS_WASH_ALPHA = 0.18f
 
 /** Pure decisions of the sync screens, for unit tests. */
 internal object V5SyncRules {
+    /** What a failed scan offers; nothing while scanning or receiving. */
+    fun scanAction(status: V5SyncScanStatus): V5SyncScanAction? = when (status) {
+        V5SyncScanStatus.CodeExpired, V5SyncScanStatus.NotFound, V5SyncScanStatus.Failed -> V5SyncScanAction.Retry
+        V5SyncScanStatus.NoCamera -> V5SyncScanAction.OpenSettings
+        V5SyncScanStatus.Scanning, V5SyncScanStatus.Receiving -> null
+    }
+
     /** The camera runs only while there is a code to find. */
     fun showsViewfinder(status: V5SyncScanStatus): Boolean =
         status == V5SyncScanStatus.Scanning || status == V5SyncScanStatus.Receiving
