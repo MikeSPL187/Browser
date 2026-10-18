@@ -17,6 +17,10 @@ median and by up to 100 MB, and pull requests that touch no app code moved the b
 +75 MB, so the browser's threshold sits above that noise and the rounds went from two to three.
 What a further tab adds stayed between -21 and +8 MB on the small fixture page: below the noise,
 so it is reported but never flagged until a measurement that loads each tab replaces it.
+
+measure also keeps what the browser's number is made of: each Vola process's PSS and its
+`dumpsys meminfo <pid>` App Summary (Java heap, native heap, code, graphics...), so memory work can
+aim at the biggest part instead of guessing. compare prints it for the median round of each build.
 """
 
 from __future__ import annotations
@@ -40,12 +44,15 @@ PAGE_SETTLE_SECONDS = 8
 MEMORY_SETTLE_SECONDS = 25
 SAMPLES = 3
 
-PSS_LINE = re.compile(r"^\s*([\d,]+)K:\s+(\S+)\s+\(pid")
+PSS_LINE = re.compile(r"^\s*([\d,]+)K:\s+(\S+)\s+\(pid (\d+)")
+SUMMARY_LINE = re.compile(r"^\s*(Java Heap|Native Heap|Code|Stack|Graphics|Private Other|System):\s+([\d,]+)")
+# "Unknown" is left out: the App Summary gives it an RSS only, which the PSS column would misread.
+SUMMARY_PARTS = ("Java Heap", "Native Heap", "Code", "Graphics", "Stack", "Private Other", "System")
 
 
-def process_pss_kb(meminfo: str, package: str) -> int:
-    """Total PSS of [package]'s processes in the "Total PSS by process" part of `dumpsys meminfo`."""
-    total = 0
+def package_processes(meminfo: str, package: str) -> list[tuple[str, int, int]]:
+    """[package]'s processes as (name, pid, PSS kB), from the "Total PSS by process" part."""
+    processes = []
     in_section = False
     for line in meminfo.splitlines():
         if line.startswith("Total PSS by process"):
@@ -56,8 +63,30 @@ def process_pss_kb(meminfo: str, package: str) -> int:
                 break
             match = PSS_LINE.match(line)
             if match and (match.group(2) == package or match.group(2).startswith(package + ":")):
-                total += int(match.group(1).replace(",", ""))
-    return total
+                processes.append((match.group(2), int(match.group(3)), int(match.group(1).replace(",", ""))))
+    return processes
+
+
+def process_pss_kb(meminfo: str, package: str) -> int:
+    """Total PSS of [package]'s processes in the "Total PSS by process" part of `dumpsys meminfo`."""
+    return sum(pss for _, _, pss in package_processes(meminfo, package))
+
+
+def app_summary_kb(process_meminfo: str) -> dict[str, int]:
+    """The PSS column of the App Summary in `dumpsys meminfo <pid>`: Java heap, native heap, code..."""
+    summary: dict[str, int] = {}
+    in_summary = False
+    for line in process_meminfo.splitlines():
+        if line.strip() == "App Summary":
+            in_summary = True
+            continue
+        if in_summary:
+            match = SUMMARY_LINE.match(line)
+            if match:
+                summary[match.group(1)] = int(match.group(2).replace(",", ""))
+            elif line.strip().startswith("TOTAL"):
+                break
+    return summary
 
 
 def adb(*args: str) -> str:
@@ -78,14 +107,31 @@ def sample_pss_kb(package: str) -> float:
     return median(samples)
 
 
+def breakdown(package: str) -> list[dict]:
+    """What the browser's number is made of right now: each process's PSS and its App Summary, in MB."""
+    parts = []
+    for name, pid, pss in package_processes(adb("shell", "dumpsys", "meminfo"), package):
+        try:
+            summary = app_summary_kb(adb("shell", "dumpsys", "meminfo", str(pid)))
+        except subprocess.CalledProcessError:
+            summary = {}  # the process went away between the two calls
+        parts.append({
+            "process": name.removeprefix(package) or "main",
+            "pss_mb": round(pss / 1024, 1),
+            "summary_mb": {key: round(value / 1024, 1) for key, value in summary.items()},
+        })
+    return parts
+
+
 def measure(package: str, url: str, tabs: int) -> dict[str, float]:
     adb("shell", "am", "force-stop", package)
     open_link(package, f"{url}?tab=0")
     one_tab = sample_pss_kb(package)
+    parts = breakdown(package)
     for tab in range(1, tabs + 1):
         open_link(package, f"{url}?tab={tab}")
     all_tabs = sample_pss_kb(package)
-    return {"browser_mb": one_tab / 1024, "per_tab_mb": (all_tabs - one_tab) / tabs / 1024}
+    return {"browser_mb": one_tab / 1024, "per_tab_mb": (all_tabs - one_tab) / tabs / 1024, "processes": parts}
 
 
 def combined(paths: list[Path]) -> dict[str, float]:
@@ -94,6 +140,33 @@ def combined(paths: list[Path]) -> dict[str, float]:
     if not rounds:
         return {}
     return {key: median(round_[key] for round_ in rounds) for key in ("browser_mb", "per_tab_mb")}
+
+
+def median_round(paths: list[Path]) -> dict:
+    """The round whose browser number is the median of the build's rounds: its breakdown is typical."""
+    rounds = sorted((json.loads(path.read_text()) for path in paths if path.is_file()),
+                    key=lambda round_: round_["browser_mb"])
+    return rounds[(len(rounds) - 1) // 2] if rounds else {}
+
+
+def breakdown_lines(base: dict, head: dict) -> list[str]:
+    """What each build's one-page number is made of, process by process, for its median round."""
+    lines: list[str] = []
+    for title, round_ in (("This PR", head), ("Base", base)):
+        processes = round_.get("processes")
+        if not processes:
+            continue
+        lines += [
+            "",
+            f"#### What one page is made of — {title} (median round, MB)",
+            "",
+            "| Process | PSS | " + " | ".join(SUMMARY_PARTS) + " |",
+            "| --- | ---: | " + " | ".join("---:" for _ in SUMMARY_PARTS) + " |",
+        ]
+        for part in sorted(processes, key=lambda item: -item["pss_mb"]):
+            cells = " | ".join(fmt(part["summary_mb"].get(key)) for key in SUMMARY_PARTS)
+            lines.append(f"| {part['process']} | {part['pss_mb']:.1f} | {cells} |")
+    return lines
 
 
 def compare(base: dict[str, float], head: dict[str, float], approved: bool,
@@ -166,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     lines, errors, warnings = compare(combined(args.base), combined(args.head), args.approved, args.enforce)
+    lines += breakdown_lines(median_round(args.base), median_round(args.head))
     text = "\n".join(lines) + "\n"
     print(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")

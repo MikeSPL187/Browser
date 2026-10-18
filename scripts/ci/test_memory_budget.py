@@ -102,5 +102,51 @@ class MemoryBudgetTest(unittest.TestCase):
             self.assertIn("| browser with one page, MB | ≤ 250 | 200.0 | 201.0 | +1.0 |", output.getvalue())
 
 
+    def test_lists_each_process_with_its_pid(self):
+        self.assertEqual(
+            memory_budget.package_processes(MEMINFO, PACKAGE),
+            [(PACKAGE, 4100, 210_000), (f"{PACKAGE}:tab0", 4200, 150_500), (f"{PACKAGE}:gpu", 4300, 40_250)],
+        )
+
+    def test_reads_the_app_summary_of_one_process(self):
+        process = """\
+** MEMINFO in pid 4100 [io.github.mikespl187.vola.benchmark] **
+                   Pss  Private  Private
+ App Summary
+                       Pss(KB)                        Rss(KB)
+                        ------                         ------
+           Java Heap:    24,512                          40,000
+         Native Heap:    61,204                          63,000
+                Code:    48,000                          90,000
+               Stack:     1,200                           1,200
+            Graphics:    30,720                          30,720
+       Private Other:     5,000
+              System:    39,364
+             Unknown:                                    12,000
+
+           TOTAL PSS:   210,000            TOTAL RSS:   250,000
+"""
+        self.assertEqual(memory_budget.app_summary_kb(process), {
+            "Java Heap": 24_512, "Native Heap": 61_204, "Code": 48_000, "Stack": 1_200,
+            "Graphics": 30_720, "Private Other": 5_000, "System": 39_364,
+        })
+
+    def test_breakdown_is_printed_for_the_median_round_biggest_process_first(self):
+        with tempfile.TemporaryDirectory() as directory:
+            def round_(name, browser, main_pss):
+                path = Path(directory, name)
+                path.write_text(json.dumps({"browser_mb": browser, "per_tab_mb": 0.0, "processes": [
+                    {"process": ":tab0", "pss_mb": 100.0, "summary_mb": {"Java Heap": 20.0}},
+                    {"process": "main", "pss_mb": main_pss, "summary_mb": {"Native Heap": 60.0}},
+                ]}))
+                return path
+
+            rounds = [round_("a.json", 500.0, 300.0), round_("b.json", 400.0, 250.0), round_("c.json", 600.0, 350.0)]
+            lines = memory_budget.breakdown_lines({}, memory_budget.median_round(rounds))
+        text = "\n".join(lines)
+        self.assertIn("What one page is made of — This PR", text)
+        self.assertNotIn("— Base", text)
+        self.assertLess(text.index("| main | 300.0"), text.index("| :tab0 | 100.0"))
+
 if __name__ == "__main__":
     unittest.main()
