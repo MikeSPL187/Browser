@@ -2358,6 +2358,7 @@
     <string name="v5_password_health_insecure_form">форма отправляет пароль по http://</string>
     <string name="v5_password_health_check_leaks">Проверить утечки</string>
     <string name="v5_password_health_checking">Проверяем утечки… %1$d%%</string>
+    <string name="v5_password_health_stop">Остановить</string>
     <string name="v5_password_health_leaks">Утечки</string>
     <string name="v5_password_health_checked_at">Проверено в %1$s</string>
     <string name="v5_password_health_check_again">Проверить ещё раз</string>
@@ -2375,6 +2376,12 @@
         <item quantity="few">%d пароля требуют внимания</item>
         <item quantity="many">%d паролей требуют внимания</item>
         <item quantity="other">%d пароля требуют внимания</item>
+    </plurals>
+    <plurals name="v5_password_health_unchecked">
+        <item quantity="one">%d пароль ещё не проверен на утечки. Проверьте ещё раз.</item>
+        <item quantity="few">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="many">%d паролей ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="other">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
     </plurals>
     <plurals name="v5_password_finding_reused">
         <item quantity="one">Этот пароль повторяется ещё на %d сайте. Если один из них утечёт, откроются и другие.</item>
