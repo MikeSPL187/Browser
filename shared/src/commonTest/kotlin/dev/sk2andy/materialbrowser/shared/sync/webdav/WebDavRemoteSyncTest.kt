@@ -219,6 +219,32 @@ class WebDavRemoteSyncTest {
     }
 
     @Test
+    fun deletingTheServerDataWhileItCannotBeReachedKeepsThePhoneConnected() {
+        val phone = Phone("Pixel 8")
+        phone.connect()
+        val connected = phone.port.state
+        server.offline = true
+
+        var removed: Boolean? = null
+        phone.port.disconnect(deleteServerData = true) { removed = it }
+        runner.drain()
+
+        assertEquals(false, removed)
+        assertEquals(connected, phone.port.state)
+        assertNotNull(phone.store.account, "the app password stays, so the deletion can be asked again")
+        assertTrue(server.files.isNotEmpty())
+
+        server.offline = false
+        phone.port.disconnect(deleteServerData = true) { removed = it }
+        runner.drain()
+
+        assertEquals(true, removed)
+        assertEquals(RemoteSyncState(), phone.port.state)
+        assertNull(phone.store.account)
+        assertTrue(server.files.isEmpty())
+    }
+
+    @Test
     fun anUnreachableServerIsReportedAndChangesNothing() {
         val phone = Phone("Pixel 8").apply { library.bookmarks += LocalTransferBookmark("https://example.org/", "Example") }
         phone.connect()

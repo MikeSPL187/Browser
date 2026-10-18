@@ -175,6 +175,15 @@ object WebDavSyncFormat {
         )
     }.getOrNull()
 
+    /**
+     * Whether [json] is a header of a later format than [VERSION]: a newer Vola started the data,
+     * so this one must not read it as a wrong phrase and offer to delete it.
+     */
+    fun isNewerHeader(json: String): Boolean = runCatching {
+        require(json.length <= MAX_HEADER_CHARS)
+        parseStrictJsonObject(json).strictInt("v") > VERSION
+    }.getOrDefault(false)
+
     /** [record] sealed for its device file under [header]. */
     fun sealRecord(record: WebDavDeviceRecord, header: WebDavSyncHeader, key: ByteArray, crypto: WebDavSyncCrypto): String {
         require(isDeviceId(record.deviceId))
