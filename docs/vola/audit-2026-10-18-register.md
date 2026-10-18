@@ -91,7 +91,7 @@
 | S-05 | Низкий | дефект | N-17 | Перевод: ответ старого запроса затирает состояние нового | `browser/translation/OnDeviceTranslationController.kt` | — | открыто |
 | S-07 | Низкий | дефект | N-17 | Неверный адрес SearXNG тихо превращается в пустой | `browser/SearxngSettings.kt`, `BrowserController.kt` | — | отклонено: поле адреса в настройках уже пишет «адрес неверный» и не сохраняет его (SearchSettingsPage.kt:256–277); обнуляется только значение из импорта, и поиск тогда просит адрес (PR #464) |
 | S-08 | Низкий | решение | N-17 | Состояние ошибки без действия | `ui/CLAUDE.md` | — | открыто |
-| FR-03 | Низкий | дефект | N-18 | Гейт `motion` не видит корневые обёртки | `quality_gates.py`, `FirstRunOverlay.kt`, `BrowserModalSurfaces.kt`, `BrowserScreen.kt` | — | открыто |
+| FR-03 | Низкий | дефект | N-18 | Гейт `motion` не видит корневые обёртки | `quality_gates.py`, `FirstRunOverlay.kt`, `BrowserModalSurfaces.kt`, `BrowserScreen.kt` | — | в работе, PR #473 |
 | FR-05 | Низкий | дефект | N-18 | «Сделать основным» уходит дальше, не дождавшись ответа | — | — | в работе, PR #473 |
 | PH-06 | Низкий | дефект | N-18 | Пустое имя пользователя | `V5PasswordHealth.kt` | — | в работе, PR #463 |
 | PH-09 | Низкий | дефект | N-18 | Повторы считаются по строке `origin` | — | — | в работе, PR #462 |
