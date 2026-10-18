@@ -2885,12 +2885,29 @@ function extractCandyReaderPayload() {
       return rect.width >= 32 && rect.height >= 32 && rect.width * rect.height >= 4096;
     });
   })();
-  const source = document.querySelector("article") || document.querySelector("main") || document.body;
+  // The longest article: on a feed or a front page the first one is a teaser card, not the story.
+  const longestArticle = Array.from(document.querySelectorAll("article")).reduce(
+    (best, node) => (!best || (node.textContent || "").length > (best.textContent || "").length ? node : best),
+    null,
+  );
+  const source = longestArticle || document.querySelector("main") || document.body;
   if (!source) return { error: "missing-root", hasVisibleContent, visibleText };
   const root = source.cloneNode(true);
   root.querySelectorAll("script,style,noscript,template,iframe,object,embed,canvas,svg,form,input,button,nav,aside,footer,video,audio").forEach((node) => node.remove());
   const clean = (value, maxLength) => (value || "").replace(/[\u0000-\u001f\u007f]+/g, " ")
     .replace(/\s+/g, " ").trim().slice(0, maxLength);
+  // A detached clone has no layout, so its innerText is its textContent and «line 1<br>line 2»
+  // would run together: a line break and the edge of a block become a space instead.
+  const breaking = new Set([
+    "BR", "P", "DIV", "LI", "UL", "OL", "DL", "DT", "DD", "TR", "TD", "TH", "TABLE", "BLOCKQUOTE",
+    "SECTION", "HEADER", "FIGURE", "FIGCAPTION", "PRE", "H1", "H2", "H3", "H4", "H5", "H6",
+  ]);
+  const textOf = (node) => {
+    if (node.nodeType === 3) return node.textContent || "";
+    if (node.nodeType !== 1) return "";
+    const inner = Array.from(node.childNodes).map(textOf).join("");
+    return breaking.has(node.tagName.toUpperCase()) ? " " + inner + " " : inner;
+  };
   const blocks = [];
   let totalChars = 0;
   let totalLinks = 0;
@@ -2914,17 +2931,14 @@ function extractCandyReaderPayload() {
     if (blocks.length >= 600 || totalChars >= 500000) return;
     if (!isOwnBlock(node)) return;
     const content = blockContent(node);
-    const text = clean(
-      content.innerText || content.textContent,
-      Math.min(12000, 500000 - totalChars),
-    );
+    const text = clean(textOf(content), Math.min(12000, 500000 - totalChars));
     if (!text || text.length < 2) return;
     const tag = node.tagName.toLowerCase();
     const kind = tag.startsWith("h") ? "heading" : tag === "blockquote" ? "quote" :
       tag === "li" ? "listitem" : "paragraph";
     const links = Array.from(content.querySelectorAll("a[href]"))
       .slice(0, Math.min(40, 500 - totalLinks)).map((anchor) => ({
-        label: clean(anchor.innerText || anchor.textContent, 300),
+        label: clean(textOf(anchor), 300),
         url: (anchor.href || "").slice(0, 2048),
       }));
     blocks.push({

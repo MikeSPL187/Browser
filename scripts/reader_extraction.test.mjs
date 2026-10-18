@@ -32,6 +32,10 @@ class FakeText {
     this.parentElement = null;
   }
 
+  get nodeType() {
+    return 3;
+  }
+
   get textContent() {
     return this.text;
   }
@@ -53,6 +57,10 @@ class FakeElement {
   append(child) {
     child.parentElement = this;
     this.childNodes.push(child);
+  }
+
+  get nodeType() {
+    return 1;
   }
 
   get id() {
@@ -120,13 +128,14 @@ class FakeElement {
 
 const h = (tag, attributes, ...children) => new FakeElement(tag, attributes, children);
 
-function pageContext(article) {
-  const body = h("body", {}, article);
+function pageContext(...content) {
+  const body = h("body", {}, ...content);
   const html = h("html", {}, body);
   const document = {
     body,
     title: "Nested article",
     querySelector: (selector) => html.querySelector(selector),
+    querySelectorAll: (selector) => html.querySelectorAll(selector),
   };
   return vm.createContext({
     document,
@@ -135,14 +144,14 @@ function pageContext(article) {
   });
 }
 
-function extractWithGecko(article) {
-  const context = pageContext(article);
+function extractWithGecko(...content) {
+  const context = pageContext(...content);
   vm.runInContext(`function extractCandyReaderPayload() {${geckoExtractor}`, context);
   return vm.runInContext("extractCandyReaderPayload()", context);
 }
 
-function extractWithWebView(article) {
-  return JSON.parse(vm.runInContext(webViewExtractor, pageContext(article)));
+function extractWithWebView(...content) {
+  return JSON.parse(vm.runInContext(webViewExtractor, pageContext(...content)));
 }
 
 const nestedArticle = () => h(
@@ -199,7 +208,35 @@ for (const [engine, extract] of [["Gecko", extractWithGecko], ["System WebView",
 
     assert.deepEqual(
       JSON.parse(JSON.stringify(extract(article).blocks)),
-      [{ kind: "quote", level: 0, text: "Quoted outerQuoted inner", links: [] }],
+      [{ kind: "quote", level: 0, text: "Quoted outer Quoted inner", links: [] }],
+    );
+  });
+
+  test(`${engine} reader extraction keeps a space where the page breaks a line or a block`, () => {
+    const article = h(
+      "article",
+      {},
+      h("p", {}, "Line one", h("br", {}), "line two"),
+      h("blockquote", {}, h("div", {}, "First verse"), h("div", {}, "second verse")),
+    );
+
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(extract(article).blocks.map((block) => block.text))),
+      ["Line one line two", "First verse second verse"],
+    );
+  });
+
+  test(`${engine} reader extraction reads the longest article, not a teaser before it`, () => {
+    const teaser = h("article", {}, h("p", {}, "A teaser card for another story."));
+    const story = h(
+      "article",
+      {},
+      h("p", {}, "The story itself, with more text than any teaser on the page around it."),
+    );
+
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(extract(teaser, story).blocks.map((block) => block.text))),
+      ["The story itself, with more text than any teaser on the page around it."],
     );
   });
 }
