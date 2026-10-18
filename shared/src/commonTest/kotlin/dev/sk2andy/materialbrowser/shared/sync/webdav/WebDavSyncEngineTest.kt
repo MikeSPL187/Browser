@@ -161,6 +161,38 @@ class WebDavSyncEngineTest {
     }
 
     @Test
+    fun aHeaderOfANewerVolaAsksForAnUpdateNotForThePhrase() {
+        Phone("A")
+        server.write("${server.root}Vola/vola.json", "{\"v\":2,\"space\":\"x\",\"kdf\":{},\"next\":true}")
+
+        assertEquals(
+            WebDavConnectOutcome.Failed(RemoteSyncFailure.NewerFormat),
+            engine.connect(ADDRESS, LOGIN, PASSWORD, PHRASE.encodeToByteArray(), "b".repeat(22)),
+        )
+    }
+
+    @Test
+    fun whatTheServerAnswersIsToldApart() {
+        val phone = Phone("A").apply { bookmarks += LocalTransferBookmark("https://example.org/", "Example") }
+
+        server.answer = { if (it.method == "PUT") WebDavResponse(507) else null }
+        assertEquals(RemoteSyncFailure.ServerFull, phone.sync())
+        server.answer = { if (it.method == "PUT") WebDavResponse(423) else null }
+        assertEquals(RemoteSyncFailure.ServerBusy, phone.sync())
+        server.answer = { WebDavResponse(429) }
+        assertEquals(RemoteSyncFailure.ServerBusy, phone.sync())
+        server.answer = { WebDavResponse(503) }
+        assertEquals(RemoteSyncFailure.ServerBusy, phone.sync())
+        server.answer = { WebDavResponse(500) }
+        assertEquals(RemoteSyncFailure.ServerError, phone.sync())
+        server.answer = { WebDavResponse(404) }
+        assertEquals(RemoteSyncFailure.FolderNotFound, phone.sync())
+        server.answer = { null }
+        assertNull(phone.sync())
+        assertEquals(1, phone.bookmarks.size)
+    }
+
+    @Test
     fun connectionProblemsAreToldApart() {
         fun connect(address: String = ADDRESS, password: String = PASSWORD, transport: WebDavTransport = server) =
             WebDavSyncEngine(transport, crypto).connect(address, LOGIN, password, PHRASE.encodeToByteArray(), "c".repeat(22))

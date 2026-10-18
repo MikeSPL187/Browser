@@ -56,6 +56,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5SyncScan
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncScanStatus
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncServerActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettings
+import dev.sk2andy.materialbrowser.ui.v5.V5WebDavDeleteFailedSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavDisconnectSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavPhraseMismatch
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavStartOverSheet
@@ -88,6 +89,7 @@ internal fun BrowserSyncSettingsV5(
     var mismatchHost by rememberSaveable { mutableStateOf("") }
     var disconnectAsked by remember { mutableStateOf(false) }
     var startOverAsked by remember { mutableStateOf(false) }
+    var deleteFailedHost by remember { mutableStateOf<String?>(null) }
     var sent by rememberSaveable { mutableStateOf(false) }
     var done by remember { mutableStateOf<BrowserSyncRules.Applied?>(null) }
     var undoFailed by remember { mutableStateOf(false) }
@@ -197,9 +199,21 @@ internal fun BrowserSyncSettingsV5(
         },
         onDisconnectAndDelete = {
             disconnectAsked = false
-            remote.port.disconnect(deleteServerData = true) {}
+            val host = remote.state.server.orEmpty()
+            remote.port.disconnect(deleteServerData = true) { deleted -> if (!deleted) deleteFailedHost = host }
         },
         onDismiss = { disconnectAsked = false },
+    )
+    // The server was not reached: its data stays, and so does the connection, for another try.
+    V5WebDavDeleteFailedSheet(
+        visible = deleteFailedHost != null,
+        host = deleteFailedHost.orEmpty(),
+        onRetry = {
+            val host = deleteFailedHost.orEmpty()
+            deleteFailedHost = null
+            remote.port.disconnect(deleteServerData = true) { deleted -> if (!deleted) deleteFailedHost = host }
+        },
+        onDismiss = { deleteFailedHost = null },
     )
     V5WebDavStartOverSheet(
         visible = startOverAsked,
