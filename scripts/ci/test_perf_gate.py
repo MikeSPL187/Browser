@@ -116,5 +116,21 @@ class PerfGateTest(unittest.TestCase):
             self.assertIn("| scrollLongPage | frame CPU time, P90 ms | 5.8 | 5.8 | +0.0 |", output.getvalue())
 
 
+    def test_startup_steps_are_reported_slowest_first_without_gating(self):
+        # What load() returns: {benchmark: {metric: runs}}.
+        base = {"coldStart": {"timeToInitialDisplayMs": [500, 510], "Vola.Startup.LoadTabsSumMs": [20.0, 22.0]}}
+        head = {"coldStart": {"timeToInitialDisplayMs": [500, 510], "Vola.Startup.LoadTabsSumMs": [21.0, 23.0],
+                              "Vola.Startup.GeckoRuntimeCreateSumMs": [180.0, 200.0]}}
+        lines = perf_gate.step_lines(base, head)
+        text = "\n".join(lines)
+        self.assertIn("| GeckoRuntimeCreate | — | 190.0 |", text)
+        self.assertIn("| LoadTabs | 21.0 | 22.0 |", text)
+        self.assertLess(text.index("GeckoRuntimeCreate"), text.index("LoadTabs"))
+        self.assertEqual(perf_gate.step_name("Vola.Startup.LoadTabsMs"), "LoadTabs")
+        self.assertIsNone(perf_gate.step_name("timeToInitialDisplayMs"))
+
+    def test_no_steps_no_table(self):
+        self.assertEqual(perf_gate.step_lines({}, {}), [])
+
 if __name__ == "__main__":
     unittest.main()
