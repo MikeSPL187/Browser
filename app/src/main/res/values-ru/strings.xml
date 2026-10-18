@@ -2376,6 +2376,12 @@
         <item quantity="many">%d паролей требуют внимания</item>
         <item quantity="other">%d пароля требуют внимания</item>
     </plurals>
+    <plurals name="v5_password_health_unchecked">
+        <item quantity="one">%d пароль ещё не проверен на утечки. Проверьте ещё раз.</item>
+        <item quantity="few">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="many">%d паролей ещё не проверены на утечки. Проверьте ещё раз.</item>
+        <item quantity="other">%d пароля ещё не проверены на утечки. Проверьте ещё раз.</item>
+    </plurals>
     <plurals name="v5_password_finding_reused">
         <item quantity="one">Этот пароль повторяется ещё на %d сайте. Если один из них утечёт, откроются и другие.</item>
         <item quantity="few">Этот пароль повторяется ещё на %d сайтах. Если один из них утечёт, откроются и другие.</item>

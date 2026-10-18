@@ -28,6 +28,47 @@ class PasswordHealthRulesTest {
     }
 
     @Test
+    fun loginsWithoutAPasswordRepeatNothingAndAreShortNotLettersOnly() {
+        val report = PasswordHealthRules.report(
+            listOf(login("a", "https://a.example", ""), login("b", "https://b.example", ""), login("c", "https://c.example", "")),
+            breaches = emptyMap(),
+        )
+
+        assertTrue(report.reused.isEmpty())
+        assertEquals(List(3) { WeakPasswordKind.Short }, report.weak.map { it.kind })
+        assertEquals(List(3) { 0 }, report.weak.map { it.length })
+    }
+
+    @Test
+    fun aSiteAndItsWwwAreOneSiteForRepeats() {
+        val report = PasswordHealthRules.report(
+            listOf(
+                login("bare", "https://example.com", "Same-Strong-Pass-42!"),
+                login("www", "https://WWW.example.com/", "Same-Strong-Pass-42!"),
+            ),
+            breaches = emptyMap(),
+        )
+
+        assertTrue(report.reused.isEmpty())
+    }
+
+    @Test
+    fun theV5CountIncludesPlainHttpLoginsOnce() {
+        val report = PasswordHealthRules.report(
+            listOf(
+                login("http-weak", "http://shop.example.com", "sunshine"),
+                login("http-strong", "http://news.example.com", "kV7#qe2Lm!Tz9pWf"),
+                login("fine", "https://bank.example.com", "Tr0ub4dor&3-horse!"),
+            ),
+            breaches = emptyMap(),
+        )
+
+        assertEquals(1, report.needsAttention)
+        assertEquals(2, report.attentionWithInsecure)
+        assertEquals(setOf("http-weak"), report.attentionIds(withInsecure = false))
+    }
+
+    @Test
     fun passwordsSentOverPlainHttpAreListedApartFromTheOtherSections() {
         val report = PasswordHealthRules.report(
             listOf(

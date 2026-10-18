@@ -79,6 +79,7 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportResultScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportSource
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
+import dev.sk2andy.materialbrowser.browser.credentials.LeakAnswers
 import dev.sk2andy.materialbrowser.browser.credentials.PwnedPasswordCheck
 import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
@@ -171,7 +172,9 @@ internal class PasswordsViewModel : ViewModel() {
 
     /** Share of hash prefixes the running leak check has answered, 0 to 1. */
     var leakProgress by mutableFloatStateOf(0f)
-    var breaches by mutableStateOf<Map<String, Int>>(emptyMap())
+
+    /** Times seen in leaks by password hash, 0 for clean ([LeakAnswers]); never written to disk. */
+    var leakAnswers by mutableStateOf<Map<String, Int>>(emptyMap())
 
     /** When the last leak check finished, for «Checked at» under v5. */
     var leakCheckedAt by mutableStateOf<Long?>(null)
@@ -260,6 +263,7 @@ class PasswordsActivity : FragmentActivity() {
             importFrom(pending.files)
         }
         val logins = remember(model.revision, lockGeneration, route) { vault.allLogins() }
+        val breaches = remember(logins, model.leakAnswers) { LeakAnswers.breaches(logins, model.leakAnswers) }
         val message = model.message?.let { stringResource(it) }
         // Canvas «ц4»–«ц7»: on the phone under v5 the vault's pages are v5 (the tablet keeps these).
         val v5 = rememberSettingsUiV5()
@@ -314,8 +318,8 @@ class PasswordsActivity : FragmentActivity() {
                     onBack = ::finish,
                     systemFillNote = systemFillOnly,
                     passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
-                    healthIssues = remember(logins, model.breaches) {
-                        PasswordHealthRules.report(logins, model.breaches).needsAttention
+                    healthIssues = remember(logins, breaches) {
+                        PasswordHealthRules.report(logins, breaches).attentionWithInsecure
                     },
                     onHealth = { use { model.route = PasswordsRoute.Health } },
                     onImport = {
@@ -335,8 +339,8 @@ class PasswordsActivity : FragmentActivity() {
                 onBack = ::finish,
                 systemFillNote = systemFillOnly,
                 passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
-                healthIssues = remember(logins, model.breaches) {
-                    PasswordHealthRules.report(logins, model.breaches).needsAttention
+                healthIssues = remember(logins, breaches) {
+                    PasswordHealthRules.report(logins, breaches).needsAttention
                 },
                 onHealth = { use { model.route = PasswordsRoute.Health } },
                 onImport = {
@@ -363,12 +367,11 @@ class PasswordsActivity : FragmentActivity() {
                 PasswordImportGuideScreen(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
             }
             is PasswordsRoute.ImportDone -> {
-                val healthIssues = remember(logins, model.breaches, route.report) {
+                val healthIssues = remember(logins, breaches, route.report, v5) {
                     val added = route.report.addedIds.toSet()
-                    val report = PasswordHealthRules.report(logins, model.breaches)
-                    (report.breached.map { it.login.id } + report.reused.map { it.login.id } + report.weak.map { it.login.id })
-                        .distinct()
-                        .count { it in added }
+                    val report = PasswordHealthRules.report(logins, breaches)
+                    // The v5 check counts plain-HTTP logins too; the count here matches the page it opens.
+                    report.attentionIds(withInsecure = v5).count { it in added }
                 }
                 val onCheck = { use { model.route = PasswordsRoute.Health } }
                 if (v5) {
@@ -399,7 +402,8 @@ class PasswordsActivity : FragmentActivity() {
             PasswordsRoute.Health -> if (rememberSettingsUiV5()) {
                 PasswordHealthV5(
                     logins = logins,
-                    breaches = model.breaches,
+                    breaches = breaches,
+                    unchecked = remember(logins, model.leakAnswers) { LeakAnswers.unchecked(logins, model.leakAnswers) },
                     leakCheck = model.leakStatus,
                     leakProgress = model.leakProgress,
                     checkedAt = model.leakCheckedAt,
@@ -410,7 +414,7 @@ class PasswordsActivity : FragmentActivity() {
             } else {
                 LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
                 PasswordHealthScreen(
-                    report = remember(logins, model.breaches) { PasswordHealthRules.report(logins, model.breaches) },
+                    report = remember(logins, breaches) { PasswordHealthRules.report(logins, breaches) },
                     leakCheck = model.leakStatus,
                     leakProgress = model.leakProgress,
                     onLeakCheckChange = { on -> setLeakCheck(on, logins) },
@@ -421,7 +425,7 @@ class PasswordsActivity : FragmentActivity() {
             }
             is PasswordsRoute.HealthFinding -> PasswordFindingV5(
                 logins = logins,
-                breaches = model.breaches,
+                breaches = breaches,
                 loginId = route.id,
                 kind = route.kind,
                 onChange = { login -> use { openChangePassword(login.origin) } },
@@ -526,7 +530,7 @@ class PasswordsActivity : FragmentActivity() {
             checkLeaks(logins)
         } else {
             model.leakStatus = LeakCheckStatus.Off
-            model.breaches = emptyMap()
+            model.leakAnswers = emptyMap()
         }
     }
 
@@ -538,7 +542,8 @@ class PasswordsActivity : FragmentActivity() {
         lifecycleScope.launch {
             val result = passwordCheck.checkLeaks(logins) { progress -> model.leakProgress = progress.fraction }
             if (model.leakStatus != LeakCheckStatus.Checking) return@launch
-            model.breaches = result.breaches
+            // Merged, not replaced: a prefix without an answer this time keeps the answer it had.
+            model.leakAnswers = LeakAnswers.record(model.leakAnswers, logins, result)
             model.leakStatus = if (result.complete) LeakCheckStatus.Done else LeakCheckStatus.Failed
             if (result.complete) model.leakCheckedAt = System.currentTimeMillis()
         }
@@ -815,7 +820,7 @@ class PasswordsActivity : FragmentActivity() {
             model.deviceKeyLost = false
             model.pendingImport = null
             model.leakStatus = LeakCheckStatus.Off
-            model.breaches = emptyMap()
+            model.leakAnswers = emptyMap()
             model.message = null
             model.revision++
             model.route = PasswordsRoute.Intro

@@ -26,6 +26,7 @@ import java.util.Date
 internal fun PasswordHealthV5(
     logins: List<VaultLogin>,
     breaches: Map<String, Int>,
+    unchecked: Int,
     leakCheck: LeakCheckStatus,
     leakProgress: Float,
     checkedAt: Long?,
@@ -42,6 +43,7 @@ internal fun PasswordHealthV5(
             leakCheck = leakCheck.toV5(),
             leakProgress = leakProgress,
             checkedAt = checkedAt?.let { DateFormat.getTimeFormat(context).format(Date(it)) },
+            unchecked = unchecked,
         ),
         actions = V5PasswordHealthActions(onBack = onBack, onFinding = onFinding, onCheckLeaks = onCheckLeaks),
     )

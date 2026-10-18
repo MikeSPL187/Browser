@@ -18,8 +18,9 @@ data class InsecureLogin(val login: VaultLogin, val formOnly: Boolean)
 /**
  * What the password check found. A login shows in one section only, the most urgent one: leaks,
  * then repeats, then weak passwords. [insecure] stands apart, since a new password does not fix
- * it: every login sent over plain HTTP, whatever its other sections. It is not counted in
- * [needsAttention] until the screen has a section for it.
+ * it: every login sent over plain HTTP, whatever its other sections. [needsAttention] leaves it
+ * out for the screen without a section for it; [attentionWithInsecure] counts it, as the v5 check
+ * does, so its entry and its page say the same number.
  */
 data class PasswordHealthReport(
     val total: Int,
@@ -29,6 +30,16 @@ data class PasswordHealthReport(
     val insecure: List<InsecureLogin> = emptyList(),
 ) {
     val needsAttention: Int get() = breached.size + reused.size + weak.size
+
+    /** Logins needing attention, each once; plain-HTTP ones too when [withInsecure]. */
+    fun attentionIds(withInsecure: Boolean): Set<String> = buildSet {
+        breached.mapTo(this) { it.login.id }
+        reused.mapTo(this) { it.login.id }
+        weak.mapTo(this) { it.login.id }
+        if (withInsecure) insecure.mapTo(this) { it.login.id }
+    }
+
+    val attentionWithInsecure: Int get() = attentionIds(withInsecure = true).size
     val fine: Int get() = total - needsAttention
 
     /** Share of logins that are fine, in whole percent; 100 with no logins. */
@@ -51,11 +62,12 @@ object PasswordHealthRules {
             breaches[login.id]?.takeIf { it > 0 }?.let { BreachedLogin(login, it) }
         }
         val flagged = breached.mapTo(mutableSetOf()) { it.login.id }
-        val sitesByPassword = logins.groupBy(VaultLogin::password).mapValues { (_, same) ->
-            same.mapTo(mutableSetOf(), VaultLogin::origin).size
-        }
+        // A login without a password repeats nothing; example.com and www.example.com are one site.
+        val sitesByPassword = logins.filter { it.password.isNotEmpty() }
+            .groupBy(VaultLogin::password)
+            .mapValues { (_, same) -> same.mapTo(mutableSetOf()) { siteKey(it.origin) }.size }
         val reused = logins.mapNotNull { login ->
-            val sites = sitesByPassword.getValue(login.password)
+            val sites = sitesByPassword[login.password] ?: 0
             if (login.id in flagged || sites < 2) null else ReusedLogin(login, otherSites = sites - 1)
         }
         flagged += reused.map { it.login.id }
@@ -97,6 +109,7 @@ object PasswordHealthRules {
         PasswordGeneratorRules.strength(PasswordGeneratorRules.estimatedBits(password)) < PasswordStrength.Strong
 
     fun weakKind(password: String): WeakPasswordKind = when {
+        password.isEmpty() -> WeakPasswordKind.Short
         password.all(Char::isLetter) -> WeakPasswordKind.LettersOnly
         password.all(Char::isDigit) -> WeakPasswordKind.DigitsOnly
         password.length < MIN_LENGTH -> WeakPasswordKind.Short
@@ -115,6 +128,14 @@ object PasswordHealthRules {
             ?.substringAfter(':')
             ?.toIntOrNull()
             ?: 0
+    }
+
+    /** [origin] as one site for repeats: lower case, without a leading `www.`. */
+    fun siteKey(origin: String): String {
+        val trimmed = origin.trim().trimEnd('/').lowercase()
+        val scheme = trimmed.substringBefore("://", missingDelimiterValue = "")
+        val rest = trimmed.substringAfter("://")
+        return scheme + "://" + rest.removePrefix("www.")
     }
 
     /** The site's own «change password» page (W3C well-known URL). */

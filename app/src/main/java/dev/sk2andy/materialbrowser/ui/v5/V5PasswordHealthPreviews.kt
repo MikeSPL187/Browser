@@ -62,3 +62,15 @@ private fun V5PasswordHealthAllFineLightPreview() {
 private fun V5PasswordHealthAllFineDarkPreview() {
     VolaV5Theme(dark = true) { V5PasswordHealth(AllFine.copy(leakCheck = V5LeakCheck.Failed), NoActions) }
 }
+
+@Preview(name = "All good, a changed password unchecked · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PasswordHealthUncheckedLightPreview() {
+    VolaV5Theme(dark = false) { V5PasswordHealth(AllFine.copy(unchecked = 1), NoActions) }
+}
+
+@Preview(name = "All good, passwords unchecked · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PasswordHealthUncheckedDarkPreview() {
+    VolaV5Theme(dark = true) { V5PasswordHealth(AllFine.copy(unchecked = 3), NoActions) }
+}

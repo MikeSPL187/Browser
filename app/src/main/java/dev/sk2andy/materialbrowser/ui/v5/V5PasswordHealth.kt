@@ -73,7 +73,10 @@ data class V5PasswordFinding(
 /** Where the leak check is: only ever started by a touch (canvas «у1»). */
 enum class V5LeakCheck { NotChecked, Checking, Done, Failed }
 
-/** The whole check: [checkedAt] is the time of the last finished leak check, as the clock shows it. */
+/**
+ * The whole check: [checkedAt] is the time of the last finished leak check, as the clock shows it;
+ * [unchecked] counts passwords no leak check has answered for, as one changed since.
+ */
 @Immutable
 data class V5PasswordHealthState(
     val total: Int,
@@ -81,6 +84,7 @@ data class V5PasswordHealthState(
     val leakCheck: V5LeakCheck,
     val leakProgress: Float = 0f,
     val checkedAt: String? = null,
+    val unchecked: Int = 0,
 )
 
 class V5PasswordHealthActions(
@@ -118,7 +122,8 @@ fun V5PasswordHealth(
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),
         ) {
             val attention = V5PasswordHealthRules.attention(state.findings)
-            if (attention == 0) AllFine(state.leakCheck == V5LeakCheck.Done) else Summary(attention, state.total)
+            val leaksChecked = state.leakCheck == V5LeakCheck.Done && state.unchecked == 0
+            if (attention == 0) AllFine(leaksChecked) else Summary(attention, state.total)
             V5PasswordHealthRules.sections(state.findings).forEach { (kind, findings) ->
                 Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
                     SectionHeader("${stringResource(kind.title())} · ${findings.size}")
@@ -351,6 +356,15 @@ private fun LeakCheck(state: V5PasswordHealthState, onCheck: () -> Unit) {
                     )
                 }
             }
+        }
+        val checked = state.leakCheck == V5LeakCheck.Done || state.leakCheck == V5LeakCheck.Failed
+        if (checked && state.unchecked > 0) {
+            Text(
+                pluralStringResource(R.plurals.v5_password_health_unchecked, state.unchecked, state.unchecked),
+                style = V5Theme.type.footnote,
+                color = colors.label,
+                modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4),
+            )
         }
         if (state.leakCheck == V5LeakCheck.Failed) {
             Text(

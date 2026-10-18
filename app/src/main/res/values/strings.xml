@@ -2272,6 +2272,10 @@
         <item quantity="one">%d password needs attention</item>
         <item quantity="other">%d passwords need attention</item>
     </plurals>
+    <plurals name="v5_password_health_unchecked">
+        <item quantity="one">%d password is not checked for leaks yet. Check again.</item>
+        <item quantity="other">%d passwords are not checked for leaks yet. Check again.</item>
+    </plurals>
     <plurals name="v5_password_finding_reused">
         <item quantity="one">This password repeats on %d other site. If one of them leaks, the other opens too.</item>
         <item quantity="other">This password repeats on %d other sites. If one of them leaks, the others open too.</item>
