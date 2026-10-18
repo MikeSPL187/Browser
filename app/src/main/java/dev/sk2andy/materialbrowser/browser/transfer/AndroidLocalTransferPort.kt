@@ -25,6 +25,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * [LocalTransferPort] on plain sockets in the phone's Wi-Fi (V26). An offer binds an ephemeral
@@ -39,8 +40,14 @@ internal class AndroidLocalTransferPort(
     private val postToMain: (() -> Unit) -> Unit = mainThreadPoster(),
     /** The socket address behind a code's host; tests map the private address to loopback. */
     private val socketAddress: (String) -> InetAddress = InetAddress::getByName,
-    /** A socket for the receiving side, bound to the Wi-Fi so a VPN cannot carry the request elsewhere. */
-    private val clientSocket: () -> Socket = ::Socket,
+    /**
+     * A socket for the receiving side, bound to the Wi-Fi so a VPN cannot carry the request
+     * elsewhere; null when there is no Wi-Fi network to bind it to. Called off the main thread, and
+     * it may throw [IOException] when the network goes away while the socket is bound.
+     */
+    private val clientSocket: () -> Socket? = ::Socket,
+    /** How long one connection may take to send its request, in all; tests shorten it. */
+    private val requestBudgetMillis: Int = REQUEST_BUDGET_MILLIS,
 ) : LocalTransferPort {
     override fun offer(payload: LocalTransferPayload, onState: (LocalTransferOfferState) -> Unit): LocalTransferHandle {
         val address = localAddress()?.hostAddress?.takeIf(LocalTransferPairingRules::isLocalHost)
@@ -86,15 +93,24 @@ internal class AndroidLocalTransferPort(
             return LocalTransferHandle.Done
         }
         val cancelled = AtomicBoolean(false)
-        val socket = clientSocket()
+        val socketInUse = AtomicReference<Socket?>(null)
         Thread({
-            val result = runCatching { fetch(socket, pairing) }
-                .getOrElse { LocalTransferReceiveResult.Failed(LocalTransferFailure.Corrupt) }
+            val result = runCatching {
+                val socket = try {
+                    clientSocket()
+                } catch (_: IOException) {
+                    null
+                } ?: return@runCatching LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable)
+                socketInUse.set(socket)
+                // Cancelled while the socket was being made: nobody closed it yet.
+                if (cancelled.get()) runCatching { socket.close() }
+                fetch(socket, pairing)
+            }.getOrElse { LocalTransferReceiveResult.Failed(LocalTransferFailure.Corrupt) }
             postToMain { if (!cancelled.get()) onResult(result) }
         }, "vola-transfer-receive").apply { isDaemon = true }.start()
         return LocalTransferHandle {
             cancelled.set(true)
-            runCatching { socket.close() }
+            runCatching { socketInUse.get()?.close() }
         }
     }
 
@@ -119,7 +135,10 @@ internal class AndroidLocalTransferPort(
                 val reply = connection.use { client ->
                     runCatching {
                         client.soTimeout = IO_TIMEOUT_MILLIS
-                        val request = LocalTransferHttp.readRequest(client.getInputStream(), LocalTransferProtocol.MAX_REQUEST_CHARS)
+                        val request = LocalTransferHttp.readRequest(
+                            DeadlineSocketInput(client, requestBudgetMillis),
+                            LocalTransferProtocol.MAX_REQUEST_CHARS,
+                        )
                         offer.answer(request).also { LocalTransferHttp.writeResponse(client.getOutputStream(), it.status, it.body) }
                     }.getOrNull()
                 } ?: when (offer.outcome) {
@@ -146,7 +165,7 @@ internal class AndroidLocalTransferPort(
                 socket.connect(InetSocketAddress(socketAddress(pairing.host), pairing.port), IO_TIMEOUT_MILLIS)
                 socket.soTimeout = IO_TIMEOUT_MILLIS
                 LocalTransferHttp.writeRequest(socket.getOutputStream(), pairing.host, pairing.port, LocalTransferProtocol.path(pairing), request.body)
-                LocalTransferHttp.readResponse(socket.getInputStream(), LocalTransferProtocol.MAX_RESPONSE_CHARS)
+                LocalTransferHttp.readResponse(DeadlineSocketInput(socket, RESPONSE_BUDGET_MILLIS), LocalTransferProtocol.MAX_RESPONSE_CHARS)
             }
         } catch (_: IOException) {
             return LocalTransferReceiveResult.Failed(LocalTransferFailure.Unreachable)
@@ -171,6 +190,12 @@ internal class AndroidLocalTransferPort(
         private const val ACCEPT_POLL_MILLIS = 500
         private const val IO_TIMEOUT_MILLIS = 5_000
 
+        /** All the time a stranger's connection gets to send its request: a request is a few hundred bytes. */
+        private const val REQUEST_BUDGET_MILLIS = 5_000
+
+        /** All the time a sender gets to answer, whatever it trickles: the payload is at most 16 MB on the Wi-Fi. */
+        private const val RESPONSE_BUDGET_MILLIS = 30_000
+
         /** Whether [code] is a well-formed offer whose time has run out, to tell that apart from a bad code. */
         internal fun isExpired(code: String, nowEpochSeconds: Long): Boolean {
             val expires = code.substringAfter("&e=", missingDelimiterValue = "").substringBefore('&').toLongOrNull() ?: return false
@@ -182,7 +207,11 @@ internal class AndroidLocalTransferPort(
                 ?: return LocalTransferPort.Unavailable
             return AndroidLocalTransferPort(
                 localAddress = { wifiAddress(connectivity) },
-                clientSocket = { Socket().also { socket -> wifiNetwork(connectivity)?.bindSocket(socket) } },
+                clientSocket = {
+                    // Without a Wi-Fi network the request would leave through the default route, a VPN
+                    // among them, to an address that only a code decided: so there is no socket then.
+                    wifiNetwork(connectivity)?.let { network -> Socket().also { socket -> network.bindSocket(socket) } }
+                },
             )
         }
 

@@ -79,8 +79,10 @@ jobs:
         run: go test -race -count=1 ./...
 
       # The version is pinned: a scanner that changes under the build is a supply-chain risk of its own.
+      # It must still understand the server image's Go: v1.1.4 bundles x/tools v0.29.0, whose SSA
+      # builder panics on the Go 1.27 standard library. Raise it together with the image's Go.
       - name: Known vulnerabilities in dependencies
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   extension:
     name: Extension (TypeScript)

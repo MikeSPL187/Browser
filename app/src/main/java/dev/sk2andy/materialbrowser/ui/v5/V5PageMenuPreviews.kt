@@ -91,3 +91,16 @@ private fun V5PageMenuNewTabPreview() {
         )
     }
 }
+
+/** A profile of another device: no private tab there, so no row for it. */
+@Preview(name = "Page menu · no private tab · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuNoPrivateLightPreview() {
+    VolaV5Theme(dark = false) { MenuPreview(PageState.copy(canNewPrivateTab = false)) }
+}
+
+@Preview(name = "Page menu · no private tab · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuNoPrivateDarkPreview() {
+    VolaV5Theme(dark = true) { MenuPreview(PageState.copy(canNewPrivateTab = false)) }
+}

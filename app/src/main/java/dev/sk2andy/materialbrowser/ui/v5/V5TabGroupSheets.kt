@@ -13,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -50,6 +51,11 @@ fun V5TabGroupMoveSheet(
     onNewGroup: () -> Unit,
     onRemoveFromGroup: () -> Unit,
     onDismiss: () -> Unit,
+    /**
+     * Null while a new group can be made; else the most groups a profile holds. «New group» is then
+     * off and says so before a name is typed, not with a lone vibration after «Save».
+     */
+    groupLimit: Int? = null,
 ) {
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = stringResource(R.string.v5_group_move_title)) {
         V5SheetHeader(
@@ -84,7 +90,9 @@ fun V5TabGroupMoveSheet(
             V5ListGroup {
                 V5ListRow(
                     title = stringResource(R.string.v5_group_new),
+                    subtitle = groupLimit?.let { limit -> pluralStringResource(R.plurals.v5_group_limit, limit, limit) },
                     icon = V5RowIcon(VolaIcons.Add),
+                    enabled = groupLimit == null,
                     onClick = onNewGroup,
                     modifier = Modifier.testTag(V5TabGroupSheetTestTags.NewGroup),
                 )

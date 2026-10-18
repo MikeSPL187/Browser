@@ -400,6 +400,27 @@ class CandySyncRepositoryTest {
         }
     }
 
+    @Test
+    fun `a realtime connection that is made while the repository closes is closed too`() {
+        val transport = FakeTransport(deviceRecord(), crypto).apply {
+            deltaMode = true
+            realtimeMode = true
+        }
+        val cacheStore = MemoryCacheStore(
+            SyncCache("epoch.0", mapOf(profile.deviceId to profile), deltaCursor = "epoch.0"),
+        )
+        val repository = repository(transport, cacheStore)
+        // The host closes the repository from its own thread while the sync thread is still making
+        // the connection: the connection then arrives after the close and nobody holds it.
+        transport.onRealtimeConnect = { repository.close() }
+
+        repository.startRealtime()
+
+        await { transport.realtimeConnects == 1 }
+        await { transport.realtimeCloses == 1 }
+        assertEquals(1, transport.realtimeCloses)
+    }
+
     private fun repository(
         transport: FakeTransport,
         cacheStore: MemoryCacheStore,
@@ -504,6 +525,9 @@ class CandySyncRepositoryTest {
         val acknowledged = mutableListOf<String>()
         var discovered = false
         var realtimeListener: ((SyncRealtimeEvent) -> Unit)? = null
+        var onRealtimeConnect: (() -> Unit)? = null
+        @Volatile var realtimeConnects = 0
+        @Volatile var realtimeCloses = 0
 
         override fun discover() { discovered = true }
         override fun bootstrap(username: String, password: ByteArray): SyncBootstrap = error("Not used")
@@ -554,7 +578,12 @@ class CandySyncRepositoryTest {
             onClosed: (Throwable?) -> Unit,
         ): AutoCloseable {
             realtimeListener = onEvent
-            return AutoCloseable { realtimeListener = null }
+            realtimeConnects++
+            onRealtimeConnect?.invoke()
+            return AutoCloseable {
+                realtimeListener = null
+                realtimeCloses++
+            }
         }
 
         fun emit(event: SyncRealtimeEvent) = requireNotNull(realtimeListener).invoke(event)

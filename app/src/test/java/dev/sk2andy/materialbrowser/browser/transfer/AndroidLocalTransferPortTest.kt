@@ -11,11 +11,15 @@ import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferReceiveResult
 import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferTab
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -95,7 +99,7 @@ class AndroidLocalTransferPortTest {
     }
 
     @Test
-    fun wrongRequestsDoNotUseTheOfferUpUntilTooMany() {
+    fun wrongProofsDoNotUseTheOfferUpUntilTooMany() {
         val pairing = pairing()
         val offer = LocalTransferOffer(pairing, payload, AndroidLocalTransferCrypto)
         val path = LocalTransferProtocol.path(pairing)
@@ -108,10 +112,32 @@ class AndroidLocalTransferPortTest {
         assertEquals(403, forged.status)
         assertEquals(LocalTransferOffer.Outcome.Open, forged.outcome)
 
+        repeat(LocalTransferOffer.MAX_WRONG_REQUESTS - 2) { offer.answer(LocalTransferHttp.Request("POST", path, "{}")) }
+        assertEquals(LocalTransferOffer.Outcome.Open, offer.outcome)
         val last = offer.answer(LocalTransferHttp.Request("POST", path, "{}"))
         assertEquals(LocalTransferOffer.Outcome.TooManyAttempts, last.outcome)
         val proven = LocalTransferProtocol.request(pairing, AndroidLocalTransferCrypto).body
         assertEquals(410, offer.answer(LocalTransferHttp.Request("POST", path, proven)).status)
+    }
+
+    @Test
+    fun requestsThatDoNotNameTheSessionCannotCloseTheOffer() {
+        val pairing = pairing()
+        val offer = LocalTransferOffer(pairing, payload, AndroidLocalTransferCrypto)
+        val path = LocalTransferProtocol.path(pairing)
+
+        // A scan of the Wi-Fi, a browser's prefetch, a stranger's probe: none of it knows the session.
+        repeat(50) {
+            offer.answer(null)
+            offer.answer(LocalTransferHttp.Request("GET", "/", ""))
+            offer.answer(LocalTransferHttp.Request("POST", "/v1/other", "{}"))
+            offer.answer(LocalTransferHttp.Request("GET", path, ""))
+        }
+
+        assertEquals(LocalTransferOffer.Outcome.Open, offer.outcome)
+        val proven = LocalTransferProtocol.request(pairing, AndroidLocalTransferCrypto).body
+        assertEquals(200, offer.answer(LocalTransferHttp.Request("POST", path, proven)).status)
+        assertEquals(LocalTransferOffer.Outcome.Sent, offer.outcome)
     }
 
     @Test
@@ -134,6 +160,41 @@ class AndroidLocalTransferPortTest {
         assertEquals(LocalTransferReceiveResult.Received(payload), result)
         assertTrue(sent.await(10, TimeUnit.SECONDS))
         assertEquals(LocalTransferOfferState.Sent, states.last())
+        handle.cancel()
+    }
+
+    @Test
+    fun aSlowClientCannotHoldTheOfferPastItsBudget() {
+        val port = loopbackPort(requestBudgetMillis = 500)
+        val states = CopyOnWriteArrayList<LocalTransferOfferState>()
+        val handle = port.offer(payload) { states += it }
+        val waiting = states.first() as LocalTransferOfferState.Waiting
+        val pairing = LocalTransferPairingRules.parse(waiting.code, NOW)!!
+        // Another device on the Wi-Fi opens a connection first and sends one byte every 100 ms: every
+        // read is well inside the socket timeout, but the request never ends.
+        val stop = AtomicBoolean(false)
+        val dripper = thread(isDaemon = true) {
+            runCatching {
+                Socket(InetAddress.getLoopbackAddress(), pairing.port).use { socket ->
+                    val out = socket.getOutputStream()
+                    while (!stop.get()) {
+                        out.write('G'.code)
+                        out.flush()
+                        Thread.sleep(100)
+                    }
+                }
+            }
+        }
+        Thread.sleep(200)
+
+        val received = CountDownLatch(1)
+        var result: LocalTransferReceiveResult? = null
+        port.receive(waiting.code) { result = it; received.countDown() }
+
+        assertTrue("the receiver is served once the slow client's budget is spent", received.await(4, TimeUnit.SECONDS))
+        assertEquals(LocalTransferReceiveResult.Received(payload), result)
+        stop.set(true)
+        dripper.join(2_000)
         handle.cancel()
     }
 
@@ -165,11 +226,44 @@ class AndroidLocalTransferPortTest {
         assertEquals(LocalTransferOfferState.Failed(LocalTransferFailure.Unavailable), state)
     }
 
-    private fun loopbackPort(now: Long = NOW) = AndroidLocalTransferPort(
+    @Test
+    fun aSocketThatCannotBeMadeOnTheWifiFailsTheReceiveWithoutThrowing() {
+        val code = LocalTransferPairingRules.format(pairing())
+        val results = CopyOnWriteArrayList<LocalTransferReceiveResult>()
+
+        // The Wi-Fi went away between the scan and the connection: binding the socket throws.
+        AndroidLocalTransferPort(
+            localAddress = { wifi },
+            nowEpochSeconds = { NOW },
+            postToMain = { it() },
+            clientSocket = { throw IOException("The network is gone") },
+        ).receive(code) { results += it }
+        // No Wi-Fi network at all (mobile data, a VPN): there is no socket to make, and the request
+        // must not leave through the default route instead.
+        AndroidLocalTransferPort(
+            localAddress = { wifi },
+            nowEpochSeconds = { NOW },
+            postToMain = { it() },
+            clientSocket = { null },
+        ).receive(code) { results += it }
+
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (results.size < 2 && System.nanoTime() < deadline) Thread.sleep(10)
+        assertEquals(
+            listOf(
+                LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable),
+                LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable),
+            ),
+            results.toList(),
+        )
+    }
+
+    private fun loopbackPort(now: Long = NOW, requestBudgetMillis: Int = 5_000) = AndroidLocalTransferPort(
         localAddress = { wifi },
         nowEpochSeconds = { now },
         postToMain = { it() },
         socketAddress = { InetAddress.getLoopbackAddress() },
+        requestBudgetMillis = requestBudgetMillis,
     )
 
     private fun pairing() = LocalTransferPairing(

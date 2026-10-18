@@ -8,6 +8,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.TabStack
 import dev.sk2andy.materialbrowser.browser.TabStackColor
+import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
@@ -72,6 +73,7 @@ internal fun BrowserTabGroupSheetsV5(
         onNewGroup = { move?.let { onTargetChange(TabGroupSheetTarget.New(it.tabId)) } },
         onRemoveFromGroup = { move?.let { refuseUnless(stacks.removeTab(it.tabId)) } },
         onDismiss = dismiss,
+        groupLimit = TabStackRules.MAX_STACKS.takeIf { stacks.activeStacks.size >= it },
     )
 
     val new = last.new

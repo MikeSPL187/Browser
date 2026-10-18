@@ -283,11 +283,19 @@ class WebDavSyncEngine(
         return (readHeader(root, auth) ?: throw Stop(RemoteSyncFailure.Unreachable)) to null
     }
 
-    /** The header, null when there is none; [RemoteSyncFailure.PhraseMismatch] when it is damaged. */
+    /**
+     * The header, null when there is none; [RemoteSyncFailure.NewerFormat] when a newer Vola wrote
+     * it, [RemoteSyncFailure.PhraseMismatch] when it is damaged.
+     */
     private fun readHeader(root: String, auth: String): WebDavSyncHeader? {
         val response = send("GET", WebDavSyncAddressRules.header(root), auth)
         return when (response.status) {
-            200 -> WebDavSyncFormat.decodeHeader(response.body.decodeToString()) ?: throw Stop(RemoteSyncFailure.PhraseMismatch)
+            200 -> {
+                val text = response.body.decodeToString()
+                WebDavSyncFormat.decodeHeader(text) ?: throw Stop(
+                    if (WebDavSyncFormat.isNewerHeader(text)) RemoteSyncFailure.NewerFormat else RemoteSyncFailure.PhraseMismatch,
+                )
+            }
             404 -> null
             else -> throw Stop(failureOf(response.status))
         }
@@ -394,9 +402,13 @@ class WebDavSyncEngine(
         fun authorization(login: String, appPassword: String): String =
             "Basic " + Base64.Default.encode("$login:$appPassword".encodeToByteArray())
 
-        private fun failureOf(status: Int): RemoteSyncFailure = when (status) {
+        internal fun failureOf(status: Int): RemoteSyncFailure = when (status) {
             401, 403 -> RemoteSyncFailure.LoginRejected
+            404, 410 -> RemoteSyncFailure.FolderNotFound
             405, 501 -> RemoteSyncFailure.NotWebDav
+            413, 507 -> RemoteSyncFailure.ServerFull
+            423, 429, 503 -> RemoteSyncFailure.ServerBusy
+            in 500..599 -> RemoteSyncFailure.ServerError
             else -> RemoteSyncFailure.Unreachable
         }
     }

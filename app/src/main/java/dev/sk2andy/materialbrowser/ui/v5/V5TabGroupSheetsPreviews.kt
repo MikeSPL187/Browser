@@ -19,7 +19,7 @@ private val PreviewGroups = listOf(
 private val PreviewColors = listOf(V5Tile.Purple, V5Tile.Red, V5Tile.Green, V5Tile.Blue)
 
 @Composable
-private fun MovePreview(dark: Boolean) {
+private fun MovePreview(dark: Boolean, groupLimit: Int? = null) {
     VolaV5Theme(dark = dark) {
         V5TabGroupMoveSheet(
             visible = true,
@@ -30,9 +30,18 @@ private fun MovePreview(dark: Boolean) {
             onNewGroup = {},
             onRemoveFromGroup = {},
             onDismiss = {},
+            groupLimit = groupLimit,
         )
     }
 }
+
+@Preview(name = "Move to group, twelve groups · light", heightDp = 640)
+@Composable
+private fun V5TabGroupMoveLimitLightPreview() = MovePreview(dark = false, groupLimit = 12)
+
+@Preview(name = "Move to group, twelve groups · dark", heightDp = 640)
+@Composable
+private fun V5TabGroupMoveLimitDarkPreview() = MovePreview(dark = true, groupLimit = 12)
 
 @Composable
 private fun EditPreview(dark: Boolean) {

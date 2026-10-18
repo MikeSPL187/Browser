@@ -35,6 +35,33 @@ class V5WebDavRulesTest {
     }
 
     @Test
+    fun anAddressTheSyncWouldRefuseCannotBeSentAndSaysWhy() {
+        listOf(
+            "https://anna@cloud.example.org",
+            "https://cloud.example.org/dav?x=1",
+            "https://cloud.example.org/#files",
+            "https://cloud.example.org/my files",
+            "https://cloud.example.org:99999",
+            "https://cloud\\example.org",
+        ).forEach { address ->
+            assertFalse(address, V5WebDavRules.canConnect(ready.copy(address = address)))
+            assertEquals(address, V5WebDavError.InvalidAddress, V5WebDavRules.addressProblem(address))
+        }
+        assertNull("only the scheme typed so far", V5WebDavRules.addressProblem("https://"))
+        assertNull(V5WebDavRules.addressProblem("cloud"))
+        assertTrue(V5WebDavRules.canConnect(ready.copy(address = "https://cloud.example.org:8443/dav")))
+    }
+
+    @Test
+    fun aPhraseOfTooFewDifferentCharactersIsRefused() {
+        assertTrue(V5WebDavRules.phraseTooSimple("aaaaaaaaaa"))
+        assertTrue(V5WebDavRules.phraseTooSimple("abababababab"))
+        assertFalse(V5WebDavRules.phraseTooSimple("short"))
+        assertFalse(V5WebDavRules.phraseTooSimple("лиса-кедр-зима"))
+        assertFalse(V5WebDavRules.canConnect(ready.copy(phrase = "aaaaaaaaaa", phraseRepeat = "aaaaaaaaaa")))
+    }
+
+    @Test
     fun phrasesDifferOnlyOnceTheRepeatIsTyped() {
         assertFalse(V5WebDavRules.phrasesDiffer(ready.copy(phraseRepeat = "")))
         assertTrue(V5WebDavRules.phrasesDiffer(ready.copy(phraseRepeat = "other")))
