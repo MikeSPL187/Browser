@@ -1,0 +1,7 @@
+# Pre-release versions allowed in gradle/libs.versions.toml (scripts/ci/quality_gates.py prerelease).
+#
+# One per line: `version name -- why it is not stable yet`. A pre-release that is not listed fails CI;
+# a line whose version became stable fails too, so this list only ever shrinks. Move to the stable
+# release as soon as it is published, and delete the line.
+
+compose-material3 -- the project stack is Material 3 Expressive (CLAUDE.md), which is in the 1.5 line; moved alpha29 -> beta01 in #416, take the stable 1.5 when it is out

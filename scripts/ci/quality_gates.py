@@ -7,6 +7,10 @@ Usage:
   quality_gates.py engine             GeckoView and WebView types stay inside the engine adapters
   quality_gates.py brand              no "Candy" in strings the user can see (resources and Kotlin)
   quality_gates.py semantics          clearAndSetSemantics is never toggled and never hides a later testTag
+  quality_gates.py literals --base REV  lines added since REV put words in Text(...) through string resources
+  quality_gates.py motion             a v5 file that animates reads V5Motion (system animations off: only a fade)
+  quality_gates.py secrets            no key, token or signing file is tracked in git
+  quality_gates.py prerelease         an alpha/beta/rc in the version catalog is listed with its reason
 
 Findings are printed as GitHub Actions annotations; any finding exits with status 1.
 """
@@ -129,22 +133,210 @@ def token_findings_in_line(text):
     return findings
 
 
-def check_tokens(base):
+def scoped_added_lines(base):
+    """(path, line number, text) for every UI-source line added since [base] that the token rules cover."""
     diff = subprocess.run(
         ["git", "diff", "--unified=0", "--diff-filter=AM", base, "HEAD", "--", "*.kt"],
         cwd=ROOT, check=True, capture_output=True, text=True,
     ).stdout
     heads = {}
-    findings = []
     for path, number, text in added_lines(diff):
         if path not in heads:
             file = ROOT / path
             heads[path] = file.read_text(encoding="utf-8")[:600] if file.exists() else ""
-        if not token_scope(path, heads[path]):
-            continue
+        if token_scope(path, heads[path]):
+            yield path, number, text
+
+
+def check_tokens(base):
+    findings = []
+    for path, number, text in scoped_added_lines(base):
         for message in token_findings_in_line(text):
             findings.append((path, number, f"{message} (or add `// {TOKEN_EXEMPT_COMMENT} reason`)"))
     return findings
+
+
+# literals
+
+LITERAL_EXEMPT_COMMENT = "literal-exempt:"
+UI_TEXT_ARGUMENT = re.compile(r'\b(?:Text|BasicText)\s*\(\s*(?:text\s*=\s*)?"((?:\\.|[^"\\])*)"')
+# Arguments that reach the screen as words. Not `label` (Compose animation labels), not `title` (data).
+DESCRIPTION_ARGUMENT = re.compile(
+    r'\b(?:contentDescription|backContentDescription|placeholder|supportingText|summary|hint)\s*=\s*"((?:\\.|[^"\\])*)"'
+)
+TEMPLATE_PART = re.compile(r"\$\{[^}]*\}|\$\w+")
+LETTER_RUN = re.compile(r"[^\W\d_]{2,}")
+
+
+def literal_findings_in_line(text):
+    """Words written into a Text(...) or a text-like argument (contentDescription, placeholder, summary,
+    supportingText, hint) instead of a string resource.
+
+    A literal is skipped when it has no word (numbers, symbols, an ellipsis, `${count}`), when it is a
+    URL, or when the line says `// literal-exempt: reason`. Every UI string belongs in values/ and
+    values-ru/ (CLAUDE.md rule 9); a literal never reaches the Russian user's language, and
+    `MissingTranslation` cannot see it."""
+    if LITERAL_EXEMPT_COMMENT in text:
+        return []
+    code = code_part(text)
+    findings = []
+    for pattern in (UI_TEXT_ARGUMENT, DESCRIPTION_ARGUMENT):
+        for match in pattern.finditer(code):
+            literal = TEMPLATE_PART.sub("", match.group(1))
+            if "://" not in literal and LETTER_RUN.search(literal):
+                findings.append(match.group(1))
+    return findings
+
+
+def check_literals(base):
+    findings = []
+    for path, number, text in scoped_added_lines(base):
+        for literal in literal_findings_in_line(text):
+            findings.append((path, number, f"\"{literal}\" is text in code, not a string resource; add it to "
+                                           f"values/ and values-ru/ (or `// {LITERAL_EXEMPT_COMMENT} reason`)"))
+    return findings
+
+
+# motion
+
+MOTION_EXEMPT_COMMENT = "motion-exempt:"
+MOTION_ROOTS = ("ui/v5/", "ui/passwords/")
+ANIMATION_API = re.compile(
+    r"\b(AnimatedVisibility|AnimatedContent|Crossfade|animate\w*AsState|slideIn\w*|slideOut\w*|"
+    r"expand(?:Vertically|Horizontally)|shrink(?:Vertically|Horizontally)|scaleIn|scaleOut|"
+    r"animateContentSize|animateItem|updateTransition|rememberInfiniteTransition)\b"
+)
+
+
+def motion_findings_in_text(text, path):
+    """A v5 file that animates must read V5Motion: with system animations off, content may only fade
+    (plan-v5.md, section 5), and V5Motion.animationsEnabled / reducedFade / the specs are how a file
+    knows. A file that animates without naming V5Motion once ignored the setting."""
+    if MOTION_EXEMPT_COMMENT in text:
+        return []
+    code = kotlin_code(text)
+    if "V5Motion" in code:
+        return []
+    match = ANIMATION_API.search(code)
+    if not match:
+        return []
+    line = text.count("\n", 0, match.start()) + 1
+    return [(path, line, f"`{match.group(1)}` animates without V5Motion; honor V5Motion.animationsEnabled and use "
+                         f"V5Motion.reducedFade() when it is off (or `// {MOTION_EXEMPT_COMMENT} reason`)")]
+
+
+def motion_findings(files):
+    findings = []
+    for path in files:
+        posix = relative(path)
+        if not any(f"/{root}" in posix for root in MOTION_ROOTS) or posix.endswith(TOKEN_EXEMPT_SUFFIXES):
+            continue
+        findings += motion_findings_in_text(Path(path).read_text(encoding="utf-8"), posix)
+    return findings
+
+
+# secrets
+
+SECRET_EXEMPT_COMMENT = "secret-scan-exempt:"
+SECRET_PATTERNS = (
+    (re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY"), "a private key"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"), "a GitHub token"),
+    (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{50,}\b"), "a GitHub token"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "an AWS access key"),
+    (re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b"), "a Google API key"),
+    (re.compile(r"\bxox[baprs]-[0-9A-Za-z-]{10,}"), "a Slack token"),
+    (re.compile(r"(?i)\b(?:store|key)Password\s*[=:]\s*[\"']?"
+                r"(?![^\s\"']*(?:replace|change|example|your|placeholder|todo)[^\s\"']*[\"']?\s*$)"
+                r"[A-Za-z0-9+/=_@#!%^&*\-]{6,}[\"']?\s*$"),
+     "a keystore password"),
+)
+SECRET_FILE_NAMES = ("local.properties", "keystore.properties")
+SECRET_FILE_SUFFIXES = (".jks", ".keystore", ".p12", ".pfx", ".pem")
+SECRET_MAX_BYTES = 1_000_000
+
+
+def tracked_files():
+    names = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, check=True, capture_output=True).stdout
+    return [name for name in names.decode("utf-8").split("\0") if name]
+
+
+def secret_findings_in_text(text, path):
+    findings = []
+    lines = text.splitlines()
+    for number, line in enumerate(lines, start=1):
+        # The exemption is on the line itself or the one above, as in the other gates.
+        if any(SECRET_EXEMPT_COMMENT in near for near in lines[max(number - 2, 0):number]):
+            continue
+        for pattern, what in SECRET_PATTERNS:
+            if pattern.search(line):
+                findings.append((path, number, f"looks like {what}; secrets live in CI secrets and the "
+                                               f"environment, never in git (CLAUDE.md rule 2)"))
+                break
+    return findings
+
+
+def secret_findings(names, read=lambda name: (ROOT / name).read_bytes()):
+    findings = []
+    for name in names:
+        base = name.rsplit("/", 1)[-1]
+        if base in SECRET_FILE_NAMES or base.endswith(SECRET_FILE_SUFFIXES):
+            findings.append((name, 0, "a signing or local-secrets file is tracked; remove it and rotate what it held"))
+            continue
+        data = read(name)
+        if len(data) > SECRET_MAX_BYTES or b"\0" in data[:4096]:
+            continue
+        findings += secret_findings_in_text(data.decode("utf-8", errors="replace"), name)
+    return findings
+
+
+# prerelease
+
+VERSION_CATALOG = ROOT / "gradle" / "libs.versions.toml"
+PRERELEASE_ALLOWLIST = Path(__file__).resolve().parent / "prerelease-allowlist.txt"
+PRERELEASE_VERSION = re.compile(r"(?i)(?:^|[.\-])(?:alpha|beta|rc|dev|snapshot|m\d+|preview|eap)(?:[.\-]?\d+)?(?:$|[.\-])")
+CATALOG_VERSION = re.compile(r'^\s*([A-Za-z0-9_.\-]+)\s*=\s*"([^"]+)"')
+
+
+def prerelease_versions(catalog_text):
+    """name -> version for every [versions] entry that is an alpha, beta, rc, snapshot or the like."""
+    found, in_versions = {}, False
+    for line in catalog_text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            in_versions = stripped == "[versions]"
+        elif in_versions and (match := CATALOG_VERSION.match(line)) and PRERELEASE_VERSION.search(match.group(2)):
+            found[match.group(1)] = match.group(2)
+    return found
+
+
+def prerelease_allowlist(text):
+    """name -> reason from lines `name -- reason`; comments and blank lines are skipped."""
+    allowed = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            name, _, reason = line.partition("--")
+            allowed[name.strip()] = reason.strip()
+    return allowed
+
+
+def prerelease_findings(catalog_text, allowlist_text):
+    found, allowed = prerelease_versions(catalog_text), prerelease_allowlist(allowlist_text)
+    findings = []
+    for name, version in sorted(found.items()):
+        if name not in allowed:
+            findings.append((relative(VERSION_CATALOG), 0, f"`{name} = \"{version}\"` is a pre-release; ship a stable "
+                             f"version, or list it in scripts/ci/prerelease-allowlist.txt with the reason"))
+        elif not allowed[name]:
+            findings.append((relative(PRERELEASE_ALLOWLIST), 0, f"`{name}` is listed without a reason"))
+    for name in sorted(set(allowed) - set(found)):
+        findings.append((relative(PRERELEASE_ALLOWLIST), 0, f"`{name}` is no longer a pre-release; delete its line"))
+    return findings
+
+
+def check_prerelease():
+    return prerelease_findings(VERSION_CATALOG.read_text(encoding="utf-8"),
+                               PRERELEASE_ALLOWLIST.read_text(encoding="utf-8"))
 
 
 # engine
@@ -571,6 +763,10 @@ def main(argv):
     commands.add_parser("engine")
     commands.add_parser("brand")
     commands.add_parser("semantics")
+    commands.add_parser("literals").add_argument("--base", required=True)
+    commands.add_parser("motion")
+    commands.add_parser("secrets")
+    commands.add_parser("prerelease")
     args = parser.parse_args(argv)
 
     if args.command == "size":
@@ -581,6 +777,14 @@ def main(argv):
         findings = engine_findings(source_files())
     elif args.command == "semantics":
         findings = semantics_findings(source_files())
+    elif args.command == "literals":
+        findings = check_literals(args.base)
+    elif args.command == "motion":
+        findings = motion_findings(source_files())
+    elif args.command == "secrets":
+        findings = secret_findings(tracked_files())
+    elif args.command == "prerelease":
+        findings = check_prerelease()
     else:
         findings = check_brand()
 

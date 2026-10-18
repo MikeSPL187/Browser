@@ -32,8 +32,8 @@ base="$(git merge-base HEAD origin/main)"
 # Quality gates: every gate the script offers, as in build.yml.
 gates="$(python3 scripts/ci/quality_gates.py -h | grep -o '{[^}]*}' | head -n 1 | tr -d '{}' | tr ',' ' ')"
 for gate in $gates; do
-  if [ "$gate" = tokens ]; then
-    step "gate tokens" python3 scripts/ci/quality_gates.py tokens --base "$base"
+  if [ "$gate" = tokens ] || [ "$gate" = literals ]; then
+    step "gate $gate" python3 scripts/ci/quality_gates.py "$gate" --base "$base"
   else
     step "gate $gate" python3 scripts/ci/quality_gates.py "$gate"
   fi
