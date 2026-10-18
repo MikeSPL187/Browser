@@ -61,15 +61,15 @@ data class V5FindInPageLabels(
 
 /**
  * Find in page (V28, B5; canvas screen «с1»): a capsule in the bar's place, above the keyboard
- * while it is open, as the address editor (screen «в»): the same height and the same «Cancel» on
- * the right. The count and the two arrows are inside the capsule; the field takes the focus at once.
- * «Next» on the keyboard goes to the next match.
+ * while it is open, as the address editor (screen «в»): the same height and «Done» on the right,
+ * as in Safari. The count and the two arrows are inside the capsule; the field takes the focus at
+ * once. «Search» on the keyboard goes to the next match, or searches again when there is none.
  */
 @Composable
 fun V5FindInPage(
     query: String,
     onQueryChange: (String) -> Unit,
-    /** «2 of 7», or empty while there is no query. */
+    /** «2 of 7» or «Not found», or empty while there is no query. */
     matchText: String,
     isCounting: Boolean,
     canNavigate: Boolean,
@@ -124,8 +124,10 @@ fun V5FindInPage(
                     singleLine = true,
                     textStyle = V5Theme.type.body.copy(color = colors.label),
                     cursorBrush = SolidColor(colors.accent),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { if (canNavigate) onNext() }),
+                    // «Search» even with nothing to step to: the controller then searches again,
+                    // the way to retry when the page gave no answer.
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { onNext() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)

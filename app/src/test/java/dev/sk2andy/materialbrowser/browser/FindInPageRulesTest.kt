@@ -210,6 +210,24 @@ class FindInPageRulesTest {
     }
 
     @Test
+    fun `only a finished search without matches is not found`() {
+        val empty = FindInPageState(tabId = "tab")
+        val searching = FindInPageRules.withQuery(empty, "zen")
+        val missed = FindInPageRules.withResult(searching, activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = true)
+        val uncounted = FindInPageRules.withoutCount(
+            FindInPageRules.withResult(searching, activeMatchOrdinal = 0, matchCount = 0, isDoneCounting = false, found = true),
+        )
+        val found = FindInPageRules.withResult(searching, activeMatchOrdinal = 1, matchCount = 7, isDoneCounting = true)
+
+        assertFalse(FindInPageRules.isNotFound(empty))
+        assertFalse(FindInPageRules.isNotFound(searching))
+        assertTrue(FindInPageRules.isNotFound(missed))
+        assertTrue(FindInPageRules.isNotFound(FindInPageRules.withoutResult(searching)))
+        assertFalse(FindInPageRules.isNotFound(uncounted))
+        assertFalse(FindInPageRules.isNotFound(found))
+    }
+
+    @Test
     fun `a withheld count ends as the match number without a total`() {
         val uncounted = FindInPageRules.withResult(
             state = FindInPageState(tabId = "tab", query = "zen"),
