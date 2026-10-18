@@ -288,10 +288,14 @@ class BrowserRootBackInstrumentedTest {
 
     /**
      * Back on a lone root tab goes to the system, which finishes the activity; with a sibling it
-     * closes the tab and opens the overview.
+     * closes the tab and opens the overview. The tab is made on the main thread: the controller's
+     * sync observer persists the tab list there, and a write from the test thread meanwhile threw
+     * ConcurrentModificationException in persistableTabs (nightly run 39102575230).
      */
     private fun createControllerWithSibling(): BrowserController =
-        createController().also { browserController -> browserController.createTab() }
+        createController().also { browserController ->
+            composeRule.runOnIdle { browserController.createTab() }
+        }
 
     private fun setBrowserContent(
         browserController: BrowserController,
