@@ -1,0 +1,85 @@
+From 041dcae93f4f14ba37364d0794827b7df728e155 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 18 Oct 2026 10:34:13 +0000
+Subject: [PATCH 5/5] fix(ui): closing all private tabs asks first on the
+ private new tab
+
+The red row closed every private tab at once and dropped the undo, while the same action in
+the tab overview asks. It now uses the overview's prompt sheet and the existing strings.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SQZTihurw1LavH7Cgs1UnR
+---
+ .../ui/BrowserPrivateNewTabV5.kt              | 33 ++++++++++++++++++-
+ 1 file changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/ui/BrowserPrivateNewTabV5.kt b/app/src/main/java/dev/sk2andy/materialbrowser/ui/BrowserPrivateNewTabV5.kt
+index 4199dce..2b81964 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/ui/BrowserPrivateNewTabV5.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/ui/BrowserPrivateNewTabV5.kt
+@@ -2,6 +2,13 @@ package dev.sk2andy.materialbrowser.ui
+ 
+ import androidx.compose.foundation.layout.PaddingValues
+ import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableIntStateOf
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.saveable.rememberSaveable
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.res.pluralStringResource
+ import androidx.compose.ui.res.stringResource
+ import dev.sk2andy.materialbrowser.R
+ import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+@@ -9,14 +16,22 @@ import dev.sk2andy.materialbrowser.ui.v5.V5PrivateFact
+ import dev.sk2andy.materialbrowser.ui.v5.V5PrivateLock
+ import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTab
+ import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabState
++import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
++import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
++import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
+ 
+ /**
+  * The v5 private new tab (V14a) bound to the engine: the same honest facts as the current page
+  * (PrivateTabRules), the lock on exit and «Close all private tabs», in the private palette.
++ * Closing them cannot be undone, so it asks first, in red, as «Close all tabs» does in the overview.
+  */
+ @Composable
+ internal fun BrowserPrivateNewTabV5(privateTab: NewTabPrivate, contentPadding: PaddingValues) {
+     val lock = privateTab.lock
++    var confirmCloseAll by rememberSaveable { mutableStateOf(false) }
++    // The question keeps its count while the sheet lowers, so it never reads «Close 0 tabs?».
++    var shownCount by remember { mutableIntStateOf(1) }
++    if (privateTab.count > 0) shownCount = privateTab.count
+     val state = V5PrivateNewTabState(
+         // Only GeckoView keeps everything in memory; with WebView the page promises less.
+         body = stringResource(
+@@ -45,8 +60,24 @@ internal fun BrowserPrivateNewTabV5(privateTab: NewTabPrivate, contentPadding: P
+         V5PrivateNewTab(
+             state = state,
+             onLockChange = { checked -> lock?.onCheckedChange?.invoke(checked) },
+-            onCloseAll = privateTab.onCloseAll,
++            onCloseAll = { confirmCloseAll = true },
+             contentPadding = contentPadding,
+         )
++        V5PromptSheet(
++            visible = confirmCloseAll,
++            title = pluralStringResource(R.plurals.close_all_tabs_title, shownCount, shownCount),
++            message = null,
++            actions = listOf(
++                V5PromptAction(
++                    label = pluralStringResource(R.plurals.private_tab_close_all, shownCount, shownCount),
++                    role = V5PromptRole.Destructive,
++                    onClick = {
++                        confirmCloseAll = false
++                        privateTab.onCloseAll()
++                    },
++                ),
++            ),
++            onDismiss = { confirmCloseAll = false },
++        )
+     }
+ }
+-- 
+2.43.0
+

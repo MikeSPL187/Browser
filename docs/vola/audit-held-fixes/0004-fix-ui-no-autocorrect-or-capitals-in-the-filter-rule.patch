@@ -1,0 +1,85 @@
+From 35ff6eebd285474cd1dd2f9bdf01a7f465fc5ffd Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 18 Oct 2026 10:33:34 +0000
+Subject: [PATCH 4/5] fix(ui): no autocorrect or capitals in the filter-rule
+ and userscript editors
+
+Both text areas took the default keyboard options: autocorrect and a capital at the start of
+a sentence, on text that is code. Same options as the other v5 fields use.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SQZTihurw1LavH7Cgs1UnR
+---
+ .../sk2andy/materialbrowser/ui/FilterImportSheetsV5.kt    | 8 ++++++++
+ .../sk2andy/materialbrowser/ui/UserscriptManagementV5.kt  | 8 ++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/ui/FilterImportSheetsV5.kt b/app/src/main/java/dev/sk2andy/materialbrowser/ui/FilterImportSheetsV5.kt
+index e599d33..7de9e3c 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/ui/FilterImportSheetsV5.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/ui/FilterImportSheetsV5.kt
+@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.heightIn
+ import androidx.compose.foundation.layout.padding
+ import androidx.compose.foundation.rememberScrollState
+ import androidx.compose.foundation.text.BasicTextField
++import androidx.compose.foundation.text.KeyboardOptions
+ import androidx.compose.foundation.text.selection.SelectionContainer
+ import androidx.compose.foundation.verticalScroll
+ import androidx.compose.material3.Text
+@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
+ import androidx.compose.ui.semantics.contentDescription
+ import androidx.compose.ui.semantics.liveRegion
+ import androidx.compose.ui.semantics.semantics
++import androidx.compose.ui.text.input.KeyboardCapitalization
+ import androidx.compose.ui.text.font.FontFamily
+ import dev.sk2andy.materialbrowser.R
+ import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
+@@ -397,6 +399,12 @@ private fun FilterSourceField(
+             onValueChange = onValueChange,
+             textStyle = V5Theme.type.footnote.copy(fontFamily = FontFamily.Monospace, color = colors.label),
+             cursorBrush = SolidColor(colors.accent),
++            // Rules and scripts are code: no autocorrect and no capital at the start of a line, which
++            // can turn `let` into `Let` or replace a word of a rule.
++            keyboardOptions = KeyboardOptions(
++                capitalization = KeyboardCapitalization.None,
++                autoCorrectEnabled = false,
++            ),
+             modifier = modifier
+                 .fillMaxWidth()
+                 .semantics { contentDescription = placeholder },
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/ui/UserscriptManagementV5.kt b/app/src/main/java/dev/sk2andy/materialbrowser/ui/UserscriptManagementV5.kt
+index de52d49..ca5f028 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/ui/UserscriptManagementV5.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/ui/UserscriptManagementV5.kt
+@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
+ import androidx.compose.foundation.layout.statusBarsPadding
+ import androidx.compose.foundation.rememberScrollState
+ import androidx.compose.foundation.text.BasicTextField
++import androidx.compose.foundation.text.KeyboardOptions
+ import androidx.compose.foundation.verticalScroll
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.Text
+@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.testTag
+ import androidx.compose.ui.res.stringResource
+ import androidx.compose.ui.semantics.contentDescription
+ import androidx.compose.ui.semantics.semantics
++import androidx.compose.ui.text.input.KeyboardCapitalization
+ import androidx.compose.ui.text.font.FontFamily
+ import androidx.compose.ui.text.style.TextAlign
+ import dev.sk2andy.materialbrowser.R
+@@ -386,6 +388,12 @@ private fun UserscriptEditorSheet(
+                 },
+                 textStyle = V5Theme.type.footnote.copy(fontFamily = FontFamily.Monospace, color = colors.label),
+                 cursorBrush = SolidColor(colors.accent),
++                // Rules and scripts are code: no autocorrect and no capital at the start of a line, which
++                // can turn `let` into `Let` or replace a word of a rule.
++                keyboardOptions = KeyboardOptions(
++                    capitalization = KeyboardCapitalization.None,
++                    autoCorrectEnabled = false,
++                ),
+                 modifier = Modifier
+                     .padding(horizontal = V5Spacing.marginPhone)
+                     .fillMaxWidth()
+-- 
+2.43.0
+

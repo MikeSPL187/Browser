@@ -1,0 +1,372 @@
+From 1e2cc846b35dd0557b256f58e09bbe1bbd2c796a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 18 Oct 2026 10:30:15 +0000
+Subject: [PATCH 2/5] fix(transfer): a slow or stray client cannot hold or
+ close a local transfer; no socket off the Wi-Fi
+
+- one connection gets a total budget for its request (DeadlineSocketInput): a peer that sent a
+  byte every few seconds kept the one-connection-at-a-time server, so the offer outlived its
+  two minutes and the receiver waited in the queue
+- only requests that name the session (its path, a POST) and fail the proof count toward
+  MAX_WRONG_REQUESTS: five GETs from anyone on the Wi-Fi used to close the offer
+- receive() makes its socket off the calling thread: no Wi-Fi network is Unavailable instead of
+  a request through the default route (a VPN), and a failed bindSocket no longer throws on the
+  main thread
+
+Tests: slow client, strangers cannot close the offer, bind failure; the old wrong-request test
+now counts wrong proofs.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SQZTihurw1LavH7Cgs1UnR
+---
+ .../transfer/AndroidLocalTransferPort.kt      | 47 +++++++--
+ .../browser/transfer/LocalTransferHttp.kt     | 38 +++++++
+ .../browser/transfer/LocalTransferOffer.kt    | 14 ++-
+ .../transfer/AndroidLocalTransferPortTest.kt  | 98 ++++++++++++++++++-
+ 4 files changed, 182 insertions(+), 15 deletions(-)
+
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPort.kt b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPort.kt
+index 8094df0..7c32d3b 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPort.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPort.kt
+@@ -25,6 +25,7 @@ import java.net.ServerSocket
+ import java.net.Socket
+ import java.net.SocketTimeoutException
+ import java.util.concurrent.atomic.AtomicBoolean
++import java.util.concurrent.atomic.AtomicReference
+ 
+ /**
+  * [LocalTransferPort] on plain sockets in the phone's Wi-Fi (V26). An offer binds an ephemeral
+@@ -39,8 +40,14 @@ internal class AndroidLocalTransferPort(
+     private val postToMain: (() -> Unit) -> Unit = mainThreadPoster(),
+     /** The socket address behind a code's host; tests map the private address to loopback. */
+     private val socketAddress: (String) -> InetAddress = InetAddress::getByName,
+-    /** A socket for the receiving side, bound to the Wi-Fi so a VPN cannot carry the request elsewhere. */
+-    private val clientSocket: () -> Socket = ::Socket,
++    /**
++     * A socket for the receiving side, bound to the Wi-Fi so a VPN cannot carry the request
++     * elsewhere; null when there is no Wi-Fi network to bind it to. Called off the main thread, and
++     * it may throw [IOException] when the network goes away while the socket is bound.
++     */
++    private val clientSocket: () -> Socket? = ::Socket,
++    /** How long one connection may take to send its request, in all; tests shorten it. */
++    private val requestBudgetMillis: Int = REQUEST_BUDGET_MILLIS,
+ ) : LocalTransferPort {
+     override fun offer(payload: LocalTransferPayload, onState: (LocalTransferOfferState) -> Unit): LocalTransferHandle {
+         val address = localAddress()?.hostAddress?.takeIf(LocalTransferPairingRules::isLocalHost)
+@@ -86,15 +93,24 @@ internal class AndroidLocalTransferPort(
+             return LocalTransferHandle.Done
+         }
+         val cancelled = AtomicBoolean(false)
+-        val socket = clientSocket()
++        val socketInUse = AtomicReference<Socket?>(null)
+         Thread({
+-            val result = runCatching { fetch(socket, pairing) }
+-                .getOrElse { LocalTransferReceiveResult.Failed(LocalTransferFailure.Corrupt) }
++            val result = runCatching {
++                val socket = try {
++                    clientSocket()
++                } catch (_: IOException) {
++                    null
++                } ?: return@runCatching LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable)
++                socketInUse.set(socket)
++                // Cancelled while the socket was being made: nobody closed it yet.
++                if (cancelled.get()) runCatching { socket.close() }
++                fetch(socket, pairing)
++            }.getOrElse { LocalTransferReceiveResult.Failed(LocalTransferFailure.Corrupt) }
+             postToMain { if (!cancelled.get()) onResult(result) }
+         }, "vola-transfer-receive").apply { isDaemon = true }.start()
+         return LocalTransferHandle {
+             cancelled.set(true)
+-            runCatching { socket.close() }
++            runCatching { socketInUse.get()?.close() }
+         }
+     }
+ 
+@@ -119,7 +135,10 @@ internal class AndroidLocalTransferPort(
+                 val reply = connection.use { client ->
+                     runCatching {
+                         client.soTimeout = IO_TIMEOUT_MILLIS
+-                        val request = LocalTransferHttp.readRequest(client.getInputStream(), LocalTransferProtocol.MAX_REQUEST_CHARS)
++                        val request = LocalTransferHttp.readRequest(
++                            DeadlineSocketInput(client, requestBudgetMillis),
++                            LocalTransferProtocol.MAX_REQUEST_CHARS,
++                        )
+                         offer.answer(request).also { LocalTransferHttp.writeResponse(client.getOutputStream(), it.status, it.body) }
+                     }.getOrNull()
+                 } ?: when (offer.outcome) {
+@@ -146,7 +165,7 @@ internal class AndroidLocalTransferPort(
+                 socket.connect(InetSocketAddress(socketAddress(pairing.host), pairing.port), IO_TIMEOUT_MILLIS)
+                 socket.soTimeout = IO_TIMEOUT_MILLIS
+                 LocalTransferHttp.writeRequest(socket.getOutputStream(), pairing.host, pairing.port, LocalTransferProtocol.path(pairing), request.body)
+-                LocalTransferHttp.readResponse(socket.getInputStream(), LocalTransferProtocol.MAX_RESPONSE_CHARS)
++                LocalTransferHttp.readResponse(DeadlineSocketInput(socket, RESPONSE_BUDGET_MILLIS), LocalTransferProtocol.MAX_RESPONSE_CHARS)
+             }
+         } catch (_: IOException) {
+             return LocalTransferReceiveResult.Failed(LocalTransferFailure.Unreachable)
+@@ -171,6 +190,12 @@ internal class AndroidLocalTransferPort(
+         private const val ACCEPT_POLL_MILLIS = 500
+         private const val IO_TIMEOUT_MILLIS = 5_000
+ 
++        /** All the time a stranger's connection gets to send its request: a request is a few hundred bytes. */
++        private const val REQUEST_BUDGET_MILLIS = 5_000
++
++        /** All the time a sender gets to answer, whatever it trickles: the payload is at most 16 MB on the Wi-Fi. */
++        private const val RESPONSE_BUDGET_MILLIS = 30_000
++
+         /** Whether [code] is a well-formed offer whose time has run out, to tell that apart from a bad code. */
+         internal fun isExpired(code: String, nowEpochSeconds: Long): Boolean {
+             val expires = code.substringAfter("&e=", missingDelimiterValue = "").substringBefore('&').toLongOrNull() ?: return false
+@@ -182,7 +207,11 @@ internal class AndroidLocalTransferPort(
+                 ?: return LocalTransferPort.Unavailable
+             return AndroidLocalTransferPort(
+                 localAddress = { wifiAddress(connectivity) },
+-                clientSocket = { Socket().also { socket -> wifiNetwork(connectivity)?.bindSocket(socket) } },
++                clientSocket = {
++                    // Without a Wi-Fi network the request would leave through the default route, a VPN
++                    // among them, to an address that only a code decided: so there is no socket then.
++                    wifiNetwork(connectivity)?.let { network -> Socket().also { socket -> network.bindSocket(socket) } }
++                },
+             )
+         }
+ 
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferHttp.kt b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferHttp.kt
+index 78e8471..06524e1 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferHttp.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferHttp.kt
+@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.browser.transfer
+ import java.io.ByteArrayOutputStream
+ import java.io.InputStream
+ import java.io.OutputStream
++import java.net.Socket
++import java.net.SocketTimeoutException
+ 
+ /**
+  * The few bytes of HTTP/1.1 the local transfer speaks: one request, one answer, then the
+@@ -109,3 +111,39 @@ internal object LocalTransferHttp {
+         else -> "Error"
+     }
+ }
++
++/**
++ * What [socket] sends, for [budgetMillis] in all. A socket timeout covers one read, so a peer that
++ * sends a byte every few seconds never trips it and, on a server that serves one connection at a
++ * time, holds everyone else out; here every read gets only the time that is left, and the budget
++ * ending is a [SocketTimeoutException].
++ */
++internal class DeadlineSocketInput(
++    private val socket: Socket,
++    budgetMillis: Int,
++    private val nanoTime: () -> Long = System::nanoTime,
++) : InputStream() {
++    private val input = socket.getInputStream()
++    private val deadline = nanoTime() + budgetMillis * NANOS_PER_MILLI
++
++    override fun read(): Int {
++        arm()
++        return input.read()
++    }
++
++    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
++        arm()
++        return input.read(buffer, offset, length)
++    }
++
++    /** A socket timeout of 0 would wait forever, so the time left is at least one millisecond. */
++    private fun arm() {
++        val left = (deadline - nanoTime()) / NANOS_PER_MILLI
++        if (left <= 0) throw SocketTimeoutException("The request took longer than its budget")
++        socket.soTimeout = left.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
++    }
++
++    private companion object {
++        const val NANOS_PER_MILLI = 1_000_000L
++    }
++}
+diff --git a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferOffer.kt b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferOffer.kt
+index d1916b4..0c9811c 100644
+--- a/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferOffer.kt
++++ b/app/src/main/java/dev/sk2andy/materialbrowser/browser/transfer/LocalTransferOffer.kt
+@@ -8,8 +8,11 @@ import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferProtocol
+ /**
+  * What the sending phone answers on its one-shot server, without the sockets: only a request
+  * that proves the code's key gets the sealed payload, and only once. Wrong requests do not use
+- * the offer up, but after [MAX_WRONG_REQUESTS] of them it closes, so the key cannot be guessed
+- * online. Not thread-safe: the server handles one connection at a time.
++ * the offer up. Those that name the session (its path, a POST) and fail the proof are counted, and
++ * after [MAX_WRONG_REQUESTS] of them the offer closes. Anything else — a scan of the Wi-Fi, a
++ * stray GET, a probe of another path — only gets its error: it does not know the session, so it
++ * cannot be guessing the key, and counting it would let anyone on the network close the offer with
++ * a few requests. Not thread-safe: the server handles one connection at a time.
+  */
+ internal class LocalTransferOffer(
+     private val pairing: LocalTransferPairing,
+@@ -32,8 +35,11 @@ internal class LocalTransferOffer(
+             ?.takeIf { it.method == "POST" && it.path == path }
+             ?.let { LocalTransferProtocol.checkRequest(pairing, it.body, crypto) }
+         if (nonce == null) {
+-            wrongRequests++
+-            if (wrongRequests >= MAX_WRONG_REQUESTS) outcome = Outcome.TooManyAttempts
++            val namesTheSession = request != null && request.method == "POST" && request.path == path
++            if (namesTheSession) {
++                wrongRequests++
++                if (wrongRequests >= MAX_WRONG_REQUESTS) outcome = Outcome.TooManyAttempts
++            }
+             val status = when {
+                 request == null -> 400
+                 request.path != path -> 404
+diff --git a/app/src/test/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPortTest.kt b/app/src/test/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPortTest.kt
+index cc7eeb5..6a91acc 100644
+--- a/app/src/test/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPortTest.kt
++++ b/app/src/test/java/dev/sk2andy/materialbrowser/browser/transfer/AndroidLocalTransferPortTest.kt
+@@ -11,11 +11,15 @@ import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferReceiveResult
+ import dev.sk2andy.materialbrowser.shared.transfer.LocalTransferTab
+ import java.io.ByteArrayInputStream
+ import java.io.ByteArrayOutputStream
++import java.io.IOException
+ import java.net.Inet4Address
+ import java.net.InetAddress
++import java.net.Socket
+ import java.util.concurrent.CopyOnWriteArrayList
+ import java.util.concurrent.CountDownLatch
+ import java.util.concurrent.TimeUnit
++import java.util.concurrent.atomic.AtomicBoolean
++import kotlin.concurrent.thread
+ import org.junit.Assert.assertArrayEquals
+ import org.junit.Assert.assertEquals
+ import org.junit.Assert.assertNull
+@@ -95,7 +99,7 @@ class AndroidLocalTransferPortTest {
+     }
+ 
+     @Test
+-    fun wrongRequestsDoNotUseTheOfferUpUntilTooMany() {
++    fun wrongProofsDoNotUseTheOfferUpUntilTooMany() {
+         val pairing = pairing()
+         val offer = LocalTransferOffer(pairing, payload, AndroidLocalTransferCrypto)
+         val path = LocalTransferProtocol.path(pairing)
+@@ -108,12 +112,34 @@ class AndroidLocalTransferPortTest {
+         assertEquals(403, forged.status)
+         assertEquals(LocalTransferOffer.Outcome.Open, forged.outcome)
+ 
++        repeat(LocalTransferOffer.MAX_WRONG_REQUESTS - 2) { offer.answer(LocalTransferHttp.Request("POST", path, "{}")) }
++        assertEquals(LocalTransferOffer.Outcome.Open, offer.outcome)
+         val last = offer.answer(LocalTransferHttp.Request("POST", path, "{}"))
+         assertEquals(LocalTransferOffer.Outcome.TooManyAttempts, last.outcome)
+         val proven = LocalTransferProtocol.request(pairing, AndroidLocalTransferCrypto).body
+         assertEquals(410, offer.answer(LocalTransferHttp.Request("POST", path, proven)).status)
+     }
+ 
++    @Test
++    fun requestsThatDoNotNameTheSessionCannotCloseTheOffer() {
++        val pairing = pairing()
++        val offer = LocalTransferOffer(pairing, payload, AndroidLocalTransferCrypto)
++        val path = LocalTransferProtocol.path(pairing)
++
++        // A scan of the Wi-Fi, a browser's prefetch, a stranger's probe: none of it knows the session.
++        repeat(50) {
++            offer.answer(null)
++            offer.answer(LocalTransferHttp.Request("GET", "/", ""))
++            offer.answer(LocalTransferHttp.Request("POST", "/v1/other", "{}"))
++            offer.answer(LocalTransferHttp.Request("GET", path, ""))
++        }
++
++        assertEquals(LocalTransferOffer.Outcome.Open, offer.outcome)
++        val proven = LocalTransferProtocol.request(pairing, AndroidLocalTransferCrypto).body
++        assertEquals(200, offer.answer(LocalTransferHttp.Request("POST", path, proven)).status)
++        assertEquals(LocalTransferOffer.Outcome.Sent, offer.outcome)
++    }
++
+     @Test
+     fun aPayloadMovesBetweenTwoPortsOverTheNetwork() {
+         val port = loopbackPort()
+@@ -137,6 +163,41 @@ class AndroidLocalTransferPortTest {
+         handle.cancel()
+     }
+ 
++    @Test
++    fun aSlowClientCannotHoldTheOfferPastItsBudget() {
++        val port = loopbackPort(requestBudgetMillis = 500)
++        val states = CopyOnWriteArrayList<LocalTransferOfferState>()
++        val handle = port.offer(payload) { states += it }
++        val waiting = states.first() as LocalTransferOfferState.Waiting
++        val pairing = LocalTransferPairingRules.parse(waiting.code, NOW)!!
++        // Another device on the Wi-Fi opens a connection first and sends one byte every 100 ms: every
++        // read is well inside the socket timeout, but the request never ends.
++        val stop = AtomicBoolean(false)
++        val dripper = thread(isDaemon = true) {
++            runCatching {
++                Socket(InetAddress.getLoopbackAddress(), pairing.port).use { socket ->
++                    val out = socket.getOutputStream()
++                    while (!stop.get()) {
++                        out.write('G'.code)
++                        out.flush()
++                        Thread.sleep(100)
++                    }
++                }
++            }
++        }
++        Thread.sleep(200)
++
++        val received = CountDownLatch(1)
++        var result: LocalTransferReceiveResult? = null
++        port.receive(waiting.code) { result = it; received.countDown() }
++
++        assertTrue("the receiver is served once the slow client's budget is spent", received.await(4, TimeUnit.SECONDS))
++        assertEquals(LocalTransferReceiveResult.Received(payload), result)
++        stop.set(true)
++        dripper.join(2_000)
++        handle.cancel()
++    }
++
+     @Test
+     fun aCancelledOfferIsUnreachable() {
+         val port = loopbackPort()
+@@ -165,11 +226,44 @@ class AndroidLocalTransferPortTest {
+         assertEquals(LocalTransferOfferState.Failed(LocalTransferFailure.Unavailable), state)
+     }
+ 
+-    private fun loopbackPort(now: Long = NOW) = AndroidLocalTransferPort(
++    @Test
++    fun aSocketThatCannotBeMadeOnTheWifiFailsTheReceiveWithoutThrowing() {
++        val code = LocalTransferPairingRules.format(pairing())
++        val results = CopyOnWriteArrayList<LocalTransferReceiveResult>()
++
++        // The Wi-Fi went away between the scan and the connection: binding the socket throws.
++        AndroidLocalTransferPort(
++            localAddress = { wifi },
++            nowEpochSeconds = { NOW },
++            postToMain = { it() },
++            clientSocket = { throw IOException("The network is gone") },
++        ).receive(code) { results += it }
++        // No Wi-Fi network at all (mobile data, a VPN): there is no socket to make, and the request
++        // must not leave through the default route instead.
++        AndroidLocalTransferPort(
++            localAddress = { wifi },
++            nowEpochSeconds = { NOW },
++            postToMain = { it() },
++            clientSocket = { null },
++        ).receive(code) { results += it }
++
++        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
++        while (results.size < 2 && System.nanoTime() < deadline) Thread.sleep(10)
++        assertEquals(
++            listOf(
++                LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable),
++                LocalTransferReceiveResult.Failed(LocalTransferFailure.Unavailable),
++            ),
++            results.toList(),
++        )
++    }
++
++    private fun loopbackPort(now: Long = NOW, requestBudgetMillis: Int = 5_000) = AndroidLocalTransferPort(
+         localAddress = { wifi },
+         nowEpochSeconds = { now },
+         postToMain = { it() },
+         socketAddress = { InetAddress.getLoopbackAddress() },
++        requestBudgetMillis = requestBudgetMillis,
+     )
+ 
+     private fun pairing() = LocalTransferPairing(
+-- 
+2.43.0
+
