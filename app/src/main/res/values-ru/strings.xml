@@ -2158,6 +2158,12 @@
     <string name="v5_site_https">Только HTTPS</string>
     <string name="v5_site_reset">Сбросить сайт к умолчаниям</string>
     <string name="v5_site_back">Назад</string>
+    <string name="v5_site_reload_note">Изменения здесь могут перезагрузить страницу и другие открытые вкладки сайта — введённое на них пропадёт.</string>
+    <string name="v5_site_reload_note_private">Изменения здесь могут перезагрузить страницу — введённое на ней пропадёт.</string>
+    <string name="v5_site_reset_title">Сбросить %1$s?</string>
+    <string name="v5_site_reset_message">Строгая защита, сторонние cookie, баннеры cookie, AMP, защита от отпечатков и исправления страниц для этого сайта вернутся к умолчаниям, а защита снова включится. Страница и другие открытые вкладки сайта перезагрузятся.</string>
+    <string name="v5_site_reset_message_private">Строгая защита, сторонние cookie, баннеры cookie, AMP, защита от отпечатков и исправления страниц для этого сайта вернутся к умолчаниям в этой приватной вкладке, а защита снова включится. Страница перезагрузится.</string>
+    <string name="v5_site_reset_action">Сбросить</string>
     <string name="v5_glance_open">Открыть</string>
     <string name="v5_glance_background">В фоне</string>
     <string name="v5_glance_opened_background">Открыто в фоне</string>

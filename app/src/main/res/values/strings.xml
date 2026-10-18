@@ -2066,6 +2066,12 @@
     <string name="v5_site_https">HTTPS only</string>
     <string name="v5_site_reset">Reset site to defaults</string>
     <string name="v5_site_back">Back</string>
+    <string name="v5_site_reload_note">Changes here can reload the page and the site’s other open tabs; anything typed on them is lost.</string>
+    <string name="v5_site_reload_note_private">Changes here can reload the page; anything typed on it is lost.</string>
+    <string name="v5_site_reset_title">Reset %1$s?</string>
+    <string name="v5_site_reset_message">Strict, third-party cookies, cookie banners, AMP, fingerprinting and page fixes for this site go back to the defaults, and protection turns back on. The page and the site’s other open tabs reload.</string>
+    <string name="v5_site_reset_message_private">Strict, third-party cookies, cookie banners, AMP, fingerprinting and page fixes for this site go back to the defaults in this private tab, and protection turns back on. The page reloads.</string>
+    <string name="v5_site_reset_action">Reset</string>
     <string name="v5_glance_open">Open</string>
     <string name="v5_glance_background">In background</string>
     <string name="v5_glance_opened_background">Opened in background</string>

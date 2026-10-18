@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 site protection panel as canvas screen «f1», light and dark, and a site with protection off. */
+/* The v5 site protection panel as canvas screen «f1»: light, dark, protection off, and the reset question. */
 
 private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
@@ -58,4 +58,12 @@ private fun V5SiteProtectionDarkPreview() {
 @Composable
 private fun V5SiteProtectionOffPreview() {
     PanelPreview(dark = true, state = GeckoSite.copy(protectionOn = false, blocked = 0))
+}
+
+@Preview(name = "Site protection · reset question · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SiteResetPromptPreview() {
+    VolaV5Theme(dark = true) {
+        V5SiteResetPrompt(visible = true, host = GeckoSite.host, privateTab = false, onReset = {}, onDismiss = {})
+    }
 }
