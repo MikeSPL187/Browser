@@ -49,6 +49,18 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The runner's own Go is older than the one that builds the server image, and its standard
+      # library carries fixed vulnerabilities (govulncheck, 18.10). The image's Go is the one that
+      # ships, so CI uses it: Go downloads that toolchain when GOTOOLCHAIN names it.
+      - name: Use the Go of the server image
+        run: |
+          version="$(sed -n 's/^FROM golang:\([0-9][0-9.]*\)-.*/\1/p' Dockerfile | head -n 1)"
+          if [[ -z "$version" ]]; then
+            echo "::error::No golang version found in sync/server/Dockerfile"
+            exit 1
+          fi
+          echo "GOTOOLCHAIN=go${version}" >> "$GITHUB_ENV"
+
       - name: Go version
         run: go version
 
