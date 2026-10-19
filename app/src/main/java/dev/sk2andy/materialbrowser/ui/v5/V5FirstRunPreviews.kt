@@ -52,3 +52,21 @@ private fun V5FirstRunGesturesPreview() {
 private fun V5FirstRunGesturesDarkPreview() {
     VolaV5Theme(dark = true) { V5FirstRunGestures(onDone = {}) }
 }
+
+// A phone on its side: the card scrolls instead of losing «Got it» under the bar (FR-01).
+@Preview(name = "First run v5 · two gestures, landscape", widthDp = PREVIEW_HEIGHT_DP, heightDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5FirstRunGesturesLandscapePreview() {
+    VolaV5Theme(dark = false) { V5FirstRunGestures(onDone = {}) }
+}
+
+@Preview(
+    name = "First run v5 · two gestures, largest font, dark",
+    widthDp = PREVIEW_WIDTH_DP,
+    heightDp = PREVIEW_HEIGHT_DP,
+    fontScale = 2f,
+)
+@Composable
+private fun V5FirstRunGesturesLargeFontDarkPreview() {
+    VolaV5Theme(dark = true) { V5FirstRunGestures(onDone = {}) }
+}

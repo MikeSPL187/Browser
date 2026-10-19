@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.data.DownloadEntry
+import dev.sk2andy.materialbrowser.data.DownloadStatus
 
 /**
  * The list behind the library's Downloads screen: what is downloading and what is done, and the
@@ -45,9 +46,9 @@ class DownloadsController internal constructor(
     private var isRefreshing = false
     private var refreshAgain = false
 
-    /** How long to wait before the next refresh: short while something is downloading. */
+    /** How long to wait before the next refresh: short only while bytes are moving. */
     internal val pollDelayMillis: Long
-        get() = if (downloads.any { entry -> entry.status.isActive }) ACTIVE_POLL_MILLIS else IDLE_POLL_MILLIS
+        get() = nextPollMillis(downloads) ?: IDLE_POLL_MILLIS
 
     internal fun refresh() {
         if (isRefreshing) {
@@ -96,5 +97,15 @@ class DownloadsController internal constructor(
     internal companion object {
         const val ACTIVE_POLL_MILLIS = 750L
         const val IDLE_POLL_MILLIS = 3_000L
+
+        /**
+         * How soon [entries] are worth reading again: often while one is running or about to, seldom
+         * while all that is left is paused or waiting for a network, and null once none is under way.
+         */
+        fun nextPollMillis(entries: List<DownloadEntry>): Long? = when {
+            entries.any { it.status == DownloadStatus.Running || it.status == DownloadStatus.Pending } -> ACTIVE_POLL_MILLIS
+            entries.any { it.status.isActive } -> IDLE_POLL_MILLIS
+            else -> null
+        }
     }
 }

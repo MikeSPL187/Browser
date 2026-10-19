@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.FindInPageMatchPosition
 import dev.sk2andy.materialbrowser.browser.FindInPageRules
 import dev.sk2andy.materialbrowser.browser.FindInPageState
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
@@ -33,7 +34,6 @@ internal fun BrowserFindInPage(
     modifier: Modifier = Modifier,
 ) {
     val matchPosition = FindInPageRules.displayPosition(findState)
-    val matchText = findInPageMatchText(matchPosition)
     val isCounting = findState.query.isNotEmpty() && !findState.isDoneCounting
     val canNavigate = FindInPageRules.canNavigate(findState)
     val placement = modifier
@@ -49,7 +49,7 @@ internal fun BrowserFindInPage(
             V5FindInPage(
                 query = findState.query,
                 onQueryChange = controller::updateFindInPageQuery,
-                matchText = if (findState.query.isEmpty()) "" else matchText,
+                matchText = v5FindInPageMatchText(findState, matchPosition),
                 isCounting = isCounting,
                 canNavigate = canNavigate,
                 labels = V5FindInPageLabels(
@@ -57,7 +57,7 @@ internal fun BrowserFindInPage(
                     counting = stringResource(R.string.cd_find_in_page_counting),
                     previous = stringResource(R.string.cd_find_in_page_previous),
                     next = stringResource(R.string.cd_find_in_page_next),
-                    done = stringResource(R.string.action_cancel),
+                    done = stringResource(R.string.action_done),
                 ),
                 onPrevious = { controller.findNextInPage(forward = false) },
                 onNext = { controller.findNextInPage(forward = true) },
@@ -70,7 +70,7 @@ internal fun BrowserFindInPage(
     FindInPageBar(
         query = findState.query,
         onQueryChange = controller::updateFindInPageQuery,
-        matchText = matchText,
+        matchText = findInPageMatchText(matchPosition),
         isCounting = isCounting,
         canNavigate = canNavigate,
         focusNonce = 0,
@@ -95,6 +95,19 @@ internal fun BrowserFindInPage(
             .padding(horizontal = VolaSpacing.x2, vertical = ADDRESS_BAR_VERTICAL_MARGIN)
             .zIndex(FIND_Z_INDEX),
     )
+}
+
+/** «2 of 7» in words, as TalkBack reads it, and «Not found» instead of "0/0"; empty without a query. */
+@Composable
+private fun v5FindInPageMatchText(state: FindInPageState, position: FindInPageMatchPosition): String = when {
+    state.query.isEmpty() -> ""
+    FindInPageRules.isNotFound(state) -> stringResource(R.string.v5_find_in_page_not_found)
+    position.isCountKnown -> stringResource(
+        R.string.v5_find_in_page_match_count,
+        position.activeMatchNumber,
+        position.matchCount,
+    )
+    else -> stringResource(R.string.v5_find_in_page_match_count_unknown, position.activeMatchNumber)
 }
 
 private const val FIND_DARK_LUMINANCE = 0.5f

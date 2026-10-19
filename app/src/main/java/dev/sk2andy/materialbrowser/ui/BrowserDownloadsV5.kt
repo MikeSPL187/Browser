@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
@@ -31,6 +30,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.DownloadsController
@@ -152,7 +154,8 @@ internal class DownloadRing {
 
 /**
  * The downloads the v5 bar watches: read from the same store as the Downloads screen, only while
- * something downloads or was just asked for, so an idle browser does not poll.
+ * the browser is on screen and something downloads or was just asked for, so an idle browser does
+ * not poll.
  */
 @Composable
 internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
@@ -168,19 +171,24 @@ internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
                     if (started) {
                         state.retries++
                     } else {
-                        Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show()
+                        V5Feedback.show(context, R.string.downloads_control_failed)
                     }
                 }
             }
         }
     }
-    LaunchedEffect(downloads, controller.contentActions.downloadRevision, state.retries) {
+    // Only while the browser is on screen, and seldom while what is left is paused or waits for a
+    // network (DL-04); coming back reads again at once.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val onScreen = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+    LaunchedEffect(downloads, controller.contentActions.downloadRevision, state.retries, onScreen) {
+        if (!onScreen) return@LaunchedEffect
         var polls = 0
         do {
             downloads.refresh()
-            delay(DownloadsController.ACTIVE_POLL_MILLIS)
+            delay(DownloadsController.nextPollMillis(downloads.downloads) ?: DownloadsController.ACTIVE_POLL_MILLIS)
             polls++
-        } while (polls < DownloadRingRules.START_POLLS || downloads.downloads.any { entry -> entry.status.isActive })
+        } while (polls < DownloadRingRules.START_POLLS || DownloadsController.nextPollMillis(downloads.downloads) != null)
     }
     val previous = remember { LastDownloads() }
     val current = downloads.downloads
@@ -295,7 +303,7 @@ internal fun BrowserDownloadNoticeAccessory(
 internal fun openDownloadPage(context: Context, url: String) {
     runCatching {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(context.packageName))
-    }.onFailure { Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show() }
+    }.onFailure { V5Feedback.show(context, R.string.downloads_control_failed) }
 }
 
 /** Opens a finished download as the Downloads screen does; the store is read off the main thread. */
@@ -308,7 +316,7 @@ private suspend fun openDownload(context: Context, id: Long) {
         uri to (entry.mime.takeIf(String::isNotBlank) ?: context.contentResolver.getType(uri))
     }
     if (target == null) {
-        Toast.makeText(context, R.string.downloads_open_failed, Toast.LENGTH_SHORT).show()
+        V5Feedback.show(context, R.string.downloads_open_failed)
         return
     }
     val (uri, mime) = target
@@ -318,7 +326,7 @@ private suspend fun openDownload(context: Context, id: Long) {
                 .setDataAndType(uri, mime ?: "*/*")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
         )
-    }.onFailure { Toast.makeText(context, R.string.downloads_open_failed, Toast.LENGTH_SHORT).show() }
+    }.onFailure { V5Feedback.show(context, R.string.downloads_open_failed) }
 }
 
 private fun downloadsController(context: Context, scope: CoroutineScope): DownloadsController {

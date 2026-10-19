@@ -70,8 +70,9 @@ internal data class V5ProfilePrivacy(
 
 /**
  * «New profile» and «Edit profile» (V11b, system-v5.md 1.2 and 10): a name, a symbol, one of the six
- * accents and the privacy switches, as Safari's profile editor. A new profile is made by «Create»;
- * an existing one keeps each change at once and is saved by «Done». [onDelete] null hides «Delete».
+ * accents and the privacy switches, as Safari's profile editor. A new profile is made by «Create»
+ * and dropped by «Close»; an existing one keeps every change, saved by «Done», «Close» or a swipe
+ * down alike. [onDelete] null hides «Delete».
  */
 @Composable
 internal fun V5ProfileEditSheet(
@@ -86,12 +87,13 @@ internal fun V5ProfileEditSheet(
     onDismiss: () -> Unit,
     onDelete: (() -> Unit)? = null,
 ) {
-    // A fresh draft each time the sheet opens for a profile.
-    var name by rememberSaveable(visible, initial) { mutableStateOf(initial.name) }
-    var iconIndex by rememberSaveable(visible, initial) {
+    // A fresh draft each time the sheet opens for a profile, kept while it slides away.
+    val opening = rememberSheetOpening(visible)
+    var name by rememberSaveable(opening) { mutableStateOf(initial.name) }
+    var iconIndex by rememberSaveable(opening) {
         mutableIntStateOf(icons.indexOfFirst { it.key == initial.iconKey }.coerceAtLeast(0))
     }
-    var accentIndex by rememberSaveable(visible, initial) {
+    var accentIndex by rememberSaveable(opening) {
         mutableIntStateOf(V5Accent.entries.indexOf(initial.accent))
     }
     val accent = V5Accent.entries[accentIndex]
@@ -106,9 +108,12 @@ internal fun V5ProfileEditSheet(
         onDismiss()
         onSave(draft())
     }
+    // An existing profile keeps every change, as its switches do: «Close» and a swipe down save the
+    // name, symbol and accent too. Only a new profile is dropped by them.
+    val close = if (creating) onDismiss else save
     val title = stringResource(if (creating) R.string.v5_profile_new else R.string.v5_profile_edit)
-    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
-        V5SheetHeader(title = title, onClose = onDismiss)
+    V5WindowSheet(visible = visible, onDismiss = close, title = title) {
+        V5SheetHeader(title = title, onClose = close)
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
