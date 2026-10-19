@@ -2197,6 +2197,10 @@
     <string name="v5_translate_in_progress">Translating…</string>
     <string name="v5_translate_note">Translated on this phone: the page text goes nowhere.</string>
     <string name="v5_translate_note_download">Translated on this phone: the page text goes nowhere. The %1$s language pack downloads once.</string>
+    <string name="v5_translate_languages_loading">Getting the languages…</string>
+    <string name="v5_translate_languages_failed">Couldn’t get the list of languages.</string>
+    <string name="v5_translate_same_language">The page is already in this language: choose another one.</string>
+    <string name="v5_translate_note_download_unknown">Translated on the device: the page’s text goes nowhere. The first translation may download a language pack.</string>
     <string name="v5_translate_error">Couldn’t translate this page. Try again.</string>
     <string name="v5_translate_error_download">The language pack didn’t download. Check the connection and try again.</string>
     <string name="v5_translate_error_language">This language can’t be translated on the phone yet.</string>
