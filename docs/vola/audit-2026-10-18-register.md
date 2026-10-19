@@ -85,8 +85,8 @@
 | N-01 | Низкий | дефект | N-01 | Немецкая страница синхронизации в `shared` — удалена | `ui/SettingsScreen.kt`, `app/.../ui/SyncSettingsPage.kt`, `docs/sync/app-integration.md` | — | исправлено: удалено в be75e32 (PR #456) |
 | N-08 | Низкий | решение | N-08 | Две системы интерфейса | — | — | открыто |
 | N-09 | Низкий | дефект | N-09 | «Без анимаций» не везде | `ui/v5/V5DistractionsPanel.kt`, `V5SiteProtection.kt` | — | исправлено: частично: V5DistractionsPanel, V5SiteProtection (PR #456) |
-| N-10 | Низкий | дефект | N-10 | Остатки Candy | `values/userscript_strings.xml` | — | в работе, PR #NEXT |
-| N-11 | Низкий | дефект | N-11 | CI | `build.yml`, `test_network_security_apks.py`, `test_systemwebview_apk.py` | — | в работе, PR #NEXT |
+| N-10 | Низкий | дефект | N-10 | Остатки Candy | `values/userscript_strings.xml` | — | в работе, PR #486 |
+| N-11 | Низкий | дефект | N-11 | CI | `build.yml`, `test_network_security_apks.py`, `test_systemwebview_apk.py` | — | в работе, PR #486 |
 | N-15 | Низкий | дефект | N-15 | `CandySyncRepository`: потокобезопасность держится на соглашении | — | патч 0003 | исправлено, PR #465 |
 | S-05 | Низкий | дефект | N-17 | Перевод: ответ старого запроса затирает состояние нового | `browser/translation/OnDeviceTranslationController.kt` | — | в работе, PR #472 |
 | S-07 | Низкий | дефект | N-17 | Неверный адрес SearXNG тихо превращается в пустой | `browser/SearxngSettings.kt`, `BrowserController.kt` | — | отклонено: поле адреса в настройках уже пишет «адрес неверный» и не сохраняет его (SearchSettingsPage.kt:256–277); обнуляется только значение из импорта, и поиск тогда просит адрес (PR #464) |
