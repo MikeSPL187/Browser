@@ -14,10 +14,13 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
+import dev.sk2andy.materialbrowser.browser.DistinctNames
 import dev.sk2andy.materialbrowser.browser.MAX_PROFILES
 import dev.sk2andy.materialbrowser.browser.ProfileLockTrigger
 import dev.sk2andy.materialbrowser.browser.ProfileProtection
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+import dev.sk2andy.materialbrowser.browser.WorkspaceDeletionRules
+import dev.sk2andy.materialbrowser.browser.WorkspaceNameRules
 import dev.sk2andy.materialbrowser.browser.isSynced
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
@@ -65,6 +68,16 @@ internal object V5ProfileRules {
         V5Accent.Purple -> WorkspaceAccent.Violet
         V5Accent.Graphite -> WorkspaceAccent.Graphite
     }
+
+    /**
+     * The name a profile is saved under: blank becomes [untitled], and a name another of [others]
+     * already shows gets the next number, so no two profiles read the same (PF-03).
+     */
+    fun distinctName(name: String, others: List<BrowserProfile>, untitled: String): String = DistinctNames.distinct(
+        name = WorkspaceNameRules.normalize(name).ifBlank { untitled },
+        taken = others.map { it.name.ifBlank { untitled } },
+        maxLength = WorkspaceNameRules.MAX_LENGTH,
+    )
 
     /** The sheet's rows: this device's profiles in their order, then those from other devices. */
     fun items(
@@ -152,6 +165,7 @@ private fun BrowserProfileEditSheetV5(
     onFinished: () -> Unit,
 ) {
     val view = LocalView.current
+    val untitled = stringResource(R.string.v5_profile_untitled)
     val profile = (edit as? ProfileEdit.Existing)?.let { target ->
         controller.localBrowserProfiles.firstOrNull { it.id == target.id }
     }
@@ -191,13 +205,16 @@ private fun BrowserProfileEditSheetV5(
                 val created = controller.createProfile(
                     emoji = draft.iconKey,
                     isolationEnabled = newOwnStorage && controller.isProfileIsolationSupported,
-                    name = draft.name,
+                    name = V5ProfileRules.distinctName(draft.name, controller.localBrowserProfiles, untitled),
                     accent = V5ProfileRules.stored(draft.accent),
                 )
                 if (created != null) view.performV5Haptic(V5Haptic.Confirm)
                 onFinished()
             } else {
-                if (draft.name != profile.name) controller.updateProfileName(profile.id, draft.name)
+                if (draft.name != profile.name) {
+                    val others = controller.localBrowserProfiles.filter { it.id != profile.id }
+                    controller.updateProfileName(profile.id, V5ProfileRules.distinctName(draft.name, others, untitled))
+                }
                 if (draft.iconKey != profile.emoji) controller.updateProfileEmoji(profile.id, draft.iconKey)
                 if (draft.accent != initial.accent) {
                     controller.updateProfileAccent(profile.id, V5ProfileRules.stored(draft.accent))
@@ -221,11 +238,21 @@ private fun BrowserProfileEditSheetV5(
     )
     // Both questions are v5 prompt sheets: «Close» and a swipe down keep things as they are.
     deleting?.let { target ->
-        val name = target.name.ifBlank { stringResource(R.string.v5_profile_untitled) }
+        val name = target.name.ifBlank { untitled }
+        val local = controller.localBrowserProfiles
+        val heir = WorkspaceDeletionRules.fallbackProfileId(
+            localProfileIds = local.map(BrowserProfile::id),
+            activeProfileId = controller.activeProfileId,
+            deletedProfileId = target.id,
+        )?.let { id -> local.firstOrNull { it.id == id } }
         V5PromptSheet(
             visible = true,
             title = stringResource(R.string.workspace_delete_confirm_title, name),
-            message = stringResource(R.string.v5_profile_delete_message),
+            // Everything deleteProfileAsync takes with the profile, and where its tabs go (PF-04).
+            message = stringResource(
+                if (target.isolationEnabled) R.string.v5_profile_delete_message_storage else R.string.v5_profile_delete_message,
+                heir?.name?.ifBlank { untitled } ?: untitled,
+            ),
             actions = listOf(
                 V5PromptAction(
                     label = stringResource(R.string.action_delete),
