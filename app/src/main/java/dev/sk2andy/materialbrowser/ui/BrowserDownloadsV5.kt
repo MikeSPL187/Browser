@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
@@ -172,7 +171,7 @@ internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
                     if (started) {
                         state.retries++
                     } else {
-                        Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show()
+                        V5Feedback.show(context, R.string.downloads_control_failed)
                     }
                 }
             }
@@ -304,7 +303,7 @@ internal fun BrowserDownloadNoticeAccessory(
 internal fun openDownloadPage(context: Context, url: String) {
     runCatching {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(context.packageName))
-    }.onFailure { Toast.makeText(context, R.string.downloads_control_failed, Toast.LENGTH_SHORT).show() }
+    }.onFailure { V5Feedback.show(context, R.string.downloads_control_failed) }
 }
 
 /** Opens a finished download as the Downloads screen does; the store is read off the main thread. */
@@ -317,7 +316,7 @@ private suspend fun openDownload(context: Context, id: Long) {
         uri to (entry.mime.takeIf(String::isNotBlank) ?: context.contentResolver.getType(uri))
     }
     if (target == null) {
-        Toast.makeText(context, R.string.downloads_open_failed, Toast.LENGTH_SHORT).show()
+        V5Feedback.show(context, R.string.downloads_open_failed)
         return
     }
     val (uri, mime) = target
@@ -327,7 +326,7 @@ private suspend fun openDownload(context: Context, id: Long) {
                 .setDataAndType(uri, mime ?: "*/*")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
         )
-    }.onFailure { Toast.makeText(context, R.string.downloads_open_failed, Toast.LENGTH_SHORT).show() }
+    }.onFailure { V5Feedback.show(context, R.string.downloads_open_failed) }
 }
 
 private fun downloadsController(context: Context, scope: CoroutineScope): DownloadsController {

@@ -98,4 +98,14 @@ class HiddenDistractionsRulesTest {
             ).sites,
         )
     }
+
+    @Test
+    fun `showing one selector keeps the rest, and a site left empty goes`() {
+        val one = HiddenDistractionsRules.hide(HiddenDistractions(), "news.example", "#a")
+        val state = HiddenDistractionsRules.hide(one, "news.example", "#b")
+
+        assertEquals(listOf("#a"), HiddenDistractionsRules.show(state, "www.news.example", "#b").selectorsFor("news.example"))
+        assertEquals(HiddenDistractions(), HiddenDistractionsRules.show(one, "news.example", "#a"))
+        assertSame(state, HiddenDistractionsRules.show(state, "news.example", "#missing"))
+    }
 }

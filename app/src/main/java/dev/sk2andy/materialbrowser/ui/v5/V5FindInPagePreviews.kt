@@ -10,7 +10,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 find capsule as canvas screen «с1»: found, counting and empty, light and dark. Not localized. */
+/* The v5 find capsule as canvas screen «с1»: found, not found, counting and empty, light and dark. Not localized. */
 
 private const val PREVIEW_WIDTH_DP = 390
 
@@ -19,11 +19,11 @@ private val Labels = V5FindInPageLabels(
     counting = "Идёт подсчёт совпадений",
     previous = "Предыдущее совпадение",
     next = "Следующее совпадение",
-    done = "Отмена",
+    done = "Готово",
 )
 
 @Composable
-private fun FindPreview(query: String, matchText: String, counting: Boolean, dark: Boolean) {
+private fun FindPreview(query: String, matchText: String, counting: Boolean, dark: Boolean, found: Boolean = matchText.isNotEmpty()) {
     VolaV5Theme(dark = dark) {
         Box(Modifier.background(V5Theme.colors.background).padding(vertical = V5Spacing.space2)) {
             V5FindInPage(
@@ -31,7 +31,7 @@ private fun FindPreview(query: String, matchText: String, counting: Boolean, dar
                 onQueryChange = {},
                 matchText = matchText,
                 isCounting = counting,
-                canNavigate = matchText.isNotEmpty(),
+                canNavigate = found,
                 labels = Labels,
                 onPrevious = {},
                 onNext = {},
@@ -43,11 +43,11 @@ private fun FindPreview(query: String, matchText: String, counting: Boolean, dar
 
 @Preview(name = "Find in page v5 · 2 of 7", widthDp = PREVIEW_WIDTH_DP)
 @Composable
-private fun V5FindInPageFoundPreview() = FindPreview("сияни", "2/7", counting = false, dark = false)
+private fun V5FindInPageFoundPreview() = FindPreview("сияни", "2 из 7", counting = false, dark = false)
 
 @Preview(name = "Find in page v5 · 2 of 7, dark", widthDp = PREVIEW_WIDTH_DP)
 @Composable
-private fun V5FindInPageFoundDarkPreview() = FindPreview("сияни", "2/7", counting = false, dark = true)
+private fun V5FindInPageFoundDarkPreview() = FindPreview("сияни", "2 из 7", counting = false, dark = true)
 
 @Preview(name = "Find in page v5 · counting", widthDp = PREVIEW_WIDTH_DP)
 @Composable
@@ -56,3 +56,11 @@ private fun V5FindInPageCountingPreview() = FindPreview("север", "", counti
 @Preview(name = "Find in page v5 · empty", widthDp = PREVIEW_WIDTH_DP)
 @Composable
 private fun V5FindInPageEmptyPreview() = FindPreview("", "", counting = false, dark = false)
+
+@Preview(name = "Find in page v5 · not found", widthDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5FindInPageNotFoundPreview() = FindPreview("сиянье", "Не найдено", counting = false, dark = false, found = false)
+
+@Preview(name = "Find in page v5 · not found, dark", widthDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5FindInPageNotFoundDarkPreview() = FindPreview("сиянье", "Не найдено", counting = false, dark = true, found = false)

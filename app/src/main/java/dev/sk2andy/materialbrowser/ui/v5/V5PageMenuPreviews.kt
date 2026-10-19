@@ -104,3 +104,21 @@ private fun V5PageMenuNoPrivateLightPreview() {
 private fun V5PageMenuNoPrivateDarkPreview() {
     VolaV5Theme(dark = true) { MenuPreview(PageState.copy(canNewPrivateTab = false)) }
 }
+
+/** A private tab: «Favorite» is off and says why (PM-04). */
+@Preview(name = "Page menu · private tab · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuPrivateDarkPreview() {
+    VolaV5Theme(dark = true) {
+        MenuPreview(PageState.copy(canFavorite = false, favoriteOffInPrivate = true, isFavorite = false))
+    }
+}
+
+/** While a file downloads: the row on top, and no second «Downloads» below (PM-02). */
+@Preview(name = "Page menu · downloading · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuDownloadingLightPreview() {
+    VolaV5Theme(dark = false) {
+        MenuPreview(PageState.copy(downloads = V5DownloadRingState.Progress(count = 1, fraction = 0.4f)))
+    }
+}

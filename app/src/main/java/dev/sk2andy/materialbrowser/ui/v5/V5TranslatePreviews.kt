@@ -75,3 +75,33 @@ private fun V5TranslatedRowLightPreview() = RowPreview(dark = false)
 @Preview(name = "Translated row · dark", widthDp = PREVIEW_WIDTH_DP)
 @Composable
 private fun V5TranslatedRowDarkPreview() = RowPreview(dark = true)
+
+private val NoLanguages = FirstTranslation.copy(
+    from = null,
+    to = Russian,
+    fromOptions = emptyList(),
+    toOptions = emptyList(),
+    alwaysTranslate = null,
+    downloadBytes = null,
+)
+
+@Preview(name = "Translate · languages loading · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TranslateLoadingPreview() = SheetPreview(
+    dark = false,
+    state = NoLanguages.copy(languagesStatus = V5TranslateLanguagesStatus.Loading),
+)
+
+@Preview(name = "Translate · languages failed · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TranslateLanguagesFailedPreview() = SheetPreview(
+    dark = true,
+    state = NoLanguages.copy(languagesStatus = V5TranslateLanguagesStatus.Failed),
+)
+
+@Preview(name = "Translate · same language, size unknown · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TranslateSameLanguagePreview() = SheetPreview(
+    dark = true,
+    state = FirstTranslation.copy(to = English, downloadBytes = null, downloadSizeUnknown = true),
+)

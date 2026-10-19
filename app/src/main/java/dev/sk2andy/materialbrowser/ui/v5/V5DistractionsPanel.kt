@@ -25,13 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -45,21 +45,27 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 object V5DistractionsPanelTestTags {
     const val Panel = "v5_distractions_panel"
     const val ShowHidden = "v5_distractions_show_hidden"
+    const val Undo = "v5_distractions_undo"
     const val Done = "v5_distractions_done"
 }
 
 /**
  * The «Hide distracting items» hint while a page is in choosing mode (V20, canvas screen «k1»,
  * system-v5.md section 12): at the top edge, since the bar is at the bottom. A tap on the page
- * outlines a block, a second tap hides it; «Show hidden items» brings back the site's blocks and
- * «Done» ends choosing. In a private tab the choice lasts only until the private tabs close.
+ * outlines a block, a second tap hides it; «Undo» brings back the block hidden last, «Show hidden
+ * items» all of the site's, and «Done» ends choosing. In a private tab the choice lasts only until
+ * the private tabs close.
  */
 @Composable
 fun V5DistractionsPanel(
     visible: Boolean,
     site: String,
     privateTab: Boolean,
-    hiddenCount: Int,
+    /** Whether the site has blocks hidden, which «Show hidden items» brings back. */
+    hasHidden: Boolean,
+    /** A block was hidden since choosing started: «Undo» takes the place of «Show hidden items». */
+    canUndo: Boolean,
+    onUndo: () -> Unit,
     onShowHidden: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
@@ -101,7 +107,7 @@ fun V5DistractionsPanel(
                 ) {
                     Icon(VolaIcons.VisibilityOff, contentDescription = null, tint = V5Tile.Blue.glyph, modifier = Modifier.size(V5Sizes.iconSmall))
                 }
-                Column(Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }) {
+                Column(Modifier.weight(1f)) {
                     Text(title, style = V5Theme.type.headline, color = colors.label)
                     Text(
                         if (privateTab) {
@@ -116,17 +122,28 @@ fun V5DistractionsPanel(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
-                if (hiddenCount > 0) {
-                    PanelButton(
-                        text = pluralStringResource(R.plurals.v5_distractions_show, hiddenCount, hiddenCount),
-                        background = colors.fill,
-                        content = colors.label,
-                        onClick = onShowHidden,
-                        modifier = Modifier.weight(1f).testTag(V5DistractionsPanelTestTags.ShowHidden),
-                    )
-                } else {
-                    Box(Modifier.weight(1f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+            ) {
+                // TalkBack hears the hint and the button change as blocks are hidden and brought back.
+                Box(Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }) {
+                    when {
+                        canUndo -> PanelButton(
+                            text = stringResource(R.string.v5_distractions_undo),
+                            background = colors.fill,
+                            content = colors.label,
+                            onClick = onUndo,
+                            modifier = Modifier.fillMaxWidth().testTag(V5DistractionsPanelTestTags.Undo),
+                        )
+                        hasHidden -> PanelButton(
+                            text = stringResource(R.string.v5_distractions_show_all),
+                            background = colors.fill,
+                            content = colors.label,
+                            onClick = onShowHidden,
+                            modifier = Modifier.fillMaxWidth().testTag(V5DistractionsPanelTestTags.ShowHidden),
+                        )
+                    }
                 }
                 PanelButton(
                     text = stringResource(R.string.v5_distractions_done),
@@ -148,9 +165,17 @@ private fun PanelButton(text: String, background: Color, content: Color, onClick
             .clip(V5Theme.shapes.full)
             .background(background)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = V5Spacing.space5),
+            .padding(horizontal = V5Spacing.space5, vertical = V5Spacing.space1),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = V5Theme.type.headline, color = content, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // Two lines rather than an ellipsis: at the largest font a label still reads whole.
+        Text(
+            text,
+            style = V5Theme.type.headline,
+            color = content,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

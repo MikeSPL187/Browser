@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.DistinctNames
 import dev.sk2andy.materialbrowser.browser.TabStack
 import dev.sk2andy.materialbrowser.browser.TabStackColor
 import dev.sk2andy.materialbrowser.data.TabStackRules
@@ -31,7 +32,7 @@ internal sealed interface TabGroupSheetTarget {
 /**
  * The v5 tab group sheets bound to the profile's TabStack data: a tab moves into a group the rules
  * allow (same privacy and pinning), into a new group or out of its own; a group is renamed,
- * recolored or ungrouped. A change the data refuses (twelve groups already) ticks Reject.
+ * recolored or ungrouped, never to another group's name. A change the data refuses (twelve groups already) ticks Reject.
  */
 @Composable
 internal fun BrowserTabGroupSheetsV5(
@@ -86,7 +87,9 @@ internal fun BrowserTabGroupSheetsV5(
         colors = tiles,
         onSave = { name, colorIndex ->
             new?.let {
-                val created = stacks.create(listOf(it.tabId), name.ifBlank { defaultName }, colors[colorIndex])
+                val taken = stacks.activeStacks.map(TabStack::name)
+                val groupName = distinctGroupName(name.ifBlank { defaultName }, taken)
+                val created = stacks.create(listOf(it.tabId), groupName, colors[colorIndex])
                 refuseUnless(created != null)
             }
         },
@@ -102,7 +105,8 @@ internal fun BrowserTabGroupSheetsV5(
         colors = tiles,
         onSave = { name, colorIndex ->
             edit?.let { group ->
-                val newName = name.ifBlank { group.name }
+                val others = stacks.activeStacks.filter { it.id != group.id }.map(TabStack::name)
+                val newName = distinctGroupName(name.ifBlank { group.name }, others)
                 if (newName != group.name) stacks.rename(group.id, newName)
                 if (colors[colorIndex] != group.color) stacks.setColor(group.id, colors[colorIndex])
             }
@@ -111,6 +115,10 @@ internal fun BrowserTabGroupSheetsV5(
         onUngroup = { edit?.let { refuseUnless(stacks.ungroup(it.id)) } },
     )
 }
+
+/** A profile's groups never share a name: «Group», «Group 2» (TG-02). */
+private fun distinctGroupName(name: String, taken: List<String>): String =
+    DistinctNames.distinct(TabStackRules.normalizedName(name), taken, TabStackRules.MAX_NAME_LENGTH)
 
 /** Not state: a new target recomposes anyway, and an old one only outlives it while its sheet hides. */
 private class LastTargets {

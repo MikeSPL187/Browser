@@ -84,6 +84,10 @@ internal object FindInPageRules {
     fun withoutResult(state: FindInPageState): FindInPageState =
         if (state.query.isEmpty() || state.isDoneCounting) state else state.copy(isDoneCounting = true)
 
+    /** The query was searched and the page has none of it: the count says so in words, not "0/0". */
+    fun isNotFound(state: FindInPageState): Boolean =
+        state.query.isNotEmpty() && state.isDoneCounting && state.matchCount == 0 && !state.isMatchFound
+
     fun canNavigate(state: FindInPageState): Boolean =
         state.query.isNotEmpty() && (state.matchCount > 0 || state.isMatchFound)
 

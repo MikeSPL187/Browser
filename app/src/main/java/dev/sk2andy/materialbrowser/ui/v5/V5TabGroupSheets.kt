@@ -127,9 +127,11 @@ fun V5TabGroupEditSheet(
     onDismiss: () -> Unit,
     onUngroup: (() -> Unit)? = null,
 ) {
-    // A fresh draft each time the sheet opens for a group.
-    var name by rememberSaveable(visible, initialName) { mutableStateOf(initialName) }
-    var colorIndex by rememberSaveable(visible, initialColorIndex) { mutableIntStateOf(initialColorIndex) }
+    // A fresh draft each time the sheet opens for a group; while it slides away after «Save» it keeps
+    // what was saved instead of flashing back to the old name and color.
+    val opening = rememberSheetOpening(visible)
+    var name by rememberSaveable(opening) { mutableStateOf(initialName) }
+    var colorIndex by rememberSaveable(opening) { mutableIntStateOf(initialColorIndex) }
     val save = {
         onDismiss()
         onSave(name.trim().ifEmpty { initialName }, colorIndex)

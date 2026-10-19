@@ -159,6 +159,50 @@ class HiddenDistractionsControllerTest {
     }
 
     @Test
+    fun `undo shows again only the block hidden last, once, and ends with choosing`() {
+        storedFor("work", "news.example", "#old")
+        val page = FakePage()
+        pages[tab.id] = page
+        controller.selectorsFor(tab, tab.url)
+        host.runBackground()
+        assertFalse(controller.canUndo)
+
+        controller.startPicking(tab, highlightArgb = 0)
+        page.listener!!.onHidden("news.example", "#a")
+        page.listener!!.onHidden("news.example", "#nav")
+        assertTrue(controller.canUndo)
+
+        controller.undoLastHide()
+        host.runBackground()
+        assertEquals(listOf("#old", "#a"), controller.selectorsFor(tab, tab.url))
+        assertEquals(listOf("#old", "#a"), storage.lists["work"]?.selectorsFor("news.example"))
+        assertFalse(controller.canUndo)
+
+        page.listener!!.onHidden("news.example", "#b")
+        controller.stopPicking()
+        assertFalse(controller.canUndo)
+        controller.undoLastHide()
+        assertEquals(listOf("#old", "#a", "#b"), controller.selectorsFor(tab, tab.url))
+    }
+
+    @Test
+    fun `undo in a private tab touches the private session only`() {
+        storedFor("work", "news.example", "#saved")
+        val page = FakePage()
+        pages[privateTab.id] = page
+        controller.selectorsFor(tab, tab.url)
+        host.runBackground()
+        controller.startPicking(privateTab, highlightArgb = 0)
+
+        page.listener!!.onHidden("news.example", "#private")
+        controller.undoLastHide()
+        host.runBackground()
+
+        assertEquals(listOf("#saved"), controller.selectorsFor(privateTab, privateTab.url))
+        assertEquals(listOf("#saved"), storage.lists["work"]?.selectorsFor("news.example"))
+    }
+
+    @Test
     fun `show all brings back every block of the site and saves that`() {
         storedFor("work", "news.example", "#a", "#b")
         controller.selectorsFor(tab, tab.url)

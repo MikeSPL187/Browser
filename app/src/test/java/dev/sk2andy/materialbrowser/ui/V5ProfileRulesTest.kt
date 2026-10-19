@@ -52,4 +52,16 @@ class V5ProfileRulesTest {
         assertEquals(WorkspaceAccent.Violet, V5ProfileRules.stored(V5Accent.Purple))
         assertEquals(WorkspaceAccent.Amber, V5ProfileRules.stored(V5Accent.Orange))
     }
+
+    @Test
+    fun `a saved profile name is never blank and never another profile's`() {
+        val others = listOf(
+            BrowserProfile(id = "default", emoji = "🏠"),
+            BrowserProfile(id = "work", emoji = "💼", name = "Work"),
+        )
+
+        assertEquals("Profile 2", V5ProfileRules.distinctName("  ", others, untitled = "Profile"))
+        assertEquals("work 2", V5ProfileRules.distinctName(" work ", others, untitled = "Profile"))
+        assertEquals("Home", V5ProfileRules.distinctName("Home", others, untitled = "Profile"))
+    }
 }

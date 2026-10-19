@@ -74,6 +74,9 @@
     <string name="action_home">Домой</string>
     <string name="find_in_page_match_count">%1$d/%2$d</string>
     <string name="find_in_page_match_count_unknown">%1$d/…</string>
+    <string name="v5_find_in_page_match_count">%1$d из %2$d</string>
+    <string name="v5_find_in_page_match_count_unknown">%1$d из …</string>
+    <string name="v5_find_in_page_not_found">Не найдено</string>
     <string name="cd_find_in_page_query">Текст для поиска на странице</string>
     <string name="cd_find_in_page_counting">Подсчёт совпадений</string>
     <string name="cd_find_in_page_previous">Предыдущее совпадение</string>
@@ -2119,12 +2122,8 @@
     <string name="v5_private_title">Частный доступ</string>
     <string name="v5_private_body">Vola не запомнит историю, cookie и данные форм. Закройте частные вкладки — и всё исчезнет.</string>
     <string name="v5_distractions_hide">Скрыть отвлекающее</string>
-    <plurals name="v5_distractions_show">
-        <item quantity="one">Показать скрытое (%d)</item>
-        <item quantity="few">Показать скрытое (%d)</item>
-        <item quantity="many">Показать скрытое (%d)</item>
-        <item quantity="other">Показать скрытое (%d)</item>
-    </plurals>
+    <string name="v5_distractions_show_all">Показать скрытое</string>
+    <string name="v5_distractions_undo">Отменить</string>
     <string name="v5_distractions_hint">Коснитесь того, что мешает</string>
     <string name="v5_distractions_site">Второе касание скрывает. Vola запомнит выбор для %1$s.</string>
     <string name="v5_distractions_private">Второе касание скрывает. В частной вкладке — только до закрытия частных вкладок.</string>
@@ -2174,12 +2173,14 @@
     <string name="v5_glance_open">Открыть</string>
     <string name="v5_glance_background">В фоне</string>
     <string name="v5_glance_opened_background">Открыто в фоне</string>
+    <string name="v5_glance_source_gone">Ссылка не открыта: её вкладки уже нет на экране</string>
     <string name="v5_glance_more">Ещё действия со ссылкой</string>
     <string name="v5_glance_private">Открыть в частной вкладке</string>
     <string name="v5_glance_private_note">Частная вкладка: из просмотра ничего не сохранится</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
+    <string name="v5_menu_favorite_private">Не в приватной</string>
     <string name="v5_menu_read">Читать</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
@@ -2217,7 +2218,8 @@
     <string name="v5_profile_edit_action">Изменить</string>
     <string name="v5_profile_create">Создать</string>
     <string name="v5_profile_delete">Удалить профиль</string>
-    <string name="v5_profile_delete_message">Вкладки перейдут в другой профиль. Удалятся его история, а при отдельном хранилище — cookie и входы.</string>
+    <string name="v5_profile_delete_message">Вкладки перейдут в профиль «%1$s», без групп. Вместе с профилем удалятся его группы, закреплённые сайты, избранное, скрытое на сайтах, настройки сайтов и история.</string>
+    <string name="v5_profile_delete_message_storage">Вкладки перейдут в профиль «%1$s», без групп. Вместе с профилем удалятся его группы, закреплённые сайты, избранное, скрытое на сайтах, настройки сайтов, история, cookie и входы.</string>
     <string name="v5_profile_storage_title">Сменить хранилище профиля?</string>
     <string name="v5_profile_storage_on">Вкладки этого профиля перезагрузятся с отдельным хранилищем. Общие с другими профилями входы не перенесутся.</string>
     <string name="v5_profile_storage_off">Вкладки этого профиля перезагрузятся с общим хранилищем. Входы из отдельного хранилища перестанут действовать.</string>
@@ -2299,6 +2301,10 @@
     <string name="v5_translate_in_progress">Перевожу…</string>
     <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
     <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
+    <string name="v5_translate_languages_loading">Загружаю список языков…</string>
+    <string name="v5_translate_languages_failed">Не удалось получить список языков.</string>
+    <string name="v5_translate_same_language">Страница уже на этом языке — выберите другой.</string>
+    <string name="v5_translate_note_download_unknown">Перевод на устройстве: текст страницы никуда не уходит. Для первого перевода может скачаться языковой пакет.</string>
     <string name="v5_translate_error">Не удалось перевести страницу. Попробуйте ещё раз.</string>
     <string name="v5_translate_error_download">Пакет не скачался. Проверьте сеть и попробуйте ещё раз.</string>
     <string name="v5_translate_error_language">Этот язык пока нельзя перевести на устройстве.</string>
