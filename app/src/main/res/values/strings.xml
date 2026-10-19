@@ -2001,7 +2001,7 @@
         <item quantity="one">%1$s tracker or ad blocked</item>
         <item quantity="other">%1$s trackers and ads blocked</item>
     </plurals>
-    <string name="v5_report_chart">Blocks by day; today %1$s</string>
+    <string name="v5_report_chart_days">Blocks by day. Today %1$s, most in a day %2$s, on average %3$s a day</string>
     <string name="v5_report_empty">Nothing blocked in this period yet.</string>
     <string name="v5_report_top_tracker">Most frequent tracker</string>
     <plurals name="v5_report_tracker_sites">

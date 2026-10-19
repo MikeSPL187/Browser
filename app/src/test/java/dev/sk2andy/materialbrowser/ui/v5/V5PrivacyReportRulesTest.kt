@@ -56,4 +56,11 @@ class V5PrivacyReportRulesTest {
         assertEquals(1, V5PrivacyReportRules.windowIndex(30))
         assertEquals(0, V5PrivacyReportRules.windowIndex(14))
     }
+
+    @Test
+    fun `the chart's description gives today, the busiest day and the daily average`() {
+        val week = listOf(2, 9, 0, 4, 6, 3, 4)
+        assertEquals(V5PrivacyReportRules.ChartFacts(today = 4, most = 9, average = 4), V5PrivacyReportRules.chartFacts(week))
+        assertEquals(V5PrivacyReportRules.ChartFacts(today = 0, most = 0, average = 0), V5PrivacyReportRules.chartFacts(emptyList()))
+    }
 }

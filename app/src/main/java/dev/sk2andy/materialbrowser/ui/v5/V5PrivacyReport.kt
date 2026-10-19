@@ -69,6 +69,8 @@ fun V5PrivacyReport(
     onClear: () -> Unit,
     onDismiss: () -> Unit,
     onHideCard: (() -> Unit)? = null,
+    /** The report keeps anything at all: «Clear» deletes every kept day, not only the period's (PR-01). */
+    hasData: Boolean = summary.total > 0,
 ) {
     val title = stringResource(R.string.v5_report_title)
     var confirmClear by rememberSaveable { mutableStateOf(false) }
@@ -103,7 +105,7 @@ fun V5PrivacyReport(
                 V5ListRow(
                     title = stringResource(R.string.v5_report_clear),
                     titleColor = V5Theme.colors.danger,
-                    enabled = summary.total > 0,
+                    enabled = hasData,
                     onClick = { confirmClear = true },
                     modifier = Modifier.testTag(V5PrivacyReportTestTags.Clear),
                 )
@@ -132,7 +134,6 @@ fun V5PrivacyReport(
 @Composable
 private fun TotalCard(summary: ProtectionSummary) {
     val colors = V5Theme.colors
-    val format = rememberCountFormat()
     Column(
         Modifier
             .padding(horizontal = V5Spacing.marginPhone)
@@ -144,7 +145,7 @@ private fun TotalCard(summary: ProtectionSummary) {
     ) {
         V5ReportTotal(summary.total, Modifier.testTag(V5PrivacyReportTestTags.Total))
         if (summary.total > 0) {
-            V5ReportChart(summary.daily, format.format(summary.daily.lastOrNull() ?: 0))
+            V5ReportChart(summary.daily)
         } else {
             Text(stringResource(R.string.v5_report_empty), style = V5Theme.type.footnote, color = colors.labelSecondary)
         }
@@ -175,11 +176,21 @@ internal fun V5ReportTotal(total: Int, modifier: Modifier = Modifier) {
     )
 }
 
-/** A bar per day, today in the full accent; TalkBack reads [today]'s count. Shared with the new tab's card. */
+/**
+ * A bar per day, today in the full accent; TalkBack hears today's count, the busiest day's and the
+ * average, what the bars show at a glance. Shared with the new tab's card.
+ */
 @Composable
-internal fun V5ReportChart(daily: List<Int>, today: String) {
+internal fun V5ReportChart(daily: List<Int>) {
     val colors = V5Theme.colors
-    val description = stringResource(R.string.v5_report_chart, today)
+    val format = rememberCountFormat()
+    val facts = V5PrivacyReportRules.chartFacts(daily)
+    val description = stringResource(
+        R.string.v5_report_chart_days,
+        format.format(facts.today),
+        format.format(facts.most),
+        format.format(facts.average),
+    )
     val bar = RoundedCornerShape(V5Sizes.reportBarRadius)
     Row(
         Modifier

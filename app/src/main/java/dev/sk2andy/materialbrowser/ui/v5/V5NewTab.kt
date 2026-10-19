@@ -544,7 +544,7 @@ private fun ReportCard(report: V5NewTabReport, onOpen: () -> Unit, onHide: () ->
         ) {
             V5ReportTotal(report.total)
             if (report.total > 0) {
-                V5ReportChart(report.daily, rememberCountFormat().format(report.daily.lastOrNull() ?: 0))
+                V5ReportChart(report.daily)
                 Row(horizontalArrangement = Arrangement.spacedBy(V5Sizes.reportBarGap)) {
                     report.weekdays.forEach { day ->
                         Text(
