@@ -172,6 +172,13 @@ object VolaIcons {
         )
     }
 
+    val Extension: ImageVector by lazy {
+        materialSymbol(
+            name = "Extension",
+            pathData = "M352 840 H200 q-33 0 -56.5 -23.5 T120 760 v-152 q48 0 84 -30.5 t36 -77.5 q0 -47 -36 -77.5 T120 392 v-152 q0 -33 23.5 -56.5 T200 160 h160 q0 -42 29 -71 t71 -29 q42 0 71 29 t29 71 h160 q33 0 56.5 23.5 T800 240 v160 q42 0 71 29 t29 71 q0 42 -29 71 t-71 29 v160 q0 33 -23.5 56.5 T720 840 H568 q0 -50 -31.5 -85 T460 720 q-45 0 -76.5 35 T352 840 Z m-152 -80 h85 q24 -66 77 -93 t98 -27 q45 0 98 27 t77 93 h85 v-240 h80 q8 0 14 -6 t6 -14 q0 -8 -6 -14 t-14 -6 h-80 v-240 H480 v-80 q0 -8 -6 -14 t-14 -6 q-8 0 -14 6 t-6 14 v80 H200 v88 q54 20 87 67 t33 105 q0 57 -33 104 t-87 68 v88 Z m260 -260 Z",
+        )
+    }
+
     val Favorite: ImageVector by lazy {
         materialSymbol(
             name = "Favorite",
@@ -447,6 +454,13 @@ object VolaIcons {
         )
     }
 
+    val Print: ImageVector by lazy {
+        materialSymbol(
+            name = "Print",
+            pathData = "M320 840 q-33 0 -56.5 -23.5 T240 760 v-80 h-80 q-33 0 -56.5 -23.5 T80 600 v-160 q0 -51 35 -85.5 t85 -34.5 h560 q51 0 85.5 34.5 T880 440 v160 q0 33 -23.5 56.5 T800 680 h-80 v80 q0 33 -23.5 56.5 T640 840 H320 Z M160 600 h80 q0 -33 23.5 -56.5 T320 520 h320 q33 0 56.5 23.5 T720 600 h80 v-160 q0 -17 -11.5 -28.5 T760 400 H200 q-17 0 -28.5 11.5 T160 440 v160 Z m480 -280 v-120 H320 v120 h-80 v-120 q0 -33 23.5 -56.5 T320 120 h320 q33 0 56.5 23.5 T720 200 v120 h-80 Z m80 180 q17 0 28.5 -11.5 T760 460 q0 -17 -11.5 -28.5 T720 420 q-17 0 -28.5 11.5 T680 460 q0 17 11.5 28.5 T720 500 Z m-80 260 v-160 H320 v160 h320 Z M160 400 h640 h-640 Z",
+        )
+    }
+
     val PushPin: ImageVector by lazy {
         materialSymbol(
             name = "PushPin",
@@ -622,6 +636,13 @@ object VolaIcons {
         )
     }
 
+    val VolumeOff: ImageVector by lazy {
+        materialSymbol(
+            name = "VolumeOff",
+            pathData = "M671 783 q-11 7 -22 13 t-23 11 q-15 7 -30.5 0 T574 784 q-6 -15 1.5 -29.5 T598 733 q7 -3 13 -6.5 t12 -7.5 L480 592 v111 q0 27 -24.5 37.5 T412 732 L280 600 H160 q-17 0 -28.5 -11.5 T120 560 v-160 q0 -17 11.5 -28.5 T160 360 h88 L84 196 q-11 -11 -11 -28 t11 -28 q11 -11 28 -11 t28 11 l680 680 q11 11 11 28 t-11 28 q-11 11 -28 11 t-28 -11 l-93 -93 Z m89 -304 q0 -83 -44 -151.5 T598 225 q-15 -7 -22 -21.5 t-2 -29.5 q6 -16 21.5 -23 t31.5 0 q97 43 155 131 t58 197 q0 33 -6 65.5 T817 607 q-8 22 -24.5 27.5 t-30.5 0.5 q-14 -5 -22.5 -18 t-0.5 -30 q11 -26 16 -52.5 t5 -55.5 Z M591 337 q33 21 51 63 t18 80 v10 q0 5 -1 10 q-2 13 -14 17 t-22 -6 l-51 -51 q-6 -6 -9 -13.5 t-3 -15.5 v-77 q0 -12 10.5 -17.5 t20.5 0.5 Z m-201 -59 q-6 -6 -6 -14 t6 -14 l22 -22 q19 -19 43.5 -8.5 T480 257 v63 q0 14 -12 19 t-22 -5 l-56 -56 Z m10 328 v-94 l-72 -72 H200 v80 h114 l86 86 Z m-36 -130 Z",
+        )
+    }
+
     val WarningFilled: ImageVector by lazy {
         materialSymbol(
             name = "WarningFilled",
@@ -669,6 +690,7 @@ object VolaIcons {
             Download,
             Edit,
             Error,
+            Extension,
             Favorite,
             Fingerprint,
             Folder,
@@ -708,6 +730,7 @@ object VolaIcons {
             PlayArrow,
             Public,
             PublicOff,
+            Print,
             PushPin,
             PauseFilled,
             PlayArrowFilled,
@@ -733,6 +756,7 @@ object VolaIcons {
             Verified,
             Visibility,
             VisibilityOff,
+            VolumeOff,
             WarningFilled,
             WifiOff,
             Workspaces,
