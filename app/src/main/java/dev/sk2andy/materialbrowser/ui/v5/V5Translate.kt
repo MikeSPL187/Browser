@@ -8,6 +8,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -62,6 +64,8 @@ object V5TranslateTestTags {
     const val Translate = "v5_translate_action"
     const val Note = "v5_translate_note"
     const val Error = "v5_translate_error"
+    const val Status = "v5_translate_status"
+    const val RetryLanguages = "v5_translate_retry_languages"
     const val Back = "v5_translate_back"
     const val Row = "v5_translated_row"
     const val Original = "v5_translated_original"
@@ -73,6 +77,9 @@ object V5TranslateTestTags {
 /** A language the sheet offers, by BCP 47 [code], with the [name] the engine gave it. */
 @Immutable
 data class V5TranslateLanguage(val code: String, val name: String)
+
+/** Where the lists of languages are: asked for, answered, or the engine could not say. */
+enum class V5TranslateLanguagesStatus { Loading, Ready, Failed }
 
 /** What the sheet says went wrong; the engine's finer reasons fold into these three. */
 enum class V5TranslateError { CouldNotTranslate, DownloadFailed, LanguageUnsupported }
@@ -94,6 +101,9 @@ data class V5TranslateSheetState(
     val downloadBytes: Long?,
     val inProgress: Boolean = false,
     val error: V5TranslateError? = null,
+    val languagesStatus: V5TranslateLanguagesStatus = V5TranslateLanguagesStatus.Ready,
+    /** The engine did not say how much the pair's pack weighs, so a download may come unannounced by size. */
+    val downloadSizeUnknown: Boolean = false,
 )
 
 class V5TranslateSheetActions(
@@ -101,6 +111,8 @@ class V5TranslateSheetActions(
     val onToChange: (String) -> Unit,
     val onAlwaysTranslateChange: (Boolean) -> Unit,
     val onTranslate: () -> Unit,
+    /** Asks the engine for the languages again after it could not say. */
+    val onRetryLanguages: () -> Unit = {},
 )
 
 /**
@@ -126,7 +138,19 @@ fun V5TranslateSheet(
     ) {
         // Back steps out of a language list before it closes the sheet.
         BackHandler(enabled = page != V5TranslateRules.Page.Main) { page = V5TranslateRules.Page.Main }
-        AnimatedContent(targetState = page, label = "translate page") { shown ->
+        // Without system animations the pages only cross-fade.
+        val animated = V5Motion.animationsEnabled
+        AnimatedContent(
+            targetState = page,
+            transitionSpec = {
+                if (animated) {
+                    fadeIn(V5Motion.effects.spec()) togetherWith fadeOut(V5Motion.effects.spec())
+                } else {
+                    fadeIn(V5Motion.reducedFade()) togetherWith fadeOut(V5Motion.reducedFade())
+                }
+            },
+            label = "translate page",
+        ) { shown ->
             Column {
                 when (shown) {
                     V5TranslateRules.Page.Main -> V5SheetHeader(
@@ -205,6 +229,22 @@ private fun MainPage(
         Modifier.padding(horizontal = V5Spacing.marginPhone),
         verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
+        // Why «Translate» waits or cannot work, said before the button rather than left to guess.
+        when (state.languagesStatus) {
+            V5TranslateLanguagesStatus.Loading -> SheetLine(stringResource(R.string.v5_translate_languages_loading))
+            V5TranslateLanguagesStatus.Failed -> {
+                SheetLine(stringResource(R.string.v5_translate_languages_failed), colors.danger)
+                TextButton(
+                    onClick = actions.onRetryLanguages,
+                    modifier = Modifier.fillMaxWidth().testTag(V5TranslateTestTags.RetryLanguages),
+                ) {
+                    Text(stringResource(R.string.action_retry), style = V5Theme.type.headline, color = colors.accent)
+                }
+            }
+            V5TranslateLanguagesStatus.Ready -> if (V5TranslateRules.sameLanguage(state)) {
+                SheetLine(stringResource(R.string.v5_translate_same_language))
+            }
+        }
         V5StatePrimaryAction(
             V5StateAction(
                 label = stringResource(
@@ -229,13 +269,14 @@ private fun MainPage(
         }
         val context = LocalContext.current
         Text(
-            if (V5TranslateRules.needsDownload(state.downloadBytes)) {
-                stringResource(
+            when {
+                V5TranslateRules.needsDownload(state.downloadBytes) -> stringResource(
                     R.string.v5_translate_note_download,
                     Formatter.formatShortFileSize(context, requireNotNull(state.downloadBytes)),
                 )
-            } else {
-                stringResource(R.string.v5_translate_note)
+                // «Translate» may still download a pack; the note does not promise otherwise.
+                state.downloadSizeUnknown -> stringResource(R.string.v5_translate_note_download_unknown)
+                else -> stringResource(R.string.v5_translate_note)
             },
             style = V5Theme.type.footnote,
             color = colors.labelSecondary,
@@ -243,6 +284,21 @@ private fun MainPage(
             modifier = Modifier.fillMaxWidth().testTag(V5TranslateTestTags.Note),
         )
     }
+}
+
+/** A short centered line above «Translate»: what it waits for, or why it cannot work. */
+@Composable
+private fun SheetLine(text: String, color: Color = V5Theme.colors.labelSecondary) {
+    Text(
+        text,
+        style = V5Theme.type.footnote,
+        color = color,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { liveRegion = LiveRegionMode.Polite }
+            .testTag(V5TranslateTestTags.Status),
+    )
 }
 
 /** The languages one side can be, the chosen one checked; a touch picks it and goes back. */
@@ -384,6 +440,10 @@ internal object V5TranslateRules {
     /** «Translate» works once both languages are known, differ, and nothing is under way. */
     fun canTranslate(state: V5TranslateSheetState): Boolean =
         !state.inProgress && state.from != null && state.to != null && state.from.code != state.to.code
+
+    /** Both languages are the same: nothing to translate, and the sheet says so. */
+    fun sameLanguage(state: V5TranslateSheetState): Boolean =
+        state.from != null && state.to != null && state.from.code == state.to.code
 
     /** Whether the note names a download: the pair's pack is not on the phone yet. */
     fun needsDownload(downloadBytes: Long?): Boolean = downloadBytes != null && downloadBytes > 0

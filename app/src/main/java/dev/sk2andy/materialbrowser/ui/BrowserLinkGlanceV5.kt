@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,7 +36,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5LinkGlanceState
  * The v5 link preview (V21) bound to the browser: the same ephemeral engine page as the current
  * preview (no tab, nothing in history), shown in the v5 card. «In background» and «New tab» move
  * that page into a new tab next to this one without loading it again (V21c); «Open» still loads
- * the link in this tab, so Back returns to this page. The other actions are the link's usual ones.
+ * the link in this tab, so Back returns to this page. The other actions are the link's usual ones,
+ * on the link as it was pressed.
  */
 @Composable
 internal fun BrowserLinkGlanceV5(controller: BrowserController) {
@@ -65,6 +65,7 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
         V5LinkGlanceMessage(title = it.title, body = it.body, danger = it.danger, retryable = it.retryable)
     }
     val openedInBackground = stringResource(R.string.v5_glance_opened_background)
+    val sourceGone = stringResource(R.string.v5_glance_source_gone)
     val state = V5LinkGlanceState(
         url = committedUrl,
         progress = (progress / PERCENT).takeIf { status == LinkPeekPreviewStatus.Loading && progress < FULL_PERCENT },
@@ -77,25 +78,33 @@ private fun LinkGlance(controller: BrowserController, url: String, canDownloadIm
     val dismiss = controller.contentActions::dismiss
     val actions = V5LinkGlanceActions(
         onOpen = {
-            val sourceIsCurrent = controller.contextLinkSourceTabId != null
-            dismiss()
-            if (sourceIsCurrent) controller.openUrl(committedUrl)
+            if (controller.contextLinkSourceTabId != null) {
+                dismiss()
+                controller.openUrl(url)
+            } else {
+                // Its tab is no longer the one on screen. Opening it in whatever tab is there could
+                // take a private tab's link out of private browsing, so the card says so instead of
+                // closing with nothing opened (LG-01).
+                dismiss()
+                V5Feedback.show(view.context, sourceGone)
+            }
         },
         onOpenInBackground = {
             if (controller.openLinkPreviewInNewTab(page, committedUrl, foreground = false)) {
                 view.performV5Haptic(V5Haptic.Confirm)
-                Toast.makeText(view.context, openedInBackground, Toast.LENGTH_SHORT).show()
+                V5Feedback.show(view.context, openedInBackground)
             }
         },
         onOpenInNewTab = { controller.openLinkPreviewInNewTab(page, committedUrl, foreground = true) },
-        onOpenInPrivate = { controller.openLinkInPrivate(committedUrl) },
+        // The link as it was pressed, as its long-press menu does, not where its redirects ended (LG-03).
+        onOpenInPrivate = { controller.openLinkInPrivate(url) },
         onCopy = {
             dismiss()
-            controller.copyLink(committedUrl)
+            controller.copyLink(url)
         },
         onShare = {
             dismiss()
-            controller.shareLink(committedUrl)
+            controller.shareLink(url)
         },
         // Both download what was long-pressed, so they run before the target is let go.
         onDownloadLink = {

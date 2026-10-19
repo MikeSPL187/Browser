@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui
 
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRetry
+import dev.sk2andy.materialbrowser.data.DownloadRetryUnavailable
 import dev.sk2andy.materialbrowser.data.DownloadStatus
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryTrailing
@@ -64,5 +65,23 @@ class DownloadsLibraryV5RulesTest {
     fun `a failed file is red whatever its kind`() {
         assertEquals(V5Tile.Sky, DownloadsLibraryV5Rules.tile(DownloadKind.Image, failed = false))
         assertEquals(V5Tile.Red, DownloadsLibraryV5Rules.tile(DownloadKind.Image, failed = true))
+    }
+
+    @Test
+    fun `a failed download that cannot start again says why`() {
+        fun hint(status: DownloadStatus, reason: DownloadRetryUnavailable, page: String? = null) =
+            DownloadsLibraryV5Rules.unavailable(entry(status, retry = DownloadRetry.Unavailable(reason, page)))
+
+        assertEquals(
+            DownloadUnavailableHint.OpenPage,
+            hint(DownloadStatus.Failed, DownloadRetryUnavailable.Blob, "https://polar-notes.ru/a"),
+        )
+        assertEquals(
+            DownloadUnavailableHint.FromSite,
+            hint(DownloadStatus.Failed, DownloadRetryUnavailable.Blob, "blob:https://polar-notes.ru/1"),
+        )
+        assertEquals(DownloadUnavailableHint.PrivateClosed, hint(DownloadStatus.Cancelled, DownloadRetryUnavailable.PrivateClosed))
+        assertEquals(null, DownloadsLibraryV5Rules.unavailable(entry(DownloadStatus.Failed, retry = DownloadRetry.Available)))
+        assertEquals(null, DownloadsLibraryV5Rules.unavailable(entry(DownloadStatus.Successful)))
     }
 }

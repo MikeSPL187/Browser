@@ -356,6 +356,7 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
+    V5FeedbackHostEffect(feedbackSnackbarHostState)
     if (rememberDrawsV5()) {
         // Under v5 the same messages as a v5 line just above the bar (canvas «ц1», «ц2»), over every screen.
         SnackbarHost(
@@ -378,6 +379,7 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
+    // motion-exempt: the snoozed tabs screen only fades, which is what reduced motion keeps.
     AnimatedVisibility(
         visible = snoozedTabsVisible,
         enter = fadeIn(tween(120)),
