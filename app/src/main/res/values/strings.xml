@@ -2152,6 +2152,10 @@
     <string name="v5_downloads_cancel_title">Cancel “%1$s”?</string>
     <string name="v5_downloads_cancel_message">What has been downloaded so far is deleted.</string>
     <string name="v5_downloads_cancel_action">Cancel download</string>
+    <string name="v5_downloads_open_page">Open the page</string>
+    <string name="v5_downloads_unavailable_open_page">Can’t download again here. Tap to open its page</string>
+    <string name="v5_downloads_unavailable_private">Can’t download again: its private tab is closed</string>
+    <string name="v5_downloads_unavailable_site">Can’t download again here. Download it from the site</string>
     <string name="v5_downloads_delete_title">Delete “%1$s”?</string>
     <string name="v5_downloads_delete_message">The file is deleted from this phone.</string>
     <string name="v5_downloads_delete_failed_message">The download is removed from the list, with anything left of it.</string>
