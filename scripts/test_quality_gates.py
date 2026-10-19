@@ -292,7 +292,27 @@ class MotionTest(unittest.TestCase):
                 found = gates.motion_findings([root / "ui/v5/V5A.kt", root / "ui/v5/V5APreviews.kt", root / "ui/OldScreen.kt"])
             finally:
                 gates.ROOT = original
-        self.assertEqual([path for path, _, _ in found], [])
+        # It expected nothing while a relative path never matched a root, so it passed without scanning.
+        self.assertEqual([path for path, _, _ in found], ["ui/v5/V5A.kt"])
+
+    def test_a_binding_in_ui_that_draws_v5_is_scanned_too(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = {
+                "ui/FirstRun.kt": "import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme\nAnimatedContent(x) { }\n",
+                "ui/V4Screen.kt": "import dev.sk2andy.materialbrowser.ui.theme.VolaTheme\nAnimatedContent(x) { }\n",
+                "data/Model.kt": "import dev.sk2andy.materialbrowser.ui.v5.V5Thing\nAnimatedContent(x) { }\n",
+            }
+            for name, text in files.items():
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_text(text, encoding="utf-8")
+            original = gates.ROOT
+            gates.ROOT = root
+            try:
+                found = gates.motion_findings([root / name for name in files])
+            finally:
+                gates.ROOT = original
+        self.assertEqual([path for path, _, _ in found], ["ui/FirstRun.kt"])
 
     def test_repository_has_no_findings(self):
         self.assertEqual(gates.motion_findings(gates.source_files()), [])

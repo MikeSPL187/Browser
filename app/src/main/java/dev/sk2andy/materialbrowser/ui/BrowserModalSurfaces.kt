@@ -379,6 +379,7 @@ internal fun BoxScope.BrowserModalSurfaces(
         )
     }
 
+    // motion-exempt: the snoozed tabs screen only fades, which is what reduced motion keeps.
     AnimatedVisibility(
         visible = snoozedTabsVisible,
         enter = fadeIn(tween(120)),

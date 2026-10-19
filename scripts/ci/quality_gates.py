@@ -239,13 +239,25 @@ def motion_findings_in_text(text, path):
                          f"V5Motion.reducedFade() when it is off (or `// {MOTION_EXEMPT_COMMENT} reason`)")]
 
 
+# A file outside the v5 roots that draws v5 (the bindings in ui/, such as the first run's): it imports
+# the v5 theme or v5 screens, so it is held to the same rule (FR-03).
+MOTION_V5_IMPORT = re.compile(r"^import dev\.sk2andy\.materialbrowser\.ui\.(?:theme\.v5|v5)\.", re.MULTILINE)
+
+
 def motion_findings(files):
     findings = []
     for path in files:
         posix = relative(path)
-        if not any(f"/{root}" in posix for root in MOTION_ROOTS) or posix.endswith(TOKEN_EXEMPT_SUFFIXES):
+        if posix.endswith(TOKEN_EXEMPT_SUFFIXES):
             continue
-        findings += motion_findings_in_text(Path(path).read_text(encoding="utf-8"), posix)
+        rooted = f"/{posix}"
+        in_root = any(f"/{root}" in rooted for root in MOTION_ROOTS)
+        if not in_root and "/ui/" not in rooted:
+            continue
+        text = Path(path).read_text(encoding="utf-8")
+        if not in_root and not MOTION_V5_IMPORT.search(text):
+            continue
+        findings += motion_findings_in_text(text, posix)
     return findings
 
 

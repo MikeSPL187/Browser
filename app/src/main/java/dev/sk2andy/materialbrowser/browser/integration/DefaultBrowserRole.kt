@@ -14,6 +14,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 object DefaultBrowserRole {
     private const val REQUEST_KEY = "vola_default_browser_role"
 
+    /** The dialog's launcher while it is open: a second tap reuses the key, so the first one goes. */
+    private var pending: ActivityResultLauncher<Intent>? = null
+
     fun isHeld(context: Context): Boolean {
         val roleManager = context.getSystemService(RoleManager::class.java) ?: return false
         return roleManager.isRoleAvailable(RoleManager.ROLE_BROWSER) &&
@@ -51,23 +54,27 @@ object DefaultBrowserRole {
     /** The role dialog must be started for a result; the launcher lives only until it answers. */
     private fun requestRole(activity: ComponentActivity, roleManager: RoleManager): Boolean {
         val startedAt = SystemClock.elapsedRealtime()
+        pending?.unregister()
         var launcher: ActivityResultLauncher<Intent>? = null
         launcher = activity.activityResultRegistry.register(
             REQUEST_KEY,
             ActivityResultContracts.StartActivityForResult(),
         ) {
             launcher?.unregister()
+            if (pending === launcher) pending = null
             val fallBack = DefaultBrowserRoleRules.openSettingsAfterAnswer(
                 roleHeld = isHeld(activity),
                 answeredAfterMillis = SystemClock.elapsedRealtime() - startedAt,
             )
             if (fallBack) openSettings(activity)
         }
+        pending = launcher
         return try {
             launcher.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_BROWSER))
             true
         } catch (_: ActivityNotFoundException) {
             launcher.unregister()
+            pending = null
             false
         }
     }
