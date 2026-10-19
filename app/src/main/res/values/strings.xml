@@ -2081,6 +2081,7 @@
     <string name="v5_glance_open">Open</string>
     <string name="v5_glance_background">In background</string>
     <string name="v5_glance_opened_background">Opened in background</string>
+    <string name="v5_glance_source_gone">Link not opened: its tab is no longer on screen</string>
     <string name="v5_glance_more">More link actions</string>
     <string name="v5_glance_private">Open in private tab</string>
     <string name="v5_glance_private_note">Private tab: nothing from this preview is saved</string>
