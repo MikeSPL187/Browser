@@ -72,6 +72,7 @@ internal fun BrowserPageMenuV5(
         hasPage = !blank,
         canGoForward = tab.canGoForward,
         canFavorite = !blank && !tab.isIncognito,
+        favoriteOffInPrivate = !blank && tab.isIncognito,
         isFavorite = controller.isSelectedTabFavorite,
         canRead = !blank && ReaderStudioSessionRules.isSupportedSource(tab.url),
         // Settings → Translation can take the item out of the menu.

@@ -39,6 +39,15 @@ internal object HiddenDistractionsRules {
         return HiddenDistractions(sites)
     }
 
+    /** Shows [selector] on [host]'s site again; a site left with nothing hidden goes from the list. */
+    fun show(state: HiddenDistractions, host: String?, selector: String): HiddenDistractions {
+        val site = siteOf(host) ?: return state
+        val selectors = state.sites[site] ?: return state
+        if (selector !in selectors) return state
+        val rest = selectors - selector
+        return HiddenDistractions(if (rest.isEmpty()) state.sites - site else state.sites + (site to rest))
+    }
+
     fun showAll(state: HiddenDistractions, host: String?): HiddenDistractions {
         val site = siteOf(host) ?: return state
         return if (site in state.sites) HiddenDistractions(state.sites - site) else state

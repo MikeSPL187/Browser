@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -86,6 +85,8 @@ data class V5PageMenuState(
     val hasPage: Boolean,
     val canGoForward: Boolean,
     val canFavorite: Boolean,
+    /** A private tab: «Favorite» is off because private tabs keep nothing, and its label says so. */
+    val favoriteOffInPrivate: Boolean = false,
     val isFavorite: Boolean,
     val canRead: Boolean,
     val canTranslate: Boolean,
@@ -218,7 +219,7 @@ fun V5PageMenu(
                         V5ListRow(
                             extra.title,
                             subtitle = extra.subtitle,
-                            icon = V5RowIcon(VolaIcons.Apps),
+                            icon = V5RowIcon(VolaIcons.Extension),
                             enabled = extra.enabled,
                             onClick = closing(extra.onClick),
                             modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
@@ -237,11 +238,14 @@ fun V5PageMenu(
                     icon = V5RowIcon(VolaIcons.History),
                     onClick = closing(actions.onHistory),
                 )
-                V5ListRow(
-                    stringResource(R.string.v5_menu_downloads),
-                    icon = V5RowIcon(VolaIcons.Download),
-                    onClick = closing(actions.onDownloads),
-                )
+                // While something downloads, the row on top with its progress is the one way there.
+                if (state.downloads == null) {
+                    V5ListRow(
+                        stringResource(R.string.v5_menu_downloads),
+                        icon = V5RowIcon(VolaIcons.Download),
+                        onClick = closing(actions.onDownloads),
+                    )
+                }
                 V5ListRow(
                     stringResource(R.string.action_settings),
                     icon = V5RowIcon(VolaIcons.Settings),
@@ -288,7 +292,7 @@ private fun PageGroup(
             )
             if (state.hiddenCount > 0) {
                 V5ListRow(
-                    pluralStringResource(R.plurals.v5_distractions_show, state.hiddenCount, state.hiddenCount),
+                    stringResource(R.string.v5_distractions_show_all),
                     icon = V5RowIcon(VolaIcons.Visibility),
                     onClick = closing(actions.onShowHidden),
                     modifier = Modifier.testTag(V5PageMenuTestTags.ShowHidden),
@@ -310,7 +314,7 @@ private fun PageGroup(
         state.siteMuted?.let { muted ->
             V5ListRow(
                 stringResource(R.string.action_mute_domain),
-                icon = V5RowIcon(VolaIcons.VisibilityOff),
+                icon = V5RowIcon(VolaIcons.VolumeOff),
                 trailing = V5RowTrailing.Toggle(muted, actions.onSiteMutedChange),
             )
         }
@@ -339,7 +343,13 @@ private fun RoundActions(
         )
         RoundAction(
             icon = VolaIcons.Star,
-            label = stringResource(if (state.isFavorite) R.string.v5_menu_in_favorites else R.string.v5_menu_favorite),
+            label = stringResource(
+                when {
+                    state.isFavorite -> R.string.v5_menu_in_favorites
+                    state.favoriteOffInPrivate -> R.string.v5_menu_favorite_private
+                    else -> R.string.v5_menu_favorite
+                },
+            ),
             enabled = state.canFavorite,
             filled = state.isFavorite,
             onClick = actions.onToggleFavorite,
@@ -353,7 +363,7 @@ private fun RoundActions(
             tag = V5PageMenuTestTags.Share,
         )
         RoundAction(
-            icon = VolaIcons.Description,
+            icon = VolaIcons.Print,
             label = stringResource(R.string.action_print),
             enabled = state.hasPage,
             onClick = closing(actions.onPrint),

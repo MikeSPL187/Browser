@@ -60,6 +60,15 @@ internal class HiddenDistractionsController(
     var pickingTabId by mutableStateOf<String?>(null)
         private set
 
+    /** The block hidden last while choosing, which «Undo» shows again; gone when choosing ends. */
+    private var lastHidden by mutableStateOf<LastHidden?>(null)
+
+    private data class LastHidden(val profileId: String, val isPrivate: Boolean, val pageHost: String, val selector: String)
+
+    /** Whether «Undo» has a block to show again: one was hidden since choosing started. */
+    val canUndo: Boolean
+        get() = lastHidden != null && pickingTabId != null
+
     /** What a page of [tab] at [pageUrl] hides: the profile's list and, in a private tab, the session's. */
     fun selectorsFor(tab: BrowserTab, pageUrl: String): List<String> {
         val pageHost = PrivacyRequestSanitizer.webHost(pageUrl) ?: return emptyList()
@@ -85,7 +94,10 @@ internal class HiddenDistractionsController(
                     hide(tab.profileId, tab.isIncognito, pageHost, selector)
 
                 override fun onPickingEnded() {
-                    if (pickingTabId == tab.id) pickingTabId = null
+                    if (pickingTabId == tab.id) {
+                        pickingTabId = null
+                        lastHidden = null
+                    }
                 }
             },
         )
@@ -94,6 +106,7 @@ internal class HiddenDistractionsController(
     }
 
     fun stopPicking() {
+        lastHidden = null
         val tabId = pickingTabId ?: return
         pickingTabId = null
         pageFor(tabId)?.stopPicking()
@@ -104,6 +117,7 @@ internal class HiddenDistractionsController(
      * private tab it holds for private tabs only and in memory only: the saved list is not touched.
      */
     fun showAll(tab: BrowserTab) {
+        lastHidden = null
         val pageHost = PrivacyRequestSanitizer.webHost(tab.url) ?: return
         privateSession[tab.profileId]?.let { session ->
             privateSession[tab.profileId] = HiddenDistractionsRules.showAll(session, pageHost)
@@ -116,8 +130,25 @@ internal class HiddenDistractionsController(
         change(tab.profileId) { HiddenDistractionsRules.showAll(it, pageHost) }
     }
 
+    /**
+     * Shows again the block hidden last while choosing (DS-03): a slip costs one block, not every
+     * block of the site as «Show hidden items» would. Only once; then that is the way.
+     */
+    fun undoLastHide() {
+        val last = lastHidden ?: return
+        lastHidden = null
+        if (last.isPrivate) {
+            val session = privateSession[last.profileId] ?: return
+            privateSession[last.profileId] = HiddenDistractionsRules.show(session, last.pageHost, last.selector)
+            changed()
+        } else {
+            change(last.profileId) { HiddenDistractionsRules.show(it, last.pageHost, last.selector) }
+        }
+    }
+
     /** Clearing the browsing data forgets every hidden block: the sites alone tell where one has been. */
     fun clearAll() {
+        lastHidden = null
         saved.clear()
         privateSession.clear()
         privateShown.clear()
@@ -127,6 +158,7 @@ internal class HiddenDistractionsController(
 
     /** A deleted profile's list goes with it. */
     fun forgetProfile(profileId: String) {
+        if (lastHidden?.profileId == profileId) lastHidden = null
         saved.remove(profileId)
         privateSession.remove(profileId)
         privateShown.remove(profileId)
@@ -136,6 +168,7 @@ internal class HiddenDistractionsController(
 
     /** The last private tab closed: what its pages hid is forgotten. */
     fun endPrivateSession() {
+        if (lastHidden?.isPrivate == true) lastHidden = null
         if (privateSession.isEmpty() && privateShown.isEmpty()) return
         privateSession.clear()
         privateShown.clear()
@@ -143,6 +176,7 @@ internal class HiddenDistractionsController(
     }
 
     private fun hide(profileId: String, isPrivate: Boolean, pageHost: String, selector: String) {
+        if (HiddenDistractionsRules.isValidSelector(selector)) lastHidden = LastHidden(profileId, isPrivate, pageHost, selector)
         if (isPrivate) {
             privateSession[profileId] = HiddenDistractionsRules.hide(
                 privateSession[profileId] ?: HiddenDistractions(),

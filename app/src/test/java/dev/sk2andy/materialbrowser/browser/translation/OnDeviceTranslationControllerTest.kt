@@ -64,6 +64,36 @@ class OnDeviceTranslationControllerTest {
     }
 
     @Test
+    fun `an older request's answer does not end the wait of the newer one`() {
+        controller.attach("tab", port)
+        controller.translate("tab", pair, allowModelDownload = true)
+        val first = port.answer
+        controller.translate("tab", TranslationPair("en", "de"), allowModelDownload = true)
+
+        first?.invoke(PageTranslationResult.Failed(PageTranslationError.ModelDownloadFailed))
+
+        assertTrue(controller.stateOf("tab").inProgress)
+        assertNull(controller.stateOf("tab").error)
+        port.answer?.invoke(PageTranslationResult.Done)
+        assertFalse(controller.stateOf("tab").inProgress)
+    }
+
+    @Test
+    fun `an answer from the page before a navigation does not reach the new page`() {
+        controller.attach("tab", port)
+        controller.translate("tab", pair, allowModelDownload = true)
+        val oldAnswer = port.answer
+        val newPort = FakePort()
+        controller.attach("tab", newPort)
+        controller.translate("tab", pair, allowModelDownload = true)
+
+        oldAnswer?.invoke(PageTranslationResult.Failed(PageTranslationError.ModelDownloadFailed))
+
+        assertTrue(controller.stateOf("tab").inProgress)
+        assertNull(controller.stateOf("tab").error)
+    }
+
+    @Test
     fun `a refused download is reported, not hidden`() {
         controller.attach("tab", port)
         controller.translate("tab", pair, allowModelDownload = false)

@@ -70,6 +70,7 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaPrivacyXRay
 import dev.sk2andy.materialbrowser.ui.theme.VolaSiteInfo
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTypeScale
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -470,8 +471,17 @@ private fun TrackerRow(
         }
         AnimatedVisibility(
             visible = actionsVisible,
-            enter = expandVertically(VolaMotion.standard()) + fadeIn(VolaMotion.effects()),
-            exit = shrinkVertically(VolaMotion.standard()) + fadeOut(VolaMotion.effects()),
+            // Without system animations the actions only fade in (plan-v5.md, section 5).
+            enter = if (V5Motion.animationsEnabled) {
+                expandVertically(VolaMotion.standard()) + fadeIn(VolaMotion.effects())
+            } else {
+                fadeIn(V5Motion.reducedFade())
+            },
+            exit = if (V5Motion.animationsEnabled) {
+                shrinkVertically(VolaMotion.standard()) + fadeOut(VolaMotion.effects())
+            } else {
+                fadeOut(V5Motion.reducedFade())
+            },
         ) {
             Column(
                 modifier = Modifier.padding(

@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5TranslateInto
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
+import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguagesStatus
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateRules
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheetActions
@@ -46,14 +47,26 @@ internal fun BrowserTranslateSheetV5(
     val ui = translation.stateOf(tab.id)
     val locale = LocalConfiguration.current.locales[0]
     var languages by remember { mutableStateOf<TranslationLanguages?>(null) }
-    LaunchedEffect(visible) {
-        if (visible && languages == null) translation.languages { languages = it }
+    var languagesFailed by remember { mutableStateOf(false) }
+    var languagesAsked by remember { mutableIntStateOf(0) }
+    LaunchedEffect(visible, languagesAsked) {
+        if (visible && languages == null) {
+            languagesFailed = false
+            translation.languages { answer ->
+                languages = answer
+                languagesFailed = answer == null
+            }
+        }
     }
     val preferredTarget = rememberV5TranslateInto().ifEmpty { null }
     val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), preferredTarget, locale.language)
     var fromCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.from) }
     var toCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.to) }
+    // The engine may name the page's language after the sheet opened: an empty side takes it then.
+    LaunchedEffect(visible, initial.from) { if (visible && fromCode == null) fromCode = initial.from }
+    LaunchedEffect(visible, initial.to) { if (visible && toCode == null) toCode = initial.to }
     var downloadBytes by remember { mutableStateOf<Long?>(null) }
+    var downloadSizeUnknown by remember { mutableStateOf(false) }
     var languageSettings by remember { mutableStateOf<Map<String, TranslationLanguageSetting>?>(null) }
     var settingsRead by remember { mutableIntStateOf(0) }
     LaunchedEffect(visible, settingsRead) {
@@ -61,12 +74,16 @@ internal fun BrowserTranslateSheetV5(
     }
     LaunchedEffect(visible, fromCode, toCode) {
         downloadBytes = null
+        downloadSizeUnknown = false
         val from = fromCode
         val to = toCode
         if (visible && from != null && to != null && from != to) {
             // An answer for a pair the user has since changed is dropped.
             translation.downloadSize(TranslationPair(from, to)) { bytes ->
-                if (fromCode == from && toCode == to) downloadBytes = bytes
+                if (fromCode == from && toCode == to) {
+                    downloadBytes = bytes
+                    downloadSizeUnknown = bytes == null
+                }
             }
         }
     }
@@ -82,7 +99,10 @@ internal fun BrowserTranslateSheetV5(
         alwaysTranslate = BrowserTranslateRules.always(fromCode, languageSettings, downloadBytes),
         downloadBytes = downloadBytes,
         inProgress = ui.inProgress,
-        error = V5TranslateRules.error(ui.error),
+        // An error belongs to the pair it was asked for; another pair chosen since starts clean.
+        error = V5TranslateRules.error(ui.error).takeIf { BrowserTranslateRules.sameRequest(ui.pair, fromCode, toCode) },
+        languagesStatus = BrowserTranslateRules.languagesStatus(languages, languagesFailed),
+        downloadSizeUnknown = downloadSizeUnknown,
     )
     V5TranslateSheet(
         visible = visible,
@@ -101,12 +121,14 @@ internal fun BrowserTranslateSheetV5(
                 val from = fromCode
                 val to = toCode
                 if (from != null && to != null) {
-                    // The note named the pack's size, so «Translate» is the consent to download it.
+                    // The note named the pack's size, or said a pack may download, so «Translate» is the
+                    // consent to download it.
                     translation.translate(tab.id, TranslationPair(from, to), allowModelDownload = true) { result ->
                         if (result == PageTranslationResult.Done) onDismiss()
                     }
                 }
             },
+            onRetryLanguages = { languagesAsked++ },
         ),
         onDismiss = onDismiss,
     )
@@ -138,6 +160,17 @@ internal fun BrowserTranslatedAccessory(controller: BrowserController, tab: Brow
 /** Pure decisions of the translate binding, for unit tests. */
 internal object BrowserTranslateRules {
     data class Codes(val from: String?, val to: String?)
+
+    /** Whether the last request's [pair] is the one the sheet now shows. */
+    fun sameRequest(pair: TranslationPair?, fromCode: String?, toCode: String?): Boolean =
+        pair != null && pair.from == fromCode && pair.to == toCode
+
+    /** The languages lists: answered, still asked for, or the engine could not say ([failed]). */
+    fun languagesStatus(languages: TranslationLanguages?, failed: Boolean): V5TranslateLanguagesStatus = when {
+        languages != null -> V5TranslateLanguagesStatus.Ready
+        failed -> V5TranslateLanguagesStatus.Failed
+        else -> V5TranslateLanguagesStatus.Loading
+    }
 
     /** Whether «Translate» opens the on-device sheet: the engine translates on the phone and a web page is open. */
     fun usesOnDevice(onDeviceTranslation: Boolean, url: String): Boolean =
