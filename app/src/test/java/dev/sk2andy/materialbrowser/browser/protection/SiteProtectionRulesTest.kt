@@ -117,6 +117,17 @@ class SiteProtectionRulesTest {
     }
 
     @Test
+    fun `the third-party cookie switch grants sign-in only, and off takes back a captcha's exception too`() {
+        val on = SiteProtectionRules.withThirdPartyCookies(SitePrivacyOverrides(), allow = true)
+        val captcha = SitePrivacyOverrides(captchaCompatibilityAllowed = true)
+
+        assertEquals(true, on.thirdPartyLoginAllowed)
+        assertNull(on.captchaCompatibilityAllowed)
+        assertTrue(SiteProtectionRules.withThirdPartyCookies(on, allow = false).isDefault)
+        assertTrue(SiteProtectionRules.withThirdPartyCookies(captcha, allow = false).isDefault)
+    }
+
+    @Test
     fun `fingerprinting exceptions gather every profile and private tab`() {
         val personal = mapOf(
             "maps.example" to SitePrivacyOverrides(fingerprintingProtectionDisabled = true),
