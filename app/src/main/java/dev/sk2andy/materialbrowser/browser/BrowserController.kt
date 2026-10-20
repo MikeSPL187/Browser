@@ -413,10 +413,10 @@ class BrowserController(
     internal var firefoxExtensionPopupIdentity: GeckoExtensionPopupIdentity? = null
     val externalDownloadManagers: List<ExternalDownloadManagerApp>
         get() = downloadRouter.managers
-    var activeProfileWallpaperBitmap by mutableStateOf<Bitmap?>(null)
-        private set
-    var activeProfileTabSwitcherWallpaperBitmap by mutableStateOf<Bitmap?>(null)
-        private set
+    val activeProfileWallpaperBitmap: Bitmap?
+        get() = profileWallpapers.newTab
+    val activeProfileTabSwitcherWallpaperBitmap: Bitmap?
+        get() = profileWallpapers.tabSwitcher
 
     private var selectedTabIdState by mutableStateOf("")
     var selectedTabId: String
@@ -1427,8 +1427,29 @@ class BrowserController(
     private val siteCapsuleStore = SiteCapsuleStore(activity)
     private val siteCapsuleIconStore = SiteCapsuleIconStore(activity)
     private val profileWallpaperStore = ProfileWallpaperStore(activity.applicationContext)
-    private var profileWallpaperLoadGeneration = 0
-    private var profileTabSwitcherWallpaperLoadGeneration = 0
+    private val profileWallpapers = ProfileWallpaperLoader(
+        background = profileWallpaperExecutor,
+        postToMainThread = { task -> mainHandler.post(task) },
+        load = profileWallpaperStore::load,
+        recycle = Bitmap::recycle,
+        host = object : ProfileWallpaperLoader.Host {
+            override val activeLocalProfile: BrowserProfile?
+                get() = localProfiles.firstOrNull { it.id == activeProfileId }
+            override val activeProfileId: String get() = this@BrowserController.activeProfileId
+            override val isDestroyed: Boolean get() = destroyed
+            override fun forgetMissing(
+                profileId: String,
+                target: ProfileWallpaperTarget,
+                wallpaper: ProfileWallpaper,
+            ) {
+                val index = profiles.indexOfFirst { candidate -> candidate.id == profileId }
+                if (index < 0) return
+                if (profiles[index].wallpaperFor(target) != wallpaper) return
+                profiles[index] = profiles[index].withWallpaper(target, null)
+                persist()
+            }
+        },
+    )
     private val capsuleShortcuts = CapsuleShortcutPublisher(activity)
     private val candyRuleRepository = CandyRuleRepository.get(activity)
     private val userScriptRepository = UserScriptRepository.get(activity)
@@ -2299,7 +2320,7 @@ class BrowserController(
             )
             profileWallpaperStore.cleanup(configuredWallpapers)
         }
-        refreshActiveProfileWallpaper()
+        profileWallpapers.refreshNewTab()
         val (restoredTabs, restoredSelection) = StartupTimeline.section("LoadTabs") { store.loadTabs(nowMillis) }
         history += StartupTimeline.section("LoadHistory") { historyRepository.snapshot() }
         StartupTimeline.section("LoadFavorites") { profileFavorites.select(activeProfileId) }
@@ -5817,7 +5838,7 @@ class BrowserController(
         touchTab(previousTabId, System.currentTimeMillis())
         profiles += profile
         activeProfileId = profile.id
-        refreshActiveProfileWallpaper()
+        profileWallpapers.refreshNewTab()
         val tab = newTabState()
         tabs += tab
         updateSelectedTabId(tab.id)
@@ -5908,7 +5929,7 @@ class BrowserController(
         touchTab(previousTabId, System.currentTimeMillis())
         rememberSelectedTab(activeProfileId, previousTabId)
         activeProfileId = profileId
-        refreshActiveProfileWallpaper()
+        profileWallpapers.refreshNewTab()
         releaseActiveProfileTabSwitcherWallpaper()
         val profile = profiles.first { it.id == profileId }
         val targetTab = profile.selectedTabId
@@ -6080,93 +6101,13 @@ class BrowserController(
         return true
     }
 
-    fun releaseActiveProfileWallpaperForEditing(profileId: String) {
-        if (profileId != activeProfileId) return
-        profileWallpaperLoadGeneration += 1
-        profileTabSwitcherWallpaperLoadGeneration += 1
-        activeProfileWallpaperBitmap = null
-        activeProfileTabSwitcherWallpaperBitmap = null
-    }
+    fun releaseActiveProfileWallpaperForEditing(profileId: String) = profileWallpapers.releaseForEditing(profileId)
 
-    fun restoreActiveProfileWallpapersAfterEditing() {
-        refreshActiveProfileWallpaper()
-        loadActiveProfileTabSwitcherWallpaper()
-    }
+    fun restoreActiveProfileWallpapersAfterEditing() = profileWallpapers.restoreAfterEditing()
 
-    private fun refreshActiveProfileWallpaper() {
-        val profile = localProfiles.firstOrNull { it.id == activeProfileId }
-        val wallpaper = profile?.newTabWallpaper
-        val profileId = profile?.id
-        val generation = ++profileWallpaperLoadGeneration
-        activeProfileWallpaperBitmap = null
-        if (profileId == null || wallpaper == null) return
-        profileWallpaperExecutor.executeIfRunning {
-            val loaded = profileWallpaperStore.load(profileId, ProfileWallpaperTarget.NewTab)
-            mainHandler.post {
-                if (
-                    destroyed ||
-                    generation != profileWallpaperLoadGeneration ||
-                    activeProfileId != profileId
-                ) {
-                    loaded?.recycle()
-                    return@post
-                }
-                if (loaded != null) {
-                    activeProfileWallpaperBitmap = loaded
-                    return@post
-                }
-                val index = profiles.indexOfFirst { candidate -> candidate.id == profileId }
-                if (index >= 0 && profiles[index].newTabWallpaper == wallpaper) {
-                    profiles[index] = profiles[index].copy(newTabWallpaper = null)
-                    persist()
-                }
-            }
-        }
-    }
+    fun loadActiveProfileTabSwitcherWallpaper(onReady: () -> Unit = {}) = profileWallpapers.loadTabSwitcher(onReady)
 
-    fun loadActiveProfileTabSwitcherWallpaper(onReady: () -> Unit = {}) {
-        val profile = localProfiles.firstOrNull { it.id == activeProfileId }
-        val wallpaper = profile?.tabSwitcherWallpaper
-        val profileId = profile?.id
-        val generation = ++profileTabSwitcherWallpaperLoadGeneration
-        activeProfileTabSwitcherWallpaperBitmap = null
-        if (profileId == null || wallpaper == null) {
-            onReady()
-            return
-        }
-        profileWallpaperExecutor.executeIfRunning {
-            val loaded = profileWallpaperStore.load(
-                profileId,
-                ProfileWallpaperTarget.TabSwitcher,
-            )
-            mainHandler.post {
-                if (
-                    destroyed ||
-                    generation != profileTabSwitcherWallpaperLoadGeneration ||
-                    activeProfileId != profileId
-                ) {
-                    loaded?.recycle()
-                    return@post
-                }
-                if (loaded != null) {
-                    activeProfileTabSwitcherWallpaperBitmap = loaded
-                    onReady()
-                    return@post
-                }
-                val index = profiles.indexOfFirst { candidate -> candidate.id == profileId }
-                if (index >= 0 && profiles[index].tabSwitcherWallpaper == wallpaper) {
-                    profiles[index] = profiles[index].copy(tabSwitcherWallpaper = null)
-                    persist()
-                }
-                onReady()
-            }
-        }
-    }
-
-    fun releaseActiveProfileTabSwitcherWallpaper() {
-        profileTabSwitcherWallpaperLoadGeneration += 1
-        activeProfileTabSwitcherWallpaperBitmap = null
-    }
+    fun releaseActiveProfileTabSwitcherWallpaper() = profileWallpapers.releaseTabSwitcher()
 
     fun setProfileIsolation(profileId: String, enabled: Boolean): Boolean {
         if (
@@ -6448,7 +6389,7 @@ class BrowserController(
         candyTrailRepository.processPendingRedactions()
         if (profileId == activeProfileId) {
             activeProfileId = fallbackProfile.id
-            refreshActiveProfileWallpaper()
+            profileWallpapers.refreshNewTab()
             loadActiveProfileTabSwitcherWallpaper()
         }
         val fallbackTabs = tabs.filter { it.profileId == fallbackProfile.id }
@@ -10069,8 +10010,7 @@ class BrowserController(
         fileChooserValidationExecutor.shutdownNow()
         externalAppLookupExecutor.shutdownNow()
         geckoFileUploadStager.releaseAll()
-        profileWallpaperLoadGeneration++
-        profileTabSwitcherWallpaperLoadGeneration++
+        profileWallpapers.close()
         profileWallpaperExecutor.shutdownNow()
         historyMutationExecutor.shutdown()
         favoriteMutationExecutor.shutdown()
