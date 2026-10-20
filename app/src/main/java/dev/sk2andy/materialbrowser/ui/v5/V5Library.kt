@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -22,6 +23,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -157,6 +160,8 @@ fun V5Library(
     modifier: Modifier = Modifier,
     /** Back up out of [V5LibraryState.folder]; system back does the same. */
     onUp: () -> Unit = {},
+    /** «Deleted — Undo» after a swipe, shown just above the actions as the browser's notice line. */
+    snackbarHostState: SnackbarHostState? = null,
 ) {
     val colors = V5Theme.colors
     BackHandler(enabled = state.folder != null, onBack = onUp)
@@ -263,6 +268,13 @@ fun V5Library(
                         }
                     }
                 }
+            }
+            if (snackbarHostState != null) {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = V5Spacing.space2),
+                    snackbar = { data -> V5FeedbackNotice(data) },
+                )
             }
         }
         Actions(state.actions)
@@ -472,7 +484,11 @@ private fun ProgressRing(fraction: Float?) {
 
 @Composable
 private fun Actions(actions: V5LibraryActions) {
-    if (actions.start == null && actions.end == null) return
+    // Without actions the list still ends above the gesture bar, as it does with them (M-08).
+    if (actions.start == null && actions.end == null) {
+        Spacer(Modifier.navigationBarsPadding())
+        return
+    }
     val colors = V5Theme.colors
     Row(
         Modifier

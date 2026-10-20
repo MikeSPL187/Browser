@@ -91,4 +91,16 @@ class V5SuggestionLayoutTest {
         assertNull(V5SuggestionLayoutRules.step(layout, search.stableId, 1))
         assertNull(V5SuggestionLayoutRules.step(layout, null, -1))
     }
+
+    @Test
+    fun `arrow keys over an empty list go nowhere`() {
+        assertNull(V5SuggestionLayoutRules.step(V5SuggestionLayout.Empty, null, 1))
+        assertNull(V5SuggestionLayoutRules.step(V5SuggestionLayout.Empty, "gone", -1))
+    }
+
+    @Test
+    fun `a highlight that left the list starts the walk again`() {
+        val layout = V5SuggestionLayoutRules.layout(listOf(history, search), query = "пол")
+        assertEquals(history, V5SuggestionLayoutRules.step(layout, "navigation:gone", 1))
+    }
 }

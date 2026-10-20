@@ -100,6 +100,7 @@ internal object FilterStudioTestTags {
     const val Search = "filter_studio_search"
     const val LiveTest = "filter_studio_live_test"
     const val Add = "filter_studio_add"
+    const val DeleteConfirm = "filter_studio_delete_confirm"
     const val Body = "filter_studio_body"
     const val EmptyState = "filter_studio_empty_state"
     const val WebList = "filter_studio_web_list"

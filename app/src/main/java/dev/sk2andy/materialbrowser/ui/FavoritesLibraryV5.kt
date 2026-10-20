@@ -5,21 +5,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.BrowsingFavoritesRules
 import dev.sk2andy.materialbrowser.data.FavoriteEntry
 import dev.sk2andy.materialbrowser.data.FavoriteLibrary
+import dev.sk2andy.materialbrowser.data.FavoriteMutation
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
@@ -37,6 +43,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5NameField
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
 import java.net.URI
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 object FavoritesLibraryV5TestTags {
     const val NewFolderName = "v5_favorites_new_folder_name"
@@ -46,7 +55,8 @@ object FavoritesLibraryV5TestTags {
 /**
  * The favorites segment of the v5 library (V28, B2c; canvas screen «р2»): the current profile's
  * folders and sites in their own order, a folder opened in place with a way back up (system back
- * too), a search through every favorite, a site swiped left deleted at once, and «New folder».
+ * too), a search through every favorite, a site swiped left deleted with «Undo» (БИ-2, as the
+ * tablet's favorites), and «New folder».
  * A folder is never deleted by a swipe: it would take its sites with it.
  */
 @Composable
@@ -54,7 +64,8 @@ internal fun FavoritesLibraryV5(
     library: FavoriteLibrary,
     favicons: Map<String, Bitmap>,
     onOpen: (FavoriteEntry) -> Unit,
-    onDelete: (FavoriteEntry) -> Unit,
+    onDelete: (FavoriteEntry, onComplete: (FavoriteMutation?) -> Unit) -> Unit,
+    onUndoDelete: (FavoriteMutation) -> Unit,
     onCreateFolder: (parentId: String?, title: String) -> Unit,
     onImport: () -> Unit,
     onSwitch: (V5LibrarySegment) -> Unit,
@@ -68,6 +79,33 @@ internal fun FavoritesLibraryV5(
     val view = remember(library, folderId, query) { FavoritesLibraryV5Rules.view(library, folderId, query) }
     val byKey = remember(view) { view.favorites.associateBy(FavoriteEntry::id) }
     val searching = query.isNotBlank()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var undoJob by remember { mutableStateOf<Job?>(null) }
+    val removedMessage = stringResource(R.string.favorite_removed_confirmation)
+    val undoLabel = stringResource(R.string.action_undo)
+    // TalkBack users and longer «Time to take action» settings get the window Android recommends.
+    val undoWindowMillis = LocalAccessibilityManager.current?.calculateRecommendedTimeoutMillis(
+        LibraryRules.UNDO_WINDOW_MILLIS,
+        containsIcons = false,
+        containsText = true,
+        containsControls = true,
+    ) ?: LibraryRules.UNDO_WINDOW_MILLIS
+    val delete = { favorite: FavoriteEntry ->
+        onDelete(favorite) { mutation ->
+            if (mutation != null) {
+                undoJob?.cancel()
+                snackbarHostState.currentSnackbarData?.dismiss()
+                undoJob = scope.launch {
+                    val result = withTimeoutOrNull(undoWindowMillis) {
+                        snackbarHostState.showSnackbar(removedMessage, undoLabel, duration = SnackbarDuration.Indefinite)
+                    }
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    if (result == SnackbarResult.ActionPerformed) onUndoDelete(mutation)
+                }
+            }
+        }
+    }
     val rows = view.folders.map { (folder, count) ->
         V5LibraryRow(
             key = folder.id,
@@ -124,10 +162,11 @@ internal fun FavoritesLibraryV5(
                 val favorite = byKey[key]
                 if (favorite != null) onOpen(favorite) else openFolderId = key
             },
-            onDelete = { key -> byKey[key]?.let(onDelete) },
+            onDelete = { key -> byKey[key]?.let(delete) },
             onRetry = {},
             onClose = onClose,
             onUp = { openFolderId = FavoritesLibraryV5Rules.parentOf(library, folderId) },
+            snackbarHostState = snackbarHostState,
         )
         NewFolderSheet(
             visible = creatingFolder,

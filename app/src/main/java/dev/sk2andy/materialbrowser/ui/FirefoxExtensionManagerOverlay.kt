@@ -55,6 +55,7 @@ internal object FirefoxExtensionManagerTestTags {
     const val Overlay = "firefox_extension_manager"
     const val InstallUrl = "gecko_extension_install_url"
     const val PermissionPrompt = "gecko_extension_permission_prompt"
+    const val UninstallConfirm = "gecko_extension_uninstall_confirm"
 
     fun optionsPage(extensionId: String): String = "gecko_extension_options:$extensionId"
 }
