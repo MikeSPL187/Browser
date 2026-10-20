@@ -11,7 +11,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoFindResult
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaCommand

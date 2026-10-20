@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayoutRules

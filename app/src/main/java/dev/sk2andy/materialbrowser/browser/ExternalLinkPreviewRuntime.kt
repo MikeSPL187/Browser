@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import android.view.View
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.integration.ExternalPreviewDownloadGrant
 
 internal sealed interface ExternalLinkPreviewEngineBinding {

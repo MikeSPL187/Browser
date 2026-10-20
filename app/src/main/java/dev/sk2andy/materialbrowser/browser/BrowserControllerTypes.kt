@@ -1,6 +1,6 @@
 package dev.sk2andy.materialbrowser.browser
 
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyFailureReason
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRejectionReason
 
