@@ -3,9 +3,9 @@ package dev.sk2andy.materialbrowser.browser
 import android.graphics.Rect
 import android.view.View
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoInlineVideoIdentity
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
 import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import java.util.concurrent.atomic.AtomicBoolean

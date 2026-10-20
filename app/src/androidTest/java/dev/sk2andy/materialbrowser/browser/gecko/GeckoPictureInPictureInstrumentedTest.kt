@@ -51,6 +51,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
 
 @RunWith(AndroidJUnit4::class)
 class GeckoPictureInPictureInstrumentedTest {

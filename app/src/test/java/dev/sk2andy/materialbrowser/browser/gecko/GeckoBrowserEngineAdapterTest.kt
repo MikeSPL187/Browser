@@ -17,6 +17,18 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserHistoryState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserHistoryStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFullscreenStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMainFrameNavigationRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaCommand
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 
 class GeckoBrowserEngineAdapterTest {
     @Test

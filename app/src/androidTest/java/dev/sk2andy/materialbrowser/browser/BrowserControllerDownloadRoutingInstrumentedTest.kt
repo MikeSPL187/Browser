@@ -11,7 +11,7 @@ import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManagerApp
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadProtocol
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadCancellation
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExternalDownloadResponse
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.data.BrowserDownloadSettings
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadManagerMode

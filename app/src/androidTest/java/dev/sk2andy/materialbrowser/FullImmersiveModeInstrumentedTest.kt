@@ -16,7 +16,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags

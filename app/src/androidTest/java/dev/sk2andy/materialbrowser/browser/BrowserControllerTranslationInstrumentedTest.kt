@@ -9,11 +9,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoFindResult
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaCommand
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaCommand
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationListener
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort

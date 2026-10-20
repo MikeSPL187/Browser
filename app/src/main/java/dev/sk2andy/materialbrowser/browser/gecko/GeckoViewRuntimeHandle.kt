@@ -122,6 +122,33 @@ import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAndroidPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAuthPromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserHistoryState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserHistoryStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoContentPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoContextDownloadRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFilePromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFullscreenStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHapticListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMainFrameNavigationRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaCommand
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 
 internal class GeckoViewRuntimeHandle private constructor(
     private val runtime: GeckoRuntime,
