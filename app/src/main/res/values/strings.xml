@@ -785,6 +785,7 @@
     <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
+    <string name="passwords_import_bookmarks_moved">Bookmarks moved. To move the passwords too, turn on the password vault.</string>
     <string name="first_run_setup_title">Make it yours</string>
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
