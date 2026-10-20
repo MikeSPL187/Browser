@@ -104,6 +104,8 @@ def aapt2_dump(aapt2: Path, *arguments: str) -> str:
         raise RuntimeError(f"aapt2 failed for {APK}: {detail}") from error
 
 
+# The checks read a built APK and are not part of CI: without it the class is skipped, not failed.
+@unittest.skipUnless(APK.is_file(), f"build the System WebView APK first (missing: {APK})")
 class SystemWebViewApkTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
