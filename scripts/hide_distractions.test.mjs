@@ -242,6 +242,11 @@ test("choosing mode outlines a block, hides it on the second tap and tells Vola"
   const outline = appended.find((node) => node.name === "div");
   assert.equal(outline.properties.width, "360px");
   assert.equal(outline.properties.border, "2px solid #336699");
+  // Vola hears that a block is outlined, so the panel can say it to TalkBack.
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(sent.at(-1))),
+    { type: "distraction-outlined", outlined: true, navigationGeneration: 7 },
+  );
 
   tap(word);
   assert.ok(outline.removed);
@@ -304,5 +309,24 @@ test("the background passes on a hidden block for the current page of the top fr
     revision: 4,
     navigationGeneration: 9,
     selector: "div.promo",
+  });
+});
+
+test("the background passes on an outline for the current page of the top frame only", () => {
+  const harness = backgroundHarness({ revision: 4, navigationGeneration: 9 });
+  const outlined = { type: "distraction-outlined", outlined: true, navigationGeneration: 9 };
+
+  harness.context.relayDistractionHidden(outlined, { frameId: 0, tab: { id: 7 } });
+  harness.context.relayDistractionHidden(outlined, { frameId: 3, tab: { id: 7 } });
+  harness.context.relayDistractionHidden({ ...outlined, navigationGeneration: 8 }, { frameId: 0, tab: { id: 7 } });
+
+  assert.equal(harness.posted.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(harness.posted[0])), {
+    type: "distraction-outlined",
+    protocolVersion: 2,
+    token: "token",
+    revision: 4,
+    navigationGeneration: 9,
+    outlined: true,
   });
 });

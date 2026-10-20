@@ -60,6 +60,10 @@ internal class HiddenDistractionsController(
     var pickingTabId by mutableStateOf<String?>(null)
         private set
 
+    /** What the last tap while choosing did, which the panel says aloud. */
+    var pickingStep by mutableStateOf(DistractionPickingStep.Choosing)
+        private set
+
     /** The block hidden last while choosing, which «Undo» shows again; gone when choosing ends. */
     private var lastHidden by mutableStateOf<LastHidden?>(null)
 
@@ -90,8 +94,16 @@ internal class HiddenDistractionsController(
         val started = page.startPicking(
             highlightArgb,
             object : PageDistractionsListener {
-                override fun onHidden(pageHost: String, selector: String) =
+                override fun onHidden(pageHost: String, selector: String) {
                     hide(tab.profileId, tab.isIncognito, pageHost, selector)
+                    if (pickingTabId == tab.id) pickingStep = DistractionPickingStep.Hidden
+                }
+
+                override fun onOutlined(outlined: Boolean) {
+                    if (pickingTabId == tab.id) {
+                        pickingStep = if (outlined) DistractionPickingStep.Selected else DistractionPickingStep.Choosing
+                    }
+                }
 
                 override fun onPickingEnded() {
                     if (pickingTabId == tab.id) {
@@ -101,7 +113,10 @@ internal class HiddenDistractionsController(
                 }
             },
         )
-        if (started) pickingTabId = tab.id
+        if (started) {
+            pickingTabId = tab.id
+            pickingStep = DistractionPickingStep.Choosing
+        }
         return started
     }
 
@@ -118,6 +133,7 @@ internal class HiddenDistractionsController(
      */
     fun showAll(tab: BrowserTab) {
         lastHidden = null
+        pickingStep = DistractionPickingStep.Choosing
         val pageHost = PrivacyRequestSanitizer.webHost(tab.url) ?: return
         privateSession[tab.profileId]?.let { session ->
             privateSession[tab.profileId] = HiddenDistractionsRules.showAll(session, pageHost)
@@ -137,6 +153,7 @@ internal class HiddenDistractionsController(
     fun undoLastHide() {
         val last = lastHidden ?: return
         lastHidden = null
+        pickingStep = DistractionPickingStep.Choosing
         if (last.isPrivate) {
             val session = privateSession[last.profileId] ?: return
             privateSession[last.profileId] = HiddenDistractionsRules.show(session, last.pageHost, last.selector)
@@ -229,3 +246,6 @@ internal class HiddenDistractionsController(
         onChanged()
     }
 }
+
+/** What the last tap did while a page chooses distracting items. */
+enum class DistractionPickingStep { Choosing, Selected, Hidden }

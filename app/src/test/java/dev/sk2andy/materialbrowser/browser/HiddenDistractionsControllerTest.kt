@@ -186,6 +186,28 @@ class HiddenDistractionsControllerTest {
     }
 
     @Test
+    fun `each tap result is kept for the panel to say, outlined then hidden then back to choosing`() {
+        val page = FakePage()
+        pages[tab.id] = page
+        controller.startPicking(tab, highlightArgb = 0)
+        assertEquals(DistractionPickingStep.Choosing, controller.pickingStep)
+
+        page.listener!!.onOutlined(true)
+        assertEquals(DistractionPickingStep.Selected, controller.pickingStep)
+        page.listener!!.onHidden("news.example", "#promo")
+        assertEquals(DistractionPickingStep.Hidden, controller.pickingStep)
+        controller.undoLastHide()
+        assertEquals(DistractionPickingStep.Choosing, controller.pickingStep)
+        page.listener!!.onOutlined(true)
+        page.listener!!.onOutlined(false)
+        assertEquals(DistractionPickingStep.Choosing, controller.pickingStep)
+
+        page.listener!!.onOutlined(true)
+        controller.startPicking(tab, highlightArgb = 0)
+        assertEquals(DistractionPickingStep.Choosing, controller.pickingStep)
+    }
+
+    @Test
     fun `undo in a private tab touches the private session only`() {
         storedFor("work", "news.example", "#saved")
         val page = FakePage()

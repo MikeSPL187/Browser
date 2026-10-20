@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.DistractionPickingStep
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Materials
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
@@ -47,6 +48,7 @@ object V5DistractionsPanelTestTags {
     const val ShowHidden = "v5_distractions_show_hidden"
     const val Undo = "v5_distractions_undo"
     const val Done = "v5_distractions_done"
+    const val Step = "v5_distractions_step"
 }
 
 /**
@@ -65,6 +67,8 @@ fun V5DistractionsPanel(
     hasHidden: Boolean,
     /** A block was hidden since choosing started: «Undo» takes the place of «Show hidden items». */
     canUndo: Boolean,
+    /** What the last tap did, said under the hint, so TalkBack hears the outline and the hiding. */
+    step: DistractionPickingStep,
     onUndo: () -> Unit,
     onShowHidden: () -> Unit,
     onDone: () -> Unit,
@@ -109,16 +113,22 @@ fun V5DistractionsPanel(
                 }
                 Column(Modifier.weight(1f)) {
                     Text(title, style = V5Theme.type.headline, color = colors.label)
+                    // What the last tap did takes the line's place, in a polite live region: TalkBack
+                    // says the outline and the hiding, which only show on the page.
                     Text(
-                        if (privateTab) {
-                            stringResource(R.string.v5_distractions_private)
-                        } else {
-                            stringResource(R.string.v5_distractions_site, site)
+                        when {
+                            step == DistractionPickingStep.Selected -> stringResource(R.string.v5_distractions_selected)
+                            step == DistractionPickingStep.Hidden -> stringResource(R.string.v5_distractions_hidden)
+                            privateTab -> stringResource(R.string.v5_distractions_private)
+                            else -> stringResource(R.string.v5_distractions_site, site)
                         },
                         style = V5Theme.type.footnote,
                         color = colors.labelSecondary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .testTag(V5DistractionsPanelTestTags.Step)
+                            .semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
             }
