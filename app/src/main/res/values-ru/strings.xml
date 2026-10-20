@@ -2128,6 +2128,8 @@
     <string name="v5_distractions_site">Второе касание скрывает. Vola запомнит выбор для %1$s.</string>
     <string name="v5_distractions_private">Второе касание скрывает. В частной вкладке — только до закрытия частных вкладок.</string>
     <string name="v5_distractions_done">Готово</string>
+    <string name="v5_distractions_selected">Выбрано. Коснитесь ещё раз, чтобы скрыть.</string>
+    <string name="v5_distractions_hidden">Скрыто. «Отменить» вернёт.</string>
     <string name="v5_site_on">Защита включена</string>
     <string name="v5_site_off">Защита выключена</string>
     <string name="v5_site_off_note">На этом сайте трекеры и реклама загружаются.</string>
