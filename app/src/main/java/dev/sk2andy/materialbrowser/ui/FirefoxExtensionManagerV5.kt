@@ -70,6 +70,8 @@ internal fun FirefoxExtensionManagerV5(
 ) {
     var openId by remember { mutableStateOf(initialOpenId) }
     var installing by remember { mutableStateOf(false) }
+    // Removing an extension takes its data and settings with it: the page asks first (РР-1).
+    var removingId by remember { mutableStateOf<String?>(null) }
     // A removed extension's page has nothing left to show: the list comes back.
     val open = state.snapshot.extensions.firstOrNull { it.id == openId }
     BackHandler { if (open != null) openId = null else onDismiss() }
@@ -127,10 +129,7 @@ internal fun FirefoxExtensionManagerV5(
                         onSetPrivate = { onSetPrivate(open, it) },
                         onOpenOptionsPage = { onOpenOptionsPage(open) },
                         onUpdate = { onUpdate(open) },
-                        onUninstall = {
-                            onUninstall(open)
-                            openId = null
-                        },
+                        onUninstall = { removingId = open.id },
                     )
                 }
             }
@@ -144,6 +143,28 @@ internal fun FirefoxExtensionManagerV5(
             onDismiss = { installing = false },
         )
         PermissionSheet(state.permissionRequest, onPermissionDecision)
+        val removing = state.snapshot.extensions.firstOrNull { it.id == removingId }
+        V5PromptSheet(
+            visible = removing != null,
+            title = removing?.let { stringResource(R.string.gecko_extension_v5_uninstall_title, FirefoxExtensionManagerV5Rules.name(it)) }
+                .orEmpty(),
+            message = stringResource(R.string.gecko_extension_v5_uninstall_message),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.gecko_extension_uninstall),
+                    role = V5PromptRole.Destructive,
+                    testTag = FirefoxExtensionManagerTestTags.UninstallConfirm,
+                    onClick = {
+                        removingId = null
+                        if (removing != null) {
+                            onUninstall(removing)
+                            openId = null
+                        }
+                    },
+                ),
+            ),
+            onDismiss = { removingId = null },
+        )
     }
 }
 

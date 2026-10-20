@@ -113,6 +113,7 @@ class HistoryActivity : ComponentActivity() {
                         onOpen = ::openEntry,
                         onSwitch = ::switchLibrary,
                         onClose = { whenMutationsSaved(::finishWithResult) },
+                        isChangingConfigurations = { isChangingConfigurations },
                     )
                     return@CandyTheme
                 }
