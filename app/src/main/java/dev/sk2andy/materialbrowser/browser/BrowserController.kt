@@ -266,10 +266,12 @@ import dev.sk2andy.materialbrowser.data.sync.AndroidSyncCacheStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncSettingsStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncVaultStore
 import dev.sk2andy.materialbrowser.data.sync.CandySyncRepository
+import dev.sk2andy.materialbrowser.reader.ReaderDocument
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionFailure
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionParser
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionResult
 import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
+import dev.sk2andy.materialbrowser.reader.ReaderPageCapture
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
@@ -7086,74 +7088,29 @@ class BrowserController(
         }
     }
 
-    fun extractSelectedPageForReader(onResult: (ReaderExtractionResult) -> Unit) {
-        val tab = selectedTab
-        if (
-            !tab.url.startsWith("https://", ignoreCase = true) &&
-            !tab.url.startsWith("http://", ignoreCase = true)
-        ) {
-            onResult(ReaderExtractionResult.Failure(ReaderExtractionFailure.UnsupportedPage))
-            return
-        }
-        val engineSession = browserEngineSessions[tab.id]
-        if (engineSession == null) {
-            onResult(ReaderExtractionResult.Failure(ReaderExtractionFailure.InvalidResponse))
-            return
-        }
-        val expectedUrl = tab.url
-        val expectedNavigationGeneration = navigationGenerations.getOrDefault(tab.id, 0)
-        engineSession.extractPageForReader { result ->
-            val currentTab = tabs.firstOrNull { candidate -> candidate.id == tab.id }
-            if (
-                destroyed ||
-                selectedTabId != tab.id ||
-                currentTab?.url != expectedUrl ||
-                navigationGenerations.getOrDefault(tab.id, 0) !=
-                expectedNavigationGeneration ||
-                browserEngineSessions[tab.id] !== engineSession
-            ) {
-                onResult(
-                    ReaderExtractionResult.Failure(
-                        ReaderExtractionFailure.InvalidResponse,
-                    ),
-                )
-            } else {
-                onResult(ReaderExtractionParser.parseJson(result))
-            }
-        }
-    }
+    fun extractSelectedPageForReader(onResult: (ReaderExtractionResult) -> Unit) =
+        readerCapture.extractSelected(onResult)
 
-    fun saveSelectedPageToReader(onResult: (ReaderExtractionResult) -> Unit) {
-        val expectedUrl = BrowserUriPolicy.normalizeHttpUrl(selectedTab.url)
-        if (selectedTab.isIncognito || expectedUrl == null) {
-            onResult(ReaderExtractionResult.Failure(ReaderExtractionFailure.UnsupportedPage))
-            return
-        }
-        extractSelectedPageForReader { result ->
-            val document = (result as? ReaderExtractionResult.Success)?.document
-            if (document == null) {
-                onResult(result)
-                return@extractSelectedPageForReader
-            }
-            if (BrowserUriPolicy.normalizeHttpUrl(document.sourceUrl) != expectedUrl) {
-                onResult(ReaderExtractionResult.Failure(ReaderExtractionFailure.InvalidResponse))
-                return@extractSelectedPageForReader
-            }
-            ReaderLibraryRepository.get(activity).saveSnapshotWithResult(
-                document = document,
-                progress = 0f,
-                isPrivate = false,
-            ) { snapshot ->
-                onResult(
-                    if (snapshot == null) {
-                        ReaderExtractionResult.Failure(ReaderExtractionFailure.InvalidResponse)
-                    } else {
-                        result
-                    },
-                )
-            }
-        }
-    }
+    fun saveSelectedPageToReader(onResult: (ReaderExtractionResult) -> Unit) =
+        readerCapture.saveSelected(onResult)
+
+    private val readerCapture = ReaderPageCapture(
+        object : ReaderPageCapture.Host<AndroidBrowserEngineSessionPort> {
+            override val isDestroyed: Boolean get() = destroyed
+            override val selectedTab: BrowserTab get() = this@BrowserController.selectedTab
+            override fun tab(tabId: String): BrowserTab? = tabs.firstOrNull { tab -> tab.id == tabId }
+            override fun navigationGeneration(tabId: String): Int = navigationGenerations.getOrDefault(tabId, 0)
+            override fun session(tabId: String): AndroidBrowserEngineSessionPort? = browserEngineSessions[tabId]
+            override fun extractPage(session: AndroidBrowserEngineSessionPort, onComplete: (String?) -> Unit) =
+                session.extractPageForReader(onComplete)
+            override fun saveToLibrary(document: ReaderDocument, onSaved: (Boolean) -> Unit) =
+                ReaderLibraryRepository.get(activity).saveSnapshotWithResult(
+                    document = document,
+                    progress = 0f,
+                    isPrivate = false,
+                ) { snapshot -> onSaved(snapshot != null) }
+        },
+    )
 
     fun saveLinkPeekToReader(
         previewView: View,
