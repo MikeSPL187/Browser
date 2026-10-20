@@ -192,8 +192,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionAccess
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
 import dev.sk2andy.materialbrowser.browser.translation.androidOnDeviceTranslationController
-import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogEntry
-import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogRules
+import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogInstaller
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptDependencyResolution
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptParseResult
@@ -262,7 +261,6 @@ import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.data.GeckoSessionStateStore
 import dev.sk2andy.materialbrowser.data.ToppingCatalogRefreshResult
 import dev.sk2andy.materialbrowser.data.ToppingCatalogRepository
-import dev.sk2andy.materialbrowser.data.ToppingDownloadResult
 import dev.sk2andy.materialbrowser.data.UserScriptRepository
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncCacheStore
 import dev.sk2andy.materialbrowser.data.sync.AndroidSyncSettingsStore
@@ -394,11 +392,12 @@ class BrowserController(
     val snoozedTabs = mutableStateListOf<SnoozedTab>()
     val siteCapsules = mutableStateListOf<SiteCapsule>()
     internal val userScripts = mutableStateListOf<UserScript>()
-    internal var toppingCatalogResult by mutableStateOf<ToppingCatalogRefreshResult?>(null)
-        private set
-    internal var isToppingCatalogLoading by mutableStateOf(false)
-        private set
-    internal val busyToppingIds = mutableStateListOf<String>()
+    internal val toppingCatalogResult: ToppingCatalogRefreshResult?
+        get() = toppingCatalog.result
+    internal val isToppingCatalogLoading: Boolean
+        get() = toppingCatalog.isLoading
+    internal val busyToppingIds: List<String>
+        get() = toppingCatalog.busyIds
     val contentActions = WebContentActionState()
     internal val firefoxExtensionActions = mutableStateListOf<GeckoExtensionActionState>()
     internal val selectedFirefoxExtensionOptionsTitle: String?
@@ -1075,7 +1074,6 @@ class BrowserController(
     private val externalAppNavigationRecoveries =
         mutableMapOf<String, ExternalAppNavigationRecovery>()
     private var userScriptMutationPending = false
-    private var toppingCatalogRefreshGeneration = 0
     private val pendingConsentCssUrls = mutableMapOf<String, String?>()
     private val pendingPopupNavigations = mutableMapOf<String, PendingPopupNavigation>()
     private val geckoPopupFilter by lazy { dev.sk2andy.materialbrowser.blocking.PopupListFilter.fromAssets(activity.assets) }
@@ -1426,7 +1424,26 @@ class BrowserController(
     private val candyRuleRepository = CandyRuleRepository.get(activity)
     private val userScriptRepository = UserScriptRepository.get(activity)
     private val userScriptCommandsByTab = mutableStateMapOf<String, List<UserScriptMenuCommand>>()
-    private val toppingCatalogRepository = ToppingCatalogRepository.get(activity)
+    private val toppingCatalog = ToppingCatalogRepository.get(activity).let { repository ->
+        ToppingCatalogInstaller(
+            fetchCatalog = repository::refresh,
+            downloadTopping = repository::download,
+            host = object : ToppingCatalogInstaller.Host {
+                override val isDestroyed: Boolean get() = destroyed
+                override val userScripts: List<UserScript> get() = this@BrowserController.userScripts
+                override fun setUserScriptEnabled(id: String, enabled: Boolean, onComplete: (Boolean) -> Unit) =
+                    this@BrowserController.setUserScriptEnabled(id, enabled, onComplete)
+                override fun resolveDependencies(
+                    script: UserScript,
+                    onComplete: (UserScriptDependencyResolution) -> Unit,
+                ) = userScriptRepository.resolveDependencies(script) { resolution ->
+                    mainHandler.post { onComplete(resolution) }
+                }
+                override fun commitUserScripts(scripts: List<UserScript>, onComplete: (Boolean) -> Unit) =
+                    this@BrowserController.commitUserScripts(scripts, onComplete = onComplete)
+            },
+        )
+    }
     private val bundledSitePrivacyDefaults = BundledSitePrivacyDefaults.load(activity)
     private val downloadManager = BrowserDownloadManager(activity)
     private val externalDownloadManager = ExternalDownloadManager(activity)
@@ -5016,115 +5033,18 @@ class BrowserController(
 
     fun siteCapsuleRenderedIcon(capsuleId: String): Bitmap? = capsuleLibrary.renderedIcon(capsuleId)
 
-    internal fun refreshToppingCatalog() {
-        val generation = ++toppingCatalogRefreshGeneration
-        isToppingCatalogLoading = true
-        toppingCatalogRepository.refresh { result ->
-            if (destroyed || generation != toppingCatalogRefreshGeneration) return@refresh
-            isToppingCatalogLoading = false
-            toppingCatalogResult = result
-        }
-    }
+    internal fun refreshToppingCatalog() = toppingCatalog.refresh()
 
     internal fun setToppingEnabled(
         toppingId: String,
         enabled: Boolean,
         onComplete: (Boolean) -> Unit = {},
-    ) {
-        val entry = toppingCatalogEntry(toppingId)
-        if (entry == null || toppingId in busyToppingIds) {
-            onComplete(false)
-            return
-        }
-        val scriptId = ToppingCatalogRules.stableScriptId(toppingId)
-        val installed = userScripts.firstOrNull { script -> script.id == scriptId }
-        if (installed != null) {
-            busyToppingIds += toppingId
-            setUserScriptEnabled(scriptId, enabled) { saved ->
-                busyToppingIds.remove(toppingId)
-                onComplete(saved)
-            }
-            return
-        }
-        if (!enabled) {
-            onComplete(true)
-            return
-        }
-        downloadAndSaveTopping(entry = entry, preserveEnabled = false, onComplete = onComplete)
-    }
+    ) = toppingCatalog.setEnabled(toppingId, enabled, onComplete)
 
     internal fun updateTopping(
         toppingId: String,
         onComplete: (Boolean) -> Unit = {},
-    ) {
-        val entry = toppingCatalogEntry(toppingId)
-        val installed = userScripts.any { script ->
-            script.id == ToppingCatalogRules.stableScriptId(toppingId)
-        }
-        if (entry == null || !installed || toppingId in busyToppingIds) {
-            onComplete(false)
-            return
-        }
-        downloadAndSaveTopping(entry = entry, preserveEnabled = true, onComplete = onComplete)
-    }
-
-    private fun toppingCatalogEntry(id: String): ToppingCatalogEntry? {
-        val catalog = when (val result = toppingCatalogResult) {
-            is ToppingCatalogRefreshResult.Fresh -> result.catalog
-            is ToppingCatalogRefreshResult.Cached -> result.catalog
-            is ToppingCatalogRefreshResult.Error,
-            null,
-            -> return null
-        }
-        return catalog.toppings.firstOrNull { entry -> entry.id == id }
-    }
-
-    private fun downloadAndSaveTopping(
-        entry: ToppingCatalogEntry,
-        preserveEnabled: Boolean,
-        onComplete: (Boolean) -> Unit,
-    ) {
-        busyToppingIds += entry.id
-        toppingCatalogRepository.download(entry) { result ->
-            if (destroyed) return@download
-            val downloaded = (result as? ToppingDownloadResult.Accepted)?.script
-            if (downloaded == null) {
-                busyToppingIds.remove(entry.id)
-                onComplete(false)
-                return@download
-            }
-            val existing = userScripts.firstOrNull { script -> script.id == downloaded.id }
-            val script = downloaded.copy(
-                enabled = if (preserveEnabled) existing?.enabled ?: true else true,
-                allowedFrameScope = existing?.allowedFrameScope
-                    ?.restrictedTo(downloaded.declaredFrameScope)
-                    ?: downloaded.declaredFrameScope,
-            )
-            userScriptRepository.resolveDependencies(script) { resolution ->
-                mainHandler.post {
-                    if (destroyed) return@post
-                    val resolved = (resolution as? UserScriptDependencyResolution.Resolved)?.script
-                    if (resolved == null) {
-                        busyToppingIds.remove(entry.id)
-                        onComplete(false)
-                        return@post
-                    }
-                    val proposed = userScripts.toMutableList()
-                    val index = proposed.indexOfFirst { candidate -> candidate.id == resolved.id }
-                    if (index >= 0) proposed[index] = resolved else proposed += resolved
-                    if (!UserScriptRules.isWithinCollectionBounds(proposed)) {
-                        busyToppingIds.remove(entry.id)
-                        onComplete(false)
-                        return@post
-                    }
-                    commitUserScripts(proposed) { persisted ->
-                        busyToppingIds.remove(entry.id)
-                        onComplete(persisted)
-                    }
-                }
-            }
-        }
-    }
+    ) = toppingCatalog.update(toppingId, onComplete)
 
     internal fun saveUserScript(
         id: String?,
