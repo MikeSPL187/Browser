@@ -91,4 +91,26 @@ class V5SuggestionLayoutTest {
         assertNull(V5SuggestionLayoutRules.step(layout, search.stableId, 1))
         assertNull(V5SuggestionLayoutRules.step(layout, null, -1))
     }
+
+    @Test
+    fun `a suggestion that comes twice shows once, so the list never meets a repeated key`() {
+        val again = AddressSuggestionItem.Navigation(AddressSuggestion("https://polar-notes.ru/noch", "Ночь"))
+        val layout = V5SuggestionLayoutRules.layout(listOf(history, again, search, search), query = "пол")
+        assertEquals(history, layout.best)
+        assertEquals(listOf(search), layout.sections.single().items)
+        val ids = layout.fromField.map { it.stableId }
+        assertEquals(ids.distinct(), ids)
+    }
+
+    @Test
+    fun `arrow keys over an empty list go nowhere`() {
+        assertNull(V5SuggestionLayoutRules.step(V5SuggestionLayout.Empty, null, 1))
+        assertNull(V5SuggestionLayoutRules.step(V5SuggestionLayout.Empty, "gone", -1))
+    }
+
+    @Test
+    fun `a highlight that left the list starts the walk again`() {
+        val layout = V5SuggestionLayoutRules.layout(listOf(history, search), query = "пол")
+        assertEquals(history, V5SuggestionLayoutRules.step(layout, "navigation:gone", 1))
+    }
 }
