@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.engine
 
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
+
 internal enum class GeckoAutoplayPermission {
     Audible,
     Inaudible,
