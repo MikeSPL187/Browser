@@ -429,18 +429,25 @@ private fun LoadingLine(visible: Boolean, progress: Float) {
     }
 }
 
-/** The domain the bar shows: no scheme, no `www.`, no path; null for a page without a host. */
+/**
+ * The domain the bar shows: no scheme, no `www.`, no path, no closing dot; null for a page without a
+ * host, which then shows its address as typed. The authority ends at `/`, `?`, `#` and also at `\`,
+ * as a browser reads `http(s)` addresses (WHATWG), so `https://evil.com\@good.com/` shows
+ * `evil.com`, the host the page comes from (П-1). An address inside another scheme, such as
+ * `view-source:https://…`, is not the page itself and has no domain here (П-3).
+ */
 internal fun v5BarDomain(url: String): String? {
-    val afterScheme = url.substringAfter("://", missingDelimiterValue = "")
-    if (afterScheme.isEmpty()) return null
-    val authority = afterScheme.substringBefore('/').substringBefore('?').substringBefore('#')
+    val scheme = url.substringBefore("://", missingDelimiterValue = "")
+    if (scheme.isEmpty() || !scheme.all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }) return null
+    val afterScheme = url.substring(scheme.length + "://".length)
+    val authority = afterScheme.substringBefore('/').substringBefore('\\').substringBefore('?').substringBefore('#')
         .substringAfterLast('@')
     val host = if (authority.startsWith("[")) {
         authority.substringBefore(']') + "]"
     } else {
         authority.substringBefore(':')
     }
-    return host.lowercase().removePrefix("www.").takeIf { it.isNotBlank() && it != "[]" }
+    return host.lowercase().removePrefix("www.").removeSuffix(".").takeIf { it.isNotBlank() && it != "[]" }
 }
 
 /** The bar's colors after the site tint (system-v5.md, section 1.3). */

@@ -5,7 +5,8 @@ enum class WeakPasswordKind { LettersOnly, DigitsOnly, Short, Other }
 
 data class BreachedLogin(val login: VaultLogin, val timesSeen: Int)
 
-data class ReusedLogin(val login: VaultLogin, val otherSites: Int)
+/** [otherSiteKeys] names the other sites with the same password ([PasswordHealthRules.siteKey]), so the page can list them (МП-2). */
+data class ReusedLogin(val login: VaultLogin, val otherSites: Int, val otherSiteKeys: List<String> = emptyList())
 
 data class WeakLogin(val login: VaultLogin, val length: Int, val kind: WeakPasswordKind)
 
@@ -67,15 +68,22 @@ object PasswordHealthRules {
         // A login without a password repeats nothing; example.com and www.example.com are one site.
         val sitesByPassword = logins.filter { it.password.isNotEmpty() }
             .groupBy(VaultLogin::password)
-            .mapValues { (_, same) -> same.mapTo(mutableSetOf()) { siteKey(it.origin) }.size }
+            .mapValues { (_, same) -> same.mapTo(linkedSetOf()) { siteKey(it.origin) } }
         val reused = logins.mapNotNull { login ->
-            val sites = sitesByPassword[login.password] ?: 0
-            if (login.id in flagged || sites < 2) null else ReusedLogin(login, otherSites = sites - 1)
+            val sites = sitesByPassword[login.password].orEmpty()
+            if (login.id in flagged || sites.size < 2) {
+                null
+            } else {
+                val own = siteKey(login.origin)
+                ReusedLogin(login, otherSites = sites.size - 1, otherSiteKeys = sites.filter { it != own })
+            }
         }
         flagged += reused.map { it.login.id }
+        // A login without a password has nothing to strengthen (МП-4); length counts characters as
+        // a person does, an emoji as one, not UTF-16 units (МП-5).
         val weak = logins.mapNotNull { login ->
-            if (login.id in flagged || !isWeak(login.password)) null
-            else WeakLogin(login, login.password.length, weakKind(login.password))
+            if (login.id in flagged || login.password.isEmpty() || !isWeak(login.password)) null
+            else WeakLogin(login, characterCount(login.password), weakKind(login.password))
         }
         val insecure = logins.mapNotNull { login ->
             when {
@@ -94,7 +102,11 @@ object PasswordHealthRules {
     fun isPlainHttp(origin: String): Boolean {
         val trimmed = origin.trim()
         if (!trimmed.startsWith(HTTP_SCHEME, ignoreCase = true)) return false
-        val authority = trimmed.substring(HTTP_SCHEME.length).substringBefore('/').substringAfterLast('@')
+        // As a browser reads the address: `\\`, `?` and `#` end the host too, so the name after `@`
+        // in `http://evil.com\\@good.com` is not the host (П-1, МП-7).
+        val authority = trimmed.substring(HTTP_SCHEME.length)
+            .substringBefore('/').substringBefore('\\').substringBefore('?').substringBefore('#')
+            .substringAfterLast('@')
         val host = if (authority.startsWith('[')) {
             authority.substringBefore(']') + "]"
         } else {
@@ -103,9 +115,30 @@ object PasswordHealthRules {
         return host.isNotEmpty() && !isLoopback(host)
     }
 
-    private fun isLoopback(host: String): Boolean =
-        host == "localhost" || host.endsWith(".localhost") || host == "[::1]" ||
-            host.split('.').let { parts -> parts.size == 4 && parts[0] == "127" && parts.all { it.toIntOrNull() in 0..255 } }
+    /**
+     * The phone itself: `localhost`, `127.x` in any of its short forms (`127.1`), `0.0.0.0` (which
+     * reaches the phone), IPv6 `::1` written out or not, and IPv4 loopback mapped into IPv6 (МП-3).
+     */
+    private fun isLoopback(host: String): Boolean {
+        if (host == "localhost" || host.endsWith(".localhost")) return true
+        if (host.startsWith('[')) {
+            val address = host.removePrefix("[").removeSuffix("]")
+            if (address.startsWith("::ffff:")) return isIpv4Loopback(address.removePrefix("::ffff:"))
+            val groups = address.split(':').filter(String::isNotEmpty)
+            return address.contains("::") && groups == listOf("1") ||
+                groups.size == 8 && groups.dropLast(1).all { it.toIntOrNull(16) == 0 } && groups.last().toIntOrNull(16) == 1
+        }
+        return isIpv4Loopback(host)
+    }
+
+    private fun isIpv4Loopback(host: String): Boolean {
+        val parts = host.split('.')
+        if (parts.size !in 1..4 || parts.any { it.toLongOrNull()?.let { value -> value >= 0 } != true }) return false
+        return parts.size >= 2 && parts[0].toLong() == 127L || parts.size == 4 && parts.all { it.toLong() == 0L }
+    }
+
+    /** Characters as a person counts them: a pair of surrogates (an emoji) is one. */
+    fun characterCount(text: String): Int = text.count { !it.isLowSurrogate() }
 
     fun isWeak(password: String): Boolean =
         PasswordGeneratorRules.strength(PasswordGeneratorRules.estimatedBits(password)) < PasswordStrength.Strong
@@ -114,7 +147,7 @@ object PasswordHealthRules {
         password.isEmpty() -> WeakPasswordKind.Short
         password.all(Char::isLetter) -> WeakPasswordKind.LettersOnly
         password.all(Char::isDigit) -> WeakPasswordKind.DigitsOnly
-        password.length < MIN_LENGTH -> WeakPasswordKind.Short
+        characterCount(password) < MIN_LENGTH -> WeakPasswordKind.Short
         else -> WeakPasswordKind.Other
     }
 
