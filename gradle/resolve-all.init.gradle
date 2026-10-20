@@ -1,0 +1,20 @@
+// Used by scripts/ci/refresh_verification_metadata.sh: resolves every configuration of every project,
+// artifacts included, so their checksums reach gradle/verification-metadata.xml.
+allprojects {
+    tasks.register("resolveAllConfigurations") {
+        notCompatibleWithConfigurationCache("resolves every configuration")
+        doLast {
+            def resolveAll = { configurations ->
+                configurations.findAll { it.canBeResolved }.each { conf ->
+                    try {
+                        conf.resolvedConfiguration.lenientConfiguration.artifacts.each { it.file }
+                    } catch (Exception e) {
+                        println("skipped ${project.path}:${conf.name}: ${e.message?.take(120)}")
+                    }
+                }
+            }
+            resolveAll(project.configurations)
+            resolveAll(project.buildscript.configurations)
+        }
+    }
+}
