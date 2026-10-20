@@ -35,6 +35,14 @@ class FindInPageController internal constructor(
         private set
 
     private var session: FindInPageSession? = null
+
+    /**
+     * The last query of each tab, in memory only (private tabs write nothing): opening find there
+     * again searches it at once, as Safari and Chrome do (FP-04). The oldest tabs drop out first.
+     */
+    private val lastQueries = object : LinkedHashMap<String, String>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > MAX_REMEMBERED_TABS
+    }
     private var nextSessionId = 0L
     private var pendingRecount: Runnable? = null
 
@@ -67,6 +75,7 @@ class FindInPageController internal constructor(
         )
         if (resetOptions) engineSession.setFindInPageOptions(FindInPageOptions())
         state = FindInPageState(tabId = tabId)
+        lastQueries[tabId]?.let(::updateQuery)
     }
 
     fun updateQuery(query: String) {
@@ -138,6 +147,9 @@ class FindInPageController internal constructor(
 
     fun close() {
         dropRequests()
+        state?.let { closed ->
+            if (closed.query.isEmpty()) lastQueries.remove(closed.tabId) else lastQueries[closed.tabId] = closed.query
+        }
         val closing = session
         session = null
         state = null
@@ -225,3 +237,6 @@ class FindInPageController internal constructor(
             host.isCurrent(active)
     }
 }
+
+/** How many tabs' last queries find keeps. */
+private const val MAX_REMEMBERED_TABS = 32

@@ -2,7 +2,7 @@ package dev.sk2andy.materialbrowser.reader
 
 import dev.sk2andy.materialbrowser.shared.browser.BrowserUrlRules
 
-enum class ReaderBlockKind { Heading, Paragraph, Quote, ListItem }
+enum class ReaderBlockKind { Heading, Paragraph, Quote, ListItem, Code }
 
 data class ReaderLink(
     val label: String,
@@ -74,14 +74,16 @@ object ReaderExtractionContract {
         val blocks = buildList {
             payload.blocks.take(MAX_BLOCKS).forEach { raw ->
                 if (remainingChars <= 0) return@forEach
-                val text = normalize(raw.text, minOf(MAX_BLOCK_CHARS, remainingChars))
-                if (text.isEmpty()) return@forEach
                 val kind = when (raw.kind?.lowercase()) {
                     "heading" -> ReaderBlockKind.Heading
                     "quote" -> ReaderBlockKind.Quote
                     "listitem" -> ReaderBlockKind.ListItem
+                    "code" -> ReaderBlockKind.Code
                     else -> ReaderBlockKind.Paragraph
                 }
+                val maxChars = minOf(MAX_BLOCK_CHARS, remainingChars)
+                val text = if (kind == ReaderBlockKind.Code) normalizeCode(raw.text, maxChars) else normalize(raw.text, maxChars)
+                if (text.isEmpty()) return@forEach
                 val links = raw.links.take(minOf(MAX_LINKS_PER_BLOCK, remainingLinks)).mapNotNull { link ->
                     val url = safeHttpUrl(link.url) ?: return@mapNotNull null
                     val label = normalize(link.label, 300).ifEmpty { url }
@@ -133,6 +135,19 @@ object ReaderExtractionContract {
         val candidate = value?.trim()?.takeIf { it.length <= 2_048 } ?: return null
         return candidate.takeIf { BrowserUrlRules.normalizeHttpUrl(candidate) != null }
     }
+
+    /** A listing keeps its lines and indentation: only control characters, tabs and trailing spaces change. */
+    private fun normalizeCode(value: String?, maxChars: Int): String = value.orEmpty()
+        .replace("\r\n", "\n")
+        .replace('\r', '\n')
+        .replace("\t", "    ")
+        .replace(Regex("[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]"), " ")
+        .replace(Regex("[ \\f]+\n"), "\n")
+        .replace(Regex("\n{3,}"), "\n\n")
+        .trim('\n')
+        .trimEnd()
+        .take(maxChars)
+        .trimEnd()
 
     private fun normalize(value: String?, maxChars: Int): String = value.orEmpty()
         .replace(Regex("[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]"), " ")
