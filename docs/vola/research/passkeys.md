@@ -25,7 +25,7 @@ Bitwarden, KeePassDX, Proton Pass и другие. На Android 12–13 passkeys
 ## 2. Как GeckoView 157 обрабатывает WebAuthn
 
 Код — `WebAuthnTokenManager.java` и `WebAuthnCredentialManager.java` в
-[mozilla-firefox/firefox](https://github.com/mozilla-firefox/firefox/tree/main/mobile/android/geckoview/src/main/java/org/mozilla/geckoview)
+[mozilla-firefox/firefox](https://github.com/mozilla-firefox/firefox/tree/main/mobile/android/geckoview/src/full/java/org/mozilla/geckoview)
 (какая ветка — привилегированный `Fido2PrivilegedApiClient` или обычный `Fido2ApiClient` — решает
 константа `MOZILLA_OFFICIAL` сборки GeckoView с maven.mozilla.org; javac оставляет в классе только одну.
 Заглушка закрывает обе).
@@ -175,8 +175,8 @@ WebAuthn остаётся выключенным.
 
 ## Источники
 
-- Исходники GeckoView: [`WebAuthnTokenManager.java`](https://github.com/mozilla-firefox/firefox/blob/main/mobile/android/geckoview/src/main/java/org/mozilla/geckoview/WebAuthnTokenManager.java),
-  [`WebAuthnCredentialManager.java`](https://github.com/mozilla-firefox/firefox/blob/main/mobile/android/geckoview/src/main/java/org/mozilla/gecko/WebAuthnCredentialManager.java).
+- Исходники GeckoView: [`WebAuthnTokenManager.java`](https://github.com/mozilla-firefox/firefox/blob/main/mobile/android/geckoview/src/full/java/org/mozilla/geckoview/WebAuthnTokenManager.java),
+  [`WebAuthnCredentialManager.java`](https://github.com/mozilla-firefox/firefox/blob/main/mobile/android/geckoview/src/full/java/org/mozilla/gecko/WebAuthnCredentialManager.java).
 - [Bug 1678045 — Support WebAuthn on Android without Google services](https://bugzilla.mozilla.org/show_bug.cgi?id=1678045).
 - [Android: privileged apps и `setOrigin`](https://developer.android.com/identity/sign-in/privileged-apps),
   [passkeys.dev: Android](https://passkeys.dev/docs/reference/android/).

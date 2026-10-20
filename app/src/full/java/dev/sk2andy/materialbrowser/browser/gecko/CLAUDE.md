@@ -1,12 +1,12 @@
 # Адаптер GeckoView
 
 Подгружается, когда работаешь с файлами `browser/gecko/`. Типы GeckoView живут только здесь и в
-`app/src/main/java/org/mozilla/geckoview/` (мосты к закрытым API); UI и ViewModel видят нейтральные порты.
+`app/src/full/java/org/mozilla/geckoview/` (мосты к закрытым API); UI и ViewModel видят нейтральные порты.
 
 - **Новая возможность движка:** сначала порт (interface) в общем коде, затем реализация для Gecko и
   System WebView; если в WebView невозможно — фича явно скрыта в UI для flavor `systemwebview`.
 - **Порт движка — в `browser/engine/`, не здесь** (#500): `AndroidBrowserEngineSessionPort`,
-  `BrowserEngineViewPort`, `BrowserEngineFindPort` — в `BrowserEnginePorts.kt`. Код здесь уедет в `src/full`,
+  `BrowserEngineViewPort`, `BrowserEngineFindPort` — в `BrowserEnginePorts.kt`. Этот код — в `src/full` (только сборка `full`),
   поэтому тип, который нужен общему коду или адаптеру WebView, не объявляй в файле с импортом GeckoView.
 - **Общий код создаёт объекты Gecko только через `engineFlavor`** (`browser/engine/EngineFlavor.kt`;
   реализации — `src/full/.../FullEngineFlavor.kt` и `src/systemwebview/.../SystemWebViewEngineFlavor.kt`):

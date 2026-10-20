@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Components only the GeckoView build has; their classes live in src/full (#500). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider
+            android:name=".browser.gecko.GeckoPerformanceDiagnosticsProvider"
+            android:authorities="${applicationId}.performance"
+            android:enabled="${performanceDiagnosticsEnabled}"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+
+        <receiver
+            android:name=".browser.gecko.GeckoWebNotificationReceiver"
+            android:exported="false" />
+    </application>
+</manifest>
