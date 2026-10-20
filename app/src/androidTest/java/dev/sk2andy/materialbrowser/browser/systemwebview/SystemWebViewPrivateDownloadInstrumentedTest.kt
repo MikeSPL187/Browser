@@ -5,9 +5,9 @@ import android.content.Context
 import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.data.DownloadRetry
 import dev.sk2andy.materialbrowser.data.DownloadRetryUnavailable
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry

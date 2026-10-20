@@ -24,9 +24,9 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoAndroidPermissionRequestL
 import dev.sk2andy.materialbrowser.browser.engine.GeckoAuthPromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoContentPermissionRequestListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoContextDownloadRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoFilePromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
 import dev.sk2andy.materialbrowser.browser.engine.GeckoFullscreenStateListener

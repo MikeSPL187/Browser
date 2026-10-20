@@ -102,11 +102,11 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEventSink
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryTracker
 import dev.sk2andy.materialbrowser.browser.engine.GeckoContentPermissionRequestListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoContextDownloadRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadCancellation
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.engine.GeckoFilePromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult

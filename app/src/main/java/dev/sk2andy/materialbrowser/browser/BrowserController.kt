@@ -123,11 +123,11 @@ import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingData
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingDataReloadRules
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEvent
 import dev.sk2andy.materialbrowser.browser.engine.GeckoContextDownloadRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadMetadataDecision
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferMetadata
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadMetadataDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferMetadata
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState

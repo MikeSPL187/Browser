@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseRules
 
 class GeckoDownloadResponseRulesTest {
     @Test
