@@ -52,13 +52,19 @@ import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
 import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanelTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5FindInPageTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5LibraryTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtectionTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettingsTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5TranslateTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5WebDavTestTags
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -134,7 +140,7 @@ class AppScreenWalkInstrumentedTest(
     private val visited = mutableListOf<String>()
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
-    private val uiV5 = group in V5_GROUPS || group in v5SettingsGroups()
+    private val uiV5 = group in V5_GROUPS || group in V5_MORE_GROUPS || group in v5SettingsGroups()
 
     @After
     fun tearDown() {
@@ -152,6 +158,9 @@ class AppScreenWalkInstrumentedTest(
             PAGE_STATES_GROUP -> walk(config, steps = ::walkPageStates)
             V5_BROWSER_GROUP -> walk(config, steps = ::walkV5Browser)
             V5_PAGE_GROUP -> walk(config, steps = ::walkV5Page)
+            V5_FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
+            V5_LIBRARY_GROUP -> walk(config, steps = ::walkV5Library)
+            V5_PAGE_STATES_GROUP -> walk(config, steps = ::walkV5PageStates)
             in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             in v5SettingsGroups() -> walk(config) { walkV5Settings(V5_SETTINGS_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
@@ -165,7 +174,7 @@ class AppScreenWalkInstrumentedTest(
         AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitOrientation()
-        if (firstRun) walkFirstRun()
+        if (firstRun) if (uiV5) walkV5FirstRun() else walkFirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(newTabTag()) }
         steps()
@@ -224,6 +233,35 @@ class AppScreenWalkInstrumentedTest(
                     idle()
                 }
             }
+        }
+    }
+
+    /**
+     * The v5 first run (V28, B1): the welcome, «Open links in Vola?» (the emulator's default browser
+     * is another one) answered «Not now», then the gesture card's «Got it», until the new tab.
+     */
+    private fun walkV5FirstRun() {
+        val welcome = hasTestTag(V5FirstRunTestTags.Welcome)
+        val question = hasTestTag(V5FirstRunTestTags.DefaultBrowser)
+        val gestures = hasTestTag(V5FirstRunTestTags.Gestures)
+        step("v5 first run: welcome") {
+            awaitTag(V5FirstRunTestTags.Welcome)
+            auditScrolling("v5 first run: welcome")
+            tapUntil(hasTestTag(V5FirstRunTestTags.Start), "the next first-run page") { !exists(welcome) }
+        }
+        step("v5 first run: default browser") {
+            composeRule.waitUntil("the default browser question or the gestures", TIMEOUT_MILLIS) {
+                exists(question) || exists(gestures)
+            }
+            if (exists(question)) {
+                auditScrolling("v5 first run: default browser")
+                tapUntil(hasTestTag(V5FirstRunTestTags.NotNow), "the gesture card") { !exists(question) }
+            }
+        }
+        step("v5 first run: gestures") {
+            awaitTag(V5FirstRunTestTags.Gestures)
+            auditScrolling("v5 first run: gestures")
+            tapUntil(hasTestTag(V5FirstRunTestTags.GesturesDone), "the browser") { !exists(gestures) }
         }
     }
 
@@ -518,6 +556,95 @@ class AppScreenWalkInstrumentedTest(
                 openOverview()
                 auditScrolling("v5 tab overview, two tabs")
                 backUntilGone(overview())
+            }
+        }
+    }
+
+    /** Favorites, history and downloads under v5, each opened from the menu as a user does. */
+    private fun walkV5Library() {
+        val library = hasTestTag(V5LibraryTestTags.Page)
+        listOf(
+            R.string.v5_menu_favorites to "v5 favorites",
+            R.string.action_history to "v5 history",
+            R.string.v5_menu_downloads to "v5 downloads",
+        ).forEach { (row, screen) ->
+            step(screen) {
+                openV5Menu()
+                tapUntil(hasText(string(row)) and hasClickAction(), "$screen to open") { exists(library) }
+                auditScrolling(screen)
+                backUntilGone(library)
+            }
+        }
+    }
+
+    /**
+     * A page's other states under v5: choosing distracting items, site protection's second pages,
+     * find with nothing found, the translate sheet where the engine translates, and a page that
+     * fails to load. A tool the engine lacks is not in its menu, and the walk passes it by.
+     */
+    private fun walkV5PageStates() {
+        val sheet = hasTestTag(V5SheetTestTags.Sheet)
+        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
+            step("v5 page") { openTyped(server.fixtureUrl("/article")) }
+            step("v5 hide distractions") {
+                openV5Menu()
+                val row = hasTestTag(V5PageMenuTestTags.HideDistractions)
+                if (exists(row)) {
+                    val panel = hasTestTag(V5DistractionsPanelTestTags.Panel)
+                    tapUntil(row, "choosing to start") { exists(panel) }
+                    audit("v5 hide distractions")
+                    tapUntil(hasTestTag(V5DistractionsPanelTestTags.Done), "choosing to end") { !exists(panel) }
+                } else {
+                    backUntilGone(sheet)
+                }
+            }
+            step("v5 site protection: details") {
+                tapUntil(hasTestTag(PermissionRadarTestTags.ActivityBadge), "the site's protection to open") { exists(sheet) }
+                tapUntil(hasTestTag(V5SiteProtectionTestTags.Details), "the details") {
+                    exists(hasTestTag(V5SiteProtectionTestTags.Reset))
+                }
+                auditScrolling("v5 site protection: details")
+                tapUntil(hasTestTag(V5SiteProtectionTestTags.Back), "the main page") {
+                    exists(hasTestTag(V5SiteProtectionTestTags.Toggle))
+                }
+                tapUntil(hasTestTag(V5SiteProtectionTestTags.Broken), "«Site not working right?»") {
+                    exists(hasTestTag(V5SiteProtectionTestTags.TurnOff))
+                }
+                auditScrolling("v5 site protection: site not working")
+                backUntilGone(sheet)
+            }
+            step("v5 find in page, not found") {
+                openV5Menu()
+                tapUntil(hasText(string(R.string.action_find_in_page)) and hasClickAction(), "find in page to open") {
+                    exists(hasTestTag(V5FindInPageTestTags.Bar))
+                }
+                composeRule.onNodeWithTag(V5FindInPageTestTags.Query).performTextInput("qzxwvj")
+                idle()
+                audit("v5 find in page, not found")
+                tapUntil(hasTestTag(V5FindInPageTestTags.Done), "find in page to close") {
+                    !exists(hasTestTag(V5FindInPageTestTags.Bar))
+                }
+            }
+            step("v5 translate") {
+                openV5Menu()
+                val row = hasText(string(R.string.action_translate_page)) and hasClickAction()
+                if (exists(row)) {
+                    val translate = hasTestTag(V5TranslateTestTags.Sheet)
+                    tapUntil(row, "the translate sheet to open") { exists(translate) }
+                    auditScrolling("v5 translate")
+                    backUntilGone(translate)
+                } else {
+                    backUntilGone(sheet)
+                }
+            }
+            step("v5 page that fails to load") {
+                scenario.onActivity { activity ->
+                    activity.browserControllerForTesting().createTab(isIncognito = false)
+                }
+                idle()
+                val closedPort = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { it.localPort }
+                openTyped("http://127.0.0.1:$closedPort/", expectFailure = true)
+                auditScrolling("v5 page that fails to load")
             }
         }
     }
@@ -1039,6 +1166,12 @@ class AppScreenWalkInstrumentedTest(
         private const val V5_BROWSER_GROUP = -6
         private const val V5_PAGE_GROUP = -7
         private val V5_GROUPS = setOf(V5_BROWSER_GROUP, V5_PAGE_GROUP)
+        private const val V5_FIRST_RUN_GROUP = -8
+        private const val V5_LIBRARY_GROUP = -9
+        private const val V5_PAGE_STATES_GROUP = -16
+
+        /** v5 walks added after the others (N-04): their own list keeps the older walks' indices. */
+        private val V5_MORE_GROUPS = listOf(V5_FIRST_RUN_GROUP, V5_LIBRARY_GROUP, V5_PAGE_STATES_GROUP)
         private const val V5_SETTINGS_GROUP_BASE = -20
         private const val PAGE_TIMEOUT_MILLIS = 30_000L
         private const val TAP_ATTEMPTS = 2
@@ -1141,7 +1274,13 @@ class AppScreenWalkInstrumentedTest(
             val v5SettingsWalks = v5SettingsGroups().flatMap { group ->
                 v5Configs.map { config -> arrayOf<Any>(group, config) }
             }
-            return walks + v5Walks + v5Landscape + v5SettingsWalks
+            // Last of all, the v5 walks added later, upright and (but the first run) on its side.
+            val v5MoreWalks = V5_MORE_GROUPS.flatMap { group ->
+                v5Configs.map { config -> arrayOf<Any>(group, config) }
+            } + V5_MORE_GROUPS.filter { it != V5_FIRST_RUN_GROUP }.map { group ->
+                arrayOf<Any>(group, AuditConfig.RussianLightLandscape)
+            }
+            return walks + v5Walks + v5Landscape + v5SettingsWalks + v5MoreWalks
         }
     }
 }
