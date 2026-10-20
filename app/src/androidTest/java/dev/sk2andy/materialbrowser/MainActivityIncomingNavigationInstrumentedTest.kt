@@ -13,8 +13,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMainFrameNavigationRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMainFrameNavigationRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
 import dev.sk2andy.materialbrowser.browser.integration.LauncherShortcutRules
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore

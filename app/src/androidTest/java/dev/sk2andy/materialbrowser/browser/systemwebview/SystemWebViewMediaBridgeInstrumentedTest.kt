@@ -7,10 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineEventSink
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

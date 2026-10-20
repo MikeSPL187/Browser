@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import android.net.Uri
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppHandoff
 import dev.sk2andy.materialbrowser.browser.integration.ExternalNavigationGrant
 

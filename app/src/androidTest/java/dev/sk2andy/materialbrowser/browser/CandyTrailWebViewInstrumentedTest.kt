@@ -9,10 +9,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineEventSink
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEvent
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEventSink
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEvent
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEventSink
 import dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewBrowserEngineFactory
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import java.io.ByteArrayOutputStream

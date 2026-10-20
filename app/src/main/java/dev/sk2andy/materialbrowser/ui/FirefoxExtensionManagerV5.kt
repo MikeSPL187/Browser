@@ -28,10 +28,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeRules
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme

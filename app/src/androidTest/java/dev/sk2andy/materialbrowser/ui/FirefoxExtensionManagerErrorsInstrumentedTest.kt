@@ -6,8 +6,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerMessage
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import org.junit.Rule
 import org.junit.Test

@@ -3,7 +3,7 @@ package dev.sk2andy.materialbrowser.browser
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineFindPort
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineFindPort
 
 /** One find-in-page run: the page it searches and the navigation it started on. */
 internal data class FindInPageSession(

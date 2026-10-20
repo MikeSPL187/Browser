@@ -13,7 +13,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.sk2andy.materialbrowser.browser.gecko.currentGeckoIdentity
 import dev.sk2andy.materialbrowser.browser.systemwebview.currentSystemWebViewIdentity
 import dev.sk2andy.materialbrowser.data.AppDataArchiveCodec
 import dev.sk2andy.materialbrowser.data.AppDataArchiveManifest
@@ -30,6 +29,7 @@ import dev.sk2andy.materialbrowser.ui.AppDataTransferStatusState
 import java.io.File
 import java.io.FileInputStream
 import java.util.UUID
+import dev.sk2andy.materialbrowser.browser.engine.engineFlavor
 
 internal object AppDataTransferContract {
     const val RESULT_EXTRA = "app_data_transfer_result"
@@ -88,7 +88,7 @@ internal fun currentBrowserEngineIdentity(): String =
     if (BuildConfig.SYSTEM_WEBVIEW_ONLY) {
         currentSystemWebViewIdentity()
     } else {
-        currentGeckoIdentity()
+        engineFlavor.runtimeIdentity() ?: currentSystemWebViewIdentity()
     }
 
 class AppDataTransferActivity : ComponentActivity() {

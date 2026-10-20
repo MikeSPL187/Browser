@@ -12,7 +12,7 @@ import android.text.format.Formatter
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.DownloadStatus
