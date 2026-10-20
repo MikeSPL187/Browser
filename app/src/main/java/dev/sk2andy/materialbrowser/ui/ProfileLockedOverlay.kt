@@ -45,6 +45,11 @@ internal fun ProfileLockedOverlay(
     canSwitchProfile: Boolean,
     onUnlock: () -> Unit,
     onSwitchProfile: () -> Unit,
+    /**
+     * The way out when nothing can open the profile and there is no other one (H-01): a new profile,
+     * which leaves this one and its tabs locked and untouched. Null where another way exists.
+     */
+    onNewProfile: (() -> Unit)? = null,
 ) {
     val name = workspace?.name?.takeIf(String::isNotBlank)
     // V28, B13: under v5 on a phone the one v5 lock screen, in the profile's accent.
@@ -72,6 +77,7 @@ internal fun ProfileLockedOverlay(
                 secondary = listOfNotNull(
                     V5StateAction(stringResource(R.string.profile_locked_switch_action), onSwitchProfile)
                         .takeIf { canSwitchProfile },
+                    onNewProfile?.let { V5StateAction(stringResource(R.string.profile_locked_new_action), it) },
                 ),
                 modifier = Modifier.testTag(ProfileProtectionTestTags.LockedOverlay),
             )
@@ -112,6 +118,12 @@ internal fun ProfileLockedOverlay(
                 VolaStatePageTextButton(
                     text = stringResource(R.string.profile_locked_switch_action),
                     onClick = onSwitchProfile,
+                )
+            }
+            if (onNewProfile != null) {
+                VolaStatePageTextButton(
+                    text = stringResource(R.string.profile_locked_new_action),
+                    onClick = onNewProfile,
                 )
             }
         }

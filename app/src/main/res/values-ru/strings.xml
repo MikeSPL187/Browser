@@ -225,7 +225,8 @@
     <string name="profile_isolation_confirm_title">Сменить хранилище пространства?</string>
     <string name="profile_isolation_enable_message">Вкладки этого пространства перезагрузятся с отдельным хранилищем. Текущие общие входы в аккаунты не перенесутся.</string>
     <string name="profile_isolation_disable_message">Вкладки этого пространства перезагрузятся с общим хранилищем. Входы из изолированного хранилища перестанут действовать.</string>
-    <string name="profile_protection_unavailable">Недоступно: сначала настройте надёжную биометрию в Android</string>
+    <string name="profile_protection_unavailable">Недоступно: сначала задайте блокировку экрана или надёжную биометрию в Android</string>
+    <string name="profile_locked_new_action">Открыть новый профиль</string>
     <string name="profile_protection_configure">Изменить время блокировки</string>
     <string name="profile_protection_dialog_title">Защита пространства</string>
     <string name="profile_protection_disclosure">Эта блокировка использует надёжную биометрию Android. Отдельного шифрования файлов пространства она не добавляет.</string>

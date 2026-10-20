@@ -218,7 +218,8 @@
     <string name="profile_isolation_confirm_title">Switch workspace storage?</string>
     <string name="profile_isolation_enable_message">Tabs in this workspace will reload with separate storage. Existing shared sign-ins will not carry over.</string>
     <string name="profile_isolation_disable_message">Tabs in this workspace will reload with shared storage. Sign-ins from isolated storage will no longer be active.</string>
-    <string name="profile_protection_unavailable">Unavailable: set up a strong biometric in Android first</string>
+    <string name="profile_protection_unavailable">Unavailable: set a screen lock or a strong biometric in Android first</string>
+    <string name="profile_locked_new_action">Start a new profile</string>
     <string name="profile_protection_configure">Change lock timing</string>
     <string name="profile_protection_dialog_title">Protect workspace</string>
     <string name="profile_protection_disclosure">This access lock uses Android strong biometrics. It does not add separate at-rest encryption to workspace files.</string>
