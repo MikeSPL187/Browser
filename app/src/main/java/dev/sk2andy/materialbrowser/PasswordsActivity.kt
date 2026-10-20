@@ -713,8 +713,10 @@ class PasswordsActivity : FragmentActivity() {
         runBusy {
             when (val outcome = withContext(Dispatchers.IO) { importFiles(files, source) }) {
                 is ImportOutcome.Done -> model.route = outcome.route
-                ImportOutcome.NeedsVault -> {
-                    model.pendingImport = PendingImport(source, files)
+                is ImportOutcome.NeedsVault -> {
+                    model.pendingImport = PendingImport(source, outcome.passwordFiles)
+                    // Bookmarks came in already; the line says only the passwords wait (FR-06).
+                    if (outcome.bookmarksImported) model.message = R.string.passwords_import_bookmarks_moved
                     model.route = if (vault.exists) PasswordsRoute.Locked else PasswordsRoute.Intro
                 }
             }
@@ -726,7 +728,8 @@ class PasswordsActivity : FragmentActivity() {
         data class Done(val route: PasswordsRoute) : ImportOutcome
 
         /** Passwords are among the files and the vault is not open yet. */
-        data object NeedsVault : ImportOutcome
+        /** Passwords wait for the vault; bookmarks need none and were moved already. */
+        data class NeedsVault(val passwordFiles: List<Uri>, val bookmarksImported: Boolean) : ImportOutcome
     }
 
     /**
@@ -767,7 +770,13 @@ class PasswordsActivity : FragmentActivity() {
                 PasswordImportParse.TooLarge -> problem = problem ?: PasswordImportProblem.TooLarge
             }
         }
-        if (logins.isNotEmpty() && !vault.isUnlocked) return ImportOutcome.NeedsVault
+        if (logins.isNotEmpty() && !vault.isUnlocked) {
+            // Without a screen lock there is no vault at all: bookmarks must not wait for one too.
+            val moved = favorites.isNotEmpty() &&
+                (BrowserSessionStore(this).mergeImportedFavoritesCommitted(favorites)?.importedCount ?: 0) > 0
+            if (moved) FavoriteLibrarySignal.markChanged()
+            return ImportOutcome.NeedsVault(passwordFiles, bookmarksImported = moved)
+        }
         fun problem(fallback: PasswordImportProblem) =
             ImportOutcome.Done(PasswordsRoute.ImportGuide(source, problem ?: fallback))
         if (logins.isEmpty() && favorites.isEmpty()) return problem(PasswordImportProblem.NoLogins)

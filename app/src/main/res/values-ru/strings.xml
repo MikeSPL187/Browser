@@ -817,6 +817,7 @@
     <string name="first_run_welcome_body">Ничего лишнего вокруг страницы, пространства для работы и отдыха, защита от слежки без настроек.</string>
     <string name="first_run_start">Начать</string>
     <string name="first_run_import">Перенести из другого браузера</string>
+    <string name="passwords_import_bookmarks_moved">Закладки перенесены. Чтобы перенести и пароли, включите хранилище паролей.</string>
     <string name="first_run_setup_title">Настройте под себя</string>
     <string name="first_run_theme_light">Светлая</string>
     <string name="first_run_theme_dark">Тёмная</string>
