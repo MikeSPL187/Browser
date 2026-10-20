@@ -8,6 +8,10 @@
 - **Порт движка — в `browser/engine/`, не здесь** (#500): `AndroidBrowserEngineSessionPort`,
   `BrowserEngineViewPort`, `BrowserEngineFindPort` — в `BrowserEnginePorts.kt`. Код здесь уедет в `src/full`,
   поэтому тип, который нужен общему коду или адаптеру WebView, не объявляй в файле с импортом GeckoView.
+- **Общий код создаёт объекты Gecko только через `engineFlavor`** (`browser/engine/EngineFlavor.kt`;
+  реализации — `src/full/.../FullEngineFlavor.kt` и `src/systemwebview/.../SystemWebViewEngineFlavor.kt`):
+  фабрика сессий, интеграция с активностью, менеджер расширений, Web Push, диагностика, идентификатор
+  движка. Новый вход в Gecko из `main` — новый член `EngineFlavor` с пустой реализацией для WebView.
 - **Настройки Gecko без публичного API** — через `CandyGeckoPrefsBridge` (пакет `org.mozilla.geckoview`).
   Мост задаёт только **значение по умолчанию** (`RuntimeSettings` → `setDefaultPrefs`): пользовательское
   значение, которое Gecko записал сам, его перекрывает. Снять пользовательское —

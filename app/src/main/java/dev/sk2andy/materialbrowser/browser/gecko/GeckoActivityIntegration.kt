@@ -1,10 +1,9 @@
-package dev.sk2andy.materialbrowser.browser.engine
+package dev.sk2andy.materialbrowser.browser.gecko
 
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoWebAuthnActivityDelegate
+import dev.sk2andy.materialbrowser.browser.engine.EngineActivityIntegration
 
 /** Keeps Gecko's activity-result and process-runtime wiring outside the engine-neutral activity. */
 internal class GeckoActivityIntegration(
@@ -12,7 +11,7 @@ internal class GeckoActivityIntegration(
     launch: (PendingIntent) -> Unit,
     onPendingChanged: (Boolean) -> Unit,
     isPendingRequestCurrent: () -> Boolean,
-) : AutoCloseable {
+) : EngineActivityIntegration {
     private val delegate = GeckoWebAuthnActivityDelegate(
         launch = launch,
         onPendingChanged = onPendingChanged,
@@ -26,15 +25,15 @@ internal class GeckoActivityIntegration(
         )
     }
 
-    fun onActivityResult(resultCode: Int, data: Intent?) {
+    override fun onActivityResult(resultCode: Int, data: Intent?) {
         delegate.onActivityResult(resultCode, data)
     }
 
-    fun onHostPaused() {
+    override fun onHostPaused() {
         delegate.onHostPaused()
     }
 
-    fun onHostResumed() {
+    override fun onHostResumed() {
         delegate.onHostResumed()
     }
 

@@ -2,8 +2,8 @@ package dev.sk2andy.materialbrowser.browser
 
 import android.os.Trace
 import dev.sk2andy.materialbrowser.BuildConfig
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPerformanceDiagnostics
 import java.util.IdentityHashMap
+import dev.sk2andy.materialbrowser.browser.engine.engineFlavor
 
 /** Fixed labels keep URLs, page text and tab identities out of system traces. */
 internal object BrowserPerformanceTrace {
@@ -67,7 +67,7 @@ internal object BrowserPerformanceTrace {
     /** Counts include every attached participant, never a last-writer surface boolean. */
     private fun reportBlurState() {
         if (!BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS ||
-            !GeckoPerformanceDiagnostics.isRecording || !Trace.isEnabled()
+            !engineFlavor.isPerformanceRecording || !Trace.isEnabled()
         ) return
         val counts = blurState.counts()
         Trace.setCounter(Counter.BlurStateCoverage.label, 1L)
@@ -82,7 +82,7 @@ internal object BrowserPerformanceTrace {
 
     fun begin(phase: Phase): Boolean {
         if (!BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS ||
-            !GeckoPerformanceDiagnostics.isRecording || !Trace.isEnabled()
+            !engineFlavor.isPerformanceRecording || !Trace.isEnabled()
         ) return false
         when (phase) {
             Phase.DiagnosticsStart, Phase.DiagnosticsGap, Phase.DiagnosticsStop,

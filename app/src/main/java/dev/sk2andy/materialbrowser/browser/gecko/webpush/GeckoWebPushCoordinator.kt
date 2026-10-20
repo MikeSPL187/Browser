@@ -17,9 +17,10 @@ import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.WebPushController
 import org.mozilla.geckoview.WebPushDelegate
 import org.mozilla.geckoview.WebPushSubscription
+import dev.sk2andy.materialbrowser.browser.engine.EngineWebPush
 
 /** Owns Gecko's process-wide Web Push delegate and FOSS delivery transport. */
-internal object GeckoWebPushCoordinator {
+internal object GeckoWebPushCoordinator : EngineWebPush {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Any()
     private val workerStartingRuntime = AtomicBoolean(false)
@@ -65,7 +66,7 @@ internal object GeckoWebPushCoordinator {
         return transport(appContext).reconnectOnce()
     }
 
-    fun onBrowserEngineChanged(context: Context, kind: AndroidBrowserEngineKind) {
+    override fun onBrowserEngineChanged(context: Context, kind: AndroidBrowserEngineKind) {
         val appContext = context.applicationContext
         if (kind != AndroidBrowserEngineKind.GeckoView) {
             FossWebPushTransport.schedulePeriodicReconnect(appContext, enabled = false)
@@ -77,7 +78,7 @@ internal object GeckoWebPushCoordinator {
         }
     }
 
-    suspend fun clearAllData(context: Context): Boolean {
+    override suspend fun clearAllData(context: Context): Boolean {
         val appContext = context.applicationContext
         val clearedScopes = transport(appContext).clearAllData() ?: return false
         FossWebPushTransport.schedulePeriodicReconnect(appContext, enabled = false)
@@ -85,7 +86,7 @@ internal object GeckoWebPushCoordinator {
         return true
     }
 
-    suspend fun removeProfileSubscriptions(context: Context, profileId: String): Boolean {
+    override suspend fun removeProfileSubscriptions(context: Context, profileId: String): Boolean {
         val appContext = context.applicationContext
         val fossTransport = transport(appContext)
         val removedScopes = fossTransport.removeProfileSubscriptions(profileId) ?: return false

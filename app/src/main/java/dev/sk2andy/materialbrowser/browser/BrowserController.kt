@@ -117,7 +117,6 @@ import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowserEngineSessionFactory
 import dev.sk2andy.materialbrowser.browser.engine.GeckoProfileStorageRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingDataReloadRules
@@ -167,7 +166,6 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegat
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets
-import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
 import dev.sk2andy.materialbrowser.browser.systemwebview.SystemWebViewBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.integration.AssistantSummaryLauncher
 import dev.sk2andy.materialbrowser.browser.integration.AssistantSummaryRequest
@@ -314,6 +312,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import dev.sk2andy.materialbrowser.browser.engine.engineFlavor
 
 class BrowserController(
     private val activity: Activity,
@@ -1084,7 +1083,8 @@ class BrowserController(
             SystemWebViewBrowserEngineFactory(activity)
         } else when (browserEngineKind) {
             AndroidBrowserEngineKind.GeckoView ->
-                GeckoBrowserEngineSessionFactory(activity.applicationContext)
+                engineFlavor.createGeckoSessionFactory(activity.applicationContext)
+                    ?: SystemWebViewBrowserEngineFactory(activity)
             AndroidBrowserEngineKind.SystemWebView ->
                 SystemWebViewBrowserEngineFactory(activity)
         }
@@ -6322,7 +6322,7 @@ class BrowserController(
         }
         historyMutationExecutor.executeIfRunning {
             val pushCleared = awaitPushCleanup {
-                GeckoWebPushCoordinator.removeProfileSubscriptions(
+                engineFlavor.webPush.removeProfileSubscriptions(
                     activity.applicationContext,
                     profileId,
                 )
@@ -6394,7 +6394,7 @@ class BrowserController(
         // Steps that can still fail run before Recall, which can't be restored once deleted.
         historyMutationExecutor.executeIfRunning {
             val pushCleared = awaitPushCleanup {
-                GeckoWebPushCoordinator.removeProfileSubscriptions(
+                engineFlavor.webPush.removeProfileSubscriptions(
                     activity.applicationContext,
                     profileId,
                 )
@@ -9228,7 +9228,7 @@ class BrowserController(
         }
         if (!store.saveAndroidBrowserEngineKind(kind)) return
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY) {
-            GeckoWebPushCoordinator.onBrowserEngineChanged(activity.applicationContext, kind)
+            engineFlavor.webPush.onBrowserEngineChanged(activity.applicationContext, kind)
         }
         onBrowserEngineChangeRequested(kind)
     }
@@ -9811,7 +9811,7 @@ class BrowserController(
             }
             historyMutationExecutor.executeIfRunning {
                 val pushCleared = BuildConfig.SYSTEM_WEBVIEW_ONLY ||
-                    awaitPushCleanup { GeckoWebPushCoordinator.clearAllData(activity.applicationContext) }
+                    awaitPushCleanup { engineFlavor.webPush.clearAllData(activity.applicationContext) }
                 mainHandler.post { completeBrowsingDataClear(pushCleared) }
             }
         }

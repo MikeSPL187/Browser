@@ -1,4 +1,4 @@
-package dev.sk2andy.materialbrowser.browser.engine
+package dev.sk2andy.materialbrowser.browser.gecko
 
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionInstallException
@@ -19,6 +19,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerCoordinator
 
 class GeckoExtensionManagerCoordinatorTest {
     @Test
