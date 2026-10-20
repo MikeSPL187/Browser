@@ -1020,11 +1020,35 @@ class BrowserController(
     private var pictureInPicturePlaybackExpected = false
     private var isInPictureInPicture = false
     private var inlineVideoGestureHapticOwner: InlineVideoGestureHapticOwner? = null
-    private val mediaLayoutRestorationGate = MediaLayoutRestorationGate()
-    private var pendingMediaLayoutRestoration: PendingMediaLayoutRestoration? = null
-    private var mediaLayoutRestorationTimeout: Runnable? = null
-    internal var isMediaLayoutRestorationPending by mutableStateOf(false)
-        private set
+    private val mediaLayout = MediaLayoutRestorer(
+        object : MediaLayoutRestorer.Frames<View> {
+            override fun requestApplyInsets(view: View) = ViewCompat.requestApplyInsets(view)
+            override fun requestLayout(view: View) {
+                ViewCompat.requestApplyInsets(view)
+                view.requestLayout()
+                view.invalidate()
+                (view.parent as? View)?.requestLayout()
+            }
+            override fun postOnAnimation(view: View, block: () -> Unit) = view.postOnAnimation(block)
+            override fun postOnWindowAnimation(block: () -> Unit) = activity.window.decorView.postOnAnimation(block)
+            override fun isInsetReady(view: View): Boolean {
+                val insets = ViewCompat.getRootWindowInsets(view) ?: lastWindowInsets ?: return false
+                return FullscreenVideoRules.isMediaLayoutRestorationInsetReady(
+                    isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime()),
+                    isStatusBarVisible = insets.isVisible(WindowInsetsCompat.Type.statusBars()),
+                    statusBarTopInset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top,
+                )
+            }
+            override fun postDelayed(task: Runnable, delayMillis: Long) {
+                mainHandler.postDelayed(task, delayMillis)
+            }
+            override fun removeCallbacks(task: Runnable) = mainHandler.removeCallbacks(task)
+        },
+    )
+    private val pendingMediaLayoutRestoration: PendingMediaLayoutRestoration<View>?
+        get() = mediaLayout.pending
+    internal val isMediaLayoutRestorationPending: Boolean
+        get() = mediaLayout.isPending
     private val geckoMediaStates = mutableMapOf<String, GeckoMediaSessionState>()
     private val inlineMediaPlayerReadyTabIds = mutableStateMapOf<String, Unit>()
     private val browserEngineContentFullscreenTabIds = mutableStateMapOf<String, Unit>()
@@ -2764,114 +2788,8 @@ class BrowserController(
                     .top,
             )
         ) {
-            startPendingMediaLayoutRestoration()
+            mediaLayout.start()
         }
-    }
-
-    private fun scheduleMediaLayoutRestoration(
-        view: View,
-        onCancelled: () -> Unit = {},
-        restore: (acceptCompletion: () -> Boolean) -> Unit,
-    ) {
-        cancelPendingMediaLayoutRestoration()
-        val request = mediaLayoutRestorationGate.begin(onCancelled)
-        val pending = PendingMediaLayoutRestoration(
-            request = request,
-            view = view,
-            restore = restore,
-        )
-        pendingMediaLayoutRestoration = pending
-        isMediaLayoutRestorationPending = true
-        ViewCompat.requestApplyInsets(view)
-        view.postOnAnimation {
-            view.postOnAnimation {
-                val pending = pendingMediaLayoutRestoration
-                    ?.takeIf { candidate -> candidate.request === request }
-                    ?: return@postOnAnimation
-                val insets = ViewCompat.getRootWindowInsets(pending.view) ?: lastWindowInsets
-                if (
-                    insets != null && FullscreenVideoRules.isMediaLayoutRestorationInsetReady(
-                        isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime()),
-                        isStatusBarVisible = insets
-                            .isVisible(WindowInsetsCompat.Type.statusBars()),
-                        statusBarTopInset = insets
-                            .getInsets(WindowInsetsCompat.Type.statusBars())
-                            .top,
-                    )
-                ) {
-                    startPendingMediaLayoutRestoration()
-                }
-            }
-        }
-        mediaLayoutRestorationTimeout = Runnable {
-            if (pendingMediaLayoutRestoration?.request === request) {
-                startPendingMediaLayoutRestoration()
-            }
-        }.also { timeout ->
-            mainHandler.postDelayed(timeout, MEDIA_LAYOUT_RESTORATION_INSET_TIMEOUT_MILLIS)
-        }
-    }
-
-    private fun startPendingMediaLayoutRestoration() {
-        val pending = pendingMediaLayoutRestoration ?: return
-        if (pending.started) return
-        pending.started = true
-        mediaLayoutRestorationTimeout?.let(mainHandler::removeCallbacks)
-        mediaLayoutRestorationTimeout = null
-        requestMediaLayoutBeforeContentRestore(pending.view) {
-            pending.restore {
-                if (pendingMediaLayoutRestoration !== pending) {
-                    return@restore false
-                }
-                // The content ACK only confirms DOM geometry. Keep the cover until the Gecko
-                // host has also received its layout/inset passes and drawn after them.
-                val windowView = activity.window.decorView
-                fun finishAfterHostFrames() {
-                    if (
-                        pendingMediaLayoutRestoration === pending &&
-                        mediaLayoutRestorationGate.complete(pending.request)
-                    ) {
-                        pendingMediaLayoutRestoration = null
-                        isMediaLayoutRestorationPending = false
-                    }
-                }
-                fun awaitHostFrames(remaining: Int) {
-                    if (remaining == 0) {
-                        finishAfterHostFrames()
-                    } else {
-                        windowView.postOnAnimation { awaitHostFrames(remaining - 1) }
-                    }
-                }
-                awaitHostFrames(3)
-                mainHandler.postDelayed(
-                    { finishAfterHostFrames() },
-                    MEDIA_LAYOUT_RESTORATION_FRAME_TIMEOUT_MILLIS,
-                )
-                true
-            }
-        }
-    }
-
-    private fun requestMediaLayoutBeforeContentRestore(
-        view: View,
-        onReady: () -> Unit,
-    ) {
-        ViewCompat.requestApplyInsets(view)
-        view.requestLayout()
-        view.invalidate()
-        (view.parent as? View)?.requestLayout()
-        view.postOnAnimation {
-            view.postOnAnimation(onReady)
-        }
-    }
-
-    private fun cancelPendingMediaLayoutRestoration() {
-        val pending = pendingMediaLayoutRestoration ?: return
-        pendingMediaLayoutRestoration = null
-        mediaLayoutRestorationTimeout?.let(mainHandler::removeCallbacks)
-        mediaLayoutRestorationTimeout = null
-        isMediaLayoutRestorationPending = false
-        mediaLayoutRestorationGate.cancel()
     }
 
     fun setBrowserChromeOwnsIme(ownsIme: Boolean) {
@@ -3227,7 +3145,7 @@ class BrowserController(
             return rejectPreparation()
         }
         val presentation = geckoMediaPresentation ?: return rejectPreparation()
-        cancelPendingMediaLayoutRestoration()
+        mediaLayout.cancel()
         if (!pictureInPictureTransitionPending && !isInPictureInPicture) {
             pictureInPictureTransitionGeneration++
         }
@@ -3374,7 +3292,7 @@ class BrowserController(
             finishCancellation()
             return
         }
-        scheduleMediaLayoutRestoration(
+        mediaLayout.schedule(
             view = presentation.view,
             onCancelled = onPresentationRestored,
         ) { acceptCompletion ->
@@ -3397,7 +3315,7 @@ class BrowserController(
     fun onPictureInPictureModeChanged(inPictureInPicture: Boolean) {
         isInPictureInPicture = inPictureInPicture
         if (inPictureInPicture) {
-            cancelPendingMediaLayoutRestoration()
+            mediaLayout.cancel()
             prepareGeckoPictureInPicture()
             pictureInPictureTransitionPending = false
             currentPictureInPicturePresentation()?.session?.setActive(true)
@@ -3534,13 +3452,13 @@ class BrowserController(
             !isInPictureInPicture && pictureInPictureTransitionPending &&
             currentPictureInPicturePresentation() === presentation &&
             navigationGenerations[presentation.tabId] == navigationGeneration
-        var restoration: PendingMediaLayoutRestoration? = null
-        scheduleMediaLayoutRestoration(
+        var restoration: PendingMediaLayoutRestoration<View>? = null
+        mediaLayout.schedule(
             view = presentation.view,
             onCancelled = ::completeReturn,
         ) { acceptCompletion ->
             if (restoration == null || pendingMediaLayoutRestoration !== restoration) {
-                return@scheduleMediaLayoutRestoration
+                return@schedule
             }
             val timeout = Runnable {
                 if (pendingMediaLayoutRestoration !== restoration) return@Runnable
@@ -3548,7 +3466,7 @@ class BrowserController(
                     presentation.session.setPictureInPicturePlaybackExpected(false)
                     finishReturn()
                 }
-                if (pendingMediaLayoutRestoration === restoration) cancelPendingMediaLayoutRestoration()
+                if (pendingMediaLayoutRestoration === restoration) mediaLayout.cancel()
             }
             returnTimeout = timeout
             mainHandler.postDelayed(timeout, MEDIA_LAYOUT_RESTORATION_POLICY_TIMEOUT_MILLIS)
@@ -3556,19 +3474,19 @@ class BrowserController(
             val restoreAfterPolicy: () -> Unit = restore@{
                 if (pendingMediaLayoutRestoration !== restoration) return@restore
                 if (!isCurrentReturn()) {
-                    cancelPendingMediaLayoutRestoration()
+                    mediaLayout.cancel()
                     return@restore
                 }
                 presentation.session.restorePictureInPicturePresentation restorationResult@{ restored ->
                     if (pendingMediaLayoutRestoration !== restoration) return@restorationResult
                     if (!isCurrentReturn()) {
-                        cancelPendingMediaLayoutRestoration()
+                        mediaLayout.cancel()
                         return@restorationResult
                     }
                     if (!restored) {
                         // Another inset policy cancels the in-flight restore. Retry its current
                         // revision after layout, without extending this return's deadline.
-                        requestMediaLayoutBeforeContentRestore(presentation.view, requestRestoration)
+                        mediaLayout.requestLayoutBeforeRestore(presentation.view, requestRestoration)
                         return@restorationResult
                     }
                     mainHandler.removeCallbacks(timeout)
@@ -9819,7 +9737,7 @@ class BrowserController(
     }
 
     private fun stopPictureInPictureMedia() {
-        cancelPendingMediaLayoutRestoration()
+        mediaLayout.cancel()
         val ownerSession = activeMediaCommandSession()
         ownerSession?.setPictureInPicturePlaybackExpected(false)
         notifyGeckoPictureInPictureModeChanged(false)
@@ -9836,7 +9754,7 @@ class BrowserController(
 
     fun destroy(lockClosedProfiles: Boolean = false) {
         stopInlineVideoGestureHaptic()
-        cancelPendingMediaLayoutRestoration()
+        mediaLayout.cancel()
         if (lockClosedProfiles) profileLock.onAppClosed()
         addressBar.cancelAutoDockProbe()
         downloadRouter.close()
@@ -10930,7 +10848,7 @@ class BrowserController(
                     pendingMediaLayoutRestoration?.view === presentation.view
             } == true
         if (fullscreen) {
-            cancelPendingMediaLayoutRestoration()
+            mediaLayout.cancel()
             browserEngineContentFullscreenTabIds[tabId] = Unit
             val state = geckoMediaStates[tabId]
             if (
@@ -11009,15 +10927,15 @@ class BrowserController(
             tabId !in browserEngineContentFullscreenTabIds &&
             !pictureInPictureTransitionPending &&
             !isInPictureInPicture
-        var restoration: PendingMediaLayoutRestoration? = null
-        scheduleMediaLayoutRestoration(view = presentation.view) { acceptCompletion ->
+        var restoration: PendingMediaLayoutRestoration<View>? = null
+        mediaLayout.schedule(view = presentation.view) { acceptCompletion ->
             if (restoration == null || pendingMediaLayoutRestoration !== restoration) {
-                return@scheduleMediaLayoutRestoration
+                return@schedule
             }
             val policyTimeout = Runnable {
                 if (pendingMediaLayoutRestoration === restoration) {
                     session.setPictureInPicturePlaybackExpected(false)
-                    cancelPendingMediaLayoutRestoration()
+                    mediaLayout.cancel()
                 }
             }
             mainHandler.postDelayed(policyTimeout, MEDIA_LAYOUT_RESTORATION_POLICY_TIMEOUT_MILLIS)
@@ -11025,18 +10943,18 @@ class BrowserController(
             val restoreAfterPolicy: () -> Unit = restore@{
                 if (pendingMediaLayoutRestoration !== restoration) return@restore
                 if (!isCurrentPresentation()) {
-                    cancelPendingMediaLayoutRestoration()
+                    mediaLayout.cancel()
                 } else {
                     session.restorePictureInPicturePresentation restorationResult@{ restored ->
                         if (pendingMediaLayoutRestoration !== restoration) return@restorationResult
                         if (!isCurrentPresentation()) {
-                            cancelPendingMediaLayoutRestoration()
+                            mediaLayout.cancel()
                             return@restorationResult
                         }
                         if (!restored) {
                             // A newer inset policy invalidates an in-flight content restore.
                             // Retry its current revision without extending this return's deadline.
-                            requestMediaLayoutBeforeContentRestore(presentation.view, requestRestoration)
+                            mediaLayout.requestLayoutBeforeRestore(presentation.view, requestRestoration)
                             return@restorationResult
                         }
                         mainHandler.removeCallbacks(policyTimeout)
@@ -11056,7 +10974,7 @@ class BrowserController(
             requestRestoration = request@{
                 if (pendingMediaLayoutRestoration !== restoration) return@request
                 if (!isCurrentPresentation()) {
-                    cancelPendingMediaLayoutRestoration()
+                    mediaLayout.cancel()
                     return@request
                 }
                 val policy = geckoPrivacyPolicyFor(tabId)
@@ -14558,9 +14476,7 @@ class BrowserController(
         const val WEB_MEDIA_RATE_WINDOW_MILLIS = 1_000L
         const val PICTURE_IN_PICTURE_FALLBACK_GRACE_MILLIS = 900L
         const val PICTURE_IN_PICTURE_EXIT_GUARD_DELAY_MILLIS = 350L
-        const val MEDIA_LAYOUT_RESTORATION_INSET_TIMEOUT_MILLIS = 350L
         const val MEDIA_LAYOUT_RESTORATION_POLICY_TIMEOUT_MILLIS = 2_000L
-        const val MEDIA_LAYOUT_RESTORATION_FRAME_TIMEOUT_MILLIS = 500L
         val PICTURE_IN_PICTURE_PLAY_RETRY_DELAYS_MILLIS = longArrayOf(250L, 1_000L, 2_000L)
         val EXTERNAL_NAVIGATION_ROLLBACK_RESUME_RETRY_DELAYS_MILLIS =
             longArrayOf(250L, 1_000L)
