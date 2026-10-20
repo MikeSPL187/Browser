@@ -32,6 +32,9 @@ internal interface PageDistractionsListener {
     /** A block of the page on [pageHost] was hidden; [selector] finds it again. */
     fun onHidden(pageHost: String, selector: String)
 
+    /** A tap outlined a block, which a second tap hides ([outlined]), or outlined nothing. */
+    fun onOutlined(outlined: Boolean) = Unit
+
     /** The page left choosing by itself: it navigated, or its tab closed. */
     fun onPickingEnded()
 }

@@ -168,6 +168,7 @@ internal fun BrowserV5Bar(
                 privateTab = tab.isIncognito,
                 hasHidden = picking && distractions.hiddenCount(tab) > 0,
                 canUndo = distractions.canUndo,
+                step = distractions.pickingStep,
                 onUndo = distractions::undoLastHide,
                 onShowHidden = { distractions.showAll(tab) },
                 onDone = distractions::stopPicking,
