@@ -6,6 +6,10 @@
 # Usage: scripts/ci/refresh_verification_metadata.sh [--quick]
 #   --quick resolves the dependency graphs only: enough when a library's version changes (GeckoView);
 #   without it the build, tests, lint, release and benchmarks run too, which also fetch their tools.
+#
+# With a warm Gradle cache, parent POMs and Gradle module files of cached dependencies are not fetched
+# again and so not recorded, while CI starts empty and needs them (#498). Run it in CI, or locally
+# with an empty GRADLE_USER_HOME.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
