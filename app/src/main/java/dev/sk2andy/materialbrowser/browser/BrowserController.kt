@@ -80,8 +80,6 @@ import dev.sk2andy.materialbrowser.capsule.CapsuleDeletionRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleFullCandyTransition
 import dev.sk2andy.materialbrowser.capsule.CapsuleFullCandyTransitionRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconRenderer
-import dev.sk2andy.materialbrowser.capsule.CapsuleIconMode
-import dev.sk2andy.materialbrowser.capsule.CapsuleIconUpdateRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleIntentRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleLaunchResolution
 import dev.sk2andy.materialbrowser.capsule.CapsuleNavigationDecision
@@ -89,7 +87,6 @@ import dev.sk2andy.materialbrowser.capsule.CapsuleNavigationRules
 import dev.sk2andy.materialbrowser.capsule.CapsuleShortcutPublisher
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleDraft
-import dev.sk2andy.materialbrowser.capsule.SiteCapsuleRules
 import dev.sk2andy.materialbrowser.browser.actions.BrowserDownloadManager
 import dev.sk2andy.materialbrowser.browser.actions.DownloadActionResult
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManager
@@ -627,9 +624,9 @@ class BrowserController(
     val activeSiteCapsule: SiteCapsule?
         get() = activeCapsuleId?.let { id -> siteCapsules.firstOrNull { it.id == id } }
     val isCapsulePinningSupported: Boolean
-        get() = capsuleShortcuts.isPinningSupported()
+        get() = capsuleLibrary.isPinningSupported
     val canCreateSiteCapsule: Boolean
-        get() = SiteCapsuleRules.canCreate(siteCapsules.size)
+        get() = capsuleLibrary.canCreate
     val selectedFavicon: Bitmap?
         get() = favicons[selectedTabId]
     private val browserChromeScrollStates = mutableMapOf<String, BrowserChromeScrollState>()
@@ -1369,8 +1366,39 @@ class BrowserController(
     private val candyTrailRepository = CandyTrailRepository.get(activity)
     private val geckoSessionStateStore = GeckoSessionStateStore(activity.applicationContext)
     private val webViewStateRepository = TabWebViewStateRepository.get(activity)
-    private val siteCapsuleStore = SiteCapsuleStore(activity)
-    private val siteCapsuleIconStore = SiteCapsuleIconStore(activity)
+    private val capsuleLibrary = SiteCapsuleLibrary(
+        capsules = siteCapsules,
+        store = object : SiteCapsuleLibrary.Store {
+            private val file = SiteCapsuleStore(activity)
+            override fun load(): List<SiteCapsule> = file.load()
+            override fun save(capsules: List<SiteCapsule>) = file.save(capsules)
+        },
+        icons = object : SiteCapsuleLibrary.Icons<Bitmap> {
+            private val files = SiteCapsuleIconStore(activity)
+            override fun load(capsuleId: String) = files.load(capsuleId)
+            override fun loadSource(capsuleId: String) = files.loadSource(capsuleId)
+            override fun loadCustom(capsuleId: String) = files.loadCustom(capsuleId)
+            override fun save(capsuleId: String, icon: Bitmap) = files.save(capsuleId, icon)
+            override fun saveSource(capsuleId: String, icon: Bitmap) = files.saveSource(capsuleId, icon)
+            override fun saveCustom(capsuleId: String, icon: Bitmap) = files.saveCustom(capsuleId, icon)
+            override fun delete(capsuleId: String) = files.delete(capsuleId)
+            override fun cleanup(knownCapsuleIds: Set<String>) = files.cleanup(knownCapsuleIds)
+        },
+        shortcuts = object : SiteCapsuleLibrary.Shortcuts<Bitmap> {
+            private val publisher = CapsuleShortcutPublisher(activity)
+            override fun isPinningSupported() = publisher.isPinningSupported()
+            override fun requestPin(capsule: SiteCapsule, icon: Bitmap) = publisher.requestPin(capsule, icon)
+            override fun update(capsule: SiteCapsule, icon: Bitmap) = publisher.update(capsule, icon)
+            override fun isPinned(capsule: SiteCapsule) = publisher.isPinned(capsule)
+            override fun disable(capsule: SiteCapsule) =
+                publisher.disable(capsule, activity.getString(R.string.capsule_shortcut_deleted))
+            override fun reportUsed(capsule: SiteCapsule) = publisher.reportUsed(capsule)
+        },
+        renderIcon = CapsuleIconRenderer::render,
+        sameImage = Bitmap::sameAs,
+        newId = { UUID.randomUUID().toString() },
+        now = System::currentTimeMillis,
+    )
     private val profileWallpaperStore = ProfileWallpaperStore(activity.applicationContext)
     private val profileWallpapers = ProfileWallpaperLoader(
         background = profileWallpaperExecutor,
@@ -1395,7 +1423,6 @@ class BrowserController(
             }
         },
     )
-    private val capsuleShortcuts = CapsuleShortcutPublisher(activity)
     private val candyRuleRepository = CandyRuleRepository.get(activity)
     private val userScriptRepository = UserScriptRepository.get(activity)
     private val userScriptCommandsByTab = mutableStateMapOf<String, List<UserScriptMenuCommand>>()
@@ -2218,11 +2245,7 @@ class BrowserController(
         profiles += storedProfiles.profiles.take(MAX_PROFILES)
         profileLock.restore()
         val restoredProfileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
-        siteCapsules += siteCapsuleStore.load()
-            .filter { capsule -> capsule.profileId in restoredProfileIds }
-            .let(SiteCapsuleRules::bounded)
-        siteCapsuleStore.save(siteCapsules)
-        siteCapsuleIconStore.cleanup(siteCapsules.mapTo(hashSetOf(), SiteCapsule::id))
+        capsuleLibrary.restore(restoredProfileIds)
         permanentSiteExceptions = permanentSiteExceptions
             .filterKeys(restoredProfileIds::contains)
             .mapValues { (_, hosts) ->
@@ -4815,7 +4838,7 @@ class BrowserController(
         activeCapsuleId = capsule.id
         activeCapsuleTabId = targetTab.id
         capsuleTabIds[capsule.id] = targetTab.id
-        capsuleShortcuts.reportUsed(capsule)
+        capsuleLibrary.reportUsed(capsule)
         if (navigateToStart && targetTab.url != capsule.startUrl) submitAddress(capsule.startUrl)
         return true
     }
@@ -4841,7 +4864,7 @@ class BrowserController(
         activeCapsuleId = capsule.id
         activeCapsuleTabId = targetTab.id
         capsuleTabIds[capsule.id] = targetTab.id
-        capsuleShortcuts.reportUsed(capsule)
+        capsuleLibrary.reportUsed(capsule)
         if (targetTab.url == BLANK_URL) submitAddress(capsule.startUrl)
         return true
     }
@@ -4908,110 +4931,18 @@ class BrowserController(
         sourceFavicon: Bitmap? = null,
         customIcon: Bitmap? = null,
     ): CapsuleSaveResult {
-        val existing = draft.id?.let { id -> siteCapsules.firstOrNull { it.id == id } }
+        val existing = draft.id?.let(capsuleLibrary::find)
         if (
             draft.profileId in lockedProfileIds ||
             existing?.profileId in lockedProfileIds
         ) return CapsuleSaveResult.Invalid
-        if (existing == null && !SiteCapsuleRules.canCreate(siteCapsules.size)) {
-            return CapsuleSaveResult.LimitReached
-        }
-        if (
-            profiles.none { it.id == draft.profileId } ||
-            isSyncedProfile(draft.profileId)
-        ) return CapsuleSaveResult.Invalid
-        val nowMillis = System.currentTimeMillis()
-        val proposedCapsule = if (existing == null) {
-            SiteCapsuleRules.create(
-                draft = draft,
-                id = UUID.randomUUID().toString(),
-                nowMillis = nowMillis,
-                multiProfileSupported = isProfileIsolationSupported,
-            )
-        } else {
-            SiteCapsuleRules.update(
-                existing = existing,
-                draft = draft,
-                nowMillis = nowMillis,
-                multiProfileSupported = isProfileIsolationSupported,
-            )
-        } ?: return CapsuleSaveResult.Invalid
-        val storedIcon = siteCapsuleIconStore.load(proposedCapsule.id)
-        val storedSourceFavicon = siteCapsuleIconStore.loadSource(proposedCapsule.id)
-        val storedCustomIcon = siteCapsuleIconStore.loadCustom(proposedCapsule.id)
-        val customIconChanged = customIcon != null && runCatching {
-            storedCustomIcon?.sameAs(customIcon) != true
-        }.getOrDefault(true)
-        if (
-            customIconChanged &&
-            !siteCapsuleIconStore.saveCustom(proposedCapsule.id, checkNotNull(customIcon))
-        ) return CapsuleSaveResult.IconSaveFailed
-        val iconCustomizationChanged = existing == null ||
-            existing.iconMode != proposedCapsule.iconMode ||
-            existing.iconEmoji != proposedCapsule.iconEmoji ||
-            existing.iconColor != proposedCapsule.iconColor
-        val capsule = proposedCapsule.copy(
-            iconMode = CapsuleIconUpdateRules.resolveMode(
-                requestedMode = proposedCapsule.iconMode,
-                hasSourceFavicon = sourceFavicon != null || storedSourceFavicon != null,
-                hasCustomIcon = customIcon != null || storedCustomIcon != null,
-                hasRenderedIcon = storedIcon != null,
-                customizationChanged = iconCustomizationChanged,
-            ),
+        return capsuleLibrary.upsert(
+            draft = draft,
+            isProfileValid = profiles.any { it.id == draft.profileId } && !isSyncedProfile(draft.profileId),
+            multiProfileSupported = isProfileIsolationSupported,
+            sourceFavicon = sourceFavicon,
+            customIcon = customIcon,
         )
-        val updated = siteCapsules.filterNot { it.id == capsule.id } + capsule
-        siteCapsules.clear()
-        siteCapsules += SiteCapsuleRules.bounded(updated)
-        siteCapsuleStore.save(siteCapsules)
-        if (sourceFavicon != null) siteCapsuleIconStore.saveSource(capsule.id, sourceFavicon)
-        val icon = when {
-            capsule.iconMode == CapsuleIconMode.Custom -> {
-                CapsuleIconRenderer.render(
-                    name = capsule.name,
-                    iconEmoji = capsule.iconEmoji,
-                    iconColor = capsule.iconColor,
-                    favicon = null,
-                    customIcon = checkNotNull(customIcon ?: storedCustomIcon),
-                )
-            }
-            capsule.iconMode == CapsuleIconMode.Favicon &&
-                sourceFavicon == null && storedSourceFavicon == null &&
-                storedIcon != null -> storedIcon
-            else -> CapsuleIconRenderer.render(
-                name = capsule.name,
-                iconEmoji = capsule.iconEmoji,
-                iconColor = capsule.iconColor,
-                favicon = if (capsule.iconMode == CapsuleIconMode.Favicon) {
-                    sourceFavicon ?: storedSourceFavicon
-                } else {
-                    null
-                },
-            )
-        }
-        siteCapsuleIconStore.save(capsule.id, icon)
-        return if (existing == null) {
-            if (!capsuleShortcuts.isPinningSupported()) {
-                CapsuleSaveResult.PinningUnsupported
-            } else if (capsuleShortcuts.requestPin(capsule, icon)) {
-                CapsuleSaveResult.PinRequested
-            } else {
-                CapsuleSaveResult.PinRequestFailed
-            }
-        } else if (!capsuleShortcuts.isPinned(capsule)) {
-            if (!capsuleShortcuts.isPinningSupported()) {
-                CapsuleSaveResult.PinningUnsupported
-            } else if (capsuleShortcuts.requestPin(capsule, icon)) {
-                CapsuleSaveResult.PinRequested
-            } else {
-                CapsuleSaveResult.PinRequestFailed
-            }
-        } else {
-            if (capsuleShortcuts.update(capsule, icon)) {
-                CapsuleSaveResult.Updated
-            } else {
-                CapsuleSaveResult.UpdateFailed
-            }
-        }
     }
 
     fun deleteSiteCapsule(capsuleId: String, deleteDedicatedProfileConfirmed: Boolean): Boolean {
@@ -5066,30 +4997,24 @@ class BrowserController(
     private fun finishSiteCapsuleDeletion(capsuleId: String): Boolean {
         val capsule = siteCapsules.firstOrNull { it.id == capsuleId } ?: return false
         if (capsule.profileId in lockedProfileIds) return false
-        val remaining = siteCapsules.filterNot { it.id == capsuleId }
         if (activeCapsuleId == capsuleId) leaveSiteCapsule()
         capsuleTabIds.remove(capsuleId)
-        siteCapsules.clear()
-        siteCapsules += remaining
-        siteCapsuleStore.save(siteCapsules)
-        siteCapsuleIconStore.delete(capsuleId)
-        capsuleShortcuts.disable(capsule, activity.getString(R.string.capsule_shortcut_deleted))
-        return true
+        return capsuleLibrary.remove(capsuleId)
     }
 
     fun siteCapsuleSourceIcon(capsuleId: String): Bitmap? {
         val capsule = siteCapsules.firstOrNull { it.id == capsuleId } ?: return null
         if (capsule.profileId in lockedProfileIds) return null
-        return siteCapsuleIconStore.loadSource(capsuleId)
+        return capsuleLibrary.sourceIcon(capsuleId)
     }
 
     fun siteCapsuleCustomIcon(capsuleId: String): Bitmap? {
         val capsule = siteCapsules.firstOrNull { it.id == capsuleId } ?: return null
         if (capsule.profileId in lockedProfileIds) return null
-        return siteCapsuleIconStore.loadCustom(capsuleId)
+        return capsuleLibrary.customIcon(capsuleId)
     }
 
-    fun siteCapsuleRenderedIcon(capsuleId: String): Bitmap? = siteCapsuleIconStore.load(capsuleId)
+    fun siteCapsuleRenderedIcon(capsuleId: String): Bitmap? = capsuleLibrary.renderedIcon(capsuleId)
 
     internal fun refreshToppingCatalog() {
         val generation = ++toppingCatalogRefreshGeneration
@@ -5349,42 +5274,7 @@ class BrowserController(
         sourceProfileId: String,
         fallbackProfile: BrowserProfile,
         excludedCapsuleId: String? = null,
-    ) {
-        val affected = siteCapsules.filter {
-            it.profileId == sourceProfileId && it.id != excludedCapsuleId
-        }
-        if (affected.isEmpty()) return
-        val nowMillis = System.currentTimeMillis()
-        val replacements = affected.associate { capsule ->
-            capsule.id to capsule.copy(
-                profileId = fallbackProfile.id,
-                ownsDedicatedProfile = false,
-                isolatedStorageRequested = false,
-                updatedAtMillis = nowMillis,
-            )
-        }
-        siteCapsules.replaceAll { capsule -> replacements[capsule.id] ?: capsule }
-        siteCapsuleStore.save(siteCapsules)
-        replacements.values.forEach { capsule ->
-            val icon = if (capsule.iconMode == CapsuleIconMode.ProfileFallback) {
-                CapsuleIconRenderer.render(
-                    name = capsule.name,
-                    iconEmoji = capsule.iconEmoji,
-                    iconColor = capsule.iconColor,
-                    favicon = null,
-                )
-            } else {
-                siteCapsuleIconStore.load(capsule.id) ?: CapsuleIconRenderer.render(
-                    name = capsule.name,
-                    iconEmoji = capsule.iconEmoji,
-                    iconColor = capsule.iconColor,
-                    favicon = null,
-                )
-            }
-            siteCapsuleIconStore.save(capsule.id, icon)
-            capsuleShortcuts.update(capsule, icon)
-        }
-    }
+    ) = capsuleLibrary.reassign(sourceProfileId, fallbackProfile.id, excludedCapsuleId)
 
     fun hasTabCapacity(nowMillis: Long = System.currentTimeMillis()): Boolean =
         tabs.size - staleTabIds(nowMillis).size < MAX_TABS
