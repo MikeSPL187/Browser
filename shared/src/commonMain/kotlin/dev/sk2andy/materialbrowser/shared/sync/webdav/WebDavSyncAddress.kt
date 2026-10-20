@@ -36,13 +36,35 @@ object WebDavSyncAddressRules {
         val rest = trimmed.substring("https://".length)
         val authority = rest.substringBefore('/')
         if (authority.isEmpty() || '@' in authority) return WebDavAddressCheck.Invalid
-        val host = authority.substringBefore(':').lowercase()
-        val port = authority.substringAfter(':', missingDelimiterValue = "")
-        if (host.isEmpty() || (authority.contains(':') && port.toIntOrNull()?.takeIf { it in 1..65_535 } == null)) {
+        // A home server may be reached by its IPv6 address in brackets, with or without a port (ЯС-5).
+        val host: String
+        val portText: String?
+        if (authority.startsWith('[')) {
+            val end = authority.indexOf(']')
+            if (end < 0) return WebDavAddressCheck.Invalid
+            host = authority.substring(0, end + 1).lowercase()
+            val inside = host.removePrefix("[").removeSuffix("]")
+            if (inside.isEmpty() || inside.any { !(it.isDigit() || it in 'a'..'f' || it == ':' || it == '.') }) {
+                return WebDavAddressCheck.Invalid
+            }
+            val after = authority.substring(end + 1)
+            portText = when {
+                after.isEmpty() -> null
+                after.startsWith(':') -> after.substring(1)
+                else -> return WebDavAddressCheck.Invalid
+            }
+        } else {
+            host = authority.substringBefore(':').lowercase()
+            portText = if (':' in authority) authority.substringAfter(':') else null
+        }
+        if (host.isEmpty() || (portText != null && portText.toIntOrNull()?.takeIf { it in 1..65_535 } == null)) {
             return WebDavAddressCheck.Invalid
         }
         val path = rest.substring(authority.length).ifEmpty { "/" }
-        if (path.split('/').any { it == "." || it == ".." }) return WebDavAddressCheck.Invalid
+        // `.` and `..` also when written as %2e: the server would read them the same way (ЯС-7).
+        if (path.split('/').any { segment -> segment.lowercase().replace("%2e", ".") in setOf(".", "..") }) {
+            return WebDavAddressCheck.Invalid
+        }
         val base = "https://${authority.lowercase()}${path.removeSuffix("/")}/"
         return WebDavAddressCheck.Valid(base, host)
     }

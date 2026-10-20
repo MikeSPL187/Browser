@@ -2503,6 +2503,7 @@
     <string name="v5_webdav_error_busy">Сервер занят или файл на нём заблокирован. Попробуйте позже.</string>
     <string name="v5_webdav_error_server">На сервере произошла ошибка. Попробуйте позже или посмотрите журнал сервера.</string>
     <string name="v5_webdav_error_address">Проверьте адрес: он выглядит как https://cloud.example.com, без логина, пробелов, «?» и «#».</string>
+    <string name="v5_webdav_error_scheme">Начните адрес с https://, например https://cloud.example.com.</string>
     <string name="v5_webdav_connecting">Подключение…</string>
     <string name="v5_webdav_phrase_simple">Слишком простая фраза: возьмите несколько разных слов.</string>
     <string name="v5_webdav_status_newer">Обновите Vola</string>

@@ -2393,6 +2393,7 @@
     <string name="v5_webdav_error_busy">The server is busy or a file on it is locked. Try again later.</string>
     <string name="v5_webdav_error_server">The server failed on its side. Try again later or look at the server’s log.</string>
     <string name="v5_webdav_error_address">Check the address: it looks like https://cloud.example.com, with no login, spaces, “?” or “#”.</string>
+    <string name="v5_webdav_error_scheme">Start the address with https://, for example https://cloud.example.com.</string>
     <string name="v5_webdav_connecting">Connecting…</string>
     <string name="v5_webdav_phrase_simple">Too simple: take a few different words.</string>
     <string name="v5_webdav_status_newer">Update Vola</string>
