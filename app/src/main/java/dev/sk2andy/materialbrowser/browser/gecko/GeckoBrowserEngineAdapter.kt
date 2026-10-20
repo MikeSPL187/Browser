@@ -60,6 +60,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 
 internal class GeckoPreparedSession(
     val session: GeckoSession,

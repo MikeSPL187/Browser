@@ -9,6 +9,10 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 
 internal interface GeckoExtensionChromeHost {
     fun currentSessionIdentity(): GeckoExtensionSessionIdentity?

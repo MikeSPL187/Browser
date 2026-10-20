@@ -8,6 +8,8 @@ import java.nio.charset.StandardCharsets
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadStreamEntry
+import dev.sk2andy.materialbrowser.browser.engine.MediaStoreDownloadStreamSink
 
 @RunWith(AndroidJUnit4::class)
 class MediaStoreDownloadStreamSinkInstrumentedTest {

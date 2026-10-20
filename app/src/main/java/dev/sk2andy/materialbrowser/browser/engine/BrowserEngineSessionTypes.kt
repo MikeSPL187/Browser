@@ -9,8 +9,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineMediaPermissionRequest
 import dev.sk2andy.materialbrowser.browser.BrowserEngineNavigationTarget
 import dev.sk2andy.materialbrowser.browser.BrowserEngineWebPromptRequest
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreparedSession
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadCancellation
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
 
 internal fun interface GeckoBrowserSessionStateListener {

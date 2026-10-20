@@ -31,6 +31,14 @@ import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoWebExecutor
 import org.mozilla.geckoview.WebRequest
 import org.mozilla.geckoview.WebResponse
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadMetadataDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadStreamEntry
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadStreamSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferMetadata
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 
 @RunWith(AndroidJUnit4::class)
 class GeckoDownloadTransferInstrumentedTest {

@@ -16,10 +16,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
 import java.io.Closeable
