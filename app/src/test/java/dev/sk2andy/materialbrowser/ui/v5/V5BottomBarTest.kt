@@ -21,4 +21,24 @@ class V5BottomBarTest {
         assertNull(v5BarDomain("about:blank"))
         assertNull(v5BarDomain("file:///sdcard/page.html"))
     }
+
+    @Test
+    fun `the host after the at sign is the one shown, never the name before it`() {
+        assertEquals("evil.com", v5BarDomain("https://good.com@evil.com/"))
+    }
+
+    @Test
+    fun `a query or a fragment right after the host ends it`() {
+        assertEquals("example.com", v5BarDomain("https://example.com?x=1"))
+        assertEquals("example.com", v5BarDomain("https://example.com#top"))
+        assertEquals("example.com", v5BarDomain("https://WWW.EXAMPLE.COM"))
+    }
+
+    @Test
+    fun `an empty or bare host shows nothing`() {
+        assertNull(v5BarDomain("https://"))
+        assertNull(v5BarDomain("https:///x"))
+        assertNull(v5BarDomain("http://[]/"))
+        assertNull(v5BarDomain("https://www./"))
+    }
 }
