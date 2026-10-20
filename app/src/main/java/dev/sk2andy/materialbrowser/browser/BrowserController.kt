@@ -834,7 +834,13 @@ class BrowserController(
     @VisibleForTesting
     fun detectFederatedLoginForTesting(requestUrl: String) {
         val context = protectionRequestContexts[selectedTabId] ?: return
-        detectFederatedLoginRequest(selectedTabId, requestUrl, context)
+        federatedLoginOffers.onSubresourceRequest(
+            selectedTabId,
+            requestUrl,
+            context.pageHost,
+            context.profileId,
+            context.navigationGeneration,
+        )
     }
 
     @VisibleForTesting
@@ -1089,10 +1095,28 @@ class BrowserController(
     private var blockedPopupSequence = 0L
     internal var blockedPopupOffer by mutableStateOf<BlockedPopupOffer?>(null)
         private set
-    internal var federatedLoginOffer by mutableStateOf<FederatedLoginOffer?>(null)
-        private set
-    private var federatedLoginOfferSequence = 0L
-    private val federatedLoginOfferKeys = ConcurrentHashMap<String, String>()
+    private val federatedLoginOffers = FederatedLoginOffers(
+        object : FederatedLoginOffers.Host {
+            override val isDestroyed: Boolean get() = destroyed
+            override val selectedTabId: String get() = this@BrowserController.selectedTabId
+            override val blocksThirdPartyCookies: Boolean get() = workerSettings.blockThirdPartyCookies
+            override fun tab(tabId: String): BrowserTab? = tabs.firstOrNull { it.id == tabId }
+            override fun pageUrl(tabId: String): String? = pageUrls[tabId]
+            override fun navigationGeneration(tabId: String): Int? = navigationGenerations[tabId]
+            override fun isAllowed(tab: BrowserTab, pageUrl: String?): Boolean =
+                isFederatedLoginCompatibilityEnabled(tab, pageUrl)
+            override fun postToMainThread(task: () -> Unit) {
+                mainHandler.post(task)
+            }
+            override fun allow(tabId: String, persistently: Boolean) {
+                updateSitePrivacyOverrides(tabId = tabId, persistently = persistently) { current, _ ->
+                    current.copy(thirdPartyLoginAllowed = true)
+                }
+            }
+        },
+    )
+    internal val federatedLoginOffer: FederatedLoginOffer?
+        get() = federatedLoginOffers.offer
     private val captchaOffers = CaptchaCompatibilityOffers(
         object : CaptchaCompatibilityOffers.Host {
             override val isDestroyed: Boolean get() = destroyed
@@ -5433,32 +5457,12 @@ class BrowserController(
         closeTab(offer.popupTabId)
     }
 
-    fun showFederatedLoginOptions(token: Long) {
-        val offer = federatedLoginOffer?.takeIf { it.token == token } ?: return
-        if (!isCurrentFederatedLoginOffer(offer)) {
-            federatedLoginOffer = null
-            return
-        }
-        federatedLoginOffer = offer.copy(showDialog = true)
-    }
+    fun showFederatedLoginOptions(token: Long) = federatedLoginOffers.showOptions(token)
 
     fun respondToFederatedLoginOffer(
         token: Long,
         choice: FederatedLoginPromptChoice,
-    ) {
-        val offer = federatedLoginOffer?.takeIf { it.token == token } ?: return
-        federatedLoginOffer = null
-        if (choice == FederatedLoginPromptChoice.Deny || !isCurrentFederatedLoginOffer(offer)) {
-            return
-        }
-        if (choice == FederatedLoginPromptChoice.AllowForProfile && offer.isPrivate) return
-        updateSitePrivacyOverrides(
-            tabId = offer.tabId,
-            persistently = choice == FederatedLoginPromptChoice.AllowForProfile,
-        ) { current, _ ->
-            current.copy(thirdPartyLoginAllowed = true)
-        }
-    }
+    ) = federatedLoginOffers.respond(token, choice)
 
     fun revokeFederatedLoginCompatibility(tabId: String): Boolean =
         updateSitePrivacyOverrides(tabId) { current, _ ->
@@ -9546,8 +9550,7 @@ class BrowserController(
         pendingPopunderNavigations.clear()
         transientPopupTabIds.clear()
         blockedPopupOffer = null
-        federatedLoginOffer = null
-        federatedLoginOfferKeys.clear()
+        federatedLoginOffers.clear()
         captchaOffers.clear()
         pageTranslation.clear()
         permissionAccess.cancelPending()
@@ -11161,7 +11164,13 @@ class BrowserController(
         if (event.isCompatibilityObservation) {
             val observedPageHost = event.pageUrl?.let(PrivacyRequestSanitizer::webHost) ?: return
             if (observedPageHost != context.pageHost) return
-            detectFederatedLoginRequest(tabId, event.requestUrl, context)
+            federatedLoginOffers.onSubresourceRequest(
+                tabId,
+                event.requestUrl,
+                context.pageHost,
+                context.profileId,
+                context.navigationGeneration,
+            )
             captchaOffers.onSubresourceRequest(
                 tabId,
                 event.requestUrl,
@@ -13350,7 +13359,7 @@ class BrowserController(
         federatedLoginPopupTabIds.remove(tabId)
         federatedLoginCompatibilityTabIds.remove(tabId)
         if (blockedPopupOffer?.popupTabId == tabId) blockedPopupOffer = null
-        if (federatedLoginOffer?.tabId == tabId) federatedLoginOffer = null
+        federatedLoginOffers.dismissFor(tabId)
         captchaOffers.dismissFor(tabId)
         pageTranslation.dismissOfferFor(tabId)
         pendingCandyTrailRestoreIds.remove(tabId)
@@ -13384,7 +13393,7 @@ class BrowserController(
         federatedLoginPopupTabIds.remove(tab.id)
         federatedLoginCompatibilityTabIds.remove(tab.id)
         if (blockedPopupOffer?.popupTabId == tab.id) blockedPopupOffer = null
-        if (federatedLoginOffer?.tabId == tab.id) federatedLoginOffer = null
+        federatedLoginOffers.dismissFor(tab.id)
         captchaOffers.dismissFor(tab.id)
         pageTranslation.dismissOfferFor(tab.id)
         pendingCandyTrailRestoreIds.remove(tab.id)
@@ -13500,7 +13509,7 @@ class BrowserController(
         pendingConsentCssUrls.remove(tabId)
         temporarySiteExceptions.remove(tabId)
         if (clearTemporarySiteOverrides) temporarySitePrivacyOverrides.remove(tabId)
-        federatedLoginOfferKeys.remove(tabId)
+        federatedLoginOffers.forgetTab(tabId)
         captchaOffers.forgetTab(tabId)
         siteExceptionRevision++
     }
@@ -13514,50 +13523,6 @@ class BrowserController(
             reportedAllowedDecisions.remove(tabId)
         }
         updateTab(tabId) { tab -> if (tab.blockedCount == 0) tab else tab.copy(blockedCount = 0) }
-    }
-
-    private fun detectFederatedLoginRequest(
-        tabId: String,
-        requestUrl: String,
-        requestContext: ProtectionRequestContext,
-    ) {
-        if (!workerSettings.blockThirdPartyCookies) return
-        val pageHost = requestContext.pageHost ?: return
-        val provider = FederatedLoginRules.providerForSubresource(
-            requestUrl = requestUrl,
-            pageUrl = "https://$pageHost/",
-        ) ?: return
-        mainHandler.post {
-            if (destroyed || selectedTabId != tabId) return@post
-            val tab = tabs.firstOrNull { it.id == tabId } ?: return@post
-            val currentHost = PrivacyRequestSanitizer.webHost(pageUrls[tabId] ?: tab.url)
-            if (currentHost != pageHost || tab.profileId != requestContext.profileId) return@post
-            if (navigationGenerations[tabId] != requestContext.navigationGeneration) return@post
-            if (isFederatedLoginCompatibilityEnabled(tab, pageUrls[tabId])) return@post
-            val offerKey = "$pageHost:${provider.name}"
-            if (federatedLoginOfferKeys[tabId] == offerKey) return@post
-            federatedLoginOfferKeys[tabId] = offerKey
-            federatedLoginOfferSequence++
-            federatedLoginOffer = FederatedLoginOffer(
-                token = federatedLoginOfferSequence,
-                tabId = tabId,
-                profileId = tab.profileId,
-                pageHost = pageHost,
-                provider = provider,
-                isPrivate = tab.isIncognito,
-                navigationGeneration = requestContext.navigationGeneration,
-            )
-        }
-    }
-
-    private fun isCurrentFederatedLoginOffer(offer: FederatedLoginOffer): Boolean {
-        val tab = tabs.firstOrNull { it.id == offer.tabId } ?: return false
-        val currentHost = PrivacyRequestSanitizer.webHost(pageUrls[tab.id] ?: tab.url)
-        return selectedTabId == tab.id &&
-            tab.profileId == offer.profileId &&
-            tab.isIncognito == offer.isPrivate &&
-            currentHost == offer.pageHost &&
-            navigationGenerations[tab.id] == offer.navigationGeneration
     }
 
     private fun isSiteProtectionPaused(tabId: String, pageUrl: String?): Boolean {
