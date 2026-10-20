@@ -279,6 +279,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuEntry
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayout
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLayoutRules
 import dev.sk2andy.materialbrowser.shared.browser.BrowserMenuLocation
+import dev.sk2andy.materialbrowser.recall.RecallAccess
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.recall.RecallPageCapture
 import dev.sk2andy.materialbrowser.recall.RecallRules
@@ -486,8 +487,8 @@ class BrowserController(
         private set
     var isAiModeToggleVisible by mutableStateOf(false)
         private set
-    var isRecallEnabled by mutableStateOf(false)
-        private set
+    val isRecallEnabled: Boolean
+        get() = recall.isEnabled
     internal var historyRecordingMode by mutableStateOf(HistoryRecordingMode.Enabled)
         private set
     var searchSuggestionProvider by mutableStateOf(defaultSearchSuggestionProvider())
@@ -1232,7 +1233,6 @@ class BrowserController(
     private val protectionRequestContexts = ConcurrentHashMap<String, ProtectionRequestContext>()
     private var isActivityResumed = false
     private var isActivityStarted = false
-    private var recallDisablePending = false
     private var browsingDataClearPending = false
     @Volatile
     private var destroyed = false
@@ -1327,6 +1327,24 @@ class BrowserController(
     internal val onDeviceTranslation = androidOnDeviceTranslationController(activity) { browserEngineSessionFactory.translationModels }
     private val historyRepository = BrowsingHistoryRepository.get(activity)
     private val recallRepository = RecallRepository.get(activity)
+    private val recall = RecallAccess(
+        saveEnabled = store::saveRecallEnabled,
+        search = recallRepository::search,
+        clearInBackground = { onCleared ->
+            historyMutationExecutor.executeIfRunning {
+                val cleared = recallRepository.clear()
+                mainHandler.post { onCleared(cleared) }
+            }
+        },
+        host = object : RecallAccess.Host {
+            override val isDestroyed: Boolean get() = destroyed
+            override val isBrowsingDataClearPending: Boolean get() = browsingDataClearPending
+            override val isHistorySuggestionsEnabled: Boolean
+                get() = this@BrowserController.isHistorySuggestionsEnabled
+            override val selectedTab: BrowserTab get() = this@BrowserController.selectedTab
+            override fun tab(tabId: String): BrowserTab? = tabs.firstOrNull { tab -> tab.id == tabId }
+        },
+    )
     private val snoozedTabStore = SnoozedTabStore(activity)
     private val snoozeScheduler = SnoozeScheduler(activity)
     val inactiveTabArchive = InactiveTabArchive(store, snoozedTabStore, snoozedTabs) { tab ->
@@ -2230,7 +2248,7 @@ class BrowserController(
         linkPeekActionLayout = store.loadLinkPeekActionLayout()
         browserMenuLayout = store.loadBrowserMenuLayout()
         isAiModeToggleVisible = store.loadAiModeToggleVisible()
-        isRecallEnabled = store.loadRecallEnabled()
+        recall.restore(store.loadRecallEnabled())
         historyRecordingMode = historyRepository.recordingMode()
         if (!isRecallEnabled) recallRepository.clearAsync()
         searchSuggestionProvider = store.loadSearchSuggestionProvider(
@@ -8212,47 +8230,8 @@ class BrowserController(
         )
     }
 
-    fun searchRecallForAddress(query: String, onComplete: (List<RecallMatch>) -> Unit) {
-        val tab = selectedTab
-        val recallQuery = if (RecallRules.isExplicitCommand(query)) {
-            RecallRules.explicitQuery(query)
-        } else {
-            RecallRules.addressQuery(query)
-        }
-        if (
-            !isRecallEnabled || recallDisablePending || browsingDataClearPending ||
-            tab.isIncognito || recallQuery == null ||
-            !RecallRules.canSearchFromAddress(query, isHistorySuggestionsEnabled)
-        ) {
-            onComplete(emptyList())
-            return
-        }
-        val expectedTabId = tab.id
-        val expectedProfileId = tab.profileId
-        val expectedInput = query
-        val limit = if (RecallRules.isExplicitCommand(query)) {
-            RecallRules.MAX_COMMAND_RESULTS
-        } else {
-            RecallRules.MAX_ADDRESS_RESULTS
-        }
-        recallRepository.search(
-            profileIds = setOf(expectedProfileId),
-            query = recallQuery,
-            limit = limit,
-        ) { matches ->
-            val current = tabs.firstOrNull { candidate -> candidate.id == expectedTabId }
-            val accepted = isRecallEnabled && !recallDisablePending && !browsingDataClearPending &&
-                RecallRules.canSearchFromAddress(
-                    expectedInput,
-                    isHistorySuggestionsEnabled,
-                ) &&
-                !destroyed &&
-                selectedTabId == expectedTabId &&
-                current?.isIncognito == false &&
-                current.profileId == expectedProfileId
-            onComplete(if (accepted && expectedInput == query) matches else emptyList())
-        }
-    }
+    fun searchRecallForAddress(query: String, onComplete: (List<RecallMatch>) -> Unit) =
+        recall.searchFromAddress(query, onComplete)
 
     fun closeDuplicateTabs(confirmedTabIds: List<String>): Int {
         val currentlyClosable = TabDuplicateRules.tabIdsToClose(activeTabs, selectedTabId).toSet()
@@ -9037,25 +9016,7 @@ class BrowserController(
         store.saveAiModeToggleVisible(visible)
     }
 
-    fun updateRecallEnabled(enabled: Boolean) {
-        if (recallDisablePending || isRecallEnabled == enabled) return
-        if (enabled) {
-            isRecallEnabled = true
-            store.saveRecallEnabled(true)
-            return
-        }
-        recallDisablePending = true
-        historyMutationExecutor.executeIfRunning {
-            val cleared = recallRepository.clear()
-            mainHandler.post {
-                if (!destroyed && cleared) {
-                    isRecallEnabled = false
-                    store.saveRecallEnabled(false)
-                }
-                recallDisablePending = false
-            }
-        }
-    }
+    fun updateRecallEnabled(enabled: Boolean) = recall.requestEnabled(enabled)
 
     internal fun updateHistoryRecordingMode(mode: HistoryRecordingMode) {
         if (historyRecordingMode == mode) return
@@ -12403,8 +12364,7 @@ class BrowserController(
         repository = recallRepository,
         extract = browserEngineSessions[tabId]?.let { session -> session::extractPageForReader } ?: return,
         current = {
-            val allowed = !destroyed && isActivityStarted && isRecallEnabled && !recallDisablePending &&
-                !browsingDataClearPending && !isSessionEphemeralTab(tabId)
+            val allowed = !destroyed && isActivityStarted && recall.isActive && !isSessionEphemeralTab(tabId)
             val tab = tabs.firstOrNull { it.id == tabId }?.takeUnless { it.profileId in pendingRecallProfileDeletions }
             RecallPageCapture.identity(tab, pageUrls[tabId], navigationGenerations[tabId], allowed)
         },
