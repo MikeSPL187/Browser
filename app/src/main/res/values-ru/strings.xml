@@ -2051,6 +2051,7 @@
     <string name="v5_suggestion_commands">Команды</string>
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
+    <string name="v5_feedback_error">Ошибка</string>
     <string name="v5_field_truncated">Поместились только первые %1$d символов, остальное обрезано.</string>
     <string name="v5_sheet_close">Закрыть</string>
     <string name="v5_overview_ungrouped">Без группы</string>

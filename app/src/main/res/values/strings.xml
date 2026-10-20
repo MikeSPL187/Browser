@@ -1973,6 +1973,7 @@
     <string name="v5_suggestion_commands">Commands</string>
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
+    <string name="v5_feedback_error">Error</string>
     <string name="v5_field_truncated">Only the first %1$d characters fit here; the rest was cut off.</string>
     <string name="v5_sheet_close">Close</string>
     <string name="v5_overview_ungrouped">No group</string>
