@@ -185,23 +185,15 @@ import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 import dev.sk2andy.materialbrowser.browser.integration.PageShareRequest
 import dev.sk2andy.materialbrowser.browser.integration.PageShareResult
 import dev.sk2andy.materialbrowser.browser.integration.PreparedWebAppLaunch
-import dev.sk2andy.materialbrowser.browser.permissions.ActivePermissionGrant
-import dev.sk2andy.materialbrowser.browser.permissions.ActivePermissionLedger
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionResponseDelivery
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPrompt
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionPromptChoice
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarRepository
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionRequestIdentity
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRequestRules
-import dev.sk2andy.materialbrowser.browser.permissions.PermissionRequestState
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionSiteKey
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
-import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionActivity
+import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionAccess
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
-import dev.sk2andy.materialbrowser.browser.permissions.runtimePermissions
 import dev.sk2andy.materialbrowser.browser.suggestions.SearchSuggestionProvider
 import dev.sk2andy.materialbrowser.browser.translation.androidOnDeviceTranslationController
 import dev.sk2andy.materialbrowser.browser.userscript.ToppingCatalogEntry
@@ -590,8 +582,8 @@ class BrowserController(
         private set
     var engineViewRevision by mutableIntStateOf(0)
         private set
-    var permissionPrompt by mutableStateOf<PermissionPrompt?>(null)
-        private set
+    val permissionPrompt: PermissionPrompt?
+        get() = permissionAccess.prompt
     var httpAuthPrompt by mutableStateOf<HttpAuthPrompt?>(null)
         private set
     var webPrompt by mutableStateOf<BrowserWebPrompt?>(null)
@@ -1247,17 +1239,44 @@ class BrowserController(
     private val temporarySitePrivacyOverrides = TemporarySitePrivacyOverrides(::pushFingerprintingExceptions)
     private val permissionStore = PermissionRadarStore(activity)
     private val permissionRepository = PermissionRadarRepository(permissionStore)
-    private val activePermissions = ActivePermissionLedger()
-    private var pendingPermissionAccess: PendingPermissionAccess? = null
-    private var shownPermissionPromptId: Long? = null
+    private val permissionAccess = SitePermissionAccess(
+        repository = permissionRepository,
+        host = object : SitePermissionAccess.Host {
+            override val tabs: List<BrowserTab> get() = this@BrowserController.tabs
+            override val selectedTabId: String get() = this@BrowserController.selectedTabId
+            override val isActivityResumed: Boolean get() = this@BrowserController.isActivityResumed
+            override val isActivityStarted: Boolean get() = this@BrowserController.isActivityStarted
+            override val isDestroyed: Boolean get() = destroyed
+            override fun pageUrl(tabId: String): String? = pageUrls[tabId]
+            override fun navigationGeneration(tabId: String): Int? = navigationGenerations[tabId]
+            override fun hasEngineSession(tabId: String): Boolean = browserEngineSessions[tabId] != null
+            override fun setNotificationPermission(
+                tabId: String,
+                origin: String,
+                decision: SitePermissionDecision,
+                onComplete: (() -> Unit)?,
+            ): Boolean {
+                val session = browserEngineSessions[tabId] ?: return false
+                session.setNotificationPermission(origin, decision, onComplete)
+                return true
+            }
+            override fun reload(tabId: String) {
+                browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
+            }
+            override fun hasRuntimePermission(permission: String): Boolean =
+                this@BrowserController.hasRuntimePermission(permission)
+            override fun requestRuntimePermissions(permissions: Set<String>) = this@BrowserController.requestRuntimePermissions(permissions)
+            override fun clearExternalNavigationAuthorization(tabId: String) =
+                this@BrowserController.clearExternalNavigationAuthorization(tabId)
+            override fun scheduleResidentSessionTrim() = this@BrowserController.scheduleResidentSessionTrim()
+        },
+    )
     private var pendingGeckoAndroidPermissionRequest: PendingGeckoAndroidPermissionRequest? = null
     private var pendingFileChooser: PendingFileChooser? = null
-    private var permissionPromptSequence = 0L
     private var pendingHttpAuthChallenge: PendingHttpAuthChallenge? = null
     private var httpAuthPromptSequence = 0L
     private var pendingWebPrompt: PendingWebPrompt? = null
     private var webPromptSequence = 0L
-    private var permissionRevision by mutableIntStateOf(0)
     private val protectionRequestContexts = ConcurrentHashMap<String, ProtectionRequestContext>()
     private var isActivityResumed = false
     private var isActivityStarted = false
@@ -1575,173 +1594,23 @@ class BrowserController(
     fun permissionRadarSnapshot(
         tabId: String = selectedTabId,
         requestedOrigin: String? = null,
-    ): PermissionRadarSnapshot {
-        permissionRevision
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return PermissionRadarSnapshot.Empty
-        val currentOrigin = PermissionOrigin.normalize(pageUrls[tabId] ?: tab.url)
-        val selectedOrigin = PermissionOrigin.normalize(requestedOrigin) ?: currentOrigin
-        val knownOrigins = buildSet {
-            addAll(permissionRepository.origins(tab.profileId, tab.isIncognito))
-            currentOrigin?.let(::add)
-        }.sorted()
-        val origin = selectedOrigin ?: return PermissionRadarSnapshot.Empty.copy(
-            isPrivate = tab.isIncognito,
-            knownOrigins = knownOrigins,
-        )
-        val site = PermissionSiteKey(tab.profileId, origin)
-        val pending = pendingPermissionAccess
-            ?.takeIf { access -> access.identity.tabId == tabId && access.identity.origin == origin }
-            ?.requested
-            .orEmpty()
-        val active = activePermissions.permissions(tabId, site)
-        return PermissionRadarSnapshot(
-            site = site,
-            isPrivate = tab.isIncognito,
-            knownOrigins = knownOrigins,
-            entries = SitePermission.entries.map { permission ->
-                PermissionRadarEntry(
-                    permission = permission,
-                    decision = permissionRepository.decision(site, permission, tab.isIncognito),
-                    allowedForSession = permissionRepository.isAllowedForSession(
-                        site,
-                        permission,
-                        tab.isIncognito,
-                    ),
-                    activity = when (permission) {
-                        in pending -> SitePermissionActivity.Pending
-                        in active -> SitePermissionActivity.Active
-                        else -> SitePermissionActivity.Idle
-                    },
-                )
-            },
-        )
-    }
+    ): PermissionRadarSnapshot = permissionAccess.radarSnapshot(tabId, requestedOrigin)
 
-    fun hasPermissionActivity(tabId: String = selectedTabId): Boolean {
-        permissionRevision
-        return pendingPermissionAccess?.identity?.tabId == tabId || activePermissions.hasTab(tabId)
-    }
+    fun hasPermissionActivity(tabId: String = selectedTabId): Boolean = permissionAccess.hasActivity(tabId)
 
     fun setSitePermissionDecision(
         tabId: String,
         origin: String,
         permission: SitePermission,
         decision: SitePermissionDecision,
-    ): Boolean {
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return false
-        val normalizedOrigin = PermissionOrigin.normalize(origin) ?: return false
-        if (normalizedOrigin != origin) return false
-        val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
-        permissionRepository.setDecision(site, permission, decision, tab.isIncognito)
-        val reloadAfterSync = if (decision == SitePermissionDecision.Allow) emptySet()
-        else revokeSitePermissionAccess(tab, site, permission)
-        if (permission == SitePermission.Notifications) {
-            syncNotificationPermission(tabId, normalizedOrigin, decision, reloadAfterSync)
-        }
-        permissionRevision++
-        if (pendingPermissionAccess?.let { it.site == site && permission in it.requested } == true) {
-            cancelPendingPermissionAccess()
-        }
-        return true
-    }
+    ): Boolean = permissionAccess.setDecision(tabId, origin, permission, decision)
 
-    fun resetSitePermissions(tabId: String, origin: String): Boolean {
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return false
-        val normalizedOrigin = PermissionOrigin.normalize(origin) ?: return false
-        if (normalizedOrigin != origin) return false
-        val site = PermissionSiteKey(tab.profileId, normalizedOrigin)
-        permissionRepository.resetSite(site, tab.isIncognito)
-        val reloadAfterSync = revokeSitePermissionAccess(tab, site, permission = null)
-        syncNotificationPermission(tabId, normalizedOrigin, SitePermissionDecision.Ask, reloadAfterSync)
-        permissionRevision++
-        if (pendingPermissionAccess?.site == site) cancelPendingPermissionAccess(tabId)
-        return true
-    }
+    fun resetSitePermissions(tabId: String, origin: String): Boolean = permissionAccess.resetSite(tabId, origin)
 
-    /** Ends access [site] holds in every tab like [tab]; returns tabs to reload after notification sync. */
-    private fun revokeSitePermissionAccess(
-        tab: BrowserTab,
-        site: PermissionSiteKey,
-        permission: SitePermission?,
-    ): Set<String> {
-        val plan = activePermissions.revocationPlan(site, permission) { id ->
-            tabs.any { other -> other.id == id && other.isIncognito == tab.isIncognito }
-        }
-        plan.tabs.forEach { id ->
-            cancelPendingPermissionAccess(id)
-            removeActivePermissionsForTab(id)
-            clearExternalNavigationAuthorization(id)
-        }
-        plan.reloadNow.forEach(::reloadAfterPermissionChange)
-        return plan.reloadAfterNotificationSync
-    }
+    fun respondToPermissionPrompt(promptId: Long, choice: PermissionPromptChoice) =
+        permissionAccess.respondToPrompt(promptId, choice)
 
-    private fun syncNotificationPermission(
-        tabId: String,
-        origin: String,
-        decision: SitePermissionDecision,
-        reloadAfterSync: Set<String>,
-    ) {
-        val session = browserEngineSessions[tabId]
-            ?: return reloadAfterSync.forEach(::reloadAfterPermissionChange)
-        session.setNotificationPermission(origin, decision) {
-            reloadAfterSync.forEach(::reloadAfterPermissionChange)
-        }
-    }
-
-    private fun reloadAfterPermissionChange(tabId: String) {
-        browserEngineSessions[tabId]?.execute(BrowserEngineCommands.reload())
-    }
-
-    fun respondToPermissionPrompt(promptId: Long, choice: PermissionPromptChoice) {
-        val pending = pendingPermissionAccess?.takeIf { it.promptId == promptId } ?: return
-        if (!isPermissionRequestCurrent(pending.identity)) {
-            cancelPendingPermissionAccess(pending.identity.tabId)
-            return
-        }
-        val prompted = pending.prompted
-        val effectiveChoice = if (
-            SitePermission.Notifications in prompted && choice == PermissionPromptChoice.AllowOnce
-        ) PermissionPromptChoice.AllowAlways else choice
-        when (effectiveChoice) {
-            PermissionPromptChoice.AllowOnce -> permissionRepository.allowOnce(
-                pending.site,
-                prompted,
-                pending.identity.isPrivate,
-            )
-            PermissionPromptChoice.AllowAlways -> prompted.forEach { permission ->
-                permissionRepository.setDecision(
-                    pending.site,
-                    permission,
-                    SitePermissionDecision.Allow,
-                    pending.identity.isPrivate,
-                )
-            }
-            PermissionPromptChoice.Block -> prompted.forEach { permission ->
-                permissionRepository.setDecision(
-                    pending.site,
-                    permission,
-                    SitePermissionDecision.Block,
-                    pending.identity.isPrivate,
-                )
-            }
-        }
-        permissionPrompt = null
-        permissionRevision++
-        val allowed = if (effectiveChoice == PermissionPromptChoice.Block) {
-            pending.allowed
-        } else {
-            pending.allowed + prompted
-        }
-        continuePermissionAccess(pending.copy(allowed = allowed, prompted = emptySet()))
-    }
-
-    fun onPermissionPromptShown(promptId: Long) {
-        val pending = pendingPermissionAccess?.takeIf { it.promptId == promptId } ?: return
-        if (shownPermissionPromptId == promptId) return
-        shownPermissionPromptId = promptId
-        pending.onPromptShown?.let { callback -> runCatching(callback) }
-    }
+    fun onPermissionPromptShown(promptId: Long) = permissionAccess.onPromptShown(promptId)
 
     fun respondToHttpAuthPrompt(promptId: Long, username: String, password: String) {
         val pending = pendingHttpAuthChallenge?.takeIf { it.promptId == promptId } ?: return
@@ -1804,23 +1673,7 @@ class BrowserController(
             )
             return
         }
-        val pending = pendingPermissionAccess?.takeIf(PendingPermissionAccess::awaitingRuntime)
-            ?: return
-        if (!isPermissionRequestCurrent(pending.identity, requireResumed = false)) {
-            cancelPendingPermissionAccess(pending.identity.tabId)
-            return
-        }
-        val granted = PermissionRequestRules.afterRuntimeResult(pending.allowed) { permission ->
-            when (permission) {
-                SitePermission.Location -> permission.runtimePermissions.any { runtimePermission ->
-                    results[runtimePermission] == true || hasRuntimePermission(runtimePermission)
-                }
-                else -> permission.runtimePermissions.all { runtimePermission ->
-                    results[runtimePermission] == true || hasRuntimePermission(runtimePermission)
-                }
-            }
-        }
-        finishPermissionAccess(pending, granted)
+        permissionAccess.onRuntimePermissionResult(results)
     }
 
     fun onFileChooserResult(resultCode: Int, data: Intent?) {
@@ -6549,7 +6402,7 @@ class BrowserController(
         }
         temporaryAlwaysBlockPopupDomains.remove(profileId)
         permissionRepository.removeProfile(profileId)
-        permissionRevision++
+        permissionAccess.touch()
         val movedTabs = GeckoProfileStorageRules.movedTabs(
             tabs = tabs,
             sourceProfileId = profileId,
@@ -9816,7 +9669,7 @@ class BrowserController(
         dismissClosedTabUndo()
         if (browsingDataClearPending) return
         browsingDataClearPending = true
-        cancelPendingPermissionAccess()
+        permissionAccess.cancelPending()
         cancelPendingHttpAuthChallenge()
         cancelPendingFileChooser()
         cancelPendingWebPrompt()
@@ -9853,9 +9706,9 @@ class BrowserController(
     }
 
     private fun finishClearingBrowsingData() {
-        activePermissions.clear()
+        permissionAccess.clearActive()
         permissionRepository.clearAll()
-        permissionRevision++
+        permissionAccess.touch()
         tabs.forEach { tab -> updateProtectionRequestContext(tab.id, pageUrls[tab.id] ?: tab.url) }
         mainHandler.removeCallbacks(blockerCountFlush)
         synchronized(privacyEventLock) {
@@ -10109,13 +9962,13 @@ class BrowserController(
         if (shouldCloseTabsWhenHidden && !keepsPictureInPictureMedia) {
             closeTabsOnBackground(protectedTabIds = protectedTabIds + setOfNotNull(playingTabId))
         }
-        if (pendingPermissionAccess?.awaitingRuntime != true) cancelPendingPermissionAccess()
+        permissionAccess.cancelPendingUnlessAwaitingRuntime()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
         pendingGeckoAndroidPermissionRequest = null
         cancelPendingHttpAuthChallenge()
         cancelPendingWebPrompt()
-        activePermissions.clear()
-        permissionRevision++
+        permissionAccess.clearActive()
+        permissionAccess.touch()
         browserEngineSessions.forEach(::persistBrowserEngineSessionState)
     }
 
@@ -10223,7 +10076,7 @@ class BrowserController(
         captchaCompatibilityOfferKeys.clear()
         pageTranslationRecoveryOffer = null
         pageTranslationAttempts.clear()
-        cancelPendingPermissionAccess()
+        permissionAccess.cancelPending()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
         pendingGeckoAndroidPermissionRequest = null
         cancelPendingHttpAuthChallenge()
@@ -10237,7 +10090,7 @@ class BrowserController(
         profileWallpaperExecutor.shutdownNow()
         historyMutationExecutor.shutdown()
         favoriteMutationExecutor.shutdown()
-        activePermissions.clear()
+        permissionAccess.clearActive()
         permissionRepository.clearPrivateSession()
         mainHandler.removeCallbacks(blockerCountFlush)
         synchronized(privacyEventLock) {
@@ -10912,7 +10765,7 @@ class BrowserController(
             grant = { allowed -> request.response.complete(request.permission in allowed) },
             deny = { request.response.complete(false) },
         )
-        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
+        request.cancellation.onCanceled { permissionAccess.dropCanceled(request.response) }
     }
 
     private fun onGeckoMediaPermissionRequest(
@@ -10929,7 +10782,7 @@ class BrowserController(
             grant = request.response::complete,
             deny = { request.response.complete(emptySet()) },
         )
-        request.cancellation.onCanceled { dropCanceledPermissionAccess(request.response) }
+        request.cancellation.onCanceled { permissionAccess.dropCanceled(request.response) }
     }
 
     private fun beginGeckoPermissionAccess(
@@ -10942,12 +10795,12 @@ class BrowserController(
         grant: (Set<SitePermission>) -> Unit,
         deny: () -> Unit,
     ) {
-        if (pendingPermissionAccess != null) {
+        if (permissionAccess.isBusy) {
             deny()
             return
         }
         val normalizedOrigin = PermissionRequestRules.siteOrigin(origin, pageUrls[tabId] ?: tabs.firstOrNull { it.id == tabId }?.url)
-        val identity = permissionRequestIdentity(tabId, normalizedOrigin)
+        val identity = permissionAccess.requestIdentity(tabId, normalizedOrigin)
         if (
             identity == null ||
             !isGeckoRendererCurrent(
@@ -10956,16 +10809,15 @@ class BrowserController(
                 navigationGeneration = identity.navigationGeneration,
                 requireSelected = true,
             ) ||
-            !isPermissionRequestCurrent(identity)
+            !permissionAccess.isRequestCurrent(identity)
         ) {
             deny()
             return
         }
-        beginPermissionAccess(
+        permissionAccess.begin(
             identity = identity,
             site = PermissionSiteKey(identity.profileId, identity.origin),
             requested = requested,
-            kind = PendingPermissionKind.Gecko,
             requestToken = requestToken,
             onPromptShown = onPromptShown,
             grant = grant,
@@ -12638,7 +12490,7 @@ class BrowserController(
         splitView.companionTabId?.let(::add)
         geckoMediaPresentation?.tabId?.let(::add)
         pictureInPictureOwnerTabId?.let(::add)
-        pendingPermissionAccess?.identity?.tabId?.let(::add)
+        permissionAccess.pendingTabId?.let(::add)
         pendingHttpAuthChallenge?.tabId?.let(::add)
         pendingFileChooser?.identity?.tabId?.let(::add)
         addAll(pendingGeckoPreviewCaptures.keys)
@@ -12812,135 +12664,6 @@ class BrowserController(
         tabs.firstOrNull { it.id == tabId }?.isIncognito
     }
 
-    private fun beginPermissionAccess(
-        identity: PermissionRequestIdentity,
-        site: PermissionSiteKey,
-        requested: Set<SitePermission>,
-        kind: PendingPermissionKind,
-        requestToken: Any,
-        onPromptShown: (() -> Unit)? = null,
-        grant: (Set<SitePermission>) -> Unit,
-        deny: () -> Unit,
-    ) {
-        val matrix = PermissionRequestRules.decisions(
-            permissions = requested,
-            decisionFor = { permission ->
-                permissionRepository.decision(site, permission, identity.isPrivate)
-            },
-            allowedForSession = { permission ->
-                permissionRepository.isAllowedForSession(site, permission, identity.isPrivate)
-            },
-        )
-        val promptId = if (matrix.pending.isEmpty()) null else ++permissionPromptSequence
-        val pending = PendingPermissionAccess(
-            identity = identity,
-            site = site,
-            requested = requested,
-            allowed = matrix.allowed,
-            prompted = matrix.pending,
-            kind = kind,
-            requestToken = requestToken,
-            onPromptShown = onPromptShown,
-            promptId = promptId,
-            awaitingRuntime = false,
-            delivery = PermissionResponseDelivery(grant, deny),
-        )
-        pendingPermissionAccess = pending
-        permissionRevision++
-        if (promptId != null) {
-            permissionPrompt = PermissionPrompt(
-                id = promptId,
-                tabId = identity.tabId,
-                site = site,
-                permissions = matrix.pending,
-                isPrivate = identity.isPrivate,
-            )
-        } else {
-            continuePermissionAccess(pending)
-        }
-    }
-
-    private fun continuePermissionAccess(pending: PendingPermissionAccess) {
-        if (!isPermissionRequestCurrent(
-                pending.identity,
-                requireResumed = !pending.awaitingRuntime,
-            )
-        ) {
-            cancelPendingPermissionAccess(pending.identity.tabId)
-            return
-        }
-        pendingPermissionAccess = pending
-        val missingRuntimePermissions = pending.allowed.flatMapTo(linkedSetOf()) { permission ->
-            if (hasRuntimePermissionFor(permission)) emptySet()
-            else permission.runtimePermissions.filterNot(::hasRuntimePermission)
-        }
-        if (missingRuntimePermissions.isEmpty()) {
-            finishPermissionAccess(pending, pending.allowed)
-            return
-        }
-        pendingPermissionAccess = pending.copy(awaitingRuntime = true)
-        permissionRevision++
-        runCatching { requestRuntimePermissions(missingRuntimePermissions) }
-            .onFailure { cancelPendingPermissionAccess(pending.identity.tabId) }
-    }
-
-    private fun finishPermissionAccess(
-        pending: PendingPermissionAccess,
-        granted: Set<SitePermission>,
-    ) {
-        if (pendingPermissionAccess?.requestToken !== pending.requestToken) return
-        if (!isPermissionRequestCurrent(
-                pending.identity,
-                requireResumed = !pending.awaitingRuntime,
-            )
-        ) {
-            cancelPendingPermissionAccess(pending.identity.tabId)
-            return
-        }
-        pendingPermissionAccess = null
-        permissionPrompt = null
-        if (
-            SitePermission.Notifications in pending.allowed &&
-            SitePermission.Notifications !in granted
-        ) {
-            permissionRepository.setDecision(
-                pending.site,
-                SitePermission.Notifications,
-                SitePermissionDecision.Block,
-                pending.identity.isPrivate,
-            )
-            browserEngineSessions[pending.identity.tabId]?.setNotificationPermission(
-                pending.site.origin,
-                SitePermissionDecision.Block,
-            )
-        }
-        if (granted.isEmpty()) {
-            runCatching { pending.delivery.deny() }
-        } else {
-            runCatching { pending.delivery.grant(granted) }
-                .onSuccess {
-                    activePermissions.record(pending.requestToken, ActivePermissionGrant(
-                        tabId = pending.identity.tabId,
-                        site = pending.site,
-                        permissions = granted,
-                    ))
-                }
-                .onFailure { activePermissions.drop(pending.requestToken) }
-        }
-        permissionRevision++
-        scheduleResidentSessionTrim()
-    }
-
-    private fun cancelPendingPermissionAccess(tabId: String? = null) {
-        val pending = pendingPermissionAccess ?: return
-        if (tabId != null && pending.identity.tabId != tabId) return
-        pendingPermissionAccess = null
-        permissionPrompt = null
-        runCatching { pending.delivery.deny() }
-        permissionRevision++
-        scheduleResidentSessionTrim()
-    }
-
     private fun cancelPendingHttpAuthChallenge(
         tabId: String? = null,
     ) {
@@ -12979,18 +12702,8 @@ class BrowserController(
             browserEngineSessions[pending.tabId] === pending.session &&
             navigationGenerations[pending.tabId] == pending.navigationGeneration
 
-    private fun dropCanceledPermissionAccess(requestToken: Any) {
-        val pending = pendingPermissionAccess ?: return
-        if (pending.requestToken !== requestToken) return
-        pendingPermissionAccess = null
-        permissionPrompt = null
-        pending.delivery.drop()
-        permissionRevision++
-        scheduleResidentSessionTrim()
-    }
-
     private fun clearPermissionActivity(tabId: String) {
-        cancelPendingPermissionAccess(tabId)
+        permissionAccess.cancelPending(tabId)
         pendingGeckoAndroidPermissionRequest
             ?.takeIf { pending -> pending.tabId == tabId }
             ?.let { pending ->
@@ -13000,70 +12713,13 @@ class BrowserController(
         cancelPendingFileChooser(tabId)
         cancelPendingHttpAuthChallenge(tabId)
         cancelPendingWebPrompt(tabId)
-        removeActivePermissionsForTab(tabId)
-    }
-
-    private fun removeActivePermissionsForTab(tabId: String) {
-        val removed = activePermissions.dropTab(tabId)
-        if (removed) {
-            permissionRevision++
-            scheduleResidentSessionTrim()
-        }
-    }
-
-    private fun permissionRequestIdentity(
-        tabId: String,
-        normalizedOrigin: String?,
-    ): PermissionRequestIdentity? {
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return null
-        val origin = normalizedOrigin ?: return null
-        val generation = navigationGenerations[tabId] ?: return null
-        return PermissionRequestIdentity(
-            tabId = tabId,
-            profileId = tab.profileId,
-            origin = origin,
-            navigationGeneration = generation,
-            isPrivate = tab.isIncognito,
-        )
-    }
-
-    private fun isPermissionRequestCurrent(
-        identity: PermissionRequestIdentity,
-        requireResumed: Boolean = true,
-    ): Boolean {
-        val tab = tabs.firstOrNull { it.id == identity.tabId }
-        val currentOrigin = PermissionOrigin.normalize(
-            pageUrls[identity.tabId] ?: tab?.url,
-        )
-        return PermissionRequestRules.isCurrent(
-            identity,
-            PermissionRequestState(
-                tabId = identity.tabId,
-                profileId = tab?.profileId.orEmpty(),
-                topLevelOrigin = currentOrigin,
-                navigationGeneration = navigationGenerations[identity.tabId],
-                isPrivate = tab?.isIncognito ?: false,
-                isSelected = selectedTabId == identity.tabId,
-                isActivityResumed = if (requireResumed) {
-                    isActivityResumed && !destroyed
-                } else {
-                    isActivityStarted && !destroyed
-                },
-                tabExists = tab != null &&
-                    (browserEngineSessions[identity.tabId] != null),
-            ),
-        )
+        permissionAccess.removeActiveForTab(tabId)
     }
 
     private fun hasRuntimePermission(permission: String): Boolean =
         permission == Manifest.permission.POST_NOTIFICATIONS &&
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
-
-    private fun hasRuntimePermissionFor(permission: SitePermission): Boolean = when (permission) {
-        SitePermission.Location -> permission.runtimePermissions.any(::hasRuntimePermission)
-        else -> permission.runtimePermissions.all(::hasRuntimePermission)
-    }
 
     private fun isSafeFileChooserResult(uri: Uri, acceptTypes: Array<String>): Boolean {
         val authority = uri.authority?.lowercase() ?: return false
@@ -15105,7 +14761,7 @@ class BrowserController(
         temporaryDesktopViewDomains.clear()
         temporaryAlwaysBlockPopupDomains.clear()
         permissionRepository.clearPrivateSession()
-        permissionRevision++
+        permissionAccess.touch()
         if (ephemeralRuleIds.isNotEmpty()) {
             filterRules.removeAll { it.id in ephemeralRuleIds }
             ephemeralRuleIds.clear()
@@ -15274,20 +14930,6 @@ class BrowserController(
         const val FILE_CHOOSER_REQUEST_CODE = 7_042
     }
 
-    private data class PendingPermissionAccess(
-        val identity: PermissionRequestIdentity,
-        val site: PermissionSiteKey,
-        val requested: Set<SitePermission>,
-        val allowed: Set<SitePermission>,
-        val prompted: Set<SitePermission>,
-        val kind: PendingPermissionKind,
-        val requestToken: Any,
-        val onPromptShown: (() -> Unit)?,
-        val promptId: Long?,
-        val awaitingRuntime: Boolean,
-        val delivery: PermissionResponseDelivery,
-    )
-
     private data class PendingHttpAuthChallenge(
         val promptId: Long,
         val tabId: String,
@@ -15312,11 +14954,6 @@ class BrowserController(
         val response: BrowserEngineWebPromptResponse,
     )
 
-    private enum class PendingPermissionKind {
-        WebResource,
-        Geolocation,
-        Gecko,
-    }
 
     private data class PendingFileChooser(
         val identity: FileChooserIdentity,
