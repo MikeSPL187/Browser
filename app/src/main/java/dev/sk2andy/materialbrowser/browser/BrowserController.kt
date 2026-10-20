@@ -92,11 +92,10 @@ import dev.sk2andy.materialbrowser.capsule.SiteCapsuleDraft
 import dev.sk2andy.materialbrowser.capsule.SiteCapsuleRules
 import dev.sk2andy.materialbrowser.browser.actions.BrowserDownloadManager
 import dev.sk2andy.materialbrowser.browser.actions.DownloadActionResult
-import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadLaunchResult
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManager
 import dev.sk2andy.materialbrowser.browser.actions.ExternalDownloadManagerApp
-import dev.sk2andy.materialbrowser.browser.actions.DownloadChoiceQueue
 import dev.sk2andy.materialbrowser.browser.actions.PendingDownloadChoice
+import dev.sk2andy.materialbrowser.browser.downloads.DownloadRouter
 import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyGate
 import dev.sk2andy.materialbrowser.browser.actions.WebContentActionState
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
@@ -232,7 +231,6 @@ import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.HistoryRecordingMode
 import dev.sk2andy.materialbrowser.data.InactiveTabLifetime
-import dev.sk2andy.materialbrowser.data.DownloadManagerMode
 import dev.sk2andy.materialbrowser.data.DownloadRuntimeRegistry
 import dev.sk2andy.materialbrowser.data.PermissionRadarStore
 import dev.sk2andy.materialbrowser.data.PendingCandyTrailRedaction
@@ -413,7 +411,8 @@ class BrowserController(
     internal var firefoxExtensionPopupView by mutableStateOf<View?>(null)
         private set
     internal var firefoxExtensionPopupIdentity: GeckoExtensionPopupIdentity? = null
-    val externalDownloadManagers = mutableStateListOf<ExternalDownloadManagerApp>()
+    val externalDownloadManagers: List<ExternalDownloadManagerApp>
+        get() = downloadRouter.managers
     var activeProfileWallpaperBitmap by mutableStateOf<Bitmap?>(null)
         private set
     var activeProfileTabSwitcherWallpaperBitmap by mutableStateOf<Bitmap?>(null)
@@ -567,9 +566,8 @@ class BrowserController(
         BrowserInputDiagnostics.isSessionEnabled,
     )
         private set
-    private val downloadChoices = DownloadChoiceQueue()
-    val pendingDownloadChoice: PendingDownloadChoice? get() = downloadChoices.pending
-    val downloadSafety = DownloadSafetyGate()
+    val pendingDownloadChoice: PendingDownloadChoice? get() = downloadRouter.choices.pending
+    val downloadSafety: DownloadSafetyGate get() = downloadRouter.safety
     var isDefaultBrowser by mutableStateOf(false)
         private set
     var isOnline by mutableStateOf(true)
@@ -1439,6 +1437,19 @@ class BrowserController(
     private val bundledSitePrivacyDefaults = BundledSitePrivacyDefaults.load(activity)
     private val downloadManager = BrowserDownloadManager(activity)
     private val externalDownloadManager = ExternalDownloadManager(activity)
+    private val downloadRouter = DownloadRouter(
+        host = object : DownloadRouter.Host {
+            override val settings: BrowserDownloadSettings get() = downloadSettings
+            override fun isIncognito(tabId: String): Boolean = tabs.any { it.id == tabId && it.isIncognito }
+            override fun requestNotificationPermission() = requestDownloadNotificationPermission()
+            override fun report(result: DownloadActionResult) = showDownloadResult(result)
+        },
+        enqueueBuiltIn = downloadManager::enqueue,
+        launchExternal = externalDownloadManager::launch,
+        discover = { request ->
+            externalDownloadDiscoveryForTesting?.invoke(request) ?: externalDownloadManager.discover(request)
+        },
+    )
 
     @VisibleForTesting
     internal var externalDownloadDiscoveryForTesting: ((BrowserDownloadRequest?) -> List<ExternalDownloadManagerApp>)? = null
@@ -2232,7 +2243,7 @@ class BrowserController(
             appearanceSettings.webContentFontSizePercent / 100f,
         )
         downloadSettings = store.loadDownloadSettings()
-        refreshExternalDownloadManagers()
+        downloadRouter.refreshManagers()
         store.clearLegacyWebContentEdgeToEdgePreference()
         profilesEnabled = store.loadProfilesEnabled()
         isDefaultBrowser = DefaultBrowserRole.isHeld(activity)
@@ -4172,7 +4183,7 @@ class BrowserController(
             currentExternalLinkPreviewGeckoRuntime(runtime.sessionId, runtime.generation, session) === runtime &&
                 runtime.downloadNavigationRevision == navigationRevision
         }
-        routeDownload(
+        downloadRouter.route(
             request = request,
             tabId = runtime.policyTab.id,
             builtInDownload = {
@@ -6568,7 +6579,7 @@ class BrowserController(
             DownloadActionResult.Failed(activity.getString(R.string.error_download_start_failed)),
         )
         contentActions.dismiss()
-        val result = routeDownload(
+        val result = downloadRouter.route(
             request = request,
             tabId = tabId,
             builtInDownload = {
@@ -6630,35 +6641,9 @@ class BrowserController(
         return null
     }
 
-    fun confirmDownloadChoice(managerId: String?) {
-        val choice = downloadChoices.take() ?: return
-        if (choice.isSourceCurrent?.invoke() == false) {
-            choice.releaseResponse?.invoke()
-            return
-        }
-        val builtInDownload = choice.builtInDownload ?: { downloadManager.enqueue(choice.request) }
-        val result = if (managerId == null) {
-            builtInDownload()
-        } else {
-            val app = choice.apps.firstOrNull { it.id == managerId }
-            if (app == null) {
-                builtInDownload()
-            } else {
-                launchExternallyOrFallback(
-                    choice.request,
-                    app,
-                    choice.isIncognito,
-                    builtInDownload,
-                    choice.releaseResponse,
-                )
-            }
-        }
-        result?.let(::showDownloadResult)
-    }
+    fun confirmDownloadChoice(managerId: String?) = downloadRouter.confirmChoice(managerId)
 
-    fun dismissDownloadChoice() {
-        downloadChoices.take()?.releaseResponse?.invoke()
-    }
+    fun dismissDownloadChoice() = downloadRouter.dismissChoice()
 
     fun openContextLinkInBackground() {
         val url = contentActions.target?.openLinkInBackgroundAction()?.url ?: return
@@ -9873,7 +9858,7 @@ class BrowserController(
             cancelPictureInPictureTransition()
         }
         isDefaultBrowser = DefaultBrowserRole.isHeld(activity)
-        refreshExternalDownloadManagers()
+        downloadRouter.refreshManagers()
         val nowMillis = System.currentTimeMillis()
         restoreDueSnoozedTabs(nowMillis)
         pruneStaleTabs(nowMillis, persistChanges = false)
@@ -10028,8 +10013,7 @@ class BrowserController(
             }
         }
         addressBar.cancelAutoDockProbe()
-        downloadChoices.releaseAll()
-        downloadSafety.cancelAll()
+        downloadRouter.close()
         dismissClosedTabUndo()
         connectivityMonitor.close()
         if (!BuildConfig.SYSTEM_WEBVIEW_ONLY && usesGeckoEngine) {
@@ -10633,7 +10617,7 @@ class BrowserController(
             if (!downloadSafety.hold(local.fileName, sourceHost, local.findings, save, response::close)) start()
             return
         }
-        routeDownload(
+        downloadRouter.route(
             request = request,
             tabId = tabId,
             builtInDownload = {
@@ -12953,104 +12937,6 @@ class BrowserController(
         }
         return true
     }
-
-    private fun routeDownload(
-        request: BrowserDownloadRequest,
-        tabId: String,
-        builtInDownload: () -> DownloadActionResult? = { downloadManager.enqueue(request) },
-        releaseResponse: (() -> Unit)? = null,
-        isSourceCurrent: (() -> Boolean)? = null,
-        safetyChecked: Boolean = false,
-    ): DownloadActionResult? {
-        if (!safetyChecked && downloadSafety.hold(
-                request = request,
-                save = {
-                    routeDownload(
-                        request, tabId, builtInDownload, releaseResponse, isSourceCurrent,
-                        safetyChecked = true,
-                    )?.let(::showDownloadResult)
-                },
-                cancel = { releaseResponse?.invoke() },
-            )
-        ) return null
-        // The sheet may have waited while the page moved on: nothing from it goes to any manager.
-        if (safetyChecked && isSourceCurrent?.invoke() == false) {
-            releaseResponse?.invoke()
-            return null
-        }
-        val startBuiltInDownload = {
-            runCatching(requestDownloadNotificationPermission)
-            builtInDownload()
-        }
-        return when (DownloadManagerMode.forSource(downloadSettings.managerMode, tabs.any { it.id == tabId && it.isIncognito })) {
-            DownloadManagerMode.BuiltIn -> startBuiltInDownload()
-            DownloadManagerMode.AskEveryTime -> {
-                val apps = discoverExternalDownloadManagers(request)
-                if (apps.isEmpty()) {
-                    startBuiltInDownload()
-                } else {
-                    downloadChoices.enqueue(
-                        PendingDownloadChoice(
-                            request = request,
-                            apps = apps,
-                            isIncognito = tabs.firstOrNull { it.id == tabId }?.isIncognito == true,
-                            builtInDownload = startBuiltInDownload,
-                            releaseResponse = releaseResponse,
-                            isSourceCurrent = isSourceCurrent,
-                        ),
-                    )
-                    null
-                }
-            }
-            DownloadManagerMode.External -> {
-                val app = discoverExternalDownloadManagers(request).firstOrNull {
-                    it.id == downloadSettings.externalManagerId
-                }
-                if (app == null) {
-                    startBuiltInDownload()
-                } else {
-                    launchExternallyOrFallback(
-                        request = request,
-                        app = app,
-                        isIncognito = tabs.firstOrNull { it.id == tabId }?.isIncognito == true,
-                        builtInDownload = startBuiltInDownload,
-                        releaseResponse = releaseResponse,
-                    )
-                }
-            }
-        }
-    }
-
-    private fun launchExternallyOrFallback(
-        request: BrowserDownloadRequest,
-        app: ExternalDownloadManagerApp,
-        isIncognito: Boolean,
-        builtInDownload: () -> DownloadActionResult? = { downloadManager.enqueue(request) },
-        releaseResponse: (() -> Unit)? = null,
-    ): DownloadActionResult? = when (
-        val result = externalDownloadManager.launch(
-            request = request,
-            app = app,
-            settings = downloadSettings,
-            allowSessionData = !isIncognito,
-        )
-    ) {
-        is ExternalDownloadLaunchResult.Launched -> {
-            releaseResponse?.invoke()
-            DownloadActionResult.HandedOff(fileName = request.fileName, appName = result.appName)
-        }
-        ExternalDownloadLaunchResult.Unavailable -> builtInDownload()
-    }
-
-    private fun refreshExternalDownloadManagers() {
-        val discovered = discoverExternalDownloadManagers(null)
-        if (externalDownloadManagers == discovered) return
-        externalDownloadManagers.clear()
-        externalDownloadManagers += discovered
-    }
-
-    private fun discoverExternalDownloadManagers(request: BrowserDownloadRequest?): List<ExternalDownloadManagerApp> =
-        externalDownloadDiscoveryForTesting?.invoke(request) ?: externalDownloadManager.discover(request)
 
     private fun showDownloadResult(result: DownloadActionResult) {
         contentActions.reportDownload(result)
