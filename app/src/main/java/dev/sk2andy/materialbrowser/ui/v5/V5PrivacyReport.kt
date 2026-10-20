@@ -52,6 +52,7 @@ object V5PrivacyReportTestTags {
     const val BusiestSite = "v5_report_busiest_site"
     const val HideCard = "v5_report_hide_card"
     const val Clear = "v5_report_clear"
+    const val ClearConfirm = "v5_report_clear_confirm"
 }
 
 /**
@@ -123,6 +124,7 @@ fun V5PrivacyReport(
                         confirmClear = false
                         onClear()
                     },
+                    testTag = V5PrivacyReportTestTags.ClearConfirm,
                 ),
             ),
             onDismiss = { confirmClear = false },
