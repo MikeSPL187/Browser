@@ -31,7 +31,7 @@
 | N-02 | Средний | решение | N-02 | История ограничена 250 записями | `data/BrowsingLibrary.kt` | — | в работе, PR #497 |
 | N-03 | Средний | дефект | N-03 | Семейство V-02: чтение «всё или ничего» (кроме вкладок) | `BrowserSessionStore.kt`, `data/HistoryJsonCodec.kt`, `data/SnoozedTabStore.kt` | — | исправлено, PR #459 |
 | N-04 | Средний | дефект | N-04 | Обход экранов не покрывает большую часть v5 | `AppScreenWalkInstrumentedTest.kt` | — | открыто |
-| N-05 | Средний | дефект | N-05 | Цепочка поставок | `gradle/verification-metadata.xml` | — | открыто |
+| N-05 | Средний | дефект | N-05 | Цепочка поставок | `gradle/verification-metadata.xml` | — | в работе, PR #498 |
 | N-06 | Средний | дефект | N-06 | Связность и размер ядра | `BrowserController.kt`, `size-baseline.json` | — | отклонено: не правка одного PR — отдельная задача #500 (план: планшет v5 → удаление v4 → порты подсистем с понижением предела `size` → `browser/gecko` в `src/full`) |
 | N-13 | Средний | дефект | N-13 | CI не проверял сервер и расширение синхронизации (найдено и исправлено при доработке) | `sync/extension/tests/build.test.mjs`, `.github/workflows/sync.yml` | — | исправлено: sync.yml и тест иконок (PR #456) |
 | N-16 | Средний | дефект | N-16 | `govulncheck@v1.1.4` падает на Go 1.27.1 — `Server (Go)` красный | `.github/workflows/sync.yml` | — | исправлено, PR #457 |
