@@ -1,64 +1,26 @@
-package dev.sk2andy.materialbrowser.browser.engine
+package dev.sk2andy.materialbrowser.browser.gecko
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionInstallFailureRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManager
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionMutationResult
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionOptionsTarget
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionReadResult
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRepository
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRuntime
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-
-internal enum class GeckoExtensionManagerMessage {
-    InvalidSignedXpi,
-    InstallNetworkFailure,
-    InstallIncorrectHash,
-    InstallCorruptFile,
-    InstallFileAccess,
-    InstallUnsigned,
-    InstallUnexpectedType,
-    InstallUnexpectedVersion,
-    InstallIncorrectId,
-    InstallInvalidDomain,
-    InstallBlocklisted,
-    InstallIncompatible,
-    InstallUnsupportedType,
-    InstallAdminOnly,
-    InstallSoftBlocked,
-    InstallCancelled,
-    InstallPostponed,
-    ActionRejected,
-    ActionFailed,
-}
-
-internal data class GeckoExtensionManagerState(
-    val snapshot: GeckoExtensionSnapshot = GeckoExtensionSnapshot(emptyList()),
-    val managementContext: GeckoExtensionManagementContext =
-        GeckoExtensionManagementContext(profileId = DEFAULT_PROFILE_ID, isPrivate = false),
-    val busy: Boolean = false,
-    val message: GeckoExtensionManagerMessage? = null,
-    val permissionRequest: GeckoExtensionPermissionRequest? = null,
-) {
-    val canManage: Boolean
-        get() = !busy && !managementContext.isPrivate
-
-    private companion object {
-        const val DEFAULT_PROFILE_ID = "default"
-    }
-}
 
 /**
  * Activity-scoped state owner for the process-wide Gecko extension runtime.
@@ -71,17 +33,17 @@ internal class GeckoExtensionManagerCoordinator(
     private val scope: CoroutineScope,
     private val onPageRuntimeChanged: () -> Unit = {},
     private val onOpenOptionsPage: (GeckoExtensionOptionsTarget) -> Boolean = { false },
-) {
+) : GeckoExtensionManager {
     private val repository = GeckoExtensionRepository(runtime, ::requestPermission)
     private val extensionRuntime = runtime
     private var permissionDecision: CompletableDeferred<GeckoExtensionPermissionDecision>? = null
     private var visible = false
     private var stateGeneration = 0L
 
-    var state by mutableStateOf(GeckoExtensionManagerState())
+    override var state by mutableStateOf(GeckoExtensionManagerState())
         private set
 
-    fun open(context: GeckoExtensionManagementContext): Job? {
+    override fun open(context: GeckoExtensionManagementContext): Job? {
         visible = false
         stateGeneration++
         denyPendingPermission()
@@ -97,9 +59,9 @@ internal class GeckoExtensionManagerCoordinator(
         return refresh()
     }
 
-    fun openOptionsPage(
+    override fun openOptionsPage(
         extensionId: String,
-        onOpened: () -> Unit = {},
+        onOpened: () -> Unit,
     ): Job? {
         if (
             !visible ||
@@ -156,11 +118,11 @@ internal class GeckoExtensionManagerCoordinator(
         }
     }
 
-    fun install(rawUri: String): Job? = mutate {
+    override fun install(rawUri: String): Job? = mutate {
         repository.installSignedXpi(rawUri, state.managementContext)
     }
 
-    fun setEnabled(extension: GeckoExtension, enabled: Boolean): Job? = mutate {
+    override fun setEnabled(extension: GeckoExtension, enabled: Boolean): Job? = mutate {
         if (enabled) {
             repository.enable(extension.id, state.managementContext)
         } else {
@@ -168,21 +130,21 @@ internal class GeckoExtensionManagerCoordinator(
         }
     }
 
-    fun setAllowedInPrivateBrowsing(extension: GeckoExtension, allowed: Boolean): Job? = mutate(
+    override fun setAllowedInPrivateBrowsing(extension: GeckoExtension, allowed: Boolean): Job? = mutate(
         reloadSelectedPage = false,
     ) {
         repository.setAllowedInPrivateBrowsing(extension.id, allowed, state.managementContext)
     }
 
-    fun update(extension: GeckoExtension): Job? = mutate {
+    override fun update(extension: GeckoExtension): Job? = mutate {
         repository.update(extension.id, state.managementContext)
     }
 
-    fun uninstall(extension: GeckoExtension): Job? = mutate {
+    override fun uninstall(extension: GeckoExtension): Job? = mutate {
         repository.uninstall(extension.id, state.managementContext)
     }
 
-    fun completePermissionRequest(granted: Boolean, allowPrivate: Boolean) {
+    override fun completePermissionRequest(granted: Boolean, allowPrivate: Boolean) {
         val deferred = permissionDecision ?: return
         deferred.complete(
             GeckoExtensionPermissionDecision(
@@ -194,14 +156,14 @@ internal class GeckoExtensionManagerCoordinator(
         state = state.copy(permissionRequest = null)
     }
 
-    fun dismiss() {
+    override fun dismiss() {
         visible = false
         stateGeneration++
         denyPendingPermission()
         state = state.copy(busy = false, permissionRequest = null)
     }
 
-    fun close() {
+    override fun close() {
         dismiss()
         extensionRuntime.setPermissionPrompt { GeckoExtensionPermissionDecision.Denied }
         extensionRuntime.setChangeListener { }

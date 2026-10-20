@@ -69,9 +69,7 @@ import dev.sk2andy.materialbrowser.browser.allowsHardwareInput
 import dev.sk2andy.materialbrowser.browser.cast.CastSessionController
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
-import dev.sk2andy.materialbrowser.browser.engine.GeckoActivityIntegration
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
-import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerCoordinator
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineProcessRestart
 import dev.sk2andy.materialbrowser.browser.integration.CandySearchWidgetRules
 import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract
@@ -125,6 +123,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import dev.sk2andy.materialbrowser.browser.engine.engineFlavor
+import dev.sk2andy.materialbrowser.browser.engine.EngineActivityIntegration
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var browserController: BrowserController
@@ -134,7 +135,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pictureInPictureController: MainActivityPictureInPictureController
     private lateinit var userScriptImporter: UserScriptImporter
     private lateinit var launcherShortcutIntentHandler: LauncherShortcutIntentHandler
-    private var geckoActivityIntegration: GeckoActivityIntegration? = null
+    private var geckoActivityIntegration: EngineActivityIntegration? = null
     private lateinit var profileBiometricAuthenticator: ProfileBiometricAuthenticator
     private val profileProcessLifecycleObserver = object : DefaultLifecycleObserver {
         override fun onStart(owner: LifecycleOwner) {
@@ -162,7 +163,7 @@ class MainActivity : AppCompatActivity() {
     private var appDataExportWarningVisible by mutableStateOf(false)
     private var pendingAppDataImport by mutableStateOf<AppDataImportPreview?>(null)
     private var firefoxExtensionsVisible by mutableStateOf(false)
-    private var firefoxExtensionManager: GeckoExtensionManagerCoordinator? = null
+    private var firefoxExtensionManager: GeckoExtensionManager? = null
     private var appDataImportLoading = false
     private var appDataTransferActive = false
     private val consumedHardwareShortcutKeys = mutableSetOf<Int>()
@@ -332,7 +333,7 @@ class MainActivity : AppCompatActivity() {
             !BuildConfig.SYSTEM_WEBVIEW_ONLY &&
             browserEngineKind == AndroidBrowserEngineKind.GeckoView
         ) {
-            geckoActivityIntegration = GeckoActivityIntegration(
+            geckoActivityIntegration = engineFlavor.createActivityIntegration(
                 context = applicationContext,
                 launch = { pendingIntent ->
                     geckoWebAuthnLauncher.launch(IntentSenderRequest.Builder(pendingIntent).build())
@@ -1200,12 +1201,12 @@ class MainActivity : AppCompatActivity() {
         if (BuildConfig.SYSTEM_WEBVIEW_ONLY) return
         if (!::browserController.isInitialized) return
         val selectedTab = browserController.selectedTab
-        val manager = firefoxExtensionManager ?: GeckoExtensionManagerCoordinator.create(
+        val manager = firefoxExtensionManager ?: engineFlavor.createExtensionManager(
             context = applicationContext,
             scope = lifecycleScope,
             onPageRuntimeChanged = browserController::reloadSelectedPageAfterExtensionChange,
             onOpenOptionsPage = browserController::openSelectedFirefoxExtensionOptionsPage,
-        ).also { created -> firefoxExtensionManager = created }
+        )?.also { created -> firefoxExtensionManager = created } ?: return
         manager.open(
             GeckoExtensionManagementContext(
                 profileId = selectedTab.profileId,
