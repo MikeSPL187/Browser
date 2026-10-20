@@ -38,10 +38,23 @@ private val NoActions = V5PageMenuActions(
 )
 
 @Composable
-private fun MenuPreview(state: V5PageMenuState) {
+private fun MenuPreview(state: V5PageMenuState, page: V5PageMenuPage = V5PageMenuPage.Main) {
     Box(Modifier.fillMaxSize().background(V5Theme.colors.background)) {
-        V5PageMenu(visible = true, state = state, actions = NoActions, onDismiss = {})
+        V5PageMenu(visible = true, state = state, actions = NoActions, onDismiss = {}, initialPage = page)
     }
+}
+
+/** PM-05: the rarer actions on «More». */
+@Preview(name = "Page menu · more, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuMoreLightPreview() {
+    VolaV5Theme(dark = false) { MenuPreview(PageState, V5PageMenuPage.More) }
+}
+
+@Preview(name = "Page menu · more, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuMoreDarkPreview() {
+    VolaV5Theme(dark = true) { MenuPreview(PageState, V5PageMenuPage.More) }
 }
 
 @Preview(name = "Page menu · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

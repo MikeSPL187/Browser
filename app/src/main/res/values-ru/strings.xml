@@ -2181,6 +2181,7 @@
     <string name="v5_glance_private">Открыть в частной вкладке</string>
     <string name="v5_glance_private_note">Частная вкладка: из просмотра ничего не сохранится</string>
     <string name="v5_menu_title">Меню страницы</string>
+    <string name="v5_menu_more">Ещё</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
     <string name="v5_menu_favorite_private">Не в приватной</string>
