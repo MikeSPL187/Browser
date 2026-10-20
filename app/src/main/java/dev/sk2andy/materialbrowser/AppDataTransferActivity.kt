@@ -133,6 +133,10 @@ class AppDataTransferActivity : ComponentActivity() {
             export = request is TransferRequest.Export,
         )
         setContent { AppDataTransferStatus(status) }
+        // Recreated while the transfer runs (a change the manifest does not keep it through): the
+        // first run goes on, a second one would export or restore over it.
+        if (transferRunning) return
+        transferRunning = true
         Thread {
             waitForMainActivityToStop()
             val attempt = runCatching {
@@ -144,6 +148,7 @@ class AppDataTransferActivity : ComponentActivity() {
                 }
             }
             if (attempt.isFailure && request is TransferRequest.Recover) {
+                transferRunning = false
                 runOnUiThread {
                     status = status.copy(message = R.string.data_archive_recovery_failed, failed = true)
                 }
@@ -170,6 +175,7 @@ class AppDataTransferActivity : ComponentActivity() {
                 },
             )
             AppDataTransferLock.release(this, lockToken)
+            transferRunning = false
             runOnUiThread { restartMain(result) }
         }.start()
     }
@@ -360,6 +366,10 @@ class AppDataTransferActivity : ComponentActivity() {
     }
 
     private companion object {
+        /** One transfer per process: the activity may be recreated, the transfer is not repeated. */
+        @Volatile
+        var transferRunning = false
+
         const val MAIN_ACTIVITY_STOP_GRACE_MILLIS = 500L
         const val MAIN_PROCESS_EXIT_POLL_MILLIS = 25L
         const val MAIN_PROCESS_EXIT_TIMEOUT_NANOS = 5_000_000_000L
