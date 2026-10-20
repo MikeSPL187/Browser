@@ -1426,20 +1426,12 @@ class BrowserController(
             if (!destroyed) restoreDueSnoozedTabs(nowMillis)
         }
     }
-    private val permanentMutedDomains = mutableStateMapOf<String, Set<String>>().apply {
-        putAll(store.loadMutedDomains())
-    }
-    private val temporaryMutedDomains = mutableStateMapOf<String, Set<String>>()
+    private val mutedDomains = ProfileSiteDomains(store::loadMutedDomains, store::saveMutedDomains)
     private val extensionTabMuteOverrides = mutableMapOf<String, Boolean>()
-    private val permanentDesktopViewDomains = mutableStateMapOf<String, Set<String>>().apply {
-        putAll(store.loadDesktopViewDomains())
-    }
-    private val temporaryDesktopViewDomains = mutableStateMapOf<String, Set<String>>()
-    private val permanentAlwaysBlockPopupDomains =
-        mutableStateMapOf<String, Set<String>>().apply {
-            putAll(store.loadAlwaysBlockPopupDomains())
-        }
-    private val temporaryAlwaysBlockPopupDomains = mutableStateMapOf<String, Set<String>>()
+    private val desktopViewDomains = ProfileSiteDomains(store::loadDesktopViewDomains, store::saveDesktopViewDomains)
+    private val alwaysBlockPopupDomains =
+        ProfileSiteDomains(store::loadAlwaysBlockPopupDomains, store::saveAlwaysBlockPopupDomains)
+    private val siteDomainSettings = listOf(mutedDomains, desktopViewDomains, alwaysBlockPopupDomains)
     private val previewRepository = TabPreviewRepository.get(activity)
     private val faviconRepository = FaviconRepository.get(activity)
     private val favoriteFaviconRepository = FavoriteFaviconRepository.get(activity)
@@ -2357,12 +2349,7 @@ class BrowserController(
         permanentSitePrivacyOverrides = permanentSitePrivacyOverrides
             .filterKeys(restoredProfileIds::contains)
         store.saveSitePrivacyOverrides(permanentSitePrivacyOverrides)
-        permanentMutedDomains.keys.retainAll(restoredProfileIds)
-        store.saveMutedDomains(permanentMutedDomains.toMap())
-        permanentDesktopViewDomains.keys.retainAll(restoredProfileIds)
-        store.saveDesktopViewDomains(permanentDesktopViewDomains.toMap())
-        permanentAlwaysBlockPopupDomains.keys.retainAll(restoredProfileIds)
-        store.saveAlwaysBlockPopupDomains(permanentAlwaysBlockPopupDomains.toMap())
+        siteDomainSettings.forEach { domains -> domains.keepProfiles(restoredProfileIds) }
         activeProfileId = if (profilesEnabled) {
             restoredActiveProfileId.takeIf { id -> profiles.any { it.id == id } }
         } else {
@@ -4020,16 +4007,7 @@ class BrowserController(
             ?: return false
         val state = externalLinkPreviewState ?: return false
         val domain = DesktopSiteRules.domainForUrl(state.currentUrl) ?: return false
-        val current = permanentDesktopViewDomains[runtime.policyTab.profileId].orEmpty()
-        val updated = DesktopSiteRules.withDesktopViewState(
-            current = current,
-            domain = domain,
-            enabled = enabled,
-        )
-        if (updated == current) return false
-        if (updated.isEmpty()) permanentDesktopViewDomains.remove(runtime.policyTab.profileId)
-        else permanentDesktopViewDomains[runtime.policyTab.profileId] = updated
-        store.saveDesktopViewDomains(permanentDesktopViewDomains.toMap())
+        if (!desktopViewDomains.set(runtime.policyTab.profileId, isPrivate = false, domain, enabled)) return false
         reloadDesktopViewDomain(runtime.policyTab.profileId, isIncognito = false, domain = domain)
         recreateExternalLinkPreviewRuntime(state)
         return true
@@ -6007,18 +5985,7 @@ class BrowserController(
             store.saveSitePrivacyOverrides(permanentSitePrivacyOverrides)
             siteExceptionRevision++
         }
-        if (permanentMutedDomains.remove(profileId) != null) {
-            store.saveMutedDomains(permanentMutedDomains.toMap())
-        }
-        temporaryMutedDomains.remove(profileId)
-        if (permanentDesktopViewDomains.remove(profileId) != null) {
-            store.saveDesktopViewDomains(permanentDesktopViewDomains.toMap())
-        }
-        temporaryDesktopViewDomains.remove(profileId)
-        if (permanentAlwaysBlockPopupDomains.remove(profileId) != null) {
-            store.saveAlwaysBlockPopupDomains(permanentAlwaysBlockPopupDomains.toMap())
-        }
-        temporaryAlwaysBlockPopupDomains.remove(profileId)
+        siteDomainSettings.forEach { domains -> domains.forgetProfile(profileId) }
         permissionRepository.removeProfile(profileId)
         permissionAccess.touch()
         val movedTabs = GeckoProfileStorageRules.movedTabs(
@@ -9038,21 +9005,7 @@ class BrowserController(
         val pageUrl = pageUrls[tabId] ?: tab.url
         val domain = PopupSiteRules.domainForUrl(pageUrl) ?: return false
         if (isAlwaysBlockPopupsEnabled(tab, pageUrl) == enabled) return false
-        val domainsByProfile = if (tab.isIncognito) {
-            temporaryAlwaysBlockPopupDomains
-        } else {
-            permanentAlwaysBlockPopupDomains
-        }
-        val updated = PopupSiteRules.withAlwaysBlockState(
-            current = domainsByProfile[tab.profileId].orEmpty(),
-            domain = domain,
-            enabled = enabled,
-        )
-        if (updated.isEmpty()) domainsByProfile.remove(tab.profileId)
-        else domainsByProfile[tab.profileId] = updated
-        if (!tab.isIncognito) {
-            store.saveAlwaysBlockPopupDomains(permanentAlwaysBlockPopupDomains.toMap())
-        }
+        alwaysBlockPopupDomains.set(tab.profileId, tab.isIncognito, domain, enabled)
         return true
     }
 
@@ -9062,19 +9015,7 @@ class BrowserController(
         val pageUrl = pageUrls[tabId] ?: tab.url
         val domain = DomainMuteRules.domainForUrl(pageUrl) ?: return false
         if (isDomainMuted(tab, pageUrl) == muted) return false
-        val domainsByProfile = if (tab.isIncognito) {
-            temporaryMutedDomains
-        } else {
-            permanentMutedDomains
-        }
-        val updated = DomainMuteRules.withMutedState(
-            current = domainsByProfile[tab.profileId].orEmpty(),
-            domain = domain,
-            muted = muted,
-        )
-        if (updated.isEmpty()) domainsByProfile.remove(tab.profileId)
-        else domainsByProfile[tab.profileId] = updated
-        if (!tab.isIncognito) store.saveMutedDomains(permanentMutedDomains.toMap())
+        mutedDomains.set(tab.profileId, tab.isIncognito, domain, muted)
         refreshDomainMuteForProfile(tab.profileId, tab.isIncognito)
         return true
     }
@@ -9089,21 +9030,7 @@ class BrowserController(
         val pageUrl = pageUrls[tabId] ?: tab.url
         val domain = DesktopSiteRules.domainForUrl(pageUrl) ?: return false
         if (isDesktopView(tab, pageUrl) == enabled) return false
-        val domainsByProfile = if (tab.isIncognito) {
-            temporaryDesktopViewDomains
-        } else {
-            permanentDesktopViewDomains
-        }
-        val updated = DesktopSiteRules.withDesktopViewState(
-            current = domainsByProfile[tab.profileId].orEmpty(),
-            domain = domain,
-            enabled = enabled,
-        )
-        if (updated.isEmpty()) domainsByProfile.remove(tab.profileId)
-        else domainsByProfile[tab.profileId] = updated
-        if (!tab.isIncognito) {
-            store.saveDesktopViewDomains(permanentDesktopViewDomains.toMap())
-        }
+        desktopViewDomains.set(tab.profileId, tab.isIncognito, domain, enabled)
         reloadDesktopViewDomain(
             profileId = tab.profileId,
             isIncognito = tab.isIncognito,
@@ -9181,15 +9108,7 @@ class BrowserController(
         temporarySitePrivacyOverrides.clear()
         permanentSitePrivacyOverrides = emptyMap()
         store.saveSitePrivacyOverrides(emptyMap())
-        temporaryMutedDomains.clear()
-        permanentMutedDomains.clear()
-        store.saveMutedDomains(emptyMap())
-        temporaryDesktopViewDomains.clear()
-        permanentDesktopViewDomains.clear()
-        store.saveDesktopViewDomains(emptyMap())
-        temporaryAlwaysBlockPopupDomains.clear()
-        permanentAlwaysBlockPopupDomains.clear()
-        store.saveAlwaysBlockPopupDomains(emptyMap())
+        siteDomainSettings.forEach(ProfileSiteDomains::clearAll)
         siteExceptionRevision++
         ReaderLibraryRepository.get(activity).clearReadingProgress()
         clearIncognitoProfile()
@@ -9535,9 +9454,7 @@ class BrowserController(
         }
         temporarySiteExceptions.clear()
         temporarySitePrivacyOverrides.clear()
-        temporaryMutedDomains.clear()
-        temporaryDesktopViewDomains.clear()
-        temporaryAlwaysBlockPopupDomains.clear()
+        siteDomainSettings.forEach(ProfileSiteDomains::clearPrivate)
         savePersistentFilterRules()
         persist()
         federatedLoginPopupTabIds.clear()
@@ -13751,9 +13668,7 @@ class BrowserController(
         browserEngineSessionFactory.clearPrivateData()
         hiddenDistractions.endPrivateSession()
         incognitoRuleHits.clear()
-        temporaryMutedDomains.clear()
-        temporaryDesktopViewDomains.clear()
-        temporaryAlwaysBlockPopupDomains.clear()
+        siteDomainSettings.forEach(ProfileSiteDomains::clearPrivate)
         permissionRepository.clearPrivateSession()
         permissionAccess.touch()
         if (ephemeralRuleIds.isNotEmpty()) {
@@ -13797,14 +13712,8 @@ class BrowserController(
         geckoLinkPeekBindings.keys.toList().forEach(::releaseLinkPeekPreviewView)
     }
 
-    private fun isDomainMuted(tab: BrowserTab, pageUrl: String?): Boolean {
-        val mutedDomains = if (tab.isIncognito) {
-            temporaryMutedDomains[tab.profileId]
-        } else {
-            permanentMutedDomains[tab.profileId]
-        }
-        return DomainMuteRules.isMuted(pageUrl, mutedDomains.orEmpty())
-    }
+    private fun isDomainMuted(tab: BrowserTab, pageUrl: String?): Boolean =
+        mutedDomains.contains(tab.profileId, tab.isIncognito, pageUrl)
 
     private fun isTabAudioMuted(tab: BrowserTab, pageUrl: String?): Boolean =
         GeckoExtensionChromeRules.effectiveAudioMuted(
@@ -13821,23 +13730,11 @@ class BrowserController(
         return true
     }
 
-    private fun isDesktopView(tab: BrowserTab, pageUrl: String?): Boolean {
-        val desktopDomains = if (tab.isIncognito) {
-            temporaryDesktopViewDomains[tab.profileId]
-        } else {
-            permanentDesktopViewDomains[tab.profileId]
-        }
-        return DesktopSiteRules.isDesktopView(pageUrl, desktopDomains.orEmpty())
-    }
+    private fun isDesktopView(tab: BrowserTab, pageUrl: String?): Boolean =
+        desktopViewDomains.contains(tab.profileId, tab.isIncognito, pageUrl)
 
-    private fun isAlwaysBlockPopupsEnabled(tab: BrowserTab, pageUrl: String?): Boolean {
-        val domains = if (tab.isIncognito) {
-            temporaryAlwaysBlockPopupDomains[tab.profileId]
-        } else {
-            permanentAlwaysBlockPopupDomains[tab.profileId]
-        }
-        return PopupSiteRules.shouldAlwaysBlock(pageUrl, domains.orEmpty())
-    }
+    private fun isAlwaysBlockPopupsEnabled(tab: BrowserTab, pageUrl: String?): Boolean =
+        alwaysBlockPopupDomains.contains(tab.profileId, tab.isIncognito, pageUrl)
 
     private fun reloadDesktopViewDomain(
         profileId: String,
