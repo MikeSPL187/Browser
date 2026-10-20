@@ -228,7 +228,7 @@ After Safari: the person picks page blocks to hide, and the site keeps them hidd
 | Concern | File |
 | --- | --- |
 | Runtime blocker | [`ContentBlocker.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/ContentBlocker.kt) |
-| Gecko host contract/runtime | [`CandyPrivacyHostContract.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/browser/gecko/CandyPrivacyHostContract.kt), [`GeckoPrivacyHostRuntime.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoPrivacyHostRuntime.kt) |
+| Gecko host contract/runtime | [`CandyPrivacyHostContract.kt`](../../app/src/full/java/dev/sk2andy/materialbrowser/browser/gecko/CandyPrivacyHostContract.kt), [`GeckoPrivacyHostRuntime.kt`](../../app/src/full/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoPrivacyHostRuntime.kt) |
 | Async process snapshot | [`BundledBlockingSnapshot.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/BundledBlockingSnapshot.kt) |
 | First-load/restore gate | [`BlockingStartGate.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/browser/BlockingStartGate.kt) |
 | Host lookup | [`RequestBlocker.kt`](../../app/src/main/java/dev/sk2andy/materialbrowser/blocking/RequestBlocker.kt) |

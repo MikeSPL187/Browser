@@ -36,12 +36,27 @@ class AndroidBrowserEngineArchitectureTest {
     }
 
     @Test
+    fun `only the full build compiles Gecko`() {
+        val geckoImport = Regex("(?m)^import (?:org\\.mozilla\\.geckoview|dev\\.sk2andy\\.materialbrowser\\.browser\\.gecko)\\.")
+        val shared = repositoryRoot.resolve("app/src/main/java")
+            .walkTopDown()
+            .filter { file -> file.isFile && file.extension in setOf("kt", "java") }
+            .filter { file -> geckoImport.containsMatchIn(file.readText()) }
+            .map { file -> file.relativeTo(repositoryRoot).invariantSeparatorsPath }
+            .sorted()
+            .toList()
+
+        assertTrue("Gecko reached the shared source set; use engineFlavor (#500): $shared", shared.isEmpty())
+        assertFalse(source("app/build.gradle.kts").contains("systemwebviewCompileOnly"))
+    }
+
+    @Test
     fun `native Gecko trust uses the explicit build channel`() {
         val settings = source(
-            "app/src/main/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoRuntimeSettingsFactory.kt",
+            "app/src/full/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoRuntimeSettingsFactory.kt",
         )
         val runtime = source(
-            "app/src/main/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoViewRuntimeHandle.kt",
+            "app/src/full/java/dev/sk2andy/materialbrowser/browser/gecko/GeckoViewRuntimeHandle.kt",
         )
 
         assertTrue(settings.contains("trustUserCertificates: Boolean = BuildConfig.TRUST_USER_CERTIFICATES"))

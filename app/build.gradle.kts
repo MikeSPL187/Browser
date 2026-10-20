@@ -696,7 +696,6 @@ dependencies {
     ) {
         exclude(group = "com.google.android.gms", module = "play-services-fido")
     }
-    addProvider("systemwebviewCompileOnly", libs.geckoview)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
