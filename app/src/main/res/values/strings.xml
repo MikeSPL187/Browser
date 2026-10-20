@@ -2089,6 +2089,7 @@
     <string name="v5_glance_private">Open in private tab</string>
     <string name="v5_glance_private_note">Private tab: nothing from this preview is saved</string>
     <string name="v5_menu_title">Page menu</string>
+    <string name="v5_menu_more">More</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
     <string name="v5_menu_favorite_private">Not in private</string>

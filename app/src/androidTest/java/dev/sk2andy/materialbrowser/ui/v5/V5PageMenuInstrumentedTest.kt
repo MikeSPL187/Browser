@@ -87,12 +87,13 @@ class V5PageMenuInstrumentedTest {
         listOf(
             R.string.action_translate_page,
             R.string.action_find_in_page,
-            R.string.action_open_in_app,
             R.string.v5_distractions_hide,
             R.string.v5_distractions_show_all,
-            R.string.action_duplicate_tab,
             R.string.v5_menu_new_private_tab,
         ).forEach { composeRule.onNodeWithText(text(it)).assertExists() }
+        // The rarer actions wait on «More» (PM-05).
+        composeRule.onNodeWithTag(V5PageMenuTestTags.OpenInApp).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.DuplicateTab).assertDoesNotExist()
         composeRule.onNodeWithTag(V5PageMenuTestTags.Forward).assertIsNotEnabled()
 
         composeRule.onNodeWithText(text(R.string.action_history)).performScrollTo().performClick()
@@ -100,10 +101,26 @@ class V5PageMenuInstrumentedTest {
     }
 
     @Test
+    fun moreHoldsTheRarerActionsAndBackReturnsToTheMenu() {
+        show(page)
+
+        composeRule.onNodeWithTag(V5PageMenuTestTags.More).performScrollTo().performClick()
+        listOf(R.string.action_open_in_app, R.string.action_duplicate_tab, R.string.action_pin_tab, R.string.action_desktop_view)
+            .forEach { composeRule.onNodeWithText(text(it)).assertExists() }
+        composeRule.onNodeWithText(text(R.string.action_desktop_view)).performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Back).performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.More).assertExists()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.More).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.DuplicateTab).performClick()
+
+        assertEquals(listOf("desktop true", "dismiss", "duplicate"), calls)
+    }
+
+    @Test
     fun aNewTabHasNoPageToolsAndShareAndPrintAreOff() {
         show(page.copy(title = "New tab", subtitle = null, hasPage = false, canRead = false, canTranslate = false))
 
-        listOf(R.string.action_find_in_page, R.string.action_translate_page, R.string.action_duplicate_tab)
+        listOf(R.string.action_find_in_page, R.string.action_translate_page, R.string.v5_menu_more)
             .forEach { composeRule.onNodeWithText(text(it)).assertDoesNotExist() }
         composeRule.onNodeWithTag(V5PageMenuTestTags.Share).assertIsNotEnabled()
         composeRule.onNodeWithTag(V5PageMenuTestTags.Print).assertIsNotEnabled()

@@ -1,6 +1,11 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,10 +21,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +68,12 @@ object V5PageMenuTestTags {
     fun extra(key: String) = "v5_menu_extra_$key"
     const val HideDistractions = "v5_menu_hide_distractions"
     const val ShowHidden = "v5_menu_show_hidden"
+    const val More = "v5_menu_more"
+    const val Back = "v5_menu_back"
 }
+
+/** The menu's two pages: everything common, and «More» with the rarer actions (PM-05). */
+enum class V5PageMenuPage { Main, More }
 
 /**
  * A command an extension or a user script adds to the page (V28, B4): its [title], who offers it as
@@ -144,7 +158,11 @@ fun V5PageMenu(
     actions: V5PageMenuActions,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    /** The page the menu opens on; previews show «More» with it. */
+    initialPage: V5PageMenuPage = V5PageMenuPage.Main,
 ) {
+    // The second page, «More», holds what is rarely needed (PM-05); the first stays short.
+    var page by rememberSaveable(visible) { mutableStateOf(initialPage) }
     // Run [action] after the sheet starts to leave.
     fun closing(action: () -> Unit): () -> Unit = {
         onDismiss()
@@ -156,102 +174,130 @@ fun V5PageMenu(
         title = stringResource(R.string.v5_menu_title),
         modifier = modifier,
     ) {
-        V5SheetHeader(
-            title = state.title,
-            subtitle = state.subtitle,
-            onClose = onDismiss,
-            leading = { Favicon(state.favicon) },
-        )
-        Column(
-            Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
-            verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
-        ) {
-            state.downloads?.let { downloads ->
-                V5ListGroup {
-                    V5ListRow(
-                        stringResource(R.string.v5_menu_downloads),
-                        subtitle = v5DownloadsSummary(downloads),
-                        icon = V5RowIcon(VolaIcons.Download),
-                        onClick = closing(actions.onDownloads),
-                    )
+        // Back steps out of «More» before it closes the sheet.
+        BackHandler(enabled = page != V5PageMenuPage.Main) { page = V5PageMenuPage.Main }
+        // The pages cross-fade; without system animations the fade is the whole of the motion.
+        val animated = V5Motion.animationsEnabled
+        AnimatedContent(
+            targetState = page,
+            transitionSpec = {
+                if (animated) {
+                    fadeIn(V5Motion.effects.spec()) togetherWith fadeOut(V5Motion.effects.spec())
+                } else {
+                    fadeIn(V5Motion.reducedFade()) togetherWith fadeOut(V5Motion.reducedFade())
                 }
+            },
+            label = "page menu page",
+        ) { shown ->
+            if (shown == V5PageMenuPage.More) {
+                Column {
+                    V5SheetHeader(
+                        title = stringResource(R.string.v5_menu_more),
+                        subtitle = state.subtitle,
+                        onClose = onDismiss,
+                        leading = { MenuBackButton { page = V5PageMenuPage.Main } },
+                    )
+                    Column(
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
+                    ) {
+                        MoreGroup(state, actions, ::closing)
+                    }
+                }
+                return@AnimatedContent
             }
-            RoundActions(state, actions, ::closing)
-            if (state.canRead) {
-                ReadListenTiles(onRead = closing(actions.onRead), onListen = closing(actions.onListen))
-            }
-            PageGroup(state, actions, ::closing)
-            V5ListGroup {
-                V5ListRow(
-                    stringResource(R.string.cd_new_tab),
-                    icon = V5RowIcon(VolaIcons.Add),
-                    onClick = closing(actions.onNewTab),
+            Column {
+                V5SheetHeader(
+                    title = state.title,
+                    subtitle = state.subtitle,
+                    onClose = onDismiss,
+                    leading = { Favicon(state.favicon) },
                 )
-                if (state.canNewPrivateTab) {
-                    V5ListRow(
-                        stringResource(R.string.v5_menu_new_private_tab),
-                        icon = V5RowIcon(VolaIcons.Lock),
-                        onClick = closing(actions.onNewPrivateTab),
-                    )
-                }
-                if (state.hasPage) {
-                    V5ListRow(
-                        stringResource(R.string.action_duplicate_tab),
-                        icon = V5RowIcon(VolaIcons.ContentCopy),
-                        onClick = closing(actions.onDuplicateTab),
-                        modifier = Modifier.testTag(V5PageMenuTestTags.DuplicateTab),
-                    )
-                }
-                if (state.canCloseTab) {
-                    V5ListRow(
-                        stringResource(R.string.cd_close_tab),
-                        icon = V5RowIcon(VolaIcons.Close),
-                        titleColor = V5Theme.colors.danger,
-                        onClick = closing(actions.onCloseTab),
-                    )
-                }
-            }
-            if (state.extras.isNotEmpty()) {
-                V5ListGroup {
-                    state.extras.forEach { extra ->
+                Column(
+                    Modifier
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
+                    verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
+                ) {
+                    state.downloads?.let { downloads ->
+                        V5ListGroup {
+                            V5ListRow(
+                                stringResource(R.string.v5_menu_downloads),
+                                subtitle = v5DownloadsSummary(downloads),
+                                icon = V5RowIcon(VolaIcons.Download),
+                                onClick = closing(actions.onDownloads),
+                            )
+                        }
+                    }
+                    RoundActions(state, actions, ::closing)
+                    if (state.canRead) {
+                        ReadListenTiles(onRead = closing(actions.onRead), onListen = closing(actions.onListen))
+                    }
+                    PageGroup(state, actions, ::closing, onMore = { page = V5PageMenuPage.More })
+                    V5ListGroup {
                         V5ListRow(
-                            extra.title,
-                            subtitle = extra.subtitle,
-                            icon = V5RowIcon(VolaIcons.Extension),
-                            enabled = extra.enabled,
-                            onClick = closing(extra.onClick),
-                            modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
+                            stringResource(R.string.cd_new_tab),
+                            icon = V5RowIcon(VolaIcons.Add),
+                            onClick = closing(actions.onNewTab),
+                        )
+                        if (state.canNewPrivateTab) {
+                            V5ListRow(
+                                stringResource(R.string.v5_menu_new_private_tab),
+                                icon = V5RowIcon(VolaIcons.Lock),
+                                onClick = closing(actions.onNewPrivateTab),
+                            )
+                        }
+                        if (state.canCloseTab) {
+                            V5ListRow(
+                                stringResource(R.string.cd_close_tab),
+                                icon = V5RowIcon(VolaIcons.Close),
+                                titleColor = V5Theme.colors.danger,
+                                onClick = closing(actions.onCloseTab),
+                            )
+                        }
+                    }
+                    if (state.extras.isNotEmpty()) {
+                        V5ListGroup {
+                            state.extras.forEach { extra ->
+                                V5ListRow(
+                                    extra.title,
+                                    subtitle = extra.subtitle,
+                                    icon = V5RowIcon(VolaIcons.Extension),
+                                    enabled = extra.enabled,
+                                    onClick = closing(extra.onClick),
+                                    modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
+                                )
+                            }
+                        }
+                    }
+                    V5ListGroup {
+                        V5ListRow(
+                            stringResource(R.string.v5_menu_favorites),
+                            icon = V5RowIcon(VolaIcons.Star),
+                            onClick = closing(actions.onFavorites),
+                        )
+                        V5ListRow(
+                            stringResource(R.string.action_history),
+                            icon = V5RowIcon(VolaIcons.History),
+                            onClick = closing(actions.onHistory),
+                        )
+                        // While something downloads, the row on top with its progress is the one way there.
+                        if (state.downloads == null) {
+                            V5ListRow(
+                                stringResource(R.string.v5_menu_downloads),
+                                icon = V5RowIcon(VolaIcons.Download),
+                                onClick = closing(actions.onDownloads),
+                            )
+                        }
+                        V5ListRow(
+                            stringResource(R.string.action_settings),
+                            icon = V5RowIcon(VolaIcons.Settings),
+                            trailing = V5RowTrailing.Chevron,
+                            onClick = closing(actions.onSettings),
                         )
                     }
                 }
-            }
-            V5ListGroup {
-                V5ListRow(
-                    stringResource(R.string.v5_menu_favorites),
-                    icon = V5RowIcon(VolaIcons.Star),
-                    onClick = closing(actions.onFavorites),
-                )
-                V5ListRow(
-                    stringResource(R.string.action_history),
-                    icon = V5RowIcon(VolaIcons.History),
-                    onClick = closing(actions.onHistory),
-                )
-                // While something downloads, the row on top with its progress is the one way there.
-                if (state.downloads == null) {
-                    V5ListRow(
-                        stringResource(R.string.v5_menu_downloads),
-                        icon = V5RowIcon(VolaIcons.Download),
-                        onClick = closing(actions.onDownloads),
-                    )
-                }
-                V5ListRow(
-                    stringResource(R.string.action_settings),
-                    icon = V5RowIcon(VolaIcons.Settings),
-                    trailing = V5RowTrailing.Chevron,
-                    onClick = closing(actions.onSettings),
-                )
             }
         }
     }
@@ -262,6 +308,7 @@ private fun PageGroup(
     state: V5PageMenuState,
     actions: V5PageMenuActions,
     closing: (() -> Unit) -> () -> Unit,
+    onMore: () -> Unit,
 ) {
     if (!state.hasPage) return
     V5ListGroup {
@@ -276,12 +323,6 @@ private fun PageGroup(
             stringResource(R.string.action_find_in_page),
             icon = V5RowIcon(VolaIcons.Search),
             onClick = closing(actions.onFindInPage),
-        )
-        V5ListRow(
-            stringResource(R.string.action_open_in_app),
-            icon = V5RowIcon(VolaIcons.OpenInNew),
-            onClick = closing(actions.onOpenInApp),
-            modifier = Modifier.testTag(V5PageMenuTestTags.OpenInApp),
         )
         if (state.canHideDistractions) {
             V5ListRow(
@@ -299,6 +340,36 @@ private fun PageGroup(
                 )
             }
         }
+        V5ListRow(
+            stringResource(R.string.v5_menu_more),
+            icon = V5RowIcon(VolaIcons.MoreHoriz),
+            trailing = V5RowTrailing.Chevron,
+            onClick = onMore,
+            modifier = Modifier.testTag(V5PageMenuTestTags.More),
+        )
+    }
+}
+
+/** «More» (PM-05): the page's and the tab's rarer actions, a layer below the menu. */
+@Composable
+private fun MoreGroup(
+    state: V5PageMenuState,
+    actions: V5PageMenuActions,
+    closing: (() -> Unit) -> () -> Unit,
+) {
+    V5ListGroup {
+        V5ListRow(
+            stringResource(R.string.action_open_in_app),
+            icon = V5RowIcon(VolaIcons.OpenInNew),
+            onClick = closing(actions.onOpenInApp),
+            modifier = Modifier.testTag(V5PageMenuTestTags.OpenInApp),
+        )
+        V5ListRow(
+            stringResource(R.string.action_duplicate_tab),
+            icon = V5RowIcon(VolaIcons.ContentCopy),
+            onClick = closing(actions.onDuplicateTab),
+            modifier = Modifier.testTag(V5PageMenuTestTags.DuplicateTab),
+        )
         V5ListRow(
             stringResource(if (state.isPinned) R.string.v5_menu_unpin_tab else R.string.action_pin_tab),
             icon = V5RowIcon(VolaIcons.PushPin),
@@ -318,6 +389,17 @@ private fun PageGroup(
                 trailing = V5RowTrailing.Toggle(muted, actions.onSiteMutedChange),
             )
         }
+    }
+}
+
+/** Back from «More» to the menu. */
+@Composable
+private fun MenuBackButton(onBack: () -> Unit) {
+    IconButton(
+        onClick = onBack,
+        modifier = Modifier.heightIn(min = V5Sizes.touchTarget).testTag(V5PageMenuTestTags.Back),
+    ) {
+        Icon(VolaIcons.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = V5Theme.colors.label)
     }
 }
 
