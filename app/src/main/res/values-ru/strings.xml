@@ -2328,6 +2328,10 @@
     <string name="v5_translate_action">Перевести</string>
     <string name="v5_translate_in_progress">Перевожу…</string>
     <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
+    <string name="v5_translate_note_metered">Вы в мобильной сети: пакет языка скачается через неё.</string>
+    <string name="v5_translate_always_later">«Всегда переводить этот язык» появится после первого перевода с него, когда пакет будет на телефоне.</string>
+    <string name="v5_translate_show_original">Показать оригинал</string>
+    <string name="v5_translate_language_search">Поиск языка</string>
     <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
     <string name="v5_translate_languages_loading">Загружаю список языков…</string>
     <string name="v5_translate_languages_failed">Не удалось получить список языков.</string>

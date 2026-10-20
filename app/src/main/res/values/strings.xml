@@ -2232,6 +2232,10 @@
     <string name="v5_translate_action">Translate</string>
     <string name="v5_translate_in_progress">Translating…</string>
     <string name="v5_translate_note">Translated on this phone: the page text goes nowhere.</string>
+    <string name="v5_translate_note_metered">You are on mobile data: the language pack downloads over it.</string>
+    <string name="v5_translate_always_later">“Always translate this language” comes once the first translation from it has downloaded its pack.</string>
+    <string name="v5_translate_show_original">Show original</string>
+    <string name="v5_translate_language_search">Search languages</string>
     <string name="v5_translate_note_download">Translated on this phone: the page text goes nowhere. The %1$s language pack downloads once.</string>
     <string name="v5_translate_languages_loading">Getting the languages…</string>
     <string name="v5_translate_languages_failed">Couldn’t get the list of languages.</string>
