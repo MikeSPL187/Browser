@@ -14,8 +14,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadResponseListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoDownloadTransferListener

@@ -20,6 +20,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.geckoview.GeckoView
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
 
 @RunWith(AndroidJUnit4::class)
 class GeckoSessionRestoreInstrumentedTest {

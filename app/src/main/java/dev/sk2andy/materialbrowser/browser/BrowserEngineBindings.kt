@@ -2,7 +2,7 @@ package dev.sk2andy.materialbrowser.browser
 
 import android.graphics.Rect
 import android.view.View
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoNavigationRequestDecision

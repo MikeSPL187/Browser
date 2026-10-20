@@ -115,7 +115,7 @@ import dev.sk2andy.materialbrowser.browser.credentials.HttpAuthPromptRules
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineFactory
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
 import dev.sk2andy.materialbrowser.browser.engine.BrowserWebContentColorScheme
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowserEngineSessionFactory
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoProfileStorageRules

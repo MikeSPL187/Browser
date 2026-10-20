@@ -17,7 +17,7 @@ import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineContentKind
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowserEngineSessionFactory
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCredentialPromptBridge
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner

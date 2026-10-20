@@ -8,8 +8,8 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.DnsOverHttpsSettings
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.gecko.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoBrowsingData
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoCandyTrailHistoryEventSink

@@ -11,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import dev.sk2andy.materialbrowser.browser.actions.BrowserContentTargetListener
-import dev.sk2andy.materialbrowser.browser.gecko.AndroidBrowserEngineSessionPort
+import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.gecko.BrowserEnginePreviewCapture
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoFindResult
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaCommand
