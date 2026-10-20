@@ -3,8 +3,8 @@ package dev.sk2andy.materialbrowser.ui
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagementContext
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerMessage
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequestKind
 import org.junit.Assert.assertEquals

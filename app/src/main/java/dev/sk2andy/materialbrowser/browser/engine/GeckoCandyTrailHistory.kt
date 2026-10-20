@@ -1,8 +1,6 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 import dev.sk2andy.materialbrowser.browser.CandyTrailHistorySnapshot
-import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
-import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserHistoryState
 
 internal data class GeckoCandyTrailHistoryEvent(
     val tabId: String,

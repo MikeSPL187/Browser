@@ -1,5 +1,7 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionOptionsTarget
 import java.net.URI
 import java.util.Locale
 

@@ -2,8 +2,8 @@ package dev.sk2andy.materialbrowser.data
 
 import android.content.Context
 import android.util.AtomicFile
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoSessionStateSnapshot
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoSessionStateSnapshotRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshot
+import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshotRules
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets
@@ -47,7 +47,7 @@ internal class GeckoSessionStateStore(context: Context) {
                     tabId = tabId,
                     profileId = snapshot.profileId,
                     isPrivate = false,
-                ) !is dev.sk2andy.materialbrowser.browser.gecko.GeckoSessionStateRestoreDecision.Restore
+                ) !is dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateRestoreDecision.Restore
             ) {
                 AtomicFile(file).delete()
                 return null

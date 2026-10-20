@@ -62,6 +62,15 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePreparation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryTracker
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
 
 internal class GeckoPreparedSession(
     val session: GeckoSession,

@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.browser.gecko
 
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
+
 internal data class GeckoExtension(
     val id: String,
     val name: String?,

@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import java.net.URI
 import java.util.Locale
+import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
 
 internal object GeckoExtensionRules {
     private const val TECHNICAL_AND_INTERACTION_DATA = "technicalAndInteraction"

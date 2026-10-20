@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserInputDiagnostics
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 import dev.sk2andy.materialbrowser.data.AddressBarAction

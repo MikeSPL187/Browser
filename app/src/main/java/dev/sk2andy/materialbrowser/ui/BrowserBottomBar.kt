@@ -100,8 +100,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRules
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.PageTranslationProvider
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand
 import dev.sk2andy.materialbrowser.data.AddressBarActionLayout
 import dev.sk2andy.materialbrowser.data.AddressBarDockEdge

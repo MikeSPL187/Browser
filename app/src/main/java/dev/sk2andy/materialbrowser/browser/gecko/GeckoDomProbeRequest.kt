@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import android.os.Handler
 import org.json.JSONObject
+import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
 
 /** Native bridge edge: never accepts page-provided code or a shell-provided selector. */
 internal class GeckoDomProbeRequest(private val handler: Handler) {

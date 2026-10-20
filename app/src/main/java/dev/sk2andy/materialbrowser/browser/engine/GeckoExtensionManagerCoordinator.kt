@@ -1,13 +1,26 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 import android.content.Context
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionInstallFailureRules
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionMutationResult
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionOptionsTarget
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionReadResult
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRejection
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRepository
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRuntime
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionSnapshot
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 internal enum class GeckoExtensionManagerMessage {
     InvalidSignedXpi,

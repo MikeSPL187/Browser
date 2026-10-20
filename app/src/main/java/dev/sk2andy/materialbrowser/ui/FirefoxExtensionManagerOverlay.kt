@@ -44,9 +44,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeRules
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerMessage
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.flow.collect

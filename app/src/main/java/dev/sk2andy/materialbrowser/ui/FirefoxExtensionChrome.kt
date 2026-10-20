@@ -38,8 +38,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionKey
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuRow
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor

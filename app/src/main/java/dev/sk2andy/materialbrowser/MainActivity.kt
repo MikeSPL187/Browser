@@ -69,9 +69,9 @@ import dev.sk2andy.materialbrowser.browser.allowsHardwareInput
 import dev.sk2andy.materialbrowser.browser.cast.CastSessionController
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.downloads.CandyDownloadNotifier
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoActivityIntegration
+import dev.sk2andy.materialbrowser.browser.engine.GeckoActivityIntegration
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagementContext
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagerCoordinator
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerCoordinator
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineProcessRestart
 import dev.sk2andy.materialbrowser.browser.integration.CandySearchWidgetRules
 import dev.sk2andy.materialbrowser.browser.integration.FavoritesActivityContract

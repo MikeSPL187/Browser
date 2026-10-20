@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mozilla.geckoview.WebExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
 
 class GeckoExtensionInstallFailureRulesTest {
     @Test

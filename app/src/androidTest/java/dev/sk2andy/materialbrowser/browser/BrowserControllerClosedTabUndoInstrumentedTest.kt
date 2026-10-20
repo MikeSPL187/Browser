@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GeckoSessionStateStore
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoSessionStateSnapshot
+import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshot
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
