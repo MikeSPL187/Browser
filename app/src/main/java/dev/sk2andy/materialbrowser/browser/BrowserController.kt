@@ -376,8 +376,8 @@ class BrowserController(
         activeProfileId = { activeProfileId },
         automaticSorting = { automaticTabSortingEnabled },
         isEphemeral = { tabId -> isSessionEphemeralTab(tabId) },
-        onPinnedChanged = { tabId, pinned -> enqueueSyncedTabPinned(tabId, pinned) },
-        onOrderChanged = { profileId -> enqueueSyncedTabOrder(profileId) },
+        onPinnedChanged = { tabId, pinned -> syncOutbox.enqueuePinned(tabId, pinned) },
+        onOrderChanged = { profileId -> syncOutbox.enqueueOrder(profileId) },
         persist = { persist() },
     )
     val profiles = mutableStateListOf<BrowserProfile>()
@@ -1001,7 +1001,11 @@ class BrowserController(
         get() = if (isVideoAutoplayBlocked) browserEngineSessions.size else 0
 
     @VisibleForTesting
-    internal var syncMutationObserverForTesting: ((SyncPendingMutation) -> Unit)? = null
+    internal var syncMutationObserverForTesting: ((SyncPendingMutation) -> Unit)?
+        get() = syncOutbox.mutationObserverForTesting
+        set(value) {
+            syncOutbox.mutationObserverForTesting = value
+        }
 
     @VisibleForTesting
     internal fun applySyncRepositoryStateForTesting(state: SyncRepositoryState) {
@@ -1185,12 +1189,31 @@ class BrowserController(
     var syncState by mutableStateOf(syncRepository.currentState())
         private set
     private var syncObservation: AutoCloseable? = null
-    private val locallyPendingSyncCandyIds = mutableSetOf<String>()
-    private val pendingSyncReopenMutationIds = mutableMapOf<String, String>()
-    private val pendingSyncNavigationRunnables = mutableMapOf<String, Runnable>()
-    private val pendingLocalSyncNavigationUrls = mutableMapOf<String, String>()
-    private val remoteSyncNavigationUrls = mutableMapOf<String, String>()
-    private val supersededRemoteSyncNavigationUrls = mutableMapOf<String, MutableSet<String>>()
+    private val syncOutbox = SyncTabOutbox(
+        send = syncRepository::mutate,
+        mainThread = object : SyncTabOutbox.Scheduler {
+            override fun post(task: Runnable) {
+                mainHandler.post(task)
+            }
+
+            override fun postDelayed(task: Runnable, delayMillis: Long) {
+                mainHandler.postDelayed(task, delayMillis)
+            }
+
+            override fun cancel(task: Runnable) = mainHandler.removeCallbacks(task)
+        },
+        host = object : SyncTabOutbox.Host {
+            override val tabs: List<BrowserTab> get() = this@BrowserController.tabs
+            override val selectedTabId: String get() = this@BrowserController.selectedTabId
+            override val syncState: SyncRepositoryState get() = this@BrowserController.syncState
+            override val isDestroyed: Boolean get() = destroyed
+            override fun isSessionEphemeralTab(tabId: String) = this@BrowserController.isSessionEphemeralTab(tabId)
+            override fun syncTargetDeviceId(profileId: String) = this@BrowserController.syncTargetDeviceId(profileId)
+            override fun loadRemoteNavigation(tabId: String, url: String) {
+                browserEngineSessions[tabId]?.let { session -> loadGeckoWithPrivacy(tabId, session, url) }
+            }
+        },
+    )
     private val syncRefreshRunnable = object : Runnable {
         override fun run() {
             if (destroyed || !isActivityStarted) return
@@ -4903,7 +4926,7 @@ class BrowserController(
                 httpStatusCode = null,
             )
         }
-        markLocalSyncNavigationPending(tabId, target)
+        syncOutbox.markLocalNavigationPending(tabId, target)
         if (target == BLANK_URL) {
             closeBrowserEngineSession(tabId)
         } else if (existingSession == null) {
@@ -4923,7 +4946,7 @@ class BrowserController(
         if (tabs.firstOrNull { tab -> tab.id == tabId }?.url == page) return
         // A typed address took the tab before the engine was asked; the engine never left [page].
         pageUrls[tabId] = page
-        pendingLocalSyncNavigationUrls.remove(tabId)
+        syncOutbox.pendingLocalNavigationUrls.remove(tabId)
         updateProtectionRequestContext(tabId, page)
         updateTab(tabId) { tab ->
             tab.copy(url = page, isLoading = false, progress = 100, error = null, failureKind = null)
@@ -5703,10 +5726,10 @@ class BrowserController(
             }
         }
         tabs += tab
-        markSyncedTabPending(tab)
+        syncOutbox.markTabPending(tab)
         updateSelectedTabId(tab.id)
         rememberSelectedTab(activeProfileId, tab.id)
-        enqueueSyncedTab(tab.id)
+        syncOutbox.enqueueTab(tab.id)
         persist()
         return tab.id
     }
@@ -5755,8 +5778,8 @@ class BrowserController(
         )
         tabs += tab
         if (!transientPopup) {
-            markSyncedTabPending(tab)
-            enqueueSyncedTab(tab.id)
+            syncOutbox.markTabPending(tab)
+            syncOutbox.enqueueTab(tab.id)
         }
         if (transientPopup) transientPopupTabIds += tab.id
         persist()
@@ -5780,8 +5803,8 @@ class BrowserController(
         if (opened.isEmpty()) return emptyList()
         tabs += opened
         opened.forEach { tab ->
-            markSyncedTabPending(tab)
-            enqueueSyncedTab(tab.id)
+            syncOutbox.markTabPending(tab)
+            syncOutbox.enqueueTab(tab.id)
         }
         persist()
         tabStackController.create(opened.map(BrowserTab::id), deviceName.trim(), TabStackColor.Grape)
@@ -5811,8 +5834,8 @@ class BrowserController(
             federatedLoginCompatibilityTabIds.remove(tab.id)
         }
         updateTab(tab.id) { current -> current.startingLoad(url = offer.targetUrl) }
-        tabs.firstOrNull { it.id == tab.id }?.let(::markSyncedTabPending)
-        scheduleSyncedTabNavigation(tab.id)
+        tabs.firstOrNull { it.id == tab.id }?.let(syncOutbox::markTabPending)
+        syncOutbox.scheduleNavigation(tab.id)
         loadGeckoWithPrivacy(tab.id, view, offer.targetUrl)
         selectTab(tab.id)
     }
@@ -6605,7 +6628,7 @@ class BrowserController(
             return false
         }
         val sourceIndex = activeTabs.indexOfFirst { it.id == tabId }
-        if (isSyncTargetProfile(sourceTab.profileId)) enqueueSyncedTabClose(sourceTab)
+        if (isSyncTargetProfile(sourceTab.profileId)) syncOutbox.enqueueClose(sourceTab)
         val movedTab = sourceTab.copy(
             profileId = profileId,
             isIncognito = sourceTab.isIncognito && !targetIsSynced,
@@ -6631,8 +6654,8 @@ class BrowserController(
             TabPinningRules.orderedTabs(tabs.filter { it.profileId == profileId }),
         )
         if (targetSyncs && !movedTab.isIncognito) {
-            markSyncedTabPending(movedTab)
-            enqueueSyncedTab(movedTab.id)
+            syncOutbox.markTabPending(movedTab)
+            syncOutbox.enqueueTab(movedTab.id)
         }
         if (tabId == selectedTabId) {
             updateSelectedTabId(
@@ -7302,8 +7325,7 @@ class BrowserController(
         }
         recovery.restored = true
         navigationSourceTabs.remove(event.tabId)
-        pendingLocalSyncNavigationUrls.remove(event.tabId)
-        clearRemoteSyncNavigationTracking(event.tabId)
+        syncOutbox.forgetNavigation(event.tabId)
         pageUrls[event.tabId] = recovery.sourceTab.url
         updateTab(event.tabId) { tab ->
             tab.copy(
@@ -8099,7 +8121,7 @@ class BrowserController(
         val originalStack = tabStacks.firstOrNull { tabId in it.tabIds }
         val wasSelected = selectedTabId == tabId
         val originalTabIds = tabs.mapTo(hashSetOf(), BrowserTab::id)
-        enqueueSyncedTabClose(closingTab)
+        syncOutbox.enqueueClose(closingTab)
         if (activeCapsuleTabId == tabId) leaveSiteCapsule()
         val closesLastIncognitoTab =
             closingTab.isIncognito && tabs.count(BrowserTab::isIncognito) == 1
@@ -8119,7 +8141,7 @@ class BrowserController(
             )
             touchTab(selectedTabId, nowMillis)
             rememberSelectedTab(activeProfileId, selectedTabId)
-            markSyncedTabPending(selectedTab)
+            syncOutbox.markTabPending(selectedTab)
         }
         // Also when a fresh private tab replaced the last one: the closed session's data must go.
         if (closesLastIncognitoTab) clearIncognitoProfile()
@@ -8178,9 +8200,9 @@ class BrowserController(
         rememberSelectedTab(activeProfileId, selectedTabId)
         reconcileCandyTrailForks(System.currentTimeMillis())
         restoreSnoozedCandyTrail(token.tab)
-        markSyncedTabPending(token.tab)
-        enqueueSyncedTab(token.tab.id, forceOpen = true)
-        enqueueSyncedTabOrder(token.tab.profileId)
+        syncOutbox.markTabPending(token.tab)
+        syncOutbox.enqueueTab(token.tab.id, forceOpen = true)
+        syncOutbox.enqueueOrder(token.tab.profileId)
         persist()
         return true
     }
@@ -8381,7 +8403,7 @@ class BrowserController(
             )
         ) return null
 
-        enqueueSyncedTabClose(tab)
+        syncOutbox.enqueueClose(tab)
         if (activeCapsuleTabId == tabId) leaveSiteCapsule()
         removeTabRuntimeForSnooze(tab)
         tabs.clear()
@@ -8452,8 +8474,8 @@ class BrowserController(
         rememberSelectedTab(activeProfileId, selectedTabId)
         reconcileCandyTrailForks(nowMillis)
         restoreSnoozedCandyTrail(result.restoredTab)
-        markSyncedTabPending(result.restoredTab)
-        enqueueSyncedTab(result.restoredTab.id)
+        syncOutbox.markTabPending(result.restoredTab)
+        syncOutbox.enqueueTab(result.restoredTab.id)
         persist()
         snoozeScheduler.schedule(result.snoozedTabs, nowMillis)
         return true
@@ -8509,8 +8531,8 @@ class BrowserController(
         snoozedTabs += remaining
         reconcileCandyTrailForks(nowMillis)
         restoreSnoozedCandyTrail(restoredTab)
-        markSyncedTabPending(restoredTab)
-        enqueueSyncedTab(restoredTab.id)
+        syncOutbox.markTabPending(restoredTab)
+        syncOutbox.enqueueTab(restoredTab.id)
         persist()
         snoozeScheduler.schedule(remaining, nowMillis)
         return true
@@ -10168,11 +10190,7 @@ class BrowserController(
         SnoozeRuntimeRegistry.unregister(snoozeRestoreCallback)
         PrivateTabsRuntimeRegistry.unregister(closeAllPrivateTabsCallback)
         mainHandler.removeCallbacks(syncRefreshRunnable)
-        pendingSyncNavigationRunnables.values.forEach(mainHandler::removeCallbacks)
-        pendingSyncNavigationRunnables.clear()
-        pendingSyncReopenMutationIds.clear()
-        remoteSyncNavigationUrls.clear()
-        supersededRemoteSyncNavigationUrls.clear()
+        syncOutbox.close()
         syncObservation?.close()
         syncObservation = null
         syncRepository.close()
@@ -11941,7 +11959,7 @@ class BrowserController(
 
     private fun onGeckoEngineEvent(event: BrowserEngineEvent) {
         if (destroyed || browserEngineSessions[event.tabId] == null) return
-        if (ignoreSupersededRemoteNavigationEvent(event)) {
+        if (syncOutbox.ignoreSupersededRemoteNavigationEvent(event)) {
             engineViewRevision++
             return
         }
@@ -12077,7 +12095,7 @@ class BrowserController(
                         httpStatusCode = null,
                     )
                 }
-                markLocalSyncNavigationPending(event.tabId, event.address)
+                syncOutbox.markLocalNavigationPending(event.tabId, event.address)
             }
             BrowserEngineEventType.NavigationCommitted -> {
                 navigationSourceTabs.remove(event.tabId)
@@ -12115,7 +12133,7 @@ class BrowserController(
                         title = committedTitle,
                     )
                 }
-                scheduleSyncedTabNavigation(
+                syncOutbox.scheduleNavigation(
                     tabId = event.tabId,
                     remoteNavigationFinished = true,
                 )
@@ -12131,8 +12149,7 @@ class BrowserController(
                     return
                 }
                 navigationSourceTabs.remove(event.tabId)
-                pendingLocalSyncNavigationUrls.remove(event.tabId)
-                clearRemoteSyncNavigationTracking(event.tabId)
+                syncOutbox.forgetNavigation(event.tabId)
                 connectivityMonitor.refresh()
                 updateTab(event.tabId) { tab ->
                     tab.copy(
@@ -12182,14 +12199,14 @@ class BrowserController(
                     retitleHistoryVisit(event.tabId, effectiveChangedUrl, changedTitle)
                 }
                 if (currentTab?.isLoading == true && event.isLoading == false) {
-                    clearRemoteSyncNavigationTracking(event.tabId)
+                    syncOutbox.clearRemoteNavigationTracking(event.tabId)
                 }
                 if (currentTab?.isLoading == false) {
                     if (event.isLoading != true &&
                         normalizedChangedUrl != null && normalizedChangedUrl != previousUrl) {
                         refreshGeckoSafeAreaForSameDocumentNavigation(event.tabId)
-                        markLocalSyncNavigationPending(event.tabId, normalizedChangedUrl)
-                        scheduleSyncedTabNavigation(event.tabId)
+                        syncOutbox.markLocalNavigationPending(event.tabId, normalizedChangedUrl)
+                        syncOutbox.scheduleNavigation(event.tabId)
                         addressBar.scheduleAutoDockProbe(event.tabId, normalizedChangedUrl)
                         if (BrowsingLibraryRules.recordsSameDocumentVisit(previousUrl, normalizedChangedUrl)) {
                             recordHistory(event.tabId, normalizedChangedUrl, event.title ?: currentTab.title)
@@ -12202,8 +12219,7 @@ class BrowserController(
                 removePendingInitialBrowserEngineNavigation(event.tabId)
                 browserEngineSessions[event.tabId]?.let(::cancelPendingInlineMediaPlayerOpen)
                 cancelPendingGeckoPreviewCapture(event.tabId)
-                pendingLocalSyncNavigationUrls.remove(event.tabId)
-                clearRemoteSyncNavigationTracking(event.tabId)
+                syncOutbox.forgetNavigation(event.tabId)
                 if (geckoMediaPresentation?.tabId == event.tabId) {
                     clearGeckoMediaPresentation()
                 }
@@ -12234,8 +12250,7 @@ class BrowserController(
                 externalAppNavigationRecoveries.remove(event.tabId)
                 removePendingInitialBrowserEngineNavigation(event.tabId)
                 browserEngineSessions[event.tabId]?.let(::cancelPendingInlineMediaPlayerOpen)
-                pendingLocalSyncNavigationUrls.remove(event.tabId)
-                clearRemoteSyncNavigationTracking(event.tabId)
+                syncOutbox.forgetNavigation(event.tabId)
                 if (geckoMediaPresentation?.tabId == event.tabId) {
                     clearGeckoMediaPresentation()
                 }
@@ -14154,7 +14169,7 @@ class BrowserController(
     private fun syncProtectedRuntimeTabIds(): Set<String> = buildSet {
         addAll(activeFederatedLoginFlowTabIds())
         addAll(transientPopupTabIds)
-        addAll(pendingLocalSyncNavigationUrls.keys)
+        addAll(syncOutbox.pendingLocalNavigationUrls.keys)
         pendingPopupNavigations.forEach { (popupTabId, pending) ->
             add(popupTabId)
             add(pending.openerTabId)
@@ -14193,7 +14208,7 @@ class BrowserController(
         val remoteById = state.profiles
             .filterNot { it.deviceId == currentDeviceId }
             .associateBy(SyncProfile::deviceId)
-        pendingLocalSyncNavigationUrls.entries.removeAll { (tabId, expectedUrl) ->
+        syncOutbox.pendingLocalNavigationUrls.entries.removeAll { (tabId, expectedUrl) ->
             val tab = tabs.firstOrNull { candidate -> candidate.id == tabId }
                 ?: return@removeAll true
             val candyId = tab.syncCandyId ?: return@removeAll true
@@ -14206,8 +14221,8 @@ class BrowserController(
                 ?.url
                 ?.let(BrowserUriPolicy::normalizeHttpUrl) == expectedUrl
         }
-        locallyPendingSyncCandyIds.removeAll { candyId ->
-            candyId !in pendingSyncReopenMutationIds &&
+        syncOutbox.locallyPendingCandyIds.removeAll { candyId ->
+            candyId !in syncOutbox.pendingReopenMutationIds &&
                 state.profiles.any { profile -> profile.tabs.any { it.candyId == candyId } }
         }
 
@@ -14236,13 +14251,13 @@ class BrowserController(
                 existingTabs = tabs,
                 nowMillis = System.currentTimeMillis(),
                 maxTabs = linkedCapacity,
-                locallyPendingCandyIds = locallyPendingSyncCandyIds,
+                locallyPendingCandyIds = syncOutbox.locallyPendingCandyIds,
                 protectedRuntimeTabIds = syncProtectedRuntimeTabIds(),
             )
             reconciliation.removedRuntimeTabIds.forEach(::removeTabResources)
             tabOrder.replaceProfileTabs(boundProfileId, reconciliation.tabs)
-            reconciliation.hydrations.forEach(::prepareSyncedTabHydration)
-            reconciliation.navigations.forEach(::applySyncedTabNavigation)
+            reconciliation.hydrations.forEach(syncOutbox::prepareHydration)
+            reconciliation.navigations.forEach(syncOutbox::applyNavigation)
         }
 
         var remainingCapacity = (MAX_TABS - tabs.count { !isSyncedProfile(it.profileId) })
@@ -14255,7 +14270,7 @@ class BrowserController(
                 existingTabs = tabs,
                 nowMillis = System.currentTimeMillis(),
                 maxTabs = remainingCapacity,
-                locallyPendingCandyIds = locallyPendingSyncCandyIds,
+                locallyPendingCandyIds = syncOutbox.locallyPendingCandyIds,
                 protectedRuntimeTabIds = syncProtectedRuntimeTabIds(),
             )
             remainingCapacity = (remainingCapacity - reconciliation.tabs.size).coerceAtLeast(0)
@@ -14279,8 +14294,8 @@ class BrowserController(
 
             reconciliation.removedRuntimeTabIds.forEach(::removeTabResources)
             tabOrder.replaceProfileTabs(profileId, reconciliation.tabs)
-            reconciliation.hydrations.forEach(::prepareSyncedTabHydration)
-            reconciliation.navigations.forEach(::applySyncedTabNavigation)
+            reconciliation.hydrations.forEach(syncOutbox::prepareHydration)
+            reconciliation.navigations.forEach(syncOutbox::applyNavigation)
         }
 
         if (activeTabs.none { it.id == selectedTabId }) {
@@ -14334,8 +14349,8 @@ class BrowserController(
                     index = tabIndex,
                     selectedTabId = selectedTabId,
                 ) ?: return@forEach
-                locallyPendingSyncCandyIds += candyId
-                mutateSync(
+                syncOutbox.locallyPendingCandyIds += candyId
+                syncOutbox.mutate(
                     SyncPendingMutation.Open(
                         mutationId = UUID.randomUUID().toString(),
                         targetDeviceId = remote.deviceId,
@@ -14344,200 +14359,6 @@ class BrowserController(
                 )
             }
         if (assignedCandyIds.isNotEmpty()) persist()
-    }
-
-    private fun markSyncedTabPending(tab: BrowserTab) {
-        if (isSessionEphemeralTab(tab.id)) return
-        tab.syncCandyId?.let(locallyPendingSyncCandyIds::add)
-    }
-
-    private fun markLocalSyncNavigationPending(tabId: String, url: String?) {
-        val tab = tabs.firstOrNull { candidate -> candidate.id == tabId } ?: return
-        if (
-            tab.isIncognito ||
-            isSessionEphemeralTab(tabId) ||
-            !isSyncTargetProfile(tab.profileId)
-        ) {
-            return
-        }
-        val safeUrl = url?.let(BrowserUriPolicy::normalizeHttpUrl) ?: return
-        if (remoteSyncNavigationUrls[tabId] == safeUrl) return
-        pendingLocalSyncNavigationUrls[tabId] = safeUrl
-    }
-
-    private fun prepareSyncedTabHydration(navigation: SyncedTabNavigation): String? {
-        val safeUrl = BrowserUriPolicy.normalizeHttpUrl(navigation.url) ?: return null
-        if (tabs.none { tab -> tab.id == navigation.runtimeTabId }) return null
-        pendingSyncNavigationRunnables.remove(navigation.runtimeTabId)
-            ?.let(mainHandler::removeCallbacks)
-        remoteSyncNavigationUrls.put(navigation.runtimeTabId, safeUrl)
-            ?.takeIf { previousUrl -> previousUrl != safeUrl }
-            ?.let { previousUrl ->
-                supersededRemoteSyncNavigationUrls
-                    .getOrPut(navigation.runtimeTabId) { mutableSetOf() }
-                    .add(previousUrl)
-            }
-        return safeUrl
-    }
-
-    private fun ignoreSupersededRemoteNavigationEvent(event: BrowserEngineEvent): Boolean {
-        val safeUrl = event.address?.let(BrowserUriPolicy::normalizeHttpUrl) ?: return false
-        if (safeUrl !in supersededRemoteSyncNavigationUrls[event.tabId].orEmpty()) return false
-        if (
-            event.type == BrowserEngineEventType.NavigationCommitted ||
-            event.type == BrowserEngineEventType.NavigationFailed ||
-            event.isLoading == false
-        ) {
-            val expectedUrl = remoteSyncNavigationUrls[event.tabId] ?: return true
-            browserEngineSessions[event.tabId]?.let { session ->
-                loadGeckoWithPrivacy(event.tabId, session, expectedUrl)
-            }
-        }
-        return true
-    }
-
-    private fun clearRemoteSyncNavigationTracking(tabId: String) {
-        remoteSyncNavigationUrls.remove(tabId)
-        supersededRemoteSyncNavigationUrls.remove(tabId)
-    }
-
-    private fun applySyncedTabNavigation(navigation: SyncedTabNavigation) {
-        val safeUrl = prepareSyncedTabHydration(navigation) ?: return
-        browserEngineSessions[navigation.runtimeTabId]?.let { session ->
-            loadGeckoWithPrivacy(navigation.runtimeTabId, session, safeUrl)
-        }
-    }
-
-    private fun scheduleSyncedTabNavigation(
-        tabId: String,
-        remoteNavigationFinished: Boolean = false,
-    ) {
-        if (isSessionEphemeralTab(tabId)) {
-            pendingSyncNavigationRunnables.remove(tabId)?.let(mainHandler::removeCallbacks)
-            return
-        }
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return
-        if (!isSyncTargetProfile(tab.profileId) || tab.isIncognito) return
-        remoteSyncNavigationUrls[tabId]?.let { expectedUrl ->
-            if (BrowserUriPolicy.normalizeHttpUrl(tab.url) == expectedUrl) {
-                if (remoteNavigationFinished) clearRemoteSyncNavigationTracking(tabId)
-                return
-            }
-            clearRemoteSyncNavigationTracking(tabId)
-        }
-        pendingSyncNavigationRunnables.remove(tabId)?.let(mainHandler::removeCallbacks)
-        val runnable = Runnable {
-            pendingSyncNavigationRunnables.remove(tabId)
-            enqueueSyncedTab(tabId)
-        }
-        pendingSyncNavigationRunnables[tabId] = runnable
-        mainHandler.postDelayed(runnable, SYNC_NAVIGATION_DEBOUNCE_MILLIS)
-    }
-
-    private fun enqueueSyncedTab(tabId: String) = enqueueSyncedTab(tabId, forceOpen = false)
-
-    private fun enqueueSyncedTab(tabId: String, forceOpen: Boolean) {
-        if (isSessionEphemeralTab(tabId)) return
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return
-        val targetDeviceId = syncTargetDeviceId(tab.profileId) ?: return
-        val tabIndex = tabs.filter { candidate ->
-            candidate.profileId == tab.profileId && !isSessionEphemeralTab(candidate.id)
-        }.indexOfFirst { it.id == tabId }
-        if (tabIndex < 0) return
-        val outbound = SyncedProfileRuntimeRules.outboundTab(tab, tabIndex, selectedTabId) ?: return
-        val remote = syncState.profiles.firstOrNull { it.deviceId == targetDeviceId }
-        val remoteTab = remote?.tabs?.firstOrNull { it.candyId == outbound.candyId }
-        if (!forceOpen && remoteTab?.url == outbound.url && remoteTab.title == outbound.title) return
-        val mutationId = UUID.randomUUID().toString()
-        val mutation = if (remoteTab != null && !forceOpen) {
-            SyncPendingMutation.Navigate(
-                mutationId = mutationId,
-                targetDeviceId = targetDeviceId,
-                candyId = outbound.candyId,
-                title = outbound.title,
-                url = outbound.url,
-            )
-        } else {
-            locallyPendingSyncCandyIds += outbound.candyId
-            SyncPendingMutation.Open(
-                mutationId = mutationId,
-                targetDeviceId = targetDeviceId,
-                tab = outbound,
-            )
-        }
-        if (forceOpen) {
-            val candyId = outbound.candyId
-            pendingSyncReopenMutationIds[candyId] = mutationId
-            mutateSync(mutation) {
-                if (pendingSyncReopenMutationIds[candyId] != mutationId) return@mutateSync
-                pendingSyncReopenMutationIds.remove(candyId)
-                val reopened = syncState.profiles.firstOrNull { it.deviceId == targetDeviceId }
-                    ?.tabs?.any { it.candyId == candyId } == true
-                if (reopened) locallyPendingSyncCandyIds.remove(candyId)
-            }
-        } else {
-            mutateSync(mutation)
-        }
-    }
-
-    private fun enqueueSyncedTabClose(tab: BrowserTab) {
-        if (isSessionEphemeralTab(tab.id)) return
-        val candyId = tab.syncCandyId ?: return
-        val targetDeviceId = syncTargetDeviceId(tab.profileId) ?: return
-        pendingSyncNavigationRunnables.remove(tab.id)?.let(mainHandler::removeCallbacks)
-        locallyPendingSyncCandyIds.remove(candyId)
-        pendingSyncReopenMutationIds.remove(candyId)
-        mutateSync(
-            SyncPendingMutation.Close(
-                mutationId = UUID.randomUUID().toString(),
-                targetDeviceId = targetDeviceId,
-                candyId = candyId,
-            ),
-        )
-    }
-
-    private fun enqueueSyncedTabOrder(profileId: String) {
-        val targetDeviceId = syncTargetDeviceId(profileId) ?: return
-        val orderedCandyIds = tabs.filter { tab ->
-            tab.profileId == profileId && !isSessionEphemeralTab(tab.id)
-        }
-            .mapNotNull(BrowserTab::syncCandyId)
-        mutateSync(
-            SyncPendingMutation.Reorder(
-                mutationId = UUID.randomUUID().toString(),
-                targetDeviceId = targetDeviceId,
-                orderedCandyIds = orderedCandyIds,
-            ),
-        )
-    }
-
-    private fun enqueueSyncedTabPinned(tabId: String, pinned: Boolean) {
-        if (isSessionEphemeralTab(tabId)) return
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return
-        val candyId = tab.syncCandyId ?: return
-        val targetDeviceId = syncTargetDeviceId(tab.profileId) ?: return
-        mutateSync(
-            SyncPendingMutation.SetPinned(
-                mutationId = UUID.randomUUID().toString(),
-                targetDeviceId = targetDeviceId,
-                candyId = candyId,
-                pinned = pinned,
-            ),
-        )
-    }
-
-    private fun mutateSync(
-        mutation: SyncPendingMutation,
-        onComplete: (() -> Unit)? = null,
-    ) {
-        syncMutationObserverForTesting?.invoke(mutation)
-        val future = syncRepository.mutate(mutation)
-        if (onComplete != null) {
-            future.whenComplete { _, _ ->
-                // Repository listener posts precede completion, so stale close states keep the guard.
-                mainHandler.post { if (!destroyed) onComplete() }
-            }
-        }
     }
 
     private fun rebuildCandyMatcher() {
@@ -14641,7 +14462,7 @@ class BrowserController(
         ) {
             prepareIncognitoProfileForRemoval()
         }
-        tabs.filter { it.id in tabIds }.forEach(::enqueueSyncedTabClose)
+        tabs.filter { it.id in tabIds }.forEach(syncOutbox::enqueueClose)
         tabIds.forEach(::removeTabResources)
         tabs.removeAll { it.id in tabIds }
         reconcileCandyTrailForks(nowMillis)
@@ -14651,7 +14472,7 @@ class BrowserController(
         if (activeTabs.isEmpty()) {
             val replacement = newTabState(nowMillis = nowMillis)
             tabs += replacement
-            markSyncedTabPending(replacement)
+            syncOutbox.markTabPending(replacement)
             updateSelectedTabId(activeTabs.first().id)
         } else if (tabs.none { it.id == selectedTabId }) {
             updateSelectedTabId(activeTabs.maxByOrNull(BrowserTab::lastAccessedAt)!!.id)
@@ -14685,13 +14506,7 @@ class BrowserController(
             geckoSessionStateStore.delete(tabId)
             webViewStateRepository.delete(tabId)
         }
-        pendingSyncNavigationRunnables.remove(tabId)?.let(mainHandler::removeCallbacks)
-        pendingLocalSyncNavigationUrls.remove(tabId)
-        clearRemoteSyncNavigationTracking(tabId)
-        tabs.firstOrNull { it.id == tabId }?.syncCandyId?.let { candyId ->
-            locallyPendingSyncCandyIds.remove(candyId)
-            pendingSyncReopenMutationIds.remove(candyId)
-        }
+        syncOutbox.forgetTab(tabId, tabs.firstOrNull { it.id == tabId }?.syncCandyId)
         clearPermissionActivity(tabId)
         clearPrivacyDataForTab(tabId)
         residentSessionAccessOrder.remove(tabId)
@@ -14796,8 +14611,8 @@ class BrowserController(
             .filter { it.id !in oldIds }
             .forEach { restoredTab ->
                 restoreSnoozedCandyTrail(restoredTab)
-                markSyncedTabPending(restoredTab)
-                enqueueSyncedTab(restoredTab.id)
+                syncOutbox.markTabPending(restoredTab)
+                syncOutbox.enqueueTab(restoredTab.id)
             }
         persist()
         snoozeScheduler.schedule(remaining, nowMillis)
@@ -15431,7 +15246,6 @@ class BrowserController(
         const val PREVIEW_NEAR_BLACK_CHANNEL_MAX = 16
         const val BLOCKER_COUNT_FLUSH_DELAY_MS = 250L
         const val SYNC_REFRESH_INTERVAL_MILLIS = 15_000L
-        const val SYNC_NAVIGATION_DEBOUNCE_MILLIS = 450L
         const val FAVORITE_FAVICON_RECYCLE_DELAY_MILLIS = 64L
         const val MAX_COSMETIC_DOCUMENT_START_RULES = 64
         const val MAX_GENERIC_POLICY_HOST_LENGTH = 253
