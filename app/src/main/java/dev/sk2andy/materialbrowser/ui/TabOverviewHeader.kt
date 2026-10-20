@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.ui.v5.v5FieldLabel
 import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
@@ -210,7 +211,7 @@ private fun TabSearchField(search: TabOverviewSearch, modifier: Modifier = Modif
                     .weight(1f)
                     .padding(start = VolaTabOverview.searchFieldPadding)
                     .focusRequester(focusRequester)
-                    .semantics { contentDescription = hint }
+                    .v5FieldLabel(hint, empty = search.query.isNullOrEmpty())
                     .testTag(TabOverviewHeaderTestTags.SearchField),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
                 singleLine = true,

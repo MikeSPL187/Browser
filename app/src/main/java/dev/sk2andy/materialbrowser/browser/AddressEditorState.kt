@@ -85,4 +85,14 @@ object AddressEditorRules {
             else -> (current + delta).coerceIn(AddressEditorState.NO_HIGHLIGHT, last)
         }
     }
+
+    /**
+     * The highlight when the suggestions change under the same query (А-1): search suggestions
+     * from the network arrive after the arrows chose a row, and the row chosen stays chosen where it
+     * moved to. Null when nothing was chosen or the chosen row is gone: the query's default applies.
+     */
+    fun carriedHighlight(previousIds: List<String>, current: Int, ids: List<String>): Int? {
+        val chosen = previousIds.getOrNull(current) ?: return null
+        return ids.indexOf(chosen).takeIf { it >= 0 }
+    }
 }

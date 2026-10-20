@@ -30,6 +30,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -53,6 +59,7 @@ object V5FindInPageTestTags {
     const val Previous = "v5_find_in_page_previous"
     const val Next = "v5_find_in_page_next"
     const val Done = "v5_find_in_page_done"
+    const val Clear = "v5_find_in_page_clear"
 }
 
 /** What the find capsule says and may do; the labels come localized from the binding. */
@@ -62,6 +69,8 @@ data class V5FindInPageLabels(
     val previous: String,
     val next: String,
     val done: String,
+    /** The clear button in the capsule (ПП-3). */
+    val clear: String = "",
 )
 
 /**
@@ -136,15 +145,35 @@ fun V5FindInPage(
                     textStyle = V5Theme.type.body.copy(color = colors.label),
                     cursorBrush = SolidColor(colors.accent),
                     // «Search» even with nothing to step to: the controller then searches again,
-                    // the way to retry when the page gave no answer.
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    // the way to retry when the page gave no answer. No autocorrect: a rare word
+                    // searched on the page must stay as typed (ПП-2).
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
                     keyboardActions = KeyboardActions(onSearch = { onNext() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus)
-                        .semantics { contentDescription = labels.placeholder }
+                        // A hardware keyboard: Shift+Enter goes back, Esc closes, as «Done» (ПП-5).
+                        .onPreviewKeyEvent { event ->
+                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                            when {
+                                event.key == Key.Escape -> true.also { onDone() }
+                                event.key == Key.Enter && event.isShiftPressed -> true.also { onPrevious() }
+                                else -> false
+                            }
+                        }
+                        .v5FieldLabel(labels.placeholder, empty = field.text.isEmpty())
                         .testTag(V5FindInPageTestTags.Query),
                 )
+            }
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }, modifier = Modifier.testTag(V5FindInPageTestTags.Clear)) {
+                    Icon(
+                        VolaIcons.Close,
+                        contentDescription = labels.clear,
+                        tint = colors.labelTertiary,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                }
             }
             when {
                 isCounting -> CircularProgressIndicator(
