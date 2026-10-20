@@ -1198,7 +1198,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openFirefoxExtensions() {
-        if (BuildConfig.SYSTEM_WEBVIEW_ONLY) return
         if (!::browserController.isInitialized) return
         val selectedTab = browserController.selectedTab
         val manager = firefoxExtensionManager ?: engineFlavor.createExtensionManager(
