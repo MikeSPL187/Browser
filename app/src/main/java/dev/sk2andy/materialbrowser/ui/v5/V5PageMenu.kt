@@ -248,14 +248,6 @@ fun V5PageMenu(
                                 onClick = closing(actions.onNewPrivateTab),
                             )
                         }
-                        if (state.canCloseTab) {
-                            V5ListRow(
-                                stringResource(R.string.cd_close_tab),
-                                icon = V5RowIcon(VolaIcons.Close),
-                                titleColor = V5Theme.colors.danger,
-                                onClick = closing(actions.onCloseTab),
-                            )
-                        }
                     }
                     if (state.extras.isNotEmpty()) {
                         V5ListGroup {
@@ -296,6 +288,18 @@ fun V5PageMenu(
                             trailing = V5RowTrailing.Chevron,
                             onClick = closing(actions.onSettings),
                         )
+                    }
+                    // The one red row stands last and alone, away from «New tab», so a slip of the
+                    // thumb does not close the page (М-3), as iOS keeps a removing action apart.
+                    if (state.canCloseTab) {
+                        V5ListGroup {
+                            V5ListRow(
+                                stringResource(R.string.cd_close_tab),
+                                icon = V5RowIcon(VolaIcons.Close),
+                                titleColor = V5Theme.colors.danger,
+                                onClick = closing(actions.onCloseTab),
+                            )
+                        }
                     }
                 }
             }
