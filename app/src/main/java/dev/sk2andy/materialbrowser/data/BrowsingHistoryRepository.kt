@@ -4,6 +4,8 @@ import android.content.Context
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import java.util.UUID
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 internal enum class HistoryRecordingMode(val storedId: String) {
     Enabled("enabled"),
@@ -31,17 +33,55 @@ internal data class HistoryRecordResult(
     val recorded: Boolean,
 )
 
-internal class BrowsingHistoryRepository private constructor(context: Context) {
+internal class BrowsingHistoryRepository private constructor(
+    context: Context,
+    /** Saves a visit after it is shown: every visit wrote the whole history on the main thread (V-07). */
+    private val background: Executor = Executors.newSingleThreadExecutor { task -> Thread(task, "Vola-history") },
+) {
     private val appContext = context.applicationContext
     private val store = BrowserSessionStore(appContext)
     private val recallRepository = RecallRepository.get(appContext)
 
-    @Synchronized
-    fun snapshot(): List<HistoryEntry> = store.loadHistory()
+    /**
+     * The history, read once and kept while the file stays as this process left it; a file
+     * replaced from outside (a data transfer) is read again.
+     */
+    private var cache: List<HistoryEntry>? = null
+    private var cacheStamp: String? = null
+
+    /** A visit waits to be saved: the next background write saves the history as it is then. */
+    private var saveScheduled = false
+
+    private fun current(): List<HistoryEntry> {
+        cache?.takeIf { store.historyStamp() == cacheStamp }?.let { return it }
+        // Changed from outside: what is saved wins over a visit still waiting to be saved.
+        saveScheduled = false
+        return store.loadHistory().also { loaded ->
+            cache = loaded
+            cacheStamp = store.historyStamp()
+        }
+    }
+
+    /** [updated] once the store has it; the cache follows only a write that succeeded. */
+    private fun committed(updated: List<HistoryEntry>, saved: Boolean): Boolean {
+        if (saved) {
+            cache = updated
+            cacheStamp = store.historyStamp()
+        }
+        return saved
+    }
 
     @Synchronized
+    fun snapshot(): List<HistoryEntry> = current()
+
+    /**
+     * Records a visit. It shows at once and is saved in the background: a visit lost to a crash in
+     * that moment costs less than a stalled frame on every page. The Recall text of a visit that
+     * falls off the end is deleted first, as before: it must not outlive its visit.
+     */
+    @Synchronized
     fun record(entry: HistoryEntry): HistoryRecordResult {
-        val current = store.loadHistory()
+        val current = current()
         if (recordingMode() == HistoryRecordingMode.Disabled) {
             return HistoryRecordResult(history = current, recorded = false)
         }
@@ -52,29 +92,43 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         if (evicted.isNotEmpty() && !recallRepository.deleteEntries(evicted)) {
             return HistoryRecordResult(history = current, recorded = false)
         }
-        val committed = store.commitHistory(updated)
-        return HistoryRecordResult(
-            history = if (committed) updated else current,
-            recorded = committed,
-        )
+        cache = updated
+        scheduleSave()
+        return HistoryRecordResult(history = updated, recorded = true)
     }
 
     /** Renames one saved visit to a page title that arrived after it was recorded. */
     @Synchronized
     fun updateTitle(visitId: String, title: String): HistoryRecordResult {
-        val current = store.loadHistory()
+        val current = current()
         val updated = BrowsingLibraryRules.renameHistoryVisit(current, visitId, title)
         if (updated == current) return HistoryRecordResult(history = current, recorded = false)
-        val committed = store.commitHistory(updated)
-        return HistoryRecordResult(
-            history = if (committed) updated else current,
-            recorded = committed,
-        )
+        cache = updated
+        scheduleSave()
+        return HistoryRecordResult(history = updated, recorded = true)
+    }
+
+    private fun scheduleSave() {
+        if (saveScheduled) return
+        saveScheduled = true
+        background.execute(::saveNow)
+    }
+
+    /**
+     * Writes the history as it is at this moment, under the same lock as every change, so a clear
+     * that came first is never undone by an older copy.
+     */
+    @Synchronized
+    private fun saveNow() {
+        if (!saveScheduled) return
+        saveScheduled = false
+        val history = cache ?: return
+        committed(history, store.commitHistory(history))
     }
 
     @Synchronized
     fun remove(entries: Collection<HistoryEntry>): HistoryMutationResult {
-        val current = store.loadHistory()
+        val current = current()
         if (!recallRepository.deleteEntries(entries)) {
             return HistoryMutationResult(history = current, committed = false)
         }
@@ -90,7 +144,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         recallAlreadyDeleted: Boolean = false,
     ): HistoryMutationResult {
         if (!recallAlreadyDeleted && !recallRepository.deleteProfiles(profileIds)) {
-            return HistoryMutationResult(history = store.loadHistory(), committed = false)
+            return HistoryMutationResult(history = current(), committed = false)
         }
         return mutateWithTrailRedaction(trailTabIds) { current ->
             BrowsingHistoryRules.removeProfiles(current, profileIds)
@@ -103,7 +157,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         trailTabIds: Set<String> = emptySet(),
     ): HistoryMutationResult {
         if (!recallRepository.deleteRange(request)) {
-            return HistoryMutationResult(history = store.loadHistory(), committed = false)
+            return HistoryMutationResult(history = current(), committed = false)
         }
         return mutateWithTrailRedaction(
             trailTabIds = trailTabIds,
@@ -116,7 +170,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
 
     @Synchronized
     fun clear(): HistoryMutationResult {
-        val current = store.loadHistory()
+        val current = current()
         if (!recallRepository.clear()) {
             return HistoryMutationResult(history = current, committed = false)
         }
@@ -180,7 +234,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
             val retainedHistory = if (sessionStillCurrent) {
                 emptyList()
             } else {
-                store.loadHistory().filter { entry ->
+                current().filter { entry ->
                     entry.lastVisitedAt >= untilExclusiveMillis
                 }
             }
@@ -195,11 +249,11 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
     }
 
     private fun mutateResult(
-        current: List<HistoryEntry> = store.loadHistory(),
+        current: List<HistoryEntry> = current(),
         transform: (List<HistoryEntry>) -> List<HistoryEntry>,
     ): HistoryMutationResult {
         val updated = transform(current)
-        val committed = updated == current || store.commitHistory(updated)
+        val committed = updated == current || committed(updated, store.commitHistory(updated))
         return HistoryMutationResult(
             history = if (committed) updated else current,
             committed = committed,
@@ -212,7 +266,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         untilExclusiveMillis: Long = Long.MAX_VALUE,
         transform: (List<HistoryEntry>) -> List<HistoryEntry>,
     ): HistoryMutationResult {
-        val current = store.loadHistory()
+        val current = current()
         val updated = transform(current)
         val redaction = trailRedaction(
             tabIds = trailTabIds,
@@ -222,11 +276,14 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
         if (updated == current && redaction == null) {
             return HistoryMutationResult(history = updated, committed = true)
         }
-        val saved = if (redaction == null) {
-            store.commitHistory(updated)
-        } else {
-            store.saveHistoryAndTrailRedaction(updated, redaction)
-        }
+        val saved = committed(
+            updated,
+            if (redaction == null) {
+                store.commitHistory(updated)
+            } else {
+                store.saveHistoryAndTrailRedaction(updated, redaction)
+            },
+        )
         return HistoryMutationResult(
             history = if (saved) updated else current,
             committed = saved,
@@ -245,15 +302,18 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
             sinceInclusiveMillis = Long.MIN_VALUE,
             untilExclusiveMillis = untilExclusiveMillis,
         )
-        return if (redaction == null) {
-            store.saveHistoryAndSessionState(retainedHistory, sessionActive)
-        } else {
-            store.saveHistoryAndTrailRedaction(
-                history = retainedHistory,
-                redaction = redaction,
-                sessionActive = sessionActive,
-            )
-        }
+        return committed(
+            retainedHistory,
+            if (redaction == null) {
+                store.saveHistoryAndSessionState(retainedHistory, sessionActive)
+            } else {
+                store.saveHistoryAndTrailRedaction(
+                    history = retainedHistory,
+                    redaction = redaction,
+                    sessionActive = sessionActive,
+                )
+            },
+        )
     }
 
     private fun persistentRegularTabIds(): Set<String> = buildSet {
@@ -267,7 +327,7 @@ internal class BrowsingHistoryRepository private constructor(context: Context) {
 
     private fun regularProfileIds(): Set<String> = buildSet {
         store.loadProfiles().first.mapTo(this, BrowserProfile::id)
-        store.loadHistory().mapTo(this, HistoryEntry::profileId)
+        current().mapTo(this, HistoryEntry::profileId)
     }
 
     private fun documentKey(entry: HistoryEntry): String? =
