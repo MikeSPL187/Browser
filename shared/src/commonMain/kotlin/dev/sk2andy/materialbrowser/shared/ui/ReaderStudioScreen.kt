@@ -1289,7 +1289,7 @@ private fun ReaderBlockContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = if (boxed) 16.dp else 0.dp,
+                    horizontal = if (boxed) 16.dp else 0.dp, // token-exempt: Reader Studio keeps its v4 values until it moves to v5
                     vertical = 10.dp,
                 ),
         ) {
