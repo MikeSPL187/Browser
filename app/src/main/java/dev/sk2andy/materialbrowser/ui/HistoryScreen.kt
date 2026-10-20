@@ -937,7 +937,7 @@ internal object HistoryScreenTestTags {
     fun select(entry: HistoryEntry): String = "history_select:${entry.profileId}:${entry.url}"
 }
 
-private val HistoryUndoSaver = Saver<HistoryUndo?, Any>(
+internal val HistoryUndoSaver = Saver<HistoryUndo?, Any>(
     save = { undo -> undo?.let(LibraryRules::saveUndo) },
     restore = LibraryRules::restoreUndo,
 )

@@ -52,4 +52,32 @@ class V5NewTabRulesTest {
         // Epoch day 0 is Thursday, 1 January 1970.
         assertEquals(listOf("Tue", "Wed", "Thu"), V5NewTabRules.weekdays(lastEpochDay = 0, days = 3, locale = Locale.ENGLISH))
     }
+
+    @Test
+    fun `a nonsense column count still gives rows`() {
+        assertEquals(listOf(1, 1), V5NewTabRules.rows(count = 1, canAdd = true, columns = 0).map { it.size })
+    }
+
+    @Test
+    fun `moving in an empty or single grid changes nothing`() {
+        assertEquals(emptyList<String>(), V5NewTabRules.moved(emptyList(), "a", 0))
+        assertEquals(listOf("a"), V5NewTabRules.moved(listOf("a"), "a", 5))
+        assertEquals(listOf("b", "a"), V5NewTabRules.moved(listOf("a", "b"), "b", -3))
+    }
+
+    @Test
+    fun `a title with no letter or an empty one gets the dot`() {
+        assertEquals("•", V5NewTabRules.letter(""))
+        assertEquals("•", V5NewTabRules.letter("   "))
+    }
+
+    @Test
+    fun `weekdays cross a year boundary and speak the locale`() {
+        // Epoch day 18628 is Friday, 1 January 2021; the two days before are Wednesday and Thursday.
+        assertEquals(
+            listOf("Ср", "Чт", "Пт"),
+            V5NewTabRules.weekdays(lastEpochDay = 18628, days = 3, locale = Locale.forLanguageTag("ru")),
+        )
+        assertEquals(emptyList<String>(), V5NewTabRules.weekdays(lastEpochDay = 0, days = 0, locale = Locale.ENGLISH))
+    }
 }

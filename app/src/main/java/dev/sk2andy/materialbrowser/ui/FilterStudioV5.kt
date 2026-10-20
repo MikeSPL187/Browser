@@ -48,6 +48,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5PageBar
 import dev.sk2andy.materialbrowser.ui.v5.V5ListDefaults
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5SearchField
 import dev.sk2andy.materialbrowser.ui.v5.V5Segmented
@@ -92,6 +95,8 @@ internal fun FilterStudioV5(
     // A rule chosen in X-Ray opens on its own page, as v4 scrolls to it.
     var openId by rememberSaveable(selectedRuleId) { mutableStateOf(selectedRuleId) }
     val dialogs = remember { FilterStudioDialogState() }
+    // A rule of one's own may be long and has no copy elsewhere: deleting it asks first (РР-2).
+    var deletingId by rememberSaveable { mutableStateOf<String?>(null) }
     val filtered = remember(rules, query, typeFilter, profileOnly, currentProfileId) {
         filterStudioRules(rules, query, typeFilter, profileOnly, currentProfileId)
     }
@@ -173,10 +178,7 @@ internal fun FilterStudioV5(
                         } ?: stringResource(R.string.filter_scope_global),
                         onToggle = { onToggle(open.id, it) },
                         onEdit = { dialogs.editingRule = open },
-                        onDelete = {
-                            onDelete(open.id)
-                            openId = null
-                        },
+                        onDelete = { deletingId = open.id },
                     )
                 }
             }
@@ -194,6 +196,27 @@ internal fun FilterStudioV5(
             onApplySubscription = onApplySubscription,
             onExport = onExport,
             uiV5 = true,
+        )
+        val deleting = rules.firstOrNull { it.id == deletingId }
+        V5PromptSheet(
+            visible = deleting != null,
+            title = deleting?.let { stringResource(R.string.filter_v5_delete_title, it.displayTarget()) }.orEmpty(),
+            message = stringResource(R.string.filter_v5_delete_message),
+            actions = listOf(
+                V5PromptAction(
+                    label = stringResource(R.string.filter_delete_rule),
+                    role = V5PromptRole.Destructive,
+                    testTag = FilterStudioTestTags.DeleteConfirm,
+                    onClick = {
+                        deletingId = null
+                        if (deleting != null) {
+                            onDelete(deleting.id)
+                            openId = null
+                        }
+                    },
+                ),
+            ),
+            onDismiss = { deletingId = null },
         )
     }
 }
