@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -164,6 +165,7 @@ fun V5Library(
             .fillMaxSize()
             .background(colors.background)
             .statusBarsPadding()
+            .windowInsetsPadding(V5SafeSides)
             .testTag(V5LibraryTestTags.Page),
     ) {
         Row(
