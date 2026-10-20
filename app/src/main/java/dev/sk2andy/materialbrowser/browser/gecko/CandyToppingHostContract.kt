@@ -9,6 +9,8 @@ import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRules
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptRunAt
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import org.mozilla.geckoview.GeckoSession
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 internal object CandyToppingHostContract {
     const val EXTENSION_ID = "candy-topping-host@sk2andy.dev"
@@ -213,11 +215,6 @@ private fun String.javascriptDoubleQuoted(): String = replace("\\", "\\\\")
     .replace("\n", "\\n")
     .replace("\r", "\\r")
 
-internal enum class GeckoToppingHostState {
-    Initializing,
-    Ready,
-    Unavailable,
-}
 
 /** Revision gate; failure is terminal, while each later catalog revision is acknowledged. */
 internal class GeckoToppingInitializationGate {
@@ -294,24 +291,3 @@ internal fun interface GeckoToppingSessionBinding {
     }
 }
 
-internal interface GeckoToppingInteractionDelegate {
-    fun onMenuCommandsChanged(
-        tabId: String,
-        commands: List<dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand>,
-    )
-
-    fun onOpenTab(request: dev.sk2andy.materialbrowser.browser.userscript.UserScriptOpenTabRequest)
-
-    companion object {
-        val None = object : GeckoToppingInteractionDelegate {
-            override fun onMenuCommandsChanged(
-                tabId: String,
-                commands: List<dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand>,
-            ) = Unit
-
-            override fun onOpenTab(
-                request: dev.sk2andy.materialbrowser.browser.userscript.UserScriptOpenTabRequest,
-            ) = Unit
-        }
-    }
-}

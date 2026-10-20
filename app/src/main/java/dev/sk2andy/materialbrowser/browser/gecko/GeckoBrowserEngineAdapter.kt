@@ -71,6 +71,9 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryTracker
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 internal class GeckoPreparedSession(
     val session: GeckoSession,

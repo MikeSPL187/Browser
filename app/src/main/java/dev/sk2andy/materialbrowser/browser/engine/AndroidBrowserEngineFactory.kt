@@ -14,12 +14,12 @@ import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
 import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEventSink
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
 import dev.sk2andy.materialbrowser.browser.translation.TranslationModelsPort
 import dev.sk2andy.materialbrowser.browser.userscript.UserScript
 import dev.sk2andy.materialbrowser.browser.userscript.UserScriptMenuCommand

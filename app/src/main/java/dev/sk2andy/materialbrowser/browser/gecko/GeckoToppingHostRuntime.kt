@@ -22,6 +22,8 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 /** GeckoView edge for Candy's private, bundled MV3 Topping host. */
 internal class GeckoViewToppingHostRuntime(

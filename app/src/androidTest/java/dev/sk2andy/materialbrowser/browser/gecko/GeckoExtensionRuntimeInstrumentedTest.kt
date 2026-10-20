@@ -24,6 +24,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionMutationResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
 
 @RunWith(AndroidJUnit4::class)
 class GeckoExtensionRuntimeInstrumentedTest {

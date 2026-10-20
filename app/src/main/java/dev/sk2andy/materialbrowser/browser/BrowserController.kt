@@ -131,10 +131,10 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionChromeHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionCreateTabRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionOptionsTarget
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionOptionsTarget
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPopupIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionUpdateTabRequest
@@ -162,8 +162,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicyRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateRestoreDecision
 import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshotRules
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets

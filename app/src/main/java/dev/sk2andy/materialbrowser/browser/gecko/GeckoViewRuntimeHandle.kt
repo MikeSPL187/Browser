@@ -170,6 +170,14 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetLayout
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets
 import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshotRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChangeListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionPrompt
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequestKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 internal class GeckoViewRuntimeHandle private constructor(
     private val runtime: GeckoRuntime,

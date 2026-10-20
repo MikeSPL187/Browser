@@ -10,7 +10,7 @@ import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore

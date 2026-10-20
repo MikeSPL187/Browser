@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.gecko
 
 import kotlinx.coroutines.CancellationException
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
 
 internal enum class GeckoDefaultExtensionDelivery {
     Bundled,

@@ -3,6 +3,14 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionMutationResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionPrompt
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionReadResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
 
 internal class GeckoExtensionRepository(
     private val runtime: GeckoExtensionRuntime,

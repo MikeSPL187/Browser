@@ -122,8 +122,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEvent
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetLayout
 import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets

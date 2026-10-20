@@ -2,18 +2,18 @@ package dev.sk2andy.materialbrowser.browser.engine
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionInstallFailureRules
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionManagementContext
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionMutationResult
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionOptionsTarget
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionDecision
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionReadResult
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRejection
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionMutationResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionOptionsTarget
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionReadResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRepository
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionRuntime
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionSnapshot
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

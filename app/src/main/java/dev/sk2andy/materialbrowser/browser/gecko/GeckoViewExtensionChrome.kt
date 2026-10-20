@@ -13,7 +13,6 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
-import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKind
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
@@ -24,45 +23,9 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionTabRequestResult
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionUpdateTabRequest
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
 import dev.sk2andy.materialbrowser.browser.engine.GeckoProfileStorageRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
 
-internal interface GeckoExtensionChromeHost {
-    fun currentSessionIdentity(): GeckoExtensionSessionIdentity?
-
-    fun isCurrentSession(identity: GeckoExtensionSessionIdentity): Boolean
-
-    /**
-     * Creates Candy tab state around GeckoView's required unopened tabs.create session.
-     *
-     * Hosts must adopt [session] before returning so Candy and Gecko reference the same renderer.
-     */
-    fun createTab(
-        request: GeckoExtensionCreateTabRequest,
-        session: BrowserEnginePreparedSession,
-    ): String?
-
-    fun updateTab(request: GeckoExtensionUpdateTabRequest): Boolean
-
-    fun closeTab(target: GeckoExtensionSessionIdentity): Boolean
-
-    fun openPopup(
-        popup: GeckoExtensionPopupIdentity,
-        session: BrowserEnginePreparedSession,
-        toggle: Boolean,
-    ): Boolean
-
-    fun closePopup(popup: GeckoExtensionPopupIdentity)
-
-    fun openOptionsPage(
-        extensionId: String,
-        title: String,
-        owner: GeckoExtensionSessionIdentity,
-        url: String,
-        openInTab: Boolean,
-    ): String?
-
-    fun onActionsChanged(actions: List<GeckoExtensionActionState>)
-
-}
 
 /**
  * Public-GeckoView-API edge for user WebExtension chrome.

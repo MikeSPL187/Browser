@@ -24,6 +24,8 @@ import org.json.JSONObject
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
 
 internal object GeckoDefaultExtensionCatalog {
     private const val CATALOG_ASSET = "gecko_default_extensions/catalog.json"

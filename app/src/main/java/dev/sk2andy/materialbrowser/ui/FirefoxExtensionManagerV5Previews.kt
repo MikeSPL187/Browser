@@ -1,11 +1,11 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequest
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionPermissionRequestKind
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionSnapshot
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequestKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 

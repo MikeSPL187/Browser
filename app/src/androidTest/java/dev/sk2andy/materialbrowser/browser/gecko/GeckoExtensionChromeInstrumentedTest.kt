@@ -31,6 +31,7 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionCreateTabRequest
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPopupIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionUpdateTabRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeHost
 
 @RunWith(AndroidJUnit4::class)
 class GeckoExtensionChromeInstrumentedTest {

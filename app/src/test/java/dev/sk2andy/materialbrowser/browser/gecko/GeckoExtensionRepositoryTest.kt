@@ -5,6 +5,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionMutationResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionPrompt
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequestKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionReadResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
 
 class GeckoExtensionRepositoryTest {
     private val regularContext = GeckoExtensionManagementContext(
