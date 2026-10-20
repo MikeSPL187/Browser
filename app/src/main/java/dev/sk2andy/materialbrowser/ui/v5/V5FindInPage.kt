@@ -19,7 +19,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +38,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -81,6 +86,9 @@ fun V5FindInPage(
 ) {
     val colors = V5Theme.colors
     val focus = remember { FocusRequester() }
+    // A query remembered from the last time comes in selected, so typing replaces it (FP-04).
+    var field by remember { mutableStateOf(TextFieldValue(query, TextRange(0, query.length))) }
+    if (field.text != query) field = TextFieldValue(query, TextRange(query.length))
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
         withFrameNanos { }
@@ -119,8 +127,11 @@ fun V5FindInPage(
                     )
                 }
                 BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
+                    value = field,
+                    onValueChange = { value ->
+                        field = value
+                        if (value.text != query) onQueryChange(value.text)
+                    },
                     singleLine = true,
                     textStyle = V5Theme.type.body.copy(color = colors.label),
                     cursorBrush = SolidColor(colors.accent),

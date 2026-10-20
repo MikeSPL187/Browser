@@ -226,6 +226,41 @@ for (const [engine, extract] of [["Gecko", extractWithGecko], ["System WebView",
     );
   });
 
+  test(`${engine} reader extraction keeps code, tables, captions, definitions and bare text divs`, () => {
+    const article = h(
+      "article",
+      {},
+      h("p", {}, "A short intro."),
+      h("pre", {}, h("code", {}, "fun main() {\n    println(1)\n}\n")),
+      h(
+        "table",
+        {},
+        h("tr", {}, h("th", {}, "Route"), h("th", {}, "Length")),
+        h("tr", {}, h("td", {}, "Grotto"), h("td", {}, h("p", {}, "4 km"))),
+      ),
+      h("figure", {}, h("figcaption", {}, "The grotto in February")),
+      h("dl", {}, h("dt", {}, "Ice"), h("dd", {}, "Strong by mid-February")),
+      h("div", {}, "A paragraph written as a bare div, long enough to be the story's own text."),
+      h("div", {}, "Share"),
+      h("div", {}, h("p", {}, "A paragraph inside a wrapper div is read once.")),
+    );
+
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(extract(article).blocks.map((block) => [block.kind, block.text]))),
+      [
+        ["paragraph", "A short intro."],
+        ["code", "fun main() {\n    println(1)\n}"],
+        ["paragraph", "Route · Length"],
+        ["paragraph", "Grotto · 4 km"],
+        ["paragraph", "The grotto in February"],
+        ["paragraph", "Ice"],
+        ["paragraph", "Strong by mid-February"],
+        ["paragraph", "A paragraph written as a bare div, long enough to be the story's own text."],
+        ["paragraph", "A paragraph inside a wrapper div is read once."],
+      ],
+    );
+  });
+
   test(`${engine} reader extraction reads the longest article, not a teaser before it`, () => {
     const teaser = h("article", {}, h("p", {}, "A teaser card for another story."));
     const story = h(

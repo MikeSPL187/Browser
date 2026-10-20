@@ -38,6 +38,7 @@ private val previewArticle = ReaderDocument(
                 "a two-day crossing along the shore.",
         ),
         ReaderBlock(ReaderBlockKind.Quote, "Always check the ice with a local guide."),
+        ReaderBlock(ReaderBlockKind.Code, "route(\"grotto\") {\n    distance = 4.km\n}"),
     ),
 )
 
