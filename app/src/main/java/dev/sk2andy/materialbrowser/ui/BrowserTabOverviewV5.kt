@@ -250,7 +250,8 @@ private fun OverviewContent(
                 },
                 onCloseRefused = { V5Feedback.show(context, R.string.v5_overview_pinned_stays) },
                 modifier = Modifier.graphicsLayer { alpha = if (heroTabId != null) hero.value.coerceIn(0f, 1f) else 1f },
-                onCardBounds = { id, bounds -> cardBounds[id] = bounds },
+                // Written only when a card moved: a layout pass without a change writes nothing (О-8).
+                onCardBounds = { id, bounds -> if (cardBounds[id] != bounds) cardBounds[id] = bounds },
                 heroCardId = heroTabId,
                 onToggleGroup = { id -> if (!exiting) controller.tabStackController.toggleCollapsed(id) },
                 onCardLongPress = { id -> if (!exiting) groupSheet = TabGroupSheetTarget.Move(id) },
