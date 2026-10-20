@@ -60,13 +60,14 @@ class FirstRunRulesTest {
     }
 
     @Test
-    fun `v5 always starts with the welcome, never with the v4 lesson`() {
-        assertEquals(FirstRunStage.Welcome, FirstRunRules.v5FirstStage())
-    }
-
-    @Test
     fun `back from the default browser question returns to the welcome`() {
         assertTrue(FirstRunRules.handlesBack(FirstRunStage.DefaultBrowser))
         assertEquals(FirstRunStage.Welcome, FirstRunRules.back(FirstRunStage.DefaultBrowser, showIntro = true))
+    }
+
+    @Test
+    fun `v5 welcomes a new install and shows an updated user only its gestures`() {
+        assertEquals(FirstRunStage.Welcome, FirstRunRules.v5FirstStage(showIntro = true))
+        assertEquals(FirstRunStage.GestureSheet, FirstRunRules.v5FirstStage(showIntro = false))
     }
 }
