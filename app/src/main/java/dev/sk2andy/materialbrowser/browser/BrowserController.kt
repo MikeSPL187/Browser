@@ -41,24 +41,18 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.BlockerSettings
 import dev.sk2andy.materialbrowser.blocking.BundledSitePrivacyDefaults
 import dev.sk2andy.materialbrowser.blocking.CandyDecisionAction
-import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
+import dev.sk2andy.materialbrowser.blocking.FilterRuleBook
 import dev.sk2andy.materialbrowser.blocking.CandyHostCanonicalizer
-import dev.sk2andy.materialbrowser.blocking.CandyImportScope
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshot
-import dev.sk2andy.materialbrowser.blocking.CandyRuleSemantics
 import dev.sk2andy.materialbrowser.blocking.CandyMatcherSnapshots
 import dev.sk2andy.materialbrowser.blocking.CandyPublicSuffixRules
 import dev.sk2andy.materialbrowser.blocking.CandyRule
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
 import dev.sk2andy.materialbrowser.blocking.CandyRuleDecision
-import dev.sk2andy.materialbrowser.blocking.CandyRuleFormat
 import dev.sk2andy.materialbrowser.blocking.CandyRuleImport
 import dev.sk2andy.materialbrowser.blocking.CandyRuleKind
 import dev.sk2andy.materialbrowser.blocking.CandyRuleOrigin
 import dev.sk2andy.materialbrowser.blocking.CandyRulePreview
-import dev.sk2andy.materialbrowser.blocking.CandyRuleValidation
-import dev.sk2andy.materialbrowser.blocking.CandyRuleValidator
-import dev.sk2andy.materialbrowser.blocking.CandySubscriptionRules
 import dev.sk2andy.materialbrowser.blocking.PrivacyRequestSanitizer
 import dev.sk2andy.materialbrowser.blocking.PrivacyPolicyRules
 import dev.sk2andy.materialbrowser.blocking.PrivacyRuleDecisionAction
@@ -390,7 +384,6 @@ class BrowserController(
     val favoriteLibrary: FavoriteLibrary get() = profileFavorites.library
     val privacySnapshots = mutableStateMapOf<String, PrivacyXRaySnapshot>()
     val filterRules = mutableStateListOf<CandyRule>()
-    private val incognitoRuleHits = mutableStateMapOf<String, Int>()
     val candyTrails = mutableStateMapOf<String, CandyTrail>()
     val snoozedTabs = mutableStateListOf<SnoozedTab>()
     val siteCapsules = mutableStateListOf<SiteCapsule>()
@@ -509,14 +502,13 @@ class BrowserController(
         private set
     var isClosedTabUndoEnabled by mutableStateOf(false)
         private set
-    internal var closedTabUndoOffer by mutableStateOf<ClosedTabUndoToken?>(null)
-        private set
-    private var closedTabUndoTrail: CandyTrail? = null
-    private var closedTabUndoPreview: Bitmap? = null
-    private var closedTabUndoFavicon: Bitmap? = null
-    private var closedTabUndoStack: TabStack? = null
-    private var closedTabUndoStackAfterClose: TabStack? = null
-    private val closedTabUndoExpiry = Runnable { dismissClosedTabUndo() }
+    private val closedTabUndo = ClosedTabUndo<Bitmap>(
+        postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
+        onExpired = { dismissClosedTabUndo() },
+    )
+    internal val closedTabUndoOffer: ClosedTabUndoToken?
+        get() = closedTabUndo.offer
     var isExternalLinkPreviewEnabled by mutableStateOf(false)
         private set
     var externalAppLinkHandling by mutableStateOf(ExternalAppLinkHandling.Default)
@@ -1565,7 +1557,14 @@ class BrowserController(
     private val commandCatalog = AndroidCommandCatalog(activity)
     private val matcherSnapshot = AtomicReference(CandyMatcherSnapshot.Empty)
     private val incognitoMatcherSnapshot = AtomicReference(CandyMatcherSnapshot.Empty)
-    private val ephemeralRuleIds = mutableSetOf<String>()
+    private val filterBook = FilterRuleBook(
+        rules = filterRules,
+        importedGroup = { activity.getString(R.string.filter_group_imported) },
+        subscriptionGroup = { activity.getString(R.string.filter_group_subscription) },
+        newId = { UUID.randomUUID().toString() },
+        now = System::currentTimeMillis,
+        onChanged = ::onFilterRulesChanged,
+    )
 
     @Volatile
     internal var permanentSiteExceptions = store.loadPermanentSiteExceptions()
@@ -1845,27 +1844,13 @@ class BrowserController(
 
     fun siteCertificate(tabId: String): SiteCertificate? = browserEngineSessions[tabId]?.siteCertificate()
 
-    fun filterRule(ruleId: String): CandyRule? = filterRules.firstOrNull { it.id == ruleId }
+    fun filterRule(ruleId: String): CandyRule? = filterBook.find(ruleId)
 
     fun filterRulesFor(tabId: String): List<CandyRule> =
-        if (tabs.firstOrNull { it.id == tabId }?.isIncognito == true) {
-            filterRules.map { rule ->
-                rule.copy(
-                    hitCount = (rule.hitCount.toLong() + incognitoRuleHits.getOrDefault(rule.id, 0))
-                        .coerceAtMost(Int.MAX_VALUE.toLong())
-                        .toInt(),
-                )
-            }
-        } else {
-            filterRules.filterNot { it.id in ephemeralRuleIds }
-        }
+        filterBook.rulesFor(isPrivate = tabs.firstOrNull { it.id == tabId }?.isIncognito == true)
 
     fun filterSubscriptionRulesFor(tabId: String): List<CandyRule> =
-        if (tabs.firstOrNull { it.id == tabId }?.isIncognito == true) {
-            filterRules.filter { it.id in ephemeralRuleIds }
-        } else {
-            filterRules.filterNot { it.id in ephemeralRuleIds }
-        }
+        filterBook.subscriptionRulesFor(isPrivate = tabs.firstOrNull { it.id == tabId }?.isIncognito == true)
 
     fun filterStudioTestUrl(tabId: String): String =
         pageUrls[tabId] ?: tabs.firstOrNull { it.id == tabId }?.url.orEmpty()
@@ -1941,60 +1926,15 @@ class BrowserController(
         return addFilterRule(candidate, temporary = tab.isIncognito)
     }
 
-    fun addFilterRule(candidate: CandyRule, temporary: Boolean = selectedTab.isIncognito): CandyRule? {
-        val validated = (CandyRuleValidator.validate(candidate) as? CandyRuleValidation.Valid)?.rule
-            ?: return null
-        val duplicate = filterRules.firstOrNull { existing ->
-            existing.id == validated.id ||
-                (existing.action == validated.action &&
-                existing.kind == validated.kind &&
-                existing.requestHost == validated.requestHost &&
-                existing.firstPartyHost == validated.firstPartyHost &&
-                existing.cosmeticSelector == validated.cosmeticSelector &&
-                existing.profileId == validated.profileId)
-        }
-        if (duplicate != null) return duplicate.takeIf { CandyRuleSemantics.same(it, validated) }
-        if (filterRules.size >= CandyRuleValidator.MAX_RULES) return null
-        if (validated.kind == CandyRuleKind.CosmeticCss &&
-            filterRules.count { it.kind == CandyRuleKind.CosmeticCss } >=
-            CandyRuleValidator.MAX_COSMETIC_RULES
-        ) return null
-        filterRules += validated
-        if (temporary) ephemeralRuleIds += validated.id
-        onFilterRulesChanged(persist = !temporary)
-        return validated
-    }
+    fun addFilterRule(candidate: CandyRule, temporary: Boolean = selectedTab.isIncognito): CandyRule? =
+        filterBook.add(candidate, temporary)
 
-    fun setFilterRuleActive(ruleId: String, active: Boolean): Boolean {
-        val index = filterRules.indexOfFirst { it.id == ruleId }
-        if (index < 0 || filterRules[index].active == active) return false
-        filterRules[index] = filterRules[index].copy(active = active)
-        onFilterRulesChanged(persist = ruleId !in ephemeralRuleIds)
-        return true
-    }
+    fun setFilterRuleActive(ruleId: String, active: Boolean): Boolean = filterBook.setActive(ruleId, active)
 
-    fun updateFilterRule(candidate: CandyRule): CandyRule? {
-        val index = filterRules.indexOfFirst { it.id == candidate.id }
-        if (index < 0) return null
-        val validated = (CandyRuleValidator.validate(candidate) as? CandyRuleValidation.Valid)?.rule
-            ?: return null
-        if (filterRules.any { it.id != validated.id && CandyRuleSemantics.same(it, validated) }) return null
-        val previous = filterRules[index]
-        if (previous.kind != CandyRuleKind.CosmeticCss &&
-            validated.kind == CandyRuleKind.CosmeticCss &&
-            filterRules.count { it.kind == CandyRuleKind.CosmeticCss } >=
-            CandyRuleValidator.MAX_COSMETIC_RULES
-        ) return null
-        filterRules[index] = validated.copy(hitCount = previous.hitCount)
-        onFilterRulesChanged(persist = validated.id !in ephemeralRuleIds)
-        return filterRules[index]
-    }
+    fun updateFilterRule(candidate: CandyRule): CandyRule? = filterBook.update(candidate)
 
     fun deleteFilterRule(ruleId: String): Boolean {
-        val removed = filterRules.firstOrNull { it.id == ruleId } ?: return false
-        filterRules.remove(removed)
-        val temporary = ephemeralRuleIds.remove(ruleId)
-        onFilterRulesChanged(persist = !temporary)
+        if (!filterBook.delete(ruleId)) return false
         privacySnapshots.replaceAll { _, snapshot ->
             snapshot.copy(
                 domains = snapshot.domains.map { domain ->
@@ -2015,121 +1955,19 @@ class BrowserController(
 
     fun importFilterRules(text: String): CandyRulePreview = CandyRuleImport.parse(text)
 
-    fun applyFilterImport(preview: CandyRulePreview): Int {
-        if (!preview.isApplicable) return 0
-        val profileIds = profiles.map(BrowserProfile::id)
-        if (preview.rules.any { !CandyImportScope.isAllowed(it.profileId, profileIds) }) return 0
-        val temporary = selectedTab.isIncognito
-        val additions = prepareRuleBatch(preview.rules) ?: return 0
-        if (additions.isEmpty()) return 0
-        filterRules += additions
-        if (temporary) ephemeralRuleIds += additions.map(CandyRule::id)
-        onFilterRulesChanged(persist = !temporary)
-        return additions.size
-    }
+    fun applyFilterImport(preview: CandyRulePreview): Int =
+        filterBook.applyImport(preview, profiles.map(BrowserProfile::id), temporary = selectedTab.isIncognito)
 
-    fun applyFilterSubscription(sourceUrl: String, preview: CandyRulePreview): Int {
-        if (!preview.isApplicable || !CandyRuleValidator.isSafeHttpsUrl(sourceUrl)) return 0
-        val targetScopes = preview.rules.map(CandyRule::profileId).toSet()
-        if (targetScopes.size != 1) return 0
-        val targetProfileId = targetScopes.first()
-        if (!CandyImportScope.isAllowed(targetProfileId, profiles.map(BrowserProfile::id))) return 0
-        val temporary = selectedTab.isIncognito
-        val sourcePrefix = if (temporary) {
-            "private-${UUID.randomUUID()}"
-        } else {
-            "subscription-${sourceUrl.hashCode().toUInt().toString(16)}"
-        }
-        val imported = CandyRuleValidator.normalizeAll(
-            preview.rules.mapIndexed { index, rule ->
-                rule.copy(
-                    id = "$sourcePrefix-$index-${CandyRuleSemantics.key(rule).hashCode().toUInt().toString(16)}",
-                    origin = CandyRuleOrigin.Subscription,
-                    sourceUrl = sourceUrl,
-                    updatedAtMillis = System.currentTimeMillis(),
-                    group = CandyFilterPresets.groupFor(sourceUrl)
-                        ?: runCatching { java.net.URI(sourceUrl).host }.getOrNull()?.take(48)
-                        ?: activity.getString(R.string.filter_group_subscription),
-                )
-            },
+    fun applyFilterSubscription(sourceUrl: String, preview: CandyRulePreview): Int =
+        filterBook.applySubscription(
+            sourceUrl = sourceUrl,
+            preview = preview,
+            profileIds = profiles.map(BrowserProfile::id),
+            temporary = selectedTab.isIncognito,
         )
-        if (temporary) {
-            val oldIds = filterRules.asSequence()
-                .filter {
-                    CandySubscriptionRules.isSameSourceScope(it, sourceUrl, targetProfileId) &&
-                        it.id in ephemeralRuleIds
-                }
-                .map(CandyRule::id)
-                .toSet()
-            val retained = filterRules.filterNot { it.id in oldIds }
-            val persistentSourceIds = retained.asSequence()
-                .filter {
-                    CandySubscriptionRules.isSameSourceScope(it, sourceUrl, targetProfileId) &&
-                        it.id !in ephemeralRuleIds
-                }
-                .map(CandyRule::id)
-                .toSet()
-            val additions = prepareRuleBatch(
-                input = imported,
-                base = retained,
-                ignoreSemanticsForIds = persistentSourceIds,
-            ) ?: return 0
-            filterRules.removeAll { it.id in oldIds }
-            ephemeralRuleIds.removeAll(oldIds)
-            incognitoRuleHits.keys.removeAll(oldIds)
-            filterRules += additions
-            ephemeralRuleIds += additions.map(CandyRule::id)
-            onFilterRulesChanged(persist = false)
-            return additions.size
-        }
-        val oldIds = filterRules.asSequence()
-            .filter {
-                CandySubscriptionRules.isSameSourceScope(it, sourceUrl, targetProfileId) &&
-                    it.id !in ephemeralRuleIds
-            }
-            .map(CandyRule::id)
-            .toSet()
-        val retained = filterRules.filterNot { it.id in oldIds }
-        val additions = prepareRuleBatch(imported, retained) ?: return 0
-        filterRules.removeAll { it.id in oldIds }
-        filterRules += additions
-        onFilterRulesChanged(persist = true)
-        return additions.size
-    }
 
-    fun exportFilterRules(): String = CandyRuleFormat.export(
-        filterRules.filterNot { it.id in ephemeralRuleIds },
-    )
+    fun exportFilterRules(): String = filterBook.export()
 
-    private fun prepareRuleBatch(
-        input: List<CandyRule>,
-        base: List<CandyRule> = filterRules,
-        ignoreSemanticsForIds: Set<String> = emptySet(),
-    ): List<CandyRule>? {
-        val existingIds = base.mapTo(mutableSetOf(), CandyRule::id)
-        val existingSemantics = base.asSequence()
-            .filterNot { it.id in ignoreSemanticsForIds }
-            .mapTo(mutableSetOf(), CandySubscriptionRules::storageKey)
-        var cosmeticCount = base.count { it.kind == CandyRuleKind.CosmeticCss }
-        val additions = ArrayList<CandyRule>(input.size)
-        for (inputRule in input) {
-            var rule = (CandyRuleValidator.validate(inputRule) as? CandyRuleValidation.Valid)?.rule
-                ?: return null
-            if (rule.origin == CandyRuleOrigin.Import && rule.group == "Imported") {
-                rule = rule.copy(group = activity.getString(R.string.filter_group_imported))
-            }
-            val semantics = CandySubscriptionRules.storageKey(rule)
-            if (!existingSemantics.add(semantics)) continue
-            if (rule.id in existingIds) rule = rule.copy(id = UUID.randomUUID().toString())
-            if (base.size + additions.size >= CandyRuleValidator.MAX_RULES) return null
-            if (rule.kind == CandyRuleKind.CosmeticCss &&
-                ++cosmeticCount > CandyRuleValidator.MAX_COSMETIC_RULES
-            ) return null
-            existingIds += rule.id
-            additions += rule
-        }
-        return additions
-    }
 
     init {
         fileChooserValidationExecutor.executeIfRunning(geckoFileUploadStager::clearOrphans)
@@ -5969,12 +5807,7 @@ class BrowserController(
         }
         movedTabIds.forEach(extensionTabMuteOverrides::remove)
         movedTabIds.forEach(::clearPrivacyDataForTab)
-        val profileRuleIds = filterRules.filter { it.profileId == profileId }.map(CandyRule::id).toSet()
-        if (profileRuleIds.isNotEmpty()) {
-            filterRules.removeAll { it.id in profileRuleIds }
-            ephemeralRuleIds.removeAll(profileRuleIds)
-            onFilterRulesChanged(persist = true)
-        }
+        filterBook.forgetProfile(profileId)
         if (permanentSiteExceptions.containsKey(profileId)) {
             permanentSiteExceptions = permanentSiteExceptions - profileId
             store.savePermanentSiteExceptions(permanentSiteExceptions)
@@ -7472,27 +7305,31 @@ class BrowserController(
         reconcileCandyTrailForks(nowMillis)
         persist()
         if (canUndo) {
-            closedTabUndoTrail = originalTrail
-            closedTabUndoPreview = originalPreview
-            closedTabUndoFavicon = originalFavicon
-            closedTabUndoStack = originalStack
-            closedTabUndoStackAfterClose = originalStack?.let { original ->
-                tabStacks.firstOrNull { it.id == original.id }
-            }
-            closedTabUndoOffer = ClosedTabUndoToken(
-                tab = closingTab,
-                originalIndex = index,
-                wasSelected = wasSelected,
-                selectedTabIdAfterClose = selectedTabId,
-                replacementTabId = tabs.firstOrNull { it.id !in originalTabIds }?.id,
-                closedAtMillis = closedAtMillis,
+            closedTabUndo.keep(
+                token = ClosedTabUndoToken(
+                    tab = closingTab,
+                    originalIndex = index,
+                    wasSelected = wasSelected,
+                    selectedTabIdAfterClose = selectedTabId,
+                    replacementTabId = tabs.firstOrNull { it.id !in originalTabIds }?.id,
+                    closedAtMillis = closedAtMillis,
+                ),
+                snapshot = ClosedTabUndo.Snapshot(
+                    trail = originalTrail,
+                    preview = originalPreview,
+                    favicon = originalFavicon,
+                    stack = originalStack,
+                    stackAfterClose = originalStack?.let { original ->
+                        tabStacks.firstOrNull { it.id == original.id }
+                    },
+                ),
             )
-            mainHandler.postDelayed(closedTabUndoExpiry, ClosedTabUndoRules.DURATION_MILLIS)
         }
     }
 
     internal fun undoClosedTab(token: ClosedTabUndoToken): Boolean {
-        if (closedTabUndoOffer != token || !isClosedTabUndoEnabled || destroyed) return false
+        val snapshot = closedTabUndo.snapshotFor(token)
+        if (snapshot == null || !isClosedTabUndoEnabled || destroyed) return false
         if (profiles.none { it.id == token.tab.profileId }) return false
         val result = ClosedTabUndoRules.restore(
             tabs = tabs,
@@ -7501,25 +7338,24 @@ class BrowserController(
             token = token,
             nowMillis = android.os.SystemClock.elapsedRealtime(),
         ) ?: return false
-        mainHandler.removeCallbacks(closedTabUndoExpiry)
         result.removedReplacementTabId?.let(::removeTabResources)
         tabs.clear()
         tabs += result.tabs
-        closedTabUndoStack?.let { original ->
+        snapshot.stack?.let { original ->
             tabStacks.replaceWith(
                 TabStackRules.restoreSnoozedMember(
                     stacks = tabStacks,
                     tabs = tabs,
                     restoredTabId = token.tab.id,
                     originalStack = original,
-                    stackAfterSnooze = closedTabUndoStackAfterClose,
+                    stackAfterSnooze = snapshot.stackAfterClose,
                 ),
             )
         }
-        closedTabUndoTrail?.let { candyTrails[token.tab.id] = it }
-        closedTabUndoPreview?.takeUnless(Bitmap::isRecycled)?.let { previews[token.tab.id] = it }
-        closedTabUndoFavicon?.takeUnless(Bitmap::isRecycled)?.let { storeFavicon(token.tab.id, it) }
-        clearClosedTabUndoOffer()
+        snapshot.trail?.let { candyTrails[token.tab.id] = it }
+        snapshot.preview?.takeUnless(Bitmap::isRecycled)?.let { previews[token.tab.id] = it }
+        snapshot.favicon?.takeUnless(Bitmap::isRecycled)?.let { storeFavicon(token.tab.id, it) }
+        closedTabUndo.clear()
         updateSelectedTabId(result.selectedTabId)
         rememberSelectedTab(activeProfileId, selectedTabId)
         reconcileCandyTrailForks(System.currentTimeMillis())
@@ -7533,21 +7369,11 @@ class BrowserController(
 
     internal fun dismissClosedTabUndo(token: ClosedTabUndoToken? = closedTabUndoOffer) {
         if (token == null || token != closedTabUndoOffer) return
-        mainHandler.removeCallbacks(closedTabUndoExpiry)
         geckoSessionStateStore.delete(token.tab.id)
         webViewStateRepository.delete(token.tab.id)
         candyTrailRepository.delete(token.tab.id)
         previewRepository.delete(token.tab.id)
-        clearClosedTabUndoOffer()
-    }
-
-    private fun clearClosedTabUndoOffer() {
-        closedTabUndoOffer = null
-        closedTabUndoTrail = null
-        closedTabUndoPreview = null
-        closedTabUndoFavicon = null
-        closedTabUndoStack = null
-        closedTabUndoStackAfterClose = null
+        closedTabUndo.clear()
     }
 
     fun closeAllTabs(): Int {
@@ -9092,7 +8918,7 @@ class BrowserController(
             blockerFlushScheduled.set(false)
             privacyXRayRepository.clear()
         }
-        incognitoRuleHits.clear()
+        filterBook.privateHits.clear()
         if (filterRules.any { it.hitCount > 0 }) {
             filterRules.indices.forEach { index ->
                 filterRules[index] = filterRules[index].copy(hitCount = 0)
@@ -12789,8 +12615,8 @@ class BrowserController(
             if (delta > 0) {
                 val index = filterRules.indexOfFirst { it.id == ruleId }
                 if (context.isIncognito) {
-                    incognitoRuleHits[ruleId] = (
-                        incognitoRuleHits.getOrDefault(ruleId, 0).toLong() + delta
+                    filterBook.privateHits[ruleId] = (
+                        filterBook.privateHits.getOrDefault(ruleId, 0).toLong() + delta
                         ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                 } else if (index >= 0) {
                     val current = filterRules[index]
@@ -12879,7 +12705,7 @@ class BrowserController(
     }
 
     private fun savePersistentFilterRules() {
-        candyRuleRepository.save(filterRules.filterNot { it.id in ephemeralRuleIds })
+        candyRuleRepository.save(filterBook.persistentRules())
     }
 
     private fun applySyncRepositoryState(state: SyncRepositoryState) {
@@ -13064,7 +12890,7 @@ class BrowserController(
     }
 
     private fun rebuildCandyMatcher() {
-        val snapshots = CandyMatcherSnapshots.compile(filterRules.toList(), ephemeralRuleIds)
+        val snapshots = CandyMatcherSnapshots.compile(filterRules.toList(), filterBook.temporaryIds)
         matcherSnapshot.set(snapshots.persistent)
         incognitoMatcherSnapshot.set(snapshots.incognito)
     }
@@ -13667,15 +13493,10 @@ class BrowserController(
     private fun clearIncognitoProfile() {
         browserEngineSessionFactory.clearPrivateData()
         hiddenDistractions.endPrivateSession()
-        incognitoRuleHits.clear()
         siteDomainSettings.forEach(ProfileSiteDomains::clearPrivate)
         permissionRepository.clearPrivateSession()
         permissionAccess.touch()
-        if (ephemeralRuleIds.isNotEmpty()) {
-            filterRules.removeAll { it.id in ephemeralRuleIds }
-            ephemeralRuleIds.clear()
-            onFilterRulesChanged(persist = false)
-        }
+        filterBook.clearPrivate()
     }
 
     private fun updateSelectedTabId(tabId: String) {
