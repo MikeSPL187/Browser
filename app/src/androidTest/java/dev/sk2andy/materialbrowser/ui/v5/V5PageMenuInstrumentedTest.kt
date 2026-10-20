@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -94,7 +95,7 @@ class V5PageMenuInstrumentedTest {
         ).forEach { composeRule.onNodeWithText(text(it)).assertExists() }
         composeRule.onNodeWithTag(V5PageMenuTestTags.Forward).assertIsNotEnabled()
 
-        composeRule.onNodeWithText(text(R.string.action_history)).performClick()
+        composeRule.onNodeWithText(text(R.string.action_history)).performScrollTo().performClick()
         assertEquals(listOf("dismiss", "history"), calls)
     }
 
@@ -140,7 +141,7 @@ class V5PageMenuInstrumentedTest {
         )
 
         composeRule.onNodeWithTag(V5PageMenuTestTags.Favorite).performClick()
-        composeRule.onNodeWithTag(V5PageMenuTestTags.extra("script")).performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.extra("script")).performScrollTo().performClick()
         assertEquals(listOf("favorite", "dismiss", "extra"), calls)
     }
 }
