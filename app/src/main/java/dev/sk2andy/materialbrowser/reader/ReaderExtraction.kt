@@ -52,7 +52,9 @@ object ReaderExtractionScript {
           const blocks = [];
           let totalChars = 0;
           let totalLinks = 0;
-          const blockSelector = 'h1,h2,h3,h4,h5,h6,p,blockquote,li';
+          // Code, table rows, captions and definitions are blocks too, so a listing or a table is never
+          // silently missing from the article.
+          const blockSelector = 'h1,h2,h3,h4,h5,h6,p,blockquote,li,pre,figcaption,dt,dd,tr';
           // A block inside another block is already in that block's text. The exception is an item of a
           // list nested in a list item: the outer item drops its nested lists, so their items stand alone.
           const isOwnBlock = node => {
@@ -67,14 +69,30 @@ object ReaderExtractionScript {
             item.querySelectorAll('ul,ol').forEach(list => list.remove());
             return item;
           };
-          root.querySelectorAll(blockSelector).forEach(node => {
+          // A listing keeps its lines and indentation; only control characters go.
+          const codeText = node => (node.textContent || '')
+            .replace(/\r\n?/g, '\n')
+            .replace(/[\u0000-\u0008\u000b-\u001f\u007f]+/g, ' ')
+            .replace(/^\n+|\s+$/g, '');
+          // A table row reads cell by cell.
+          const rowText = node => Array.from(node.childNodes)
+            .filter(cell => cell.nodeType === 1 && /^t[dh]$/i.test(cell.tagName))
+            .map(cell => clean(textOf(cell)))
+            .filter(Boolean)
+            .join(' · ');
+          // Sites that write paragraphs as bare divs: a div with text of its own and no block inside.
+          const isTextDiv = node => !node.querySelector(blockSelector + ',div');
+          root.querySelectorAll(blockSelector + ',div').forEach(node => {
             if (blocks.length >= 600 || totalChars >= 500000) return;
+            const tag = node.tagName.toLowerCase();
+            if (tag === 'div' && !isTextDiv(node)) return;
             if (!isOwnBlock(node)) return;
             const content = blockContent(node);
-            const text = clean(textOf(content)).slice(0, Math.min(12000, 500000 - totalChars));
-            if (!text || text.length < 2) return;
-            const tag = node.tagName.toLowerCase();
-            const kind = tag.startsWith('h') ? 'heading' : tag === 'blockquote' ? 'quote' : tag === 'li' ? 'listitem' : 'paragraph';
+            const raw = tag === 'pre' ? codeText(content) : tag === 'tr' ? rowText(content) : clean(textOf(content));
+            const text = raw.slice(0, Math.min(12000, 500000 - totalChars));
+            if (!text || text.length < (tag === 'div' ? 40 : 2)) return;
+            const kind = /^h[1-6]$/.test(tag) ? 'heading' : tag === 'blockquote' ? 'quote' :
+              tag === 'li' ? 'listitem' : tag === 'pre' ? 'code' : 'paragraph';
             const links = Array.from(content.querySelectorAll('a[href]')).slice(0, Math.min(40, 500 - totalLinks)).map(anchor => ({
               label: clean(textOf(anchor)),
               url: anchor.href
