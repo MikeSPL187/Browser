@@ -6,6 +6,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequestKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
 
 class GeckoExtensionRulesTest {
     @Test

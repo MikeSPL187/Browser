@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.engine
 
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtension
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoExtensionOptionsTarget
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionOptionsTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

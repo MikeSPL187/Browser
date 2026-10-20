@@ -17,6 +17,9 @@ import org.mozilla.geckoview.GeckoRuntime
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
 import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionPrompt
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 class GeckoRuntimeOwnerTest {
     @Before

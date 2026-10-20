@@ -3,6 +3,13 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import java.net.URI
 import java.util.Locale
 import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagementContext
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequestKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionRejection
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSnapshot
 
 internal object GeckoExtensionRules {
     private const val TECHNICAL_AND_INTERACTION_DATA = "technicalAndInteraction"

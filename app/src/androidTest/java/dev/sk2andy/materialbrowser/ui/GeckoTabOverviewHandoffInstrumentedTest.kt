@@ -25,7 +25,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
 import dev.sk2andy.materialbrowser.browser.gecko.CandyGeckoView
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoToppingHostState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserChromeStyle
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore

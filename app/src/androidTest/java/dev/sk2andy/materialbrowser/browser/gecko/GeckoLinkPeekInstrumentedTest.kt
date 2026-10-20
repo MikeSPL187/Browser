@@ -31,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)

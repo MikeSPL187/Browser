@@ -23,6 +23,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingInteractionDelegate
+import dev.sk2andy.materialbrowser.browser.engine.GeckoToppingHostState
 
 @RunWith(AndroidJUnit4::class)
 class CandyToppingHostInstrumentedTest {
