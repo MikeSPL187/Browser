@@ -47,9 +47,12 @@ import org.json.JSONObject
 
 class BrowserSessionStore internal constructor(
     private val preferences: SharedPreferences,
+    /** The history's own file; null keeps it in [preferences], as tests with fake preferences do. */
+    private val historyFile: HistoryFile? = null,
 ) : AddressBarPreferenceStore {
     constructor(context: Context) : this(
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE),
+        HistoryFile.forContext(context),
     )
 
     fun loadTabs(nowMillis: Long = System.currentTimeMillis()): Pair<List<BrowserTab>, String?> {
@@ -190,24 +193,29 @@ class BrowserSessionStore internal constructor(
     }
 
     @Synchronized
-    fun loadHistory(): List<HistoryEntry> =
-        HistoryJsonCodec.decode(preferences.getString(KEY_HISTORY, null))
+    fun loadHistory(): List<HistoryEntry> = HistoryJsonCodec.decode(
+        historyFile?.read(preferences, KEY_HISTORY) ?: preferences.getString(KEY_HISTORY, null),
+    )
 
     @Synchronized
     fun saveHistory(history: List<HistoryEntry>) {
-        preferences.edit().putString(KEY_HISTORY, encodeHistory(history)).apply()
+        commitHistory(history)
     }
 
-    internal fun commitHistory(history: List<HistoryEntry>): Boolean =
-        preferences.edit().putString(KEY_HISTORY, encodeHistory(history)).commit()
+    /** Changes whenever the saved history may have; null when it lives in the preferences. */
+    internal fun historyStamp(): String? = historyFile?.stamp()
+
+    internal fun commitHistory(history: List<HistoryEntry>): Boolean {
+        val text = encodeHistory(history)
+        return historyFile?.write(text, clearing = history.isEmpty())
+            ?: preferences.edit().putString(KEY_HISTORY, text).commit()
+    }
 
     internal fun saveHistoryAndSessionState(
         history: List<HistoryEntry>,
         sessionActive: Boolean,
-    ): Boolean = preferences.edit()
-        .putString(KEY_HISTORY, encodeHistory(history))
-        .putBoolean(KEY_HISTORY_SESSION_ACTIVE, sessionActive)
-        .commit()
+    ): Boolean = commitHistory(history) &&
+        preferences.edit().putBoolean(KEY_HISTORY_SESSION_ACTIVE, sessionActive).commit()
 
     internal fun saveHistoryAndTrailRedaction(
         history: List<HistoryEntry>,
@@ -216,15 +224,16 @@ class BrowserSessionStore internal constructor(
     ): Boolean = synchronized(HISTORY_TRAIL_JOURNAL_LOCK) {
         val pending = loadPendingCandyTrailRedactions()
             .filterNot { existing -> existing.id == redaction.id } + redaction
+        // The trail's redaction is journaled first: if the history then fails to save, the trail
+        // is still cleaned of the same visits, the safe side of the two.
         preferences.edit()
-            .putString(KEY_HISTORY, encodeHistory(history))
             .putString(KEY_PENDING_CANDY_TRAIL_REDACTIONS, encodeTrailRedactions(pending))
             .apply {
                 if (sessionActive != null) {
                     putBoolean(KEY_HISTORY_SESSION_ACTIVE, sessionActive)
                 }
             }
-            .commit()
+            .commit() && commitHistory(history)
     }
 
     @Synchronized

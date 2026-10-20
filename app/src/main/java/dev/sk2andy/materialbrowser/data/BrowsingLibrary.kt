@@ -51,7 +51,11 @@ enum class AddressSuggestionSource {
 }
 
 internal object BrowsingLibraryRules {
-    const val MAX_HISTORY_ENTRIES = 250
+    /**
+     * Visits kept, newest first (N-02): weeks of browsing rather than the 250 Candy kept. The history
+     * lives in a file of its own and is saved off the main thread, so its length costs no frame.
+     */
+    const val MAX_HISTORY_ENTRIES = 2_000
     const val MAX_FAVORITES = 100
 
     fun addHistory(
