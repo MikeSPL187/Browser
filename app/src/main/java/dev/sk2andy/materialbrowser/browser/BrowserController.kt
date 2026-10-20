@@ -314,7 +314,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.runBlocking
 
 class BrowserController(
     private val activity: Activity,
@@ -1823,7 +1822,7 @@ class BrowserController(
         }
         val shouldStageForGecko = usesGeckoEngine
         runCatching {
-            fileChooserValidationExecutor.execute {
+            fileChooserValidationExecutor.executeIfRunning {
                 val safeUris = FileChooserRules.sanitizedUris(parsed, pending.allowMultiple)
                     .map(Uri::parse)
                     .filter { uri -> isSafeFileChooserResult(uri, pending.acceptTypes) }
@@ -2161,7 +2160,7 @@ class BrowserController(
     }
 
     init {
-        fileChooserValidationExecutor.execute(geckoFileUploadStager::clearOrphans)
+        fileChooserValidationExecutor.executeIfRunning(geckoFileUploadStager::clearOrphans)
         filterRules += StartupTimeline.section("LoadFilterRules") { candyRuleRepository.load() }
         userScripts += StartupTimeline.section("LoadUserScripts") { userScriptRepository.load() }
         browserEngineSessionFactory.setBlockThirdPartyCookies(workerSettings.blockThirdPartyCookies)
@@ -2407,7 +2406,7 @@ class BrowserController(
                 }
             }
         }
-        profileWallpaperExecutor.execute {
+        profileWallpaperExecutor.executeIfRunning {
             profileWallpaperStore.migrateLegacy(
                 configuredWallpapers.mapTo(hashSetOf()) { (profileId, _) -> profileId },
             )
@@ -6214,7 +6213,7 @@ class BrowserController(
         val generation = ++profileWallpaperLoadGeneration
         activeProfileWallpaperBitmap = null
         if (profileId == null || wallpaper == null) return
-        profileWallpaperExecutor.execute {
+        profileWallpaperExecutor.executeIfRunning {
             val loaded = profileWallpaperStore.load(profileId, ProfileWallpaperTarget.NewTab)
             mainHandler.post {
                 if (
@@ -6248,7 +6247,7 @@ class BrowserController(
             onReady()
             return
         }
-        profileWallpaperExecutor.execute {
+        profileWallpaperExecutor.executeIfRunning {
             val loaded = profileWallpaperStore.load(
                 profileId,
                 ProfileWallpaperTarget.TabSwitcher,
@@ -6321,15 +6320,13 @@ class BrowserController(
             onComplete(result)
             return
         }
-        historyMutationExecutor.execute {
-            val pushCleared = runCatching {
-                runBlocking {
-                    GeckoWebPushCoordinator.removeProfileSubscriptions(
-                        activity.applicationContext,
-                        profileId,
-                    )
-                }
-            }.getOrDefault(false)
+        historyMutationExecutor.executeIfRunning {
+            val pushCleared = awaitPushCleanup {
+                GeckoWebPushCoordinator.removeProfileSubscriptions(
+                    activity.applicationContext,
+                    profileId,
+                )
+            }
             mainHandler.post {
                 val result = pushCleared && !destroyed &&
                     profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true &&
@@ -6395,15 +6392,13 @@ class BrowserController(
             return
         }
         // Steps that can still fail run before Recall, which can't be restored once deleted.
-        historyMutationExecutor.execute {
-            val pushCleared = runCatching {
-                runBlocking {
-                    GeckoWebPushCoordinator.removeProfileSubscriptions(
-                        activity.applicationContext,
-                        profileId,
-                    )
-                }
-            }.getOrDefault(false)
+        historyMutationExecutor.executeIfRunning {
+            val pushCleared = awaitPushCleanup {
+                GeckoWebPushCoordinator.removeProfileSubscriptions(
+                    activity.applicationContext,
+                    profileId,
+                )
+            }
             mainHandler.post {
                 if (pushCleared && !destroyed && canDeleteProfile(profileId) &&
                     profiles.firstOrNull { it.id == profileId }?.isolationEnabled == true
@@ -6558,7 +6553,7 @@ class BrowserController(
         essentials.forgetProfile(profileId)
         lockedProfileIds -= profileId
         ProfileProtectionSession.forget(profileId)
-        profileWallpaperExecutor.execute { profileWallpaperStore.delete(profileId) }
+        profileWallpaperExecutor.executeIfRunning { profileWallpaperStore.delete(profileId) }
         val profileTrailRedactions = store.loadPendingCandyTrailRedactions().filter { redaction ->
             redaction.tabIds.any(removedProfileTrailTabIds::contains)
         }
@@ -7120,7 +7115,7 @@ class BrowserController(
             if (safeHttpUrl == null) {
                 completeLaunch(null)
             } else {
-                externalAppLookupExecutor.execute {
+                externalAppLookupExecutor.executeIfRunning {
                     val prepared = runCatching {
                         externalApps.prepareWebUrlInChosenApp(safeHttpUrl)
                     }.getOrNull()
@@ -7567,7 +7562,7 @@ class BrowserController(
         val selectedTabIdAtLookup = selectedTabId
         val activeProfileIdAtLookup = activeProfileId
         val navigationGeneration = navigationGenerations.getOrDefault(tabId, 0)
-        externalAppLookupExecutor.execute {
+        externalAppLookupExecutor.executeIfRunning {
             val prepared = runCatching {
                 externalApps.prepareWebUrlInChosenApp(url)
             }.getOrNull()
@@ -9655,7 +9650,7 @@ class BrowserController(
             return
         }
         recallDisablePending = true
-        historyMutationExecutor.execute {
+        historyMutationExecutor.executeIfRunning {
             val cleared = recallRepository.clear()
             mainHandler.post {
                 if (!destroyed && cleared) {
@@ -9814,12 +9809,9 @@ class BrowserController(
                 completeBrowsingDataClear(false)
                 return@clearAllData
             }
-            historyMutationExecutor.execute {
-                val pushCleared = BuildConfig.SYSTEM_WEBVIEW_ONLY || runCatching {
-                    runBlocking {
-                        GeckoWebPushCoordinator.clearAllData(activity.applicationContext)
-                    }
-                }.getOrDefault(false)
+            historyMutationExecutor.executeIfRunning {
+                val pushCleared = BuildConfig.SYSTEM_WEBVIEW_ONLY ||
+                    awaitPushCleanup { GeckoWebPushCoordinator.clearAllData(activity.applicationContext) }
                 mainHandler.post { completeBrowsingDataClear(pushCleared) }
             }
         }
@@ -9882,7 +9874,7 @@ class BrowserController(
         tabs.indices.forEach { index ->
             tabs[index] = tabs[index].copy(blockedCount = 0, canGoBack = false, canGoForward = false)
         }
-        historyMutationExecutor.execute {
+        historyMutationExecutor.executeIfRunning {
             val mutation = historyRepository.clear()
             mainHandler.post {
                 if (!destroyed) {
