@@ -25125,7 +25125,7 @@ SPLdev/sk2andy/materialbrowser/ui/FirstRunRules;-><clinit>()V
 SPLdev/sk2andy/materialbrowser/ui/FirstRunRules;-><init>()V
 SPLdev/sk2andy/materialbrowser/ui/FirstRunRules;->handlesBack(Ldev/sk2andy/materialbrowser/ui/FirstRunStage;)Z
 PLdev/sk2andy/materialbrowser/ui/FirstRunRules;->v5AfterWelcome(Z)Ldev/sk2andy/materialbrowser/ui/FirstRunStage;
-SPLdev/sk2andy/materialbrowser/ui/FirstRunRules;->v5FirstStage()Ldev/sk2andy/materialbrowser/ui/FirstRunStage;
+SPLdev/sk2andy/materialbrowser/ui/FirstRunRules;->v5FirstStage(Z)Ldev/sk2andy/materialbrowser/ui/FirstRunStage;
 Ldev/sk2andy/materialbrowser/ui/FirstRunStage;
 SPLdev/sk2andy/materialbrowser/ui/FirstRunStage;->$values()[Ldev/sk2andy/materialbrowser/ui/FirstRunStage;
 SPLdev/sk2andy/materialbrowser/ui/FirstRunStage;-><clinit>()V
