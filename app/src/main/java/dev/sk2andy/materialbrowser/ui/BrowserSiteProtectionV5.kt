@@ -49,9 +49,13 @@ internal fun BrowserSiteProtectionV5(
     val tab = controller.tabs.firstOrNull { it.id == id } ?: return
     val panel = controller.siteProtection.state(id) ?: return
     val visible = tabId != null
-    // The engine's log answers later; until then the blocker's own count shows.
+    // The engine's log answers later; until then the blocker's own count shows. A new site or a new
+    // opening forgets the last answer, so an old number never stands in for the page now shown.
     val blockerBlocked = controller.privacySnapshot(id).totalBlocked
-    var engineTotal by remember(id) { mutableStateOf<Int?>(null) }
+    var engineTotal by remember(id, panel.host) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(visible) {
+        if (visible) engineTotal = null
+    }
     LaunchedEffect(id, visible, blockerBlocked, panel.level) {
         if (visible) controller.siteProtection.counts(id) { engineTotal = it.total }
     }
@@ -95,7 +99,7 @@ internal fun BrowserSiteProtectionV5(
         onThirdPartyCookiesChange = { allow ->
             if (allow) {
                 controller.updateSitePrivacyOverrides(id) { current, _ ->
-                    current.copy(thirdPartyLoginAllowed = true, captchaCompatibilityAllowed = true)
+                    SiteProtectionRules.withThirdPartyCookies(current, allow = true)
                 }
             } else {
                 controller.revokeThirdPartyCookieCompatibility(id)

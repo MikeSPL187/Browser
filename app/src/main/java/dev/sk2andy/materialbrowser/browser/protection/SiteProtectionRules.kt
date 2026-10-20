@@ -97,6 +97,18 @@ internal object SiteProtectionRules {
         policy.level != SiteProtectionLevel.Off &&
             (policy.level == SiteProtectionLevel.Strict || global.hideCookieConsent)
 
+    /**
+     * The site's overrides after its third-party cookie switch: on lets sign-in through other sites
+     * (which accepts the cookies) and nothing else; off also takes back a captcha's cookie exception,
+     * since either one keeps the cookies coming and the switch would stay on.
+     */
+    fun withThirdPartyCookies(overrides: SitePrivacyOverrides, allow: Boolean): SitePrivacyOverrides =
+        if (allow) {
+            overrides.copy(thirdPartyLoginAllowed = true)
+        } else {
+            overrides.copy(thirdPartyLoginAllowed = null, captchaCompatibilityAllowed = null)
+        }
+
     /** Whether the site's pages accept third-party cookies under [policy]. */
     fun acceptsThirdPartyCookies(policy: SiteProtectionPolicy): Boolean =
         !policy.blockThirdPartyCookies || policy.allowLoginAndCaptchaCookies
