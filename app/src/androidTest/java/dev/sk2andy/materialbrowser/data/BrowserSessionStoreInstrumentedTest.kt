@@ -209,18 +209,20 @@ class BrowserSessionStoreInstrumentedTest {
     }
 
     @Test
-    fun tabStackLoadRejectsOversizedPayloadAndCollections() {
+    fun tabStackLoadKeepsTheLimitAndRejectsOversizedPayloadAndMembers() {
         val tabs = listOf(
             BrowserTab(id = "one", lastAccessedAt = 1L),
             BrowserTab(id = "two", lastAccessedAt = 2L),
         )
-        val stackJson =
-            """{"id":"stack","profileId":"candy","name":"Ideas","tabIds":["one","two"]}"""
-        val tooManyStacks = List(TabStackRules.MAX_STORED_STACKS + 1) { stackJson }
-            .joinToString(prefix = "[", postfix = "]")
+        // Since #452 a list longer than the limit keeps its first stacks instead of losing them all.
+        val tooManyStacks = List(TabStackRules.MAX_STORED_STACKS + 1) { index ->
+            """{"id":"stack$index","profileId":"candy","name":"Ideas","tabIds":["one","two"]}"""
+        }.joinToString(prefix = "[", postfix = "]")
 
         preferences.edit().putString("tab_stacks", tooManyStacks).commit()
-        assertTrue(BrowserSessionStore(context).loadTabStacks(tabs).isEmpty())
+        val kept = BrowserSessionStore(context).loadTabStacks(tabs)
+        assertTrue(kept.isNotEmpty())
+        assertTrue(kept.size <= TabStackRules.MAX_STORED_STACKS)
 
         val tooManyMembers =
             """[{"id":"stack","profileId":"candy","name":"Ideas","tabIds":["one","two","three"]}]"""

@@ -831,7 +831,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
     }
     return undefined;
   }
-  if (message.type === "distraction-hidden") {
+  if (message.type === "distraction-hidden" || message.type === "distraction-outlined") {
     relayDistractionHidden(message, sender);
     return undefined;
   }
@@ -937,10 +937,12 @@ function forwardDistractionPick(message) {
   }, { frameId: 0 }).catch(() => {});
 }
 
+// A hidden block carries its selector; an outlined one only whether a block is outlined now.
 function relayDistractionHidden(message, sender) {
+  const hidden = message.type === "distraction-hidden";
   if (
     sender.frameId !== 0 ||
-    typeof message.selector !== "string" ||
+    (hidden && typeof message.selector !== "string") ||
     !Number.isSafeInteger(message.navigationGeneration)
   ) {
     return;
@@ -949,12 +951,12 @@ function relayDistractionHidden(message, sender) {
   const policy = token && policiesByToken.get(token);
   if (!policy || policy.navigationGeneration !== message.navigationGeneration || !nativePort) return;
   nativePort.postMessage({
-    type: "distraction-hidden",
+    type: message.type,
     protocolVersion: PROTOCOL_VERSION,
     token,
     revision: policy.revision,
     navigationGeneration: message.navigationGeneration,
-    selector: message.selector.slice(0, 256),
+    ...(hidden ? { selector: message.selector.slice(0, 256) } : { outlined: message.outlined === true }),
   });
 }
 

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
@@ -1270,30 +1271,38 @@ private fun ReaderBlockContent(
             fontSize = 18.sp * fontScale,
             lineHeight = 29.sp * fontScale,
         )
+        // A listing in a fixed-width face, its lines unwrapped and scrolled sideways.
+        ReaderBlockKind.Code -> MaterialTheme.typography.bodyMedium.copy(
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize * fontScale,
+            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * fontScale,
+        )
     }
+    val code = block.kind == ReaderBlockKind.Code
+    val boxed = block.kind == ReaderBlockKind.Quote || code
     val prefix = if (block.kind == ReaderBlockKind.ListItem) "•  " else ""
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = if (block.kind == ReaderBlockKind.Quote) colors.card else Color.Transparent,
+        color = if (boxed) colors.card else Color.Transparent,
         shape = RoundedCornerShape(20.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = if (block.kind == ReaderBlockKind.Quote) 16.dp else 0.dp,
+                    horizontal = if (boxed) 16.dp else 0.dp, // token-exempt: Reader Studio keeps its v4 values until it moves to v5
                     vertical = 10.dp,
                 ),
         ) {
             Text(
                 prefix + block.text,
-                modifier = if (block.kind == ReaderBlockKind.Heading) {
-                    Modifier.semantics { heading() }
-                } else {
-                    Modifier
+                modifier = when {
+                    block.kind == ReaderBlockKind.Heading -> Modifier.semantics { heading() }
+                    code -> Modifier.horizontalScroll(rememberScrollState())
+                    else -> Modifier
                 },
+                softWrap = !code,
                 style = style.copy(
-                    fontFamily = fontFamily,
+                    fontFamily = if (code) FontFamily.Monospace else fontFamily,
                     textAlign = if (justify) TextAlign.Justify else TextAlign.Start,
                     hyphens = if (justify) Hyphens.Auto else Hyphens.None,
                 ),

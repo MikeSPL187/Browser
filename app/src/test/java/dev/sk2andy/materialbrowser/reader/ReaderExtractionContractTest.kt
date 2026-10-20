@@ -41,6 +41,31 @@ class ReaderExtractionContractTest {
     }
 
     @Test
+    fun `a listing keeps its lines and indentation, other blocks fold their spaces`() {
+        val result = ReaderExtractionContract.sanitize(
+            ReaderExtractionPayload(
+                title = "Code",
+                sourceUrl = "https://docs.example/code",
+                siteName = null,
+                blocks = listOf(
+                    ReaderExtractionBlock(
+                        "paragraph",
+                        "A paragraph   that explains the listing below, long enough to count as an article.",
+                    ),
+                    ReaderExtractionBlock("code", "\nfun main() {\r\n\tprintln(1)   \n\n\n\n}\n"),
+                ),
+            ),
+        ) as ReaderExtractionResult.Success
+
+        assertEquals(
+            "A paragraph that explains the listing below, long enough to count as an article.",
+            result.document.blocks.first().text,
+        )
+        assertEquals(ReaderBlockKind.Code, result.document.blocks.last().kind)
+        assertEquals("fun main() {\n    println(1)\n\n}", result.document.blocks.last().text)
+    }
+
+    @Test
     fun `non-http source and thin content are rejected`() {
         val unsafe = ReaderExtractionContract.sanitize(
             ReaderExtractionPayload("Title", "file:///private/page", null, emptyList()),

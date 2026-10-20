@@ -785,6 +785,7 @@
     <string name="first_run_welcome_body">Nothing in the way of the page, spaces for work and for rest, and tracking protection with no setup.</string>
     <string name="first_run_start">Get started</string>
     <string name="first_run_import">Move from another browser</string>
+    <string name="passwords_import_bookmarks_moved">Bookmarks moved. To move the passwords too, turn on the password vault.</string>
     <string name="first_run_setup_title">Make it yours</string>
     <string name="first_run_theme_light">Light</string>
     <string name="first_run_theme_dark">Dark</string>
@@ -2038,6 +2039,8 @@
     <string name="v5_distractions_site">Tap it again to hide it. Vola remembers this for %1$s.</string>
     <string name="v5_distractions_private">Tap it again to hide it. In a private tab, only until the private tabs close.</string>
     <string name="v5_distractions_done">Done</string>
+    <string name="v5_distractions_selected">Selected. Tap it again to hide it.</string>
+    <string name="v5_distractions_hidden">Hidden. «Undo» brings it back.</string>
     <string name="v5_site_on">Protection is on</string>
     <string name="v5_site_off">Protection is off</string>
     <string name="v5_site_off_note">Trackers and ads load on this site.</string>

@@ -256,7 +256,14 @@
       hide(state, state.target);
       return;
     }
-    outline(state, targetFor(tapped, document, globalThis));
+    const target = targetFor(tapped, document, globalThis);
+    outline(state, target);
+    // Vola says what the tap did, so TalkBack hears it: the outline itself is only drawn.
+    browser.runtime.sendMessage({
+      type: "distraction-outlined",
+      outlined: !!target,
+      navigationGeneration: policy.navigationGeneration,
+    }).catch(() => {});
   };
 
   const onMove = () => { if (picking) place(picking); };

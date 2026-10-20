@@ -607,6 +607,7 @@ internal class GeckoViewPrivacyHostRuntime(
                 acceptPictureInPicturePlaybackResult(value)
             "reader-result" -> acceptReaderResult(value)
             "distraction-hidden" -> acceptDistractionHidden(value)
+            "distraction-outlined" -> acceptDistractionOutlined(value)
             "login-field-focus" -> {
                 val binding = bindings[value.optString("token")] ?: return
                 // Private tabs never offer the vault; a message from an older page is stale.
@@ -748,6 +749,13 @@ internal class GeckoViewPrivacyHostRuntime(
             return
         }
         listener.onHidden(pageHost, selector)
+    }
+
+    private fun acceptDistractionOutlined(value: JSONObject) {
+        val binding = bindings[value.optString("token")] ?: return
+        val listener = binding.distractionListener ?: return
+        if (binding.policy.navigationGeneration != value.optInt("navigationGeneration", -1)) return
+        listener.onOutlined(value.optBoolean("outlined"))
     }
 
     private fun endDistractionPicking(binding: Binding) {

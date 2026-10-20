@@ -49,6 +49,17 @@ internal object SearchSettingsTestTags {
 
 /** What the search page shows for each engine (board W-SetSearch). */
 internal object SearchSettingsRules {
+    /**
+     * What is wrong with the SearXNG address [draft], said under the field: nothing, an address that
+     * does not parse (the last good one stays in use), or none at all, so searches have nowhere to go.
+     */
+    @StringRes
+    fun searxngProblem(draft: String): Int? = when {
+        draft.isBlank() -> R.string.toast_searxng_instance_required
+        SearxngRules.normalizedInstanceUrl(draft) == null -> R.string.settings_searxng_instance_url_invalid
+        else -> null
+    }
+
     /** One line on what sets the engine apart, privacy first. */
     @StringRes
     fun description(engine: SearchEngine): Int = when (engine) {
@@ -253,8 +264,8 @@ private fun SearxngServerField(
     onSearxngSettingsChanged: (SearxngSettings) -> Unit,
 ) {
     var instanceUrlDraft by remember { mutableStateOf(searxngSettings.instanceUrl) }
-    val invalid = instanceUrlDraft.isNotBlank() &&
-        SearxngRules.normalizedInstanceUrl(instanceUrlDraft) == null
+    // An address that is missing or does not parse is said under the field, never dropped silently.
+    val problem = SearchSettingsRules.searxngProblem(instanceUrlDraft)
     val onValueChange = { value: String ->
         val boundedValue = value.take(SearxngRules.MAX_INSTANCE_URL_LENGTH)
         val normalizedValue = SearxngRules.normalizedInstanceUrl(boundedValue)
@@ -274,7 +285,7 @@ private fun SearxngServerField(
             onDone = {},
             modifier = Modifier.testTag(SearchSettingsTestTags.SearxngInstanceUrl),
             hint = stringResource(R.string.settings_searxng_instance_url_summary),
-            problem = if (invalid) stringResource(R.string.settings_searxng_instance_url_invalid) else null,
+            problem = problem?.let { stringResource(it) },
             keyboardType = KeyboardType.Uri,
             inPage = true,
         )
@@ -289,16 +300,10 @@ private fun SearxngServerField(
         label = { Text(stringResource(R.string.settings_searxng_instance_url)) },
         supportingText = {
             Text(
-                stringResource(
-                    if (invalid) {
-                        R.string.settings_searxng_instance_url_invalid
-                    } else {
-                        R.string.settings_searxng_instance_url_summary
-                    },
-                ),
+                stringResource(problem ?: R.string.settings_searxng_instance_url_summary),
             )
         },
-        isError = invalid,
+        isError = problem != null,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Uri,
             imeAction = ImeAction.Done,
