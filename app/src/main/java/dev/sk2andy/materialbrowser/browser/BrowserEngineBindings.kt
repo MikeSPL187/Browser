@@ -46,14 +46,6 @@ internal data class InlineVideoGestureHapticOwner(
     val identity: GeckoInlineVideoIdentity,
 )
 
-internal class PendingMediaLayoutRestoration(
-    val request: MediaLayoutRestorationGate.Request,
-    val view: View,
-    val restore: (acceptCompletion: () -> Boolean) -> Unit,
-) {
-    var started = false
-}
-
 internal data class GeckoViewBinding(
     val tabId: String,
     val session: AndroidBrowserEngineSessionPort,
