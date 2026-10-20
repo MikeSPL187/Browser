@@ -1,4 +1,4 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 import androidx.core.view.WindowInsetsCompat
 import dev.sk2andy.materialbrowser.browser.WebContentTopInsetTransitionState

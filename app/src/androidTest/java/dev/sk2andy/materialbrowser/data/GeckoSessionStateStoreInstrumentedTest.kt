@@ -3,7 +3,7 @@ package dev.sk2andy.materialbrowser.data
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoSessionStateSnapshot
+import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshot
 import java.io.File
 import java.util.UUID
 import org.junit.Assert.assertEquals

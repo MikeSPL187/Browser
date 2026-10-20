@@ -17,6 +17,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets
 
 /**
  * The top safe area of a Gecko page is a native margin of the engine view (#123, H4): the page is

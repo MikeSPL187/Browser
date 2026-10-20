@@ -31,6 +31,7 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferMetadata
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
 import dev.sk2andy.materialbrowser.browser.engine.MediaStoreDownloadStreamSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoProfileStorageRules
 
 internal data class GeckoDownloadOwner(
     val profileId: String,

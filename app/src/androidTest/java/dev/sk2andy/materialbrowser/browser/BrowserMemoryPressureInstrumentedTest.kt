@@ -14,7 +14,7 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
 import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaCommand
 import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
 import org.junit.Assert.assertEquals

@@ -152,6 +152,24 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePreparation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAutoplayDecision
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAutoplayPermission
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAutoplayPermissionSyncAction
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAutoplayPermissionSyncRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAutoplayRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoProfileStorageRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetLayout
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets
+import dev.sk2andy.materialbrowser.browser.engine.GeckoSessionStateSnapshotRules
 
 internal class GeckoViewRuntimeHandle private constructor(
     private val runtime: GeckoRuntime,

@@ -2,6 +2,8 @@ package dev.sk2andy.materialbrowser.browser.gecko
 
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 internal class GeckoInlineVideoOpenRequestGate(
     private val nowMillis: () -> Long,

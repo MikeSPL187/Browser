@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.gecko
 
 import org.mozilla.geckoview.WebExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
 
 internal enum class GeckoExtensionInstallFailure {
     NetworkFailure,

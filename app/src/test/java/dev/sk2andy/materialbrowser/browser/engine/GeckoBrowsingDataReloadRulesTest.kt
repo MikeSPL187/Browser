@@ -1,4 +1,4 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

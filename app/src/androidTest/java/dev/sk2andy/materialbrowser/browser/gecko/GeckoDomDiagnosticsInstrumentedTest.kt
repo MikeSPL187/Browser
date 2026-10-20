@@ -23,6 +23,10 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetHost
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsetRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoViewInsets
 
 @RunWith(AndroidJUnit4::class)
 class GeckoDomDiagnosticsInstrumentedTest {

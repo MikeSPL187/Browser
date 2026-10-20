@@ -1,7 +1,4 @@
-package dev.sk2andy.materialbrowser.browser.gecko
-
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+package dev.sk2andy.materialbrowser.browser.engine
 
 internal object GeckoInlineVideoGestureHapticRules {
     fun shouldForward(

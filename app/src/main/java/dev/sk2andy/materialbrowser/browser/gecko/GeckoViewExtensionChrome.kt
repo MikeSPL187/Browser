@@ -13,6 +13,17 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadFailure
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferStart
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionCreateTabRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPopupIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionTabRequestResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionUpdateTabRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionChromeRules
+import dev.sk2andy.materialbrowser.browser.engine.GeckoProfileStorageRules
 
 internal interface GeckoExtensionChromeHost {
     fun currentSessionIdentity(): GeckoExtensionSessionIdentity?

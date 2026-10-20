@@ -29,6 +29,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEvent
+import dev.sk2andy.materialbrowser.browser.engine.GeckoCandyTrailHistoryEventSink
 
 class GeckoBrowserEngineAdapterTest {
     @Test

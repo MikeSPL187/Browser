@@ -5,6 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 class GeckoInlineVideoOpenRequestGateTest {
     @Test

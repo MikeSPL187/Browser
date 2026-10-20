@@ -38,8 +38,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaPermissionRequestLis
 import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPictureInPicturePreparation
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePreparation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts

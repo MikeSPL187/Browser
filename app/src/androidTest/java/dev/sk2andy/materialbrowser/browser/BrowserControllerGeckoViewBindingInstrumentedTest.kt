@@ -26,8 +26,8 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyBindingHandshake
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyBindingHandshakeRules
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyEvent
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEvent
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 import dev.sk2andy.materialbrowser.browser.integration.ExternalAppLauncher
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands

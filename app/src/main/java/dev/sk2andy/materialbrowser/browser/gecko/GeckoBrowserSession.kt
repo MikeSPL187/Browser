@@ -43,6 +43,9 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadCancellation
 import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadTransferListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePreparation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 internal object GeckoNavigationFailureRules {
     fun kindForErrorCode(errorCode: Int): BrowserEngineFailureKind = when (errorCode) {

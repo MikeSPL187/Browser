@@ -21,6 +21,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.geckoview.ContentBlocking
 import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEvent
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 @RunWith(AndroidJUnit4::class)
 class CandyPrivacyHostInstrumentedTest {

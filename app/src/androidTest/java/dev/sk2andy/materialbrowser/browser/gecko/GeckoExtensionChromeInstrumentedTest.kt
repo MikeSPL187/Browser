@@ -23,6 +23,14 @@ import org.junit.runner.RunWith
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.WebExtension
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreparedSession
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKind
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionCreateTabRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPopupIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionSessionIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionUpdateTabRequest
 
 @RunWith(AndroidJUnit4::class)
 class GeckoExtensionChromeInstrumentedTest {

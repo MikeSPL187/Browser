@@ -12,6 +12,9 @@ import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebExtension
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
+import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 @RunWith(AndroidJUnit4::class)
 class GeckoInlineVideoOpenRequestInstrumentedTest {

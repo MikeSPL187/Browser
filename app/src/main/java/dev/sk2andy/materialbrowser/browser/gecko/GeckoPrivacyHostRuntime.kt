@@ -22,6 +22,26 @@ import org.mozilla.geckoview.WebExtensionController
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
+import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePlaybackResultRoute
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPictureInPicturePreparation
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEvent
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.geckoInlineVideoGestureHapticFromMessage
+import dev.sk2andy.materialbrowser.browser.engine.geckoInlineVideoOpenRequestFromMessage
+import dev.sk2andy.materialbrowser.browser.engine.geckoInlineVideoStateFromMessage
+import dev.sk2andy.materialbrowser.browser.engine.geckoPictureInPicturePlaybackResultRoute
+import dev.sk2andy.materialbrowser.browser.engine.geckoPictureInPicturePreparationFromMessage
+import dev.sk2andy.materialbrowser.browser.engine.geckoScrollMetricsFromMessage
+import dev.sk2andy.materialbrowser.browser.engine.inlineVideoPresentationMessage
+import dev.sk2andy.materialbrowser.browser.engine.isGeckoPictureInPictureRestorationResult
+import dev.sk2andy.materialbrowser.browser.engine.pictureInPicturePlaybackMessage
+import dev.sk2andy.materialbrowser.browser.engine.pictureInPicturePreparationMessage
+import dev.sk2andy.materialbrowser.browser.engine.pictureInPictureRestorationMessage
+import dev.sk2andy.materialbrowser.browser.engine.shouldClearInlineVideoPresentationDesire
+import dev.sk2andy.materialbrowser.browser.engine.toMessage
 
 internal interface GeckoPrivacyBinding {
     fun update(policy: GeckoPrivacyPolicy, onReady: () -> Unit = {})

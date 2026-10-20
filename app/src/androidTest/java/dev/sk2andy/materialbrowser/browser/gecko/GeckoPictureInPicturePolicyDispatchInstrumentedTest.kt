@@ -17,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.geckoview.GeckoView
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
 
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = 34)

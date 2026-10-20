@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
 
 @RunWith(AndroidJUnit4::class)
 class GeckoBrowsingDataInstrumentedTest {

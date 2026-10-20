@@ -14,6 +14,9 @@ import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 import org.mozilla.geckoview.GeckoRuntime
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyEventSink
+import dev.sk2andy.materialbrowser.browser.engine.GeckoPrivacyPolicy
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowsingData
 
 class GeckoRuntimeOwnerTest {
     @Before

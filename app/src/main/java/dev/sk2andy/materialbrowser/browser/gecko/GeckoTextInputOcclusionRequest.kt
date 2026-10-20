@@ -5,6 +5,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import org.json.JSONObject
+import dev.sk2andy.materialbrowser.browser.engine.CandyPrivacyHostContract
 
 internal class GeckoTextInputOcclusionRequest(private val handler: Handler) {
     private var requestId = 0L

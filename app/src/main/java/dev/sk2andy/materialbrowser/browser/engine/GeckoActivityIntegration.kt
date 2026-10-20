@@ -1,8 +1,10 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
+import dev.sk2andy.materialbrowser.browser.gecko.GeckoWebAuthnActivityDelegate
 
 /** Keeps Gecko's activity-result and process-runtime wiring outside the engine-neutral activity. */
 internal class GeckoActivityIntegration(

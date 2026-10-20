@@ -1,4 +1,4 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
 /**
  * Candy's bounded reference to Gecko's own serialized session state.

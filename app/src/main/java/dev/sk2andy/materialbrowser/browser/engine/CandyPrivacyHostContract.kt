@@ -1,6 +1,5 @@
-package dev.sk2andy.materialbrowser.browser.gecko
+package dev.sk2andy.materialbrowser.browser.engine
 
-import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.blocking.CandyRule
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
 import dev.sk2andy.materialbrowser.blocking.CandyRuleKind
@@ -8,14 +7,11 @@ import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
 import dev.sk2andy.materialbrowser.browser.CaptchaCompatibilityRules
 import dev.sk2andy.materialbrowser.browser.FederatedLoginRules
+import dev.sk2andy.materialbrowser.browser.InlineMediaPlayerMode
 import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.HiddenDistractionsRules
 import org.json.JSONArray
 import org.json.JSONObject
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHapticPhase
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 internal object CandyPrivacyHostContract {
     const val EXTENSION_ID = "candy-privacy-host@sk2andy.dev"
