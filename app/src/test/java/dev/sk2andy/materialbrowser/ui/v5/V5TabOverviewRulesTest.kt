@@ -90,4 +90,65 @@ class V5TabOverviewRulesTest {
         assertEquals(5, V5OverviewGroupRules.indexOf(items, "2"))
         assertEquals(0, V5OverviewGroupRules.indexOf(items, "missing"))
     }
+
+    @Test
+    fun `a fling against the drag, no travel or no width never closes a card`() {
+        assertFalse(V5TabOverviewRules.closes(offsetPx = 50f, velocityPxPerSecond = -5000f, widthPx = 400f, density = 2f))
+        assertFalse(V5TabOverviewRules.closes(offsetPx = -50f, velocityPxPerSecond = 5000f, widthPx = 400f, density = 2f))
+        assertFalse(V5TabOverviewRules.closes(offsetPx = 0f, velocityPxPerSecond = 5000f, widthPx = 400f, density = 2f))
+        assertFalse(V5TabOverviewRules.closes(offsetPx = 300f, velocityPxPerSecond = 5000f, widthPx = 0f, density = 2f))
+        assertTrue(V5TabOverviewRules.closes(offsetPx = -161f, velocityPxPerSecond = 0f, widthPx = 400f, density = 2f))
+    }
+
+    @Test
+    fun `a card swiped further than its width fades no more than the limit`() {
+        val limit = V5TabOverviewRules.swipeAlpha(offsetPx = 400f, widthPx = 400f)
+        assertEquals(limit, V5TabOverviewRules.swipeAlpha(offsetPx = -4000f, widthPx = 400f), 0f)
+        assertEquals(1f, V5TabOverviewRules.swipeAlpha(offsetPx = 100f, widthPx = 0f), 0f)
+    }
+
+    @Test
+    fun `a blank search keeps every card and words may be split by tabs or new lines`() {
+        assertEquals(listOf(polar, recipe), V5TabOverviewRules.visibleTabs(tabs, false, "   ", hidden))
+        assertEquals(listOf(recipe), V5TabOverviewRules.visibleTabs(tabs, false, "recipes\tpie\n", hidden))
+    }
+
+    private fun group(id: String, vararg tabIds: String, collapsed: Boolean = false) =
+        V5OverviewGroup(id, id, tabIds.toList(), collapsed, V5Tile.Blue)
+
+    @Test
+    fun `a group whose tabs are all out of the segment or the search is not shown`() {
+        val items = V5OverviewGroupRules.items(listOf("1", "2"), listOf(group("g", "8", "9")), searching = false)
+        assertEquals(listOf(V5OverviewItem.Card("1", null), V5OverviewItem.Card("2", null)), items)
+    }
+
+    @Test
+    fun `a collapsed group is one row with at most three previews in tab order`() {
+        val g = group("g", "4", "2", "3", "1", collapsed = true)
+        val items = V5OverviewGroupRules.items(listOf("1", "2", "3", "4", "5"), listOf(g), searching = false)
+        val row = items[0] as V5OverviewItem.CollapsedGroup
+        assertEquals(4, row.count)
+        assertEquals(listOf("1", "2", "3"), row.previewIds)
+        assertEquals(V5OverviewItem.UngroupedHeader, items[1])
+        assertEquals(V5OverviewItem.Card("5", null), items[2])
+        assertEquals(3, items.size)
+    }
+
+    @Test
+    fun `every item of the grid has its own key`() {
+        val groups = listOf(group("a", "1", "2"), group("b", "3", collapsed = true))
+        val items = V5OverviewGroupRules.items(listOf("1", "2", "3", "4"), groups, searching = false)
+        assertEquals(items.map { it.key }.distinct(), items.map { it.key })
+    }
+
+    @Test
+    fun `the grid opens at a collapsed group's row, a loose card, or the start`() {
+        val groups = listOf(group("a", "1", collapsed = true))
+        val items = V5OverviewGroupRules.items(listOf("1", "2"), groups, searching = false)
+        assertEquals(0, V5OverviewGroupRules.indexOf(items, "1"))
+        assertEquals(2, V5OverviewGroupRules.indexOf(items, "2"))
+        assertEquals(0, V5OverviewGroupRules.indexOf(items, "zzz"))
+        assertEquals(0, V5OverviewGroupRules.indexOf(items, null))
+        assertEquals(0, V5OverviewGroupRules.indexOf(emptyList(), "1"))
+    }
 }
