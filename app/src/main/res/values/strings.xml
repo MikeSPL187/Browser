@@ -1281,6 +1281,10 @@
     <string name="filter_fetching_preview">Fetching preview…</string>
     <string name="filter_confirm_update">Confirm update</string>
     <string name="filter_diff_summary">+%1$d · −%2$d · %3$d unchanged</string>
+    <string name="filter_diff_added">+ %1$s</string>
+    <string name="filter_diff_removed">− %1$s</string>
+    <string name="filter_diff_added_spoken">Adds %1$s</string>
+    <string name="filter_diff_removed_spoken">Removes %1$s</string>
     <string name="filter_more_changes">Other changes: %1$d</string>
     <string name="filter_more_rules">Other rules: %1$d</string>
     <string name="filter_deciding_rule">Rule: %1$s</string>

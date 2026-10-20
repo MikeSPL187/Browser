@@ -1320,6 +1320,10 @@
     <string name="filter_fetching_preview">Загрузка предпросмотра…</string>
     <string name="filter_confirm_update">Подтвердить обновление</string>
     <string name="filter_diff_summary">+%1$d · −%2$d · без изменений: %3$d</string>
+    <string name="filter_diff_added">+ %1$s</string>
+    <string name="filter_diff_removed">− %1$s</string>
+    <string name="filter_diff_added_spoken">Добавит %1$s</string>
+    <string name="filter_diff_removed_spoken">Уберёт %1$s</string>
     <string name="filter_more_changes">Других изменений: %1$d</string>
     <string name="filter_more_rules">Других правил: %1$d</string>
     <string name="filter_deciding_rule">Правило: %1$s</string>
