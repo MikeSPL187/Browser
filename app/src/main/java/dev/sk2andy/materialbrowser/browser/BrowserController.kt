@@ -5885,10 +5885,7 @@ class BrowserController(
 
     fun revokeThirdPartyCookieCompatibility(tabId: String): Boolean =
         updateSitePrivacyOverrides(tabId) { current, _ ->
-            current.copy(
-                thirdPartyLoginAllowed = null,
-                captchaCompatibilityAllowed = null,
-            )
+            SiteProtectionRules.withThirdPartyCookies(current, allow = false)
         }
 
     fun createProfile(

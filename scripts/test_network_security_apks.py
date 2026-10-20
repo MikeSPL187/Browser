@@ -221,6 +221,11 @@ def certificate_sources(output: str) -> list[str]:
     return re.findall(r'^\s*A: src="([^"]+)"', output, re.MULTILINE)
 
 
+# The checks read built APKs and are not part of CI: without them the class is skipped, not failed.
+MISSING_APKS = [path for path in (STANDARD_APK, USER_CA_APK, FOSS_APK) if not path.is_file()]
+
+
+@unittest.skipIf(MISSING_APKS, f"build the APKs first (missing: {', '.join(map(str, MISSING_APKS))})")
 class NetworkSecurityApkTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
