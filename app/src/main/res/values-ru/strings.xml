@@ -2198,7 +2198,7 @@
     <string name="v5_menu_more">Ещё</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
-    <string name="v5_menu_favorite_private">Не в приватной</string>
+    <string name="v5_menu_favorite_private">Недоступно в частной вкладке</string>
     <string name="v5_menu_read">Читать</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
@@ -2306,6 +2306,7 @@
     <string name="v5_first_run_device_caption">Никакой аналитики и рекламных SDK</string>
     <string name="v5_first_run_default_title">Открывать ссылки в Vola?</string>
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
+    <string name="v5_first_run_default_refused">Vola пока не браузер по умолчанию. Это можно сделать позже в настройках.</string>
     <string name="v5_first_run_default_action">Сделать основным</string>
     <string name="v5_first_run_not_now">Не сейчас</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
@@ -2316,6 +2317,7 @@
     <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
     <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
     <string name="v5_first_run_gestures_done">Понятно</string>
+    <string name="v5_first_run_gestures_buttons">Без жестов: то же самое делают кнопка вкладок и меню «•••».</string>
     <string name="filter_v5_on">Вкл.</string>
     <string name="filter_v5_off">Выкл.</string>
     <string name="filter_v5_active">Включено</string>

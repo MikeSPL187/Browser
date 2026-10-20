@@ -2106,7 +2106,7 @@
     <string name="v5_menu_more">More</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
-    <string name="v5_menu_favorite_private">Not in private</string>
+    <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
     <string name="v5_menu_read">Read</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>
@@ -2210,6 +2210,7 @@
     <string name="v5_first_run_device_caption">No analytics and no ad SDKs</string>
     <string name="v5_first_run_default_title">Open links in Vola?</string>
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
+    <string name="v5_first_run_default_refused">Vola isn’t your default browser yet. You can make it one later in Settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
@@ -2220,6 +2221,7 @@
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
     <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
     <string name="v5_first_run_gestures_done">Got it</string>
+    <string name="v5_first_run_gestures_buttons">Without gestures: the tabs button and the “•••” menu do the same.</string>
     <string name="filter_v5_on">On</string>
     <string name="filter_v5_off">Off</string>
     <string name="filter_v5_active">Enabled</string>

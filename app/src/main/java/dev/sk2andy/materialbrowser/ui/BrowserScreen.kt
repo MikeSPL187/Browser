@@ -1068,7 +1068,7 @@ internal fun BrowserScreen(
                 controller.submitAddress(submission.input, searchModeFor(submission.input))
                 addressEditorVisible = false
             }
-            AddressSubmission.None -> Unit
+            AddressSubmission.None -> rootView.performRejectHaptic() // Nothing typed: felt, not a dead key (А-2).
         }
     }
 
