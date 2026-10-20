@@ -2022,6 +2022,7 @@
     </plurals>
     <string name="v5_report_device_only">Stored only on this device and never sent anywhere. Private tabs are not counted.</string>
     <string name="v5_report_hide_card">Hide on new tab</string>
+    <string name="v5_report_hide_card_message">It comes back with “Weekly report on the new tab” in the protection settings.</string>
     <string name="v5_report_clear">Clear report data</string>
     <string name="v5_report_clear_body">The report\'s counts are deleted from this device. Protection keeps working.</string>
     <string name="v5_newtab_pinned">Pinned</string>
@@ -2033,7 +2034,12 @@
     <string name="v5_newtab_more">More</string>
     <string name="v5_newtab_recent">Recent tabs</string>
     <string name="v5_newtab_add_title">Pin a site</string>
-    <string name="v5_newtab_add_empty">Open a site in a tab of this profile to pin it here.</string>
+    <string name="v5_newtab_add_empty">Sites from this profile’s open tabs, favorites and history show up here.</string>
+    <string name="v5_newtab_add_tabs">Open tabs</string>
+    <string name="v5_newtab_add_favorites">Favorites</string>
+    <string name="v5_newtab_add_history">History</string>
+    <string name="v5_newtab_pinned_empty">Pin the sites you open most: they wait here in every new tab.</string>
+    <string name="v5_newtab_pinned_full">16 sites is as many as fit. Unpin one to add another.</string>
     <string name="v5_newtab_move_earlier">Move earlier</string>
     <string name="v5_newtab_move_later">Move later</string>
     <string name="v5_private_title">Private browsing</string>

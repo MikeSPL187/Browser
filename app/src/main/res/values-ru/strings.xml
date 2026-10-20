@@ -2112,6 +2112,7 @@
     </plurals>
     <string name="v5_report_device_only">Хранится только на этом устройстве и никуда не отправляется. Частные вкладки не учитываются.</string>
     <string name="v5_report_hide_card">Не показывать на новой вкладке</string>
+    <string name="v5_report_hide_card_message">Вернуть её можно переключателем «Отчёт за неделю на новой вкладке» в настройках защиты.</string>
     <string name="v5_report_clear">Очистить данные отчёта</string>
     <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
     <string name="v5_newtab_pinned">Закреплённые</string>
@@ -2123,7 +2124,12 @@
     <string name="v5_newtab_more">Ещё</string>
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
-    <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
+    <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
+    <string name="v5_newtab_add_tabs">Открытые вкладки</string>
+    <string name="v5_newtab_add_favorites">Избранное</string>
+    <string name="v5_newtab_add_history">История</string>
+    <string name="v5_newtab_pinned_empty">Закрепите сайты, которые открываете чаще всего: они будут ждать здесь в каждой новой вкладке.</string>
+    <string name="v5_newtab_pinned_full">Поместится не больше 16 сайтов. Открепите сайт, чтобы добавить другой.</string>
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_private_title">Частный доступ</string>
