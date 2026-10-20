@@ -509,14 +509,13 @@ class BrowserController(
         private set
     var isClosedTabUndoEnabled by mutableStateOf(false)
         private set
-    internal var closedTabUndoOffer by mutableStateOf<ClosedTabUndoToken?>(null)
-        private set
-    private var closedTabUndoTrail: CandyTrail? = null
-    private var closedTabUndoPreview: Bitmap? = null
-    private var closedTabUndoFavicon: Bitmap? = null
-    private var closedTabUndoStack: TabStack? = null
-    private var closedTabUndoStackAfterClose: TabStack? = null
-    private val closedTabUndoExpiry = Runnable { dismissClosedTabUndo() }
+    private val closedTabUndo = ClosedTabUndo<Bitmap>(
+        postDelayed = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        removeCallbacks = { task -> mainHandler.removeCallbacks(task) },
+        onExpired = { dismissClosedTabUndo() },
+    )
+    internal val closedTabUndoOffer: ClosedTabUndoToken?
+        get() = closedTabUndo.offer
     var isExternalLinkPreviewEnabled by mutableStateOf(false)
         private set
     var externalAppLinkHandling by mutableStateOf(ExternalAppLinkHandling.Default)
@@ -7472,27 +7471,31 @@ class BrowserController(
         reconcileCandyTrailForks(nowMillis)
         persist()
         if (canUndo) {
-            closedTabUndoTrail = originalTrail
-            closedTabUndoPreview = originalPreview
-            closedTabUndoFavicon = originalFavicon
-            closedTabUndoStack = originalStack
-            closedTabUndoStackAfterClose = originalStack?.let { original ->
-                tabStacks.firstOrNull { it.id == original.id }
-            }
-            closedTabUndoOffer = ClosedTabUndoToken(
-                tab = closingTab,
-                originalIndex = index,
-                wasSelected = wasSelected,
-                selectedTabIdAfterClose = selectedTabId,
-                replacementTabId = tabs.firstOrNull { it.id !in originalTabIds }?.id,
-                closedAtMillis = closedAtMillis,
+            closedTabUndo.keep(
+                token = ClosedTabUndoToken(
+                    tab = closingTab,
+                    originalIndex = index,
+                    wasSelected = wasSelected,
+                    selectedTabIdAfterClose = selectedTabId,
+                    replacementTabId = tabs.firstOrNull { it.id !in originalTabIds }?.id,
+                    closedAtMillis = closedAtMillis,
+                ),
+                snapshot = ClosedTabUndo.Snapshot(
+                    trail = originalTrail,
+                    preview = originalPreview,
+                    favicon = originalFavicon,
+                    stack = originalStack,
+                    stackAfterClose = originalStack?.let { original ->
+                        tabStacks.firstOrNull { it.id == original.id }
+                    },
+                ),
             )
-            mainHandler.postDelayed(closedTabUndoExpiry, ClosedTabUndoRules.DURATION_MILLIS)
         }
     }
 
     internal fun undoClosedTab(token: ClosedTabUndoToken): Boolean {
-        if (closedTabUndoOffer != token || !isClosedTabUndoEnabled || destroyed) return false
+        val snapshot = closedTabUndo.snapshotFor(token)
+        if (snapshot == null || !isClosedTabUndoEnabled || destroyed) return false
         if (profiles.none { it.id == token.tab.profileId }) return false
         val result = ClosedTabUndoRules.restore(
             tabs = tabs,
@@ -7501,25 +7504,24 @@ class BrowserController(
             token = token,
             nowMillis = android.os.SystemClock.elapsedRealtime(),
         ) ?: return false
-        mainHandler.removeCallbacks(closedTabUndoExpiry)
         result.removedReplacementTabId?.let(::removeTabResources)
         tabs.clear()
         tabs += result.tabs
-        closedTabUndoStack?.let { original ->
+        snapshot.stack?.let { original ->
             tabStacks.replaceWith(
                 TabStackRules.restoreSnoozedMember(
                     stacks = tabStacks,
                     tabs = tabs,
                     restoredTabId = token.tab.id,
                     originalStack = original,
-                    stackAfterSnooze = closedTabUndoStackAfterClose,
+                    stackAfterSnooze = snapshot.stackAfterClose,
                 ),
             )
         }
-        closedTabUndoTrail?.let { candyTrails[token.tab.id] = it }
-        closedTabUndoPreview?.takeUnless(Bitmap::isRecycled)?.let { previews[token.tab.id] = it }
-        closedTabUndoFavicon?.takeUnless(Bitmap::isRecycled)?.let { storeFavicon(token.tab.id, it) }
-        clearClosedTabUndoOffer()
+        snapshot.trail?.let { candyTrails[token.tab.id] = it }
+        snapshot.preview?.takeUnless(Bitmap::isRecycled)?.let { previews[token.tab.id] = it }
+        snapshot.favicon?.takeUnless(Bitmap::isRecycled)?.let { storeFavicon(token.tab.id, it) }
+        closedTabUndo.clear()
         updateSelectedTabId(result.selectedTabId)
         rememberSelectedTab(activeProfileId, selectedTabId)
         reconcileCandyTrailForks(System.currentTimeMillis())
@@ -7533,21 +7535,11 @@ class BrowserController(
 
     internal fun dismissClosedTabUndo(token: ClosedTabUndoToken? = closedTabUndoOffer) {
         if (token == null || token != closedTabUndoOffer) return
-        mainHandler.removeCallbacks(closedTabUndoExpiry)
         geckoSessionStateStore.delete(token.tab.id)
         webViewStateRepository.delete(token.tab.id)
         candyTrailRepository.delete(token.tab.id)
         previewRepository.delete(token.tab.id)
-        clearClosedTabUndoOffer()
-    }
-
-    private fun clearClosedTabUndoOffer() {
-        closedTabUndoOffer = null
-        closedTabUndoTrail = null
-        closedTabUndoPreview = null
-        closedTabUndoFavicon = null
-        closedTabUndoStack = null
-        closedTabUndoStackAfterClose = null
+        closedTabUndo.clear()
     }
 
     fun closeAllTabs(): Int {
