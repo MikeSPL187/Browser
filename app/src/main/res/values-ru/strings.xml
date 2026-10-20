@@ -2227,6 +2227,10 @@
     <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_profiles_title">Профили</string>
     <string name="v5_profiles_other_devices">С других устройств</string>
+    <string name="v5_profiles_other_devices_footer">Эти профили меняются на устройстве, с которого они пришли.</string>
+    <string name="v5_profile_create_failed">Не удалось создать профиль. Попробуйте ещё раз из списка профилей.</string>
+    <string name="v5_profile_delete_last">Единственный профиль на телефоне удалить нельзя.</string>
+    <string name="v5_profile_delete_unavailable">Этот профиль сейчас нельзя удалить: он заблокирован или связан с другим устройством.</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
     <string name="v5_profile_untitled">Профиль</string>
     <string name="v5_profile_locked">Заблокирован</string>
