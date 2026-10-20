@@ -19,6 +19,9 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 internal interface GeckoPrivacyBinding {
     fun update(policy: GeckoPrivacyPolicy, onReady: () -> Unit = {})

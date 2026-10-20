@@ -42,6 +42,24 @@ import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineEventSink
+import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAndroidPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoAuthPromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoContentPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoContextDownloadRequest
+import dev.sk2andy.materialbrowser.browser.engine.GeckoDownloadResponseListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFilePromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFullscreenStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaCommand
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaPermissionRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionStateListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoNewSessionListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoWebPromptListener
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 
 internal class GeckoPreparedSession(
     val session: GeckoSession,

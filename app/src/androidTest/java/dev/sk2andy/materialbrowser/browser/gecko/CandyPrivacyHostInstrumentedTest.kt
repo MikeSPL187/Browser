@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.geckoview.ContentBlocking
+import dev.sk2andy.materialbrowser.browser.engine.GeckoBrowserSessionState
 
 @RunWith(AndroidJUnit4::class)
 class CandyPrivacyHostInstrumentedTest {

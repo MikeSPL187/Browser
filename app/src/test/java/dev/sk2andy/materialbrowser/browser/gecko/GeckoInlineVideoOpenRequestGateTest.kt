@@ -3,6 +3,8 @@ package dev.sk2andy.materialbrowser.browser.gecko
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 class GeckoInlineVideoOpenRequestGateTest {
     @Test

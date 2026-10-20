@@ -10,6 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebExtension
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
+import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 @RunWith(AndroidJUnit4::class)
 class GeckoInlineVideoOpenRequestInstrumentedTest {

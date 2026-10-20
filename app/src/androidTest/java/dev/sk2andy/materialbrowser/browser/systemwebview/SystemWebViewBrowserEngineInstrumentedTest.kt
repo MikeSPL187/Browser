@@ -24,7 +24,7 @@ import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionScript
 import dev.sk2andy.materialbrowser.browser.WebRtcProtectionMode
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.browser.gecko.GeckoRuntimeOwner
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.reader.ReaderExtractionScript

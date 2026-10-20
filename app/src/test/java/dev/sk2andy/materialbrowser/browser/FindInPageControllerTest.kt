@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEngineFindPort
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoFindResult
+import dev.sk2andy.materialbrowser.browser.engine.GeckoFindResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

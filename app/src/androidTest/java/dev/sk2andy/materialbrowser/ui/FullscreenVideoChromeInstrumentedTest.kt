@@ -13,7 +13,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.MainActivity
 import dev.sk2andy.materialbrowser.browser.FullscreenVideoPlacement
 import dev.sk2andy.materialbrowser.browser.StartupAddressFocusMode
-import dev.sk2andy.materialbrowser.browser.gecko.GeckoMediaSessionState
+import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import org.junit.After

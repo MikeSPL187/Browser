@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import dev.sk2andy.materialbrowser.browser.engine.GeckoExternalDownloadResponse
 
 class GeckoExternalDownloadResponseTest {
     @Test
