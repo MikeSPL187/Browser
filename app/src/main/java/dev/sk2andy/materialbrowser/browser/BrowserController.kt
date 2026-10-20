@@ -840,7 +840,13 @@ class BrowserController(
     @VisibleForTesting
     fun detectCaptchaForTesting(requestUrl: String) {
         val context = protectionRequestContexts[selectedTabId] ?: return
-        detectCaptchaRequest(selectedTabId, requestUrl, context)
+        captchaOffers.onSubresourceRequest(
+            selectedTabId,
+            requestUrl,
+            context.pageHost,
+            context.profileId,
+            context.navigationGeneration,
+        )
     }
 
     @VisibleForTesting
@@ -1087,11 +1093,30 @@ class BrowserController(
         private set
     private var federatedLoginOfferSequence = 0L
     private val federatedLoginOfferKeys = ConcurrentHashMap<String, String>()
-    internal var captchaCompatibilityOffer by mutableStateOf<CaptchaCompatibilityOffer?>(null)
-        private set
-    private var captchaCompatibilityOfferSequence = 0L
-    private val captchaCompatibilityOfferKeys =
-        ConcurrentHashMap<String, MutableSet<String>>()
+    private val captchaOffers = CaptchaCompatibilityOffers(
+        object : CaptchaCompatibilityOffers.Host {
+            override val isDestroyed: Boolean get() = destroyed
+            override val selectedTabId: String get() = this@BrowserController.selectedTabId
+            override val blocksThirdPartyCookies: Boolean get() = workerSettings.blockThirdPartyCookies
+            override fun tab(tabId: String): BrowserTab? = tabs.firstOrNull { it.id == tabId }
+            override fun pageUrl(tabId: String): String? = pageUrls[tabId]
+            override fun navigationGeneration(tabId: String): Int? = navigationGenerations[tabId]
+            override fun isRelaxed(tab: BrowserTab, pageUrl: String): Boolean =
+                isSiteProtectionPaused(tab.id, pageUrl) ||
+                    isFederatedLoginCompatibilityEnabled(tab, pageUrl) ||
+                    isCaptchaCompatibilityEnabled(tab, pageUrl)
+            override fun postToMainThread(task: () -> Unit) {
+                mainHandler.post(task)
+            }
+            override fun allow(tabId: String, persistently: Boolean) {
+                updateSitePrivacyOverrides(tabId = tabId, persistently = persistently) { current, _ ->
+                    current.copy(captchaCompatibilityAllowed = true)
+                }
+            }
+        },
+    )
+    internal val captchaCompatibilityOffer: CaptchaCompatibilityOffer?
+        get() = captchaOffers.offer
     private val pageTranslation = PageTranslationRecovery(
         object : PageTranslationRecovery.Host<AndroidBrowserEngineSessionPort> {
             override val isDestroyed: Boolean get() = destroyed
@@ -5440,32 +5465,12 @@ class BrowserController(
             current.copy(thirdPartyLoginAllowed = null)
         }
 
-    fun showCaptchaCompatibilityOptions(token: Long) {
-        val offer = captchaCompatibilityOffer?.takeIf { it.token == token } ?: return
-        if (!isCurrentCaptchaCompatibilityOffer(offer)) {
-            captchaCompatibilityOffer = null
-            return
-        }
-        captchaCompatibilityOffer = offer.copy(showDialog = true)
-    }
+    fun showCaptchaCompatibilityOptions(token: Long) = captchaOffers.showOptions(token)
 
     fun respondToCaptchaCompatibilityOffer(
         token: Long,
         choice: CaptchaCompatibilityPromptChoice,
-    ) {
-        val offer = captchaCompatibilityOffer?.takeIf { it.token == token } ?: return
-        captchaCompatibilityOffer = null
-        if (choice == CaptchaCompatibilityPromptChoice.Deny ||
-            !isCurrentCaptchaCompatibilityOffer(offer)
-        ) return
-        if (choice == CaptchaCompatibilityPromptChoice.AllowForProfile && offer.isPrivate) return
-        updateSitePrivacyOverrides(
-            tabId = offer.tabId,
-            persistently = choice == CaptchaCompatibilityPromptChoice.AllowForProfile,
-        ) { current, _ ->
-            current.copy(captchaCompatibilityAllowed = true)
-        }
-    }
+    ) = captchaOffers.respond(token, choice)
 
     fun revokeThirdPartyCookieCompatibility(tabId: String): Boolean =
         updateSitePrivacyOverrides(tabId) { current, _ ->
@@ -9543,8 +9548,7 @@ class BrowserController(
         blockedPopupOffer = null
         federatedLoginOffer = null
         federatedLoginOfferKeys.clear()
-        captchaCompatibilityOffer = null
-        captchaCompatibilityOfferKeys.clear()
+        captchaOffers.clear()
         pageTranslation.clear()
         permissionAccess.cancelPending()
         pendingGeckoAndroidPermissionRequest?.request?.response?.complete(false)
@@ -11145,14 +11149,26 @@ class BrowserController(
         if (event.isCloudflareChallengeResponse) {
             val observedPageHost = event.pageUrl?.let(PrivacyRequestSanitizer::webHost) ?: return
             if (observedPageHost != context.pageHost) return
-            offerCloudflareMainFrameChallenge(tabId, event.requestUrl, context)
+            captchaOffers.onMainFrameChallenge(
+                tabId,
+                event.requestUrl,
+                context.pageHost,
+                context.profileId,
+                context.navigationGeneration,
+            )
             return
         }
         if (event.isCompatibilityObservation) {
             val observedPageHost = event.pageUrl?.let(PrivacyRequestSanitizer::webHost) ?: return
             if (observedPageHost != context.pageHost) return
             detectFederatedLoginRequest(tabId, event.requestUrl, context)
-            detectCaptchaRequest(tabId, event.requestUrl, context)
+            captchaOffers.onSubresourceRequest(
+                tabId,
+                event.requestUrl,
+                context.pageHost,
+                context.profileId,
+                context.navigationGeneration,
+            )
             return
         }
         if (event.isBuiltIn) {
@@ -13335,7 +13351,7 @@ class BrowserController(
         federatedLoginCompatibilityTabIds.remove(tabId)
         if (blockedPopupOffer?.popupTabId == tabId) blockedPopupOffer = null
         if (federatedLoginOffer?.tabId == tabId) federatedLoginOffer = null
-        if (captchaCompatibilityOffer?.tabId == tabId) captchaCompatibilityOffer = null
+        captchaOffers.dismissFor(tabId)
         pageTranslation.dismissOfferFor(tabId)
         pendingCandyTrailRestoreIds.remove(tabId)
         suppressedCandyTrailTabIds.remove(tabId)
@@ -13369,7 +13385,7 @@ class BrowserController(
         federatedLoginCompatibilityTabIds.remove(tab.id)
         if (blockedPopupOffer?.popupTabId == tab.id) blockedPopupOffer = null
         if (federatedLoginOffer?.tabId == tab.id) federatedLoginOffer = null
-        if (captchaCompatibilityOffer?.tabId == tab.id) captchaCompatibilityOffer = null
+        captchaOffers.dismissFor(tab.id)
         pageTranslation.dismissOfferFor(tab.id)
         pendingCandyTrailRestoreIds.remove(tab.id)
         suppressedCandyTrailTabIds.remove(tab.id)
@@ -13485,7 +13501,7 @@ class BrowserController(
         temporarySiteExceptions.remove(tabId)
         if (clearTemporarySiteOverrides) temporarySitePrivacyOverrides.remove(tabId)
         federatedLoginOfferKeys.remove(tabId)
-        captchaCompatibilityOfferKeys.remove(tabId)
+        captchaOffers.forgetTab(tabId)
         siteExceptionRevision++
     }
 
@@ -13535,97 +13551,6 @@ class BrowserController(
     }
 
     private fun isCurrentFederatedLoginOffer(offer: FederatedLoginOffer): Boolean {
-        val tab = tabs.firstOrNull { it.id == offer.tabId } ?: return false
-        val currentHost = PrivacyRequestSanitizer.webHost(pageUrls[tab.id] ?: tab.url)
-        return selectedTabId == tab.id &&
-            tab.profileId == offer.profileId &&
-            tab.isIncognito == offer.isPrivate &&
-            currentHost == offer.pageHost &&
-            navigationGenerations[tab.id] == offer.navigationGeneration
-    }
-
-    private fun detectCaptchaRequest(
-        tabId: String,
-        requestUrl: String,
-        requestContext: ProtectionRequestContext,
-    ) {
-        if (!workerSettings.blockThirdPartyCookies) return
-        val pageHost = requestContext.pageHost ?: return
-        val provider = CaptchaCompatibilityRules.providerForSubresource(
-            requestUrl = requestUrl,
-            pageUrl = "https://$pageHost/",
-        ) ?: return
-        mainHandler.post {
-            if (destroyed || selectedTabId != tabId || !workerSettings.blockThirdPartyCookies) {
-                return@post
-            }
-            val tab = tabs.firstOrNull { it.id == tabId } ?: return@post
-            val pageUrl = pageUrls[tabId] ?: tab.url
-            val currentHost = PrivacyRequestSanitizer.webHost(pageUrl)
-            if (currentHost != pageHost || tab.profileId != requestContext.profileId) return@post
-            if (navigationGenerations[tabId] != requestContext.navigationGeneration) return@post
-            if (isSiteProtectionPaused(tabId, pageUrl) ||
-                isFederatedLoginCompatibilityEnabled(tab, pageUrl) ||
-                isCaptchaCompatibilityEnabled(tab, pageUrl)
-            ) return@post
-            queueCaptchaCompatibilityOffer(tabId, tab, pageHost, provider, requestContext)
-        }
-    }
-
-    private fun offerCloudflareMainFrameChallenge(
-        tabId: String,
-        responseUrl: String,
-        requestContext: ProtectionRequestContext,
-    ) {
-        if (!workerSettings.blockThirdPartyCookies) return
-        val pageHost = requestContext.pageHost ?: return
-        if (PrivacyRequestSanitizer.webHost(responseUrl) != pageHost) return
-        if (destroyed || selectedTabId != tabId) return
-        val tab = tabs.firstOrNull { it.id == tabId } ?: return
-        val pageUrl = pageUrls[tabId] ?: tab.url
-        if (PrivacyRequestSanitizer.webHost(pageUrl) != pageHost) return
-        if (tab.profileId != requestContext.profileId) return
-        if (navigationGenerations[tabId] != requestContext.navigationGeneration) return
-        if (isSiteProtectionPaused(tabId, pageUrl) ||
-            isFederatedLoginCompatibilityEnabled(tab, pageUrl) ||
-            isCaptchaCompatibilityEnabled(tab, pageUrl)
-        ) return
-        queueCaptchaCompatibilityOffer(
-            tabId = tabId,
-            tab = tab,
-            pageHost = pageHost,
-            provider = CaptchaProvider.Cloudflare,
-            requestContext = requestContext,
-        )
-    }
-
-    private fun queueCaptchaCompatibilityOffer(
-        tabId: String,
-        tab: BrowserTab,
-        pageHost: String,
-        provider: CaptchaProvider,
-        requestContext: ProtectionRequestContext,
-    ) {
-        val offerKey = "${requestContext.navigationGeneration}:$pageHost:${provider.name}"
-        val tabOfferKeys = captchaCompatibilityOfferKeys.computeIfAbsent(tabId) {
-            ConcurrentHashMap.newKeySet()
-        }
-        if (!tabOfferKeys.add(offerKey)) return
-        captchaCompatibilityOfferSequence++
-        captchaCompatibilityOffer = CaptchaCompatibilityOffer(
-            token = captchaCompatibilityOfferSequence,
-            tabId = tabId,
-            profileId = tab.profileId,
-            pageHost = pageHost,
-            provider = provider,
-            isPrivate = tab.isIncognito,
-            navigationGeneration = requestContext.navigationGeneration,
-        )
-    }
-
-    private fun isCurrentCaptchaCompatibilityOffer(
-        offer: CaptchaCompatibilityOffer,
-    ): Boolean {
         val tab = tabs.firstOrNull { it.id == offer.tabId } ?: return false
         val currentHost = PrivacyRequestSanitizer.webHost(pageUrls[tab.id] ?: tab.url)
         return selectedTabId == tab.id &&
