@@ -441,10 +441,26 @@ class BrowserController(
     private var activeProfileIdState by mutableStateOf(DEFAULT_PROFILE_ID)
     var profilesEnabled by mutableStateOf(true)
         private set
-    var isProfileProtectionSupported by mutableStateOf(profileProtectionSupported())
-        private set
-    var lockedProfileIds by mutableStateOf<Set<String>>(emptySet())
-        private set
+    private val profileLock = ProfileLock(
+        supported = profileProtectionSupported,
+        askBiometric = authenticateProfile,
+        host = object : ProfileLock.Host {
+            override val profiles: List<BrowserProfile> get() = this@BrowserController.profiles
+            override val tabs: List<BrowserTab> get() = this@BrowserController.tabs
+            override val activeProfileId: String get() = this@BrowserController.activeProfileId
+            override val isDestroyed: Boolean get() = destroyed
+            override fun suspendTabs(tabIds: Set<String>, hidesSelectedTab: Boolean) =
+                suspendLockedTabs(tabIds, hidesSelectedTab)
+            override fun resumeSelectedTab() = resumeUnlockedSelectedTab()
+            override fun refreshEngineViews() {
+                engineViewRevision++
+            }
+        },
+    )
+    val isProfileProtectionSupported: Boolean
+        get() = profileLock.isSupported
+    val lockedProfileIds: Set<String>
+        get() = profileLock.lockedIds
     val isActiveProfileLocked: Boolean
         get() = activeProfileId in lockedProfileIds
 
@@ -457,8 +473,6 @@ class BrowserController(
         get() = isActiveProfileLocked && profiles.any { profile ->
             profile.id != activeProfileId && profile.id !in lockedProfileIds
         }
-    private var profileAuthenticationInFlight = false
-    private var profileLockGeneration = 0L
     var blockerSettings by mutableStateOf(BlockerSettings())
         private set
     var inactiveTabLifetime by mutableStateOf(InactiveTabLifetime.Never)
@@ -2271,11 +2285,7 @@ class BrowserController(
         val storedProfiles = StartupTimeline.section("LoadProfiles") { store.loadStoredProfiles() }
         val restoredActiveProfileId = storedProfiles.activeProfileId
         profiles += storedProfiles.profiles.take(MAX_PROFILES)
-        lockedProfileIds = profiles.asSequence()
-            .filter { profile ->
-                profile.protection != null && !ProfileProtectionSession.isUnlocked(profile.id)
-            }
-            .mapTo(linkedSetOf(), BrowserProfile::id)
+        profileLock.restore()
         val restoredProfileIds = profiles.mapTo(mutableSetOf(), BrowserProfile::id)
         siteCapsules += siteCapsuleStore.load()
             .filter { capsule -> capsule.profileId in restoredProfileIds }
@@ -5864,7 +5874,7 @@ class BrowserController(
             if (!isActiveProfileLocked) {
                 mainHandler.post { if (!destroyed) onComplete(true) }
             } else {
-                if (!isProfileProtectionSupported || profileAuthenticationInFlight) {
+                if (!profileLock.canAuthenticate) {
                     mainHandler.post { if (!destroyed) onComplete(false) }
                     return true
                 }
@@ -5884,7 +5894,7 @@ class BrowserController(
             mainHandler.post { if (!destroyed) onComplete(selected) }
             return true
         }
-        if (!isProfileProtectionSupported || profileAuthenticationInFlight) {
+        if (!profileLock.canAuthenticate) {
             mainHandler.post { if (!destroyed) onComplete(false) }
             return true
         }
@@ -5995,8 +6005,7 @@ class BrowserController(
             profiles[currentIndex] = candidate
             protectionReport.onWorkspaceProtectionChanged(current.protection != null, candidate.protection != null)
             if (candidate.protection == null) {
-                lockedProfileIds -= profileId
-                ProfileProtectionSession.forget(profileId)
+                profileLock.forget(profileId)
             } else {
                 unlockProfile(profileId)
             }
@@ -6016,30 +6025,9 @@ class BrowserController(
     private fun requestProfileAuthentication(
         purpose: ProfileAuthenticationPurpose,
         onComplete: (Boolean) -> Unit,
-    ) {
-        if (!isProfileProtectionSupported || profileAuthenticationInFlight || destroyed) {
-            onComplete(false)
-            return
-        }
-        profileAuthenticationInFlight = true
-        val lockGeneration = profileLockGeneration
-        authenticateProfile(purpose) { authenticated ->
-            profileAuthenticationInFlight = false
-            onComplete(
-                authenticated && !destroyed && lockGeneration == profileLockGeneration,
-            )
-        }
-    }
+    ) = profileLock.authenticate(purpose, onComplete)
 
-    private fun unlockProfile(profileId: String) {
-        val isProtected = profiles.any { profile ->
-            profile.id == profileId && profile.protection != null
-        }
-        if (!isProtected) return
-        ProfileProtectionSession.unlock(profileId)
-        lockedProfileIds -= profileId
-        if (profileId == activeProfileId) resumeUnlockedSelectedTab() else engineViewRevision++
-    }
+    private fun unlockProfile(profileId: String) = profileLock.unlock(profileId)
 
     /** The selected page comes back after a lock: its view reattaches and, in front, it runs. */
     private fun resumeUnlockedSelectedTab() {
@@ -6379,8 +6367,7 @@ class BrowserController(
         }
         profiles.removeAt(profileIndex)
         essentials.forgetProfile(profileId)
-        lockedProfileIds -= profileId
-        ProfileProtectionSession.forget(profileId)
+        profileLock.forget(profileId)
         profileWallpaperExecutor.executeIfRunning { profileWallpaperStore.delete(profileId) }
         val profileTrailRedactions = store.loadPendingCandyTrailRedactions().filter { redaction ->
             redaction.tabIds.any(removedProfileTrailTabIds::contains)
@@ -9914,18 +9901,13 @@ class BrowserController(
     }
 
     fun onAppBackgrounded(nowElapsedRealtime: Long = SystemClock.elapsedRealtime()) {
-        profileLockGeneration++
-        ProfileProtectionSession.markBackgrounded(nowElapsedRealtime)
-        lockProtectedProfiles { protection ->
-            protection.lockTrigger == ProfileLockTrigger.AppBackgrounded
-        }
+        profileLock.onAppBackgrounded(nowElapsedRealtime)
         privateTabsLock.onAppBackgrounded()
         siteDataDeletion.commit()
     }
 
     fun onAppForegrounded(nowElapsedRealtime: Long = SystemClock.elapsedRealtime()) {
-        isProfileProtectionSupported = profileProtectionSupported()
-        lockProfilesAfterBackground(nowElapsedRealtime)
+        profileLock.onAppForegrounded(nowElapsedRealtime)
         if (isActivityResumed && isActiveProfileLocked) retryActiveProfileAuthentication()
     }
 
@@ -9948,11 +9930,7 @@ class BrowserController(
     fun destroy(lockClosedProfiles: Boolean = false) {
         stopInlineVideoGestureHaptic()
         cancelPendingMediaLayoutRestoration()
-        if (lockClosedProfiles) {
-            lockProtectedProfiles { protection ->
-                protection.lockTrigger == ProfileLockTrigger.AppClosed
-            }
-        }
+        if (lockClosedProfiles) profileLock.onAppClosed()
         addressBar.cancelAutoDockProbe()
         downloadRouter.close()
         dismissClosedTabUndo()
@@ -13572,31 +13550,6 @@ class BrowserController(
             ?: persistentProfiles.first().id
         store.saveProfiles(persistentProfiles, persistentActiveProfileId)
         savePersistentFilterRules()
-    }
-
-    private fun lockProfilesAfterBackground(nowElapsedRealtime: Long) {
-        val elapsed = ProfileProtectionSession.consumeBackgroundElapsed(nowElapsedRealtime)
-            ?: return
-        lockProtectedProfiles { protection ->
-            ProfileProtectionRules.shouldLockAfterBackground(
-                protection = protection,
-                elapsedBackgroundMillis = elapsed,
-            )
-        }
-    }
-
-    private fun lockProtectedProfiles(shouldLock: (ProfileProtection) -> Boolean) {
-        val profileIds = profiles.asSequence()
-            .filter { profile -> profile.protection?.let(shouldLock) == true }
-            .mapTo(linkedSetOf(), BrowserProfile::id)
-        if (profileIds.isEmpty()) return
-        ProfileProtectionSession.lock(profileIds)
-        lockedProfileIds += profileIds
-        suspendLockedTabs(
-            tabIds = tabs.filter { tab -> tab.profileId in profileIds }
-                .mapTo(hashSetOf(), BrowserTab::id),
-            hidesSelectedTab = activeProfileId in profileIds,
-        )
     }
 
     /**
