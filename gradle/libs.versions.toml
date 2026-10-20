@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.21"
-compose-multiplatform = "1.12.1"
+compose-multiplatform = "1.12.2"
 # The Material 3 build that Compose Multiplatform 1.12.1 pairs with its compose.material3 alias.
 # Android resolves the AndroidX artifact from compose-material3 below.
 jetbrains-compose-material3 = "1.9.0"

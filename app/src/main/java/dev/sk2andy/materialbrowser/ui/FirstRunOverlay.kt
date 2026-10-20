@@ -88,11 +88,12 @@ internal object FirstRunRules {
         if (isDefaultBrowser) FirstRunStage.GestureSheet else FirstRunStage.DefaultBrowser
 
     /**
-     * Where v5 starts: always the welcome. The v4 gesture lesson teaches v4 gestures, so where v4
-     * would show only the lesson (after an update that brings one, or «Show gesture lesson» in
-     * developer options) v5 shows its whole first run, which ends with its own two gestures.
+     * Where v5 starts: the welcome on a new install. After an update that brings a new lesson, or
+     * «Show gesture lesson» in developer options, only v5's own two gestures: someone who uses Vola
+     * already needs that one step, not the welcome and «Move from another browser» again (FR-04).
      */
-    fun v5FirstStage(): FirstRunStage = FirstRunStage.Welcome
+    fun v5FirstStage(showIntro: Boolean): FirstRunStage =
+        if (showIntro) FirstRunStage.Welcome else FirstRunStage.GestureSheet
 }
 
 /**
@@ -165,7 +166,7 @@ internal fun FirstRunOverlay(
 @Composable
 private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean, onCompleted: () -> Unit) {
     val context = LocalContext.current
-    var stage by rememberSaveable { mutableStateOf(FirstRunRules.v5FirstStage()) }
+    var stage by rememberSaveable { mutableStateOf(FirstRunRules.v5FirstStage(showIntro)) }
     // «Make default» waits for the answer: the page moves on once Vola is the default browser, and
     // a refusal leaves it in place, where «Not now» still goes on.
     var askedForDefault by rememberSaveable { mutableStateOf(false) }

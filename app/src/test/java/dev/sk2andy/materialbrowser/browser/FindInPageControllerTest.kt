@@ -100,6 +100,26 @@ class FindInPageControllerTest {
     }
 
     @Test
+    fun `find opened again on a tab searches its last query, and an emptied query is forgotten`() {
+        val engine = FakeFindPort(counted, counted, counted)
+        val controller = controller(engine, mutableListOf())
+        controller.updateQuery("Zen")
+        controller.close()
+
+        controller.open("tab", engine, navigationGeneration = 0, resetOptions = false)
+        assertEquals("Zen", controller.state!!.query)
+        assertEquals(541, controller.state!!.matchCount)
+
+        controller.updateQuery("")
+        controller.close()
+        controller.open("tab", engine, navigationGeneration = 0, resetOptions = false)
+        assertEquals("", controller.state!!.query)
+
+        controller.open("other", engine, navigationGeneration = 0, resetOptions = false)
+        assertEquals("", controller.state!!.query)
+    }
+
+    @Test
     fun `a url change in the same document keeps find working on the new generation`() {
         var generation = 7
         val engine = FakeFindPort(counted, counted.copy(matchCount = 8))
