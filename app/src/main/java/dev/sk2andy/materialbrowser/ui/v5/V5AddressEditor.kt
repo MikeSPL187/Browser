@@ -188,7 +188,6 @@ internal fun V5AddressEditor(
                 onArrow = { step ->
                     onHighlight(V5SuggestionLayoutRules.step(state.layout, state.highlightedId, step))
                 },
-                onEscape = onCancel,
             )
         }
     }
@@ -201,7 +200,6 @@ private fun EditorField(
     onSubmit: (String) -> Unit,
     onCancel: () -> Unit,
     onArrow: (Int) -> Unit,
-    onEscape: () -> Unit,
 ) {
     val colors = V5Theme.colors
     val focus = remember { FocusRequester() }
@@ -258,7 +256,6 @@ private fun EditorField(
                                 when (event.key) {
                                     Key.DirectionUp -> true.also { onArrow(1) }
                                     Key.DirectionDown -> true.also { onArrow(-1) }
-                                    Key.Escape -> true.also { onEscape() }
                                     else -> false
                                 }
                             }
