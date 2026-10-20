@@ -376,8 +376,10 @@ private fun MoreGroup(
             onClick = closing(actions.onTogglePinned),
         )
         state.desktopView?.let { desktop ->
+            // What a switch does, said before it is touched: the page reloads, the site stays muted (М-7).
             V5ListRow(
                 stringResource(R.string.action_desktop_view),
+                subtitle = stringResource(R.string.v5_menu_desktop_view_hint),
                 icon = V5RowIcon(VolaIcons.DesktopWindows),
                 trailing = V5RowTrailing.Toggle(desktop, actions.onDesktopViewChange),
             )
@@ -385,6 +387,7 @@ private fun MoreGroup(
         state.siteMuted?.let { muted ->
             V5ListRow(
                 stringResource(R.string.action_mute_domain),
+                subtitle = stringResource(R.string.v5_menu_mute_site_hint),
                 icon = V5RowIcon(VolaIcons.VolumeOff),
                 trailing = V5RowTrailing.Toggle(muted, actions.onSiteMutedChange),
             )

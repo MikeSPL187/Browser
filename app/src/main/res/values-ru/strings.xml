@@ -2203,6 +2203,9 @@
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
     <string name="v5_menu_favorite_private">Недоступно в частной вкладке</string>
+    <string name="v5_menu_extension_off_here">Недоступно на этой странице</string>
+    <string name="v5_menu_desktop_view_hint">Страница перезагрузится как на компьютере</string>
+    <string name="v5_menu_mute_site_hint">Все страницы этого сайта будут без звука</string>
     <string name="v5_menu_read">Читать</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>

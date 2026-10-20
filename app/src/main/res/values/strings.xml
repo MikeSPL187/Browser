@@ -2111,6 +2111,9 @@
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
     <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
+    <string name="v5_menu_extension_off_here">Off on this page</string>
+    <string name="v5_menu_desktop_view_hint">The page reloads as on a computer</string>
+    <string name="v5_menu_mute_site_hint">Every page of this site stays silent</string>
     <string name="v5_menu_read">Read</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>
