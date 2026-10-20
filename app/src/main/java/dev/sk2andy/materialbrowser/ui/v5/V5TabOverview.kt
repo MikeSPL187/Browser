@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalView
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -63,8 +64,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,6 +95,9 @@ object V5OverviewTestTags {
     const val NewTab = "v5_tab_overview_new_tab"
     const val Done = "v5_tab_overview_done"
     const val Profile = "v5_tab_overview_profile"
+    const val CloseAll = "v5_tab_overview_close_all"
+    const val Empty = "v5_tab_overview_empty"
+    const val EmptyNewTab = "v5_tab_overview_empty_new_tab"
     fun card(id: String) = "v5_tab_card:$id"
     fun close(id: String) = "v5_tab_card_close:$id"
 }
@@ -120,6 +126,8 @@ data class V5OverviewState(
     val groups: List<V5OverviewGroup> = emptyList(),
     /** The profile's symbol on the chip (a Material Symbol for its stored emoji key). */
     val profileIcon: ImageVector? = null,
+    /** Whether the profile can have private tabs: without them «+» leaves the private segment (О-2). */
+    val canOpenPrivate: Boolean = true,
 )
 
 @Composable
@@ -145,6 +153,8 @@ fun V5TabOverview(
     onGroupLongPress: ((String) -> Unit)? = null,
     /** The profile chip was tapped: the profiles sheet opens (V11a); null keeps the chip a label. */
     onProfiles: (() -> Unit)? = null,
+    /** A pinned card was swiped away: it stays, and the host says why (О-5). */
+    onCloseRefused: () -> Unit = {},
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -158,17 +168,16 @@ fun V5TabOverview(
             .testTag(V5OverviewTestTags.Overview),
     ) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Header(state.query, onQueryChange, onCloseAll)
+            val canAddTab = V5TabOverviewRules.canAddTab(state.privateSegment, state.canOpenPrivate)
+            Header(state.query, onQueryChange, onCloseAll, canCloseAll = state.cards.any(V5TabCard::closable))
             Segments(state.privateSegment, state.counts, onSegmentChange)
             if (state.cards.isEmpty()) {
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.tab_search_empty_title),
-                        style = V5Theme.type.callout,
-                        color = colors.labelSecondary,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+                Empty(
+                    empty = V5TabOverviewRules.empty(state.query, state.privateSegment, state.canOpenPrivate),
+                    query = state.query.trim(),
+                    onNewTab = onNewTab,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                )
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
@@ -200,6 +209,7 @@ fun V5TabOverview(
                                     card = card,
                                     onSelect = onSelect,
                                     onClose = onClose,
+                                    onCloseRefused = onCloseRefused,
                                     onBounds = onCardBounds,
                                     hidden = card.id == heroCardId,
                                     groupTile = item.group?.tile,
@@ -230,13 +240,67 @@ fun V5TabOverview(
                     }
                 }
             }
-            Toolbar(state.profileLabel, state.profileIcon, onNewTab, onDone, onProfiles)
+            Toolbar(state.profileLabel, state.profileIcon, onNewTab.takeIf { canAddTab }, onDone, onProfiles)
+        }
+    }
+}
+
+/** An empty grid says why, and offers the one thing to do next (О-3): never just «No tabs found». */
+@Composable
+private fun Empty(empty: V5OverviewEmpty, query: String, onNewTab: () -> Unit, modifier: Modifier) {
+    val colors = V5Theme.colors
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Column(
+            Modifier
+                .widthIn(max = V5Sizes.stateContentMax)
+                .padding(horizontal = V5Spacing.space6)
+                .testTag(V5OverviewTestTags.Empty),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+        ) {
+            val title = when (empty) {
+                V5OverviewEmpty.NoMatches -> stringResource(R.string.v5_overview_no_matches, query)
+                V5OverviewEmpty.NoPrivateTabs -> stringResource(R.string.v5_overview_private_empty_title)
+                V5OverviewEmpty.PrivateUnavailable -> stringResource(R.string.v5_overview_private_unavailable)
+                V5OverviewEmpty.NoTabs -> stringResource(R.string.v5_overview_tabs_empty_title)
+            }
+            Text(
+                title,
+                style = V5Theme.type.headline,
+                color = colors.label,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { heading() },
+            )
+            if (empty == V5OverviewEmpty.NoPrivateTabs) {
+                Text(
+                    stringResource(R.string.v5_overview_private_empty_message),
+                    style = V5Theme.type.callout,
+                    color = colors.labelSecondary,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            val action = when (empty) {
+                V5OverviewEmpty.NoPrivateTabs -> R.string.v5_menu_new_private_tab
+                V5OverviewEmpty.NoTabs -> R.string.cd_new_tab
+                V5OverviewEmpty.NoMatches, V5OverviewEmpty.PrivateUnavailable -> null
+            }
+            if (action != null) {
+                V5StatePrimaryAction(
+                    V5StateAction(
+                        label = stringResource(action),
+                        onClick = onNewTab,
+                        icon = VolaIcons.Add,
+                        testTag = V5OverviewTestTags.EmptyNewTab,
+                    ),
+                    modifier = Modifier.padding(top = V5Spacing.space2),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: () -> Unit) {
+private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: () -> Unit, canCloseAll: Boolean) {
     val colors = V5Theme.colors
     var menu by remember { mutableStateOf(false) }
     Row(
@@ -266,6 +330,9 @@ private fun Header(query: String, onQueryChange: (String) -> Unit, onCloseAll: (
                     V5PromptAction(
                         label = stringResource(R.string.action_close_all_tabs),
                         role = V5PromptRole.Destructive,
+                        testTag = V5OverviewTestTags.CloseAll,
+                        // Nothing in front to close (an empty segment, only pinned tabs): the row says so by fading.
+                        enabled = canCloseAll,
                         onClick = {
                             menu = false
                             onCloseAll()
@@ -322,6 +389,7 @@ private fun TabCard(
     card: V5TabCard,
     onSelect: (String) -> Unit,
     onClose: (String) -> Unit,
+    onCloseRefused: () -> Unit,
     onBounds: (String, Rect) -> Unit,
     hidden: Boolean,
     modifier: Modifier,
@@ -331,12 +399,14 @@ private fun TabCard(
     val colors = V5Theme.colors
     val shape = V5Theme.shapes.m
     val longPressLabel = stringResource(R.string.v5_group_move_title)
+    val pinnedLabel = stringResource(R.string.v5_newtab_pinned)
     val view = LocalView.current
     val density = LocalDensity.current.density
     val scope = rememberCoroutineScope()
     // Swipe sideways to close (system-v5.md, section 7.1): the card follows the finger, fades, and
     // past 40 % of its width or on a fling it leaves on the tabSwipe spring and the tab closes. The
-    // tab closes as the card leaves, so the grid closes the gap at once; a pinned tab springs back.
+    // tab closes once the card is off screen, so the leaving is seen (M-03) and the grid then closes
+    // the gap; a pinned tab springs back, and the host says why.
     val offset = remember(card.id) { Animatable(0f) }
     var widthPx by remember { mutableFloatStateOf(0f) }
     val dragState = rememberDraggableState { delta -> scope.launch { offset.snapTo(offset.value + delta) } }
@@ -354,13 +424,17 @@ private fun TabCard(
                     val closes = V5TabOverviewRules.closes(offset.value, velocity, widthPx, density)
                     if (closes && card.closable) {
                         view.performV5Haptic(V5Haptic.Confirm)
-                        onClose(card.id)
                         if (V5Motion.animationsEnabled) {
                             val away = if (offset.value < 0f) -widthPx * 2 else widthPx * 2
                             offset.animateTo(away, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
                         }
+                        onClose(card.id)
+                        // A card still here a moment later was not closed (the overview is leaving): it comes back.
+                        delay(V5SwipeToDeleteRules.RETURN_AFTER_MILLIS)
+                        if (V5Motion.animationsEnabled) offset.animateTo(0f, V5Motion.tabSwipe.spec()) else offset.snapTo(0f)
                     } else if (closes) {
                         view.performV5Haptic(V5Haptic.Reject)
+                        onCloseRefused()
                         if (V5Motion.animationsEnabled) {
                             offset.animateTo(0f, V5Motion.tabSwipe.spec(), initialVelocity = velocity)
                         } else {
@@ -373,7 +447,11 @@ private fun TabCard(
                     }
                 },
             )
-            .semantics { selected = card.selected }
+            .semantics {
+                selected = card.selected
+                // A pinned card has no «×»: TalkBack hears why (О-5).
+                if (!card.closable) stateDescription = pinnedLabel
+            }
             .combinedClickable(
                 role = Role.Button,
                 onClick = { onSelect(card.id) },
@@ -433,7 +511,8 @@ private fun TabCard(
                 ) {
                     Icon(
                         VolaIcons.Close,
-                        contentDescription = stringResource(R.string.cd_close_tab),
+                        // Each card's «×» names its tab, as «Unpin %1$s» on the new tab page does (О-4).
+                        contentDescription = stringResource(R.string.v5_overview_close_named, card.title),
                         tint = colors.label,
                         modifier = Modifier.size(V5Sizes.overviewFavicon),
                     )
@@ -452,7 +531,17 @@ private fun TabCard(
                 color = colors.label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
+            // Seen as well as heard: a pinned card shows its pin where the others have nothing.
+            if (!card.closable) {
+                Icon(
+                    VolaIcons.PushPin,
+                    contentDescription = null,
+                    tint = colors.labelSecondary,
+                    modifier = Modifier.size(V5Sizes.overviewFavicon),
+                )
+            }
         }
     }
 }
@@ -471,7 +560,8 @@ private fun Favicon(card: V5TabCard, size: Dp) {
 private fun Toolbar(
     profileLabel: String,
     profileIcon: ImageVector?,
-    onNewTab: () -> Unit,
+    /** Null where the segment in front cannot have a new tab: no «+» at all rather than a wrong tab. */
+    onNewTab: (() -> Unit)?,
     onDone: () -> Unit,
     onProfiles: (() -> Unit)?,
 ) {
@@ -485,8 +575,13 @@ private fun Toolbar(
             .padding(horizontal = V5Spacing.space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onNewTab, modifier = Modifier.testTag(V5OverviewTestTags.NewTab)) {
-            Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.accent)
+        if (onNewTab != null) {
+            IconButton(onClick = onNewTab, modifier = Modifier.testTag(V5OverviewTestTags.NewTab)) {
+                Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.accent)
+            }
+        } else {
+            // The bar keeps its layout: the chip stays centered.
+            Box(Modifier.size(V5Sizes.touchTarget))
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             // The chip keeps its look; tapping it lists the profiles, its touch target is the bar's.
