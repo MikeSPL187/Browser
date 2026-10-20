@@ -10,10 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHapticPhase
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 class CandyPrivacyHostContractTest {
     @Test

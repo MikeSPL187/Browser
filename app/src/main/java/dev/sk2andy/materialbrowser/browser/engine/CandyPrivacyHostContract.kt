@@ -12,10 +12,6 @@ import dev.sk2andy.materialbrowser.data.DeveloperSettings
 import dev.sk2andy.materialbrowser.data.HiddenDistractionsRules
 import org.json.JSONArray
 import org.json.JSONObject
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHaptic
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoGestureHapticPhase
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
-import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoOpenRequest
 
 internal object CandyPrivacyHostContract {
     const val EXTENSION_ID = "candy-privacy-host@sk2andy.dev"
