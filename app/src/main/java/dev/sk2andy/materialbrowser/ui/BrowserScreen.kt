@@ -724,13 +724,8 @@ internal fun BrowserScreen(
             openAddressEditor()
         }
     }
-    LaunchedEffect(hardwareTabChangeRequestId) {
-        if (hardwareTabChangeRequestId > 0) {
-            addressEditor.close()
-            pendingCommand = null
-            commandFeedback = null
-        }
-    }
+    HardwareTabChangeEffect(hardwareTabChangeRequestId) { addressEditor.close(); pendingCommand = null; commandFeedback = null }
+    OverviewOpeningWatchdog(tabOverviewOpening) { tabOverviewOpening = false; tabOverviewVisible = true }
     fun openNewTabAndEdit(isIncognito: Boolean = false) {
         val createAndEdit = {
             if (controller.createTabAndConfirm(isIncognito, haptics = rootView)) {
