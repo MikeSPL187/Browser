@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -132,6 +133,10 @@ class AppDataTransferActivity : ComponentActivity() {
             export = request is TransferRequest.Export,
         )
         setContent { AppDataTransferStatus(status) }
+        // Recreated while the transfer runs (a change the manifest does not keep it through): the
+        // first run goes on, a second one would export or restore over it.
+        if (transferRunning) return
+        transferRunning = true
         Thread {
             waitForMainActivityToStop()
             val attempt = runCatching {
@@ -143,6 +148,7 @@ class AppDataTransferActivity : ComponentActivity() {
                 }
             }
             if (attempt.isFailure && request is TransferRequest.Recover) {
+                transferRunning = false
                 runOnUiThread {
                     status = status.copy(message = R.string.data_archive_recovery_failed, failed = true)
                 }
@@ -169,25 +175,55 @@ class AppDataTransferActivity : ComponentActivity() {
                 },
             )
             AppDataTransferLock.release(this, lockToken)
+            transferRunning = false
             runOnUiThread { restartMain(result) }
         }.start()
     }
 
+    /**
+     * Writes the archive to [destination]. A document the picker just made is written in place and
+     * deleted if the export fails, so no broken archive is left. A document that already held
+     * something (a provider may hand back an existing file) is only replaced once the whole archive
+     * is ready in the cache, and never deleted for a failure before that (M-04).
+     */
     private fun export(destination: Uri) {
-        try {
-            val output = checkNotNull(contentResolver.openOutputStream(destination, "wt"))
-            output.use { stream ->
-                AppDataArchiveCodec.export(
-                    dataDirectory = applicationInfo.dataDir.let(::File).toPath(),
-                    manifest = currentManifest(),
-                    output = stream,
-                )
+        val replacesContent = documentSize(destination) > 0L
+        if (!replacesContent) {
+            try {
+                write(destination) { stream -> exportArchive(stream) }
+            } catch (failure: Throwable) {
+                runCatching { DocumentsContract.deleteDocument(contentResolver, destination) }
+                throw failure
             }
-        } catch (failure: Throwable) {
-            runCatching { DocumentsContract.deleteDocument(contentResolver, destination) }
-            throw failure
+            return
+        }
+        val staged = File.createTempFile("export", ".zip", cacheDir)
+        try {
+            staged.outputStream().use(::exportArchive)
+            write(destination) { stream -> staged.inputStream().use { input -> input.copyTo(stream) } }
+        } finally {
+            staged.delete()
         }
     }
+
+    private fun exportArchive(output: java.io.OutputStream) {
+        AppDataArchiveCodec.export(
+            dataDirectory = applicationInfo.dataDir.let(::File).toPath(),
+            manifest = currentManifest(),
+            output = output,
+        )
+    }
+
+    private fun write(destination: Uri, body: (java.io.OutputStream) -> Unit) {
+        checkNotNull(contentResolver.openOutputStream(destination, "wt")).use(body)
+    }
+
+    /** The document's size in bytes; 0 when the provider does not say. */
+    private fun documentSize(document: Uri): Long = runCatching {
+        contentResolver.query(document, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else 0L
+        } ?: 0L
+    }.getOrDefault(0L)
 
     private fun restore(stagedFileName: String) {
         val stagingDirectory = File(cacheDir, AppDataTransferContract.STAGING_DIRECTORY_NAME)
@@ -330,6 +366,10 @@ class AppDataTransferActivity : ComponentActivity() {
     }
 
     private companion object {
+        /** One transfer per process: the activity may be recreated, the transfer is not repeated. */
+        @Volatile
+        var transferRunning = false
+
         const val MAIN_ACTIVITY_STOP_GRACE_MILLIS = 500L
         const val MAIN_PROCESS_EXIT_POLL_MILLIS = 25L
         const val MAIN_PROCESS_EXIT_TIMEOUT_NANOS = 5_000_000_000L

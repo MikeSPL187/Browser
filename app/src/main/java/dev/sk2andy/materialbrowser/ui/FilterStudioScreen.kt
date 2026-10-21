@@ -1640,11 +1640,24 @@ private fun SubscriptionDiffText(diff: CandySubscriptionDiff) {
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
         )
+        // The signs are from strings, and TalkBack hears «adds» and «removes» rather than «plus» (РР-5).
         diff.added.take(4).forEach { rule ->
-            Text("+ ${rule.displayTarget()}", style = MaterialTheme.typography.bodySmall)
+            val target = rule.displayTarget()
+            val spoken = stringResource(R.string.filter_diff_added_spoken, target)
+            Text(
+                stringResource(R.string.filter_diff_added, target),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.semantics { contentDescription = spoken },
+            )
         }
         diff.removed.take(4).forEach { rule ->
-            Text("− ${rule.displayTarget()}", style = MaterialTheme.typography.bodySmall)
+            val target = rule.displayTarget()
+            val spoken = stringResource(R.string.filter_diff_removed_spoken, target)
+            Text(
+                stringResource(R.string.filter_diff_removed, target),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.semantics { contentDescription = spoken },
+            )
         }
         val hidden = (diff.added.size - 4).coerceAtLeast(0) +
             (diff.removed.size - 4).coerceAtLeast(0)

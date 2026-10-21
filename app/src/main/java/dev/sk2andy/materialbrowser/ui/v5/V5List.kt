@@ -252,10 +252,17 @@ fun V5ListRow(
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
         if (icon != null) RowIcon(icon) else leading?.invoke()
+        // Long names wrap, as Settings' do at a large font, up to a few lines; past that they end in «…» (L-02).
         Column(Modifier.weight(1f)) {
-            Text(title, style = V5Theme.type.body, color = titleColor)
+            Text(title, style = V5Theme.type.body, color = titleColor, maxLines = TITLE_MAX_LINES, overflow = TextOverflow.Ellipsis)
             if (subtitle != null) {
-                Text(subtitle, style = V5Theme.type.footnote, color = colors.labelSecondary)
+                Text(
+                    subtitle,
+                    style = V5Theme.type.footnote,
+                    color = colors.labelSecondary,
+                    maxLines = SUBTITLE_MAX_LINES,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
         if (value != null) {
@@ -310,3 +317,9 @@ private fun RowIcon(icon: V5RowIcon) {
         }
     }
 }
+
+/** A row's title wraps up to this many lines before it is cut. */
+private const val TITLE_MAX_LINES = 3
+
+/** A row's second line, which explains, gets a little more. */
+private const val SUBTITLE_MAX_LINES = 4

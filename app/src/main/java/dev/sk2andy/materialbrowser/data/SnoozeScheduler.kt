@@ -26,6 +26,16 @@ class SnoozeScheduler(context: Context) {
         Log.i(LOG_TAG, "Inexact alarm scheduled; pending=${tabs.size}; triggerAt=$nextWakeAt")
     }
 
+    /**
+     * Comes back later without reading the stores: during a data transfer they are being replaced,
+     * and the alarm that fired is spent, so without this a due tab would wait for the next start (M-06).
+     */
+    fun retryLater(nowMillis: Long = System.currentTimeMillis()) {
+        val triggerAt = SnoozeScheduleRules.retryAt(nowMillis)
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, wakeOperation(appContext))
+        Log.i(LOG_TAG, "Retry scheduled during a data transfer; triggerAt=$triggerAt")
+    }
+
     companion object {
         internal const val ACTION_WAKE = "dev.sk2andy.materialbrowser.action.WAKE_SNOOZED_TABS"
         private const val REQUEST_CODE = 50_071
@@ -46,13 +56,14 @@ internal object SnoozeScheduleRules {
     fun nextTriggerAt(tabs: List<SnoozedTab>, nowMillis: Long): Long? {
         val earliest = tabs.filterNot(SnoozedTab::isArchived)
             .minOfOrNull(SnoozedTab::wakeAtMillis) ?: return null
-        return if (earliest > nowMillis) earliest else nowMillis + OVERDUE_RETRY_DELAY_MILLIS
+        return if (earliest > nowMillis) earliest else retryAt(nowMillis)
     }
+
+    fun retryAt(nowMillis: Long): Long = nowMillis + OVERDUE_RETRY_DELAY_MILLIS
 }
 
 class SnoozeAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (AppDataTransferLock.isActive(context)) return
         val supportedAction = intent.action == SnoozeScheduler.ACTION_WAKE ||
             intent.action == Intent.ACTION_BOOT_COMPLETED ||
             intent.action == Intent.ACTION_MY_PACKAGE_REPLACED ||
@@ -60,12 +71,24 @@ class SnoozeAlarmReceiver : BroadcastReceiver() {
             intent.action == Intent.ACTION_TIMEZONE_CHANGED
         if (!supportedAction) return
         val nowMillis = System.currentTimeMillis()
-        Log.i(SnoozeScheduler.LOG_TAG, "Receiver action=${intent.action}; now=$nowMillis")
-        if (!SnoozeRuntimeRegistry.restoreDue(nowMillis)) {
-            SnoozeRestoreCoordinator.restoreDue(context.applicationContext, nowMillis)
+        if (AppDataTransferLock.isActive(context)) {
+            SnoozeScheduler(context).retryLater(nowMillis)
+            return
         }
-        val pending = SnoozedTabStore(context).load()
-        SnoozeScheduler(context).schedule(pending, nowMillis)
+        Log.i(SnoozeScheduler.LOG_TAG, "Receiver action=${intent.action}; now=$nowMillis")
+        // A running browser restores on its own thread, as for any tab change.
+        val restoredByApp = SnoozeRuntimeRegistry.restoreDue(nowMillis)
+        // Reading and writing the session (tens of kilobytes) stays off the main thread (M-07).
+        val appContext = context.applicationContext
+        val result = goAsync()
+        Thread({
+            try {
+                if (!restoredByApp) SnoozeRestoreCoordinator.restoreDue(appContext, nowMillis)
+                SnoozeScheduler(appContext).schedule(SnoozedTabStore(appContext).load(), nowMillis)
+            } finally {
+                result.finish()
+            }
+        }, "Vola-snooze").start()
     }
 }
 

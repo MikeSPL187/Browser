@@ -70,9 +70,11 @@ internal data class V5ProfilePrivacy(
 
 /**
  * «New profile» and «Edit profile» (V11b, system-v5.md 1.2 and 10): a name, a symbol, one of the six
- * accents and the privacy switches, as Safari's profile editor. A new profile is made by «Create»
- * and dropped by «Close»; an existing one keeps every change, saved by «Done», «Close» or a swipe
- * down alike. [onDelete] null hides «Delete».
+ * accents and the privacy switches, as Safari's profile editor. «Create» or «Done» saves the name,
+ * symbol and accent; «Close» and a swipe down leave them as they were, for a new profile and an
+ * existing one alike (ПР-1), so a color picked by mistake is undone by closing. The privacy switches
+ * apply at once, as they ask their own questions. [onDelete] null hides «Delete» and
+ * [deleteUnavailable] then says why (ПР-3).
  */
 @Composable
 internal fun V5ProfileEditSheet(
@@ -86,6 +88,7 @@ internal fun V5ProfileEditSheet(
     onBiometricLockChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onDelete: (() -> Unit)? = null,
+    deleteUnavailable: String? = null,
 ) {
     // A fresh draft each time the sheet opens for a profile, kept while it slides away.
     val opening = rememberSheetOpening(visible)
@@ -108,9 +111,8 @@ internal fun V5ProfileEditSheet(
         onDismiss()
         onSave(draft())
     }
-    // An existing profile keeps every change, as its switches do: «Close» and a swipe down save the
-    // name, symbol and accent too. Only a new profile is dropped by them.
-    val close = if (creating) onDismiss else save
+    // Only «Create» and «Done» save; closing is the way out of a change (ПР-1).
+    val close = onDismiss
     val title = stringResource(if (creating) R.string.v5_profile_new else R.string.v5_profile_edit)
     V5WindowSheet(visible = visible, onDismiss = close, title = title) {
         V5SheetHeader(title = title, onClose = close)
@@ -158,7 +160,7 @@ internal fun V5ProfileEditSheet(
                     }
                 }
             }
-            V5ListGroup {
+            V5ListGroup(footer = deleteUnavailable.takeIf { onDelete == null && !creating }) {
                 V5ListRow(
                     title = stringResource(if (creating) R.string.v5_profile_create else R.string.action_done),
                     titleColor = V5Theme.colors.accent,

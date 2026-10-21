@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -212,13 +213,21 @@ internal fun rememberDownloadRing(controller: BrowserController): DownloadRing {
         state.justDone = false
     }
     val notice = state.notice
+    // A line with «Open» or «Retry» stays as long as the user's «Time to take action» asks (СС-2).
+    val accessibility = LocalAccessibilityManager.current
     LaunchedEffect(notice) {
+        val base = when (notice) {
+            is V5DownloadNotice.Done -> DownloadRingRules.DONE_NOTICE_MILLIS
+            is V5DownloadNotice.Failed -> DownloadRingRules.FAILED_NOTICE_MILLIS
+            null -> return@LaunchedEffect
+        }
         delay(
-            when (notice) {
-                is V5DownloadNotice.Done -> DownloadRingRules.DONE_NOTICE_MILLIS
-                is V5DownloadNotice.Failed -> DownloadRingRules.FAILED_NOTICE_MILLIS
-                null -> return@LaunchedEffect
-            },
+            accessibility?.calculateRecommendedTimeoutMillis(
+                base,
+                containsIcons = true,
+                containsText = true,
+                containsControls = true,
+            ) ?: base,
         )
         state.notice = null
     }

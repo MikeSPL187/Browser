@@ -204,7 +204,8 @@ private fun reloadNote(state: V5SiteProtectionState): String =
 
 @Composable
 private fun MainPage(state: V5SiteProtectionState, actions: V5SiteProtectionActions, onOpen: (Page) -> Unit) {
-    V5ListGroup {
+    // The switch reloads the site's pages as the ones in «Details» do, and says so the same way (ЗС-1).
+    V5ListGroup(footer = reloadNote(state)) {
         if (state.protectionOn) {
             Box(Modifier.fillMaxWidth().padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3)) {
                 V5ReportTotal(state.blocked)
@@ -273,7 +274,7 @@ private fun TroubleshootPage(state: V5SiteProtectionState, actions: V5SiteProtec
             )
         }
     }
-    V5ListGroup {
+    V5ListGroup(footer = reloadNote(state)) {
         ReportRow(actions.onCopyReport)
         V5ListRow(
             title = stringResource(R.string.v5_site_turn_off),

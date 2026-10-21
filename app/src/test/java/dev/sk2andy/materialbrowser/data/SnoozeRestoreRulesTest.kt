@@ -164,6 +164,8 @@ class SnoozeRestoreRulesTest {
         val overdue = snoozedTab("overdue", wakeAt = 90L)
 
         assertEquals(1_000L + 15 * 60 * 1_000L, SnoozeScheduleRules.nextTriggerAt(listOf(overdue), 1_000L))
+        // An alarm spent during a data transfer comes back after the same wait (M-06).
+        assertEquals(1_000L + 15 * 60 * 1_000L, SnoozeScheduleRules.retryAt(1_000L))
         assertEquals(null, SnoozeScheduleRules.nextTriggerAt(emptyList(), 1_000L))
     }
 

@@ -70,6 +70,9 @@ object V5TranslateTestTags {
     const val Row = "v5_translated_row"
     const val Original = "v5_translated_original"
     const val RowClose = "v5_translated_close"
+    const val ShowOriginal = "v5_translate_show_original"
+    const val Metered = "v5_translate_metered"
+    const val LanguageSearch = "v5_translate_language_search"
 
     fun language(code: String) = "v5_translate_language_$code"
 }
@@ -104,6 +107,12 @@ data class V5TranslateSheetState(
     val languagesStatus: V5TranslateLanguagesStatus = V5TranslateLanguagesStatus.Ready,
     /** The engine did not say how much the pair's pack weighs, so a download may come unannounced by size. */
     val downloadSizeUnknown: Boolean = false,
+    /** The page is translated now: the sheet offers the original back (ПВ-2). */
+    val translated: Boolean = false,
+    /** «Always translate» is kept back until the pair's packs are on the phone: the sheet says so (ПВ-4). */
+    val alwaysLater: Boolean = false,
+    /** The phone is on a metered network: a pack to download is said to come over it (ПВ-3). */
+    val metered: Boolean = false,
 )
 
 class V5TranslateSheetActions(
@@ -113,6 +122,8 @@ class V5TranslateSheetActions(
     val onTranslate: () -> Unit,
     /** Asks the engine for the languages again after it could not say. */
     val onRetryLanguages: () -> Unit = {},
+    /** Brings the page's own text back, also after the row above the bar was closed (ПВ-2). */
+    val onShowOriginal: () -> Unit = {},
 )
 
 /**
@@ -198,7 +209,10 @@ private fun MainPage(
 ) {
     val colors = V5Theme.colors
     val locale = LocalConfiguration.current.locales[0]
-    V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
+    V5ListGroup(
+        footer = stringResource(R.string.v5_translate_always_later).takeIf { state.alwaysLater },
+        dividerInset = V5ListDefaults.dividerInsetText,
+    ) {
         V5ListRow(
             title = stringResource(R.string.v5_translate_from),
             value = state.from?.let { V5TranslateRules.displayName(it.name, locale) }
@@ -255,6 +269,15 @@ private fun MainPage(
                 testTag = V5TranslateTestTags.Translate,
             ),
         )
+        if (state.translated) {
+            V5StateQuietAction(
+                V5StateAction(
+                    label = stringResource(R.string.v5_translate_show_original),
+                    onClick = actions.onShowOriginal,
+                    testTag = V5TranslateTestTags.ShowOriginal,
+                ),
+            )
+        }
         state.error?.let { error ->
             Text(
                 stringResource(V5TranslateRules.errorText(error)),
@@ -283,6 +306,15 @@ private fun MainPage(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().testTag(V5TranslateTestTags.Note),
         )
+        if (state.metered && (V5TranslateRules.needsDownload(state.downloadBytes) || state.downloadSizeUnknown)) {
+            Text(
+                stringResource(R.string.v5_translate_note_metered),
+                style = V5Theme.type.footnote,
+                color = colors.label,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().testTag(V5TranslateTestTags.Metered),
+            )
+        }
     }
 }
 
@@ -309,8 +341,20 @@ private fun LanguagePage(
     onChoose: (String) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
+    // A long list gets a search, so a language is typed rather than scrolled for (ПВ-6).
+    var query by rememberSaveable { mutableStateOf("") }
+    if (options.size > V5TranslateRules.SEARCH_FROM) {
+        V5SearchField(
+            query = query,
+            onQueryChange = { query = it },
+            hint = stringResource(R.string.v5_translate_language_search),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = V5Spacing.marginPhone),
+            fieldModifier = Modifier.testTag(V5TranslateTestTags.LanguageSearch),
+        )
+    }
+    val shown = V5TranslateRules.matching(options, query) { V5TranslateRules.displayName(it.name, locale) }
     V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
-        options.forEach { language ->
+        shown.forEach { language ->
             V5ListRow(
                 title = V5TranslateRules.displayName(language.name, locale),
                 trailing = if (language.code == chosen?.code) V5RowTrailing.Check else V5RowTrailing.None,
@@ -436,6 +480,16 @@ private class LastTranslatedRow {
 /** Pure decisions of the translate screens, for unit tests. */
 internal object V5TranslateRules {
     enum class Page { Main, From, To }
+
+    /** From this many languages on, a list gets its search field. */
+    const val SEARCH_FROM = 12
+
+    /** The languages whose name or code holds [query], ignoring case; all for a blank query. */
+    fun <T : Any> matching(options: List<T>, query: String, name: (T) -> String): List<T> {
+        val needle = query.trim()
+        if (needle.isEmpty()) return options
+        return options.filter { option -> name(option).contains(needle, ignoreCase = true) }
+    }
 
     /** «Translate» works once both languages are known, differ, and nothing is under way. */
     fun canTranslate(state: V5TranslateSheetState): Boolean =

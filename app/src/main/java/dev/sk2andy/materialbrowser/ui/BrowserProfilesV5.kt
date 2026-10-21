@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
@@ -94,7 +95,8 @@ internal object V5ProfileRules {
                 icon = WorkspaceIcons.vector(profile.emoji),
                 name = profile.name.ifBlank { profile.syncedDisplayName.orEmpty() }.ifBlank { untitled },
                 accent = accent(profile.accent),
-                tabCount = counts[profile.id] ?: 0,
+                // A locked profile hides its tabs until it is opened, their number too (ПР-4).
+                tabCount = if (profile.id in lockedProfileIds) null else counts[profile.id] ?: 0,
                 active = profile.id == activeProfileId,
                 locked = profile.id in lockedProfileIds,
                 device = profile.syncedDisplayName.takeIf { profile.isSynced },
@@ -165,6 +167,7 @@ private fun BrowserProfileEditSheetV5(
     onFinished: () -> Unit,
 ) {
     val view = LocalView.current
+    val context = LocalContext.current
     val untitled = stringResource(R.string.v5_profile_untitled)
     val profile = (edit as? ProfileEdit.Existing)?.let { target ->
         controller.localBrowserProfiles.firstOrNull { it.id == target.id }
@@ -205,14 +208,21 @@ private fun BrowserProfileEditSheetV5(
                 val created = controller.createProfile(
                     emoji = draft.iconKey,
                     isolationEnabled = newOwnStorage && controller.isProfileIsolationSupported,
-                    name = V5ProfileRules.distinctName(draft.name, controller.localBrowserProfiles, untitled),
+                    // Other devices' profiles count too: the overview and TalkBack show them side by side (ПР-6).
+                    name = V5ProfileRules.distinctName(draft.name, controller.profiles, untitled),
                     accent = V5ProfileRules.stored(draft.accent),
                 )
-                if (created != null) view.performV5Haptic(V5Haptic.Confirm)
+                if (created != null) {
+                    view.performV5Haptic(V5Haptic.Confirm)
+                } else {
+                    // The limit reached from elsewhere, or the store refused: said, not just gone (ПР-2).
+                    view.performV5Haptic(V5Haptic.Reject)
+                    V5Feedback.show(context, R.string.v5_profile_create_failed)
+                }
                 onFinished()
             } else {
                 if (draft.name != profile.name) {
-                    val others = controller.localBrowserProfiles.filter { it.id != profile.id }
+                    val others = controller.profiles.filter { it.id != profile.id }
                     controller.updateProfileName(profile.id, V5ProfileRules.distinctName(draft.name, others, untitled))
                 }
                 if (draft.iconKey != profile.emoji) controller.updateProfileEmoji(profile.id, draft.iconKey)
@@ -235,6 +245,9 @@ private fun BrowserProfileEditSheetV5(
         },
         onDismiss = onBack,
         onDelete = profile?.takeIf { controller.canDeleteProfile(it.id) }?.let { target -> { deleting = target } },
+        deleteUnavailable = stringResource(
+            if (controller.localBrowserProfiles.size <= 1) R.string.v5_profile_delete_last else R.string.v5_profile_delete_unavailable,
+        ),
     )
     // Both questions are v5 prompt sheets: «Close» and a swipe down keep things as they are.
     deleting?.let { target ->

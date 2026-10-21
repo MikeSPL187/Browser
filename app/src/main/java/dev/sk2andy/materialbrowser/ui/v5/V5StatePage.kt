@@ -168,7 +168,9 @@ internal fun V5StateQuietAction(action: V5StateAction, modifier: Modifier = Modi
             .fillMaxWidth()
             .heightIn(min = V5Sizes.touchTarget)
             .clip(V5Theme.shapes.full)
-            .clickable(role = Role.Button, onClick = action.onClick)
+            // An action that cannot run now fades and does nothing, as the main one does (M-10).
+            .alpha(if (action.enabled) 1f else DISABLED_ALPHA)
+            .clickable(enabled = action.enabled, role = Role.Button, onClick = action.onClick)
             .then(if (action.testTag != null) Modifier.testTag(action.testTag) else Modifier),
         contentAlignment = Alignment.Center,
     ) {

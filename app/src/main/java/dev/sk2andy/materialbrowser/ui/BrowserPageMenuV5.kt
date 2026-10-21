@@ -59,8 +59,11 @@ internal fun BrowserPageMenuV5(
     val translateOffer by rememberV5Preference(V5TranslateOfferSetting)
     // «Never translate» (Settings → Translation) takes the item away for pages in those languages.
     var languageSettings by remember { mutableStateOf<Map<String, TranslationLanguageSetting>?>(null) }
+    // Read before the menu first opens too, so «Translate» does not show and then vanish (М-2).
     LaunchedEffect(visible, onDeviceTranslate) {
-        if (visible && onDeviceTranslate) controller.onDeviceTranslation.models.languageSettings { languageSettings = it }
+        if (onDeviceTranslate && (visible || languageSettings == null)) {
+            controller.onDeviceTranslation.models.languageSettings { languageSettings = it }
+        }
     }
     val pageLanguage = controller.onDeviceTranslation.stateOf(tab.id).page.pageLanguage
     val faviconBitmap = controller.favicons[tab.id]
@@ -89,7 +92,7 @@ internal fun BrowserPageMenuV5(
         canHideDistractions = canHideDistractions,
         hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
         downloads = downloads,
-        extras = pageMenuExtras(controller),
+        extras = pageMenuExtras(controller, offHere = stringResource(R.string.v5_menu_extension_off_here)),
     )
     V5PageMenu(
         visible = visible,
@@ -138,12 +141,13 @@ internal fun BrowserPageMenuV5(
  * The page's extension actions, then its user-script commands, as rows of the v5 menu. User scripts
  * count only where the engine runs them; an extension action the page disables stays, faded.
  */
-private fun pageMenuExtras(controller: BrowserController): List<V5PageMenuExtra> {
+private fun pageMenuExtras(controller: BrowserController, offHere: String): List<V5PageMenuExtra> {
     val extensions = controller.firefoxExtensionActions.toList().map { action ->
         V5PageMenuExtra(
             key = "ext_${action.key.hashCode()}",
             title = action.title,
-            subtitle = action.badgeText,
+            // A faded action says why: the extension turned it off for this page (М-5).
+            subtitle = if (action.enabled) action.badgeText else offHere,
             enabled = action.enabled,
             onClick = { controller.clickFirefoxExtensionAction(action.key) },
         )
