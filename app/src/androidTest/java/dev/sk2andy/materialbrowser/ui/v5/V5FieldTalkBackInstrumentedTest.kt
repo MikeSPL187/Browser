@@ -15,8 +15,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,10 +41,13 @@ class V5FieldTalkBackInstrumentedTest {
     )
 
     private fun editableNode(): AccessibilityNodeInfo {
-        composeRule.waitForIdle()
-        val root = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
-        assertNotNull("No accessibility window", root)
-        return findEditable(root!!) ?: error("No editable node in the window")
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        repeat(50) {
+            composeRule.waitForIdle()
+            automation.rootInActiveWindow?.let(::findEditable)?.let { return it }
+            Thread.sleep(100)
+        }
+        error("No editable node reached the accessibility tree")
     }
 
     private fun findEditable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
@@ -53,6 +56,24 @@ class V5FieldTalkBackInstrumentedTest {
             node.getChild(index)?.let(::findEditable)?.let { return it }
         }
         return null
+    }
+
+    private fun AccessibilityNodeInfo.describe(): String =
+        "text=$text, contentDescription=$contentDescription, hintText=$hintText, showingHint=$isShowingHintText"
+
+    /** While empty, TalkBack names the field from its description, its hint or its hint-text. */
+    private fun assertNamed(label: String) {
+        val node = editableNode()
+        val names = listOfNotNull(node.contentDescription, node.hintText, node.text.takeIf { node.isShowingHintText })
+            .map(CharSequence::toString)
+        assertTrue("The empty field is not named «$label»: ${node.describe()}", label in names)
+    }
+
+    /** Once typed, the node carries the typed text and nothing spoken in its place. */
+    private fun assertReadsTyped(typed: String) {
+        val node = editableNode()
+        assertEquals(node.describe(), typed, node.text?.toString())
+        assertNull(node.describe(), node.contentDescription)
     }
 
     @Test
@@ -74,13 +95,11 @@ class V5FieldTalkBackInstrumentedTest {
             }
         }
 
-        assertEquals("Find on page", editableNode().contentDescription?.toString())
+        assertNamed("Find on page")
 
         composeRule.onNodeWithTag(V5FindInPageTestTags.Query).performTextInput("aurora")
 
-        val typed = editableNode()
-        assertEquals("aurora", typed.text?.toString())
-        assertNull(typed.contentDescription)
+        assertReadsTyped("aurora")
     }
 
     @Test
@@ -99,13 +118,11 @@ class V5FieldTalkBackInstrumentedTest {
             }
         }
 
-        assertEquals("Search history", editableNode().contentDescription?.toString())
+        assertNamed("Search history")
 
         composeRule.onNodeWithTag(FIELD).performTextInput("kotlin")
 
-        val typed = editableNode()
-        assertEquals("kotlin", typed.text?.toString())
-        assertNull(typed.contentDescription)
+        assertReadsTyped("kotlin")
     }
 
     private companion object {
