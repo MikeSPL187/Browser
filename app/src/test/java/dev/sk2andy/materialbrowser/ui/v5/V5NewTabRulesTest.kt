@@ -80,4 +80,14 @@ class V5NewTabRulesTest {
         )
         assertEquals(emptyList<String>(), V5NewTabRules.weekdays(lastEpochDay = 0, days = 0, locale = Locale.ENGLISH))
     }
+
+    @Test
+    fun `the pinned note explains an empty or a full grid, never while editing`() {
+        assertEquals(V5NewTabRules.PinnedNote.Empty, V5NewTabRules.pinnedNote(pinnedCount = 0, canAdd = true, editing = false))
+        assertEquals(V5NewTabRules.PinnedNote.Full, V5NewTabRules.pinnedNote(pinnedCount = 16, canAdd = false, editing = false))
+        assertEquals(null, V5NewTabRules.pinnedNote(pinnedCount = 5, canAdd = true, editing = false))
+        assertEquals(null, V5NewTabRules.pinnedNote(pinnedCount = 16, canAdd = false, editing = true))
+        // A preview without an editor cannot add either, but is not full.
+        assertEquals(null, V5NewTabRules.pinnedNote(pinnedCount = 3, canAdd = false, editing = false))
+    }
 }

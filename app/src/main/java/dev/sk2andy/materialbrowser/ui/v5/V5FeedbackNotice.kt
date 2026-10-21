@@ -72,7 +72,13 @@ internal fun V5FeedbackNotice(data: SnackbarData, modifier: Modifier = Modifier)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (error) {
-            Icon(VolaIcons.Error, contentDescription = null, tint = colors.danger, modifier = Modifier.size(V5Sizes.iconSmall))
+            // Heard as well as seen: «Error» before the message, whatever its words (СС-4).
+            Icon(
+                VolaIcons.Error,
+                contentDescription = stringResource(R.string.v5_feedback_error),
+                tint = colors.danger,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
         }
         Text(
             visuals.message,

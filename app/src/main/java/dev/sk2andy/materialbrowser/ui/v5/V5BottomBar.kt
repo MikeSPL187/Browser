@@ -63,6 +63,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
@@ -166,6 +169,7 @@ internal fun BoxScope.V5BottomBar(
     )
     val fullHeight = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) V5Sizes.barLargeFont else V5Sizes.bar
     val showBarLabel = stringResource(R.string.compact_mode_show_bar)
+    val tabsLabel = stringResource(R.string.v5_bar_open_tabs)
     Column(
         modifier
             .align(Alignment.BottomCenter)
@@ -177,6 +181,8 @@ internal fun BoxScope.V5BottomBar(
                     Modifier
                         .v5BarGestures(gestures, onTabs)
                         .clickable(role = Role.Button, onClickLabel = showBarLabel, onClick = onExpand)
+                        // The swipe up has a TalkBack action too: tabs without showing the bar first (П-8).
+                        .semantics { customActions = listOf(CustomAccessibilityAction(tabsLabel) { onTabs(); true }) }
                 } else {
                     Modifier
                 },

@@ -53,4 +53,12 @@ class V5TranslateRulesTest {
         assertEquals("Английский", V5TranslateRules.displayName("английский", Locale.forLanguageTag("ru")))
         assertEquals("English", V5TranslateRules.displayName("English", Locale.ENGLISH))
     }
+
+    @Test
+    fun `the language search finds by name ignoring case and keeps all for a blank query`() {
+        val names = listOf("English", "Español", "Русский")
+        assertEquals(listOf("Español"), V5TranslateRules.matching(names, " esp") { it })
+        assertEquals(listOf("Русский"), V5TranslateRules.matching(names, "рус") { it })
+        assertEquals(names, V5TranslateRules.matching(names, "  ") { it })
+    }
 }

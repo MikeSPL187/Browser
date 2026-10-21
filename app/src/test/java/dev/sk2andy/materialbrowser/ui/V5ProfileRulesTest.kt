@@ -34,7 +34,8 @@ class V5ProfileRulesTest {
         )
         val items = V5ProfileRules.items(profiles, tabs, "personal", setOf("work"), untitled = "Workspace")
         assertEquals(listOf("personal", "work", "laptop"), items.map { it.id })
-        assertEquals(listOf(2, 1, 0), items.map { it.tabCount })
+        // A locked profile does not tell how many tabs it hides (ПР-4).
+        assertEquals(listOf(2, null, 0), items.map { it.tabCount })
         assertTrue(items[0].active)
         assertFalse(items[1].active)
         assertTrue(items[1].locked)

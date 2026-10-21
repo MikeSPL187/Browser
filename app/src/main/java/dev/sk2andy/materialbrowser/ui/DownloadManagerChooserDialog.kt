@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.actions.PendingDownloadChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
@@ -81,7 +82,7 @@ private fun DownloadManagerChoiceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

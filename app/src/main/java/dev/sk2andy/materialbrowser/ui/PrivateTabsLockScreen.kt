@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.DEFAULT_PROFILE_EMOJI
 import dev.sk2andy.materialbrowser.browser.PrivateTabsLockRules
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -90,6 +91,10 @@ internal fun BrowserLockScreens(controller: BrowserController) {
             canSwitchProfile = controller.canLeaveLockedProfile,
             onUnlock = controller::retryActiveProfileAuthentication,
             onSwitchProfile = { controller.leaveLockedProfile() },
+            onNewProfile = {
+                controller.createProfile(emoji = DEFAULT_PROFILE_EMOJI)
+                Unit
+            }.takeIf { !controller.isProfileProtectionSupported && !controller.canLeaveLockedProfile },
         )
     } else if (controller.isSelectedContentLocked) {
         val lifecycle = LocalLifecycleOwner.current.lifecycle

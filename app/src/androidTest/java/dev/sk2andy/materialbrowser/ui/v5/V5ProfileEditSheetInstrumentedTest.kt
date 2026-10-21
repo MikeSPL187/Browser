@@ -75,4 +75,17 @@ class V5ProfileEditSheetInstrumentedTest {
 
         assertEquals(listOf("storage false", "lock true", "delete", "dismiss", "save Personal person 0"), calls)
     }
+
+    @Test
+    fun closingAnExistingProfileAfterAChangeKeepsItAsItWas() {
+        show(creating = false)
+
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextClearance()
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextInput("Work")
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.color(2)).performClick()
+        composeRule.onNodeWithTag(V5SheetTestTags.Close).performClick()
+
+        // «Close» is the way out of a change (ПР-1): only «Done» saves.
+        assertEquals(listOf("dismiss"), calls)
+    }
 }

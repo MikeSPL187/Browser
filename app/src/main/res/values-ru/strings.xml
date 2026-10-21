@@ -225,7 +225,8 @@
     <string name="profile_isolation_confirm_title">Сменить хранилище пространства?</string>
     <string name="profile_isolation_enable_message">Вкладки этого пространства перезагрузятся с отдельным хранилищем. Текущие общие входы в аккаунты не перенесутся.</string>
     <string name="profile_isolation_disable_message">Вкладки этого пространства перезагрузятся с общим хранилищем. Входы из изолированного хранилища перестанут действовать.</string>
-    <string name="profile_protection_unavailable">Недоступно: сначала настройте надёжную биометрию в Android</string>
+    <string name="profile_protection_unavailable">Недоступно: сначала задайте блокировку экрана или надёжную биометрию в Android</string>
+    <string name="profile_locked_new_action">Открыть новый профиль</string>
     <string name="profile_protection_configure">Изменить время блокировки</string>
     <string name="profile_protection_dialog_title">Защита пространства</string>
     <string name="profile_protection_disclosure">Эта блокировка использует надёжную биометрию Android. Отдельного шифрования файлов пространства она не добавляет.</string>
@@ -1319,6 +1320,10 @@
     <string name="filter_fetching_preview">Загрузка предпросмотра…</string>
     <string name="filter_confirm_update">Подтвердить обновление</string>
     <string name="filter_diff_summary">+%1$d · −%2$d · без изменений: %3$d</string>
+    <string name="filter_diff_added">+ %1$s</string>
+    <string name="filter_diff_removed">− %1$s</string>
+    <string name="filter_diff_added_spoken">Добавит %1$s</string>
+    <string name="filter_diff_removed_spoken">Уберёт %1$s</string>
     <string name="filter_more_changes">Других изменений: %1$d</string>
     <string name="filter_more_rules">Других правил: %1$d</string>
     <string name="filter_deciding_rule">Правило: %1$s</string>
@@ -2050,6 +2055,7 @@
     <string name="v5_suggestion_commands">Команды</string>
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
+    <string name="v5_feedback_error">Ошибка</string>
     <string name="v5_field_truncated">Поместились только первые %1$d символов, остальное обрезано.</string>
     <string name="v5_sheet_close">Закрыть</string>
     <string name="v5_overview_ungrouped">Без группы</string>
@@ -2112,6 +2118,7 @@
     </plurals>
     <string name="v5_report_device_only">Хранится только на этом устройстве и никуда не отправляется. Частные вкладки не учитываются.</string>
     <string name="v5_report_hide_card">Не показывать на новой вкладке</string>
+    <string name="v5_report_hide_card_message">Вернуть её можно переключателем «Отчёт за неделю на новой вкладке» в настройках защиты.</string>
     <string name="v5_report_clear">Очистить данные отчёта</string>
     <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
     <string name="v5_newtab_pinned">Закреплённые</string>
@@ -2123,7 +2130,12 @@
     <string name="v5_newtab_more">Ещё</string>
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
-    <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
+    <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
+    <string name="v5_newtab_add_tabs">Открытые вкладки</string>
+    <string name="v5_newtab_add_favorites">Избранное</string>
+    <string name="v5_newtab_add_history">История</string>
+    <string name="v5_newtab_pinned_empty">Закрепите сайты, которые открываете чаще всего: они будут ждать здесь в каждой новой вкладке.</string>
+    <string name="v5_newtab_pinned_full">Поместится не больше 16 сайтов. Открепите сайт, чтобы добавить другой.</string>
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_private_title">Частный доступ</string>
@@ -2190,7 +2202,11 @@
     <string name="v5_menu_more">Ещё</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
-    <string name="v5_menu_favorite_private">Не в приватной</string>
+    <string name="v5_menu_favorite_private">Недоступно в частной вкладке</string>
+    <string name="v5_bar_open_tabs">Показать вкладки</string>
+    <string name="v5_menu_extension_off_here">Недоступно на этой странице</string>
+    <string name="v5_menu_desktop_view_hint">Страница перезагрузится как на компьютере</string>
+    <string name="v5_menu_mute_site_hint">Все страницы этого сайта будут без звука</string>
     <string name="v5_menu_read">Читать</string>
     <string name="v5_menu_unpin_tab">Открепить вкладку</string>
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
@@ -2221,6 +2237,10 @@
     <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_profiles_title">Профили</string>
     <string name="v5_profiles_other_devices">С других устройств</string>
+    <string name="v5_profiles_other_devices_footer">Эти профили меняются на устройстве, с которого они пришли.</string>
+    <string name="v5_profile_create_failed">Не удалось создать профиль. Попробуйте ещё раз из списка профилей.</string>
+    <string name="v5_profile_delete_last">Единственный профиль на телефоне удалить нельзя.</string>
+    <string name="v5_profile_delete_unavailable">Этот профиль сейчас нельзя удалить: он заблокирован или связан с другим устройством.</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
     <string name="v5_profile_untitled">Профиль</string>
     <string name="v5_profile_locked">Заблокирован</string>
@@ -2294,6 +2314,7 @@
     <string name="v5_first_run_device_caption">Никакой аналитики и рекламных SDK</string>
     <string name="v5_first_run_default_title">Открывать ссылки в Vola?</string>
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
+    <string name="v5_first_run_default_refused">Vola пока не браузер по умолчанию. Это можно сделать позже в настройках.</string>
     <string name="v5_first_run_default_action">Сделать основным</string>
     <string name="v5_first_run_not_now">Не сейчас</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
@@ -2304,6 +2325,7 @@
     <string name="v5_first_run_gesture_overview_title">Вверх от панели</string>
     <string name="v5_first_run_gesture_overview_caption">Все вкладки и группы</string>
     <string name="v5_first_run_gestures_done">Понятно</string>
+    <string name="v5_first_run_gestures_buttons">Без жестов: то же самое делают кнопка вкладок и меню «•••».</string>
     <string name="filter_v5_on">Вкл.</string>
     <string name="filter_v5_off">Выкл.</string>
     <string name="filter_v5_active">Включено</string>
@@ -2318,6 +2340,10 @@
     <string name="v5_translate_action">Перевести</string>
     <string name="v5_translate_in_progress">Перевожу…</string>
     <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
+    <string name="v5_translate_note_metered">Вы в мобильной сети: пакет языка скачается через неё.</string>
+    <string name="v5_translate_always_later">«Всегда переводить этот язык» появится после первого перевода с него, когда пакет будет на телефоне.</string>
+    <string name="v5_translate_show_original">Показать оригинал</string>
+    <string name="v5_translate_language_search">Поиск языка</string>
     <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
     <string name="v5_translate_languages_loading">Загружаю список языков…</string>
     <string name="v5_translate_languages_failed">Не удалось получить список языков.</string>
@@ -2497,6 +2523,7 @@
     <string name="v5_webdav_error_busy">Сервер занят или файл на нём заблокирован. Попробуйте позже.</string>
     <string name="v5_webdav_error_server">На сервере произошла ошибка. Попробуйте позже или посмотрите журнал сервера.</string>
     <string name="v5_webdav_error_address">Проверьте адрес: он выглядит как https://cloud.example.com, без логина, пробелов, «?» и «#».</string>
+    <string name="v5_webdav_error_scheme">Начните адрес с https://, например https://cloud.example.com.</string>
     <string name="v5_webdav_connecting">Подключение…</string>
     <string name="v5_webdav_phrase_simple">Слишком простая фраза: возьмите несколько разных слов.</string>
     <string name="v5_webdav_status_newer">Обновите Vola</string>

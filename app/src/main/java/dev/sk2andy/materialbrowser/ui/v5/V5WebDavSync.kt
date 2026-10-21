@@ -34,6 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordGeneratorRules
+import dev.sk2andy.materialbrowser.shared.credentials.PasswordStrength
 import dev.sk2andy.materialbrowser.shared.sync.webdav.WebDavAddressCheck
 import dev.sk2andy.materialbrowser.shared.sync.webdav.WebDavSyncAddressRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -100,6 +102,9 @@ enum class V5WebDavError {
 
     /** Not an address the sync can use: a login, a space, `?` or `#` in it, or a wrong port. */
     InvalidAddress,
+
+    /** An address typed without `https://`, as most are: the line says to start with it (ЯС-1). */
+    MissingScheme,
 }
 
 /** «Own server» (canvas «х1»): what is typed, and whether the connection is being made. */
@@ -594,8 +599,13 @@ internal object V5WebDavRules {
     fun addressProblem(address: String): V5WebDavError? = when (WebDavSyncAddressRules.check(address)) {
         WebDavAddressCheck.NotHttps -> V5WebDavError.NotHttps
         WebDavAddressCheck.Invalid -> {
-            val rest = address.trim().substringAfter("://", missingDelimiterValue = "")
-            V5WebDavError.InvalidAddress.takeIf { rest.isNotEmpty() }
+            val trimmed = address.trim()
+            when {
+                // Said once it reads as an address («cloud.example.com»), not at the first letter.
+                "://" !in trimmed && '.' in trimmed -> V5WebDavError.MissingScheme
+                trimmed.substringAfter("://", missingDelimiterValue = "").isNotEmpty() -> V5WebDavError.InvalidAddress
+                else -> null
+            }
         }
         is WebDavAddressCheck.Valid -> null
     }
@@ -603,9 +613,31 @@ internal object V5WebDavRules {
     /** Whether [address] is an address the sync can use. */
     fun isHttpsAddress(address: String): Boolean = WebDavSyncAddressRules.check(address) is WebDavAddressCheck.Valid
 
-    /** Long enough, but made of too few different characters. */
-    fun phraseTooSimple(phrase: String): Boolean =
-        phrase.length >= MIN_PHRASE && phrase.toSet().size < MIN_PHRASE_DISTINCT
+    /**
+     * Long enough, but guessed at once offline (ЯС-2): too few different characters, a run along
+     * the alphabet, the digits or a keyboard row («1234567890», «qwertyuiop», «abcdefghij»), a
+     * common password with digits («password12»), or under the generator's «fair» strength.
+     */
+    fun phraseTooSimple(phrase: String): Boolean {
+        if (phrase.length < MIN_PHRASE) return false
+        if (phrase.toSet().size < MIN_PHRASE_DISTINCT) return true
+        val lower = phrase.lowercase()
+        if (SEQUENCES.any { sequence -> sequence.contains(lower) || sequence.reversed().contains(lower) }) return true
+        val rest = COMMON_WORDS.fold(lower) { left, word -> left.replace(word, "") }
+        if (rest.length < lower.length && rest.all { !it.isLetter() }) return true
+        return PasswordGeneratorRules.strength(PasswordGeneratorRules.estimatedBits(phrase)) == PasswordStrength.Weak
+    }
+
+    private val SEQUENCES = listOf(
+        "abcdefghijklmnopqrstuvwxyz",
+        "01234567890",
+        "qwertyuiopasdfghjklzxcvbnm",
+        "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik9ol0p",
+        "абвгдеёжзийклмнопрстуфхцчшщъыьэюя",
+        "йцукенгшщзхъфывапролджэячсмитьбю",
+    )
+
+    private val COMMON_WORDS = listOf("password", "passw0rd", "qwerty", "letmein", "iloveyou", "admin", "welcome", "пароль")
 
     /** The repeat is typed and differs from the phrase. */
     fun phrasesDiffer(state: V5WebDavConnectState): Boolean =
@@ -633,6 +665,7 @@ internal object V5WebDavRules {
         V5WebDavError.ServerBusy -> R.string.v5_webdav_error_busy
         V5WebDavError.ServerError -> R.string.v5_webdav_error_server
         V5WebDavError.InvalidAddress -> R.string.v5_webdav_error_address
+        V5WebDavError.MissingScheme -> R.string.v5_webdav_error_scheme
     }
 
     /** The status card's title when the last sync failed. */
@@ -640,7 +673,8 @@ internal object V5WebDavRules {
         V5WebDavError.Unreachable -> R.string.v5_webdav_status_unreachable
         V5WebDavError.LoginRejected -> R.string.v5_webdav_status_login
         V5WebDavError.PhraseMismatch -> R.string.v5_webdav_mismatch_title
-        V5WebDavError.NotHttps, V5WebDavError.NotWebDav, V5WebDavError.InvalidAddress -> R.string.v5_webdav_status_failed
+        V5WebDavError.NotHttps, V5WebDavError.NotWebDav, V5WebDavError.InvalidAddress, V5WebDavError.MissingScheme ->
+            R.string.v5_webdav_status_failed
         V5WebDavError.NewerFormat -> R.string.v5_webdav_status_newer
         V5WebDavError.FolderNotFound -> R.string.v5_webdav_status_folder
         V5WebDavError.ServerFull -> R.string.v5_webdav_status_full

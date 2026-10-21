@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.topping.ToppingFrameScope
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -386,7 +387,7 @@ internal fun UserscriptManagementScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = selectScope)
+                                .clickable(role = Role.RadioButton, onClick = selectScope)
                                 .testTag(
                                     UserscriptManagementTestTags.frameScopeOption(script.id, scope),
                                 ),

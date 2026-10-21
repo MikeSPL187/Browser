@@ -534,7 +534,7 @@ internal fun <T : View> LinkPeekOverlay(
                             stringResource(R.string.action_download_link),
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadLink)
-                                .clickable(onClick = onDownloadLink)
+                                .clickable(role = Role.Button, onClick = onDownloadLink)
                                 .heightIn(min = VolaGlance.minTouchTarget)
                                 .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
@@ -547,7 +547,7 @@ internal fun <T : View> LinkPeekOverlay(
                             stringResource(R.string.action_download_image),
                             modifier = Modifier
                                 .testTag(LinkPeekTestTags.DownloadImage)
-                                .clickable(onClick = onDownloadImage)
+                                .clickable(role = Role.Button, onClick = onDownloadImage)
                                 .heightIn(min = VolaGlance.minTouchTarget)
                                 .wrapContentHeight(Alignment.CenterVertically)
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
