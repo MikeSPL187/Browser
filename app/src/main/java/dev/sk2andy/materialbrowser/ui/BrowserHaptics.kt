@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.BrowserGestureHapticFeedback
 import kotlin.math.roundToInt
 
 internal fun View.performConfirmHaptic() {
@@ -108,3 +109,15 @@ private fun View.rubberbandVibrator(): Vibrator? =
 private const val SCALED_TICK_DURATION_MILLIS = 9L
 private const val MIN_SCALED_TICK_AMPLITUDE = 28f
 private const val MAX_SCALED_TICK_AMPLITUDE = 180f
+
+/** The inline player's rubber band past its edge and the confirmation when a drag lands. */
+internal fun View.performBrowserGestureHaptic(haptic: BrowserGestureHapticFeedback) {
+    when (haptic) {
+        BrowserGestureHapticFeedback.RubberbandStart -> startRubberbandHaptic()
+        BrowserGestureHapticFeedback.RubberbandStop -> stopRubberbandHaptic()
+        BrowserGestureHapticFeedback.Confirm -> {
+            stopRubberbandHaptic()
+            performConfirmHaptic()
+        }
+    }
+}
