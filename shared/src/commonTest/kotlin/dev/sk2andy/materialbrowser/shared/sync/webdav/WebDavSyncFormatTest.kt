@@ -81,6 +81,15 @@ class WebDavSyncFormatTest {
         assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://cloud.example.com/dav?x=1"))
         assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://cloud.example.com/../etc"))
         assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://cloud.example.com:99999"))
+        // Encoded dots are dots to the server (ЯС-7); a bracketed host is IPv6, with or without a port (ЯС-5).
+        assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://cloud.example.com/a/%2E%2e/b"))
+        assertEquals(WebDavAddressCheck.Valid("https://[::1]:8443/", "[::1]"), WebDavSyncAddressRules.check("https://[::1]:8443"))
+        assertEquals(
+            WebDavAddressCheck.Valid("https://[2001:db8::1]/dav/", "[2001:db8::1]"),
+            WebDavSyncAddressRules.check("https://[2001:db8::1]/dav"),
+        )
+        assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://[::1]x"))
+        assertEquals(WebDavAddressCheck.Invalid, WebDavSyncAddressRules.check("https://[zz]/"))
         assertEquals(
             WebDavAddressCheck.Valid("https://cloud.example.com:8443/dav/", "cloud.example.com"),
             WebDavSyncAddressRules.check("  HTTPS://Cloud.Example.com:8443/dav  "),

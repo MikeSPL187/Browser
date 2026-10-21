@@ -21,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -35,7 +37,9 @@ object V5PinnedAddSheetTestTags {
 
 /**
  * «Pin a site» from the new tab: the profile's open tabs that are not pinned yet, the most recent
- * first. A tap pins the site and closes the sheet; without such tabs it says how to get one.
+ * first, then its favorites and its history (Н-1), so a site unpinned by mistake comes back without
+ * opening it first. A tap pins the site and closes the sheet; with nothing to offer it says how to
+ * get something.
  */
 @Composable
 fun V5PinnedAddSheet(
@@ -43,6 +47,8 @@ fun V5PinnedAddSheet(
     candidates: List<V5RecentTab>,
     onAdd: (String) -> Unit,
     onDismiss: () -> Unit,
+    favorites: List<V5RecentTab> = emptyList(),
+    history: List<V5RecentTab> = emptyList(),
 ) {
     val colors = V5Theme.colors
     val title = stringResource(R.string.v5_newtab_add_title)
@@ -54,7 +60,7 @@ fun V5PinnedAddSheet(
                 .padding(horizontal = V5Spacing.marginPhone)
                 .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
         ) {
-            if (candidates.isEmpty()) {
+            if (candidates.isEmpty() && favorites.isEmpty() && history.isEmpty()) {
                 Text(
                     stringResource(R.string.v5_newtab_add_empty),
                     style = V5Theme.type.callout,
@@ -64,7 +70,25 @@ fun V5PinnedAddSheet(
                         .testTag(V5PinnedAddSheetTestTags.Empty),
                 )
             } else {
-                CandidateList(candidates, onAdd, onDismiss)
+                Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space4)) {
+                    listOf(
+                        R.string.v5_newtab_add_tabs to candidates,
+                        R.string.v5_newtab_add_favorites to favorites,
+                        R.string.v5_newtab_add_history to history,
+                    ).filter { (_, rows) -> rows.isNotEmpty() }.forEach { (header, rows) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
+                            Text(
+                                stringResource(header),
+                                style = V5Theme.type.footnote,
+                                color = colors.labelSecondary,
+                                modifier = Modifier
+                                    .padding(horizontal = V5Spacing.space4)
+                                    .semantics { heading() },
+                            )
+                            CandidateList(rows, onAdd, onDismiss)
+                        }
+                    }
+                }
             }
         }
     }

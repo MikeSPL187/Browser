@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import java.time.LocalDate
@@ -24,6 +25,23 @@ object V5NewTabRules {
     fun rows(count: Int, canAdd: Boolean, columns: Int = V5Sizes.PINNED_COLUMNS): List<List<Cell>> {
         val cells = List(count) { Cell.Site(it) } + if (canAdd) listOf(Cell.Add) else emptyList()
         return cells.chunked(columns.coerceAtLeast(1))
+    }
+
+    /** A line under «Pinned» that says what the grid alone does not. */
+    enum class PinnedNote {
+        /** Nothing pinned yet: what pinning is for (Н-4). */
+        Empty,
+
+        /** The grid is full and «Add» is gone: why, and how to make room (Н-3). */
+        Full,
+    }
+
+    /** The note for [pinnedCount] sites; none while editing, where the tiles say it all. */
+    fun pinnedNote(pinnedCount: Int, canAdd: Boolean, editing: Boolean): PinnedNote? = when {
+        editing -> null
+        pinnedCount == 0 -> PinnedNote.Empty
+        !canAdd && pinnedCount >= EssentialsRules.MAX_ENTRIES -> PinnedNote.Full
+        else -> null
     }
 
     /**

@@ -114,6 +114,10 @@ internal interface NewTabEssentialsEditor {
 
     /** Tab icons by tab id, for the add sheet. */
     val candidateIcons: Map<String, Bitmap>
+
+    /** Favorites and history pages to pin besides open tabs (Н-1); the v4 sheet offers tabs only. */
+    val suggestions: Pair<List<EssentialCandidate>, List<EssentialCandidate>>
+        get() = emptyList<EssentialCandidate>() to emptyList()
     val isFull: Boolean
 
     fun remove(entry: EssentialEntry)
@@ -138,6 +142,13 @@ internal fun rememberNewTabEssentialsEditor(
             )
         override val candidateIcons: Map<String, Bitmap>
             get() = controller.favicons
+        override val suggestions: Pair<List<EssentialCandidate>, List<EssentialCandidate>>
+            get() = EssentialsRules.suggestions(
+                entries = essentials.entriesFor(profileId),
+                offered = candidates,
+                favorites = if (controller.activeProfileId == profileId) controller.favorites else emptyList(),
+                history = controller.history.filter { it.profileId == profileId },
+            )
         override val isFull: Boolean
             get() = essentials.entriesFor(profileId).size >= EssentialsRules.MAX_ENTRIES
 

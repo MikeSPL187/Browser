@@ -1,14 +1,18 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.content.Context
+import android.net.ConnectivityManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationUiState
@@ -49,15 +53,19 @@ internal fun BrowserTranslateSheetV5(
     var languages by remember { mutableStateOf<TranslationLanguages?>(null) }
     var languagesFailed by remember { mutableStateOf(false) }
     var languagesAsked by remember { mutableIntStateOf(0) }
+    // Asked each time the sheet opens, as a pack downloaded or the app's language changed since may
+    // change the lists (ПВ-5); the last answer shows meanwhile.
     LaunchedEffect(visible, languagesAsked) {
-        if (visible && languages == null) {
+        if (visible) {
             languagesFailed = false
             translation.languages { answer ->
-                languages = answer
-                languagesFailed = answer == null
+                if (answer != null) languages = answer
+                languagesFailed = answer == null && languages == null
             }
         }
     }
+    val context = LocalContext.current
+    val sheetOpen by rememberUpdatedState(visible)
     val preferredTarget = rememberV5TranslateInto().ifEmpty { null }
     val initial = BrowserTranslateRules.initialPair(ui, translation.suggestedPair(tab.id), preferredTarget, locale.language)
     var fromCode by rememberSaveable(visible, tab.id) { mutableStateOf(initial.from) }
@@ -103,6 +111,10 @@ internal fun BrowserTranslateSheetV5(
         error = V5TranslateRules.error(ui.error).takeIf { BrowserTranslateRules.sameRequest(ui.pair, fromCode, toCode) },
         languagesStatus = BrowserTranslateRules.languagesStatus(languages, languagesFailed),
         downloadSizeUnknown = downloadSizeUnknown,
+        translated = ui.isTranslated,
+        alwaysLater = fromCode != null && languageSettings != null &&
+            BrowserTranslateRules.always(fromCode, languageSettings, downloadBytes) == null,
+        metered = remember(visible) { context.isOnMeteredNetwork() },
     )
     V5TranslateSheet(
         visible = visible,
@@ -124,15 +136,31 @@ internal fun BrowserTranslateSheetV5(
                     // The note named the pack's size, or said a pack may download, so «Translate» is the
                     // consent to download it.
                     translation.translate(tab.id, TranslationPair(from, to), allowModelDownload = true) { result ->
-                        if (result == PageTranslationResult.Done) onDismiss()
+                        if (result == PageTranslationResult.Done) {
+                            onDismiss()
+                        } else if (!sheetOpen) {
+                            // The sheet was closed while the pack downloaded: the failure is said where
+                            // the user is, not kept for the next opening (ПВ-1).
+                            V5TranslateRules.error(translation.stateOf(tab.id).error)?.let { error ->
+                                V5Feedback.show(context, V5TranslateRules.errorText(error))
+                            }
+                        }
                     }
                 }
             },
             onRetryLanguages = { languagesAsked++ },
+            onShowOriginal = {
+                translation.showOriginal(tab.id)
+                onDismiss()
+            },
         ),
         onDismiss = onDismiss,
     )
 }
+
+/** Whether the phone's network is metered: mobile data, or a hotspot marked so. */
+private fun Context.isOnMeteredNetwork(): Boolean =
+    getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered == true
 
 /** «Translated: English → Russian» above the bar while [tab]'s page is translated. */
 @Composable

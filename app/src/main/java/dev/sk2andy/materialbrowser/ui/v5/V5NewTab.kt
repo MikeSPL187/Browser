@@ -1,6 +1,13 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -9,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
@@ -16,6 +24,8 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import kotlinx.coroutines.launch
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,6 +87,7 @@ object V5NewTabTestTags {
     const val Add = "v5_new_tab_add"
     const val Report = "v5_new_tab_report"
     const val ReportMore = "v5_new_tab_report_more"
+    const val PinnedNote = "v5_new_tab_pinned_note"
     fun pinned(id: String) = "v5_new_tab_pinned:$id"
     fun recent(id: String) = "v5_new_tab_recent:$id"
 }
@@ -104,6 +116,8 @@ data class V5NewTabState(
     val recent: List<V5RecentTab>,
     /** The profile's symbol on its accent; null shows the name's first letter. */
     val profileIcon: ImageVector? = null,
+    /** False where nothing can be changed (a preview of the next tab): no «Edit» then (Н-8). */
+    val canEdit: Boolean = true,
 )
 
 /**
@@ -255,17 +269,47 @@ private fun Pinned(
     val shown = if (dragId == null) ids else dragOrder
     val moveEarlier = stringResource(R.string.v5_newtab_move_earlier)
     val moveLater = stringResource(R.string.v5_newtab_move_later)
-    Column(verticalArrangement = Arrangement.spacedBy(V5Spacing.space3)) {
+    // Unpinned sites leave no bounds behind (Н-7).
+    bounds.keys.retainAll(ids.toSet())
+    // Motion (Н-2): each tile's last place in the section, so a tile that moves (another unpinned,
+    // the order changed) glides there on the tabSwipe spring instead of jumping; an unpinned tile
+    // fades first; a dropped tile lands from under the finger. Without animations they only fade.
+    var section by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val places = remember { HashMap<String, Offset>() }
+    places.keys.retainAll(ids.toSet())
+    var removingId by remember { mutableStateOf<String?>(null) }
+    var landingId by remember { mutableStateOf<String?>(null) }
+    var landingFrom by remember { mutableStateOf(Offset.Zero) }
+    val remove by rememberUpdatedState(onRemove)
+    val scope = rememberCoroutineScope()
+    Column(
+        Modifier.onGloballyPositioned { section = it },
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
         SectionHeader(
             title = stringResource(R.string.v5_newtab_pinned),
             action = when {
-                state.pinned.isEmpty() -> null
+                state.pinned.isEmpty() || !state.canEdit -> null
                 editing -> stringResource(R.string.v5_newtab_done)
                 else -> stringResource(R.string.v5_newtab_edit)
             },
             onAction = { onEditingChange(!editing) },
             actionTag = V5NewTabTestTags.Edit,
         )
+        val note = V5NewTabRules.pinnedNote(pinnedCount = state.pinned.size, canAdd = state.canAdd, editing = editing)
+        if (note != null) {
+            Text(
+                stringResource(
+                    when (note) {
+                        V5NewTabRules.PinnedNote.Empty -> R.string.v5_newtab_pinned_empty
+                        V5NewTabRules.PinnedNote.Full -> R.string.v5_newtab_pinned_full
+                    },
+                ),
+                style = V5Theme.type.footnote,
+                color = V5Theme.colors.labelSecondary,
+                modifier = Modifier.testTag(V5NewTabTestTags.PinnedNote),
+            )
+        }
         V5NewTabRules.rows(shown.size, canAdd = state.canAdd && !editing).forEach { row ->
             val lifted = row.any { it is V5NewTabRules.Cell.Site && shown[it.index] == dragId }
             Row(Modifier.fillMaxWidth().zIndex(if (lifted) 1f else 0f)) {
@@ -280,10 +324,29 @@ private fun Pinned(
                             } else {
                                 val index = cell.index
                                 val dragging = id == dragId
+                                val glide = remember(id) { Animatable(Offset.Zero, Offset.VectorConverter) }
+                                val fade = remember(id) { Animatable(1f) }
+                                LaunchedEffect(removingId == id) {
+                                    if (removingId != id) return@LaunchedEffect
+                                    fade.animateTo(0f, if (V5Motion.animationsEnabled) V5Motion.effects.spec() else V5Motion.reducedFade())
+                                    removingId = null
+                                    remove(id)
+                                }
+                                LaunchedEffect(landingId == id) {
+                                    if (landingId != id) return@LaunchedEffect
+                                    val base = bounds[id]
+                                    if (base != null && V5Motion.animationsEnabled) {
+                                        glide.snapTo(landingFrom - base.topLeft)
+                                        glide.animateTo(Offset.Zero, V5Motion.tabSwipe.spec())
+                                    }
+                                    landingId = null
+                                }
                                 PinnedTile(
                                     site = site,
                                     editing = editing,
-                                    onClick = { if (editing) onRemove(id) else onOpen(id) },
+                                    onClick = {
+                                        if (!editing) onOpen(id) else if (removingId == null) removingId = id
+                                    },
                                     // While editing a long press lifts the tile (below); taking it here
                                     // keeps its release from counting as a tap that would unpin.
                                     onLongClick = if (editing) {
@@ -295,7 +358,19 @@ private fun Pinned(
                                         }
                                     },
                                     modifier = cellModifier
-                                        .onGloballyPositioned { bounds[id] = it.boundsInRoot() }
+                                        .onGloballyPositioned { coordinates ->
+                                            bounds[id] = coordinates.boundsInRoot()
+                                            val place = section?.takeIf { it.isAttached }?.localPositionOf(coordinates, Offset.Zero)
+                                            val before = place?.let { places.put(id, it) }
+                                            if (place != null && before != null && before != place && !dragging &&
+                                                landingId != id && V5Motion.animationsEnabled
+                                            ) {
+                                                scope.launch {
+                                                    glide.snapTo(glide.value + before - place)
+                                                    glide.animateTo(Offset.Zero, V5Motion.tabSwipe.spec())
+                                                }
+                                            }
+                                        }
                                         .then(
                                             if (editing) {
                                                 Modifier.pointerInput(id) {
@@ -321,6 +396,9 @@ private fun Pinned(
                                                         },
                                                         onDragEnd = {
                                                             val to = dragOrder.indexOf(id)
+                                                            // The tile lands from where it was let go (Н-7а).
+                                                            landingFrom = pointer - grab
+                                                            landingId = id
                                                             dragId = null
                                                             if (to >= 0 && to != currentIds.indexOf(id)) move(id, to)
                                                         },
@@ -333,11 +411,15 @@ private fun Pinned(
                                         )
                                         .graphicsLayer {
                                             val base = bounds[id]
+                                            alpha = fade.value
                                             if (dragging && base != null) {
                                                 translationX = pointer.x - grab.x - base.left
                                                 translationY = pointer.y - grab.y - base.top
                                                 scaleX = PINNED_LIFT_SCALE
                                                 scaleY = PINNED_LIFT_SCALE
+                                            } else {
+                                                translationX = glide.value.x
+                                                translationY = glide.value.y
                                             }
                                         }
                                         .semantics {
@@ -410,11 +492,18 @@ private fun PinnedTile(
                 Text(V5NewTabRules.letter(site.title), style = V5Theme.type.title, color = tile.glyph)
             }
         }
-        if (editing) {
+        // The «−» badges come in with the edit mode on a short spring; without animations they fade.
+        val moves = V5Motion.animationsEnabled
+        AnimatedVisibility(
+            visible = editing,
+            enter = if (moves) scaleIn(V5Motion.glance.spec()) + fadeIn(V5Motion.effects.spec()) else fadeIn(V5Motion.reducedFade()),
+            exit = if (moves) scaleOut(V5Motion.effects.spec()) + fadeOut(V5Motion.effects.spec()) else fadeOut(V5Motion.reducedFade()),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = -V5Spacing.space1, y = -V5Spacing.space1),
+        ) {
             Box(
                 Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = -V5Spacing.space1, y = -V5Spacing.space1)
                     .size(V5Sizes.pinnedBadge)
                     .clip(V5Theme.shapes.full)
                     .background(colors.labelSecondary),
@@ -474,7 +563,8 @@ private fun TileCell(
             label,
             style = V5Theme.type.caption,
             color = V5Theme.colors.label,
-            maxLines = 1,
+            // Two lines, as Safari's favorites: a large font still leaves a name readable (Н-5).
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = V5Spacing.space1),
@@ -524,7 +614,8 @@ private fun ReportCard(report: V5NewTabReport, onOpen: () -> Unit, onHide: () ->
                 V5PromptSheet(
                     visible = menu,
                     title = stringResource(R.string.v5_report_title),
-                    message = null,
+                    // Hiding has no «Undo»: the sheet says where the card comes back (Н-6).
+                    message = stringResource(R.string.v5_report_hide_card_message),
                     actions = listOf(
                         V5PromptAction(
                             label = stringResource(R.string.v5_report_hide_card),

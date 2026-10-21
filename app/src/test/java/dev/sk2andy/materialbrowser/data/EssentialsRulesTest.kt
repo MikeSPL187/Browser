@@ -133,4 +133,25 @@ class EssentialsRulesTest {
         assertNull(EssentialsRules.openTabId(entry, tabs.take(1)))
         assertNull(EssentialsRules.openTabId(entry, emptyList()))
     }
+
+    @Test
+    fun `suggestions offer favorites then newest history, without pinned, open or repeated sites`() {
+        val entries = listOf(EssentialEntry(url = "https://pinned.example", title = "Pinned"))
+        val open = listOf(EssentialCandidate("tab-1", "https://open.example", "Open"))
+        val favorites = listOf(
+            FavoriteEntry("https://pinned.example", "Pinned", addedAt = 1),
+            FavoriteEntry("https://news.example", "News", addedAt = 2),
+            FavoriteEntry("file:///sdcard/a.html", "File", addedAt = 3),
+        )
+        val history = listOf(
+            HistoryEntry("https://old.example", "Old", lastVisitedAt = 1),
+            HistoryEntry("https://news.example/", "News again", lastVisitedAt = 5),
+            HistoryEntry("https://open.example", "Open", lastVisitedAt = 4),
+            HistoryEntry("https://new.example", "New", lastVisitedAt = 9),
+        )
+        val (fromFavorites, fromHistory) = EssentialsRules.suggestions(entries, open, favorites, history)
+        assertEquals(listOf("https://news.example"), fromFavorites.map { it.url })
+        assertEquals(listOf("https://new.example", "https://old.example"), fromHistory.map { it.url })
+        assertTrue((fromFavorites + fromHistory).none { it.tabId == "tab-1" })
+    }
 }

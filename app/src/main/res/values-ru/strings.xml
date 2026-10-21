@@ -2112,6 +2112,7 @@
     </plurals>
     <string name="v5_report_device_only">Хранится только на этом устройстве и никуда не отправляется. Частные вкладки не учитываются.</string>
     <string name="v5_report_hide_card">Не показывать на новой вкладке</string>
+    <string name="v5_report_hide_card_message">Вернуть её можно переключателем «Отчёт за неделю на новой вкладке» в настройках защиты.</string>
     <string name="v5_report_clear">Очистить данные отчёта</string>
     <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
     <string name="v5_newtab_pinned">Закреплённые</string>
@@ -2123,7 +2124,12 @@
     <string name="v5_newtab_more">Ещё</string>
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
-    <string name="v5_newtab_add_empty">Откройте сайт во вкладке этого профиля, чтобы закрепить его здесь.</string>
+    <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
+    <string name="v5_newtab_add_tabs">Открытые вкладки</string>
+    <string name="v5_newtab_add_favorites">Избранное</string>
+    <string name="v5_newtab_add_history">История</string>
+    <string name="v5_newtab_pinned_empty">Закрепите сайты, которые открываете чаще всего: они будут ждать здесь в каждой новой вкладке.</string>
+    <string name="v5_newtab_pinned_full">Поместится не больше 16 сайтов. Открепите сайт, чтобы добавить другой.</string>
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_private_title">Частный доступ</string>
@@ -2221,6 +2227,10 @@
     <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_profiles_title">Профили</string>
     <string name="v5_profiles_other_devices">С других устройств</string>
+    <string name="v5_profiles_other_devices_footer">Эти профили меняются на устройстве, с которого они пришли.</string>
+    <string name="v5_profile_create_failed">Не удалось создать профиль. Попробуйте ещё раз из списка профилей.</string>
+    <string name="v5_profile_delete_last">Единственный профиль на телефоне удалить нельзя.</string>
+    <string name="v5_profile_delete_unavailable">Этот профиль сейчас нельзя удалить: он заблокирован или связан с другим устройством.</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
     <string name="v5_profile_untitled">Профиль</string>
     <string name="v5_profile_locked">Заблокирован</string>
@@ -2318,6 +2328,10 @@
     <string name="v5_translate_action">Перевести</string>
     <string name="v5_translate_in_progress">Перевожу…</string>
     <string name="v5_translate_note">Перевод на устройстве: текст страницы никуда не уходит.</string>
+    <string name="v5_translate_note_metered">Вы в мобильной сети: пакет языка скачается через неё.</string>
+    <string name="v5_translate_always_later">«Всегда переводить этот язык» появится после первого перевода с него, когда пакет будет на телефоне.</string>
+    <string name="v5_translate_show_original">Показать оригинал</string>
+    <string name="v5_translate_language_search">Поиск языка</string>
     <string name="v5_translate_note_download">Перевод на устройстве: текст страницы никуда не уходит. Пакет %1$s скачается один раз.</string>
     <string name="v5_translate_languages_loading">Загружаю список языков…</string>
     <string name="v5_translate_languages_failed">Не удалось получить список языков.</string>
@@ -2497,6 +2511,7 @@
     <string name="v5_webdav_error_busy">Сервер занят или файл на нём заблокирован. Попробуйте позже.</string>
     <string name="v5_webdav_error_server">На сервере произошла ошибка. Попробуйте позже или посмотрите журнал сервера.</string>
     <string name="v5_webdav_error_address">Проверьте адрес: он выглядит как https://cloud.example.com, без логина, пробелов, «?» и «#».</string>
+    <string name="v5_webdav_error_scheme">Начните адрес с https://, например https://cloud.example.com.</string>
     <string name="v5_webdav_connecting">Подключение…</string>
     <string name="v5_webdav_phrase_simple">Слишком простая фраза: возьмите несколько разных слов.</string>
     <string name="v5_webdav_status_newer">Обновите Vola</string>
