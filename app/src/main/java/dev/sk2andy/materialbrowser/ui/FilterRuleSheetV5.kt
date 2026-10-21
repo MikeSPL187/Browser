@@ -45,6 +45,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5Segmented
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
+import dev.sk2andy.materialbrowser.ui.v5.v5FieldLabel
 
 /**
  * The filter rule editor under ui.v5 (V28, Б12a-4): a v5 sheet with what the rule does (block,
@@ -275,7 +276,7 @@ internal fun FilterTextField(
             ),
             modifier = modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = placeholder },
+                .v5FieldLabel(placeholder, empty = value.isEmpty()),
         )
     }
 }

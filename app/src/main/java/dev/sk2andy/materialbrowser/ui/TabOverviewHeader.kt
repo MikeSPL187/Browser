@@ -210,7 +210,7 @@ private fun TabSearchField(search: TabOverviewSearch, modifier: Modifier = Modif
                     .weight(1f)
                     .padding(start = VolaTabOverview.searchFieldPadding)
                     .focusRequester(focusRequester)
-                    .semantics { contentDescription = hint }
+                    .semantics { if (search.query.isNullOrEmpty()) contentDescription = hint } // СС-1: a filled field reads its text
                     .testTag(TabOverviewHeaderTestTags.SearchField),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
                 singleLine = true,

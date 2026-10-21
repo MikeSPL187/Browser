@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.data.EssentialCandidate
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.data.ProtectionReportRules
@@ -68,6 +69,7 @@ internal fun BrowserNewTabV5(
         },
         recent = recentTabs.map { tab -> tab.v5Recent(recentIcons[tab.id]) },
         profileIcon = profileIconKey?.let(WorkspaceIcons::vector),
+        canEdit = editor != null,
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark) {
@@ -84,19 +86,17 @@ internal fun BrowserNewTabV5(
         )
         if (editor != null) {
             val candidates = editor.candidates
+            val suggested = if (addVisible) editor.suggestions else emptyList<EssentialCandidate>() to emptyList()
             val candidateIcons = rememberImageBitmaps(editor.candidateIcons)
             V5PinnedAddSheet(
                 visible = addVisible,
-                candidates = candidates.map { candidate ->
-                    V5RecentTab(
-                        id = candidate.tabId,
-                        title = candidate.title.ifBlank { EssentialsRules.host(candidate.url) },
-                        host = EssentialsRules.host(candidate.url),
-                        favicon = candidateIcons[candidate.tabId],
-                    )
+                candidates = candidates.map { candidate -> candidate.v5Row(candidateIcons[candidate.tabId]) },
+                onAdd = { id ->
+                    (candidates + suggested.first + suggested.second).firstOrNull { it.tabId == id }?.let(editor::add)
                 },
-                onAdd = { tabId -> candidates.firstOrNull { it.tabId == tabId }?.let(editor::add) },
                 onDismiss = { addVisible = false },
+                favorites = suggested.first.map { it.v5Row(null) },
+                history = suggested.second.map { it.v5Row(null) },
             )
         }
     }
@@ -108,6 +108,13 @@ internal fun BrowserNewTabV5(
         )
     }
 }
+
+private fun EssentialCandidate.v5Row(favicon: ImageBitmap?): V5RecentTab = V5RecentTab(
+    id = tabId,
+    title = title.ifBlank { EssentialsRules.host(url) },
+    host = EssentialsRules.host(url),
+    favicon = favicon,
+)
 
 private fun BrowserTab.v5Recent(favicon: ImageBitmap?): V5RecentTab = V5RecentTab(
     id = id,

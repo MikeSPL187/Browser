@@ -46,6 +46,7 @@ object V5PasswordHealthTestTags {
     const val Page = "v5_password_health"
     const val Summary = "v5_password_health_summary"
     const val AllFine = "v5_password_health_all_fine"
+    const val Empty = "v5_password_health_empty"
     const val LeakCheck = "v5_password_health_leak_check"
     const val StopLeakCheck = "v5_password_health_stop_leak_check"
     const val Finding = "v5_password_finding"
@@ -71,6 +72,8 @@ data class V5PasswordFinding(
     val count: Int = 0,
     val weakKind: WeakPasswordKind? = null,
     val formOnly: Boolean = false,
+    /** For a repeat: the other sites with the same password, so they need not be searched for (МП-2). */
+    val otherSites: List<String> = emptyList(),
 )
 
 /** Where the leak check is: only ever started by a touch (canvas «у1»). */
@@ -126,6 +129,11 @@ fun V5PasswordHealth(
                 .padding(top = V5Spacing.space4, bottom = V5Spacing.space8),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),
         ) {
+            if (V5PasswordHealthRules.empty(state.total)) {
+                // Nothing saved yet: no green «all fine» and no leak check over nothing (МП-1).
+                NoPasswords(actions.onBack)
+                return@Column
+            }
             val attention = V5PasswordHealthRules.attention(state.findings)
             val leaksChecked = state.leakCheck == V5LeakCheck.Done && state.unchecked == 0
             if (attention == 0) AllFine(leaksChecked) else Summary(attention, state.total)
@@ -187,6 +195,14 @@ fun V5PasswordFindingPage(
                     modifier = Modifier.size(V5Sizes.iconSmall),
                 )
                 Text(findingSentence(finding), style = V5Theme.type.callout, color = colors.label)
+            }
+            if (finding.otherSites.isNotEmpty()) {
+                V5ListGroup(
+                    header = stringResource(R.string.v5_password_finding_other_sites),
+                    dividerInset = V5ListDefaults.dividerInsetText,
+                ) {
+                    finding.otherSites.forEach { site -> V5ListRow(title = site) }
+                }
             }
             V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
                 V5ListRow(title = stringResource(R.string.passwords_username), value = finding.username)
@@ -255,6 +271,38 @@ private fun Summary(attention: Int, total: Int) {
                 color = colors.labelSecondary,
             )
         }
+    }
+}
+
+@Composable
+private fun NoPasswords(onBack: () -> Unit) {
+    val colors = V5Theme.colors
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = V5Spacing.space6, vertical = V5Spacing.space8)
+            .testTag(V5PasswordHealthTestTags.Empty),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
+        V5StateGlyph(VolaIcons.Key)
+        Text(
+            stringResource(R.string.v5_password_health_empty_title),
+            style = V5Theme.type.title,
+            color = colors.label,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            stringResource(R.string.v5_password_health_empty_message),
+            style = V5Theme.type.callout,
+            color = colors.labelSecondary,
+            textAlign = TextAlign.Center,
+        )
+        V5StatePrimaryAction(
+            V5StateAction(label = stringResource(R.string.v5_password_health_empty_action), onClick = onBack),
+            modifier = Modifier.padding(top = V5Spacing.space2),
+        )
     }
 }
 
@@ -471,7 +519,10 @@ internal object V5PasswordHealthRules {
      */
     fun findings(report: PasswordHealthReport, site: (VaultLogin) -> String): List<V5PasswordFinding> =
         report.breached.map { finding(it.login, site, V5PasswordFindingKind.Breached, it.timesSeen) } +
-            report.reused.map { finding(it.login, site, V5PasswordFindingKind.Reused, it.otherSites) } +
+            report.reused.map {
+                finding(it.login, site, V5PasswordFindingKind.Reused, it.otherSites)
+                    .copy(otherSites = it.otherSiteKeys.map { key -> otherSite(key) })
+            } +
             report.insecure.map { finding(it.login, site, V5PasswordFindingKind.Insecure, formOnly = it.formOnly) } +
             report.weak.map { finding(it.login, site, V5PasswordFindingKind.Weak, it.length, it.kind) }
 
@@ -488,6 +539,12 @@ internal object V5PasswordHealthRules {
     fun canChange(finding: V5PasswordFinding): Boolean = finding.kind != V5PasswordFindingKind.Insecure
 
     fun percent(progress: Float): Int = (progress.coerceIn(0f, 1f) * PERCENT).toInt()
+
+    /** The page's top: with no passwords at all there is nothing «fine» to report (МП-1). */
+    fun empty(total: Int): Boolean = total == 0
+
+    /** Another site of a repeat as the bar would name it. */
+    private fun otherSite(siteKey: String): String = v5BarDomain(siteKey) ?: siteKey
 
     private fun finding(
         login: VaultLogin,

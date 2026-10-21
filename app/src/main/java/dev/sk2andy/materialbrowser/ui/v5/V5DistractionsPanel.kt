@@ -136,22 +136,29 @@ fun V5DistractionsPanel(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
             ) {
-                // TalkBack hears the hint and the button change as blocks are hidden and brought back.
-                Box(Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }) {
-                    when {
-                        canUndo -> PanelButton(
+                // TalkBack hears the hint and the buttons change as blocks are hidden and brought back.
+                // «Undo» brings the last block back and «Show all» every one: both stay while both
+                // can act, so bringing everything back needs no «Done» and a second pick (РР-3).
+                Row(
+                    Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
+                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                ) {
+                    if (canUndo) {
+                        PanelButton(
                             text = stringResource(R.string.v5_distractions_undo),
                             background = colors.fill,
                             content = colors.label,
                             onClick = onUndo,
-                            modifier = Modifier.fillMaxWidth().testTag(V5DistractionsPanelTestTags.Undo),
+                            modifier = Modifier.weight(1f).testTag(V5DistractionsPanelTestTags.Undo),
                         )
-                        hasHidden -> PanelButton(
+                    }
+                    if (hasHidden) {
+                        PanelButton(
                             text = stringResource(R.string.v5_distractions_show_all),
                             background = colors.fill,
                             content = colors.label,
                             onClick = onShowHidden,
-                            modifier = Modifier.fillMaxWidth().testTag(V5DistractionsPanelTestTags.ShowHidden),
+                            modifier = Modifier.weight(1f).testTag(V5DistractionsPanelTestTags.ShowHidden),
                         )
                     }
                 }

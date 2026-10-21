@@ -63,6 +63,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
@@ -166,6 +169,7 @@ internal fun BoxScope.V5BottomBar(
     )
     val fullHeight = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) V5Sizes.barLargeFont else V5Sizes.bar
     val showBarLabel = stringResource(R.string.compact_mode_show_bar)
+    val tabsLabel = stringResource(R.string.v5_bar_open_tabs)
     Column(
         modifier
             .align(Alignment.BottomCenter)
@@ -177,6 +181,8 @@ internal fun BoxScope.V5BottomBar(
                     Modifier
                         .v5BarGestures(gestures, onTabs)
                         .clickable(role = Role.Button, onClickLabel = showBarLabel, onClick = onExpand)
+                        // The swipe up has a TalkBack action too: tabs without showing the bar first (П-8).
+                        .semantics { customActions = listOf(CustomAccessibilityAction(tabsLabel) { onTabs(); true }) }
                 } else {
                     Modifier
                 },
@@ -429,18 +435,25 @@ private fun LoadingLine(visible: Boolean, progress: Float) {
     }
 }
 
-/** The domain the bar shows: no scheme, no `www.`, no path; null for a page without a host. */
+/**
+ * The domain the bar shows: no scheme, no `www.`, no path, no closing dot; null for a page without a
+ * host, which then shows its address as typed. The authority ends at `/`, `?`, `#` and also at `\`,
+ * as a browser reads `http(s)` addresses (WHATWG), so `https://evil.com\@good.com/` shows
+ * `evil.com`, the host the page comes from (П-1). An address inside another scheme, such as
+ * `view-source:https://…`, is not the page itself and has no domain here (П-3).
+ */
 internal fun v5BarDomain(url: String): String? {
-    val afterScheme = url.substringAfter("://", missingDelimiterValue = "")
-    if (afterScheme.isEmpty()) return null
-    val authority = afterScheme.substringBefore('/').substringBefore('?').substringBefore('#')
+    val scheme = url.substringBefore("://", missingDelimiterValue = "")
+    if (scheme.isEmpty() || !scheme.all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }) return null
+    val afterScheme = url.substring(scheme.length + "://".length)
+    val authority = afterScheme.substringBefore('/').substringBefore('\\').substringBefore('?').substringBefore('#')
         .substringAfterLast('@')
     val host = if (authority.startsWith("[")) {
         authority.substringBefore(']') + "]"
     } else {
         authority.substringBefore(':')
     }
-    return host.lowercase().removePrefix("www.").takeIf { it.isNotBlank() && it != "[]" }
+    return host.lowercase().removePrefix("www.").removeSuffix(".").takeIf { it.isNotBlank() && it != "[]" }
 }
 
 /** The bar's colors after the site tint (system-v5.md, section 1.3). */

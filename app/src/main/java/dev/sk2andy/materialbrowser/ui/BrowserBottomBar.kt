@@ -981,7 +981,7 @@ private fun AddressCommandFeedbackContent(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("address_command_feedback")
-            .clickable(enabled = gesturesEnabled, onClick = onAddress)
+            .clickable(enabled = gesturesEnabled, role = Role.Button, onClick = onAddress)
             .addressBarVerticalGesture(
                 enabled = gesturesEnabled,
                 onSwipeUp = onTabs,

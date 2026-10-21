@@ -107,6 +107,36 @@ object EssentialsRules {
             .filterNot { tab -> CanonicalWebUrl.key(tab.url) in pinned }
     }
 
+    /** How many favorites or history pages the «Pin a site» sheet offers, each. */
+    const val SUGGESTED_PER_SOURCE = 8
+
+    /**
+     * Sites to pin besides open tabs (Н-1): the profile's favorites in their order, then its history
+     * newest first, each a site once, without what is pinned or already offered by [offered] (the
+     * open tabs). Ids carry their source, so a tap knows the row; only http(s) pages can be pinned.
+     */
+    fun suggestions(
+        entries: List<EssentialEntry>,
+        offered: List<EssentialCandidate>,
+        favorites: List<FavoriteEntry>,
+        history: List<HistoryEntry>,
+    ): Pair<List<EssentialCandidate>, List<EssentialCandidate>> {
+        val taken = entries.mapTo(hashSetOf(), EssentialEntry::id)
+        offered.mapNotNullTo(taken) { CanonicalWebUrl.key(it.url) }
+        fun pick(candidates: List<EssentialCandidate>): List<EssentialCandidate> = candidates
+            .filter { candidate -> CanonicalWebUrl.key(candidate.url)?.let(taken::add) == true }
+            .take(SUGGESTED_PER_SOURCE)
+        val fromFavorites = pick(favorites.map { EssentialCandidate("$FAVORITE_PREFIX${it.id}", it.url, it.title) })
+        val fromHistory = pick(
+            history.sortedByDescending(HistoryEntry::lastVisitedAt)
+                .map { EssentialCandidate("$HISTORY_PREFIX${it.url}", it.url, it.title) },
+        )
+        return fromFavorites to fromHistory
+    }
+
+    private const val FAVORITE_PREFIX = "favorite:"
+    private const val HISTORY_PREFIX = "history:"
+
     /**
      * The open tab already showing [entry] in [tabs] (the workspace's regular tabs, in order), so
      * a tap from the tab overview switches to it instead of opening a second copy.

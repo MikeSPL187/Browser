@@ -73,4 +73,20 @@ class V5WebDavRulesTest {
         val lines = V5WebDavError.entries.map(V5WebDavRules::errorText)
         assertEquals(lines.size, lines.toSet().size)
     }
+
+    @Test
+    fun `an address without https is told to start with it`() {
+        assertEquals(V5WebDavError.MissingScheme, V5WebDavRules.addressProblem("cloud.example.com"))
+        assertNull(V5WebDavRules.addressProblem("   "))
+    }
+
+    @Test
+    fun `runs, keyboard rows and common passwords are too simple`() {
+        listOf("1234567890", "qwertyuiop", "password12", "abcdefghij", "0987654321", "йцукенгшщз").forEach { phrase ->
+            assertTrue(phrase, V5WebDavRules.phraseTooSimple(phrase))
+        }
+        listOf("лес река гора небо", "Tr0ub4dor&3x", "correct horse battery").forEach { phrase ->
+            assertFalse(phrase, V5WebDavRules.phraseTooSimple(phrase))
+        }
+    }
 }

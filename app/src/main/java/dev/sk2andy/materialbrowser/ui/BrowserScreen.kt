@@ -99,7 +99,6 @@ import dev.sk2andy.materialbrowser.browser.commands.CommandActions
 import dev.sk2andy.materialbrowser.browser.commands.CommandConfirmation
 import dev.sk2andy.materialbrowser.browser.commands.CommandDispatchOutcome
 import dev.sk2andy.materialbrowser.browser.commands.CommandDispatcher
-import dev.sk2andy.materialbrowser.browser.commands.CommandMatcher
 import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconMode
@@ -683,8 +682,18 @@ internal fun BrowserScreen(
         tabOverviewVisible = false
         controller.releaseActiveProfileTabSwitcherWallpaper()
     }
+    // A link from another app shows its page: no overview, editor, settings or studio left over it (M-02).
     LaunchedEffect(incomingBrowserNavigationRequestId) {
-        if (incomingBrowserNavigationRequestId != 0) closeTabOverview()
+        if (incomingBrowserNavigationRequestId == 0) return@LaunchedEffect
+        closeTabOverview()
+        addressEditor.close()
+        settingsVisible = false
+        snoozedTabsVisible = false
+        filterStudioVisible = false
+        readerStudioSession = null
+        privacyXRayTabId = null
+        pendingCommand = null
+        commandFeedback = null
     }
     // «Open side by side» in the overview: the two cards show at once.
     LaunchedEffect(controller.splitView.openRequests) {
@@ -715,23 +724,11 @@ internal fun BrowserScreen(
             openAddressEditor()
         }
     }
-    LaunchedEffect(hardwareTabChangeRequestId) {
-        if (hardwareTabChangeRequestId > 0) {
-            addressEditor.close()
-            pendingCommand = null
-            commandFeedback = null
-        }
-    }
-    fun createTabAndConfirm(isIncognito: Boolean, emitHaptic: Boolean): Boolean {
-        val previousTabId = controller.selectedTabId
-        val createdTabId = controller.createTab(isIncognito = isIncognito)
-        if (createdTabId == previousTabId) return false
-        if (emitHaptic) rootView.performConfirmHaptic()
-        return true
-    }
+    HardwareTabChangeEffect(hardwareTabChangeRequestId) { addressEditor.close(); pendingCommand = null; commandFeedback = null }
+    OverviewOpeningWatchdog(tabOverviewOpening) { tabOverviewOpening = false; tabOverviewVisible = true }
     fun openNewTabAndEdit(isIncognito: Boolean = false) {
         val createAndEdit = {
-            if (createTabAndConfirm(isIncognito = isIncognito, emitHaptic = true)) {
+            if (controller.createTabAndConfirm(isIncognito, haptics = rootView)) {
                 addressEditor.open("")
             }
         }
@@ -906,10 +903,7 @@ internal fun BrowserScreen(
             profileId: String,
             onComplete: (Boolean) -> Unit,
         ): Boolean = controller.requestProfileSelection(profileId, onComplete)
-        override fun createTab(isIncognito: Boolean): Boolean = createTabAndConfirm(
-            isIncognito = isIncognito,
-            emitHaptic = false,
-        )
+        override fun createTab(isIncognito: Boolean): Boolean = controller.createTabAndConfirm(isIncognito, haptics = null)
         override fun openSettings(): Boolean = true
     }
 
@@ -1069,7 +1063,7 @@ internal fun BrowserScreen(
                 controller.submitAddress(submission.input, searchModeFor(submission.input))
                 addressEditorVisible = false
             }
-            AddressSubmission.None -> Unit
+            AddressSubmission.None -> rootView.performRejectHaptic() // Nothing typed: felt, not a dead key (А-2).
         }
     }
 
@@ -1078,15 +1072,7 @@ internal fun BrowserScreen(
         addressEditor.moveHighlight(delta, suggestionItems.size)
     }
 
-    LaunchedEffect(addressValue.text, suggestionItems.map(AddressSuggestionItem::stableId)) {
-        highlightedSuggestionIndex = if (
-            CommandMatcher.isExplicitCommandQuery(addressValue.text) && suggestionItems.isNotEmpty()
-        ) {
-            0
-        } else {
-            -1
-        }
-    }
+    AddressHighlightEffect(addressValue.text, suggestionItems, addressEditor)
 
     LaunchedEffect(commandFeedback) {
         val shownFeedback = commandFeedback ?: return@LaunchedEffect
@@ -1556,6 +1542,7 @@ internal fun BrowserScreen(
             onOverviewGestureStarted = { overviewGestureSettleJob?.cancel() },
             onOverviewGestureCancelled = settleOverviewGesture,
             openNewTabAndEdit = { openNewTabAndEdit() },
+            openNewPrivateTabAndEdit = { openNewTabAndEdit(isIncognito = true) },
             toggleFavoriteWithFeedback = toggleFavoriteWithFeedback,
             onBlankTabModeRevealOriginChanged = { blankTabModeRevealOrigin = it },
             onSnoozedTabs = { snoozedTabsVisible = true },
@@ -1642,6 +1629,11 @@ internal fun BrowserScreen(
                 onNewTab = {
                     val previousTabId = controller.selectedTabId
                     openNewTabAndEdit()
+                    if (controller.selectedTabId != previousTabId) closeTabOverview()
+                },
+                onNewPrivateTab = {
+                    val previousTabId = controller.selectedTabId
+                    openNewTabAndEdit(isIncognito = true)
                     if (controller.selectedTabId != previousTabId) closeTabOverview()
                 },
                 onOpenSettings = { openSettings(SettingsDestination.Home) },

@@ -41,7 +41,7 @@ class GeckoReaderViewInstrumentedTest {
         assertTrue(content.contains("self === top && message.type === \"reader-extract\""))
         assertTrue(content.contains("content, 500"))
         assertTrue(content.contains("content, 200"))
-        assertTrue(content.contains("textContent, 300"))
+        assertTrue(content.contains("textOf(anchor), 300"))
         assertTrue(content.contains("slice(0, 2048)"))
     }
 

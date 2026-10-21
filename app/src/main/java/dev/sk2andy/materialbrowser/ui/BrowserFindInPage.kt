@@ -58,6 +58,7 @@ internal fun BrowserFindInPage(
                     previous = stringResource(R.string.cd_find_in_page_previous),
                     next = stringResource(R.string.cd_find_in_page_next),
                     done = stringResource(R.string.action_done),
+                    clear = stringResource(R.string.v5_editor_clear),
                 ),
                 onPrevious = { controller.findNextInPage(forward = false) },
                 onNext = { controller.findNextInPage(forward = true) },
@@ -100,7 +101,7 @@ internal fun BrowserFindInPage(
 /** «2 of 7» in words, as TalkBack reads it, and «Not found» instead of "0/0"; empty without a query. */
 @Composable
 private fun v5FindInPageMatchText(state: FindInPageState, position: FindInPageMatchPosition): String = when {
-    state.query.isEmpty() -> ""
+    state.query.isBlank() -> ""
     FindInPageRules.isNotFound(state) -> stringResource(R.string.v5_find_in_page_not_found)
     position.isCountKnown -> stringResource(
         R.string.v5_find_in_page_match_count,

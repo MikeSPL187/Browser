@@ -94,7 +94,11 @@ internal fun V5ProfileSheet(
                 }
             }
             if (synced.isNotEmpty()) {
-                V5ListGroup(header = stringResource(R.string.v5_profiles_other_devices)) {
+                // Changed on the device that owns them: the footer says why a long press does nothing (ПР-5).
+                V5ListGroup(
+                    header = stringResource(R.string.v5_profiles_other_devices),
+                    footer = stringResource(R.string.v5_profiles_other_devices_footer),
+                ) {
                     synced.forEach { profile -> ProfileRow(profile, onSelect, onEdit = null) }
                 }
             }

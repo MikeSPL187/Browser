@@ -218,7 +218,8 @@
     <string name="profile_isolation_confirm_title">Switch workspace storage?</string>
     <string name="profile_isolation_enable_message">Tabs in this workspace will reload with separate storage. Existing shared sign-ins will not carry over.</string>
     <string name="profile_isolation_disable_message">Tabs in this workspace will reload with shared storage. Sign-ins from isolated storage will no longer be active.</string>
-    <string name="profile_protection_unavailable">Unavailable: set up a strong biometric in Android first</string>
+    <string name="profile_protection_unavailable">Unavailable: set a screen lock or a strong biometric in Android first</string>
+    <string name="profile_locked_new_action">Start a new profile</string>
     <string name="profile_protection_configure">Change lock timing</string>
     <string name="profile_protection_dialog_title">Protect workspace</string>
     <string name="profile_protection_disclosure">This access lock uses Android strong biometrics. It does not add separate at-rest encryption to workspace files.</string>
@@ -1280,6 +1281,10 @@
     <string name="filter_fetching_preview">Fetching preview…</string>
     <string name="filter_confirm_update">Confirm update</string>
     <string name="filter_diff_summary">+%1$d · −%2$d · %3$d unchanged</string>
+    <string name="filter_diff_added">+ %1$s</string>
+    <string name="filter_diff_removed">− %1$s</string>
+    <string name="filter_diff_added_spoken">Adds %1$s</string>
+    <string name="filter_diff_removed_spoken">Removes %1$s</string>
     <string name="filter_more_changes">Other changes: %1$d</string>
     <string name="filter_more_rules">Other rules: %1$d</string>
     <string name="filter_deciding_rule">Rule: %1$s</string>
@@ -1972,6 +1977,8 @@
     <string name="v5_suggestion_commands">Commands</string>
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
+    <string name="v5_feedback_error">Error</string>
+    <string name="v5_field_truncated">Only the first %1$d characters fit here; the rest was cut off.</string>
     <string name="v5_sheet_close">Close</string>
     <string name="v5_overview_ungrouped">No group</string>
     <string name="v5_overview_group_collapse">Collapse group</string>
@@ -2021,6 +2028,7 @@
     </plurals>
     <string name="v5_report_device_only">Stored only on this device and never sent anywhere. Private tabs are not counted.</string>
     <string name="v5_report_hide_card">Hide on new tab</string>
+    <string name="v5_report_hide_card_message">It comes back with “Weekly report on the new tab” in the protection settings.</string>
     <string name="v5_report_clear">Clear report data</string>
     <string name="v5_report_clear_body">The report\'s counts are deleted from this device. Protection keeps working.</string>
     <string name="v5_newtab_pinned">Pinned</string>
@@ -2032,7 +2040,12 @@
     <string name="v5_newtab_more">More</string>
     <string name="v5_newtab_recent">Recent tabs</string>
     <string name="v5_newtab_add_title">Pin a site</string>
-    <string name="v5_newtab_add_empty">Open a site in a tab of this profile to pin it here.</string>
+    <string name="v5_newtab_add_empty">Sites from this profile’s open tabs, favorites and history show up here.</string>
+    <string name="v5_newtab_add_tabs">Open tabs</string>
+    <string name="v5_newtab_add_favorites">Favorites</string>
+    <string name="v5_newtab_add_history">History</string>
+    <string name="v5_newtab_pinned_empty">Pin the sites you open most: they wait here in every new tab.</string>
+    <string name="v5_newtab_pinned_full">16 sites is as many as fit. Unpin one to add another.</string>
     <string name="v5_newtab_move_earlier">Move earlier</string>
     <string name="v5_newtab_move_later">Move later</string>
     <string name="v5_private_title">Private browsing</string>
@@ -2097,7 +2110,11 @@
     <string name="v5_menu_more">More</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
-    <string name="v5_menu_favorite_private">Not in private</string>
+    <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
+    <string name="v5_bar_open_tabs">Show tabs</string>
+    <string name="v5_menu_extension_off_here">Off on this page</string>
+    <string name="v5_menu_desktop_view_hint">The page reloads as on a computer</string>
+    <string name="v5_menu_mute_site_hint">Every page of this site stays silent</string>
     <string name="v5_menu_read">Read</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>
@@ -2116,9 +2133,20 @@
     <string name="v5_menu_all_actions">All actions</string>
     <string name="v5_overview_tabs">Tabs · %1$d</string>
     <string name="v5_overview_private">Private · %1$d</string>
+    <string name="v5_overview_no_matches">No tabs match “%1$s”</string>
+    <string name="v5_overview_private_empty_title">Private tabs show up here</string>
+    <string name="v5_overview_private_empty_message">What you open in a private tab leaves no history, and its cookies go when you close it.</string>
+    <string name="v5_overview_private_unavailable">This profile has no private tabs</string>
+    <string name="v5_overview_tabs_empty_title">No open tabs</string>
+    <string name="v5_overview_close_named">Close “%1$s”</string>
+    <string name="v5_overview_pinned_stays">A pinned tab stays open. Unpin it first.</string>
     <string name="v5_overview_search">Search tabs</string>
     <string name="v5_profiles_title">Profiles</string>
     <string name="v5_profiles_other_devices">From other devices</string>
+    <string name="v5_profiles_other_devices_footer">These profiles are changed on the device they come from.</string>
+    <string name="v5_profile_create_failed">Couldn’t create the profile. Try again from the profiles list.</string>
+    <string name="v5_profile_delete_last">The only profile on this phone can’t be deleted.</string>
+    <string name="v5_profile_delete_unavailable">This profile can’t be deleted now: it is locked or kept in step with another device.</string>
     <string name="v5_profiles_choose">Choose profile</string>
     <string name="v5_profile_untitled">Profile</string>
     <string name="v5_profile_locked">Locked</string>
@@ -2190,6 +2218,7 @@
     <string name="v5_first_run_device_caption">No analytics and no ad SDKs</string>
     <string name="v5_first_run_default_title">Open links in Vola?</string>
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
+    <string name="v5_first_run_default_refused">Vola isn’t your default browser yet. You can make it one later in Settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
@@ -2200,6 +2229,7 @@
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
     <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
     <string name="v5_first_run_gestures_done">Got it</string>
+    <string name="v5_first_run_gestures_buttons">Without gestures: the tabs button and the “•••” menu do the same.</string>
     <string name="filter_v5_on">On</string>
     <string name="filter_v5_off">Off</string>
     <string name="filter_v5_active">Enabled</string>
@@ -2214,6 +2244,10 @@
     <string name="v5_translate_action">Translate</string>
     <string name="v5_translate_in_progress">Translating…</string>
     <string name="v5_translate_note">Translated on this phone: the page text goes nowhere.</string>
+    <string name="v5_translate_note_metered">You are on mobile data: the language pack downloads over it.</string>
+    <string name="v5_translate_always_later">“Always translate this language” comes once the first translation from it has downloaded its pack.</string>
+    <string name="v5_translate_show_original">Show original</string>
+    <string name="v5_translate_language_search">Search languages</string>
     <string name="v5_translate_note_download">Translated on this phone: the page text goes nowhere. The %1$s language pack downloads once.</string>
     <string name="v5_translate_languages_loading">Getting the languages…</string>
     <string name="v5_translate_languages_failed">Couldn’t get the list of languages.</string>
@@ -2304,7 +2338,11 @@
     <string name="v5_password_health_leaks">Leaks</string>
     <string name="v5_password_health_checked_at">Checked at %1$s</string>
     <string name="v5_password_health_check_again">Check again</string>
-    <string name="v5_password_health_note">Only the first 5 characters of each password’s hash are sent — not the password and not the site. Repeats and weak passwords are checked on the phone.</string>
+    <string name="v5_password_health_note">Only the first 5 characters of each password’s hash go to the Pwned Passwords service (haveibeenpwned.com) — never the password or the site. The service sees your IP address and when you check. Repeats and weak passwords are checked on the phone.</string>
+    <string name="v5_password_health_empty_title">No passwords yet</string>
+    <string name="v5_password_health_empty_message">Once you save or bring over passwords, the check finds repeats, weak ones and leaks here.</string>
+    <string name="v5_password_health_empty_action">Back to passwords</string>
+    <string name="v5_password_finding_other_sites">Same password on</string>
     <string name="v5_password_health_all_fine">No repeats, no leaks, every password is strong.</string>
     <string name="v5_password_health_all_fine_unchecked">No repeats, every password is strong. Leaks have not been checked yet.</string>
     <string name="v5_password_health_open_login">Login details</string>
@@ -2375,6 +2413,7 @@
     <string name="v5_webdav_error_busy">The server is busy or a file on it is locked. Try again later.</string>
     <string name="v5_webdav_error_server">The server failed on its side. Try again later or look at the server’s log.</string>
     <string name="v5_webdav_error_address">Check the address: it looks like https://cloud.example.com, with no login, spaces, “?” or “#”.</string>
+    <string name="v5_webdav_error_scheme">Start the address with https://, for example https://cloud.example.com.</string>
     <string name="v5_webdav_connecting">Connecting…</string>
     <string name="v5_webdav_phrase_simple">Too simple: take a few different words.</string>
     <string name="v5_webdav_status_newer">Update Vola</string>

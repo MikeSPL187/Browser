@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
@@ -74,7 +75,7 @@ private fun CompactModeHintCard(onClick: () -> Unit) {
         modifier = Modifier
             .testTag(CompactModeHintTestTags.Hint)
             .semantics { liveRegion = LiveRegionMode.Polite }
-            .clickable(onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick),
         shape = VolaShapes.card,
         color = VolaTheme.extendedColors.card,
         shadowElevation = VolaElevation.level2,

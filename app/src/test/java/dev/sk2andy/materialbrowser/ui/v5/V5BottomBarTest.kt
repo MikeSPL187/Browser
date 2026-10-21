@@ -41,4 +41,21 @@ class V5BottomBarTest {
         assertNull(v5BarDomain("http://[]/"))
         assertNull(v5BarDomain("https://www./"))
     }
+
+    @Test
+    fun `a backslash ends the host as a browser reads it, so the name after it is never shown`() {
+        assertEquals("evil.com", v5BarDomain("https://evil.com\\@good.com/"))
+        assertEquals("evil.com", v5BarDomain("http://evil.com\\path"))
+    }
+
+    @Test
+    fun `an address inside another scheme is not the page`() {
+        assertNull(v5BarDomain("view-source:https://example.com"))
+        assertNull(v5BarDomain("javascript:alert('https://example.com')"))
+    }
+
+    @Test
+    fun `the closing dot of a host is dropped`() {
+        assertEquals("example.com", v5BarDomain("https://example.com./"))
+    }
 }

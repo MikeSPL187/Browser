@@ -570,7 +570,7 @@ fun SiteCapsuleEditorScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = request.canCreateDedicatedProfile) {
+                            .clickable(enabled = request.canCreateDedicatedProfile, role = Role.Switch) {
                                 createDedicatedProfile = !createDedicatedProfile
                             }
                             .padding(vertical = 8.dp),
@@ -607,7 +607,7 @@ fun SiteCapsuleEditorScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = request.profileIsolationSupported) {
+                            .clickable(enabled = request.profileIsolationSupported, role = Role.Switch) {
                                 isolatedStorage = !isolatedStorage
                             }
                             .padding(vertical = 8.dp),
@@ -829,7 +829,7 @@ private fun ProfileChoices(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .clickable(enabled = enabled) { onSelect(profile.id) },
+                    .clickable(enabled = enabled, role = Role.RadioButton) { onSelect(profile.id) },
                 shape = CircleShape,
                 color = if (profile.id == selectedProfileId) {
                     MaterialTheme.colorScheme.primaryContainer

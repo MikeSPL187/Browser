@@ -227,6 +227,7 @@ private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean,
                         controller.openDefaultBrowserSettings()
                     },
                     onNotNow = { stage = FirstRunStage.GestureSheet },
+                    refused = askedForDefault && !controller.isDefaultBrowser,
                 )
                 FirstRunStage.GestureSheet -> V5FirstRunGestures(onDone = onCompleted)
                 else -> V5FirstRunWelcome(

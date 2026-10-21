@@ -18,8 +18,19 @@ internal class ProfileBiometricAuthenticator(
     private val activity: AppCompatActivity,
 ) {
     val isAvailable: Boolean
-        get() = BiometricManager.from(activity).canAuthenticate(AUTHENTICATORS) ==
-            BiometricManager.BIOMETRIC_SUCCESS
+        get() = authenticators() != null
+
+    /**
+     * A strong biometric when the phone has one enrolled; otherwise the phone's own PIN, pattern or
+     * password (H-01): a profile locked while a fingerprint existed must still open after the
+     * fingerprints are removed, the same way the phone itself opens. Null with neither.
+     */
+    private fun authenticators(): Int? {
+        val manager = BiometricManager.from(activity)
+        return listOf(BIOMETRIC, DEVICE_CREDENTIAL).firstOrNull { authenticators ->
+            manager.canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS
+        }
+    }
 
     private var pendingResult: ((Boolean) -> Unit)? = null
 
@@ -38,6 +49,7 @@ internal class ProfileBiometricAuthenticator(
     }
 
     private fun showPrompt(purpose: ProfileAuthenticationPurpose) {
+        val authenticators = authenticators() ?: return complete(success = false)
         val prompt = BiometricPrompt(
             activity,
             ContextCompat.getMainExecutor(activity),
@@ -53,14 +65,13 @@ internal class ProfileBiometricAuthenticator(
                 }
             },
         )
-        prompt.authenticate(
-            BiometricPrompt.PromptInfo.Builder()
-                .setTitle(activity.getString(purpose.titleResource))
-                .setSubtitle(activity.getString(purpose.subtitleResource))
-                .setAllowedAuthenticators(AUTHENTICATORS)
-                .setNegativeButtonText(activity.getString(R.string.action_cancel))
-                .build(),
-        )
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(activity.getString(purpose.titleResource))
+            .setSubtitle(activity.getString(purpose.subtitleResource))
+            .setAllowedAuthenticators(authenticators)
+        // The phone's own credential screen has its own way back; a cancel button is for biometrics only.
+        if (authenticators == BIOMETRIC) info.setNegativeButtonText(activity.getString(R.string.action_cancel))
+        prompt.authenticate(info.build())
     }
 
     private fun complete(success: Boolean) {
@@ -91,6 +102,7 @@ internal class ProfileBiometricAuthenticator(
         }
 
     private companion object {
-        const val AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_STRONG
+        const val BIOMETRIC = BiometricManager.Authenticators.BIOMETRIC_STRONG
+        const val DEVICE_CREDENTIAL = BiometricManager.Authenticators.DEVICE_CREDENTIAL
     }
 }
