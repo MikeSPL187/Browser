@@ -23,16 +23,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -94,7 +103,7 @@ fun V5SearchField(
                 cursorBrush = SolidColor(colors.accent),
                 modifier = fieldModifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = hint },
+                    .v5FieldLabel(hint, empty = query.isEmpty()),
             )
         }
         if (query.isNotEmpty()) {
@@ -132,38 +141,73 @@ internal fun V5NameField(
     enabled: Boolean = true,
 ) {
     val colors = V5Theme.colors
-    Box(
-        Modifier
-            .padding(horizontal = sideMargin)
-            .fillMaxWidth()
-            .heightIn(min = V5Sizes.rowSingleLine)
-            .clip(V5Theme.shapes.s)
-            .background(colors.surface)
-            .padding(horizontal = V5Spacing.space4),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        if (value.isEmpty()) {
-            Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary)
-        }
-        BasicTextField(
-            value = value,
-            onValueChange = { onValueChange(it.take(maxLength)) },
-            singleLine = true,
-            enabled = enabled,
-            textStyle = V5Theme.type.body.copy(color = if (enabled) colors.label else colors.labelSecondary),
-            cursorBrush = SolidColor(colors.accent),
-            keyboardOptions = KeyboardOptions(
-                capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
-                autoCorrectEnabled = !password && capitalize,
-                keyboardType = keyboardType ?: if (password) KeyboardType.Password else KeyboardType.Text,
-                imeAction = imeAction,
-            ),
-            visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardActions = KeyboardActions(onDone = { onDone() }),
-            modifier = modifier
+    val focusManager = LocalFocusManager.current
+    // A long app password or phrase is easy to mistype unseen: the eye shows it (ЯС-6).
+    var revealed by rememberSaveable { mutableStateOf(false) }
+    // Pasted text over the limit loses its end: the field says so instead of failing later (ЯС-4).
+    var truncated by remember { mutableStateOf(false) }
+    Column(Modifier.padding(horizontal = sideMargin).fillMaxWidth()) {
+        Row(
+            Modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = placeholder },
-        )
+                .heightIn(min = V5Sizes.rowSingleLine)
+                .clip(V5Theme.shapes.s)
+                .background(colors.surface)
+                .padding(start = V5Spacing.space4, end = if (password) V5Spacing.space1 else V5Spacing.space4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) {
+                    Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary)
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = { typed ->
+                        truncated = typed.length > maxLength
+                        onValueChange(typed.take(maxLength))
+                    },
+                    singleLine = true,
+                    enabled = enabled,
+                    textStyle = V5Theme.type.body.copy(color = if (enabled) colors.label else colors.labelSecondary),
+                    cursorBrush = SolidColor(colors.accent),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = if (capitalize && !password) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
+                        autoCorrectEnabled = !password && capitalize,
+                        keyboardType = keyboardType ?: if (password) KeyboardType.Password else KeyboardType.Text,
+                        imeAction = imeAction,
+                    ),
+                    visualTransformation = if (password && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
+                    // «Next» moves on to the form's next field, as the key promises (M-01).
+                    keyboardActions = KeyboardActions(
+                        onDone = { onDone() },
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) },
+                    ),
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .v5FieldLabel(placeholder, empty = value.isEmpty()),
+                )
+            }
+            if (password) {
+                IconButton(onClick = { revealed = !revealed }, enabled = enabled) {
+                    Icon(
+                        if (revealed) VolaIcons.VisibilityOff else VolaIcons.Visibility,
+                        contentDescription = stringResource(if (revealed) R.string.passwords_hide else R.string.passwords_show),
+                        tint = colors.labelSecondary,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                }
+            }
+        }
+        if (truncated) {
+            Text(
+                stringResource(R.string.v5_field_truncated, maxLength),
+                style = V5Theme.type.footnote,
+                color = colors.warning,
+                modifier = Modifier
+                    .padding(start = V5Spacing.space4, top = V5Spacing.space1)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
     }
 }
 
@@ -219,3 +263,11 @@ internal fun V5SwatchRow(
         }
     }
 }
+
+/**
+ * A text field's name for TalkBack: said while the field is empty. Once something is typed TalkBack
+ * reads what was typed, which a name in contentDescription would replace (СС-1, FP-06); the place
+ * of the field (its sheet, its heading) still says what it is for.
+ */
+internal fun Modifier.v5FieldLabel(label: String, empty: Boolean): Modifier =
+    semantics { if (empty) contentDescription = label }

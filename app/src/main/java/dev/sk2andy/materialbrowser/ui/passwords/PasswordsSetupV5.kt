@@ -56,6 +56,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5RowIcon
 import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StateGlyph
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePrimaryAction
+import dev.sk2andy.materialbrowser.ui.v5.v5FieldLabel
 
 /*
  * Setting the vault up and opening it with the phrase under v5 (canvas «ц4», approved 17.10): the
@@ -213,7 +214,7 @@ internal fun RecoveryEntryV5(wrong: Boolean, busy: Boolean, onOpen: (String) -> 
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = hint }
+                    .v5FieldLabel(hint, empty = phrase.isEmpty())
                     .testTag(PasswordsTestTags.RecoverField),
             )
         }

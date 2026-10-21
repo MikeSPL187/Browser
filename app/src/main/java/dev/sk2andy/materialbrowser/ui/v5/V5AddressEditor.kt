@@ -251,15 +251,17 @@ private fun EditorField(
                             .fillMaxWidth()
                             .focusRequester(focus)
                             .onPreviewKeyEvent { event ->
-                                // A hardware keyboard walks the list: up goes away from the field.
+                                // A hardware keyboard walks the list: up goes away from the field; Esc
+                                // cancels, as «Cancel» does (А-5).
                                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (event.key) {
                                     Key.DirectionUp -> true.also { onArrow(1) }
                                     Key.DirectionDown -> true.also { onArrow(-1) }
+                                    Key.Escape -> true.also { onCancel() }
                                     else -> false
                                 }
                             }
-                            .semantics { contentDescription = hint }
+                            .v5FieldLabel(hint, empty = state.value.text.isEmpty())
                             .testTag(V5EditorTestTags.Field),
                         singleLine = true,
                         textStyle = V5Theme.type.body.copy(color = colors.label),
@@ -415,6 +417,9 @@ private fun SuggestionRow(
     val colors = V5Theme.colors
     val content = item.content()
     val highlighted = item.stableId == highlightedId
+    // A search row fills the field with its own button: a long press saying the same would be a
+    // second «Fill in» for TalkBack (А-4).
+    val longPressFills = content.fillable && item !is AddressSuggestionItem.Search
     val shape = V5Theme.shapes.l
     val container = when {
         highlighted -> colors.fill
@@ -432,8 +437,8 @@ private fun SuggestionRow(
             .combinedClickable(
                 role = Role.Button,
                 onClick = { onSelect(item) },
-                onLongClick = if (content.fillable) ({ onFill(item) }) else null,
-                onLongClickLabel = stringResource(R.string.address_suggestion_fill).takeIf { content.fillable },
+                onLongClick = if (longPressFills) ({ onFill(item) }) else null,
+                onLongClickLabel = stringResource(R.string.address_suggestion_fill).takeIf { longPressFills },
             )
             .padding(start = V5Spacing.space4, end = V5Spacing.space2)
             .testTag(V5EditorTestTags.row(item)),

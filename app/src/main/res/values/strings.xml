@@ -1972,6 +1972,7 @@
     <string name="v5_suggestion_commands">Commands</string>
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
+    <string name="v5_field_truncated">Only the first %1$d characters fit here; the rest was cut off.</string>
     <string name="v5_sheet_close">Close</string>
     <string name="v5_overview_ungrouped">No group</string>
     <string name="v5_overview_group_collapse">Collapse group</string>
@@ -2116,6 +2117,13 @@
     <string name="v5_menu_all_actions">All actions</string>
     <string name="v5_overview_tabs">Tabs · %1$d</string>
     <string name="v5_overview_private">Private · %1$d</string>
+    <string name="v5_overview_no_matches">No tabs match “%1$s”</string>
+    <string name="v5_overview_private_empty_title">Private tabs show up here</string>
+    <string name="v5_overview_private_empty_message">What you open in a private tab leaves no history, and its cookies go when you close it.</string>
+    <string name="v5_overview_private_unavailable">This profile has no private tabs</string>
+    <string name="v5_overview_tabs_empty_title">No open tabs</string>
+    <string name="v5_overview_close_named">Close “%1$s”</string>
+    <string name="v5_overview_pinned_stays">A pinned tab stays open. Unpin it first.</string>
     <string name="v5_overview_search">Search tabs</string>
     <string name="v5_profiles_title">Profiles</string>
     <string name="v5_profiles_other_devices">From other devices</string>
@@ -2304,7 +2312,11 @@
     <string name="v5_password_health_leaks">Leaks</string>
     <string name="v5_password_health_checked_at">Checked at %1$s</string>
     <string name="v5_password_health_check_again">Check again</string>
-    <string name="v5_password_health_note">Only the first 5 characters of each password’s hash are sent — not the password and not the site. Repeats and weak passwords are checked on the phone.</string>
+    <string name="v5_password_health_note">Only the first 5 characters of each password’s hash go to the Pwned Passwords service (haveibeenpwned.com) — never the password or the site. The service sees your IP address and when you check. Repeats and weak passwords are checked on the phone.</string>
+    <string name="v5_password_health_empty_title">No passwords yet</string>
+    <string name="v5_password_health_empty_message">Once you save or bring over passwords, the check finds repeats, weak ones and leaks here.</string>
+    <string name="v5_password_health_empty_action">Back to passwords</string>
+    <string name="v5_password_finding_other_sites">Same password on</string>
     <string name="v5_password_health_all_fine">No repeats, no leaks, every password is strong.</string>
     <string name="v5_password_health_all_fine_unchecked">No repeats, every password is strong. Leaks have not been checked yet.</string>
     <string name="v5_password_health_open_login">Login details</string>

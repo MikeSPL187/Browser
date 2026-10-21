@@ -103,4 +103,15 @@ class V5SuggestionLayoutTest {
         val layout = V5SuggestionLayoutRules.layout(listOf(history, search), query = "пол")
         assertEquals(history, V5SuggestionLayoutRules.step(layout, "navigation:gone", 1))
     }
+
+    @Test
+    fun `a repeated key keeps only its first row, so the list never sees it twice`() {
+        val again = AddressSuggestionItem.Recall(
+            RecallMatch("personal", "https://example.com", "Example again", "полярное", 2L, 0.5),
+        )
+        val layout = V5SuggestionLayoutRules.layout(listOf(history, recall, again), query = "пол")
+        val keys = (listOfNotNull(layout.best) + layout.sections.flatMap { it.items }).map { it.stableId }
+        assertEquals(keys.distinct(), keys)
+        assertTrue(layout.sections.flatMap { it.items }.contains(recall))
+    }
 }

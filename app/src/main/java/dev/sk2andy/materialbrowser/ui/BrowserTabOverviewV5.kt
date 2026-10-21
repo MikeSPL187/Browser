@@ -45,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -79,6 +80,8 @@ internal fun BrowserTabOverviewV5(
     onNewTab: () -> Unit,
     onEntryHeroStarted: (Boolean) -> Unit,
     onEntryHeroCompleted: () -> Unit,
+    /** A new tab straight in private, never an ordinary one turned private (О-2, М-6). */
+    onNewPrivateTab: () -> Unit = onNewTab,
 ) {
     // The current bar waits for the overview's entry hero before it gets out of the way; the v5
     // hero is drawn inside the overview, above the page, so the bar can go at once.
@@ -103,7 +106,7 @@ internal fun BrowserTabOverviewV5(
         },
         exit = fadeOut(if (moves) V5Motion.effects.spec<Float>() else V5Motion.reducedFade<Float>()),
     ) {
-        OverviewContent(controller, visible, darkShell, heroOnEntry, onClose, onSelect, onNewTab)
+        OverviewContent(controller, visible, darkShell, heroOnEntry, onClose, onSelect, onNewTab, onNewPrivateTab)
     }
 }
 
@@ -123,8 +126,10 @@ private fun OverviewContent(
     onClose: () -> Unit,
     onSelect: (String) -> Unit,
     onNewTab: () -> Unit,
+    onNewPrivateTab: () -> Unit,
 ) {
     val rootView = LocalView.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // The hero: 0 is the page filling the overview, 1 is the page in its card.
     val cardBounds = remember { mutableStateMapOf<String, Rect>() }
@@ -165,7 +170,8 @@ private fun OverviewContent(
     var privateSegment by rememberSaveable {
         mutableStateOf(V5TabOverviewRules.initialSegmentIsPrivate(controller.selectedTab.isIncognito, counts))
     }
-    var closeAllCount by rememberSaveable { mutableIntStateOf(0) }
+    // The tabs «Close all» asked about: the ones on screen when it was chosen (О-1).
+    var closeAllIds by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     val cards = V5TabOverviewRules.visibleTabs(tabs, privateSegment, query, hidden).mapNotNull { item ->
         val tab = byId[item.id] ?: return@mapNotNull null
         V5TabCard(
@@ -197,6 +203,7 @@ private fun OverviewContent(
                     profileLabel = profile?.name?.ifBlank { null } ?: stringResource(R.string.v5_profile_untitled),
                     profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
+                    canOpenPrivate = controller.canOpenLinkInPrivate,
                 ),
                 onQueryChange = { query = it },
                 onSegmentChange = { privateSegment = it },
@@ -225,8 +232,11 @@ private fun OverviewContent(
                 // does not mark the exit.
                 onNewTab = {
                     if (!exiting) {
-                        onNewTab()
-                        if (privateSegment) controller.setBlankTabIncognito(true)
+                        // Checked before the tab is made: a refusal after it would leave an ordinary tab.
+                        when {
+                            !privateSegment -> onNewTab()
+                            controller.canOpenLinkInPrivate -> onNewPrivateTab()
+                        }
                     }
                 },
                 onDone = {
@@ -236,8 +246,9 @@ private fun OverviewContent(
                     }
                 },
                 onCloseAll = {
-                    if (!exiting) closeAllCount = TabDeletionRules.deletableTabIds(controller.activeTabs).size
+                    if (!exiting) closeAllIds = V5TabOverviewRules.closeAllIds(cards)
                 },
+                onCloseRefused = { V5Feedback.show(context, R.string.v5_overview_pinned_stays) },
                 modifier = Modifier.graphicsLayer { alpha = if (heroTabId != null) hero.value.coerceIn(0f, 1f) else 1f },
                 onCardBounds = { id, bounds -> cardBounds[id] = bounds },
                 heroCardId = heroTabId,
@@ -260,26 +271,30 @@ private fun OverviewContent(
             BrowserProfileSheetV5(controller, visible = profileSheet, onDismiss = { profileSheet = false })
         }
     }
-    // «Close all tabs» asks first, in red as an action that removes. The title keeps its count while
-    // the sheet lowers, so it never reads «Close 0 tabs».
+    // «Close all tabs» asks first, in red as an action that removes, and closes what it counted: the
+    // segment's cards in front (О-1). The title keeps its count while the sheet lowers, so it never
+    // reads «Close 0 tabs»; the pinned-tabs note shows only where pinned tabs stay.
     var shownCount by remember { mutableIntStateOf(1) }
-    if (closeAllCount > 0) shownCount = closeAllCount
+    if (closeAllIds.isNotEmpty()) shownCount = closeAllIds.size
+    val pinnedStay = cards.any { !it.closable }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         V5PromptSheet(
-            visible = closeAllCount > 0,
+            visible = closeAllIds.isNotEmpty(),
             title = pluralStringResource(R.plurals.close_all_tabs_title, shownCount, shownCount),
-            message = stringResource(R.string.close_all_tabs_pinned_supporting_text),
+            message = stringResource(R.string.close_all_tabs_pinned_supporting_text).takeIf { pinnedStay },
             actions = listOf(
                 V5PromptAction(
                     label = stringResource(R.string.action_close_all_tabs),
                     role = V5PromptRole.Destructive,
                     onClick = {
-                        closeAllCount = 0
-                        if (controller.closeAllTabs() > 0) rootView.performConfirmHaptic()
+                        val ids = closeAllIds
+                        closeAllIds = emptyList()
+                        ids.forEach(controller::closeTab)
+                        if (ids.isNotEmpty()) rootView.performConfirmHaptic()
                     },
                 ),
             ),
-            onDismiss = { closeAllCount = 0 },
+            onDismiss = { closeAllIds = emptyList() },
         )
     }
 }
