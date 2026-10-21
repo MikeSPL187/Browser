@@ -29,6 +29,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,7 +49,6 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.BrowserActivityResultIdentity
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.browser.BrowserGestureHapticFeedback
 import dev.sk2andy.materialbrowser.browser.BrowserHardwareInputAction
 import dev.sk2andy.materialbrowser.browser.BrowserHardwareInputRules
 import dev.sk2andy.materialbrowser.browser.BrowserHardwareKey
@@ -64,6 +64,7 @@ import dev.sk2andy.materialbrowser.browser.FullscreenVideoRules
 import dev.sk2andy.materialbrowser.browser.ProfileBiometricAuthenticator
 import dev.sk2andy.materialbrowser.browser.PrivateTabsNotifier
 import dev.sk2andy.materialbrowser.browser.ReleaseNotesPresentationRules
+import dev.sk2andy.materialbrowser.browser.StartupPresentation
 import dev.sk2andy.materialbrowser.browser.StartupPresentationRules
 import dev.sk2andy.materialbrowser.browser.allowsHardwareInput
 import dev.sk2andy.materialbrowser.browser.cast.CastSessionController
@@ -110,9 +111,8 @@ import dev.sk2andy.materialbrowser.ui.BrowserLockScreens
 import dev.sk2andy.materialbrowser.ui.LocalBrowserUnderFirstRun
 import dev.sk2andy.materialbrowser.ui.LocalPrivateTabsLocked
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesScreen
-import dev.sk2andy.materialbrowser.ui.performConfirmHaptic
 import dev.sk2andy.materialbrowser.ui.rememberFullscreenVideoGestureState
-import dev.sk2andy.materialbrowser.ui.startRubberbandHaptic
+import dev.sk2andy.materialbrowser.ui.performBrowserGestureHaptic
 import dev.sk2andy.materialbrowser.ui.stopRubberbandHaptic
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
@@ -256,26 +256,7 @@ class MainActivity : AppCompatActivity() {
         LaunchScreen.installExit(this, launchStore, launchAppearance)
         appliedNightConfiguration = resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK
-        if (AppDataArchiveRestore.hasInterruptedRestore(appDataRestoreRecoveryMarker())) {
-            val lockToken = AppDataTransferLock.activate(this, Process.myPid())
-            if (lockToken != null) {
-                appDataTransferActive = true
-                BrowserMediaPlaybackService.clearForAppDataTransfer(applicationContext)
-                val started = runCatching {
-                    startActivity(
-                        AppDataTransferContract.recoveryIntent(
-                            context = this,
-                            mainProcessId = Process.myPid(),
-                            lockToken = lockToken,
-                        ),
-                    )
-                }.isSuccess
-                if (!started) AppDataTransferLock.release(this, lockToken)
-            }
-            finish()
-            return
-        }
-        if (AppDataTransferLock.isActive(this)) {
+        if (AppDataTransferHandover.yieldsTo(this, appDataRestoreRecoveryMarker()) { appDataTransferActive = true }) {
             finish()
             return
         }
@@ -333,26 +314,7 @@ class MainActivity : AppCompatActivity() {
             !BuildConfig.SYSTEM_WEBVIEW_ONLY &&
             browserEngineKind == AndroidBrowserEngineKind.GeckoView
         ) {
-            geckoActivityIntegration = engineFlavor.createActivityIntegration(
-                context = applicationContext,
-                launch = { pendingIntent ->
-                    geckoWebAuthnLauncher.launch(IntentSenderRequest.Builder(pendingIntent).build())
-                },
-                onPendingChanged = { pending ->
-                    geckoWebAuthnActivityIdentity = if (
-                        pending && ::browserController.isInitialized
-                    ) {
-                        browserController.selectedActivityResultIdentity()
-                    } else {
-                        null
-                    }
-                },
-                isPendingRequestCurrent = {
-                    ::browserController.isInitialized &&
-                        geckoWebAuthnActivityIdentity
-                            ?.let(browserController::isActivityResultIdentityCurrent) == true
-                },
-            )
+            geckoActivityIntegration = createGeckoActivityIntegration()
         }
         profileBiometricAuthenticator = ProfileBiometricAuthenticator(this)
         browserController = dev.sk2andy.materialbrowser.browser.StartupTimeline.section("ControllerCreate") { BrowserController(
@@ -365,67 +327,8 @@ class MainActivity : AppCompatActivity() {
             requestDownloadNotificationPermission = requestNotificationPermission,
             onFullImmersiveModeChanged = { applyBrowserSystemUi() },
             onWebContentFullscreenChanged = ::onWebContentFullscreenChanged,
-            onMediaStateChanged = {
-                if (!activityDestroyed) {
-                    ensureMediaControllers()
-                    if (::browserMediaSystemSession.isInitialized) {
-                        val publication = browserController.media3Publication(
-                            traceSource = "MainActivity.onMediaStateChanged",
-                        )
-                        if (browserController.consumeMedia3PictureInPictureRestore()) {
-                            BrowserMediaLifecycleTrace.record(
-                                source = "MainActivity.onMediaStateChanged",
-                                action = "effect:restore-picture-in-picture",
-                                publication = publication,
-                            )
-                            browserMediaSystemSession.restoreAfterPictureInPicture(publication)
-                        } else if (browserController.consumeMedia3NavigationReplace()) {
-                            BrowserMediaLifecycleTrace.record(
-                                source = "MainActivity.onMediaStateChanged",
-                                action = "effect:replace-navigation",
-                                publication = publication,
-                            )
-                            browserMediaSystemSession.replacePublication(publication)
-                        } else {
-                            BrowserMediaLifecycleTrace.record(
-                                source = "MainActivity.onMediaStateChanged",
-                                action = "effect:publish",
-                                publication = publication,
-                            )
-                            browserMediaSystemSession.publish(publication)
-                        }
-                    }
-                    if (::castSessionController.isInitialized) {
-                        castSessionController.updateCandidate(browserController.castMediaCandidate)
-                    }
-                    if (
-                        !browserController.usesGeckoEngine &&
-                        browserController.isSelectedWebContentFullscreen
-                    ) {
-                        val videoOrientation = if (
-                            browserController.isSelectedLandscapeWebContentVideo
-                        ) {
-                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                        } else {
-                            ActivityInfo.SCREEN_ORIENTATION_SENSOR
-                        }
-                        if (requestedOrientation != videoOrientation) applyBrowserSystemUi()
-                    }
-                    updatePictureInPictureParams()
-                }
-            },
-            onInlineVideoGestureHaptic = { haptic ->
-                when (haptic) {
-                    BrowserGestureHapticFeedback.RubberbandStart ->
-                        window.decorView.startRubberbandHaptic()
-                    BrowserGestureHapticFeedback.RubberbandStop ->
-                        window.decorView.stopRubberbandHaptic()
-                    BrowserGestureHapticFeedback.Confirm -> {
-                        window.decorView.stopRubberbandHaptic()
-                        window.decorView.performConfirmHaptic()
-                    }
-                }
-            },
+            onMediaStateChanged = ::onBrowserMediaStateChanged,
+            onInlineVideoGestureHaptic = window.decorView::performBrowserGestureHaptic,
             onBrowserEngineChangeRequested = {
                 BrowserEngineProcessRestart.restart(this)
             },
@@ -478,6 +381,389 @@ class MainActivity : AppCompatActivity() {
             browserController.onWindowInsetsChanged(insets)
             insets
         }
+        restoreLaunchState(savedInstanceState)
+        val startupPresentation = StartupPresentationRules.resolve(
+            isColdStart = savedInstanceState == null,
+            isLauncherLaunch = intent.action == Intent.ACTION_MAIN,
+            isStartupAnimationEnabled = CandyAnimationRules.startupAnimationEnabled(
+                animationsEnabled = browserController.appearanceSettings.animationsEnabled,
+                startupAnimationEnabled = browserController.isStartupAnimationEnabled,
+            ),
+            startupAddressFocusMode = browserController.addressBar.startupFocusMode,
+            isOnboardingRequired = onboardingRequired,
+            isReleaseNotesRequired = releaseNotesRequired,
+        )
+        setCandyContent(
+            animationsEnabled = browserController.appearanceSettings.animationsEnabled,
+        ) { dev.sk2andy.materialbrowser.browser.StartupTimeline.mark("ContentComposeStart")
+            BrowserActivityContent(startupPresentation, onboardingStore)
+        }
+        showAppDataTransferResult(intent)
+    }
+
+    /** The whole screen: the browser and whatever first-run, release-notes or data dialog sits over it. */
+    @Composable
+    private fun BrowserActivityContent(
+        startupPresentation: StartupPresentation,
+        onboardingStore: GestureOnboardingStore,
+    ) {
+        val appearanceSettings = browserController.appearanceSettings
+        val privateMode = browserController.selectedTab.isIncognito
+        val appearanceDark = privateMode || appearanceSettings.usesDarkColors(isSystemInDarkTheme())
+        val activeProfile = browserController.localBrowserProfiles
+            .firstOrNull { profile -> profile.id == browserController.activeProfileId }
+        SideEffect {
+            applyAppearanceNightMode(appearanceSettings.appearanceMode)
+            applyAppearanceSystemBars(appearanceDark)
+            setRecentsPreviewEnabled(activeProfile?.protection == null && !privateMode)
+        }
+        CandyTheme(
+            settings = appearanceSettings,
+            workspaceAccent = activeProfile?.accent ?: WorkspaceAccent.Default,
+            privateMode = privateMode,
+        ) {
+            val launcherShortcutState = LauncherShortcutRules.state(
+                profiles = browserController.localBrowserProfiles,
+                tabs = browserController.tabs.toList(),
+                activeProfileId = browserController.activeProfileId,
+                profilesEnabled = browserController.profilesEnabled,
+            )
+            val candySearchWidgetState = CandySearchWidgetRules.state(
+                profiles = browserController.localBrowserProfiles,
+                profilesEnabled = browserController.profilesEnabled,
+            )
+            val fullscreenVideoState = browserController.fullscreenVideoState
+            val webContentFullscreen = browserController.isSelectedWebContentFullscreen
+            val landscapeWebContentVideo =
+                browserController.isSelectedLandscapeWebContentVideo
+            val selectedTabId = browserController.selectedTabId
+            val fullscreenVideoGesturesActive =
+                browserController.isInlineMediaPlayerPresented &&
+                    webContentFullscreen &&
+                    !videoOnlyPresentation
+            val fullscreenVideoGestureState = rememberFullscreenVideoGestureState(
+                systemControls = fullscreenVideoSystemControls,
+                onDismissFullscreen = {
+                    if (!browserController.exitSelectedWebContentFullscreen()) {
+                        browserController.exitFullscreenVideo()
+                    }
+                },
+            )
+            val webViewVideoOnlyPresentation = videoOnlyPresentation &&
+                fullscreenVideoState?.let { state ->
+                    !FullscreenVideoRules.hostsSourceInOverlay(
+                        host = state.host,
+                    )
+                } == true
+            val showReleaseNotes = releaseNotesVisible &&
+                releaseNotesContent != null &&
+                !onboardingVisible &&
+                !videoOnlyPresentation
+            LaunchedEffect(launcherShortcutState) {
+                launcherShortcutPublisher.publishSerially(launcherShortcutState)
+            }
+            LaunchedEffect(candySearchWidgetState) {
+                CandySearchWidgetProvider.updateAll(
+                    context = applicationContext,
+                    state = candySearchWidgetState,
+                )
+            }
+            LaunchedEffect(showReleaseNotes) {
+                if (showReleaseNotes) {
+                    releaseNotesStore.markHandled(BuildConfig.VERSION_CODE.toLong())
+                }
+            }
+            LaunchedEffect(
+                fullscreenVideoState,
+                webContentFullscreen,
+                landscapeWebContentVideo,
+                browserController.systemMediaState,
+                selectedTabId,
+                videoOnlyPresentation,
+            ) {
+                applyBrowserSystemUi()
+                updatePictureInPictureParams()
+                if (
+                    browserController.fullscreenVideoState == null &&
+                    isInPictureInPictureMode
+                ) {
+                    moveTaskToBack(true)
+                }
+            }
+            LaunchedEffect(fullscreenVideoGesturesActive) {
+                fullscreenVideoSystemControls.setFullscreenActive(
+                    fullscreenVideoGesturesActive,
+                )
+                fullscreenVideoGestureState.setEnabled(fullscreenVideoGesturesActive)
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
+                val castController = if (::castSessionController.isInitialized) castSessionController else null
+                CompositionLocalProvider(
+                    LocalPrivateTabsLocked provides browserController.privateTabsLock.isLocked,
+                    LocalBrowserUnderFirstRun provides (!videoOnlyPresentation && onboardingVisible),
+                ) {
+                    BrowserScreen(
+                        controller = browserController,
+                        castUiState = castController?.state ?: CastUiState(),
+                        onToggleCastPlayback = { castController?.togglePlayback() },
+                        onSeekCast = { positionMillis -> castController?.seekTo(positionMillis) },
+                        onCastVolumeChange = { volume -> castController?.setDeviceVolume(volume) },
+                        onDisconnectCast = { castController?.disconnect() },
+                        webViewVideoOnlyPresentation = webViewVideoOnlyPresentation,
+                        videoOnlyPresentation = videoOnlyPresentation,
+                        fullscreenVideoGestureState = fullscreenVideoGestureState
+                            .takeIf { fullscreenVideoGesturesActive },
+                        incomingBrowserNavigationRequestId =
+                            incomingBrowserNavigationRequestId,
+                        externalLaunchTabId = externalLaunchTabId,
+                        onReturnToExternalApp = {
+                            browserController.dismissExternalLinkPreview()
+                            externalLaunchTabId = null
+                            moveTaskToBack(true)
+                        },
+                        onExternalPreviewCommitted = { tabId ->
+                            externalLaunchTabId = tabId
+                        },
+                        onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
+                        onOpenFavorites = { openLibrary(V5LibrarySegment.Favorites) },
+                        onOpenDownloads = { openLibrary(V5LibrarySegment.Downloads) },
+                        onOpenHistory = { openLibrary(V5LibrarySegment.History) },
+                        onImportUserScript = {
+                            userScriptImportLauncher.launch(
+                                arrayOf(
+                                    "application/javascript",
+                                    "text/javascript",
+                                    "text/plain",
+                                ),
+                            )
+                        },
+                        onImportFavoriteBookmarks = {
+                            startActivity(PasswordsActivityContract.importIntent(this@MainActivity))
+                        },
+                        onExportAppData = {
+                            if (!browserController.canExportAppData()) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    R.string.data_archive_private_tabs_error,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                appDataExportWarningVisible = true
+                            }
+                        },
+                        onImportAppData = {
+                            appDataImportLauncher.launch(
+                                arrayOf("application/zip", "application/octet-stream"),
+                            )
+                        },
+                        onShowGestureOnboarding = {
+                            initialOnboardingRequired = false
+                            releaseNotesVisible = false
+                            onboardingVisible = true
+                        },
+                        onShowReleaseNotes = {
+                            loadReleaseNotesContent()
+                            releaseNotesVisible = releaseNotesContent != null
+                        },
+                        onManageFirefoxExtensions = if (browserController.usesGeckoEngine) {
+                            {
+                                openFirefoxExtensions()
+                            }
+                        } else {
+                            null
+                        },
+                        openAddressEditorOnLaunch = startupPresentation.openAddressEditor,
+                        launcherAddressEditorRequestId = launcherAddressEditorRequestId,
+                        hardwareTabChangeRequestId = hardwareTabChangeRequestId,
+                    )
+                }
+                if (firefoxExtensionsVisible) {
+                    firefoxExtensionManager?.let { manager ->
+                        FirefoxExtensionManagerOverlay(
+                            state = manager.state,
+                            onInstall = manager::install,
+                            onSetEnabled = manager::setEnabled,
+                            onSetPrivate = manager::setAllowedInPrivateBrowsing,
+                            onUpdate = manager::update,
+                            onUninstall = manager::uninstall,
+                            onOpenOptionsPage = { extension ->
+                                manager.openOptionsPage(extension.id) {
+                                    firefoxExtensionsVisible = false
+                                }
+                            },
+                            onPermissionDecision = manager::completePermissionRequest,
+                            onDismiss = {
+                                manager.dismiss()
+                                firefoxExtensionsVisible = false
+                            },
+                        )
+                    }
+                }
+                if (videoOnlyPresentation && !webViewVideoOnlyPresentation) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) // token-exempt: the video letterbox, moved here unchanged
+                }
+                FullscreenVideoOverlay(
+                    controller = browserController,
+                    videoOnlyPresentation = videoOnlyPresentation,
+                    gestureState = fullscreenVideoGestureState
+                        .takeIf { fullscreenVideoGesturesActive },
+                    onBoundsChanged = ::onFullscreenVideoBoundsChanged,
+                )
+                if (
+                    pictureInPictureReturnRestorationPending ||
+                    browserController.isMediaLayoutRestorationPending
+                ) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) // token-exempt: the cover while the page lays out again, moved here unchanged
+                }
+                if (!videoOnlyPresentation && onboardingVisible) {
+                    FirstRunOverlay(
+                        controller = browserController,
+                        showIntro = initialOnboardingRequired,
+                        onCompleted = {
+                            onboardingStore.markCompleted()
+                            if (initialOnboardingRequired) {
+                                releaseNotesStore.markHandled(BuildConfig.VERSION_CODE.toLong())
+                                releaseNotesVisible = false
+                            }
+                            initialOnboardingRequired = false
+                            onboardingVisible = false
+                        },
+                    )
+                }
+                releaseNotesContent?.takeIf { showReleaseNotes }?.let { content ->
+                    ReleaseNotesScreen(
+                        versionName = content.versionName,
+                        document = content.document,
+                        onDone = { releaseNotesVisible = false },
+                        onOpenLink = { url ->
+                            if (browserController.openUrl(url, inNewTab = true)) {
+                                releaseNotesVisible = false
+                            }
+                        },
+                    )
+                }
+            }
+            LaunchPrompts(
+                context = this,
+                visible = !onboardingVisible &&
+                    !releaseNotesVisible &&
+                    !videoOnlyPresentation,
+                onOpenReleaseNotes = { url ->
+                    browserController.openUrl(url, inNewTab = true)
+                },
+            )
+            if (appDataExportWarningVisible) {
+                AppDataExportWarningDialog(
+                    hasProtectedProfiles = browserController.hasProtectedProfiles,
+                    onDismiss = { appDataExportWarningVisible = false },
+                    onConfirm = {
+                        appDataExportWarningVisible = false
+                        appDataExportLauncher.launch(defaultAppDataArchiveFileName())
+                    },
+                )
+            }
+            pendingAppDataImport?.let { pending ->
+                AppDataImportConfirmationDialog(
+                    pending = pending,
+                    onDismiss = {
+                        deleteStagedAppDataArchive(pending.staged.fileName)
+                        pendingAppDataImport = null
+                    },
+                    onConfirm = {
+                        pendingAppDataImport = null
+                        startAppDataTransfer(R.string.data_archive_import_failed) { lockToken ->
+                            AppDataTransferContract.importIntent(
+                                context = this,
+                                stagedFileName = pending.staged.fileName,
+                                mainProcessId = Process.myPid(),
+                                lockToken = lockToken,
+                            )
+                        }
+                    },
+                )
+            }
+            BrowserLockScreens(browserController)
+        }
+    }
+
+    /** WebAuthn and other Gecko requests that need this Activity's result launchers. */
+    private fun createGeckoActivityIntegration() = engineFlavor.createActivityIntegration(
+        context = applicationContext,
+        launch = { pendingIntent ->
+            geckoWebAuthnLauncher.launch(IntentSenderRequest.Builder(pendingIntent).build())
+        },
+        onPendingChanged = { pending ->
+            geckoWebAuthnActivityIdentity = if (
+                pending && ::browserController.isInitialized
+            ) {
+                browserController.selectedActivityResultIdentity()
+            } else {
+                null
+            }
+        },
+        isPendingRequestCurrent = {
+            ::browserController.isInitialized &&
+                geckoWebAuthnActivityIdentity
+                    ?.let(browserController::isActivityResultIdentityCurrent) == true
+        },
+    )
+
+    /** The page's media changed: the system media session, Cast, orientation and PiP follow. */
+    private fun onBrowserMediaStateChanged() {
+        if (!activityDestroyed) {
+            ensureMediaControllers()
+            if (::browserMediaSystemSession.isInitialized) {
+                val publication = browserController.media3Publication(
+                    traceSource = "MainActivity.onMediaStateChanged",
+                )
+                if (browserController.consumeMedia3PictureInPictureRestore()) {
+                    BrowserMediaLifecycleTrace.record(
+                        source = "MainActivity.onMediaStateChanged",
+                        action = "effect:restore-picture-in-picture",
+                        publication = publication,
+                    )
+                    browserMediaSystemSession.restoreAfterPictureInPicture(publication)
+                } else if (browserController.consumeMedia3NavigationReplace()) {
+                    BrowserMediaLifecycleTrace.record(
+                        source = "MainActivity.onMediaStateChanged",
+                        action = "effect:replace-navigation",
+                        publication = publication,
+                    )
+                    browserMediaSystemSession.replacePublication(publication)
+                } else {
+                    BrowserMediaLifecycleTrace.record(
+                        source = "MainActivity.onMediaStateChanged",
+                        action = "effect:publish",
+                        publication = publication,
+                    )
+                    browserMediaSystemSession.publish(publication)
+                }
+            }
+            if (::castSessionController.isInitialized) {
+                castSessionController.updateCandidate(browserController.castMediaCandidate)
+            }
+            if (
+                !browserController.usesGeckoEngine &&
+                browserController.isSelectedWebContentFullscreen
+            ) {
+                val videoOrientation = if (
+                    browserController.isSelectedLandscapeWebContentVideo
+                ) {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                }
+                if (requestedOrientation != videoOrientation) applyBrowserSystemUi()
+            }
+            updatePictureInPictureParams()
+        }
+    }
+
+    /**
+     * What the screen opens to: the capsule or link preview the Activity was recreated with, or, on
+     * a fresh start, the intent that launched it.
+     */
+    private fun restoreLaunchState(savedInstanceState: Bundle?) {
         val restoredCapsuleId = savedInstanceState?.getString(STATE_CAPSULE_ID)
         val restoreExternalLinkPreview = savedInstanceState
             ?.getBoolean(STATE_EXTERNAL_LINK_PREVIEW_ACTIVE)
@@ -512,299 +798,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        val startupPresentation = StartupPresentationRules.resolve(
-            isColdStart = savedInstanceState == null,
-            isLauncherLaunch = intent.action == Intent.ACTION_MAIN,
-            isStartupAnimationEnabled = CandyAnimationRules.startupAnimationEnabled(
-                animationsEnabled = browserController.appearanceSettings.animationsEnabled,
-                startupAnimationEnabled = browserController.isStartupAnimationEnabled,
-            ),
-            startupAddressFocusMode = browserController.addressBar.startupFocusMode,
-            isOnboardingRequired = onboardingRequired,
-            isReleaseNotesRequired = releaseNotesRequired,
-        )
-        setCandyContent(
-            animationsEnabled = browserController.appearanceSettings.animationsEnabled,
-        ) { dev.sk2andy.materialbrowser.browser.StartupTimeline.mark("ContentComposeStart")
-            val appearanceSettings = browserController.appearanceSettings
-            val privateMode = browserController.selectedTab.isIncognito
-            val appearanceDark = privateMode || appearanceSettings.usesDarkColors(isSystemInDarkTheme())
-            val activeProfile = browserController.localBrowserProfiles
-                .firstOrNull { profile -> profile.id == browserController.activeProfileId }
-            SideEffect {
-                applyAppearanceNightMode(appearanceSettings.appearanceMode)
-                applyAppearanceSystemBars(appearanceDark)
-                setRecentsPreviewEnabled(activeProfile?.protection == null && !privateMode)
-            }
-            CandyTheme(
-                settings = appearanceSettings,
-                workspaceAccent = activeProfile?.accent ?: WorkspaceAccent.Default,
-                privateMode = privateMode,
-            ) {
-                val launcherShortcutState = LauncherShortcutRules.state(
-                    profiles = browserController.localBrowserProfiles,
-                    tabs = browserController.tabs.toList(),
-                    activeProfileId = browserController.activeProfileId,
-                    profilesEnabled = browserController.profilesEnabled,
-                )
-                val candySearchWidgetState = CandySearchWidgetRules.state(
-                    profiles = browserController.localBrowserProfiles,
-                    profilesEnabled = browserController.profilesEnabled,
-                )
-                val fullscreenVideoState = browserController.fullscreenVideoState
-                val webContentFullscreen = browserController.isSelectedWebContentFullscreen
-                val landscapeWebContentVideo =
-                    browserController.isSelectedLandscapeWebContentVideo
-                val selectedTabId = browserController.selectedTabId
-                val fullscreenVideoGesturesActive =
-                    browserController.isInlineMediaPlayerPresented &&
-                        webContentFullscreen &&
-                        !videoOnlyPresentation
-                val fullscreenVideoGestureState = rememberFullscreenVideoGestureState(
-                    systemControls = fullscreenVideoSystemControls,
-                    onDismissFullscreen = {
-                        if (!browserController.exitSelectedWebContentFullscreen()) {
-                            browserController.exitFullscreenVideo()
-                        }
-                    },
-                )
-                val webViewVideoOnlyPresentation = videoOnlyPresentation &&
-                    fullscreenVideoState?.let { state ->
-                        !FullscreenVideoRules.hostsSourceInOverlay(
-                            host = state.host,
-                        )
-                    } == true
-                val showReleaseNotes = releaseNotesVisible &&
-                    releaseNotesContent != null &&
-                    !onboardingVisible &&
-                    !videoOnlyPresentation
-                LaunchedEffect(launcherShortcutState) {
-                    launcherShortcutPublisher.publishSerially(launcherShortcutState)
-                }
-                LaunchedEffect(candySearchWidgetState) {
-                    CandySearchWidgetProvider.updateAll(
-                        context = applicationContext,
-                        state = candySearchWidgetState,
-                    )
-                }
-                LaunchedEffect(showReleaseNotes) {
-                    if (showReleaseNotes) {
-                        releaseNotesStore.markHandled(BuildConfig.VERSION_CODE.toLong())
-                    }
-                }
-                LaunchedEffect(
-                    fullscreenVideoState,
-                    webContentFullscreen,
-                    landscapeWebContentVideo,
-                    browserController.systemMediaState,
-                    selectedTabId,
-                    videoOnlyPresentation,
-                ) {
-                    applyBrowserSystemUi()
-                    updatePictureInPictureParams()
-                    if (
-                        browserController.fullscreenVideoState == null &&
-                        isInPictureInPictureMode
-                    ) {
-                        moveTaskToBack(true)
-                    }
-                }
-                LaunchedEffect(fullscreenVideoGesturesActive) {
-                    fullscreenVideoSystemControls.setFullscreenActive(
-                        fullscreenVideoGesturesActive,
-                    )
-                    fullscreenVideoGestureState.setEnabled(fullscreenVideoGesturesActive)
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    val castController = if (::castSessionController.isInitialized) castSessionController else null
-                    CompositionLocalProvider(
-                        LocalPrivateTabsLocked provides browserController.privateTabsLock.isLocked,
-                        LocalBrowserUnderFirstRun provides (!videoOnlyPresentation && onboardingVisible),
-                    ) {
-                        BrowserScreen(
-                            controller = browserController,
-                            castUiState = castController?.state ?: CastUiState(),
-                            onToggleCastPlayback = { castController?.togglePlayback() },
-                            onSeekCast = { positionMillis -> castController?.seekTo(positionMillis) },
-                            onCastVolumeChange = { volume -> castController?.setDeviceVolume(volume) },
-                            onDisconnectCast = { castController?.disconnect() },
-                            webViewVideoOnlyPresentation = webViewVideoOnlyPresentation,
-                            videoOnlyPresentation = videoOnlyPresentation,
-                            fullscreenVideoGestureState = fullscreenVideoGestureState
-                                .takeIf { fullscreenVideoGesturesActive },
-                            incomingBrowserNavigationRequestId =
-                                incomingBrowserNavigationRequestId,
-                            externalLaunchTabId = externalLaunchTabId,
-                            onReturnToExternalApp = {
-                                browserController.dismissExternalLinkPreview()
-                                externalLaunchTabId = null
-                                moveTaskToBack(true)
-                            },
-                            onExternalPreviewCommitted = { tabId ->
-                                externalLaunchTabId = tabId
-                            },
-                            onTabOverviewPortraitLockChanged = ::setTabOverviewPortraitLocked,
-                            onOpenFavorites = { openLibrary(V5LibrarySegment.Favorites) },
-                            onOpenDownloads = { openLibrary(V5LibrarySegment.Downloads) },
-                            onOpenHistory = { openLibrary(V5LibrarySegment.History) },
-                            onImportUserScript = {
-                                userScriptImportLauncher.launch(
-                                    arrayOf(
-                                        "application/javascript",
-                                        "text/javascript",
-                                        "text/plain",
-                                    ),
-                                )
-                            },
-                            onImportFavoriteBookmarks = {
-                                startActivity(PasswordsActivityContract.importIntent(this@MainActivity))
-                            },
-                            onExportAppData = {
-                                if (!browserController.canExportAppData()) {
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        R.string.data_archive_private_tabs_error,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                } else {
-                                    appDataExportWarningVisible = true
-                                }
-                            },
-                            onImportAppData = {
-                                appDataImportLauncher.launch(
-                                    arrayOf("application/zip", "application/octet-stream"),
-                                )
-                            },
-                            onShowGestureOnboarding = {
-                                initialOnboardingRequired = false
-                                releaseNotesVisible = false
-                                onboardingVisible = true
-                            },
-                            onShowReleaseNotes = {
-                                loadReleaseNotesContent()
-                                releaseNotesVisible = releaseNotesContent != null
-                            },
-                            onManageFirefoxExtensions = if (browserController.usesGeckoEngine) {
-                                {
-                                    openFirefoxExtensions()
-                                }
-                            } else {
-                                null
-                            },
-                            openAddressEditorOnLaunch = startupPresentation.openAddressEditor,
-                            launcherAddressEditorRequestId = launcherAddressEditorRequestId,
-                            hardwareTabChangeRequestId = hardwareTabChangeRequestId,
-                        )
-                    }
-                    if (firefoxExtensionsVisible) {
-                        firefoxExtensionManager?.let { manager ->
-                            FirefoxExtensionManagerOverlay(
-                                state = manager.state,
-                                onInstall = manager::install,
-                                onSetEnabled = manager::setEnabled,
-                                onSetPrivate = manager::setAllowedInPrivateBrowsing,
-                                onUpdate = manager::update,
-                                onUninstall = manager::uninstall,
-                                onOpenOptionsPage = { extension ->
-                                    manager.openOptionsPage(extension.id) {
-                                        firefoxExtensionsVisible = false
-                                    }
-                                },
-                                onPermissionDecision = manager::completePermissionRequest,
-                                onDismiss = {
-                                    manager.dismiss()
-                                    firefoxExtensionsVisible = false
-                                },
-                            )
-                        }
-                    }
-                    if (videoOnlyPresentation && !webViewVideoOnlyPresentation) {
-                        Box(modifier = Modifier.fillMaxSize().background(Color.Black))
-                    }
-                    FullscreenVideoOverlay(
-                        controller = browserController,
-                        videoOnlyPresentation = videoOnlyPresentation,
-                        gestureState = fullscreenVideoGestureState
-                            .takeIf { fullscreenVideoGesturesActive },
-                        onBoundsChanged = ::onFullscreenVideoBoundsChanged,
-                    )
-                    if (
-                        pictureInPictureReturnRestorationPending ||
-                        browserController.isMediaLayoutRestorationPending
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize().background(Color.Black))
-                    }
-                    if (!videoOnlyPresentation && onboardingVisible) {
-                        FirstRunOverlay(
-                            controller = browserController,
-                            showIntro = initialOnboardingRequired,
-                            onCompleted = {
-                                onboardingStore.markCompleted()
-                                if (initialOnboardingRequired) {
-                                    releaseNotesStore.markHandled(BuildConfig.VERSION_CODE.toLong())
-                                    releaseNotesVisible = false
-                                }
-                                initialOnboardingRequired = false
-                                onboardingVisible = false
-                            },
-                        )
-                    }
-                    releaseNotesContent?.takeIf { showReleaseNotes }?.let { content ->
-                        ReleaseNotesScreen(
-                            versionName = content.versionName,
-                            document = content.document,
-                            onDone = { releaseNotesVisible = false },
-                            onOpenLink = { url ->
-                                if (browserController.openUrl(url, inNewTab = true)) {
-                                    releaseNotesVisible = false
-                                }
-                            },
-                        )
-                    }
-                }
-                LaunchPrompts(
-                    context = this,
-                    visible = !onboardingVisible &&
-                        !releaseNotesVisible &&
-                        !videoOnlyPresentation,
-                    onOpenReleaseNotes = { url ->
-                        browserController.openUrl(url, inNewTab = true)
-                    },
-                )
-                if (appDataExportWarningVisible) {
-                    AppDataExportWarningDialog(
-                        hasProtectedProfiles = browserController.hasProtectedProfiles,
-                        onDismiss = { appDataExportWarningVisible = false },
-                        onConfirm = {
-                            appDataExportWarningVisible = false
-                            appDataExportLauncher.launch(defaultAppDataArchiveFileName())
-                        },
-                    )
-                }
-                pendingAppDataImport?.let { pending ->
-                    AppDataImportConfirmationDialog(
-                        pending = pending,
-                        onDismiss = {
-                            deleteStagedAppDataArchive(pending.staged.fileName)
-                            pendingAppDataImport = null
-                        },
-                        onConfirm = {
-                            pendingAppDataImport = null
-                            startAppDataTransfer(R.string.data_archive_import_failed) { lockToken ->
-                                AppDataTransferContract.importIntent(
-                                    context = this,
-                                    stagedFileName = pending.staged.fileName,
-                                    mainProcessId = Process.myPid(),
-                                    lockToken = lockToken,
-                                )
-                            }
-                        },
-                    )
-                }
-                BrowserLockScreens(browserController)
-            }
-        }
-        showAppDataTransferResult(intent)
     }
 
     override fun onNewIntent(intent: Intent) {

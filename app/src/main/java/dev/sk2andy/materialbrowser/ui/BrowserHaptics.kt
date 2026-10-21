@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
+import dev.sk2andy.materialbrowser.browser.BrowserGestureHapticFeedback
 import kotlin.math.roundToInt
 
 internal fun View.performConfirmHaptic() {
@@ -116,4 +117,16 @@ internal fun BrowserController.createTabAndConfirm(isIncognito: Boolean, haptics
     if (createTab(isIncognito = isIncognito) == previousTabId) return false
     haptics?.performConfirmHaptic()
     return true
+}
+
+/** The inline player's rubber band past its edge and the confirmation when a drag lands. */
+internal fun View.performBrowserGestureHaptic(haptic: BrowserGestureHapticFeedback) {
+    when (haptic) {
+        BrowserGestureHapticFeedback.RubberbandStart -> startRubberbandHaptic()
+        BrowserGestureHapticFeedback.RubberbandStop -> stopRubberbandHaptic()
+        BrowserGestureHapticFeedback.Confirm -> {
+            stopRubberbandHaptic()
+            performConfirmHaptic()
+        }
+    }
 }
