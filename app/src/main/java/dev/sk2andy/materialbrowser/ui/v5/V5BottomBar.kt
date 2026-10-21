@@ -69,6 +69,7 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.AddressBarTabCounterButton
@@ -440,7 +441,8 @@ private fun LoadingLine(visible: Boolean, progress: Float) {
  * host, which then shows its address as typed. The authority ends at `/`, `?`, `#` and also at `\`,
  * as a browser reads `http(s)` addresses (WHATWG), so `https://evil.com\@good.com/` shows
  * `evil.com`, the host the page comes from (П-1). An address inside another scheme, such as
- * `view-source:https://…`, is not the page itself and has no domain here (П-3).
+ * `view-source:https://…`, is not the page itself and has no domain here (П-3). An international
+ * name reads in its letters only when it cannot pass for another site, else as `xn--…` (П-4).
  */
 internal fun v5BarDomain(url: String): String? {
     val scheme = url.substringBefore("://", missingDelimiterValue = "")
@@ -453,7 +455,8 @@ internal fun v5BarDomain(url: String): String? {
     } else {
         authority.substringBefore(':')
     }
-    return host.lowercase().removePrefix("www.").removeSuffix(".").takeIf { it.isNotBlank() && it != "[]" }
+    val shown = host.lowercase().removePrefix("www.").removeSuffix(".").takeIf { it.isNotBlank() && it != "[]" }
+    return shown?.let(IdnDisplayRules::displayHost)
 }
 
 /** The bar's colors after the site tint (system-v5.md, section 1.3). */

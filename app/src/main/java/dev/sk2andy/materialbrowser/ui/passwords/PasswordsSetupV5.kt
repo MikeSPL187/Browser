@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -200,7 +201,8 @@ internal fun RecoveryEntryV5(wrong: Boolean, busy: Boolean, onOpen: (String) -> 
                 .background(colors.surface)
                 .padding(V5Spacing.space4),
         ) {
-            if (phrase.isEmpty()) Text(hint, style = V5Theme.type.body, color = colors.labelTertiary)
+            // The field carries the name for TalkBack; this is only what the eye reads (СС-1).
+            if (phrase.isEmpty()) Text(hint, style = V5Theme.type.body, color = colors.labelTertiary, modifier = Modifier.clearAndSetSemantics {})
             BasicTextField(
                 value = phrase,
                 onValueChange = { phrase = it.take(MAX_PHRASE_LENGTH) },

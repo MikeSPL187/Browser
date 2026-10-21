@@ -158,7 +158,8 @@ internal fun V5NameField(
         ) {
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (value.isEmpty()) {
-                    Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary)
+                    // The field carries the name for TalkBack; this is only what the eye reads (СС-1).
+                    Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary, modifier = Modifier.clearAndSetSemantics {})
                 }
                 BasicTextField(
                     value = value,

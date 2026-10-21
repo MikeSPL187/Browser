@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser.integration
 
 import dev.sk2andy.materialbrowser.browser.SiteDomainRules
-import java.net.IDN
+import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import java.net.URI
 
 /** Shared validation for URLs entering the browser from another Android component. */
@@ -31,7 +31,7 @@ object BrowserUriPolicy {
     fun displayHttpHost(value: String?): String {
         val safeUrl = normalizeHttpUrl(value) ?: return ""
         val host = runCatching { URI(safeUrl).toURL().host }.getOrNull().orEmpty()
-        return runCatching { IDN.toUnicode(host) }.getOrDefault(host).removePrefix("www.")
+        return IdnDisplayRules.displayHost(host).removePrefix("www.")
     }
 
     fun normalizeExternalUri(value: String?): String? {
