@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BrowserTab
@@ -343,7 +344,7 @@ private fun NewTabContinueCard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = enabled) { onTab(tab.id) }
+                            .clickable(enabled = enabled, role = Role.Button) { onTab(tab.id) }
                             .padding(horizontal = VolaSpacing.x4, vertical = VolaSpacing.x3),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(VolaSpacing.x3),

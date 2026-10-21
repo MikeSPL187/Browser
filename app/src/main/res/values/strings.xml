@@ -218,7 +218,8 @@
     <string name="profile_isolation_confirm_title">Switch workspace storage?</string>
     <string name="profile_isolation_enable_message">Tabs in this workspace will reload with separate storage. Existing shared sign-ins will not carry over.</string>
     <string name="profile_isolation_disable_message">Tabs in this workspace will reload with shared storage. Sign-ins from isolated storage will no longer be active.</string>
-    <string name="profile_protection_unavailable">Unavailable: set up a strong biometric in Android first</string>
+    <string name="profile_protection_unavailable">Unavailable: set a screen lock or a strong biometric in Android first</string>
+    <string name="profile_locked_new_action">Start a new profile</string>
     <string name="profile_protection_configure">Change lock timing</string>
     <string name="profile_protection_dialog_title">Protect workspace</string>
     <string name="profile_protection_disclosure">This access lock uses Android strong biometrics. It does not add separate at-rest encryption to workspace files.</string>
@@ -1280,6 +1281,10 @@
     <string name="filter_fetching_preview">Fetching preview…</string>
     <string name="filter_confirm_update">Confirm update</string>
     <string name="filter_diff_summary">+%1$d · −%2$d · %3$d unchanged</string>
+    <string name="filter_diff_added">+ %1$s</string>
+    <string name="filter_diff_removed">− %1$s</string>
+    <string name="filter_diff_added_spoken">Adds %1$s</string>
+    <string name="filter_diff_removed_spoken">Removes %1$s</string>
     <string name="filter_more_changes">Other changes: %1$d</string>
     <string name="filter_more_rules">Other rules: %1$d</string>
     <string name="filter_deciding_rule">Rule: %1$s</string>
@@ -1972,6 +1977,7 @@
     <string name="v5_suggestion_commands">Commands</string>
     <string name="v5_suggestion_tab">Tab</string>
     <string name="v5_editor_clear">Clear</string>
+    <string name="v5_feedback_error">Error</string>
     <string name="v5_field_truncated">Only the first %1$d characters fit here; the rest was cut off.</string>
     <string name="v5_sheet_close">Close</string>
     <string name="v5_overview_ungrouped">No group</string>
@@ -2104,7 +2110,11 @@
     <string name="v5_menu_more">More</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
-    <string name="v5_menu_favorite_private">Not in private</string>
+    <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
+    <string name="v5_bar_open_tabs">Show tabs</string>
+    <string name="v5_menu_extension_off_here">Off on this page</string>
+    <string name="v5_menu_desktop_view_hint">The page reloads as on a computer</string>
+    <string name="v5_menu_mute_site_hint">Every page of this site stays silent</string>
     <string name="v5_menu_read">Read</string>
     <string name="v5_menu_unpin_tab">Unpin tab</string>
     <string name="v5_menu_new_private_tab">New private tab</string>
@@ -2208,6 +2218,7 @@
     <string name="v5_first_run_device_caption">No analytics and no ad SDKs</string>
     <string name="v5_first_run_default_title">Open links in Vola?</string>
     <string name="v5_first_run_default_body">Links from mail and messengers will open here, with protection. You can change this in settings.</string>
+    <string name="v5_first_run_default_refused">Vola isn’t your default browser yet. You can make it one later in Settings.</string>
     <string name="v5_first_run_default_action">Make default</string>
     <string name="v5_first_run_not_now">Not now</string>
     <!-- V28 B9b: the field of a page's prompt() on the v5 prompt sheet -->
@@ -2218,6 +2229,7 @@
     <string name="v5_first_run_gesture_overview_title">Swipe up from the bar</string>
     <string name="v5_first_run_gesture_overview_caption">All tabs and groups</string>
     <string name="v5_first_run_gestures_done">Got it</string>
+    <string name="v5_first_run_gestures_buttons">Without gestures: the tabs button and the “•••” menu do the same.</string>
     <string name="filter_v5_on">On</string>
     <string name="filter_v5_off">Off</string>
     <string name="filter_v5_active">Enabled</string>

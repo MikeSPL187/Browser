@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.browser.BrowserController
 import kotlin.math.roundToInt
 
 internal fun View.performConfirmHaptic() {
@@ -108,3 +109,11 @@ private fun View.rubberbandVibrator(): Vibrator? =
 private const val SCALED_TICK_DURATION_MILLIS = 9L
 private const val MIN_SCALED_TICK_AMPLITUDE = 28f
 private const val MAX_SCALED_TICK_AMPLITUDE = 180f
+
+/** A new tab, felt on [haptics] when one came: false when none did (the tab limit). */
+internal fun BrowserController.createTabAndConfirm(isIncognito: Boolean, haptics: View?): Boolean {
+    val previousTabId = selectedTabId
+    if (createTab(isIncognito = isIncognito) == previousTabId) return false
+    haptics?.performConfirmHaptic()
+    return true
+}

@@ -12,6 +12,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
@@ -132,7 +134,10 @@ fun V5ChoiceSheet(
                     title = option,
                     trailing = if (index == selected) V5RowTrailing.Check else V5RowTrailing.None,
                     onClick = { onSelect(index) },
-                    modifier = Modifier.testTag(V5PromptSheetTestTags.option(index)),
+                    // The check is seen; TalkBack hears «selected» (L-01).
+                    modifier = Modifier
+                        .semantics { this.selected = index == selected }
+                        .testTag(V5PromptSheetTestTags.option(index)),
                 )
             }
         }

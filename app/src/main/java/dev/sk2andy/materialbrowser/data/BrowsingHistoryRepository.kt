@@ -126,6 +126,19 @@ internal class BrowsingHistoryRepository private constructor(
         committed(history, store.commitHistory(history))
     }
 
+    /**
+     * Writes a visit still waiting for the background write, now: a data transfer stops this
+     * process right after, and the archive must hold the last visits too (M-05). True when nothing
+     * waits or the write succeeded.
+     */
+    @Synchronized
+    fun flush(): Boolean {
+        if (!saveScheduled) return true
+        saveScheduled = false
+        val history = cache ?: return true
+        return committed(history, store.commitHistory(history))
+    }
+
     @Synchronized
     fun remove(entries: Collection<HistoryEntry>): HistoryMutationResult {
         val current = current()

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 
 /**
  * The «Hide distracting items» panel on the device (DS-05): its line says each tap's result in a
- * live region (DS-01), «Undo» stands in for «Show hidden items» after a hide (DS-03), and «Done» ends.
+ * live region (DS-01), «Undo» comes next to «Show hidden items» after a hide (DS-03, РР-3), and «Done» ends.
  */
 @RunWith(AndroidJUnit4::class)
 class V5DistractionsPanelInstrumentedTest {
@@ -63,7 +63,8 @@ class V5DistractionsPanelInstrumentedTest {
         show(hasHidden = true, canUndo = true, step = DistractionPickingStep.Hidden)
 
         composeRule.onNodeWithText(context.getString(R.string.v5_distractions_hidden)).assertExists()
-        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ShowHidden).assertDoesNotExist()
+        // Bringing every block back stays one tap away while «Undo» brings the last one (РР-3).
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ShowHidden).assertExists()
         composeRule.onNodeWithTag(V5DistractionsPanelTestTags.Undo).performClick()
         composeRule.onNodeWithTag(V5DistractionsPanelTestTags.Done).performClick()
 

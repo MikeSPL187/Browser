@@ -1282,7 +1282,7 @@ class MainActivity : AppCompatActivity() {
         }
         val preparing = runCatching {
             browserController.prepareForAppDataTransfer { ready ->
-                val canStartNow = ready && canStart()
+                val canStartNow = ready && dev.sk2andy.materialbrowser.data.BrowsingHistoryRepository.get(this).flush() && canStart()
                 val started = canStartNow && runCatching {
                     startActivity(intent(lockToken))
                 }.isSuccess

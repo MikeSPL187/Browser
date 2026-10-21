@@ -248,14 +248,6 @@ fun V5PageMenu(
                                 onClick = closing(actions.onNewPrivateTab),
                             )
                         }
-                        if (state.canCloseTab) {
-                            V5ListRow(
-                                stringResource(R.string.cd_close_tab),
-                                icon = V5RowIcon(VolaIcons.Close),
-                                titleColor = V5Theme.colors.danger,
-                                onClick = closing(actions.onCloseTab),
-                            )
-                        }
                     }
                     if (state.extras.isNotEmpty()) {
                         V5ListGroup {
@@ -296,6 +288,18 @@ fun V5PageMenu(
                             trailing = V5RowTrailing.Chevron,
                             onClick = closing(actions.onSettings),
                         )
+                    }
+                    // The one red row stands last and alone, away from «New tab», so a slip of the
+                    // thumb does not close the page (М-3), as iOS keeps a removing action apart.
+                    if (state.canCloseTab) {
+                        V5ListGroup {
+                            V5ListRow(
+                                stringResource(R.string.cd_close_tab),
+                                icon = V5RowIcon(VolaIcons.Close),
+                                titleColor = V5Theme.colors.danger,
+                                onClick = closing(actions.onCloseTab),
+                            )
+                        }
                     }
                 }
             }
@@ -376,8 +380,10 @@ private fun MoreGroup(
             onClick = closing(actions.onTogglePinned),
         )
         state.desktopView?.let { desktop ->
+            // What a switch does, said before it is touched: the page reloads, the site stays muted (М-7).
             V5ListRow(
                 stringResource(R.string.action_desktop_view),
+                subtitle = stringResource(R.string.v5_menu_desktop_view_hint),
                 icon = V5RowIcon(VolaIcons.DesktopWindows),
                 trailing = V5RowTrailing.Toggle(desktop, actions.onDesktopViewChange),
             )
@@ -385,6 +391,7 @@ private fun MoreGroup(
         state.siteMuted?.let { muted ->
             V5ListRow(
                 stringResource(R.string.action_mute_domain),
+                subtitle = stringResource(R.string.v5_menu_mute_site_hint),
                 icon = V5RowIcon(VolaIcons.VolumeOff),
                 trailing = V5RowTrailing.Toggle(muted, actions.onSiteMutedChange),
             )

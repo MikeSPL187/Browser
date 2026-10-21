@@ -11,6 +11,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -225,25 +227,22 @@ internal fun BrowserTransientOverlays(
                     ),
                 )
             },
+            // Three choices stand in a column, the removing one first and «Cancel» last, so a large font
+            // or a narrow phone never squeezes them into one row (L-07).
             confirmButton = {
-                if (capsule.ownsDedicatedProfile) {
+                Column(horizontalAlignment = Alignment.End) {
                     Button(
                         onClick = {
-                            controller.deleteSiteCapsuleAsync(capsule.id, true) {}
+                            controller.deleteSiteCapsuleAsync(capsule.id, capsule.ownsDedicatedProfile) {}
                             onPendingCapsuleDeleteDismiss()
                         },
-                    ) { Text(stringResource(R.string.capsule_delete_with_profile)) }
-                } else {
-                    Button(
-                        onClick = {
-                            controller.deleteSiteCapsuleAsync(capsule.id, false) {}
-                            onPendingCapsuleDeleteDismiss()
-                        },
-                    ) { Text(stringResource(R.string.action_delete)) }
-                }
-            },
-            dismissButton = {
-                Row {
+                    ) {
+                        Text(
+                            stringResource(
+                                if (capsule.ownsDedicatedProfile) R.string.capsule_delete_with_profile else R.string.action_delete,
+                            ),
+                        )
+                    }
                     if (capsule.ownsDedicatedProfile) {
                         TextButton(
                             onClick = {

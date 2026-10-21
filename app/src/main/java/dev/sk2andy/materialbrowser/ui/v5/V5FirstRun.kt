@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import dev.sk2andy.materialbrowser.R
@@ -50,6 +52,7 @@ object V5FirstRunTestTags {
     const val Start = "v5_first_run_start"
     const val Import = "v5_first_run_import"
     const val DefaultBrowser = "v5_first_run_default_browser"
+    const val DefaultRefused = "v5_first_run_default_refused"
     const val MakeDefault = "v5_first_run_make_default"
     const val NotNow = "v5_first_run_not_now"
     const val Gestures = "v5_first_run_gestures"
@@ -137,6 +140,8 @@ fun V5FirstRunDefaultBrowser(
     onMakeDefault: () -> Unit,
     onNotNow: () -> Unit,
     modifier: Modifier = Modifier,
+    /** The user came back from the system's choice without picking Vola: the page says so (ПЗ-1). */
+    refused: Boolean = false,
 ) {
     val colors = V5Theme.colors
     FirstRunPage(modifier.testTag(V5FirstRunTestTags.DefaultBrowser), glow = false) {
@@ -159,6 +164,17 @@ fun V5FirstRunDefaultBrowser(
                 color = colors.labelSecondary,
                 textAlign = TextAlign.Center,
             )
+            if (refused) {
+                Text(
+                    stringResource(R.string.v5_first_run_default_refused),
+                    style = V5Theme.type.footnote,
+                    color = colors.label,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .semantics { liveRegion = LiveRegionMode.Polite }
+                        .testTag(V5FirstRunTestTags.DefaultRefused),
+                )
+            }
         }
         FirstRunActions(
             primary = stringResource(R.string.v5_first_run_default_action),
@@ -286,6 +302,13 @@ fun V5FirstRunGestures(onDone: () -> Unit, modifier: Modifier = Modifier) {
                     caption = stringResource(R.string.v5_first_run_gesture_overview_caption),
                 )
             }
+            // The same without gestures, for TalkBack and three-button navigation (ПЗ-3).
+            Text(
+                stringResource(R.string.v5_first_run_gestures_buttons),
+                style = V5Theme.type.footnote,
+                color = colors.labelSecondary,
+                modifier = Modifier.padding(horizontal = V5Spacing.space1),
+            )
             V5StatePrimaryAction(
                 V5StateAction(
                     label = stringResource(R.string.v5_first_run_gestures_done),
