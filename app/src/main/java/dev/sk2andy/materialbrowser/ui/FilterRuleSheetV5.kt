@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -257,7 +258,8 @@ internal fun FilterTextField(
             .padding(horizontal = V5Spacing.space4),
         contentAlignment = Alignment.CenterStart,
     ) {
-        if (value.isEmpty()) Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary)
+        // The field carries the name for TalkBack; this is only what the eye reads (СС-1).
+        if (value.isEmpty()) Text(placeholder, style = V5Theme.type.body, color = colors.labelTertiary, modifier = Modifier.clearAndSetSemantics {})
         BasicTextField(
             value = value,
             onValueChange = onValueChange,

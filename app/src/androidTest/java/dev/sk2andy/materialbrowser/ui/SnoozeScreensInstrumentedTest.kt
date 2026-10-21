@@ -232,7 +232,11 @@ class SnoozeScreensInstrumentedTest {
 
         assertEquals(1, openCalls.get())
         assertEquals(1, backCalls.get())
-        assertEquals(1, deleteCalls.get())
+        // A deleted tab waits behind «Undo» (M-09) and is deleted when the window closes.
+        composeRule.onNodeWithText(context.getString(R.string.snoozed_tab_deleted)).assertExists()
+        assertEquals(0, deleteCalls.get())
+        composeRule.mainClock.advanceTimeBy(LibraryRules.UNDO_WINDOW_MILLIS * 4)
+        composeRule.waitUntil(UNDO_TIMEOUT_MILLIS) { deleteCalls.get() == 1 }
     }
 
     @Test
@@ -359,5 +363,9 @@ class SnoozeScreensInstrumentedTest {
         composeRule.onNodeWithTag(SnoozeTestTags.Dialog).assertExists()
         composeRule.onNodeWithTag(SnoozeTestTags.Tomorrow).performClick()
         composeRule.onNodeWithTag(SnoozeTestTags.Dialog).assertDoesNotExist()
+    }
+
+    private companion object {
+        const val UNDO_TIMEOUT_MILLIS = 5_000L
     }
 }

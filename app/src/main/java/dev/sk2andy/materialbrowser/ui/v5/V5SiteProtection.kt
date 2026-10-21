@@ -274,7 +274,8 @@ private fun TroubleshootPage(state: V5SiteProtectionState, actions: V5SiteProtec
             )
         }
     }
-    V5ListGroup(footer = reloadNote(state)) {
+    // One note a page: the cookies group above already says it when it is there.
+    V5ListGroup(footer = reloadNote(state).takeIf { state.thirdPartyCookiesAllowed == null }) {
         ReportRow(actions.onCopyReport)
         V5ListRow(
             title = stringResource(R.string.v5_site_turn_off),

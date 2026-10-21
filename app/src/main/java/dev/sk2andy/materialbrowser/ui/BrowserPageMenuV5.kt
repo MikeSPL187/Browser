@@ -30,6 +30,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5DownloadRingState
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenu
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuActions
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuExtra
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuRules
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuState
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 
@@ -52,7 +53,7 @@ internal fun BrowserPageMenuV5(
     val listenSession = remember(context) { ListenSession.get(context) }
     val accentArgb = V5Theme.colors.accent.toArgb()
     // Only GeckoView can choose and hide page blocks; WebView keeps the menu without the item.
-    val canHideDistractions = !blank && controller.browserEngineCapabilities.hideDistractions
+    val canHideDistractions = V5PageMenuRules.canHideDistractions(blank, controller.browserEngineCapabilities.hideDistractions)
     // On GeckoView the page translates on the phone, through the sheet (V23); elsewhere through the provider.
     val onDeviceTranslate = BrowserTranslateRules.usesOnDevice(controller.browserEngineCapabilities.onDeviceTranslation, tab.url)
     var translateSheet by remember { mutableStateOf(false) }
@@ -74,23 +75,26 @@ internal fun BrowserPageMenuV5(
         favicon = favicon,
         hasPage = !blank,
         canGoForward = tab.canGoForward,
-        canFavorite = !blank && !tab.isIncognito,
-        favoriteOffInPrivate = !blank && tab.isIncognito,
+        canFavorite = V5PageMenuRules.canFavorite(blank, tab.isIncognito),
+        favoriteOffInPrivate = V5PageMenuRules.favoriteOffInPrivate(blank, tab.isIncognito),
         isFavorite = controller.isSelectedTabFavorite,
         canRead = !blank && ReaderStudioSessionRules.isSupportedSource(tab.url),
         // Settings → Translation can take the item out of the menu.
-        canTranslate = if (onDeviceTranslate) {
-            translateOffer && BrowserTranslateRules.offers(pageLanguage, languageSettings)
-        } else {
-            !blank && PageTranslationRules.canTranslate(provider = controller.pageTranslationProvider, sourceUrl = tab.url)
-        },
+        canTranslate = V5PageMenuRules.canTranslate(
+            blank = blank,
+            onDevice = onDeviceTranslate,
+            offerOn = translateOffer,
+            offersPageLanguage = onDeviceTranslate && BrowserTranslateRules.offers(pageLanguage, languageSettings),
+            providerCanTranslate = !onDeviceTranslate &&
+                PageTranslationRules.canTranslate(provider = controller.pageTranslationProvider, sourceUrl = tab.url),
+        ),
         isPinned = tab.isPinned,
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },
         canCloseTab = TabDeletionRules.canDelete(tab),
         canNewPrivateTab = controller.canOpenLinkInPrivate,
         canHideDistractions = canHideDistractions,
-        hiddenCount = if (canHideDistractions) controller.hiddenDistractions.hiddenCount(tab) else 0,
+        hiddenCount = V5PageMenuRules.hiddenCount(canHideDistractions) { controller.hiddenDistractions.hiddenCount(tab) },
         downloads = downloads,
         extras = pageMenuExtras(controller, offHere = stringResource(R.string.v5_menu_extension_off_here)),
     )
