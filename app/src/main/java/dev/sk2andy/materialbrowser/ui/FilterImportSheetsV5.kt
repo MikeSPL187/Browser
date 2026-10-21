@@ -50,6 +50,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
 import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
+import dev.sk2andy.materialbrowser.ui.v5.v5FieldLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -407,7 +408,7 @@ private fun FilterSourceField(
             ),
             modifier = modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = placeholder },
+                .v5FieldLabel(placeholder, empty = value.isEmpty()),
         )
     }
 }

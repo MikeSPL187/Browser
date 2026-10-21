@@ -66,8 +66,10 @@ object V5SuggestionLayoutRules {
     }
 
     fun layout(items: List<AddressSuggestionItem>, query: String): V5SuggestionLayout {
-        val best = best(items, query)
-        val rest = items.filterNot { it.stableId == best?.stableId }
+        // The list keys rows by stableId and fails on a repeat: the first of each stays (А-6).
+        val unique = items.distinctBy { it.stableId }
+        val best = best(unique, query)
+        val rest = unique.filterNot { it.stableId == best?.stableId }
         val sections = V5SuggestionGroup.entries.mapNotNull { group ->
             rest.filter { group(it) == group }
                 .takeIf { it.isNotEmpty() }

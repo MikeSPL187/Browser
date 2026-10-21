@@ -31,13 +31,14 @@ internal object FindInPageRules {
     /** How many times to ask again before showing the match without a total. */
     const val MAX_RECOUNTS = 2
 
+    /** A query of spaces alone is no query (ПП-6): nothing is searched or counted for it. */
     fun withQuery(state: FindInPageState, query: String): FindInPageState {
         if (query == state.query) return state
         return state.copy(
             query = query,
             activeMatchOrdinal = null,
             matchCount = 0,
-            isDoneCounting = query.isEmpty(),
+            isDoneCounting = query.isBlank(),
             isMatchFound = false,
         )
     }
@@ -54,7 +55,7 @@ internal object FindInPageRules {
         isDoneCounting: Boolean,
         found: Boolean = matchCount > 0,
     ): FindInPageState {
-        if (state.query.isEmpty()) return withQuery(state, state.query)
+        if (state.query.isBlank()) return withQuery(state, state.query)
         val normalizedMatchCount = matchCount.coerceAtLeast(0)
         val isMatchFound = found || normalizedMatchCount > 0
         return state.copy(
@@ -71,7 +72,7 @@ internal object FindInPageRules {
 
     /** Whether the page has matches the engine has not counted yet. */
     fun needsRecount(state: FindInPageState): Boolean =
-        state.query.isNotEmpty() && state.isMatchFound && !state.isDoneCounting
+        state.query.isNotBlank() && state.isMatchFound && !state.isDoneCounting
 
     /** Stops waiting for a count the engine keeps withholding: the match shows without a total. */
     fun withoutCount(state: FindInPageState): FindInPageState =
@@ -82,18 +83,18 @@ internal object FindInPageRules {
      * already known stays, so a new query shows "0/0" instead of counting forever.
      */
     fun withoutResult(state: FindInPageState): FindInPageState =
-        if (state.query.isEmpty() || state.isDoneCounting) state else state.copy(isDoneCounting = true)
+        if (state.query.isBlank() || state.isDoneCounting) state else state.copy(isDoneCounting = true)
 
     /** The query was searched and the page has none of it: the count says so in words, not "0/0". */
     fun isNotFound(state: FindInPageState): Boolean =
-        state.query.isNotEmpty() && state.isDoneCounting && state.matchCount == 0 && !state.isMatchFound
+        state.query.isNotBlank() && state.isDoneCounting && state.matchCount == 0 && !state.isMatchFound
 
     fun canNavigate(state: FindInPageState): Boolean =
-        state.query.isNotEmpty() && (state.matchCount > 0 || state.isMatchFound)
+        state.query.isNotBlank() && (state.matchCount > 0 || state.isMatchFound)
 
     fun displayPosition(state: FindInPageState): FindInPageMatchPosition {
         val normalizedMatchCount = state.matchCount.coerceAtLeast(0)
-        if (normalizedMatchCount == 0 && state.isMatchFound && state.query.isNotEmpty()) {
+        if (normalizedMatchCount == 0 && state.isMatchFound && state.query.isNotBlank()) {
             return FindInPageMatchPosition(
                 activeMatchNumber = (state.activeMatchOrdinal ?: 0).coerceAtLeast(0) + 1,
                 matchCount = 0,

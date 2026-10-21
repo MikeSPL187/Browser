@@ -108,10 +108,7 @@ internal fun BrowserPageMenuV5(
             onNewTab = actions.onNewTab,
             onNewPrivateTab = {
                 // Checked before the tab is made: a refusal after it left an ordinary tab, unsaid.
-                if (controller.canOpenLinkInPrivate) {
-                    actions.onNewTab()
-                    controller.setBlankTabIncognito(true)
-                }
+                if (controller.canOpenLinkInPrivate) actions.onNewPrivateTab()
             },
             onCloseTab = actions.onCloseTab,
             onFavorites = actions.onFavorites,

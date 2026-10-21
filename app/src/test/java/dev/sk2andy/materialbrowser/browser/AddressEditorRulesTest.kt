@@ -24,4 +24,18 @@ class AddressEditorRulesTest {
         assertEquals(none, AddressEditorRules.movedHighlight(2, 1, 0))
         assertEquals(0, AddressEditorRules.movedHighlight(7, 1, 3))
     }
+
+    @Test
+    fun `new suggestions for the same query keep the chosen row where it moved`() {
+        val before = listOf("tab:a", "history:b", "search:c")
+        val after = listOf("tab:a", "search:x", "history:b", "search:c")
+        assertEquals(2, AddressEditorRules.carriedHighlight(before, 1, after))
+    }
+
+    @Test
+    fun `nothing chosen or the chosen row gone carries nothing`() {
+        val before = listOf("tab:a", "history:b")
+        assertEquals(null, AddressEditorRules.carriedHighlight(before, none, before))
+        assertEquals(null, AddressEditorRules.carriedHighlight(before, 1, listOf("tab:a")))
+    }
 }

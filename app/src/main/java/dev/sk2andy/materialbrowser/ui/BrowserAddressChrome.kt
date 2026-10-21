@@ -129,6 +129,7 @@ internal fun BoxScope.BrowserAddressChrome(
     onOverviewGestureStarted: () -> Unit,
     onOverviewGestureCancelled: () -> Unit,
     openNewTabAndEdit: () -> Unit,
+    openNewPrivateTabAndEdit: () -> Unit,
     toggleFavoriteWithFeedback: (String) -> Unit,
     onBlankTabModeRevealOriginChanged: (Offset) -> Unit,
     onSnoozedTabs: () -> Unit,
@@ -499,6 +500,7 @@ internal fun BoxScope.BrowserAddressChrome(
             onBarPositioned = onBarPositioned,
             actions = V5MenuActions(
                 onNewTab = openNewTabAndEdit,
+                onNewPrivateTab = openNewPrivateTabAndEdit,
                 onDuplicateTab = { controller.duplicateSelectedTab() },
                 onCloseTab = { controller.closeTabFromUser(selectedTab.id) },
                 onToggleFavorite = { toggleFavoriteWithFeedback(selectedTab.id) },

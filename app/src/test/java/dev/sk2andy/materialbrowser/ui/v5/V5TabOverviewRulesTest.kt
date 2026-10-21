@@ -151,4 +151,30 @@ class V5TabOverviewRulesTest {
         assertEquals(0, V5OverviewGroupRules.indexOf(items, null))
         assertEquals(0, V5OverviewGroupRules.indexOf(emptyList(), "1"))
     }
+
+    @Test
+    fun `close all counts and closes only the cards in front, never pinned ones`() {
+        fun card(id: String, closable: Boolean = true) =
+            V5TabCard(id = id, title = id, selected = false, preview = null, favicon = null, closable = closable)
+        // The private tab of the other segment and a locked one are not cards here at all.
+        val cards = listOf(card("a"), card("pinned", closable = false), card("b"))
+        assertEquals(listOf("a", "b"), V5TabOverviewRules.closeAllIds(cards))
+        assertEquals(emptyList<String>(), V5TabOverviewRules.closeAllIds(listOf(card("pinned", closable = false))))
+        assertEquals(emptyList<String>(), V5TabOverviewRules.closeAllIds(emptyList()))
+    }
+
+    @Test
+    fun `plus adds a private tab only where the profile can have one`() {
+        assertTrue(V5TabOverviewRules.canAddTab(privateSegment = false, canOpenPrivate = false))
+        assertTrue(V5TabOverviewRules.canAddTab(privateSegment = true, canOpenPrivate = true))
+        assertFalse(V5TabOverviewRules.canAddTab(privateSegment = true, canOpenPrivate = false))
+    }
+
+    @Test
+    fun `an empty grid says why, a search first`() {
+        assertEquals(V5OverviewEmpty.NoMatches, V5TabOverviewRules.empty("news", privateSegment = true, canOpenPrivate = false))
+        assertEquals(V5OverviewEmpty.NoPrivateTabs, V5TabOverviewRules.empty(" ", privateSegment = true, canOpenPrivate = true))
+        assertEquals(V5OverviewEmpty.PrivateUnavailable, V5TabOverviewRules.empty("", privateSegment = true, canOpenPrivate = false))
+        assertEquals(V5OverviewEmpty.NoTabs, V5TabOverviewRules.empty("", privateSegment = false, canOpenPrivate = true))
+    }
 }

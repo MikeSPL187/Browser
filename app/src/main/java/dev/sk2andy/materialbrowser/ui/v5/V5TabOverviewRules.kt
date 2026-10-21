@@ -21,7 +21,39 @@ data class V5OverviewTab(
 
 data class V5OverviewCounts(val regular: Int, val private: Int)
 
+/** What an empty grid says, with its one way on (О-3). */
+enum class V5OverviewEmpty {
+    /** A search found nothing: it names the query. */
+    NoMatches,
+
+    /** The private segment has no tabs yet: it says what one is, with «New private tab». */
+    NoPrivateTabs,
+
+    /** The profile has no private tabs at all (a synced profile, an engine without them). */
+    PrivateUnavailable,
+
+    /** The tabs segment is empty: «New tab». */
+    NoTabs,
+}
+
 object V5TabOverviewRules {
+    /** Why the grid is empty: a search first, then the segment and whether it can have tabs. */
+    fun empty(query: String, privateSegment: Boolean, canOpenPrivate: Boolean): V5OverviewEmpty = when {
+        query.isNotBlank() -> V5OverviewEmpty.NoMatches
+        privateSegment && !canOpenPrivate -> V5OverviewEmpty.PrivateUnavailable
+        privateSegment -> V5OverviewEmpty.NoPrivateTabs
+        else -> V5OverviewEmpty.NoTabs
+    }
+
+    /** Whether «+» adds a tab to the segment in front: a private one only where the profile has them (О-2). */
+    fun canAddTab(privateSegment: Boolean, canOpenPrivate: Boolean): Boolean = !privateSegment || canOpenPrivate
+
+    /**
+     * What «Close all» closes (О-1): the cards in front of the user, so the count it asks about is
+     * the one on screen. Another segment, tabs behind the private lock and pinned tabs stay.
+     */
+    fun closeAllIds(cards: List<V5TabCard>): List<String> = cards.filter(V5TabCard::closable).map(V5TabCard::id)
+
     /** Tabs and private tabs the segment chips count; hidden (locked) tabs do not count. */
     fun counts(tabs: List<V5OverviewTab>, hidden: (V5OverviewTab) -> Boolean): V5OverviewCounts {
         val visible = tabs.filterNot(hidden)
