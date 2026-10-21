@@ -37,6 +37,17 @@ class V5BottomBarReadInstrumentedTest {
 
     private var readable by mutableStateOf(false)
 
+    private val gestures = V5BarGestures(
+        tabSwipeEnabled = false,
+        onTabDrag = {},
+        onTabDragStopped = {},
+        overviewEnabled = false,
+        overviewProgress = mutableFloatStateOf(0f),
+        onOverviewProgress = {},
+        onOverviewStarted = {},
+        onOverviewCancelled = {},
+    )
+
     @Test
     fun theDomainStaysInPlaceWhileReadComesInAndGoes() {
         composeRule.setContent {
@@ -55,16 +66,7 @@ class V5BottomBarReadInstrumentedTest {
                             blockedCount = 0,
                             readerAvailable = readable,
                         ),
-                        gestures = V5BarGestures(
-                            tabSwipeEnabled = false,
-                            onTabDrag = {},
-                            onTabDragStopped = {},
-                            overviewEnabled = false,
-                            overviewProgress = mutableFloatStateOf(0f),
-                            onOverviewProgress = {},
-                            onOverviewStarted = {},
-                            onOverviewCancelled = {},
-                        ),
+                        gestures = gestures,
                         tint = V5SiteTints.of(null, V5Theme.colors.chrome, V5Theme.colors.label),
                         collapsed = false,
                         onExpand = {},
