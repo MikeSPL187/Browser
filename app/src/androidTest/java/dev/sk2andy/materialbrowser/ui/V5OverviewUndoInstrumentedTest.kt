@@ -38,6 +38,8 @@ class V5OverviewUndoInstrumentedTest {
         BrowserSessionStore(context).apply {
             saveStartupAnimationEnabled(false)
             saveStartupAddressFocusMode(StartupAddressFocusMode.Never)
+            // «Undo» after closing a tab is a setting, off on a fresh install.
+            saveClosedTabUndoEnabled(true)
         }
     }
 
