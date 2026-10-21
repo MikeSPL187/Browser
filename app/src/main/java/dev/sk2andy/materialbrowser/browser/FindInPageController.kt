@@ -79,13 +79,15 @@ class FindInPageController internal constructor(
     }
 
     fun updateQuery(query: String) {
-        val session = session ?: return
-        val current = state?.takeIf { it.tabId == session.tabId } ?: return
+        // Without the page it searched (closed, or another tab in front) the bar has nothing to
+        // search: it closes rather than swallow the typing (ПП-4).
+        val session = session ?: return close()
+        val current = state?.takeIf { it.tabId == session.tabId } ?: return close()
         val updated = FindInPageRules.withQuery(current, query)
         if (updated === current) return
         dropRequests()
         state = updated
-        if (query.isEmpty()) {
+        if (query.isBlank()) {
             session.engineSession.clearFindInPage()
         } else {
             search(session, query, forward = true, recountsLeft = FindInPageRules.MAX_RECOUNTS)
@@ -138,7 +140,7 @@ class FindInPageController internal constructor(
 
     private fun searchAgain(session: FindInPageSession, current: FindInPageState): Boolean {
         val query = current.query
-        if (query.isEmpty()) return false
+        if (query.isBlank()) return false
         dropRequests()
         state = FindInPageRules.withQuery(FindInPageRules.withQuery(current, query = ""), query)
         search(session, query, forward = true, recountsLeft = FindInPageRules.MAX_RECOUNTS)
@@ -148,7 +150,7 @@ class FindInPageController internal constructor(
     fun close() {
         dropRequests()
         state?.let { closed ->
-            if (closed.query.isEmpty()) lastQueries.remove(closed.tabId) else lastQueries[closed.tabId] = closed.query
+            if (closed.query.isBlank()) lastQueries.remove(closed.tabId) else lastQueries[closed.tabId] = closed.query
         }
         val closing = session
         session = null

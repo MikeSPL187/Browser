@@ -23,6 +23,8 @@ internal fun TabOverview(
     onSelect: (String) -> Unit,
     onSelectDismissAnchor: (String) -> Unit = onSelect,
     onNewTab: () -> Unit,
+    /** v5 only: a new tab straight in private (О-2, М-6). */
+    onNewPrivateTab: () -> Unit = onNewTab,
     onOpenSettings: () -> Unit,
     onOpenSyncSettings: () -> Unit = onOpenSettings,
     onEditProfileWallpaper: (String, ProfileWallpaperTarget) -> Unit = { _, _ -> },
@@ -54,6 +56,7 @@ internal fun TabOverview(
             onNewTab = onNewTab,
             onEntryHeroStarted = onEntryHeroStarted,
             onEntryHeroCompleted = onEntryHeroCompleted,
+            onNewPrivateTab = onNewPrivateTab,
         )
         return
     }

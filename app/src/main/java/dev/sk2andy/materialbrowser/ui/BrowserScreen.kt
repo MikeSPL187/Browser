@@ -99,7 +99,6 @@ import dev.sk2andy.materialbrowser.browser.commands.CommandActions
 import dev.sk2andy.materialbrowser.browser.commands.CommandConfirmation
 import dev.sk2andy.materialbrowser.browser.commands.CommandDispatchOutcome
 import dev.sk2andy.materialbrowser.browser.commands.CommandDispatcher
-import dev.sk2andy.materialbrowser.browser.commands.CommandMatcher
 import dev.sk2andy.materialbrowser.browser.commands.CommandSuggestion
 import dev.sk2andy.materialbrowser.capsule.SiteCapsule
 import dev.sk2andy.materialbrowser.capsule.CapsuleIconMode
@@ -1078,15 +1077,7 @@ internal fun BrowserScreen(
         addressEditor.moveHighlight(delta, suggestionItems.size)
     }
 
-    LaunchedEffect(addressValue.text, suggestionItems.map(AddressSuggestionItem::stableId)) {
-        highlightedSuggestionIndex = if (
-            CommandMatcher.isExplicitCommandQuery(addressValue.text) && suggestionItems.isNotEmpty()
-        ) {
-            0
-        } else {
-            -1
-        }
-    }
+    AddressHighlightEffect(addressValue.text, suggestionItems, addressEditor)
 
     LaunchedEffect(commandFeedback) {
         val shownFeedback = commandFeedback ?: return@LaunchedEffect
@@ -1556,6 +1547,7 @@ internal fun BrowserScreen(
             onOverviewGestureStarted = { overviewGestureSettleJob?.cancel() },
             onOverviewGestureCancelled = settleOverviewGesture,
             openNewTabAndEdit = { openNewTabAndEdit() },
+            openNewPrivateTabAndEdit = { openNewTabAndEdit(isIncognito = true) },
             toggleFavoriteWithFeedback = toggleFavoriteWithFeedback,
             onBlankTabModeRevealOriginChanged = { blankTabModeRevealOrigin = it },
             onSnoozedTabs = { snoozedTabsVisible = true },
@@ -1642,6 +1634,11 @@ internal fun BrowserScreen(
                 onNewTab = {
                     val previousTabId = controller.selectedTabId
                     openNewTabAndEdit()
+                    if (controller.selectedTabId != previousTabId) closeTabOverview()
+                },
+                onNewPrivateTab = {
+                    val previousTabId = controller.selectedTabId
+                    openNewTabAndEdit(isIncognito = true)
                     if (controller.selectedTabId != previousTabId) closeTabOverview()
                 },
                 onOpenSettings = { openSettings(SettingsDestination.Home) },

@@ -48,6 +48,8 @@ import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 /** Menu actions that need more than a controller call. */
 internal class V5MenuActions(
     val onNewTab: () -> Unit,
+    /** A new tab made private from the start: never an ordinary one turned private after (М-6). */
+    val onNewPrivateTab: () -> Unit,
     val onDuplicateTab: () -> Unit,
     val onCloseTab: () -> Unit,
     val onToggleFavorite: () -> Unit,

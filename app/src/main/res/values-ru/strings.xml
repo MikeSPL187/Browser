@@ -2050,6 +2050,7 @@
     <string name="v5_suggestion_commands">Команды</string>
     <string name="v5_suggestion_tab">Вкладка</string>
     <string name="v5_editor_clear">Очистить</string>
+    <string name="v5_field_truncated">Поместились только первые %1$d символов, остальное обрезано.</string>
     <string name="v5_sheet_close">Закрыть</string>
     <string name="v5_overview_ungrouped">Без группы</string>
     <string name="v5_overview_group_collapse">Свернуть группу</string>
@@ -2210,6 +2211,13 @@
     <string name="v5_menu_all_actions">Все действия</string>
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>
+    <string name="v5_overview_no_matches">Ничего не найдено по «%1$s»</string>
+    <string name="v5_overview_private_empty_title">Здесь появятся частные вкладки</string>
+    <string name="v5_overview_private_empty_message">Открытое в частной вкладке не попадает в историю, а её файлы cookie удаляются, когда вы её закроете.</string>
+    <string name="v5_overview_private_unavailable">В этом профиле нет частных вкладок</string>
+    <string name="v5_overview_tabs_empty_title">Нет открытых вкладок</string>
+    <string name="v5_overview_close_named">Закрыть «%1$s»</string>
+    <string name="v5_overview_pinned_stays">Закреплённая вкладка не закрывается. Сначала открепите её.</string>
     <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_profiles_title">Профили</string>
     <string name="v5_profiles_other_devices">С других устройств</string>
@@ -2408,7 +2416,11 @@
     <string name="v5_password_health_leaks">Утечки</string>
     <string name="v5_password_health_checked_at">Проверено в %1$s</string>
     <string name="v5_password_health_check_again">Проверить ещё раз</string>
-    <string name="v5_password_health_note">Отправляются только первые 5 символов хеша каждого пароля — не пароль и не адрес сайта. Повторы и слабые пароли проверяются на телефоне.</string>
+    <string name="v5_password_health_note">В службу Pwned Passwords (haveibeenpwned.com) уходят только первые 5 символов хеша каждого пароля — не пароль и не адрес сайта. Служба видит ваш IP-адрес и время проверки. Повторы и слабые пароли проверяются на телефоне.</string>
+    <string name="v5_password_health_empty_title">Паролей пока нет</string>
+    <string name="v5_password_health_empty_message">Когда вы сохраните или перенесёте пароли, здесь появятся повторы, слабые пароли и утечки.</string>
+    <string name="v5_password_health_empty_action">К паролям</string>
+    <string name="v5_password_finding_other_sites">Тот же пароль на сайтах</string>
     <string name="v5_password_health_all_fine">Без повторов и утечек, все пароли надёжные.</string>
     <string name="v5_password_health_all_fine_unchecked">Без повторов, все пароли надёжные. Утечки ещё не проверялись.</string>
     <string name="v5_password_health_open_login">Все данные записи</string>

@@ -39,15 +39,16 @@ class PasswordHealthRulesTest {
     }
 
     @Test
-    fun loginsWithoutAPasswordRepeatNothingAndAreShortNotLettersOnly() {
+    fun loginsWithoutAPasswordRepeatNothingAndAreNotWeak() {
         val report = PasswordHealthRules.report(
             listOf(login("a", "https://a.example", ""), login("b", "https://b.example", ""), login("c", "https://c.example", "")),
             breaches = emptyMap(),
         )
 
         assertTrue(report.reused.isEmpty())
-        assertEquals(List(3) { WeakPasswordKind.Short }, report.weak.map { it.kind })
-        assertEquals(List(3) { 0 }, report.weak.map { it.length })
+        // Nothing to strengthen: a login saved without a password is not «weak, 0 characters» (МП-4).
+        assertTrue(report.weak.isEmpty())
+        assertEquals(WeakPasswordKind.Short, PasswordHealthRules.weakKind(""))
     }
 
     @Test
@@ -109,6 +110,34 @@ class PasswordHealthRulesTest {
         assertFalse(PasswordHealthRules.isPlainHttp("http://[::1]:8080"))
         assertFalse(PasswordHealthRules.isPlainHttp("android://hash@com.example.app/"))
         assertFalse(PasswordHealthRules.isPlainHttp("http://"))
+    }
+
+    @Test
+    fun theLoopbackInAnyFormIsNotInsecure() {
+        assertFalse(PasswordHealthRules.isPlainHttp("http://127.1/"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://0.0.0.0/"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://[::ffff:127.0.0.1]/"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://[0:0:0:0:0:0:0:1]:8080"))
+        assertTrue(PasswordHealthRules.isPlainHttp("http://[::ffff:10.0.0.1]/"))
+        assertTrue(PasswordHealthRules.isPlainHttp("http://128.0.0.1/"))
+    }
+
+    @Test
+    fun aBackslashEndsTheHostAsInABrowser() {
+        // The page comes from evil.com over plain HTTP; the name after the at sign is not the host.
+        assertTrue(PasswordHealthRules.isPlainHttp("http://evil.com\\@localhost/"))
+        assertFalse(PasswordHealthRules.isPlainHttp("http://localhost\\@evil.com/"))
+    }
+
+    @Test
+    fun aLoginWithoutAPasswordIsNotWeakAndEmojiCountAsCharacters() {
+        val logins = listOf(
+            login("empty", "https://a.example", ""),
+            login("emoji", "https://b.example", "😀😀😀"),
+        )
+        val weak = PasswordHealthRules.report(logins, emptyMap()).weak
+        assertEquals(listOf("emoji"), weak.map { it.login.id })
+        assertEquals(3, weak.single().length)
     }
 
     @Test
