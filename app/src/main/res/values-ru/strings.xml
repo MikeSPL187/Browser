@@ -1275,6 +1275,8 @@
     <string name="filter_add_rule">Добавить правило</string>
     <string name="filter_edit_rule">Изменить правило</string>
     <string name="filter_delete_rule">Удалить правило</string>
+    <string name="filter_v5_delete_title">Удалить правило для «%1$s»?</string>
+    <string name="filter_v5_delete_message">Правило перестанет действовать во всех вкладках, где оно применялось. Своё правило вернуть будет нельзя.</string>
     <string name="filter_rule_deleted">Правило удалено</string>
     <string name="filter_rule_builtin">Встроено в Vola · EasyList/EasyPrivacy</string>
     <string name="filter_type_host">Хост запроса</string>
@@ -1413,6 +1415,7 @@
     <string name="action_open_now">Открыть сейчас</string>
     <string name="snooze_invalid_time">Выберите дату и время в будущем</string>
     <string name="snoozed_tab_update_failed">Не удалось изменить вкладку — возможно, она уже открылась</string>
+    <string name="snoozed_tab_deleted">Отложенная вкладка удалена</string>
     <string name="snooze_confirmation">Вкладка отложена</string>
     <string name="snooze_failed">Не удалось отложить вкладку</string>
     <string name="snooze_notification_channel_name">Отложенные вкладки</string>
@@ -1630,6 +1633,8 @@
     <string name="gecko_extension_allow_private_too">Разрешить также в приватных вкладках</string>
     <string name="gecko_extension_update">Обновить расширение</string>
     <string name="gecko_extension_uninstall">Удалить расширение</string>
+    <string name="gecko_extension_v5_uninstall_title">Удалить «%1$s»?</string>
+    <string name="gecko_extension_v5_uninstall_message">Расширение удалится из Vola вместе со своими данными и настройками.</string>
     <string name="gecko_extension_permission_intro">Расширение запрашивает следующий доступ:</string>
     <string name="gecko_extension_no_permissions">Дополнительных разрешений не заявлено.</string>
     <string name="gecko_extension_v5_on">Вкл.</string>
@@ -2269,6 +2274,7 @@
     <string name="v5_history_clear_today">За сегодня</string>
     <string name="v5_history_clear_two_days">За сегодня и вчера</string>
     <string name="v5_history_clear_all">За всё время</string>
+    <string name="v5_history_clear_confirm_message">Страницы, открытые за этот период, удалятся из истории этого профиля. Вернуть их будет нельзя.</string>
     <!-- V28 B1: знакомство v5 (холст п1, п2) -->
     <string name="v5_first_run_tagline">Браузер, который не мешает странице.</string>
     <string name="v5_first_run_protection_title">Защита сразу</string>

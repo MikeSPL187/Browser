@@ -49,14 +49,18 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -83,6 +87,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowMinHeight
 import dev.sk2andy.materialbrowser.shared.ui.theme.densityRowPadding
 
@@ -293,6 +298,32 @@ internal fun SnoozedTabsScreen(
     val showUpdateFailed: () -> Unit = {
         feedbackScope.launch { snackbarHostState.showSnackbar(updateFailedMessage) }
     }
+    // A deleted tab hides at once and waits behind «Undo» (M-09): it is deleted, with its page
+    // state, only when the window closes, another one is deleted or the screen goes away.
+    var pendingDeleteId by remember { mutableStateOf<String?>(null) }
+    val currentDelete by rememberUpdatedState(onDelete)
+    val commitDelete: (String) -> Unit = { id -> if (!currentDelete(id)) showUpdateFailed() }
+    DisposableEffect(Unit) {
+        onDispose { pendingDeleteId?.let { id -> currentDelete(id) } }
+    }
+    val deletedMessage = stringResource(R.string.snoozed_tab_deleted)
+    val undoLabel = stringResource(R.string.action_undo)
+    val undoWindowMillis = LocalAccessibilityManager.current?.calculateRecommendedTimeoutMillis(
+        LibraryRules.UNDO_WINDOW_MILLIS,
+        containsIcons = false,
+        containsText = true,
+        containsControls = true,
+    ) ?: LibraryRules.UNDO_WINDOW_MILLIS
+    LaunchedEffect(pendingDeleteId) {
+        val id = pendingDeleteId ?: return@LaunchedEffect
+        val result = withTimeoutOrNull(undoWindowMillis) {
+            snackbarHostState.showSnackbar(deletedMessage, undoLabel, duration = SnackbarDuration.Indefinite)
+        }
+        snackbarHostState.currentSnackbarData?.dismiss()
+        pendingDeleteId = null
+        if (result != SnackbarResult.ActionPerformed) commitDelete(id)
+    }
+    val shownTabs = snoozedTabs.filterNot { it.tab.id == pendingDeleteId }
     val profilesById = remember(profiles) { profiles.associateBy(BrowserProfile::id) }
     Surface(
         modifier = modifier
@@ -331,7 +362,7 @@ internal fun SnoozedTabsScreen(
                         )
                     }
                 }
-                if (snoozedTabs.isEmpty()) {
+                if (shownTabs.isEmpty()) {
                     item(key = "empty") {
                         VolaStateMessage(
                             icon = rememberVectorPainter(VolaIcons.Snooze),
@@ -343,9 +374,9 @@ internal fun SnoozedTabsScreen(
                         )
                     }
                 } else {
-                    itemsIndexed(snoozedTabs, key = { _, snoozed -> snoozed.tab.id }) { index, snoozed ->
+                    itemsIndexed(shownTabs, key = { _, snoozed -> snoozed.tab.id }) { index, snoozed ->
                         LibraryCardSlice(
-                            position = LibraryRules.position(index, snoozedTabs.size),
+                            position = LibraryRules.position(index, shownTabs.size),
                             modifier = if (index == 0) Modifier.padding(top = VolaLibrary.sectionGap) else Modifier,
                         ) {
                             SnoozedTabRow(
@@ -355,7 +386,10 @@ internal fun SnoozedTabsScreen(
                                 onOpenNow = {
                                     if (onOpenNow(snoozed.tab.id)) onBack() else showUpdateFailed()
                                 },
-                                onDelete = { if (!onDelete(snoozed.tab.id)) showUpdateFailed() },
+                                onDelete = {
+                                    pendingDeleteId?.let(commitDelete)
+                                    pendingDeleteId = snoozed.tab.id
+                                },
                             )
                         }
                     }
@@ -592,7 +626,8 @@ private fun SnoozeDateTimeDialogs(
             val timeState = rememberTimePickerState(
                 initialHour = initialLocal.hour,
                 initialMinute = initialLocal.minute,
-                is24Hour = true,
+                // The device's own clock: a 12-hour locale picks AM and PM, as the row then shows it (L-05).
+                is24Hour = android.text.format.DateFormat.is24HourFormat(LocalContext.current),
             )
             AlertDialog(
                 onDismissRequest = onDismiss,
