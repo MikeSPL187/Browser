@@ -6,7 +6,7 @@ compose-multiplatform = "1.12.2"
 # Android resolves the AndroidX artifact from compose-material3 below.
 jetbrains-compose-material3 = "1.9.0"
 # Keep GeckoView on the latest stable release: it carries the engine's security fixes.
-geckoview = "158.0.20261007201254"
+geckoview = "158.0.20261021001945"
 compose-bom = "2026.09.00"
 compose-material3 = "1.5.0-beta01"
 lifecycle = "2.8.7"
