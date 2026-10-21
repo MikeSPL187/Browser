@@ -8,7 +8,6 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoInlineVideoIdentity
 import dev.sk2andy.materialbrowser.browser.engine.GeckoNavigationRequestDecision
 import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommand
-import java.util.concurrent.atomic.AtomicBoolean
 
 // The engine's bookkeeping records for BrowserController: views bound to tabs, pending captures,
 // navigations and media presentations. Moved out of BrowserController.kt unchanged.
@@ -46,14 +45,6 @@ internal data class InlineVideoGestureHapticOwner(
     val identity: GeckoInlineVideoIdentity,
 )
 
-internal class PendingMediaLayoutRestoration(
-    val request: MediaLayoutRestorationGate.Request,
-    val view: View,
-    val restore: (acceptCompletion: () -> Boolean) -> Unit,
-) {
-    var started = false
-}
-
 internal data class GeckoViewBinding(
     val tabId: String,
     val session: AndroidBrowserEngineSessionPort,
@@ -85,15 +76,6 @@ internal class PendingInitialBrowserEngineNavigation(
         observedView = null
         layoutListener = null
     }
-}
-
-internal data class TabFaviconFetchAttempt(
-    val session: AndroidBrowserEngineSessionPort,
-    val pageUrl: String,
-    val navigationGeneration: Int,
-    val faviconEpoch: Int,
-) {
-    val cancelled = AtomicBoolean(false)
 }
 
 internal data class PendingGeckoViewAttach(
