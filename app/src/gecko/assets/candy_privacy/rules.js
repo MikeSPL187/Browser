@@ -28,6 +28,8 @@
   const GENERIC_POLICY_CACHE_SIZE = 128;
   const MAX_GENERIC_NAMES = 2048;
   const MAX_GENERIC_COMPLEX = 1024;
+  // Shared by every cosmetic rule without host exclusions: one frozen array, not 40 000 empty ones.
+  const NO_HOSTS = Object.freeze([]);
 
   function lines(text) {
     return text.split(/\r?\n/).map((line) => line.trim())
@@ -200,7 +202,7 @@
       if (fields.length !== 4) throw new Error("Invalid cosmetic rule");
       return {
         action: fields[0], host: fields[1],
-        excluded: fields[2] === "-" ? [] : fields[2].split(","),
+        excluded: fields[2] === "-" ? NO_HOSTS : fields[2].split(","),
         selector: fields[3] === "-" ? "" : decode(fields[3]),
       };
     });
@@ -240,33 +242,101 @@
     });
   }
 
+  // Strings stored as one joined string and their offsets: no string object per entry. `find`
+  // needs the values sorted (plain code-unit order, as Array.prototype.sort leaves them).
+  function packedStrings(values) {
+    const starts = new Uint32Array(values.length + 1);
+    for (let index = 0; index < values.length; index++) starts[index + 1] = starts[index] + values[index].length;
+    const text = values.join("");
+    const compare = (value, index) => {
+      const start = starts[index];
+      const length = starts[index + 1] - start;
+      const common = Math.min(value.length, length);
+      for (let offset = 0; offset < common; offset++) {
+        const difference = value.charCodeAt(offset) - text.charCodeAt(start + offset);
+        if (difference !== 0) return difference;
+      }
+      return value.length - length;
+    };
+    const size = values.length;
+    return {
+      size,
+      at: (index) => text.slice(starts[index], starts[index + 1]),
+      find(value) {
+        let low = 0;
+        let high = size - 1;
+        while (low <= high) {
+          const middle = (low + high) >>> 1;
+          const comparison = compare(value, middle);
+          if (comparison < 0) high = middle - 1;
+          else if (comparison > 0) low = middle + 1;
+          else return middle;
+        }
+        return -1;
+      },
+    };
+  }
+
+  // Plain scoped hide rules (no exclusions; 23 000 of the 25 000 scoped ones) as sorted hosts,
+  // each with a range of ids into one table of distinct selectors.
+  function packPlainRules(selectorsByHost) {
+    const hosts = Array.from(selectorsByHost.keys()).sort();
+    const hostStarts = new Uint32Array(hosts.length + 1);
+    const selectorIds = new Map();
+    const selectors = [];
+    const ids = [];
+    hosts.forEach((host, index) => {
+      for (const selector of selectorsByHost.get(host)) {
+        let id = selectorIds.get(selector);
+        if (id === undefined) {
+          id = selectors.length;
+          selectorIds.set(selector, id);
+          selectors.push(selector);
+        }
+        ids.push(id);
+      }
+      hostStarts[index + 1] = ids.length;
+    });
+    return { hosts: packedStrings(hosts), hostStarts, ids: Uint32Array.from(ids), selectors: packedStrings(selectors) };
+  }
+
   // Scoped cosmetic rules bucketed by host, so a frame looks at its own hosts' rules instead of
   // all 40 000. Generic rules (host "*") stay out of the buckets: plain `.class` and `#id` ones go
   // to sets a page looks up with the names it actually uses, the rest to a short list.
+  // The index lives as long as the extension does, so plain hide rules are packed (packPlainRules)
+  // and their rule objects rebuilt only for the hosts a frame asks about.
   function indexCosmetics(cosmeticRules) {
     const byHost = new Map();
+    const plainByHost = new Map();
     const everyHost = [];
-    const generic = {
-      classes: new Set(), ids: new Set(), complex: [], selectors: new Set(),
-      unconditional: new Set(), conditional: new Map(),
-    };
+    const generic = { classes: new Set(), ids: new Set(), complex: [], complexSet: new Set(), conditional: new Map() };
+    const unconditional = new Set();
     for (const rule of cosmeticRules) {
       if (rule.host === "*") {
         if (rule.action === "A") everyHost.push(rule);
-        if (rule.action === "H") addGeneric(generic, rule);
+        if (rule.action === "H") addGeneric(generic, unconditional, rule);
       } else if (rule.host.endsWith(".*")) {
         everyHost.push(rule);
       } else {
-        if (!byHost.has(rule.host)) byHost.set(rule.host, []);
-        byHost.get(rule.host).push(rule);
+        const buckets = rule.action === "H" && !rule.excluded.length ? plainByHost : byHost;
+        if (!buckets.has(rule.host)) buckets.set(rule.host, []);
+        buckets.get(rule.host).push(rule.action === "H" && !rule.excluded.length ? rule.selector : rule);
       }
     }
+    // A selector with a copy that excludes no host is never dropped by the copies that do.
+    for (const selector of unconditional) generic.conditional.delete(selector);
+    const plain = packPlainRules(plainByHost);
     const candidates = (host) => {
       const found = everyHost.slice();
       let candidate = host;
       while (true) {
         const bucket = byHost.get(candidate);
         if (bucket) found.push(...bucket);
+        const hostIndex = plain.hosts.find(candidate);
+        for (let index = hostIndex < 0 ? 0 : plain.hostStarts[hostIndex];
+          hostIndex >= 0 && index < plain.hostStarts[hostIndex + 1]; index++) {
+          found.push({ action: "H", host: candidate, excluded: NO_HOSTS, selector: plain.selectors.at(plain.ids[index]) });
+        }
         const dot = candidate.indexOf(".");
         if (dot < 0) return found;
         candidate = candidate.slice(dot + 1);
@@ -288,19 +358,26 @@
     };
   }
 
-  function addGeneric(generic, rule) {
-    if (!generic.selectors.has(rule.selector)) {
-      generic.selectors.add(rule.selector);
-      const simple = SIMPLE_SELECTOR.exec(rule.selector);
-      if (!simple) generic.complex.push(rule.selector);
-      else (simple[1] === "." ? generic.classes : generic.ids).add(simple[2]);
+  function addGeneric(generic, unconditional, rule) {
+    const simple = SIMPLE_SELECTOR.exec(rule.selector);
+    if (simple) {
+      (simple[1] === "." ? generic.classes : generic.ids).add(simple[2]);
+    } else if (!generic.complexSet.has(rule.selector)) {
+      generic.complexSet.add(rule.selector);
+      generic.complex.push(rule.selector);
     }
     if (!rule.excluded.length) {
-      generic.unconditional.add(rule.selector);
+      unconditional.add(rule.selector);
     } else {
       if (!generic.conditional.has(rule.selector)) generic.conditional.set(rule.selector, []);
-      generic.conditional.get(rule.selector).push(rule);
+      generic.conditional.get(rule.selector).push(rule.excluded);
     }
+  }
+
+  function isGenericSelector(generic, selector) {
+    const simple = SIMPLE_SELECTOR.exec(selector);
+    if (!simple) return generic.complexSet.has(selector);
+    return (simple[1] === "." ? generic.classes : generic.ids).has(simple[2]);
   }
 
   function resolveGenericPolicy(generic, rules, host) {
@@ -310,16 +387,16 @@
     if (disabled) return null;
     const denied = new Set();
     for (const rule of rules) {
-      if (rule.action === "A" && generic.selectors.has(rule.selector) &&
+      if (rule.action === "A" && isGenericSelector(generic, rule.selector) &&
           (rule.host === "*" || hostPatternMatches(host, rule.host))) {
         denied.add(rule.selector);
       }
     }
     // A selector some copies exclude on a host is kept there only when no copy applies to it.
-    for (const [selector, conditional] of generic.conditional) {
-      const keptEverywhere = conditional.every((rule) =>
-        rule.excluded.some((pattern) => hostPatternMatches(host, pattern)));
-      if (keptEverywhere && !generic.unconditional.has(selector)) denied.add(selector);
+    for (const [selector, exclusions] of generic.conditional) {
+      if (exclusions.every((excluded) => excluded.some((pattern) => hostPatternMatches(host, pattern)))) {
+        denied.add(selector);
+      }
     }
     return { denied };
   }

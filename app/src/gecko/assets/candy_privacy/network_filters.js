@@ -7,6 +7,8 @@
   const HEADER = "candy-network-filter:2";
   const TOKEN_RUN = /[a-z0-9%]+/g;
   const SEPARATOR = "(?:[^a-z0-9_.%-]|$)";
+  // Shared by the 12 000 filters without page conditions instead of two empty arrays each.
+  const NO_PAGES = Object.freeze([]);
 
   function declaredCount(text, prefix) {
     const line = text.split(/\r?\n/).find((value) => value.startsWith(prefix));
@@ -47,6 +49,12 @@
     if (!text.startsWith(HEADER)) throw new Error("Invalid network filter header");
     const rows = text.split(/\r?\n/).slice(1).filter((line) => line && !line.startsWith("#"));
     if (rows.length !== declaredCount(text, "# Rules:")) throw new Error("Network filter count mismatch");
+    // The lists use a few dozen type combinations: one read-only set per combination.
+    const typeSets = new Map();
+    const typesOf = (value) => {
+      if (!typeSets.has(value)) typeSets.set(value, new Set(value.split(",")));
+      return typeSets.get(value);
+    };
     return rows.map((row) => {
       const fields = row.split("\t");
       if (fields.length !== 7 || (fields[0] !== "A" && fields[0] !== "B")) {
@@ -56,9 +64,9 @@
         action: fields[0],
         token: fields[1] === "-" ? null : fields[1],
         pattern: fields[2],
-        types: fields[3] === "*" ? null : new Set(fields[3].split(",")),
-        pages: fields[4] === "-" ? [] : fields[4].split(","),
-        excluded: fields[5] === "-" ? [] : fields[5].split(","),
+        types: fields[3] === "*" ? null : typesOf(fields[3]),
+        pages: fields[4] === "-" ? NO_PAGES : fields[4].split(","),
+        excluded: fields[5] === "-" ? NO_PAGES : fields[5].split(","),
         party: fields[6],
         regExp: null,
       };
