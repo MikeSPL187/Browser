@@ -29,6 +29,8 @@ internal object GeckoRuntimeSettingsFactory {
         .automaticFontSizeAdjustment(false)
         // Gecko owns its CA store; Android Network Security Config alone cannot opt it in.
         .enterpriseRootsEnabled(trustUserCertificates)
+        // Pinned: Gecko 158 turns Fission on by default, a later default must not turn it off quietly.
+        .fissionEnabled(true)
         .build()
         .apply {
             setFingerprintingProtection(true)
@@ -38,6 +40,9 @@ internal object GeckoRuntimeSettingsFactory {
             applyDnsOverHttpsSettings(dnsOverHttpsSettings)
             applyHttpsOnlyMode(httpsOnlyMode)
             applyWebAuthn(webAuthnEnabled)
+            // Gecko's own default isolates every site in its own process (1), the most memory there
+            // is; Firefox for Android isolates only sites someone signed in to or that ask for it.
+            setWebContentIsolationStrategy(GeckoRuntimeSettings.STRATEGY_ISOLATE_HIGH_VALUE)
             CandyGeckoPrefsBridge.setStartupPref(this, PROCESS_PRELAUNCH_PREF, false)
         }
 }
