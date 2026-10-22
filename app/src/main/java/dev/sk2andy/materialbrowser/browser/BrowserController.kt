@@ -11561,7 +11561,7 @@ class BrowserController(
             add(pending.openerTabId)
             add(pending.popupTabId)
         }
-        browserEngineSessions.keys.filterTo(this) { tabId -> hasPermissionActivity(tabId) }
+        browserEngineSessions.keys.filterTo(this) { id -> hasPermissionActivity(id) || geckoMediaStates[id]?.isPlaying == true }
     }
 
     private fun evictResidentSession(tabId: String) {
