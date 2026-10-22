@@ -1009,8 +1009,6 @@ class BrowserController(
         factory.also { it.setFingerprintingProtectionExceptions(fingerprintingExceptionHosts()) }
     }
     private val browserEngineSessionFactory: AndroidBrowserEngineFactory by browserEngineSessionFactoryLazy
-    private val residentSessionAccessOrder = mutableMapOf<String, Long>()
-    private var residentSessionAccessSequence = 0L
     private var residentSessionTrimScheduled = false
     private var fullscreenVideoSourceRevision = 0
     private var geckoMediaPresentation: GeckoMediaPresentation? = null
@@ -1158,6 +1156,11 @@ class BrowserController(
     internal val pageUrls = ConcurrentHashMap<String, String>()
     private val historyVisits = mutableMapOf<String, HistoryEntry>() // last saved visit per tab
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val residentSessionAccess = BrowserSessionIdleUnload(
+        postDelayed = { tick, delayMillis -> mainHandler.postDelayed(tick, delayMillis) },
+        removeCallbacks = mainHandler::removeCallbacks,
+        check = ::scheduleResidentSessionTrim,
+    )
     private val findInPage = FindInPageController(
         host = ::isFindInPageSessionCurrent,
         postDelayed = { runnable, delayMillis -> mainHandler.postDelayed(runnable, delayMillis) },
@@ -2367,7 +2370,7 @@ class BrowserController(
     fun openSplitView(companionTabId: String? = null): Boolean {
         val companion = SplitViewRules.companionFor(activeTabs, selectedTabId, companionTabId)
             ?: return false
-        markResidentSessionAccess(companion)
+        residentSessionAccess.markAccess(companion)
         touchTab(companion, System.currentTimeMillis())
         splitView.open(companion)
         return true
@@ -7192,7 +7195,7 @@ class BrowserController(
         val nowMillis = System.currentTimeMillis()
         touchTab(selectedTabId, nowMillis)
         touchTab(tabId, nowMillis)
-        markResidentSessionAccess(tabId)
+        residentSessionAccess.markAccess(tabId)
         scheduleResidentSessionTrim()
         pruneStaleTabs(nowMillis)
         if (tabId == selectedTabId) {
@@ -9116,6 +9119,7 @@ class BrowserController(
             VolaRemoteSync.attach(activity, this)
         }
         syncRepository.startRealtime()
+        residentSessionAccess.onForeground()
         mainHandler.removeCallbacks(syncRefreshRunnable)
         mainHandler.post(syncRefreshRunnable)
     }
@@ -9183,6 +9187,7 @@ class BrowserController(
         permissionAccess.clearActive()
         permissionAccess.touch()
         browserEngineSessions.forEach(::persistBrowserEngineSessionState)
+        residentSessionAccess.onBackground()
     }
 
     fun onTaskRemoved(protectedTabIds: Set<String> = emptySet()) {
@@ -9312,7 +9317,7 @@ class BrowserController(
         browserEngineSessions.keys.toList().forEach(::closeBrowserEngineSession)
         webViewStateRepository.flush()
         browserEngineSessionFactory.shutdown()
-        residentSessionAccessOrder.clear()
+        residentSessionAccess.close()
         castMediaCandidate = null
         pendingConsentCssUrls.clear()
         navigationGenerations.clear()
@@ -9526,7 +9531,7 @@ class BrowserController(
                 }
             }
         }.also {
-            markResidentSessionAccess(tabId)
+            residentSessionAccess.markAccess(tabId)
             scheduleResidentSessionTrim()
         }
 
@@ -11516,12 +11521,6 @@ class BrowserController(
         if (tabId == selectedTabId) scrollBarRefreshNonce++
     }
 
-    private fun markResidentSessionAccess(tabId: String) {
-        if (tabId !in browserEngineSessions) return
-        residentSessionAccessSequence++
-        residentSessionAccessOrder[tabId] = residentSessionAccessSequence
-    }
-
     private fun scheduleResidentSessionTrim() {
         if (residentSessionTrimScheduled || destroyed) return
         residentSessionTrimScheduled = true
@@ -11532,10 +11531,8 @@ class BrowserController(
     }
 
     private fun trimResidentSessions(limit: Int = residentTabLimit) {
-        residentSessionAccessOrder.keys.retainAll(browserEngineSessions.keys)
-        val evictionIds = BrowserSessionResidencyRules.evictionOrder(
+        val evictionIds = residentSessionAccess.evictionOrder(
             residentTabIds = browserEngineSessions.keys,
-            accessOrder = residentSessionAccessOrder,
             protectedTabIds = protectedResidentTabIds(),
             limit = limit,
         )
@@ -11564,13 +11561,13 @@ class BrowserController(
             add(pending.openerTabId)
             add(pending.popupTabId)
         }
-        browserEngineSessions.keys.filterTo(this) { tabId -> hasPermissionActivity(tabId) }
+        browserEngineSessions.keys.filterTo(this) { id -> hasPermissionActivity(id) || geckoMediaStates[id]?.isPlaying == true }
     }
 
     private fun evictResidentSession(tabId: String) {
         if (tabId !in browserEngineSessions) return
         closeBrowserEngineSession(tabId)
-        residentSessionAccessOrder.remove(tabId)
+        residentSessionAccess.forget(tabId)
         updateTab(tabId) { it.copy(isLoading = false) }
     }
 
@@ -12955,7 +12952,7 @@ class BrowserController(
         syncOutbox.forgetTab(tabId, tabs.firstOrNull { it.id == tabId }?.syncCandyId)
         clearPermissionActivity(tabId)
         clearPrivacyDataForTab(tabId)
-        residentSessionAccessOrder.remove(tabId)
+        residentSessionAccess.forget(tabId)
         navigationGenerations.remove(tabId)
         automaticNativeTopSafeAreaTabIds.remove(tabId)
         webContentTopBarStates.remove(tabId)
@@ -12996,7 +12993,7 @@ class BrowserController(
         closeBrowserEngineSession(tab.id)
 
         clearPrivacyDataForTab(tab.id)
-        residentSessionAccessOrder.remove(tab.id)
+        residentSessionAccess.forget(tab.id)
         navigationGenerations.remove(tab.id)
         pageUrls.remove(tab.id)
         addressBar.forgetTab(tab.id)

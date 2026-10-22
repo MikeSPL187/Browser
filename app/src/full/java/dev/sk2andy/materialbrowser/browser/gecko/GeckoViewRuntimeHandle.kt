@@ -2826,6 +2826,8 @@ private class GeckoViewBrowserSession(
         if (!active) boundView?.cancelActiveTouch()
         if (this.active == active) return
         session.setActive(active)
+        // Tells Gecko the selected tab matters most, so it keeps that session state as long as possible.
+        session.setPriorityHint(if (active) GeckoSession.PRIORITY_HIGH else GeckoSession.PRIORITY_DEFAULT)
         extensionController.setTabActive(session, active)
         this.active = active
         if (BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS) {

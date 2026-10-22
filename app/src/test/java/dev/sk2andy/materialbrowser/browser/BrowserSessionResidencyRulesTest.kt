@@ -87,4 +87,88 @@ class BrowserSessionResidencyRulesTest {
 
         assertEquals(listOf("older", "old"), evictions)
     }
+
+    @Test
+    fun `a session idle for exactly the interval is unloaded and a millisecond less is kept`() {
+        val idle = BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS
+        val now = 10 * idle
+
+        fun unloads(accessedAt: Long) = BrowserSessionResidencyRules.idleUnloadOrder(
+            residentTabIds = setOf("tab"),
+            lastAccessMillis = mapOf("tab" to accessedAt),
+            protectedTabIds = emptySet(),
+            nowMillis = now,
+        )
+
+        assertEquals(listOf("tab"), unloads(accessedAt = now - idle))
+        assertEquals(emptyList<String>(), unloads(accessedAt = now - idle + 1))
+        assertEquals(listOf("tab"), unloads(accessedAt = now - idle - 1))
+    }
+
+    @Test
+    fun `idle interval is two hours`() {
+        assertEquals(2 * 60 * 60 * 1000L, BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS)
+    }
+
+    @Test
+    fun `protected idle sessions are never unloaded`() {
+        val unloads = BrowserSessionResidencyRules.idleUnloadOrder(
+            residentTabIds = setOf("selected", "audio", "permission", "pip", "idle"),
+            lastAccessMillis = mapOf(
+                "selected" to 0L,
+                "audio" to 0L,
+                "permission" to 0L,
+                "pip" to 0L,
+                "idle" to 0L,
+            ),
+            protectedTabIds = setOf("selected", "audio", "permission", "pip"),
+            nowMillis = BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS * 3,
+        )
+
+        assertEquals(listOf("idle"), unloads)
+    }
+
+    @Test
+    fun `no live sessions means nothing to unload`() {
+        val unloads = BrowserSessionResidencyRules.idleUnloadOrder(
+            residentTabIds = emptySet(),
+            lastAccessMillis = mapOf("closed" to 0L),
+            protectedTabIds = emptySet(),
+            nowMillis = BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS * 3,
+        )
+
+        assertEquals(emptyList<String>(), unloads)
+    }
+
+    @Test
+    fun `access in the future or unknown access is not idle`() {
+        val now = BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS * 3
+        val unloads = BrowserSessionResidencyRules.idleUnloadOrder(
+            residentTabIds = setOf("future", "unknown"),
+            lastAccessMillis = mapOf("future" to now + BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS),
+            protectedTabIds = emptySet(),
+            nowMillis = now,
+        )
+
+        assertEquals(emptyList<String>(), unloads)
+    }
+
+    @Test
+    fun `idle sessions unload oldest first with deterministic tie break`() {
+        val now = BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS * 3
+        val unloads = BrowserSessionResidencyRules.idleUnloadOrder(
+            residentTabIds = setOf("recent", "middle", "b", "a", "fresh"),
+            lastAccessMillis = mapOf(
+                "recent" to now - BrowserSessionResidencyRules.IDLE_UNLOAD_MILLIS,
+                "middle" to 5L,
+                "b" to 1L,
+                "a" to 1L,
+                "fresh" to now,
+            ),
+            protectedTabIds = emptySet(),
+            nowMillis = now,
+        )
+
+        assertEquals(listOf("a", "b", "middle", "recent"), unloads)
+    }
 }
