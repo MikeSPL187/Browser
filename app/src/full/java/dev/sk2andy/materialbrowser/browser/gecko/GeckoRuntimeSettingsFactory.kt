@@ -29,6 +29,9 @@ internal object GeckoRuntimeSettingsFactory {
         .automaticFontSizeAdjustment(false)
         // Gecko owns its CA store; Android Network Security Config alone cannot opt it in.
         .enterpriseRootsEnabled(trustUserCertificates)
+        // Extensions (candy_privacy, the user's add-ons) run in their own process, not in Vola's main
+        // one: a crash there cannot take the browser down, and the main process's memory is its own.
+        .extensionsProcessEnabled(true)
         .build()
         .apply {
             setFingerprintingProtection(true)

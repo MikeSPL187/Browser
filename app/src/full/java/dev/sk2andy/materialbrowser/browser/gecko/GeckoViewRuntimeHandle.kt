@@ -424,6 +424,9 @@ internal class GeckoViewRuntimeHandle private constructor(
             }
             GeckoWebPushCoordinator.attach(appContext, runtime)
             val extensionController = runtime.webExtensionController
+            extensionController.setExtensionProcessDelegate(
+                GeckoExtensionProcessGuard(extensionController::enableExtensionProcessSpawning),
+            )
             val toppingHost = GeckoViewToppingHostRuntime(
                 controller = extensionController,
                 valueStore = UserScriptValueStore(appContext),

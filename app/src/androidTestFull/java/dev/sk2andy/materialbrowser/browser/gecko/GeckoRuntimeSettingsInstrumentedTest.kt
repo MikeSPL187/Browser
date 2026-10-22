@@ -50,4 +50,15 @@ class GeckoRuntimeSettingsInstrumentedTest {
             assertEquals(true, settings.fingerprintingProtectionPrivateBrowsing)
         }
     }
+
+    @Test
+    fun extensionsRunInTheirOwnProcess() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val settings = GeckoRuntimeSettingsFactory.create(
+                ContentBlocking.Settings.Builder().build(),
+            )
+
+            assertEquals(true, settings.extensionsProcessEnabled)
+        }
+    }
 }
