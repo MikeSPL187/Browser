@@ -87,9 +87,22 @@ jobs:
           STABLE: ${{ steps.beta.outputs.stable }}
           OUTCOME: ${{ job.status }}
         run: |
+          # A green job proves little if no test ran: count them from the JUnit reports.
+          tests="$(python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = [0, 0, 0]
+          for path in glob.glob("app/build/test-results/testFullDebugUnitTest/*.xml"):
+              suite = ET.parse(path).getroot()
+              totals[0] += int(suite.get("tests", 0))
+              totals[1] += int(suite.get("failures", 0)) + int(suite.get("errors", 0))
+              totals[2] += int(suite.get("skipped", 0))
+          print(f"{totals[0]} run, {totals[1]} failed, {totals[2]} skipped")
+          PY
+          )"
           {
             echo "### GeckoView beta"
             echo "- Stable in the catalog: \`${STABLE}\`"
             echo "- Beta built against: \`${BETA}\`"
+            echo "- Gecko unit tests: ${tests}"
             echo "- Result: ${OUTCOME}"
           } | tee -a "$GITHUB_STEP_SUMMARY"
