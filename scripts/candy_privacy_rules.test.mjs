@@ -720,8 +720,12 @@ test("the host index gives every frame the same ad selectors as the full scan", 
   const indexed = rules.indexCosmetics(cosmetics);
   const procedural = rules.parseProcedural(readList("uassets_procedural_cosmetic_rules.txt"));
   const policy = { blockAds: true, pausedHosts: [], cosmetics: [], hideConsent: false, pageHost: null };
+  // Every 100th host the lists scope rules to, so the compact buckets are checked across the lists.
+  const listedHosts = [...new Set(cosmetics.map((rule) => rule.host))]
+    .filter((host) => host !== "*" && !host.endsWith(".*")).filter((_, i) => i % 100 === 0);
+  assert.ok(listedHosts.length > 50);
   const hosts = ["www.reddit.com", "news.ycombinator.com", "www.google.de", "m.youtube.com",
-    "www.skai.gr", "example.com", "www.9anime.vip"];
+    "www.skai.gr", "example.com", "www.9anime.vip", ...listedHosts.map((host) => `www.${host}`)];
   for (const host of hosts) {
     const full = rules.cosmeticPayload({ cosmetics, procedural, candyDefaults: [] }, policy, host);
     const fast = rules.cosmeticPayload({ cosmetics: indexed, procedural, candyDefaults: [] }, policy, host);
