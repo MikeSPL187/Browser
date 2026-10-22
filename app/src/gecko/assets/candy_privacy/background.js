@@ -280,7 +280,9 @@ function ensureCookieRules() {
 
 function ensureNetworkBlocker() {
   if (!networkBlockerPromise) {
-    networkBlockerPromise = CandyNetworkBlocker.load(loadText).then((blocker) => {
+    // MEASUREMENT ONLY (do not merge): every list reads as empty, so the memory gate shows what the
+    // parsed lists cost in the extensions process.
+    networkBlockerPromise = CandyNetworkBlocker.load(async () => "").then((blocker) => {
       networkBlocker = blocker;
       return blocker;
     }, (error) => {
@@ -292,6 +294,8 @@ function ensureNetworkBlocker() {
 }
 
 async function loadAdCosmetics() {
+  // MEASUREMENT ONLY (do not merge): no ad cosmetics are read or indexed.
+  return { cosmetics: CandyPrivacyRules.indexCosmetics([]), procedural: [] };
   const [easyList, uAssets, procedural] = await Promise.all([
     loadText("easylist_cosmetic_rules.txt"),
     loadText("uassets_cosmetic_rules.txt"),
