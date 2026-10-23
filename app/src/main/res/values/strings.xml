@@ -918,6 +918,8 @@
     <string name="https_only_error_advice">Don’t enter passwords or card details on this site.</string>
     <string name="https_only_error_continue">Open over HTTP anyway</string>
     <string name="https_only_error_back">Go back</string>
+    <string name="https_only_error_advice_title">Fine to read, not to type</string>
+    <string name="https_only_error_exception">The exception is for %1$s only. You can remove it in the site’s protection.</string>
     <string name="settings_dns_over_https_title">Encrypted DNS (DoH)</string>
     <string name="settings_dns_over_https_provider_system">System default</string>
     <string name="settings_dns_over_https_provider_cloudflare">Cloudflare</string>

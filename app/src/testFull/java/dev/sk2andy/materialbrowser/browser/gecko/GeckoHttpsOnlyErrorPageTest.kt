@@ -84,6 +84,35 @@ class GeckoHttpsOnlyErrorPageTest {
     }
 
     @Test
+    fun `the v5 page names the site in the exception and keeps both actions`() {
+        val html = GeckoHttpsOnlyErrorPage.htmlV5(
+            strings.copy(
+                adviceTitle = "Fine to read",
+                exceptionNote = "Only for ${GeckoHttpsOnlyErrorPage.HOST_MARKER}.",
+            ),
+            host = "old-forum.example",
+        )
+
+        assertTrue(html.contains("<p class=\"note\">Only for <strong>old-forum.example</strong>.</p>"))
+        assertTrue(html.contains("<b>Fine to read</b>"))
+        assertTrue(html.contains("id=\"back\" class=\"primary\">Go back</button>"))
+        assertTrue(html.contains("id=\"continue\" class=\"plate\">Continue to HTTP site</button>"))
+        assertTrue(html.contains("document.reloadWithHttpsOnlyException()"))
+        assertFalse(html.contains("<script>alert"))
+    }
+
+    @Test
+    fun `the v5 page takes the v5 roles in both themes`() {
+        val (light, dark) = GeckoHttpsOnlyErrorPage.defaultPalettesV5
+        val html = GeckoHttpsOnlyErrorPage.htmlV5(strings, host = "a.b")
+
+        assertEquals("#F4F4F6FF", light.background)
+        assertEquals("#1C1C1EFF", dark.background)
+        assertTrue(html.contains(":root { --bg: #F4F4F6FF;"))
+        assertTrue(html.contains("@media (prefers-color-scheme: dark) { :root { --bg: #1C1C1EFF;"))
+    }
+
+    @Test
     fun `escape covers every HTML special character`() {
         assertEquals("&amp;&lt;&gt;&quot;&#39;", GeckoHttpsOnlyErrorPage.escape("&<>\"'"))
     }
