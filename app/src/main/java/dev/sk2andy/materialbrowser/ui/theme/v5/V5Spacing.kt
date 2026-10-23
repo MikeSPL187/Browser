@@ -79,6 +79,8 @@ object V5Sizes {
     val suggestionTile: Dp = 32.dp
     /** The «Cancel» button beside the field. */
     val editorCancel: Dp = 72.dp
+    /** The round plate of «previous» and «next» beside the find-in-page field (canvas «FindInPage»). */
+    val findStep: Dp = 40.dp
     /** The top of the suggestion list fades into the material over this height. */
     val suggestionFade: Dp = 36.dp
 
