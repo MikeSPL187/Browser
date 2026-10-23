@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Новый профиль</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--sheet:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--label:#111114;--label2:#55555D;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--pa:#B4520F;--paText:#B4520F;--paSoft:#F7E7DB;font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--sheet:#1C1C1E;--surface:#2A2A2D;--elev:#3E3E43;--label:#F4F4F6;--label2:#A9A9B1;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--paText:#FF9F5A;--paSoft:#3A2A20}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; font-family: Inter, system-ui, sans-serif; color: var(--label)">
+  <div aria-hidden="true" style="position: absolute; inset: 0; transform: scale(.94); transform-origin: 50% 0; border-radius: 32px; overflow: hidden; opacity: .6"><dc-import name="Overview" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div role="dialog" aria-label="Новый профиль" style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; border-radius: 32px 32px 0 0; background: var(--sheet); padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column">
+    <div style="height: 56px; display: flex; align-items: center; justify-content: space-between">
+      <button style="font-size: 17px; color: var(--paText)">Отмена</button>
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.22px">Новый профиль</h2>
+      <button style="font-size: 17px; font-weight: 600; color: var(--paText)">Создать</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 8px">
+      <span style="width: 88px; height: 88px; border-radius: 50%; background: var(--pa); color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(180,82,15,.35)">
+        <svg class="i" width="42" height="42" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 1.7"><path d="M4 5.5a1.5 1.5 0 0 1 1.5-1.5H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z"></path></svg>
+      </span>
+      <label style="width: 100%; height: 52px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; padding: 0 16px; box-sizing: border-box">
+        <input aria-label="Название профиля" value="Учёба" style="flex: 1; border: 0; outline: 0; background: transparent; padding: 0; font-size: 22px; font-weight: 650; text-align: center; color: var(--label)">
+      </label>
+    </div>
+    <div style="margin-top: 16px; border-radius: 16px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px">
+      <div role="radiogroup" aria-label="Цвет профиля" style="display: flex; justify-content: space-between">
+        <sc-for list="{{colors}}" as="c" hint-placeholder-count="6">
+          <span role="radio" aria-checked="{{c.sel}}" aria-label="{{c.n}}" style="width: 36px; height: 36px; border-radius: 50%; background: {{c.v}}; box-shadow: {{c.ring}}"></span>
+        </sc-for>
+      </div>
+      <div style="height: 0.5px; background: var(--sep)"></div>
+      <div role="radiogroup" aria-label="Значок профиля" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{icons}}" as="ic" hint-placeholder-count="12">
+          <span role="radio" aria-checked="{{ic.sel}}" style="height: 44px; border-radius: 50%; background: {{ic.bg}}; color: {{ic.fg}}; display: flex; align-items: center; justify-content: center">
+            <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ic.d}}"></path></svg>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+    <div style="margin: 18px 0 8px 4px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">У профиля будет своё</div>
+    <div style="border-radius: 12px; background: var(--surface); padding: 12px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; font-size: 15px">
+      <sc-for list="{{own}}" as="o" hint-placeholder-count="4">
+        <span style="display: flex; align-items: center; gap: 8px"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--paText); stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{o}}</span>
+      </sc-for>
+    </div>
+    <div style="margin-top: 12px; border-radius: 12px; background: var(--surface); min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 16px">
+      <div style="flex: 1"><div style="font-size: 17px">Перенести открытые вкладки</div><div style="font-size: 13px; color: var(--label2)">Группа «Курсовая» · 3 вкладки</div></div>
+      <button role="switch" aria-checked="true" aria-label="Перенести открытые вкладки" style="width: 51px; height: 31px; border-radius: 999px; background: var(--pa); padding: 2px; box-sizing: border-box; display: flex; justify-content: flex-end"><span style="width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,.2)"></span></button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const cols = [['Синий', '#2563D9'], ['Зелёный', '#1A7F45'], ['Оранжевый', '#B4520F'], ['Розовый', '#BE2A68'], ['Фиолетовый', '#6A45D1'], ['Графит', dark ? '#66666F' : '#4B4B53']];
+    const colors = cols.map((c, i) => ({ n: c[0], v: c[1], sel: i === 2 ? 'true' : 'false', ring: i === 2 ? '0 0 0 3px var(--surface), 0 0 0 5px ' + c[1] : 'none' }));
+    const paths = [
+      'M12 12.3a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5',
+      'M4 8.5h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM9 8.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2.5',
+      'M4 5.5a1.5 1.5 0 0 1 1.5-1.5H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z',
+      'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+      'M4 11l8-6.5 8 6.5M6 9.5V19h12V9.5M10 19v-5h4v5',
+      'M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z',
+      'M12 4l2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z',
+      'M8.5 8L4.5 12l4 4M15.5 8l4 4-4 4M13.5 5.5l-3 13',
+      'M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM19 16a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z',
+      'M4 5h2l2.2 10.5h9.6L20 8H7M10 19.5h.01M17 19.5h.01',
+      'M6 9h12a3 3 0 0 1 3 3v2a3 3 0 0 1-5.4 1.8L14.5 14h-5l-1.1 1.8A3 3 0 0 1 3 14v-2a3 3 0 0 1 3-3zM8 11v2M7 12h2M16 12h.01',
+      'M5 19c0-8 5-13 14-14-1 9-6 14-14 14zM5 19l7-7'
+    ];
+    const icons = paths.map((d, i) => ({ d: d, sel: i === 2 ? 'true' : 'false', bg: i === 2 ? 'var(--paSoft)' : 'var(--fill)', fg: i === 2 ? 'var(--paText)' : 'var(--label2)' }));
+    return { mode: 'vs' + (dark ? ' dk' : ''), dark: dark, colors: colors, icons: icons, own: ['Cookie и входы', 'История', 'Группы вкладок', 'Закреплённые сайты'] };
+  }
+}
+</script>
+</body>
+</html>

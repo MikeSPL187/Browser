@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Телефон в альбомной ориентации</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--pg:#FFFFFF;--pgText:#1B2328;--pgMuted:#5A6670;--tint:#1F4E5F;font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--pg:#10171B;--pgText:#E3EAEC;--pgMuted:#93A3AB;--tint:#163A47}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 844px; height: 390px; overflow: hidden; background: var(--pg); color: var(--pgText); font-family: Inter, system-ui, sans-serif">
+  <div style="height: 44px; background: var(--tint); color: #FFFFFF; display: flex; align-items: center; padding: 0 48px; font-family: Literata, Georgia, serif; font-size: 17px; font-weight: 600">Полярные заметки</div>
+  <div style="display: flex; gap: 28px; padding: 18px 48px 0">
+    <div role="img" aria-label="Северное сияние" style="flex: none; width: 300px; height: 190px; border-radius: 12px; overflow: hidden; position: relative; background: linear-gradient(180deg, #06131D, #18414B)">
+      <div style="position: absolute; left: -40px; top: 40px; width: 400px; height: 70px; border-radius: 50%; background: #39F2A4; filter: blur(22px); opacity: .6; transform: rotate(-11deg)"></div>
+      <svg width="300" height="190" viewBox="0 0 300 190" aria-hidden="true" style="position: absolute; inset: 0"><path d="M0 150 L50 118 L90 136 L150 96 L200 130 L250 110 L300 126 L300 190 L0 190 Z" fill="#081820"></path></svg>
+    </div>
+    <article style="flex: 1">
+      <h1 style="margin: 0; font-family: Literata, Georgia, serif; font-size: 24px; line-height: 31px; font-weight: 700">Северное сияние над Териберкой: как поймать небо</h1>
+      <p style="margin: 10px 0 0; font-family: Literata, Georgia, serif; font-size: 16px; line-height: 26px">Сияние начинается без предупреждения. Над сопками проступает бледная полоса — её легко принять за облако.</p>
+    </article>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--tint); color: #FFFFFF; border-top: 0.5px solid rgba(255,255,255,.08); display: flex; flex-direction: column">
+    <div style="height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 48px">
+      <div style="width: 440px; height: 44px; border-radius: 999px; background: rgba(255,255,255,.14); display: flex; align-items: center; gap: 6px; padding: 0 6px 0 14px; box-sizing: border-box">
+        <span style="display: flex; align-items: center; gap: 3px; color: rgba(255,255,255,.72)"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-3z"></path></svg><span class="tn" style="font-size: 12px; font-weight: 650">12</span></span>
+        <span style="flex: 1; text-align: center; font-size: 17px; font-weight: 600">polar-notes.ru</span>
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: rgba(255,255,255,.72); margin-right: 8px"><path d="M19 12a7 7 0 1 1-2.05-4.95"></path><path d="M19 4.5V9h-4.5"></path></svg>
+      </div>
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.14); display: flex; align-items: center; justify-content: center"><span class="tn" style="width: 20px; height: 20px; border: 1.8px solid #FFFFFF; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">5</span></span>
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.14); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="display: block"><circle cx="5" cy="12" r="1.9" fill="#FFFFFF"></circle><circle cx="12" cy="12" r="1.9" fill="#FFFFFF"></circle><circle cx="19" cy="12" r="1.9" fill="#FFFFFF"></circle></svg></span>
+    </div>
+    <div aria-hidden="true" style="flex: 1; display: flex; justify-content: center"><div style="width: 108px; height: 4px; border-radius: 2px; background: #FFFFFF; opacity: .4"></div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":844,"height":390}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { mode: 'vs' + (this.props.dark ? ' dk' : '') };
+  }
+}
+</script>
+</body>
+</html>

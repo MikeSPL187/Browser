@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Поиск на странице</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.94);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--accent:#2563D9;--accentFill:#2563D9;--kb:#D9DAE0;--key:#FFFFFF;--pg:#FFFFFF;--pgText:#1B2328;--mark:rgba(250,205,66,.55);--markOn:#F59E0B;font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.94);--e2:0 8px 24px rgba(0,0,0,.4);--accent:#6E9BFF;--kb:#232325;--key:#47474C;--pg:#10171B;--pgText:#E3EAEC;--mark:rgba(240,165,58,.35);--markOn:#F0A53A}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+mark.on{background:var(--markOn);color:#111114;box-shadow:0 0 0 2px var(--markOn)}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--pg); color: var(--pgText); font-family: Inter, system-ui, sans-serif">
+  <div style="height: 80px; background: #1F4E5F; color: #FFFFFF; display: flex; align-items: flex-end; padding: 0 20px 14px; box-sizing: border-box; font-family: Literata, Georgia, serif; font-size: 19px; font-weight: 600">Полярные заметки</div>
+  <article style="padding: 18px 20px 0; font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; letter-spacing: 0">
+    <h1 style="margin: 0; font-size: 26px; line-height: 33px; font-weight: 700">Северное <mark>сияние</mark> над Териберкой</h1>
+    <p style="margin: 14px 0 0"><mark class="on">Сияние</mark> начинается без предупреждения. Над сопками проступает бледная полоса — её легко принять за облако.</p>
+    <p style="margin: 14px 0 0">Лучшее время, чтобы увидеть <mark>сияние</mark>, — с конца сентября до марта. Прогноз смотрите накануне.</p>
+    <p style="margin: 14px 0 0">Самое яркое <mark>сияние</mark> бывает после полуночи, когда посёлок засыпает и гаснут фонари.</p>
+  </article>
+
+  <div role="search" style="position: absolute; left: 0; right: 0; bottom: 256px; height: 64px; background: var(--thick); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 0.5px solid var(--edge); display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; color: var(--label)">
+    <label style="flex: 1; height: 44px; border-radius: 999px; background: var(--surface); box-shadow: var(--e2); display: flex; align-items: center; gap: 8px; padding: 0 14px">
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+      <input aria-label="Найти на странице" value="сияние" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0; font-size: 17px; color: var(--label)">
+      <span class="tn" style="font-size: 15px; color: var(--label2); white-space: nowrap">2 из 5</span>
+    </label>
+    <button aria-label="Предыдущее совпадение" style="width: 40px; height: 40px; border-radius: 50%; background: var(--fill); display: flex; align-items: center; justify-content: center"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M6 14.5l6-6 6 6"></path></svg></button>
+    <button aria-label="Следующее совпадение" style="width: 40px; height: 40px; border-radius: 50%; background: var(--fill); display: flex; align-items: center; justify-content: center"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M6 9.5l6 6 6-6"></path></svg></button>
+    <button style="font-size: 17px; font-weight: 600; color: var(--accent); padding-left: 4px">Готово</button>
+  </div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 256px; background: var(--kb); padding: 8px 4px 0; box-sizing: border-box; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); grid-auto-rows: 44px; gap: 10px 5px">
+    <sc-for list="{{keys}}" as="k" hint-placeholder-count="40"><span style="border-radius: 7px; background: var(--key); box-shadow: 0 1px 0 rgba(0,0,0,.25)"></span></sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { mode: 'vl' + (this.props.dark ? ' dk' : ''), keys: Array.from({ length: 40 }, (_, i) => i) };
+  }
+}
+</script>
+</body>
+</html>
