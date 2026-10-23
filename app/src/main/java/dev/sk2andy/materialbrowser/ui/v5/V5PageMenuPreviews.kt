@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 page menu as canvas screen «д»: a page in light and dark, and a new tab. */
@@ -55,6 +56,18 @@ private fun V5PageMenuMoreLightPreview() {
 @Composable
 private fun V5PageMenuMoreDarkPreview() {
     VolaV5Theme(dark = true) { MenuPreview(PageState, V5PageMenuPage.More) }
+}
+
+@Preview(name = "Page menu · pink accent, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Pink) { MenuPreview(PageState) }
+}
+
+@Preview(name = "Page menu · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5PageMenuLargeFontPreview() {
+    VolaV5Theme(dark = false) { MenuPreview(PageState) }
 }
 
 @Preview(name = "Page menu · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
@@ -44,7 +45,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 
 /*
  * Tab groups in the v5 overview (V12, canvas screen «г», system-v5.md section 10): a group's color
- * is only its dot and the frame of its cards, never a fill. An open group is a header over its
+ * is only its dot and the frame around the group (V5GroupFrames), never a fill. An open group is a header over its
  * cards; a folded one is a single framed row with a fan of its pages.
  */
 
@@ -86,15 +87,16 @@ internal fun GroupHeader(
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
     ) {
         GroupDot(group)
+        // The name reads as the title of what the frame holds (canvas «OverviewV2»).
         Text(
             group.name,
-            style = V5Theme.type.footnote,
+            style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
             color = colors.label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
-        Text(count.toString(), style = V5Theme.type.footnote, color = colors.labelSecondary)
+        Text(count.toString(), style = V5Theme.type.callout, color = colors.labelSecondary)
         Box(Modifier.weight(1f))
         Icon(VolaIcons.KeyboardArrowUp, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
     }
