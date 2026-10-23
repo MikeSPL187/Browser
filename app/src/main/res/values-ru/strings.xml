@@ -2081,6 +2081,16 @@
     <string name="v5_group_default_name">Группа</string>
     <string name="v5_group_save">Готово</string>
     <string name="v5_group_ungroup">Разгруппировать</string>
+    <string name="v5_group_tabs_header">Вкладки в группе · %1$d</string>
+    <string name="v5_group_add_tabs">Добавить открытые вкладки</string>
+    <string name="v5_group_close_message">Все вкладки группы закроются.</string>
+    <string name="v5_group_close_action">Закрыть вкладки</string>
+    <plurals name="v5_group_close">
+        <item quantity="one">Закрыть группу и %d вкладку</item>
+        <item quantity="few">Закрыть группу и %d вкладки</item>
+        <item quantity="many">Закрыть группу и %d вкладок</item>
+        <item quantity="other">Закрыть группу и %d вкладки</item>
+    </plurals>
     <string name="v5_group_name">Название группы</string>
     <string name="v5_group_color">Цвет</string>
     <string name="v5_group_color_purple">Фиолетовый</string>
