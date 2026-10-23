@@ -9,17 +9,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -62,6 +65,7 @@ object V5LibraryTestTags {
     const val Close = "v5_library_close"
     const val Search = "v5_library_search"
     const val Empty = "v5_library_empty"
+    const val EmptyAction = "v5_library_empty_action"
     const val Up = "v5_library_up"
     fun row(key: String) = "v5_library_row:$key"
     fun retry(key: String) = "v5_library_retry:$key"
@@ -136,6 +140,10 @@ data class V5LibraryActions(
     val endDestructive: Boolean = false,
 )
 
+/** The way out of an empty segment (S-08): say what to do next, and do it. */
+@Immutable
+data class V5LibraryEmptyAction(val label: String, val onClick: () -> Unit)
+
 @Immutable
 data class V5LibraryState(
     val segment: V5LibrarySegment,
@@ -144,6 +152,9 @@ data class V5LibraryState(
     /** Shown when [sections] hold no row: nothing yet, or nothing found for [query]. */
     val emptyMessage: String,
     val actions: V5LibraryActions = V5LibraryActions(),
+    /** A heading over [emptyMessage] when the segment has nothing yet (not when a search finds nothing). */
+    val emptyTitle: String? = null,
+    val emptyAction: V5LibraryEmptyAction? = null,
     /** The open folder's name, with a way back up; null at the top. */
     val folder: String? = null,
 )
@@ -238,7 +249,7 @@ fun V5Library(
         val rows = state.sections.sumOf { section -> section.rows.size }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (rows == 0) {
-                Empty(state.segment, state.emptyMessage)
+                Empty(state.segment, state.emptyTitle, state.emptyMessage, state.emptyAction)
             } else {
                 LazyColumn(
                     Modifier.fillMaxSize(),
@@ -282,29 +293,85 @@ fun V5Library(
 }
 
 @Composable
-private fun Empty(segment: V5LibrarySegment, message: String) {
+private fun Empty(segment: V5LibrarySegment, title: String?, message: String, action: V5LibraryEmptyAction?) {
     val colors = V5Theme.colors
     Column(
         Modifier
             .fillMaxSize()
-            .padding(horizontal = V5Spacing.space8)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = V5Spacing.space8, vertical = V5Spacing.space4)
             .testTag(V5LibraryTestTags.Empty),
-        verticalArrangement = Arrangement.spacedBy(V5Spacing.space3, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space2, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            when (segment) {
-                V5LibrarySegment.Favorites -> VolaIcons.Star
-                V5LibrarySegment.History -> VolaIcons.History
-                V5LibrarySegment.Downloads -> VolaIcons.Download
-            },
-            contentDescription = null,
-            tint = colors.labelTertiary,
-            modifier = Modifier.size(V5Sizes.iconMax),
-        )
+        // The list's glyph on a card over a tilted plate of the profile's accent (canvas «EmptyHistory»).
+        Box(
+            Modifier
+                .padding(bottom = V5Spacing.space4)
+                .size(V5Sizes.emptyArt),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .graphicsLayer { rotationZ = EMPTY_ART_TILT_DEGREES }
+                    .clip(V5Theme.shapes.xl)
+                    .background(colors.accentSoft),
+            )
+            Box(
+                Modifier
+                    .size(V5Sizes.emptyArtCard)
+                    .clip(V5Theme.shapes.l)
+                    .background(colors.surface),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    when (segment) {
+                        V5LibrarySegment.Favorites -> VolaIcons.Star
+                        V5LibrarySegment.History -> VolaIcons.History
+                        V5LibrarySegment.Downloads -> VolaIcons.Download
+                    },
+                    contentDescription = null,
+                    tint = colors.accent,
+                    modifier = Modifier.size(V5Sizes.emptyArtIcon),
+                )
+            }
+        }
+        if (title != null) {
+            Text(
+                title,
+                style = V5Theme.type.title,
+                color = colors.label,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
         Text(message, style = V5Theme.type.callout, color = colors.labelSecondary, textAlign = TextAlign.Center)
+        if (action != null) {
+            Box(
+                Modifier
+                    .padding(top = V5Spacing.space3)
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.accentSoft)
+                    .clickable(role = Role.Button, onClick = action.onClick)
+                    .padding(horizontal = V5Spacing.space5, vertical = V5Spacing.space2)
+                    .testTag(V5LibraryTestTags.EmptyAction),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    action.label,
+                    style = V5Theme.type.callout.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.accent,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
     }
 }
+
+/** How far the accent plate behind an empty list's glyph is turned. */
+private const val EMPTY_ART_TILT_DEGREES = -8f
 
 @Composable
 private fun LibraryRow(
