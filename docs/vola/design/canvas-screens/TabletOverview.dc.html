@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Планшет — обзор вкладок</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--label:#111114;--label2:#55555D;--fill:rgba(120,120,128,.12);--accent:#2563D9;--accentFill:#2563D9;--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--label:#F4F4F6;--label2:#A9A9B1;--fill:rgba(140,140,150,.22);--accent:#6E9BFF;--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4)}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 1194px; height: 834px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif; padding: 28px 24px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <button aria-label="Новая вкладка" style="width: 44px; height: 44px; border-radius: 50%; background: var(--fill); display: flex; align-items: center; justify-content: center"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 5v14M5 12h14"></path></svg></button>
+    <div role="tablist" style="height: 36px; border-radius: 999px; background: var(--elev); padding: 2px; box-sizing: border-box; display: flex; width: 280px">
+      <button role="tab" aria-selected="true" style="flex: 1; border-radius: 999px; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-size: 15px; font-weight: 600">Вкладки <span class="tn" style="color: var(--label2); font-weight: 500">12</span></button>
+      <button role="tab" aria-selected="false" style="flex: 1; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--label2)">Частные <span class="tn">2</span></button>
+    </div>
+    <label style="flex: 1; max-width: 460px; margin: 0 auto; height: 40px; border-radius: 12px; background: var(--elev); display: flex; align-items: center; gap: 8px; padding: 0 12px">
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+      <input aria-label="Поиск по вкладкам" placeholder="Поиск по вкладкам и тексту" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0; font-size: 17px; color: var(--label)">
+    </label>
+    <span style="height: 40px; border-radius: 999px; background: var(--fill); display: flex; align-items: center; gap: 8px; padding: 0 14px 0 6px">
+      <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--accentFill); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"></path></svg></span>
+      <span style="font-size: 15px; font-weight: 600">Личный</span>
+    </span>
+    <button style="font-size: 17px; font-weight: 600; color: var(--accent); padding-left: 8px">Готово</button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 20px; align-items: start">
+    <sc-for list="{{first}}" as="c" hint-placeholder-count="2">
+      <dc-import name="TabletOverviewCard" card="{{c}}" hint-size="100%,316px"></dc-import>
+    </sc-for>
+    <div style="grid-column: span 3; border-radius: 26px; border: 2px solid #0E8C8C; padding: 6px 10px 12px">
+      <div style="height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0E8C8C"></span><span style="font-size: 15px; font-weight: 600">Териберка</span><span class="tn" style="font-size: 15px; color: var(--label2)">3</span></div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{group}}" as="c" hint-placeholder-count="3">
+          <dc-import name="TabletOverviewCard" card="{{c}}" hint-size="100%,300px"></dc-import>
+        </sc-for>
+      </div>
+    </div>
+    <sc-for list="{{rest}}" as="c" hint-placeholder-count="5">
+      <dc-import name="TabletOverviewCard" card="{{c}}" hint-size="100%,316px"></dc-import>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const C = (t, g, fav, img, bg, active) => ({ t: t, g: g, fav: fav, img: img, bg: bg, active: !!active });
+    const first = [
+      C('Северное сияние над Териберкой', 'П', '#1F4E5F', 'linear-gradient(180deg,#06131D,#18414B)', '#FFFFFF', true),
+      C('Киноград — расписание', 'К', '#C2272D', 'linear-gradient(160deg,#3A4A6B,#0E1424)', '#121216')
+    ];
+    const group = [
+      C('Дома у залива — Север·дом', 'С', '#2F5D50', 'linear-gradient(180deg,#1B2747,#4A3F72 60%,#C9849A)', '#FFFFFF'),
+      C('Прогноз сияния на неделю', 'М', '#2F6FE4', 'linear-gradient(180deg,#9FC3D8,#DCE9EE)', '#FFFFFF'),
+      C('Мурманск → Териберка, 127 км', 'А', '#0E8C8C', 'radial-gradient(circle at 20% 80%,#CFE3D6 0 30%,#E7EEE9 31%)', '#FFFFFF')
+    ];
+    const rest = [
+      C('Тыквенный суп с имбирём', 'Р', '#E0620D', 'radial-gradient(circle at 40% 55%,#F6B24A 0 20%,#E07A1F 21% 33%,#5B3A26 34%)', '#FFF8F1'),
+      C('Лумо Почта — Входящие', 'Л', '#3B5BDB', 'linear-gradient(180deg,#E8ECFB,#FFFFFF)', '#FFFFFF'),
+      C('The last lighthouse keepers', 'H', '#C79A00', 'linear-gradient(180deg,#9FC3D8,#6E8FA3)', '#FFFDF5'),
+      C('Звук — плейлист «Север»', 'З', '#7B57E0', 'linear-gradient(135deg,#7B57E0,#22D3EE)', '#16141F'),
+      C('Люмен — документация', 'L', '#111114', 'linear-gradient(180deg,#1C1C1E,#2A2A2D)', '#111114')
+    ];
+    return { mode: 'vs' + (dark ? ' dk' : ''), first: first, group: group, rest: rest };
+  }
+}
+</script>
+</body>
+</html>

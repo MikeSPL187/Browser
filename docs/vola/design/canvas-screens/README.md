@@ -29,3 +29,15 @@
 | Прочее | `Onboarding`, `Panel`, `Bar`, `Tablet` |
 
 Сайты, домены и люди в макете вымышлены.
+
+## Доработки (предложения, 23.10.2026)
+
+Ряды под основными экранами. Это предложения — в систему они входят только после «да» владельца.
+
+| Ряд | Файлы |
+|---|---|
+| Исправления «было → стало» | `FixRing` (кольцо загрузки цвета текста панели на цветной панели — меняет правило `system-v5.md`, раздел 10), `MenuV2` (ПК-версия ушла в «Дополнительно»), `OverviewV2` (карточки одной высоты) |
+| Движение | `MotionAddress`, `MotionSwipe`, `MotionOverview`, `MotionGlance`, `MotionRefresh` — CSS-анимации, кривые приближают пружины из `plan-v5.md`; у каждого переключатель `reduced` (только прозрачность) |
+| Недостающие состояния | `EmptyHistory`, `FindInPage`, `ReaderSettings`, `HideMode`, `Permission`, `CertError`, `HttpsOnly`, `NewProfile`, `GroupEditor`, `EmptyStart` |
+| Доступность | `Font200`, `Landscape`, `English`, `TalkBack` |
+| Планшет | `TabletDark`, `TabletCompact`, `TabletOverview` (+ компонент `TabletOverviewCard`) |

@@ -100,7 +100,7 @@ button{border:0;background:none;padding:0;cursor:pointer}
         <sc-if value="{{showRing}}" hint-placeholder-val="{{false}}">
           <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" style="position: absolute; left: -2px; top: -2px; transform: rotate(-90deg)">
             <circle cx="26" cy="26" r="25" fill="none" stroke-width="2" style="stroke: {{ringTrack}}"></circle>
-            <circle cx="26" cy="26" r="25" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="{{ringDash}}" style="stroke: var(--accent)"></circle>
+            <circle cx="26" cy="26" r="25" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="{{ringDash}}" style="stroke: {{ringColor}}"></circle>
           </svg>
         </sc-if>
       </button>
@@ -112,7 +112,7 @@ button{border:0;background:none;padding:0;cursor:pointer}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["site","start","neutral","private","reader","collapsed","big"],"default":"site"},"tint":{"editor":"color","default":"#1F4E5F","options":["#1F4E5F","#C65111","#FACD42","#C42630"]},"ink":{"editor":"enum","options":["#FFFFFF","#111114"],"default":"#FFFFFF"},"domain":{"editor":"text","default":"polar-notes.ru"},"count":{"editor":"text","default":"12"},"tabs":{"editor":"text","default":"5"},"reader":{"editor":"boolean","default":false},"hide":{"editor":"boolean","default":false},"progress":{"editor":"range","min":0,"max":100,"step":1,"default":0},"ring":{"editor":"range","min":0,"max":100,"step":1,"default":0},"done":{"editor":"text","default":""},"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":88}}'>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["site","start","neutral","private","reader","collapsed","big"],"default":"site"},"tint":{"editor":"color","default":"#1F4E5F","options":["#1F4E5F","#C65111","#FACD42","#C42630"]},"ink":{"editor":"enum","options":["#FFFFFF","#111114"],"default":"#FFFFFF"},"domain":{"editor":"text","default":"polar-notes.ru"},"count":{"editor":"text","default":"12"},"tabs":{"editor":"text","default":"5"},"reader":{"editor":"boolean","default":false},"hide":{"editor":"boolean","default":false},"progress":{"editor":"range","min":0,"max":100,"step":1,"default":0},"ring":{"editor":"range","min":0,"max":100,"step":1,"default":0},"done":{"editor":"text","default":""},"ringInk":{"editor":"boolean","default":false},"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":88}}'>
 class Component extends DCLogic {
   renderVals() {
     const p = this.props;
@@ -169,6 +169,7 @@ class Component extends DCLogic {
       moreLabel: ring > 0 ? 'Меню. Загрузки: ' + ring + ' %' : 'Меню',
       showRing: ring > 0,
       ringTrack: lightInk ? 'rgba(255,255,255,.18)' : 'rgba(17,17,20,.1)',
+      ringColor: p.ringInk ? ink : 'var(--accent)',
       ringDash: (C * ring / 100).toFixed(1) + ' ' + C.toFixed(1)
     };
   }

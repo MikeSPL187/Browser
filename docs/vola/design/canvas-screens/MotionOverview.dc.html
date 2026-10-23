@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вход в обзор вкладок</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.mo .bg{animation:mv-bg 4.4s infinite cubic-bezier(.28,1.12,.4,1)}
+.mo .cl{animation:mv-cl 4.4s infinite cubic-bezier(.28,1.12,.4,1)}
+.mo .sc{animation:mv-sc 4.4s infinite cubic-bezier(.28,1.12,.4,1)}
+.mo.rm .bg{animation:mv-rmbg 4.4s infinite linear}
+.mo.rm .cl{animation:mv-rmcl 4.4s infinite linear;left:0;top:0;width:390px;height:844px;border-radius:0}
+.mo.rm .sc{animation:none;transform:none}
+@keyframes mv-bg{0%,14%{opacity:0;transform:scale(.92)}26%,68%{opacity:1;transform:scale(1)}80%,100%{opacity:0;transform:scale(.92)}}
+@keyframes mv-cl{0%,12%{left:0;top:0;width:390px;height:844px;border-radius:40px;box-shadow:0 0 0 0 rgba(37,99,217,0)}24%,70%{left:16px;top:140px;width:173px;height:226px;border-radius:16px;box-shadow:0 0 0 2.5px #F4F4F6,0 0 0 4.5px #2563D9}82%,100%{left:0;top:0;width:390px;height:844px;border-radius:40px;box-shadow:0 0 0 0 rgba(37,99,217,0)}}
+@keyframes mv-sc{0%,12%{transform:scale(1)}24%,70%{transform:scale(.4436)}82%,100%{transform:scale(1)}}
+@keyframes mv-rmbg{0%,14%{opacity:0}18%,70%{opacity:1}74%,100%{opacity:0}}
+@keyframes mv-rmcl{0%,14%{opacity:1}18%,70%{opacity:0}74%,100%{opacity:1}}
+</style>
+</helmet>
+<div class="{{cls}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #F4F4F6; font-family: Inter, system-ui, sans-serif">
+  <div class="bg" style="position: absolute; inset: 0; transform-origin: 50% 40%"><dc-import name="Overview" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div class="cl" style="position: absolute; left: 16px; top: 140px; width: 173px; height: 226px; overflow: hidden; border-radius: 16px">
+    <div class="sc" style="width: 390px; height: 844px; transform-origin: 0 0; transform: scale(.4436)"><dc-import name="Page" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  </div>
+  <div style="position: absolute; top: 36px; left: 50%; transform: translateX(-50%); height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(0,0,0,.55); color: #FFFFFF; display: flex; align-items: center; font-size: 12px; font-weight: 600; white-space: nowrap">{{label}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"reduced":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark, rm = !!this.props.reduced;
+    return { cls: 'mo' + (rm ? ' rm' : ''), dark: dark, label: rm ? 'Без анимаций · смена прозрачностью' : 'Пружина 0,82 / 300 · страница становится карточкой' };
+  }
+}
+</script>
+</body>
+</html>

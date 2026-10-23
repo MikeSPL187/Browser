@@ -1,54 +1,582 @@
 {
-  "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-10-23T08:20:00Z"},
-  "title": "Vola — все экраны",
-  "launch": {"view": "canvas"},
-  "pages": [],
-  "boards": {
-    "Main.dc.html": {"x": 0, "y": 1400, "w": 390, "h": 844, "title": "Новая вкладка", "radius": 40},
-    "System.dc.html": {"x": 0, "y": 0, "w": 2270, "h": 900, "title": "Vola · дизайн-система"},
-    "Bar.dc.html": {"x": 940, "y": 10632, "w": 390, "h": 88, "title": "Компонент · нижняя панель"},
-    "Page.dc.html": {"x": 470, "y": 1400, "w": 390, "h": 844, "title": "Страница · цвет сайта", "radius": 40},
-    "Address.dc.html": {"x": 940, "y": 1400, "w": 390, "h": 844, "title": "Адресная строка", "radius": 40},
-    "Overview.dc.html": {"x": 1410, "y": 1400, "w": 390, "h": 844, "title": "Обзор вкладок", "radius": 40},
-    "Menu.dc.html": {"x": 1880, "y": 1400, "w": 390, "h": 844, "title": "Меню страницы", "radius": 40},
-    "DarkA.dc.html": {"x": 0, "y": 2364, "w": 2270, "h": 844, "title": "Тёмная тема · главное"},
-    "Shield.dc.html": {"x": 0, "y": 3708, "w": 390, "h": 844, "title": "Защита сайта", "radius": 40},
-    "Report.dc.html": {"x": 470, "y": 3708, "w": 390, "h": 844, "title": "Отчёт о приватности", "radius": 40},
-    "Danger.dc.html": {"x": 940, "y": 3708, "w": 390, "h": 844, "title": "Опасный сайт", "radius": 40},
-    "Private.dc.html": {"x": 1410, "y": 3708, "w": 390, "h": 844, "title": "Частный доступ", "radius": 40},
-    "PrivateLock.dc.html": {"x": 1880, "y": 3708, "w": 390, "h": 844, "title": "Частные вкладки заперты", "radius": 40},
-    "DarkB.dc.html": {"x": 0, "y": 4672, "w": 1330, "h": 844, "title": "Тёмная тема · защита"},
-    "Reader.dc.html": {"x": 0, "y": 6016, "w": 390, "h": 844, "title": "Режим чтения и прослушивание", "radius": 40},
-    "Glance.dc.html": {"x": 470, "y": 6016, "w": 390, "h": 844, "title": "Предпросмотр ссылки", "radius": 40},
-    "Translate.dc.html": {"x": 940, "y": 6016, "w": 390, "h": 844, "title": "Перевод на устройстве", "radius": 40},
-    "Downloads.dc.html": {"x": 1410, "y": 6016, "w": 390, "h": 844, "title": "Загрузки", "radius": 40},
-    "Error.dc.html": {"x": 1880, "y": 6016, "w": 390, "h": 844, "title": "Нет соединения", "radius": 40},
-    "DarkC.dc.html": {"x": 0, "y": 6980, "w": 2270, "h": 844, "title": "Тёмная тема · чтение и удобство"},
-    "Profiles.dc.html": {"x": 0, "y": 8324, "w": 390, "h": 844, "title": "Профили", "radius": 40},
-    "Settings.dc.html": {"x": 470, "y": 8324, "w": 390, "h": 844, "title": "Настройки", "radius": 40},
-    "Passwords.dc.html": {"x": 940, "y": 8324, "w": 390, "h": 844, "title": "Пароли", "radius": 40},
-    "History.dc.html": {"x": 1410, "y": 8324, "w": 390, "h": 844, "title": "История", "radius": 40},
-    "Sync.dc.html": {"x": 1880, "y": 8324, "w": 390, "h": 844, "title": "Связать устройства", "radius": 40},
-    "DarkD.dc.html": {"x": 0, "y": 9288, "w": 2270, "h": 844, "title": "Тёмная тема · профили и данные"},
-    "Onboarding.dc.html": {"x": 0, "y": 10632, "w": 390, "h": 844, "title": "Первый запуск", "radius": 40},
-    "Panel.dc.html": {"x": 470, "y": 10632, "w": 390, "h": 1800, "title": "Нижняя панель · все состояния"},
-    "Tablet.dc.html": {"x": 1410, "y": 10632, "w": 1194, "h": 834, "title": "Планшет · «Раздельно»", "radius": 24}
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-23T08:20:00Z"
+ },
+ "title": "Vola — все экраны",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 1400,
+   "w": 390,
+   "h": 844,
+   "title": "Новая вкладка",
+   "radius": 40
   },
-  "order": [
-    "Main.dc.html", "System.dc.html", "Bar.dc.html",
-    "Page.dc.html", "Address.dc.html", "Overview.dc.html", "Menu.dc.html", "DarkA.dc.html",
-    "Shield.dc.html", "Report.dc.html", "Danger.dc.html", "Private.dc.html", "PrivateLock.dc.html", "DarkB.dc.html",
-    "Reader.dc.html", "Glance.dc.html", "Translate.dc.html", "Downloads.dc.html", "Error.dc.html", "DarkC.dc.html",
-    "Profiles.dc.html", "Settings.dc.html", "Passwords.dc.html", "History.dc.html", "Sync.dc.html", "DarkD.dc.html",
-    "Onboarding.dc.html", "Panel.dc.html", "Tablet.dc.html"
-  ],
-  "notes": {
-    "rowA": {"x": 0, "y": 1150, "text": "Главное — новая вкладка, страница, адрес, вкладки, меню", "kind": "title1", "maxW": 2270},
-    "rowB": {"x": 0, "y": 3458, "text": "Защита и приватность", "kind": "title1", "maxW": 2270},
-    "rowC": {"x": 0, "y": 5766, "text": "Чтение и удобство", "kind": "title1", "maxW": 2270},
-    "rowD": {"x": 0, "y": 8074, "text": "Профили и данные", "kind": "title1", "maxW": 2270},
-    "rowE": {"x": 0, "y": 10382, "text": "Первый запуск, панель, планшет", "kind": "title1", "maxW": 2604}
+  "System.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 2270,
+   "h": 900,
+   "title": "Vola · дизайн-система"
   },
-  "designSystems": []
+  "Bar.dc.html": {
+   "x": 940,
+   "y": 10632,
+   "w": 390,
+   "h": 88,
+   "title": "Компонент · нижняя панель"
+  },
+  "Page.dc.html": {
+   "x": 470,
+   "y": 1400,
+   "w": 390,
+   "h": 844,
+   "title": "Страница · цвет сайта",
+   "radius": 40
+  },
+  "Address.dc.html": {
+   "x": 940,
+   "y": 1400,
+   "w": 390,
+   "h": 844,
+   "title": "Адресная строка",
+   "radius": 40
+  },
+  "Overview.dc.html": {
+   "x": 1410,
+   "y": 1400,
+   "w": 390,
+   "h": 844,
+   "title": "Обзор вкладок",
+   "radius": 40
+  },
+  "Menu.dc.html": {
+   "x": 1880,
+   "y": 1400,
+   "w": 390,
+   "h": 844,
+   "title": "Меню страницы",
+   "radius": 40
+  },
+  "DarkA.dc.html": {
+   "x": 0,
+   "y": 2364,
+   "w": 2270,
+   "h": 844,
+   "title": "Тёмная тема · главное"
+  },
+  "Shield.dc.html": {
+   "x": 0,
+   "y": 3708,
+   "w": 390,
+   "h": 844,
+   "title": "Защита сайта",
+   "radius": 40
+  },
+  "Report.dc.html": {
+   "x": 470,
+   "y": 3708,
+   "w": 390,
+   "h": 844,
+   "title": "Отчёт о приватности",
+   "radius": 40
+  },
+  "Danger.dc.html": {
+   "x": 940,
+   "y": 3708,
+   "w": 390,
+   "h": 844,
+   "title": "Опасный сайт",
+   "radius": 40
+  },
+  "Private.dc.html": {
+   "x": 1410,
+   "y": 3708,
+   "w": 390,
+   "h": 844,
+   "title": "Частный доступ",
+   "radius": 40
+  },
+  "PrivateLock.dc.html": {
+   "x": 1880,
+   "y": 3708,
+   "w": 390,
+   "h": 844,
+   "title": "Частные вкладки заперты",
+   "radius": 40
+  },
+  "DarkB.dc.html": {
+   "x": 0,
+   "y": 4672,
+   "w": 1330,
+   "h": 844,
+   "title": "Тёмная тема · защита"
+  },
+  "Reader.dc.html": {
+   "x": 0,
+   "y": 6016,
+   "w": 390,
+   "h": 844,
+   "title": "Режим чтения и прослушивание",
+   "radius": 40
+  },
+  "Glance.dc.html": {
+   "x": 470,
+   "y": 6016,
+   "w": 390,
+   "h": 844,
+   "title": "Предпросмотр ссылки",
+   "radius": 40
+  },
+  "Translate.dc.html": {
+   "x": 940,
+   "y": 6016,
+   "w": 390,
+   "h": 844,
+   "title": "Перевод на устройстве",
+   "radius": 40
+  },
+  "Downloads.dc.html": {
+   "x": 1410,
+   "y": 6016,
+   "w": 390,
+   "h": 844,
+   "title": "Загрузки",
+   "radius": 40
+  },
+  "Error.dc.html": {
+   "x": 1880,
+   "y": 6016,
+   "w": 390,
+   "h": 844,
+   "title": "Нет соединения",
+   "radius": 40
+  },
+  "DarkC.dc.html": {
+   "x": 0,
+   "y": 6980,
+   "w": 2270,
+   "h": 844,
+   "title": "Тёмная тема · чтение и удобство"
+  },
+  "Profiles.dc.html": {
+   "x": 0,
+   "y": 8324,
+   "w": 390,
+   "h": 844,
+   "title": "Профили",
+   "radius": 40
+  },
+  "Settings.dc.html": {
+   "x": 470,
+   "y": 8324,
+   "w": 390,
+   "h": 844,
+   "title": "Настройки",
+   "radius": 40
+  },
+  "Passwords.dc.html": {
+   "x": 940,
+   "y": 8324,
+   "w": 390,
+   "h": 844,
+   "title": "Пароли",
+   "radius": 40
+  },
+  "History.dc.html": {
+   "x": 1410,
+   "y": 8324,
+   "w": 390,
+   "h": 844,
+   "title": "История",
+   "radius": 40
+  },
+  "Sync.dc.html": {
+   "x": 1880,
+   "y": 8324,
+   "w": 390,
+   "h": 844,
+   "title": "Связать устройства",
+   "radius": 40
+  },
+  "DarkD.dc.html": {
+   "x": 0,
+   "y": 9288,
+   "w": 2270,
+   "h": 844,
+   "title": "Тёмная тема · профили и данные"
+  },
+  "Onboarding.dc.html": {
+   "x": 0,
+   "y": 10632,
+   "w": 390,
+   "h": 844,
+   "title": "Первый запуск",
+   "radius": 40
+  },
+  "Panel.dc.html": {
+   "x": 470,
+   "y": 10632,
+   "w": 390,
+   "h": 1800,
+   "title": "Нижняя панель · все состояния"
+  },
+  "Tablet.dc.html": {
+   "x": 1410,
+   "y": 10632,
+   "w": 1194,
+   "h": 834,
+   "title": "Планшет · «Раздельно»",
+   "radius": 24
+  },
+  "FixRing.dc.html": {
+   "x": 0,
+   "y": 13000,
+   "w": 820,
+   "h": 844,
+   "title": "Исправление · кольцо загрузки"
+  },
+  "MenuV2.dc.html": {
+   "x": 900,
+   "y": 13000,
+   "w": 390,
+   "h": 844,
+   "title": "Исправление · меню страницы легче",
+   "radius": 40
+  },
+  "OverviewV2.dc.html": {
+   "x": 1370,
+   "y": 13000,
+   "w": 390,
+   "h": 844,
+   "title": "Исправление · ровные карточки обзора",
+   "radius": 40
+  },
+  "MotionAddress.dc.html": {
+   "x": 0,
+   "y": 14344,
+   "w": 390,
+   "h": 844,
+   "title": "Движение · морфинг адреса",
+   "radius": 40
+  },
+  "MotionSwipe.dc.html": {
+   "x": 470,
+   "y": 14344,
+   "w": 390,
+   "h": 844,
+   "title": "Движение · свайп вкладок",
+   "radius": 40
+  },
+  "MotionOverview.dc.html": {
+   "x": 940,
+   "y": 14344,
+   "w": 390,
+   "h": 844,
+   "title": "Движение · вход в обзор",
+   "radius": 40
+  },
+  "MotionGlance.dc.html": {
+   "x": 1410,
+   "y": 14344,
+   "w": 390,
+   "h": 844,
+   "title": "Движение · предпросмотр ссылки",
+   "radius": 40
+  },
+  "MotionRefresh.dc.html": {
+   "x": 1880,
+   "y": 14344,
+   "w": 390,
+   "h": 844,
+   "title": "Движение · обновление потягиванием",
+   "radius": 40
+  },
+  "EmptyHistory.dc.html": {
+   "x": 0,
+   "y": 15688,
+   "w": 390,
+   "h": 844,
+   "title": "Пусто · история",
+   "radius": 40
+  },
+  "FindInPage.dc.html": {
+   "x": 470,
+   "y": 15688,
+   "w": 390,
+   "h": 844,
+   "title": "Поиск на странице",
+   "radius": 40
+  },
+  "ReaderSettings.dc.html": {
+   "x": 940,
+   "y": 15688,
+   "w": 390,
+   "h": 844,
+   "title": "Настройки чтения «Aa»",
+   "radius": 40
+  },
+  "HideMode.dc.html": {
+   "x": 1410,
+   "y": 15688,
+   "w": 390,
+   "h": 844,
+   "title": "Скрыть отвлекающее · выбор",
+   "radius": 40
+  },
+  "Permission.dc.html": {
+   "x": 1880,
+   "y": 15688,
+   "w": 390,
+   "h": 844,
+   "title": "Запрос разрешения",
+   "radius": 40
+  },
+  "CertError.dc.html": {
+   "x": 0,
+   "y": 16652,
+   "w": 390,
+   "h": 844,
+   "title": "Ошибка сертификата",
+   "radius": 40
+  },
+  "HttpsOnly.dc.html": {
+   "x": 470,
+   "y": 16652,
+   "w": 390,
+   "h": 844,
+   "title": "Только HTTPS",
+   "radius": 40
+  },
+  "NewProfile.dc.html": {
+   "x": 940,
+   "y": 16652,
+   "w": 390,
+   "h": 844,
+   "title": "Новый профиль",
+   "radius": 40
+  },
+  "GroupEditor.dc.html": {
+   "x": 1410,
+   "y": 16652,
+   "w": 390,
+   "h": 844,
+   "title": "Редактор группы",
+   "radius": 40
+  },
+  "EmptyStart.dc.html": {
+   "x": 1880,
+   "y": 16652,
+   "w": 390,
+   "h": 844,
+   "title": "Новая вкладка нового профиля",
+   "radius": 40
+  },
+  "Font200.dc.html": {
+   "x": 0,
+   "y": 17996,
+   "w": 390,
+   "h": 844,
+   "title": "Шрифт 200 % · настройки",
+   "radius": 40
+  },
+  "Landscape.dc.html": {
+   "x": 470,
+   "y": 17996,
+   "w": 844,
+   "h": 390,
+   "title": "Телефон · альбомная",
+   "radius": 40
+  },
+  "English.dc.html": {
+   "x": 1394,
+   "y": 17996,
+   "w": 390,
+   "h": 844,
+   "title": "English · защита сайта",
+   "radius": 40
+  },
+  "TalkBack.dc.html": {
+   "x": 1864,
+   "y": 17996,
+   "w": 390,
+   "h": 844,
+   "title": "TalkBack · порядок чтения",
+   "radius": 40
+  },
+  "TabletDark.dc.html": {
+   "x": 0,
+   "y": 19340,
+   "w": 1194,
+   "h": 834,
+   "title": "Планшет · тёмная тема",
+   "radius": 24
+  },
+  "TabletCompact.dc.html": {
+   "x": 1274,
+   "y": 19340,
+   "w": 1194,
+   "h": 834,
+   "title": "Планшет · «Компактно»",
+   "radius": 24
+  },
+  "TabletOverview.dc.html": {
+   "x": 0,
+   "y": 20294,
+   "w": 1194,
+   "h": 834,
+   "title": "Планшет · обзор вкладок",
+   "radius": 24
+  },
+  "TabletOverviewCard.dc.html": {
+   "x": 1274,
+   "y": 20294,
+   "w": 213,
+   "h": 316,
+   "title": "Компонент · карточка вкладки (планшет)"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "System.dc.html",
+  "Bar.dc.html",
+  "Page.dc.html",
+  "Address.dc.html",
+  "Overview.dc.html",
+  "Menu.dc.html",
+  "DarkA.dc.html",
+  "Shield.dc.html",
+  "Report.dc.html",
+  "Danger.dc.html",
+  "Private.dc.html",
+  "PrivateLock.dc.html",
+  "DarkB.dc.html",
+  "Reader.dc.html",
+  "Glance.dc.html",
+  "Translate.dc.html",
+  "Downloads.dc.html",
+  "Error.dc.html",
+  "DarkC.dc.html",
+  "Profiles.dc.html",
+  "Settings.dc.html",
+  "Passwords.dc.html",
+  "History.dc.html",
+  "Sync.dc.html",
+  "DarkD.dc.html",
+  "Onboarding.dc.html",
+  "Panel.dc.html",
+  "Tablet.dc.html",
+  "FixRing.dc.html",
+  "MenuV2.dc.html",
+  "OverviewV2.dc.html",
+  "MotionAddress.dc.html",
+  "MotionSwipe.dc.html",
+  "MotionOverview.dc.html",
+  "MotionGlance.dc.html",
+  "MotionRefresh.dc.html",
+  "EmptyHistory.dc.html",
+  "FindInPage.dc.html",
+  "ReaderSettings.dc.html",
+  "HideMode.dc.html",
+  "Permission.dc.html",
+  "CertError.dc.html",
+  "HttpsOnly.dc.html",
+  "NewProfile.dc.html",
+  "GroupEditor.dc.html",
+  "EmptyStart.dc.html",
+  "Font200.dc.html",
+  "Landscape.dc.html",
+  "English.dc.html",
+  "TalkBack.dc.html",
+  "TabletDark.dc.html",
+  "TabletCompact.dc.html",
+  "TabletOverview.dc.html",
+  "TabletOverviewCard.dc.html"
+ ],
+ "notes": {
+  "rowA": {
+   "x": 0,
+   "y": 1150,
+   "text": "Главное — новая вкладка, страница, адрес, вкладки, меню",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowB": {
+   "x": 0,
+   "y": 3458,
+   "text": "Защита и приватность",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowC": {
+   "x": 0,
+   "y": 5766,
+   "text": "Чтение и удобство",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowD": {
+   "x": 0,
+   "y": 8074,
+   "text": "Профили и данные",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowE": {
+   "x": 0,
+   "y": 10382,
+   "text": "Первый запуск, панель, планшет",
+   "kind": "title1",
+   "maxW": 2604
+  },
+  "v2": {
+   "x": 0,
+   "y": 12500,
+   "text": "Доработки — макеты предложений",
+   "kind": "title1",
+   "maxW": 2604
+  },
+  "rowF": {
+   "x": 0,
+   "y": 12750,
+   "text": "1 · Исправления: было → стало",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowG": {
+   "x": 0,
+   "y": 14094,
+   "text": "2 · Движение — анимации на пружинах",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowH": {
+   "x": 0,
+   "y": 15438,
+   "text": "3 · Недостающие экраны и состояния",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowI": {
+   "x": 0,
+   "y": 17746,
+   "text": "4 · Доступность",
+   "kind": "title1",
+   "maxW": 2270
+  },
+  "rowJ": {
+   "x": 0,
+   "y": 19090,
+   "text": "5 · Планшет",
+   "kind": "title1",
+   "maxW": 2470
+  }
+ },
+ "designSystems": []
 }

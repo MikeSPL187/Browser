@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Настройки чтения</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--sheet:rgba(244,244,246,.96);--surface:#FFFFFF;--elev:#EBEBEF;--label:#111114;--label2:#55555D;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--accent:#2563D9;--accentFill:#2563D9;--soft:#E3EAF9;font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--sheet:rgba(30,30,32,.96);--surface:#2A2A2D;--elev:#333337;--label:#F4F4F6;--label2:#A9A9B1;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--accent:#6E9BFF;--soft:#1F2A44}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;letter-spacing:inherit;border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; font-family: Inter, system-ui, sans-serif; color: var(--label)">
+  <div aria-hidden="true" style="position: absolute; inset: 0"><dc-import name="Reader" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.25)"></div>
+  <div role="dialog" aria-label="Настройки чтения" style="position: absolute; left: 0; right: 0; bottom: 0; height: 470px; border-radius: 32px 32px 0 0; background: var(--sheet); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); box-shadow: 0 -12px 40px rgba(0,0,0,.16); padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div aria-hidden="true" style="height: 12px; display: flex; align-items: flex-end; justify-content: center"><div style="width: 36px; height: 4px; border-radius: 2px; background: var(--label2); opacity: .4"></div></div>
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 650; letter-spacing: -0.4px">Чтение</h2>
+      <button aria-label="Закрыть" style="width: 32px; height: 32px; border-radius: 50%; background: var(--fill); color: var(--label2); display: flex; align-items: center; justify-content: center"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6"><path d="M7 7l10 10M17 7L7 17"></path></svg></button>
+    </div>
+    <div role="radiogroup" aria-label="Шрифт" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+      <button role="radio" aria-checked="false" style="height: 76px; border-radius: 16px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px"><span style="font-size: 26px; font-weight: 600">Aa</span><span style="font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--label2)">Без засечек</span></button>
+      <button role="radio" aria-checked="true" style="height: 76px; border-radius: 16px; background: var(--soft); box-shadow: inset 0 0 0 2px var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px"><span style="font-family: Literata, Georgia, serif; font-size: 26px; font-weight: 600">Aa</span><span style="font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--accent)">С засечками</span></button>
+      <button role="radio" aria-checked="false" style="height: 76px; border-radius: 16px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500">Aa</span><span style="font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--label2)">Моноширинный</span></button>
+    </div>
+    <div style="border-radius: 16px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; justify-content: space-between; font-size: 15px"><span>Размер текста</span><span class="tn" style="font-weight: 600">120 %</span></div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="font-size: 13px; font-weight: 600">A</span>
+        <div role="slider" aria-label="Размер текста" aria-valuenow="120" aria-valuemin="80" aria-valuemax="250" style="flex: 1; height: 28px; position: relative; display: flex; align-items: center">
+          <div style="position: absolute; left: 0; right: 0; height: 6px; border-radius: 3px; background: var(--elev)"></div>
+          <div style="position: absolute; left: 0; width: 24%; height: 6px; border-radius: 3px; background: var(--accent)"></div>
+          <div style="position: absolute; left: calc(24% - 14px); width: 28px; height: 28px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 8px rgba(0,0,0,.22)"></div>
+        </div>
+        <span style="font-size: 22px; font-weight: 600">A</span>
+      </div>
+    </div>
+    <div role="radiogroup" aria-label="Фон" style="display: flex; justify-content: space-around; padding: 4px 0">
+      <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+        <button role="radio" aria-checked="{{t.sel}}" style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+          <span style="width: 52px; height: 52px; border-radius: 50%; background: {{t.bg}}; color: {{t.fg}}; box-shadow: {{t.ring}}; display: flex; align-items: center; justify-content: center; font-family: Literata, Georgia, serif; font-size: 18px; font-weight: 600">Аа</span>
+          <span style="font-size: 12px; font-weight: {{t.w}}; letter-spacing: 0; color: {{t.lc}}">{{t.n}}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="font-size: 13px; line-height: 18px; color: var(--label2); text-align: center">Запоминается для всех сайтов</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const sel = dark ? 2 : 1;
+    const list = [
+      { n: 'Светлый', bg: '#FFFFFF', fg: '#1B1B1B' },
+      { n: 'Сепия', bg: '#F6EFE1', fg: '#3B2F20' },
+      { n: 'Тёмный', bg: '#1F1E1C', fg: '#DCD6CB' }
+    ];
+    const themes = list.map((t, i) => ({
+      ...t,
+      sel: i === sel ? 'true' : 'false',
+      ring: i === sel ? '0 0 0 2px var(--sheet), 0 0 0 4px var(--accent)' : 'inset 0 0 0 1px rgba(0,0,0,.12)',
+      w: i === sel ? 600 : 500,
+      lc: i === sel ? 'var(--accent)' : 'var(--label2)'
+    }));
+    return { mode: 'vs' + (dark ? ' dk' : ''), dark: dark, themes: themes };
+  }
+}
+</script>
+</body>
+</html>
