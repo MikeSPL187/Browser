@@ -83,7 +83,7 @@ class V5ProfileEditSheetInstrumentedTest {
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextClearance()
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextInput("Work")
         composeRule.onNodeWithTag(V5ProfileEditTestTags.color(2)).performClick()
-        composeRule.onNodeWithTag(V5SheetTestTags.Close).performClick()
+        composeRule.onNodeWithTag(V5EditHeaderTestTags.Cancel).performClick()
 
         // «Close» is the way out of a change (ПР-1): only «Done» saves.
         assertEquals(listOf("dismiss"), calls)

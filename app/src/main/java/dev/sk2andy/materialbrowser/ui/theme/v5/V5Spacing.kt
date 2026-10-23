@@ -164,6 +164,10 @@ object V5Sizes {
     /** The plate of a gesture's hand on the two-gesture sheet (canvas screen «п3»). */
     val firstRunGesture: Dp = 52.dp
 
+    // A profile's editor (canvas «NewProfile»): the profile as it will look, white on its accent.
+    val profileAvatar: Dp = 88.dp
+    val profileAvatarIcon: Dp = 40.dp
+
     // Link preview (canvas screen «н1»).
     /** The address line over the live page in the preview card. */
     val glanceHeader: Dp = 40.dp

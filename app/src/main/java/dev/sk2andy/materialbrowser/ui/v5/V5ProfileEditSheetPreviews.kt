@@ -42,6 +42,18 @@ private fun V5ProfileNewLightPreview() = EditPreview(dark = false, creating = tr
 @Composable
 private fun V5ProfileEditDarkPreview() = EditPreview(dark = true, creating = false)
 
+@Preview(name = "New profile · dark", heightDp = 900)
+@Composable
+private fun V5ProfileNewDarkPreview() = EditPreview(dark = true, creating = true)
+
+@Preview(name = "Edit profile · light", heightDp = 900)
+@Composable
+private fun V5ProfileEditLightPreview() = EditPreview(dark = false, creating = false)
+
+@Preview(name = "New profile · largest font", heightDp = 1400, fontScale = 2f)
+@Composable
+private fun V5ProfileNewLargeFontPreview() = EditPreview(dark = false, creating = true)
+
 /** «Delete profile»: where the tabs go and everything that goes with the profile (PF-04). */
 @Composable
 private fun DeletePreview(dark: Boolean) {
