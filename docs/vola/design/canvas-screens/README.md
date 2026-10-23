@@ -41,3 +41,7 @@
 | Недостающие состояния | `EmptyHistory`, `FindInPage`, `ReaderSettings`, `HideMode`, `Permission`, `CertError`, `HttpsOnly`, `NewProfile`, `GroupEditor`, `EmptyStart` |
 | Доступность | `Font200`, `Landscape`, `English`, `TalkBack` |
 | Планшет | `TabletDark`, `TabletCompact`, `TabletOverview` (+ компонент `TabletOverviewCard`) |
+
+## Реализация
+
+Промт для сессии, которая переносит макет в код, — `IMPLEMENTATION_PROMPT.md`.
