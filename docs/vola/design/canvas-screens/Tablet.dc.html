@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Планшет</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em;--pg:#FFFFFF;--pgText:#1B2328;--pgMuted:#5A6670;--pgHead:#1F4E5F;--pgKicker:#1F7A8C;--pgRule:#E3E8EA}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E;--pg:#10171B;--pgText:#E3EAEC;--pgMuted:#93A3AB;--pgHead:#163A47;--pgKicker:#6CC3D1;--pgRule:#22313A}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 1194px; height: 834px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif; display: flex">
+  <aside aria-label="Боковая панель" style="width: 280px; flex: none; box-sizing: border-box; padding: 28px 16px 16px 20px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <button aria-label="Профиль: Личный" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 4px; border-radius: 999px; background: var(--surface); box-shadow: var(--e1)">
+        <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accentFill); color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"></path></svg>
+        </span>
+        <span style="font-size: 15px; font-weight: 600">Личный</span>
+        <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><path d="M6 9.5l6 6 6-6"></path></svg>
+      </button>
+      <button aria-label="Свернуть боковую панель" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--label2)">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"></rect><path d="M9.5 4.5v15"></path></svg>
+      </button>
+    </div>
+
+    <div>
+      <div style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2); margin-bottom: 10px">Закреплённые</div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{pins}}" as="p" hint-placeholder-count="8">
+          <span title="{{p.name}}" style="position: relative; height: 52px; border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center">
+            <span aria-hidden="true" style="position: absolute; width: 64px; height: 64px; border-radius: 50%; background: {{p.color}}; filter: blur(16px); opacity: .5"></span>
+            <span style="position: relative; width: 26px; height: 26px; border-radius: 8px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">{{p.glyph}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2); margin-bottom: 6px">Группы</div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="height: 44px; border-radius: 12px; background: var(--accentSoft); display: flex; align-items: center; gap: 10px; padding: 0 12px">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #0E8C8C"></span>
+          <span style="flex: 1; font-size: 15px; font-weight: 600">Териберка</span>
+          <span class="tn" style="font-size: 13px; color: var(--label2)">4</span>
+        </div>
+        <div style="height: 44px; border-radius: 12px; display: flex; align-items: center; gap: 10px; padding: 0 12px">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #E0620D"></span>
+          <span style="flex: 1; font-size: 15px">Ужин в пятницу</span>
+          <span class="tn" style="font-size: 13px; color: var(--label2)">3</span>
+        </div>
+        <div style="height: 44px; border-radius: 12px; display: flex; align-items: center; gap: 10px; padding: 0 12px">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #7B57E0"></span>
+          <span style="flex: 1; font-size: 15px">Кино на выходные</span>
+          <span class="tn" style="font-size: 13px; color: var(--label2)">2</span>
+        </div>
+        <div style="height: 44px; border-radius: 12px; display: flex; align-items: center; gap: 10px; padding: 0 12px; color: var(--accent)">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 5v14M5 12h14"></path></svg>
+          <span style="font-size: 15px; font-weight: 500">Новая группа</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: auto; height: 48px; border-radius: 14px; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; gap: 10px; padding: 0 14px">
+      <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: #7B57E0"><path d="M3 11h18"></path><path d="M6 11l1.6-5.2a1 1 0 0 1 1-.8h6.8a1 1 0 0 1 1 .8L18 11"></path><circle cx="7.5" cy="16" r="2.8"></circle><circle cx="16.5" cy="16" r="2.8"></circle></svg>
+      <span style="flex: 1; font-size: 15px">Частные вкладки</span>
+      <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label3); stroke-width: 2.2"><rect x="5" y="10.5" width="14" height="10" rx="3"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>
+    </div>
+  </aside>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 24px 8px 8px 0">
+    <div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px">
+      <button aria-label="Назад" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+      </button>
+      <button aria-label="Вперёд" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--label3)">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </button>
+      <div style="flex: 1; display: flex; justify-content: center">
+        <a href="Address.dc.html" aria-label="Адресная строка, polar-notes.ru, защищено, заблокировано 12" style="width: 520px; height: 40px; border-radius: 999px; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; gap: 8px; padding: 0 6px 0 14px; color: var(--label); text-decoration: none">
+          <span style="display: flex; align-items: center; gap: 3px; color: var(--label2)">
+            <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-3z"></path></svg>
+            <span class="tn" style="font-size: 12px; font-weight: 650; letter-spacing: 0">12</span>
+          </span>
+          <span style="flex: 1; text-align: center; font-size: 15px; font-weight: 600">polar-notes.ru</span>
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><path d="M5 6.5h14M5 10.5h14M5 14.5h9M5 18.5h6"></path></svg>
+          <span style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--label2)">
+            <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95"></path><path d="M19 4.5V9h-4.5"></path></svg>
+          </span>
+        </a>
+      </div>
+      <button aria-label="Поделиться" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11"></path><path d="M8 7.5l4-4 4 4"></path><path d="M7 10.5H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"></path></svg>
+      </button>
+      <a href="Main.dc.html" aria-label="Новая вкладка" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--label)">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M12 5v14M5 12h14"></path></svg>
+      </a>
+      <a href="Overview.dc.html" aria-label="Все вкладки" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--label)">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg>
+      </a>
+      <button aria-label="Меню" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="display: block"><circle cx="5" cy="12" r="1.8" fill="currentColor"></circle><circle cx="12" cy="12" r="1.8" fill="currentColor"></circle><circle cx="19" cy="12" r="1.8" fill="currentColor"></circle></svg>
+      </button>
+    </div>
+
+    <div role="tablist" aria-label="Вкладки группы «Териберка»" style="height: 40px; display: flex; align-items: center; gap: 6px; padding: 0 8px; margin-bottom: 8px">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <span role="tab" aria-selected="{{t.sel}}" style="flex: 1; min-width: 0; height: 34px; border-radius: 10px; background: {{t.bg}}; box-shadow: {{t.shadow}}; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; font-weight: {{t.weight}}; color: {{t.color}}; letter-spacing: -0.04px">
+          <span style="width: 16px; height: 16px; border-radius: 5px; background: {{t.fav}}; color: #FFFFFF; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{t.glyph}}</span>
+          <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <div style="flex: 1; min-height: 0; border-radius: 16px; overflow: hidden; background: var(--pg); color: var(--pgText); box-shadow: var(--e2); box-shadow: var(--e2), 0 0 0 0.5px var(--edge)">
+      <div style="height: 56px; background: var(--pgHead); color: #FFFFFF; display: flex; align-items: center; gap: 28px; padding: 0 32px">
+        <span style="font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Полярные заметки</span>
+        <span style="display: flex; gap: 22px; font-size: 13px; font-weight: 500; letter-spacing: 0">
+          <span style="opacity: .7">Маршруты</span><span style="border-bottom: 2px solid #9EE6D5; padding-bottom: 3px">Сияние</span><span style="opacity: .7">Люди</span><span style="opacity: .7">Фото</span><span style="opacity: .7">Карта</span>
+        </span>
+      </div>
+      <div style="display: flex; gap: 32px; padding: 28px 32px 0">
+        <div role="img" aria-label="Северное сияние над сопками Териберки" style="position: relative; flex: none; width: 420px; height: 300px; border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, #06131D 0%, #0B2534 52%, #18414B 100%)">
+          <div aria-hidden="true" style="position: absolute; left: -60px; top: 50px; width: 560px; height: 110px; border-radius: 50%; background: #39F2A4; filter: blur(30px); opacity: .6; transform: rotate(-11deg)"></div>
+          <div aria-hidden="true" style="position: absolute; left: 180px; top: 10px; width: 260px; height: 80px; border-radius: 50%; background: #8E6CF4; filter: blur(32px); opacity: .45"></div>
+          <svg width="420" height="300" viewBox="0 0 390 236" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0">
+            <path d="M0 176 L46 138 L78 158 L132 112 L170 146 L212 124 L262 160 L300 132 L352 156 L390 140 L390 236 L0 236 Z" fill="#0A1B24"></path>
+            <path d="M0 200 L60 176 L120 194 L190 170 L250 192 L320 176 L390 190 L390 236 L0 236 Z" fill="#050F15"></path>
+          </svg>
+        </div>
+        <article style="flex: 1; min-width: 0">
+          <div style="font-size: 12px; line-height: 16px; font-weight: 650; letter-spacing: 0.8px; color: var(--pgKicker)">МУРМАНСКАЯ ОБЛАСТЬ · 8 МИН</div>
+          <h1 style="margin: 10px 0 0; font-family: Literata, Georgia, serif; font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.5px">Северное сияние над Териберкой: как поймать небо</h1>
+          <div style="margin-top: 12px; font-size: 13px; color: var(--pgMuted); letter-spacing: 0">Анна Белова · 21 октября</div>
+          <p style="margin: 16px 0 0; font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; letter-spacing: 0">Сияние начинается без предупреждения. Над сопками проступает бледная полоса — её легко принять за облако. Через пару минут она зеленеет, раздваивается и начинает двигаться.</p>
+        </article>
+      </div>
+      <p style="margin: 24px 32px 0; max-width: 760px; font-family: Literata, Georgia, serif; font-size: 17px; line-height: 28px; letter-spacing: 0">Лучшее время — с конца сентября до марта, в ясные ночи после десяти. Мы собрали, где остановиться и как добраться из Мурманска без машины: от рейсового автобуса до трансфера, который ждёт после полуночи.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const pins = [
+      { name: 'Заметки', glyph: 'П', color: '#1F4E5F' }, { name: 'Киноград', glyph: 'К', color: '#C2272D' },
+      { name: 'Рецепты', glyph: 'Р', color: '#E0620D' }, { name: 'Лумо Почта', glyph: 'Л', color: '#3B5BDB' },
+      { name: 'Атлас', glyph: 'А', color: '#0E8C8C' }, { name: 'Звук', glyph: 'З', color: '#7B57E0' },
+      { name: 'Сводка', glyph: 'С', color: '#4B4B53' }, { name: 'Люмен', glyph: 'L', color: '#111114' }
+    ];
+    const raw = [
+      { title: 'Северное сияние над Териберкой', glyph: 'П', fav: '#1F4E5F', sel: true },
+      { title: 'Дома у залива — Север·дом', glyph: 'С', fav: '#2F5D50' },
+      { title: 'Прогноз сияния на неделю', glyph: 'М', fav: '#2F6FE4' },
+      { title: 'Мурманск → Териберка', glyph: 'А', fav: '#0E8C8C' }
+    ];
+    const tabs = raw.map((t) => ({
+      ...t,
+      sel: t.sel ? 'true' : 'false',
+      bg: t.sel ? 'var(--surface)' : 'transparent',
+      shadow: t.sel ? 'var(--e1), inset 0 -2px 0 #0E8C8C' : 'inset 0 -2px 0 rgba(14,140,140,.35)',
+      weight: t.sel ? 600 : 500,
+      color: t.sel ? 'var(--label)' : 'var(--label2)'
+    }));
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + (this.props.accent ?? 'blue'), pins: pins, tabs: tabs };
+  }
+}
+</script>
+</body>
+</html>

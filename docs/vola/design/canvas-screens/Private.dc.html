@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Частный доступ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.pv{--bg:#17151D;--surface:#221F2B;--elev:#2C2838;--highest:#383246;--chrome:#241F31;--label:#F3F1F8;--label2:#ABA6BA;--label3:#7F7A8E;--sep:#352F44;--fill:rgba(166,139,255,.14);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(23,21,29,.92);--regular:rgba(36,31,49,.86);--e1:0 0 0 .5px rgba(255,255,255,.06);--e2:0 8px 24px rgba(0,0,0,.45);--e3:0 16px 48px rgba(0,0,0,.6);--accent:#A68BFF;--accentFill:#6A45D1;--softPct:26%;--softBase:#17151D}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="vl pv" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div aria-hidden="true" style="position: absolute; left: -80px; right: -80px; top: -120px; height: 520px; background: radial-gradient(50% 50% at 50% 40%, rgba(106,69,209,.42) 0%, transparent 100%)"></div>
+  <div aria-hidden="true" style="position: absolute; right: -60px; top: 220px; width: 240px; height: 240px; border-radius: 50%; background: rgba(166,139,255,.12); filter: blur(50px)"></div>
+
+  <div style="position: relative; padding: 84px 20px 0; display: flex; flex-direction: column">
+    <span style="width: 64px; height: 64px; border-radius: 20px; background: var(--accentFill); color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(106,69,209,.45), inset 0 0.5px 0 rgba(255,255,255,.25)">
+      <svg class="i" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 1.7"><path d="M3 11h18"></path><path d="M6 11l1.6-5.2a1 1 0 0 1 1-.8h6.8a1 1 0 0 1 1 .8L18 11"></path><circle cx="7.5" cy="16" r="2.8"></circle><circle cx="16.5" cy="16" r="2.8"></circle><path d="M10.3 15.6c1.1-.7 2.3-.7 3.4 0"></path></svg>
+    </span>
+    <h1 style="margin: 24px 0 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.75px">Частный доступ</h1>
+    <p style="margin: 10px 0 0; font-size: 17px; line-height: 24px; color: var(--label2)">Vola не запомнит, где вы были. Закройте частные вкладки — и их история, cookie и данные форм исчезнут.</p>
+
+    <div style="margin-top: 26px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+      <div style="min-height: 68px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <span style="width: 30px; height: 30px; border-radius: 8px; background: #7B57E0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M4 7h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><path d="M3 4h18v3H3z"></path><path d="M9.5 13.5l5-3M9.5 10.5l5 3"></path></svg>
+        </span>
+        <div style="flex: 1; min-width: 0">
+          <div style="font-size: 17px; line-height: 22px">Ничего не пишется на диск</div>
+          <div style="font-size: 13px; line-height: 18px; color: var(--label2)">История, cookie и кэш живут только в памяти</div>
+        </div>
+      </div>
+      <div style="height: 0.5px; margin-left: 56px; background: var(--sep)"></div>
+      <div style="min-height: 68px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <span style="width: 30px; height: 30px; border-radius: 8px; background: #1F9D55; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><path d="M7 5.5A8 8 0 0 1 20 12v1M4 9.5c-.3.8-.5 1.6-.5 2.5v3M8 19.5a14 14 0 0 1-1-6 5 5 0 0 1 10 0v1.5M12 13v1.5a11 11 0 0 1-1.5 6M16.5 18.5c.3-1 .5-2 .5-3"></path></svg>
+        </span>
+        <div style="flex: 1; min-width: 0">
+          <div style="font-size: 17px; line-height: 22px">Строгая защита от отпечатков</div>
+          <div style="font-size: 13px; line-height: 18px; color: var(--label2)">Сайтам труднее узнать вас по устройству</div>
+        </div>
+      </div>
+      <div style="height: 0.5px; margin-left: 56px; background: var(--sep)"></div>
+      <div style="min-height: 68px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <span style="width: 30px; height: 30px; border-radius: 8px; background: #4F5BD5; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2"><rect x="5" y="10.5" width="14" height="10" rx="3"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>
+        </span>
+        <div style="flex: 1; min-width: 0">
+          <div style="font-size: 17px; line-height: 22px">Замок при выходе</div>
+          <div style="font-size: 13px; line-height: 18px; color: var(--label2)">Вкладки откроются по отпечатку</div>
+        </div>
+        <button role="switch" aria-checked="true" aria-label="Замок при выходе" style="width: 51px; height: 31px; border-radius: 999px; background: var(--accentFill); padding: 2px; box-sizing: border-box; display: flex; justify-content: flex-end; flex: none">
+          <span style="width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,.25)"></span>
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 8px; padding: 0 4px; font-size: 13px; line-height: 18px; color: var(--label2)">
+      <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 1px"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+      <span>Скачанные файлы остаются в общей папке «Загрузки» — их Vola не удаляет.</span>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0">
+    <dc-import name="Bar" variant="private" domain="" tabs="2" hint-size="390px,88px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

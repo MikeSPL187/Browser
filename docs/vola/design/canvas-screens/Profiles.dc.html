@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Профили</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0">
+    <dc-import name="Overview" dark="{{dark}}" accent="{{accent}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div role="dialog" aria-label="Профили" style="position: absolute; left: 0; right: 0; bottom: 0; height: 600px; border-radius: 32px 32px 0 0; background: var(--thick); backdrop-filter: blur(40px) saturate(1.4); -webkit-backdrop-filter: blur(40px) saturate(1.4); box-shadow: var(--e3), inset 0 0.5px 0 var(--edge); padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column">
+    <div aria-hidden="true" style="height: 20px; display: flex; align-items: center; justify-content: center"><div style="width: 36px; height: 4px; border-radius: 2px; background: var(--label3); opacity: .5"></div></div>
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 650; letter-spacing: -0.4px">Профили</h2>
+      <button style="font-size: 17px; color: var(--accent)">Изменить</button>
+    </div>
+    <p style="margin: 2px 0 0; font-size: 15px; line-height: 20px; color: var(--label2)">У каждого профиля свои cookie и входы, история, группы и закреплённые сайты.</p>
+
+    <div style="margin-top: 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+      <sc-for list="{{profiles}}" as="p" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column">
+          <sc-if value="{{p.divider}}" hint-placeholder-val="{{false}}">
+            <div style="height: 0.5px; margin-left: 72px; background: var(--sep)"></div>
+          </sc-if>
+          <a href="Overview.dc.html" aria-current="{{p.current}}" style="height: 72px; display: flex; align-items: center; gap: 14px; padding: 0 16px; text-decoration: none; color: var(--label); background: {{p.rowBg}}">
+            <span style="width: 44px; height: 44px; border-radius: 50%; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,.2)">
+              <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="{{p.icon}}"></path></svg>
+            </span>
+            <span style="flex: 1; min-width: 0">
+              <span style="display: block; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.22px">{{p.name}}</span>
+              <span class="tn" style="display: block; font-size: 13px; line-height: 18px; color: var(--label2)">{{p.meta}}</span>
+            </span>
+            <sc-if value="{{p.isCurrent}}" hint-placeholder-val="{{false}}">
+              <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent); stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+            </sc-if>
+          </a>
+        </div>
+      </sc-for>
+    </div>
+
+    <button style="margin-top: 12px; height: 60px; border-radius: 16px; border: 1.5px dashed var(--sep); display: flex; align-items: center; gap: 14px; padding: 0 16px; color: var(--accent)">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accentSoft); display: flex; align-items: center; justify-content: center">
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M12 5v14M5 12h14"></path></svg>
+      </span>
+      <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.22px">Новый профиль</span>
+    </button>
+
+    <div style="margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; line-height: 18px; color: var(--label2)">
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h12M16 8l4 4-4 4"></path><path d="M4 7v10"></path></svg>
+      Свайп по обзору вкладок листает профили
+    </div>
+
+    <div aria-hidden="true" style="margin-top: auto; height: 24px; display: flex; align-items: center; justify-content: center">
+      <div style="width: 108px; height: 4px; border-radius: 2px; background: var(--label); opacity: .4"></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const accent = this.props.accent ?? 'blue';
+    const user = 'M12 12.3a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6zM4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5';
+    const bag = 'M4 8.5h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM9 8.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2.5M4 13h16';
+    const book = 'M4 5.5a1.5 1.5 0 0 1 1.5-1.5H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z';
+    const plane = 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z';
+    const list = [
+      { name: 'Личный', meta: '7 вкладок · 2 группы · 8 закреплённых', color: 'var(--accentFill)', icon: user },
+      { name: 'Работа', meta: '12 вкладок · 4 группы', color: '#1A7F45', icon: bag },
+      { name: 'Учёба', meta: '3 вкладки · 1 группа', color: '#B4520F', icon: book },
+      { name: 'Путешествия', meta: '5 вкладок · Териберка', color: '#BE2A68', icon: plane }
+    ];
+    const profiles = list.map((p, i) => ({
+      ...p,
+      divider: i > 0,
+      isCurrent: i === 0,
+      current: i === 0 ? 'true' : 'false',
+      rowBg: i === 0 ? 'var(--accentSoft)' : 'transparent'
+    }));
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + accent, dark: dark, accent: accent, profiles: profiles };
+  }
+}
+</script>
+</body>
+</html>
