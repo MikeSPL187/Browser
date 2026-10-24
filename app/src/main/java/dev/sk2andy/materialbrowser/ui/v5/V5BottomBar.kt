@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,7 +75,6 @@ import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.AddressBarTabCounterButton
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
-import dev.sk2andy.materialbrowser.ui.PermissionRadarBadge
 import dev.sk2andy.materialbrowser.ui.addressBarVerticalGesture
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -338,15 +338,17 @@ private fun AddressCapsule(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(V5Sizes.barCapsule), contentAlignment = Alignment.Center) {
-            PermissionRadarBadge(
-                siteAvailable = state.siteAvailable,
-                activityVisible = state.permissionActivity,
-                connectionKind = state.connectionKind,
-                blockedCount = state.blockedCount,
-                onClick = onShield,
-                tabId = state.tabId,
-            )
+        Box(Modifier.widthIn(min = V5Sizes.barCapsule), contentAlignment = Alignment.Center) {
+            if (state.siteAvailable) {
+                V5BarShield(
+                    tabId = state.tabId,
+                    connectionKind = state.connectionKind,
+                    blockedCount = state.blockedCount,
+                    activityVisible = state.permissionActivity,
+                    ink = bar.onTintSecondary,
+                    onClick = onShield,
+                )
+            }
         }
         if (state.domain != null) {
             // Mirrors «Read» on the right, so the domain stays in the middle of the capsule.
