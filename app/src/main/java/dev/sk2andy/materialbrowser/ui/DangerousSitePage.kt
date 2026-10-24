@@ -1,13 +1,10 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -18,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -32,9 +28,8 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaDangerousSite
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5DangerousSite
 
 internal object DangerousSiteTestTags {
     const val Page = "dangerous_site_page"
@@ -55,11 +50,11 @@ internal fun DangerousSitePage(
     onOpenRealSite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Under v5 the page is one of v5's state screens (owner 17.10: the phone all v5): the danger is
-    // in the glyph and in the red «Open anyway»; the current interface paints the page red.
+    // Under v5 the page is the canvas «Danger» screen (owner 17.10: the phone all v5); the current
+    // interface paints the page red.
     if (rememberDrawsV5()) {
-        Box(modifier.fillMaxSize().testTag(DangerousSiteTestTags.Page)) {
-            DangerousSiteContent(site, onBackToSafety, onOpenAnyway, onOpenRealSite, v5 = true)
+        VolaV5Theme(dark = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE_LUMINANCE) {
+            V5DangerousSite(site, onBackToSafety, onOpenAnyway, onOpenRealSite, modifier)
         }
         return
     }
@@ -87,7 +82,7 @@ internal fun DangerousSitePage(
             color = background,
             contentColor = content,
         ) {
-            DangerousSiteContent(site, onBackToSafety, onOpenAnyway, onOpenRealSite, v5 = false)
+            DangerousSiteContent(site, onBackToSafety, onOpenAnyway, onOpenRealSite)
         }
     }
 }
@@ -98,7 +93,6 @@ private fun DangerousSiteContent(
     onBackToSafety: () -> Unit,
     onOpenAnyway: () -> Unit,
     onOpenRealSite: () -> Unit,
-    v5: Boolean,
 ) {
     val imitatedHost = site.imitatedHost
     VolaStatePage(
@@ -115,7 +109,7 @@ private fun DangerousSiteContent(
         icon = {
             VolaStatePageIcon(
                 icon = VolaIcons.Dangerous,
-                tone = if (v5) VolaStatePageTone.Error else VolaStatePageTone.Accent,
+                tone = VolaStatePageTone.Accent,
             )
         },
         details = {
@@ -126,7 +120,7 @@ private fun DangerousSiteContent(
             }
             val factIcon = if (imitatedHost != null) VolaIcons.Verified else VolaIcons.ShieldLock
             val onFact = onOpenRealSite.takeIf { imitatedHost != null }
-            if (v5) V5SiteFact(fact, factIcon, onFact) else SiteFact(fact, factIcon, onFact)
+            SiteFact(fact, factIcon, onFact)
         },
     ) {
         VolaStatePagePrimaryButton(
@@ -166,26 +160,6 @@ private fun SiteFact(text: String, icon: ImageVector, onClick: (() -> Unit)?) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(VolaDangerousSite.rowIconSize))
             Text(text = text, style = MaterialTheme.typography.bodyMedium)
         }
-    }
-}
-
-/** The same fact as a v5 row on its card. */
-@Composable
-private fun V5SiteFact(text: String, icon: ImageVector, onClick: (() -> Unit)?) {
-    val colors = V5Theme.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = V5Sizes.touchTarget)
-            .clip(V5Theme.shapes.m)
-            .background(colors.surface)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
-            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
-        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.iconSmall))
-        Text(text, style = V5Theme.type.callout, color = colors.label, modifier = Modifier.weight(1f))
     }
 }
 

@@ -52,6 +52,16 @@ object V5Elevation {
 }
 
 /**
+ * A colored tile's own glow (canvas «Danger»): a soft shadow in the tile's color under it, the same in
+ * both themes, where a gray shadow would only dirty the color.
+ */
+object V5Glow {
+    val y: Dp = 10.dp
+    val blur: Dp = 30.dp
+    const val ALPHA = 0.35f
+}
+
+/**
  * A translucent material. [blur] applies from Android 13; on 12 Haze causes extra invalidations, so
  * there and below the tint alone is drawn at [fallbackAlpha]. Battery saver, "Reduce transparency"
  * and increased contrast use it opaque.

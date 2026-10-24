@@ -170,6 +170,13 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // Dangerous site (canvas screen «Danger»): the red tile of the warning, its corners and glyph,
+    // and the chip with the site's address.
+    val dangerTile: Dp = 72.dp
+    val dangerTileRadius: Dp = 22.dp
+    val dangerTileIcon: Dp = 36.dp
+    val dangerChip: Dp = 32.dp
+
     // Site protection (canvas screen «Shield»): the shield's tile at the top of the panel.
     val siteShieldBadge: Dp = 52.dp
 
