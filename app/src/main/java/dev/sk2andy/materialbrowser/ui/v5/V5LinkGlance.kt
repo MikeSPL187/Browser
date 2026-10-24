@@ -7,6 +7,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,6 +63,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.dismiss
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -77,6 +81,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Shapes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
@@ -89,8 +94,9 @@ object V5LinkGlanceTestTags {
     const val Retry = "v5_glance_retry"
     const val More = "v5_glance_more"
     const val Open = "v5_glance_open"
-    const val Background = "v5_glance_background"
-    const val Close = "v5_glance_close"
+    const val NewTab = "v5_glance_new_tab"
+    const val Copy = "v5_glance_copy"
+    const val Share = "v5_glance_share"
 }
 
 /** Shown in place of a page the card can't show: a failed load, a crash or a dangerous site. */
@@ -136,8 +142,9 @@ class V5LinkGlanceActions(
  * The v5 link preview (V21, canvas screen «н1», system-v5.md section 12). A long press on a link
  * shrinks the page to 0.97 and dims it ([onPageScale] carries the scale to the page, which lives
  * below this layer), and a card with the live page flies out of [origin] (the touch point in window
- * coordinates) along a low arc. «Open» grows the card into the window and opens the link in this
- * tab, as Safari's preview does; «In background» opens it in a new tab behind; «⋯» has the rest.
+ * coordinates) along a low arc. «Open» (or a swipe up) grows the card into the window and opens
+ * the link in this tab, as Safari's preview does; a swipe down, a tap outside or back closes it.
+ * The round buttons beside «Open» are a new tab, copy and share (canvas «Glance»); «⋯» has the rest.
  * Nothing in the card goes into history until the link is opened.
  *
  * [preview] is drawn in the card's own layer (the engine draws the preview's page as a texture,
@@ -161,6 +168,8 @@ fun V5LinkGlance(
     val spec: AnimationSpec<Float> = if (moves) V5Motion.glance.spec() else V5Motion.reducedFade()
     val glance = remember { Animatable(if (entered) 1f else 0f) }
     val opening = remember { Animatable(0f) }
+    // How far a vertical swipe has carried the card from its place (canvas «Glance»).
+    val swipe = remember { Animatable(0f) }
     var leaving by remember { mutableStateOf(false) }
     var openingStarted by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -215,12 +224,21 @@ fun V5LinkGlance(
     val arcPx = with(density) { V5Motion.GLANCE_ARC_MAX_DP.dp.toPx() }
     val shadow = V5Elevation.e3.forTheme(colors.isDark).shadows.firstOrNull()
     val closeLabel = stringResource(R.string.glance_close)
+    val swipeCommitPx = with(density) { V5Motion.GLANCE_SWIPE_COMMIT_DP.dp.toPx() }
+    val swipeVelocityPx = with(density) { V5Motion.GLANCE_SWIPE_VELOCITY_DP.dp.toPx() }
 
     Box(
         modifier
             .fillMaxSize()
             .onGloballyPositioned { windowOffset = it.positionInWindow() }
-            .semantics { paneTitle = address }
+            .semantics {
+                paneTitle = address
+                // Without the swipe and with no «×» on screen, TalkBack closes the preview here.
+                dismiss(closeLabel) {
+                    leave(actions.onDismiss)
+                    true
+                }
+            }
             .testTag(V5LinkGlanceTestTags.Root),
     ) {
         // Above the page's own surface: the frame around the shrunk page, the dimming, and the
@@ -281,13 +299,14 @@ fun V5LinkGlance(
                             scaleX = flight.scale
                             scaleY = flight.scale
                             translationX = flight.dx
-                            translationY = flight.dy
+                            translationY = flight.dy + swipe.value
                             val radius = V5LinkGlanceRules.cornerRadius(originRadiusPx, cardRadiusPx, progress)
                             shape = RoundedCornerShape(radius / flight.scale.coerceAtLeast(V5LinkGlanceRules.MIN_SCALE))
                             alpha = 1f - fading
                         } else {
                             shape = RoundedCornerShape(cardRadiusPx)
                             alpha = progress.coerceIn(0f, 1f)
+                            translationY = swipe.value
                         }
                         clip = true
                         if (shadow != null) {
@@ -300,6 +319,22 @@ fun V5LinkGlance(
                     .border(V5Spacing.hairline, colors.edge, RoundedCornerShape(cardRadiusPx))
                     // Like a Surface: a tap on the card stays on it rather than closing it from behind.
                     .pointerInput(Unit) {}
+                    // Up opens the link here, down closes the preview; a short swipe settles back.
+                    .draggable(
+                        state = rememberDraggableState { delta ->
+                            scope.launch { swipe.snapTo(swipe.value + delta * V5Motion.GLANCE_SWIPE_RESISTANCE) }
+                        },
+                        orientation = Orientation.Vertical,
+                        enabled = !leaving,
+                        onDragStopped = { velocity ->
+                            when (V5LinkGlanceRules.swipe(swipe.value, velocity, swipeCommitPx, swipeVelocityPx)) {
+                                V5LinkGlanceRules.Swipe.Open -> openHere()
+                                // The card goes back into the link from where the finger left it.
+                                V5LinkGlanceRules.Swipe.Close -> leave(actions.onDismiss)
+                                V5LinkGlanceRules.Swipe.Stay -> swipe.animateTo(0f, spec)
+                            }
+                        },
+                    )
                     .testTag(V5LinkGlanceTestTags.Card),
             ) {
                 GlanceHeader(
@@ -345,24 +380,36 @@ fun V5LinkGlance(
                     onClick = openHere,
                     modifier = Modifier.weight(1f).testTag(V5LinkGlanceTestTags.Open),
                 )
-                GlanceButton(
-                    text = stringResource(R.string.v5_glance_background),
-                    icon = VolaIcons.Tab,
-                    primary = false,
-                    onClick = { leave(actions.onOpenInBackground) },
-                    modifier = Modifier.weight(1f).testTag(V5LinkGlanceTestTags.Background),
+                GlanceRoundButton(
+                    label = stringResource(R.string.action_open_in_new_tab),
+                    icon = VolaIcons.OpenInNew,
+                    onClick = { leave(actions.onOpenInNewTab) },
+                    modifier = Modifier.testTag(V5LinkGlanceTestTags.NewTab),
                 )
-                GlanceButton(
-                    text = null,
-                    icon = VolaIcons.Close,
-                    primary = false,
-                    onClick = { leave(actions.onDismiss) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(V5LinkGlanceTestTags.Close)
-                        .semantics { contentDescription = closeLabel },
+                GlanceRoundButton(
+                    label = stringResource(R.string.external_link_preview_copy_link),
+                    icon = VolaIcons.ContentCopy,
+                    onClick = { leave(actions.onCopy) },
+                    modifier = Modifier.testTag(V5LinkGlanceTestTags.Copy),
+                )
+                GlanceRoundButton(
+                    label = stringResource(R.string.action_share),
+                    icon = VolaIcons.Share,
+                    onClick = { leave(actions.onShare) },
+                    modifier = Modifier.testTag(V5LinkGlanceTestTags.Share),
                 )
             }
+            // The gestures, said once under the buttons; TalkBack has the actions and «dismiss» instead.
+            Text(
+                stringResource(R.string.v5_glance_swipe_hint),
+                style = V5Theme.type.footnote,
+                color = V5ControlColors.glanceHint,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top = V5Spacing.space3)
+                    .graphicsLayer { alpha = V5LinkGlanceRules.actionsAlpha(glance.value) }
+                    .clearAndSetSemantics { },
+            )
         }
     }
 }
@@ -380,8 +427,11 @@ private fun GlanceHeader(
     val colors = V5Theme.colors
     var menu by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxWidth().height(V5Sizes.glanceHeader)) {
+        // The address in the middle, as the canvas sets it; «⋯» keeps the rest at the end.
         Row(
-            Modifier.fillMaxSize().padding(start = V5Spacing.space4),
+            Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = V5Sizes.touchTarget),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
         ) {
@@ -397,42 +447,41 @@ private fun GlanceHeader(
                 color = colors.label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).testTag(V5LinkGlanceTestTags.Address),
+                modifier = Modifier.weight(1f, fill = false).testTag(V5LinkGlanceTestTags.Address),
             )
-            Box {
-                IconButton(onClick = { menu = true }, modifier = Modifier.testTag(V5LinkGlanceTestTags.More)) {
-                    Icon(
-                        VolaIcons.MoreHoriz,
-                        contentDescription = stringResource(R.string.v5_glance_more),
-                        tint = colors.labelSecondary,
-                    )
-                }
-                // «More» as a v5 sheet of the link's actions, each with its glyph, as the menu had.
-                val item: @Composable (Int, ImageVector, () -> Unit) -> V5PromptAction = { label, icon, action ->
-                    V5PromptAction(
-                        label = stringResource(label),
-                        icon = icon,
-                        onClick = {
-                            menu = false
-                            onAction(action)
-                        },
-                    )
-                }
-                V5PromptSheet(
-                    visible = menu,
-                    title = address,
-                    message = null,
-                    actions = listOfNotNull(
-                        item(R.string.action_open_in_new_tab, VolaIcons.OpenInNew, actions.onOpenInNewTab),
-                        if (state.canOpenInPrivate) item(R.string.v5_glance_private, VolaIcons.VisibilityOff, actions.onOpenInPrivate) else null,
-                        item(R.string.external_link_preview_copy_link, VolaIcons.ContentCopy, actions.onCopy),
-                        item(R.string.action_share, VolaIcons.Share, actions.onShare),
-                        item(R.string.action_download_link, VolaIcons.Download, actions.onDownloadLink),
-                        if (state.canDownloadImage) item(R.string.action_download_image, VolaIcons.Image, actions.onDownloadImage) else null,
-                    ),
-                    onDismiss = { menu = false },
+        }
+        Box(Modifier.align(Alignment.CenterEnd)) {
+            IconButton(onClick = { menu = true }, modifier = Modifier.testTag(V5LinkGlanceTestTags.More)) {
+                Icon(
+                    VolaIcons.MoreHoriz,
+                    contentDescription = stringResource(R.string.v5_glance_more),
+                    tint = colors.labelSecondary,
                 )
             }
+            // «More» as a v5 sheet of the link's actions, each with its glyph, as the menu had.
+            val item: @Composable (Int, ImageVector, () -> Unit) -> V5PromptAction = { label, icon, action ->
+                V5PromptAction(
+                    label = stringResource(label),
+                    icon = icon,
+                    onClick = {
+                        menu = false
+                        onAction(action)
+                    },
+                )
+            }
+            V5PromptSheet(
+                visible = menu,
+                title = address,
+                message = null,
+                actions = listOfNotNull(
+                    // New tab, copy and share are the round buttons under the card.
+                    item(R.string.v5_glance_open_background, VolaIcons.Tab, actions.onOpenInBackground),
+                    if (state.canOpenInPrivate) item(R.string.v5_glance_private, VolaIcons.VisibilityOff, actions.onOpenInPrivate) else null,
+                    item(R.string.action_download_link, VolaIcons.Download, actions.onDownloadLink),
+                    if (state.canDownloadImage) item(R.string.action_download_image, VolaIcons.Image, actions.onDownloadImage) else null,
+                ),
+                onDismiss = { menu = false },
+            )
         }
         if (progress != null) {
             Box(
@@ -527,7 +576,8 @@ private fun GlanceButton(
     val content: Color = if (primary) colors.onAccentFill else colors.label
     Row(
         modifier
-            .heightIn(min = V5Sizes.touchTarget)
+            .heightIn(min = V5Sizes.glanceButton)
+            .v5Elevation(V5Elevation.e2, V5Theme.shapes.full)
             .clip(V5Theme.shapes.full)
             .background(if (primary) colors.accentFill else colors.surface)
             .clickable(role = Role.Button, onClick = onClick)
@@ -545,5 +595,23 @@ private fun GlanceButton(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+/** A round button beside «Open»: the glyph alone on the card's surface, its name for TalkBack. */
+@Composable
+private fun GlanceRoundButton(label: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier) {
+    val colors = V5Theme.colors
+    Box(
+        modifier
+            .size(V5Sizes.glanceButton)
+            .v5Elevation(V5Elevation.e2, V5Theme.shapes.full)
+            .clip(V5Theme.shapes.full)
+            .background(colors.surface)
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = colors.label, modifier = Modifier.size(V5Sizes.iconSmall))
     }
 }

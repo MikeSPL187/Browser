@@ -84,4 +84,16 @@ class V5LinkGlanceRulesTest {
         assertFalse(V5LinkGlanceRules.secure("http://example.com"))
         assertFalse(V5LinkGlanceRules.secure("::"))
     }
+
+    @Test
+    fun `a swipe up opens, down closes, a short slow one settles back`() {
+        val swipe = { offset: Float, velocity: Float -> V5LinkGlanceRules.swipe(offset, velocity, commitPx = 100f, minVelocityPx = 1000f) }
+        assertEquals(V5LinkGlanceRules.Swipe.Open, swipe(-120f, 0f))
+        assertEquals(V5LinkGlanceRules.Swipe.Close, swipe(120f, 0f))
+        assertEquals(V5LinkGlanceRules.Swipe.Open, swipe(-20f, -1500f))
+        assertEquals(V5LinkGlanceRules.Swipe.Close, swipe(20f, 1500f))
+        assertEquals(V5LinkGlanceRules.Swipe.Stay, swipe(-40f, -200f))
+        // A fling back against the pull does not commit the other way.
+        assertEquals(V5LinkGlanceRules.Swipe.Stay, swipe(30f, -1500f))
+    }
 }
