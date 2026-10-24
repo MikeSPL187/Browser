@@ -8,6 +8,16 @@ internal object BrowserSessionResidencyRules {
     /** Live background sessions kept while the system asks for memory but is not yet critical. */
     const val LOW_MEMORY_LIMIT = 3
 
+    /**
+     * A live background session nobody has opened for this long lets go of its page (it comes back
+     * from the saved state when the tab is selected), as Edge's sleeping tabs do. Shorter only
+     * after measurements.
+     */
+    const val IDLE_UNLOAD_MILLIS = 2 * 60 * 60 * 1000L
+
+    /** How often the open app looks for idle sessions; in the background nothing polls. */
+    const val IDLE_CHECK_INTERVAL_MILLIS = 5 * 60 * 1000L
+
     fun normalizedLimit(limit: Int): Int = limit.coerceIn(MIN_LIMIT, MAX_LIMIT)
 
     /**
@@ -52,4 +62,27 @@ internal object BrowserSessionResidencyRules {
             .take(excessCount)
             .toList()
     }
+
+    /**
+     * The live sessions idle for at least [idleMillis] at [nowMillis], oldest first, except the
+     * protected ones (the same set [evictionOrder] spares). A session without a known access time
+     * or with one after [nowMillis] (a clock that went back) is not idle.
+     */
+    fun idleUnloadOrder(
+        residentTabIds: Set<String>,
+        lastAccessMillis: Map<String, Long>,
+        protectedTabIds: Set<String>,
+        nowMillis: Long,
+        idleMillis: Long = IDLE_UNLOAD_MILLIS,
+    ): List<String> = residentTabIds.asSequence()
+        .filterNot(protectedTabIds::contains)
+        .filter { tabId ->
+            val accessedAt = lastAccessMillis[tabId] ?: return@filter false
+            accessedAt <= nowMillis && nowMillis - accessedAt >= idleMillis
+        }
+        .sortedWith(
+            compareBy<String> { tabId -> lastAccessMillis.getValue(tabId) }
+                .thenBy { tabId -> tabId },
+        )
+        .toList()
 }

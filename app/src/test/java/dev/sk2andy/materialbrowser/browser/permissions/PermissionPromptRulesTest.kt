@@ -42,4 +42,12 @@ class PermissionPromptRulesTest {
         )
         assertEquals(SitePermission.Location, PermissionPromptRules.heroPermission(emptySet()))
     }
+
+    @Test
+    fun `the v5 sheet leads with only this time where it is offered`() {
+        val camera = PermissionPromptRules.choices(setOf(SitePermission.Camera))
+        assertEquals(PermissionPromptChoice.AllowOnce, PermissionPromptRules.mainChoice(camera))
+        val notifications = PermissionPromptRules.choices(setOf(SitePermission.Notifications))
+        assertEquals(PermissionPromptChoice.AllowAlways, PermissionPromptRules.mainChoice(notifications))
+    }
 }

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Предпросмотр ссылки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em;--gp:#FFFFFF;--gpText:#16201C;--gpMuted:#5E6B66;--gpLine:#E3E8E5}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E;--gp:#131816;--gpText:#E4EAE7;--gpMuted:#98A5A0;--gpLine:#26302C}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0; transform: scale(0.97); transform-origin: 50% 70%; border-radius: 36px; overflow: hidden">
+    <dc-import name="Page" dark="{{dark}}" accent="{{accent}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.42)"></div>
+
+  <div role="dialog" aria-label="Предпросмотр: severdom.ru" style="position: absolute; left: 16px; right: 16px; top: 76px; height: 572px; border-radius: 24px; overflow: hidden; background: var(--gp); color: var(--gpText); box-shadow: 0 24px 60px rgba(0,0,0,.35), 0 0 0 0.5px rgba(255,255,255,.1)">
+    <div style="height: 40px; background: var(--surface); color: var(--label); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -0.04px; border-bottom: 0.5px solid var(--sep)">
+      <svg class="i" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6; color: var(--label2)"><rect x="5" y="10.5" width="14" height="10" rx="3"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>
+      severdom.ru
+    </div>
+    <div style="height: 46px; background: #2F5D50; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.3px">Север<span style="color: #F2C46D">·</span>дом</span>
+      <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+    </div>
+    <div role="img" aria-label="Деревянный дом у залива в сумерках" style="position: relative; height: 196px; overflow: hidden; background: linear-gradient(180deg, #1B2747 0%, #4A3F72 55%, #C9849A 100%)">
+      <div aria-hidden="true" style="position: absolute; left: 40px; top: 26px; width: 10px; height: 10px; border-radius: 50%; background: #FFF6D8; box-shadow: 0 0 18px 6px rgba(255,240,200,.45)"></div>
+      <svg width="358" height="196" viewBox="0 0 358 196" aria-hidden="true" style="position: absolute; inset: 0">
+        <path d="M0 132 L60 112 L120 126 L190 104 L260 122 L358 108 L358 196 L0 196 Z" fill="#2A2C4A"></path>
+        <path d="M0 150 C 80 140, 180 160, 358 146 L358 196 L0 196 Z" fill="#E7EEF7"></path>
+        <path d="M150 150 L150 112 L188 86 L226 112 L226 150 Z" fill="#3A2A24"></path>
+        <path d="M144 114 L188 80 L232 114" fill="none" stroke="#F4F7FB" stroke-width="5" stroke-linejoin="round"></path>
+        <rect x="160" y="118" width="16" height="14" rx="2" fill="#FFC86B"></rect>
+        <rect x="198" y="118" width="16" height="14" rx="2" fill="#FFC86B"></rect>
+        <rect x="181" y="128" width="14" height="22" rx="2" fill="#24170F"></rect>
+        <path d="M150 150 C 170 160, 210 160, 226 150" fill="#FFC86B" opacity=".25"></path>
+      </svg>
+    </div>
+    <div style="padding: 16px 16px 0">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #2F5D50; color: #FFFFFF; font-size: 12px; font-weight: 650; letter-spacing: 0; display: flex; align-items: center" class="tn">★ 4,9</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--gpMuted)">Териберка · 6 домов</span>
+      </div>
+      <h2 style="margin: 10px 0 0; font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.4px">Дома у залива: где ночевать в Териберке</h2>
+      <p style="margin: 8px 0 0; font-size: 15px; line-height: 22px; color: var(--gpMuted)">Панорамные окна на север, сауна и трансфер от Мурманска. Свободно на эти выходные.</p>
+      <div style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--gpLine)">
+        <span class="tn" style="font-size: 17px; font-weight: 700">от 4 800 ₽ <span style="font-size: 13px; font-weight: 500; color: var(--gpMuted)">за ночь</span></span>
+        <span style="height: 32px; padding: 0 14px; border-radius: 999px; background: #2F5D50; color: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center">Выбрать даты</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 16px; right: 16px; top: 664px; display: flex; gap: 10px">
+    <a href="Page.dc.html" style="flex: 1; height: 52px; border-radius: 999px; background: var(--accentFill); color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.22px; text-decoration: none; box-shadow: 0 8px 24px rgba(0,0,0,.3)">
+      Открыть
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+    </a>
+    <button aria-label="Открыть в новой вкладке" style="width: 52px; height: 52px; border-radius: 50%; background: var(--surface); color: var(--label); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.25)">
+      <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"></rect><path d="M12 8.5v7M8.5 12h7"></path></svg>
+    </button>
+    <button aria-label="Скопировать ссылку" style="width: 52px; height: 52px; border-radius: 50%; background: var(--surface); color: var(--label); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.25)">
+      <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>
+    </button>
+    <button aria-label="Поделиться" style="width: 52px; height: 52px; border-radius: 50%; background: var(--surface); color: var(--label); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.25)">
+      <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11"></path><path d="M8 7.5l4-4 4 4"></path><path d="M7 10.5H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"></path></svg>
+    </button>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; top: 736px; text-align: center; font-size: 13px; line-height: 18px; color: rgba(255,255,255,.82)">Свайп вверх — открыть · вниз — закрыть</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const accent = this.props.accent ?? 'blue';
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + accent, dark: dark, accent: accent };
+  }
+}
+</script>
+</body>
+</html>

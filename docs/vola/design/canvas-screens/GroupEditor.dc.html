@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Редактор группы</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--sheet:#F4F4F6;--surface:#FFFFFF;--label:#111114;--label2:#55555D;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--accent:#2563D9;--danger:#C42630;font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--sheet:#1C1C1E;--surface:#2A2A2D;--label:#F4F4F6;--label2:#A9A9B1;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--accent:#6E9BFF;--danger:#FF6B6B}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; font-family: Inter, system-ui, sans-serif; color: var(--label)">
+  <div aria-hidden="true" style="position: absolute; inset: 0; transform: scale(.94); transform-origin: 50% 0; border-radius: 32px; overflow: hidden; opacity: .6"><dc-import name="Overview" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div role="dialog" aria-label="Группа «Ужин в пятницу»" style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; border-radius: 32px 32px 0 0; background: var(--sheet); padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column">
+    <div style="height: 56px; display: flex; align-items: center; justify-content: space-between">
+      <button style="font-size: 17px; color: var(--accent)">Отмена</button>
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.22px">Группа</h2>
+      <button style="font-size: 17px; font-weight: 600; color: var(--accent)">Готово</button>
+    </div>
+    <label style="margin-top: 8px; height: 56px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; gap: 12px; padding: 0 16px">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #E0620D"></span>
+      <input aria-label="Название группы" value="Ужин в пятницу" style="flex: 1; border: 0; outline: 0; background: transparent; padding: 0; font-size: 17px; font-weight: 600; color: var(--label)">
+    </label>
+    <div role="radiogroup" aria-label="Цвет группы" style="margin-top: 12px; border-radius: 12px; background: var(--surface); padding: 14px 16px; display: flex; justify-content: space-between">
+      <sc-for list="{{colors}}" as="c" hint-placeholder-count="7">
+        <span role="radio" aria-checked="{{c.sel}}" style="width: 32px; height: 32px; border-radius: 50%; box-sizing: border-box; border: 2.5px solid {{c.v}}; display: flex; align-items: center; justify-content: center"><span style="width: {{c.dot}}px; height: {{c.dot}}px; border-radius: 50%; background: {{c.v}}"></span></span>
+      </sc-for>
+    </div>
+    <div style="margin: 20px 0 8px 4px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">Вкладки в группе · 3</div>
+    <div style="border-radius: 12px; background: var(--surface); overflow: hidden">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column">
+          <sc-if value="{{t.divider}}" hint-placeholder-val="{{false}}"><div style="height: 0.5px; margin-left: 58px; background: var(--sep)"></div></sc-if>
+          <div style="height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+            <span style="width: 32px; height: 32px; border-radius: 9px; background: {{t.c}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">{{t.g}}</span>
+            <span style="flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.n}}</span>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; color: var(--label2)"><path d="M5 9h14M5 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+          </div>
+        </div>
+      </sc-for>
+      <div style="height: 0.5px; margin-left: 58px; background: var(--sep)"></div>
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; color: var(--accent)">
+        <span style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M12 5v14M5 12h14"></path></svg></span>
+        <span style="font-size: 15px; font-weight: 500">Добавить открытые вкладки</span>
+      </div>
+    </div>
+    <div style="margin-top: 20px; border-radius: 12px; background: var(--surface); overflow: hidden">
+      <button style="width: 100%; height: 52px; font-size: 17px; text-align: left; padding: 0 16px">Разгруппировать</button>
+      <div style="height: 0.5px; margin-left: 16px; background: var(--sep)"></div>
+      <button style="width: 100%; height: 52px; font-size: 17px; text-align: left; padding: 0 16px; color: var(--danger)">Закрыть группу и 3 вкладки</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const pal = ['#E0620D', '#0E8C8C', '#7B57E0', '#2F6FE4', '#D93A7A', '#1F9D55', '#808088'];
+    const colors = pal.map((v, i) => ({ v: v, sel: i === 0 ? 'true' : 'false', dot: i === 0 ? 14 : 22 }));
+    const list = [
+      { n: 'Тыквенный суп с имбирём за 30 минут', g: 'Р', c: '#E0620D' },
+      { n: 'Винная карта: что к супу', g: 'В', c: '#6B1E2E' },
+      { n: 'Список покупок на пятницу', g: 'Л', c: '#3B5BDB' }
+    ];
+    return { mode: 'vs' + (dark ? ' dk' : ''), dark: dark, colors: colors, tabs: list.map((t, i) => ({ ...t, divider: i > 0 })) };
+  }
+}
+</script>
+</body>
+</html>

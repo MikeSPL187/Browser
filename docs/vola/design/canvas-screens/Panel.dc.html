@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Нижняя панель — все состояния</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 1800px; background: #F4F4F6; color: #111114; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11' 1; letter-spacing: -0.013em; display: flex; flex-direction: column">
+  <div style="padding: 28px 16px 20px">
+    <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 650; letter-spacing: -0.4px">Нижняя панель</h1>
+    <p style="margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #55555D">Капсула 48 · две кнопки 48 · панель 64 + жестовая навигация. Лента — непрозрачный цвет сайта: над страницей Gecko размытия нет.</p>
+  </div>
+  <sc-for list="{{states}}" as="s" hint-placeholder-count="13">
+    <div style="display: flex; flex-direction: column">
+      <div style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; gap: 12px">
+        <span style="font-size: 13px; line-height: 18px; font-weight: 600">{{s.title}}</span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0; color: #55555D; text-align: right">{{s.note}}</span>
+      </div>
+      <dc-import name="Bar" variant="{{s.variant}}" tint="{{s.tint}}" ink="{{s.ink}}" domain="{{s.domain}}" count="{{s.count}}" tabs="{{s.tabs}}" reader="{{s.reader}}" hide="{{s.hide}}" progress="{{s.progress}}" ring="{{s.ring}}" done="{{s.done}}" dark="{{s.dark}}" accent="blue" hint-size="390px,{{s.h}}px"></dc-import>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = { variant: 'site', tint: '#1F4E5F', ink: '#FFFFFF', domain: 'polar-notes.ru', count: '12', tabs: '5', reader: false, hide: false, progress: 0, ring: 0, done: '', dark: false, h: 88 };
+    const list = [
+      { title: 'Цвет сайта', note: 'theme-color, белый текст 9,1 : 1', reader: true },
+      { title: 'Яркий сайт', note: 'затемнён на 0,115 → белый 4,5 : 1', tint: '#C65111', domain: 'recepty-doma.ru', count: '7' },
+      { title: 'Светлый сайт', note: 'тёмный текст 12,5 : 1', tint: '#FACD42', ink: '#111114', domain: 'harborlight.news', count: '31', reader: true },
+      { title: 'Новая вкладка', note: 'без цвета сайта', variant: 'start' },
+      { title: 'Загрузка страницы', note: 'линия 2 dp цвета текста', progress: 64 },
+      { title: 'Загрузка файла', note: 'кольцо акцента вокруг «•••»', variant: 'neutral', domain: 'atlas-maps.ru', count: '4', ring: 45 },
+      { title: 'Файл загружен', note: 'одна строка, без всплывающих окон', variant: 'neutral', domain: 'atlas-maps.ru', count: '4', done: 'aurora-photos-4k.zip', h: 132 },
+      { title: 'Скрыто отвлекающее', note: 'перечёркнутый глаз в капсуле', tint: '#B3262C', domain: 'kinograd.ru', count: '17', hide: true },
+      { title: 'Прокрутка вниз', note: 'полоса 28 dp, касание — вернуть', variant: 'collapsed', h: 52 },
+      { title: 'Режим чтения', note: 'цвет темы чтения', variant: 'reader', tint: '#F6EFE1', ink: '#3B2F20' },
+      { title: 'Частная вкладка', note: 'маска вместо щита', variant: 'private' },
+      { title: 'Шрифт 200 %', note: 'панель 72 dp, без числа и значков', variant: 'big', domain: 'polar…otes.ru', h: 96 },
+      { title: 'Тёмная тема', note: 'сайт без theme-color', variant: 'neutral', dark: true, domain: 'lumen.dev', count: '0' }
+    ];
+    const states = list.map((s) => ({ ...base, ...s }));
+    return { states: states };
+  }
+}
+</script>
+</body>
+</html>

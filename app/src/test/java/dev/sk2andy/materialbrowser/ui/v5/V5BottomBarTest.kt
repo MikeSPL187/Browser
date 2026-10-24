@@ -58,4 +58,11 @@ class V5BottomBarTest {
     fun `the closing dot of a host is dropped`() {
         assertEquals("example.com", v5BarDomain("https://example.com./"))
     }
+
+    @Test
+    fun `a look-alike international name shows in punycode, a genuine one in its letters`() {
+        assertEquals("xn--80ak6aa92e.com", v5BarDomain("https://xn--80ak6aa92e.com/"))
+        assertEquals("xn--80ak6aa92e.com", v5BarDomain("https://аррӏе.com/"))
+        assertEquals("пример.рф", v5BarDomain("https://xn--e1afmkfd.xn--p1ai/"))
+    }
 }

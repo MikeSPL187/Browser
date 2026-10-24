@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Кольцо загрузки — исправление</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tn{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="width: 820px; height: 844px; box-sizing: border-box; padding: 40px; background: #F4F4F6; color: #111114; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11' 1; letter-spacing: -0.013em; display: flex; flex-direction: column; gap: 24px">
+  <div>
+    <h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.75px">Кольцо загрузки файла</h1>
+    <p style="margin: 8px 0 0; font-size: 17px; line-height: 24px; color: #55555D; max-width: 680px">Сейчас кольцо вокруг «•••» всегда в акценте профиля. На панели в цвете сайта синий тонет: 1,2–1,7 : 1 при норме 3 : 1 для индикаторов. Предлагаю: на цветной панели кольцо цвета её текста, на нейтральной — акцент, как раньше.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 650"><span style="width: 10px; height: 10px; border-radius: 50%; background: #C42630"></span>Было · акцент профиля</div>
+      <sc-for list="{{before}}" as="b" hint-placeholder-count="3">
+        <div style="border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08)">
+          <div style="zoom: 0.918"><dc-import name="Bar" variant="site" tint="{{b.tint}}" ink="{{b.ink}}" domain="{{b.domain}}" count="{{b.count}}" ring="45" hint-size="390px,88px"></dc-import></div>
+          <div class="tn" style="background: #FFFFFF; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #C42630">Кольцо {{b.ratio}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 650"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1A7F45"></span>Стало · цвет текста панели</div>
+      <sc-for list="{{after}}" as="b" hint-placeholder-count="3">
+        <div style="border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08)">
+          <div style="zoom: 0.918"><dc-import name="Bar" variant="site" tint="{{b.tint}}" ink="{{b.ink}}" domain="{{b.domain}}" count="{{b.count}}" ring="45" ring-ink="{{true}}" hint-size="390px,88px"></dc-import></div>
+          <div class="tn" style="background: #FFFFFF; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #1A7F45">Кольцо {{b.ratio}}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="font-size: 13px; line-height: 18px; color: #55555D">Нейтральная панель (новая вкладка, сайт без цвета) — кольцо остаётся в акценте: 5,4 : 1. Правило меняет раздел 10 `system-v5.md` — нужно «да» владельца.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sites = [
+      { tint: '#1F4E5F', ink: '#FFFFFF', domain: 'polar-notes.ru', count: '12', a: '1,7 : 1', b: '9,1 : 1' },
+      { tint: '#C65111', ink: '#FFFFFF', domain: 'recepty-doma.ru', count: '7', a: '1,2 : 1', b: '4,6 : 1' },
+      { tint: '#FACD42', ink: '#111114', domain: 'harborlight.news', count: '31', a: '3,6 : 1', b: '12,6 : 1' }
+    ];
+    return {
+      before: sites.map((s) => ({ ...s, ratio: s.a + (s.tint === '#FACD42' ? ' — на грани' : ' — не видно') })),
+      after: sites.map((s) => ({ ...s, ratio: s.b }))
+    };
+  }
+}
+</script>
+</body>
+</html>

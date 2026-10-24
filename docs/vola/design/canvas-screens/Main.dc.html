@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Новая вкладка</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 440px; background: radial-gradient(120% 75% at 50% -12%, var(--accentSoft) 0%, transparent 70%)"></div>
+
+  <div style="position: relative; padding: 40px 16px 0; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 40px">
+      <button aria-label="Профиль: Личный. Сменить профиль" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 4px; border-radius: 999px; background: var(--surface); box-shadow: var(--e1)">
+        <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accentFill); color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5"></path></svg>
+        </span>
+        <span style="font-size: 15px; font-weight: 600">Личный</span>
+        <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><path d="M6 9.5l6 6 6-6"></path></svg>
+      </button>
+      <button style="height: 40px; padding: 0 4px; font-size: 15px; font-weight: 500; color: var(--accent)">Изменить</button>
+    </div>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 24px">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 650; letter-spacing: -0.4px">Закреплённые</h2>
+      <span class="tn" style="font-size: 13px; color: var(--label2)">8 из 12</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 18px; column-gap: 12px; margin-top: 14px">
+      <sc-for list="{{pins}}" as="p" hint-placeholder-count="8">
+        <a href="{{p.href}}" style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: var(--label)">
+          <span style="position: relative; width: 60px; height: 60px; border-radius: 16px; overflow: hidden; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center">
+            <span aria-hidden="true" style="position: absolute; width: 76px; height: 76px; border-radius: 50%; background: {{p.color}}; filter: blur(18px); opacity: 0.55"></span>
+            <span style="position: relative; width: 30px; height: 30px; border-radius: 9px; background: {{p.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; letter-spacing: 0; box-shadow: 0 1px 2px rgba(0,0,0,.18), inset 0 0 0 0.5px rgba(255,255,255,.18)">{{p.glyph}}</span>
+          </span>
+          <span style="font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0; color: var(--label2); max-width: 78px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</span>
+        </a>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 30px">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 650; letter-spacing: -0.4px">Продолжить</h2>
+      <span style="font-size: 15px; color: var(--accent)">Все</span>
+    </div>
+    <div style="display: flex; gap: 12px; margin-top: 14px; margin-right: -16px">
+      <div style="flex: none; width: 168px; border-radius: 24px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+        <div aria-hidden="true" style="position: relative; height: 112px; background: #121216; overflow: hidden">
+          <div style="height: 16px; background: #C2272D; display: flex; align-items: center; padding: 0 8px"><div style="width: 34px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.85)"></div></div>
+          <div style="display: flex; gap: 6px; padding: 10px 8px 0">
+            <div style="width: 46px; height: 66px; border-radius: 6px; background: linear-gradient(160deg, #3A4A6B, #0E1424)"></div>
+            <div style="width: 46px; height: 66px; border-radius: 6px; background: linear-gradient(160deg, #8C3B2E, #24100C)"></div>
+            <div style="width: 46px; height: 66px; border-radius: 6px; background: linear-gradient(160deg, #2E5E4E, #0B1A15)"></div>
+          </div>
+        </div>
+        <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--label2)">
+            <svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"></rect><path d="M10 18h4"></path></svg>С планшета
+          </div>
+          <div style="font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -0.04px; height: 36px; overflow: hidden">«Северный ветер» — сеансы на выходные</div>
+        </div>
+      </div>
+      <div style="flex: none; width: 168px; border-radius: 24px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+        <div aria-hidden="true" style="position: relative; height: 112px; background: #FFF8F1; overflow: hidden">
+          <div style="height: 16px; background: #E0620D; display: flex; align-items: center; padding: 0 8px"><div style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.9)"></div></div>
+          <div style="position: absolute; left: 8px; right: 8px; top: 24px; height: 54px; border-radius: 8px; background: radial-gradient(circle at 38% 55%, #F6B24A 0 18%, #E07A1F 19% 30%, #7A3A12 31% 34%, transparent 35%), radial-gradient(circle at 70% 40%, #9CC36B 0 10%, transparent 11%), linear-gradient(135deg, #5B3A26, #2A1B12)"></div>
+          <div style="position: absolute; left: 8px; top: 86px; width: 110px; height: 5px; border-radius: 3px; background: #3B2F20; opacity: .7"></div>
+          <div style="position: absolute; left: 8px; top: 96px; width: 80px; height: 4px; border-radius: 2px; background: #3B2F20; opacity: .3"></div>
+        </div>
+        <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--label2)">
+            <svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>Вчера, 21:40
+          </div>
+          <div style="font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -0.04px; height: 36px; overflow: hidden">Тыквенный суп с имбирём за 30 минут</div>
+        </div>
+      </div>
+      <div style="flex: none; width: 168px; border-radius: 24px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+        <div aria-hidden="true" style="position: relative; height: 112px; background: #E7EEE9; overflow: hidden">
+          <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 80%, #CFE3D6 0 30%, transparent 31%), radial-gradient(circle at 85% 20%, #BFD8E8 0 26%, transparent 27%)"></div>
+          <svg width="168" height="112" viewBox="0 0 168 112" style="position: absolute; inset: 0"><path d="M18 92 C 50 70, 64 84, 90 58 S 130 30, 150 22" fill="none" stroke="#0E8C8C" stroke-width="4" stroke-linecap="round"></path><circle cx="18" cy="92" r="6" fill="#FFFFFF" stroke="#0E8C8C" stroke-width="3"></circle><circle cx="150" cy="22" r="6" fill="#0E8C8C"></circle></svg>
+        </div>
+        <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--label2)">
+            <svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"></rect><path d="M10 18h4"></path></svg>С планшета
+          </div>
+          <div style="font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -0.04px; height: 36px; overflow: hidden">Мурманск → Териберка, 127 км</div>
+        </div>
+      </div>
+    </div>
+
+    <a href="Report.dc.html" style="margin-top: 28px; border-radius: 24px; background: var(--surface); box-shadow: var(--e1); padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: var(--label)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">
+        <span style="width: 22px; height: 22px; border-radius: 7px; background: var(--success); color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+        </span>
+        Защита за 7 дней
+        <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto"><path d="M9.5 6l6 6-6 6"></path></svg>
+      </div>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between">
+        <div>
+          <div class="tn" style="font-size: 34px; line-height: 40px; font-weight: 700; letter-spacing: -0.75px">1 284</div>
+          <div style="font-size: 15px; line-height: 20px; color: var(--label2)">трекера остановлено</div>
+        </div>
+        <div aria-hidden="true" style="display: flex; align-items: flex-end; gap: 6px; height: 52px; padding-bottom: 4px">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="7">
+            <div style="width: 8px; height: {{b.h}}px; border-radius: 4px; background: var(--accent); opacity: {{b.o}}"></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font-size: 13px; line-height: 18px; color: var(--label2)">Самый частый трекер — tracksphere.net, заблокирован на 31 сайте</div>
+    </a>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0">
+    <dc-import name="Bar" variant="start" tabs="5" dark="{{dark}}" accent="{{accent}}" hint-size="390px,88px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const accent = this.props.accent ?? 'blue';
+    const pins = [
+      { name: 'Заметки', glyph: 'П', color: '#1F4E5F', href: 'Page.dc.html' },
+      { name: 'Киноград', glyph: 'К', color: '#C2272D', href: 'Glance.dc.html' },
+      { name: 'Рецепты', glyph: 'Р', color: '#E0620D', href: 'Overview.dc.html' },
+      { name: 'Лумо Почта', glyph: 'Л', color: '#3B5BDB', href: 'Overview.dc.html' },
+      { name: 'Атлас', glyph: 'А', color: '#0E8C8C', href: 'Overview.dc.html' },
+      { name: 'Звук', glyph: 'З', color: '#7B57E0', href: 'Overview.dc.html' },
+      { name: 'Сводка', glyph: 'С', color: '#4B4B53', href: 'Translate.dc.html' },
+      { name: 'Люмен', glyph: 'L', color: '#111114', href: 'Overview.dc.html' }
+    ];
+    const hs = [22, 30, 18, 36, 28, 40, 46];
+    const bars = hs.map((h, i) => ({ h: h, o: i === hs.length - 1 ? 1 : 0.32 }));
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + accent, dark: dark, accent: accent, pins: pins, bars: bars };
+  }
+}
+</script>
+</body>
+</html>

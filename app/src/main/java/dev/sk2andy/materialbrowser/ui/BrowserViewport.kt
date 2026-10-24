@@ -593,6 +593,7 @@ internal fun BrowserViewport(
                             .firstOrNull { profile -> profile.id == profileId }
                             ?.workspaceDisplayName(),
                         titleIconKey = controller.profiles.firstOrNull { profile -> profile.id == profileId }?.emoji,
+                        fresh = rememberNewTabFreshStart(controller, profileId, selectedTab.id),
                     )
                 }
             }

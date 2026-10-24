@@ -1,7 +1,7 @@
 package dev.sk2andy.materialbrowser.browser
 
 import dev.sk2andy.materialbrowser.browser.integration.BrowserUriPolicy
-import java.net.IDN
+import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import java.net.URI
 
 internal enum class SiteConnectionKind {
@@ -29,6 +29,6 @@ internal object SiteConnectionRules {
     fun host(pageUrl: String): String {
         val safeUrl = BrowserUriPolicy.normalizeHttpUrl(pageUrl) ?: return ""
         val host = runCatching { URI(safeUrl).toURL().host }.getOrNull().orEmpty()
-        return runCatching { IDN.toUnicode(host) }.getOrDefault(host)
+        return IdnDisplayRules.displayHost(host)
     }
 }

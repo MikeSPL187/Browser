@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Свайп вкладок по панели</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.mo .st{animation:ms-st 4.4s infinite}
+.mo .fg{animation:ms-fg 4.4s infinite}
+.mo .tk{animation:ms-tk 4.4s infinite}
+.mo.rm .st{animation:ms-rm 4.4s infinite steps(1,end)}
+.mo.rm .fg{animation:none;opacity:0}
+.mo.rm .tk{animation:none;opacity:0}
+.mo.rm .xf{animation:ms-xf 4.4s infinite linear}
+@keyframes ms-st{
+  0%,10%{transform:translateX(0);animation-timing-function:linear}
+  20%{transform:translateX(-140px);animation-timing-function:cubic-bezier(.25,1.1,.4,1)}
+  27%,55%{transform:translateX(-390px);animation-timing-function:linear}
+  65%{transform:translateX(-250px);animation-timing-function:cubic-bezier(.25,1.1,.4,1)}
+  72%,100%{transform:translateX(0)}}
+@keyframes ms-fg{0%,8%{opacity:0;transform:translateX(300px)}10%{opacity:1;transform:translateX(300px)}20%{opacity:1;transform:translateX(160px)}22%,53%{opacity:0;transform:translateX(160px)}55%{opacity:1;transform:translateX(90px)}65%{opacity:1;transform:translateX(230px)}67%,100%{opacity:0;transform:translateX(230px)}}
+@keyframes ms-tk{0%,15%{opacity:0;transform:scale(.6)}17%{opacity:1;transform:scale(1)}22%,100%{opacity:0;transform:scale(1.4)}}
+@keyframes ms-rm{0%,49%{transform:translateX(0)}50%,100%{transform:translateX(-390px)}}
+@keyframes ms-xf{0%,45%{opacity:0}49%,52%{opacity:1}56%,100%{opacity:0}}
+</style>
+</helmet>
+<div class="{{cls}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; font-family: Inter, system-ui, sans-serif">
+  <div class="st" style="position: absolute; top: 0; left: 0; width: 790px; height: 844px; display: flex; gap: 10px">
+    <div style="width: 390px; height: 844px; flex: none; overflow: hidden"><dc-import name="Page" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+    <div style="width: 390px; height: 844px; flex: none; overflow: hidden"><dc-import name="Translate" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  </div>
+  <div class="xf" aria-hidden="true" style="position: absolute; inset: 0; background: #000000; opacity: 0; pointer-events: none"></div>
+  <div class="fg" aria-hidden="true" style="position: absolute; left: 0; bottom: 38px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.55); box-shadow: 0 0 0 2px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.25); opacity: 0"></div>
+  <div class="tk" aria-hidden="true" style="position: absolute; left: 50%; top: 380px; margin-left: -70px; width: 140px; height: 36px; border-radius: 999px; background: rgba(0,0,0,.6); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; opacity: 0">Порог 30 % · отдача</div>
+  <div style="position: absolute; top: 36px; left: 50%; transform: translateX(-50%); height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(0,0,0,.55); color: #FFFFFF; display: flex; align-items: center; font-size: 12px; font-weight: 600; white-space: nowrap">{{label}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"reduced":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark, rm = !!this.props.reduced;
+    return { cls: 'mo' + (rm ? ' rm' : ''), dark: dark, label: rm ? 'Без анимаций · смена прозрачностью' : 'Пружина 0,85 / 500 · 1 : 1 за пальцем' };
+  }
+}
+</script>
+</body>
+</html>

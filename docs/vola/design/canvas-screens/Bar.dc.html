@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Нижняя панель</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: {{h}}px; box-sizing: border-box; background: {{tint}}; color: {{ink}}; border-top: 0.5px solid {{edge}}; box-shadow: 0 -8px 24px rgba(0,0,0,.08); font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+  <sc-if value="{{showProgress}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; left: 0; top: -0.5px; height: 2px; width: {{progressPct}}; background: {{ink}}; border-radius: 0 2px 2px 0"></div>
+  </sc-if>
+
+  <sc-if value="{{showDone}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="height: 44px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 0.5px solid {{edgeIn}}">
+      <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--success)"><circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 12.2l2.4 2.4 4.6-4.8"></path></svg>
+      <span style="flex: 1; min-width: 0; font-size: 15px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Загружено: {{done}}</span>
+      <button style="font-size: 15px; font-weight: 600; color: var(--accent)">Открыть</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isCollapsed}}" hint-placeholder-val="{{false}}">
+    <button aria-label="Адресная строка, {{domain}}. Показать панель" style="height: 28px; flex: none; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -0.04px; padding-top: 4px">
+      <svg class="i" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.4; opacity: .72"><rect x="5" y="10.5" width="14" height="10" rx="3"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>
+      {{domain}}
+    </button>
+  </sc-if>
+
+  <sc-if value="{{isFull}}" hint-placeholder-val="{{true}}">
+    <div style="height: {{rowH}}px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px">
+      <button aria-label="{{a11y}}" style="flex: 1; min-width: 0; height: {{capH}}px; border-radius: 999px; background: {{field}}; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 14px">
+        <sc-if value="{{isShield}}" hint-placeholder-val="{{true}}">
+          <span style="display: flex; align-items: center; gap: 3px; color: {{ink2}}; min-width: 34px">
+            <svg class="i" width="{{iconS}}" height="{{iconS}}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-3z"></path></svg>
+            <sc-if value="{{showCount}}" hint-placeholder-val="{{true}}">
+              <span class="tn" style="font-size: 12px; line-height: 16px; font-weight: 650; letter-spacing: 0">{{count}}</span>
+            </sc-if>
+          </span>
+        </sc-if>
+        <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}">
+          <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: {{ink2}}"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+        </sc-if>
+        <sc-if value="{{isPrivate}}" hint-placeholder-val="{{false}}">
+          <span style="display: flex; align-items: center; gap: 5px; color: {{ink2}}">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11h18"></path><path d="M6 11l1.6-5.2a1 1 0 0 1 1-.8h6.8a1 1 0 0 1 1 .8L18 11"></path><circle cx="7.5" cy="16" r="2.8"></circle><circle cx="16.5" cy="16" r="2.8"></circle><path d="M10.3 15.6c1.1-.7 2.3-.7 3.4 0"></path></svg>
+            <span style="font-size: 12px; line-height: 16px; font-weight: 650; letter-spacing: 0">Частный</span>
+          </span>
+        </sc-if>
+        <sc-if value="{{isReader}}" hint-placeholder-val="{{false}}">
+          <span aria-label="Настройки чтения" style="min-width: 30px; font-size: 15px; font-weight: 650; letter-spacing: -0.2px; color: {{ink2}}">Aa</span>
+        </sc-if>
+
+        <span style="flex: 1; min-width: 0; text-align: center; font-size: {{domainS}}px; line-height: 22px; font-weight: {{domainW}}; letter-spacing: -0.22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{domainC}}">{{label}}</span>
+
+        <sc-if value="{{showReaderIcon}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="width: 28px; height: 36px; display: flex; align-items: center; justify-content: center; color: {{readerC}}">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24"><path d="M5 6.5h14M5 10.5h14M5 14.5h9M5 18.5h6"></path></svg>
+          </span>
+        </sc-if>
+        <sc-if value="{{showHidden}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="width: 28px; height: 36px; display: flex; align-items: center; justify-content: center; color: {{ink2}}">
+            <svg class="i" width="20" height="20" viewBox="0 0 24 24"><path d="M3.5 3.5l17 17"></path><path d="M10.6 5.6c.5-.1.9-.1 1.4-.1 5 0 8.5 4.5 9.5 6.5-.5 1-1.5 2.4-3 3.7M6.6 6.9C4.6 8.2 3.2 10.1 2.5 12c1 2 4.5 6.5 9.5 6.5 1.6 0 3-.4 4.3-1.1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+          </span>
+        </sc-if>
+        <sc-if value="{{showReload}}" hint-placeholder-val="{{true}}">
+          <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+            <svg class="i" width="{{iconS}}" height="{{iconS}}" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.05-4.95"></path><path d="M19 4.5V9h-4.5"></path></svg>
+          </span>
+        </sc-if>
+        <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="width: 26px"></span>
+        </sc-if>
+      </button>
+
+      <button aria-label="Вкладки: {{tabs}}" style="flex: none; width: {{capH}}px; height: {{capH}}px; border-radius: 50%; background: {{field}}; display: flex; align-items: center; justify-content: center">
+        <span class="tn" style="width: {{tabS}}px; height: {{tabS}}px; box-sizing: border-box; border: 1.8px solid {{ink}}; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: {{tabF}}px; font-weight: 700; letter-spacing: 0">{{tabs}}</span>
+      </button>
+      <button aria-label="{{moreLabel}}" style="position: relative; flex: none; width: {{capH}}px; height: {{capH}}px; border-radius: 50%; background: {{field}}; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="display: block"><circle cx="5" cy="12" r="1.9" fill="currentColor"></circle><circle cx="12" cy="12" r="1.9" fill="currentColor"></circle><circle cx="19" cy="12" r="1.9" fill="currentColor"></circle></svg>
+        <sc-if value="{{showRing}}" hint-placeholder-val="{{false}}">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" style="position: absolute; left: -2px; top: -2px; transform: rotate(-90deg)">
+            <circle cx="26" cy="26" r="25" fill="none" stroke-width="2" style="stroke: {{ringTrack}}"></circle>
+            <circle cx="26" cy="26" r="25" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="{{ringDash}}" style="stroke: {{ringColor}}"></circle>
+          </svg>
+        </sc-if>
+      </button>
+    </div>
+  </sc-if>
+
+  <div aria-hidden="true" style="flex: 1; display: flex; align-items: center; justify-content: center">
+    <div style="width: 108px; height: 4px; border-radius: 2px; background: {{ink}}; opacity: 0.4"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["site","start","neutral","private","reader","collapsed","big"],"default":"site"},"tint":{"editor":"color","default":"#1F4E5F","options":["#1F4E5F","#C65111","#FACD42","#C42630"]},"ink":{"editor":"enum","options":["#FFFFFF","#111114"],"default":"#FFFFFF"},"domain":{"editor":"text","default":"polar-notes.ru"},"count":{"editor":"text","default":"12"},"tabs":{"editor":"text","default":"5"},"reader":{"editor":"boolean","default":false},"hide":{"editor":"boolean","default":false},"progress":{"editor":"range","min":0,"max":100,"step":1,"default":0},"ring":{"editor":"range","min":0,"max":100,"step":1,"default":0},"done":{"editor":"text","default":""},"ringInk":{"editor":"boolean","default":false},"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":88}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const v = p.variant ?? 'site';
+    const dark = !!p.dark;
+    const neutral = v === 'start' || v === 'neutral';
+    let tint = p.tint ?? '#1F4E5F';
+    let ink = String(p.ink ?? '#FFFFFF').toUpperCase();
+    if (neutral) { tint = dark ? '#262628' : '#F9F9FB'; ink = dark ? '#F4F4F6' : '#111114'; }
+    if (v === 'private') { tint = '#241F31'; ink = '#F3F1F8'; }
+    const lightInk = ink !== '#111114' && ink !== '#3B2F20';
+    const rgb = lightInk ? '255,255,255' : '17,17,20';
+    let field = 'rgba(' + rgb + ',' + (lightInk ? '0.14' : '0.08') + ')';
+    if (neutral) field = dark ? '#333337' : '#EBEBEF';
+    if (v === 'private') field = '#2C2838';
+    const ink2 = lightInk ? 'rgba(255,255,255,.72)' : 'rgba(17,17,20,.66)';
+    const big = v === 'big';
+    const collapsed = v === 'collapsed';
+    const rowH = big ? 72 : 64;
+    const done = p.done ?? '';
+    const h = 24 + (collapsed ? 28 : rowH) + (done ? 44 : 0);
+    const ring = Number(p.ring ?? 0);
+    const C = 2 * Math.PI * 25;
+    const progress = Number(p.progress ?? 0);
+    const domain = p.domain ?? 'polar-notes.ru';
+    const isSearch = v === 'start' || (v === 'private' && !domain);
+    const count = p.count ?? '12';
+    const showCount = !big && count !== '' && count !== '0';
+    return {
+      mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + (p.accent ?? 'blue'),
+      h: h, tint: tint, ink: ink, ink2: ink2, field: field,
+      edge: lightInk ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.12)',
+      edgeIn: lightInk ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)',
+      showProgress: progress > 0 && progress < 100, progressPct: progress + '%',
+      showDone: !!done, done: done,
+      isCollapsed: collapsed, isFull: !collapsed, domain: domain,
+      rowH: rowH, capH: big ? 56 : 48, iconS: big ? 24 : 20,
+      tabS: big ? 26 : 22, tabF: big ? 14 : 12,
+      isShield: v === 'site' || v === 'neutral' || v === 'big',
+      isSearch: isSearch,
+      isPrivate: v === 'private',
+      isReader: v === 'reader',
+      showCount: showCount, count: count,
+      label: isSearch ? 'Поиск или адрес' : domain,
+      domainS: big ? 26 : 17,
+      domainW: isSearch ? 400 : 600,
+      domainC: isSearch ? ink2 : ink,
+      showReaderIcon: (!!p.reader || v === 'reader') && !big,
+      readerC: v === 'reader' ? 'var(--accent)' : ink2,
+      showHidden: !!p.hide && !big,
+      showReload: !isSearch && v !== 'reader',
+      tabs: p.tabs ?? '5',
+      a11y: isSearch ? 'Адресная строка. Поиск или адрес' : 'Адресная строка, ' + domain + (v === 'site' || v === 'neutral' ? ', защищено, заблокировано ' + count : ''),
+      moreLabel: ring > 0 ? 'Меню. Загрузки: ' + ring + ' %' : 'Меню',
+      showRing: ring > 0,
+      ringTrack: lightInk ? 'rgba(255,255,255,.18)' : 'rgba(17,17,20,.1)',
+      ringColor: p.ringInk ? ink : 'var(--accent)',
+      ringDash: (C * ring / 100).toFixed(1) + ' ' + C.toFixed(1)
+    };
+  }
+}
+</script>
+</body>
+</html>

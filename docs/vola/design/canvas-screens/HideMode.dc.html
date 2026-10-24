@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Скрыть отвлекающее — выбор</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vs{--surface:#FFFFFF;--label:#111114;--label2:#55555D;--fill:rgba(120,120,128,.12);--accent:#2563D9;--accentFill:#2563D9;--hl:rgba(37,99,217,.12);font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vs.dk{--surface:#2A2A2D;--label:#F4F4F6;--label2:#A9A9B1;--fill:rgba(140,140,150,.22);--accent:#6E9BFF;--hl:rgba(110,155,255,.18)}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+button{font:inherit;color:inherit;letter-spacing:inherit;border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; font-family: Inter, system-ui, sans-serif; color: var(--label)">
+  <div aria-hidden="true" style="position: absolute; inset: 0"><dc-import name="Page" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.18)"></div>
+
+  <div style="position: absolute; left: 12px; right: 12px; top: 452px; height: 128px; border-radius: 14px; background: #E8F3F1; color: #16302C; padding: 16px; box-sizing: border-box; box-shadow: 0 0 0 3px var(--accent), 0 0 0 9px var(--hl), 0 10px 30px rgba(0,0,0,.2)">
+    <div style="font-family: Literata, Georgia, serif; font-size: 17px; font-weight: 700">Подпишитесь на «Заметки»</div>
+    <div style="margin-top: 4px; font-size: 13px; line-height: 18px; color: #3F5A55">Лучшие маршруты Севера — раз в неделю на почту</div>
+    <div style="margin-top: 12px; display: inline-flex; height: 32px; align-items: center; padding: 0 14px; border-radius: 8px; background: #1F4E5F; color: #FFFFFF; font-size: 13px; font-weight: 600">Подписаться</div>
+    <span style="position: absolute; top: -13px; left: 14px; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--accentFill); color: #FFFFFF; font-size: 12px; font-weight: 600; display: flex; align-items: center">Баннер · выбран</span>
+  </div>
+
+  <div role="status" style="position: absolute; top: 40px; left: 16px; right: 16px; height: 52px; border-radius: 999px; background: var(--surface); box-shadow: 0 8px 24px rgba(0,0,0,.2); display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px">
+    <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--accent)"><path d="M3.5 3.5l17 17"></path><path d="M10.6 5.6c.5-.1.9-.1 1.4-.1 5 0 8.5 4.5 9.5 6.5-.5 1-1.5 2.4-3 3.7M6.6 6.9C4.6 8.2 3.2 10.1 2.5 12c1 2 4.5 6.5 9.5 6.5 1.6 0 3-.4 4.3-1.1"></path></svg>
+    <span style="flex: 1; font-size: 15px; font-weight: 500">Коснитесь того, что мешает</span>
+    <button style="height: 36px; padding: 0 14px; border-radius: 999px; background: var(--fill); font-size: 15px; font-weight: 600; color: var(--accent)">Готово</button>
+  </div>
+
+  <div style="position: absolute; left: 12px; right: 12px; bottom: 100px; border-radius: 24px; background: var(--surface); box-shadow: 0 12px 40px rgba(0,0,0,.25); padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <button style="height: 50px; border-radius: 999px; background: var(--accentFill); color: #FFFFFF; font-size: 17px; font-weight: 600; letter-spacing: -0.22px">Скрыть баннер</button>
+    <div style="display: flex; gap: 8px">
+      <button style="flex: 1; height: 44px; border-radius: 999px; background: var(--fill); font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3"></path></svg>Выбрать крупнее</button>
+      <button style="flex: 1; height: 44px; border-radius: 999px; background: var(--fill); font-size: 15px; font-weight: 500">Отмена</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    return { mode: 'vs' + (dark ? ' dk' : ''), dark: dark };
+  }
+}
+</script>
+</body>
+</html>

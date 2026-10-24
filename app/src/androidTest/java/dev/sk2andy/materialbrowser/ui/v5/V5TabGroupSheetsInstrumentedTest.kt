@@ -1,10 +1,12 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -53,6 +55,27 @@ class V5TabGroupSheetsInstrumentedTest {
         composeRule.waitForIdle()
     }
 
+    private fun showEditor() {
+        composeRule.setContent {
+            VolaV5Theme {
+                V5TabGroupEditSheet(
+                    visible = true,
+                    title = "Edit group",
+                    initialName = "Dinner",
+                    initialColorIndex = 0,
+                    colors = listOf(V5Tile.Blue, V5Tile.Green),
+                    onSave = { draft -> calls += "save ${draft.tabIds}" },
+                    onDismiss = { calls += "dismiss" },
+                    onUngroup = { calls += "ungroup" },
+                    tabs = listOf(V5GroupEditorTab("soup", "Soup"), V5GroupEditorTab("wine", "Wine")),
+                    candidates = listOf(V5GroupEditorTab("list", "Shopping list")),
+                    onCloseGroup = { calls += "close group" },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
     private fun showEdit(onUngroup: (() -> Unit)?) {
         composeRule.setContent {
             VolaV5Theme {
@@ -62,7 +85,7 @@ class V5TabGroupSheetsInstrumentedTest {
                     initialName = "Work",
                     initialColorIndex = 0,
                     colors = listOf(V5Tile.Blue, V5Tile.Green, V5Tile.Red),
-                    onSave = { name, color -> calls += "save $name $color" },
+                    onSave = { draft -> calls += "save ${draft.name} ${draft.colorIndex}" },
                     onDismiss = { calls += "dismiss" },
                     onUngroup = onUngroup,
                 )
@@ -119,5 +142,33 @@ class V5TabGroupSheetsInstrumentedTest {
         composeRule.onNodeWithTag(V5TabGroupSheetTestTags.NameField).performTextClearance()
         composeRule.onNodeWithTag(V5TabGroupSheetTestTags.Save).performClick()
         assertEquals(listOf("dismiss", "save Work 0"), calls)
+    }
+
+    /** TalkBack moves a tab later; an open tab joins; «Done» saves both at once (canvas «GroupEditor»). */
+    @Test
+    fun theEditorReordersAndAddsTabsOnDone() {
+        showEditor()
+
+        val actions = composeRule.onNodeWithTag(V5TabGroupSheetTestTags.tab("soup"))
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        val later = context.getString(R.string.v5_newtab_move_later)
+        composeRule.runOnIdle { actions.first { it.label == later }.action() }
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.AddTabs).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.candidate("list")).performClick()
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.AddTabsBack).performClick()
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.Save).performClick()
+
+        assertEquals(listOf("dismiss", "save [wine, soup, list]"), calls)
+    }
+
+    @Test
+    fun closingTheGroupAsksFirst() {
+        showEditor()
+
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.CloseGroup).performScrollTo().performClick()
+        assertEquals(emptyList<String>(), calls)
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.CloseGroupConfirm).performClick()
+
+        assertEquals(listOf("dismiss", "close group"), calls)
     }
 }

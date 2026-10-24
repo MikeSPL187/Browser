@@ -83,6 +83,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
+import dev.sk2andy.materialbrowser.browser.DistractionAction
 import dev.sk2andy.materialbrowser.browser.PageDistractionsListener
 import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
@@ -1043,6 +1044,8 @@ private class GeckoViewBrowserSession(
                 privacyBinding.startDistractionPicking(highlightArgb, listener)
 
         override fun stopPicking() = privacyBinding.stopDistractionPicking()
+
+        override fun act(action: DistractionAction) = privacyBinding.actOnDistraction(action)
     }
 
     @Volatile
@@ -2826,6 +2829,8 @@ private class GeckoViewBrowserSession(
         if (!active) boundView?.cancelActiveTouch()
         if (this.active == active) return
         session.setActive(active)
+        // Tells Gecko the selected tab matters most, so it keeps that session state as long as possible.
+        session.setPriorityHint(if (active) GeckoSession.PRIORITY_HIGH else GeckoSession.PRIORITY_DEFAULT)
         extensionController.setTabActive(session, active)
         this.active = active
         if (BuildConfig.ENABLE_PERFORMANCE_DIAGNOSTICS) {

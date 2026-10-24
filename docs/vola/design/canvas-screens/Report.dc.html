@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Отчёт о приватности</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div style="padding: 28px 16px 0; display: flex; flex-direction: column">
+    <div style="height: 44px; display: flex; align-items: center">
+      <a href="Shield.dc.html" style="display: flex; align-items: center; gap: 2px; margin-left: -6px; font-size: 17px; color: var(--accent); text-decoration: none">
+        <svg class="i" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M14.5 6l-6 6 6 6"></path></svg>Защита
+      </a>
+    </div>
+    <h1 style="margin: 4px 0 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.75px">Отчёт о приватности</h1>
+
+    <div role="tablist" style="margin-top: 16px; height: 36px; border-radius: 999px; background: var(--elev); padding: 2px; box-sizing: border-box; display: flex">
+      <button role="tab" aria-selected="true" style="flex: 1; border-radius: 999px; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-size: 15px; font-weight: 600">7 дней</button>
+      <button role="tab" aria-selected="false" style="flex: 1; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--label2)">30 дней</button>
+    </div>
+
+    <div style="margin-top: 16px; border-radius: 24px; background: var(--surface); box-shadow: var(--e1); padding: 20px 20px 16px">
+      <div class="tn" style="font-size: 48px; line-height: 52px; font-weight: 750; letter-spacing: -1.4px">1 284</div>
+      <div style="font-size: 15px; line-height: 20px; color: var(--label2)">трекера остановлено за неделю</div>
+      <div role="img" aria-label="По дням: от 118 до 233 трекеров, сегодня 210" style="margin-top: 18px; height: 112px; display: flex; align-items: flex-end; gap: 10px">
+        <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <div style="width: 100%; height: {{d.h}}px; border-radius: 8px; background: var(--accent); opacity: {{d.o}}"></div>
+            <span style="font-size: 12px; line-height: 16px; font-weight: {{d.w}}; letter-spacing: 0; color: {{d.c}}">{{d.l}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">Самый частый трекер</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 36px; height: 36px; border-radius: 10px; background: var(--elev); color: var(--label2); display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"></path></svg>
+        </span>
+        <div style="flex: 1">
+          <div style="font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.22px">tracksphere.net</div>
+          <div style="font-size: 15px; line-height: 20px; color: var(--label2)">заблокирован на <span class="tn" style="color: var(--label); font-weight: 600">31</span> сайте</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">Больше всего трекеров</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 36px; height: 36px; border-radius: 10px; background: #C2272D; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700">К</span>
+        <div style="flex: 1">
+          <div style="font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.22px">kinograd.ru</div>
+          <div style="font-size: 15px; line-height: 20px; color: var(--label2)">в среднем <span class="tn" style="color: var(--label); font-weight: 600">17</span> за визит</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; align-items: flex-start; gap: 8px; padding: 0 4px; font-size: 13px; line-height: 18px; color: var(--label2)">
+      <svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 1px"><rect x="5" y="10.5" width="14" height="10" rx="3"></rect><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path></svg>
+      <span>Отчёт хранится только на этом устройстве. Частные вкладки не учитываются.</span>
+    </div>
+    <button style="margin-top: 8px; height: 48px; font-size: 17px; color: var(--danger)">Очистить данные отчёта</button>
+  </div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: flex; align-items: center; justify-content: center">
+    <div style="width: 108px; height: 4px; border-radius: 2px; background: var(--label); opacity: .4"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const vals = [152, 118, 196, 204, 171, 233, 210];
+    const labels = ['Сб', 'Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
+    const max = 233;
+    const days = vals.map((v, i) => {
+      const today = i === vals.length - 1;
+      return { h: Math.round(v / max * 86), o: today ? 1 : 0.3, l: labels[i], w: today ? 650 : 500, c: today ? 'var(--label)' : 'var(--label2)' };
+    });
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + (this.props.accent ?? 'blue'), days: days };
+  }
+}
+</script>
+</body>
+</html>

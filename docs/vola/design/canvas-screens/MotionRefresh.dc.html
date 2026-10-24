@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Обновление потягиванием</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.mo .pg{animation:mr-pg 4.4s infinite}
+.mo .ind{animation:mr-ind 4.4s infinite}
+.mo .shape{animation:mr-shape 1.1s infinite linear}
+.mo .fg{animation:mr-fg 4.4s infinite}
+.mo.rm .pg{animation:none}
+.mo.rm .ind{animation:mr-rm 4.4s infinite linear;transform:translate(-50%,0)}
+.mo.rm .shape{animation:none}
+.mo.rm .fg{animation:none;opacity:0}
+@keyframes mr-pg{0%,8%{transform:translateY(0);animation-timing-function:cubic-bezier(.2,.6,.4,1)}26%{transform:translateY(96px)}30%,62%{transform:translateY(80px);animation-timing-function:cubic-bezier(.2,.8,.3,1)}72%,100%{transform:translateY(0)}}
+@keyframes mr-ind{0%,8%{opacity:0;transform:translate(-50%,-30px) scale(.4)}22%{opacity:1;transform:translate(-50%,6px) scale(1)}62%{opacity:1;transform:translate(-50%,0) scale(1)}70%,100%{opacity:0;transform:translate(-50%,-20px) scale(.6)}}
+@keyframes mr-shape{0%{border-radius:50%;transform:rotate(0)}33%{border-radius:30% 70% 70% 30% / 30% 30% 70% 70%;transform:rotate(120deg)}66%{border-radius:12px;transform:rotate(240deg)}100%{border-radius:50%;transform:rotate(360deg)}}
+@keyframes mr-fg{0%,6%{opacity:0;transform:translateY(0)}8%{opacity:1;transform:translateY(0)}26%{opacity:1;transform:translateY(120px)}29%,100%{opacity:0;transform:translateY(120px)}}
+@keyframes mr-rm{0%,20%{opacity:0}24%,62%{opacity:1}66%,100%{opacity:0}}
+</style>
+</helmet>
+<div class="{{cls}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{band}}; font-family: Inter, system-ui, sans-serif">
+  <div class="ind" aria-hidden="true" style="position: absolute; left: 50%; top: 44px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center; opacity: 0">
+    <span class="shape" style="width: 24px; height: 24px; border-radius: 50%; background: #9EE6D5"></span>
+  </div>
+  <div class="pg" style="position: absolute; inset: 0; border-radius: 28px 28px 0 0; overflow: hidden; box-shadow: 0 -8px 24px rgba(0,0,0,.2)"><dc-import name="Page" dark="{{dark}}" hint-size="390px,844px"></dc-import></div>
+  <div class="fg" aria-hidden="true" style="position: absolute; left: 172px; top: 300px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.55); box-shadow: 0 0 0 2px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.25); opacity: 0"></div>
+  <div style="position: absolute; top: 700px; left: 50%; transform: translateX(-50%); height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(0,0,0,.6); color: #FFFFFF; display: flex; align-items: center; font-size: 12px; font-weight: 600; white-space: nowrap">{{label}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"reduced":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark, rm = !!this.props.reduced;
+    return { cls: 'mo' + (rm ? ' rm' : ''), dark: dark, band: dark ? '#163A47' : '#1F4E5F', label: rm ? 'Без анимаций · индикатор проявляется' : 'Сопротивление 0,55 · порог 80 dp · возврат 1,0 / 400' };
+  }
+}
+</script>
+</body>
+</html>

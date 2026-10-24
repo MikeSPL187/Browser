@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Меню страницы v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;family=Literata:opsz,wght@7..72,400..700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #000000; color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0">
+    <dc-import name="Page" dark="{{dark}}" accent="{{accent}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div role="dialog" aria-label="Меню страницы" style="position: absolute; left: 0; right: 0; bottom: 0; height: 640px; border-radius: 32px 32px 0 0; background: var(--thick); backdrop-filter: blur(40px) saturate(1.4); -webkit-backdrop-filter: blur(40px) saturate(1.4); box-shadow: var(--e3), inset 0 0.5px 0 var(--edge); padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column">
+    <div aria-hidden="true" style="height: 20px; display: flex; align-items: center; justify-content: center"><div style="width: 36px; height: 4px; border-radius: 2px; background: var(--label3); opacity: .5"></div></div>
+
+    <div style="display: flex; align-items: center; gap: 12px; height: 52px">
+      <span style="width: 40px; height: 40px; border-radius: 12px; background: #1F4E5F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700">П</span>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Северное сияние над Териберкой</div>
+        <div style="font-size: 13px; line-height: 18px; color: var(--label2)">polar-notes.ru</div>
+      </div>
+      <a href="Page.dc.html" aria-label="Закрыть" style="width: 32px; height: 32px; border-radius: 50%; background: var(--fill); color: var(--label2); display: flex; align-items: center; justify-content: center">
+        <svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6"><path d="M7 7l10 10M17 7L7 17"></path></svg>
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 16px">
+      <button style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <span style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0; color: var(--label2)">Вперёд</span>
+      </button>
+      <button aria-pressed="true" style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <span style="width: 56px; height: 56px; border-radius: 18px; background: var(--accentSoft); color: var(--accent); display: flex; align-items: center; justify-content: center">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="display: block"><path d="M7 3.8h10a1.2 1.2 0 0 1 1.2 1.2v15.2a.6.6 0 0 1-1 .5L12 16.6l-5.2 4.1a.6.6 0 0 1-1-.5V5A1.2 1.2 0 0 1 7 3.8z" fill="currentColor"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0; color: var(--accent)">В закладках</span>
+      </button>
+      <button style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <span style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11"></path><path d="M8 7.5l4-4 4 4"></path><path d="M7 10.5H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0; color: var(--label2)">Поделиться</span>
+      </button>
+      <button style="display: flex; flex-direction: column; align-items: center; gap: 7px">
+        <span style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center">
+          <svg class="i" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M5 19.5h14"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0; color: var(--label2)">Скачать</span>
+      </button>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-top: 18px">
+      <a href="Reader.dc.html" style="flex: 1; height: 52px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.22px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14M5 10.5h14M5 14.5h9M5 18.5h6"></path></svg>Читать
+      </a>
+      <a href="Reader.dc.html" style="flex: 1; height: 52px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.22px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"></path><rect x="3.5" y="13.5" width="4.5" height="7" rx="2"></rect><rect x="16" y="13.5" width="4.5" height="7" rx="2"></rect></svg>Слушать
+      </a>
+    </div>
+
+    <a href="Downloads.dc.html" style="margin-top: 12px; height: 52px; border-radius: 12px; background: var(--surface); box-shadow: var(--e1); display: flex; align-items: center; gap: 12px; padding: 0 14px; color: var(--label); text-decoration: none">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="display: block; transform: rotate(-90deg)"><circle cx="12" cy="12" r="9.5" fill="none" stroke-width="2.4" style="stroke: var(--fill)"></circle><circle cx="12" cy="12" r="9.5" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="26.9 59.7" style="stroke: var(--accent)"></circle></svg>
+      <span style="font-size: 17px; line-height: 22px">Загрузки</span>
+      <span class="tn" style="font-size: 15px; color: var(--label2)">2 · 45 %</span>
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto; color: var(--label3)"><path d="M9.5 6l6 6-6 6"></path></svg>
+    </a>
+
+    <div style="margin-top: 12px; border-radius: 12px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h4"></path><path d="M14 3.5l5 5V11"></path><circle cx="16" cy="16" r="3.2"></circle><path d="M18.4 18.4l2.1 2.1"></path></svg>
+        <span style="font-size: 17px; line-height: 22px">Найти на странице</span>
+      </div>
+      <div style="height: 0.5px; margin-left: 48px; background: var(--sep)"></div>
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><path d="M3.5 3.5l17 17"></path><path d="M10.6 5.6c.5-.1.9-.1 1.4-.1 5 0 8.5 4.5 9.5 6.5-.5 1-1.5 2.4-3 3.7M6.6 6.9C4.6 8.2 3.2 10.1 2.5 12c1 2 4.5 6.5 9.5 6.5 1.6 0 3-.4 4.3-1.1"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+        <span style="font-size: 17px; line-height: 22px">Скрыть отвлекающее</span>
+      </div>
+      <div style="height: 0.5px; margin-left: 48px; background: var(--sep)"></div>
+      <div style="height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="display: block; color: var(--label2)"><circle cx="5" cy="12" r="1.7" fill="currentColor"></circle><circle cx="12" cy="12" r="1.7" fill="currentColor"></circle><circle cx="19" cy="12" r="1.7" fill="currentColor"></circle></svg>
+        <span style="flex: 1; font-size: 17px; line-height: 22px">Дополнительно</span>
+        <span style="font-size: 13px; color: var(--label2)">ПК-версия, код, поломка</span>
+        <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label3)"><path d="M9.5 6l6 6-6 6"></path></svg>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px">
+      <a href="History.dc.html" style="height: 64px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"></path><path d="M4 4.5v4h4"></path><path d="M12 8v4.2l2.8 1.8"></path></svg>
+        <span style="font-size: 12px; font-weight: 500; letter-spacing: 0">История</span>
+      </a>
+      <a href="History.dc.html" style="height: 64px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.8h10a1.2 1.2 0 0 1 1.2 1.2v15.2a.6.6 0 0 1-1 .5L12 16.6l-5.2 4.1a.6.6 0 0 1-1-.5V5A1.2 1.2 0 0 1 7 3.8z"></path></svg>
+        <span style="font-size: 12px; font-weight: 500; letter-spacing: 0">Закладки</span>
+      </a>
+      <a href="Passwords.dc.html" style="height: 64px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8.5-8.5M16.5 6.5l2.5 2.5M14 9l2 2"></path></svg>
+        <span style="font-size: 12px; font-weight: 500; letter-spacing: 0">Пароли</span>
+      </a>
+      <a href="Settings.dc.html" style="height: 64px; border-radius: 16px; background: var(--surface); box-shadow: var(--e1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--label); text-decoration: none">
+        <svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2.2"></circle><circle cx="9" cy="17" r="2.2"></circle></svg>
+        <span style="font-size: 12px; font-weight: 500; letter-spacing: 0">Настройки</span>
+      </a>
+    </div>
+
+    <div aria-hidden="true" style="margin-top: auto; height: 24px; display: flex; align-items: center; justify-content: center">
+      <div style="width: 108px; height: 4px; border-radius: 2px; background: var(--label); opacity: .4"></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const accent = this.props.accent ?? 'blue';
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + accent, dark: dark, accent: accent };
+  }
+}
+</script>
+</body>
+</html>

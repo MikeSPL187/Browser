@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>История</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.vl{--bg:#F4F4F6;--surface:#FFFFFF;--elev:#EBEBEF;--highest:#E0E0E5;--chrome:#F9F9FB;--label:#111114;--label2:#55555D;--label3:#808088;--sep:#D8D8DE;--fill:rgba(120,120,128,.12);--scrim:rgba(0,0,0,.32);--success:#1A7F45;--warning:#9A5600;--danger:#C42630;--edge:rgba(0,0,0,.08);--thick:rgba(244,244,246,.92);--regular:rgba(249,249,251,.84);--e1:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);--e2:0 2px 6px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);--e3:0 12px 40px rgba(0,0,0,.16);--accent:#2563D9;--accentFill:#2563D9;--softPct:14%;--softBase:#FFFFFF;--accentSoft:color-mix(in srgb,var(--accentFill) var(--softPct),var(--softBase));font-feature-settings:'cv11' 1;-webkit-font-smoothing:antialiased;letter-spacing:-0.013em}
+.vl.dk{--bg:#1C1C1E;--surface:#2A2A2D;--elev:#333337;--highest:#3E3E43;--chrome:#262628;--label:#F4F4F6;--label2:#A9A9B1;--label3:#7E7E86;--sep:#3A3A3E;--fill:rgba(140,140,150,.22);--scrim:rgba(0,0,0,.5);--success:#4CC47E;--warning:#F0A53A;--danger:#FF6B6B;--edge:rgba(255,255,255,.06);--thick:rgba(30,30,32,.92);--regular:rgba(38,38,40,.84);--e1:0 0 0 .5px rgba(255,255,255,.07);--e2:0 8px 24px rgba(0,0,0,.4);--e3:0 16px 48px rgba(0,0,0,.55);--accent:#6E9BFF;--softPct:22%;--softBase:#1C1C1E}
+.ac-green{--accent:#1A7F45;--accentFill:#1A7F45}.dk.ac-green{--accent:#4CC47E}
+.ac-orange{--accent:#B4520F;--accentFill:#B4520F}.dk.ac-orange{--accent:#FF9F5A}
+.ac-pink{--accent:#BE2A68;--accentFill:#BE2A68}.dk.ac-pink{--accent:#FF7EAE}
+.ac-violet{--accent:#6A45D1;--accentFill:#6A45D1}.dk.ac-violet{--accent:#A88FFF}
+.ac-graphite{--accent:#4B4B53;--accentFill:#4B4B53}.dk.ac-graphite{--accent:#C9C9D1;--accentFill:#66666F}
+.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tn{font-variant-numeric:tabular-nums}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+</style>
+</helmet>
+<div class="{{mode}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--bg); color: var(--label); font-family: Inter, system-ui, sans-serif">
+  <div style="padding: 28px 16px 0; display: flex; flex-direction: column">
+    <div style="height: 44px; display: flex; align-items: center; justify-content: space-between">
+      <a href="Menu.dc.html" style="display: flex; align-items: center; gap: 2px; margin-left: -6px; font-size: 17px; color: var(--accent); text-decoration: none">
+        <svg class="i" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="M14.5 6l-6 6 6 6"></path></svg>Назад
+      </a>
+      <button style="font-size: 17px; color: var(--accent)">Изменить</button>
+    </div>
+    <h1 style="margin: 4px 0 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.75px">История</h1>
+    <div role="tablist" style="margin-top: 12px; height: 36px; border-radius: 999px; background: var(--elev); padding: 2px; box-sizing: border-box; display: flex">
+      <button role="tab" aria-selected="true" style="flex: 1; border-radius: 999px; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); font-size: 15px; font-weight: 600">История</button>
+      <button role="tab" aria-selected="false" style="flex: 1; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--label2)">Закладки</button>
+      <button role="tab" aria-selected="false" style="flex: 1.2; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--label2)">Читать позже</button>
+    </div>
+    <label style="margin-top: 12px; height: 40px; border-radius: 12px; background: var(--elev); display: flex; align-items: center; gap: 8px; padding: 0 12px">
+      <svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--label2)"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+      <input aria-label="Поиск по истории" placeholder="Поиск по истории и тексту страниц" style="flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0; font-size: 17px; color: var(--label)">
+    </label>
+
+    <sc-for list="{{days}}" as="d" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column">
+        <div style="margin: 20px 0 8px 4px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label2)">{{d.title}}</div>
+        <div style="border-radius: 12px; background: var(--surface); box-shadow: var(--e1); overflow: hidden">
+          <sc-for list="{{d.rows}}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column">
+              <sc-if value="{{r.divider}}" hint-placeholder-val="{{false}}">
+                <div style="height: 0.5px; margin-left: 58px; background: var(--sep)"></div>
+              </sc-if>
+              <div style="position: relative; height: 60px; overflow: hidden">
+                <sc-if value="{{r.swiped}}" hint-placeholder-val="{{false}}">
+                  <button aria-label="Удалить из истории" style="position: absolute; top: 0; right: 0; bottom: 0; width: 92px; background: #E5383B; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0">
+                    <svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"></path></svg>
+                    Удалить
+                  </button>
+                </sc-if>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 100%; transform: translateX({{r.shift}}px); background: var(--surface); display: flex; align-items: center; gap: 12px; padding: 0 14px; box-sizing: border-box">
+                  <span style="width: 32px; height: 32px; border-radius: 9px; background: {{r.color}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex: none">{{r.glyph}}</span>
+                  <div style="flex: 1; min-width: 0">
+                    <div style="font-size: 15px; line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.title}}</div>
+                    <div class="tn" style="font-size: 13px; line-height: 18px; color: var(--label2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.meta}}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: var(--regular); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 0.5px solid var(--edge); display: flex; flex-direction: column">
+    <div style="height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">
+      <button style="font-size: 17px; color: var(--danger)">Очистить…</button>
+      <span style="font-size: 13px; color: var(--label2)">Профиль «Личный»</span>
+    </div>
+    <div aria-hidden="true" style="flex: 1; display: flex; align-items: center; justify-content: center">
+      <div style="width: 108px; height: 4px; border-radius: 2px; background: var(--label); opacity: .4"></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false,"section":"Тема"},"accent":{"editor":"enum","options":["blue","green","orange","pink","violet","graphite"],"default":"blue","section":"Тема"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = !!this.props.dark;
+    const raw = [
+      { title: 'Сегодня', rows: [
+        { title: 'Северное сияние над Териберкой', meta: 'polar-notes.ru · 14:18', glyph: 'П', color: '#1F4E5F' },
+        { title: 'Дома у залива: где ночевать в Териберке', meta: 'severdom.ru · 14:11', glyph: 'С', color: '#2F5D50', swiped: true },
+        { title: 'The last lighthouse keepers of Cape Gale', meta: 'harborlight.news · 12:40', glyph: 'H', color: '#C79A00' },
+        { title: 'Прогноз сияния на неделю', meta: 'meteo-sever.ru · 09:05', glyph: 'М', color: '#2F6FE4' }
+      ] },
+      { title: 'Вчера', rows: [
+        { title: 'Тыквенный суп с имбирём за 30 минут', meta: 'recepty-doma.ru · 21:40', glyph: 'Р', color: '#E0620D' },
+        { title: '«Северный ветер» — сеансы на выходные', meta: 'kinograd.ru · 19:02', glyph: 'К', color: '#C2272D' }
+      ] }
+    ];
+    const days = raw.map((d) => ({ title: d.title, rows: d.rows.map((r, i) => ({ ...r, divider: i > 0, swiped: !!r.swiped, shift: r.swiped ? -92 : 0 })) }));
+    return { mode: 'vl' + (dark ? ' dk' : '') + ' ac-' + (this.props.accent ?? 'blue'), days: days };
+  }
+}
+</script>
+</body>
+</html>
