@@ -2258,7 +2258,8 @@
     <string name="v5_site_reset_message_private">Строгая защита, сторонние cookie, баннеры cookie, AMP, защита от отпечатков и исправления страниц для этого сайта вернутся к умолчаниям в этой приватной вкладке, а защита снова включится. Страница перезагрузится.</string>
     <string name="v5_site_reset_action">Сбросить</string>
     <string name="v5_glance_open">Открыть</string>
-    <string name="v5_glance_background">В фоне</string>
+    <string name="v5_glance_open_background">Открыть в фоне</string>
+    <string name="v5_glance_swipe_hint">Свайп вверх — открыть · вниз — закрыть</string>
     <string name="v5_glance_opened_background">Открыто в фоне</string>
     <string name="v5_glance_source_gone">Ссылка не открыта: её вкладки уже нет на экране</string>
     <string name="v5_glance_more">Ещё действия со ссылкой</string>

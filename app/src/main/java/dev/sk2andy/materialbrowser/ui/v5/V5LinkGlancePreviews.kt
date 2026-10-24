@@ -101,3 +101,9 @@ private fun V5LinkGlanceFailedPreview() {
         ),
     )
 }
+
+@Preview(name = "Link preview · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LinkGlanceLargeFontPreview() {
+    GlancePreview(dark = false)
+}
