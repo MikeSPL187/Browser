@@ -2051,6 +2051,16 @@
     <string name="v5_newtab_recent">Recent tabs</string>
     <string name="v5_newtab_add_title">Pin a site</string>
     <string name="v5_newtab_add_empty">Sites from this profile’s open tabs, favorites and history show up here.</string>
+    <string name="v5_fresh_title">A clean slate</string>
+    <string name="v5_fresh_message">“%1$s” keeps its own cookies and history. You haven’t signed in anywhere here yet.</string>
+    <string name="v5_fresh_card_title">Get started faster</string>
+    <string name="v5_fresh_copy">Copy favorites from “%1$s”</string>
+    <string name="v5_fresh_copy_failed">Couldn’t copy the favorites. Try again from the new tab.</string>
+    <string name="v5_fresh_move">Move tabs here</string>
+    <string name="v5_fresh_move_title">Move tabs here</string>
+    <string name="v5_fresh_move_action">Move to this profile</string>
+    <string name="v5_fresh_move_empty">Other profiles have no open tabs left to move.</string>
+    <string name="v5_fresh_move_done">Done</string>
     <string name="v5_newtab_add_tabs">Open tabs</string>
     <string name="v5_newtab_add_favorites">Favorites</string>
     <string name="v5_newtab_add_history">History</string>

@@ -118,6 +118,8 @@ data class V5NewTabState(
     val profileIcon: ImageVector? = null,
     /** False where nothing can be changed (a preview of the next tab): no «Edit» then (Н-8). */
     val canEdit: Boolean = true,
+    /** Set while the profile has nothing of its own yet («EmptyStart»). */
+    val fresh: V5NewTabFresh? = null,
 )
 
 /**
@@ -139,6 +141,8 @@ fun V5NewTab(
     contentPadding: PaddingValues = PaddingValues(),
     /** A pinned site was dragged (or moved by TalkBack) to a new place among the pinned ones. */
     onMovePinned: (id: String, toIndex: Int) -> Unit = { _, _ -> },
+    onCopyFavorites: () -> Unit = {},
+    onMoveTabs: () -> Unit = {},
 ) {
     val colors = V5Theme.colors
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -167,6 +171,7 @@ fun V5NewTab(
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space6),
         ) {
             state.profileLabel?.let { ProfileChip(it, state.profileIcon) }
+            state.fresh?.let { V5FreshTitle(it) }
             Pinned(
                 state = state,
                 editing = editing,
@@ -176,7 +181,12 @@ fun V5NewTab(
                 onAdd = onAddPinned,
                 onMove = onMovePinned,
             )
-            state.report?.let { ReportCard(it, onOpenReport, onHideReport) }
+            val fresh = state.fresh
+            if (fresh == null) {
+                state.report?.let { ReportCard(it, onOpenReport, onHideReport) }
+            } else if (fresh.copyFrom != null || fresh.canMoveTabs) {
+                V5FreshCard(fresh, onCopy = onCopyFavorites, onMove = onMoveTabs)
+            }
             if (state.recent.isNotEmpty()) Recent(state.recent, onOpenRecent)
         }
     }
@@ -297,7 +307,8 @@ private fun Pinned(
             actionTag = V5NewTabTestTags.Edit,
         )
         val note = V5NewTabRules.pinnedNote(pinnedCount = state.pinned.size, canAdd = state.canAdd, editing = editing)
-        if (note != null) {
+        // A fresh profile shows empty slots instead of the note.
+        if (note != null && state.fresh == null) {
             Text(
                 stringResource(
                     when (note) {
@@ -437,10 +448,12 @@ private fun Pinned(
                                 )
                             }
                         }
-                        V5NewTabRules.Cell.Add -> AddTile(onAdd, cellModifier)
+                        V5NewTabRules.Cell.Add -> AddTile(onAdd, cellModifier, inviting = state.fresh != null)
                     }
                 }
-                repeat(V5Sizes.PINNED_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                repeat(V5Sizes.PINNED_COLUMNS - row.size) {
+                    if (state.fresh != null) V5FreshSlot(Modifier.weight(1f)) else Spacer(Modifier.weight(1f))
+                }
             }
         }
     }
@@ -516,18 +529,30 @@ private fun PinnedTile(
 }
 
 @Composable
-private fun AddTile(onAdd: () -> Unit, modifier: Modifier) {
+private fun AddTile(onAdd: () -> Unit, modifier: Modifier, inviting: Boolean = false) {
     val colors = V5Theme.colors
     val label = stringResource(R.string.v5_newtab_add)
-    TileCell(label = label, onClick = onAdd, onClickLabel = null, modifier = modifier.testTag(V5NewTabTestTags.Add)) {
+    // On a fresh profile «Add» is the first thing to do, so it takes the accent (EmptyStart).
+    TileCell(
+        label = label,
+        onClick = onAdd,
+        onClickLabel = null,
+        modifier = modifier.testTag(V5NewTabTestTags.Add),
+        labelColor = if (inviting) colors.accent else colors.label,
+    ) {
         Box(
             Modifier
                 .size(V5Sizes.pinnedTile)
                 .clip(V5Theme.shapes.m)
-                .background(colors.fill),
+                .background(if (inviting) colors.accentSoft else colors.fill),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(VolaIcons.Add, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.icon))
+            Icon(
+                VolaIcons.Add,
+                contentDescription = null,
+                tint = if (inviting) colors.accent else colors.labelSecondary,
+                modifier = Modifier.size(V5Sizes.icon),
+            )
         }
     }
 }
@@ -542,6 +567,7 @@ private fun TileCell(
     modifier: Modifier,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
+    labelColor: Color = V5Theme.colors.label,
     tile: @Composable BoxScope.() -> Unit,
 ) {
     Column(
@@ -562,7 +588,7 @@ private fun TileCell(
         Text(
             label,
             style = V5Theme.type.caption,
-            color = V5Theme.colors.label,
+            color = labelColor,
             // Two lines, as Safari's favorites: a large font still leaves a name readable (Н-5).
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
