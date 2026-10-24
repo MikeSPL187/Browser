@@ -29,17 +29,18 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -47,6 +48,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 
 /*
  * Grouped lists of the v5 menu and settings (system-v5.md, sections 1.5 and 3.4; canvas screens «д»
@@ -107,6 +109,8 @@ fun V5ListGroup(
             dividerColor = colors.separator,
             modifier = Modifier
                 .fillMaxWidth()
+                // A group of rows is a card (canvas «Settings», «Shield»): e1 under it.
+                .v5Elevation(V5Elevation.e1, V5Theme.shapes.s)
                 .clip(V5Theme.shapes.s)
                 .background(colors.surface),
             content = content,
