@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
@@ -183,13 +184,13 @@ fun V5NewTab(
                 onAdd = onAddPinned,
                 onMove = onMovePinned,
             )
+            // Pinned, then where to carry on, then the week's protection (canvas «Main»).
             val fresh = state.fresh
-            if (fresh == null) {
-                state.report?.let { ReportCard(it, onOpenReport, onHideReport) }
-            } else if (fresh.copyFrom != null || fresh.canMoveTabs) {
+            if (fresh != null && (fresh.copyFrom != null || fresh.canMoveTabs)) {
                 V5FreshCard(fresh, onCopy = onCopyFavorites, onMove = onMoveTabs)
             }
             if (state.recent.isNotEmpty()) Recent(state.recent, onOpenRecent)
+            if (fresh == null) state.report?.let { ReportCard(it, onOpenReport, onHideReport) }
         }
     }
 }
@@ -228,14 +229,32 @@ private fun ProfileChip(label: String, icon: ImageVector?) {
 }
 
 @Composable
-private fun SectionHeader(title: String, action: String? = null, onAction: () -> Unit = {}, actionTag: String = "") {
+private fun SectionHeader(
+    title: String,
+    action: String? = null,
+    onAction: () -> Unit = {},
+    actionTag: String = "",
+    /** A quiet count after the title, such as «8 of 12». */
+    count: String? = null,
+) {
     val colors = V5Theme.colors
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
         Text(
             title,
             style = V5Theme.type.title,
             color = colors.label,
-            modifier = Modifier.weight(1f).semantics { heading() },
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            count.orEmpty(),
+            style = V5Theme.type.footnote,
+            color = colors.labelSecondary,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
         )
         if (action != null) {
             Box(
@@ -307,6 +326,12 @@ private fun Pinned(
             },
             onAction = { onEditingChange(!editing) },
             actionTag = V5NewTabTestTags.Edit,
+            // How many of the twelve are taken, so the limit is never a surprise (canvas «Main»).
+            count = if (state.pinned.isNotEmpty() && state.canEdit) {
+                stringResource(R.string.v5_newtab_pinned_count, state.pinned.size, EssentialsRules.MAX_ENTRIES)
+            } else {
+                null
+            },
         )
         val note = V5NewTabRules.pinnedNote(pinnedCount = state.pinned.size, canAdd = state.canAdd, editing = editing)
         // A fresh profile shows empty slots instead of the note.
@@ -541,7 +566,7 @@ private fun AddTile(onAdd: () -> Unit, modifier: Modifier, inviting: Boolean = f
         onClick = onAdd,
         onClickLabel = null,
         modifier = modifier.testTag(V5NewTabTestTags.Add),
-        labelColor = if (inviting) colors.accent else colors.label,
+        labelColor = if (inviting) colors.accent else colors.labelSecondary,
     ) {
         Box(
             Modifier
@@ -570,7 +595,7 @@ private fun TileCell(
     modifier: Modifier,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
-    labelColor: Color = V5Theme.colors.label,
+    labelColor: Color = V5Theme.colors.labelSecondary,
     tile: @Composable BoxScope.() -> Unit,
 ) {
     Column(

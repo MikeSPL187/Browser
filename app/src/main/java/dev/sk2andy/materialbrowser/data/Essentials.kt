@@ -25,8 +25,17 @@ data class EssentialCandidate(
 
 /** The pure rules behind [dev.sk2andy.materialbrowser.browser.EssentialsController]. */
 object EssentialsRules {
-    /** Four rows of four: the grid stays within the thumb zone of a phone. */
-    const val MAX_ENTRIES = 16
+    /**
+     * Three rows of four (system-v5.md 5.2, canvas «Main»): the grid stays within the thumb zone of
+     * a phone. Adding stops here.
+     */
+    const val MAX_ENTRIES = 12
+
+    /**
+     * What is kept: the limit was 16 before. A profile that pinned more than [MAX_ENTRIES] keeps all
+     * of them and adds again once it unpins below the limit; nothing it pinned is dropped.
+     */
+    const val KEPT_ENTRIES = 16
 
     /** The first run copies at most three rows of the old new tab favorites. */
     const val MIGRATED_ENTRY_LIMIT = 12
@@ -38,13 +47,13 @@ object EssentialsRules {
         data object Unsupported : AddResult
     }
 
-    /** Drops pages that are not http(s), repeats and anything past [MAX_ENTRIES]. */
+    /** Drops pages that are not http(s), repeats and anything past [KEPT_ENTRIES]. */
     fun normalize(entries: List<EssentialEntry>): List<EssentialEntry> =
         entries.asSequence()
             .filter { entry -> CanonicalWebUrl.key(entry.url) != null }
             .distinctBy(EssentialEntry::id)
             .map { entry -> entry.copy(url = entry.url.trim(), title = entry.title.trim()) }
-            .take(MAX_ENTRIES)
+            .take(KEPT_ENTRIES)
             .toList()
 
     fun add(entries: List<EssentialEntry>, url: String, title: String): AddResult {
@@ -57,9 +66,12 @@ object EssentialsRules {
         }
     }
 
-    /** Puts a removed entry back where it was, unless the page came back some other way. */
+    /**
+     * Puts a removed entry back where it was, unless the page came back some other way: undoing an
+     * unpin returns what was there, even past [MAX_ENTRIES].
+     */
     fun restore(entries: List<EssentialEntry>, entry: EssentialEntry, index: Int): List<EssentialEntry>? {
-        if (entries.any { it.id == entry.id } || entries.size >= MAX_ENTRIES) return null
+        if (entries.any { it.id == entry.id } || entries.size >= KEPT_ENTRIES) return null
         return entries.toMutableList().apply { add(index.coerceIn(0, size), entry) }
     }
 
