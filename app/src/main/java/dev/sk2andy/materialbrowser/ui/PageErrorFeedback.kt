@@ -5,14 +5,19 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +30,15 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
+import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
+import dev.sk2andy.materialbrowser.ui.v5.V5RowIcon
+import dev.sk2andy.materialbrowser.ui.v5.V5WaveGlyph
 
 internal object PageErrorFeedbackTestTags {
     const val Page = "page_error_page"
@@ -32,6 +46,8 @@ internal object PageErrorFeedbackTestTags {
     const val RetryProgress = "page_error_retry_progress"
     const val Offline = "page_error_offline"
     const val NetworkSettings = "page_error_network_settings"
+    const val CheckWifi = "page_error_check_wifi"
+    const val CheckCellular = "page_error_check_cellular"
     const val Search = "page_error_search"
 }
 
@@ -46,11 +62,18 @@ internal fun PageErrorFeedback(
     /** Searches the typed words instead: a name that does not exist is rarely meant as an address. */
     onSearch: ((String) -> Unit)? = null,
 ) {
+    // Under v5 the page fades on V5Motion's springs, and only fades quickly with system animations off.
+    val v5 = rememberDrawsV5()
+    val fade: FiniteAnimationSpec<Float> = when {
+        !v5 -> VolaMotion.effects()
+        V5Motion.animationsEnabled -> V5Motion.effects.spec()
+        else -> V5Motion.reducedFade()
+    }
     AnimatedVisibility(
         visible = state !is PageErrorFeedbackState.Hidden,
         modifier = modifier,
-        enter = fadeIn(VolaMotion.effects()),
-        exit = fadeOut(VolaMotion.effects()),
+        enter = fadeIn(fade),
+        exit = fadeOut(fade),
     ) {
         Box(
             modifier = Modifier
@@ -62,7 +85,7 @@ internal fun PageErrorFeedback(
                 targetState = state,
                 contentKey = { it::class },
                 transitionSpec = {
-                    fadeIn(VolaMotion.effects()) togetherWith fadeOut(VolaMotion.effects())
+                    fadeIn(fade) togetherWith fadeOut(fade)
                 },
                 label = "page problem",
                 modifier = Modifier.fillMaxSize(),
@@ -96,7 +119,7 @@ internal fun PageErrorFeedback(
                         message = stringResource(R.string.page_error_unreachable_message, host),
                         onRetry = onRetry,
                     )
-                    is PageErrorFeedbackState.Offline -> OfflinePage(onRetry = onRetry)
+                    is PageErrorFeedbackState.Offline -> OfflinePage(host = host, onRetry = onRetry)
                     PageErrorFeedbackState.Retrying -> RetryingPage()
                     PageErrorFeedbackState.Hidden -> Unit
                 }
@@ -174,25 +197,75 @@ private fun InsecureConnectionPage(host: String, onBack: (() -> Unit)?, onRetry:
     }
 }
 
-/** No connection (board W-Offline): the page reloads by itself when the connection is back. */
+/**
+ * No connection (board W-Offline): the page reloads by itself when the connection is back. Under
+ * v5 (canvas «Error») the glyph waits inside rings, the sentence names the site, and «What to check»
+ * says how Wi-Fi and the mobile network stand, each opening its system panel.
+ */
 @Composable
-private fun OfflinePage(onRetry: () -> Unit) {
+private fun OfflinePage(host: String, onRetry: () -> Unit) {
     val context = LocalContext.current
+    val v5 = rememberDrawsV5()
     VolaStatePage(
         title = stringResource(R.string.page_error_offline_title),
-        message = stringResource(R.string.page_error_offline_body),
-        icon = { VolaStatePageIcon(icon = VolaIcons.WifiOff) },
+        message = if (v5 && host.isNotBlank()) {
+            stringResource(R.string.page_error_offline_body_host, host)
+        } else {
+            stringResource(R.string.page_error_offline_body)
+        },
+        icon = { VolaStatePageWaves(icon = VolaIcons.WifiOff) },
         modifier = Modifier.testTag(PageErrorFeedbackTestTags.Offline),
         announce = true,
+        details = if (v5) {
+            { NetworkChecksGroup(rememberNetworkChecks(), onOpen = { panel -> context.openPanel(panel) }) }
+        } else {
+            null
+        },
     ) {
         RetryButton(onRetry = onRetry)
-        VolaStatePageSecondaryButton(
-            text = stringResource(R.string.page_error_network_settings),
-            onClick = { context.openNetworkSettings() },
-            modifier = Modifier.testTag(PageErrorFeedbackTestTags.NetworkSettings),
+        // Under v5 the rows of «What to check» open the system panels themselves.
+        if (!v5) {
+            VolaStatePageSecondaryButton(
+                text = stringResource(R.string.page_error_network_settings),
+                onClick = { context.openPanel(Settings.Panel.ACTION_INTERNET_CONNECTIVITY) },
+                modifier = Modifier.testTag(PageErrorFeedbackTestTags.NetworkSettings),
+            )
+        }
+    }
+}
+
+/** «What to check»: Wi-Fi and the mobile network with how each stands, as v5 list rows. */
+@Composable
+private fun NetworkChecksGroup(checks: NetworkChecks, onOpen: (String) -> Unit) {
+    V5ListGroup(
+        modifier = Modifier.padding(top = V5Spacing.space6),
+        header = stringResource(R.string.page_error_check_title),
+    ) {
+        V5ListRow(
+            title = stringResource(R.string.network_wifi),
+            icon = V5RowIcon(VolaIcons.Wifi, tile = V5Tile.Blue),
+            value = networkLinkText(checks.wifi),
+            onClick = { onOpen(Settings.Panel.ACTION_WIFI) },
+            modifier = Modifier.testTag(PageErrorFeedbackTestTags.CheckWifi),
+        )
+        V5ListRow(
+            title = stringResource(R.string.network_cellular),
+            icon = V5RowIcon(VolaIcons.SignalCellular, tile = V5Tile.Green),
+            value = networkLinkText(checks.cellular),
+            onClick = { onOpen(Settings.Panel.ACTION_INTERNET_CONNECTIVITY) },
+            modifier = Modifier.testTag(PageErrorFeedbackTestTags.CheckCellular),
         )
     }
 }
+
+@Composable
+private fun networkLinkText(link: NetworkLink): String = stringResource(
+    when (link) {
+        NetworkLink.Connected -> R.string.network_link_connected
+        NetworkLink.NoInternet -> R.string.network_link_no_internet
+        NetworkLink.NotConnected -> R.string.network_link_not_connected
+    },
+)
 
 @Composable
 private fun RetryButton(onRetry: () -> Unit) {
@@ -215,10 +288,10 @@ private fun RetryingPage() {
     )
 }
 
-/** The system's internet panel over the browser; it closes back to the page. */
-private fun Context.openNetworkSettings() {
+/** A system settings panel over the browser (internet or Wi-Fi); it closes back to the page. */
+private fun Context.openPanel(action: String) {
     runCatching {
-        startActivity(Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY))
+        startActivity(Intent(action))
     }
 }
 
@@ -265,5 +338,23 @@ private fun UnknownHostSearchPagePreview() {
             url = "https://file.txt/",
             onSearch = {},
         )
+    }
+}
+
+/** The v5 parts of «No connection» (canvas «Error»): the glyph in its rings and «What to check». */
+@VolaPreviews
+@Composable
+private fun V5OfflineChecksPreview() {
+    VolaV5Theme(dark = isSystemInDarkTheme()) {
+        Column(
+            Modifier.background(V5Theme.colors.background).padding(vertical = V5Spacing.space6),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            V5WaveGlyph(VolaIcons.WifiOff)
+            NetworkChecksGroup(
+                NetworkChecks(wifi = NetworkLink.NotConnected, cellular = NetworkLink.NoInternet),
+                onOpen = {},
+            )
+        }
     }
 }
