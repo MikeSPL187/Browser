@@ -2185,6 +2185,11 @@
     <string name="v5_profile_edit_action">Edit</string>
     <string name="v5_profile_create">Create</string>
     <string name="v5_profile_delete">Delete profile</string>
+    <string name="v5_profile_own_title">A profile keeps its own</string>
+    <string name="v5_profile_own_cookies">Cookies and sign-ins</string>
+    <string name="v5_profile_own_history">History</string>
+    <string name="v5_profile_own_groups">Tab groups</string>
+    <string name="v5_profile_own_pinned">Pinned sites</string>
     <string name="v5_profile_delete_message">Its tabs move to “%1$s”, out of their groups. Deleted with the profile: its groups, pinned sites, favorites, hidden page items, site settings and history.</string>
     <string name="v5_profile_delete_message_storage">Its tabs move to “%1$s”, out of their groups. Deleted with the profile: its groups, pinned sites, favorites, hidden page items, site settings, history, cookies and sign-ins.</string>
     <string name="v5_profile_storage_title">Switch the profile’s storage?</string>

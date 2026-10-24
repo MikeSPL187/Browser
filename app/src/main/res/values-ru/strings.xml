@@ -2283,6 +2283,11 @@
     <string name="v5_profile_edit_action">Изменить</string>
     <string name="v5_profile_create">Создать</string>
     <string name="v5_profile_delete">Удалить профиль</string>
+    <string name="v5_profile_own_title">У профиля будет своё</string>
+    <string name="v5_profile_own_cookies">Cookie и входы</string>
+    <string name="v5_profile_own_history">История</string>
+    <string name="v5_profile_own_groups">Группы вкладок</string>
+    <string name="v5_profile_own_pinned">Закреплённые сайты</string>
     <string name="v5_profile_delete_message">Вкладки перейдут в профиль «%1$s», без групп. Вместе с профилем удалятся его группы, закреплённые сайты, избранное, скрытое на сайтах, настройки сайтов и история.</string>
     <string name="v5_profile_delete_message_storage">Вкладки перейдут в профиль «%1$s», без групп. Вместе с профилем удалятся его группы, закреплённые сайты, избранное, скрытое на сайтах, настройки сайтов, история, cookie и входы.</string>
     <string name="v5_profile_storage_title">Сменить хранилище профиля?</string>

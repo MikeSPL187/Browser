@@ -177,6 +177,10 @@ object V5Sizes {
     /** The plate of a gesture's hand on the two-gesture sheet (canvas screen «п3»). */
     val firstRunGesture: Dp = 52.dp
 
+    // A profile's editor (canvas «NewProfile»): the profile as it will look, white on its accent.
+    val profileAvatar: Dp = 88.dp
+    val profileAvatarIcon: Dp = 40.dp
+
     // An empty list (canvas «EmptyHistory»): the list's glyph on a card over a tilted accent plate.
     val emptyArt: Dp = 120.dp
     val emptyArtCard: Dp = 88.dp
