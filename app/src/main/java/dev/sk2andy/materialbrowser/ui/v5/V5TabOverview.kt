@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
@@ -42,6 +41,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +75,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5ControlColors
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Materials
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -470,14 +475,25 @@ private fun TabCard(
                 .fillMaxWidth()
                 .aspectRatio(V5Sizes.OVERVIEW_CARD_RATIO)
                 .onGloballyPositioned { onBounds(card.id, Rect(it.positionInRoot(), it.size.toSize())) }
+                // The current tab wears the accent ring outside its card, past a gap of the background
+                // (canvas «Overview»), so the page picture keeps its whole size; a group's color frames
+                // the whole group (V5GroupFrames).
+                .drawBehind {
+                    if (!card.selected) return@drawBehind
+                    val ring = V5Sizes.overviewRing.toPx()
+                    val inset = V5Sizes.overviewRingGap.toPx() + ring / 2
+                    translate(-inset, -inset) {
+                        drawOutline(
+                            shape.createOutline(Size(size.width + inset * 2, size.height + inset * 2), layoutDirection, this),
+                            color = colors.accent,
+                            style = Stroke(width = ring),
+                        )
+                    }
+                }
                 // The page's card rises above the others (canvas «Overview»): e2, the rest e1.
                 .v5Elevation(if (card.selected) V5Elevation.e2 else V5Elevation.e1, shape)
                 .clip(shape)
-                .background(colors.surfaceHighest)
-                .then(
-                    // A group's color frames the whole group (V5GroupFrames); a card keeps only the accent ring.
-                    if (card.selected) Modifier.border(V5Sizes.overviewRing, colors.accent, shape) else Modifier,
-                ),
+                .background(colors.surfaceHighest),
         ) {
             if (card.preview != null) {
                 Image(
@@ -504,14 +520,14 @@ private fun TabCard(
                     Modifier
                         .size(V5Sizes.overviewClosePlate)
                         .clip(V5Theme.shapes.full)
-                        .background(V5Materials.thin.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false)),
+                        .background(V5ControlColors.cardClosePlate),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         VolaIcons.Close,
                         // Each card's «×» names its tab, as «Unpin %1$s» on the new tab page does (О-4).
                         contentDescription = stringResource(R.string.v5_overview_close_named, card.title),
-                        tint = colors.label,
+                        tint = V5ControlColors.cardCloseGlyph,
                         modifier = Modifier.size(V5Sizes.overviewFavicon),
                     )
                 }
@@ -574,8 +590,17 @@ private fun Toolbar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onNewTab != null) {
-            IconButton(onClick = onNewTab, modifier = Modifier.testTag(V5OverviewTestTags.NewTab)) {
-                Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.accent)
+            // «+» on a round plate, as the bar's round buttons (canvas «Overview»).
+            Box(
+                Modifier
+                    .size(V5Sizes.barCapsule)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.fill)
+                    .clickable(role = Role.Button, onClick = onNewTab)
+                    .testTag(V5OverviewTestTags.NewTab),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(VolaIcons.Add, contentDescription = stringResource(R.string.cd_new_tab), tint = colors.label)
             }
         } else {
             // The bar keeps its layout: the chip stays centered.
@@ -597,17 +622,28 @@ private fun Toolbar(
                     Modifier
                         .clip(V5Theme.shapes.full)
                         .background(colors.fill)
-                        .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
-                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+                        .padding(start = V5Spacing.space1, end = V5Spacing.space3, top = V5Spacing.space1, bottom = V5Spacing.space1),
+                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (profileIcon != null) {
-                        Icon(
-                            profileIcon,
-                            contentDescription = null,
-                            tint = colors.accent,
-                            modifier = Modifier.size(V5Sizes.iconSmall),
-                        )
+                    // The profile's avatar: its symbol, or its first letter, white on its accent.
+                    Box(
+                        Modifier
+                            .size(V5Sizes.overviewAvatar)
+                            .clip(V5Theme.shapes.full)
+                            .background(colors.accentFill),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (profileIcon != null) {
+                            Icon(
+                                profileIcon,
+                                contentDescription = null,
+                                tint = colors.onAccentFill,
+                                modifier = Modifier.size(V5Sizes.overviewFavicon),
+                            )
+                        } else {
+                            Text(V5NewTabRules.letter(profileLabel), style = V5Theme.type.caption, color = colors.onAccentFill)
+                        }
                     }
                     Text(
                         profileLabel,
