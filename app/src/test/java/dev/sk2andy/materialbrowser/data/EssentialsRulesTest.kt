@@ -17,7 +17,8 @@ class EssentialsRulesTest {
 
         val normalized = EssentialsRules.normalize(entries)
 
-        assertEquals(EssentialsRules.MAX_ENTRIES, normalized.size)
+        // Pins made under the old limit of 16 are all kept; adding stops at MAX_ENTRIES.
+        assertEquals(EssentialsRules.KEPT_ENTRIES, normalized.size)
         assertEquals("https://mail.example.com/", normalized.first().url)
         assertEquals(normalized.map { it.id }.distinct(), normalized.map { it.id })
     }
@@ -53,6 +54,18 @@ class EssentialsRulesTest {
         assertEquals(listOf(a, b, c), EssentialsRules.restore(listOf(a, c), b, 1))
         assertEquals(listOf(a, c, b), EssentialsRules.restore(listOf(a, c), b, 9))
         assertNull(EssentialsRules.restore(listOf(a, b), b, 0))
+    }
+
+    @Test
+    fun `pins made under the old limit stay, and adding waits until there are fewer than twelve`() {
+        val old = (1..14).map { entry("https://old$it.example.com/") }
+
+        assertEquals(old, EssentialsRules.normalize(old))
+        assertEquals(EssentialsRules.AddResult.Full, EssentialsRules.add(old, "https://new.example.com/", ""))
+        // Undoing an unpin brings the page back even above twelve.
+        assertEquals(old, EssentialsRules.restore(old.drop(1), old.first(), 0))
+        val eleven = old.take(11)
+        assert(EssentialsRules.add(eleven, "https://new.example.com/", "") is EssentialsRules.AddResult.Added)
     }
 
     @Test

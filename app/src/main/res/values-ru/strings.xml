@@ -2160,13 +2160,14 @@
     <string name="v5_report_clear">Очистить данные отчёта</string>
     <string name="v5_report_clear_body">Данные отчёта удаляются с этого устройства. Защита продолжает работать.</string>
     <string name="v5_newtab_pinned">Закреплённые</string>
+    <string name="v5_newtab_pinned_count">%1$d из %2$d</string>
     <string name="v5_newtab_edit">Изменить</string>
     <string name="v5_newtab_done">Готово</string>
     <string name="v5_newtab_add">Добавить</string>
     <string name="v5_newtab_remove_pinned">Открепить %1$s</string>
     <string name="v5_newtab_report_more">Подробнее</string>
     <string name="v5_newtab_more">Ещё</string>
-    <string name="v5_newtab_recent">Недавние вкладки</string>
+    <string name="v5_newtab_recent">Продолжить</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
     <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
     <string name="v5_fresh_title">Чистый лист</string>
@@ -2183,7 +2184,7 @@
     <string name="v5_newtab_add_favorites">Избранное</string>
     <string name="v5_newtab_add_history">История</string>
     <string name="v5_newtab_pinned_empty">Закрепите сайты, которые открываете чаще всего: они будут ждать здесь в каждой новой вкладке.</string>
-    <string name="v5_newtab_pinned_full">Поместится не больше 16 сайтов. Открепите сайт, чтобы добавить другой.</string>
+    <string name="v5_newtab_pinned_full">Поместится не больше 12 сайтов. Открепите сайт, чтобы добавить другой.</string>
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_private_title">Частный доступ</string>

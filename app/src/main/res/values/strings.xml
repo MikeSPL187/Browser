@@ -2068,13 +2068,14 @@
     <string name="v5_report_clear">Clear report data</string>
     <string name="v5_report_clear_body">The report\'s counts are deleted from this device. Protection keeps working.</string>
     <string name="v5_newtab_pinned">Pinned</string>
+    <string name="v5_newtab_pinned_count">%1$d of %2$d</string>
     <string name="v5_newtab_edit">Edit</string>
     <string name="v5_newtab_done">Done</string>
     <string name="v5_newtab_add">Add</string>
     <string name="v5_newtab_remove_pinned">Unpin %1$s</string>
     <string name="v5_newtab_report_more">Details</string>
     <string name="v5_newtab_more">More</string>
-    <string name="v5_newtab_recent">Recent tabs</string>
+    <string name="v5_newtab_recent">Continue</string>
     <string name="v5_newtab_add_title">Pin a site</string>
     <string name="v5_newtab_add_empty">Sites from this profile’s open tabs, favorites and history show up here.</string>
     <string name="v5_fresh_title">A clean slate</string>
@@ -2091,7 +2092,7 @@
     <string name="v5_newtab_add_favorites">Favorites</string>
     <string name="v5_newtab_add_history">History</string>
     <string name="v5_newtab_pinned_empty">Pin the sites you open most: they wait here in every new tab.</string>
-    <string name="v5_newtab_pinned_full">16 sites is as many as fit. Unpin one to add another.</string>
+    <string name="v5_newtab_pinned_full">12 sites is as many as fit. Unpin one to add another.</string>
     <string name="v5_newtab_move_earlier">Move earlier</string>
     <string name="v5_newtab_move_later">Move later</string>
     <string name="v5_private_title">Private browsing</string>
