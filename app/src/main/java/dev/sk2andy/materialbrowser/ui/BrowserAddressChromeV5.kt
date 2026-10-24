@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.TextFieldValue
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
@@ -24,10 +26,12 @@ import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTintSetting
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
@@ -96,6 +100,8 @@ internal fun BrowserV5Bar(
         ),
         blockedCount = tab.blockedCount,
         readerAvailable = controller.selectedReaderAvailable && ReaderStudioSessionRules.isSupportedSource(tab.url),
+        hidesItems = controller.hiddenDistractions.hiddenCount(tab) > 0,
+        isPrivate = tab.isIncognito,
     )
     var menuExpanded by remember { mutableStateOf(false) }
     // V22: what is downloading, as a ring around «•••» and a row at the top of the menu.
@@ -109,6 +115,8 @@ internal fun BrowserV5Bar(
     VolaV5Theme(dark = darkShell, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         val chrome = V5Theme.colors.chrome
         val label = V5Theme.colors.label
+        val accentArgb = V5Theme.colors.accent.toArgb()
+        val view = LocalView.current
         val tint = remember(siteColor, chrome, label) { V5SiteTints.of(siteColor, chrome, label) }
         Box(modifier) {
             V5BottomBar(
@@ -121,6 +129,10 @@ internal fun BrowserV5Bar(
                 onShield = actions.onPrivacyXRay,
                 onReloadOrStop = { if (tab.isLoading) controller.stopLoading() else controller.reload() },
                 onRead = actions.onReaderStudio,
+                // The page outlines in the profile's accent, as from the menu.
+                onHidden = {
+                    if (!controller.hiddenDistractions.startPicking(tab, accentArgb)) view.performV5Haptic(V5Haptic.Reject)
+                },
                 onTabs = onTabs,
                 onBarPositioned = onBarPositioned,
                 accessory = {

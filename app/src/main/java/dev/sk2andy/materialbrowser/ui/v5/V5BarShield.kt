@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -48,6 +49,7 @@ import kotlinx.coroutines.delay
  * connection's symbol and the number blocked on the page, in the bar's quiet ink, with no plate
  * of its own. A site using the camera, the microphone or the location gets an accent dot. A tap
  * opens the site's protection. At the largest font the number goes, the shield stays (section 8).
+ * In a private tab the mask and «Private» stand in its place (section 1.4).
  *
  * When the number grows the shield gives a short spring pulse, batched as before
  * ([PrivacyXRayMotionRules]); without system animations it does not move.
@@ -61,6 +63,7 @@ internal fun V5BarShield(
     ink: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    privateTab: Boolean = false,
 ) {
     val pulse = remember(tabId) { Animatable(1f) }
     val currentCount by rememberUpdatedState(blockedCount)
@@ -94,8 +97,13 @@ internal fun V5BarShield(
     )
     val site = stringResource(R.string.site_info_badge_cd, connection, blockedCount)
     val activity = stringResource(R.string.permission_radar_activity_cd)
-    val description = if (activityVisible) "$site. $activity" else site
-    val showsCount = blockedCount > 0 && LocalDensity.current.fontScale < COUNT_MAX_FONT_SCALE
+    val privateLabel = stringResource(R.string.v5_bar_private)
+    val description = listOfNotNull(
+        privateLabel.takeIf { privateTab },
+        site,
+        activity.takeIf { activityVisible },
+    ).joinToString(". ")
+    val showsCount = !privateTab && blockedCount > 0 && LocalDensity.current.fontScale < COUNT_MAX_FONT_SCALE
     Box(
         modifier
             .heightIn(min = V5Sizes.barCapsule)
@@ -116,16 +124,25 @@ internal fun V5BarShield(
             horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
         ) {
             Box {
-                Icon(
-                    when (connectionKind) {
-                        SiteConnectionKind.Https -> VolaIcons.ShieldLock
-                        SiteConnectionKind.Http -> VolaIcons.GppMaybe
-                        SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> VolaIcons.Info
-                    },
-                    contentDescription = null,
-                    tint = ink,
-                    modifier = Modifier.size(V5Sizes.iconSmall),
-                )
+                if (privateTab) {
+                    Icon(
+                        painterResource(R.drawable.ic_incognito_filled),
+                        contentDescription = null,
+                        tint = ink,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                } else {
+                    Icon(
+                        when (connectionKind) {
+                            SiteConnectionKind.Https -> VolaIcons.ShieldLock
+                            SiteConnectionKind.Http -> VolaIcons.GppMaybe
+                            SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> VolaIcons.Info
+                        },
+                        contentDescription = null,
+                        tint = ink,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                }
                 if (activityVisible) {
                     Box(
                         Modifier
@@ -136,6 +153,9 @@ internal fun V5BarShield(
                             .background(V5Theme.colors.accentFill),
                     )
                 }
+            }
+            if (privateTab) {
+                Text(privateLabel, style = V5Theme.type.caption, color = ink, maxLines = 1)
             }
             if (showsCount) {
                 Text(

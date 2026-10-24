@@ -188,3 +188,21 @@ private fun V5BarShieldHttpLargeFontPreview() {
         BarPreview(previewState("polar-notes.ru").copy(connectionKind = SiteConnectionKind.Http))
     }
 }
+
+/** Something hidden on the page: the crossed-out eye beside «Read», the domain still in the middle. */
+@Preview(name = "v5 bar · hidden items and «Read»", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarHiddenItemsPreview() {
+    VolaV5Theme(dark = false) {
+        BarPreview(previewState("polar-notes.ru", readable = true).copy(hidesItems = true))
+    }
+}
+
+/** A private tab: the mask and «Private» in the shield's place (system-v5.md 1.4). */
+@Preview(name = "v5 bar · private page", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarPrivatePagePreview() {
+    VolaV5Theme(dark = true, privateBrowsing = true) {
+        BarPreview(previewState("polar-notes.ru").copy(isPrivate = true))
+    }
+}
