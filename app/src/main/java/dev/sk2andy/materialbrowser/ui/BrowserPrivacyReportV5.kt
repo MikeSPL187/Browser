@@ -38,7 +38,6 @@ internal fun BrowserPrivacyReportV5(
             onWindowChange = { windowDays = it },
             onClear = protection.onClear,
             onDismiss = onDismiss,
-            onHideCard = protection.onHideCard,
             hasData = hasData,
         )
     }

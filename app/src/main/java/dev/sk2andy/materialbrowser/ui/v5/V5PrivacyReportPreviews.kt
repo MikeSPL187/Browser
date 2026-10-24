@@ -5,9 +5,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.data.ProtectionSiteTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.data.ProtectionTracker
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 privacy report as canvas screen «л1» (30 days), in light and dark, and an empty week. */
+/* The v5 privacy report as canvas screen «Report»: a week and 30 days, light and dark, an accent, the largest font, an empty week. */
 
 private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
@@ -29,6 +30,13 @@ private val PreviewSummary = ProtectionSummary(
     lastEpochDay = 29,
 )
 
+/** The canvas week: Saturday to Friday, 1 284 blocks. */
+private val PreviewWeek = PreviewSummary.copy(
+    total = 1284,
+    daily = listOf(152, 118, 196, 204, 171, 233, 210),
+    lastEpochDay = 20_749,
+)
+
 private val EmptyWeek = ProtectionSummary(
     total = 0,
     siteCount = 0,
@@ -42,8 +50,14 @@ private val EmptyWeek = ProtectionSummary(
 )
 
 @Composable
-private fun ReportPreview(dark: Boolean, summary: ProtectionSummary, windowDays: Int, hasData: Boolean = summary.total > 0) {
-    VolaV5Theme(dark = dark) {
+private fun ReportPreview(
+    dark: Boolean,
+    summary: ProtectionSummary,
+    windowDays: Int,
+    hasData: Boolean = summary.total > 0,
+    accent: V5Accent = V5Accent.Blue,
+) {
+    VolaV5Theme(dark = dark, accent = accent) {
         V5PrivacyReport(
             visible = true,
             summary = summary,
@@ -51,7 +65,6 @@ private fun ReportPreview(dark: Boolean, summary: ProtectionSummary, windowDays:
             onWindowChange = {},
             onClear = {},
             onDismiss = {},
-            onHideCard = {},
             hasData = hasData,
         )
     }
@@ -80,4 +93,22 @@ private fun V5PrivacyReportEmptyPreview() {
 @Composable
 private fun V5PrivacyReportEmptyWeekOlderDataPreview() {
     ReportPreview(dark = false, summary = EmptyWeek, windowDays = 7, hasData = true)
+}
+
+@Preview(name = "Privacy report · week · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PrivacyReportWeekLightPreview() {
+    ReportPreview(dark = false, summary = PreviewWeek, windowDays = 7)
+}
+
+@Preview(name = "Privacy report · week · dark · green", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PrivacyReportWeekAccentPreview() {
+    ReportPreview(dark = true, summary = PreviewWeek, windowDays = 7, accent = V5Accent.Green)
+}
+
+@Preview(name = "Privacy report · week · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5PrivacyReportWeekLargeFontPreview() {
+    ReportPreview(dark = false, summary = PreviewWeek, windowDays = 7)
 }

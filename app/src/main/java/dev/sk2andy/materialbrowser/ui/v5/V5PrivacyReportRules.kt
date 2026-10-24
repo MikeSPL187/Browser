@@ -4,6 +4,9 @@ import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.ProtectionSiteTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.data.ProtectionTracker
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 /*
  * What the v5 privacy report (V18, canvas screen «л1», system-v5.md section 12) shows of a summary:
@@ -50,6 +53,30 @@ object V5PrivacyReportRules {
     /** The site that tried to load the most different trackers, if any. */
     fun busiestSite(summary: ProtectionSummary): ProtectionSiteTrackers? =
         summary.sitesWithMostTrackers.firstOrNull { it.trackerCount > 0 }
+
+    /**
+     * The short weekday under each bar, oldest first and ending on [lastEpochDay] (canvas «Report»).
+     * Only a week has room for them; a longer period gets none.
+     */
+    fun dayLabels(days: Int, lastEpochDay: Long, locale: Locale): List<String> {
+        if (days <= 0 || days > ProtectionReportRules.DAYS) return emptyList()
+        return (days - 1 downTo 0).map { back ->
+            LocalDate.ofEpochDay(lastEpochDay - back).dayOfWeek
+                .getDisplayName(TextStyle.SHORT_STANDALONE, locale)
+                .trimEnd('.')
+                .replaceFirstChar { it.titlecase(locale) }
+        }
+    }
+
+    /**
+     * What the total counts, without the number itself, for the line under the big number: the
+     * period's plural phrase stays the one source of its words (and their grammar for [count]).
+     */
+    fun wordsAround(line: String, count: String): String {
+        val at = line.indexOf(count)
+        if (at < 0) return line
+        return (line.substring(0, at) + line.substring(at + count.length)).trim().replace(Regex("\\s+"), " ")
+    }
 
     /** The chosen period, or the week when [windowDays] is not one of [WINDOWS]. */
     fun windowIndex(windowDays: Int): Int = WINDOWS.indexOf(windowDays).coerceAtLeast(0)

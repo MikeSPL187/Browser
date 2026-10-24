@@ -6,6 +6,8 @@ import dev.sk2andy.materialbrowser.data.ProtectionTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
+import java.util.Locale
 
 class V5PrivacyReportRulesTest {
     private fun summary(
@@ -62,5 +64,24 @@ class V5PrivacyReportRulesTest {
         val week = listOf(2, 9, 0, 4, 6, 3, 4)
         assertEquals(V5PrivacyReportRules.ChartFacts(today = 4, most = 9, average = 4), V5PrivacyReportRules.chartFacts(week))
         assertEquals(V5PrivacyReportRules.ChartFacts(today = 0, most = 0, average = 0), V5PrivacyReportRules.chartFacts(emptyList()))
+    }
+
+    @Test
+    fun `a week names its days ending today, a month names none`() {
+        // 2026-10-23 is a Friday.
+        val friday = LocalDate.of(2026, 10, 23).toEpochDay()
+        assertEquals(
+            listOf("Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"),
+            V5PrivacyReportRules.dayLabels(7, friday, Locale.ENGLISH),
+        )
+        assertEquals("Пт", V5PrivacyReportRules.dayLabels(7, friday, Locale.forLanguageTag("ru")).last())
+        assertEquals(emptyList<String>(), V5PrivacyReportRules.dayLabels(30, friday, Locale.ENGLISH))
+    }
+
+    @Test
+    fun `the words under the big number are the phrase without it`() {
+        assertEquals("trackers and ads blocked", V5PrivacyReportRules.wordsAround("1,284 trackers and ads blocked", "1,284"))
+        assertEquals("блокировки трекеров и рекламы", V5PrivacyReportRules.wordsAround("1 284 блокировки трекеров и рекламы", "1 284"))
+        assertEquals("no number here", V5PrivacyReportRules.wordsAround("no number here", "7"))
     }
 }
