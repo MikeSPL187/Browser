@@ -42,7 +42,6 @@ class V5PageMenuInstrumentedTest {
         isPinned = false,
         desktopView = false,
         siteMuted = false,
-        canCloseTab = true,
     )
 
     private val actions = V5PageMenuActions(
@@ -56,9 +55,6 @@ class V5PageMenuInstrumentedTest {
         onTogglePinned = { calls += "pin" },
         onDesktopViewChange = { calls += "desktop $it" },
         onSiteMutedChange = { calls += "mute $it" },
-        onNewTab = { calls += "new tab" },
-        onNewPrivateTab = { calls += "new private tab" },
-        onCloseTab = { calls += "close tab" },
         onFavorites = { calls += "favorites" },
         onHistory = { calls += "history" },
         onDownloads = { calls += "downloads" },
@@ -67,6 +63,7 @@ class V5PageMenuInstrumentedTest {
         onOpenInApp = { calls += "open in app" },
         onHideDistractions = { calls += "hide distractions" },
         onShowHidden = { calls += "show hidden" },
+        onPasswords = { calls += "passwords" },
     )
 
     private fun show(state: V5PageMenuState) {
@@ -89,15 +86,19 @@ class V5PageMenuInstrumentedTest {
             R.string.action_find_in_page,
             R.string.v5_distractions_hide,
             R.string.v5_distractions_show_all,
-            R.string.v5_menu_new_private_tab,
+            R.string.v5_menu_downloads,
         ).forEach { composeRule.onNodeWithText(text(it)).assertExists() }
+        // New and closed tabs live in the overview; the menu stays one layer (canvas «Menu»).
+        listOf(R.string.cd_new_tab, R.string.v5_menu_new_private_tab, R.string.cd_close_tab)
+            .forEach { composeRule.onNodeWithText(text(it)).assertDoesNotExist() }
         // The rarer actions wait on «More» (PM-05).
         composeRule.onNodeWithTag(V5PageMenuTestTags.OpenInApp).assertDoesNotExist()
         composeRule.onNodeWithTag(V5PageMenuTestTags.DuplicateTab).assertDoesNotExist()
         composeRule.onNodeWithTag(V5PageMenuTestTags.Forward).assertIsNotEnabled()
 
-        composeRule.onNodeWithText(text(R.string.action_history)).performScrollTo().performClick()
-        assertEquals(listOf("dismiss", "history"), calls)
+        composeRule.onNodeWithTag(V5PageMenuTestTags.History).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Passwords).performScrollTo().performClick()
+        assertEquals(listOf("dismiss", "history", "dismiss", "passwords"), calls)
     }
 
     @Test
@@ -128,21 +129,20 @@ class V5PageMenuInstrumentedTest {
     }
 
     @Test
-    fun whileSomethingDownloadsDownloadsIsOneRowOnTop() {
+    fun downloadsIsOneRowWithItsProgress() {
         show(page.copy(downloads = V5DownloadRingState.Progress(count = 1, fraction = 0.5f)))
 
         composeRule.onAllNodesWithText(text(R.string.v5_menu_downloads)).assertCountEquals(1)
-        composeRule.onNodeWithText(text(R.string.v5_menu_downloads)).performClick()
+        composeRule.onNodeWithText(text(R.string.v5_menu_downloads)).performScrollTo().performClick()
         assertEquals(listOf("dismiss", "downloads"), calls)
     }
 
     @Test
-    fun aPrivateTabSaysWhyFavoriteIsOffAndOffersNoPrivateTabWhereItCannot() {
-        show(page.copy(canFavorite = false, favoriteOffInPrivate = true, canNewPrivateTab = false))
+    fun aPrivateTabSaysWhyFavoriteIsOff() {
+        show(page.copy(canFavorite = false, favoriteOffInPrivate = true))
 
         composeRule.onNodeWithTag(V5PageMenuTestTags.Favorite).assertIsNotEnabled()
         composeRule.onNodeWithText(text(R.string.v5_menu_favorite_private)).assertExists()
-        composeRule.onNodeWithText(text(R.string.v5_menu_new_private_tab)).assertDoesNotExist()
     }
 
     @Test
@@ -158,6 +158,9 @@ class V5PageMenuInstrumentedTest {
         )
 
         composeRule.onNodeWithTag(V5PageMenuTestTags.Favorite).performClick()
+        // The extensions' commands wait in «More».
+        composeRule.onNodeWithTag(V5PageMenuTestTags.extra("script")).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.More).performScrollTo().performClick()
         composeRule.onNodeWithTag(V5PageMenuTestTags.extra("script")).performScrollTo().performClick()
         assertEquals(listOf("favorite", "dismiss", "extra"), calls)
     }

@@ -102,6 +102,8 @@ object V5Sizes {
 
     /** A round action of the page menu with its caption (canvas screen «д»). */
     val menuActionWidth: Dp = 72.dp
+    /** A tile of the menu's library row: History, Favorites, Passwords, Settings. */
+    val menuLibraryTile: Dp = 64.dp
 
     // Lists (section 3.4): the capsule toggle and its thumb, inset by 2 dp.
     val toggleWidth: Dp = 51.dp
