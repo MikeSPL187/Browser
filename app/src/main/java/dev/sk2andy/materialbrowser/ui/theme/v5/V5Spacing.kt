@@ -153,6 +153,9 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // Site protection (canvas screen «Shield»): the shield's tile at the top of the panel.
+    val siteShieldBadge: Dp = 52.dp
+
     // Reading settings sheet (canvas screen «ReaderSettings»): a typeface card, a theme swatch and
     // the ring around the chosen one, which stands off the swatch by its own width.
     val readerFontCard: Dp = 76.dp

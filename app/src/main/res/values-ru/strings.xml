@@ -2206,6 +2206,11 @@
     <string name="v5_site_off">Защита выключена</string>
     <string name="v5_site_off_note">На этом сайте трекеры и реклама загружаются.</string>
     <string name="v5_site_toggle">Защита для этого сайта</string>
+    <string name="v5_site_connection_secure">Защищённое соединение</string>
+    <string name="v5_site_connection_not_secure">Незащищённое соединение</string>
+    <string name="v5_site_toggle_standard">Стандарт · строже — в «Подробнее»</string>
+    <string name="v5_site_toggle_strict">Строго · изменить — в «Подробнее»</string>
+    <string name="v5_site_details_hint">Уровень, cookie-баннеры, AMP, отпечатки, HTTPS</string>
     <string name="v5_site_toggle_private">Только для этой частной вкладки</string>
     <string name="v5_site_broken">Сайт работает неправильно?</string>
     <string name="v5_site_broken_hint">Сначала разрешим сторонние cookie — защита останется</string>

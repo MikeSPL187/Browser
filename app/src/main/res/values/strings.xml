@@ -2114,6 +2114,11 @@
     <string name="v5_site_off">Protection is off</string>
     <string name="v5_site_off_note">Trackers and ads load on this site.</string>
     <string name="v5_site_toggle">Protection for this site</string>
+    <string name="v5_site_connection_secure">Secure connection</string>
+    <string name="v5_site_connection_not_secure">Connection not secure</string>
+    <string name="v5_site_toggle_standard">Standard · stricter in “Details”</string>
+    <string name="v5_site_toggle_strict">Strict · change in “Details”</string>
+    <string name="v5_site_details_hint">Level, cookie banners, AMP, fingerprinting, HTTPS</string>
     <string name="v5_site_toggle_private">For this private tab only</string>
     <string name="v5_site_broken">Site not working right?</string>
     <string name="v5_site_broken_hint">First we allow third-party cookies — protection stays on</string>
