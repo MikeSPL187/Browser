@@ -153,6 +153,12 @@ object V5Sizes {
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
 
+    // Reading settings sheet (canvas screen «ReaderSettings»): a typeface card, a theme swatch and
+    // the ring around the chosen one, which stands off the swatch by its own width.
+    val readerFontCard: Dp = 76.dp
+    val readerThemeSwatch: Dp = 52.dp
+    val readerRing: Dp = 2.dp
+
     // A Firefox extension's popup in a v5 sheet: room for a small panel, never past the screen.
     val extensionPopupMin: Dp = 160.dp
     val extensionPopupMax: Dp = 560.dp

@@ -1476,6 +1476,8 @@
         <item quantity="other">%d минуты</item>
     </plurals>
     <string name="reader_text_size">Размер текста</string>
+    <string name="reader_text_size_value">%1$d %%</string>
+    <string name="reader_settings_remembered">Запоминается для всех сайтов</string>
     <string name="reader_font_serif">С засечками</string>
     <string name="reader_font_sans">Без засечек</string>
     <string name="reader_font_mono">Моноширинный</string>
