@@ -177,4 +177,19 @@ class V5TabOverviewRulesTest {
         assertEquals(V5OverviewEmpty.PrivateUnavailable, V5TabOverviewRules.empty("", privateSegment = true, canOpenPrivate = false))
         assertEquals(V5OverviewEmpty.NoTabs, V5TabOverviewRules.empty("", privateSegment = false, canOpenPrivate = true))
     }
+
+    @Test
+    fun `an open group is framed from its header to its last card`() {
+        val items = V5OverviewGroupRules.items(listOf("1", "2", "3", "4", "5"), listOf(dinner, trip), searching = false)
+        val frames = V5OverviewGroupRules.frames(items)
+        assertEquals(listOf(V5GroupFrame(dinner, "group:g1", "3")), frames)
+    }
+
+    @Test
+    fun `nothing is framed while searching or without open groups`() {
+        val searching = V5OverviewGroupRules.items(listOf("1", "3"), listOf(dinner), searching = true)
+        assertEquals(emptyList<V5GroupFrame>(), V5OverviewGroupRules.frames(searching))
+        val folded = V5OverviewGroupRules.items(listOf("4", "5"), listOf(trip), searching = false)
+        assertEquals(emptyList<V5GroupFrame>(), V5OverviewGroupRules.frames(folded))
+    }
 }
