@@ -119,14 +119,15 @@ object SplitViewRules {
     /**
      * The status the companion pane shows for [companion], or null for its live page: a site the
      * dangerous-site guard [blocked] or Safe Browsing stopped, or a page that failed to load.
-     * HTTPS-only failures are left alone: the engine shows its own page for them.
+     * HTTPS-only and certificate warnings are left alone: the engine shows its own page for them.
      */
     fun companionStatus(companion: BrowserTab, blocked: Boolean): SplitCompanionStatus? =
         when {
             blocked || companion.failureKind == BrowserEngineFailureKind.DangerousSite ->
                 SplitCompanionStatus.SiteBlocked
             companion.failureKind == null ||
-                companion.failureKind == BrowserEngineFailureKind.HttpsOnly -> null
+                companion.failureKind == BrowserEngineFailureKind.HttpsOnly ||
+                companion.failureKind == BrowserEngineFailureKind.CertificateWarning -> null
             else -> SplitCompanionStatus.PageFailed
         }
 

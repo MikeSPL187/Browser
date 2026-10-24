@@ -187,6 +187,7 @@ internal class GeckoViewRuntimeHandle private constructor(
     private val privacyHost: GeckoViewPrivacyHostRuntime,
     private val downloadTransfers: GeckoDownloadTransferManager,
     private val httpsOnlyErrorPages: GeckoHttpsOnlyErrorPages,
+    private val certErrorPages: GeckoCertErrorPages,
 ) : GeckoRuntimeHandle {
     private val cookieBehavior = GeckoCookieBehaviorCoordinator(
         runtime.settings.contentBlocking,
@@ -218,6 +219,7 @@ internal class GeckoViewRuntimeHandle private constructor(
             privacyHost = privacyHost,
             downloadTransfers = downloadTransfers,
             httpsOnlyErrorPages = httpsOnlyErrorPages,
+            certErrorPages = certErrorPages,
             cookieBehavior = cookieBehavior,
             trackingPermissions = trackingPermissions,
             initialPrivacyPolicy = privacyPolicy,
@@ -249,6 +251,7 @@ internal class GeckoViewRuntimeHandle private constructor(
             privacyHost = privacyHost,
             downloadTransfers = downloadTransfers,
             httpsOnlyErrorPages = httpsOnlyErrorPages,
+            certErrorPages = certErrorPages,
             cookieBehavior = cookieBehavior,
             trackingPermissions = trackingPermissions,
             initialPrivacyPolicy = privacyPolicy,
@@ -463,6 +466,7 @@ internal class GeckoViewRuntimeHandle private constructor(
                 privacyHost = privacyHost,
                 downloadTransfers = downloadTransfers,
                 httpsOnlyErrorPages = GeckoHttpsOnlyErrorPages(appContext),
+                certErrorPages = GeckoCertErrorPages(appContext),
             )
         }
     }
@@ -1001,6 +1005,7 @@ private class GeckoViewBrowserSession(
     private val privacyHost: GeckoViewPrivacyHostRuntime,
     private val downloadTransfers: GeckoDownloadTransferManager,
     private val httpsOnlyErrorPages: GeckoHttpsOnlyErrorPages,
+    private val certErrorPages: GeckoCertErrorPages,
     private val cookieBehavior: GeckoCookieBehaviorCoordinator,
     private val trackingPermissions: GeckoTrackingPermissionCoordinator,
     initialPrivacyPolicy: GeckoPrivacyPolicy,
@@ -1289,6 +1294,19 @@ private class GeckoViewBrowserSession(
                         )
                     }
                     return GeckoResult.fromValue(httpsOnlyErrorPages.dataUri(uri))
+                }
+                // A bad certificate on the v5 phone: Gecko's page says why and may let the site
+                // through for this session (canvas «CertError»); elsewhere Vola's page stays.
+                if (error.code == WebRequestError.ERROR_SECURITY_BAD_CERT) {
+                    certErrorPages.dataUri(uri, error.certificate)?.let { page ->
+                        updateState { current ->
+                            current.copy(
+                                failureDescription = null,
+                                failureKind = BrowserEngineFailureKind.CertificateWarning,
+                            )
+                        }
+                        return GeckoResult.fromValue(page)
+                    }
                 }
                 val failureKind = GeckoNavigationFailureRules.kindForErrorCode(error.code)
                 updateState { current ->
