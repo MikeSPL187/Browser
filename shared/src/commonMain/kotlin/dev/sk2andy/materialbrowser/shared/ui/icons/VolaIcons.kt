@@ -158,6 +158,13 @@ object VolaIcons {
         )
     }
 
+    val DragHandle: ImageVector by lazy {
+        materialSymbol(
+            name = "DragHandle",
+            pathData = "M200 600 q-17 0 -28.5 -11.5 T160 560 q0 -17 11.5 -28.5 T200 520 h560 q17 0 28.5 11.5 T800 560 q0 17 -11.5 28.5 T760 600 H200 Z m0 -160 q-17 0 -28.5 -11.5 T160 400 q0 -17 11.5 -28.5 T200 360 h560 q17 0 28.5 11.5 T800 400 q0 17 -11.5 28.5 T760 440 H200 Z",
+        )
+    }
+
     val Edit: ImageVector by lazy {
         materialSymbol(
             name = "Edit",
@@ -688,6 +695,7 @@ object VolaIcons {
             Delete,
             DeleteSweep,
             Download,
+            DragHandle,
             Edit,
             Error,
             Extension,

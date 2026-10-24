@@ -116,6 +116,21 @@
     return null;
   };
 
+  // «Choose larger»: the nearest box around [target] that is bigger than it, short of the page.
+  const largerTarget = (target, doc, view) => {
+    if (!target) return null;
+    const viewportArea = view.innerWidth * view.innerHeight;
+    const own = target.getBoundingClientRect();
+    let node = target.parentElement;
+    for (let depth = 0; node && depth < maxTargetClimb; depth++, node = node.parentElement) {
+      if (node === doc.body || node === doc.documentElement) return null;
+      const rect = node.getBoundingClientRect();
+      if (rect.width * rect.height > viewportArea * maxViewportShare) return null;
+      if (rect.width > own.width || rect.height > own.height) return node;
+    }
+    return null;
+  };
+
   const validSelectors = (list) => (Array.isArray(list) ? list : []).filter((selector) =>
     typeof selector === "string" && selector.length > 0 && selector.length <= maxSelectorLength &&
       /^[A-Za-z0-9_\-#.>:() ]+$/.test(selector),
@@ -123,7 +138,7 @@
 
   const hiddenStyleText = (selectors) => selectors.map((selector) => `${selector}{display:none!important}`).join("\n");
 
-  globalThis.VolaHideDistractions = { hiddenStyleText, isStableName, selectorFor, targetFor, validSelectors };
+  globalThis.VolaHideDistractions = { hiddenStyleText, isStableName, largerTarget, selectorFor, targetFor, validSelectors };
 
   if (typeof browser === "undefined" || globalThis.top !== globalThis.self) return;
 
@@ -256,14 +271,33 @@
       hide(state, state.target);
       return;
     }
-    const target = targetFor(tapped, document, globalThis);
+    outlineAndTell(state, targetFor(tapped, document, globalThis));
+  };
+
+  // Vola says what the tap did, so TalkBack hears it: the outline itself is only drawn. It also
+  // learns whether a larger block is there, for «Choose larger».
+  const outlineAndTell = (state, target) => {
     outline(state, target);
-    // Vola says what the tap did, so TalkBack hears it: the outline itself is only drawn.
     browser.runtime.sendMessage({
       type: "distraction-outlined",
       outlined: !!target,
+      larger: !!largerTarget(target, document, globalThis),
       navigationGeneration: policy.navigationGeneration,
     }).catch(() => {});
+  };
+
+  // What Vola's choice card asks for the outlined block: hide it, take the larger one, or let go.
+  const act = (action) => {
+    const state = picking;
+    if (!state || !state.target) return;
+    if (action === "hide") {
+      hide(state, state.target);
+    } else if (action === "larger") {
+      const larger = largerTarget(state.target, document, globalThis);
+      if (larger) outlineAndTell(state, larger);
+    } else if (action === "cancel") {
+      outlineAndTell(state, null);
+    }
   };
 
   const onMove = () => { if (picking) place(picking); };
@@ -305,6 +339,8 @@
       } else {
         stopPicking();
       }
+    } else if (message?.type === "distractions-act") {
+      act(message.action);
     }
   });
 

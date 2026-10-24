@@ -79,6 +79,8 @@ object V5Sizes {
     val suggestionTile: Dp = 32.dp
     /** The «Cancel» button beside the field. */
     val editorCancel: Dp = 72.dp
+    /** The round plate of «previous» and «next» beside the find-in-page field (canvas «FindInPage»). */
+    val findStep: Dp = 40.dp
     /** The top of the suggestion list fades into the material over this height. */
     val suggestionFade: Dp = 36.dp
 
@@ -141,10 +143,21 @@ object V5Sizes {
     val pinnedBadge: Dp = 22.dp
     /** The accent wash behind the top of the new tab fades out over this height. */
     val newTabWash: Dp = 280.dp
+    // A fresh profile's new tab (canvas screen «EmptyStart»): the dashed outline of an empty pinned
+    // slot, the length of its dashes and the bar standing in for the slot's name.
+    val freshSlotBorder: Dp = 1.5.dp
+    val freshSlotDash: Dp = 4.dp
+    val freshSlotName: Dp = 40.dp
 
     // Private new tab (canvas screen «h1»): the round plate of the mask and the mask on it.
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
+
+    // Reading settings sheet (canvas screen «ReaderSettings»): a typeface card, a theme swatch and
+    // the ring around the chosen one, which stands off the swatch by its own width.
+    val readerFontCard: Dp = 76.dp
+    val readerThemeSwatch: Dp = 52.dp
+    val readerRing: Dp = 2.dp
 
     // A Firefox extension's popup in a v5 sheet: room for a small panel, never past the screen.
     val extensionPopupMin: Dp = 160.dp
@@ -163,6 +176,11 @@ object V5Sizes {
     val firstRunMarkIcon: Dp = 40.dp
     /** The plate of a gesture's hand on the two-gesture sheet (canvas screen «п3»). */
     val firstRunGesture: Dp = 52.dp
+
+    // An empty list (canvas «EmptyHistory»): the list's glyph on a card over a tilted accent plate.
+    val emptyArt: Dp = 120.dp
+    val emptyArtCard: Dp = 88.dp
+    val emptyArtIcon: Dp = 40.dp
 
     // Link preview (canvas screen «н1»).
     /** The address line over the live page in the preview card. */

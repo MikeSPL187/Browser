@@ -28,6 +28,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5Library
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryActions
+import dev.sk2andy.materialbrowser.ui.v5.V5LibraryEmptyAction
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryLeading
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryRow
 import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySection
@@ -66,6 +67,10 @@ internal fun HistoryLibraryV5(
     onOpen: (HistoryEntry) -> Unit,
     onSwitch: (V5LibrarySegment) -> Unit,
     onClose: () -> Unit,
+    /** The empty history's way out (canvas «EmptyHistory»): a new tab in the browser. */
+    onNewTab: () -> Unit,
+    /** The profile's name when there are several, so the empty history says whose it is. */
+    profileName: String? = null,
     /** True while the host is being recreated: a deletion behind «Undo» then waits in saved state. */
     isChangingConfigurations: () -> Boolean = { false },
 ) {
@@ -149,7 +154,16 @@ internal fun HistoryLibraryV5(
         segment = V5LibrarySegment.History,
         query = query,
         sections = sections,
-        emptyMessage = stringResource(if (query.isBlank()) R.string.history_empty_message else R.string.history_no_results),
+        emptyMessage = when {
+            query.isNotBlank() -> stringResource(R.string.history_no_results)
+            profileName != null -> stringResource(R.string.v5_history_empty_profile, profileName)
+            else -> stringResource(R.string.history_empty_message)
+        },
+        emptyTitle = stringResource(R.string.v5_history_empty_title).takeIf { query.isBlank() },
+        emptyAction = V5LibraryEmptyAction(stringResource(R.string.history_empty_action)) {
+            commitPending()
+            onNewTab()
+        }.takeIf { query.isBlank() },
         actions = V5LibraryActions(
             end = stringResource(R.string.v5_history_clear).takeIf { history.any { it.profileId == profileId } },
             onEnd = { clearing = true },
