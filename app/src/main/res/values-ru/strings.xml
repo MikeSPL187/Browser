@@ -2194,6 +2194,7 @@
     <string name="v5_newtab_move_earlier">Переместить раньше</string>
     <string name="v5_newtab_move_later">Переместить дальше</string>
     <string name="v5_private_title">Частный доступ</string>
+    <string name="v5_private_downloads_note">Скачанные файлы остаются в общей папке «Загрузки» — их Vola не удаляет.</string>
     <string name="v5_private_body">Vola не запомнит историю, cookie и данные форм. Закройте частные вкладки — и всё исчезнет.</string>
     <string name="v5_distractions_hide">Скрыть отвлекающее</string>
     <string name="v5_distractions_show_all">Показать скрытое</string>

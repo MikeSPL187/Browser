@@ -2102,6 +2102,7 @@
     <string name="v5_newtab_move_earlier">Move earlier</string>
     <string name="v5_newtab_move_later">Move later</string>
     <string name="v5_private_title">Private browsing</string>
+    <string name="v5_private_downloads_note">Downloaded files stay in the shared Downloads folder; Vola does not delete them.</string>
     <string name="v5_private_body">Vola won\'t remember history, cookies or form data. Close the private tabs and it\'s all gone.</string>
     <string name="v5_distractions_hide">Hide distracting items</string>
     <string name="v5_distractions_show_all">Show hidden items</string>

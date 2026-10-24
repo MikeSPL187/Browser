@@ -169,6 +169,10 @@ object V5Sizes {
     // Private new tab (canvas screen «h1»): the round plate of the mask and the mask on it.
     val privateGem: Dp = 80.dp
     val privateGemIcon: Dp = 40.dp
+    /** The private new tab's own gem (canvas «Private»): a rounded square on the accent, the mask on it. */
+    val privateGemTile: Dp = 64.dp
+    val privateGemTileRadius: Dp = 20.dp
+    val privateGemTileIcon: Dp = 32.dp
 
     // Dangerous site (canvas screen «Danger»): the red tile of the warning, its corners and glyph,
     // and the chip with the site's address.
