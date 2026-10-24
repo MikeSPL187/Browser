@@ -77,4 +77,11 @@ class V5PrivacyReportRulesTest {
         assertEquals("Пт", V5PrivacyReportRules.dayLabels(7, friday, Locale.forLanguageTag("ru")).last())
         assertEquals(emptyList<String>(), V5PrivacyReportRules.dayLabels(30, friday, Locale.ENGLISH))
     }
+
+    @Test
+    fun `the words under the big number are the phrase without it`() {
+        assertEquals("trackers and ads blocked", V5PrivacyReportRules.wordsAround("1,284 trackers and ads blocked", "1,284"))
+        assertEquals("блокировки трекеров и рекламы", V5PrivacyReportRules.wordsAround("1 284 блокировки трекеров и рекламы", "1 284"))
+        assertEquals("no number here", V5PrivacyReportRules.wordsAround("no number here", "7"))
+    }
 }

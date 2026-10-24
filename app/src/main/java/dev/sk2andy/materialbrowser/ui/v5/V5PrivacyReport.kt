@@ -177,7 +177,7 @@ private fun ReportHeadline(total: Int) {
     ) {
         Text(count, style = V5Theme.type.largeTitle.tabular(), color = colors.label, maxLines = 1)
         Text(
-            pluralStringResource(R.plurals.v5_report_blocked_words, total),
+            V5PrivacyReportRules.wordsAround(line, count),
             style = V5Theme.type.callout,
             color = colors.labelSecondary,
         )

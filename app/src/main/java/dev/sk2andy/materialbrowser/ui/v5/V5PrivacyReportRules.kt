@@ -68,6 +68,16 @@ object V5PrivacyReportRules {
         }
     }
 
+    /**
+     * What the total counts, without the number itself, for the line under the big number: the
+     * period's plural phrase stays the one source of its words (and their grammar for [count]).
+     */
+    fun wordsAround(line: String, count: String): String {
+        val at = line.indexOf(count)
+        if (at < 0) return line
+        return (line.substring(0, at) + line.substring(at + count.length)).trim().replace(Regex("\\s+"), " ")
+    }
+
     /** The chosen period, or the week when [windowDays] is not one of [WINDOWS]. */
     fun windowIndex(windowDays: Int): Int = WINDOWS.indexOf(windowDays).coerceAtLeast(0)
 }
