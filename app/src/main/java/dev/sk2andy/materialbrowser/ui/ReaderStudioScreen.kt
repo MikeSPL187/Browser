@@ -104,6 +104,9 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.ProgressPercent ->
             stringResource(R.string.reader_progress_percent, requireNotNull(value))
         ReaderStudioLabel.DeleteSnapshot -> stringResource(R.string.reader_delete_snapshot)
+        ReaderStudioLabel.TextSizeValue ->
+            stringResource(R.string.reader_text_size_value, requireNotNull(value))
+        ReaderStudioLabel.SettingsRemembered -> stringResource(R.string.reader_settings_remembered)
     }
 
     @Composable

@@ -131,6 +131,9 @@ sealed interface V5OverviewItem {
     }
 }
 
+/** An open group's frame (canvas «OverviewV2»): one outline from its header to its last card. */
+data class V5GroupFrame(val group: V5OverviewGroup, val firstKey: String, val lastKey: String)
+
 object V5OverviewGroupRules {
     /** A collapsed group shows a fan of up to this many of its pages. */
     const val COLLAPSED_PREVIEWS = 3
@@ -165,6 +168,13 @@ object V5OverviewGroupRules {
             }
         }
     }
+
+    /** Each open group of [items] with the keys of its first line (the header) and its last card. */
+    fun frames(items: List<V5OverviewItem>): List<V5GroupFrame> =
+        items.filterIsInstance<V5OverviewItem.GroupHeader>().map { header ->
+            val last = items.lastOrNull { it is V5OverviewItem.Card && it.group?.id == header.group.id }
+            V5GroupFrame(header.group, header.key, last?.key ?: header.key)
+        }
 
     /** Where the grid starts so [tabId]'s card, or its collapsed group, is on screen. */
     fun indexOf(items: List<V5OverviewItem>, tabId: String?): Int {

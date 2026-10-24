@@ -76,7 +76,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 import kotlinx.coroutines.delay
@@ -181,6 +180,7 @@ fun V5TabOverview(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                 )
             } else {
+                val frames = rememberV5GroupFrames(items)
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
                     // The grid opens on the selected card, so the page's card is on screen for the hero.
@@ -190,7 +190,7 @@ fun V5TabOverview(
                             state.cards.firstOrNull { it.selected }?.id,
                         ),
                     ),
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().v5GroupFrames(frames),
                     contentPadding = PaddingValues(
                         start = V5Spacing.marginPhone,
                         end = V5Spacing.marginPhone,
@@ -214,9 +214,8 @@ fun V5TabOverview(
                                     onCloseRefused = onCloseRefused,
                                     onBounds = onCardBounds,
                                     hidden = card.id == heroCardId,
-                                    groupTile = item.group?.tile,
                                     onLongPress = onCardLongPress,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.animateItem().v5GroupFrameLine(frames, item.key),
                                 )
                             }
                             is V5OverviewItem.GroupHeader -> GroupHeader(
@@ -224,7 +223,7 @@ fun V5TabOverview(
                                 count = item.count,
                                 onToggle = { onToggleGroup(item.group.id) },
                                 onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
-                                modifier = Modifier.animateItem(),
+                                modifier = Modifier.animateItem().v5GroupFrameLine(frames, item.key),
                             )
                             is V5OverviewItem.CollapsedGroup -> CollapsedGroup(
                                 group = item.group,
@@ -395,7 +394,6 @@ private fun TabCard(
     onBounds: (String, Rect) -> Unit,
     hidden: Boolean,
     modifier: Modifier,
-    groupTile: V5Tile? = null,
     onLongPress: ((String) -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
@@ -477,12 +475,8 @@ private fun TabCard(
                 .clip(shape)
                 .background(colors.surfaceHighest)
                 .then(
-                    // The group's color only frames its cards (section 10); the selected card keeps the accent.
-                    when {
-                        card.selected -> Modifier.border(V5Sizes.overviewRing, colors.accent, shape)
-                        groupTile != null -> Modifier.border(V5Sizes.groupBorder, groupTile.color, shape)
-                        else -> Modifier
-                    },
+                    // A group's color frames the whole group (V5GroupFrames); a card keeps only the accent ring.
+                    if (card.selected) Modifier.border(V5Sizes.overviewRing, colors.accent, shape) else Modifier,
                 ),
         ) {
             if (card.preview != null) {

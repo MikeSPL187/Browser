@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
 import dev.sk2andy.materialbrowser.reader.ReaderBlock
@@ -19,6 +20,8 @@ import dev.sk2andy.materialbrowser.reader.ReaderSpeechStatus
 import dev.sk2andy.materialbrowser.reader.ReaderTheme
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioScreen as SharedReaderStudioScreen
 
 private val previewArticle = ReaderDocument(
@@ -155,4 +158,20 @@ private fun ReaderV5MonoLargePreview() {
 @Composable
 private fun ReaderV5SettingsPreview() {
     ReaderPreview(ReaderSettings(theme = ReaderTheme.Dark, font = ReaderFont.Sans), settingsVisible = true, v5 = true)
+}
+
+/** Canvas screen «ReaderSettings»: the v5 sheet over a light page, serif chosen. */
+@VolaPreviews
+@Composable
+private fun ReaderV5SettingsLightPreview() {
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Light, font = ReaderFont.Serif, fontScale = 1.2f), settingsVisible = true, v5 = true)
+}
+
+/** The v5 sheet in a green profile: the chosen card and swatch take its accent. */
+@VolaPreviews
+@Composable
+private fun ReaderV5SettingsGreenPreview() {
+    CompositionLocalProvider(LocalV5ProfileAccent provides V5Accent.Green) {
+        ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = true, v5 = true)
+    }
 }

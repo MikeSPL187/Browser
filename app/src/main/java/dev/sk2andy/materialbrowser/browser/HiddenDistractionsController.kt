@@ -64,6 +64,10 @@ internal class HiddenDistractionsController(
     var pickingStep by mutableStateOf(DistractionPickingStep.Choosing)
         private set
 
+    /** Whether a larger block is around the outlined one, for «Choose larger». */
+    var canPickLarger by mutableStateOf(false)
+        private set
+
     /** The block hidden last while choosing, which «Undo» shows again; gone when choosing ends. */
     private var lastHidden by mutableStateOf<LastHidden?>(null)
 
@@ -96,12 +100,16 @@ internal class HiddenDistractionsController(
             object : PageDistractionsListener {
                 override fun onHidden(pageHost: String, selector: String) {
                     hide(tab.profileId, tab.isIncognito, pageHost, selector)
-                    if (pickingTabId == tab.id) pickingStep = DistractionPickingStep.Hidden
+                    if (pickingTabId == tab.id) {
+                        pickingStep = DistractionPickingStep.Hidden
+                        canPickLarger = false
+                    }
                 }
 
-                override fun onOutlined(outlined: Boolean) {
+                override fun onOutlined(outlined: Boolean, larger: Boolean) {
                     if (pickingTabId == tab.id) {
                         pickingStep = if (outlined) DistractionPickingStep.Selected else DistractionPickingStep.Choosing
+                        canPickLarger = outlined && larger
                     }
                 }
 
@@ -116,12 +124,21 @@ internal class HiddenDistractionsController(
         if (started) {
             pickingTabId = tab.id
             pickingStep = DistractionPickingStep.Choosing
+            canPickLarger = false
         }
         return started
     }
 
+    /** The choice card's answer for the outlined block on the page that chooses. */
+    fun act(action: DistractionAction) {
+        val tabId = pickingTabId ?: return
+        if (pickingStep != DistractionPickingStep.Selected) return
+        pageFor(tabId)?.act(action)
+    }
+
     fun stopPicking() {
         lastHidden = null
+        canPickLarger = false
         val tabId = pickingTabId ?: return
         pickingTabId = null
         pageFor(tabId)?.stopPicking()

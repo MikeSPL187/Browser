@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 new tab as canvas screen «а», in light and dark, and the add sheet. Preview text is not localized. */
@@ -97,5 +98,68 @@ private fun V5NewTabEditorDarkPreview() {
                 onCancel = {},
             )
         }
+    }
+}
+
+/** Canvas screen «EmptyStart»: the new tab of a profile with nothing of its own yet. */
+private val FreshState = V5NewTabState(
+    profileLabel = "Учёба",
+    profileIcon = WorkspaceIcons.vector("📚"),
+    pinned = emptyList(),
+    canAdd = true,
+    report = null,
+    recent = emptyList(),
+    fresh = V5NewTabFresh(profileName = "Учёба", copyFrom = "Личный", canMoveTabs = true),
+)
+
+@Composable
+private fun FreshPreview(dark: Boolean, accent: V5Accent = V5Accent.Orange) {
+    VolaV5Theme(dark = dark, accent = accent) {
+        V5NewTab(
+            state = FreshState,
+            onOpenPinned = {},
+            onRemovePinned = {},
+            onAddPinned = {},
+            onOpenReport = {},
+            onHideReport = {},
+            onOpenRecent = {},
+        )
+    }
+}
+
+@Preview(name = "Fresh profile · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5NewTabFreshLightPreview() {
+    FreshPreview(dark = false)
+}
+
+@Preview(name = "Fresh profile · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5NewTabFreshDarkPreview() {
+    FreshPreview(dark = true)
+}
+
+@Preview(name = "Fresh profile · green, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5NewTabFreshGreenPreview() {
+    FreshPreview(dark = true, accent = V5Accent.Green)
+}
+
+@Preview(name = "Fresh profile · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5NewTabFreshLargeFontPreview() {
+    FreshPreview(dark = false)
+}
+
+@Preview(name = "Move tabs here · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5MoveTabsSheetPreview() {
+    VolaV5Theme(dark = true, accent = V5Accent.Orange) {
+        V5MoveTabsSheet(
+            visible = true,
+            groups = listOf(V5MovableTabs("Личный", PreviewState.recent)),
+            onMove = {},
+            onDismiss = {},
+        )
     }
 }

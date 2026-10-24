@@ -918,6 +918,8 @@
     <string name="https_only_error_advice">Don’t enter passwords or card details on this site.</string>
     <string name="https_only_error_continue">Open over HTTP anyway</string>
     <string name="https_only_error_back">Go back</string>
+    <string name="https_only_error_advice_title">Fine to read, not to type</string>
+    <string name="https_only_error_exception">The exception is for %1$s only. You can remove it in the site’s protection.</string>
     <string name="settings_dns_over_https_title">Encrypted DNS (DoH)</string>
     <string name="settings_dns_over_https_provider_system">System default</string>
     <string name="settings_dns_over_https_provider_cloudflare">Cloudflare</string>
@@ -1428,6 +1430,8 @@
         <item quantity="other">%d min</item>
     </plurals>
     <string name="reader_text_size">Text size</string>
+    <string name="reader_text_size_value">%1$d%%</string>
+    <string name="reader_settings_remembered">Remembered for all sites</string>
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans serif</string>
     <string name="reader_font_mono">Monospace</string>
@@ -1999,6 +2003,14 @@
     <string name="v5_group_default_name">Group</string>
     <string name="v5_group_save">Done</string>
     <string name="v5_group_ungroup">Ungroup</string>
+    <string name="v5_group_tabs_header">Tabs in the group · %1$d</string>
+    <string name="v5_group_add_tabs">Add open tabs</string>
+    <string name="v5_group_close_message">Every tab in the group closes.</string>
+    <string name="v5_group_close_action">Close tabs</string>
+    <plurals name="v5_group_close">
+        <item quantity="one">Close the group and %d tab</item>
+        <item quantity="other">Close the group and %d tabs</item>
+    </plurals>
     <string name="v5_group_name">Group name</string>
     <string name="v5_group_color">Color</string>
     <string name="v5_group_color_purple">Purple</string>
@@ -2041,6 +2053,16 @@
     <string name="v5_newtab_recent">Recent tabs</string>
     <string name="v5_newtab_add_title">Pin a site</string>
     <string name="v5_newtab_add_empty">Sites from this profile’s open tabs, favorites and history show up here.</string>
+    <string name="v5_fresh_title">A clean slate</string>
+    <string name="v5_fresh_message">“%1$s” keeps its own cookies and history. You haven’t signed in anywhere here yet.</string>
+    <string name="v5_fresh_card_title">Get started faster</string>
+    <string name="v5_fresh_copy">Copy favorites from “%1$s”</string>
+    <string name="v5_fresh_copy_failed">Couldn’t copy the favorites. Try again from the new tab.</string>
+    <string name="v5_fresh_move">Move tabs here</string>
+    <string name="v5_fresh_move_title">Move tabs here</string>
+    <string name="v5_fresh_move_action">Move to this profile</string>
+    <string name="v5_fresh_move_empty">Other profiles have no open tabs left to move.</string>
+    <string name="v5_fresh_move_done">Done</string>
     <string name="v5_newtab_add_tabs">Open tabs</string>
     <string name="v5_newtab_add_favorites">Favorites</string>
     <string name="v5_newtab_add_history">History</string>
@@ -2057,6 +2079,9 @@
     <string name="v5_distractions_site">Tap it again to hide it. Vola remembers this for %1$s.</string>
     <string name="v5_distractions_private">Tap it again to hide it. In a private tab, only until the private tabs close.</string>
     <string name="v5_distractions_done">Done</string>
+    <string name="v5_distractions_choice_hide">Hide</string>
+    <string name="v5_distractions_choice_larger">Choose larger</string>
+    <string name="v5_distractions_choice_cancel">Cancel</string>
     <string name="v5_distractions_selected">Selected. Tap it again to hide it.</string>
     <string name="v5_distractions_hidden">Hidden. «Undo» brings it back.</string>
     <string name="v5_site_on">Protection is on</string>
@@ -2108,6 +2133,7 @@
     <string name="v5_glance_private_note">Private tab: nothing from this preview is saved</string>
     <string name="v5_menu_title">Page menu</string>
     <string name="v5_menu_more">More</string>
+    <string name="v5_menu_more_hint">Desktop site, apps, duplicate</string>
     <string name="v5_menu_favorite">Favorite</string>
     <string name="v5_menu_in_favorites">In favorites</string>
     <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
@@ -2200,6 +2226,8 @@
     <string name="v5_library_up">Back to the folder above</string>
     <string name="v5_favorites_new_folder">New folder</string>
     <string name="v5_history_clear">Clear…</string>
+    <string name="v5_history_empty_title">Nothing here yet</string>
+    <string name="v5_history_empty_profile">Sites you open in the “%1$s” profile will show up here. Private tabs never do.</string>
     <string name="v5_history_clear_title">Clear history</string>
     <string name="v5_history_clear_subtitle">Only in this profile</string>
     <string name="v5_history_clear_hour">The last hour</string>

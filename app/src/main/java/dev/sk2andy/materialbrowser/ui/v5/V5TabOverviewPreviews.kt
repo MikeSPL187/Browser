@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
@@ -88,4 +89,17 @@ private fun V5OverviewGroupsPreview() {
 @Composable
 private fun V5OverviewGroupsDarkPreview() {
     VolaV5Theme(dark = true) { OverviewPreview(groups = PreviewGroups) }
+}
+
+/** The group's frame keeps its own color whatever the profile's accent (canvas «OverviewV2»). */
+@Preview(name = "Overview · groups, orange accent, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5OverviewGroupsAccentPreview() {
+    VolaV5Theme(dark = true, accent = V5Accent.Orange) { OverviewPreview(groups = PreviewGroups) }
+}
+
+@Preview(name = "Overview · groups, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5OverviewGroupsLargeFontPreview() {
+    VolaV5Theme(dark = false) { OverviewPreview(groups = PreviewGroups) }
 }
