@@ -105,7 +105,9 @@ internal fun linkPeekMessageText(status: LinkPeekPreviewStatus, host: String): L
                 BrowserEngineFailureKind.UnknownHost ->
                     stringResource(R.string.error_page_unreachable) to
                         stringResource(R.string.page_error_unknown_host_message, host)
-                BrowserEngineFailureKind.InsecureConnection ->
+                BrowserEngineFailureKind.InsecureConnection,
+                BrowserEngineFailureKind.CertificateWarning,
+                ->
                     stringResource(R.string.page_error_insecure_title) to
                         stringResource(R.string.page_error_insecure_message, host)
                 BrowserEngineFailureKind.HttpsOnly ->
@@ -140,6 +142,7 @@ private fun FailedPreviewMessage(
         icon = when (status.kind) {
             BrowserEngineFailureKind.Offline -> VolaIcons.WifiOff
             BrowserEngineFailureKind.InsecureConnection,
+            BrowserEngineFailureKind.CertificateWarning,
             BrowserEngineFailureKind.HttpsOnly,
             -> VolaIcons.GppBad
             else -> VolaIcons.PublicOff

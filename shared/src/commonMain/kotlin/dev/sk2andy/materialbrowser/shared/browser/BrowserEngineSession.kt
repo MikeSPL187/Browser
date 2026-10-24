@@ -89,6 +89,13 @@ enum class BrowserEngineFailureKind {
     HttpsOnly,
 
     /**
+     * The site's certificate failed and the engine shows its own warning page in place of the
+     * site: why, the way back and the choice to open the site anyway for this session. The
+     * browser must not cover that page.
+     */
+    CertificateWarning,
+
+    /**
      * The engine's own reputation check (Safe Browsing) stopped the load as phishing or malware.
      * The failure description holds the stopped address; the browser shows its dangerous-site page.
      */

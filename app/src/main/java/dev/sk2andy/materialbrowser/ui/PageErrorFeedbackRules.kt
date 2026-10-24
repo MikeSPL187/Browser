@@ -51,7 +51,8 @@ internal object PageErrorFeedbackRules {
         !isWebPage -> PageErrorObservation(PageErrorFeedbackState.Hidden)
         // The engine's own HTTPS-only page offers to continue over HTTP; covering it would hide
         // the only way to the site.
-        failureKind == BrowserEngineFailureKind.HttpsOnly ->
+        failureKind == BrowserEngineFailureKind.HttpsOnly ||
+            failureKind == BrowserEngineFailureKind.CertificateWarning ->
             PageErrorObservation(PageErrorFeedbackState.Hidden)
         // Safe Browsing stopped the site: the dangerous-site page takes the place of the error.
         failureKind == BrowserEngineFailureKind.DangerousSite ->

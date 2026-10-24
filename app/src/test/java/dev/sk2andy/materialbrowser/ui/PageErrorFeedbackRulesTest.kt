@@ -64,6 +64,21 @@ class PageErrorFeedbackRulesTest {
     }
 
     @Test
+    fun `engine certificate warning is never covered by the error page`() {
+        val observation = PageErrorFeedbackRules.observe(
+            current = PageErrorFeedbackState.Hidden,
+            error = null,
+            httpStatusCode = null,
+            isLoading = false,
+            isOnline = true,
+            failureKind = BrowserEngineFailureKind.CertificateWarning,
+        )
+
+        assertEquals(PageErrorFeedbackState.Hidden, observation.state)
+        assertFalse(observation.shouldReload)
+    }
+
+    @Test
     fun `a site stopped by safe browsing gets the dangerous-site page, not an error`() {
         val observation = PageErrorFeedbackRules.observe(
             current = PageErrorFeedbackState.Hidden,
