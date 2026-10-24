@@ -14,6 +14,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTint
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5SiteTints
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 bar on a page, a loading page and a new tab, in light, dark and private. */
@@ -167,5 +168,41 @@ private fun V5BarListenPreparingPreview() {
                 message = "Готовлю страницу к чтению вслух…",
             ),
         )
+    }
+}
+
+/** The shield (canvas «Bar»): a site using the camera gets the accent dot, a large count stays tabular. */
+@Preview(name = "v5 bar · shield, camera in use, green", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarShieldActivityPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Green) {
+        BarPreview(previewState("polar-notes.ru").copy(permissionActivity = true, blockedCount = 1284))
+    }
+}
+
+/** A plain HTTP site: the shield warns; at the largest font the number leaves it (system-v5.md 8). */
+@Preview(name = "v5 bar · shield, HTTP, largest font, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5BarShieldHttpLargeFontPreview() {
+    VolaV5Theme(dark = true) {
+        BarPreview(previewState("polar-notes.ru").copy(connectionKind = SiteConnectionKind.Http))
+    }
+}
+
+/** Something hidden on the page: the crossed-out eye beside «Read», the domain still in the middle. */
+@Preview(name = "v5 bar · hidden items and «Read»", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarHiddenItemsPreview() {
+    VolaV5Theme(dark = false) {
+        BarPreview(previewState("polar-notes.ru", readable = true).copy(hidesItems = true))
+    }
+}
+
+/** A private tab: the mask and «Private» in the shield's place (system-v5.md 1.4). */
+@Preview(name = "v5 bar · private page", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarPrivatePagePreview() {
+    VolaV5Theme(dark = true, privateBrowsing = true) {
+        BarPreview(previewState("polar-notes.ru").copy(isPrivate = true))
     }
 }

@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,7 +75,6 @@ import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.AddressBarTabCounterButton
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
-import dev.sk2andy.materialbrowser.ui.PermissionRadarBadge
 import dev.sk2andy.materialbrowser.ui.addressBarVerticalGesture
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
@@ -95,6 +95,7 @@ import kotlin.math.roundToInt
 
 internal object V5BarTestTags {
     const val Read = "v5_bar_read"
+    const val Hidden = "v5_bar_hidden"
 }
 
 /** What the bar shows; everything else arrives as callbacks. */
@@ -112,6 +113,10 @@ internal data class V5BarState(
     val blockedCount: Int,
     /** The page reads as an article: «Read» joins the capsule (system-v5.md, section 5.1). */
     val readerAvailable: Boolean = false,
+    /** «Hide distracting items» hides something on the page: the crossed-out eye joins the capsule. */
+    val hidesItems: Boolean = false,
+    /** A private tab: the mask and «Private» take the shield's place (system-v5.md, section 1.4). */
+    val isPrivate: Boolean = false,
 )
 
 /** The gestures the bar shares with the current one. */
@@ -141,6 +146,8 @@ internal fun BoxScope.V5BottomBar(
     menuButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     onRead: () -> Unit = {},
+    /** The crossed-out eye: back to choosing, where «Show hidden items» brings everything back. */
+    onHidden: () -> Unit = {},
     /**
      * A second row above the bar, such as the listening mini player (V19b). It is part of the bar:
      * the page ends above it, and it folds away with the bar while scrolling.
@@ -244,6 +251,7 @@ internal fun BoxScope.V5BottomBar(
                                 onShield = onShield,
                                 onReloadOrStop = onReloadOrStop,
                                 onRead = onRead,
+                                onHidden = onHidden,
                                 onTabs = onTabs,
                                 modifier = Modifier.weight(1f),
                             )
@@ -298,6 +306,9 @@ private fun Modifier.v5BarGestures(gestures: V5BarGestures, onTabs: () -> Unit):
 /** From this font scale the full bar grows to [V5Sizes.barLargeFont]. */
 private const val LARGE_FONT_SCALE = 1.5f
 
+/** From this font scale «Read» and the eye leave the capsule for the menu. */
+private const val CAPSULE_ICONS_MAX_FONT_SCALE = 2f
+
 @Composable
 private fun AddressCapsule(
     state: V5BarState,
@@ -306,6 +317,7 @@ private fun AddressCapsule(
     onShield: () -> Unit,
     onReloadOrStop: () -> Unit,
     onRead: () -> Unit,
+    onHidden: () -> Unit,
     onTabs: () -> Unit,
     modifier: Modifier,
 ) {
@@ -338,19 +350,29 @@ private fun AddressCapsule(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(V5Sizes.barCapsule), contentAlignment = Alignment.Center) {
-            PermissionRadarBadge(
-                siteAvailable = state.siteAvailable,
-                activityVisible = state.permissionActivity,
-                connectionKind = state.connectionKind,
-                blockedCount = state.blockedCount,
-                onClick = onShield,
-                tabId = state.tabId,
-            )
+        Box(Modifier.widthIn(min = V5Sizes.barCapsule), contentAlignment = Alignment.Center) {
+            if (state.siteAvailable) {
+                V5BarShield(
+                    tabId = state.tabId,
+                    connectionKind = state.connectionKind,
+                    blockedCount = state.blockedCount,
+                    activityVisible = state.permissionActivity,
+                    ink = bar.onTintSecondary,
+                    onClick = onShield,
+                    privateTab = state.isPrivate,
+                )
+            }
         }
+        // At the largest font «Read» and the eye leave the capsule for the menu (system-v5.md, section 8).
+        val roomy = LocalDensity.current.fontScale < CAPSULE_ICONS_MAX_FONT_SCALE
+        val showsRead = state.readerAvailable && roomy
+        val showsEye = state.hidesItems && roomy
         if (state.domain != null) {
-            // Mirrors «Read» on the right, so the domain stays in the middle of the capsule.
-            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
+            // Mirrors «Read» and the eye on the right, so the domain stays in the middle of the capsule.
+            AnimatedVisibility(visible = showsRead, enter = readEnter(), exit = readExit()) {
+                Spacer(Modifier.width(V5Sizes.barCapsule))
+            }
+            AnimatedVisibility(visible = showsEye, enter = readEnter(), exit = readExit()) {
                 Spacer(Modifier.width(V5Sizes.barCapsule))
             }
         }
@@ -364,7 +386,16 @@ private fun AddressCapsule(
             modifier = Modifier.weight(1f),
         )
         if (state.domain != null) {
-            AnimatedVisibility(visible = state.readerAvailable, enter = readEnter(), exit = readExit()) {
+            AnimatedVisibility(visible = showsEye, enter = readEnter(), exit = readExit()) {
+                IconButton(onClick = onHidden, modifier = Modifier.testTag(V5BarTestTags.Hidden)) {
+                    Icon(
+                        imageVector = VolaIcons.VisibilityOff,
+                        contentDescription = stringResource(R.string.v5_bar_hidden),
+                        tint = bar.onTint,
+                    )
+                }
+            }
+            AnimatedVisibility(visible = showsRead, enter = readEnter(), exit = readExit()) {
                 IconButton(onClick = onRead, modifier = Modifier.testTag(V5BarTestTags.Read)) {
                     Icon(
                         imageVector = VolaIcons.FormatAlignLeft,
