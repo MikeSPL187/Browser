@@ -1096,6 +1096,12 @@
     <string name="dangerous_site_listed_local">Checked on this phone against a built-in list. The address wasn’t sent anywhere.</string>
     <string name="dangerous_site_safe_browsing_message">Google Safe Browsing reports %1$s as phishing or malware. Pages like this steal passwords and card details or install harmful apps.</string>
     <string name="dangerous_site_safe_browsing_source">Lists of dangerous addresses come from Google Safe Browsing. Only a short hash is checked with Google, never the address.</string>
+    <string name="v5_danger_checked">Checked on this device</string>
+    <string name="v5_danger_lookalike_source">Addresses are compared on the phone, without the network.</string>
+    <string name="v5_danger_why">Why Vola decided so</string>
+    <string name="v5_danger_why_lookalike">The letters of %1$s only look like those of %2$s, a site you know: a well-known one, pinned or in favorites. The real site and its subdomains are never stopped.</string>
+    <string name="v5_danger_why_listed">%1$s is on the HaGeZi Threat Intelligence list of phishing, malware and scam sites. The list comes with Vola and is checked on the phone.</string>
+    <string name="v5_danger_why_safe_browsing">Google Safe Browsing marks addresses where phishing or malware was found. The engine does not open such sites, so this warning cannot be passed.</string>
     <string name="action_save">Save</string>
     <string name="capsule_add_action">Add as Site Capsule</string>
     <string name="capsule_unavailable_private">Unavailable in Incognito because Capsules persist</string>

@@ -38,6 +38,11 @@ data class V5ColorScheme(
     val onAccentFill: Color,
     /** Background of a selected row or chip. */
     val accentSoft: Color,
+    /**
+     * Behind a page that warns of danger (canvas «Danger», audit question 6): the danger color
+     * barely over the ground, as [accentSoft] is made.
+     */
+    val dangerSoft: Color,
     /** The 0.5 dp top edge of the bar and of every material. */
     val edge: Color,
 )
@@ -144,6 +149,7 @@ object V5Colors {
             onAccentFill = White,
             // Light: the accent at 14 % over surface.
             accentSoft = accent.light.copy(alpha = 0.14f).compositeOver(surface),
+            dangerSoft = Color(0xFFC42630).copy(alpha = 0.08f).compositeOver(surface),
             edge = Color(0x1F000000),
         )
     }
@@ -172,6 +178,7 @@ object V5Colors {
             onAccentFill = White,
             // Dark: 20 % accent and 80 % background (the Zen model).
             accentSoft = accent.darkAccent.copy(alpha = 0.20f).compositeOver(background),
+            dangerSoft = DarkDanger.copy(alpha = DARK_DANGER_SOFT).compositeOver(background),
             edge = Color(0x14FFFFFF),
         )
     }
@@ -205,6 +212,7 @@ object V5Colors {
             accentFill = Color(0xFF6A45D1),
             onAccentFill = White,
             accentSoft = accent.copy(alpha = 0.20f).compositeOver(background),
+            dangerSoft = DarkDanger.copy(alpha = DARK_DANGER_SOFT).compositeOver(background),
             edge = Color(0x14FFFFFF),
         )
     }
@@ -225,4 +233,7 @@ object V5Colors {
     private val DarkSuccess = Color(0xFF4CC47E)
     private val DarkWarning = Color(0xFFF0A53A)
     private val DarkDanger = Color(0xFFFF6B6B)
+
+    /** In the dark the bright danger needs less of itself to read as a red ground. */
+    private const val DARK_DANGER_SOFT = 0.06f
 }

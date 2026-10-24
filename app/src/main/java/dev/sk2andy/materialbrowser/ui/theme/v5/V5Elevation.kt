@@ -4,6 +4,7 @@ import androidx.compose.foundation.border
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.DpOffset
@@ -24,3 +25,9 @@ fun Modifier.v5Elevation(level: V5ElevationLevel, shape: Shape): Modifier {
     }
     return lift.outline?.let { outline -> shadowed.border(V5Spacing.hairline, outline, shape) } ?: shadowed
 }
+
+/** Puts [V5Glow] in [color] under what follows, shaped by [shape]; before the clip, like [v5Elevation]. */
+fun Modifier.v5Glow(color: Color, shape: Shape): Modifier = dropShadow(
+    shape = shape,
+    shadow = Shadow(radius = V5Glow.blur, color = color.copy(alpha = V5Glow.ALPHA), offset = DpOffset.Zero.copy(y = V5Glow.y)),
+)

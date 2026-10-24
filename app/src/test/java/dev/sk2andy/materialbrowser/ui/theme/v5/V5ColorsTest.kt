@@ -100,6 +100,15 @@ class V5ColorsTest {
     }
 
     @Test
+    fun `a danger page keeps its text readable on its red ground`() {
+        for (scheme in listOf(light, dark, V5Colors.privateBrowsing())) {
+            assertAtLeast(TEXT, scheme.label, scheme.dangerSoft, "dangerSoft label")
+            assertAtLeast(TEXT, scheme.labelSecondary, scheme.dangerSoft, "dangerSoft labelSecondary")
+            assertTrue(scheme.dangerSoft != scheme.background)
+        }
+    }
+
+    @Test
     fun `material mapping puts the accent fill on primary`() {
         val material = dark.toMaterial()
         assertEquals(dark.accentFill, material.primary)

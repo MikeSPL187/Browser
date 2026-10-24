@@ -1134,6 +1134,12 @@
     <string name="dangerous_site_listed_local">Проверено на телефоне по встроенному списку. Адрес никуда не отправлялся.</string>
     <string name="dangerous_site_safe_browsing_message">Google Safe Browsing отмечает %1$s как фишинговый или вредоносный сайт. Такие страницы крадут пароли и данные карт или подсовывают вредные приложения.</string>
     <string name="dangerous_site_safe_browsing_source">Списки опасных адресов приходят от Google Safe Browsing. С Google сверяется только короткий хеш, а не адрес.</string>
+    <string name="v5_danger_checked">Проверено на устройстве</string>
+    <string name="v5_danger_lookalike_source">Адреса сравниваются на телефоне, без сети.</string>
+    <string name="v5_danger_why">Почему Vola так решила</string>
+    <string name="v5_danger_why_lookalike">Буквы в адресе %1$s только похожи на %2$s — сайт, который вы знаете: известный, закреплённый или из избранного. Настоящий сайт и его поддомены Vola не останавливает.</string>
+    <string name="v5_danger_why_listed">%1$s есть в списке фишинговых, вредоносных и мошеннических сайтов HaGeZi Threat Intelligence. Список встроен в Vola и проверяется на телефоне.</string>
+    <string name="v5_danger_why_safe_browsing">Google Safe Browsing отмечает адреса, где находили фишинг или вредоносные программы. Движок такие сайты не открывает, поэтому пройти дальше нельзя.</string>
     <string name="action_save">Сохранить</string>
     <string name="capsule_add_action">Добавить как капсулу сайта</string>
     <string name="capsule_unavailable_private">Недоступно в приватном режиме: капсулы сохраняются</string>
