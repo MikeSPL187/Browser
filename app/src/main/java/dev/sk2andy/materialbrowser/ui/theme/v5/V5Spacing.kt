@@ -142,6 +142,12 @@ object V5Sizes {
     val reportChart: Dp = 72.dp
     val reportBarGap: Dp = 3.dp
     val reportBarRadius: Dp = 3.dp
+    /** The report's own chart of a week (canvas «Report»): taller, with wider gaps and a weekday under each bar. */
+    val reportWeekChart: Dp = 86.dp
+    val reportWeekBarGap: Dp = 10.dp
+    /** A finding's tile in the report and its corners. */
+    val reportFindingTile: Dp = 36.dp
+    val reportFindingTileRadius: Dp = 10.dp
     /** A row with a caption, a value and a detail line: the report's two findings. */
     val rowThreeLine: Dp = 72.dp
 

@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -13,6 +14,7 @@ import dev.sk2andy.materialbrowser.data.ProtectionSiteTrackers
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.data.ProtectionTracker
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import java.text.NumberFormat
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -20,7 +22,7 @@ import org.junit.runner.RunWith
 
 /**
  * The v5 privacy report on the device (PR-04): the period switch, the findings, «Clear» only after
- * its question and open whenever anything is kept (PR-01), and hiding the new tab's card.
+ * its question and open whenever anything is kept (PR-01), and the big number read as one line.
  */
 @RunWith(AndroidJUnit4::class)
 class V5PrivacyReportInstrumentedTest {
@@ -62,7 +64,6 @@ class V5PrivacyReportInstrumentedTest {
                     onWindowChange = { calls += "window $it" },
                     onClear = { calls += "clear" },
                     onDismiss = { calls += "dismiss" },
-                    onHideCard = { calls += "hide card" },
                     hasData = hasData,
                 )
             }
@@ -100,10 +101,11 @@ class V5PrivacyReportInstrumentedTest {
     }
 
     @Test
-    fun theCardCanBeHiddenFromTheReport() {
-        show(month, windowDays = 7)
+    fun theBigNumberReadsAsOneLine() {
+        show(month, windowDays = 30)
 
-        composeRule.onNodeWithTag(V5PrivacyReportTestTags.HideCard).performClick()
-        assertEquals(listOf("dismiss", "hide card"), calls)
+        val count = NumberFormat.getIntegerInstance(context.resources.configuration.locales[0]).format(month.total)
+        val line = context.resources.getQuantityString(R.plurals.v5_report_blocked, month.total, count)
+        composeRule.onNodeWithTag(V5PrivacyReportTestTags.Total).assertContentDescriptionEquals(line)
     }
 }

@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,24 +26,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Shapes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type.tabular
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 import java.text.NumberFormat
 
 object V5PrivacyReportTestTags {
@@ -50,16 +60,16 @@ object V5PrivacyReportTestTags {
     const val Chart = "v5_report_chart"
     const val TopTracker = "v5_report_top_tracker"
     const val BusiestSite = "v5_report_busiest_site"
-    const val HideCard = "v5_report_hide_card"
     const val Clear = "v5_report_clear"
     const val ClearConfirm = "v5_report_clear_confirm"
 }
 
 /**
- * The v5 privacy report (V18, canvas screen «л1», system-v5.md section 12) in a sheet over the
- * whole window: 7 or 30 days, the blocks of the period with a bar per day, the most frequent
- * tracker and the site with the most trackers. Everything stays on the device; «Clear report data»
- * asks first. [onHideCard] (from the new tab's card) also offers to hide that card.
+ * The v5 privacy report (V18, canvas screen «Report», system-v5.md section 12) in a sheet over the
+ * whole window: the title in the large size, 7 or 30 days, the period's blocks in one big number
+ * with a bar per day (a week names its days), the most frequent tracker and the site with the most
+ * trackers as cards of their own. Everything stays on the device; «Clear report data» asks first.
+ * Hiding the new tab's card stays in that card's «•••».
  */
 @Composable
 fun V5PrivacyReport(
@@ -69,48 +79,39 @@ fun V5PrivacyReport(
     onWindowChange: (Int) -> Unit,
     onClear: () -> Unit,
     onDismiss: () -> Unit,
-    onHideCard: (() -> Unit)? = null,
     /** The report keeps anything at all: «Clear» deletes every kept day, not only the period's (PR-01). */
     hasData: Boolean = summary.total > 0,
 ) {
     val title = stringResource(R.string.v5_report_title)
+    val colors = V5Theme.colors
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
-        V5SheetHeader(title = title, onClose = onDismiss)
+        // The sheet's own close stays (section 9); the title below it is the screen's, in the large size.
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+            V5SheetCloseButton(onClose = onDismiss, modifier = Modifier.padding(top = V5Spacing.space2, end = V5Spacing.space1))
+        }
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
-            verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
+                .padding(horizontal = V5Spacing.marginPhone)
+                .padding(bottom = V5Spacing.space4),
         ) {
+            Text(
+                title,
+                style = V5Theme.type.largeTitle,
+                color = colors.label,
+                modifier = Modifier.semantics { heading() },
+            )
             V5Segmented(
                 options = V5PrivacyReportRules.WINDOWS.map { pluralStringResource(R.plurals.v5_report_days, it, it) },
                 selectedIndex = V5PrivacyReportRules.windowIndex(windowDays),
                 onSelect = { onWindowChange(V5PrivacyReportRules.WINDOWS[it]) },
-                modifier = Modifier.padding(horizontal = V5Spacing.marginPhone),
+                modifier = Modifier.padding(top = V5Spacing.space4),
             )
-            TotalCard(summary)
+            TotalCard(summary, Modifier.padding(top = V5Spacing.space4))
             Findings(summary)
-            DeviceNote()
-            V5ListGroup {
-                if (onHideCard != null) {
-                    V5ListRow(
-                        title = stringResource(R.string.v5_report_hide_card),
-                        onClick = {
-                            onDismiss()
-                            onHideCard()
-                        },
-                        modifier = Modifier.testTag(V5PrivacyReportTestTags.HideCard),
-                    )
-                }
-                V5ListRow(
-                    title = stringResource(R.string.v5_report_clear),
-                    titleColor = V5Theme.colors.danger,
-                    enabled = hasData,
-                    onClick = { confirmClear = true },
-                    modifier = Modifier.testTag(V5PrivacyReportTestTags.Clear),
-                )
-            }
+            DeviceNote(Modifier.padding(top = V5Spacing.space5))
+            ClearButton(enabled = hasData, onClick = { confirmClear = true })
         }
         V5PromptSheet(
             visible = confirmClear,
@@ -132,25 +133,54 @@ fun V5PrivacyReport(
     }
 }
 
-/** The one big number with its bars by day; today's bar is in the full accent. */
+/** The one big number, the words under it, and the bars by day; a week names its days. */
 @Composable
-private fun TotalCard(summary: ProtectionSummary) {
+private fun TotalCard(summary: ProtectionSummary, modifier: Modifier = Modifier) {
     val colors = V5Theme.colors
+    val shape = V5Theme.shapes.l
+    val locale = LocalConfiguration.current.locales[0]
+    val labels = remember(summary.daily.size, summary.lastEpochDay, locale) {
+        V5PrivacyReportRules.dayLabels(summary.daily.size, summary.lastEpochDay, locale)
+    }
+    Column(
+        modifier
+            .fillMaxWidth()
+            .v5Elevation(V5Elevation.e1, shape)
+            .clip(shape)
+            .background(colors.surface)
+            .padding(start = V5Spacing.space5, end = V5Spacing.space5, top = V5Spacing.space5, bottom = V5Spacing.space4),
+    ) {
+        ReportHeadline(summary.total)
+        if (summary.total > 0) {
+            V5ReportChart(summary.daily, Modifier.padding(top = V5Spacing.space4), labels = labels)
+        } else {
+            Text(
+                stringResource(R.string.v5_report_empty),
+                style = V5Theme.type.footnote,
+                color = colors.labelSecondary,
+                modifier = Modifier.padding(top = V5Spacing.space3),
+            )
+        }
+    }
+}
+
+/** The report's own total: the number alone in the large size, what it counts under it. */
+@Composable
+private fun ReportHeadline(total: Int) {
+    val colors = V5Theme.colors
+    val count = rememberCountFormat().format(total)
+    val line = pluralStringResource(R.plurals.v5_report_blocked, total, count)
     Column(
         Modifier
-            .padding(horizontal = V5Spacing.marginPhone)
-            .fillMaxWidth()
-            .clip(V5Theme.shapes.m)
-            .background(colors.surface)
-            .padding(V5Spacing.space4),
-        verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+            .testTag(V5PrivacyReportTestTags.Total)
+            .clearAndSetSemantics { contentDescription = line },
     ) {
-        V5ReportTotal(summary.total, Modifier.testTag(V5PrivacyReportTestTags.Total))
-        if (summary.total > 0) {
-            V5ReportChart(summary.daily)
-        } else {
-            Text(stringResource(R.string.v5_report_empty), style = V5Theme.type.footnote, color = colors.labelSecondary)
-        }
+        Text(count, style = V5Theme.type.largeTitle.tabular(), color = colors.label, maxLines = 1)
+        Text(
+            pluralStringResource(R.plurals.v5_report_blocked_words, total),
+            style = V5Theme.type.callout,
+            color = colors.labelSecondary,
+        )
     }
 }
 
@@ -180,10 +210,11 @@ internal fun V5ReportTotal(total: Int, modifier: Modifier = Modifier) {
 
 /**
  * A bar per day, today in the full accent; TalkBack hears today's count, the busiest day's and the
- * average, what the bars show at a glance. Shared with the new tab's card.
+ * average, what the bars show at a glance. Shared with the new tab's card, which has no [labels]:
+ * with a label per day the chart is the report's taller one, today's label in the strong ink.
  */
 @Composable
-internal fun V5ReportChart(daily: List<Int>) {
+internal fun V5ReportChart(daily: List<Int>, modifier: Modifier = Modifier, labels: List<String> = emptyList()) {
     val colors = V5Theme.colors
     val format = rememberCountFormat()
     val facts = V5PrivacyReportRules.chartFacts(daily)
@@ -193,106 +224,163 @@ internal fun V5ReportChart(daily: List<Int>) {
         format.format(facts.most),
         format.format(facts.average),
     )
-    val bar = RoundedCornerShape(V5Sizes.reportBarRadius)
+    val week = labels.size == daily.size && labels.isNotEmpty()
+    val bar = RoundedCornerShape(if (week) V5Shapes.radiusXs else V5Sizes.reportBarRadius)
+    val fractions = V5PrivacyReportRules.barFractions(daily)
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .height(V5Sizes.reportChart)
             .testTag(V5PrivacyReportTestTags.Chart)
             .clearAndSetSemantics { contentDescription = description },
-        horizontalArrangement = Arrangement.spacedBy(V5Sizes.reportBarGap),
+        horizontalArrangement = Arrangement.spacedBy(if (week) V5Sizes.reportWeekBarGap else V5Sizes.reportBarGap),
         verticalAlignment = Alignment.Bottom,
     ) {
-        val fractions = V5PrivacyReportRules.barFractions(daily)
         fractions.forEachIndexed { index, fraction ->
             val isToday = index == fractions.lastIndex
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight(fraction)
-                    .clip(bar)
-                    .background(if (isToday) colors.accent else colors.accent.copy(alpha = V5PrivacyReportRules.PAST_BAR_ALPHA)),
-            )
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.height(if (week) V5Sizes.reportWeekChart else V5Sizes.reportChart), contentAlignment = Alignment.BottomCenter) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(fraction)
+                            .clip(bar)
+                            .background(if (isToday) colors.accent else colors.accent.copy(alpha = V5PrivacyReportRules.PAST_BAR_ALPHA)),
+                    )
+                }
+                if (week) {
+                    Text(
+                        labels[index],
+                        style = V5Theme.type.caption.copy(fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Medium),
+                        color = if (isToday) colors.label else colors.labelSecondary,
+                        maxLines = 1,
+                        modifier = Modifier.padding(top = V5Spacing.space1 + V5Spacing.space1 / 2),
+                    )
+                }
+            }
         }
     }
 }
 
-/** The two findings in the report's own words; a period without them shows neither. */
+/** The two findings, each a card of its own in the report's words; a period without them shows neither. */
 @Composable
 private fun Findings(summary: ProtectionSummary) {
+    val colors = V5Theme.colors
     val tracker = V5PrivacyReportRules.topTracker(summary)
     val site = V5PrivacyReportRules.busiestSite(summary)
-    if (tracker == null && site == null) return
-    V5ListGroup {
-        if (tracker != null) {
-            Finding(
-                icon = VolaIcons.VisibilityOff,
-                tile = V5Tile.Orange,
-                caption = stringResource(R.string.v5_report_top_tracker),
-                value = tracker.host,
-                detail = pluralStringResource(R.plurals.v5_report_tracker_sites, tracker.siteCount, tracker.siteCount),
-                modifier = Modifier.testTag(V5PrivacyReportTestTags.TopTracker),
-            )
-        }
-        if (site != null) {
-            Finding(
-                icon = VolaIcons.Public,
-                tile = V5Tile.Red,
-                caption = stringResource(R.string.v5_report_busiest_site),
-                value = site.host,
-                detail = pluralStringResource(R.plurals.v5_report_site_trackers, site.trackerCount, site.trackerCount),
-                modifier = Modifier.testTag(V5PrivacyReportTestTags.BusiestSite),
-            )
-        }
+    if (tracker != null) {
+        Finding(
+            icon = VolaIcons.VisibilityOff,
+            tileColor = colors.surfaceElevated,
+            glyphColor = colors.labelSecondary,
+            caption = stringResource(R.string.v5_report_top_tracker),
+            value = tracker.host,
+            detail = pluralStringResource(R.plurals.v5_report_tracker_sites, tracker.siteCount, tracker.siteCount),
+            number = tracker.siteCount.toString(),
+            modifier = Modifier.testTag(V5PrivacyReportTestTags.TopTracker),
+        )
+    }
+    if (site != null) {
+        Finding(
+            icon = VolaIcons.Public,
+            tileColor = V5Tile.Red.color,
+            glyphColor = V5Tile.Red.glyph,
+            caption = stringResource(R.string.v5_report_busiest_site),
+            value = site.host,
+            detail = pluralStringResource(R.plurals.v5_report_site_trackers, site.trackerCount, site.trackerCount),
+            number = site.trackerCount.toString(),
+            modifier = Modifier.testTag(V5PrivacyReportTestTags.BusiestSite),
+        )
     }
 }
 
 @Composable
 private fun Finding(
     icon: ImageVector,
-    tile: V5Tile,
+    tileColor: Color,
+    glyphColor: Color,
     caption: String,
     value: String,
     detail: String,
+    number: String,
     modifier: Modifier = Modifier,
 ) {
     val colors = V5Theme.colors
-    Row(
+    val shape = V5Theme.shapes.m
+    Column(
         modifier
+            .padding(top = V5Spacing.space3)
             .fillMaxWidth()
-            .heightIn(min = V5Sizes.rowThreeLine)
+            .v5Elevation(V5Elevation.e1, shape)
+            .clip(shape)
+            .background(colors.surface)
             .semantics(mergeDescendants = true) {}
-            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space2),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+            .padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
     ) {
-        Box(
-            Modifier
-                .size(V5Sizes.rowTile)
-                .clip(V5Theme.shapes.xs)
-                .background(tile.color),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = null, tint = tile.glyph, modifier = Modifier.size(V5Sizes.iconSmall))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(caption, style = V5Theme.type.footnote, color = colors.labelSecondary)
-            Text(value, style = V5Theme.type.body, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(detail, style = V5Theme.type.footnote, color = colors.labelSecondary)
+        Text(caption, style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold), color = colors.labelSecondary)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3)) {
+            Box(
+                Modifier
+                    .size(V5Sizes.reportFindingTile)
+                    .clip(RoundedCornerShape(V5Sizes.reportFindingTileRadius))
+                    .background(tileColor),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = glyphColor, modifier = Modifier.size(V5Sizes.iconSmall))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(value, style = V5Theme.type.headline, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(emphasized(detail, number), style = V5Theme.type.callout, color = colors.labelSecondary)
+            }
         }
     }
 }
 
+/** [line] with its [number] in the strong ink and weight, as the canvas sets it. */
+@Composable
+private fun emphasized(line: String, number: String) = buildAnnotatedString {
+    val at = line.indexOf(number)
+    if (at < 0) {
+        append(line)
+        return@buildAnnotatedString
+    }
+    append(line.substring(0, at))
+    withStyle(SpanStyle(color = V5Theme.colors.label, fontWeight = FontWeight.SemiBold)) { append(number) }
+    append(line.substring(at + number.length))
+}
+
 /** Where the report lives: on this device only, without private tabs. */
 @Composable
-private fun DeviceNote() {
+private fun DeviceNote(modifier: Modifier = Modifier) {
     val colors = V5Theme.colors
     Row(
-        Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space1),
+        modifier.padding(horizontal = V5Spacing.space1),
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
     ) {
         Icon(VolaIcons.Lock, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
         Text(stringResource(R.string.v5_report_device_only), style = V5Theme.type.footnote, color = colors.labelSecondary)
+    }
+}
+
+/** «Clear report data» as red text on its own, the way the canvas ends the screen. */
+@Composable
+private fun ClearButton(enabled: Boolean, onClick: () -> Unit) {
+    val colors = V5Theme.colors
+    Box(
+        Modifier
+            .padding(top = V5Spacing.space2)
+            .fillMaxWidth()
+            .heightIn(min = V5Spacing.space12)
+            .clip(V5Theme.shapes.s)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .testTag(V5PrivacyReportTestTags.Clear),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            stringResource(R.string.v5_report_clear),
+            style = V5Theme.type.body,
+            color = if (enabled) colors.danger else colors.labelTertiary,
+        )
     }
 }
 

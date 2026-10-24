@@ -289,21 +289,28 @@ fun V5SheetHeader(
                 }
             }
         }
-        IconButton(onClick = onClose, modifier = Modifier.testTag(V5SheetTestTags.Close)) {
-            Box(
-                Modifier
-                    .size(V5Sizes.overviewClosePlate)
-                    .clip(V5Theme.shapes.full)
-                    .background(colors.fill),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    VolaIcons.Close,
-                    contentDescription = stringResource(R.string.v5_sheet_close),
-                    tint = colors.labelSecondary,
-                    modifier = Modifier.size(V5Sizes.overviewFavicon),
-                )
-            }
+        V5SheetCloseButton(onClose)
+    }
+}
+
+/** A sheet's «Close»: the glyph on a round plate, for a sheet whose title is its own (the report's large one). */
+@Composable
+fun V5SheetCloseButton(onClose: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    IconButton(onClick = onClose, modifier = modifier.testTag(V5SheetTestTags.Close)) {
+        Box(
+            Modifier
+                .size(V5Sizes.overviewClosePlate)
+                .clip(V5Theme.shapes.full)
+                .background(colors.fill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                VolaIcons.Close,
+                contentDescription = stringResource(R.string.v5_sheet_close),
+                tint = colors.labelSecondary,
+                modifier = Modifier.size(V5Sizes.overviewFavicon),
+            )
         }
     }
 }

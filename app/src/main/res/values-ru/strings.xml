@@ -2138,6 +2138,12 @@
         <item quantity="many">%1$s блокировок трекеров и рекламы</item>
         <item quantity="other">%1$s блокировки трекеров и рекламы</item>
     </plurals>
+    <plurals name="v5_report_blocked_words">
+        <item quantity="one">блокировка трекеров и рекламы</item>
+        <item quantity="few">блокировки трекеров и рекламы</item>
+        <item quantity="many">блокировок трекеров и рекламы</item>
+        <item quantity="other">блокировки трекеров и рекламы</item>
+    </plurals>
     <string name="v5_report_chart_days">Блокировки по дням. Сегодня %1$s, больше всего за день %2$s, в среднем %3$s в день</string>
     <string name="v5_report_empty">За этот период пока ничего не заблокировано.</string>
     <string name="v5_report_top_tracker">Самый частый трекер</string>
