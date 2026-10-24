@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
@@ -100,12 +101,33 @@ private fun V5LibraryDownloadsDarkPreview() = LibraryPreview(Downloads, dark = t
 @Composable
 private fun V5LibraryDownloadsPreview() = LibraryPreview(Downloads, dark = false)
 
+private val EmptyHistory = History.copy(
+    sections = emptyList(),
+    emptyTitle = "Пока пусто",
+    emptyMessage = "Здесь появятся сайты, которые вы откроете в профиле «Учёба». Частные вкладки сюда не попадают.",
+    emptyAction = V5LibraryEmptyAction("Открыть новую вкладку") {},
+    actions = V5LibraryActions(),
+)
+
 @Preview(name = "Library v5 · empty history", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun V5LibraryEmptyPreview() = LibraryPreview(
-    History.copy(sections = emptyList(), emptyMessage = "Здесь появятся сайты, которые вы откроете. Частные вкладки сюда не попадают.", actions = V5LibraryActions()),
-    dark = false,
-)
+private fun V5LibraryEmptyPreview() = LibraryPreview(EmptyHistory, dark = false)
+
+@Preview(name = "Library v5 · empty history, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryEmptyDarkPreview() = LibraryPreview(EmptyHistory, dark = true)
+
+@Preview(name = "Library v5 · empty history, green accent", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryEmptyAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Green) {
+        V5Library(EmptyHistory, onSegmentChange = {}, onQueryChange = {}, onOpen = {}, onDelete = {}, onRetry = {}, onClose = {})
+    }
+}
+
+@Preview(name = "Library v5 · empty history, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LibraryEmptyLargeFontPreview() = LibraryPreview(EmptyHistory, dark = false)
 
 @Preview(name = "Library v5 · favorites, folder open, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable

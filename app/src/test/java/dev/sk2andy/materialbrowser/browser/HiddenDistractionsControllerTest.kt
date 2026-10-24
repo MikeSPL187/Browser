@@ -65,6 +65,12 @@ class HiddenDistractionsControllerTest {
             stops++
             listener = null
         }
+
+        val actions = mutableListOf<DistractionAction>()
+
+        override fun act(action: DistractionAction) {
+            actions += action
+        }
     }
 
     private val storage = FakeStorage()
@@ -205,6 +211,31 @@ class HiddenDistractionsControllerTest {
         page.listener!!.onOutlined(true)
         controller.startPicking(tab, highlightArgb = 0)
         assertEquals(DistractionPickingStep.Choosing, controller.pickingStep)
+    }
+
+    @Test
+    fun `the choice card acts on an outlined block only, and offers a larger one when there is`() {
+        val page = FakePage()
+        pages[tab.id] = page
+        controller.startPicking(tab, highlightArgb = 0)
+
+        // Nothing outlined: the card has nothing to act on.
+        controller.act(DistractionAction.Hide)
+        assertEquals(emptyList<DistractionAction>(), page.actions)
+
+        page.listener!!.onOutlined(true, larger = true)
+        assertTrue(controller.canPickLarger)
+        controller.act(DistractionAction.Larger)
+        page.listener!!.onOutlined(true, larger = false)
+        assertFalse(controller.canPickLarger)
+        controller.act(DistractionAction.Hide)
+        assertEquals(listOf(DistractionAction.Larger, DistractionAction.Hide), page.actions)
+
+        page.listener!!.onHidden("news.example", "#promo")
+        assertFalse(controller.canPickLarger)
+        page.listener!!.onOutlined(true, larger = true)
+        controller.stopPicking()
+        assertFalse(controller.canPickLarger)
     }
 
     @Test

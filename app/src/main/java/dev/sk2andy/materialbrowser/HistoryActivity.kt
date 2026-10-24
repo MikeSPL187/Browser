@@ -113,6 +113,10 @@ class HistoryActivity : ComponentActivity() {
                         onOpen = ::openEntry,
                         onSwitch = ::switchLibrary,
                         onClose = { whenMutationsSaved(::finishWithResult) },
+                        onNewTab = ::openNewTab,
+                        profileName = profiles.takeIf { it.size > 1 }
+                            ?.firstOrNull { profile -> profile.id == activeProfileId }
+                            ?.name?.takeIf(String::isNotBlank),
                         isChangingConfigurations = { isChangingConfigurations },
                     )
                     return@CandyTheme

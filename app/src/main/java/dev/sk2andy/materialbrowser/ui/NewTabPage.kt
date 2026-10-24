@@ -127,6 +127,8 @@ internal fun NewTabPage(
     protection: NewTabProtection? = null,
     /** What the private new tab shows; `null` in previews of regular tabs. */
     privateTab: NewTabPrivate? = null,
+    /** A fresh profile's quicker start on the v5 new tab («EmptyStart»). */
+    fresh: NewTabFreshStart? = null,
 ) {
     val drawsV5 = rememberDrawsV5()
     // Under v5 the live new tab is the v5 one: regular (V13a) or private (V14a); the overview's
@@ -159,6 +161,7 @@ internal fun NewTabPage(
                 top = safeDrawing.calculateTopPadding(),
                 bottom = safeDrawing.calculateBottomPadding() + bottomContentPadding,
             ),
+            fresh = fresh,
         )
         return
     }

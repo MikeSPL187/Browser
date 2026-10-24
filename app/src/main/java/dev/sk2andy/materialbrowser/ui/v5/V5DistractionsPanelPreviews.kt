@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.browser.DistractionPickingStep
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The «Hide distracting items» hint as canvas screen «k1»: light, dark, private, after a hide and at the largest font. */
@@ -76,4 +77,37 @@ private fun V5DistractionsPanelSelectedLightPreview() {
 @Composable
 private fun V5DistractionsPanelLargeFontPreview() {
     PanelPreview(dark = true, privateTab = false, hasHidden = true)
+}
+
+/** Canvas screen «HideMode»: the card for an outlined block, above the bar. */
+@Composable
+private fun ChoicePreview(dark: Boolean, canPickLarger: Boolean = true, accent: V5Accent = V5Accent.Default) {
+    VolaV5Theme(dark = dark, accent = accent) {
+        V5DistractionChoice(visible = true, canPickLarger = canPickLarger, onHide = {}, onLarger = {}, onCancel = {})
+    }
+}
+
+@Preview(name = "Hide distractions · choice, light", widthDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5DistractionChoiceLightPreview() {
+    ChoicePreview(dark = false)
+}
+
+@Preview(name = "Hide distractions · choice, dark", widthDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5DistractionChoiceDarkPreview() {
+    ChoicePreview(dark = true)
+}
+
+/** Nothing larger around the block: «Cancel» alone under «Hide». Green profile. */
+@Preview(name = "Hide distractions · choice, nothing larger, green", widthDp = PREVIEW_WIDTH_DP)
+@Composable
+private fun V5DistractionChoiceNoLargerPreview() {
+    ChoicePreview(dark = false, canPickLarger = false, accent = V5Accent.Green)
+}
+
+@Preview(name = "Hide distractions · choice, largest font", widthDp = PREVIEW_WIDTH_DP, fontScale = 2f)
+@Composable
+private fun V5DistractionChoiceLargeFontPreview() {
+    ChoicePreview(dark = true)
 }

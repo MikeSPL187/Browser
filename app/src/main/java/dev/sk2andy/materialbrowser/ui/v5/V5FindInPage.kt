@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -45,6 +46,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -118,7 +120,7 @@ fun V5FindInPage(
                 .heightIn(min = V5Sizes.barCapsule)
                 .clip(V5Theme.shapes.full)
                 .background(colors.surface)
-                .padding(start = V5Spacing.space3),
+                .padding(start = V5Spacing.space3, end = V5Spacing.space3),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
         ) {
@@ -185,20 +187,17 @@ fun V5FindInPage(
                 )
                 matchText.isNotEmpty() -> Text(
                     matchText,
-                    style = V5Theme.type.footnote,
+                    style = V5Theme.type.callout,
                     color = colors.labelSecondary,
                     maxLines = 1,
                     // TalkBack hears the new count as the matches are counted and stepped through.
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-            IconButton(onClick = onPrevious, enabled = canNavigate, modifier = Modifier.testTag(V5FindInPageTestTags.Previous)) {
-                Icon(VolaIcons.KeyboardArrowUp, contentDescription = labels.previous, tint = colors.label)
-            }
-            IconButton(onClick = onNext, enabled = canNavigate, modifier = Modifier.testTag(V5FindInPageTestTags.Next)) {
-                Icon(VolaIcons.KeyboardArrowDown, contentDescription = labels.next, tint = colors.label)
-            }
         }
+        // The steps stand beside the field on round plates (canvas «FindInPage»).
+        StepButton(VolaIcons.KeyboardArrowUp, labels.previous, canNavigate, onPrevious, V5FindInPageTestTags.Previous)
+        StepButton(VolaIcons.KeyboardArrowDown, labels.next, canNavigate, onNext, V5FindInPageTestTags.Next)
         Box(
             Modifier
                 .widthIn(min = V5Sizes.editorCancel)
@@ -208,7 +207,29 @@ fun V5FindInPage(
                 .testTag(V5FindInPageTestTags.Done),
             contentAlignment = Alignment.Center,
         ) {
-            Text(labels.done, style = V5Theme.type.body, color = colors.accent, maxLines = 1)
+            Text(labels.done, style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold), color = colors.accent, maxLines = 1)
+        }
+    }
+}
+
+/** A step to the previous or next match: a 48 dp target around a round plate; faded when there is none. */
+@Composable
+private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit, tag: String) {
+    val colors = V5Theme.colors
+    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.testTag(tag)) {
+        Box(
+            Modifier
+                .size(V5Sizes.findStep)
+                .clip(V5Theme.shapes.full)
+                .background(colors.fill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = if (enabled) colors.label else colors.labelTertiary,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
         }
     }
 }
