@@ -19,6 +19,8 @@ import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.ClipboardOffer
+import dev.sk2andy.materialbrowser.browser.DistractionAction
+import dev.sk2andy.materialbrowser.browser.DistractionPickingStep
 import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
@@ -33,6 +35,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
 import dev.sk2andy.materialbrowser.ui.v5.V5BottomBar
+import dev.sk2andy.materialbrowser.ui.v5.V5DistractionChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanel
 import dev.sk2andy.materialbrowser.ui.v5.V5CommandNotice
 import dev.sk2andy.materialbrowser.ui.v5.V5CommandNoticeAccessory
@@ -175,6 +178,15 @@ internal fun BrowserV5Bar(
                 onShowHidden = { distractions.showAll(tab) },
                 onDone = distractions::stopPicking,
                 modifier = Modifier.align(Alignment.TopCenter),
+            )
+            // A tap outlined a block: the card above the bar hides it, takes a larger one or lets go.
+            V5DistractionChoice(
+                visible = picking && distractions.pickingStep == DistractionPickingStep.Selected,
+                canPickLarger = distractions.canPickLarger,
+                onHide = { distractions.act(DistractionAction.Hide) },
+                onLarger = { distractions.act(DistractionAction.Larger) },
+                onCancel = { distractions.act(DistractionAction.Cancel) },
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
     }

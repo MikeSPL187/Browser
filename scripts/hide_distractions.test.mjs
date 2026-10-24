@@ -166,6 +166,22 @@ test("a block that fills the screen is not a target", () => {
   assert.equal(hide.targetFor(word, document, view), null);
 });
 
+test("«choose larger» takes the nearest bigger box, short of the page", () => {
+  const { element, document, view, body } = page();
+  const section = element("section", { parent: body, rect: { width: 400, height: 300 } });
+  const wrapper = element("div", { parent: section, rect: { width: 360, height: 120 } });
+  const card = element("div", { parent: wrapper, rect: { width: 360, height: 120 } });
+  const page2 = element("main", { parent: body, rect: { width: 400, height: 2000 } });
+  const inner = element("div", { parent: page2, rect: { width: 360, height: 120 } });
+
+  // A wrapper the same size is skipped: it would hide the same thing.
+  assert.equal(hide.largerTarget(card, document, view), section);
+  // Nothing larger short of the whole page.
+  assert.equal(hide.largerTarget(inner, document, view), null);
+  assert.equal(hide.largerTarget(section, document, view), null);
+  assert.equal(hide.largerTarget(null, document, view), null);
+});
+
 test("only plain selectors are applied, at most 32", () => {
   const many = Array.from({ length: 40 }, (_, index) => `div.a${index}`);
   assert.equal(hide.validSelectors(many).length, 32);
@@ -245,11 +261,26 @@ test("choosing mode outlines a block, hides it on the second tap and tells Vola"
   // Vola hears that a block is outlined, so the panel can say it to TalkBack.
   assert.deepEqual(
     JSON.parse(JSON.stringify(sent.at(-1))),
-    { type: "distraction-outlined", outlined: true, navigationGeneration: 7 },
+    { type: "distraction-outlined", outlined: true, larger: false, navigationGeneration: 7 },
   );
 
-  tap(word);
+  // «Cancel» on Vola's choice card lets the block go and says so.
+  onMessage({ type: "distractions-act", action: "cancel" });
   assert.ok(outline.removed);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(sent.at(-1))),
+    { type: "distraction-outlined", outlined: false, larger: false, navigationGeneration: 7 },
+  );
+  // «Hide» with nothing outlined does nothing.
+  const sentBefore = sent.length;
+  onMessage({ type: "distractions-act", action: "hide" });
+  assert.equal(sent.length, sentBefore);
+
+  tap(word);
+  const again = appended.filter((node) => node.name === "div").at(-1);
+  assert.notEqual(again, outline);
+  tap(word);
+  assert.ok(again.removed);
   assert.equal(sheet.textContent, "#cookie-wall{display:none!important}\ndiv.promo{display:none!important}");
   assert.deepEqual(
     JSON.parse(JSON.stringify(sent.at(-1))),
@@ -292,6 +323,19 @@ test("the background starts choosing on the bound tab's top frame only", () => {
   assert.equal(harness.sent[0][2].frameId, 0);
 });
 
+test("the background passes the choice card's answer to the bound tab's top frame only", () => {
+  const harness = backgroundHarness({ revision: 4, navigationGeneration: 9 });
+
+  harness.context.forwardDistractionAct({ token: "token", action: "larger" });
+  harness.context.forwardDistractionAct({ token: "token", action: "remove-everything" });
+  harness.context.forwardDistractionAct({ token: "other", action: "hide" });
+
+  assert.equal(harness.sent.length, 1);
+  assert.equal(harness.sent[0][0], 7);
+  assert.deepEqual(JSON.parse(JSON.stringify(harness.sent[0][1])), { type: "distractions-act", action: "larger" });
+  assert.equal(harness.sent[0][2].frameId, 0);
+});
+
 test("the background passes on a hidden block for the current page of the top frame only", () => {
   const harness = backgroundHarness({ revision: 4, navigationGeneration: 9 });
   const hidden = { type: "distraction-hidden", selector: "div.promo", navigationGeneration: 9 };
@@ -314,7 +358,7 @@ test("the background passes on a hidden block for the current page of the top fr
 
 test("the background passes on an outline for the current page of the top frame only", () => {
   const harness = backgroundHarness({ revision: 4, navigationGeneration: 9 });
-  const outlined = { type: "distraction-outlined", outlined: true, navigationGeneration: 9 };
+  const outlined = { type: "distraction-outlined", outlined: true, larger: true, navigationGeneration: 9 };
 
   harness.context.relayDistractionHidden(outlined, { frameId: 0, tab: { id: 7 } });
   harness.context.relayDistractionHidden(outlined, { frameId: 3, tab: { id: 7 } });
@@ -328,5 +372,6 @@ test("the background passes on an outline for the current page of the top frame 
     revision: 4,
     navigationGeneration: 9,
     outlined: true,
+    larger: true,
   });
 });
