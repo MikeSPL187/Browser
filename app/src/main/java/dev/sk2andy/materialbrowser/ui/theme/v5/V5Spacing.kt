@@ -77,6 +77,11 @@ object V5Sizes {
     val suggestionBest: Dp = 56.dp
     /** The icon tile at the start of a suggestion. */
     val suggestionTile: Dp = 32.dp
+    /** The best match's tile and its accent outline (canvas «Address»). */
+    val suggestionBestTile: Dp = 40.dp
+    val suggestionBestBorder: Dp = 1.5.dp
+    /** The «clear» circle in the address field. */
+    val editorClear: Dp = 20.dp
     /** The «Cancel» button beside the field. */
     val editorCancel: Dp = 72.dp
     /** The round plate of «previous» and «next» beside the find-in-page field (canvas «FindInPage»). */
