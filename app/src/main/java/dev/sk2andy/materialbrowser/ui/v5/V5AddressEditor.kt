@@ -82,6 +82,15 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Shapes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.SmoothCornerShape
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.border
 
 /*
  * The v5 address editor (system-v5.md, section 9; canvas screen «c»). The field stays a capsule
@@ -218,6 +227,7 @@ private fun EditorField(
             Modifier
                 .weight(1f)
                 .heightIn(min = V5Sizes.barCapsule)
+                .v5Elevation(V5Elevation.e2, V5Theme.shapes.full)
                 .clip(V5Theme.shapes.full)
                 .background(colors.surface)
                 .padding(start = V5Spacing.space3),
@@ -278,12 +288,21 @@ private fun EditorField(
             }
             if (state.value.text.isNotEmpty()) {
                 IconButton(onClick = { onValueChange(TextFieldValue()) }) {
-                    Icon(
-                        VolaIcons.Close,
-                        contentDescription = stringResource(R.string.v5_editor_clear),
-                        tint = colors.labelSecondary,
-                        modifier = Modifier.size(V5Sizes.iconSmall),
-                    )
+                    // A small gray circle with the cross cut out of it (canvas «Address»).
+                    Box(
+                        Modifier
+                            .size(V5Sizes.editorClear)
+                            .clip(V5Theme.shapes.full)
+                            .background(colors.labelTertiary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            VolaIcons.Close,
+                            contentDescription = stringResource(R.string.v5_editor_clear),
+                            tint = colors.surface,
+                            modifier = Modifier.size(V5Sizes.overviewFavicon),
+                        )
+                    }
                 }
             }
         }
@@ -334,9 +353,21 @@ private fun SuggestionList(
             header(key = "best", R.string.v5_suggestion_best)
         }
         layout.sections.forEach { section ->
-            // Rows keep their order from the top down, so they go in reversed.
-            items(section.items.asReversed(), key = { it.stableId }) { item ->
-                SuggestionRow(item, query, best = false, state.highlightedId, onSelect, onFill)
+            // Rows keep their order from the top down, so they go in reversed. Each group is one
+            // card (canvas «Address»): the top row rounds the card's top, the last its bottom.
+            val count = section.items.size
+            itemsIndexed(section.items.asReversed(), key = { _, item -> item.stableId }) { reversedIndex, item ->
+                val index = count - 1 - reversedIndex
+                SuggestionRow(
+                    item,
+                    query,
+                    best = false,
+                    state.highlightedId,
+                    onSelect,
+                    onFill,
+                    first = index == 0,
+                    last = index == count - 1,
+                )
             }
             header(key = section.group.name, section.group.title())
         }
@@ -413,6 +444,8 @@ private fun SuggestionRow(
     highlightedId: String?,
     onSelect: (AddressSuggestionItem) -> Unit,
     onFill: (AddressSuggestionItem) -> Unit,
+    first: Boolean = true,
+    last: Boolean = true,
 ) {
     val colors = V5Theme.colors
     val content = item.content()
@@ -420,19 +453,36 @@ private fun SuggestionRow(
     // A search row fills the field with its own button: a long press saying the same would be a
     // second «Fill in» for TalkBack (А-4).
     val longPressFills = content.fillable && item !is AddressSuggestionItem.Search
-    val shape = V5Theme.shapes.l
-    val container = when {
-        highlighted -> colors.fill
-        best -> colors.accentSoft
-        else -> Color.Transparent
+    // The best match is its own card (radius m, e2, an accent outline); a group's rows share one card
+    // of radius s, its corners on the first and last row, hairlines between them.
+    val radius = V5Shapes.radiusS
+    val shape = if (best) {
+        V5Theme.shapes.m
+    } else {
+        SmoothCornerShape(
+            topStart = if (first) radius else 0.dp,
+            topEnd = if (first) radius else 0.dp,
+            bottomEnd = if (last) radius else 0.dp,
+            bottomStart = if (last) radius else 0.dp,
+        )
     }
+    val container = if (highlighted) colors.fill else colors.surface
+    val separator = colors.separator
     Row(
         Modifier
             .fillMaxWidth()
-            .then(if (best) Modifier.padding(horizontal = V5Spacing.space2) else Modifier)
+            .padding(horizontal = V5Spacing.space2)
             .heightIn(min = if (best) V5Sizes.suggestionBest else V5Sizes.suggestionRow)
+            .then(if (best) Modifier.v5Elevation(V5Elevation.e2, shape) else Modifier)
             .clip(shape)
             .background(container, shape)
+            .then(if (best) Modifier.border(V5Sizes.suggestionBestBorder, colors.accent, shape) else Modifier)
+            .drawBehind {
+                if (best || last) return@drawBehind
+                val inset = (V5Spacing.space4 + V5Sizes.suggestionTile + V5Spacing.space3).toPx()
+                val y = size.height - V5Spacing.hairline.toPx() / 2
+                drawLine(separator, Offset(inset, y), Offset(size.width, y), strokeWidth = V5Spacing.hairline.toPx())
+            }
             .semantics { selected = highlighted }
             .combinedClickable(
                 role = Role.Button,
@@ -447,12 +497,17 @@ private fun SuggestionRow(
     ) {
         Box(
             Modifier
-                .size(V5Sizes.suggestionTile)
+                .size(if (best) V5Sizes.suggestionBestTile else V5Sizes.suggestionTile)
                 .clip(V5Theme.shapes.xs)
-                .background(colors.fill),
+                .background(if (best) colors.accentSoft else colors.fill),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(content.icon, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+            Icon(
+                content.icon,
+                contentDescription = null,
+                tint = if (best) colors.accent else colors.labelSecondary,
+                modifier = Modifier.size(V5Sizes.iconSmall),
+            )
         }
         Column(Modifier.weight(1f)) {
             Text(
@@ -462,24 +517,27 @@ private fun SuggestionRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            content.subtitle?.let {
+            // The best match that is an open tab says so under its title, in the accent.
+            val switchHint = if (best && content.openTab) stringResource(R.string.address_suggestion_switch) else null
+            val subtitle = listOfNotNull(switchHint, content.subtitle).joinToString(" · ").ifEmpty { null }
+            subtitle?.let {
                 Text(
                     it,
                     style = V5Theme.type.footnote,
-                    color = colors.labelSecondary,
+                    color = if (switchHint != null) colors.accent else colors.labelSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
         when {
-            content.openTab -> Row(
+            content.openTab && !best -> Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
             ) {
                 Icon(VolaIcons.Tab, contentDescription = null, tint = colors.accent, modifier = Modifier.size(V5Sizes.iconSmall))
                 Text(
-                    stringResource(if (best) R.string.address_suggestion_switch else R.string.v5_suggestion_tab),
+                    stringResource(R.string.v5_suggestion_tab),
                     style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.accent,
                 )
@@ -491,6 +549,17 @@ private fun SuggestionRow(
                     tint = colors.labelTertiary,
                     modifier = Modifier.size(V5Sizes.iconSmall),
                 )
+            }
+            // A best match other than a search ends in a round accent «go» (canvas «Address»); the row itself is the button.
+            best -> Box(
+                Modifier
+                    .size(V5Sizes.suggestionTile)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.accentFill)
+                    .clearAndSetSemantics {},
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(VolaIcons.ArrowForward, contentDescription = null, tint = colors.onAccentFill, modifier = Modifier.size(V5Sizes.iconSmall))
             }
             else -> Unit
         }
