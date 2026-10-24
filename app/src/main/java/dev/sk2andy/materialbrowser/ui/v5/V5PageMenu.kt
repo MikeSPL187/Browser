@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -51,9 +52,10 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 /*
  * The v5 page menu (canvas screen «д», system-v5.md section 10): a sheet over the page with the
- * page's title, a row of round actions (Forward, Favorite, Share, Print), «Read», the page's tools,
- * tabs, the commands of extensions and user scripts when they offer any, and the library. There is
- * no second, older menu behind it (V28, B4: `design/v28-b4-all-actions.md`).
+ * page's title, a row of round actions (Forward, Favorite, Share, Print), «Read» and «Listen»,
+ * Downloads, the page's tools and the library as four tiles (canvas «Menu»). New and closed tabs
+ * live in the overview; «More» holds the rarer actions and the commands of extensions and user
+ * scripts. There is no second, older menu behind it (V28, B4: `design/v28-b4-all-actions.md`).
  */
 
 object V5PageMenuTestTags {
@@ -70,6 +72,10 @@ object V5PageMenuTestTags {
     const val ShowHidden = "v5_menu_show_hidden"
     const val More = "v5_menu_more"
     const val Back = "v5_menu_back"
+    const val History = "v5_menu_history"
+    const val Favorites = "v5_menu_favorites"
+    const val Passwords = "v5_menu_passwords"
+    const val Settings = "v5_menu_settings"
 }
 
 /** The menu's two pages: everything common, and «More» with the rarer actions (PM-05). */
@@ -107,12 +113,6 @@ data class V5PageMenuState(
     val isPinned: Boolean,
     val desktopView: Boolean?,
     val siteMuted: Boolean?,
-    val canCloseTab: Boolean,
-    /**
-     * False where a private tab cannot be opened: a profile of another device, or an engine
-     * without isolated profiles. The row goes, rather than opening an ordinary tab instead.
-     */
-    val canNewPrivateTab: Boolean = true,
     /** «Hide distracting items» applies: a web page with an engine that can (GeckoView, V20). */
     val canHideDistractions: Boolean = false,
     /** Blocks hidden on this site; «Show hidden items» from one. */
@@ -135,9 +135,6 @@ class V5PageMenuActions(
     val onTogglePinned: () -> Unit,
     val onDesktopViewChange: (Boolean) -> Unit,
     val onSiteMutedChange: (Boolean) -> Unit,
-    val onNewTab: () -> Unit,
-    val onNewPrivateTab: () -> Unit,
-    val onCloseTab: () -> Unit,
     val onFavorites: () -> Unit,
     val onHistory: () -> Unit,
     val onDownloads: () -> Unit,
@@ -149,6 +146,8 @@ class V5PageMenuActions(
     val onShowHidden: () -> Unit = {},
     /** «Listen» (V19c): the article read aloud without opening the reader. */
     val onListen: () -> Unit = {},
+    /** The passwords screen; null where the browser keeps none, and the tile goes. */
+    val onPasswords: (() -> Unit)? = null,
 )
 
 @Composable
@@ -220,87 +219,28 @@ fun V5PageMenu(
                         .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
                     verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
                 ) {
-                    state.downloads?.let { downloads ->
-                        V5ListGroup {
-                            V5ListRow(
-                                stringResource(R.string.v5_menu_downloads),
-                                subtitle = v5DownloadsSummary(downloads),
-                                icon = V5RowIcon(VolaIcons.Download),
-                                onClick = closing(actions.onDownloads),
-                            )
-                        }
-                    }
                     RoundActions(state, actions, ::closing)
                     if (state.canRead) {
                         ReadListenTiles(onRead = closing(actions.onRead), onListen = closing(actions.onListen))
                     }
+                    // Downloads stand on their own line, with what is downloading now (canvas «Menu»).
+                    V5ListGroup {
+                        V5ListRow(
+                            stringResource(R.string.v5_menu_downloads),
+                            value = state.downloads?.let { v5DownloadsSummary(it) },
+                            icon = V5RowIcon(VolaIcons.Download),
+                            onClick = closing(actions.onDownloads),
+                        )
+                    }
                     PageGroup(state, actions, ::closing, onMore = { page = V5PageMenuPage.More })
-                    V5ListGroup {
-                        V5ListRow(
-                            stringResource(R.string.cd_new_tab),
-                            icon = V5RowIcon(VolaIcons.Add),
-                            onClick = closing(actions.onNewTab),
-                        )
-                        if (state.canNewPrivateTab) {
-                            V5ListRow(
-                                stringResource(R.string.v5_menu_new_private_tab),
-                                icon = V5RowIcon(VolaIcons.Lock),
-                                onClick = closing(actions.onNewPrivateTab),
-                            )
-                        }
-                    }
-                    if (state.extras.isNotEmpty()) {
-                        V5ListGroup {
-                            state.extras.forEach { extra ->
-                                V5ListRow(
-                                    extra.title,
-                                    subtitle = extra.subtitle,
-                                    icon = V5RowIcon(VolaIcons.Extension),
-                                    enabled = extra.enabled,
-                                    onClick = closing(extra.onClick),
-                                    modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
-                                )
-                            }
-                        }
-                    }
-                    V5ListGroup {
-                        V5ListRow(
-                            stringResource(R.string.v5_menu_favorites),
-                            icon = V5RowIcon(VolaIcons.Star),
-                            onClick = closing(actions.onFavorites),
-                        )
-                        V5ListRow(
-                            stringResource(R.string.action_history),
-                            icon = V5RowIcon(VolaIcons.History),
-                            onClick = closing(actions.onHistory),
-                        )
-                        // While something downloads, the row on top with its progress is the one way there.
-                        if (state.downloads == null) {
-                            V5ListRow(
-                                stringResource(R.string.v5_menu_downloads),
-                                icon = V5RowIcon(VolaIcons.Download),
-                                onClick = closing(actions.onDownloads),
-                            )
-                        }
-                        V5ListRow(
-                            stringResource(R.string.action_settings),
-                            icon = V5RowIcon(VolaIcons.Settings),
-                            trailing = V5RowTrailing.Chevron,
-                            onClick = closing(actions.onSettings),
-                        )
-                    }
-                    // The one red row stands last and alone, away from «New tab», so a slip of the
-                    // thumb does not close the page (М-3), as iOS keeps a removing action apart.
-                    if (state.canCloseTab) {
-                        V5ListGroup {
-                            V5ListRow(
-                                stringResource(R.string.cd_close_tab),
-                                icon = V5RowIcon(VolaIcons.Close),
-                                titleColor = V5Theme.colors.danger,
-                                onClick = closing(actions.onCloseTab),
-                            )
-                        }
-                    }
+                    // The library as four tiles (canvas «Menu»): one layer, no second list. New and
+                    // closed tabs live in the overview, the extensions' commands in «More».
+                    LibraryTiles(
+                        onHistory = closing(actions.onHistory),
+                        onFavorites = closing(actions.onFavorites),
+                        onPasswords = actions.onPasswords?.let(::closing),
+                        onSettings = closing(actions.onSettings),
+                    )
                 }
             }
         }
@@ -397,6 +337,21 @@ private fun MoreGroup(
                 icon = V5RowIcon(VolaIcons.VolumeOff),
                 trailing = V5RowTrailing.Toggle(muted, actions.onSiteMutedChange),
             )
+        }
+    }
+    // Commands of extensions and user scripts for this page: rare, so they wait here.
+    if (state.extras.isNotEmpty()) {
+        V5ListGroup {
+            state.extras.forEach { extra ->
+                V5ListRow(
+                    extra.title,
+                    subtitle = extra.subtitle,
+                    icon = V5RowIcon(VolaIcons.Extension),
+                    enabled = extra.enabled,
+                    onClick = closing(extra.onClick),
+                    modifier = Modifier.testTag(V5PageMenuTestTags.extra(extra.key)),
+                )
+            }
         }
     }
 }
@@ -558,6 +513,54 @@ private fun WideTile(icon: ImageVector, label: String, onClick: () -> Unit, modi
             style = V5Theme.type.headline,
             color = colors.label,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** History, favorites, passwords and settings as four tiles in a row; passwords only where they exist. */
+@Composable
+private fun LibraryTiles(
+    onHistory: () -> Unit,
+    onFavorites: () -> Unit,
+    onPasswords: (() -> Unit)?,
+    onSettings: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = V5Spacing.marginPhone),
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
+        LibraryTile(VolaIcons.History, stringResource(R.string.action_history), onHistory, V5PageMenuTestTags.History)
+        LibraryTile(VolaIcons.Star, stringResource(R.string.v5_menu_favorites), onFavorites, V5PageMenuTestTags.Favorites)
+        onPasswords?.let { LibraryTile(VolaIcons.Key, stringResource(R.string.passwords_title), it, V5PageMenuTestTags.Passwords) }
+        LibraryTile(VolaIcons.Settings, stringResource(R.string.action_settings), onSettings, V5PageMenuTestTags.Settings)
+    }
+}
+
+@Composable
+private fun RowScope.LibraryTile(icon: ImageVector, label: String, onClick: () -> Unit, tag: String) {
+    val colors = V5Theme.colors
+    Column(
+        Modifier
+            .weight(1f)
+            .heightIn(min = V5Sizes.menuLibraryTile)
+            .clip(V5Theme.shapes.m)
+            .background(colors.surface)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(V5Spacing.space2)
+            .testTag(tag),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space1, Alignment.CenterVertically),
+    ) {
+        Icon(icon, contentDescription = null, tint = colors.label, modifier = Modifier.size(V5Sizes.icon))
+        Text(
+            label,
+            style = V5Theme.type.caption,
+            color = colors.label,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
     }

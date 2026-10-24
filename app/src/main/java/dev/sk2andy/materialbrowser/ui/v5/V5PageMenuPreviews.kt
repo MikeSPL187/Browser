@@ -28,14 +28,13 @@ private val PageState = V5PageMenuState(
     isPinned = false,
     desktopView = false,
     siteMuted = null,
-    canCloseTab = true,
 )
 
 private val NoActions = V5PageMenuActions(
     onForward = {}, onToggleFavorite = {}, onShare = {}, onPrint = {}, onRead = {}, onTranslate = {},
     onFindInPage = {}, onTogglePinned = {}, onDesktopViewChange = {}, onSiteMutedChange = {},
-    onNewTab = {}, onNewPrivateTab = {}, onCloseTab = {}, onFavorites = {}, onHistory = {},
-    onDownloads = {}, onSettings = {}, onDuplicateTab = {}, onOpenInApp = {},
+    onFavorites = {}, onHistory = {},
+    onDownloads = {}, onSettings = {}, onDuplicateTab = {}, onOpenInApp = {}, onPasswords = {},
 )
 
 @Composable
@@ -116,19 +115,6 @@ private fun V5PageMenuNewTabPreview() {
             ),
         )
     }
-}
-
-/** A profile of another device: no private tab there, so no row for it. */
-@Preview(name = "Page menu · no private tab · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
-@Composable
-private fun V5PageMenuNoPrivateLightPreview() {
-    VolaV5Theme(dark = false) { MenuPreview(PageState.copy(canNewPrivateTab = false)) }
-}
-
-@Preview(name = "Page menu · no private tab · dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
-@Composable
-private fun V5PageMenuNoPrivateDarkPreview() {
-    VolaV5Theme(dark = true) { MenuPreview(PageState.copy(canNewPrivateTab = false)) }
 }
 
 /** A private tab: «Favorite» is off and says why (PM-04). */

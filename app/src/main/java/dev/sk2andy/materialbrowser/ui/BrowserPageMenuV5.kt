@@ -18,7 +18,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
-import dev.sk2andy.materialbrowser.data.TabDeletionRules
+import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
 import dev.sk2andy.materialbrowser.reader.ListenSession
 import dev.sk2andy.materialbrowser.reader.ReaderStudioSessionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
@@ -91,8 +91,6 @@ internal fun BrowserPageMenuV5(
         isPinned = tab.isPinned,
         desktopView = controller.isSelectedDesktopView.takeIf { controller.canToggleSelectedDesktopView },
         siteMuted = controller.isSelectedDomainMuted.takeIf { controller.canToggleSelectedDomainMute },
-        canCloseTab = TabDeletionRules.canDelete(tab),
-        canNewPrivateTab = controller.canOpenLinkInPrivate,
         canHideDistractions = canHideDistractions,
         hiddenCount = V5PageMenuRules.hiddenCount(canHideDistractions) { controller.hiddenDistractions.hiddenCount(tab) },
         downloads = downloads,
@@ -112,12 +110,6 @@ internal fun BrowserPageMenuV5(
             onTogglePinned = actions.onTogglePinned,
             onDesktopViewChange = controller::setSelectedDesktopView,
             onSiteMutedChange = controller::setSelectedDomainMuted,
-            onNewTab = actions.onNewTab,
-            onNewPrivateTab = {
-                // Checked before the tab is made: a refusal after it left an ordinary tab, unsaid.
-                if (controller.canOpenLinkInPrivate) actions.onNewPrivateTab()
-            },
-            onCloseTab = actions.onCloseTab,
             onFavorites = actions.onFavorites,
             onHistory = actions.onHistory,
             onDownloads = actions.onDownloads,
@@ -130,6 +122,7 @@ internal fun BrowserPageMenuV5(
             },
             onShowHidden = { controller.hiddenDistractions.showAll(tab) },
             onListen = { listenToSelectedPage(controller, listenSession, title = state.title) },
+            onPasswords = { context.startActivity(PasswordsActivityContract.launchIntent(context)) },
         ),
         onDismiss = onDismiss,
     )
