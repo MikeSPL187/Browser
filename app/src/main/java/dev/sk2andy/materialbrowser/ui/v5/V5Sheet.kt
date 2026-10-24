@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,7 +44,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -233,7 +236,8 @@ fun V5Sheet(
 
 /**
  * The top of a sheet: an optional [leading] glyph, the title (a heading, where TalkBack starts) with
- * an optional [subtitle], and «Close» — every sheet has one (section 9).
+ * an optional [subtitle], and «Close» — every sheet has one (section 9). A subtitle that states a
+ * status may take its color ([subtitleColor]) and a small symbol before it ([subtitleIcon]).
  */
 @Composable
 fun V5SheetHeader(
@@ -242,6 +246,8 @@ fun V5SheetHeader(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     leading: (@Composable () -> Unit)? = null,
+    subtitleColor: Color? = null,
+    subtitleIcon: ImageVector? = null,
 ) {
     val colors = V5Theme.colors
     Row(
@@ -264,13 +270,23 @@ fun V5SheetHeader(
                 modifier = Modifier.semantics { heading() },
             )
             if (subtitle != null) {
-                Text(
-                    subtitle,
-                    style = V5Theme.type.footnote,
-                    color = colors.labelSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1)) {
+                    if (subtitleIcon != null) {
+                        Icon(
+                            subtitleIcon,
+                            contentDescription = null,
+                            tint = subtitleColor ?: colors.labelSecondary,
+                            modifier = Modifier.size(V5Sizes.overviewFavicon),
+                        )
+                    }
+                    Text(
+                        subtitle,
+                        style = V5Theme.type.footnote,
+                        color = subtitleColor ?: colors.labelSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         IconButton(onClick = onClose, modifier = Modifier.testTag(V5SheetTestTags.Close)) {

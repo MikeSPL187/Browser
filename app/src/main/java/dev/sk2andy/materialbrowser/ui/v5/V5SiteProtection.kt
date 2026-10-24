@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
@@ -50,7 +52,11 @@ object V5SiteProtectionTestTags {
     const val Reset = "v5_site_reset"
     const val ResetConfirm = "v5_site_reset_confirm"
     const val Back = "v5_site_back"
+    const val PrivacyReport = "v5_site_privacy_report"
 }
+
+/** The page's connection as the header states it; null says nothing (a page that failed, a local file). */
+enum class V5SiteConnection { Secure, NotSecure }
 
 /** The site's protection as the panel shows it; a null switch is one the engine does not offer here. */
 @Immutable
@@ -68,6 +74,7 @@ data class V5SiteProtectionState(
     val fingerprintingProtection: Boolean?,
     /** The browser-wide HTTPS-only mode as a label, or null where the engine has none. */
     val httpsOnly: String?,
+    val connection: V5SiteConnection? = null,
 )
 
 class V5SiteProtectionActions(
@@ -82,6 +89,8 @@ class V5SiteProtectionActions(
     val onReset: () -> Unit,
     /** The full site sheet: permissions, certificate, page fixes. */
     val onSiteInfo: () -> Unit,
+    /** The privacy report of the last days; null hides the link. */
+    val onPrivacyReport: (() -> Unit)? = null,
 )
 
 /**
@@ -121,9 +130,24 @@ fun V5SiteProtection(
         ) { shown ->
             Column {
                 when (shown) {
+                    // The site first, then its connection in the color of what it means (canvas «Shield»).
                     Page.Main -> V5SheetHeader(
-                        title = title,
-                        subtitle = state.host,
+                        title = state.host,
+                        subtitle = when (state.connection) {
+                            V5SiteConnection.Secure -> stringResource(R.string.v5_site_connection_secure)
+                            V5SiteConnection.NotSecure -> stringResource(R.string.v5_site_connection_not_secure)
+                            null -> title
+                        },
+                        subtitleColor = when (state.connection) {
+                            V5SiteConnection.Secure -> V5Theme.colors.success
+                            V5SiteConnection.NotSecure -> V5Theme.colors.warning
+                            null -> null
+                        },
+                        subtitleIcon = when (state.connection) {
+                            V5SiteConnection.Secure -> VolaIcons.Lock
+                            V5SiteConnection.NotSecure -> VolaIcons.LockOpen
+                            null -> null
+                        },
                         onClose = onDismiss,
                         leading = { ShieldBadge(state.protectionOn) },
                     )
@@ -218,10 +242,16 @@ private fun MainPage(state: V5SiteProtectionState, actions: V5SiteProtectionActi
                 modifier = Modifier.fillMaxWidth().padding(horizontal = V5Spacing.space4, vertical = V5Spacing.space3),
             )
         }
+        // Chosen switches take the accent (system-v5.md 1.2); the level and where to change it below.
         V5ListRow(
             title = stringResource(R.string.v5_site_toggle),
-            subtitle = if (state.privateTab) stringResource(R.string.v5_site_toggle_private) else null,
-            trailing = V5RowTrailing.Toggle(state.protectionOn, actions.onProtectionChange, V5ToggleTint.Success),
+            subtitle = when {
+                state.privateTab -> stringResource(R.string.v5_site_toggle_private)
+                !state.protectionOn -> null
+                state.strict -> stringResource(R.string.v5_site_toggle_strict)
+                else -> stringResource(R.string.v5_site_toggle_standard)
+            },
+            trailing = V5RowTrailing.Toggle(state.protectionOn, actions.onProtectionChange, V5ToggleTint.Accent),
             modifier = Modifier.testTag(V5SiteProtectionTestTags.Toggle),
         )
     }
@@ -237,6 +267,7 @@ private fun MainPage(state: V5SiteProtectionState, actions: V5SiteProtectionActi
         }
         V5ListRow(
             title = stringResource(R.string.v5_site_details),
+            subtitle = stringResource(R.string.v5_site_details_hint),
             titleColor = V5Theme.colors.accent,
             trailing = V5RowTrailing.Chevron,
             onClick = { onOpen(Page.Details) },
@@ -248,6 +279,21 @@ private fun MainPage(state: V5SiteProtectionState, actions: V5SiteProtectionActi
             onClick = actions.onSiteInfo,
             modifier = Modifier.testTag(V5SiteProtectionTestTags.SiteInfo),
         )
+    }
+    actions.onPrivacyReport?.let { onReport ->
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clip(V5Theme.shapes.full)
+                    .clickable(role = Role.Button, onClick = onReport)
+                    .padding(horizontal = V5Spacing.space4)
+                    .testTag(V5SiteProtectionTestTags.PrivacyReport),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(stringResource(R.string.v5_report_title), style = V5Theme.type.callout, color = V5Theme.colors.accent)
+            }
+        }
     }
 }
 
@@ -365,14 +411,14 @@ private fun ReportRow(onCopy: () -> Unit) {
     )
 }
 
-/** The big shield: green while the site is protected, gray when it is not. */
+/** The big shield on its tile: green while the site is protected, gray when it is not. */
 @Composable
 private fun ShieldBadge(on: Boolean) {
     val colors = V5Theme.colors
     Box(
         Modifier
-            .size(V5Sizes.rowTile + V5Spacing.space2)
-            .clip(V5Theme.shapes.full)
+            .size(V5Sizes.siteShieldBadge)
+            .clip(V5Theme.shapes.m)
             .background(if (on) colors.success else colors.fill),
         contentAlignment = Alignment.Center,
     ) {
@@ -380,7 +426,7 @@ private fun ShieldBadge(on: Boolean) {
             VolaIcons.ShieldLock,
             contentDescription = null,
             tint = if (on) V5Tile.Green.glyph else colors.labelSecondary,
-            modifier = Modifier.size(V5Sizes.iconSmall),
+            modifier = Modifier.size(V5Sizes.icon),
         )
     }
 }

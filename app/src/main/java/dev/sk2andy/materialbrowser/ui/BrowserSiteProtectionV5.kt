@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
@@ -19,11 +20,14 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.blocking.SitePrivacyOverrides
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.HttpsOnlyMode
+import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
+import dev.sk2andy.materialbrowser.browser.SiteConnectionRules
 import dev.sk2andy.materialbrowser.browser.integration.markedSensitive
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionLevel
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtection
+import dev.sk2andy.materialbrowser.ui.v5.V5SiteConnection
 import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtectionActions
 import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtectionRules
 import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtectionState
@@ -86,7 +90,17 @@ internal fun BrowserSiteProtectionV5(
         } else {
             null
         },
+        connection = when (
+            SiteConnectionRules.kind(pageUrl = tab.url, isLoading = tab.isLoading, hasError = tab.error != null || tab.failureKind != null)
+        ) {
+            SiteConnectionKind.Https -> V5SiteConnection.Secure
+            SiteConnectionKind.Http -> V5SiteConnection.NotSecure
+            SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> null
+        },
     )
+    // «Privacy report» at the foot of the panel opens the same report as the new tab's card.
+    var reportVisible by rememberSaveable { mutableStateOf(false) }
+    val report = controller.protectionReport
     val context = LocalContext.current
     val copied = stringResource(R.string.v5_site_report_copied)
     val actions = V5SiteProtectionActions(
@@ -138,11 +152,25 @@ internal fun BrowserSiteProtectionV5(
             if (!on) controller.resumeSiteProtection(id)
         },
         onSiteInfo = onSiteInfo,
+        onPrivacyReport = {
+            report.refresh()
+            reportVisible = true
+        },
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
         V5SiteProtection(visible = visible, state = state, actions = actions, onDismiss = onDismiss)
     }
+    BrowserPrivacyReportV5(
+        protection = NewTabProtection(
+            week = report.week,
+            onClear = report::clear,
+            onHideCard = { report.updateCardVisible(false) },
+            summary = report::summary,
+        ),
+        visible = reportVisible,
+        onDismiss = { reportVisible = false },
+    )
 }
 
 /** Not state: a new tab recomposes anyway, and the old one only outlives it while the panel hides. */
