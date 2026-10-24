@@ -3,15 +3,26 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.ui.draw.clip
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
-import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
-import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
+import dev.sk2andy.materialbrowser.ui.theme.v5.LocalV5ProfileAccent
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
+import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptSheet
+import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
+import dev.sk2andy.materialbrowser.ui.v5.V5StatePrimaryAction
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -159,7 +170,11 @@ private fun PermissionPromptContent(
     }
 }
 
-/** The permission question on the v5 prompt sheet: its glyph, the site and the three answers. */
+/**
+ * The permission question on the v5 prompt sheet (canvas «Permission»): its glyph, the site, the main
+ * answer filled under the thumb («Only this time» where offered), the others side by side under it,
+ * and where to change it later in small print.
+ */
 @Composable
 private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (PermissionPromptChoice) -> Unit) {
     val host = SiteConnectionRules.host(prompt.site.origin).ifEmpty { prompt.site.origin }
@@ -169,18 +184,50 @@ private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (Permiss
         if (prompt.isPrivate) R.string.permission_radar_private_request_note else R.string.permission_prompt_change_later,
     )
     val icon = PermissionPromptRules.heroPermission(prompt.permissions).icon()
+    val choices = PermissionPromptRules.choices(prompt.permissions)
+    val main = PermissionPromptRules.mainChoice(choices)
     V5PromptTheme {
         val colors = V5Theme.colors
         V5PromptSheet(
             visible = true,
             title = stringResource(PermissionPromptRules.question(prompt.permissions).title()),
-            message = "$message\n\n$note",
-            actions = PermissionPromptRules.choices(prompt.permissions).map { choice ->
-                V5PromptAction(
-                    label = stringResource(choice.label(prompt.isPrivate)),
-                    onClick = { onChoice(choice) },
-                    role = if (choice == PermissionPromptChoice.AllowAlways) V5PromptRole.Primary else V5PromptRole.Default,
-                )
+            message = message,
+            actions = emptyList(),
+            content = {
+                Column(
+                    Modifier.padding(horizontal = V5Spacing.marginPhone),
+                    verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                ) {
+                    V5StatePrimaryAction(V5StateAction(stringResource(main.label(prompt.isPrivate)), onClick = { onChoice(main) }))
+                    Row(horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
+                        choices.filter { it != main }.forEach { choice ->
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .heightIn(min = V5Sizes.touchTarget)
+                                    .clip(V5Theme.shapes.full)
+                                    .background(colors.fill)
+                                    .clickable(role = Role.Button, onClick = { onChoice(choice) })
+                                    .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space2),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    stringResource(choice.label(prompt.isPrivate)),
+                                    style = V5Theme.type.callout.copy(fontWeight = FontWeight.Medium),
+                                    color = colors.label,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        note,
+                        style = V5Theme.type.caption,
+                        color = colors.labelSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(top = V5Spacing.space1),
+                    )
+                }
             },
             onDismiss = { onChoice(PermissionPromptChoice.Block) },
             testTag = PermissionRadarTestTags.Prompt,
@@ -240,3 +287,35 @@ private fun PermissionPromptContentPreview() {
         }
     }
 }
+
+/** The v5 sheet (canvas «Permission») in the theme and accent of the page under it. */
+@Composable
+private fun PermissionPromptV5Preview(dark: Boolean, accent: V5Accent, permission: SitePermission) {
+    CompositionLocalProvider(LocalV5ProfileAccent provides accent) {
+        VolaV5Theme(dark = dark) {
+            PermissionPromptSheetV5(
+                prompt = PermissionPrompt(
+                    id = 1L,
+                    tabId = "tab",
+                    site = PermissionSiteKey(profileId = "personal", origin = "https://maps.example.com"),
+                    permissions = setOf(permission),
+                    isPrivate = false,
+                ),
+                onChoice = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Permission v5 · location, light", heightDp = 640)
+@Composable
+private fun PermissionPromptV5LightPreview() = PermissionPromptV5Preview(false, V5Accent.Blue, SitePermission.Location)
+
+@Preview(name = "Permission v5 · camera, dark, green", heightDp = 640)
+@Composable
+private fun PermissionPromptV5DarkPreview() = PermissionPromptV5Preview(true, V5Accent.Green, SitePermission.Camera)
+
+@Preview(name = "Permission v5 · notifications, largest font", heightDp = 900, fontScale = 2f)
+@Composable
+private fun PermissionPromptV5LargeFontPreview() =
+    PermissionPromptV5Preview(false, V5Accent.Blue, SitePermission.Notifications)

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -49,6 +50,10 @@ object V5DistractionsPanelTestTags {
     const val Undo = "v5_distractions_undo"
     const val Done = "v5_distractions_done"
     const val Step = "v5_distractions_step"
+    const val Choice = "v5_distractions_choice"
+    const val ChoiceHide = "v5_distractions_choice_hide"
+    const val ChoiceLarger = "v5_distractions_choice_larger"
+    const val ChoiceCancel = "v5_distractions_choice_cancel"
 }
 
 /**
@@ -168,6 +173,75 @@ fun V5DistractionsPanel(
                     content = colors.onAccentFill,
                     onClick = onDone,
                     modifier = Modifier.testTag(V5DistractionsPanelTestTags.Done),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The card for the outlined block (canvas screen «HideMode»), above the bar: «Hide» it, «Choose
+ * larger» — the block around it, when there is one — or «Cancel» to let it go. A second tap on the
+ * block still hides it, so the card only adds a way, it takes none.
+ */
+@Composable
+fun V5DistractionChoice(
+    visible: Boolean,
+    canPickLarger: Boolean,
+    onHide: () -> Unit,
+    onLarger: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val animated = V5Motion.animationsEnabled
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = if (animated) slideInVertically { it } + fadeIn() else fadeIn(V5Motion.reducedFade()),
+        exit = if (animated) slideOutVertically { it } + fadeOut() else fadeOut(V5Motion.reducedFade()),
+    ) {
+        val colors = V5Theme.colors
+        val shape = V5Theme.shapes.l
+        val title = stringResource(R.string.v5_distractions_selected)
+        Column(
+            Modifier
+                .navigationBarsPadding()
+                .padding(horizontal = V5Spacing.space3)
+                .padding(bottom = V5Sizes.bar + V5Spacing.space4)
+                .fillMaxWidth()
+                .clip(shape)
+                .background(colors.surface)
+                .border(V5Spacing.hairline, colors.edge, shape)
+                .semantics { paneTitle = title }
+                .padding(V5Spacing.space3)
+                .testTag(V5DistractionsPanelTestTags.Choice),
+            verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+        ) {
+            PanelButton(
+                text = stringResource(R.string.v5_distractions_choice_hide),
+                background = colors.accentFill,
+                content = colors.onAccentFill,
+                onClick = onHide,
+                modifier = Modifier.fillMaxWidth().testTag(V5DistractionsPanelTestTags.ChoiceHide),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2)) {
+                // Without a larger block around the outlined one the button goes, rather than
+                // staying greyed out with no word why.
+                if (canPickLarger) {
+                    PanelButton(
+                        text = stringResource(R.string.v5_distractions_choice_larger),
+                        background = colors.fill,
+                        content = colors.label,
+                        onClick = onLarger,
+                        modifier = Modifier.weight(1f).testTag(V5DistractionsPanelTestTags.ChoiceLarger),
+                    )
+                }
+                PanelButton(
+                    text = stringResource(R.string.v5_distractions_choice_cancel),
+                    background = colors.fill,
+                    content = colors.label,
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f).testTag(V5DistractionsPanelTestTags.ChoiceCancel),
                 )
             }
         }
