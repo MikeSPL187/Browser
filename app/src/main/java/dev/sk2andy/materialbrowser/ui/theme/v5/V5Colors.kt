@@ -108,6 +108,13 @@ object V5ControlColors {
 
     /** Behind the page while it shrinks under a link preview: the device's dark frame (canvas «н1»). */
     val glanceBackdrop = Color(0xFF0B0B0D)
+
+    /**
+     * A tab card's «×» (canvas «Overview»): a dark veil and a white cross, the same over any page
+     * picture in both themes.
+     */
+    val cardClosePlate = Color(0x57000000)
+    val cardCloseGlyph = Color(0xFFFFFFFF)
 }
 
 object V5Colors {

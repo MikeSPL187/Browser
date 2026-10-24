@@ -89,6 +89,10 @@ object V5Sizes {
     const val OVERVIEW_CARD_RATIO = 0.75f
     /** The accent ring around the current tab's card. */
     val overviewRing: Dp = 2.dp
+    /** The gap of the background's color between the current tab's card and its ring. */
+    val overviewRingGap: Dp = 2.5.dp
+    /** The profile's avatar in the overview's chip. */
+    val overviewAvatar: Dp = 28.dp
     /** The round plate of a card's close button; its touch target stays [touchTarget]. */
     val overviewClosePlate: Dp = 24.dp
     /** The site icon under a card. */
