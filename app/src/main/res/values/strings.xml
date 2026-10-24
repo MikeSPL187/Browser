@@ -1428,6 +1428,8 @@
         <item quantity="other">%d min</item>
     </plurals>
     <string name="reader_text_size">Text size</string>
+    <string name="reader_text_size_value">%1$d%%</string>
+    <string name="reader_settings_remembered">Remembered for all sites</string>
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans serif</string>
     <string name="reader_font_mono">Monospace</string>
