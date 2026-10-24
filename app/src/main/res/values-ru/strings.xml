@@ -2297,6 +2297,8 @@
     <string name="v5_library_up">Назад в папку выше</string>
     <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>
+    <string name="v5_history_empty_title">Пока пусто</string>
+    <string name="v5_history_empty_profile">Здесь появятся сайты, которые вы откроете в профиле «%1$s». Частные вкладки сюда не попадают.</string>
     <string name="v5_history_clear_title">Очистить историю</string>
     <string name="v5_history_clear_subtitle">Только в этом профиле</string>
     <string name="v5_history_clear_hour">За последний час</string>
