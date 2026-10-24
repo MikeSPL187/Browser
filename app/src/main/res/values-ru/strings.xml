@@ -2131,6 +2131,16 @@
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
     <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
+    <string name="v5_fresh_title">Чистый лист</string>
+    <string name="v5_fresh_message">У профиля «%1$s» свои cookie и история. Здесь вы ещё нигде не вошли.</string>
+    <string name="v5_fresh_card_title">Начать быстрее</string>
+    <string name="v5_fresh_copy">Скопировать избранное из «%1$s»</string>
+    <string name="v5_fresh_copy_failed">Не удалось скопировать избранное. Попробуйте ещё раз с новой вкладки.</string>
+    <string name="v5_fresh_move">Переместить сюда вкладки</string>
+    <string name="v5_fresh_move_title">Переместить сюда вкладки</string>
+    <string name="v5_fresh_move_action">Переместить в этот профиль</string>
+    <string name="v5_fresh_move_empty">В других профилях не осталось открытых вкладок.</string>
+    <string name="v5_fresh_move_done">Готово</string>
     <string name="v5_newtab_add_tabs">Открытые вкладки</string>
     <string name="v5_newtab_add_favorites">Избранное</string>
     <string name="v5_newtab_add_history">История</string>

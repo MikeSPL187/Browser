@@ -141,6 +141,11 @@ object V5Sizes {
     val pinnedBadge: Dp = 22.dp
     /** The accent wash behind the top of the new tab fades out over this height. */
     val newTabWash: Dp = 280.dp
+    // A fresh profile's new tab (canvas screen «EmptyStart»): the dashed outline of an empty pinned
+    // slot, the length of its dashes and the bar standing in for the slot's name.
+    val freshSlotBorder: Dp = 1.5.dp
+    val freshSlotDash: Dp = 4.dp
+    val freshSlotName: Dp = 40.dp
 
     // Private new tab (canvas screen «h1»): the round plate of the mask and the mask on it.
     val privateGem: Dp = 80.dp
