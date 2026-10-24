@@ -7,6 +7,7 @@ import android.util.Log
 import dev.sk2andy.materialbrowser.BuildConfig
 import dev.sk2andy.materialbrowser.browser.BrowserEngineScrollMetrics
 import dev.sk2andy.materialbrowser.browser.BrowserViewportRect
+import dev.sk2andy.materialbrowser.browser.DistractionAction
 import dev.sk2andy.materialbrowser.browser.PageDistractionsListener
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeMode
 import dev.sk2andy.materialbrowser.browser.TextInputOcclusionProbeResult
@@ -82,6 +83,9 @@ internal interface GeckoPrivacyBinding {
     fun startDistractionPicking(highlightArgb: Int, listener: PageDistractionsListener): Boolean = false
 
     fun stopDistractionPicking() = Unit
+
+    /** Passes the choice card's answer for the outlined block to the page, while it chooses. */
+    fun actOnDistraction(action: DistractionAction) = Unit
 
     fun close()
 }
@@ -303,6 +307,11 @@ internal class GeckoViewPrivacyHostRuntime(
                 if (binding.distractionListener == null) return
                 binding.distractionListener = null
                 runWhenReady(binding) { publishDistractionPicking(binding, highlightArgb = null) }
+            }
+
+            override fun actOnDistraction(action: DistractionAction) {
+                if (binding.distractionListener == null) return
+                runWhenReady(binding) { publishDistractionAction(binding, action) }
             }
 
             override fun extractPageForReader(onResult: (String?) -> Unit) {
@@ -760,6 +769,24 @@ internal class GeckoViewPrivacyHostRuntime(
         )
     }
 
+    private fun publishDistractionAction(binding: Binding, action: DistractionAction) {
+        if (bindings[binding.token] !== binding || binding.distractionListener == null) return
+        port?.postMessage(
+            JSONObject()
+                .put("type", "distractions-act")
+                .put("protocolVersion", CandyPrivacyHostContract.PROTOCOL_VERSION)
+                .put("token", binding.token)
+                .put(
+                    "action",
+                    when (action) {
+                        DistractionAction.Hide -> "hide"
+                        DistractionAction.Larger -> "larger"
+                        DistractionAction.Cancel -> "cancel"
+                    },
+                ),
+        )
+    }
+
     private fun acceptDistractionHidden(value: JSONObject) {
         val binding = bindings[value.optString("token")] ?: return
         val listener = binding.distractionListener ?: return
@@ -778,7 +805,7 @@ internal class GeckoViewPrivacyHostRuntime(
         val binding = bindings[value.optString("token")] ?: return
         val listener = binding.distractionListener ?: return
         if (binding.policy.navigationGeneration != value.optInt("navigationGeneration", -1)) return
-        listener.onOutlined(value.optBoolean("outlined"))
+        listener.onOutlined(value.optBoolean("outlined"), larger = value.optBoolean("larger"))
     }
 
     private fun endDistractionPicking(binding: Binding) {

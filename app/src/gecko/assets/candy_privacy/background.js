@@ -937,7 +937,16 @@ function forwardDistractionPick(message) {
   }, { frameId: 0 }).catch(() => {});
 }
 
-// A hidden block carries its selector; an outlined one only whether a block is outlined now.
+// The choice card's answer for the outlined block: hide it, take the larger one, or let go.
+function forwardDistractionAct(message) {
+  const tabEntry = Array.from(tokenByTab.entries()).find(([, token]) => token === message.token);
+  if (!tabEntry || !["hide", "larger", "cancel"].includes(message.action)) return;
+  browser.tabs.sendMessage(tabEntry[0], { type: "distractions-act", action: message.action }, { frameId: 0 })
+    .catch(() => {});
+}
+
+// A hidden block carries its selector; an outlined one whether a block is outlined now and
+// whether a larger one is around it.
 function relayDistractionHidden(message, sender) {
   const hidden = message.type === "distraction-hidden";
   if (
@@ -956,7 +965,9 @@ function relayDistractionHidden(message, sender) {
     token,
     revision: policy.revision,
     navigationGeneration: message.navigationGeneration,
-    ...(hidden ? { selector: message.selector.slice(0, 256) } : { outlined: message.outlined === true }),
+    ...(hidden
+      ? { selector: message.selector.slice(0, 256) }
+      : { outlined: message.outlined === true, larger: message.larger === true }),
   });
 }
 
@@ -1318,6 +1329,8 @@ function connectNative() {
       }
     } else if (message.type === "distractions-pick" && typeof message.token === "string") {
       forwardDistractionPick(message);
+    } else if (message.type === "distractions-act" && typeof message.token === "string") {
+      forwardDistractionAct(message);
     } else if (message.type === "reader-extract" && typeof message.token === "string") {
       extractReader(message);
     } else if (

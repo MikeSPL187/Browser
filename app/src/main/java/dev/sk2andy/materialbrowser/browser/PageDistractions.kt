@@ -19,6 +19,12 @@ internal interface PageDistractionsPort {
 
     fun stopPicking()
 
+    /**
+     * Answers the choice card for the outlined block (canvas screen «HideMode»): hide it, take the
+     * larger block around it, or let it go. Nothing happens when nothing is outlined.
+     */
+    fun act(action: DistractionAction) = Unit
+
     /** The engine without the mode (System WebView). */
     object Unavailable : PageDistractionsPort {
         override fun startPicking(highlightArgb: Int, listener: PageDistractionsListener) = false
@@ -32,9 +38,15 @@ internal interface PageDistractionsListener {
     /** A block of the page on [pageHost] was hidden; [selector] finds it again. */
     fun onHidden(pageHost: String, selector: String)
 
-    /** A tap outlined a block, which a second tap hides ([outlined]), or outlined nothing. */
-    fun onOutlined(outlined: Boolean) = Unit
+    /**
+     * A tap outlined a block, which a second tap hides ([outlined]), or outlined nothing; [larger]
+     * says a larger block is around it, for «Choose larger».
+     */
+    fun onOutlined(outlined: Boolean, larger: Boolean = false) = Unit
 
     /** The page left choosing by itself: it navigated, or its tab closed. */
     fun onPickingEnded()
 }
+
+/** What the choice card asks for the outlined block. */
+internal enum class DistractionAction { Hide, Larger, Cancel }

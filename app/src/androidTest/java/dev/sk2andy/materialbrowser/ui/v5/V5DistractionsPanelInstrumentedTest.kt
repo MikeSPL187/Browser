@@ -1,5 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -85,5 +88,32 @@ class V5DistractionsPanelInstrumentedTest {
         show(hasHidden = false, canUndo = false, step = DistractionPickingStep.Choosing, privateTab = true)
 
         composeRule.onNodeWithText(context.getString(R.string.v5_distractions_private)).assertExists()
+    }
+
+    @Test
+    fun theChoiceCardHidesTakesALargerBlockOrLetsGo() {
+        var canPickLarger by mutableStateOf(true)
+        composeRule.setContent {
+            VolaV5Theme {
+                V5DistractionChoice(
+                    visible = true,
+                    canPickLarger = canPickLarger,
+                    onHide = { calls += "hide" },
+                    onLarger = { calls += "larger" },
+                    onCancel = { calls += "cancel" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ChoiceLarger).performClick()
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ChoiceHide).performClick()
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ChoiceCancel).performClick()
+        assertEquals(listOf("larger", "hide", "cancel"), calls)
+
+        // Nothing larger around the block: the button goes rather than stays greyed out.
+        canPickLarger = false
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ChoiceLarger).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5DistractionsPanelTestTags.ChoiceCancel).assertExists()
     }
 }
