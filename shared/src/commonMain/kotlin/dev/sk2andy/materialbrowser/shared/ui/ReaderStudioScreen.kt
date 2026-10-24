@@ -93,6 +93,7 @@ import dev.sk2andy.materialbrowser.reader.ReaderTextAlignment
 import dev.sk2andy.materialbrowser.reader.ReaderTheme
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 object ReaderStudioTestTags {
     const val Screen = "reader_studio_screen"
@@ -115,6 +116,7 @@ object ReaderStudioTestTags {
     const val WideMargins = "reader_studio_wide_margins"
     const val SettingsButton = "reader_studio_settings_button"
     const val SettingsPanel = "reader_studio_settings_panel"
+    const val SettingsRemembered = "reader_studio_settings_remembered"
     const val Original = "reader_studio_original"
 }
 
@@ -152,6 +154,10 @@ enum class ReaderStudioLabel {
     OfflineEmpty,
     ProgressPercent,
     DeleteSnapshot,
+    /** The text size in use, as a percentage in `value`. */
+    TextSizeValue,
+    /** Where the reading settings apply. */
+    SettingsRemembered,
 }
 
 enum class ReaderStudioIcon {
@@ -213,6 +219,8 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.OfflineEmpty -> "No offline articles saved yet."
         ReaderStudioLabel.ProgressPercent -> "${requireNotNull(value)}% read"
         ReaderStudioLabel.DeleteSnapshot -> "Delete offline article"
+        ReaderStudioLabel.TextSizeValue -> "${requireNotNull(value)}%"
+        ReaderStudioLabel.SettingsRemembered -> "Remembered for all sites"
     }
 
     @Composable
@@ -815,28 +823,23 @@ private fun ReaderSettingsPanel(
     onShowLibrary: () -> Unit,
     onOpenOriginal: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(style.panelMargin)
-            .testTag(ReaderStudioTestTags.SettingsPanel),
-        shape = style.panelShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = style.panelElevation,
-    ) {
+    val controls = style.controls
+    val content: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(style.panelPadding),
             verticalArrangement = Arrangement.spacedBy(style.panelGap),
         ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(style.handleWidth, style.handleHeight)
-                    .background(MaterialTheme.colorScheme.outlineVariant, CircleShape),
-            )
+            // The app's panel draws its own handle.
+            if (controls == null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(style.handleWidth, style.handleHeight)
+                        .background(MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     resources.text(ReaderStudioLabel.ReadingView),
@@ -867,31 +870,60 @@ private fun ReaderSettingsPanel(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            ReaderThemeSwatches(
-                resources = resources,
-                style = style,
-                settings = settings,
-                browserDark = browserDark,
-                onSettingsChanged = onSettingsChanged,
-            )
-            ReaderTextSize(
-                resources = resources,
-                style = style,
-                settings = settings,
-                onSettingsChanged = onSettingsChanged,
-            )
-            ReaderFontFamilyChoice(
-                resources = resources,
-                style = style,
-                settings = settings,
-                onSettingsChanged = onSettingsChanged,
-            )
+            // The app's sheet leads with the typeface, as Safari's (canvas screen «ReaderSettings»).
+            if (controls == null) {
+                ReaderThemeSwatches(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    browserDark = browserDark,
+                    onSettingsChanged = onSettingsChanged,
+                )
+                ReaderTextSize(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    onSettingsChanged = onSettingsChanged,
+                )
+                ReaderFontFamilyChoice(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    onSettingsChanged = onSettingsChanged,
+                )
+            } else {
+                ReaderFontFamilyChoice(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    onSettingsChanged = onSettingsChanged,
+                )
+                ReaderTextSize(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    onSettingsChanged = onSettingsChanged,
+                )
+                ReaderThemeSwatches(
+                    resources = resources,
+                    style = style,
+                    settings = settings,
+                    browserDark = browserDark,
+                    onSettingsChanged = onSettingsChanged,
+                )
+            }
             ReaderWideMargins(
                 resources = resources,
                 style = style,
                 settings = settings,
                 onSettingsChanged = onSettingsChanged,
             )
+            if (controls != null && !isPrivate) {
+                controls.Footnote(
+                    resources.text(ReaderStudioLabel.SettingsRemembered),
+                    Modifier.fillMaxWidth().testTag(ReaderStudioTestTags.SettingsRemembered),
+                )
+            }
             if (!isPrivate) {
                 Row(horizontalArrangement = Arrangement.spacedBy(style.panelGap)) {
                     FilledTonalButton(
@@ -946,6 +978,26 @@ private fun ReaderSettingsPanel(
             }
         }
     }
+    if (controls != null) {
+        controls.Panel(
+            Modifier
+                .fillMaxWidth()
+                .testTag(ReaderStudioTestTags.SettingsPanel),
+            content,
+        )
+        return
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(style.panelMargin)
+            .testTag(ReaderStudioTestTags.SettingsPanel),
+        shape = style.panelShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shadowElevation = style.panelElevation,
+        content = content,
+    )
 }
 
 /** «Listen» until speech starts, then pause or resume and stop. */
@@ -1031,6 +1083,22 @@ private fun ReaderThemeSwatches(
     onSettingsChanged: (ReaderSettings) -> Unit,
 ) {
     val current = settings.theme.resolved(browserDark)
+    val controls = style.controls
+    if (controls != null) {
+        val palettes = READER_SWATCH_THEMES.map { style.palette(it, browserDark) }
+        controls.Themes(
+            names = READER_SWATCH_THEMES.map { theme -> resources.text(theme.swatchLabel()) },
+            backgrounds = palettes.map(ReaderPalette::background),
+            contents = palettes.map(ReaderPalette::content),
+            sampleFontFamily = style.serifFontFamily,
+            selected = READER_SWATCH_THEMES.indexOf(current),
+            onSelect = { index -> onSettingsChanged(settings.copy(theme = READER_SWATCH_THEMES[index])) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(ReaderStudioTestTags.ThemeSegmented),
+        )
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1069,15 +1137,7 @@ private fun ReaderThemeSwatches(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        resources.text(
-                            when (theme) {
-                                ReaderTheme.Paper -> ReaderStudioLabel.ThemePaper
-                                ReaderTheme.Dark -> ReaderStudioLabel.ThemeDark
-                                ReaderTheme.System,
-                                ReaderTheme.Light,
-                                -> ReaderStudioLabel.ThemeLight
-                            },
-                        ),
+                        resources.text(theme.swatchLabel()),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -1087,6 +1147,14 @@ private fun ReaderThemeSwatches(
             }
         }
     }
+}
+
+private fun ReaderTheme.swatchLabel(): ReaderStudioLabel = when (this) {
+    ReaderTheme.Paper -> ReaderStudioLabel.ThemePaper
+    ReaderTheme.Dark -> ReaderStudioLabel.ThemeDark
+    ReaderTheme.System,
+    ReaderTheme.Light,
+    -> ReaderStudioLabel.ThemeLight
 }
 
 private val READER_SWATCH_THEMES = listOf(ReaderTheme.Light, ReaderTheme.Paper, ReaderTheme.Dark)
@@ -1100,6 +1168,26 @@ private fun ReaderTextSize(
     onSettingsChanged: (ReaderSettings) -> Unit,
 ) {
     val description = resources.text(ReaderStudioLabel.TextSize)
+    val range = ReaderLibraryRules.MIN_FONT_SCALE..ReaderLibraryRules.MAX_FONT_SCALE
+    val onScale = { scale: Float ->
+        if (scale != settings.fontScale) onSettingsChanged(settings.copy(fontScale = scale))
+    }
+    val controls = style.controls
+    if (controls != null) {
+        controls.TextSize(
+            title = description,
+            valueText = resources.text(ReaderStudioLabel.TextSizeValue, (settings.fontScale * 100).roundToInt()),
+            value = settings.fontScale,
+            onValueChange = onScale,
+            valueRange = range,
+            steps = ReaderLibraryRules.FONT_SCALE_STEPS,
+            sampleFontFamily = style.serifFontFamily,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(ReaderStudioTestTags.FontSegmented),
+        )
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1113,25 +1201,15 @@ private fun ReaderTextSize(
             fontFamily = style.serifFontFamily,
             style = MaterialTheme.typography.bodyMedium,
         )
-        val onScale = { scale: Float ->
-            if (scale != settings.fontScale) onSettingsChanged(settings.copy(fontScale = scale))
-        }
-        val sliderModifier = Modifier
-            .weight(1f)
-            .semantics { contentDescription = description }
-        val range = ReaderLibraryRules.MIN_FONT_SCALE..ReaderLibraryRules.MAX_FONT_SCALE
-        val controls = style.controls
-        if (controls != null) {
-            controls.Slider(settings.fontScale, onScale, range, ReaderLibraryRules.FONT_SCALE_STEPS, sliderModifier)
-        } else {
-            Slider(
-                value = settings.fontScale,
-                onValueChange = onScale,
-                modifier = sliderModifier,
-                valueRange = range,
-                steps = ReaderLibraryRules.FONT_SCALE_STEPS,
-            )
-        }
+        Slider(
+            value = settings.fontScale,
+            onValueChange = onScale,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { contentDescription = description },
+            valueRange = range,
+            steps = ReaderLibraryRules.FONT_SCALE_STEPS,
+        )
         Text(
             "A",
             modifier = Modifier.clearAndSetSemantics { },

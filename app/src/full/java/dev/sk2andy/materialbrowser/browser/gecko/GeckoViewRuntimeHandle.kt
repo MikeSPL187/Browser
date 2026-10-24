@@ -83,6 +83,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionOrigin
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.gecko.webpush.GeckoWebPushCoordinator
+import dev.sk2andy.materialbrowser.browser.DistractionAction
 import dev.sk2andy.materialbrowser.browser.PageDistractionsListener
 import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
@@ -1048,6 +1049,8 @@ private class GeckoViewBrowserSession(
                 privacyBinding.startDistractionPicking(highlightArgb, listener)
 
         override fun stopPicking() = privacyBinding.stopDistractionPicking()
+
+        override fun act(action: DistractionAction) = privacyBinding.actOnDistraction(action)
     }
 
     @Volatile

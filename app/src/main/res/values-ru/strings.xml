@@ -980,6 +980,8 @@
     <string name="cert_error_continue">Всё равно открыть сайт</string>
     <string name="cert_error_continue_note">Vola запомнит это для сайта до своего закрытия.</string>
     <string name="cert_error_continue_failed">Не удалось открыть сайт. Вернитесь назад или попробуйте позже.</string>
+    <string name="https_only_error_advice_title">Читать можно, вводить — не стоит</string>
+    <string name="https_only_error_exception">Исключение — только для %1$s. Снять его можно в защите сайта.</string>
     <string name="settings_dns_over_https_title">Зашифрованный DNS (DoH)</string>
     <string name="settings_dns_over_https_provider_system">Системный</string>
     <string name="settings_dns_over_https_provider_cloudflare">Cloudflare</string>
@@ -1498,6 +1500,8 @@
         <item quantity="other">%d минуты</item>
     </plurals>
     <string name="reader_text_size">Размер текста</string>
+    <string name="reader_text_size_value">%1$d %%</string>
+    <string name="reader_settings_remembered">Запоминается для всех сайтов</string>
     <string name="reader_font_serif">С засечками</string>
     <string name="reader_font_sans">Без засечек</string>
     <string name="reader_font_mono">Моноширинный</string>
@@ -2105,6 +2109,16 @@
     <string name="v5_group_default_name">Группа</string>
     <string name="v5_group_save">Готово</string>
     <string name="v5_group_ungroup">Разгруппировать</string>
+    <string name="v5_group_tabs_header">Вкладки в группе · %1$d</string>
+    <string name="v5_group_add_tabs">Добавить открытые вкладки</string>
+    <string name="v5_group_close_message">Все вкладки группы закроются.</string>
+    <string name="v5_group_close_action">Закрыть вкладки</string>
+    <plurals name="v5_group_close">
+        <item quantity="one">Закрыть группу и %d вкладку</item>
+        <item quantity="few">Закрыть группу и %d вкладки</item>
+        <item quantity="many">Закрыть группу и %d вкладок</item>
+        <item quantity="other">Закрыть группу и %d вкладки</item>
+    </plurals>
     <string name="v5_group_name">Название группы</string>
     <string name="v5_group_color">Цвет</string>
     <string name="v5_group_color_purple">Фиолетовый</string>
@@ -2155,6 +2169,16 @@
     <string name="v5_newtab_recent">Недавние вкладки</string>
     <string name="v5_newtab_add_title">Закрепить сайт</string>
     <string name="v5_newtab_add_empty">Здесь появятся сайты из открытых вкладок, избранного и истории этого профиля.</string>
+    <string name="v5_fresh_title">Чистый лист</string>
+    <string name="v5_fresh_message">У профиля «%1$s» свои cookie и история. Здесь вы ещё нигде не вошли.</string>
+    <string name="v5_fresh_card_title">Начать быстрее</string>
+    <string name="v5_fresh_copy">Скопировать избранное из «%1$s»</string>
+    <string name="v5_fresh_copy_failed">Не удалось скопировать избранное. Попробуйте ещё раз с новой вкладки.</string>
+    <string name="v5_fresh_move">Переместить сюда вкладки</string>
+    <string name="v5_fresh_move_title">Переместить сюда вкладки</string>
+    <string name="v5_fresh_move_action">Переместить в этот профиль</string>
+    <string name="v5_fresh_move_empty">В других профилях не осталось открытых вкладок.</string>
+    <string name="v5_fresh_move_done">Готово</string>
     <string name="v5_newtab_add_tabs">Открытые вкладки</string>
     <string name="v5_newtab_add_favorites">Избранное</string>
     <string name="v5_newtab_add_history">История</string>
@@ -2171,6 +2195,9 @@
     <string name="v5_distractions_site">Второе касание скрывает. Vola запомнит выбор для %1$s.</string>
     <string name="v5_distractions_private">Второе касание скрывает. В частной вкладке — только до закрытия частных вкладок.</string>
     <string name="v5_distractions_done">Готово</string>
+    <string name="v5_distractions_choice_hide">Скрыть</string>
+    <string name="v5_distractions_choice_larger">Выбрать крупнее</string>
+    <string name="v5_distractions_choice_cancel">Отмена</string>
     <string name="v5_distractions_selected">Выбрано. Коснитесь ещё раз, чтобы скрыть.</string>
     <string name="v5_distractions_hidden">Скрыто. «Отменить» вернёт.</string>
     <string name="v5_site_on">Защита включена</string>
@@ -2224,6 +2251,7 @@
     <string name="v5_glance_private_note">Частная вкладка: из просмотра ничего не сохранится</string>
     <string name="v5_menu_title">Меню страницы</string>
     <string name="v5_menu_more">Ещё</string>
+    <string name="v5_menu_more_hint">ПК-версия, в приложении, копия</string>
     <string name="v5_menu_favorite">В избранное</string>
     <string name="v5_menu_in_favorites">В избранном</string>
     <string name="v5_menu_favorite_private">Недоступно в частной вкладке</string>
@@ -2320,6 +2348,8 @@
     <string name="v5_library_up">Назад в папку выше</string>
     <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>
+    <string name="v5_history_empty_title">Пока пусто</string>
+    <string name="v5_history_empty_profile">Здесь появятся сайты, которые вы откроете в профиле «%1$s». Частные вкладки сюда не попадают.</string>
     <string name="v5_history_clear_title">Очистить историю</string>
     <string name="v5_history_clear_subtitle">Только в этом профиле</string>
     <string name="v5_history_clear_hour">За последний час</string>

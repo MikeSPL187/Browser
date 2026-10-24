@@ -347,6 +347,8 @@ private fun PageGroup(
         V5ListRow(
             stringResource(R.string.v5_menu_more),
             icon = V5RowIcon(VolaIcons.MoreHoriz),
+            // What lies behind it, said before it is opened (canvas «MenuV2»).
+            value = stringResource(R.string.v5_menu_more_hint),
             trailing = V5RowTrailing.Chevron,
             onClick = onMore,
             modifier = Modifier.testTag(V5PageMenuTestTags.More),

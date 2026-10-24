@@ -36,11 +36,11 @@ class HistoryLibraryV5InstrumentedTest {
         profileId = "personal",
     )
 
-    private fun show() {
+    private fun show(history: List<HistoryEntry> = listOf(visit)) {
         composeRule.setContent {
             HistoryLibraryV5(
                 profileId = "personal",
-                history = listOf(visit),
+                history = history,
                 recallMatches = emptyList(),
                 onRecallQuery = { _, _ -> },
                 onDelete = { calls += "delete ${it.title}" },
@@ -48,6 +48,8 @@ class HistoryLibraryV5InstrumentedTest {
                 onOpen = { calls += "open" },
                 onSwitch = {},
                 onClose = {},
+                onNewTab = { calls += "new tab" },
+                profileName = "Учёба",
             )
         }
         composeRule.waitForIdle()
@@ -76,5 +78,18 @@ class HistoryLibraryV5InstrumentedTest {
         composeRule.onNodeWithTag(HistoryLibraryV5TestTags.ClearConfirm).performClick()
 
         assertEquals(listOf("clear"), calls)
+    }
+
+    /** An empty history says whose it is and offers a new tab (S-08, canvas «EmptyHistory»). */
+    @Test
+    fun anEmptyHistoryOffersANewTab() {
+        show(history = emptyList())
+
+        composeRule.onNodeWithText(context.getString(R.string.v5_history_empty_title)).assertExists()
+        composeRule.onNodeWithText(context.getString(R.string.v5_history_empty_profile, "Учёба")).assertExists()
+        composeRule.onNodeWithTag(V5LibraryTestTags.EmptyAction).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("new tab"), calls)
     }
 }

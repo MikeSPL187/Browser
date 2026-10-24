@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
@@ -43,18 +44,27 @@ private fun V5TabGroupMoveLimitLightPreview() = MovePreview(dark = false, groupL
 @Composable
 private fun V5TabGroupMoveLimitDarkPreview() = MovePreview(dark = true, groupLimit = 12)
 
+private val PreviewTabs = listOf(
+    V5GroupEditorTab("a", "Тыквенный суп с имбирём за 30 минут"),
+    V5GroupEditorTab("b", "Винная карта: что к супу"),
+    V5GroupEditorTab("c", "Список покупок на пятницу"),
+)
+
 @Composable
-private fun EditPreview(dark: Boolean) {
-    VolaV5Theme(dark = dark) {
+private fun EditPreview(dark: Boolean, accent: V5Accent = V5Accent.Default) {
+    VolaV5Theme(dark = dark, accent = accent) {
         V5TabGroupEditSheet(
             visible = true,
             title = "Изменить группу",
-            initialName = "Поездка",
+            initialName = "Ужин в пятницу",
             initialColorIndex = 0,
             colors = PreviewColors,
-            onSave = { _, _ -> },
+            onSave = {},
             onDismiss = {},
             onUngroup = {},
+            tabs = PreviewTabs,
+            candidates = listOf(V5GroupEditorTab("d", "Рецепты дома")),
+            onCloseGroup = {},
         )
     }
 }
@@ -81,4 +91,16 @@ private fun V5TabGroupEditLightPreview() {
 @Composable
 private fun V5TabGroupEditDarkPreview() {
     EditPreview(dark = true)
+}
+
+@Preview(name = "Edit group · orange accent, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5TabGroupEditAccentPreview() {
+    EditPreview(dark = false, accent = V5Accent.Orange)
+}
+
+@Preview(name = "Edit group · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5TabGroupEditLargeFontPreview() {
+    EditPreview(dark = false)
 }

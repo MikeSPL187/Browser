@@ -28,6 +28,13 @@ object PermissionPromptRules {
             )
         }
 
+    /**
+     * The v5 sheet's main answer (canvas «Permission»): «Only this time» where it is offered, the
+     * least that answers the site; else the strongest. The rest stand beside each other under it.
+     */
+    fun mainChoice(choices: List<PermissionPromptChoice>): PermissionPromptChoice =
+        choices.firstOrNull { it == PermissionPromptChoice.AllowOnce } ?: choices.first()
+
     /** The permission whose icon heads the sheet: the most sensitive one asked for. */
     fun heroPermission(permissions: Set<SitePermission>): SitePermission =
         HERO_ORDER.firstOrNull(permissions::contains) ?: SitePermission.Location

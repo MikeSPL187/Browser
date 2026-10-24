@@ -20,7 +20,10 @@ import dev.sk2andy.materialbrowser.data.EssentialsRules
 import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5MovableTabs
+import dev.sk2andy.materialbrowser.ui.v5.V5MoveTabsSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTab
+import dev.sk2andy.materialbrowser.ui.v5.V5NewTabFresh
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabReport
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabRules
 import dev.sk2andy.materialbrowser.ui.v5.V5NewTabState
@@ -47,9 +50,11 @@ internal fun BrowserNewTabV5(
     onRecentTab: (String) -> Unit,
     protection: NewTabProtection?,
     contentPadding: PaddingValues,
+    fresh: NewTabFreshStart? = null,
 ) {
     var reportVisible by rememberSaveable { mutableStateOf(false) }
     var addVisible by rememberSaveable { mutableStateOf(false) }
+    var moveVisible by rememberSaveable { mutableStateOf(false) }
     val locale = LocalConfiguration.current.locales[0]
     val week = protection?.summary?.invoke(ProtectionReportRules.DAYS)
     val pinnedIcons = rememberImageBitmaps(essentialIcons)
@@ -70,6 +75,13 @@ internal fun BrowserNewTabV5(
         recent = recentTabs.map { tab -> tab.v5Recent(recentIcons[tab.id]) },
         profileIcon = profileIconKey?.let(WorkspaceIcons::vector),
         canEdit = editor != null,
+        fresh = fresh?.takeIf { it.isFresh && essentials.isEmpty() }?.let { start ->
+            V5NewTabFresh(
+                profileName = start.profileName,
+                copyFrom = start.copyFromName,
+                canMoveTabs = start.movableTabs.isNotEmpty(),
+            )
+        },
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark) {
@@ -83,7 +95,20 @@ internal fun BrowserNewTabV5(
             onHideReport = { protection?.onHideCard?.invoke() },
             onOpenRecent = onRecentTab,
             contentPadding = contentPadding,
+            onCopyFavorites = { fresh?.onCopyFavorites?.invoke() },
+            onMoveTabs = { moveVisible = true },
         )
+        if (fresh != null) {
+            val movableIcons = rememberImageBitmaps(fresh.favicons)
+            V5MoveTabsSheet(
+                visible = moveVisible,
+                groups = fresh.movableTabs.map { (profileName, tabs) ->
+                    V5MovableTabs(profileName, tabs.map { tab -> tab.v5Recent(movableIcons[tab.id]) })
+                },
+                onMove = fresh.onMoveTab,
+                onDismiss = { moveVisible = false },
+            )
+        }
         if (editor != null) {
             val candidates = editor.candidates
             val suggested = if (addVisible) editor.suggestions else emptyList<EssentialCandidate>() to emptyList()
