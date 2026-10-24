@@ -404,6 +404,8 @@ private data class RowContent(
     val subtitle: String?,
     val openTab: Boolean = false,
     val fillable: Boolean = true,
+    /** A page's site: its letter tile stands in for the group's symbol (canvas «Address»). */
+    val site: String? = null,
 )
 
 private fun AddressSuggestionItem.content(): RowContent = when (this) {
@@ -419,6 +421,7 @@ private fun AddressSuggestionItem.content(): RowContent = when (this) {
             title = suggestion.title.ifBlank { host },
             subtitle = host.takeIf { suggestion.title.isNotBlank() },
             openTab = openTab,
+            site = host,
         )
     }
     is AddressSuggestionItem.Recall -> RowContent(
@@ -495,19 +498,24 @@ private fun SuggestionRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
     ) {
-        Box(
-            Modifier
-                .size(if (best) V5Sizes.suggestionBestTile else V5Sizes.suggestionTile)
-                .clip(V5Theme.shapes.xs)
-                .background(if (best) colors.accentSoft else colors.fill),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                content.icon,
-                contentDescription = null,
-                tint = if (best) colors.accent else colors.labelSecondary,
-                modifier = Modifier.size(V5Sizes.iconSmall),
-            )
+        val tileSize = if (best) V5Sizes.suggestionBestTile else V5Sizes.suggestionTile
+        if (content.site != null) {
+            V5SiteTile(favicon = null, site = content.site, size = tileSize)
+        } else {
+            Box(
+                Modifier
+                    .size(tileSize)
+                    .clip(V5Theme.shapes.xs)
+                    .background(if (best) colors.accentSoft else colors.fill),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    content.icon,
+                    contentDescription = null,
+                    tint = if (best) colors.accent else colors.labelSecondary,
+                    modifier = Modifier.size(V5Sizes.iconSmall),
+                )
+            }
         }
         Column(Modifier.weight(1f)) {
             Text(

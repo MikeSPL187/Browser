@@ -735,12 +735,7 @@ private fun Recent(tabs: List<V5RecentTab>, onOpen: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
                 ) {
-                    val favicon = tab.favicon
-                    if (favicon != null) {
-                        Image(favicon, contentDescription = null, modifier = Modifier.size(V5Sizes.iconSmall).clip(V5Theme.shapes.xs))
-                    } else {
-                        Icon(VolaIcons.Public, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
-                    }
+                    V5SiteTile(tab.favicon, site = tab.host, size = V5Sizes.iconSmall)
                     Column(Modifier.weight(1f)) {
                         Text(tab.title, style = V5Theme.type.body, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(tab.host, style = V5Theme.type.footnote, color = colors.labelSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

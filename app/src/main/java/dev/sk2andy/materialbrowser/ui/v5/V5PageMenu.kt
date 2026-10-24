@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -211,7 +210,7 @@ fun V5PageMenu(
                     title = state.title,
                     subtitle = state.subtitle,
                     onClose = onDismiss,
-                    leading = { Favicon(state.favicon) },
+                    leading = { Favicon(state.favicon, site = state.subtitle.takeIf { state.hasPage }) },
                 )
                 Column(
                     Modifier
@@ -567,7 +566,8 @@ private fun RowScope.LibraryTile(icon: ImageVector, label: String, onClick: () -
 }
 
 @Composable
-private fun Favicon(favicon: ImageBitmap?) {
+/** The page's tile in the header: its icon, or its letter; a new tab has no site and keeps the globe. */
+private fun Favicon(favicon: ImageBitmap?, site: String?) {
     val colors = V5Theme.colors
     Box(
         Modifier
@@ -576,10 +576,6 @@ private fun Favicon(favicon: ImageBitmap?) {
             .background(colors.fill),
         contentAlignment = Alignment.Center,
     ) {
-        if (favicon != null) {
-            Image(favicon, contentDescription = null, modifier = Modifier.size(V5Sizes.iconSmall))
-        } else {
-            Icon(VolaIcons.Public, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
-        }
+        V5SiteTile(favicon, site = site, size = V5Sizes.iconSmall)
     }
 }
