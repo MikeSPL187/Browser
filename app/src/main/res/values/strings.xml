@@ -1999,6 +1999,14 @@
     <string name="v5_group_default_name">Group</string>
     <string name="v5_group_save">Done</string>
     <string name="v5_group_ungroup">Ungroup</string>
+    <string name="v5_group_tabs_header">Tabs in the group · %1$d</string>
+    <string name="v5_group_add_tabs">Add open tabs</string>
+    <string name="v5_group_close_message">Every tab in the group closes.</string>
+    <string name="v5_group_close_action">Close tabs</string>
+    <plurals name="v5_group_close">
+        <item quantity="one">Close the group and %d tab</item>
+        <item quantity="other">Close the group and %d tabs</item>
+    </plurals>
     <string name="v5_group_name">Group name</string>
     <string name="v5_group_color">Color</string>
     <string name="v5_group_color_purple">Purple</string>
