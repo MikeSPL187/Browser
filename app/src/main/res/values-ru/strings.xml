@@ -1115,6 +1115,13 @@
     <string name="page_error_not_found_title">Страница не найдена</string>
     <string name="page_error_offline_title">Нет подключения</string>
     <string name="page_error_offline_body">Страница откроется сама, как только сеть вернётся. Проверьте Wi‑Fi или мобильный интернет.</string>
+    <string name="page_error_offline_body_host">Не удалось открыть %1$s. Страница обновится сама, когда сеть вернётся.</string>
+    <string name="page_error_check_title">Что проверить</string>
+    <string name="network_wifi">Wi‑Fi</string>
+    <string name="network_cellular">Мобильная сеть</string>
+    <string name="network_link_connected">Подключено</string>
+    <string name="network_link_no_internet">Без интернета</string>
+    <string name="network_link_not_connected">Не подключено</string>
     <string name="page_error_not_found_message">На сайте %1$s нет такой страницы. Возможно, её перенесли или удалили.</string>
     <string name="page_error_unknown_host_message">Не удалось найти %1$s. Проверьте, нет ли в адресе опечатки.</string>
     <string name="page_error_search_for">Искать «%1$s»</string>

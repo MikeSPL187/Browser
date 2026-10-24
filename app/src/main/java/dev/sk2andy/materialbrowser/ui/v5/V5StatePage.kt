@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,9 +33,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 
 /**
  * An action of a [V5StatePage]: the main one is filled in the accent with an optional glyph; a
@@ -110,6 +113,42 @@ internal fun V5StateGlyph(icon: ImageVector, modifier: Modifier = Modifier, tint
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(V5Sizes.privateGemIcon))
     }
 }
+
+/**
+ * A glyph that waits for something outside (canvas «Error»: the network): the quiet glyph on a
+ * raised disc inside two thin rings, like waves going out.
+ */
+@Composable
+internal fun V5WaveGlyph(icon: ImageVector, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    Box(modifier.size(V5Sizes.stateWaves), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .alpha(WAVE_OUTER_ALPHA)
+                .border(V5Spacing.hairline, colors.separator, V5Theme.shapes.full),
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .padding(V5Sizes.stateWavesGap)
+                .border(V5Spacing.hairline, colors.separator, V5Theme.shapes.full),
+        )
+        Box(
+            Modifier
+                .size(V5Sizes.stateWavesDisc)
+                .v5Elevation(V5Elevation.e2, V5Theme.shapes.full)
+                .clip(V5Theme.shapes.full)
+                .background(colors.surface),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.privateGemIcon))
+        }
+    }
+}
+
+/** The outer ring fades a little, as a wave does going out. */
+private const val WAVE_OUTER_ALPHA = 0.6f
 
 /**
  * The filled main action over the quiet ones, each a full row wide: the same buttons on every state

@@ -531,6 +531,13 @@ object VolaIcons {
         )
     }
 
+    val SignalCellular: ImageVector by lazy {
+        materialSymbol(
+            name = "SignalCellular",
+            pathData = "M260 800 q-25 0 -42.5 -17.5 T200 740 v-120 q0 -25 17.5 -42.5 T260 560 q25 0 42.5 17.5 T320 620 v120 q0 25 -17.5 42.5 T260 800 Z m240 0 q-25 0 -42.5 -17.5 T440 740 v-320 q0 -25 17.5 -42.5 T500 360 q25 0 42.5 17.5 T560 420 v320 q0 25 -17.5 42.5 T500 800 Z m240 0 q-25 0 -42.5 -17.5 T680 740 v-520 q0 -25 17.5 -42.5 T740 160 q25 0 42.5 17.5 T800 220 v520 q0 25 -17.5 42.5 T740 800 Z",
+        )
+    }
+
     val Snooze: ImageVector by lazy {
         materialSymbol(
             name = "Snooze",
@@ -657,6 +664,13 @@ object VolaIcons {
         )
     }
 
+    val Wifi: ImageVector by lazy {
+        materialSymbol(
+            name = "Wifi",
+            pathData = "M480 840 q-42 0 -71 -29 t-29 -71 q0 -42 29 -71 t71 -29 q42 0 71 29 t29 71 q0 42 -29 71 t-71 29 Z m0 -440 q75 0 142.5 24 T745 490 q20 15 20.5 39.5 T748 572 q-17 17 -42 17.5 T661 576 q-38 -26 -84 -41 t-97 -15 q-51 0 -97 15 t-84 41 q-20 14 -45 13 t-42 -18 q-17 -18 -17 -42.5 t20 -39.5 q55 -42 122.5 -65.5 T480 400 Z m0 -240 q125 0 235.5 41 T914 317 q20 17 21 42 t-17 43 q-17 17 -42 17.5 T831 404 q-72 -59 -161.5 -91.5 T480 280 q-100 0 -189.5 32.5 T129 404 q-20 16 -45 15.5 T42 402 q-18 -18 -17 -43 t21 -42 q88 -75 198.5 -116 T480 160 Z",
+        )
+    }
+
     val WifiOff: ImageVector by lazy {
         materialSymbol(
             name = "WifiOff",
@@ -748,6 +762,7 @@ object VolaIcons {
             SearchOff,
             Share,
             ShieldLock,
+            SignalCellular,
             Snooze,
             Settings,
             Sort,
@@ -766,6 +781,7 @@ object VolaIcons {
             VisibilityOff,
             VolumeOff,
             WarningFilled,
+            Wifi,
             WifiOff,
             Workspaces,
         )
