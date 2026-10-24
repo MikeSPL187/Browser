@@ -562,12 +562,7 @@ private fun TabCard(
 
 @Composable
 private fun Favicon(card: V5TabCard, size: Dp) {
-    val favicon = card.favicon
-    if (favicon != null) {
-        Image(favicon, contentDescription = null, modifier = Modifier.size(size).clip(V5Theme.shapes.xs))
-    } else {
-        Icon(VolaIcons.Public, contentDescription = null, tint = V5Theme.colors.labelSecondary, modifier = Modifier.size(size))
-    }
+    V5SiteTile(card.favicon, site = card.title, size = size)
 }
 
 @Composable
