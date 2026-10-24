@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
@@ -70,6 +71,7 @@ internal fun rememberNewTabFreshStart(
     // Favorites, history and copying all work on the active profile, which owns the selected tab.
     if (!controller.profilesEnabled || profileId != controller.activeProfileId) return null
     val context = LocalContext.current
+    val resources = LocalResources.current
     val profiles = controller.profiles
     val profile = profiles.firstOrNull { it.id == profileId } ?: return null
     val isFresh = NewTabFreshRules.isFresh(
@@ -102,9 +104,9 @@ internal fun rememberNewTabFreshStart(
             controller.importFavoriteBookmarks(favorites) { result ->
                 // A failure keeps the button on the new tab, so the message points back to it.
                 val message = when {
-                    result == null -> context.getString(R.string.v5_fresh_copy_failed)
-                    result.importedCount == 0 -> context.getString(R.string.favorite_bookmark_import_no_new)
-                    else -> context.resources.getQuantityString(
+                    result == null -> resources.getString(R.string.v5_fresh_copy_failed)
+                    result.importedCount == 0 -> resources.getString(R.string.favorite_bookmark_import_no_new)
+                    else -> resources.getQuantityString(
                         R.plurals.favorite_bookmark_import_success,
                         result.importedCount,
                         result.importedCount,
