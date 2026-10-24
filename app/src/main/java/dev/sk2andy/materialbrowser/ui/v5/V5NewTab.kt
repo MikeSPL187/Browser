@@ -9,27 +9,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.zIndex
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
-import kotlinx.coroutines.launch
-import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -56,30 +40,48 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
+import kotlinx.coroutines.launch
 
 object V5NewTabTestTags {
     const val Page = "v5_new_tab"
@@ -468,6 +470,7 @@ private fun PinnedTile(
         Box(
             Modifier
                 .size(V5Sizes.pinnedTile)
+                .v5Elevation(V5Elevation.e1, V5Theme.shapes.m)
                 .clip(V5Theme.shapes.m),
             contentAlignment = Alignment.Center,
         ) {
@@ -579,10 +582,12 @@ private fun ReportCard(report: V5NewTabReport, onOpen: () -> Unit, onHide: () ->
     val more = stringResource(R.string.v5_newtab_report_more)
     val moreLabel = stringResource(R.string.v5_newtab_more)
     var menu by remember { mutableStateOf(false) }
+    // A card on the new tab has the `l` corner (system-v5.md 3) and lifts by e1.
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(V5Theme.shapes.m)
+            .v5Elevation(V5Elevation.e1, V5Theme.shapes.l)
+            .clip(V5Theme.shapes.l)
             .background(colors.surface)
             .clickable(role = Role.Button, onClickLabel = more, onClick = onOpen)
             .padding(start = V5Spacing.space4, end = V5Spacing.space1, top = V5Spacing.space1, bottom = V5Spacing.space4)
@@ -664,6 +669,7 @@ private fun Recent(tabs: List<V5RecentTab>, onOpen: (String) -> Unit) {
         Column(
             Modifier
                 .fillMaxWidth()
+                .v5Elevation(V5Elevation.e1, V5Theme.shapes.m)
                 .clip(V5Theme.shapes.m)
                 .background(colors.surface),
         ) {
