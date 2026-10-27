@@ -37,6 +37,14 @@ enum class V5OverviewEmpty {
 }
 
 object V5TabOverviewRules {
+    /**
+     * How many stagger steps a card at [index] waits on entering the overview (canvas
+     * «MotionOverview»): its distance from the page's card at [selectedIndex], which the page itself
+     * becomes; from the top when no card is the page's.
+     */
+    fun entranceOrder(index: Int, selectedIndex: Int): Int =
+        if (selectedIndex < 0) index else abs(index - selectedIndex)
+
     /** Why the grid is empty: a search first, then the segment and whether it can have tabs. */
     fun empty(query: String, privateSegment: Boolean, canOpenPrivate: Boolean): V5OverviewEmpty = when {
         query.isNotBlank() -> V5OverviewEmpty.NoMatches
