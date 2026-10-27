@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 
-/* The password manager under v5 (canvas «ц4»): locked, the list, a login, editing. Preview text is not localized. */
+/* The password manager under v5 (canvas «ц4», «Passwords»): locked, the list, a login, editing. Preview text is not localized. */
 
 private fun previewLogin(id: String, site: String, user: String, totp: String? = null) = VaultLogin(
     id = id,
@@ -27,6 +27,7 @@ private val previewLogins = listOf(
     previewLogin("1", "north-guide.example", "anna@example.com", totp = "otpauth://totp/north?secret=JBSWY3DPEHPK3PXP"),
     previewLogin("2", "mail.example", "anna"),
     previewLogin("3", "shop.example", "anna.k"),
+    previewLogin("4", "aurora-tours.example", "anna"),
 )
 
 @Composable
@@ -48,6 +49,10 @@ private fun PasswordsListV5LightPreview() = PasswordsListPreview(dark = false)
 @Composable
 private fun PasswordsListV5DarkPreview() = PasswordsListPreview(dark = true)
 
+@Preview(name = "Passwords v5 · list, largest font", heightDp = 1400, fontScale = 2f)
+@Composable
+private fun PasswordsListV5LargeFontPreview() = PasswordsListPreview(dark = false)
+
 @Composable
 private fun PasswordsListPreview(dark: Boolean) = PreviewScheme(dark) {
     PasswordsListV5(
@@ -58,7 +63,7 @@ private fun PasswordsListPreview(dark: Boolean) = PreviewScheme(dark) {
         onBack = {},
         systemFillNote = false,
         passkeyNote = null,
-        healthIssues = 2,
+        health = PasswordsHealthCounts(weak = 2, reused = 1, breached = null, issues = 3),
         onHealth = {},
         onImport = {},
         busy = false,

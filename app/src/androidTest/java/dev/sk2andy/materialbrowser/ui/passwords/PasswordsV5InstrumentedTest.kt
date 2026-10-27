@@ -39,7 +39,7 @@ class PasswordsV5InstrumentedTest {
                     onBack = {},
                     systemFillNote = false,
                     passkeyNote = null,
-                    healthIssues = 0,
+                    health = PasswordsHealthCounts(weak = 0, reused = 0, breached = 0, issues = 0),
                     onHealth = {},
                     onImport = {},
                     busy = false,

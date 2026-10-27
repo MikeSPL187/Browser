@@ -1942,6 +1942,11 @@
     <string name="passwords_health_digits_only">%1$s, digits only</string>
     <string name="passwords_health_easy_to_guess">%1$s, easy to guess</string>
     <string name="passwords_health_entry">Password check</string>
+    <string name="v5_passwords_weak">Weak</string>
+    <string name="v5_passwords_reused">Reused</string>
+    <string name="v5_passwords_leaks">Leaks</string>
+    <string name="v5_passwords_leaks_unchecked">not checked yet</string>
+    <string name="v5_passwords_vault_note">KDBX vault on this phone · opens with your fingerprint</string>
     <string name="passwords_health_entry_fine">All fine</string>
     <plurals name="passwords_health_seen_in_leaks">
         <item quantity="one">seen in leaks %d time</item>
