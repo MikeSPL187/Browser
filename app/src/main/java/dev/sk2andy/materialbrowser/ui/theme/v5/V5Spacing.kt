@@ -34,6 +34,10 @@ object V5Sizes {
     val touchTarget: Dp = 48.dp
     /** The widest a full-screen state's content gets (a lock screen, B13), so lines stay readable. */
     val stateContentMax: Dp = 480.dp
+    /** A waiting glyph (canvas «Error»): its two rings, the gap between them and the raised disc inside. */
+    val stateWaves: Dp = 176.dp
+    val stateWavesGap: Dp = 22.dp
+    val stateWavesDisc: Dp = 96.dp
 
     // Bottom bar on a phone (section 5.1).
     /** The bar: 8 + 48 + 8, plus the system navigation under it. */

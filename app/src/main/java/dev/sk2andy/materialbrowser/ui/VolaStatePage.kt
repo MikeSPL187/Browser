@@ -51,6 +51,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StateGlyph
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePrimaryAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StateQuietAction
+import dev.sk2andy.materialbrowser.ui.v5.V5WaveGlyph
 
 /** The color of a [VolaStatePageIcon]: plain, a warning, a danger, or the page's accent. */
 internal enum class VolaStatePageTone { Neutral, Warning, Error, Accent }
@@ -230,6 +231,16 @@ internal fun VolaStatePageIcon(
             modifier = Modifier.size(VolaStatePageTokens.iconSize),
         )
     }
+}
+
+/** A [VolaStatePageIcon] for a page that waits on the network; v5 draws it inside rings (canvas «Error»). */
+@Composable
+internal fun VolaStatePageWaves(icon: ImageVector, modifier: Modifier = Modifier) {
+    if (LocalStatePageV5.current) {
+        V5WaveGlyph(icon, modifier)
+        return
+    }
+    VolaStatePageIcon(icon = icon, modifier = modifier)
 }
 
 /** A [VolaStatePageIcon] that spins while the page tries again. */

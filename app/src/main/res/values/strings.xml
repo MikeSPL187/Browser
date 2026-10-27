@@ -1077,6 +1077,13 @@
     <string name="page_error_not_found_title">Page not found</string>
     <string name="page_error_offline_title">No connection</string>
     <string name="page_error_offline_body">The page will open by itself as soon as you’re back online. Check Wi‑Fi or mobile data.</string>
+    <string name="page_error_offline_body_host">Couldn’t open %1$s. The page reloads by itself when the network is back.</string>
+    <string name="page_error_check_title">What to check</string>
+    <string name="network_wifi">Wi‑Fi</string>
+    <string name="network_cellular">Mobile network</string>
+    <string name="network_link_connected">Connected</string>
+    <string name="network_link_no_internet">No internet</string>
+    <string name="network_link_not_connected">Not connected</string>
     <string name="page_error_not_found_message">%1$s has no page at this address. It may have been moved or deleted.</string>
     <string name="page_error_unknown_host_message">Couldn’t find %1$s. Check the address for typos.</string>
     <string name="page_error_search_for">Search for “%1$s”</string>
