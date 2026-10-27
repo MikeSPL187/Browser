@@ -105,3 +105,7 @@ private fun V5TranslateSameLanguagePreview() = SheetPreview(
     dark = true,
     state = FirstTranslation.copy(to = English, downloadBytes = null, downloadSizeUnknown = true),
 )
+
+@Preview(name = "Translate · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5TranslateLightPreviewLargeFont() = SheetPreview(dark = false, state = FirstTranslation)

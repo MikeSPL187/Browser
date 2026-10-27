@@ -44,3 +44,7 @@ private fun V5FeedbackNoticeLightPreview() = NoticesPreview(dark = false)
 @Preview(name = "V5FeedbackNotice · dark")
 @Composable
 private fun V5FeedbackNoticeDarkPreview() = NoticesPreview(dark = true)
+
+@Preview(name = "V5FeedbackNotice · light, largest font", fontScale = 2f)
+@Composable
+private fun V5FeedbackNoticeLightPreviewLargeFont() = NoticesPreview(dark = false)

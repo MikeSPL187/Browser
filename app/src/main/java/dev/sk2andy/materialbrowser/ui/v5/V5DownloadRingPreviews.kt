@@ -94,3 +94,7 @@ private fun V5DownloadNoticeLightPreview() = NoticesPreview(dark = false)
 @Preview(name = "Download ended · dark", widthDp = 360)
 @Composable
 private fun V5DownloadNoticeDarkPreview() = NoticesPreview(dark = true)
+
+@Preview(name = "Downloads ring · light, largest font", fontScale = 2f)
+@Composable
+private fun V5DownloadRingLightPreviewLargeFont() = RingsPreview(dark = false)

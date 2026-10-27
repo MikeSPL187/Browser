@@ -146,3 +146,9 @@ private fun V5TogglesLightPreview() {
 private fun V5TogglesDarkPreview() {
     VolaV5Theme(dark = true) { ToggleSample() }
 }
+
+@Preview(name = "Settings list · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5SettingsListLightPreviewLargeFont() {
+    VolaV5Theme(dark = false) { SettingsSample() }
+}

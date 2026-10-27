@@ -76,3 +76,9 @@ private fun V5EditorEmptyPreview() {
 private fun V5EditorPrivatePreview() {
     VolaV5Theme(privateBrowsing = true) { EditorPreview("пол", PreviewItems.drop(2)) }
 }
+
+@Preview(name = "Editor · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5EditorLightPreviewLargeFont() {
+    VolaV5Theme(dark = false) { EditorPreview("пол", PreviewItems) }
+}
