@@ -103,15 +103,18 @@ internal fun SettingsHomeV5(
                     DefaultBrowserBanner(onMakeDefault = onOpenDefaultBrowserSettings)
                 }
             }
-            groups.forEachIndexed { index, group ->
+            groups.forEach { group ->
                 V5ListGroup {
                     group.forEach { item ->
                         val entry = byItem.getValue(item)
                         val aboutUnlocks = item.destination == SettingsDestination.AboutLegal &&
                             !developerOptionsUnlocked && onUnlockDeveloperOptions != null
+                        val appearance = item.destination == SettingsDestination.Appearance
                         V5ListRow(
                             title = entry.title,
-                            subtitle = entry.summary,
+                            // The theme is one word: it stands at the end, as on the canvas («As in system»).
+                            subtitle = entry.summary.takeUnless { appearance },
+                            value = entry.summary.takeIf { appearance },
                             icon = V5RowIcon(settingsHomeIcon(item.icon), V5SettingsHomeRules.tile(item)),
                             trailing = V5RowTrailing.Chevron,
                             onClick = { onOpen(item) },
@@ -119,14 +122,15 @@ internal fun SettingsHomeV5(
                             onLongClickLabel = stringResource(R.string.developer_options_unlock_action)
                                 .takeIf { aboutUnlocks },
                         )
-                    }
-                    if (index == V5SettingsHomeRules.APPEARANCE_GROUP) {
-                        V5ListRow(
-                            title = stringResource(R.string.settings_v5_site_tint),
-                            icon = V5RowIcon(VolaIcons.Contrast, V5Tile.Pink),
-                            trailing = V5RowTrailing.Toggle(siteTint, { siteTint = it }),
-                            modifier = Modifier.testTag(SettingsHomeV5TestTags.SiteTint),
-                        )
+                        // «Tint the bar» belongs to how the browser looks: right under Appearance.
+                        if (appearance) {
+                            V5ListRow(
+                                title = stringResource(R.string.settings_v5_site_tint),
+                                icon = V5RowIcon(VolaIcons.Contrast, V5Tile.Pink),
+                                trailing = V5RowTrailing.Toggle(siteTint, { siteTint = it }),
+                                modifier = Modifier.testTag(SettingsHomeV5TestTags.SiteTint),
+                            )
+                        }
                     }
                 }
             }
