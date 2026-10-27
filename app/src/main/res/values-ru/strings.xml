@@ -1115,6 +1115,13 @@
     <string name="page_error_not_found_title">Страница не найдена</string>
     <string name="page_error_offline_title">Нет подключения</string>
     <string name="page_error_offline_body">Страница откроется сама, как только сеть вернётся. Проверьте Wi‑Fi или мобильный интернет.</string>
+    <string name="page_error_offline_body_host">Не удалось открыть %1$s. Страница обновится сама, когда сеть вернётся.</string>
+    <string name="page_error_check_title">Что проверить</string>
+    <string name="network_wifi">Wi‑Fi</string>
+    <string name="network_cellular">Мобильная сеть</string>
+    <string name="network_link_connected">Подключено</string>
+    <string name="network_link_no_internet">Без интернета</string>
+    <string name="network_link_not_connected">Не подключено</string>
     <string name="page_error_not_found_message">На сайте %1$s нет такой страницы. Возможно, её перенесли или удалили.</string>
     <string name="page_error_unknown_host_message">Не удалось найти %1$s. Проверьте, нет ли в адресе опечатки.</string>
     <string name="page_error_search_for">Искать «%1$s»</string>
@@ -2258,7 +2265,8 @@
     <string name="v5_site_reset_message_private">Строгая защита, сторонние cookie, баннеры cookie, AMP, защита от отпечатков и исправления страниц для этого сайта вернутся к умолчаниям в этой приватной вкладке, а защита снова включится. Страница перезагрузится.</string>
     <string name="v5_site_reset_action">Сбросить</string>
     <string name="v5_glance_open">Открыть</string>
-    <string name="v5_glance_background">В фоне</string>
+    <string name="v5_glance_open_background">Открыть в фоне</string>
+    <string name="v5_glance_swipe_hint">Свайп вверх — открыть · вниз — закрыть</string>
     <string name="v5_glance_opened_background">Открыто в фоне</string>
     <string name="v5_glance_source_gone">Ссылка не открыта: её вкладки уже нет на экране</string>
     <string name="v5_glance_more">Ещё действия со ссылкой</string>
@@ -2344,7 +2352,6 @@
     <string name="v5_accent_purple">Фиолетовый</string>
     <string name="v5_accent_graphite">Графит</string>
     <!-- V28 B2: библиотека v5 (холст р1-р3) -->
-    <string name="v5_library_title">Библиотека</string>
     <string name="v5_library_close">Закрыть библиотеку</string>
     <string name="v5_library_favorites">Избранное</string>
     <string name="v5_library_history">История</string>
@@ -2366,6 +2373,20 @@
     <string name="v5_downloads_delete_failed_message">Загрузка уйдёт из списка вместе со всем, что от неё осталось.</string>
     <string name="v5_downloads_clear_message">Файлы всех завершённых загрузок удалятся с этого телефона, а неудавшиеся и отменённые уйдут из списка. Идущие загрузки останутся.</string>
     <string name="v5_library_up">Назад в папку выше</string>
+    <string name="v5_library_read_later">Читать позже</string>
+    <string name="v5_library_search_read_later">Поиск в «Читать позже»</string>
+    <string name="v5_read_later_empty_title">Пока пусто</string>
+    <string name="v5_read_later_empty_message">Сохраните статью в режиме чтения кнопкой «Сохранить офлайн» — она появится здесь.</string>
+    <string name="v5_read_later_no_results">Ничего не найдено</string>
+    <string name="v5_read_later_progress">Прочитано %1$d %%</string>
+    <string name="v5_read_later_deleted">Статья удалена</string>
+    <string name="v5_downloads_now">Сейчас</string>
+    <string name="v5_downloads_filter_all">Все</string>
+    <string name="v5_downloads_filter_documents">Документы</string>
+    <string name="v5_downloads_filter_images">Изображения</string>
+    <string name="v5_downloads_filter_archives">Архивы</string>
+    <string name="v5_downloads_no_kind">Таких загрузок нет</string>
+    <string name="v5_downloads_folder_note">Файлы лежат в общей папке «Загрузки» телефона — их видят и другие приложения.</string>
     <string name="v5_favorites_new_folder">Новая папка</string>
     <string name="v5_history_clear">Очистить…</string>
     <string name="v5_history_empty_title">Пока пусто</string>

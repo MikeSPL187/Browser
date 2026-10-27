@@ -1077,6 +1077,13 @@
     <string name="page_error_not_found_title">Page not found</string>
     <string name="page_error_offline_title">No connection</string>
     <string name="page_error_offline_body">The page will open by itself as soon as you’re back online. Check Wi‑Fi or mobile data.</string>
+    <string name="page_error_offline_body_host">Couldn’t open %1$s. The page reloads by itself when the network is back.</string>
+    <string name="page_error_check_title">What to check</string>
+    <string name="network_wifi">Wi‑Fi</string>
+    <string name="network_cellular">Mobile network</string>
+    <string name="network_link_connected">Connected</string>
+    <string name="network_link_no_internet">No internet</string>
+    <string name="network_link_not_connected">Not connected</string>
     <string name="page_error_not_found_message">%1$s has no page at this address. It may have been moved or deleted.</string>
     <string name="page_error_unknown_host_message">Couldn’t find %1$s. Check the address for typos.</string>
     <string name="page_error_search_for">Search for “%1$s”</string>
@@ -2164,7 +2171,8 @@
     <string name="v5_site_reset_message_private">Strict, third-party cookies, cookie banners, AMP, fingerprinting and page fixes for this site go back to the defaults in this private tab, and protection turns back on. The page reloads.</string>
     <string name="v5_site_reset_action">Reset</string>
     <string name="v5_glance_open">Open</string>
-    <string name="v5_glance_background">In background</string>
+    <string name="v5_glance_open_background">Open in background</string>
+    <string name="v5_glance_swipe_hint">Swipe up to open · down to close</string>
     <string name="v5_glance_opened_background">Opened in background</string>
     <string name="v5_glance_source_gone">Link not opened: its tab is no longer on screen</string>
     <string name="v5_glance_more">More link actions</string>
@@ -2246,7 +2254,6 @@
     <string name="v5_accent_purple">Purple</string>
     <string name="v5_accent_graphite">Graphite</string>
     <!-- V28 B2: v5 library (canvas screens r1-r3) -->
-    <string name="v5_library_title">Library</string>
     <string name="v5_library_close">Close library</string>
     <string name="v5_library_favorites">Favorites</string>
     <string name="v5_library_history">History</string>
@@ -2268,6 +2275,20 @@
     <string name="v5_downloads_delete_failed_message">The download is removed from the list, with anything left of it.</string>
     <string name="v5_downloads_clear_message">This deletes the files of all finished downloads from this phone and removes the failed and cancelled ones. Downloads under way stay.</string>
     <string name="v5_library_up">Back to the folder above</string>
+    <string name="v5_library_read_later">Read later</string>
+    <string name="v5_library_search_read_later">Search read later</string>
+    <string name="v5_read_later_empty_title">Nothing saved yet</string>
+    <string name="v5_read_later_empty_message">Save an article with “Save offline” in Reader view and it appears here.</string>
+    <string name="v5_read_later_no_results">No matching articles</string>
+    <string name="v5_read_later_progress">%1$d%% read</string>
+    <string name="v5_read_later_deleted">Article deleted</string>
+    <string name="v5_downloads_now">Now</string>
+    <string name="v5_downloads_filter_all">All</string>
+    <string name="v5_downloads_filter_documents">Documents</string>
+    <string name="v5_downloads_filter_images">Images</string>
+    <string name="v5_downloads_filter_archives">Archives</string>
+    <string name="v5_downloads_no_kind">No downloads of this kind</string>
+    <string name="v5_downloads_folder_note">Files are kept in the phone’s shared Downloads folder — other apps can see them too.</string>
     <string name="v5_favorites_new_folder">New folder</string>
     <string name="v5_history_clear">Clear…</string>
     <string name="v5_history_empty_title">Nothing here yet</string>

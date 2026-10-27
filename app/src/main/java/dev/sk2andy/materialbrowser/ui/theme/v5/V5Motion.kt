@@ -74,6 +74,10 @@ object V5Motion {
     const val GLANCE_LIFT_SCALE = 1.03f
     const val GLANCE_PAGE_SCALE = 0.97f
     const val GLANCE_ARC_MAX_DP = 20f
+    /** The preview card follows a vertical swipe at this share of the finger, and commits past this distance or speed. */
+    const val GLANCE_SWIPE_RESISTANCE = 0.5f
+    const val GLANCE_SWIPE_COMMIT_DP = 72f
+    const val GLANCE_SWIPE_VELOCITY_DP = 1000f
     /** A sheet dragged down closes past 25 % of its height or 1000 dp/s. */
     const val SHEET_DISMISS_FRACTION = 0.25f
     const val SHEET_DISMISS_VELOCITY_DP = 1000f

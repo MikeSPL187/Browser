@@ -7,7 +7,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 library as canvas screens «р1»–«р3» and an empty segment, light and dark. Not localized. */
+/* The v5 library as canvas screens «History» and «Downloads», «Read later» and empty segments, light and dark. Not localized. */
 
 private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
@@ -63,21 +63,40 @@ private val Downloads = V5LibraryState(
     query = "",
     sections = listOf(
         V5LibrarySection(
-            null,
+            "Сейчас",
             listOf(
                 V5LibraryRow("d1", "gid-po-severu.pdf", "12,4 из 20 МБ · осталось 8 с", V5LibraryLeading.File(VolaIcons.PictureAsPdf, V5Tile.Red), V5LibraryTrailing.Progress(0.62f, paused = false), deleteLabel = "Отменить загрузку", deleteAsks = true),
+            ),
+        ),
+        V5LibrarySection(
+            "Сегодня",
+            listOf(
                 V5LibraryRow("d2", "karta-oblakov.png", "Не загрузилось · 2,3 МБ", V5LibraryLeading.File(VolaIcons.Error, V5Tile.Orange), V5LibraryTrailing.Retry),
                 V5LibraryRow("d3", "siyanie-teriberka.jpg", "3,1 МБ · polar-notes.ru · вчера", V5LibraryLeading.File(VolaIcons.Image, V5Tile.Blue)),
             ),
         ),
     ),
     emptyMessage = "",
+    note = "Файлы лежат в общей папке «Загрузки» телефона — их видят и другие приложения.",
 )
 
 @Composable
 private fun LibraryPreview(state: V5LibraryState, dark: Boolean) {
     VolaV5Theme(dark = dark) {
-        V5Library(state, onSegmentChange = {}, onQueryChange = {}, onOpen = {}, onDelete = {}, onRetry = {}, onClose = {})
+        V5Library(
+            state,
+            onSegmentChange = {},
+            onQueryChange = {},
+            onOpen = {},
+            onDelete = {},
+            onRetry = {},
+            onClose = {},
+            filters = if (state.segment == V5LibrarySegment.Downloads) {
+                { V5FilterChips(listOf("Все", "Документы", "Изображения", "Архивы"), selectedIndex = 0, onSelect = {}) }
+            } else {
+                null
+            },
+        )
     }
 }
 
@@ -139,3 +158,52 @@ private fun V5LibraryFolderDarkPreview() = LibraryPreview(
     ),
     dark = true,
 )
+
+private val ReadLater = V5LibraryState(
+    segment = V5LibrarySegment.ReadLater,
+    query = "",
+    sections = listOf(
+        V5LibrarySection(
+            null,
+            listOf(
+                V5LibraryRow("r1", "Как снимать северное сияние на телефон", "Полярные заметки", V5LibraryLeading.Site("П", V5Tile.Teal), V5LibraryTrailing.Value("Прочитано 40 %")),
+                V5LibraryRow("r2", "Териберка зимой: дорога, жильё, погода", "teriberka.travel", V5LibraryLeading.Site("T", V5Tile.Blue)),
+            ),
+        ),
+    ),
+    emptyMessage = "",
+)
+
+private val EmptyReadLater = ReadLater.copy(
+    sections = emptyList(),
+    emptyTitle = "Пока пусто",
+    emptyMessage = "Сохраните статью в режиме чтения кнопкой «Сохранить офлайн» — она появится здесь.",
+)
+
+@Preview(name = "Library v5 · read later", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterPreview() = LibraryPreview(ReadLater, dark = false)
+
+@Preview(name = "Library v5 · read later, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterDarkPreview() = LibraryPreview(ReadLater, dark = true)
+
+@Preview(name = "Library v5 · read later, purple accent", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Purple) {
+        V5Library(ReadLater, onSegmentChange = {}, onQueryChange = {}, onOpen = {}, onDelete = {}, onRetry = {}, onClose = {})
+    }
+}
+
+@Preview(name = "Library v5 · read later, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LibraryReadLaterLargeFontPreview() = LibraryPreview(ReadLater, dark = false)
+
+@Preview(name = "Library v5 · empty read later, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterEmptyDarkPreview() = LibraryPreview(EmptyReadLater, dark = true)
+
+@Preview(name = "Library v5 · downloads, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LibraryDownloadsLargeFontPreview() = LibraryPreview(Downloads, dark = false)

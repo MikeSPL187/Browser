@@ -34,6 +34,10 @@ object V5Sizes {
     val touchTarget: Dp = 48.dp
     /** The widest a full-screen state's content gets (a lock screen, B13), so lines stay readable. */
     val stateContentMax: Dp = 480.dp
+    /** A waiting glyph (canvas «Error»): its two rings, the gap between them and the raised disc inside. */
+    val stateWaves: Dp = 176.dp
+    val stateWavesGap: Dp = 22.dp
+    val stateWavesDisc: Dp = 96.dp
 
     // Bottom bar on a phone (section 5.1).
     /** The bar: 8 + 48 + 8, plus the system navigation under it. */
@@ -122,6 +126,9 @@ object V5Sizes {
 
     /** The tile that starts a floating card's heading, such as the translation offer (canvas «Translate»). */
     val cardTile: Dp = 36.dp
+
+    /** A filter chip's capsule (canvas «Downloads»); its touch target stays [touchTarget]. */
+    val filterChip: Dp = 34.dp
 
     // Slider (canvas screen «ц3»): a 4 dp track and the toggle's white 28 dp knob, as on iOS.
     val sliderTrack: Dp = 4.dp
@@ -232,6 +239,8 @@ object V5Sizes {
     val glancePageRadius: Dp = 36.dp
     /** Space between the card and its buttons. */
     val glanceActionsGap: Dp = 14.dp
+    /** «Open» and the round buttons beside it (canvas «Glance»). */
+    val glanceButton: Dp = 52.dp
 
     // Sync over QR (canvas screens «ф1», «ф2»): the code on its white plate and the scanner frame.
     val syncCode: Dp = 232.dp

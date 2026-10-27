@@ -22,6 +22,7 @@ import dev.sk2andy.materialbrowser.data.DownloadTimeFilter
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5FilterChips
 import dev.sk2andy.materialbrowser.ui.v5.V5Library
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryActions
 import dev.sk2andy.materialbrowser.ui.v5.V5LibraryLeading
@@ -47,7 +48,8 @@ import java.time.format.FormatStyle
  * files by day. A tap opens a file; a failed one starts again, or opens the page it came from, or
  * its row says why neither can be done. A
  * swipe deletes one file, and «Clear…» all finished ones; each asks first, since what goes is the
- * files themselves, not a list. While searching «Clear…» hides: it never clears what is not shown.
+ * files themselves, not a list. While searching or filtering «Clear…» hides: it never clears what is
+ * not shown. Chips filter by kind (canvas «Downloads»); a note under the list says where files are kept.
  */
 @Composable
 internal fun DownloadsLibraryV5(
@@ -59,12 +61,12 @@ internal fun DownloadsLibraryV5(
     onRetry: (DownloadEntry) -> Unit,
     onOpenPage: (String) -> Unit,
     onClearFinished: (List<DownloadEntry>) -> Unit,
-    onSwitch: (V5LibrarySegment) -> Unit,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     var query by rememberSaveable { mutableStateOf("") }
+    var filter by rememberSaveable { mutableStateOf(V5DownloadFilter.All) }
     var clearing by rememberSaveable { mutableStateOf(false) }
     // The download a swipe asks about, by key, so the question survives a rotation.
     var asking by rememberSaveable { mutableStateOf<String?>(null) }
@@ -73,8 +75,9 @@ internal fun DownloadsLibraryV5(
     val zoneId = remember(today) { ZoneId.systemDefault() }
     val dateFormatter = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
     val timeFormatter = remember(locale) { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale) }
-    val visible = remember(downloads, query, zoneId) {
+    val visible = remember(downloads, query, filter, zoneId) {
         DownloadHistoryRules.visibleEntries(downloads, query, DownloadTimeFilter.All, System.currentTimeMillis(), zoneId)
+            .filter { entry -> filter.matches(LibraryFileRules.kind(entry.name, entry.mime)) }
     }
     val byKey = remember(visible) { visible.associateBy { entry -> entry.id.toString() } }
     val clearable = remember(downloads) { downloads.filter { entry -> entry.status.isTerminal } }
@@ -121,10 +124,11 @@ internal fun DownloadsLibraryV5(
     }
 
     val todayLabel = stringResource(R.string.history_today)
+    val nowLabel = stringResource(R.string.v5_downloads_now)
     val yesterdayLabel = stringResource(R.string.downloads_yesterday)
     val active = visible.filter { entry -> entry.status.isActive }
     val sections = buildList {
-        if (active.isNotEmpty()) add(V5LibrarySection(title = null, rows = active.map { row(it) }))
+        if (active.isNotEmpty()) add(V5LibrarySection(title = nowLabel, rows = active.map { row(it) }))
         LibraryFileRules.daySections(visible, zoneId).forEach { section ->
             add(
                 V5LibrarySection(
@@ -142,18 +146,30 @@ internal fun DownloadsLibraryV5(
         segment = V5LibrarySegment.Downloads,
         query = query,
         sections = sections,
-        emptyMessage = stringResource(if (query.isBlank()) R.string.downloads_empty_message else R.string.downloads_no_results),
+        emptyMessage = stringResource(
+            when {
+                query.isNotBlank() -> R.string.downloads_no_results
+                filter != V5DownloadFilter.All -> R.string.v5_downloads_no_kind
+                else -> R.string.downloads_empty_message
+            },
+        ),
+        // Where the files are kept, under the list: other apps see that folder too.
+        note = stringResource(R.string.v5_downloads_folder_note).takeIf { visible.isNotEmpty() },
         actions = V5LibraryActions(
-            end = stringResource(R.string.v5_history_clear).takeIf { clearable.isNotEmpty() && !isClearing && query.isBlank() },
+            end = stringResource(R.string.v5_history_clear).takeIf {
+                clearable.isNotEmpty() && !isClearing && query.isBlank() && filter == V5DownloadFilter.All
+            },
             onEnd = { clearing = true },
             endDestructive = true,
         ),
     )
+    val filterLabels = V5DownloadFilter.entries.map { kind -> stringResource(kind.label) }
     val dark = MaterialTheme.colorScheme.background.luminance() < DOWNLOADS_DARK_LUMINANCE
     VolaV5Theme(dark = dark) {
         V5Library(
             state = state,
-            onSegmentChange = { segment -> if (segment != V5LibrarySegment.Downloads) onSwitch(segment) },
+            // Downloads are a screen of their own (canvas «Downloads»): no segment to change to.
+            onSegmentChange = {},
             onQueryChange = { query = it },
             onOpen = { key ->
                 val entry = byKey[key] ?: return@V5Library
@@ -174,6 +190,15 @@ internal fun DownloadsLibraryV5(
             },
             onRetry = { key -> byKey[key]?.let(onRetry) },
             onClose = onClose,
+            filters = filterLabels.takeIf { downloads.isNotEmpty() }?.let { labels ->
+                @Composable {
+                    V5FilterChips(
+                        options = labels,
+                        selectedIndex = filter.ordinal,
+                        onSelect = { index -> filter = V5DownloadFilter.entries[index] },
+                    )
+                }
+            },
         )
         // The entry as it is now. One that finished or went while «Cancel?» was open closes the
         // question rather than turn it into «Delete?» under a tap meant to cancel.
@@ -273,3 +298,11 @@ private fun DownloadKind.icon(): ImageVector = when (this) {
 }
 
 private const val DOWNLOADS_DARK_LUMINANCE = 0.5f
+
+private val V5DownloadFilter.label: Int
+    get() = when (this) {
+        V5DownloadFilter.All -> R.string.v5_downloads_filter_all
+        V5DownloadFilter.Documents -> R.string.v5_downloads_filter_documents
+        V5DownloadFilter.Images -> R.string.v5_downloads_filter_images
+        V5DownloadFilter.Archives -> R.string.v5_downloads_filter_archives
+    }

@@ -65,5 +65,21 @@ internal object DownloadsLibraryV5Rules {
     fun swipeCancels(entry: DownloadEntry): Boolean = entry.status.isActive
 }
 
+/** The chips over the v5 downloads (canvas «Downloads»): «All · Documents · Images · Archives». */
+internal enum class V5DownloadFilter {
+    All,
+    Documents,
+    Images,
+    Archives,
+    ;
+
+    fun matches(kind: DownloadKind): Boolean = when (this) {
+        All -> true
+        Documents -> kind == DownloadKind.Pdf || kind == DownloadKind.Document || kind == DownloadKind.Spreadsheet
+        Images -> kind == DownloadKind.Image
+        Archives -> kind == DownloadKind.Archive
+    }
+}
+
 /** What a failed download's row says when it cannot start again; see [DownloadsLibraryV5Rules.unavailable]. */
 internal enum class DownloadUnavailableHint { OpenPage, PrivateClosed, FromSite }

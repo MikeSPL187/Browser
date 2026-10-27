@@ -183,6 +183,7 @@ COMPOSE_ICONS = [
     ("SearchOff", "search_off", False, False),
     ("Share", "share", False, False),
     ("ShieldLock", "shield_lock", False, False),
+    ("SignalCellular", "signal_cellular_alt", False, False),
     ("Snooze", "snooze", False, False),
     ("Settings", "settings", False, False),
     ("Sort", "sort", False, False),
@@ -201,6 +202,7 @@ COMPOSE_ICONS = [
     ("VisibilityOff", "visibility_off", False, False),
     ("VolumeOff", "volume_off", False, False),
     ("WarningFilled", "warning", True, False),
+    ("Wifi", "wifi", False, False),
     ("WifiOff", "wifi_off", False, False),
     ("Workspaces", "workspaces", False, False),
 ]
