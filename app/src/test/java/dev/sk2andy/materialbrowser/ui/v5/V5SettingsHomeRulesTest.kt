@@ -13,16 +13,15 @@ class V5SettingsHomeRulesTest {
         val groups = V5SettingsHomeRules.groups(items).map { group -> group.map { it.destination } }
         assertEquals(
             listOf(
-                listOf(SettingsDestination.Sync),
-                listOf(
-                    SettingsDestination.Search,
-                    SettingsDestination.TabsAndGestures,
-                    SettingsDestination.Appearance,
-                    SettingsDestination.Browser,
-                ),
+                listOf(SettingsDestination.Browser, SettingsDestination.Search, SettingsDestination.TabsAndGestures),
                 listOf(SettingsDestination.ProtectionAndData, SettingsDestination.Passwords),
-                listOf(SettingsDestination.Userscripts, null, SettingsDestination.Downloads),
-                listOf(SettingsDestination.AboutLegal, SettingsDestination.DeveloperOptions),
+                listOf(SettingsDestination.Appearance, SettingsDestination.Downloads, SettingsDestination.Sync),
+                listOf(
+                    SettingsDestination.Userscripts,
+                    null,
+                    SettingsDestination.AboutLegal,
+                    SettingsDestination.DeveloperOptions,
+                ),
             ),
             groups,
         )
