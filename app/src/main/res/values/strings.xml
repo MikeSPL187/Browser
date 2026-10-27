@@ -2282,6 +2282,13 @@
     <string name="v5_read_later_no_results">No matching articles</string>
     <string name="v5_read_later_progress">%1$d%% read</string>
     <string name="v5_read_later_deleted">Article deleted</string>
+    <string name="v5_downloads_now">Now</string>
+    <string name="v5_downloads_filter_all">All</string>
+    <string name="v5_downloads_filter_documents">Documents</string>
+    <string name="v5_downloads_filter_images">Images</string>
+    <string name="v5_downloads_filter_archives">Archives</string>
+    <string name="v5_downloads_no_kind">No downloads of this kind</string>
+    <string name="v5_downloads_folder_note">Files are kept in the phone’s shared Downloads folder — other apps can see them too.</string>
     <string name="v5_favorites_new_folder">New folder</string>
     <string name="v5_history_clear">Clear…</string>
     <string name="v5_history_empty_title">Nothing here yet</string>
