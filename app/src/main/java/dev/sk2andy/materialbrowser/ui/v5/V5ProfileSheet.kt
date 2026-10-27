@@ -9,8 +9,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +34,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 
 object V5ProfileSheetTestTags {
     const val New = "v5_profile_new"
+    const val Edit = "v5_profiles_edit"
     fun profile(id: String) = "v5_profile:$id"
 }
 
@@ -52,8 +58,10 @@ internal data class V5ProfileItem(
 /**
  * «Profiles» (V11a, system-v5.md section 10): the chip in the middle of the overview's bottom edge
  * opens this sheet, as Safari's profile menu; a profile is chosen with one touch and the overview
- * shows its tabs. Profiles from other devices follow under their own header. A long press edits a
- * profile of this device ([onEdit], V11b); «New profile» ([onNew]) makes one.
+ * shows its tabs. Profiles from other devices follow under their own header. «Edit» in the header
+ * (canvas «Profiles») turns a touch on a profile of this device into editing it ([onEdit], V11b),
+ * as a long press does; «New profile» ([onNew]) makes one. A line under the title says what a
+ * profile keeps apart.
  */
 @Composable
 internal fun V5ProfileSheet(
@@ -68,17 +76,36 @@ internal fun V5ProfileSheet(
     /** Null while a profile can be made; else the most there can be, said on «New profile», which is off. */
     profileLimit: Int? = null,
 ) {
+    var editing by rememberSaveable(visible) { mutableStateOf(false) }
+    val (local, synced) = profiles.partition { it.device == null }
+    // Only this device's profiles that are open can be edited: a locked one is unlocked first.
+    val canEdit = onEdit != null && local.any { !it.locked }
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
-        V5SheetHeader(title = title, onClose = onDismiss)
-        val (local, synced) = profiles.partition { it.device == null }
+        V5SheetHeader(
+            title = title,
+            onClose = onDismiss,
+            action = V5SheetHeaderAction(
+                label = stringResource(if (editing) R.string.action_done else R.string.v5_profiles_edit),
+                onClick = { editing = !editing },
+                testTag = V5ProfileSheetTestTags.Edit,
+            ).takeIf { canEdit },
+        )
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(top = V5Spacing.space3, bottom = V5Spacing.space4),
+                .padding(top = V5Spacing.space2, bottom = V5Spacing.space4),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
         ) {
+            if (onEdit != null) {
+                Text(
+                    stringResource(R.string.v5_profiles_explainer),
+                    style = V5Theme.type.callout,
+                    color = V5Theme.colors.labelSecondary,
+                    modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space1),
+                )
+            }
             V5ListGroup {
-                local.forEach { profile -> ProfileRow(profile, onSelect, onEdit) }
+                local.forEach { profile -> ProfileRow(profile, onSelect, onEdit, editing = editing && canEdit) }
             }
             if (onNew != null) {
                 V5ListGroup {
@@ -99,7 +126,7 @@ internal fun V5ProfileSheet(
                     header = stringResource(R.string.v5_profiles_other_devices),
                     footer = stringResource(R.string.v5_profiles_other_devices_footer),
                 ) {
-                    synced.forEach { profile -> ProfileRow(profile, onSelect, onEdit = null) }
+                    synced.forEach { profile -> ProfileRow(profile, onSelect, onEdit = null, editing = false) }
                 }
             }
         }
@@ -107,14 +134,19 @@ internal fun V5ProfileSheet(
 }
 
 @Composable
-private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit, onEdit: ((String) -> Unit)?) {
+private fun ProfileRow(profile: V5ProfileItem, onSelect: (String) -> Unit, onEdit: ((String) -> Unit)?, editing: Boolean) {
     val tabs = profile.tabCount?.let { count -> pluralStringResource(R.plurals.workspace_sheet_tabs, count, count) }
+    val edits = editing && onEdit != null && !profile.locked
     V5ListRow(
         title = profile.name,
         subtitle = listOfNotNull(profile.device, tabs).joinToString(" · ").ifEmpty { null },
         leading = { ProfileTile(profile) },
-        trailing = if (profile.active) V5RowTrailing.Check else V5RowTrailing.None,
-        onClick = { onSelect(profile.id) },
+        trailing = when {
+            edits -> V5RowTrailing.Chevron
+            profile.active -> V5RowTrailing.Check
+            else -> V5RowTrailing.None
+        },
+        onClick = { if (edits) onEdit?.invoke(profile.id) else onSelect(profile.id) },
         // A locked profile is edited once it is open: no long press that would silently do nothing.
         onLongClick = onEdit?.takeIf { !profile.locked }?.let { edit -> { edit(profile.id) } },
         onLongClickLabel = stringResource(R.string.v5_profile_edit_action),
