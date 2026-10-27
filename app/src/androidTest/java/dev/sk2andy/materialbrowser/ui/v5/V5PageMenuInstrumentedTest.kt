@@ -64,6 +64,7 @@ class V5PageMenuInstrumentedTest {
         onHideDistractions = { calls += "hide distractions" },
         onShowHidden = { calls += "show hidden" },
         onPasswords = { calls += "passwords" },
+        onSaveAsPdf = { calls += "save pdf" },
     )
 
     private fun show(state: V5PageMenuState) {
@@ -115,6 +116,24 @@ class V5PageMenuInstrumentedTest {
         composeRule.onNodeWithTag(V5PageMenuTestTags.DuplicateTab).performClick()
 
         assertEquals(listOf("desktop true", "dismiss", "duplicate"), calls)
+    }
+
+    @Test
+    fun anEngineThatSavesPdfsPutsDownloadInTheRowAndPrintInMore() {
+        show(page.copy(canSaveAsPdf = true))
+
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Print).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.SavePdf).performClick()
+        assertEquals(listOf("dismiss", "save pdf"), calls)
+    }
+
+    @Test
+    fun withDownloadInTheRowPrintWaitsInMore() {
+        show(page.copy(canSaveAsPdf = true))
+
+        composeRule.onNodeWithTag(V5PageMenuTestTags.More).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Print).performClick()
+        assertEquals(listOf("dismiss", "print"), calls)
     }
 
     @Test

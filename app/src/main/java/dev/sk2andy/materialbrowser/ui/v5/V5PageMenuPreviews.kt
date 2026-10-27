@@ -28,6 +28,7 @@ private val PageState = V5PageMenuState(
     isPinned = false,
     desktopView = false,
     siteMuted = null,
+    canSaveAsPdf = true,
 )
 
 private val NoActions = V5PageMenuActions(
@@ -133,4 +134,10 @@ private fun V5PageMenuDownloadingLightPreview() {
     VolaV5Theme(dark = false) {
         MenuPreview(PageState.copy(downloads = V5DownloadRingState.Progress(count = 1, fraction = 0.4f)))
     }
+}
+
+@Preview(name = "Page menu · System WebView: print, no download · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuWebViewPreview() {
+    VolaV5Theme(dark = false) { MenuPreview(PageState.copy(canSaveAsPdf = false)) }
 }

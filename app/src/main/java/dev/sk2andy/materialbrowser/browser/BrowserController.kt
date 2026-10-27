@@ -286,6 +286,7 @@ import dev.sk2andy.materialbrowser.sync.SyncPendingMutation
 import dev.sk2andy.materialbrowser.sync.SyncProfile
 import dev.sk2andy.materialbrowser.sync.SyncRepositoryState
 import dev.sk2andy.materialbrowser.sync.SyncTab
+import java.io.InputStream
 import java.util.ArrayDeque
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -7181,13 +7182,12 @@ class BrowserController(
         if (browserEngineSessions[tab.id]?.printPage() != true) showPrintingUnavailable()
     }
 
-    private fun showPrintingUnavailable() {
-        Toast.makeText(
-            activity,
-            activity.getString(R.string.toast_printing_unavailable),
-            Toast.LENGTH_SHORT,
-        ).show()
-    }
+    private fun showPrintingUnavailable() =
+        Toast.makeText(activity, activity.getString(R.string.toast_printing_unavailable), Toast.LENGTH_SHORT).show()
+
+    /** [tabId]'s page rendered to a PDF by the engine (canvas «MenuV2»); null when it could not. */
+    fun savePageAsPdf(tabId: String, onResult: (InputStream?) -> Unit) =
+        browserEngineSessions[tabId]?.savePageAsPdf(onResult) ?: onResult(null)
 
     fun selectTab(tabId: String) {
         if (activeTabs.none { it.id == tabId }) return

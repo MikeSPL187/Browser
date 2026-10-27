@@ -62,6 +62,7 @@ object V5PageMenuTestTags {
     const val Favorite = "v5_menu_favorite"
     const val Share = "v5_menu_share"
     const val Print = "v5_menu_print"
+    const val SavePdf = "v5_menu_save_pdf"
     const val Read = "v5_menu_read"
     const val Listen = "v5_menu_listen"
     const val DuplicateTab = "v5_menu_duplicate_tab"
@@ -120,6 +121,11 @@ data class V5PageMenuState(
     val downloads: V5DownloadRingState? = null,
     /** Commands of extensions and user scripts for this page; the group shows only when there are some. */
     val extras: List<V5PageMenuExtra> = emptyList(),
+    /**
+     * The engine saves the page as a PDF (GeckoView): «Download» takes the last round button and
+     * «Print» moves to «More» (canvas «MenuV2»). Without it «Print» keeps its place.
+     */
+    val canSaveAsPdf: Boolean = false,
 )
 
 /** The menu's actions. Each one but the toggles closes the menu first. */
@@ -147,6 +153,8 @@ class V5PageMenuActions(
     val onListen: () -> Unit = {},
     /** The passwords screen; null where the browser keeps none, and the tile goes. */
     val onPasswords: (() -> Unit)? = null,
+    /** «Download»: the page as a PDF in the phone's Downloads ([V5PageMenuState.canSaveAsPdf]). */
+    val onSaveAsPdf: () -> Unit = {},
 )
 
 @Composable
@@ -303,6 +311,16 @@ private fun MoreGroup(
     closing: (() -> Unit) -> () -> Unit,
 ) {
     V5ListGroup {
+        // «Download» took its round button: printing waits here (canvas «MenuV2»).
+        if (state.canSaveAsPdf) {
+            V5ListRow(
+                stringResource(R.string.action_print),
+                icon = V5RowIcon(VolaIcons.Print),
+                enabled = state.hasPage,
+                onClick = closing(actions.onPrint),
+                modifier = Modifier.testTag(V5PageMenuTestTags.Print),
+            )
+        }
         V5ListRow(
             stringResource(R.string.action_open_in_app),
             icon = V5RowIcon(VolaIcons.OpenInNew),
@@ -407,13 +425,23 @@ private fun RoundActions(
             onClick = closing(actions.onShare),
             tag = V5PageMenuTestTags.Share,
         )
-        RoundAction(
-            icon = VolaIcons.Print,
-            label = stringResource(R.string.action_print),
-            enabled = state.hasPage,
-            onClick = closing(actions.onPrint),
-            tag = V5PageMenuTestTags.Print,
-        )
+        if (state.canSaveAsPdf) {
+            RoundAction(
+                icon = VolaIcons.Download,
+                label = stringResource(R.string.v5_menu_save_pdf),
+                enabled = state.hasPage,
+                onClick = closing(actions.onSaveAsPdf),
+                tag = V5PageMenuTestTags.SavePdf,
+            )
+        } else {
+            RoundAction(
+                icon = VolaIcons.Print,
+                label = stringResource(R.string.action_print),
+                enabled = state.hasPage,
+                onClick = closing(actions.onPrint),
+                tag = V5PageMenuTestTags.Print,
+            )
+        }
     }
 }
 

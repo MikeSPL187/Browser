@@ -2193,6 +2193,9 @@
     <string name="v5_menu_new_private_tab">New private tab</string>
     <string name="v5_menu_favorites">Favorites</string>
     <string name="v5_menu_downloads">Downloads</string>
+    <string name="v5_menu_save_pdf">Download</string>
+    <string name="v5_save_pdf_done">PDF saved to the phone’s Downloads</string>
+    <string name="v5_save_pdf_failed">Couldn’t save the page as PDF. Try again.</string>
     <plurals name="v5_downloads_active">
         <item quantity="one">%d file downloading</item>
         <item quantity="other">%d files downloading</item>

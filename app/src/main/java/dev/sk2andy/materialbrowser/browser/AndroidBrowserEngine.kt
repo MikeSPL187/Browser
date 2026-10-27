@@ -32,6 +32,8 @@ internal data class AndroidBrowserEngineCapabilities(
     val onDeviceTranslation: Boolean,
     /** «Hide distracting items» (v5 V20); System WebView has no choosing mode, so the UI hides it. */
     val hideDistractions: Boolean,
+    /** Saving the page as a PDF from the menu (canvas «MenuV2»); System WebView cannot render one itself. */
+    val savePageAsPdf: Boolean = false,
 ) {
     companion object {
         val GeckoView = AndroidBrowserEngineCapabilities(
@@ -52,6 +54,7 @@ internal data class AndroidBrowserEngineCapabilities(
             perSiteFingerprintingProtection = true,
             onDeviceTranslation = true,
             hideDistractions = true,
+            savePageAsPdf = true,
         )
 
         val SystemWebView = AndroidBrowserEngineCapabilities(
