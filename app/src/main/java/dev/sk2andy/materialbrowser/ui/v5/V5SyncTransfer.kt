@@ -21,6 +21,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +47,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5SyncColors
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
+import kotlinx.coroutines.delay
 
 object V5SyncTestTags {
     const val ShowCode = "v5_sync_show_code"
@@ -51,6 +57,7 @@ object V5SyncTestTags {
     const val ScanAction = "v5_sync_scan_action"
     const val Done = "v5_sync_done"
     const val Undo = "v5_sync_undo"
+    const val NewCodeIn = "v5_sync_new_code_in"
 }
 
 /**
@@ -65,6 +72,8 @@ data class V5SyncShowState(
     val networkName: String?,
     val tabs: Int,
     val bookmarks: Int,
+    /** When the shown code stops working and a new one replaces it (canvas «Sync»); null while there is none. */
+    val expiresAtEpochSeconds: Long? = null,
 )
 
 /** Where the receiving side is (canvas «ф2»). */
@@ -127,6 +136,7 @@ fun V5SyncShowCode(
         ) {
             if (state.onWifi) {
                 CodePlate(state.code)
+                if (state.code != null && state.expiresAtEpochSeconds != null) NewCodeIn(state.expiresAtEpochSeconds)
                 Column(
                     Modifier.padding(horizontal = V5Spacing.space6),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -404,6 +414,24 @@ private fun CodePlate(code: ImageBitmap?) {
     }
 }
 
+/** «New code in 0:48» under the code: it says the code works for a while, and when the next one comes. */
+@Composable
+private fun NewCodeIn(expiresAtEpochSeconds: Long) {
+    var nowSeconds by remember { mutableLongStateOf(System.currentTimeMillis() / MILLIS_PER_SECOND) }
+    LaunchedEffect(expiresAtEpochSeconds) {
+        while (true) {
+            nowSeconds = System.currentTimeMillis() / MILLIS_PER_SECOND
+            delay(MILLIS_PER_SECOND)
+        }
+    }
+    Text(
+        stringResource(R.string.v5_sync_new_code_in, V5SyncRules.countdown(expiresAtEpochSeconds - nowSeconds)),
+        style = V5Theme.type.footnote.copy(fontFeatureSettings = "tnum"),
+        color = V5Theme.colors.labelSecondary,
+        modifier = Modifier.testTag(V5SyncTestTags.NewCodeIn),
+    )
+}
+
 @Composable
 private fun NoWifi() {
     val colors = V5Theme.colors
@@ -463,6 +491,7 @@ private fun WhatMoves(tabs: Int, bookmarks: Int) {
 }
 
 private const val SUCCESS_WASH_ALPHA = 0.18f
+private const val MILLIS_PER_SECOND = 1_000L
 
 /** Pure decisions of the sync screens, for unit tests. */
 internal object V5SyncRules {
@@ -503,4 +532,12 @@ internal object V5SyncRules {
         listOfNotNull(tabs.takeIf { hasTabs }, bookmarks.takeIf { hasBookmarks })
             .joinToString(", ")
             .ifEmpty { nothing }
+
+    /** [seconds] left as «0:48», never below «0:00» while the new code is on its way. */
+    fun countdown(seconds: Long): String {
+        val left = seconds.coerceAtLeast(0)
+        return "%d:%02d".format(left / SECONDS_PER_MINUTE, left % SECONDS_PER_MINUTE)
+    }
+
+    private const val SECONDS_PER_MINUTE = 60
 }

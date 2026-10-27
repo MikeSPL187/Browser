@@ -2382,6 +2382,7 @@
     <string name="v5_sync_title">Sync</string>
     <string name="v5_sync_show_title">Show code</string>
     <string name="v5_sync_show_hint">Open “Scan code” on the other device</string>
+    <string name="v5_sync_new_code_in">New code in %1$s</string>
     <string name="v5_sync_same_wifi">Both devices on the same Wi-Fi “%1$s”</string>
     <string name="v5_sync_same_wifi_unnamed">Both devices on the same Wi-Fi</string>
     <string name="v5_sync_code_description">Code for the other device</string>

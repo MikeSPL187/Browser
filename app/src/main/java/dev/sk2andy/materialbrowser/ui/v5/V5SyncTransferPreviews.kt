@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
@@ -15,6 +16,12 @@ private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
 
 private val Show = V5SyncShowState(code = null, onWifi = true, networkName = "Дом", tabs = 12, bookmarks = 34)
+
+// A blank stand-in for the code: the countdown shows only beside one.
+private val ShowWithCode = Show.copy(
+    code = ImageBitmap(PREVIEW_CODE_PX, PREVIEW_CODE_PX),
+    expiresAtEpochSeconds = System.currentTimeMillis() / 1_000 + 48,
+)
 private val Done = V5SyncDoneState(deviceName = "Pixel Анны", tabs = 12, bookmarksAdded = 30, bookmarksExisting = 4)
 private val NoServerActions = V5SyncServerActions(onConnect = {}, onSyncNow = {}, onOpenDevice = {}, onDisconnect = {})
 private val NoActions = V5SyncDoneActions(onOpenGroup = {}, onOpenFavorites = {}, onDone = {}, onUndo = {})
@@ -124,3 +131,18 @@ private fun V5SyncScanNoCameraDarkPreview() {
 private fun V5SyncScanNotFoundDarkPreview() {
     VolaV5Theme(dark = true) { V5SyncScan(V5SyncScanStatus.NotFound, onClose = {}) {} }
 }
+
+@Preview(name = "Show code · countdown, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5SyncShowCountdownDarkPreview() {
+    VolaV5Theme(dark = true) { V5SyncShowCode(ShowWithCode, onBack = {}) }
+}
+
+@Preview(name = "Show code · countdown, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = 1400, fontScale = 2f)
+@Composable
+private fun V5SyncShowCountdownLargeFontPreview() {
+    VolaV5Theme(dark = false) { V5SyncShowCode(ShowWithCode, onBack = {}) }
+}
+
+private const val PREVIEW_CODE_PX = 64
+

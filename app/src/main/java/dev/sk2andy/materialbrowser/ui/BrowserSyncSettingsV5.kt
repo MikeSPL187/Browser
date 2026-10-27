@@ -250,6 +250,7 @@ private fun SyncShowCode(controller: BrowserController, onBack: () -> Unit, onSe
     val sizePx = with(LocalDensity.current) { V5Sizes.syncCode.roundToPx() }
     val currentOnSent by rememberUpdatedState(onSent)
     var code by remember { mutableStateOf<ImageBitmap?>(null) }
+    var expiresAt by remember { mutableStateOf<Long?>(null) }
     var noWifi by remember { mutableStateOf(false) }
     // Each round is one offer: a code that expired or met too many wrong requests is replaced,
     // and Wi-Fi coming back starts one where there was none.
@@ -258,15 +259,19 @@ private fun SyncShowCode(controller: BrowserController, onBack: () -> Unit, onSe
     WifiArrivals { if (noWifi) round++ }
     DisposableEffect(port, round) {
         code = null
+        expiresAt = null
         noWifi = false
         val handle = port.offer(payload) { state ->
             when (state) {
-                is LocalTransferOfferState.Waiting -> code = localTransferQrBitmap(
-                    state.code,
-                    sizePx,
-                    V5SyncColors.codeInk.toArgb(),
-                    V5SyncColors.codePaper.toArgb(),
-                ).asImageBitmap()
+                is LocalTransferOfferState.Waiting -> {
+                    code = localTransferQrBitmap(
+                        state.code,
+                        sizePx,
+                        V5SyncColors.codeInk.toArgb(),
+                        V5SyncColors.codePaper.toArgb(),
+                    ).asImageBitmap()
+                    expiresAt = state.expiresAtEpochSeconds
+                }
                 LocalTransferOfferState.Sent -> currentOnSent()
                 is LocalTransferOfferState.Failed ->
                     if (BrowserSyncRules.offersAgain(state.reason)) round++ else noWifi = true
@@ -283,6 +288,7 @@ private fun SyncShowCode(controller: BrowserController, onBack: () -> Unit, onSe
             networkName = null,
             tabs = payload.tabs.size.coerceAtMost(LocalTransferPayloadCodec.MAX_TABS),
             bookmarks = payload.bookmarks.size.coerceAtMost(LocalTransferPayloadCodec.MAX_BOOKMARKS),
+            expiresAtEpochSeconds = expiresAt,
         ),
         onBack = onBack,
     )
