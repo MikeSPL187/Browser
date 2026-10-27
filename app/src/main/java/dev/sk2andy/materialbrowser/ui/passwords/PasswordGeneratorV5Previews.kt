@@ -29,3 +29,7 @@ private fun PasswordGeneratorV5LightPreview() = GeneratorPreview(dark = false)
 @Preview(name = "Generator v5 · dark", heightDp = 720)
 @Composable
 private fun PasswordGeneratorV5DarkPreview() = GeneratorPreview(dark = true)
+
+@Preview(name = "Generator v5 · light, largest font", heightDp = 720, fontScale = 2f)
+@Composable
+private fun PasswordGeneratorV5LightPreviewLargeFont() = GeneratorPreview(dark = false)

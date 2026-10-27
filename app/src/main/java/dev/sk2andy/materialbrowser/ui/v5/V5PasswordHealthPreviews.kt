@@ -95,3 +95,9 @@ private fun V5PasswordHealthCheckingLightPreview() {
 private fun V5PasswordHealthCheckingDarkPreview() {
     VolaV5Theme(dark = true) { V5PasswordHealth(Sample.copy(leakCheck = V5LeakCheck.Checking, leakProgress = 0.42f), NoActions) }
 }
+
+@Preview(name = "Password check · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5PasswordHealthLightPreviewLargeFont() {
+    VolaV5Theme(dark = false) { V5PasswordHealth(Sample, NoActions) }
+}

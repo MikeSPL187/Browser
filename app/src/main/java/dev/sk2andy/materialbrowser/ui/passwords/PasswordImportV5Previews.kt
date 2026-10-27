@@ -54,3 +54,9 @@ private fun PasswordImportResultV5Preview() = PreviewScheme(dark = false) {
         onUseFilePasswords = {},
     )
 }
+
+@Preview(name = "Import v5 · sources, largest font", heightDp = 760, fontScale = 2f)
+@Composable
+private fun PasswordImportV5PreviewLargeFont() = PreviewScheme(dark = false) {
+    PasswordImportV5(onSource = {}, onPickFile = {}, onBack = {})
+}

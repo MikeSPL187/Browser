@@ -78,3 +78,9 @@ private fun V5TranslationNeverLightPreview() {
 private fun V5TranslationNeverDarkPreview() {
     VolaV5Theme(dark = true) { V5TranslationNeverPage(Sample, onBack = {}, onChange = { _, _ -> }) }
 }
+
+@Preview(name = "Translation settings · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5TranslationSettingsLightPreviewLargeFont() {
+    VolaV5Theme(dark = false) { V5TranslationSettings(Sample, NoActions) }
+}

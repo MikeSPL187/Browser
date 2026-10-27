@@ -145,3 +145,9 @@ private fun V5WebDavConnectInvalidLightPreview() {
 private fun V5WebDavConnectConnectingDarkPreview() {
     VolaV5Theme(dark = true) { V5WebDavConnect(Filled.copy(connecting = true), NoConnectActions) }
 }
+
+@Preview(name = "Connect · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5WebDavConnectLightPreviewLargeFont() {
+    VolaV5Theme(dark = false) { V5WebDavConnect(Filled, NoConnectActions) }
+}

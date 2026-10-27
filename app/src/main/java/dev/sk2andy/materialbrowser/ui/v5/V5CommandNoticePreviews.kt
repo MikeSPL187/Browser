@@ -28,3 +28,7 @@ private fun V5CommandNoticeLightPreview() = CommandNoticesPreview(dark = false)
 @Preview(name = "Command answers · dark")
 @Composable
 private fun V5CommandNoticeDarkPreview() = CommandNoticesPreview(dark = true)
+
+@Preview(name = "Command answers · light, largest font", fontScale = 2f)
+@Composable
+private fun V5CommandNoticeLightPreviewLargeFont() = CommandNoticesPreview(dark = false)

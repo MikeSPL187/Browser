@@ -29,3 +29,7 @@ private fun V5SliderLightPreview() = SliderPreview(dark = false)
 @Preview(name = "V5Slider · dark")
 @Composable
 private fun V5SliderDarkPreview() = SliderPreview(dark = true)
+
+@Preview(name = "V5Slider · light, largest font", fontScale = 2f)
+@Composable
+private fun V5SliderLightPreviewLargeFont() = SliderPreview(dark = false)

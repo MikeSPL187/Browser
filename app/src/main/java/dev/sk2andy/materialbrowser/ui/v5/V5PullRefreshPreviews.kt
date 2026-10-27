@@ -36,3 +36,7 @@ private fun V5PullRefreshLightPreview() = IndicatorsPreview(dark = false)
 private fun V5PullRefreshDarkPreview() = IndicatorsPreview(dark = true)
 
 private const val PULLED_A_THIRD = 0.33f
+
+@Preview(name = "Pull to refresh · light, largest font", fontScale = 2f)
+@Composable
+private fun V5PullRefreshLightPreviewLargeFont() = IndicatorsPreview(dark = false)

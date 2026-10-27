@@ -56,3 +56,7 @@ private fun CastExpandedV5DarkPreview() {
         )
     }
 }
+
+@Preview(name = "Cast v5 · line, light, largest font", fontScale = 2f)
+@Composable
+private fun CastMiniV5LightPreviewLargeFont() = MiniPreview(dark = false)

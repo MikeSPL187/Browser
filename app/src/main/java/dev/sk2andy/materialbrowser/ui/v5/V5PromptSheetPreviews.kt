@@ -124,3 +124,7 @@ private fun V5PromptLinkMenuDarkPreview() {
         )
     }
 }
+
+@Preview(name = "Prompt · update, light, largest font", heightDp = 520, fontScale = 2f)
+@Composable
+private fun V5PromptUpdateLightPreviewLargeFont() = UpdatePreview(dark = false)
