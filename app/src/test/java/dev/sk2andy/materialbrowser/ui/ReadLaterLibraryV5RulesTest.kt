@@ -43,7 +43,7 @@ class ReadLaterLibraryV5RulesTest {
     }
 
     @Test
-    fun `the control offers history, favorites and read later; downloads stand alone`() {
+    fun `the control offers history, favorites and read later, downloads stand alone`() {
         assertEquals(
             listOf(V5LibrarySegment.History, V5LibrarySegment.Favorites, V5LibrarySegment.ReadLater),
             V5LibraryRules.segments,
