@@ -30,7 +30,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -234,10 +236,15 @@ fun V5Sheet(
     }
 }
 
+/** A word in the accent before a sheet's «Close», such as «Edit» in «Profiles» (canvas «Profiles»). */
+@Immutable
+data class V5SheetHeaderAction(val label: String, val onClick: () -> Unit, val testTag: String? = null)
+
 /**
  * The top of a sheet: an optional [leading] glyph, the title (a heading, where TalkBack starts) with
- * an optional [subtitle], and «Close» — every sheet has one (section 9). A subtitle that states a
- * status may take its color ([subtitleColor]) and a small symbol before it ([subtitleIcon]).
+ * an optional [subtitle], an optional [action] and «Close» — every sheet has one (section 9). A
+ * subtitle that states a status may take its color ([subtitleColor]) and a small symbol before it
+ * ([subtitleIcon]).
  */
 @Composable
 fun V5SheetHeader(
@@ -248,6 +255,7 @@ fun V5SheetHeader(
     leading: (@Composable () -> Unit)? = null,
     subtitleColor: Color? = null,
     subtitleIcon: ImageVector? = null,
+    action: V5SheetHeaderAction? = null,
 ) {
     val colors = V5Theme.colors
     Row(
@@ -287,6 +295,16 @@ fun V5SheetHeader(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            }
+        }
+        if (action != null) {
+            TextButton(
+                onClick = action.onClick,
+                modifier = Modifier
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .then(if (action.testTag != null) Modifier.testTag(action.testTag) else Modifier),
+            ) {
+                Text(action.label, style = V5Theme.type.body, color = colors.accent)
             }
         }
         V5SheetCloseButton(onClose)

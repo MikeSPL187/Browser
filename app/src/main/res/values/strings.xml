@@ -2215,6 +2215,8 @@
     <string name="v5_overview_pinned_stays">A pinned tab stays open. Unpin it first.</string>
     <string name="v5_overview_search">Search tabs</string>
     <string name="v5_profiles_title">Profiles</string>
+    <string name="v5_profiles_edit">Edit</string>
+    <string name="v5_profiles_explainer">Each profile keeps its own cookies and sign-ins, history, groups and pinned sites.</string>
     <string name="v5_profiles_other_devices">From other devices</string>
     <string name="v5_profiles_other_devices_footer">These profiles are changed on the device they come from.</string>
     <string name="v5_profile_create_failed">Couldn’t create the profile. Try again from the profiles list.</string>

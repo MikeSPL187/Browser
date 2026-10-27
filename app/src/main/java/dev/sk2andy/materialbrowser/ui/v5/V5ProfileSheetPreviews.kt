@@ -6,7 +6,7 @@ import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* V11a: the profiles sheet — the active profile checked, a locked one, one from another device. */
+/* V11a and canvas «Profiles»: the sheet with «Edit» and its line — the active profile checked, a locked one, one from another device. */
 
 private val previewProfiles = listOf(
     V5ProfileItem("personal", WorkspaceIcons.vector("🏔"), "Личный", V5Accent.Blue, tabCount = 7, active = true),
@@ -24,14 +24,15 @@ private val previewProfiles = listOf(
 )
 
 @Composable
-private fun SheetPreview(dark: Boolean, profileLimit: Int? = null) {
-    VolaV5Theme(dark = dark) {
+private fun SheetPreview(dark: Boolean, profileLimit: Int? = null, accent: V5Accent = V5Accent.Blue) {
+    VolaV5Theme(dark = dark, accent = accent) {
         V5ProfileSheet(
             visible = true,
             profiles = previewProfiles,
             onSelect = {},
             onDismiss = {},
             onNew = {},
+            onEdit = {},
             profileLimit = profileLimit,
         )
     }
@@ -52,6 +53,14 @@ private fun V5ProfileSheetLightPreview() = SheetPreview(dark = false)
 @Preview(name = "Profiles · dark", heightDp = 640)
 @Composable
 private fun V5ProfileSheetDarkPreview() = SheetPreview(dark = true)
+
+@Preview(name = "Profiles · pink accent", heightDp = 640)
+@Composable
+private fun V5ProfileSheetAccentPreview() = SheetPreview(dark = false, accent = V5Accent.Pink)
+
+@Preview(name = "Profiles · largest font", heightDp = 900, fontScale = 2f)
+@Composable
+private fun V5ProfileSheetLargeFontPreview() = SheetPreview(dark = false)
 
 /** V28 B11: «Move to profile» — the same sheet, only the profiles the tab can go to, no counts. */
 @Preview(name = "Move to profile · dark", heightDp = 480)
