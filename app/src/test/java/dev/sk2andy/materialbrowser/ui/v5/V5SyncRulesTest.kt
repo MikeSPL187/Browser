@@ -50,4 +50,11 @@ class V5SyncRulesTest {
         assertEquals("3 bookmarks", V5SyncRules.confirmMessage("0 tabs", "3 bookmarks", false, true, "none"))
         assertEquals("none", V5SyncRules.confirmMessage("0 tabs", "0 bookmarks", false, false, "none"))
     }
+
+    @Test
+    fun `the countdown reads minutes and seconds and stops at zero`() {
+        assertEquals("0:48", V5SyncRules.countdown(48))
+        assertEquals("1:05", V5SyncRules.countdown(65))
+        assertEquals("0:00", V5SyncRules.countdown(-3))
+    }
 }

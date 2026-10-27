@@ -2447,6 +2447,7 @@
     <string name="v5_sync_title">Синхронизация</string>
     <string name="v5_sync_show_title">Показать код</string>
     <string name="v5_sync_show_hint">Откройте «Считать код» на другом устройстве</string>
+    <string name="v5_sync_new_code_in">Новый код через %1$s</string>
     <string name="v5_sync_same_wifi">Оба устройства — в одной Wi-Fi «%1$s»</string>
     <string name="v5_sync_same_wifi_unnamed">Оба устройства — в одной Wi-Fi</string>
     <string name="v5_sync_code_description">Код для другого устройства</string>
