@@ -5,6 +5,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -67,26 +69,36 @@ class V5LinkGlanceInstrumentedTest {
     private fun text(id: Int) = context.getString(id)
 
     @Test
-    fun inBackgroundEndsThePreviewWithItsAction() {
+    fun theRoundButtonsEndThePreviewWithTheirAction() {
         show(page)
 
         composeRule.onNodeWithText(text(R.string.glance_not_in_history)).assertExists()
-        composeRule.onNodeWithTag(V5LinkGlanceTestTags.Background).performClick()
+        composeRule.onNodeWithTag(V5LinkGlanceTestTags.Copy).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("copy"), calls)
+    }
+
+    @Test
+    fun moreKeepsTheRestAndPrivateOnlyWhereItWorks() {
+        show(page.copy(canOpenInPrivate = false))
+
+        composeRule.onNodeWithTag(V5LinkGlanceTestTags.More).performClick()
+        composeRule.onNodeWithText(text(R.string.v5_glance_private)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.v5_glance_open_background)).performClick()
         composeRule.waitForIdle()
 
         assertEquals(listOf("background"), calls)
     }
 
     @Test
-    fun moreOffersTheLinksActionsAndPrivateOnlyWhereItWorks() {
-        show(page.copy(canOpenInPrivate = false))
+    fun aSwipeDownClosesThePreview() {
+        show(page)
 
-        composeRule.onNodeWithTag(V5LinkGlanceTestTags.More).performClick()
-        composeRule.onNodeWithText(text(R.string.v5_glance_private)).assertDoesNotExist()
-        composeRule.onNodeWithText(text(R.string.external_link_preview_copy_link)).performClick()
+        composeRule.onNodeWithTag(V5LinkGlanceTestTags.Card).performTouchInput { swipeDown() }
         composeRule.waitForIdle()
 
-        assertEquals(listOf("copy"), calls)
+        assertEquals(listOf("dismiss"), calls)
     }
 
     @Test

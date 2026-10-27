@@ -98,4 +98,14 @@ object V5LinkGlanceRules {
     /** True for an encrypted connection: the address line shows a lock. */
     fun secure(url: String): Boolean =
         runCatching { URI(url).scheme }.getOrNull().equals("https", ignoreCase = true)
+
+    /** What a vertical swipe on the card ends in (canvas «Glance»: up opens, down closes). */
+    enum class Swipe { Open, Close, Stay }
+
+    /** Past [commitPx] or faster than [velocityPx] per second: up opens, down closes; else the card settles back. */
+    fun swipe(offsetPx: Float, velocityPx: Float, commitPx: Float, minVelocityPx: Float): Swipe = when {
+        offsetPx <= -commitPx || (velocityPx <= -minVelocityPx && offsetPx < 0f) -> Swipe.Open
+        offsetPx >= commitPx || (velocityPx >= minVelocityPx && offsetPx > 0f) -> Swipe.Close
+        else -> Swipe.Stay
+    }
 }

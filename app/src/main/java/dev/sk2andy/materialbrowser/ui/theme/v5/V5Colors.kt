@@ -119,6 +119,9 @@ object V5ControlColors {
      * picture in both themes.
      */
     val cardClosePlate = Color(0x57000000)
+
+    /** The swipe hint under the link preview's buttons, on the dimmed page in both themes (canvas «Glance»). */
+    val glanceHint = Color(0xD1FFFFFF)
     val cardCloseGlyph = Color(0xFFFFFFFF)
 }
 
