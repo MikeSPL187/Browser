@@ -37,6 +37,13 @@ internal object AddressBarTabSwitchRules {
     const val CANCEL_DAMPING_RATIO = 0.82f
     const val CANCEL_STIFFNESS = 520f
 
+    /**
+     * Under v5, a swipe past the last tab that stretched the rubber band nearly to its end opens a
+     * new tab when let go (system-v5.md section 7, `tabSwipe`); a shorter pull only springs back.
+     */
+    fun opensNewTabPastLast(offsetPx: Float, edgeTravelMaxPx: Float, newTabFraction: Float): Boolean =
+        edgeTravelMaxPx > 0f && offsetPx <= -edgeTravelMaxPx * newTabFraction
+
     fun hasReachedDistance(dragDistance: Float, viewportWidth: Float): Boolean =
         viewportWidth > 0f && dragDistance >= viewportWidth * DISTANCE_FRACTION
 }

@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AddressBarGestureRulesTest {
@@ -71,5 +73,14 @@ class AddressBarGestureRulesTest {
         assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 1280f, smallestWidthDp = 800f))
         // A phone upright.
         assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 411f, smallestWidthDp = 411f))
+    }
+
+    @Test
+    fun `past the last tab only a rubber band pulled nearly to its end opens a new tab`() {
+        val edge = 42f
+        assertTrue(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = -40f, edgeTravelMaxPx = edge, newTabFraction = 0.9f))
+        assertFalse(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = -30f, edgeTravelMaxPx = edge, newTabFraction = 0.9f))
+        assertFalse(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = 40f, edgeTravelMaxPx = edge, newTabFraction = 0.9f))
+        assertFalse(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = -40f, edgeTravelMaxPx = 0f, newTabFraction = 0.9f))
     }
 }

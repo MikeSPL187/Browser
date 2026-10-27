@@ -64,6 +64,8 @@ object V5Motion {
     /** A tab swipe commits past 30 % of the width or 1000 dp/s. */
     const val TAB_SWIPE_COMMIT_FRACTION = 0.30f
     const val TAB_SWIPE_COMMIT_VELOCITY_DP = 1000f
+    /** Past the last tab, the rubber band stretched to this share of its reach opens a new tab. */
+    const val TAB_SWIPE_NEW_TAB_EDGE_FRACTION = 0.9f
     const val OVERVIEW_CARD_START_SCALE = 0.92f
     /** A card swiped sideways in the overview closes past 40 % of its width or 1000 dp/s. */
     const val CARD_CLOSE_COMMIT_FRACTION = 0.40f
