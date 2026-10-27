@@ -199,10 +199,17 @@ private fun V5FirstRunOverlay(controller: BrowserController, showIntro: Boolean,
             caption = stringResource(R.string.v5_first_run_profiles_caption),
         ),
         V5FirstRunPromise(
-            icon = VolaIcons.Lock,
-            tile = V5Tile.Gray,
-            title = stringResource(R.string.v5_first_run_device_title),
-            caption = stringResource(R.string.v5_first_run_device_caption),
+            icon = VolaIcons.Headphones,
+            tile = V5Tile.Teal,
+            title = stringResource(R.string.v5_first_run_read_title),
+            // Only GeckoView translates on the phone: without it the page promises reading and listening.
+            caption = stringResource(
+                if (controller.browserEngineCapabilities.onDeviceTranslation) {
+                    R.string.v5_first_run_read_caption
+                } else {
+                    R.string.v5_first_run_read_caption_no_translation
+                },
+            ),
         ),
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < V5_FIRST_RUN_DARK_LUMINANCE
