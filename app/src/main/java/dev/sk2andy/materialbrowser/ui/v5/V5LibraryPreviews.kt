@@ -63,21 +63,40 @@ private val Downloads = V5LibraryState(
     query = "",
     sections = listOf(
         V5LibrarySection(
-            null,
+            "Сейчас",
             listOf(
                 V5LibraryRow("d1", "gid-po-severu.pdf", "12,4 из 20 МБ · осталось 8 с", V5LibraryLeading.File(VolaIcons.PictureAsPdf, V5Tile.Red), V5LibraryTrailing.Progress(0.62f, paused = false), deleteLabel = "Отменить загрузку", deleteAsks = true),
+            ),
+        ),
+        V5LibrarySection(
+            "Сегодня",
+            listOf(
                 V5LibraryRow("d2", "karta-oblakov.png", "Не загрузилось · 2,3 МБ", V5LibraryLeading.File(VolaIcons.Error, V5Tile.Orange), V5LibraryTrailing.Retry),
                 V5LibraryRow("d3", "siyanie-teriberka.jpg", "3,1 МБ · polar-notes.ru · вчера", V5LibraryLeading.File(VolaIcons.Image, V5Tile.Blue)),
             ),
         ),
     ),
     emptyMessage = "",
+    note = "Файлы лежат в общей папке «Загрузки» телефона — их видят и другие приложения.",
 )
 
 @Composable
 private fun LibraryPreview(state: V5LibraryState, dark: Boolean) {
     VolaV5Theme(dark = dark) {
-        V5Library(state, onSegmentChange = {}, onQueryChange = {}, onOpen = {}, onDelete = {}, onRetry = {}, onClose = {})
+        V5Library(
+            state,
+            onSegmentChange = {},
+            onQueryChange = {},
+            onOpen = {},
+            onDelete = {},
+            onRetry = {},
+            onClose = {},
+            filters = if (state.segment == V5LibrarySegment.Downloads) {
+                { V5FilterChips(listOf("Все", "Документы", "Изображения", "Архивы"), selectedIndex = 0, onSelect = {}) }
+            } else {
+                null
+            },
+        )
     }
 }
 

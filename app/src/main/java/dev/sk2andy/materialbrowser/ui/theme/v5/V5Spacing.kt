@@ -120,6 +120,9 @@ object V5Sizes {
     val toggleThumb: Dp = 27.dp
     val toggleThumbInset: Dp = 2.dp
 
+    /** A filter chip's capsule (canvas «Downloads»); its touch target stays [touchTarget]. */
+    val filterChip: Dp = 34.dp
+
     // Slider (canvas screen «ц3»): a 4 dp track and the toggle's white 28 dp knob, as on iOS.
     val sliderTrack: Dp = 4.dp
     val sliderThumb: Dp = 28.dp

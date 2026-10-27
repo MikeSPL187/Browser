@@ -161,6 +161,8 @@ data class V5LibraryState(
     val folder: String? = null,
     /** True until the rows are read: the screen then shows neither rows nor the empty state. */
     val loading: Boolean = false,
+    /** A quiet line under the last row, such as where downloaded files are kept. */
+    val note: String? = null,
 )
 
 @Composable
@@ -177,6 +179,8 @@ fun V5Library(
     onUp: () -> Unit = {},
     /** «Deleted — Undo» after a swipe, shown just above the actions as the browser's notice line. */
     snackbarHostState: SnackbarHostState? = null,
+    /** Filters under the search field, such as the kinds of downloads ([V5FilterChips]). */
+    filters: (@Composable () -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     BackHandler(enabled = state.folder != null, onBack = onUp)
@@ -229,6 +233,9 @@ fun V5Library(
             modifier = Modifier.fillMaxWidth().padding(horizontal = V5Spacing.marginPhone),
             fieldModifier = Modifier.testTag(V5LibraryTestTags.Search),
         )
+        if (filters != null) {
+            Box(Modifier.padding(top = V5Spacing.space1)) { filters() }
+        }
         if (state.folder != null) {
             Row(
                 Modifier
@@ -286,6 +293,9 @@ fun V5Library(
                         items(section.rows, key = { row -> row.key }) { row ->
                             LibraryRow(row, onOpen, onDelete, onRetry)
                         }
+                    }
+                    if (state.note != null) {
+                        item(key = "note") { Note(state.note) }
                     }
                 }
             }
@@ -377,6 +387,24 @@ private fun Empty(segment: V5LibrarySegment, title: String?, message: String, ac
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun Note(text: String) {
+    val colors = V5Theme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(
+                start = V5Spacing.marginPhone + V5Spacing.space1,
+                end = V5Spacing.marginPhone + V5Spacing.space1,
+                top = V5Spacing.space4,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+    ) {
+        Icon(VolaIcons.Folder, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+        Text(text, style = V5Theme.type.footnote, color = colors.labelSecondary, modifier = Modifier.weight(1f))
     }
 }
 

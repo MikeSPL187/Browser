@@ -84,4 +84,15 @@ class DownloadsLibraryV5RulesTest {
         assertEquals(null, DownloadsLibraryV5Rules.unavailable(entry(DownloadStatus.Failed, retry = DownloadRetry.Available)))
         assertEquals(null, DownloadsLibraryV5Rules.unavailable(entry(DownloadStatus.Successful)))
     }
+
+    @Test
+    fun `the chips sort files into documents, images and archives, and all shows every kind`() {
+        assertTrue(V5DownloadFilter.Documents.matches(DownloadKind.Pdf))
+        assertTrue(V5DownloadFilter.Documents.matches(DownloadKind.Spreadsheet))
+        assertFalse(V5DownloadFilter.Documents.matches(DownloadKind.Image))
+        assertTrue(V5DownloadFilter.Images.matches(DownloadKind.Image))
+        assertTrue(V5DownloadFilter.Archives.matches(DownloadKind.Archive))
+        assertFalse(V5DownloadFilter.Archives.matches(DownloadKind.App))
+        assertTrue(DownloadKind.entries.all(V5DownloadFilter.All::matches))
+    }
 }
