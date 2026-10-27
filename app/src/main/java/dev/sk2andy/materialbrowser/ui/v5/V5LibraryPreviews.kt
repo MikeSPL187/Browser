@@ -7,7 +7,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
-/* The v5 library as canvas screens «р1»–«р3» and an empty segment, light and dark. Not localized. */
+/* The v5 library as canvas screens «History» and «Downloads», «Read later» and empty segments, light and dark. Not localized. */
 
 private const val PREVIEW_WIDTH_DP = 390
 private const val PREVIEW_HEIGHT_DP = 844
@@ -139,3 +139,52 @@ private fun V5LibraryFolderDarkPreview() = LibraryPreview(
     ),
     dark = true,
 )
+
+private val ReadLater = V5LibraryState(
+    segment = V5LibrarySegment.ReadLater,
+    query = "",
+    sections = listOf(
+        V5LibrarySection(
+            null,
+            listOf(
+                V5LibraryRow("r1", "Как снимать северное сияние на телефон", "Полярные заметки", V5LibraryLeading.Site("П", V5Tile.Teal), V5LibraryTrailing.Value("Прочитано 40 %")),
+                V5LibraryRow("r2", "Териберка зимой: дорога, жильё, погода", "teriberka.travel", V5LibraryLeading.Site("T", V5Tile.Blue)),
+            ),
+        ),
+    ),
+    emptyMessage = "",
+)
+
+private val EmptyReadLater = ReadLater.copy(
+    sections = emptyList(),
+    emptyTitle = "Пока пусто",
+    emptyMessage = "Сохраните статью в режиме чтения кнопкой «Сохранить офлайн» — она появится здесь.",
+)
+
+@Preview(name = "Library v5 · read later", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterPreview() = LibraryPreview(ReadLater, dark = false)
+
+@Preview(name = "Library v5 · read later, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterDarkPreview() = LibraryPreview(ReadLater, dark = true)
+
+@Preview(name = "Library v5 · read later, purple accent", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Purple) {
+        V5Library(ReadLater, onSegmentChange = {}, onQueryChange = {}, onOpen = {}, onDelete = {}, onRetry = {}, onClose = {})
+    }
+}
+
+@Preview(name = "Library v5 · read later, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LibraryReadLaterLargeFontPreview() = LibraryPreview(ReadLater, dark = false)
+
+@Preview(name = "Library v5 · empty read later, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5LibraryReadLaterEmptyDarkPreview() = LibraryPreview(EmptyReadLater, dark = true)
+
+@Preview(name = "Library v5 · downloads, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5LibraryDownloadsLargeFontPreview() = LibraryPreview(Downloads, dark = false)

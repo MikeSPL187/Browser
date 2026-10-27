@@ -10,7 +10,7 @@ import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 
 /**
- * Favorites, history or downloads, each with its own launcher so its result reaches the code that
+ * Favorites, history (with «Read later») or downloads, each with its own launcher so its result reaches the code that
  * reads it; [instant] when one segment of the v5 library hands over to another (V28, B2), so the
  * switch shows no screen transition.
  */
@@ -18,6 +18,7 @@ internal fun MainActivity.openLibrary(segment: V5LibrarySegment, instant: Boolea
     when (segment) {
         V5LibrarySegment.Favorites -> favoritesLauncher.launch(FavoritesActivityContract.launchIntent(this))
         V5LibrarySegment.History -> historyLauncher.launch(HistoryActivityContract.launchIntent(this))
+        V5LibrarySegment.ReadLater -> historyLauncher.launch(HistoryActivityContract.launchIntent(this, readLater = true))
         V5LibrarySegment.Downloads -> downloadsLauncher.launch(DownloadsActivity.launchIntent(this))
     }
     @Suppress("DEPRECATION")

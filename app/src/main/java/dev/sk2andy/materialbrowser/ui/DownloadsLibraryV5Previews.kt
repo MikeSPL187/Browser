@@ -34,7 +34,6 @@ private fun DownloadsPreview(mode: BrowserAppearanceMode) {
             onRetry = {},
             onOpenPage = {},
             onClearFinished = {},
-            onSwitch = {},
             onClose = {},
         )
     }

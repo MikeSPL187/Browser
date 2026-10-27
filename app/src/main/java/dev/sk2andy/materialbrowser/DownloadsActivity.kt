@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -19,12 +18,10 @@ import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRepository
 import dev.sk2andy.materialbrowser.ui.DownloadsLibraryV5
 import dev.sk2andy.materialbrowser.ui.DownloadsScreen
-import dev.sk2andy.materialbrowser.ui.LibrarySwitch
 import dev.sk2andy.materialbrowser.ui.openDownloadPage
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
-import dev.sk2andy.materialbrowser.ui.v5.V5LibrarySegment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -84,7 +81,6 @@ class DownloadsActivity : ComponentActivity() {
                         onRetry = { entry -> controller.retry(entry, ::reportControl) },
                         onOpenPage = { url -> openDownloadPage(this, url) },
                         onClearFinished = ::clearFinished,
-                        onSwitch = ::switchLibrary,
                         onClose = ::finish,
                     )
                     return@CandyTheme
@@ -139,20 +135,6 @@ class DownloadsActivity : ComponentActivity() {
         controller.clearFinished(entries) { cleared ->
             if (!cleared) toast(R.string.downloads_clear_failed)
         }
-    }
-
-    // The browser opens the other segment at once, so the library reads as one screen.
-    // Opened from a download's notification nobody waits for the result: the browser gets the
-    // request as a new intent instead.
-    private fun switchLibrary(segment: V5LibrarySegment) {
-        if (callingActivity == null) {
-            startActivity(LibrarySwitch.request(segment, Intent(this, MainActivity::class.java)))
-        } else {
-            setResult(Activity.RESULT_OK, LibrarySwitch.request(segment))
-        }
-        finish()
-        @Suppress("DEPRECATION")
-        overridePendingTransition(0, 0)
     }
 
     private fun reportControl(changed: Boolean) {
