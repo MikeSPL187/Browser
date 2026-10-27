@@ -370,8 +370,18 @@ internal fun BoxScope.BrowserAddressChrome(
                 )
             }
             if (uiV5) {
-                val reached = hasTarget &&
-                    browserDragOffset.floatValue.absoluteValue >= browserWidthPx * V5Motion.TAB_SWIPE_COMMIT_FRACTION
+                // Past the last tab the threshold is the rubber band's end, where letting go opens a new tab.
+                val pastLast = !hasTarget && proposed < 0f && currentIndex == tabs.lastIndex
+                val reached = if (pastLast) {
+                    AddressBarTabSwitchRules.opensNewTabPastLast(
+                        offsetPx = browserDragOffset.floatValue,
+                        edgeTravelMaxPx = with(density) { AddressBarTabSwitchRules.EDGE_TRAVEL_MAX_DP.dp.toPx() },
+                        newTabFraction = V5Motion.TAB_SWIPE_NEW_TAB_EDGE_FRACTION,
+                    )
+                } else {
+                    hasTarget &&
+                        browserDragOffset.floatValue.absoluteValue >= browserWidthPx * V5Motion.TAB_SWIPE_COMMIT_FRACTION
+                }
                 if (reached != v5SwipeThresholdReached) {
                     v5SwipeThresholdReached = reached
                     rootView.performV5Haptic(if (reached) V5Haptic.ThresholdReached else V5Haptic.ThresholdLeft)
@@ -403,6 +413,14 @@ internal fun BoxScope.BrowserAddressChrome(
         }
         v5SwipeThresholdReached = false
         val shouldSwitch = tabSwipeEnabled && targetTab != null && (farEnough || fastEnough)
+        // v5: the rubber band past the last tab, let go near its end, opens a new tab once it springs back.
+        val opensNewTab = uiV5 && tabSwipeEnabled && targetTab == null && direction < 0 &&
+            currentIndex == tabs.lastIndex &&
+            AddressBarTabSwitchRules.opensNewTabPastLast(
+                offsetPx = browserDragOffset.floatValue,
+                edgeTravelMaxPx = with(density) { AddressBarTabSwitchRules.EDGE_TRAVEL_MAX_DP.dp.toPx() },
+                newTabFraction = V5Motion.TAB_SWIPE_NEW_TAB_EDGE_FRACTION,
+            )
         val settle = Animatable(browserDragOffset.floatValue)
         settle.animateTo(
             targetValue = if (shouldSwitch) direction * tabSwitchTravelPx else 0f,
@@ -436,6 +454,10 @@ internal fun BoxScope.BrowserAddressChrome(
             rootView.performConfirmHaptic()
         } else {
             browserDragOffset.floatValue = 0f
+            if (opensNewTab) {
+                controller.createTab()
+                rootView.performV5Haptic(V5Haptic.Confirm)
+            }
         }
     }
     val onBarPositioned: (Rect, Int) -> Unit = { boundsInRoot, topInWindowPx ->
