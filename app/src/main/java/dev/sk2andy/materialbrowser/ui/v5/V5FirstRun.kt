@@ -35,6 +35,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -64,9 +65,10 @@ object V5FirstRunTestTags {
 data class V5FirstRunPromise(val icon: ImageVector, val tile: V5Tile, val title: String, val caption: String)
 
 /**
- * Canvas screen «п1» (V28, B1): Vola's mark, its name, one line, three promises that hold without
- * settings, «Get started» and a quiet «Move from another browser». Nothing is asked here: protection
- * is on from the start and the theme follows the system.
+ * Canvas screens «п1» (V28, B1) and «Onboarding»: Vola's mark, the line «A browser that protects
+ * first» with one more under it, three promises that hold without settings, «Get started», a quiet
+ * «Move your data from another browser», and at the foot that there is no telemetry and the code
+ * is open. Nothing is asked here: protection is on from the start and the theme follows the system.
  */
 @Composable
 fun V5FirstRunWelcome(
@@ -81,9 +83,12 @@ fun V5FirstRunWelcome(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = V5Spacing.space16),
             verticalArrangement = Arrangement.spacedBy(V5Spacing.space2),
         ) {
+            val appName = stringResource(R.string.app_name)
             Box(
                 Modifier
                     .padding(bottom = V5Spacing.space4)
+                    // The name is the mark's: the title under it is the promise (canvas «Onboarding»).
+                    .semantics { contentDescription = appName }
                     .size(V5Sizes.firstRunMark)
                     .clip(V5Theme.shapes.l)
                     .background(colors.accentFill),
@@ -97,12 +102,12 @@ fun V5FirstRunWelcome(
                 )
             }
             Text(
-                stringResource(R.string.app_name),
+                stringResource(R.string.v5_first_run_title),
                 style = V5Theme.type.largeTitle,
                 color = colors.label,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(stringResource(R.string.v5_first_run_tagline), style = V5Theme.type.callout, color = colors.labelSecondary)
+            Text(stringResource(R.string.v5_first_run_subtitle), style = V5Theme.type.callout, color = colors.labelSecondary)
             Spacer(Modifier.height(V5Spacing.space4))
             Column(
                 Modifier
@@ -124,9 +129,16 @@ fun V5FirstRunWelcome(
             primary = stringResource(R.string.first_run_start),
             primaryTag = V5FirstRunTestTags.Start,
             onPrimary = onStart,
-            secondary = stringResource(R.string.first_run_import),
+            secondary = stringResource(R.string.v5_first_run_import),
             secondaryTag = V5FirstRunTestTags.Import,
             onSecondary = onImport,
+        )
+        Text(
+            stringResource(R.string.v5_first_run_footnote),
+            style = V5Theme.type.caption,
+            color = colors.labelSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = V5Spacing.space2),
         )
     }
 }

@@ -2411,14 +2411,18 @@
     <string name="v5_history_clear_all">За всё время</string>
     <string name="v5_history_clear_confirm_message">Страницы, открытые за этот период, удалятся из истории этого профиля. Вернуть их будет нельзя.</string>
     <!-- V28 B1: знакомство v5 (холст п1, п2) -->
-    <string name="v5_first_run_tagline">Браузер, который не мешает странице.</string>
-    <string name="v5_first_run_protection_title">Защита сразу</string>
-    <string name="v5_first_run_protection_caption">Реклама и трекеры блокируются, только HTTPS</string>
-    <string name="v5_first_run_protection_caption_no_https">Реклама и трекеры блокируются</string>
-    <string name="v5_first_run_profiles_title">Профили</string>
-    <string name="v5_first_run_profiles_caption">У работы и дома свои вкладки, история и закреплённые</string>
-    <string name="v5_first_run_device_title">Всё на устройстве</string>
-    <string name="v5_first_run_device_caption">Никакой аналитики и рекламных SDK</string>
+    <string name="v5_first_run_title">Браузер, который сначала защищает</string>
+    <string name="v5_first_run_subtitle">Быстрый, тихий и честный. Всё важное — на вашем устройстве.</string>
+    <string name="v5_first_run_read_title">Читайте и слушайте</string>
+    <string name="v5_first_run_read_caption">Режим чтения и чтение вслух, перевод — прямо на телефоне</string>
+    <string name="v5_first_run_read_caption_no_translation">Режим чтения и чтение вслух</string>
+    <string name="v5_first_run_import">Перенести данные из другого браузера</string>
+    <string name="v5_first_run_footnote">Без телеметрии и рекламы · открытый код, MPL-2.0</string>
+    <string name="v5_first_run_protection_title">Защита с первой секунды</string>
+    <string name="v5_first_run_protection_caption">Реклама, трекеры и cookie-баннеры исчезают сами, только HTTPS</string>
+    <string name="v5_first_run_protection_caption_no_https">Реклама, трекеры и cookie-баннеры исчезают сами</string>
+    <string name="v5_first_run_profiles_title">Профили, а не хаос вкладок</string>
+    <string name="v5_first_run_profiles_caption">Работа и личное — свои cookie, история и группы</string>
     <string name="v5_first_run_default_title">Открывать ссылки в Vola?</string>
     <string name="v5_first_run_default_body">Ссылки из почты и мессенджеров откроются здесь, с защитой. Изменить можно в настройках.</string>
     <string name="v5_first_run_default_refused">Vola пока не браузер по умолчанию. Это можно сделать позже в настройках.</string>
