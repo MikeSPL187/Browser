@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +28,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -35,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +77,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.util.lerp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
@@ -189,6 +193,10 @@ fun V5TabOverview(
                 )
             } else {
                 val frames = rememberV5GroupFrames(items)
+                // The others appear around the page's card (canvas «MotionOverview»): from 0.92 and
+                // transparent, one step of delay per card away from it. Cards scrolled in later are there at once.
+                val openedAt = remember { SystemClock.uptimeMillis() }
+                val selectedIndex = items.indexOfFirst { item -> item is V5OverviewItem.Card && cardsById[item.id]?.selected == true }
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
                     // The grid opens on the selected card, so the page's card is on screen for the hero.
@@ -208,13 +216,17 @@ fun V5TabOverview(
                     horizontalArrangement = Arrangement.spacedBy(V5Sizes.tabGridGap),
                     verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
                 ) {
-                    items(
+                    itemsIndexed(
                         items,
-                        key = { it.key },
-                        span = { item -> GridItemSpan(if (item is V5OverviewItem.Card) 1 else maxLineSpan) },
-                    ) { item ->
+                        key = { _, item -> item.key },
+                        span = { _, item -> GridItemSpan(if (item is V5OverviewItem.Card) 1 else maxLineSpan) },
+                    ) { index, item ->
                         when (item) {
                             is V5OverviewItem.Card -> cardsById[item.id]?.let { card ->
+                                val entrance = rememberOverviewEntrance(
+                                    order = V5TabOverviewRules.entranceOrder(index, selectedIndex),
+                                    openedAt = openedAt,
+                                )
                                 TabCard(
                                     card = card,
                                     onSelect = onSelect,
@@ -223,7 +235,16 @@ fun V5TabOverview(
                                     onBounds = onCardBounds,
                                     hidden = card.id == heroCardId,
                                     onLongPress = onCardLongPress,
-                                    modifier = Modifier.animateItem().v5GroupFrameLine(frames, item.key),
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .v5GroupFrameLine(frames, item.key)
+                                        .graphicsLayer {
+                                            val shown = entrance.value
+                                            alpha = shown.coerceIn(0f, 1f)
+                                            val scale = lerp(V5Motion.OVERVIEW_CARD_START_SCALE, 1f, shown)
+                                            scaleX = scale
+                                            scaleY = scale
+                                        },
                                 )
                             }
                             is V5OverviewItem.GroupHeader -> GroupHeader(
@@ -693,3 +714,25 @@ private fun Toolbar(
         }
     }
 }
+
+/**
+ * A card's entrance into the overview: 0 → 1 on the overviewEnter spring after [order] steps of
+ * [V5Motion.OVERVIEW_CARD_STAGGER_MILLIS]. Already 1 for a card composed after the overview opened
+ * (scrolled in) and without system animations, where the overview only fades in as a whole.
+ */
+@Composable
+private fun rememberOverviewEntrance(order: Int, openedAt: Long): Animatable<Float, AnimationVector1D> {
+    val animated = V5Motion.animationsEnabled
+    val entrance = remember {
+        val opening = SystemClock.uptimeMillis() - openedAt < V5Motion.OVERVIEW_ENTRANCE_WINDOW_MILLIS
+        Animatable(if (animated && opening) 0f else 1f)
+    }
+    LaunchedEffect(Unit) {
+        if (entrance.value < 1f) {
+            delay(order.toLong() * V5Motion.OVERVIEW_CARD_STAGGER_MILLIS)
+            entrance.animateTo(1f, V5Motion.overviewEnter.spec())
+        }
+    }
+    return entrance
+}
+

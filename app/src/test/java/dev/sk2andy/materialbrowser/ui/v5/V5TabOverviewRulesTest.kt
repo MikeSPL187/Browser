@@ -192,4 +192,12 @@ class V5TabOverviewRulesTest {
         val folded = V5OverviewGroupRules.items(listOf("4", "5"), listOf(trip), searching = false)
         assertEquals(emptyList<V5GroupFrame>(), V5OverviewGroupRules.frames(folded))
     }
+
+    @Test
+    fun `cards enter outwards from the page's card, from the top when there is none`() {
+        assertEquals(0, V5TabOverviewRules.entranceOrder(index = 4, selectedIndex = 4))
+        assertEquals(2, V5TabOverviewRules.entranceOrder(index = 2, selectedIndex = 4))
+        assertEquals(3, V5TabOverviewRules.entranceOrder(index = 7, selectedIndex = 4))
+        assertEquals(5, V5TabOverviewRules.entranceOrder(index = 5, selectedIndex = -1))
+    }
 }

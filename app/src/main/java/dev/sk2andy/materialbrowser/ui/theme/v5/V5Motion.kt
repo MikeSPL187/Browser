@@ -70,6 +70,8 @@ object V5Motion {
     /** How transparent a card gets at a full width of travel while it is swiped. */
     const val CARD_CLOSE_FADE = 0.6f
     const val OVERVIEW_CARD_STAGGER_MILLIS = 15
+    /** Cards composed this soon after the overview opened make the entrance; later ones (scrolled in) are just there. */
+    const val OVERVIEW_ENTRANCE_WINDOW_MILLIS = 300L
     const val GLANCE_PRESS_MILLIS = 400
     const val GLANCE_LIFT_SCALE = 1.03f
     const val GLANCE_PAGE_SCALE = 0.97f
