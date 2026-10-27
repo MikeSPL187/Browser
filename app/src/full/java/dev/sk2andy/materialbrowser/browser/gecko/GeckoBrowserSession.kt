@@ -19,6 +19,7 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
+import java.io.InputStream
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.WebRequestError
 import dev.sk2andy.materialbrowser.browser.engine.BrowserEnginePreviewCapture
@@ -256,6 +257,9 @@ internal interface GeckoBrowserSession {
 
     /** Opens Gecko's Android print flow for the current document. */
     fun printPage(): Boolean
+
+    /** Renders the current document to a PDF (`GeckoSession.saveAsPdf`); null when Gecko could not. */
+    fun savePageAsPdf(onResult: (InputStream?) -> Unit) = onResult(null)
 
     /** Applies Gecko's native desktop/mobile UA and viewport policy for the next reload. */
     fun setDesktopMode(enabled: Boolean)

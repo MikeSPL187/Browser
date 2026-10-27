@@ -46,6 +46,7 @@ import dev.sk2andy.materialbrowser.browser.protection.SiteProtectionCounts
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationPort
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineSessionPort
+import java.io.InputStream
 
 /** Find in page, the part of [BrowserEngineViewPort] that FindInPageController needs. */
 internal interface BrowserEngineFindPort {
@@ -85,6 +86,13 @@ internal interface BrowserEngineViewPort : BrowserEngineFindPort {
     ): BrowserEnginePreviewCapture?
 
     fun printPage(): Boolean
+
+    /**
+     * Renders the current page to a PDF and hands its bytes to [onResult] on the main thread; null
+     * when it could not. The caller closes the stream. Only an engine that renders PDFs itself
+     * (`AndroidBrowserEngineCapabilities.savePageAsPdf`) does; the others answer null.
+     */
+    fun savePageAsPdf(onResult: (InputStream?) -> Unit) = onResult(null)
 
     fun setDesktopMode(enabled: Boolean)
 

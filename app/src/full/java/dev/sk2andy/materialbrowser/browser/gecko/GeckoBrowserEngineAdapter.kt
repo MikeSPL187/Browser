@@ -38,6 +38,7 @@ import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommands
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineCommandType
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEvent
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineEventType
+import java.io.InputStream
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 import dev.sk2andy.materialbrowser.browser.engine.AndroidBrowserEngineSessionPort
@@ -701,6 +702,10 @@ internal class GeckoBrowserEngineSessionAdapter(
 
     @UiThread
     override fun printPage(): Boolean = !closed && session.printPage()
+
+    @UiThread
+    override fun savePageAsPdf(onResult: (InputStream?) -> Unit) =
+        if (closed) onResult(null) else session.savePageAsPdf(onResult)
 
     override fun updatePrivacyPolicy(
         policy: GeckoPrivacyPolicy,

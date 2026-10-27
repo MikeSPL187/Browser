@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +17,7 @@ import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.PagePdfSaver
 import dev.sk2andy.materialbrowser.browser.PageTranslationRules
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.integration.PasswordsActivityContract
@@ -95,6 +97,7 @@ internal fun BrowserPageMenuV5(
         hiddenCount = V5PageMenuRules.hiddenCount(canHideDistractions) { controller.hiddenDistractions.hiddenCount(tab) },
         downloads = downloads,
         extras = pageMenuExtras(controller, offHere = stringResource(R.string.v5_menu_extension_off_here)),
+        canSaveAsPdf = controller.browserEngineCapabilities.savePageAsPdf,
     )
     V5PageMenu(
         visible = visible,
@@ -123,6 +126,7 @@ internal fun BrowserPageMenuV5(
             onShowHidden = { controller.hiddenDistractions.showAll(tab) },
             onListen = { listenToSelectedPage(controller, listenSession, title = state.title) },
             onPasswords = { context.startActivity(PasswordsActivityContract.launchIntent(context)) },
+            onSaveAsPdf = { savePageAsPdf(context, controller, tab.id, title = state.title) },
         ),
         onDismiss = onDismiss,
     )
@@ -158,5 +162,18 @@ private fun pageMenuExtras(controller: BrowserController, offHere: String): List
             enabled = true,
             onClick = { controller.invokeUserScriptMenuCommand(command) },
         )
+    }
+}
+
+/** «Download» in the menu: the engine renders [tabId]'s page to a PDF, kept in the phone's Downloads. */
+private fun savePageAsPdf(context: Context, controller: BrowserController, tabId: String, title: String) {
+    controller.savePageAsPdf(tabId) { pdf ->
+        if (pdf == null) {
+            V5Feedback.show(context, R.string.v5_save_pdf_failed)
+        } else {
+            PagePdfSaver(context).save(pdf, title) { uri ->
+                V5Feedback.show(context, if (uri != null) R.string.v5_save_pdf_done else R.string.v5_save_pdf_failed)
+            }
+        }
     }
 }

@@ -2279,6 +2279,9 @@
     <string name="v5_menu_new_private_tab">Новая частная вкладка</string>
     <string name="v5_menu_favorites">Избранное</string>
     <string name="v5_menu_downloads">Загрузки</string>
+    <string name="v5_menu_save_pdf">Скачать</string>
+    <string name="v5_save_pdf_done">PDF сохранён в загрузки телефона</string>
+    <string name="v5_save_pdf_failed">Не удалось сохранить страницу в PDF. Попробуйте ещё раз.</string>
     <plurals name="v5_downloads_active">
         <item quantity="one">Загружается %d файл</item>
         <item quantity="few">Загружаются %d файла</item>

@@ -89,6 +89,7 @@ import dev.sk2andy.materialbrowser.browser.PageDistractionsPort
 import dev.sk2andy.materialbrowser.data.UserScriptValueStore
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
+import java.io.InputStream
 import java.net.URI
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -3095,6 +3096,13 @@ private class GeckoViewBrowserSession(
         if (closed || boundView == null) return false
         session.printPageContent()
         return true
+    }
+
+    override fun savePageAsPdf(onResult: (InputStream?) -> Unit) {
+        if (closed) return onResult(null)
+        session.saveAsPdf()
+            .withHandler(Handler(Looper.getMainLooper()))
+            .accept({ stream -> onResult(stream) }, { onResult(null) })
     }
 
     override fun setDesktopMode(enabled: Boolean) {
