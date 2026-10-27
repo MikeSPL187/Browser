@@ -200,6 +200,8 @@ internal fun BrowserV5Bar(
                 onCancel = { distractions.act(DistractionAction.Cancel) },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
+            // Vola's offer to translate the page, above the bar (canvas «Translate»).
+            BrowserTranslateOfferV5(controller = controller, tab = tab, modifier = Modifier.align(Alignment.BottomCenter))
         }
     }
 }

@@ -2430,9 +2430,15 @@
     <string name="v5_translated_from_to">Перевод: %1$s → %2$s</string>
     <string name="v5_translate_original">Оригинал</string>
     <string name="v5_translated_hide">Скрыть</string>
+    <string name="v5_translate_offer_title">Перевести на %1$s?</string>
+    <string name="v5_translate_offer_page_language">Язык страницы: %1$s</string>
+    <string name="v5_translate_offer_never_site">Не для этого сайта</string>
+    <string name="v5_translate_offer_note">Перевод на устройстве — текст не уходит в сеть</string>
+    <string name="v5_translate_offer_close">Не сейчас</string>
+    <string name="v5_translate_offer_region">Перевод страницы</string>
     <string name="v5_translation_settings_title">Перевод</string>
     <string name="v5_translation_settings_summary">Языки и пакеты на телефоне</string>
-    <string name="v5_translation_offer">Предлагать перевод в меню</string>
+    <string name="v5_translation_offer">Предлагать перевод</string>
     <string name="v5_translation_offer_hint">Когда язык страницы не ваш</string>
     <string name="v5_translation_into">Переводить на</string>
     <string name="v5_translation_never">Не переводить</string>

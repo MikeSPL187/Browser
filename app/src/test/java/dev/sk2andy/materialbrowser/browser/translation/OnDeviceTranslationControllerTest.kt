@@ -11,6 +11,7 @@ class OnDeviceTranslationControllerTest {
         var current: PageTranslationListener? = null
         var translated: Pair<TranslationPair, Boolean>? = null
         var answer: ((PageTranslationResult) -> Unit)? = null
+        var neverOnSite: Boolean? = null
 
         override fun setListener(listener: PageTranslationListener?) {
             current = listener
@@ -29,8 +30,10 @@ class OnDeviceTranslationControllerTest {
 
         override fun neverTranslateSite(onResult: (Boolean?) -> Unit) = onResult(false)
 
-        override fun setNeverTranslateSite(never: Boolean, onResult: (PageTranslationResult) -> Unit) =
+        override fun setNeverTranslateSite(never: Boolean, onResult: (PageTranslationResult) -> Unit) {
+            neverOnSite = never
             onResult(PageTranslationResult.Done)
+        }
     }
 
     private val english = PageTranslationState(pageLanguage = "en", pageLanguageSupported = true, userLanguage = "ru")
@@ -121,5 +124,40 @@ class OnDeviceTranslationControllerTest {
         controller.translate("none", pair, allowModelDownload = true) { result = it }
 
         assertEquals(PageTranslationResult.Unsupported, result)
+    }
+
+    @Test
+    fun `the engine's offer waits for an answer, and translating answers it`() {
+        controller.attach("tab", port)
+        port.current?.onStateChanged(english)
+        assertFalse(controller.stateOf("tab").offered)
+
+        port.current?.onOffer()
+        assertTrue(controller.stateOf("tab").offered)
+
+        controller.translate("tab", pair, allowModelDownload = false)
+        assertFalse(controller.stateOf("tab").offered)
+    }
+
+    @Test
+    fun `not now puts the offer away, not for this site also tells the engine`() {
+        controller.attach("tab", port)
+        port.current?.onOffer()
+        controller.dismissOffer("tab")
+        assertFalse(controller.stateOf("tab").offered)
+        assertNull(port.neverOnSite)
+
+        port.current?.onOffer()
+        controller.neverOfferOnSite("tab")
+        assertFalse(controller.stateOf("tab").offered)
+        assertEquals(true, port.neverOnSite)
+    }
+
+    @Test
+    fun `a closed page forgets its offer`() {
+        controller.attach("tab", port)
+        port.current?.onOffer()
+        controller.detach("tab")
+        assertFalse(controller.stateOf("tab").offered)
     }
 }

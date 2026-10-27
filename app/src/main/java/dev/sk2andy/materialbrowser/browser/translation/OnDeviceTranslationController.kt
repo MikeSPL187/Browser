@@ -26,6 +26,12 @@ internal class OnDeviceTranslationController(
         ports[tabId] = port
         port.setListener(
             object : PageTranslationListener {
+                // The engine's own moment: a page in a language the user does not read, on a site
+                // not set to «never» and not offered yet this session.
+                override fun onOffer() {
+                    update(tabId) { it.copy(offered = true) }
+                }
+
                 override fun onStateChanged(state: PageTranslationState) {
                     update(tabId) { current ->
                         current.copy(
@@ -67,7 +73,7 @@ internal class OnDeviceTranslationController(
     ) {
         val port = ports[tabId] ?: return onResult(PageTranslationResult.Unsupported)
         val request = ++lastRequest
-        update(tabId) { it.copy(pair = pair, inProgress = true, error = null, request = request) }
+        update(tabId) { it.copy(pair = pair, inProgress = true, error = null, request = request, offered = false) }
         port.translate(pair, allowModelDownload) { result ->
             // Only the latest request on the same page speaks: an older answer, or one from the
             // page before a navigation, would end the wait of the request that is still running.
@@ -93,6 +99,16 @@ internal class OnDeviceTranslationController(
         }
     }
 
+    /** Puts the offer for [tabId]'s page away: «Not now», or the user translated another way. */
+    fun dismissOffer(tabId: String) = update(tabId) { it.copy(offered = false) }
+
+    /** «Not for this site»: the engine stops offering a translation on [tabId]'s site. */
+    fun neverOfferOnSite(tabId: String, onResult: (PageTranslationResult) -> Unit = {}) {
+        val port = ports[tabId] ?: return onResult(PageTranslationResult.Unsupported)
+        dismissOffer(tabId)
+        port.setNeverTranslateSite(true, onResult)
+    }
+
     private fun update(tabId: String, change: (OnDeviceTranslationUiState) -> OnDeviceTranslationUiState) {
         if (tabId !in ports) return
         states[tabId] = change(stateOf(tabId))
@@ -102,7 +118,8 @@ internal class OnDeviceTranslationController(
 /**
  * One tab's translation as the v5 screens show it: the engine's [page] state, the [pair] the user
  * asked for, whether a request is [inProgress] (a model may be downloading) and the last [error].
- * [request] numbers the latest request, so an older one's answer is told apart.
+ * [request] numbers the latest request, so an older one's answer is told apart; [offered] is the
+ * engine's offer to translate, until the user answers it.
  */
 internal data class OnDeviceTranslationUiState(
     val page: PageTranslationState = PageTranslationState(),
@@ -110,6 +127,8 @@ internal data class OnDeviceTranslationUiState(
     val inProgress: Boolean = false,
     val error: PageTranslationError? = null,
     val request: Int = 0,
+    /** The engine offered a translation of this page and the user has not answered it yet. */
+    val offered: Boolean = false,
 ) {
     val isTranslated: Boolean get() = page.isTranslated
 }
