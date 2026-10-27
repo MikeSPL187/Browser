@@ -50,7 +50,6 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Shapes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type.tabular
 import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 import java.text.NumberFormat
@@ -269,9 +268,7 @@ private fun Findings(summary: ProtectionSummary) {
     val site = V5PrivacyReportRules.busiestSite(summary)
     if (tracker != null) {
         Finding(
-            icon = VolaIcons.VisibilityOff,
-            tileColor = colors.surfaceElevated,
-            glyphColor = colors.labelSecondary,
+            tile = { GlyphTile(VolaIcons.VisibilityOff, colors.surfaceElevated, colors.labelSecondary) },
             caption = stringResource(R.string.v5_report_top_tracker),
             value = tracker.host,
             detail = pluralStringResource(R.plurals.v5_report_tracker_sites, tracker.siteCount, tracker.siteCount),
@@ -281,9 +278,8 @@ private fun Findings(summary: ProtectionSummary) {
     }
     if (site != null) {
         Finding(
-            icon = VolaIcons.Public,
-            tileColor = V5Tile.Red.color,
-            glyphColor = V5Tile.Red.glyph,
+            // The site in its own letter tile, as on the new tab and in the address suggestions.
+            tile = { V5SiteTile(favicon = null, site = site.host, size = V5Sizes.reportFindingTile) },
             caption = stringResource(R.string.v5_report_busiest_site),
             value = site.host,
             detail = pluralStringResource(R.plurals.v5_report_site_trackers, site.trackerCount, site.trackerCount),
@@ -295,9 +291,7 @@ private fun Findings(summary: ProtectionSummary) {
 
 @Composable
 private fun Finding(
-    icon: ImageVector,
-    tileColor: Color,
-    glyphColor: Color,
+    tile: @Composable () -> Unit,
     caption: String,
     value: String,
     detail: String,
@@ -319,20 +313,26 @@ private fun Finding(
     ) {
         Text(caption, style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold), color = colors.labelSecondary)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3)) {
-            Box(
-                Modifier
-                    .size(V5Sizes.reportFindingTile)
-                    .clip(RoundedCornerShape(V5Sizes.reportFindingTileRadius))
-                    .background(tileColor),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, contentDescription = null, tint = glyphColor, modifier = Modifier.size(V5Sizes.iconSmall))
-            }
+            tile()
             Column(Modifier.weight(1f)) {
                 Text(value, style = V5Theme.type.headline, color = colors.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(emphasized(detail, number), style = V5Theme.type.callout, color = colors.labelSecondary)
             }
         }
+    }
+}
+
+/** A finding's tile that is no site: [icon] on a neutral ground. */
+@Composable
+private fun GlyphTile(icon: ImageVector, tileColor: Color, glyphColor: Color) {
+    Box(
+        Modifier
+            .size(V5Sizes.reportFindingTile)
+            .clip(RoundedCornerShape(V5Sizes.reportFindingTileRadius))
+            .background(tileColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = glyphColor, modifier = Modifier.size(V5Sizes.iconSmall))
     }
 }
 
