@@ -2310,6 +2310,8 @@
     <string name="v5_menu_all_actions">Все действия</string>
     <string name="v5_overview_tabs">Вкладки · %1$d</string>
     <string name="v5_overview_private">Частные · %1$d</string>
+    <string name="v5_overview_tabs_label">Вкладки</string>
+    <string name="v5_overview_private_label">Частные</string>
     <string name="v5_overview_no_matches">Ничего не найдено по «%1$s»</string>
     <string name="v5_overview_private_empty_title">Здесь появятся частные вкладки</string>
     <string name="v5_overview_private_empty_message">Открытое в частной вкладке не попадает в историю, а её файлы cookie удаляются, когда вы её закроете.</string>

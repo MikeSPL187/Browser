@@ -2214,6 +2214,8 @@
     <string name="v5_menu_all_actions">All actions</string>
     <string name="v5_overview_tabs">Tabs · %1$d</string>
     <string name="v5_overview_private">Private · %1$d</string>
+    <string name="v5_overview_tabs_label">Tabs</string>
+    <string name="v5_overview_private_label">Private</string>
     <string name="v5_overview_no_matches">No tabs match “%1$s”</string>
     <string name="v5_overview_private_empty_title">Private tabs show up here</string>
     <string name="v5_overview_private_empty_message">What you open in a private tab leaves no history, and its cookies go when you close it.</string>

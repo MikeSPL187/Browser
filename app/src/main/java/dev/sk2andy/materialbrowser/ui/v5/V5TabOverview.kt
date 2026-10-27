@@ -60,8 +60,11 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -375,15 +378,39 @@ private fun Segments(privateSegment: Boolean, counts: V5OverviewCounts, onChange
                     .testTag(if (private) V5OverviewTestTags.SegmentPrivate else V5OverviewTestTags.SegmentTabs),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
+                // The name and its count apart (canvas «Overview»): the count lighter, the private
+                // segment after the mask. TalkBack reads them as one phrase, «Private · 2».
+                val spoken = if (private) {
+                    stringResource(R.string.v5_overview_private, counts.private)
+                } else {
+                    stringResource(R.string.v5_overview_tabs, counts.regular)
+                }
+                Row(
+                    Modifier.clearAndSetSemantics { contentDescription = spoken },
+                    horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     if (private) {
-                        stringResource(R.string.v5_overview_private, counts.private)
-                    } else {
-                        stringResource(R.string.v5_overview_tabs, counts.regular)
-                    },
-                    style = V5Theme.type.callout.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
-                    color = if (selected) colors.label else colors.labelSecondary,
-                )
+                        Icon(
+                            painterResource(R.drawable.ic_incognito_filled),
+                            contentDescription = null,
+                            tint = if (selected) colors.label else colors.labelSecondary,
+                            modifier = Modifier.size(V5Sizes.overviewFavicon),
+                        )
+                    }
+                    Text(
+                        stringResource(if (private) R.string.v5_overview_private_label else R.string.v5_overview_tabs_label),
+                        style = V5Theme.type.callout.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium),
+                        color = if (selected) colors.label else colors.labelSecondary,
+                        maxLines = 1,
+                    )
+                    Text(
+                        (if (private) counts.private else counts.regular).toString(),
+                        style = V5Theme.type.callout.copy(fontFeatureSettings = "tnum"),
+                        color = colors.labelSecondary,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
