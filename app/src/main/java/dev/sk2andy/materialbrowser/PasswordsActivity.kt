@@ -90,6 +90,7 @@ import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedV5
+import dev.sk2andy.materialbrowser.ui.passwords.PasswordsHealthCounts
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditV5
@@ -328,8 +329,15 @@ class PasswordsActivity : FragmentActivity() {
                     onBack = ::finish,
                     systemFillNote = systemFillOnly,
                     passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
-                    healthIssues = remember(logins, breaches) {
-                        PasswordHealthRules.report(logins, breaches).attentionWithInsecure
+                    health = remember(logins, breaches, model.leakCheckedAt) {
+                        val report = PasswordHealthRules.report(logins, breaches)
+                        PasswordsHealthCounts(
+                            weak = report.weak.size,
+                            reused = report.reused.size,
+                            // Unknown until the leak check ran: a dash, not a reassuring zero.
+                            breached = report.breached.size.takeIf { model.leakCheckedAt != null },
+                            issues = report.attentionWithInsecure,
+                        )
                     },
                     onHealth = { use { model.route = PasswordsRoute.Health } },
                     onImport = {

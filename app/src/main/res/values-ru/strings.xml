@@ -2001,6 +2001,11 @@
     <string name="passwords_health_digits_only">%1$s, только цифры</string>
     <string name="passwords_health_easy_to_guess">%1$s, легко подобрать</string>
     <string name="passwords_health_entry">Проверка паролей</string>
+    <string name="v5_passwords_weak">Слабые</string>
+    <string name="v5_passwords_reused">Повторы</string>
+    <string name="v5_passwords_leaks">Утечки</string>
+    <string name="v5_passwords_leaks_unchecked">ещё не проверены</string>
+    <string name="v5_passwords_vault_note">Хранилище KDBX на этом телефоне · открывается по отпечатку</string>
     <string name="passwords_health_entry_fine">Всё в порядке</string>
     <plurals name="passwords_health_seen_in_leaks">
         <item quantity="one">в утечках %d раз</item>

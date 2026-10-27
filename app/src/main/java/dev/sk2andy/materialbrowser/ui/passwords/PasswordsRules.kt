@@ -74,6 +74,18 @@ internal object PasswordsRules {
     fun displaySite(origin: String): String = origin.removePrefix("https://")
 
     /**
+     * [logins] under their site's first letter (canvas «Passwords»), letters in order and logins in
+     * their own order within one; a site that starts with no letter goes under «#» at the end.
+     */
+    fun byLetter(logins: List<VaultLogin>): List<Pair<String, List<VaultLogin>>> =
+        logins.groupBy { login ->
+            displaySite(login.origin).removePrefix("http://").removePrefix("www.")
+                .firstOrNull()?.takeIf(Char::isLetter)?.uppercase() ?: OTHER_LETTER
+        }.toList().sortedWith(compareBy({ it.first == OTHER_LETTER }, { it.first }))
+
+    private const val OTHER_LETTER = "#"
+
+    /**
      * Logins whose site or user name contains [query], ignoring case; all of them for a blank query.
      * A site shown in punycode is also found by its own spelling («пример» finds `xn--e1afmkfd.xn--p1ai`).
      */

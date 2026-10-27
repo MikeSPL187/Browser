@@ -1,14 +1,17 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -26,9 +30,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -39,9 +47,12 @@ import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.V5PromptTheme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Elevation
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
+import dev.sk2andy.materialbrowser.ui.theme.v5.v5Elevation
 import dev.sk2andy.materialbrowser.ui.v5.V5ListDefaults
 import dev.sk2andy.materialbrowser.ui.v5.V5ListGroup
 import dev.sk2andy.materialbrowser.ui.v5.V5ListRow
@@ -103,7 +114,14 @@ internal fun PasswordsLockedV5(
     }
 }
 
-/** «ц5»: search, the password check first, then every password with its site and user name. */
+/** What the password check found, as the list's card shows it; [breached] is null until leaks were checked. */
+@Immutable
+internal data class PasswordsHealthCounts(val weak: Int, val reused: Int, val breached: Int?, val issues: Int)
+
+/**
+ * «ц5» and canvas «Passwords»: search, the password check as a card with its three numbers, then
+ * every password under its site's first letter, and where the vault lives at the end.
+ */
 @Composable
 internal fun PasswordsListV5(
     logins: List<VaultLogin>,
@@ -113,7 +131,7 @@ internal fun PasswordsListV5(
     onBack: () -> Unit,
     systemFillNote: Boolean,
     passkeyNote: PasskeyAvailability?,
-    healthIssues: Int,
+    health: PasswordsHealthCounts,
     onHealth: () -> Unit,
     onImport: () -> Unit,
     busy: Boolean,
@@ -149,21 +167,8 @@ internal fun PasswordsListV5(
                     fieldModifier = Modifier.testTag(PasswordsTestTags.Search),
                 )
                 if (query.isBlank()) {
+                    if (logins.isNotEmpty()) HealthCard(health, onHealth)
                     V5ListGroup {
-                        if (logins.isNotEmpty()) {
-                            V5ListRow(
-                                title = stringResource(R.string.passwords_health_entry),
-                                icon = V5RowIcon(VolaIcons.GppMaybe, V5Tile.Orange),
-                                value = if (healthIssues > 0) {
-                                    pluralStringResource(R.plurals.passwords_health_entry_issues, healthIssues, healthIssues)
-                                } else {
-                                    stringResource(R.string.passwords_health_entry_fine)
-                                },
-                                trailing = V5RowTrailing.Chevron,
-                                onClick = onHealth,
-                                modifier = Modifier.testTag(PasswordsTestTags.Health),
-                            )
-                        }
                         V5ListRow(
                             title = stringResource(R.string.passwords_import_entry),
                             icon = V5RowIcon(VolaIcons.UploadFile, V5Tile.Blue),
@@ -181,22 +186,37 @@ internal fun PasswordsListV5(
                         body = stringResource(if (searching) R.string.passwords_no_results_body else R.string.passwords_empty_body),
                     )
                 } else {
-                    V5ListGroup(
-                        header = stringResource(R.string.passwords_all_count, visible.size),
-                        dividerInset = V5ListDefaults.dividerInsetText,
-                    ) {
-                        visible.forEach { login ->
-                            V5ListRow(
-                                title = PasswordsRules.displaySite(login.origin),
-                                subtitle = login.username.ifEmpty { stringResource(R.string.passwords_no_username) },
-                                trailing = V5RowTrailing.Chevron,
-                                onClick = { onOpen(login) },
-                                modifier = Modifier.testTag(PasswordsTestTags.login(login.id)),
-                            )
+                    Text(
+                        stringResource(R.string.passwords_all_count, visible.size),
+                        style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.labelSecondary,
+                        modifier = Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4),
+                    )
+                    // Under each site's first letter, as the canvas and Safari's list.
+                    PasswordsRules.byLetter(visible).forEach { (letter, group) ->
+                        V5ListGroup(header = letter, dividerInset = V5ListDefaults.dividerInsetText) {
+                            group.forEach { login ->
+                                V5ListRow(
+                                    title = PasswordsRules.displaySite(login.origin),
+                                    subtitle = login.username.ifEmpty { stringResource(R.string.passwords_no_username) },
+                                    trailing = V5RowTrailing.Chevron,
+                                    onClick = { onOpen(login) },
+                                    modifier = Modifier.testTag(PasswordsTestTags.login(login.id)),
+                                )
+                            }
                         }
                     }
                 }
                 if (query.isBlank()) {
+                    // Where the passwords live (canvas «Passwords»): a KDBX file on this phone.
+                    Row(
+                        Modifier.padding(horizontal = V5Spacing.marginPhone + V5Spacing.space4),
+                        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(VolaIcons.Lock, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+                        Text(stringResource(R.string.v5_passwords_vault_note), style = V5Theme.type.footnote, color = colors.labelSecondary)
+                    }
                     V5ListGroup(dividerInset = V5ListDefaults.dividerInsetText) {
                         V5ListRow(
                             title = stringResource(R.string.passwords_turn_off),
@@ -522,6 +542,73 @@ private fun EraseSheet(visible: Boolean, onErase: () -> Unit, onDismiss: () -> U
     )
 }
 
+/** The password check as a card: three numbers in a row, the leaks a dash until they were checked. */
+@Composable
+private fun HealthCard(health: PasswordsHealthCounts, onHealth: () -> Unit) {
+    val colors = V5Theme.colors
+    val shape = V5Theme.shapes.m
+    val openLabel = stringResource(R.string.passwords_health_title)
+    Column(
+        Modifier
+            .padding(horizontal = V5Spacing.marginPhone)
+            .fillMaxWidth()
+            .v5Elevation(V5Elevation.e1, shape)
+            .clip(shape)
+            .background(colors.surface)
+            .clickable(role = Role.Button, onClickLabel = openLabel, onClick = onHealth)
+            .semantics(mergeDescendants = true) {}
+            .padding(V5Spacing.space4)
+            .testTag(PasswordsTestTags.Health),
+        verticalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3)) {
+            Box(
+                Modifier.size(V5Sizes.rowTile).clip(V5Theme.shapes.xs).background(V5Tile.Orange.color),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(VolaIcons.GppMaybe, contentDescription = null, tint = V5Tile.Orange.glyph, modifier = Modifier.size(V5Sizes.iconSmall))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.passwords_health_entry), style = V5Theme.type.headline, color = colors.label)
+                Text(
+                    if (health.issues > 0) {
+                        pluralStringResource(R.plurals.passwords_health_entry_issues, health.issues, health.issues)
+                    } else {
+                        stringResource(R.string.passwords_health_entry_fine)
+                    },
+                    style = V5Theme.type.footnote,
+                    color = colors.labelSecondary,
+                )
+            }
+            Icon(VolaIcons.KeyboardArrowRight, contentDescription = null, tint = colors.labelTertiary, modifier = Modifier.size(V5Sizes.iconSmall))
+        }
+        Row(Modifier.fillMaxWidth()) {
+            HealthNumber(health.weak.toString(), stringResource(R.string.v5_passwords_weak), Modifier.weight(1f))
+            HealthNumber(health.reused.toString(), stringResource(R.string.v5_passwords_reused), Modifier.weight(1f))
+            HealthNumber(
+                health.breached?.toString() ?: LEAKS_UNCHECKED,
+                stringResource(R.string.v5_passwords_leaks),
+                Modifier.weight(1f),
+                spoken = stringResource(R.string.v5_passwords_leaks_unchecked).takeIf { health.breached == null },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HealthNumber(number: String, label: String, modifier: Modifier, spoken: String? = null) {
+    val colors = V5Theme.colors
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            number,
+            style = V5Theme.type.title,
+            color = colors.label,
+            modifier = if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier,
+        )
+        Text(label, style = V5Theme.type.footnote, color = colors.labelSecondary, textAlign = TextAlign.Center)
+    }
+}
+
 @Composable
 private fun ListNotes(systemFillNote: Boolean, passkeyNote: PasskeyAvailability?) {
     val note = when {
@@ -561,6 +648,7 @@ private fun PasswordEditError.messageRes(): Int = when (this) {
 }
 
 private const val MASK = "••••••••••"
+private const val LEAKS_UNCHECKED = "—"
 private const val MAX_QUERY_LENGTH = 200
 private const val MAX_SITE_LENGTH = 512
 private const val MAX_USERNAME_LENGTH = 1_024

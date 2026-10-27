@@ -71,4 +71,18 @@ class PasswordsRulesTest {
         lastUsedAtMillis = null,
         timesUsed = 0,
     )
+
+    @Test
+    fun `logins fall under their site's first letter, letters in order, others last`() {
+        val groups = PasswordsRules.byLetter(
+            listOf(
+                login("1", "https://mail.example", "anna"),
+                login("2", "https://4pda.example", "anna"),
+                login("3", "https://www.bank.example", "anna"),
+                login("4", "https://mymail.example", "anna"),
+            ),
+        )
+        assertEquals(listOf("B", "M", "#"), groups.map { it.first })
+        assertEquals(listOf("1", "4"), groups[1].second.map { it.id })
+    }
 }
