@@ -2344,7 +2344,6 @@
     <string name="v5_accent_purple">Фиолетовый</string>
     <string name="v5_accent_graphite">Графит</string>
     <!-- V28 B2: библиотека v5 (холст р1-р3) -->
-    <string name="v5_library_close">Закрыть библиотеку</string>
     <string name="v5_library_favorites">Избранное</string>
     <string name="v5_library_history">История</string>
     <string name="v5_library_downloads">Загрузки</string>

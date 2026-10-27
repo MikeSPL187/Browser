@@ -25,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -58,8 +57,8 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 /*
  * The v5 library (V28, B2; canvas screens «History» and «Downloads»): history, favorites and
  * reading saved for later share one screen with the segment «History · Favorites · Read later», as
- * Safari's bookmarks sheet; downloads are a screen of their own. The title names the segment in
- * front. Search filters it, a row swipes left to be deleted, an empty segment is one line and a glyph.
+ * Safari's bookmarks sheet; downloads are a screen of their own. Back sits at the top and the
+ * large title under it names the segment in front. Search filters it, a row swipes left to be deleted, an empty segment is one line and a glyph.
  */
 
 object V5LibraryTestTags {
@@ -188,22 +187,19 @@ fun V5Library(
             .windowInsetsPadding(V5SafeSides)
             .testTag(V5LibraryTestTags.Page),
     ) {
-        Row(
-            Modifier
+        // A page of its own (canvas «History», «Downloads»): back at the top, the large title under it.
+        V5PageBar(title = "", onBack = onClose, modifier = Modifier.testTag(V5LibraryTestTags.Close))
+        Text(
+            stringResource(state.segment.label),
+            style = V5Theme.type.largeTitle,
+            color = colors.label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = V5Spacing.marginPhone, end = V5Spacing.space2, top = V5Spacing.space2),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(state.segment.label),
-                style = V5Theme.type.title,
-                color = colors.label,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            IconButton(onClick = onClose, modifier = Modifier.testTag(V5LibraryTestTags.Close)) {
-                Icon(VolaIcons.Close, contentDescription = stringResource(R.string.v5_library_close), tint = colors.labelSecondary)
-            }
-        }
+                .padding(horizontal = V5Spacing.marginPhone)
+                .semantics { heading() },
+        )
         val segmentIndex = V5LibraryRules.segments.indexOf(state.segment)
         if (segmentIndex >= 0) {
             V5Segmented(
