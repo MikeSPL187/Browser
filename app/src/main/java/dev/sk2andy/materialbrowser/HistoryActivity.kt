@@ -7,9 +7,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -24,9 +26,12 @@ import dev.sk2andy.materialbrowser.data.HistoryClearRequest
 import dev.sk2andy.materialbrowser.data.HistoryEntry
 import dev.sk2andy.materialbrowser.data.RecallRepository
 import dev.sk2andy.materialbrowser.data.SnoozedTabStore
+import dev.sk2andy.materialbrowser.reader.ReaderLibraryRepository
+import dev.sk2andy.materialbrowser.reader.ReaderSnapshot
 import dev.sk2andy.materialbrowser.ui.HistoryLibraryV5
 import dev.sk2andy.materialbrowser.ui.HistoryScreen
 import dev.sk2andy.materialbrowser.ui.LibrarySwitch
+import dev.sk2andy.materialbrowser.ui.ReadLaterLibraryV5
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
 import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
@@ -43,6 +48,8 @@ class HistoryActivity : ComponentActivity() {
     private val recallRepository by lazy { RecallRepository.get(this) }
     private var history by mutableStateOf<List<HistoryEntry>>(emptyList())
     private var recallMatches by mutableStateOf<List<RecallMatch>>(emptyList())
+    // The articles saved offline, read only when the v5 library shows «Read later»; null until then.
+    private var readLater by mutableStateOf<List<ReaderSnapshot>?>(null)
     private var recallRequestId = 0
     private val clearRequests = mutableListOf<HistoryClearRequest>()
     // Edits run in the process scope, so one confirmed as the screen closes is still saved.
@@ -103,6 +110,28 @@ class HistoryActivity : ComponentActivity() {
                 workspaceAccent = workspaceAccent,
             ) {
                 if (drawsV5) {
+                    // «History» and «Read later» are one screen: the segment switches here, without a transition.
+                    var segment by rememberSaveable {
+                        mutableStateOf(
+                            if (HistoryActivityContract.opensReadLater(intent)) V5LibrarySegment.ReadLater else V5LibrarySegment.History,
+                        )
+                    }
+                    if (segment == V5LibrarySegment.ReadLater) {
+                        LaunchedEffect(Unit) { if (readLater == null) loadReadLater() }
+                        ReadLaterLibraryV5(
+                            snapshots = readLater,
+                            onOpen = { snapshot ->
+                                openEntry(HistoryEntry(snapshot.document.sourceUrl, snapshot.document.title, 0L, activeProfileId))
+                            },
+                            onDelete = ::deleteReadLater,
+                            onSwitch = { next ->
+                                if (next == V5LibrarySegment.History) segment = next else switchLibrary(next)
+                            },
+                            onClose = { whenMutationsSaved(::finishWithResult) },
+                            isChangingConfigurations = { isChangingConfigurations },
+                        )
+                        return@CandyTheme
+                    }
                     HistoryLibraryV5(
                         profileId = activeProfileId,
                         history = history,
@@ -111,7 +140,9 @@ class HistoryActivity : ComponentActivity() {
                         onDelete = { entry -> mutations.enqueue { deleteEntries(listOf(entry)) } },
                         onClear = { request -> mutations.enqueue { clearHistory(request) } },
                         onOpen = ::openEntry,
-                        onSwitch = ::switchLibrary,
+                        onSwitch = { next ->
+                            if (next == V5LibrarySegment.ReadLater) segment = next else switchLibrary(next)
+                        },
                         onClose = { whenMutationsSaved(::finishWithResult) },
                         onNewTab = ::openNewTab,
                         profileName = profiles.takeIf { it.size > 1 }
@@ -237,6 +268,18 @@ class HistoryActivity : ComponentActivity() {
     private fun openEntry(entry: HistoryEntry) = whenMutationsSaved {
         setResult(Activity.RESULT_OK, HistoryActivityContract.resultIntent(entry, clearRequests))
         finish()
+    }
+
+    private fun loadReadLater() {
+        ReaderLibraryRepository.get(this).load(isPrivate = false) { state ->
+            if (!isFinishing) readLater = state.snapshots
+        }
+    }
+
+    /** The row goes at once; the repository deletes the article in the background. */
+    private fun deleteReadLater(snapshot: ReaderSnapshot) {
+        readLater = readLater?.filterNot { it.id == snapshot.id }
+        ReaderLibraryRepository.get(applicationContext).deleteSnapshot(snapshot.id, isPrivate = false) {}
     }
 
     /** Another segment of the v5 library: the browser starts it once this screen's edits are saved. */

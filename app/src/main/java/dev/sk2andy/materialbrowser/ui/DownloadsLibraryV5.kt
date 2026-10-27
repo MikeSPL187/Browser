@@ -59,7 +59,6 @@ internal fun DownloadsLibraryV5(
     onRetry: (DownloadEntry) -> Unit,
     onOpenPage: (String) -> Unit,
     onClearFinished: (List<DownloadEntry>) -> Unit,
-    onSwitch: (V5LibrarySegment) -> Unit,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -153,7 +152,8 @@ internal fun DownloadsLibraryV5(
     VolaV5Theme(dark = dark) {
         V5Library(
             state = state,
-            onSegmentChange = { segment -> if (segment != V5LibrarySegment.Downloads) onSwitch(segment) },
+            // Downloads are a screen of their own (canvas «Downloads»): no segment to change to.
+            onSegmentChange = {},
             onQueryChange = { query = it },
             onOpen = { key ->
                 val entry = byKey[key] ?: return@V5Library

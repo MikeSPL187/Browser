@@ -20,7 +20,13 @@ internal object HistoryActivityContract {
     private const val EXTRA_CLEAR_SINCE = "since"
     private const val EXTRA_CLEAR_UNTIL = "until"
 
-    fun launchIntent(context: Context): Intent = Intent(context, HistoryActivity::class.java)
+    private const val EXTRA_READ_LATER = "history_read_later"
+
+    /** History, or with [readLater] the library's «Read later» segment, which shares its screen. */
+    fun launchIntent(context: Context, readLater: Boolean = false): Intent =
+        Intent(context, HistoryActivity::class.java).putExtra(EXTRA_READ_LATER, readLater)
+
+    fun opensReadLater(intent: Intent?): Boolean = intent?.getBooleanExtra(EXTRA_READ_LATER, false) == true
 
     fun resultIntent(
         entry: HistoryEntry? = null,

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -55,9 +56,10 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 
 /*
- * The v5 library (V28, B2; canvas screens «р1»–«р3»): one sheet with the segment «Favorites ·
- * History · Downloads» instead of three screens, as Safari's bookmarks sheet. Search filters the
- * segment in front, a row swipes left to be deleted, an empty segment is one line and a glyph.
+ * The v5 library (V28, B2; canvas screens «History» and «Downloads»): history, favorites and
+ * reading saved for later share one screen with the segment «History · Favorites · Read later», as
+ * Safari's bookmarks sheet; downloads are a screen of their own. The title names the segment in
+ * front. Search filters it, a row swipes left to be deleted, an empty segment is one line and a glyph.
  */
 
 object V5LibraryTestTags {
@@ -72,8 +74,8 @@ object V5LibraryTestTags {
     fun pause(key: String) = "v5_library_pause:$key"
 }
 
-/** The segments, in the order the control shows them. */
-enum class V5LibrarySegment { Favorites, History, Downloads }
+/** What the library shows: one of [V5LibraryRules.segments], or [Downloads] on a screen of its own. */
+enum class V5LibrarySegment { History, Favorites, ReadLater, Downloads }
 
 /** What a row starts with. */
 @Immutable
@@ -157,6 +159,8 @@ data class V5LibraryState(
     val emptyAction: V5LibraryEmptyAction? = null,
     /** The open folder's name, with a way back up; null at the top. */
     val folder: String? = null,
+    /** True until the rows are read: the screen then shows neither rows nor the empty state. */
+    val loading: Boolean = false,
 )
 
 @Composable
@@ -191,7 +195,7 @@ fun V5Library(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                stringResource(R.string.v5_library_title),
+                stringResource(state.segment.label),
                 style = V5Theme.type.title,
                 color = colors.label,
                 modifier = Modifier.weight(1f).semantics { heading() },
@@ -200,16 +204,17 @@ fun V5Library(
                 Icon(VolaIcons.Close, contentDescription = stringResource(R.string.v5_library_close), tint = colors.labelSecondary)
             }
         }
-        V5Segmented(
-            options = listOf(
-                stringResource(R.string.v5_library_favorites),
-                stringResource(R.string.v5_library_history),
-                stringResource(R.string.v5_library_downloads),
-            ),
-            selectedIndex = state.segment.ordinal,
-            onSelect = { index -> onSegmentChange(V5LibrarySegment.entries[index]) },
-            modifier = Modifier.padding(horizontal = V5Spacing.marginPhone, vertical = V5Spacing.space2),
-        )
+        val segmentIndex = V5LibraryRules.segments.indexOf(state.segment)
+        if (segmentIndex >= 0) {
+            V5Segmented(
+                options = V5LibraryRules.segments.map { segment -> stringResource(segment.label) },
+                selectedIndex = segmentIndex,
+                onSelect = { index -> onSegmentChange(V5LibraryRules.segments[index]) },
+                modifier = Modifier.padding(horizontal = V5Spacing.marginPhone, vertical = V5Spacing.space2),
+            )
+        } else {
+            Spacer(Modifier.height(V5Spacing.space2))
+        }
         V5SearchField(
             query = state.query,
             onQueryChange = onQueryChange,
@@ -217,6 +222,7 @@ fun V5Library(
                 when (state.segment) {
                     V5LibrarySegment.Favorites -> R.string.v5_library_search_favorites
                     V5LibrarySegment.History -> R.string.v5_library_search_history
+                    V5LibrarySegment.ReadLater -> R.string.v5_library_search_read_later
                     V5LibrarySegment.Downloads -> R.string.v5_library_search_downloads
                 },
             ),
@@ -248,7 +254,10 @@ fun V5Library(
         }
         val rows = state.sections.sumOf { section -> section.rows.size }
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            if (rows == 0) {
+            // While the rows are read the screen stays quiet: no empty state that then turns into a list.
+            if (state.loading) {
+                Spacer(Modifier.fillMaxSize())
+            } else if (rows == 0) {
                 Empty(state.segment, state.emptyTitle, state.emptyMessage, state.emptyAction)
             } else {
                 LazyColumn(
@@ -329,6 +338,7 @@ private fun Empty(segment: V5LibrarySegment, title: String?, message: String, ac
                     when (segment) {
                         V5LibrarySegment.Favorites -> VolaIcons.Star
                         V5LibrarySegment.History -> VolaIcons.History
+                        V5LibrarySegment.ReadLater -> VolaIcons.Description
                         V5LibrarySegment.Downloads -> VolaIcons.Download
                     },
                     contentDescription = null,
@@ -429,8 +439,21 @@ private fun LibraryRow(
     }
 }
 
+/** The segment's name: the screen's title and its label in the control. */
+private val V5LibrarySegment.label: Int
+    get() = when (this) {
+        V5LibrarySegment.History -> R.string.v5_library_history
+        V5LibrarySegment.Favorites -> R.string.v5_library_favorites
+        V5LibrarySegment.ReadLater -> R.string.v5_library_read_later
+        V5LibrarySegment.Downloads -> R.string.v5_library_downloads
+    }
+
 /** Pure rules of the library, for unit tests. */
 object V5LibraryRules {
+    /** The control's segments, in its order (canvas «History»); downloads are not one of them. */
+    val segments: List<V5LibrarySegment> =
+        listOf(V5LibrarySegment.History, V5LibrarySegment.Favorites, V5LibrarySegment.ReadLater)
+
     /** A row swiped to the left past the overview's card-close share of its width is deleted. */
     fun deletes(offsetPx: Float, widthPx: Float): Boolean = V5SwipeToDeleteRules.deletes(offsetPx, widthPx)
 }
