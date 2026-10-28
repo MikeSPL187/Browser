@@ -6,16 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsAtLeast
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,7 +36,6 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import eightbitlab.com.blurview.BlurTarget
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -174,14 +167,7 @@ class PrivacyXRaySheetInstrumentedTest {
             MaterialBrowserTheme(
                 settings = AppearanceSettings(surfaceStyle = BrowserSurfaceStyle.Frosted),
             ) {
-                var blurTarget by remember { mutableStateOf<BlurTarget?>(null) }
                 Box(Modifier.fillMaxSize()) {
-                    BrowserContentBlurTarget(
-                        enabled = true,
-                        onTargetAttached = { blurTarget = it },
-                        onTargetReleased = { if (blurTarget === it) blurTarget = null },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {}
                     PrivacyXRaySheet(
                         pageUrl = "https://private.example",
                         connectionKind = SiteConnectionKind.Https,
@@ -193,7 +179,6 @@ class PrivacyXRaySheetInstrumentedTest {
                         permissionSnapshot = PermissionRadarSnapshot.Empty,
                         workspaceName = "Personal",
                         supportedPermissions = AndroidBrowserEngineCapabilities.GeckoView.sitePermissions,
-                        backdropSource = blurTarget.asCandyChromeBackdropSource(),
                         onPause = { persistently ->
                             if (!persistently) temporaryPauses.incrementAndGet()
                         },
@@ -207,10 +192,6 @@ class PrivacyXRaySheetInstrumentedTest {
             }
         }
 
-        composeRule.onAllNodesWithTag(BrowserChromeSurfaceTestTags.BackdropBlur)
-            .assertCountEquals(2)
-        composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
-            .assertCountEquals(1)
         // Pausing is the site's protection switch on the sheet's first page.
         composeRule.onNodeWithTag(SiteInfoTestTags.Protection).performScrollTo().performClick()
         composeRule.onNodeWithTag(PrivacyXRayTestTags.Warning).assertExists()

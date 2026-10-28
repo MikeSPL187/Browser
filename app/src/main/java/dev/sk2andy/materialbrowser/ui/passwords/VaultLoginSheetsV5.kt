@@ -26,9 +26,9 @@ import dev.sk2andy.materialbrowser.ui.v5.V5RowTrailing
  * the v5 prompt sheet with the account rows in a group. «Close» and a swipe down say «Not now».
  */
 
-/** [request] as a v5 sheet; true once it is drawn. */
+/** [request] as a v5 sheet. */
 @Composable
-internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -> Unit): Boolean {
+internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -> Unit) {
     when (request) {
         is VaultLoginRequest.Save -> V5PromptTheme { SaveSheet(request, onDismiss) }
         is VaultLoginRequest.Select -> V5PromptTheme { SelectSheet(request, onDismiss) }
@@ -47,7 +47,6 @@ internal fun VaultLoginPromptSheetV5(request: VaultLoginRequest, onDismiss: () -
             ) }
         }
     }
-    return true
 }
 
 @Composable
