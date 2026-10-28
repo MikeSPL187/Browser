@@ -46,6 +46,8 @@ object V5Sizes {
     val barCapsule: Dp = 48.dp
     /** The bar collapsed while scrolling; the whole strip stays one 48 dp target. */
     val barCollapsed: Dp = 28.dp
+    /** The lock before the site in the collapsed strip. */
+    val barCollapsedLock: Dp = 12.dp
     /** Height the bar may grow to at 200 % font. */
     val barLargeFont: Dp = 72.dp
     /** The loading line along the bar's top edge. */

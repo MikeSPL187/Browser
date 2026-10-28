@@ -271,19 +271,33 @@ internal fun BoxScope.V5BottomBar(
                         }
                     }
                     if (expanded < 1f) {
-                        Text(
-                            text = state.domain ?: stringResource(R.string.address_empty_hint),
-                            style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
-                            color = barColors.onTint,
-                            maxLines = 1,
-                            overflow = TextOverflow.MiddleEllipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
+                        // The strip keeps the connection beside the site (canvas «Bar», collapsed).
+                        Row(
+                            Modifier
                                 .align(Alignment.Center)
-                                .fillMaxWidth()
                                 .padding(horizontal = V5Spacing.space6)
                                 .graphicsLayer { alpha = 1f - expanded },
-                        )
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
+                        ) {
+                            stripLock(state)?.let { lock ->
+                                Icon(
+                                    lock,
+                                    contentDescription = null,
+                                    tint = barColors.onTintSecondary,
+                                    modifier = Modifier.size(V5Sizes.barCollapsedLock),
+                                )
+                            }
+                            Text(
+                                text = state.domain ?: stringResource(R.string.address_empty_hint),
+                                style = V5Theme.type.footnote.copy(fontWeight = FontWeight.SemiBold),
+                                color = barColors.onTint,
+                                maxLines = 1,
+                                overflow = TextOverflow.MiddleEllipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                        }
                     }
                 }
             }
@@ -291,6 +305,14 @@ internal fun BoxScope.V5BottomBar(
             Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
+}
+
+/** A closed lock for HTTPS, an open one for plain HTTP; nothing where the connection says nothing. */
+private fun stripLock(state: V5BarState) = when {
+    state.domain == null -> null
+    state.connectionKind == SiteConnectionKind.Https -> VolaIcons.Lock
+    state.connectionKind == SiteConnectionKind.Http -> VolaIcons.LockOpen
+    else -> null
 }
 
 /** Swipe along the bar switches tabs, swipe up opens the overview: the same on both bar heights. */
