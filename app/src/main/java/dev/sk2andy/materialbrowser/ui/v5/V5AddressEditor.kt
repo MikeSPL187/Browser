@@ -111,6 +111,7 @@ object V5EditorTestTags {
     const val Cancel = "v5_address_editor_cancel"
     const val Clipboard = "v5_address_editor_clipboard"
     const val FindOnPage = "v5_address_editor_find_on_page"
+    const val SearchEngine = "v5_address_editor_search_engine"
     fun row(item: AddressSuggestionItem) = "v5_address_suggestion:${item.stableId}"
 }
 
@@ -133,6 +134,8 @@ data class V5EditorState(
     val overStart: Boolean = false,
     /** The rest of the best match's site after the typed text ([V5AddressCompletionRules]). */
     val completion: String? = null,
+    /** The search engine's name, beside the first search row: where a search goes. */
+    val searchEngine: String? = null,
 )
 
 @Composable
@@ -407,6 +410,7 @@ private fun SuggestionList(
                     onFill,
                     first = index == 0,
                     last = index == count - 1,
+                    engine = state.searchEngine.takeIf { section.group == V5SuggestionGroup.Search && index == 0 },
                 )
             }
             header(key = section.group.name, section.group.title())
@@ -535,6 +539,8 @@ private fun SuggestionRow(
     onFill: (AddressSuggestionItem) -> Unit,
     first: Boolean = true,
     last: Boolean = true,
+    /** The search engine's name, at the end of the first search row (canvas «Address»). */
+    engine: String? = null,
 ) {
     val colors = V5Theme.colors
     val content = item.content()
@@ -636,13 +642,24 @@ private fun SuggestionRow(
                     color = colors.accent,
                 )
             }
-            item is AddressSuggestionItem.Search -> IconButton(onClick = { onFill(item) }) {
-                Icon(
-                    VolaIcons.NorthWest,
-                    contentDescription = stringResource(R.string.address_suggestion_fill),
-                    tint = colors.labelTertiary,
-                    modifier = Modifier.size(V5Sizes.iconSmall),
-                )
+            item is AddressSuggestionItem.Search -> Row(verticalAlignment = Alignment.CenterVertically) {
+                engine?.let {
+                    Text(
+                        it,
+                        style = V5Theme.type.footnote,
+                        color = colors.labelSecondary,
+                        maxLines = 1,
+                        modifier = Modifier.testTag(V5EditorTestTags.SearchEngine),
+                    )
+                }
+                IconButton(onClick = { onFill(item) }) {
+                    Icon(
+                        VolaIcons.NorthWest,
+                        contentDescription = stringResource(R.string.address_suggestion_fill),
+                        tint = colors.labelTertiary,
+                        modifier = Modifier.size(V5Sizes.iconSmall),
+                    )
+                }
             }
             // A best match other than a search ends in a round accent «go» (canvas «Address»); the row itself is the button.
             best -> Box(

@@ -51,6 +51,7 @@ private fun EditorPreview(
             layout = V5SuggestionLayoutRules.layout(items, text, pageUrl = PREVIEW_PAGE_URL),
             clipboard = clipboard,
             completion = completion,
+            searchEngine = "DuckDuckGo",
         ),
         onValueChange = {},
         onSubmit = {},
