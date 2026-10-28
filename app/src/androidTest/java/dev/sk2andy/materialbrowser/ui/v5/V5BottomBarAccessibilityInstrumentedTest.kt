@@ -7,8 +7,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -23,7 +25,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** System-v5.md 8: the capsule's swipes are TalkBack actions, offered only where they lead. */
+/** System-v5.md 8: the capsule's swipes are TalkBack actions, offered only where they lead; the tabs button says its count. */
 @RunWith(AndroidJUnit4::class)
 class V5BottomBarAccessibilityInstrumentedTest {
     @get:Rule
@@ -113,5 +115,16 @@ class V5BottomBarAccessibilityInstrumentedTest {
         show(tabSwipeEnabled = false) { true }
 
         assertEquals(listOf(context.getString(R.string.v5_bar_open_tabs)), actions().map { it.label })
+    }
+
+    @Test
+    fun theTabsButtonSaysTheCountAndOpensTheOverview() {
+        show(tabSwipeEnabled = true) { true }
+
+        composeRule.onNodeWithTag(AddressBarTestTags.TabButton)
+            .assertContentDescriptionEquals(context.resources.getQuantityString(R.plurals.cd_open_tab_overview_count, 3, 3))
+            .performClick()
+
+        assertEquals(listOf("tabs"), calls)
     }
 }
