@@ -61,6 +61,11 @@ data class ReaderStudioStyle(
     val iconSize: Dp,
     val handleWidth: Dp,
     val handleHeight: Dp,
+    /**
+     * The site and the reading time over the article's title, with the minutes left (canvas
+     * «Reader», ui.v5), instead of in the header.
+     */
+    val articleSiteLine: Boolean = false,
     /** The panel's slider, choice and switch in the app's design system; null keeps Material's. */
     val controls: ReaderStudioControls? = null,
 ) {

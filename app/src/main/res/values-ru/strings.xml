@@ -1512,6 +1512,12 @@
         <item quantity="many">%d минут</item>
         <item quantity="other">%d минуты</item>
     </plurals>
+    <plurals name="reader_reading_minutes_left">
+        <item quantity="one">осталась %d</item>
+        <item quantity="few">осталось %d</item>
+        <item quantity="many">осталось %d</item>
+        <item quantity="other">осталось %d</item>
+    </plurals>
     <string name="reader_text_size">Размер текста</string>
     <string name="reader_text_size_value">%1$d %%</string>
     <string name="reader_settings_remembered">Запоминается для всех сайтов</string>
