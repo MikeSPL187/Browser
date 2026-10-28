@@ -217,9 +217,8 @@ internal fun SettingsScreen(
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
         ?.accent
         ?: WorkspaceAccent.Default
-    val uiV5 = rememberSettingsUiV5()
     // Under ui.v5 the inner pages draw their shared components as v5 lists (V15d).
-    ProvideV5SettingsSkin(enabled = uiV5) {
+    ProvideV5SettingsSkin(enabled = true) {
     SettingsRouter(
         destination = destination,
         modifier = modifier,
@@ -270,7 +269,7 @@ internal fun SettingsScreen(
                 SettingsDestination.TabsAndGestures,
                 SettingsDestination.TabsMore,
                 -> TabsAndGesturesSettingsPage(
-                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    layer = SettingsLayerRules.layer(true, currentDestination),
                     onOpenMore = { onDestinationChanged(SettingsDestination.TabsMore) },
                     inactiveTabLifetime = inactiveTabLifetime,
                     archiveInactiveTabs = archiveInactiveTabs,
@@ -351,7 +350,7 @@ internal fun SettingsScreen(
 
                 SettingsDestination.MenuActions -> {
                     // Under ui.v5 «Menu actions» opens from «Tabs › More» and goes back there.
-                    val menuBack = if (uiV5) SettingsDestination.TabsMore else currentDestination.parent
+                    val menuBack = SettingsDestination.TabsMore
                     BackHandler { onDestinationChanged(menuBack) }
                     BrowserMenuSettingsPage(
                         layout = browserMenuLayout,
@@ -392,8 +391,8 @@ internal fun SettingsScreen(
                     )
                 }
 
-                // V15d-2: under ui.v5 only what the v5 interface uses.
-                SettingsDestination.Appearance -> if (uiV5) {
+                // V15d-2: only what the v5 interface uses.
+                SettingsDestination.Appearance -> {
                     AppearanceSettingsPageV5(
                         settings = appearanceSettings,
                         onSettingsChanged = onAppearanceSettingsChanged,
@@ -401,16 +400,7 @@ internal fun SettingsScreen(
                         forceDarkWebsitesAvailable =
                             browserEngineKind == AndroidBrowserEngineKind.SystemWebView,
                     )
-                } else AppearanceSettingsPage(
-                    settings = appearanceSettings,
-                    workspaceAccent = workspaceAccent,
-                    onSettingsChanged = onAppearanceSettingsChanged,
-                    onOpenThemes = { onDestinationChanged(SettingsDestination.Themes) },
-                    onBack = { onDestinationChanged(SettingsDestination.Home) },
-                    forceDarkWebsitesAvailable =
-                        browserEngineKind == AndroidBrowserEngineKind.SystemWebView,
-                    browserEngineKind = browserEngineKind,
-                )
+                }
 
                 SettingsDestination.Themes -> ThemesSettingsPage(
                     settings = appearanceSettings,
@@ -422,7 +412,7 @@ internal fun SettingsScreen(
                 SettingsDestination.Browser,
                 SettingsDestination.BrowserMore,
                 -> BrowserSettingsPage(
-                    layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                    layer = SettingsLayerRules.layer(true, currentDestination),
                     onOpenMore = { onDestinationChanged(SettingsDestination.BrowserMore) },
                     browserEngineKind = browserEngineKind,
                     pageTranslationProvider = pageTranslationProvider,
@@ -514,7 +504,7 @@ internal fun SettingsScreen(
                             onBack = back,
                         )
                     }
-                    if (uiV5 && syncSettings != null) syncSettings(toHome) else serverPage(toHome)
+                    if (syncSettings != null) syncSettings(toHome) else serverPage(toHome)
                 }
 
                 SettingsDestination.ProtectionAndData,
@@ -522,7 +512,7 @@ internal fun SettingsScreen(
                 -> {
                     val context = LocalContext.current
                     ProtectionAndDataSettingsPage(
-                        layer = SettingsLayerRules.layer(uiV5, currentDestination),
+                        layer = SettingsLayerRules.layer(true, currentDestination),
                         onOpenMore = { onDestinationChanged(SettingsDestination.ProtectionMore) },
                         onOpenFirefoxExtensions = onOpenFirefoxExtensions,
                         blockerSettings = blockerSettings,

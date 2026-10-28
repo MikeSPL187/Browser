@@ -37,18 +37,10 @@ import dev.sk2andy.materialbrowser.data.AppDataTransferLock
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLoginDraft
 import dev.sk2andy.materialbrowser.shared.credentials.VaultSaveResult
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordDetailScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditError
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordEditScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordFindingV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthV5
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordsIntroScreen
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListScreen
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsRules
-import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmScreen
-import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryScreen
-import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseScreen
 import dev.sk2andy.materialbrowser.ui.passwords.SensitiveClipboard
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
@@ -74,11 +66,8 @@ import dev.sk2andy.materialbrowser.shared.credentials.PasswordImportRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultImportResult
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportConflictState
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportFileState
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportGuideScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportProblem
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportReport
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportResultScreen
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportSource
 import dev.sk2andy.materialbrowser.browser.credentials.PasswordCheck
 import dev.sk2andy.materialbrowser.browser.credentials.ChangePasswordPage
@@ -88,7 +77,6 @@ import dev.sk2andy.materialbrowser.shared.credentials.PasswordHealthRules
 import dev.sk2andy.materialbrowser.shared.credentials.TotpRules
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
 import dev.sk2andy.materialbrowser.ui.passwords.LeakCheckStatus
-import dev.sk2andy.materialbrowser.ui.passwords.PasswordHealthScreen
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsLockedV5
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsHealthCounts
 import dev.sk2andy.materialbrowser.ui.passwords.PasswordsListV5
@@ -101,7 +89,6 @@ import dev.sk2andy.materialbrowser.ui.passwords.PasswordImportV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryConfirmV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryEntryV5
 import dev.sk2andy.materialbrowser.ui.passwords.RecoveryPhraseV5
-import dev.sk2andy.materialbrowser.ui.rememberSettingsUiV5
 import dev.sk2andy.materialbrowser.ui.v5.ProvideV5SettingsSkin
 import dev.sk2andy.materialbrowser.ui.v5.V5PasswordFindingKind
 
@@ -232,9 +219,8 @@ class PasswordsActivity : FragmentActivity() {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
             SideEffect { applyAppearanceSystemBars(appearanceDark) }
             CandyTheme(settings = appearanceSettings, workspaceAccent = workspaceAccent) {
-                // V28 B3: under ui.v5 on a phone the screens take the v5 palette, type and shapes
-                // through Material; the full v5 passwords screen comes with V24.
-                ProvideV5SettingsSkin(enabled = rememberSettingsUiV5()) {
+                // V28 B3: the screens take the v5 palette, type and shapes through Material.
+                ProvideV5SettingsSkin(enabled = true) {
                     Content()
                 }
             }
@@ -276,29 +262,20 @@ class PasswordsActivity : FragmentActivity() {
         val logins = remember(model.revision, lockGeneration, route) { vault.allLogins() }
         val breaches = remember(logins, model.leakAnswers) { LeakAnswers.breaches(logins, model.leakAnswers) }
         val message = model.message?.let { stringResource(it) }
-        // Canvas «ц4»–«ц7»: on the phone under v5 the vault's pages are v5 (the tablet keeps these).
-        val v5 = rememberSettingsUiV5()
+        // Canvas «ц4»–«ц7»: the vault's pages are v5.
         BackHandler { back(route) }
         when (route) {
-            PasswordsRoute.Intro -> if (v5) {
+            PasswordsRoute.Intro -> {
                 PasswordsIntroV5(model.busy, message, ::startSetup, ::finish)
-            } else {
-                PasswordsIntroScreen(model.busy, message, ::startSetup, ::finish)
             }
             is PasswordsRoute.Phrase -> {
                 val onDone = { model.route = PasswordsRoute.Confirm(route.phrase, PasswordsRules.confirmationPositions(random)) }
-                if (v5) {
-                    RecoveryPhraseV5(route.phrase.split(' '), onDone) { back(route) }
-                } else {
-                    RecoveryPhraseScreen(route.phrase.split(' '), onDone) { back(route) }
-                }
+                RecoveryPhraseV5(route.phrase.split(' '), onDone) { back(route) }
             }
-            is PasswordsRoute.Confirm -> if (v5) {
+            is PasswordsRoute.Confirm -> {
                 RecoveryConfirmV5(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
-            } else {
-                RecoveryConfirmScreen(route.positions, route.wrong, model.busy, { answers -> confirm(route, answers) }) { back(route) }
             }
-            PasswordsRoute.Locked -> if (v5) {
+            PasswordsRoute.Locked -> {
                 PasswordsLockedV5(
                     busy = model.busy,
                     message = message,
@@ -307,20 +284,11 @@ class PasswordsActivity : FragmentActivity() {
                     onBack = ::finish,
                     onErase = ::eraseVault,
                 )
-            } else PasswordsLockedScreen(
-                busy = model.busy,
-                message = message,
-                onUnlock = ::unlock,
-                onRecover = { model.message = null; model.route = PasswordsRoute.Recover() },
-                onBack = ::finish,
-                onErase = ::eraseVault,
-            )
-            is PasswordsRoute.Recover -> if (v5) {
-                RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
-            } else {
-                RecoveryEntryScreen(route.wrong, model.busy, ::recover) { back(route) }
             }
-            PasswordsRoute.Logins -> if (v5) {
+            is PasswordsRoute.Recover -> {
+                RecoveryEntryV5(route.wrong, model.busy, ::recover) { back(route) }
+            }
+            PasswordsRoute.Logins -> {
                 PasswordsListV5(
                     logins = logins,
                     onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
@@ -349,75 +317,36 @@ class PasswordsActivity : FragmentActivity() {
                     busy = model.busy,
                     onTurnOff = ::eraseVault,
                 )
-            } else PasswordsListScreen(
-                logins = logins,
-                onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
-                onAdd = { use { model.route = PasswordsRoute.Edit(null) } },
-                onLock = ::lockNow,
-                onBack = ::finish,
-                systemFillNote = systemFillOnly,
-                passkeyNote = if (systemFillOnly) null else remember { PasskeySupport.current(this@PasswordsActivity) },
-                healthIssues = remember(logins, breaches) {
-                    PasswordHealthRules.report(logins, breaches).needsAttention
-                },
-                onHealth = { use { model.route = PasswordsRoute.Health } },
-                onImport = {
-                    use {
-                        model.launchedForImport = false
-                        model.route = PasswordsRoute.Import
-                    }
-                },
-                busy = model.busy,
-                onTurnOff = ::eraseVault,
-            )
+            }
             PasswordsRoute.Import -> {
                 val onSource = { source: PasswordImportSource -> model.route = PasswordsRoute.ImportGuide(source) }
                 val onPickFile = { pickExport(PasswordImportSource.File) }
-                if (v5) {
-                    PasswordImportV5(onSource, onPickFile) { back(route) }
-                } else {
-                    PasswordImportScreen(onSource, onPickFile) { back(route) }
-                }
+                PasswordImportV5(onSource, onPickFile) { back(route) }
             }
-            is PasswordsRoute.ImportGuide -> if (v5) {
+            is PasswordsRoute.ImportGuide -> {
                 PasswordImportGuideV5(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
-            } else {
-                PasswordImportGuideScreen(route.source, route.problem, model.busy, { pickExport(route.source) }) { back(route) }
             }
             is PasswordsRoute.ImportDone -> {
-                val healthIssues = remember(logins, breaches, route.report, v5) {
+                val healthIssues = remember(logins, breaches, route.report) {
                     val added = route.report.addedIds.toSet()
                     val report = PasswordHealthRules.report(logins, breaches)
                     // The v5 check counts plain-HTTP logins too; the count here matches the page it opens.
-                    report.attentionIds(withInsecure = v5).count { it in added }
+                    report.attentionIds(withInsecure = true).count { it in added }
                 }
                 val onCheck = { use { model.route = PasswordsRoute.Health } }
-                if (v5) {
-                    PasswordImportResultV5(
-                        report = route.report,
-                        fileState = route.fileState,
-                        healthIssues = healthIssues,
-                        onDeleteFile = { deleteExport(route) },
-                        onCheck = onCheck,
-                        onDone = { back(route) },
-                        conflictState = route.conflictState,
-                        onUseFilePasswords = { useFilePasswords(route) },
-                    )
-                } else {
-                    PasswordImportResultScreen(
-                        report = route.report,
-                        fileState = route.fileState,
-                        healthIssues = healthIssues,
-                        onDeleteFile = { deleteExport(route) },
-                        onCheck = onCheck,
-                        onDone = { back(route) },
-                        conflictState = route.conflictState,
-                        onUseFilePasswords = { useFilePasswords(route) },
-                    )
-                }
+                PasswordImportResultV5(
+                    report = route.report,
+                    fileState = route.fileState,
+                    healthIssues = healthIssues,
+                    onDeleteFile = { deleteExport(route) },
+                    onCheck = onCheck,
+                    onDone = { back(route) },
+                    conflictState = route.conflictState,
+                    onUseFilePasswords = { useFilePasswords(route) },
+                )
             }
             // V24: the v5 check runs the leak check only when asked, never on opening.
-            PasswordsRoute.Health -> if (rememberSettingsUiV5()) {
+            PasswordsRoute.Health -> {
                 PasswordHealthV5(
                     logins = logins,
                     breaches = breaches,
@@ -428,17 +357,6 @@ class PasswordsActivity : FragmentActivity() {
                     onCheckLeaks = { checkLeaks(logins) },
                     onStopLeakCheck = ::stopLeakCheck,
                     onFinding = { finding -> use { model.route = PasswordsRoute.HealthFinding(finding.loginId, finding.kind) } },
-                    onBack = { back(route) },
-                )
-            } else {
-                LaunchedEffect(Unit) { if (leakCheckOn && model.leakStatus == LeakCheckStatus.Off) checkLeaks(logins) }
-                PasswordHealthScreen(
-                    report = remember(logins, breaches) { PasswordHealthRules.report(logins, breaches) },
-                    leakCheck = model.leakStatus,
-                    leakProgress = model.leakProgress,
-                    onLeakCheckChange = { on -> setLeakCheck(on, logins) },
-                    onOpen = { login -> use { model.route = PasswordsRoute.Detail(login.id) } },
-                    onChange = { login -> use { openChangePassword(login.origin) } },
                     onBack = { back(route) },
                 )
             }
@@ -456,20 +374,8 @@ class PasswordsActivity : FragmentActivity() {
                 val login = logins.firstOrNull { it.id == route.id }
                 if (login == null) {
                     LaunchedEffect(route) { model.route = PasswordsRoute.Logins }
-                } else if (v5) {
-                    PasswordDetailV5(
-                        login = login,
-                        onCopyUsername = { use { copy(login.username) } },
-                        onCopyPassword = { use { copy(login.password) } },
-                        onEdit = { use { model.route = PasswordsRoute.Edit(login.id) } },
-                        onDelete = { delete(login.id) },
-                        onBack = { back(route) },
-                        onCopyCode = { code -> use { copy(code) } },
-                        onSetTotp = { input -> setTotp(login.id, input) },
-                        onRemoveTotp = { writeTotp(login.id, null) },
-                    )
                 } else {
-                    PasswordDetailScreen(
+                    PasswordDetailV5(
                         login = login,
                         onCopyUsername = { use { copy(login.username) } },
                         onCopyPassword = { use { copy(login.password) } },
@@ -482,7 +388,7 @@ class PasswordsActivity : FragmentActivity() {
                     )
                 }
             }
-            is PasswordsRoute.Edit -> if (v5) {
+            is PasswordsRoute.Edit -> {
                 PasswordEditV5(
                     initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
                     error = route.error,
@@ -490,13 +396,7 @@ class PasswordsActivity : FragmentActivity() {
                     onSave = { site, username, password -> save(route, site, username, password) },
                     onBack = { back(route) },
                 )
-            } else PasswordEditScreen(
-                initial = route.id?.let { id -> logins.firstOrNull { it.id == id } },
-                error = route.error,
-                busy = model.busy,
-                onSave = { site, username, password -> save(route, site, username, password) },
-                onBack = { back(route) },
-            )
+            }
         }
     }
 
@@ -536,20 +436,6 @@ class PasswordsActivity : FragmentActivity() {
                 finish()
                 return
             }
-        }
-    }
-
-    /** Whether the leak check is on; off until the user turns it on (Q21b). */
-    private val leakCheckOn: Boolean
-        get() = getSharedPreferences(PREFERENCES, MODE_PRIVATE).getBoolean(KEY_LEAK_CHECK, false)
-
-    private fun setLeakCheck(on: Boolean, logins: List<VaultLogin>) {
-        getSharedPreferences(PREFERENCES, MODE_PRIVATE).edit().putBoolean(KEY_LEAK_CHECK, on).apply()
-        if (on) {
-            checkLeaks(logins)
-        } else {
-            model.leakStatus = LeakCheckStatus.Off
-            model.leakAnswers = emptyMap()
         }
     }
 
@@ -986,9 +872,6 @@ class PasswordsActivity : FragmentActivity() {
     }
 
     private companion object {
-        const val PREFERENCES = "vola_passwords"
-        const val KEY_LEAK_CHECK = "leak_check"
-
         /** CSV and HTML come as text of one kind or another, Bitwarden's export as JSON; some providers know neither. */
         val EXPORT_TYPES = arrayOf(
             "text/*",
