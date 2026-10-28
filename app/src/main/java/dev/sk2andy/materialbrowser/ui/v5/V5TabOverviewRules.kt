@@ -62,14 +62,18 @@ object V5TabOverviewRules {
      */
     fun closeAllIds(cards: List<V5TabCard>): List<String> = cards.filter(V5TabCard::closable).map(V5TabCard::id)
 
-    /** Tabs and private tabs the segment chips count; hidden (locked) tabs do not count. */
-    fun counts(tabs: List<V5OverviewTab>, hidden: (V5OverviewTab) -> Boolean): V5OverviewCounts {
-        val visible = tabs.filterNot(hidden)
-        return V5OverviewCounts(
-            regular = visible.count { !it.isPrivate },
-            private = visible.count { it.isPrivate },
-        )
-    }
+    /**
+     * Tabs and private tabs the segment chips count. Locked private tabs count too (canvas
+     * «PrivateLock»: «Private 2»): the lock in their segment says as much, and their titles stay hidden.
+     */
+    fun counts(tabs: List<V5OverviewTab>): V5OverviewCounts = V5OverviewCounts(
+        regular = tabs.count { !it.isPrivate },
+        private = tabs.count { it.isPrivate },
+    )
+
+    /** How many private tabs the lock covers; the private segment shows the lock while there are any. */
+    fun lockedPrivate(tabs: List<V5OverviewTab>, hidden: (V5OverviewTab) -> Boolean): Int =
+        tabs.count { it.isPrivate && hidden(it) }
 
     /** The cards of one segment that match [query], in tab order. */
     fun visibleTabs(

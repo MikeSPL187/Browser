@@ -55,6 +55,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5OverviewPrivateLock
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewState
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
@@ -165,7 +166,8 @@ private fun OverviewContent(
     val tabs = browserTabs.map { V5OverviewTab(it.id, it.title, it.url, it.isIncognito) }
     val lockedIds = browserTabs.filter(controller.privateTabsLock::hides).mapTo(hashSetOf()) { it.id }
     val hidden: (V5OverviewTab) -> Boolean = { it.id in lockedIds }
-    val counts = V5TabOverviewRules.counts(tabs, hidden)
+    val counts = V5TabOverviewRules.counts(tabs)
+    val lockedPrivate = V5TabOverviewRules.lockedPrivate(tabs, hidden)
     var query by rememberSaveable { mutableStateOf("") }
     var privateSegment by rememberSaveable {
         mutableStateOf(V5TabOverviewRules.initialSegmentIsPrivate(controller.selectedTab.isIncognito, counts))
@@ -204,7 +206,13 @@ private fun OverviewContent(
                     profileIcon = profile?.let { WorkspaceIcons.vector(it.emoji) },
                     groups = groups,
                     canOpenPrivate = controller.canOpenLinkInPrivate,
+                    privateLock = V5OverviewPrivateLock(
+                        count = counts.private,
+                        unlockAvailable = controller.isProfileProtectionSupported,
+                    ).takeIf { lockedPrivate > 0 },
                 ),
+                onUnlockPrivate = controller.privateTabsLock::unlock,
+                onCloseAllPrivate = { if (!exiting) controller.closeAllPrivateTabs() },
                 onQueryChange = { query = it },
                 onSegmentChange = { privateSegment = it },
                 // The browser's select hands the card's snapshot over to the page until it draws; first

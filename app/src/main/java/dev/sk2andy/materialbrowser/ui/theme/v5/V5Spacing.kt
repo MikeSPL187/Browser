@@ -184,6 +184,10 @@ object V5Sizes {
     val privateGemTileRadius: Dp = 20.dp
     val privateGemTileIcon: Dp = 32.dp
 
+    // Locked private tabs in the overview (canvas «PrivateLock»): the blur over the plates that stand
+    // where the cards would be.
+    val privateLockBlur: Dp = 22.dp
+
     // Dangerous site (canvas screen «Danger»): the red tile of the warning, its corners and glyph,
     // and the chip with the site's address.
     val dangerTile: Dp = 72.dp
