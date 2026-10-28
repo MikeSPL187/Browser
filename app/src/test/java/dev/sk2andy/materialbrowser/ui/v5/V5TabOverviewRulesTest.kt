@@ -15,8 +15,10 @@ class V5TabOverviewRulesTest {
     private val hidden: (V5OverviewTab) -> Boolean = { it.id == locked.id }
 
     @Test
-    fun `segments split tabs and private tabs and skip locked ones`() {
-        assertEquals(V5OverviewCounts(regular = 2, private = 1), V5TabOverviewRules.counts(tabs, hidden))
+    fun `segments split tabs and private tabs, locked ones counted but not shown`() {
+        assertEquals(V5OverviewCounts(regular = 2, private = 2), V5TabOverviewRules.counts(tabs))
+        assertEquals(1, V5TabOverviewRules.lockedPrivate(tabs, hidden))
+        assertEquals(0, V5TabOverviewRules.lockedPrivate(tabs) { false })
         assertEquals(listOf(polar, recipe), V5TabOverviewRules.visibleTabs(tabs, privateSegment = false, "", hidden))
         assertEquals(listOf(secret), V5TabOverviewRules.visibleTabs(tabs, privateSegment = true, "", hidden))
     }

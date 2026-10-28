@@ -141,6 +141,8 @@ data class V5OverviewState(
     val profileIcon: ImageVector? = null,
     /** Whether the profile can have private tabs: without them «+» leaves the private segment (О-2). */
     val canOpenPrivate: Boolean = true,
+    /** The private tabs are locked: their segment shows the lock card instead of cards (canvas «PrivateLock»). */
+    val privateLock: V5OverviewPrivateLock? = null,
 )
 
 @Composable
@@ -168,6 +170,10 @@ fun V5TabOverview(
     onProfiles: (() -> Unit)? = null,
     /** A pinned card was swiped away: it stays, and the host says why (О-5). */
     onCloseRefused: () -> Unit = {},
+    /** «Unlock» on the lock card of the private segment. */
+    onUnlockPrivate: () -> Unit = {},
+    /** «Close all private tabs» on the lock card. */
+    onCloseAllPrivate: () -> Unit = {},
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -181,10 +187,19 @@ fun V5TabOverview(
             .testTag(V5OverviewTestTags.Overview),
     ) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            val canAddTab = V5TabOverviewRules.canAddTab(state.privateSegment, state.canOpenPrivate)
+            val lock = state.privateLock?.takeIf { state.privateSegment }
+            // Behind the lock a new private tab would open out of sight: «+» waits for the unlock.
+            val canAddTab = lock == null && V5TabOverviewRules.canAddTab(state.privateSegment, state.canOpenPrivate)
             Header(state.query, onQueryChange, onCloseAll, canCloseAll = state.cards.any(V5TabCard::closable))
             Segments(state.privateSegment, state.counts, onSegmentChange)
-            if (state.cards.isEmpty()) {
+            if (lock != null) {
+                V5OverviewPrivateLockLayer(
+                    lock = lock,
+                    onUnlock = onUnlockPrivate,
+                    onCloseAll = onCloseAllPrivate,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                )
+            } else if (state.cards.isEmpty()) {
                 Empty(
                     empty = V5TabOverviewRules.empty(state.query, state.privateSegment, state.canOpenPrivate),
                     query = state.query.trim(),
