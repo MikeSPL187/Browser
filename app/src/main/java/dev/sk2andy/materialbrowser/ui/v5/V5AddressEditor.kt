@@ -53,6 +53,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -71,6 +72,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Density
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.ClipboardOffer
@@ -91,6 +93,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.border
+import kotlin.math.roundToInt
 
 /*
  * The v5 address editor (system-v5.md, section 9; canvas screen «c»). The field stays a capsule
@@ -141,8 +144,9 @@ internal fun V5AddressEditor(
     notice: V5CommandNotice? = null,
 ) {
     val colors = V5Theme.colors
-    // A first step of the morph (V9b draws the capsule stretching out of the bar): the editor rises
-    // from the bar's height on the addressMorph spring; without animations it only fades in.
+    // The morph (system-v5.md section 7, canvas «MotionAddress»): the editor rises from the bar's
+    // height while its field stretches out of the bar's capsule to its full width, on the
+    // addressMorph spring; without animations it only fades in.
     val appear = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         appear.animateTo(
@@ -197,6 +201,7 @@ internal fun V5AddressEditor(
                 onArrow = { step ->
                     onHighlight(V5SuggestionLayoutRules.step(state.layout, state.highlightedId, step))
                 },
+                morph = { if (moves) appear.value else 1f },
             )
         }
     }
@@ -209,6 +214,8 @@ private fun EditorField(
     onSubmit: (String) -> Unit,
     onCancel: () -> Unit,
     onArrow: (Int) -> Unit,
+    /** How far the field has stretched out of the bar's capsule: 0 at the bar, 1 open; read while laid out. */
+    morph: () -> Float = { 1f },
 ) {
     val colors = V5Theme.colors
     val focus = remember { FocusRequester() }
@@ -226,6 +233,17 @@ private fun EditorField(
         Row(
             Modifier
                 .weight(1f)
+                // At the start the capsule ends where the bar's does, before its two round buttons;
+                // it grows to the right over them while «Cancel» fades in.
+                .layout { measurable, constraints ->
+                    val full = constraints.maxWidth
+                    val width = (full - V5EditorRules.morphInsetPx(this) * (1f - morph().coerceIn(0f, 1f)))
+                        .roundToInt()
+                        // The weight hands a fixed width; the capsule draws narrower inside it.
+                        .coerceIn(0, full)
+                    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+                    layout(full, placeable.height) { placeable.place(0, 0) }
+                }
                 .heightIn(min = V5Sizes.barCapsule)
                 .v5Elevation(V5Elevation.e2, V5Theme.shapes.full)
                 .clip(V5Theme.shapes.full)
@@ -310,6 +328,7 @@ private fun EditorField(
             Modifier
                 .widthIn(min = V5Sizes.editorCancel)
                 .heightIn(min = V5Sizes.touchTarget)
+                .graphicsLayer { alpha = morph().coerceIn(0f, 1f) }
                 .clickable(role = Role.Button, onClick = onCancel)
                 .testTag(V5EditorTestTags.Cancel),
             contentAlignment = Alignment.Center,
@@ -643,6 +662,17 @@ private fun Modifier.fadingTop(mask: Color): Modifier = this
     }
 
 internal object V5EditorRules {
+    /**
+     * How much narrower the field starts than it ends (canvas «MotionAddress»): in the bar the
+     * capsule stops before the tabs and menu buttons, in the editor only before «Cancel». Never
+     * below nothing, should the editor's end ever be the wider one.
+     */
+    fun morphInsetPx(density: Density): Float = with(density) {
+        val barEnd = V5Sizes.barCapsule * 2 + V5Spacing.space2 * 2 + V5Spacing.space3
+        val editorEnd = V5Sizes.editorCancel + V5Spacing.space2
+        (barEnd - editorEnd).toPx().coerceAtLeast(0f)
+    }
+
     /**
      * The new tab shows through while nothing is typed; a clip on offer keeps the list, since the
      * offer lives there.
