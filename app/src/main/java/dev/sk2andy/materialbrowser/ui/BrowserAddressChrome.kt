@@ -496,6 +496,12 @@ internal fun BoxScope.BrowserAddressChrome(
         !tabOverviewOpening &&
         !tabOverviewVisible &&
         !addressBarMorphInFront
+    // The tab a swipe on the bar steps to, the one after (+1) or before (−1): TalkBack takes the same step.
+    val adjacentTab: (Int) -> BrowserTab? = { step ->
+        val tabs = controller.activeTabs
+        val index = tabs.indexOfFirst { it.id == controller.selectedTabId }
+        if (index < 0) null else tabs.getOrNull(index + step)
+    }
     if (showV5Bar) {
         BrowserV5Bar(
             controller = controller,
@@ -514,6 +520,8 @@ internal fun BoxScope.BrowserAddressChrome(
                 },
                 onOverviewStarted = { onOverviewGestureStarted() },
                 onOverviewCancelled = onOverviewGestureCancelled,
+                hasTab = { step -> adjacentTab(step) != null },
+                onStepTab = { step -> adjacentTab(step)?.let { controller.selectTab(it.id) } },
             ),
             permissionActivityVisible = permissionActivityVisible,
             commandFeedback = commandFeedback,

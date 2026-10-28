@@ -2201,6 +2201,8 @@
     <string name="v5_menu_in_favorites">In favorites</string>
     <string name="v5_menu_favorite_private">Unavailable in a private tab</string>
     <string name="v5_bar_open_tabs">Show tabs</string>
+    <string name="v5_bar_next_tab">Next tab</string>
+    <string name="v5_bar_previous_tab">Previous tab</string>
     <string name="v5_menu_extension_off_here">Off on this page</string>
     <string name="v5_menu_desktop_view_hint">The page reloads as on a computer</string>
     <string name="v5_menu_mute_site_hint">Every page of this site stays silent</string>

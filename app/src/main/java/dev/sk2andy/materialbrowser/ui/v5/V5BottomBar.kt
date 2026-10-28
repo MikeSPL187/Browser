@@ -129,6 +129,10 @@ internal class V5BarGestures(
     val onOverviewProgress: (Float) -> Unit,
     val onOverviewStarted: () -> Unit,
     val onOverviewCancelled: () -> Unit,
+    /** Whether a swipe would find a tab after (+1) or before (−1) the current one: TalkBack offers the step. */
+    val hasTab: (step: Int) -> Boolean = { false },
+    /** The step a swipe makes, without the swipe: TalkBack's «Next tab» and «Previous tab». */
+    val onStepTab: (step: Int) -> Unit = {},
 )
 
 @Composable
@@ -330,6 +334,9 @@ private fun AddressCapsule(
         label = "v5 capsule press",
     )
     val openLabel = stringResource(R.string.address_empty_hint)
+    val nextLabel = stringResource(R.string.v5_bar_next_tab)
+    val previousLabel = stringResource(R.string.v5_bar_previous_tab)
+    val tabsLabel = stringResource(R.string.v5_bar_open_tabs)
     Row(
         modifier
             .heightIn(min = V5Sizes.barCapsule)
@@ -347,7 +354,19 @@ private fun AddressCapsule(
                 role = Role.Button,
                 onClickLabel = openLabel,
                 onClick = onAddress,
-            ),
+            )
+            // The capsule's swipes as TalkBack actions (system-v5.md 8): next, previous, all tabs.
+            .semantics {
+                customActions = buildList {
+                    if (gestures.tabSwipeEnabled && gestures.hasTab(1)) {
+                        add(CustomAccessibilityAction(nextLabel) { gestures.onStepTab(1); true })
+                    }
+                    if (gestures.tabSwipeEnabled && gestures.hasTab(-1)) {
+                        add(CustomAccessibilityAction(previousLabel) { gestures.onStepTab(-1); true })
+                    }
+                    if (gestures.overviewEnabled) add(CustomAccessibilityAction(tabsLabel) { onTabs(); true })
+                }
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.widthIn(min = V5Sizes.barCapsule), contentAlignment = Alignment.Center) {
