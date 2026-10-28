@@ -80,6 +80,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type
 import kotlin.math.roundToInt
 
 /*
@@ -179,7 +180,7 @@ internal fun BoxScope.V5BottomBar(
         },
         label = "v5 bar collapse",
     )
-    val fullHeight = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) V5Sizes.barLargeFont else V5Sizes.bar
+    val fullHeight = if (LocalDensity.current.fontScale >= V5Type.LARGE_FONT_SCALE) V5Sizes.barLargeFont else V5Sizes.bar
     val showBarLabel = stringResource(R.string.compact_mode_show_bar)
     val tabsLabel = stringResource(R.string.v5_bar_open_tabs)
     Column(
@@ -307,8 +308,6 @@ private fun Modifier.v5BarGestures(gestures: V5BarGestures, onTabs: () -> Unit):
         )
 }
 
-/** From this font scale the full bar grows to [V5Sizes.barLargeFont]. */
-private const val LARGE_FONT_SCALE = 1.5f
 
 /** From this font scale «Read» and the eye leave the capsule for the menu. */
 private const val CAPSULE_ICONS_MAX_FONT_SCALE = 2f

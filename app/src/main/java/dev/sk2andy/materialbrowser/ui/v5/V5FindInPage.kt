@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -37,6 +38,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -54,6 +56,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type
 
 object V5FindInPageTestTags {
     const val Bar = "v5_find_in_page"
@@ -106,109 +109,132 @@ fun V5FindInPage(
         focus.requestFocus()
         keyboard?.show()
     }
-    Row(
-        modifier
-            .fillMaxWidth()
-            .padding(horizontal = V5Spacing.space3)
-            .testTag(V5FindInPageTestTags.Bar),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
-    ) {
+    // At a large font the capsule beside the steps and «Done» has no room for «Not found»: the
+    // count goes to its own line over the bar instead of being cut (walk 200 %, 28.10).
+    val countOnItsOwnLine = LocalDensity.current.fontScale >= V5Type.LARGE_FONT_SCALE
+    Column(modifier.fillMaxWidth().testTag(V5FindInPageTestTags.Bar)) {
+        if (countOnItsOwnLine && (isCounting || matchText.isNotEmpty())) {
+            // Over the page, so on the capsule's own plate to stay readable.
+            Box(
+                Modifier
+                    .padding(start = V5Spacing.space3, bottom = V5Spacing.space1)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.surface)
+                    .padding(horizontal = V5Spacing.space3, vertical = V5Spacing.space1),
+            ) {
+                FindCount(matchText = matchText, isCounting = isCounting, countingLabel = labels.counting)
+            }
+        }
         Row(
             Modifier
-                .weight(1f)
-                .heightIn(min = V5Sizes.barCapsule)
-                .clip(V5Theme.shapes.full)
-                .background(colors.surface)
-                .padding(start = V5Spacing.space3, end = V5Spacing.space3),
+                .fillMaxWidth()
+                .padding(horizontal = V5Spacing.space3),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+            horizontalArrangement = Arrangement.spacedBy(V5Spacing.space1),
         ) {
-            Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (query.isEmpty()) {
-                    // The field carries the placeholder for TalkBack; this is what the eye reads.
-                    Text(
-                        labels.placeholder,
-                        style = V5Theme.type.body,
-                        color = colors.labelTertiary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clearAndSetSemantics {},
-                    )
-                }
-                BasicTextField(
-                    value = field,
-                    onValueChange = { value ->
-                        field = value
-                        if (value.text != query) onQueryChange(value.text)
-                    },
-                    singleLine = true,
-                    textStyle = V5Theme.type.body.copy(color = colors.label),
-                    cursorBrush = SolidColor(colors.accent),
-                    // «Search» even with nothing to step to: the controller then searches again,
-                    // the way to retry when the page gave no answer. No autocorrect: a rare word
-                    // searched on the page must stay as typed (ПП-2).
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
-                    keyboardActions = KeyboardActions(onSearch = { onNext() }),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focus)
-                        // A hardware keyboard: Shift+Enter goes back, Esc closes, as «Done» (ПП-5).
-                        .onPreviewKeyEvent { event ->
-                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                            when {
-                                event.key == Key.Escape -> true.also { onDone() }
-                                event.key == Key.Enter && event.isShiftPressed -> true.also { onPrevious() }
-                                else -> false
+            Row(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = V5Sizes.barCapsule)
+                    .clip(V5Theme.shapes.full)
+                    .background(colors.surface)
+                    .padding(start = V5Spacing.space3, end = V5Spacing.space3),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(V5Spacing.space2),
+            ) {
+                Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (query.isEmpty()) {
+                        // The field carries the placeholder for TalkBack; this is what the eye reads.
+                        Text(
+                            labels.placeholder,
+                            style = V5Theme.type.body,
+                            color = colors.labelTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clearAndSetSemantics {},
+                        )
+                    }
+                    BasicTextField(
+                        value = field,
+                        onValueChange = { value ->
+                            field = value
+                            if (value.text != query) onQueryChange(value.text)
+                        },
+                        singleLine = true,
+                        textStyle = V5Theme.type.body.copy(color = colors.label),
+                        cursorBrush = SolidColor(colors.accent),
+                        // «Search» even with nothing to step to: the controller then searches again,
+                        // the way to retry when the page gave no answer. No autocorrect: a rare word
+                        // searched on the page must stay as typed (ПП-2).
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrectEnabled = false),
+                        keyboardActions = KeyboardActions(onSearch = { onNext() }),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focus)
+                            // A hardware keyboard: Shift+Enter goes back, Esc closes, as «Done» (ПП-5).
+                            .onPreviewKeyEvent { event ->
+                                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                when {
+                                    event.key == Key.Escape -> true.also { onDone() }
+                                    event.key == Key.Enter && event.isShiftPressed -> true.also { onPrevious() }
+                                    else -> false
+                                }
                             }
-                        }
-                        .v5FieldLabel(labels.placeholder, empty = field.text.isEmpty())
-                        .testTag(V5FindInPageTestTags.Query),
-                )
-            }
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }, modifier = Modifier.testTag(V5FindInPageTestTags.Clear)) {
-                    Icon(
-                        VolaIcons.Close,
-                        contentDescription = labels.clear,
-                        tint = colors.labelTertiary,
-                        modifier = Modifier.size(V5Sizes.iconSmall),
+                            .v5FieldLabel(labels.placeholder, empty = field.text.isEmpty())
+                            .testTag(V5FindInPageTestTags.Query),
                     )
                 }
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { onQueryChange("") }, modifier = Modifier.testTag(V5FindInPageTestTags.Clear)) {
+                        Icon(
+                            VolaIcons.Close,
+                            contentDescription = labels.clear,
+                            tint = colors.labelTertiary,
+                            modifier = Modifier.size(V5Sizes.iconSmall),
+                        )
+                    }
+                }
+                if (!countOnItsOwnLine) FindCount(matchText, isCounting, labels.counting)
             }
-            when {
-                isCounting -> CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(V5Sizes.iconSmall)
-                        .semantics { contentDescription = labels.counting },
-                    color = colors.labelSecondary,
-                    strokeWidth = V5Sizes.downloadRing,
-                )
-                matchText.isNotEmpty() -> Text(
-                    matchText,
-                    style = V5Theme.type.callout,
-                    color = colors.labelSecondary,
-                    maxLines = 1,
-                    // TalkBack hears the new count as the matches are counted and stepped through.
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+            // The steps stand beside the field on round plates (canvas «FindInPage»).
+            StepButton(VolaIcons.KeyboardArrowUp, labels.previous, canNavigate, onPrevious, V5FindInPageTestTags.Previous)
+            StepButton(VolaIcons.KeyboardArrowDown, labels.next, canNavigate, onNext, V5FindInPageTestTags.Next)
+            Box(
+                Modifier
+                    .widthIn(min = V5Sizes.editorCancel)
+                    .heightIn(min = V5Sizes.touchTarget)
+                    .clip(V5Theme.shapes.full)
+                    .clickable(role = Role.Button, onClick = onDone)
+                    .testTag(V5FindInPageTestTags.Done),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(labels.done, style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold), color = colors.accent, maxLines = 1)
             }
         }
-        // The steps stand beside the field on round plates (canvas «FindInPage»).
-        StepButton(VolaIcons.KeyboardArrowUp, labels.previous, canNavigate, onPrevious, V5FindInPageTestTags.Previous)
-        StepButton(VolaIcons.KeyboardArrowDown, labels.next, canNavigate, onNext, V5FindInPageTestTags.Next)
-        Box(
-            Modifier
-                .widthIn(min = V5Sizes.editorCancel)
-                .heightIn(min = V5Sizes.touchTarget)
-                .clip(V5Theme.shapes.full)
-                .clickable(role = Role.Button, onClick = onDone)
-                .testTag(V5FindInPageTestTags.Done),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(labels.done, style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold), color = colors.accent, maxLines = 1)
-        }
+    }
+}
+
+/** «2 of 7», «Not found» or the counting ring; nothing while there is no query. */
+@Composable
+private fun FindCount(matchText: String, isCounting: Boolean, countingLabel: String, modifier: Modifier = Modifier) {
+    val colors = V5Theme.colors
+    when {
+        isCounting -> CircularProgressIndicator(
+            modifier = modifier
+                .size(V5Sizes.iconSmall)
+                .semantics { contentDescription = countingLabel },
+            color = colors.labelSecondary,
+            strokeWidth = V5Sizes.downloadRing,
+        )
+        matchText.isNotEmpty() -> Text(
+            matchText,
+            style = V5Theme.type.callout,
+            color = colors.labelSecondary,
+            maxLines = 1,
+            // TalkBack hears the new count as the matches are counted and stepped through.
+            modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
     }
 }
 
