@@ -1473,6 +1473,10 @@
     <string name="reader_font_sans">Sans serif</string>
     <string name="reader_font_mono">Monospace</string>
     <string name="listen_unavailable">Reading aloud isn’t available on this device</string>
+    <string name="v5_listen_speed">%1$s×</string>
+    <string name="v5_listen_speed_description">Speed %1$s×, change</string>
+    <string name="v5_listen_time">%1$s / %2$s</string>
+    <string name="v5_listen_time_description">%1$s of about %2$s</string>
     <string name="listen_private_page">Private page</string>
     <string name="listen_preparing">Preparing the page to read aloud…</string>
     <string name="reader_wide_margins">Wide margins</string>

@@ -1519,6 +1519,10 @@
     <string name="reader_font_sans">Без засечек</string>
     <string name="reader_font_mono">Моноширинный</string>
     <string name="listen_unavailable">Чтение вслух недоступно на этом устройстве</string>
+    <string name="v5_listen_speed">%1$s×</string>
+    <string name="v5_listen_speed_description">Скорость %1$s×, изменить</string>
+    <string name="v5_listen_time">%1$s / %2$s</string>
+    <string name="v5_listen_time_description">%1$s из примерно %2$s</string>
     <string name="listen_private_page">Частная страница</string>
     <string name="listen_preparing">Готовлю страницу к чтению вслух…</string>
     <string name="reader_wide_margins">Широкие поля</string>

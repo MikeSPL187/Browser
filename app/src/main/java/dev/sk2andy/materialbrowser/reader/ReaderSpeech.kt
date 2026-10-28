@@ -24,6 +24,9 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
     /** Bumped on every play, pause, stop and close; callbacks of older queues are ignored. */
     private var generation = 0
 
+    /** How fast the voice speaks, 1 being the engine's usual pace. */
+    private var speed = 1f
+
     /** Read on the TTS binder thread. */
     @Volatile
     private var chunkStarts: Map<String, Int> = emptyMap()
@@ -34,6 +37,7 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
                 if (state.status == ReaderSpeechStatus.Closed) return@post
                 if (result == TextToSpeech.SUCCESS) {
                     engine?.setOnUtteranceProgressListener(listener)
+                    engine?.setSpeechRate(speed)
                     dispatch(ReaderSpeechEvent.Initialized)
                     pendingContent?.let { content ->
                         pendingContent = null
@@ -79,6 +83,17 @@ class ReaderSpeechController(context: Context) : ReaderSpeech {
             }
         }
         dispatch(ReaderSpeechEvent.Play)
+    }
+
+    /** The voice's speed; a speaking voice goes on from where it is at the new speed. */
+    fun setSpeed(value: Float) {
+        if (value == speed) return
+        speed = value
+        engine?.setSpeechRate(value)
+        if (state.status == ReaderSpeechStatus.Speaking) {
+            pause()
+            play(text)
+        }
     }
 
     override fun pause() {
