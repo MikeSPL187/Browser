@@ -17,11 +17,9 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.DownloadEntry
 import dev.sk2andy.materialbrowser.data.DownloadRepository
 import dev.sk2andy.materialbrowser.ui.DownloadsLibraryV5
-import dev.sk2andy.materialbrowser.ui.DownloadsScreen
 import dev.sk2andy.materialbrowser.ui.openDownloadPage
 import dev.sk2andy.materialbrowser.ui.theme.CandyTheme
 import dev.sk2andy.materialbrowser.ui.theme.setCandyContent
-import dev.sk2andy.materialbrowser.ui.theme.v5.UiV5Flag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -60,9 +58,6 @@ class DownloadsActivity : ComponentActivity() {
         applyFullImmersiveMode(isFullImmersiveModeEnabled)
         val appearanceSettings = store.loadAppearanceSettings()
         val workspaceAccent = store.loadActiveWorkspaceAccent()
-        // v5 draws the library on a phone (V28, B2d); a tablet keeps the current screen.
-        val drawsV5 = UiV5Flag.isEnabled(this) &&
-            resources.configuration.smallestScreenWidthDp < BrowserWindowStateRules.LARGE_SCREEN_MIN_WIDTH_DP
 
         setCandyContent(animationsEnabled = appearanceSettings.animationsEnabled) {
             val appearanceDark = appearanceSettings.usesDarkColors(isSystemInDarkTheme())
@@ -71,30 +66,16 @@ class DownloadsActivity : ComponentActivity() {
                 settings = appearanceSettings,
                 workspaceAccent = workspaceAccent,
             ) {
-                if (drawsV5) {
-                    DownloadsLibraryV5(
-                        downloads = controller.downloads,
-                        isClearing = controller.isClearing,
-                        onOpen = ::openDownload,
-                        onTogglePause = { entry -> controller.togglePause(entry, ::reportControl) },
-                        onCancel = { entry -> controller.cancel(entry, ::reportControl) },
-                        onRetry = { entry -> controller.retry(entry, ::reportControl) },
-                        onOpenPage = { url -> openDownloadPage(this, url) },
-                        onClearFinished = ::clearFinished,
-                        onClose = ::finish,
-                    )
-                    return@CandyTheme
-                }
-                DownloadsScreen(
+                DownloadsLibraryV5(
                     downloads = controller.downloads,
                     isClearing = controller.isClearing,
+                    onOpen = ::openDownload,
+                    onTogglePause = { entry -> controller.togglePause(entry, ::reportControl) },
+                    onCancel = { entry -> controller.cancel(entry, ::reportControl) },
+                    onRetry = { entry -> controller.retry(entry, ::reportControl) },
+                    onOpenPage = { url -> openDownloadPage(this, url) },
                     onClearFinished = ::clearFinished,
-                    onOpenDownload = ::openDownload,
-                    onBack = ::finish,
-                    onCancelDownload = { entry -> controller.cancel(entry, ::reportControl) },
-                    onTogglePauseDownload = { entry -> controller.togglePause(entry, ::reportControl) },
-                    onRetryDownload = { entry -> controller.retry(entry, ::reportControl) },
-                    onOpenDownloadPage = { url -> openDownloadPage(this, url) },
+                    onClose = ::finish,
                 )
             }
         }
