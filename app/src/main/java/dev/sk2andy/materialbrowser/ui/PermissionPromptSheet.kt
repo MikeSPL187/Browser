@@ -179,7 +179,11 @@ private fun PermissionPromptContent(
  * and where to change it later in small print.
  */
 @Composable
-private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (PermissionPromptChoice) -> Unit, backdrop: Bitmap?) {
+private fun PermissionPromptSheetV5(
+    prompt: PermissionPrompt,
+    onChoice: (PermissionPromptChoice) -> Unit,
+    backdrop: Bitmap? = null,
+) {
     val host = SiteConnectionRules.host(prompt.site.origin).ifEmpty { prompt.site.origin }
     val names = prompt.permissions.map { it.displayName() }.joinToString()
     val message = stringResource(R.string.permission_radar_request_message, host, names)

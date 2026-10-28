@@ -58,10 +58,10 @@ fun V5PromptSheet(
     testTag: String? = null,
     /** A glyph before the title, such as the permission a site asks for. */
     leading: (@Composable () -> Unit)? = null,
-    /** What the question asks to fill in or pick, between the message and the actions. */
-    content: @Composable ColumnScope.() -> Unit = {},
     /** A snapshot of the page under the sheet, for its glass ([V5Sheet]). */
     backdrop: Bitmap? = null,
+    /** What the question asks to fill in or pick, between the message and the actions. */
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val colors = V5Theme.colors
     V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title, backdrop = backdrop) {
