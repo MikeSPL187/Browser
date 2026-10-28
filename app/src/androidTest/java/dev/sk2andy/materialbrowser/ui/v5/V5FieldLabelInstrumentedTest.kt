@@ -1,6 +1,8 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -104,27 +106,47 @@ class V5FieldLabelInstrumentedTest {
 
         composeRule.onNodeWithTag(tag).performTextInput(TYPED)
 
-        val filled = editableNode()
+        // The platform tree catches up with the typed text a moment later, more so while the
+        // keyboard comes up (find in page shows it at once): read it until it has.
+        val filled = editableNode { it.text?.toString() == TYPED }
         assertEquals(dump(filled), TYPED, filled.text?.toString())
         assertTrue("The name is still said over the typed text: ${dump(filled)}", NAME !in spoken(filled))
     }
 
+    /**
+     * The test's own window. Not the active window: with the keyboard up that can be the keyboard's,
+     * and on a rerun a window the last process left was still taken (nightly 28.10, the field
+     * «not found» or empty on the second call only).
+     */
     private fun root(): AccessibilityNodeInfo {
-        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // The same connection as everywhere else: one with other flags would reconnect (androidTest/CLAUDE.md).
+        val automation = instrumentation.uiAutomation
+        automation.serviceInfo = automation.serviceInfo.apply {
+            flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        }
+        val ownPackage = instrumentation.targetContext.packageName
         repeat(ATTEMPTS) {
             composeRule.waitForIdle()
-            automation.rootInActiveWindow?.let { return it }
+            automation.windows
+                .filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+                .mapNotNull { it.root }
+                .firstOrNull { it.packageName?.toString() == ownPackage }
+                ?.let { return it }
             Thread.sleep(POLL_MILLIS)
         }
-        error("No window reached the accessibility tree")
+        error("No window of $ownPackage reached the accessibility tree")
     }
 
-    private fun editableNode(): AccessibilityNodeInfo {
+    private fun editableNode(ready: (AccessibilityNodeInfo) -> Boolean = { true }): AccessibilityNodeInfo {
+        var last: AccessibilityNodeInfo? = null
         repeat(ATTEMPTS) {
-            find(root(), AccessibilityNodeInfo::isEditable)?.let { return it }
+            val node = find(root(), AccessibilityNodeInfo::isEditable)
+            if (node != null && ready(node)) return node
+            last = node ?: last
             Thread.sleep(POLL_MILLIS)
         }
-        error("No editable node reached the accessibility tree")
+        return last ?: error("No editable node reached the accessibility tree")
     }
 
     private fun find(node: AccessibilityNodeInfo, matches: (AccessibilityNodeInfo) -> Boolean): AccessibilityNodeInfo? {
