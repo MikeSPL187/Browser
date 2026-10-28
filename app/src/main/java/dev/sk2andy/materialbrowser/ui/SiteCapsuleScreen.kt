@@ -65,7 +65,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -192,109 +191,6 @@ private fun CapsuleBrowserEngineHost(
             .fillMaxSize()
             .testTag(SiteCapsuleTestTags.WebContent),
     )
-}
-
-@Composable
-private fun CapsuleChrome(
-    capsule: SiteCapsule,
-    currentUrl: String,
-    canGoBack: Boolean,
-    isLoading: Boolean,
-    onBack: () -> Unit,
-    onReloadOrStop: () -> Unit,
-    onOpenFullCandy: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier
-            .navigationBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-            .fillMaxWidth()
-            .testTag(SiteCapsuleTestTags.Chrome),
-        shape = RoundedCornerShape(30.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f),
-        tonalElevation = 12.dp,
-        shadowElevation = 14.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack, enabled = canGoBack) {
-                Icon(
-                    VolaIcons.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                )
-            }
-            IconButton(onClick = onReloadOrStop) {
-                Icon(
-                    if (isLoading) VolaIcons.Close else VolaIcons.Refresh,
-                    contentDescription = stringResource(
-                        if (isLoading) R.string.action_stop_loading else R.string.action_reload,
-                    ),
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp),
-            ) {
-                Text(
-                    capsule.name,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                if (capsule.chromeMode == CapsuleChromeMode.Compact) {
-                    Text(
-                        AddressResolver.displayText(currentUrl),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Surface(
-                onClick = onOpenFullCandy,
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Text(
-                    stringResource(R.string.capsule_open_full_candy),
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CapsuleErrorCard(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.padding(24.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.errorContainer,
-        tonalElevation = 6.dp,
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.error_page_unreachable), style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            Text(message, style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-        }
-    }
 }
 
 @Composable

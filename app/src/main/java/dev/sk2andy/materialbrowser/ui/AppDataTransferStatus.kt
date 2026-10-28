@@ -100,5 +100,3 @@ internal fun AppDataTransferStatusV5(state: AppDataTransferStatusState) {
     }
 }
 
-/** The size the plain v4 line always had. */
-private const val LEGACY_TEXT_SP = 18f

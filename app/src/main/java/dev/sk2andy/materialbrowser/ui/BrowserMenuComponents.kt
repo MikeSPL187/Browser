@@ -6,7 +6,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -14,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuIconToggleItem as SharedBrowserMenuIconToggleItem
-import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuRow as SharedBrowserMenuRow
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuToggleItem as SharedBrowserMenuToggleItem
 import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuToolbarAction as SharedBrowserMenuToolbarAction
 import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
@@ -48,39 +46,6 @@ internal fun MenuToolbarAction(
         accessibilityLabel = accessibilityLabel,
         horizontalContent = horizontalContent,
         containerColor = browserChromeColor(containerColor),
-    )
-}
-
-@Composable
-internal fun MenuRow(
-    label: String,
-    @DrawableRes iconRes: Int,
-    shape: Shape,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    supportingText: String? = null,
-    trailingContent: (@Composable () -> Unit)? = null,
-) {
-    SharedBrowserMenuRow(
-        label = label,
-        icon = {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-        },
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        shape = shape,
-        containerColor = browserChromeColor(containerColor, frostedAlpha = 0.68f),
-        contentColor = if (enabled) contentColor else contentColor.copy(alpha = 0.38f),
-        supportingText = supportingText,
-        trailingContent = trailingContent,
     )
 }
 

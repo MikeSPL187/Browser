@@ -42,12 +42,6 @@ internal fun View.performRejectHaptic() {
     )
 }
 
-internal fun View.performTabFocusHaptic() {
-    if (!performHapticFeedback(HapticFeedbackConstants.SEGMENT_TICK)) {
-        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-    }
-}
-
 internal fun View.startRubberbandHaptic() {
     val vibrator = rubberbandVibrator() ?: return
     if (!vibrator.hasVibrator()) return

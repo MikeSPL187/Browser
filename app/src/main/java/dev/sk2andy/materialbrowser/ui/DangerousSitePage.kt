@@ -1,31 +1,13 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.safety.BlockedSite
 import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserAppearanceMode
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import dev.sk2andy.materialbrowser.ui.theme.VolaDangerousSite
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5DangerousSite
@@ -53,82 +35,6 @@ internal fun DangerousSitePage(
     // interface paints the page red.
     VolaV5Theme(dark = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE_LUMINANCE) {
         V5DangerousSite(site, onBackToSafety, onOpenAnyway, onOpenRealSite, modifier)
-    }
-}
-
-@Composable
-private fun DangerousSiteContent(
-    site: BlockedSite,
-    onBackToSafety: () -> Unit,
-    onOpenAnyway: () -> Unit,
-    onOpenRealSite: () -> Unit,
-) {
-    val imitatedHost = site.imitatedHost
-    VolaStatePage(
-        title = stringResource(
-            if (imitatedHost != null) R.string.dangerous_site_title else R.string.dangerous_site_listed_title,
-        ),
-        message = when {
-            imitatedHost != null ->
-                stringResource(R.string.dangerous_site_message, site.host, imitatedHost)
-            site.reportedBySafeBrowsing ->
-                stringResource(R.string.dangerous_site_safe_browsing_message, site.host)
-            else -> stringResource(R.string.dangerous_site_listed_message, site.host)
-        },
-        icon = {
-            VolaStatePageIcon(
-                icon = VolaIcons.Dangerous,
-                tone = VolaStatePageTone.Accent,
-            )
-        },
-        details = {
-            val fact = when {
-                imitatedHost != null -> stringResource(R.string.dangerous_site_real, imitatedHost)
-                site.reportedBySafeBrowsing -> stringResource(R.string.dangerous_site_safe_browsing_source)
-                else -> stringResource(R.string.dangerous_site_listed_local)
-            }
-            val factIcon = if (imitatedHost != null) VolaIcons.Verified else VolaIcons.ShieldLock
-            val onFact = onOpenRealSite.takeIf { imitatedHost != null }
-            SiteFact(fact, factIcon, onFact)
-        },
-    ) {
-        VolaStatePagePrimaryButton(
-            text = stringResource(R.string.dangerous_site_back),
-            onClick = onBackToSafety,
-            modifier = Modifier.testTag(DangerousSiteTestTags.Back),
-        )
-        // The engine refuses a site Safe Browsing reported, so there is no way through.
-        if (!site.reportedBySafeBrowsing) {
-            VolaStatePageTextButton(
-                text = stringResource(R.string.dangerous_site_open_anyway),
-                onClick = onOpenAnyway,
-                modifier = Modifier.testTag(DangerousSiteTestTags.OpenAnyway),
-                destructive = true,
-            )
-        }
-    }
-}
-
-/** The fact under the message on the red page: the real site to go to, or who listed this one. */
-@Composable
-private fun SiteFact(text: String, icon: ImageVector, onClick: (() -> Unit)?) {
-    val content = LocalContentColor.current
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = VolaDangerousSite.cardShape,
-        color = content.copy(alpha = VolaDangerousSite.CARD_ALPHA),
-        contentColor = content,
-    ) {
-        Row(
-            modifier = Modifier
-                .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
-                .padding(VolaDangerousSite.cardPadding),
-            horizontalArrangement = Arrangement.spacedBy(VolaDangerousSite.rowGap),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(VolaDangerousSite.rowIconSize))
-            Text(text = text, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

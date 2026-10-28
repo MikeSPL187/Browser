@@ -2,9 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalConfiguration
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
-
 /**
  * Which part of a settings page a screen shows (V15d): under ui.v5 a page keeps one layer of what
  * most people set and moves the rest behind «More», as iOS Settings does (system-v5.md section 10).
@@ -44,13 +41,6 @@ internal object SettingsLayerRules {
         destination in moreOf -> SettingsLayer.More
         else -> SettingsLayer.Main
     }
-}
-
-/** [SettingsLayerRules.speaksForV5] for this window. */
-@Composable
-internal fun rememberSettingsUiV5(): Boolean {
-    val flag by rememberUiV5Flag()
-    return SettingsLayerRules.speaksForV5(flag, LocalConfiguration.current.smallestScreenWidthDp.toFloat())
 }
 
 /** One row of a settings card that knows whether a line follows it. */

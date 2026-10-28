@@ -2,8 +2,6 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberUpdatedState
@@ -77,24 +75,3 @@ internal fun BrowserContentBlurTarget(
     )
 }
 
-@Composable
-internal fun BrowserContentBlurTargetWithConstraints(
-    enabled: Boolean,
-    onTargetAttached: (BlurTarget) -> Unit,
-    onTargetReleased: (BlurTarget) -> Unit,
-    modifier: Modifier,
-    contentModifier: Modifier,
-    content: @Composable BoxWithConstraintsScope.() -> Unit,
-) {
-    BrowserContentBlurTarget(
-        enabled = enabled,
-        onTargetAttached = onTargetAttached,
-        onTargetReleased = onTargetReleased,
-        modifier = modifier,
-    ) {
-        BoxWithConstraints(
-            modifier = contentModifier,
-            content = content,
-        )
-    }
-}

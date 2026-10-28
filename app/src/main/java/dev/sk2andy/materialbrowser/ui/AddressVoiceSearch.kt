@@ -1,17 +1,8 @@
 package dev.sk2andy.materialbrowser.ui
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
-import android.view.HapticFeedbackConstants
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -30,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -45,10 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -65,7 +51,6 @@ import dev.sk2andy.materialbrowser.shared.voice.VoiceInputRules
 import dev.sk2andy.materialbrowser.shared.voice.VoiceInputStatus
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.VolaVoice
-import dev.sk2andy.materialbrowser.voice.LocalVoiceInputFactory
 import kotlinx.coroutines.flow.collectLatest
 
 internal object AddressVoiceSearchTestTags {
@@ -186,83 +171,12 @@ internal class AddressVoiceSearch internal constructor(
     }
 }
 
-@Composable
-internal fun rememberAddressVoiceSearch(
-    editing: Boolean,
-    editValue: TextFieldValue,
-    onEditValueChange: (TextFieldValue) -> Unit,
-    onSubmit: (String) -> Unit,
-): AddressVoiceSearch {
-    val context = LocalContext.current
-    val view = LocalView.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val voiceFactory = LocalVoiceInputFactory.current
-    val voice = remember(context, voiceFactory) { voiceFactory(context) }
-    var search: AddressVoiceSearch? = null
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        // Right after a refusal, no rationale means «don't ask again»: the system prompt will not
-        // come back, so the next step is the app settings.
-        val refusedForGood = !granted && context.findActivity()
-            ?.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) == false
-        search?.onPermissionResult(granted, refusedForGood)
-    }
-    val host = rememberUpdatedState(
-        AddressVoiceHost(
-            editValue = editValue,
-            onEditValueChange = onEditValueChange,
-            onSubmit = onSubmit,
-            languageTag = VoiceInputRules.languageTag(LocalConfiguration.current.locales[0].language),
-            hasPermission = {
-                context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
-                    PackageManager.PERMISSION_GRANTED
-            },
-            requestPermission = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
-            onListening = {
-                keyboard?.hide()
-                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-            },
-            showMessage = { message -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show() },
-        ),
-    )
-    val voiceSearch = remember(voice) { AddressVoiceSearch(voice, host) }
-    search = voiceSearch
-    val error = voiceSearch.error
-    LaunchedEffect(error) {
-        if (error != null) voiceSearch.onFailed(error)
-    }
-    // Closing the editor ends the session; so does leaving the screen.
-    LaunchedEffect(editing) {
-        if (!editing) voiceSearch.cancel()
-    }
-    DisposableEffect(voiceSearch) {
-        onDispose { voiceSearch.cancel() }
-    }
-    return voiceSearch
-}
-
 /** The field's placeholder while listening, or null when voice search is not running. */
 @Composable
 internal fun AddressVoiceSearch.placeholder(): String? = when (status) {
     VoiceInputStatus.Idle -> null
     VoiceInputStatus.Starting, VoiceInputStatus.Listening -> stringResource(R.string.voice_search_listening)
     VoiceInputStatus.Recognizing -> stringResource(R.string.voice_search_recognizing)
-}
-
-/** The microphone in the address editor, with the permission dialogs it leads to. */
-@Composable
-internal fun AddressVoiceSearchButton(search: AddressVoiceSearch) {
-    if (!search.available) return
-    val context = LocalContext.current
-    AddressVoiceMicrophoneButton(onClick = search::onMicrophone)
-    search.dialog?.let { dialog ->
-        AddressVoicePermissionDialog(
-            dialog = dialog,
-            onConfirm = { search.onDialogConfirmed { context.openAppSettings() } },
-            onDismiss = search::onDialogDismissed,
-        )
-    }
 }
 
 @Composable
@@ -426,12 +340,6 @@ internal fun voiceErrorMessage(error: VoiceInputError): Int = when (error) {
     VoiceInputError.PermissionDenied -> R.string.voice_search_permission_needed
     VoiceInputError.Busy -> R.string.voice_search_error_busy
     VoiceInputError.Failed -> R.string.voice_search_error_failed
-}
-
-private fun Context.openAppSettings() {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    runCatching { startActivity(intent) }
 }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {

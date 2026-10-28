@@ -1,9 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
-
 internal enum class AddressBarVerticalAction {
     None,
     OpenTabs,
@@ -47,16 +44,3 @@ internal object AddressBarTabSwitchRules {
         viewportWidth > 0f && dragDistance >= viewportWidth * DISTANCE_FRACTION
 }
 
-internal object AddressBarWideLayoutRules {
-    const val MIN_WINDOW_WIDTH_DP = 600f
-
-    fun usesTabStrip(windowWidthDp: Float): Boolean =
-        windowWidthDp.isFinite() && windowWidthDp >= MIN_WINDOW_WIDTH_DP
-}
-
-/** Whether v5 draws the browser: the flag is on, on a phone and a tablet alike. */
-@Composable
-internal fun rememberDrawsV5(): Boolean {
-    val uiV5 by rememberUiV5Flag()
-    return uiV5
-}

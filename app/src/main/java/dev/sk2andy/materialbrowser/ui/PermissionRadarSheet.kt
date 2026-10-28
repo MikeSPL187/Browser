@@ -2,11 +2,7 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-import android.os.SystemClock
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,15 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -47,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarEntry
 import dev.sk2andy.materialbrowser.browser.permissions.PermissionRadarSnapshot
 import dev.sk2andy.materialbrowser.browser.permissions.SitePermission
@@ -56,8 +44,6 @@ import dev.sk2andy.materialbrowser.browser.permissions.SitePermissionDecision
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetHeader
 import dev.sk2andy.materialbrowser.ui.v5.V5WindowSheet
-import kotlinx.coroutines.delay
-
 @Composable
 internal fun PermissionRadarSheet(
     snapshot: PermissionRadarSnapshot,
@@ -328,119 +314,6 @@ private fun PermissionActivityDot(activity: SitePermissionActivity) {
             MaterialTheme.colorScheme.tertiary
         },
     ) {}
-}
-
-@Composable
-internal fun PermissionRadarBadge(
-    siteAvailable: Boolean,
-    activityVisible: Boolean,
-    connectionKind: SiteConnectionKind,
-    blockedCount: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    tabId: String? = null,
-) {
-    if (!siteAvailable) return
-    val currentBlockedCount by rememberUpdatedState(blockedCount)
-    val initialBlockedCount = remember(tabId) { blockedCount }
-    val pulseScale = remember(tabId) { Animatable(1f) }
-    LaunchedEffect(tabId) {
-        var previousCount = initialBlockedCount
-        var lastPulseCompletedAtMillis: Long? = null
-        snapshotFlow { currentBlockedCount }.collect { count ->
-            val previous = previousCount
-            previousCount = count
-            val now = SystemClock.uptimeMillis()
-            val elapsedSinceLastPulse = lastPulseCompletedAtMillis?.let { now - it }
-                ?: Long.MAX_VALUE
-            val pulseDelay = PrivacyXRayMotionRules.badgePulseDelayMillis(
-                previousCount = previous,
-                currentCount = count,
-                elapsedSinceLastPulseMillis = elapsedSinceLastPulse,
-            ) ?: return@collect
-
-            delay(pulseDelay)
-            val batchedCount = currentBlockedCount
-            previousCount = batchedCount
-            if (!PrivacyXRayMotionRules.shouldRunBatchedPulse(count, batchedCount)) {
-                return@collect
-            }
-            pulseScale.animateTo(
-                targetValue = 1.1f,
-                animationSpec = tween(110, easing = FastOutSlowInEasing),
-            )
-            pulseScale.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(190, easing = FastOutSlowInEasing),
-            )
-            lastPulseCompletedAtMillis = SystemClock.uptimeMillis()
-        }
-    }
-    val connectionLabel = stringResource(
-        when (connectionKind) {
-            SiteConnectionKind.Https -> R.string.site_connection_https
-            SiteConnectionKind.Http -> R.string.site_connection_http
-            SiteConnectionKind.Unavailable -> R.string.site_connection_unavailable
-            SiteConnectionKind.Other -> R.string.site_connection_other
-        },
-    )
-    val siteDescription = stringResource(
-        R.string.site_info_badge_cd,
-        connectionLabel,
-        blockedCount,
-    )
-    val description = if (activityVisible) {
-        "$siteDescription. ${stringResource(R.string.permission_radar_activity_cd)}"
-    } else {
-        siteDescription
-    }
-    Surface(
-        onClick = onClick,
-        modifier = modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .graphicsLayer {
-                scaleX = pulseScale.value
-                scaleY = pulseScale.value
-            }
-            .semantics { contentDescription = description }
-            .testTag(PermissionRadarTestTags.ActivityBadge),
-        shape = RoundedCornerShape(24.dp),
-        color = Color.Transparent,
-    ) {
-        Surface(
-            modifier = Modifier.padding(4.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = if (activityVisible) MaterialTheme.colorScheme.tertiaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
-            Row(
-                modifier = Modifier.height(40.dp).padding(horizontal = 11.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(
-                    when (connectionKind) {
-                        SiteConnectionKind.Https -> VolaIcons.Lock
-                        SiteConnectionKind.Http -> VolaIcons.WarningFilled
-                        SiteConnectionKind.Unavailable, SiteConnectionKind.Other -> VolaIcons.Info
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = if (activityVisible) MaterialTheme.colorScheme.onTertiaryContainer
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (blockedCount > 0) {
-                    Text(
-                        blockedCount.toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (activityVisible) MaterialTheme.colorScheme.onTertiaryContainer
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable

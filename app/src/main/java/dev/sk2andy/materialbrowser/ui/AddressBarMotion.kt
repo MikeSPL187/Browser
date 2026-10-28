@@ -1,38 +1,19 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.SpringSpec
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.ui.theme.VolaTabOverview
 import dev.sk2andy.materialbrowser.ui.theme.CandyMotionScheme
-import dev.sk2andy.materialbrowser.ui.theme.LocalCandyMotionScheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaCompactMode
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import kotlin.math.PI
 import kotlin.math.sin
-
-@Immutable
-internal data class AddressBarMotionState(
-    val width: Dp,
-    val height: Dp,
-    val dockOffset: DpOffset,
-)
 
 internal object AddressBarMotion {
     /** The island becomes the tab overview's new-tab button: same size, same place. */
@@ -169,118 +150,3 @@ internal object AddressBarMotion {
     }
 }
 
-@Composable
-internal fun rememberAddressBarMotionState(
-    presentation: AddressBarPresentation,
-    compactWidth: Dp,
-    maxWidth: Dp,
-    feedbackWidth: Dp,
-    edgeTabWidth: Dp,
-    expandedHeight: Dp = AddressBarMotion.EXPANDED_HEIGHT,
-    verticalTravel: Dp,
-    dockPosition: Offset,
-    handle: Boolean = false,
-): AddressBarMotionState {
-    val motionScheme = LocalCandyMotionScheme.current
-    val width by animateDpAsState(
-        targetValue = AddressBarMotion.widthTarget(
-            presentation = presentation,
-            compactWidth = compactWidth,
-            maxWidth = maxWidth,
-            feedbackWidth = feedbackWidth,
-            edgeTabWidth = edgeTabWidth,
-            handle = handle,
-        ),
-        animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
-        label = "Adressleistenbreite beim Scrollen und Parken",
-    )
-    val height by animateDpAsState(
-        targetValue = AddressBarMotion.heightTarget(
-            presentation = presentation,
-            expandedHeight = expandedHeight,
-            handle = handle,
-        ),
-        animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
-        label = "Adressleistenhöhe beim Parken",
-    )
-    val overviewShift by animateDpAsState(
-        targetValue = if (presentation == AddressBarPresentation.Overview) {
-            AddressBarMotion.overviewOffsetX(maxWidth)
-        } else {
-            0.dp
-        },
-        animationSpec = AddressBarMotion.containerAnimationSpec(motionScheme),
-        label = "address-bar-overview-shift",
-    )
-    val dockOffset = AddressBarMotion.dockOffsetForPosition(
-        position = dockPosition,
-        maxWidth = maxWidth,
-        barWidth = width,
-        verticalTravel = verticalTravel,
-    )
-    return AddressBarMotionState(
-        width = width,
-        height = height,
-        dockOffset = DpOffset(dockOffset.x + overviewShift, dockOffset.y),
-    )
-}
-
-@Composable
-internal fun AddressBarPresentationTransition(
-    presentation: AddressBarPresentation,
-    modifier: Modifier = Modifier,
-    content: @Composable (AddressBarPresentation) -> Unit,
-) {
-    val motionScheme = LocalCandyMotionScheme.current
-    var displayedPresentation by remember { mutableStateOf(presentation) }
-    val contentAlpha = remember { Animatable(1f) }
-
-    LaunchedEffect(presentation, motionScheme) {
-        if (presentation == displayedPresentation) {
-            contentAlpha.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = AddressBarMotion.enterDurationMillis(
-                        initial = displayedPresentation,
-                        target = presentation,
-                        motionScheme = motionScheme,
-                    ),
-                    easing = motionScheme.addressBarFadeInEasing,
-                ),
-            )
-            return@LaunchedEffect
-        }
-
-        val initialPresentation = displayedPresentation
-        contentAlpha.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(
-                durationMillis = AddressBarMotion.exitDurationMillis(
-                    initial = initialPresentation,
-                    target = presentation,
-                    motionScheme = motionScheme,
-                ),
-                easing = motionScheme.addressBarFadeOutEasing,
-            ),
-        )
-        displayedPresentation = presentation
-        contentAlpha.snapTo(0f)
-        contentAlpha.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = AddressBarMotion.enterDurationMillis(
-                    initial = initialPresentation,
-                    target = presentation,
-                    motionScheme = motionScheme,
-                ),
-                easing = motionScheme.addressBarFadeInEasing,
-            ),
-        )
-    }
-
-    Box(
-        modifier = modifier.graphicsLayer { alpha = contentAlpha.value },
-    ) {
-        content(displayedPresentation)
-    }
-}

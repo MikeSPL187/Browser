@@ -1,20 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.Role
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.actions.PendingDownloadChoice
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
@@ -40,20 +27,3 @@ internal fun DownloadManagerChooserDialog(
     }
 }
 
-@Composable
-private fun DownloadManagerChoiceRow(
-    label: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = false, onClick = onClick)
-        Spacer(Modifier.width(10.dp))
-        Text(label, style = MaterialTheme.typography.titleMedium)
-    }
-}

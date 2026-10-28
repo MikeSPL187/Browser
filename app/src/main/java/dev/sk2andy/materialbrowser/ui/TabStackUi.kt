@@ -15,10 +15,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,7 +23,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,23 +43,16 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,9 +79,7 @@ import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.TabStack
-import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.TabStackColor
-import dev.sk2andy.materialbrowser.data.TabStackRules
 import dev.sk2andy.materialbrowser.data.TabOverviewMode
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import kotlinx.coroutines.delay
@@ -683,254 +670,6 @@ private fun TabStackFolderPreviewCard(
 }
 
 @Composable
-internal fun TabStackMenuSection(
-    currentStack: TabStack?,
-    availableStacks: List<TabStack>,
-    canCreate: Boolean,
-    onCreate: () -> Unit,
-    onAddToStack: (String) -> Unit,
-    onRemoveFromStack: () -> Unit,
-) {
-    if (!canCreate && currentStack == null && availableStacks.isEmpty()) return
-    Spacer(Modifier.height(12.dp))
-    Text(
-        text = stringResource(R.string.tab_stacks_title),
-        modifier = Modifier.padding(start = 8.dp, bottom = 6.dp),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        if (canCreate) {
-            MenuRow(
-                label = stringResource(
-                    if (currentStack == null) R.string.action_create_tab_stack
-                    else R.string.action_edit_tab_stack,
-                ),
-                iconRes = R.drawable.ic_switch_to_tab,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.testTag(TabStackTestTags.Create),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                onClick = onCreate,
-            )
-        }
-        availableStacks.forEach { stack ->
-            MenuRow(
-                label = stringResource(R.string.action_add_to_tab_stack, stack.name),
-                iconRes = R.drawable.ic_switch_to_tab,
-                shape = MaterialTheme.shapes.medium,
-                onClick = { onAddToStack(stack.id) },
-            )
-        }
-        if (currentStack != null) {
-            MenuRow(
-                label = stringResource(R.string.action_remove_from_tab_stack, currentStack.name),
-                iconRes = R.drawable.ic_delete_outline,
-                shape = MaterialTheme.shapes.medium,
-                onClick = onRemoveFromStack,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun TabStackCreateDialog(
-    initialTabId: String?,
-    candidates: List<BrowserTab>,
-    preselectedTabIds: Set<String>,
-    initialPreviewTabId: String? = null,
-    initialName: String = "",
-    initialColor: TabStackColor = TabStackColor.Grape,
-    editing: Boolean = false,
-    onCreate: (List<String>, String, TabStackColor, String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    if (initialTabId == null) return
-    val candidateIds = candidates.map(BrowserTab::id)
-    var name by remember(initialTabId) {
-        mutableStateOf(initialName)
-    }
-    var color by remember(initialTabId) { mutableStateOf(initialColor) }
-    var selectedTabIds by remember(initialTabId, candidateIds) {
-        mutableStateOf(
-            (preselectedTabIds + initialTabId).intersect(candidateIds.toSet()),
-        )
-    }
-    var previewTabId by remember(initialTabId, candidateIds) {
-        mutableStateOf(
-            initialPreviewTabId
-                ?.takeIf { it in selectedTabIds }
-                ?: initialTabId,
-        )
-    }
-    val normalizedName = TabStackRules.normalizedName(name)
-    AlertDialog(
-        modifier = Modifier.testTag(TabStackTestTags.Dialog),
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                stringResource(
-                    if (editing) R.string.edit_tab_stack_title
-                    else R.string.create_tab_stack_title,
-                ),
-            )
-        },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it.take(TabStackRules.MAX_NAME_LENGTH) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(TabStackTestTags.Name),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.tab_stack_name)) },
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.tab_stack_color),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .testTag(TabStackTestTags.ColorChoices)
-                        .selectableGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    TabStackColor.classic.forEach { candidateColor ->
-                        val colorName = stringResource(candidateColor.labelResource())
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .testTag(TabStackTestTags.color(candidateColor))
-                                .semantics {
-                                    contentDescription = colorName
-                                }
-                                .selectable(
-                                    selected = color == candidateColor,
-                                    role = Role.RadioButton,
-                                    onClick = { color = candidateColor },
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(38.dp),
-                                shape = CircleShape,
-                                color = stackColors(candidateColor).accent,
-                                border = if (color == candidateColor) {
-                                    BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface)
-                                } else {
-                                    null
-                                },
-                            ) {}
-                        }
-                    }
-                }
-                Text(
-                    text = stringResource(R.string.tab_stack_choose_tabs),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Text(
-                    text = stringResource(R.string.tab_stack_preview_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 240.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    candidates.forEach { tab ->
-                        val checked = tab.id in selectedTabIds
-                        val required = tab.id == initialTabId
-                        val tabTitle = tabStackTabTitle(tab)
-                        val previewDescription = stringResource(
-                            R.string.tab_stack_preview_choice,
-                            tabTitle,
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag(TabStackTestTags.candidate(tab.id))
-                                .clickable(
-                                    enabled = !required,
-                                    role = Role.Checkbox,
-                                ) {
-                                    selectedTabIds = if (checked) {
-                                        (selectedTabIds - tab.id).also { updated ->
-                                            if (previewTabId == tab.id) {
-                                                previewTabId = updated.first()
-                                            }
-                                        }
-                                    } else {
-                                        selectedTabIds + tab.id
-                                    }
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = checked,
-                                onCheckedChange = null,
-                                enabled = !required,
-                            )
-                            Text(
-                                text = tabTitle,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            RadioButton(
-                                selected = previewTabId == tab.id,
-                                onClick = { previewTabId = tab.id },
-                                modifier = Modifier
-                                    .testTag(TabStackTestTags.previewChoice(tab.id))
-                                    .semantics {
-                                        contentDescription = previewDescription
-                                    },
-                                enabled = checked,
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onCreate(
-                        selectedTabIds.toList(),
-                        normalizedName,
-                        color,
-                        previewTabId,
-                    )
-                },
-                modifier = Modifier.testTag(TabStackTestTags.DialogConfirm),
-                enabled = selectedTabIds.size >= TabStackRules.MIN_MEMBER_COUNT &&
-                    normalizedName.isNotBlank(),
-            ) {
-                Text(
-                    stringResource(
-                        if (editing) R.string.action_save_tab_stack
-                        else R.string.action_create_tab_stack,
-                    ),
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
-}
-
-@Composable
 private fun tabStackTabTitle(tab: BrowserTab): String {
     val title = tab.title.trim()
     return when {
@@ -971,65 +710,3 @@ private fun stackColors(color: TabStackColor): TabStackColors {
     )
 }
 
-private fun TabStackColor.labelResource(): Int = when (this) {
-    TabStackColor.Grape -> R.string.tab_stack_color_grape
-    TabStackColor.Cherry -> R.string.tab_stack_color_cherry
-    TabStackColor.Lime -> R.string.tab_stack_color_lime
-    TabStackColor.Blueberry -> R.string.tab_stack_color_blueberry
-    TabStackColor.Orange -> R.string.v5_group_color_orange
-    TabStackColor.Teal -> R.string.v5_group_color_teal
-    TabStackColor.Slate -> R.string.v5_group_color_gray
-}
-
-/** Creating or editing the tab stack of [tabId] from the tab overview; [onDone] closes it. */
-@Composable
-internal fun TabOverviewStackEditor(
-    controller: BrowserController,
-    tabId: String?,
-    onDone: () -> Unit,
-) {
-    val rootView = LocalView.current
-    val stackEditorTab = tabId?.let { id ->
-        controller.activeTabs.firstOrNull { tab -> tab.id == id }
-    }
-    val editedStack = stackEditorTab?.let { tab -> controller.tabStackController.stackFor(tab.id) }
-    val stackEditorCandidates = stackEditorTab?.let { target ->
-        controller.activeTabs.filter { candidate ->
-            candidate.profileId == target.profileId &&
-                candidate.isIncognito == target.isIncognito &&
-                candidate.isPinned == target.isPinned
-        }
-    }.orEmpty()
-    TabStackCreateDialog(
-        initialTabId = stackEditorTab?.id,
-        candidates = stackEditorCandidates,
-        preselectedTabIds = editedStack?.tabIds?.toSet().orEmpty(),
-        initialPreviewTabId = editedStack?.previewTabId,
-        initialName = editedStack?.name.orEmpty(),
-        initialColor = editedStack?.color ?: TabStackColor.Grape,
-        editing = editedStack != null,
-        onCreate = { tabIds, name, color, previewTabId ->
-            val changed = if (editedStack == null) {
-                controller.tabStackController.create(
-                    tabIds = tabIds,
-                    name = name,
-                    color = color,
-                    previewTabId = previewTabId,
-                ) != null
-            } else {
-                controller.tabStackController.update(
-                    stackId = editedStack.id,
-                    tabIds = tabIds,
-                    name = name,
-                    color = color,
-                    previewTabId = previewTabId,
-                )
-            }
-            if (changed) {
-                onDone()
-                rootView.performConfirmHaptic()
-            }
-        },
-        onDismiss = onDone,
-    )
-}

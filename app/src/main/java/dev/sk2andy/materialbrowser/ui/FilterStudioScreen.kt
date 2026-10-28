@@ -1,13 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -27,13 +20,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,15 +41,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
-import dev.sk2andy.materialbrowser.blocking.CandyDecisionAction
 import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
 import dev.sk2andy.materialbrowser.blocking.CandyImportFormat
 import dev.sk2andy.materialbrowser.blocking.CandyImportScope
@@ -74,9 +61,6 @@ import dev.sk2andy.materialbrowser.blocking.CandySubscriptionDiff
 import dev.sk2andy.materialbrowser.blocking.CandySubscriptionResult
 import dev.sk2andy.materialbrowser.blocking.CandySubscriptionRules
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import java.text.DateFormat
-import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -115,8 +99,6 @@ internal object FilterStudioTestTags {
 }
 
 internal enum class StudioTypeFilter { All, Block, Allow, Css }
-
-private const val RULE_ITEMS_START_INDEX = 11
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -358,325 +340,6 @@ internal fun filterStudioRules(
             rule.sourceUrl,
         ).any { needle in it.lowercase() }
         matchesType && matchesProfile && matchesQuery
-    }
-}
-
-@Composable
-private fun StudioSectionHeader(title: String, trailing: String? = null) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 10.dp, bottom = 2.dp)
-            .semantics { heading() },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            title,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        trailing?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun BuiltInProtectionCard() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(FilterStudioTestTags.BuiltInProtection),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                stringResource(R.string.filter_builtin_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                stringResource(R.string.filter_builtin_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StudioEmptyState(
-    title: String,
-    body: String,
-    actionVisible: Boolean,
-    onAdd: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(FilterStudioTestTags.EmptyState),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text(
-                body,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (actionVisible) {
-                OutlinedButton(onClick = onAdd) {
-                    Icon(VolaIcons.Add, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.filter_add_first_rule))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FilterLiveTestCard(
-    liveInput: String,
-    onInputChanged: (String) -> Unit,
-    decision: CandyRuleDecision?,
-    onTest: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(FilterStudioTestTags.LiveTest),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                stringResource(R.string.filter_test_explanation),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            OutlinedTextField(
-                value = liveInput,
-                onValueChange = onInputChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.filter_test_request)) },
-                singleLine = true,
-            )
-            Button(
-                onClick = onTest,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.filter_test_action))
-            }
-            AnimatedContent(
-                targetState = decision,
-                transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) },
-                label = "Filter live decision",
-            ) { currentDecision ->
-                Text(
-                    text = when (currentDecision?.action) {
-                        CandyDecisionAction.Block -> stringResource(
-                            R.string.filter_test_blocked_by,
-                            currentDecision.rule.group,
-                        )
-                        CandyDecisionAction.Allow -> stringResource(
-                            R.string.filter_test_allowed_by,
-                            currentDecision.rule.group,
-                        )
-                        null -> stringResource(R.string.filter_test_no_match)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RuleTransferCard(onImport: () -> Unit, onExport: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                stringResource(R.string.filter_transfer_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                stringResource(R.string.filter_transfer_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedButton(
-                onClick = onImport,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(FilterStudioTestTags.ImportOpen),
-            ) {
-                Text(stringResource(R.string.filter_import))
-            }
-            OutlinedButton(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.filter_export))
-            }
-        }
-    }
-}
-
-@Composable
-private fun WebFilterListCard(onOpen: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                stringResource(R.string.filter_subscription),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                stringResource(R.string.filter_web_list_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-            )
-            Button(
-                onClick = onOpen,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(FilterStudioTestTags.WebList),
-            ) {
-                Text(stringResource(R.string.filter_web_list_action))
-            }
-        }
-    }
-}
-
-@Composable
-private fun FilterRuleCard(
-    rule: CandyRule,
-    profileLabel: String,
-    selected: Boolean,
-    onToggle: (Boolean) -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val color by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        animationSpec = spring(stiffness = 620f),
-        label = "Filter rule highlight",
-    )
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics { this.selected = selected },
-        shape = RoundedCornerShape(22.dp),
-        color = color,
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    rule.displayTarget(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    "${rule.action.label()} · ${rule.scopeLabel()} · ${rule.group}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    stringResource(
-                        R.string.filter_rule_origin_profile,
-                        rule.origin.label(),
-                        profileLabel,
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    stringResource(R.string.filter_hits, rule.hitCount),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                rule.sourceUrl?.let { source ->
-                    Text(
-                        source,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    if (rule.updatedAtMillis > 0L) {
-                        Text(
-                            stringResource(
-                                R.string.filter_updated,
-                                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
-                                    .format(Date(rule.updatedAtMillis)),
-                            ),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                }
-            }
-            val switchDescription = stringResource(
-                if (rule.active) {
-                    R.string.filter_rule_disable
-                } else {
-                    R.string.filter_rule_enable
-                },
-                rule.displayTarget(),
-            )
-            Switch(
-                checked = rule.active,
-                onCheckedChange = onToggle,
-                modifier = Modifier.semantics { contentDescription = switchDescription },
-            )
-            IconButton(onClick = onEdit) {
-                Icon(
-                    VolaIcons.Edit,
-                    stringResource(R.string.filter_edit_rule_target, rule.displayTarget()),
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    VolaIcons.Delete,
-                    stringResource(R.string.filter_delete_rule_target, rule.displayTarget()),
-                )
-            }
-        }
     }
 }
 
