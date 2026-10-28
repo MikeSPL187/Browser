@@ -56,6 +56,7 @@ internal fun SettingsHomePage(
     developerOptionsUnlocked: Boolean = false,
     onUnlockDeveloperOptions: (() -> Unit)? = null,
     hasTranslation: Boolean = false,
+    profileCard: (@Composable () -> Unit)? = null,
 ) {
     var searching by rememberSaveable { mutableStateOf(false) }
     if (searching) {
@@ -103,6 +104,7 @@ internal fun SettingsHomePage(
             onDismiss = onDismiss,
             developerOptionsUnlocked = developerOptionsUnlocked,
             onUnlockDeveloperOptions = onUnlockDeveloperOptions,
+            profileCard = profileCard,
         )
         return
     }

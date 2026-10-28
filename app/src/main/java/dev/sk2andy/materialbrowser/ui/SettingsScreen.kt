@@ -210,6 +210,8 @@ internal fun SettingsScreen(
     translationSettings: (@Composable (onBack: () -> Unit) -> Unit)? = null,
     /** Settings → Sync in v5 (V26, V27): the local transfer and the own server. */
     syncSettings: (@Composable (onBack: () -> Unit) -> Unit)? = null,
+    /** Under ui.v5 the profile card on top of the home (canvas «Settings»). */
+    homeProfileCard: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val workspaceAccent = profiles.firstOrNull { profile -> profile.id == activeProfileId }
@@ -247,6 +249,7 @@ internal fun SettingsScreen(
                     developerOptionsUnlocked = isDeveloperOptionsUnlocked,
                     onUnlockDeveloperOptions = onUnlockDeveloperOptions,
                     hasTranslation = translationSettings != null,
+                    profileCard = homeProfileCard,
                 )
 
                 SettingsDestination.Search -> SearchSettingsPage(

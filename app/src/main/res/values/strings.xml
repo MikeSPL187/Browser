@@ -2244,6 +2244,11 @@
     <string name="v5_profile_delete_last">The only profile on this phone can’t be deleted.</string>
     <string name="v5_profile_delete_unavailable">This profile can’t be deleted now: it is locked or kept in step with another device.</string>
     <string name="v5_profiles_choose">Choose profile</string>
+    <string name="v5_settings_profile_title">Profile “%1$s”</string>
+    <string name="v5_settings_profile_synced">Synced %1$s</string>
+    <string name="v5_settings_profile_sync_off">Sync is off</string>
+    <string name="v5_settings_profile_syncing">Syncing…</string>
+    <string name="v5_settings_profile_sync_failed">Last sync failed</string>
     <string name="v5_overview_next_profile">Next profile</string>
     <string name="v5_overview_previous_profile">Previous profile</string>
     <string name="v5_profile_untitled">Profile</string>

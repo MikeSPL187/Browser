@@ -406,6 +406,11 @@ internal fun BrowserSettingsOverlay(
                         onDismiss()
                     }
                 },
+                homeProfileCard = {
+                    BrowserSettingsProfileCardV5(controller) {
+                        onDestinationChanged(SettingsDestination.Sync)
+                    }
+                },
                 modifier = Modifier.predictiveBackSurface(
                         predictiveBackProgress,
                         predictiveBackEdgeSign,
