@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -80,11 +81,13 @@ fun V5PrivacyReport(
     onDismiss: () -> Unit,
     /** The report keeps anything at all: «Clear» deletes every kept day, not only the period's (PR-01). */
     hasData: Boolean = summary.total > 0,
+    /** A snapshot of the page under the sheet, for its glass ([V5Sheet]). */
+    backdrop: Bitmap? = null,
 ) {
     val title = stringResource(R.string.v5_report_title)
     val colors = V5Theme.colors
     var confirmClear by rememberSaveable { mutableStateOf(false) }
-    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title, backdrop = backdrop) {
         // The sheet's own close stays (section 9); the title below it is the screen's, in the large size.
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
             V5SheetCloseButton(onClose = onDismiss, modifier = Modifier.padding(top = V5Spacing.space2, end = V5Spacing.space1))

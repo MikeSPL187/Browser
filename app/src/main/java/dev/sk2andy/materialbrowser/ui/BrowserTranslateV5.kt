@@ -126,6 +126,7 @@ internal fun BrowserTranslateSheetV5(
     V5TranslateSheet(
         visible = visible,
         state = state,
+        backdrop = rememberPageBackdrop(controller, tab, visible),
         actions = V5TranslateSheetActions(
             onFromChange = { fromCode = it },
             onToChange = { toCode = it },

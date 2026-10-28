@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -138,6 +139,8 @@ fun V5TranslateSheet(
     state: V5TranslateSheetState,
     actions: V5TranslateSheetActions,
     onDismiss: () -> Unit,
+    /** A snapshot of the page under the sheet, for its glass ([V5Sheet]). */
+    backdrop: Bitmap? = null,
 ) {
     var page by rememberSaveable(visible) { mutableStateOf(V5TranslateRules.Page.Main) }
     val title = stringResource(R.string.v5_translate_title)
@@ -146,6 +149,7 @@ fun V5TranslateSheet(
         onDismiss = onDismiss,
         title = title,
         modifier = Modifier.testTag(V5TranslateTestTags.Sheet),
+        backdrop = backdrop,
     ) {
         // Back steps out of a language list before it closes the sheet.
         BackHandler(enabled = page != V5TranslateRules.Page.Main) { page = V5TranslateRules.Page.Main }

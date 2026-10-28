@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Bitmap
 import androidx.compose.ui.draw.clip
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -74,11 +75,13 @@ internal fun PermissionPromptSheet(
     prompt: PermissionPrompt,
     onChoice: (PermissionPromptChoice) -> Unit,
     onShown: () -> Unit = {},
+    /** A snapshot of the asking page, for the v5 sheet's glass. */
+    backdrop: Bitmap? = null,
 ) {
     LaunchedEffect(prompt.id) { onShown() }
     // V28, B9c: under v5 on a phone the one v5 prompt sheet; closing it does not allow.
     if (rememberDrawsV5()) {
-        PermissionPromptSheetV5(prompt, onChoice)
+        PermissionPromptSheetV5(prompt, onChoice, backdrop)
         return
     }
     ModalBottomSheet(
@@ -176,7 +179,7 @@ private fun PermissionPromptContent(
  * and where to change it later in small print.
  */
 @Composable
-private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (PermissionPromptChoice) -> Unit) {
+private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (PermissionPromptChoice) -> Unit, backdrop: Bitmap?) {
     val host = SiteConnectionRules.host(prompt.site.origin).ifEmpty { prompt.site.origin }
     val names = prompt.permissions.map { it.displayName() }.joinToString()
     val message = stringResource(R.string.permission_radar_request_message, host, names)
@@ -231,6 +234,7 @@ private fun PermissionPromptSheetV5(prompt: PermissionPrompt, onChoice: (Permiss
             },
             onDismiss = { onChoice(PermissionPromptChoice.Block) },
             testTag = PermissionRadarTestTags.Prompt,
+            backdrop = backdrop,
             leading = {
                 Box(
                     Modifier
