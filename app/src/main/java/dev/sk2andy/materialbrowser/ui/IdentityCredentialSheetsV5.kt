@@ -32,7 +32,6 @@ internal object IdentityCredentialSheetTestTags {
  */
 @Composable
 internal fun IdentityCredentialPromptSheets() {
-    if (!rememberDrawsV5()) return
     val activity = AndroidCredentialPromptHost.activityContext(LocalContext.current) ?: return
     val windowId = System.identityHashCode(activity)
     DisposableEffect(windowId) {
