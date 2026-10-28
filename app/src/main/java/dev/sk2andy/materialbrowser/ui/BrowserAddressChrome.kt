@@ -581,6 +581,10 @@ internal fun BoxScope.BrowserAddressChrome(
             onHighlightChange = onHighlightedSuggestionChanged,
             overStart = showInteractiveBlankStart,
             commandFeedback = commandFeedback,
+            onFindOnPage = { query ->
+                onAddressEditorDismiss()
+                if (controller.openFindInPage()) controller.updateFindInPageQuery(query)
+            },
         )
     }
     // V10a: the v5 overview has its own toolbar, so no bar shows while it opens or is open.

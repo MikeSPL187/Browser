@@ -1,13 +1,16 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import dev.sk2andy.materialbrowser.browser.AddressResolver
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
+import dev.sk2andy.materialbrowser.browser.commands.CommandMatcher
 import dev.sk2andy.materialbrowser.data.AddressSuggestionSource
+import dev.sk2andy.materialbrowser.recall.RecallRules
 
 /*
  * How the v5 address editor lays out suggestions (system-v5.md, section 9): the list grows up from
  * the field, the best match sits right above it, then open tabs, favorites, history, page memory,
- * searches and, farthest away, commands. The suggestions themselves are the current ones; only
- * their order and grouping are new.
+ * searches, commands and, farthest away, «Find on page». The suggestions themselves are the
+ * current ones; only their order and grouping are new.
  */
 
 /** Groups of the v5 list, from the field upwards. */
@@ -25,12 +28,14 @@ data class V5SuggestionSection(
     val items: List<AddressSuggestionItem>,
 )
 
-/** [best] right above the field, then [sections] from the field upwards. */
+/** [best] right above the field, then [sections] from the field upwards, then [findOnPage]. */
 data class V5SuggestionLayout(
     val best: AddressSuggestionItem?,
     val sections: List<V5SuggestionSection>,
+    /** The text «Find on page» looks for in the open page; null hides the row. */
+    val findOnPage: String? = null,
 ) {
-    val isEmpty: Boolean get() = best == null && sections.isEmpty()
+    val isEmpty: Boolean get() = best == null && sections.isEmpty() && findOnPage == null
 
     /** Every suggestion from the field upwards: the order arrow keys walk. */
     val fromField: List<AddressSuggestionItem>
@@ -65,7 +70,19 @@ object V5SuggestionLayoutRules {
             ?: items.firstOrNull { it is AddressSuggestionItem.Recall }
     }
 
-    fun layout(items: List<AddressSuggestionItem>, query: String): V5SuggestionLayout {
+    /**
+     * What «Find on page» looks for: the typed text, while a page is open ([pageUrl]) and the text
+     * is neither that page's own address (the editor opens on it) nor a command.
+     */
+    fun findOnPage(query: String, pageUrl: String?): String? {
+        val text = query.trim()
+        if (text.isEmpty() || pageUrl == null) return null
+        if (CommandMatcher.isExplicitCommandQuery(text) || RecallRules.isExplicitCommand(text)) return null
+        if (text == pageUrl || text == AddressResolver.displayText(pageUrl)) return null
+        return text
+    }
+
+    fun layout(items: List<AddressSuggestionItem>, query: String, pageUrl: String? = null): V5SuggestionLayout {
         // The list keys rows by stableId and fails on a repeat: the first of each stays (А-6).
         val unique = items.distinctBy { it.stableId }
         val best = best(unique, query)
@@ -75,7 +92,7 @@ object V5SuggestionLayoutRules {
                 .takeIf { it.isNotEmpty() }
                 ?.let { V5SuggestionSection(group, it) }
         }
-        return V5SuggestionLayout(best, sections)
+        return V5SuggestionLayout(best, sections, findOnPage(query, pageUrl))
     }
 
     /**

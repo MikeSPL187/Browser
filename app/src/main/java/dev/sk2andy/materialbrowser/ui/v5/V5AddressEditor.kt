@@ -107,6 +107,7 @@ object V5EditorTestTags {
     const val Field = "v5_address_editor_field"
     const val Cancel = "v5_address_editor_cancel"
     const val Clipboard = "v5_address_editor_clipboard"
+    const val FindOnPage = "v5_address_editor_find_on_page"
     fun row(item: AddressSuggestionItem) = "v5_address_suggestion:${item.stableId}"
 }
 
@@ -142,6 +143,8 @@ internal fun V5AddressEditor(
     onHighlight: (AddressSuggestionItem?) -> Unit = {},
     /** A command's answer, a line right above the field while the editor stays open. */
     notice: V5CommandNotice? = null,
+    /** «Find on page» was tapped: search the open page for the given text. */
+    onFindOnPage: (String) -> Unit = {},
 ) {
     val colors = V5Theme.colors
     // The morph (system-v5.md section 7, canvas «MotionAddress»): the editor rises from the bar's
@@ -187,6 +190,7 @@ internal fun V5AddressEditor(
                     onSelect = onSelect,
                     onFill = onFill,
                     onClipboard = onClipboard,
+                    onFindOnPage = onFindOnPage,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
@@ -348,6 +352,7 @@ private fun SuggestionList(
     onSelect: (AddressSuggestionItem) -> Unit,
     onFill: (AddressSuggestionItem) -> Unit,
     onClipboard: () -> Unit,
+    onFindOnPage: (String) -> Unit,
     modifier: Modifier,
 ) {
     val query = state.value.text
@@ -390,6 +395,52 @@ private fun SuggestionList(
             }
             header(key = section.group.name, section.group.title())
         }
+        // Farthest from the field (system-v5.md section 9): the page itself is the last place to look.
+        layout.findOnPage?.let { text ->
+            item(key = "find_on_page") { FindOnPageRow(text) { onFindOnPage(text) } }
+        }
+    }
+}
+
+/**
+ * «Find on page: «…»», its own card above the groups (canvas «Address»). The canvas also counts the
+ * matches; counting would run the page's find while the editor covers it, highlighting and
+ * scrolling the page under it, so the count first shows in the find bar.
+ */
+@Composable
+private fun FindOnPageRow(text: String, onClick: () -> Unit) {
+    val colors = V5Theme.colors
+    val shape = V5Theme.shapes.s
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = V5Spacing.space2, end = V5Spacing.space2, bottom = V5Spacing.space3)
+            .heightIn(min = V5Sizes.suggestionRow)
+            .clip(shape)
+            .background(colors.surface, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = V5Spacing.space4, end = V5Spacing.space4)
+            .testTag(V5EditorTestTags.FindOnPage),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(V5Spacing.space3),
+    ) {
+        Box(
+            Modifier
+                .size(V5Sizes.suggestionTile)
+                .clip(V5Theme.shapes.xs)
+                .background(colors.fill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(VolaIcons.Search, contentDescription = null, tint = colors.labelSecondary, modifier = Modifier.size(V5Sizes.iconSmall))
+        }
+        Text(
+            stringResource(R.string.v5_suggestion_find_on_page, text),
+            style = V5Theme.type.callout,
+            color = colors.label,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

@@ -231,11 +231,15 @@ internal fun BrowserV5AddressEditor(
     overStart: Boolean = false,
     /** A command's answer while the editor stays open: «No such command», «New tab». */
     commandFeedback: AddressCommandFeedback? = null,
+    /** «Find on page» in the list: search the open page for the typed text. */
+    onFindOnPage: (String) -> Unit = {},
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
-    val layout = remember(suggestionItems, value.text) {
-        V5SuggestionLayoutRules.layout(suggestionItems, value.text)
+    // Only a page can be searched: not a new tab, whose start shows through the editor.
+    val pageUrl = selectedTab.url.takeUnless { it == BLANK_URL || overStart }
+    val layout = remember(suggestionItems, value.text, pageUrl) {
+        V5SuggestionLayoutRules.layout(suggestionItems, value.text, pageUrl)
     }
     VolaV5Theme(dark = darkShell, accent = accent, privateBrowsing = selectedTab.isIncognito) {
         V5AddressEditor(
@@ -256,6 +260,7 @@ internal fun BrowserV5AddressEditor(
             onClipboard = onClipboard,
             onCancel = onCancel,
             onHighlight = { item -> onHighlightChange(suggestionItems.indexOf(item)) },
+            onFindOnPage = onFindOnPage,
             notice = commandFeedback?.let { feedback ->
                 V5CommandNotice(
                     text = feedback.localizedText(),
