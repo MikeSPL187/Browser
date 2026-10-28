@@ -88,6 +88,14 @@ object V5Sizes {
     const val PINNED_MAX = 12
     val tabGridGap: Dp = 12.dp
     const val TAB_COLUMNS_PHONE = 2
+    /** Wider windows fit more tab cards a row, none narrower than this (a tablet, a phone on its side). */
+    val tabCardMinWidth: Dp = 180.dp
+
+    /**
+     * On a window wider than a phone (a tablet), v5 keeps a phone's column of this width, centered:
+     * the bar, the address editor, sheets and the new tab (owner, 28.10: no tablet layout of its own).
+     */
+    val wideColumnMax: Dp = 640.dp
 
     // Address editor (system-v5.md, section 9).
     /** A suggestion row; the best match is a little taller. */

@@ -202,4 +202,13 @@ class V5TabOverviewRulesTest {
         assertEquals(3, V5TabOverviewRules.entranceOrder(index = 7, selectedIndex = 4))
         assertEquals(5, V5TabOverviewRules.entranceOrder(index = 5, selectedIndex = -1))
     }
+
+    @Test
+    fun `a phone shows two cards a row, a wider window more, never fewer than two`() {
+        // In px at density 1: cards at least 180 wide, 12 apart.
+        assertEquals(2, V5TabOverviewRules.columns(availableWidthPx = 328, minCardPx = 180, gapPx = 12))
+        assertEquals(2, V5TabOverviewRules.columns(availableWidthPx = 288, minCardPx = 180, gapPx = 12))
+        assertEquals(4, V5TabOverviewRules.columns(availableWidthPx = 768, minCardPx = 180, gapPx = 12))
+        assertEquals(6, V5TabOverviewRules.columns(availableWidthPx = 1248, minCardPx = 180, gapPx = 12))
+    }
 }

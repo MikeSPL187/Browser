@@ -53,6 +53,8 @@ private fun OverviewPreview(
 }
 
 @Preview(name = "Overview · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+/** A tablet keeps v5: more cards a row (owner, 28.10). */
+@Preview(name = "Overview · light, tablet", widthDp = 840, heightDp = 1180)
 @Composable
 private fun V5OverviewLightPreview() {
     VolaV5Theme(dark = false) { OverviewPreview() }

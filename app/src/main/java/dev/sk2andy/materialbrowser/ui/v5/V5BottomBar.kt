@@ -247,6 +247,9 @@ internal fun BoxScope.V5BottomBar(
                     if (expanded > 0f) {
                         Row(
                             Modifier
+                                // The strip spans the window; its row keeps a phone's width on a tablet.
+                                .align(Alignment.TopCenter)
+                                .widthIn(max = V5Sizes.wideColumnMax)
                                 .fillMaxWidth()
                                 .wrapContentHeight(Alignment.Top, unbounded = true)
                                 .heightIn(min = fullHeight)

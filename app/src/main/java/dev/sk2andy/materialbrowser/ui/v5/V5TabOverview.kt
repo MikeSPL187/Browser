@@ -51,6 +51,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
@@ -229,7 +230,7 @@ fun V5TabOverview(
                     val openedAt = remember { SystemClock.uptimeMillis() }
                     val selectedIndex = items.indexOfFirst { item -> item is V5OverviewItem.Card && cardsById[item.id]?.selected == true }
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
+                        columns = V5OverviewColumns,
                         // The grid opens on the selected card, so the page's card is on screen for the hero.
                         state = rememberLazyGridState(
                             initialFirstVisibleItemIndex = V5OverviewGroupRules.indexOf(
@@ -806,3 +807,11 @@ private fun rememberOverviewEntrance(order: Int, openedAt: Long): Animatable<Flo
     return entrance
 }
 
+/** Two cards a row on a phone, more on a wider window ([V5TabOverviewRules.columns]); cells share the rest. */
+private object V5OverviewColumns : GridCells {
+    override fun Density.calculateCrossAxisCellSizes(availableSize: Int, spacing: Int): List<Int> {
+        val count = V5TabOverviewRules.columns(availableSize, V5Sizes.tabCardMinWidth.roundToPx(), spacing)
+        val cells = availableSize - spacing * (count - 1)
+        return List(count) { index -> cells / count + if (index < cells % count) 1 else 0 }
+    }
+}
