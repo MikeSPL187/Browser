@@ -113,6 +113,15 @@ private fun V5BarCollapsedPreview() {
     VolaV5Theme(dark = true) { BarPreview(previewState("polar-notes.ru"), collapsed = true) }
 }
 
+@Preview(name = "v5 bar · collapsed, HTTP, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Preview(name = "v5 bar · collapsed, HTTP, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5BarCollapsedHttpPreview() {
+    VolaV5Theme(dark = false) {
+        BarPreview(previewState("polar-notes.ru").copy(connectionKind = SiteConnectionKind.Http), collapsed = true)
+    }
+}
+
 @Preview(name = "v5 bar · site colors", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP * 3)
 @Composable
 private fun V5BarSiteColorPreview() {
