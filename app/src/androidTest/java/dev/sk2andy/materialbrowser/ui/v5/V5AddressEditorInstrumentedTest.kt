@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -36,13 +37,13 @@ class V5AddressEditorInstrumentedTest {
     private val page = AddressSuggestionItem.Navigation(AddressSuggestion("https://polar-notes.example", "Polar notes"))
     private val search = AddressSuggestionItem.Search("polar night")
 
-    private fun show() {
+    private fun show(pageUrl: String? = null) {
         composeRule.setContent {
             VolaV5Theme {
                 V5AddressEditor(
                     state = V5EditorState(
                         value = TextFieldValue("pol"),
-                        layout = V5SuggestionLayoutRules.layout(listOf(page, search), query = "pol"),
+                        layout = V5SuggestionLayoutRules.layout(listOf(page, search), query = "pol", pageUrl = pageUrl),
                     ),
                     onValueChange = {},
                     onSubmit = { calls += "submit $it" },
@@ -50,6 +51,7 @@ class V5AddressEditorInstrumentedTest {
                     onFill = { calls += "fill ${it.stableId}" },
                     onClipboard = { calls += "clipboard" },
                     onCancel = { calls += "cancel" },
+                    onFindOnPage = { calls += "find $it" },
                 )
             }
         }
@@ -64,6 +66,24 @@ class V5AddressEditorInstrumentedTest {
         composeRule.onNodeWithTag(V5EditorTestTags.row(page)).performTouchInput { longClick() }
 
         assertEquals(listOf("select ${page.stableId}", "fill ${page.stableId}"), calls)
+    }
+
+    @Test
+    fun overAPageTheTypedTextIsFoundOnIt() {
+        show(pageUrl = "https://polar-notes.example/route")
+
+        composeRule.onNodeWithTag(V5EditorTestTags.FindOnPage)
+            .assertTextEquals(context.getString(R.string.v5_suggestion_find_on_page, "pol"))
+            .performClick()
+
+        assertEquals(listOf("find pol"), calls)
+    }
+
+    @Test
+    fun withoutAPageThereIsNothingToFind() {
+        show()
+
+        composeRule.onNodeWithTag(V5EditorTestTags.FindOnPage).assertDoesNotExist()
     }
 
     @Test

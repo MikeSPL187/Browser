@@ -9,6 +9,7 @@ import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.AddressSuggestionSource
 import dev.sk2andy.materialbrowser.recall.RecallMatch
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 address editor as canvas screen «c»: «пол» typed, light and dark; empty with a copied link; private. */
@@ -41,7 +42,8 @@ private fun EditorPreview(text: String, items: List<AddressSuggestionItem>, clip
     V5AddressEditor(
         state = V5EditorState(
             value = TextFieldValue(text, TextRange(text.length)),
-            layout = V5SuggestionLayoutRules.layout(items, text),
+            // Over an open page, so «Find on page» shows farthest from the field.
+            layout = V5SuggestionLayoutRules.layout(items, text, pageUrl = PREVIEW_PAGE_URL),
             clipboard = clipboard,
         ),
         onValueChange = {},
@@ -77,8 +79,16 @@ private fun V5EditorPrivatePreview() {
     VolaV5Theme(privateBrowsing = true) { EditorPreview("пол", PreviewItems.drop(2)) }
 }
 
+@Preview(name = "Editor · accent", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5EditorAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Green) { EditorPreview("пол", PreviewItems) }
+}
+
 @Preview(name = "Editor · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
 @Composable
 private fun V5EditorLightPreviewLargeFont() {
     VolaV5Theme(dark = false) { EditorPreview("пол", PreviewItems) }
 }
+
+private const val PREVIEW_PAGE_URL = "https://polar-notes.example/route"

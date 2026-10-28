@@ -114,4 +114,26 @@ class V5SuggestionLayoutTest {
         assertEquals(keys.distinct(), keys)
         assertTrue(layout.sections.flatMap { it.items }.contains(recall))
     }
+
+    @Test
+    fun `over a page the typed text can be found on it, farthest from the field`() {
+        val layout = V5SuggestionLayoutRules.layout(listOf(history, search), query = " пол ", pageUrl = "https://polar-notes.ru/noch")
+        assertEquals("пол", layout.findOnPage)
+    }
+
+    @Test
+    fun `find on page alone still makes a list`() {
+        val layout = V5SuggestionLayoutRules.layout(emptyList(), query = "пол", pageUrl = "https://polar-notes.ru/noch")
+        assertEquals(false, layout.isEmpty)
+    }
+
+    @Test
+    fun `nothing to find without a page, without text, in the page's own address or in a command`() {
+        val page = "https://polar-notes.ru/noch"
+        assertNull(V5SuggestionLayoutRules.findOnPage("пол", pageUrl = null))
+        assertNull(V5SuggestionLayoutRules.findOnPage("  ", pageUrl = page))
+        assertNull(V5SuggestionLayoutRules.findOnPage(page, pageUrl = page))
+        assertNull(V5SuggestionLayoutRules.findOnPage("> reload", pageUrl = page))
+        assertNull(V5SuggestionLayoutRules.layout(listOf(history), query = "пол").findOnPage)
+    }
 }
