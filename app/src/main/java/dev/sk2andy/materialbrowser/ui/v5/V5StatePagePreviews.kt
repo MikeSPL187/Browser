@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The one v5 lock screen (V28, B13): private tabs and a locked profile. Preview text is not localized. */
@@ -50,6 +51,38 @@ private fun V5ProfileLockUnavailablePreview() {
             title = "Профиль закрыт",
             message = "На этом устройстве нет блокировки экрана — включите её в настройках Android.",
             primary = V5StateAction("Разблокировать", {}, icon = VolaIcons.Fingerprint, enabled = false),
+        )
+    }
+}
+
+@Preview(name = "Locked profile · accent", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5ProfileLockAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Green) {
+        V5StatePage(
+            icon = VolaIcons.Lock,
+            title = "Профиль «Работа» закрыт",
+            message = "Подтвердите, что это вы, чтобы открыть его вкладки.",
+            primary = V5StateAction("Разблокировать", {}, icon = VolaIcons.Fingerprint),
+            secondary = listOf(V5StateAction("Другой профиль", {})),
+        )
+    }
+}
+
+/** At 200 % the three actions still fit under the text and scroll with it, not over it. */
+@Preview(name = "Locked private tabs · largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
+@Composable
+private fun V5PrivateLockLargeFontPreview() {
+    VolaV5Theme(dark = true, privateBrowsing = true) {
+        V5StatePage(
+            icon = VolaIcons.Fingerprint,
+            title = "Частные вкладки закрыты",
+            message = "3 частные вкладки ждут, пока вы подтвердите, что это вы.",
+            primary = V5StateAction("Разблокировать", {}, icon = VolaIcons.Fingerprint),
+            secondary = listOf(
+                V5StateAction("Обычные вкладки", {}),
+                V5StateAction("Закрыть 3 частные вкладки", {}, destructive = true),
+            ),
         )
     }
 }
