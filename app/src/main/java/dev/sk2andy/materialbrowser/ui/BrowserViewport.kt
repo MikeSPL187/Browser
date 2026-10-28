@@ -69,7 +69,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -306,8 +305,6 @@ internal fun BrowserViewport(
     tabOverviewVisible: Boolean,
     onLiveFrame: (String) -> Unit,
     onFavorite: (String) -> Unit,
-    blankTabModeProgress: Float,
-    blankTabModeRevealOrigin: Offset,
     onRetry: () -> Boolean,
     onBlurTargetAttached: (BlurTarget) -> Unit,
     onBlurTargetReleased: (BlurTarget) -> Unit,
@@ -491,7 +488,6 @@ internal fun BrowserViewport(
         // Read here, outside the blur target: its nested ComposeView gets no window insets, so a
         // new tab measured inside it ran under the status bar while the chrome was frosted.
         val newTabSafeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
-        val newTabSystemBarsPadding = WindowInsets.systemBars.asPaddingValues()
         val newTabBottomPadding = NewTabLayoutRules.bottomContentPadding(
             addressBarDocked = controller.addressBar.isDocked && controller.addressBar.isDockingEnabled,
             addressBarHeight = addressBarExpandedHeight(controller.appearanceSettings.addressBarStyle),
@@ -518,52 +514,57 @@ internal fun BrowserViewport(
                             controller.protectionReport.refresh()
                         }
                     }
-                    NewTabPage(
-                        essentials = essentials.entriesFor(profileId),
-                        essentialIcons = essentials.iconsByUrl,
-                        incognito = selectedTab.isIncognito,
-                        modeProgress = blankTabModeProgress,
-                        revealOriginInRoot = blankTabModeRevealOrigin,
-                        onOpenEssential = onFavorite,
-                        editor = rememberNewTabEssentialsEditor(controller, profileId),
-                        explicitSafeDrawingPadding = newTabSafeDrawingPadding,
-                        explicitSystemBarsPadding = newTabSystemBarsPadding,
-                        bottomContentPadding = newTabBottomPadding,
-                        privateTab = NewTabPrivate(
-                            storage = PrivateTabRules.storage(
-                                engine = controller.browserEngineKind,
-                                profilesSupported = controller.isProfileIsolationSupported,
-                            ),
-                            count = controller.tabs.count(BrowserTab::isIncognito),
-                            onCloseAll = { controller.closeAllPrivateTabs() },
-                            lock = controller.privateTabLockRow(),
-                        ),
-                        protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
-                            NewTabProtection(
-                                week = report.week,
-                                onClear = report::clear,
-                                onHideCard = { report.updateCardVisible(false) },
-                                summary = report::summary,
-                            )
-                        },
-                        recentTabs = controller.activeTabs
-                            .filter { tab ->
-                                tab.id != selectedTab.id &&
-                                    !tab.isIncognito &&
-                                    tab.url != BLANK_URL
-                            }
-                            .sortedByDescending(BrowserTab::lastAccessedAt)
-                            .take(NEW_TAB_RECENT_TAB_COUNT),
-                        recentTabFavicons = controller.favicons,
-                        onRecentTab = controller::selectTab,
-                        // The tab's own workspace, synced ones included; a workspace without a
-                        // name of its own shows its localized default.
-                        title = controller.profiles
-                            .firstOrNull { profile -> profile.id == profileId }
-                            ?.workspaceDisplayName(),
-                        titleIconKey = controller.profiles.firstOrNull { profile -> profile.id == profileId }?.emoji,
-                        fresh = rememberNewTabFreshStart(controller, profileId, selectedTab.id),
+                    val newTabPadding = PaddingValues(
+                        top = newTabSafeDrawingPadding.calculateTopPadding(),
+                        bottom = newTabSafeDrawingPadding.calculateBottomPadding() + newTabBottomPadding,
                     )
+                    // The regular new tab (V13a) or the private one (V14a).
+                    if (selectedTab.isIncognito) {
+                        BrowserPrivateNewTabV5(
+                            privateTab = NewTabPrivate(
+                                storage = PrivateTabRules.storage(
+                                    engine = controller.browserEngineKind,
+                                    profilesSupported = controller.isProfileIsolationSupported,
+                                ),
+                                count = controller.tabs.count(BrowserTab::isIncognito),
+                                onCloseAll = { controller.closeAllPrivateTabs() },
+                                lock = controller.privateTabLockRow(),
+                            ),
+                            contentPadding = newTabPadding,
+                        )
+                    } else {
+                        val profile = controller.profiles.firstOrNull { it.id == profileId }
+                        BrowserNewTabV5(
+                            essentials = essentials.entriesFor(profileId),
+                            essentialIcons = essentials.iconsByUrl,
+                            onOpenEssential = onFavorite,
+                            editor = rememberNewTabEssentialsEditor(controller, profileId),
+                            // The tab's own workspace, synced ones included; a workspace without a
+                            // name of its own shows its localized default.
+                            profileLabel = profile?.workspaceDisplayName(),
+                            profileIconKey = profile?.emoji,
+                            recentTabs = controller.activeTabs
+                                .filter { tab ->
+                                    tab.id != selectedTab.id &&
+                                        !tab.isIncognito &&
+                                        tab.url != BLANK_URL
+                                }
+                                .sortedByDescending(BrowserTab::lastAccessedAt)
+                                .take(NEW_TAB_RECENT_TAB_COUNT),
+                            recentTabFavicons = controller.favicons,
+                            onRecentTab = controller::selectTab,
+                            protection = controller.protectionReport.takeIf { it.isCardVisible }?.let { report ->
+                                NewTabProtection(
+                                    week = report.week,
+                                    onClear = report::clear,
+                                    onHideCard = { report.updateCardVisible(false) },
+                                    summary = report::summary,
+                                )
+                            },
+                            contentPadding = newTabPadding,
+                            fresh = rememberNewTabFreshStart(controller, profileId, selectedTab.id),
+                        )
+                    }
                 }
             }
         }

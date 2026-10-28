@@ -60,7 +60,7 @@ class PageErrorFeedbackInstrumentedTest {
     }
 
     @Test
-    fun offlinePageOffersRetryAndNetworkSettings() {
+    fun offlinePageOffersRetryAndNetworkChecks() {
         val reloads = AtomicInteger()
         composeRule.setContent {
             MaterialBrowserTheme {
@@ -79,7 +79,7 @@ class PageErrorFeedbackInstrumentedTest {
                     LiveRegionMode.Polite,
                 ),
             )
-        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.NetworkSettings).assertExists()
+        composeRule.onNodeWithTag(PageErrorFeedbackTestTags.CheckWifi).assertExists()
         composeRule.onNodeWithTag(PageErrorFeedbackTestTags.Retry).performClick()
 
         assertEquals(1, reloads.get())

@@ -79,16 +79,9 @@ internal fun rememberBrowserPageFrames(
         chromeVisible &&
         !controller.isActiveProfileLocked &&
         !controller.privateTabsLock.hides(companion)
-    // v5 (ui.v5 on a phone; a tablet stays on v4) has no page card: the page runs edge to edge
-    // above the opaque bar strip.
-    val drawsV5 = rememberDrawsV5()
-    // Split View is always framed: two cards on the aura, whatever the shell's style.
-    val contentFramed = splitShown || !drawsV5 && BrowserContentFrameRules.isFramed(
-        chromeStyle = controller.appearanceSettings.chromeStyle,
-        browserChromeVisible = chromeVisible,
-        isBlankPage = selectedTab.url == BLANK_URL,
-        compactMode = controller.addressBar.compactMode,
-    )
+    // v5 has no page card: the page runs edge to edge above the opaque bar strip. Split View alone
+    // is framed: two cards on the aura.
+    val contentFramed = splitShown
     // In full immersive mode the system bars only come over the page for a moment (with the
     // keyboard, or a swipe from the edge); counting them moved the page by a navigation bar (#317).
     val frameSafeInsets = if (controller.isFullImmersiveModeEnabled) {

@@ -132,19 +132,16 @@ internal fun ColumnScope.AppearanceMainSections(
             onSelect = { mode -> onSettingsChanged(settings.copy(appearanceMode = mode)) },
         )
     }
-    val drawsV5 = rememberDrawsV5()
-    if (drawsV5) {
-        // The v5 bar's site color (system-v5.md, section 1.3); moves to the v5 settings with them.
-        var siteTint by rememberV5Preference(V5SiteTintSetting)
-        Spacer(Modifier.height(VolaAppearance.sectionGap))
-        SettingsSwitch(
-            title = stringResource(R.string.settings_v5_site_tint),
-            subtitle = stringResource(R.string.settings_v5_site_tint_summary),
-            checked = siteTint,
-            onCheckedChange = { siteTint = it },
-            modifier = Modifier.testTag(AppearanceMainTestTags.SiteTint),
-        )
-    }
+    // The v5 bar's site color (system-v5.md, section 1.3); moves to the v5 settings with them.
+    var siteTint by rememberV5Preference(V5SiteTintSetting)
+    Spacer(Modifier.height(VolaAppearance.sectionGap))
+    SettingsSwitch(
+        title = stringResource(R.string.settings_v5_site_tint),
+        subtitle = stringResource(R.string.settings_v5_site_tint_summary),
+        checked = siteTint,
+        onCheckedChange = { siteTint = it },
+        modifier = Modifier.testTag(AppearanceMainTestTags.SiteTint),
+    )
     Spacer(Modifier.height(VolaAppearance.sectionGap))
     ThemesEntry(settings, workspaceAccent, onOpenThemes)
 }
