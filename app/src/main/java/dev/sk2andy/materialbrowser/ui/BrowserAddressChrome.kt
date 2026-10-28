@@ -44,6 +44,8 @@ import dev.sk2andy.materialbrowser.browser.ClipboardOfferRules
 import dev.sk2andy.materialbrowser.browser.cast.CastUiState
 import dev.sk2andy.materialbrowser.browser.commands.AddressSuggestionItem
 import kotlin.math.absoluteValue
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaMotion
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Haptic
@@ -362,7 +364,7 @@ internal fun BoxScope.BrowserAddressChrome(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 88.dp)
+                .padding(bottom = V5Sizes.bar + V5Spacing.space2)
                 .zIndex(10f),
         )
     }

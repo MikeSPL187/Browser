@@ -27,7 +27,7 @@ internal enum class SettingsLayer {
 internal object SettingsLayerRules {
     /**
      * Whether settings speak for the v5 interface: whenever the flag is on, since v5 draws the
-     * browser on every width ([AddressBarWideLayoutRules.isWide]).
+     * browser on every width.
      */
     @Suppress("UNUSED_PARAMETER")
     fun speaksForV5(flag: Boolean, smallestWidthDp: Float): Boolean = flag
