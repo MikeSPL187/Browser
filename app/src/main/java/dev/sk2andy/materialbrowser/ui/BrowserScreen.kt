@@ -1419,8 +1419,6 @@ internal fun BrowserScreen(
                             addressEditorVisible = false
                             controller.submitAddress(url)
                         },
-                        blankTabModeProgress = blankTabModeProgress,
-                        blankTabModeRevealOrigin = blankTabModeRevealOrigin,
                         onRetry = controller::retryFailedPage,
                         onBlurTargetAttached = { target -> browserContentBlurTarget = target },
                         onBlurTargetReleased = { target ->
@@ -1848,15 +1846,8 @@ internal fun BrowserScreen(
             pendingCommand = null
             runCommand(command)
         },
-        addressNewTabButtonBounds = addressNewTabButtonBounds,
         pendingCapsuleDelete = pendingCapsuleDelete,
         onPendingCapsuleDeleteDismiss = { pendingCapsuleDelete = null },
-        onFavoriteLink = { url, title ->
-            controller.toggleContextLinkFavorite(url, title)?.let(showFavoriteMutation)
-        },
-        onSnoozeLink = { url, title, sourceTabId ->
-            pendingLinkSnooze = PendingLinkSnooze(url, title, sourceTabId)
-        },
     ) }
     StartupComposition("FirefoxExtensionChrome") { FirefoxExtensionChrome(controller) }
 }
