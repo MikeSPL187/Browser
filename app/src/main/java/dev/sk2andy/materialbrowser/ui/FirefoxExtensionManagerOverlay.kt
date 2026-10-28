@@ -2,30 +2,20 @@
 
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,8 +39,6 @@ import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionPermissionRequest
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import kotlinx.coroutines.flow.collect
-
 internal object FirefoxExtensionManagerTestTags {
     const val Overlay = "firefox_extension_manager"
     const val InstallUrl = "gecko_extension_install_url"
@@ -72,91 +60,17 @@ internal fun FirefoxExtensionManagerOverlay(
     onPermissionDecision: (Boolean, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    if (rememberSettingsUiV5()) {
-        FirefoxExtensionManagerV5(
-            state = state,
-            onInstall = onInstall,
-            onSetEnabled = onSetEnabled,
-            onSetPrivate = onSetPrivate,
-            onUpdate = onUpdate,
-            onUninstall = onUninstall,
-            onOpenOptionsPage = onOpenOptionsPage,
-            onPermissionDecision = onPermissionDecision,
-            onDismiss = onDismiss,
-        )
-        return
-    }
-    var installDialogVisible by remember { mutableStateOf(false) }
-    PredictiveBackHandler(enabled = true) { events ->
-        events.collect { }
-        onDismiss()
-    }
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(FirefoxExtensionManagerTestTags.Overlay),
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(
-            modifier = Modifier
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
-        ) {
-            ExtensionManagerHeader(
-                canManage = state.canManage,
-                onInstall = { installDialogVisible = true },
-                onDismiss = onDismiss,
-            )
-            if (state.busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            if (state.managementContext.isPrivate) {
-                ExtensionManagerMessage(R.string.gecko_extension_private_management_disabled)
-            }
-            state.message?.let { message -> ExtensionManagerMessage(extensionManagerMessageRes(message)) }
-            if (state.snapshot.extensions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.gecko_extensions_empty),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.snapshot.extensions, key = GeckoExtension::id) { extension ->
-                        GeckoExtensionRow(
-                            extension = extension,
-                            canManage = state.canManage,
-                            onOpenOptionsPage = { onOpenOptionsPage(extension) },
-                            onSetEnabled = { onSetEnabled(extension, it) },
-                            onSetPrivate = { onSetPrivate(extension, it) },
-                            onUpdate = { onUpdate(extension) },
-                            onUninstall = { onUninstall(extension) },
-                        )
-                        HorizontalDivider()
-                    }
-                }
-            }
-        }
-    }
-
-    if (installDialogVisible) {
-        GeckoExtensionInstallDialog(
-            onInstall = { url ->
-                installDialogVisible = false
-                onInstall(url)
-            },
-            onDismiss = { installDialogVisible = false },
-        )
-    }
-    state.permissionRequest?.let { request ->
-        GeckoExtensionPermissionDialog(
-            request = request,
-            onDecision = onPermissionDecision,
-        )
-    }
+    FirefoxExtensionManagerV5(
+        state = state,
+        onInstall = onInstall,
+        onSetEnabled = onSetEnabled,
+        onSetPrivate = onSetPrivate,
+        onUpdate = onUpdate,
+        onUninstall = onUninstall,
+        onOpenOptionsPage = onOpenOptionsPage,
+        onPermissionDecision = onPermissionDecision,
+        onDismiss = onDismiss,
+    )
 }
 
 @Composable
