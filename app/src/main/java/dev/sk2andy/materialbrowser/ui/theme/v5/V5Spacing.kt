@@ -200,6 +200,14 @@ object V5Sizes {
     val readerThemeSwatch: Dp = 52.dp
     val readerRing: Dp = 2.dp
 
+    // Listening mini player (canvas screen «Reader»): the row, its round play button, the line of
+    // the article said so far and the speed capsule with its outline.
+    val listenRow: Dp = 68.dp
+    val listenPlay: Dp = 44.dp
+    val listenProgress: Dp = 3.dp
+    val listenSpeed: Dp = 32.dp
+    val listenSpeedBorder: Dp = 1.dp
+
     // A Firefox extension's popup in a v5 sheet: room for a small panel, never past the screen.
     val extensionPopupMin: Dp = 160.dp
     val extensionPopupMax: Dp = 560.dp

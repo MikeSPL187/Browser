@@ -492,14 +492,15 @@ internal fun v5BarDomain(url: String): String? {
 
 /** The bar's colors after the site tint (system-v5.md, section 1.3). */
 @Immutable
-private data class V5BarColors(
+internal data class V5BarColors(
     val container: Color,
     val onTint: Color,
     val onTintSecondary: Color,
     val field: Color,
 )
 
-private val LocalV5BarColors = staticCompositionLocalOf {
+/** The bar's colors, for what the bar hosts above itself (the listening mini player). */
+internal val LocalV5BarColors = staticCompositionLocalOf {
     V5BarColors(Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified)
 }
 

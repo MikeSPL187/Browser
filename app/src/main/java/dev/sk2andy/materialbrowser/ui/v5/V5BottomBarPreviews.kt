@@ -136,13 +136,39 @@ private fun V5BarListeningPreview() {
     VolaV5Theme(dark = false) {
         BarPreview(
             previewState("polar-notes.ru"),
-            listen = V5ListenRowState(
-                title = "Как полярники готовятся к долгой зимовке",
-                speaking = true,
-            ),
+            listen = previewListening(speaking = true),
         )
     }
 }
+
+@Preview(name = "v5 bar · listening, green", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5BarListeningAccentPreview() {
+    VolaV5Theme(dark = false, accent = V5Accent.Green) {
+        BarPreview(previewState("polar-notes.ru"), listen = previewListening(speaking = true))
+    }
+}
+
+@Preview(
+    name = "v5 bar · listening, largest font, dark",
+    widthDp = PREVIEW_WIDTH_DP,
+    heightDp = PREVIEW_HEIGHT_DP * 2,
+    fontScale = 2f,
+)
+@Composable
+private fun V5BarListeningLargeFontPreview() {
+    VolaV5Theme(dark = true) {
+        BarPreview(previewState("polar-notes.ru"), listen = previewListening(speaking = false))
+    }
+}
+
+/** Canvas screen «Reader»: «3:12 / 8:40» at 1,2×. */
+private fun previewListening(speaking: Boolean) = V5ListenRowState(
+    title = "Северное сияние над Териберкой",
+    speaking = speaking,
+    timing = V5ListenTiming(progress = 0.37f, text = "3:12 / 8:40", description = "3:12 из примерно 8:40"),
+    speed = "1,2",
+)
 
 @Preview(name = "v5 bar · listening paused, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -150,7 +176,7 @@ private fun V5BarListeningPausedPreview() {
     VolaV5Theme(dark = true) {
         BarPreview(
             previewState("polar-notes.ru"),
-            listen = V5ListenRowState(title = null, speaking = false),
+            listen = previewListening(speaking = false).copy(title = null),
         )
     }
 }
