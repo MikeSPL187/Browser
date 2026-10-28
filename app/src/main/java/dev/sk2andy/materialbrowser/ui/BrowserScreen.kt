@@ -24,19 +24,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -1808,7 +1804,6 @@ internal fun BrowserScreen(
             permissionRadarOrigin = permissionRadarOrigin,
             filterStudioVisible = filterStudioVisible,
             filterStudioSelectedRuleId = filterStudioSelectedRuleId,
-            browserContentBlurTarget = browserContentBlurTarget,
             visibleProfiles = visibleProfiles,
             favoriteFeedbackEvent = favoriteFeedbackEvent,
             feedbackSnackbarHostState = feedbackSnackbarHostState,
