@@ -80,3 +80,8 @@ private fun V5FindInPageAccentPreview() = FindPreview("сияни", "2 из 7", 
 @Preview(name = "Find in page v5 · largest font", widthDp = PREVIEW_WIDTH_DP, fontScale = 2f)
 @Composable
 private fun V5FindInPageLargeFontPreview() = FindPreview("сияни", "2 из 7", counting = false, dark = false)
+
+/** At the largest font «Not found» stands over the bar, not cut inside the capsule. */
+@Preview(name = "Find in page v5 · not found, largest font, dark", widthDp = PREVIEW_WIDTH_DP, fontScale = 2f)
+@Composable
+private fun V5FindInPageNotFoundLargeFontPreview() = FindPreview("териберк", "Не найдено", counting = false, dark = true, found = false)

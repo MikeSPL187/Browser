@@ -75,6 +75,12 @@ object V5Type {
         caption = style(12f, 16f, FontWeight.Medium, 0f),
     )
 
+    /**
+     * From this font scale a bar has no room for everything in one line: the bar grows, and a count
+     * that would sit beside a field goes to its own line (system-v5.md 8).
+     */
+    const val LARGE_FONT_SCALE = 1.5f
+
     /** Tabular figures, so a counter on the shield or a timer does not jump as it changes. */
     fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
 
