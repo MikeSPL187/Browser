@@ -205,4 +205,13 @@ class ReaderLibraryRulesTest {
         assertEquals(ReaderFont.Serif, ReaderFont.fromStored("Gothic", serif = true))
         assertEquals(ReaderFont.Sans, ReaderSettings(1f, ReaderTheme.Light, serif = false).font)
     }
+
+    @Test
+    fun `the minutes left round up and never pass the article's length`() {
+        assertEquals(8, ReaderLibraryRules.minutesLeft(8, 0f))
+        assertEquals(5, ReaderLibraryRules.minutesLeft(8, 0.4f))
+        assertEquals(1, ReaderLibraryRules.minutesLeft(8, 0.99f))
+        assertEquals(0, ReaderLibraryRules.minutesLeft(8, 1f))
+        assertEquals(8, ReaderLibraryRules.minutesLeft(8, -1f))
+    }
 }

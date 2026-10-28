@@ -1466,6 +1466,10 @@
         <item quantity="one">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
+    <plurals name="reader_reading_minutes_left">
+        <item quantity="one">%d left</item>
+        <item quantity="other">%d left</item>
+    </plurals>
     <string name="reader_text_size">Text size</string>
     <string name="reader_text_size_value">%1$d%%</string>
     <string name="reader_settings_remembered">Remembered for all sites</string>

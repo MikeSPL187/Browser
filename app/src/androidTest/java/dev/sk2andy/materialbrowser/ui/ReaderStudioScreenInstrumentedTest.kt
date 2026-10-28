@@ -141,7 +141,9 @@ class ReaderStudioScreenInstrumentedTest {
         }
 
         val minutes = context.resources.getQuantityString(R.plurals.reader_reading_minutes, 1, 1)
-        composeRule.onNodeWithText("Example · $minutes").assertIsDisplayed()
+        // v4 puts both in the header («Example · 1 minute»); v5 over the title (canvas «Reader»).
+        composeRule.onNodeWithText("Example", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText(minutes, substring = true).assertIsDisplayed()
         composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsButton).performClick()
         composeRule.onNodeWithTag(ReaderStudioTestTags.SettingsPanel).assertIsDisplayed()
         listOf(

@@ -1,5 +1,7 @@
 package dev.sk2andy.materialbrowser.reader
 
+import kotlin.math.ceil
+
 interface ReaderLibraryDataSource {
     fun load(isPrivate: Boolean, onLoaded: (ReaderLibraryState) -> Unit)
 
@@ -165,6 +167,13 @@ object ReaderLibraryRules {
         val words = text.split(Regex("\\s+")).count(String::isNotBlank)
         return ((words + WORDS_PER_MINUTE - 1) / WORDS_PER_MINUTE).coerceAtLeast(1)
     }
+
+    /**
+     * Minutes still to read of an article of [totalMinutes] once [progress] of it is behind:
+     * rounded up, so the last lines are still «1».
+     */
+    fun minutesLeft(totalMinutes: Int, progress: Float): Int =
+        ceil(totalMinutes * (1f - progress.coerceIn(0f, 1f))).toInt().coerceIn(0, totalMinutes)
 
     const val MIN_FONT_SCALE = 0.8f
 

@@ -101,6 +101,7 @@ object ReaderStudioTestTags {
     const val Error = "reader_studio_error"
     const val Article = "reader_studio_article"
     const val Progress = "reader_studio_progress"
+    const val SiteLine = "reader_studio_site_line"
     const val Save = "reader_studio_save"
     const val Library = "reader_studio_library"
     const val HeaderLibrary = "reader_studio_header_library"
@@ -138,6 +139,8 @@ enum class ReaderStudioLabel {
     ThemeDark,
     ReadingView,
     ReadingTime,
+    /** Minutes still to read, in `value`. */
+    ReadingTimeLeft,
     ReadingSettings,
     TextSize,
     FontSerif,
@@ -202,6 +205,7 @@ internal object DefaultReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.ThemeDark -> "Dark"
         ReaderStudioLabel.ReadingView -> "Reading view"
         ReaderStudioLabel.ReadingTime -> "${requireNotNull(value)} min"
+        ReaderStudioLabel.ReadingTimeLeft -> "${requireNotNull(value)} left"
         ReaderStudioLabel.ReadingSettings -> "Reading view settings"
         ReaderStudioLabel.TextSize -> "Text size"
         ReaderStudioLabel.FontSerif -> "Serif"
@@ -483,7 +487,9 @@ private fun ReaderStudioHeader(
         horizontalArrangement = Arrangement.spacedBy(style.headerGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (document != null) {
+        if (document != null && style.articleSiteLine) {
+            Spacer(Modifier.weight(1f))
+        } else if (document != null) {
             Box(
                 modifier = Modifier
                     .size(style.siteGemSize)
@@ -733,6 +739,10 @@ private fun ReaderArticle(
                     .testTag(ReaderStudioTestTags.Article),
             ) {
                 Spacer(Modifier.height(style.articleGap))
+                if (style.articleSiteLine) {
+                    ReaderSiteLine(document, progress, resources, colors)
+                    Spacer(Modifier.height(style.articleGap))
+                }
                 Text(
                     document.title,
                     modifier = Modifier.semantics { heading() },
@@ -805,6 +815,42 @@ private fun ReaderArticle(
  * margins, and the offline copy. It sits on the browser's own surface, not the reading theme,
  * so the swatches show each theme as it is.
  */
+/** «polar-notes.ru» on the left, «8 min · 5 left» on the right (canvas «Reader»). */
+@Composable
+private fun ReaderSiteLine(
+    document: ReaderDocument,
+    progress: Float,
+    resources: ReaderStudioResources,
+    colors: ReaderPalette,
+) {
+    val total = remember(document) { ReaderLibraryRules.readingMinutes(document.speechText) }
+    val left = ReaderLibraryRules.minutesLeft(total, progress)
+    val time = resources.text(ReaderStudioLabel.ReadingTime, total)
+    val timeLeft = if (left in 1 until total) resources.text(ReaderStudioLabel.ReadingTimeLeft, left) else null
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(ReaderStudioTestTags.SiteLine),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = document.siteName,
+            modifier = Modifier.weight(1f),
+            color = colors.muted,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = listOfNotNull(time, timeLeft).joinToString(" · "),
+            color = colors.muted,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+        )
+    }
+}
+
 @Composable
 private fun ReaderSettingsPanel(
     resources: ReaderStudioResources,

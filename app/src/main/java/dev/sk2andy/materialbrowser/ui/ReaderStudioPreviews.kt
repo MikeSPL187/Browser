@@ -138,6 +138,13 @@ private fun ReaderErrorPreview() {
     )
 }
 
+/** Canvas «Reader» under ui.v5: the site and the reading time over the title, in sepia. */
+@VolaPreviews
+@Composable
+private fun ReaderV5ArticlePreview() {
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = false, v5 = true)
+}
+
 /** V19 under ui.v5: the dark gray theme, the monospace typeface and the largest text, 250 %. */
 @VolaPreviews
 @Composable

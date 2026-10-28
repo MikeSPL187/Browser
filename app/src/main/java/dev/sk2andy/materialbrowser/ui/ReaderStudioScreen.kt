@@ -87,6 +87,9 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
         ReaderStudioLabel.ReadingTime -> requireNotNull(value).let { minutes ->
             pluralStringResource(R.plurals.reader_reading_minutes, minutes, minutes)
         }
+        ReaderStudioLabel.ReadingTimeLeft -> requireNotNull(value).let { minutes ->
+            pluralStringResource(R.plurals.reader_reading_minutes_left, minutes, minutes)
+        }
         ReaderStudioLabel.ReadingSettings -> stringResource(R.string.reader_reading_settings)
         ReaderStudioLabel.TextSize -> stringResource(R.string.reader_text_size)
         ReaderStudioLabel.FontSerif -> stringResource(R.string.reader_font_serif)
@@ -203,6 +206,7 @@ internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
             iconSize = VolaReader.iconSize,
             handleWidth = VolaReader.handleWidth,
             handleHeight = VolaReader.handleHeight,
+            articleSiteLine = v5,
             controls = if (v5) V5ReaderStudioControls else null,
         )
     }
