@@ -202,10 +202,6 @@ internal class V5PullRefreshState(private val scope: CoroutineScope, private val
     }
 }
 
-/** Pull to refresh is v5's where v5 draws the browser ([rememberDrawsV5]). */
-@Composable
-internal fun rememberPullRefreshV5(): Boolean = rememberDrawsV5()
-
 @Composable
 internal fun rememberV5PullRefresh(selectedTabId: String, isLoading: Boolean, topInsetPx: Int): V5PullRefreshState {
     val view = LocalView.current
