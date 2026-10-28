@@ -50,6 +50,18 @@ object V5Sizes {
     val barLargeFont: Dp = 72.dp
     /** The loading line along the bar's top edge. */
     val barProgress: Dp = 2.dp
+    /** The tab counter's outlined square on the round tabs button (canvas «Bar»). */
+    val barTabGlyph: Dp = 22.dp
+    /** The counter at 200 % font, where the bar grows to [barLargeFont]. */
+    val barTabGlyphLarge: Dp = 26.dp
+    val barTabGlyphRadius: Dp = 6.dp
+    val barTabGlyphBorder: Dp = 1.8.dp
+    /**
+     * The count inside the square, as a glyph: it grows with the square, not with the font, so
+     * «12» never spills out; TalkBack says the number in words.
+     */
+    val barTabGlyphText: Dp = 12.dp
+    val barTabGlyphTextLarge: Dp = 14.dp
     /** The downloads ring around «•••» (V22): as thin as the loading line. */
     val downloadRing: Dp = 2.dp
     /** The pause or play glyph inside a download's ring in the library (DL-02). */

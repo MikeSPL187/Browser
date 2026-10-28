@@ -70,10 +70,16 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.sk2andy.materialbrowser.R
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Type.tabular
+import dev.sk2andy.materialbrowser.ui.theme.v5.SmoothCornerShape
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.foundation.border
 import dev.sk2andy.materialbrowser.browser.safety.IdnDisplayRules
 import dev.sk2andy.materialbrowser.browser.SiteConnectionKind
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.AddressBarTabCounterButton
+import dev.sk2andy.materialbrowser.ui.AddressBarControlRules
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
 import dev.sk2andy.materialbrowser.ui.addressBarVerticalGesture
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
@@ -260,7 +266,7 @@ internal fun BoxScope.V5BottomBar(
                                 onTabs = onTabs,
                                 modifier = Modifier.weight(1f),
                             )
-                            RoundButton { AddressBarTabCounterButton(tabCount = state.tabCount, onClick = onTabs) }
+                            TabsButton(tabCount = state.tabCount, onClick = onTabs)
                             RoundButton { menuButton() }
                         }
                     }
@@ -459,6 +465,47 @@ private fun RoundButton(content: @Composable () -> Unit) {
             .background(LocalV5BarColors.current.field),
         contentAlignment = Alignment.Center,
     ) { content() }
+}
+
+/**
+ * The tabs button (canvas «Bar»): the count in an outlined square on the round field. At 200 % font
+ * the square grows a step with the bar instead of the number growing out of it.
+ */
+@Composable
+private fun TabsButton(tabCount: Int, onClick: () -> Unit) {
+    val bar = LocalV5BarColors.current
+    val density = LocalDensity.current
+    val large = density.fontScale >= V5Type.LARGE_FONT_SCALE
+    val description = pluralStringResource(R.plurals.cd_open_tab_overview_count, tabCount, tabCount)
+    val square = SmoothCornerShape(V5Sizes.barTabGlyphRadius)
+    Box(
+        Modifier
+            .size(V5Sizes.barCapsule)
+            .clip(V5Theme.shapes.full)
+            .background(bar.field)
+            .clickable(role = Role.Button, onClick = onClick)
+            .testTag(AddressBarTestTags.TabButton)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier
+                .size(if (large) V5Sizes.barTabGlyphLarge else V5Sizes.barTabGlyph)
+                .border(V5Sizes.barTabGlyphBorder, bar.onTint, square)
+                .clearAndSetSemantics {},
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                AddressBarControlRules.tabCountLabel(tabCount),
+                style = V5Theme.type.caption.tabular().copy(
+                    fontSize = with(density) { (if (large) V5Sizes.barTabGlyphTextLarge else V5Sizes.barTabGlyphText).toSp() },
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = bar.onTint,
+                maxLines = 1,
+            )
+        }
+    }
 }
 
 /** The 2 dp loading line along the top edge of the strip. */
