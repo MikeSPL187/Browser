@@ -46,3 +46,7 @@ private fun DownloadsLibraryV5LightPreview() = DownloadsPreview(BrowserAppearanc
 @Preview(name = "Downloads v5 · failures, dark", widthDp = 390, heightDp = 844)
 @Composable
 private fun DownloadsLibraryV5DarkPreview() = DownloadsPreview(BrowserAppearanceMode.Dark)
+
+@Preview(name = "Downloads v5 · failures, light, largest font", widthDp = 390, heightDp = 844, fontScale = 2f)
+@Composable
+private fun DownloadsLibraryV5LargeFontPreview() = DownloadsPreview(BrowserAppearanceMode.Light)

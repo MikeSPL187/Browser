@@ -31,6 +31,7 @@ private fun CapsuleBarPreview(dark: Boolean) {
 }
 
 @Preview(name = "Capsule v5 · bar, light")
+@Preview(name = "Capsule v5 · bar, largest font", fontScale = 2f)
 @Composable
 private fun CapsuleChromeV5LightPreview() = CapsuleBarPreview(dark = false)
 
@@ -39,6 +40,7 @@ private fun CapsuleChromeV5LightPreview() = CapsuleBarPreview(dark = false)
 private fun CapsuleChromeV5DarkPreview() = CapsuleBarPreview(dark = true)
 
 @Preview(name = "Capsule v5 · not loaded", heightDp = 560)
+@Preview(name = "Capsule v5 · not loaded, largest font", heightDp = 560, fontScale = 2f)
 @Composable
 private fun CapsuleErrorV5Preview() {
     VolaV5Theme(dark = false) { CapsuleErrorV5(message = "net::ERR_NAME_NOT_RESOLVED", onRetry = {}) }
