@@ -102,6 +102,8 @@ object V5Sizes {
     val overviewRingGap: Dp = 2.5.dp
     /** The profile's avatar in the overview's chip. */
     val overviewAvatar: Dp = 28.dp
+    /** A profile's dot on the overview's chip (canvas «Overview»): the active one in the accent. */
+    val profileDot: Dp = 6.dp
     /** The round plate of a card's close button; its touch target stays [touchTarget]. */
     val overviewClosePlate: Dp = 24.dp
     /** The site icon under a card. */

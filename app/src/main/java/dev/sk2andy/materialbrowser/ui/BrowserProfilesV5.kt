@@ -47,6 +47,9 @@ internal val ProfileAccentV5 get() = LocalV5ProfileAccent
 
 /** Profiles as v5 shows them (V11a, system-v5.md 1.2 and 10). */
 internal object V5ProfileRules {
+    /** The profiles in the order the sheet lists them and the overview pages through them: this device's first. */
+    fun order(profiles: List<BrowserProfile>): List<BrowserProfile> = profiles.sortedBy(BrowserProfile::isSynced)
+
     /**
      * The v5 accent of a profile's stored color. v5 offers six accents; the two older colors with
      * no twin go to their nearest one (teal to green, coral to orange).
@@ -89,7 +92,7 @@ internal object V5ProfileRules {
         untitled: String,
     ): List<V5ProfileItem> {
         val counts = tabs.groupingBy(BrowserTab::profileId).eachCount()
-        return profiles.sortedBy(BrowserProfile::isSynced).map { profile ->
+        return order(profiles).map { profile ->
             V5ProfileItem(
                 id = profile.id,
                 icon = WorkspaceIcons.vector(profile.emoji),

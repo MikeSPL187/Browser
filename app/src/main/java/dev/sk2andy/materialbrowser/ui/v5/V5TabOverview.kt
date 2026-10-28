@@ -65,9 +65,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -143,6 +145,8 @@ data class V5OverviewState(
     val canOpenPrivate: Boolean = true,
     /** The private tabs are locked: their segment shows the lock card instead of cards (canvas «PrivateLock»). */
     val privateLock: V5OverviewPrivateLock? = null,
+    /** The profiles the bar pages through and the active one; null with a single profile. */
+    val profileDots: V5ProfileDots? = null,
 )
 
 @Composable
@@ -174,6 +178,8 @@ fun V5TabOverview(
     onUnlockPrivate: () -> Unit = {},
     /** «Close all private tabs» on the lock card. */
     onCloseAllPrivate: () -> Unit = {},
+    /** A swipe on the bar or a TalkBack action steps to the next (+1) or previous (−1) profile. */
+    onProfileStep: ((Int) -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     val items = remember(state.cards, state.groups, state.query) {
@@ -192,100 +198,111 @@ fun V5TabOverview(
             val canAddTab = lock == null && V5TabOverviewRules.canAddTab(state.privateSegment, state.canOpenPrivate)
             Header(state.query, onQueryChange, onCloseAll, canCloseAll = state.cards.any(V5TabCard::closable))
             Segments(state.privateSegment, state.counts, onSegmentChange)
-            if (lock != null) {
-                V5OverviewPrivateLockLayer(
-                    lock = lock,
-                    onUnlock = onUnlockPrivate,
-                    onCloseAll = onCloseAllPrivate,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                )
-            } else if (state.cards.isEmpty()) {
-                Empty(
-                    empty = V5TabOverviewRules.empty(state.query, state.privateSegment, state.canOpenPrivate),
-                    query = state.query.trim(),
-                    onNewTab = onNewTab,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                )
-            } else {
-                val frames = rememberV5GroupFrames(items)
-                // The others appear around the page's card (canvas «MotionOverview»): from 0.92 and
-                // transparent, one step of delay per card away from it. Cards scrolled in later are there at once.
-                val openedAt = remember { SystemClock.uptimeMillis() }
-                val selectedIndex = items.indexOfFirst { item -> item is V5OverviewItem.Card && cardsById[item.id]?.selected == true }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
-                    // The grid opens on the selected card, so the page's card is on screen for the hero.
-                    state = rememberLazyGridState(
-                        initialFirstVisibleItemIndex = V5OverviewGroupRules.indexOf(
-                            items,
-                            state.cards.firstOrNull { it.selected }?.id,
+            // Another profile's tabs come in from the side they were paged from.
+            Box(Modifier.weight(1f).fillMaxWidth().v5ProfileSlide(state.profileDots?.active)) {
+                if (lock != null) {
+                    V5OverviewPrivateLockLayer(
+                        lock = lock,
+                        onUnlock = onUnlockPrivate,
+                        onCloseAll = onCloseAllPrivate,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else if (state.cards.isEmpty()) {
+                    Empty(
+                        empty = V5TabOverviewRules.empty(state.query, state.privateSegment, state.canOpenPrivate),
+                        query = state.query.trim(),
+                        onNewTab = onNewTab,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    val frames = rememberV5GroupFrames(items)
+                    // The others appear around the page's card (canvas «MotionOverview»): from 0.92 and
+                    // transparent, one step of delay per card away from it. Cards scrolled in later are there at once.
+                    val openedAt = remember { SystemClock.uptimeMillis() }
+                    val selectedIndex = items.indexOfFirst { item -> item is V5OverviewItem.Card && cardsById[item.id]?.selected == true }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(V5Sizes.TAB_COLUMNS_PHONE),
+                        // The grid opens on the selected card, so the page's card is on screen for the hero.
+                        state = rememberLazyGridState(
+                            initialFirstVisibleItemIndex = V5OverviewGroupRules.indexOf(
+                                items,
+                                state.cards.firstOrNull { it.selected }?.id,
+                            ),
                         ),
-                    ),
-                    modifier = Modifier.weight(1f).fillMaxWidth().v5GroupFrames(frames),
-                    contentPadding = PaddingValues(
-                        start = V5Spacing.marginPhone,
-                        end = V5Spacing.marginPhone,
-                        top = V5Spacing.space3,
-                        bottom = V5Spacing.space3,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(V5Sizes.tabGridGap),
-                    verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
-                ) {
-                    itemsIndexed(
-                        items,
-                        key = { _, item -> item.key },
-                        span = { _, item -> GridItemSpan(if (item is V5OverviewItem.Card) 1 else maxLineSpan) },
-                    ) { index, item ->
-                        when (item) {
-                            is V5OverviewItem.Card -> cardsById[item.id]?.let { card ->
-                                val entrance = rememberOverviewEntrance(
-                                    order = V5TabOverviewRules.entranceOrder(index, selectedIndex),
-                                    openedAt = openedAt,
+                        modifier = Modifier.fillMaxSize().v5GroupFrames(frames),
+                        contentPadding = PaddingValues(
+                            start = V5Spacing.marginPhone,
+                            end = V5Spacing.marginPhone,
+                            top = V5Spacing.space3,
+                            bottom = V5Spacing.space3,
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(V5Sizes.tabGridGap),
+                        verticalArrangement = Arrangement.spacedBy(V5Spacing.space4),
+                    ) {
+                        itemsIndexed(
+                            items,
+                            key = { _, item -> item.key },
+                            span = { _, item -> GridItemSpan(if (item is V5OverviewItem.Card) 1 else maxLineSpan) },
+                        ) { index, item ->
+                            when (item) {
+                                is V5OverviewItem.Card -> cardsById[item.id]?.let { card ->
+                                    val entrance = rememberOverviewEntrance(
+                                        order = V5TabOverviewRules.entranceOrder(index, selectedIndex),
+                                        openedAt = openedAt,
+                                    )
+                                    TabCard(
+                                        card = card,
+                                        onSelect = onSelect,
+                                        onClose = onClose,
+                                        onCloseRefused = onCloseRefused,
+                                        onBounds = onCardBounds,
+                                        hidden = card.id == heroCardId,
+                                        onLongPress = onCardLongPress,
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .v5GroupFrameLine(frames, item.key)
+                                            .graphicsLayer {
+                                                val shown = entrance.value
+                                                alpha = shown.coerceIn(0f, 1f)
+                                                val scale = lerp(V5Motion.OVERVIEW_CARD_START_SCALE, 1f, shown)
+                                                scaleX = scale
+                                                scaleY = scale
+                                            },
+                                    )
+                                }
+                                is V5OverviewItem.GroupHeader -> GroupHeader(
+                                    group = item.group,
+                                    count = item.count,
+                                    onToggle = { onToggleGroup(item.group.id) },
+                                    onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
+                                    modifier = Modifier.animateItem().v5GroupFrameLine(frames, item.key),
                                 )
-                                TabCard(
-                                    card = card,
-                                    onSelect = onSelect,
-                                    onClose = onClose,
-                                    onCloseRefused = onCloseRefused,
-                                    onBounds = onCardBounds,
-                                    hidden = card.id == heroCardId,
-                                    onLongPress = onCardLongPress,
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .v5GroupFrameLine(frames, item.key)
-                                        .graphicsLayer {
-                                            val shown = entrance.value
-                                            alpha = shown.coerceIn(0f, 1f)
-                                            val scale = lerp(V5Motion.OVERVIEW_CARD_START_SCALE, 1f, shown)
-                                            scaleX = scale
-                                            scaleY = scale
-                                        },
+                                is V5OverviewItem.CollapsedGroup -> CollapsedGroup(
+                                    group = item.group,
+                                    count = item.count,
+                                    previews = item.previewIds.mapNotNull(cardsById::get),
+                                    onToggle = { onToggleGroup(item.group.id) },
+                                    onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
+                                    modifier = Modifier.animateItem(),
+                                )
+                                V5OverviewItem.UngroupedHeader -> SectionTitle(
+                                    stringResource(R.string.v5_overview_ungrouped),
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
-                            is V5OverviewItem.GroupHeader -> GroupHeader(
-                                group = item.group,
-                                count = item.count,
-                                onToggle = { onToggleGroup(item.group.id) },
-                                onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
-                                modifier = Modifier.animateItem().v5GroupFrameLine(frames, item.key),
-                            )
-                            is V5OverviewItem.CollapsedGroup -> CollapsedGroup(
-                                group = item.group,
-                                count = item.count,
-                                previews = item.previewIds.mapNotNull(cardsById::get),
-                                onToggle = { onToggleGroup(item.group.id) },
-                                onLongPress = onGroupLongPress?.let { edit -> { edit(item.group.id) } },
-                                modifier = Modifier.animateItem(),
-                            )
-                            V5OverviewItem.UngroupedHeader -> SectionTitle(
-                                stringResource(R.string.v5_overview_ungrouped),
-                                modifier = Modifier.animateItem(),
-                            )
                         }
                     }
                 }
             }
-            Toolbar(state.profileLabel, state.profileIcon, onNewTab.takeIf { canAddTab }, onDone, onProfiles)
+            Toolbar(
+                state.profileLabel,
+                state.profileIcon,
+                onNewTab.takeIf { canAddTab },
+                onDone,
+                onProfiles,
+                dots = state.profileDots,
+                onProfileStep = onProfileStep,
+            )
         }
     }
 }
@@ -636,12 +653,16 @@ private fun Toolbar(
     onNewTab: (() -> Unit)?,
     onDone: () -> Unit,
     onProfiles: (() -> Unit)?,
+    dots: V5ProfileDots? = null,
+    onProfileStep: ((Int) -> Unit)? = null,
 ) {
     val colors = V5Theme.colors
     Row(
         Modifier
             .fillMaxWidth()
             .background(V5Materials.regular.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false))
+            // A sideways swipe on the bar pages through the profiles; on the grid it closes a card.
+            .v5ProfileSwipe(dots, onProfileStep)
             .navigationBarsPadding()
             .heightIn(min = V5Sizes.bar)
             .padding(horizontal = V5Spacing.space2),
@@ -667,10 +688,23 @@ private fun Toolbar(
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             // The chip keeps its look; tapping it lists the profiles, its touch target is the bar's.
             val chooseLabel = stringResource(R.string.v5_profiles_choose)
+            val nextLabel = stringResource(R.string.v5_overview_next_profile)
+            val previousLabel = stringResource(R.string.v5_overview_previous_profile)
             val chip = if (onProfiles != null) {
                 Modifier
                     .heightIn(min = V5Sizes.touchTarget)
                     .clickable(role = Role.Button, onClickLabel = chooseLabel, onClick = onProfiles)
+                    .semantics {
+                        // The swipe's actions for TalkBack (system-v5.md 8: «Next profile»).
+                        if (dots != null && onProfileStep != null) {
+                            customActions = listOfNotNull(
+                                CustomAccessibilityAction(nextLabel) { onProfileStep(1); true }
+                                    .takeIf { V5ProfileDotsRules.target(dots, 1) != null },
+                                CustomAccessibilityAction(previousLabel) { onProfileStep(-1); true }
+                                    .takeIf { V5ProfileDotsRules.target(dots, -1) != null },
+                            )
+                        }
+                    }
                     .testTag(V5OverviewTestTags.Profile)
             } else {
                 Modifier
@@ -709,7 +743,9 @@ private fun Toolbar(
                         color = colors.label,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    dots?.takeIf { it.count > 1 }?.let { V5ProfileDotsRow(it) }
                 }
             }
         }

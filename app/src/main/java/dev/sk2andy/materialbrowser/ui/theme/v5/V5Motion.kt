@@ -67,6 +67,8 @@ object V5Motion {
     /** Past the last tab, the rubber band stretched to this share of its reach opens a new tab. */
     const val TAB_SWIPE_NEW_TAB_EDGE_FRACTION = 0.9f
     const val OVERVIEW_CARD_START_SCALE = 0.92f
+    /** Another profile's grid comes in from this share of its width on the side it was paged from. */
+    const val PROFILE_SWITCH_SLIDE_FRACTION = 0.3f
     /** A card swiped sideways in the overview closes past 40 % of its width or 1000 dp/s. */
     const val CARD_CLOSE_COMMIT_FRACTION = 0.40f
     /** How transparent a card gets at a full width of travel while it is swiped. */
