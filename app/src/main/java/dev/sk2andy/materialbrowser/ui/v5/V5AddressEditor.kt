@@ -63,6 +63,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -128,6 +131,8 @@ data class V5EditorState(
      * as Safari keeps Favorites under an empty field; the editor keeps only its field.
      */
     val overStart: Boolean = false,
+    /** The rest of the best match's site after the typed text ([V5AddressCompletionRules]). */
+    val completion: String? = null,
 )
 
 @Composable
@@ -263,6 +268,9 @@ private fun EditorField(
                 modifier = Modifier.size(V5Sizes.iconSmall),
             )
             val hint = stringResource(R.string.address_empty_hint)
+            val completion = state.completion
+            val completed = V5AddressCompletionRules.submitted(state.value.text, completion)
+            val completionStyle = SpanStyle(color = colors.label, background = colors.accentSoft)
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (state.value.text.isEmpty()) {
                     // The field carries the hint for TalkBack; this is only what the eye reads.
@@ -290,21 +298,29 @@ private fun EditorField(
                                     Key.DirectionUp -> true.also { onArrow(1) }
                                     Key.DirectionDown -> true.also { onArrow(-1) }
                                     Key.Escape -> true.also { onCancel() }
+                                    // → or Tab takes the completion into the field, as in Safari.
+                                    Key.DirectionRight, Key.Tab -> (completion != null).also { accept ->
+                                        if (accept) onValueChange(TextFieldValue(completed, TextRange(completed.length)))
+                                    }
                                     else -> false
                                 }
                             }
                             .v5FieldLabel(hint, empty = state.value.text.isEmpty())
+                            // TalkBack hears where Go leads, not only the typed letters.
+                            .semantics { if (completion != null) stateDescription = completed }
                             .testTag(V5EditorTestTags.Field),
                         singleLine = true,
                         textStyle = V5Theme.type.body.copy(color = colors.label),
                         cursorBrush = SolidColor(colors.accent),
+                        visualTransformation = completion?.let { V5CompletionTransformation(it, completionStyle) }
+                            ?: VisualTransformation.None,
                         // Addresses and queries: no autocorrect turning «github» into «gotham».
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Uri,
                             autoCorrectEnabled = false,
                             imeAction = ImeAction.Go,
                         ),
-                        keyboardActions = KeyboardActions(onGo = { onSubmit(state.value.text) }),
+                        keyboardActions = KeyboardActions(onGo = { onSubmit(completed) }),
                     )
                 }
             }

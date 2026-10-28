@@ -8,6 +8,7 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
@@ -37,15 +38,16 @@ class V5AddressEditorInstrumentedTest {
     private val page = AddressSuggestionItem.Navigation(AddressSuggestion("https://polar-notes.example", "Polar notes"))
     private val search = AddressSuggestionItem.Search("polar night")
 
-    private fun show(pageUrl: String? = null) {
+    private fun show(pageUrl: String? = null, completion: String? = null) {
         composeRule.setContent {
             VolaV5Theme {
                 V5AddressEditor(
                     state = V5EditorState(
                         value = TextFieldValue("pol"),
                         layout = V5SuggestionLayoutRules.layout(listOf(page, search), query = "pol", pageUrl = pageUrl),
+                        completion = completion,
                     ),
-                    onValueChange = {},
+                    onValueChange = { calls += "value ${it.text}" },
                     onSubmit = { calls += "submit $it" },
                     onSelect = { calls += "select ${it.stableId}" },
                     onFill = { calls += "fill ${it.stableId}" },
@@ -103,5 +105,33 @@ class V5AddressEditorInstrumentedTest {
         composeRule.onNodeWithTag(V5EditorTestTags.Field).performKeyInput { pressKey(Key.Escape) }
 
         assertEquals(listOf("cancel"), calls)
+    }
+
+    @Test
+    fun goOpensTheCompletedSite() {
+        show(completion = "ar-notes.example")
+
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).performImeAction()
+
+        assertEquals(listOf("submit polar-notes.example"), calls)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun theRightArrowTakesTheCompletionIntoTheField() {
+        show(completion = "ar-notes.example")
+
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).performKeyInput { pressKey(Key.DirectionRight) }
+
+        assertEquals(listOf("value polar-notes.example"), calls)
+    }
+
+    @Test
+    fun withoutACompletionGoOpensWhatIsTyped() {
+        show()
+
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).performImeAction()
+
+        assertEquals(listOf("submit pol"), calls)
     }
 }

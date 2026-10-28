@@ -35,6 +35,7 @@ import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.theme.v5.performV5Haptic
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
+import dev.sk2andy.materialbrowser.ui.v5.V5AddressCompletionRules
 import dev.sk2andy.materialbrowser.ui.v5.V5AddressEditor
 import dev.sk2andy.materialbrowser.ui.v5.V5BarGestures
 import dev.sk2andy.materialbrowser.ui.v5.V5BarState
@@ -241,6 +242,11 @@ internal fun BrowserV5AddressEditor(
     val layout = remember(suggestionItems, value.text, pageUrl) {
         V5SuggestionLayoutRules.layout(suggestionItems, value.text, pageUrl)
     }
+    // Delete takes the completion away until the next letter; a letter typed over the selected
+    // address is typing, not deleting.
+    var deleting by remember { mutableStateOf(false) }
+    // A row picked with the arrow keys is what Go opens, so no completion shows beside it.
+    val completion = V5AddressCompletionRules.suffix(value, layout.best, deleting).takeIf { highlighted == null }
     VolaV5Theme(dark = darkShell, accent = accent, privateBrowsing = selectedTab.isIncognito) {
         V5AddressEditor(
             state = V5EditorState(
@@ -251,8 +257,12 @@ internal fun BrowserV5AddressEditor(
                 isPrivate = selectedTab.isIncognito,
                 focusNonce = focusNonce,
                 overStart = overStart,
+                completion = completion,
             ),
-            onValueChange = onValueChange,
+            onValueChange = { next ->
+                deleting = next.text.length < value.text.length && value.text.startsWith(next.text)
+                onValueChange(next)
+            },
             // Enter opens what the arrow keys picked, else the typed text, like the current editor.
             onSubmit = { text -> if (highlighted != null) onSelect(highlighted) else onSubmit(text) },
             onSelect = onSelect,
