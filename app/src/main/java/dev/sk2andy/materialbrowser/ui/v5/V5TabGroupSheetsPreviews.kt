@@ -17,7 +17,16 @@ private val PreviewGroups = listOf(
     V5OverviewGroup(id = "recipes", name = "Рецепты", tabIds = listOf("d"), collapsed = false, tile = V5Tile.Green),
 )
 
-private val PreviewColors = listOf(V5Tile.Purple, V5Tile.Red, V5Tile.Green, V5Tile.Blue)
+/** The canvas palette (TabStackColor.palette). */
+private val PreviewColors = listOf(
+    V5Tile.Orange,
+    V5Tile.Teal,
+    V5Tile.Purple,
+    V5Tile.Blue,
+    V5Tile.Pink,
+    V5Tile.Green,
+    V5Tile.Gray,
+)
 
 @Composable
 private fun MovePreview(dark: Boolean, groupLimit: Int? = null) {

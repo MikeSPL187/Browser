@@ -125,7 +125,8 @@ class TabStackUiInstrumentedTest {
             }
         }
 
-        TabStackColor.entries.forEach { color ->
+        // v4 offers its four colors; v5's palette of seven is the v5 group editor's.
+        TabStackColor.classic.forEach { color ->
             composeRule.onNodeWithTag(TabStackTestTags.color(color))
                 .assertHeightIsAtLeast(48.dp)
                 .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))

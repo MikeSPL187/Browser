@@ -477,10 +477,13 @@ private fun GroupTabTile(tab: V5GroupEditorTab) {
 
 /** A group color's name for TalkBack. */
 private fun V5Tile.groupColorName(): Int = when (this) {
+    V5Tile.Orange -> R.string.v5_group_color_orange
+    V5Tile.Teal -> R.string.v5_group_color_teal
     V5Tile.Purple -> R.string.v5_group_color_purple
-    V5Tile.Red -> R.string.v5_group_color_red
-    V5Tile.Green -> R.string.v5_group_color_green
     V5Tile.Blue -> R.string.v5_group_color_blue
+    V5Tile.Pink -> R.string.v5_group_color_pink
+    V5Tile.Green -> R.string.v5_group_color_green
+    V5Tile.Gray -> R.string.v5_group_color_gray
     else -> R.string.v5_group_color
 }
 

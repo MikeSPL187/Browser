@@ -8,6 +8,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -216,7 +218,11 @@ internal fun V5NameField(
 @Immutable
 internal data class V5Swatch(val color: Color, val name: String)
 
-/** Round color swatches under a [title]; the chosen one is ringed in the label color. */
+/**
+ * Round color swatches under a [title]; the chosen one is ringed in the label color. They wrap to a
+ * second line where a narrow phone has no room for all of them at the full touch target.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun V5SwatchRow(
     title: String,
@@ -232,7 +238,7 @@ internal fun V5SwatchRow(
             color = V5Theme.colors.labelSecondary,
             modifier = Modifier.padding(start = V5Spacing.space4, bottom = V5Spacing.space2),
         )
-        Row(
+        FlowRow(
             Modifier.fillMaxWidth().selectableGroup(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {

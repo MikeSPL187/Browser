@@ -1,7 +1,11 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -14,6 +18,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -170,5 +175,44 @@ class V5TabGroupSheetsInstrumentedTest {
         composeRule.onNodeWithTag(V5TabGroupSheetTestTags.CloseGroupConfirm).performClick()
 
         assertEquals(listOf("dismiss", "close group"), calls)
+    }
+
+    @Test
+    fun theSevenGroupColorsKeepTheirTouchTargetAndNames() {
+        val palette = listOf(
+            V5Tile.Orange,
+            V5Tile.Teal,
+            V5Tile.Purple,
+            V5Tile.Blue,
+            V5Tile.Pink,
+            V5Tile.Green,
+            V5Tile.Gray,
+        )
+        composeRule.setContent {
+            VolaV5Theme {
+                V5TabGroupEditSheet(
+                    visible = true,
+                    title = "Edit group",
+                    initialName = "Dinner",
+                    initialColorIndex = 0,
+                    colors = palette,
+                    onSave = { draft -> calls += "save ${draft.colorIndex}" },
+                    onDismiss = {},
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        val names = palette.indices.map { index ->
+            composeRule.onNodeWithTag(V5TabGroupSheetTestTags.color(index))
+                .performScrollTo()
+                .assertWidthIsAtLeast(48.dp)
+                .assertHeightIsAtLeast(48.dp)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.ContentDescription]
+                .single()
+        }
+        assertEquals("every swatch has its own name: $names", palette.size, names.toSet().size)
+        composeRule.onNodeWithTag(V5TabGroupSheetTestTags.color(6)).performClick().assertIsSelected()
     }
 }
