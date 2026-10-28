@@ -52,6 +52,8 @@ import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
 import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
 import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
 import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
+import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5BarTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanelTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5FindInPageTestTags
@@ -61,6 +63,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5NewTabTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5PrivateNewTabTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileEditTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSheetTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SiteProtectionTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettingsTestTags
@@ -140,7 +144,8 @@ class AppScreenWalkInstrumentedTest(
     private val visited = mutableListOf<String>()
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
-    private val uiV5 = group in V5_GROUPS || group in V5_MORE_GROUPS || group in v5SettingsGroups()
+    private val uiV5 = group in V5_GROUPS || group in V5_MORE_GROUPS || group == V5_DEEPER_GROUP ||
+        group in v5SettingsGroups()
 
     @After
     fun tearDown() {
@@ -161,6 +166,7 @@ class AppScreenWalkInstrumentedTest(
             V5_FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
             V5_LIBRARY_GROUP -> walk(config, steps = ::walkV5Library)
             V5_PAGE_STATES_GROUP -> walk(config, steps = ::walkV5PageStates)
+            V5_DEEPER_GROUP -> walk(config, steps = ::walkV5Deeper)
             in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             in v5SettingsGroups() -> walk(config) { walkV5Settings(V5_SETTINGS_GROUP_BASE - group) }
             else -> walk(config) { walkSettings(group) }
@@ -646,6 +652,40 @@ class AppScreenWalkInstrumentedTest(
                 openTyped("http://127.0.0.1:$closedPort/", expectFailure = true)
                 auditScrolling("v5 page that fails to load")
             }
+        }
+    }
+
+    /**
+     * v5 screens one step deeper than the others (canvas «Reader» and «NewProfile», GAP-AUDIT
+     * «Обход экранов»): a page in reading view, and the sheet that makes a new profile. Reading
+     * view needs an engine that finds the article; where «Read» never shows, the walk passes it by.
+     */
+    private fun walkV5Deeper() {
+        val sheet = hasTestTag(V5SheetTestTags.Sheet)
+        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
+            step("v5 page") { openTyped(server.fixtureUrl("/article")) }
+            step("v5 reader") {
+                val read = hasTestTag(V5BarTestTags.Read)
+                val offered = runCatching {
+                    composeRule.waitUntil("«Read» to show", READ_OFFER_TIMEOUT_MILLIS) { exists(read) }
+                }.isSuccess
+                if (offered) {
+                    val reader = hasTestTag(ReaderStudioTestTags.Screen)
+                    tapUntil(read, "reading view to open") { exists(reader) }
+                    auditScrolling("v5 reader")
+                    backUntilGone(reader)
+                }
+            }
+        }
+        step("v5 new profile") {
+            openOverview()
+            tapUntil(hasTestTag(V5OverviewTestTags.Profile), "the profiles to open") { exists(sheet) }
+            val name = hasTestTag(V5ProfileEditTestTags.Name)
+            tapUntil(hasTestTag(V5ProfileSheetTestTags.New), "a new profile to open") { exists(name) }
+            auditScrolling("v5 new profile")
+            backUntilGone(name)
+            backUntilGone(sheet)
+            backUntilGone(overview())
         }
     }
 
@@ -1169,6 +1209,9 @@ class AppScreenWalkInstrumentedTest(
         private const val V5_FIRST_RUN_GROUP = -8
         private const val V5_LIBRARY_GROUP = -9
         private const val V5_PAGE_STATES_GROUP = -16
+        private const val V5_DEEPER_GROUP = -17
+        /** How long a loaded article may take before the engine offers reading view. */
+        private const val READ_OFFER_TIMEOUT_MILLIS = 10_000L
 
         /** v5 walks added after the others (N-04): their own list keeps the older walks' indices. */
         private val V5_MORE_GROUPS = listOf(V5_FIRST_RUN_GROUP, V5_LIBRARY_GROUP, V5_PAGE_STATES_GROUP)
@@ -1280,7 +1323,9 @@ class AppScreenWalkInstrumentedTest(
             } + V5_MORE_GROUPS.filter { it != V5_FIRST_RUN_GROUP }.map { group ->
                 arrayOf<Any>(group, AuditConfig.RussianLightLandscape)
             }
-            return walks + v5Walks + v5Landscape + v5SettingsWalks + v5MoreWalks
+            // The newest walk, last so every index before it stays; upright phone configurations only.
+            val v5DeeperWalks = v5Configs.map { config -> arrayOf<Any>(V5_DEEPER_GROUP, config) }
+            return walks + v5Walks + v5Landscape + v5SettingsWalks + v5MoreWalks + v5DeeperWalks
         }
     }
 }
