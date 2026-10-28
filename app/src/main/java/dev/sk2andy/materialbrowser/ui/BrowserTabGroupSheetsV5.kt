@@ -55,7 +55,7 @@ internal fun BrowserTabGroupSheetsV5(
     }
     val dismiss = { onTargetChange(null) }
     val refuseUnless = { done: Boolean -> if (!done) view.performV5Haptic(V5Haptic.Reject) }
-    val colors = TabStackColor.entries
+    val colors = TabStackColor.palette
     val tiles = colors.map { it.v5Tile() }
     val defaultName = stringResource(R.string.v5_group_default_name)
 
@@ -165,7 +165,11 @@ internal fun TabStack.v5Group(): V5OverviewGroup = V5OverviewGroup(
 /** A group's color as a v5 section tile: the data keeps four colors, v5 draws them as tiles. */
 internal fun TabStackColor.v5Tile(): V5Tile = when (this) {
     TabStackColor.Grape -> V5Tile.Purple
-    TabStackColor.Cherry -> V5Tile.Red
+    // Red means danger in v5, so the canvas palette has pink where v4 had cherry.
+    TabStackColor.Cherry -> V5Tile.Pink
     TabStackColor.Lime -> V5Tile.Green
     TabStackColor.Blueberry -> V5Tile.Blue
+    TabStackColor.Orange -> V5Tile.Orange
+    TabStackColor.Teal -> V5Tile.Teal
+    TabStackColor.Slate -> V5Tile.Gray
 }

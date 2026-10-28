@@ -800,7 +800,7 @@ internal fun TabStackCreateDialog(
                         .selectableGroup(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    TabStackColor.entries.forEach { candidateColor ->
+                    TabStackColor.classic.forEach { candidateColor ->
                         val colorName = stringResource(candidateColor.labelResource())
                         Box(
                             modifier = Modifier
@@ -954,6 +954,11 @@ private fun stackColors(color: TabStackColor): TabStackColors {
         TabStackColor.Cherry -> Color(0xFFFF2F78)
         TabStackColor.Lime -> Color(0xFF7CB342)
         TabStackColor.Blueberry -> Color(0xFF3F6EDB)
+        // v5's colors: a group colored in v5 keeps its color here.
+        TabStackColor.Orange,
+        TabStackColor.Teal,
+        TabStackColor.Slate,
+        -> color.v5Tile().color
     }
     val content = when (color) {
         TabStackColor.Lime -> Color(0xFF182800)
@@ -971,6 +976,9 @@ private fun TabStackColor.labelResource(): Int = when (this) {
     TabStackColor.Cherry -> R.string.tab_stack_color_cherry
     TabStackColor.Lime -> R.string.tab_stack_color_lime
     TabStackColor.Blueberry -> R.string.tab_stack_color_blueberry
+    TabStackColor.Orange -> R.string.v5_group_color_orange
+    TabStackColor.Teal -> R.string.v5_group_color_teal
+    TabStackColor.Slate -> R.string.v5_group_color_gray
 }
 
 /** Creating or editing the tab stack of [tabId] from the tab overview; [onDone] closes it. */

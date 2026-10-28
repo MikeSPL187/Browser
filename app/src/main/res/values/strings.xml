@@ -2056,7 +2056,10 @@
     <string name="v5_group_name">Group name</string>
     <string name="v5_group_color">Color</string>
     <string name="v5_group_color_purple">Purple</string>
-    <string name="v5_group_color_red">Red</string>
+    <string name="v5_group_color_orange">Orange</string>
+    <string name="v5_group_color_teal">Teal</string>
+    <string name="v5_group_color_pink">Pink</string>
+    <string name="v5_group_color_gray">Gray</string>
     <string name="v5_group_color_green">Green</string>
     <string name="v5_group_color_blue">Blue</string>
     <string name="v5_report_title">Privacy report</string>
