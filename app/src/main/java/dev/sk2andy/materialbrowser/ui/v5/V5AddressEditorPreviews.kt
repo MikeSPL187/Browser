@@ -38,13 +38,19 @@ private val PreviewItems = listOf(
 )
 
 @Composable
-private fun EditorPreview(text: String, items: List<AddressSuggestionItem>, clipboard: ClipboardOffer? = null) {
+private fun EditorPreview(
+    text: String,
+    items: List<AddressSuggestionItem>,
+    clipboard: ClipboardOffer? = null,
+    completion: String? = null,
+) {
     V5AddressEditor(
         state = V5EditorState(
             value = TextFieldValue(text, TextRange(text.length)),
             // Over an open page, so «Find on page» shows farthest from the field.
             layout = V5SuggestionLayoutRules.layout(items, text, pageUrl = PREVIEW_PAGE_URL),
             clipboard = clipboard,
+            completion = completion,
         ),
         onValueChange = {},
         onSubmit = {},
@@ -83,6 +89,18 @@ private fun V5EditorPrivatePreview() {
 @Composable
 private fun V5EditorAccentPreview() {
     VolaV5Theme(dark = false, accent = V5Accent.Green) { EditorPreview("пол", PreviewItems) }
+}
+
+@Preview(name = "Editor · completion, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5EditorCompletionPreview() {
+    VolaV5Theme(dark = false) { EditorPreview("pol", PreviewItems, completion = "ar-notes.ru") }
+}
+
+@Preview(name = "Editor · completion, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5EditorCompletionDarkPreview() {
+    VolaV5Theme(dark = true) { EditorPreview("pol", PreviewItems, completion = "ar-notes.ru") }
 }
 
 @Preview(name = "Editor · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
