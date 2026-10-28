@@ -90,7 +90,6 @@ private fun ReaderPreview(
     settings: ReaderSettings,
     settingsVisible: Boolean,
     result: ReaderExtractionResult = ReaderExtractionResult.Success(previewArticle),
-    v5: Boolean = false,
 ) {
     MaterialBrowserTheme(
         settings = AppearanceSettings(appearanceMode = BrowserAppearanceMode.System),
@@ -101,7 +100,7 @@ private fun ReaderPreview(
             isPrivate = false,
             repository = PreviewReaderLibrary(settings),
             resources = AndroidReaderStudioResources,
-            style = rememberReaderStudioStyle(v5 = v5),
+            style = rememberReaderStudioStyle(),
             speechFactory = { PreviewReaderSpeech },
             backHandler = { _, _ -> },
             onRetry = {},
@@ -142,7 +141,7 @@ private fun ReaderErrorPreview() {
 @VolaPreviews
 @Composable
 private fun ReaderV5ArticlePreview() {
-    ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = false, v5 = true)
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = false)
 }
 
 /** V19 under ui.v5: the dark gray theme, the monospace typeface and the largest text, 250 %. */
@@ -156,7 +155,6 @@ private fun ReaderV5MonoLargePreview() {
             font = ReaderFont.Mono,
         ),
         settingsVisible = false,
-        v5 = true,
     )
 }
 
@@ -164,14 +162,14 @@ private fun ReaderV5MonoLargePreview() {
 @VolaPreviews
 @Composable
 private fun ReaderV5SettingsPreview() {
-    ReaderPreview(ReaderSettings(theme = ReaderTheme.Dark, font = ReaderFont.Sans), settingsVisible = true, v5 = true)
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Dark, font = ReaderFont.Sans), settingsVisible = true)
 }
 
 /** Canvas screen «ReaderSettings»: the v5 sheet over a light page, serif chosen. */
 @VolaPreviews
 @Composable
 private fun ReaderV5SettingsLightPreview() {
-    ReaderPreview(ReaderSettings(theme = ReaderTheme.Light, font = ReaderFont.Serif, fontScale = 1.2f), settingsVisible = true, v5 = true)
+    ReaderPreview(ReaderSettings(theme = ReaderTheme.Light, font = ReaderFont.Serif, fontScale = 1.2f), settingsVisible = true)
 }
 
 /** The v5 sheet in a green profile: the chosen card and swatch take its accent. */
@@ -179,6 +177,6 @@ private fun ReaderV5SettingsLightPreview() {
 @Composable
 private fun ReaderV5SettingsGreenPreview() {
     CompositionLocalProvider(LocalV5ProfileAccent provides V5Accent.Green) {
-        ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = true, v5 = true)
+        ReaderPreview(ReaderSettings(theme = ReaderTheme.Paper, font = ReaderFont.Serif), settingsVisible = true)
     }
 }
