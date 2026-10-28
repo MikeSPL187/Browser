@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,10 +40,23 @@ private val NoActions = V5PageMenuActions(
 )
 
 @Composable
-private fun MenuPreview(state: V5PageMenuState, page: V5PageMenuPage = V5PageMenuPage.Main) {
+private fun MenuPreview(state: V5PageMenuState, page: V5PageMenuPage = V5PageMenuPage.Main, backdrop: Bitmap? = null) {
     Box(Modifier.fillMaxSize().background(V5Theme.colors.background)) {
-        V5PageMenu(visible = true, state = state, actions = NoActions, onDismiss = {}, initialPage = page)
+        V5PageMenu(visible = true, state = state, actions = NoActions, onDismiss = {}, initialPage = page, backdrop = backdrop)
     }
+}
+
+/** System-v5 section 4: the menu on glass over the bottom of the page. */
+@Preview(name = "Page menu · glass over a page, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuGlassPreview() {
+    VolaV5Theme(dark = false) { MenuPreview(PageState, backdrop = v5PreviewPageSnapshot()) }
+}
+
+@Preview(name = "Page menu · glass over a page, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun V5PageMenuGlassDarkPreview() {
+    VolaV5Theme(dark = true) { MenuPreview(PageState, backdrop = v5PreviewPageSnapshot()) }
 }
 
 /** PM-05: the rarer actions on «More». */

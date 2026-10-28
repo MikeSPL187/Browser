@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -108,11 +109,13 @@ fun V5SiteProtection(
     state: V5SiteProtectionState,
     actions: V5SiteProtectionActions,
     onDismiss: () -> Unit,
+    /** A snapshot of the page under the sheet, for its glass. */
+    backdrop: Bitmap? = null,
 ) {
     var page by rememberSaveable(visible) { mutableStateOf(Page.Main) }
     var confirmReset by rememberSaveable(visible) { mutableStateOf(false) }
     val title = stringResource(if (state.protectionOn) R.string.v5_site_on else R.string.v5_site_off)
-    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title, backdrop = backdrop) {
         // Back steps out of a page before it closes the sheet.
         BackHandler(enabled = page != Page.Main) { page = Page.Main }
         // The pages cross-fade; without system animations the fade is the whole of the motion.

@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
@@ -166,6 +167,8 @@ fun V5PageMenu(
     modifier: Modifier = Modifier,
     /** The page the menu opens on; previews show «More» with it. */
     initialPage: V5PageMenuPage = V5PageMenuPage.Main,
+    /** A snapshot of the page under the menu, for its glass. */
+    backdrop: Bitmap? = null,
 ) {
     // The second page, «More», holds what is rarely needed (PM-05); the first stays short.
     var page by rememberSaveable(visible) { mutableStateOf(initialPage) }
@@ -179,6 +182,7 @@ fun V5PageMenu(
         onDismiss = onDismiss,
         title = stringResource(R.string.v5_menu_title),
         modifier = modifier,
+        backdrop = backdrop,
     ) {
         // Back steps out of «More» before it closes the sheet.
         BackHandler(enabled = page != V5PageMenuPage.Main) { page = V5PageMenuPage.Main }

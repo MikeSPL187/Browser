@@ -159,7 +159,13 @@ internal fun BrowserSiteProtectionV5(
     )
     val dark = MaterialTheme.colorScheme.background.luminance() < DARK_BACKGROUND_LUMINANCE
     VolaV5Theme(dark = dark, accent = controller.v5Accent, privateBrowsing = tab.isIncognito) {
-        V5SiteProtection(visible = visible, state = state, actions = actions, onDismiss = onDismiss)
+        V5SiteProtection(
+            visible = visible,
+            state = state,
+            actions = actions,
+            onDismiss = onDismiss,
+            backdrop = rememberPageBackdrop(controller, tab, visible),
+        )
     }
     BrowserPrivacyReportV5(
         protection = NewTabProtection(
