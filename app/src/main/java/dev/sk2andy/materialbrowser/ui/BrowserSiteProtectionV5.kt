@@ -176,6 +176,7 @@ internal fun BrowserSiteProtectionV5(
         ),
         visible = reportVisible,
         onDismiss = { reportVisible = false },
+        backdrop = rememberPageBackdrop(controller, tab, reportVisible),
     )
 }
 

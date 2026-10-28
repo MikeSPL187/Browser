@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Bitmap
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -23,6 +24,8 @@ internal fun BrowserPrivacyReportV5(
     protection: NewTabProtection,
     visible: Boolean,
     onDismiss: () -> Unit,
+    /** A snapshot of the page, when the report opens from the site's protection over it. */
+    backdrop: Bitmap? = null,
 ) {
     var windowDays by rememberSaveable { mutableIntStateOf(ProtectionReportRules.DAYS) }
     // The summary reads the report's state, so it follows new blocks while the sheet is open.
@@ -39,6 +42,7 @@ internal fun BrowserPrivacyReportV5(
             onClear = protection.onClear,
             onDismiss = onDismiss,
             hasData = hasData,
+            backdrop = backdrop,
         )
     }
 }

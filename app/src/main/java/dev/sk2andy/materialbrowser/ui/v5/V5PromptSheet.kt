@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -57,11 +58,13 @@ fun V5PromptSheet(
     testTag: String? = null,
     /** A glyph before the title, such as the permission a site asks for. */
     leading: (@Composable () -> Unit)? = null,
+    /** A snapshot of the page under the sheet, for its glass ([V5Sheet]). */
+    backdrop: Bitmap? = null,
     /** What the question asks to fill in or pick, between the message and the actions. */
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val colors = V5Theme.colors
-    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title) {
+    V5WindowSheet(visible = visible, onDismiss = onDismiss, title = title, backdrop = backdrop) {
         V5SheetHeader(
             title = title,
             onClose = onDismiss,

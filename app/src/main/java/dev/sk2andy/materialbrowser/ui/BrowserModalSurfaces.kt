@@ -258,10 +258,13 @@ internal fun BoxScope.BrowserModalSurfaces(
     }
 
     controller.permissionPrompt?.let { prompt ->
+        // The glass shows the asking page only while that page is the one in front.
+        val asking = controller.selectedTab.takeIf { it.id == prompt.tabId }
         PermissionPromptSheet(
             prompt = prompt,
             onChoice = { choice -> controller.respondToPermissionPrompt(prompt.id, choice) },
             onShown = { controller.onPermissionPromptShown(prompt.id) },
+            backdrop = asking?.let { rememberPageBackdrop(controller, it, visible = true) },
         )
     }
 
