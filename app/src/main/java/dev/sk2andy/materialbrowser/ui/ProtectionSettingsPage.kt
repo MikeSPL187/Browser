@@ -7,13 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.sk2andy.materialbrowser.R
@@ -617,75 +612,26 @@ private fun CustomDnsEndpointDialog(
     var endpointDraft by rememberSaveable(initialEndpoint) { mutableStateOf(initialEndpoint) }
     val normalizedEndpoint = DnsOverHttpsRules.normalizedCustomEndpoint(endpointDraft)
     val invalid = endpointDraft.isNotBlank() && normalizedEndpoint == null
-    if (rememberDrawsV5()) {
-        SettingsPromptV5(
-            title = stringResource(R.string.settings_dns_over_https_custom_dialog_title),
-            message = null,
-            confirm = stringResource(R.string.action_save),
-            onConfirm = { normalizedEndpoint?.let(onConfirm) },
-            onDismiss = onDismiss,
-            confirmEnabled = normalizedEndpoint != null,
-        ) {
-            SettingsPromptFieldV5(
-                value = endpointDraft,
-                onValueChange = { value -> endpointDraft = value.take(DnsOverHttpsRules.MAX_ENDPOINT_LENGTH) },
-                placeholder = stringResource(R.string.settings_dns_over_https_custom_endpoint),
-                maxLength = DnsOverHttpsRules.MAX_ENDPOINT_LENGTH,
-                onDone = { normalizedEndpoint?.let(onConfirm) },
-                modifier = Modifier.testTag(ProtectionSettingsTestTags.CustomDnsEndpoint),
-                hint = stringResource(R.string.settings_dns_over_https_custom_summary),
-                problem = if (invalid) stringResource(R.string.settings_dns_over_https_custom_invalid) else null,
-                keyboardType = KeyboardType.Uri,
-            )
-        }
-        return
+    SettingsPromptV5(
+        title = stringResource(R.string.settings_dns_over_https_custom_dialog_title),
+        message = null,
+        confirm = stringResource(R.string.action_save),
+        onConfirm = { normalizedEndpoint?.let(onConfirm) },
+        onDismiss = onDismiss,
+        confirmEnabled = normalizedEndpoint != null,
+    ) {
+        SettingsPromptFieldV5(
+            value = endpointDraft,
+            onValueChange = { value -> endpointDraft = value.take(DnsOverHttpsRules.MAX_ENDPOINT_LENGTH) },
+            placeholder = stringResource(R.string.settings_dns_over_https_custom_endpoint),
+            maxLength = DnsOverHttpsRules.MAX_ENDPOINT_LENGTH,
+            onDone = { normalizedEndpoint?.let(onConfirm) },
+            modifier = Modifier.testTag(ProtectionSettingsTestTags.CustomDnsEndpoint),
+            hint = stringResource(R.string.settings_dns_over_https_custom_summary),
+            problem = if (invalid) stringResource(R.string.settings_dns_over_https_custom_invalid) else null,
+            keyboardType = KeyboardType.Uri,
+        )
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_dns_over_https_custom_dialog_title)) },
-        text = {
-            OutlinedTextField(
-                value = endpointDraft,
-                onValueChange = { value ->
-                    endpointDraft = value.take(DnsOverHttpsRules.MAX_ENDPOINT_LENGTH)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(ProtectionSettingsTestTags.CustomDnsEndpoint),
-                label = { Text(stringResource(R.string.settings_dns_over_https_custom_endpoint)) },
-                supportingText = {
-                    Text(
-                        stringResource(
-                            if (endpointDraft.isNotBlank() && normalizedEndpoint == null) {
-                                R.string.settings_dns_over_https_custom_invalid
-                            } else {
-                                R.string.settings_dns_over_https_custom_summary
-                            },
-                        ),
-                    )
-                },
-                isError = endpointDraft.isNotBlank() && normalizedEndpoint == null,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    imeAction = ImeAction.Done,
-                ),
-                singleLine = true,
-            )
-        },
-        confirmButton = {
-            TextButton(
-                enabled = normalizedEndpoint != null,
-                onClick = { normalizedEndpoint?.let(onConfirm) },
-            ) {
-                Text(stringResource(R.string.action_save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
 }
 
 @Composable

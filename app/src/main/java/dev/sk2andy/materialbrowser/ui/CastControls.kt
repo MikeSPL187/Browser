@@ -56,31 +56,11 @@ internal fun CastControls(
 ) {
     if (!state.isConnected || !state.hasMedia) return
     var expanded by rememberSaveable { mutableStateOf(false) }
-    if (rememberDrawsV5()) {
-        V5PromptTheme {
-            CastMiniControllerV5(state, { expanded = true }, onTogglePlayback, onDisconnect, modifier)
-            CastExpandedControllerV5(
-                state = state,
-                visible = expanded,
-                onDismiss = { expanded = false },
-                onTogglePlayback = onTogglePlayback,
-                onSeek = onSeek,
-                onVolumeChange = onVolumeChange,
-                onDisconnect = onDisconnect,
-            )
-        }
-        return
-    }
-    CastMiniController(
-        state = state,
-        onExpand = { expanded = true },
-        onTogglePlayback = onTogglePlayback,
-        onDisconnect = onDisconnect,
-        modifier = modifier,
-    )
-    if (expanded) {
-        CastExpandedController(
+    V5PromptTheme {
+        CastMiniControllerV5(state, { expanded = true }, onTogglePlayback, onDisconnect, modifier)
+        CastExpandedControllerV5(
             state = state,
+            visible = expanded,
             onDismiss = { expanded = false },
             onTogglePlayback = onTogglePlayback,
             onSeek = onSeek,
