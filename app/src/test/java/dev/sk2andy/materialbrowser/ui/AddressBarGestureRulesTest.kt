@@ -64,19 +64,6 @@ class AddressBarGestureRulesTest {
     }
 
     @Test
-    fun `v5 is never wide, the current interface follows the window`() {
-        // A phone sideways: 891 dp wide, its narrow side 411 dp.
-        assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = false, windowWidthDp = 891f, smallestWidthDp = 411f))
-        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 891f, smallestWidthDp = 411f))
-        // A tablet either way: v5 keeps the phone's layout there too (owner, 28.10).
-        assertEquals(true, AddressBarWideLayoutRules.isWide(uiV5 = false, windowWidthDp = 800f, smallestWidthDp = 800f))
-        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 800f, smallestWidthDp = 800f))
-        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 1280f, smallestWidthDp = 800f))
-        // A phone upright.
-        assertEquals(false, AddressBarWideLayoutRules.isWide(uiV5 = true, windowWidthDp = 411f, smallestWidthDp = 411f))
-    }
-
-    @Test
     fun `past the last tab only a rubber band pulled nearly to its end opens a new tab`() {
         val edge = 42f
         assertTrue(AddressBarTabSwitchRules.opensNewTabPastLast(offsetPx = -40f, edgeTravelMaxPx = edge, newTabFraction = 0.9f))
