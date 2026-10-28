@@ -1479,24 +1479,15 @@ internal fun BrowserScreen(
             selectedTab = selectedTab,
             addressEditorVisible = addressEditorVisible,
             showInteractiveBlankStart = showInteractiveBlankStart,
-            blankTabModeProgress = blankTabModeProgress,
-            blankTabModeRevealOrigin = blankTabModeRevealOrigin,
-            profileWallpaperRuntime = profileWallpaperRuntime,
             commandFeedback = commandFeedback,
             suggestionItems = suggestionItems,
             highlightedSuggestionIndex = highlightedSuggestionIndex,
-            browserHeightPx = browserHeightPx,
             bottomBarTopPx = bottomBarTopPx,
-            browserContentBlurTarget = browserContentBlurTarget,
-            pageBehindAddressBar = !contentFramed || addressBarDocked,
             linkPeekAddressBarExpanded = linkPeekAddressBarExpanded,
             castUiState = castUiState,
             settingsVisible = settingsVisible,
             addressValue = addressValue,
-            domainCompletion = domainCompletion,
             addressFocusNonce = addressFocusNonce,
-            showAiModeToggle = showAiModeToggle,
-            aiModeSelectedState = aiModeSelectedState,
             browserDragOffset = browserDragOffset,
             browserWidthPx = browserWidthPx,
             tabSwitchTravelPx = tabSwitchTravelPx,
@@ -1504,9 +1495,6 @@ internal fun BrowserScreen(
             tabOverviewOpening = tabOverviewOpening,
             tabOverviewVisible = tabOverviewVisible,
             overviewGestureProgress = overviewGestureProgress,
-            addressBarMorphInFront = addressBarMorphInFront,
-            browserRootBottomInWindowPx = browserRootBottomInWindowPx,
-            visibleSnoozedTabCount = visibleSnoozedTabs.size,
             onToggleCastPlayback = onToggleCastPlayback,
             onSeekCast = onSeekCast,
             onCastVolumeChange = onCastVolumeChange,
@@ -1517,7 +1505,6 @@ internal fun BrowserScreen(
             onHighlightedSuggestionChanged = { highlightedSuggestionIndex = it },
             selectSuggestion = ::selectSuggestion,
             fillAddressFromSuggestion = ::fillAddressFromSuggestion,
-            moveSuggestionHighlight = ::moveSuggestionHighlight,
             submitAddressOrCommand = ::submitAddressOrCommand,
             onLiveFrameCleared = { liveFrameTabId = null },
             onTabHandoffChanged = { tabHandoff = it },
@@ -1538,8 +1525,6 @@ internal fun BrowserScreen(
             openNewTabAndEdit = { openNewTabAndEdit() },
             openNewPrivateTabAndEdit = { openNewTabAndEdit(isIncognito = true) },
             toggleFavoriteWithFeedback = toggleFavoriteWithFeedback,
-            onBlankTabModeRevealOriginChanged = { blankTabModeRevealOrigin = it },
-            onSnoozedTabs = { snoozedTabsVisible = true },
             onOpenFavorites = onOpenFavorites,
             onOpenDownloads = onOpenDownloads,
             onOpenHistory = onOpenHistory,
@@ -1548,16 +1533,7 @@ internal fun BrowserScreen(
                 privacyXRayTabId = selectedTab.id
                 permissionRadarOrigin = null
             },
-            onNewTabButtonBoundsChanged = { addressNewTabButtonBounds = it },
             onReaderStudio = { performAddressBarLongPress(AddressBarLongPressAction.OpenReader) },
-            onOpenCandyTrail = {
-                performAddressBarLongPress(AddressBarLongPressAction.OpenCandyTrail)
-            },
-            onSnooze = { snoozeTabId = selectedTab.id },
-            onAddSiteCapsule = {
-                performAddressBarLongPress(AddressBarLongPressAction.CreateSiteCapsule)
-            },
-            onAddressBarLongPressAction = ::performAddressBarLongPress,
             ) }
         }
 

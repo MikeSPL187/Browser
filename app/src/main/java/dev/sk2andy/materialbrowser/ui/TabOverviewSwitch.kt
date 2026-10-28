@@ -2,16 +2,13 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.geometry.Rect
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.ProfileWallpaperTarget
-import dev.sk2andy.materialbrowser.ui.theme.v5.rememberUiV5Flag
 
 /**
- * The tab overview: under ui.v5 on a phone the v5 overview (V10a), otherwise the current one
- * ([TabOverviewV4]). The parameters are the current overview's; the v5 one uses the few it needs.
- * Wide windows keep the current overview until the tablet layout of v5.
+ * The tab overview: the v5 overview (V10a) on every width. The parameters are still the v4
+ * overview's; the v5 one uses the few it needs, and the rest go with the v4 code.
  */
 @Composable
 internal fun TabOverview(
@@ -45,48 +42,14 @@ internal fun TabOverview(
     onSnoozeTab: (String) -> Unit,
     onHeroPagerSnapshotObserved: ((HeroPagerSnapshotObservation) -> Unit)? = null,
 ) {
-    val uiV5 by rememberUiV5Flag()
-    val wide = rememberWideBrowserWindow()
-    if (uiV5 && !wide) {
-        BrowserTabOverviewV5(
-            controller = controller,
-            visible = visible,
-            onClose = onClose,
-            onSelect = onSelect,
-            onNewTab = onNewTab,
-            onEntryHeroStarted = onEntryHeroStarted,
-            onEntryHeroCompleted = onEntryHeroCompleted,
-            onNewPrivateTab = onNewPrivateTab,
-        )
-        return
-    }
-    TabOverviewV4(
+    BrowserTabOverviewV5(
         controller = controller,
-        backgroundWallpaper = backgroundWallpaper,
         visible = visible,
-        bottomBarTopPx = bottomBarTopPx,
         onClose = onClose,
         onSelect = onSelect,
-        onSelectDismissAnchor = onSelectDismissAnchor,
         onNewTab = onNewTab,
-        onOpenSettings = onOpenSettings,
-        onOpenSyncSettings = onOpenSyncSettings,
-        onEditProfileWallpaper = onEditProfileWallpaper,
-        onConfigureCreatedProfile = onConfigureCreatedProfile,
-        destinationChromeVisible = destinationChromeVisible,
         onEntryHeroStarted = onEntryHeroStarted,
         onEntryHeroCompleted = onEntryHeroCompleted,
-        onExitHeroVisibilityChanged = onExitHeroVisibilityChanged,
-        candyTrailTabId = candyTrailTabId,
-        candyTrailSourceBounds = candyTrailSourceBounds,
-        candyTrailBackProgress = candyTrailBackProgress,
-        candyTrailBackEdgeSign = candyTrailBackEdgeSign,
-        candyTrailPredictiveBackCommitted = candyTrailPredictiveBackCommitted,
-        onOpenCandyTrail = onOpenCandyTrail,
-        onCloseCandyTrail = onCloseCandyTrail,
-        onToggleFavoriteTab = onToggleFavoriteTab,
-        onAddSiteCapsule = onAddSiteCapsule,
-        onSnoozeTab = onSnoozeTab,
-        onHeroPagerSnapshotObserved = onHeroPagerSnapshotObserved,
+        onNewPrivateTab = onNewPrivateTab,
     )
 }
