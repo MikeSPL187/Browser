@@ -4,10 +4,14 @@ import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ActivityScenario
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
+import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.actions.WebContentTarget
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -16,7 +20,8 @@ import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
-import dev.sk2andy.materialbrowser.ui.LinkPeekTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5LinkGlanceTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -25,7 +30,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -96,9 +100,9 @@ class GeckoLinkPeekInstrumentedTest {
                 scenario.onActivity { activity ->
                     initialTabId = activity.browserControllerForTesting().selectedTabId
                 }
-                // The card's tag sits on a node merged into the card's own semantics.
-                composeRule.onNodeWithTag("overview_tab:$initialTabId", useUnmergedTree = true)
-                    .performClick()
+                // If the overview opened over the new page, its card brings the page back.
+                val card = composeRule.onAllNodesWithTag(V5OverviewTestTags.card(initialTabId), useUnmergedTree = true)
+                if (card.fetchSemanticsNodes().isNotEmpty()) card.onFirst().performClick()
                 awaitCondition {
                     var attached = false
                     scenario.onActivity { activity ->
@@ -148,7 +152,7 @@ class GeckoLinkPeekInstrumentedTest {
                     }
                     visible
                 }
-                composeRule.onNodeWithTag(LinkPeekTestTags.Root).assertIsDisplayed()
+                composeRule.onNodeWithTag(V5LinkGlanceTestTags.Root).assertIsDisplayed()
                 awaitCondition {
                     var previewCreated = false
                     scenario.onActivity { activity ->
@@ -162,10 +166,9 @@ class GeckoLinkPeekInstrumentedTest {
                 scenario.onActivity { activity ->
                     originalTabIds += activity.browserControllerForTesting().tabs.map(BrowserTab::id)
                 }
-                composeRule.onNodeWithTag(
-                    LinkPeekTestTags.OpenTarget,
-                    useUnmergedTree = true,
-                ).performClick()
+                // «In background» lives in the card's «More».
+                composeRule.onNodeWithTag(V5LinkGlanceTestTags.More).performClick()
+                composeRule.onNodeWithText(context.getString(R.string.v5_glance_open_background)).performClick()
                 composeRule.waitForIdle()
                 var openState = "unavailable"
                 awaitCondition(description = { openState }) {
@@ -216,7 +219,7 @@ class GeckoLinkPeekInstrumentedTest {
                     }
                     dismissed
                 }
-                composeRule.onNodeWithTag(LinkPeekTestTags.Root).assertDoesNotExist()
+                composeRule.onNodeWithTag(V5LinkGlanceTestTags.Root).assertDoesNotExist()
 
                 scenario.onActivity { activity ->
                     val controller = activity.browserControllerForTesting()

@@ -88,9 +88,8 @@ class SettingsHomePageInstrumentedTest {
             }
         }
 
-        val air = context.getString(R.string.settings_chrome_style_air)
-        val theme = context.getString(R.string.settings_home_theme_auto)
-        composeRule.onNodeWithText("$air · $theme").assertExists()
+        // v5 has no frame style: under Appearance only the theme counts.
+        composeRule.onNodeWithText(context.getString(R.string.settings_home_theme_auto)).assertExists()
         composeRule.onNodeWithText(
             context.getString(R.string.settings_home_protection_trackers_https),
         ).assertExists()

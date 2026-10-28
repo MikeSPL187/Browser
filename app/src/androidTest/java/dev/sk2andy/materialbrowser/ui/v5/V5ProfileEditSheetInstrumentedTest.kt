@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,6 +18,7 @@ import org.junit.runner.RunWith
 /**
  * The v5 profile sheet on the device (PF-06): a new profile is made by «Create» with its name, symbol
  * and accent; an existing one keeps a blank name as it was, and its switches and «Delete» answer.
+ * Rows below the sheet's edge are scrolled to first: a tap there lands on the scrim (androidTest/CLAUDE.md).
  */
 @RunWith(AndroidJUnit4::class)
 class V5ProfileEditSheetInstrumentedTest {
@@ -67,9 +69,9 @@ class V5ProfileEditSheetInstrumentedTest {
     fun aBlankNameKeepsTheOldOneAndTheSwitchesAndDeleteAnswer() {
         show(creating = false, onDelete = { calls += "delete" })
 
-        composeRule.onNodeWithTag(V5ProfileEditTestTags.Isolation).performClick()
-        composeRule.onNodeWithTag(V5ProfileEditTestTags.Protection).performClick()
-        composeRule.onNodeWithTag(V5ProfileEditTestTags.Delete).performClick()
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.Isolation).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.Protection).performScrollTo().performClick()
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.Delete).performScrollTo().performClick()
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextClearance()
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Save).performClick()
 
@@ -82,7 +84,7 @@ class V5ProfileEditSheetInstrumentedTest {
 
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextClearance()
         composeRule.onNodeWithTag(V5ProfileEditTestTags.Name).performTextInput("Work")
-        composeRule.onNodeWithTag(V5ProfileEditTestTags.color(2)).performClick()
+        composeRule.onNodeWithTag(V5ProfileEditTestTags.color(2)).performScrollTo().performClick()
         composeRule.onNodeWithTag(V5EditHeaderTestTags.Cancel).performClick()
 
         // «Close» is the way out of a change (ПР-1): only «Done» saves.

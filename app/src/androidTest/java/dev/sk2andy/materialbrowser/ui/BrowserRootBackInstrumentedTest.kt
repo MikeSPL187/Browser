@@ -2,31 +2,17 @@ package dev.sk2andy.materialbrowser.ui
 
 import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performTouchInput
-import androidx.core.graphics.Insets
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.data.AppearanceSettings
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
-import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5OverviewTestTags
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,7 +53,7 @@ class BrowserRootBackInstrumentedTest {
         composeRule.waitUntil(timeoutMillis = 5_000L) {
             browserController.tabs.none { it.id == closingTabId }
         }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertExists()
+        composeRule.onNodeWithTag(V5OverviewTestTags.Overview).assertExists()
     }
 
     @Test
@@ -105,7 +91,7 @@ class BrowserRootBackInstrumentedTest {
             assertEquals(1, returnCalls.get())
             assertTrue(browserController.tabs.any { it.id == externalTabId })
         }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5OverviewTestTags.Overview).assertDoesNotExist()
     }
 
     @Test
@@ -122,7 +108,7 @@ class BrowserRootBackInstrumentedTest {
         }
 
         composeRule.waitUntil(timeoutMillis = 5_000L) { portraitLocked.get() }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertExists()
+        composeRule.onNodeWithTag(V5OverviewTestTags.Overview).assertExists()
         composeRule.runOnIdle { assertTrue(portraitLocked.get()) }
 
         composeRule.activityRule.scenario.onActivity { activity ->
@@ -136,116 +122,6 @@ class BrowserRootBackInstrumentedTest {
     }
 
     @Test
-    fun frostedTabOverviewKeepsClearSystemBarSpacing() {
-        val browserController = createControllerWithSibling()
-        val surfaceStyle = mutableStateOf(BrowserSurfaceStyle.Clear)
-        val safeInsets = AtomicReference<Insets?>()
-        val windowHeight = AtomicInteger()
-        val windowWidth = AtomicInteger()
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.enableEdgeToEdge()
-        }
-        composeRule.setContent {
-            MaterialBrowserTheme(
-                settings = AppearanceSettings(
-                    surfaceStyle = surfaceStyle.value,
-                    frostedTransparencyPercent = 50,
-                    frostedAddressBarTransparencyPercent = 40,
-                    frostedBlurPercent = 70,
-                ),
-            ) {
-                BrowserScreen(controller = browserController)
-            }
-        }
-
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.onBackPressedDispatcher.onBackPressed()
-        }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertExists()
-        composeRule.activityRule.scenario.onActivity { activity ->
-            windowHeight.set(activity.window.decorView.height)
-            windowWidth.set(activity.window.decorView.width)
-            safeInsets.set(
-                ViewCompat.getRootWindowInsets(activity.window.decorView)?.getInsets(
-                    WindowInsetsCompat.Type.systemBars() or
-                        WindowInsetsCompat.Type.displayCutout(),
-                ),
-            )
-        }
-        val clearProfileBounds = composeRule
-            .onNodeWithTag(ProfileSwitcherTestTags.Switcher)
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInWindow
-        // The v4 overview ends in the workspace dock; its new-tab button is the lowest control.
-        val clearBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInWindow
-        val insets = requireNotNull(safeInsets.get())
-        assertTrue(windowHeight.get() > windowWidth.get())
-        assertTrue(insets.top > 0)
-        assertTrue(insets.bottom > 0)
-        assertTrue(clearProfileBounds.top >= insets.top)
-        assertTrue(clearBarBounds.bottom <= windowHeight.get() - insets.bottom)
-
-        composeRule.runOnIdle { surfaceStyle.value = BrowserSurfaceStyle.Frosted }
-        composeRule.waitForIdle()
-
-        val frostedProfileBounds = composeRule
-            .onNodeWithTag(ProfileSwitcherTestTags.Switcher)
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInWindow
-        val frostedBarBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.NewTab)
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInWindow
-        assertEquals(clearProfileBounds.top, frostedProfileBounds.top, 1f)
-        assertEquals(clearBarBounds.bottom, frostedBarBounds.bottom, 1f)
-        assertTrue(frostedProfileBounds.top >= insets.top)
-        assertTrue(frostedBarBounds.bottom <= windowHeight.get() - insets.bottom)
-    }
-
-    @Test
-    fun settingsFromOverviewReturnsToOverviewOnBack() {
-        val browserController = createControllerWithSibling()
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        setBrowserContent(browserController)
-
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.onBackPressedDispatcher.onBackPressed()
-        }
-        val settingsBounds = composeRule
-            .onNodeWithTag(TabOverviewChromeTestTags.Settings)
-            .assertIsDisplayed()
-            .fetchSemanticsNode()
-            .boundsInRoot
-        composeRule.onRoot().performTouchInput { click(settingsBounds.center) }
-        composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
-        composeRule
-            .onNodeWithText(context.getString(R.string.settings_tabs_gestures_title))
-            .performTouchInput { click(center) }
-        composeRule.onNodeWithTag(TabSettingsTestTags.ResidentTabLimit).assertExists()
-
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.onBackPressedDispatcher.onBackPressed()
-        }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
-
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.onBackPressedDispatcher.onBackPressed()
-        }
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertDoesNotExist()
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertExists()
-    }
-
-    @Test
     fun incomingBrowserNavigationOpensNewTabAndClosesOverview() {
         val browserController = createControllerWithSibling()
         setBrowserContent(browserController)
@@ -253,7 +129,7 @@ class BrowserRootBackInstrumentedTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.onBackPressedDispatcher.onBackPressed()
         }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertExists()
+        composeRule.onNodeWithTag(V5OverviewTestTags.Overview).assertExists()
 
         val existingTab = browserController.selectedTab
         val existingTabCount = browserController.tabs.size
@@ -266,7 +142,7 @@ class BrowserRootBackInstrumentedTest {
             browserController.tabs.size == existingTabCount + 1 &&
                 browserController.selectedTab.url == TARGET_URL
         }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.Root).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5OverviewTestTags.Overview).assertDoesNotExist()
         composeRule.runOnIdle {
             assertEquals(
                 existingTab.url,

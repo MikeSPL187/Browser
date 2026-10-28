@@ -27,7 +27,7 @@ import dev.sk2andy.materialbrowser.sync.SyncProfile
 import dev.sk2andy.materialbrowser.sync.SyncRepositoryState
 import dev.sk2andy.materialbrowser.sync.SyncStatus
 import dev.sk2andy.materialbrowser.sync.SyncTab
-import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -104,10 +104,10 @@ class AddressBarSyncNavigationE2EInstrumentedTest {
                 // The editor opens with the bar's expand motion.
                 composeRule.waitUntil(timeoutMillis = 5_000L) {
                     runCatching {
-                        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+                        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertIsDisplayed()
                     }.isSuccess
                 }
-                val searchEditor = composeRule.onNodeWithTag(AddressBarTestTags.Editor)
+                val searchEditor = composeRule.onNodeWithTag(V5EditorTestTags.Field)
                     .assertIsDisplayed()
                 searchEditor.performTextReplacement(SEARCH_QUERY)
                 searchEditor.performImeAction()

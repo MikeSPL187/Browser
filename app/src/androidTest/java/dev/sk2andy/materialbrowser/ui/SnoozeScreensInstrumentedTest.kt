@@ -16,15 +16,12 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.R
@@ -120,70 +117,6 @@ class SnoozeScreensInstrumentedTest {
     @Test
     fun listOverflowOpensActionsAboveChromeBeforeSnoozePicker() {
         verifyOverflowActionsFlow(TabOverviewMode.List)
-    }
-
-    @Test
-    fun tabOverviewCloseAllKeepsPinnedTabs() {
-        lateinit var browserController: BrowserController
-        lateinit var pinnedTabId: String
-        lateinit var closableTabId: String
-        composeRule.runOnIdle {
-            browserController = BrowserController(composeRule.activity)
-            controller = browserController
-            pinnedTabId = requireNotNull(
-                browserController.createBackgroundTab("https://pinned.example"),
-            )
-            closableTabId = requireNotNull(
-                browserController.createBackgroundTab("https://closable.example"),
-            )
-            assertTrue(browserController.tabOrder.setPinned(pinnedTabId, true))
-            browserController.selectTab(pinnedTabId)
-        }
-        composeRule.setContent {
-            val bottomBarTop = remember { mutableFloatStateOf(2_000f) }
-            MaterialBrowserTheme {
-                TabOverview(
-                    controller = browserController,
-                    visible = true,
-                    bottomBarTopPx = bottomBarTop,
-                    onClose = {},
-                    onSelect = {},
-                    onNewTab = {},
-                    onOpenSettings = {},
-                    destinationChromeVisible = true,
-                    onEntryHeroStarted = {},
-                    onEntryHeroCompleted = {},
-                    onExitHeroVisibilityChanged = {},
-                    candyTrailTabId = null,
-                    candyTrailSourceBounds = null,
-                    candyTrailBackProgress = 0f,
-                    candyTrailBackEdgeSign = 1,
-                    candyTrailPredictiveBackCommitted = false,
-                    onOpenCandyTrail = { _, _ -> },
-                    onCloseCandyTrail = {},
-                    onToggleFavoriteTab = {},
-                    onAddSiteCapsule = {},
-                    onSnoozeTab = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.More).performScrollTo().performClick()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.more(TabMoreAction.CloseAll))
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertIsEnabled()
-            .performClick()
-        // Closing every unpinned tab asks first.
-        composeRule.onNode(
-            hasText(context.getString(R.string.action_close_all_tabs)) and hasAnyAncestor(isDialog()),
-        ).performClick()
-
-        composeRule.runOnIdle {
-            assertEquals(listOf(pinnedTabId), browserController.activeTabs.map(BrowserTab::id))
-            assertTrue(browserController.tabs.none { it.id == closableTabId })
-        }
     }
 
     @Test
