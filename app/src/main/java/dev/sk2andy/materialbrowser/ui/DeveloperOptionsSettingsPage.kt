@@ -3,8 +3,6 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -252,7 +250,7 @@ internal fun DeveloperOptionsSettingsPage(
     if (v5SpecimenVisible) {
         V5SpecimenDialog(onDismiss = { v5SpecimenVisible = false })
     }
-    if (httpAutofillConfirmationVisible && rememberDrawsV5()) {
+    if (httpAutofillConfirmationVisible) {
         SettingsPromptV5(
             title = stringResource(R.string.developer_options_http_warning_title),
             message = stringResource(R.string.developer_options_http_warning_message),
@@ -263,27 +261,6 @@ internal fun DeveloperOptionsSettingsPage(
             },
             onDismiss = { httpAutofillConfirmationVisible = false },
             destructive = true,
-        )
-    } else if (httpAutofillConfirmationVisible) {
-        AlertDialog(
-            onDismissRequest = { httpAutofillConfirmationVisible = false },
-            title = { Text(stringResource(R.string.developer_options_http_warning_title)) },
-            text = { Text(stringResource(R.string.developer_options_http_warning_message)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        httpAutofillConfirmationVisible = false
-                        onHttpPasswordAutofillEnabledChanged(true)
-                    },
-                ) {
-                    Text(stringResource(R.string.developer_options_http_warning_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { httpAutofillConfirmationVisible = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
         )
     }
 }

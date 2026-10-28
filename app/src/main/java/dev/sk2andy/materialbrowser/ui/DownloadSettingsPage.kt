@@ -3,9 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -148,7 +146,7 @@ internal fun DownloadsSettingsPage(
             }
         }
     }
-    if (directoryDialogVisible && rememberDrawsV5()) {
+    if (directoryDialogVisible) {
         val validDirectory = DownloadDirectoryRules.isValidSubdirectoryInput(directoryDraft)
         val save = {
             directoryDialogVisible = false
@@ -176,50 +174,6 @@ internal fun DownloadsSettingsPage(
                 problem = if (validDirectory) null else stringResource(R.string.settings_download_folder_invalid),
             )
         }
-    } else if (directoryDialogVisible) {
-        val validDirectory = DownloadDirectoryRules.isValidSubdirectoryInput(directoryDraft)
-        AlertDialog(
-            onDismissRequest = { directoryDialogVisible = false },
-            modifier = Modifier.testTag(DownloadSettingsTestTags.DirectoryDialog),
-            title = { Text(stringResource(R.string.settings_download_folder_title)) },
-            text = {
-                OutlinedTextField(
-                    value = directoryDraft,
-                    onValueChange = { directoryDraft = it },
-                    modifier = Modifier.testTag(DownloadSettingsTestTags.DirectoryInput),
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.settings_download_folder_input)) },
-                    isError = !validDirectory,
-                    supportingText = if (validDirectory) {
-                        null
-                    } else {
-                        { Text(stringResource(R.string.settings_download_folder_invalid)) }
-                    },
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        directoryDialogVisible = false
-                        onSettingsChanged(
-                            settings.copy(
-                                downloadSubdirectory = DownloadDirectoryRules
-                                    .normalizedSubdirectory(directoryDraft),
-                            ),
-                        )
-                    },
-                    enabled = validDirectory,
-                    modifier = Modifier.testTag(DownloadSettingsTestTags.DirectoryConfirm),
-                ) {
-                    Text(stringResource(R.string.action_save))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { directoryDialogVisible = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
     }
 }
 
