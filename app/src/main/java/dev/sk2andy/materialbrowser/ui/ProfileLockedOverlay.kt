@@ -7,9 +7,7 @@ import dev.sk2andy.materialbrowser.ui.v5.V5StateAction
 import dev.sk2andy.materialbrowser.ui.v5.V5StatePage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -32,8 +30,6 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaStatePageTokens
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
-import dev.sk2andy.materialbrowser.ui.theme.auraBrush
-
 /**
  * «Workspace locked» (board W-Locked) over a protected workspace until the user confirms it is
  * them. Its tabs are hidden underneath; the way out goes to another workspace.
@@ -53,80 +49,33 @@ internal fun ProfileLockedOverlay(
 ) {
     val name = workspace?.name?.takeIf(String::isNotBlank)
     // V28, B13: under v5 on a phone the one v5 lock screen, in the profile's accent.
-    if (rememberDrawsV5()) {
-        VolaV5Theme(
-            dark = MaterialTheme.colorScheme.background.luminance() < PROFILE_LOCK_DARK_LUMINANCE,
-            accent = workspace?.let { V5ProfileRules.accent(it.accent) } ?: LocalV5ProfileAccent.current,
-        ) {
-            V5StatePage(
-                icon = VolaIcons.Lock,
-                title = if (name != null) {
-                    stringResource(R.string.profile_locked_title_named, name)
-                } else {
-                    stringResource(R.string.profile_locked_title)
-                },
-                message = stringResource(
-                    if (unlockAvailable) R.string.profile_locked_message else R.string.profile_protection_unavailable,
-                ),
-                primary = V5StateAction(
-                    label = stringResource(R.string.profile_unlock_action),
-                    onClick = onUnlock,
-                    icon = VolaIcons.Fingerprint,
-                    enabled = unlockAvailable,
-                ),
-                secondary = listOfNotNull(
-                    V5StateAction(stringResource(R.string.profile_locked_switch_action), onSwitchProfile)
-                        .takeIf { canSwitchProfile },
-                    onNewProfile?.let { V5StateAction(stringResource(R.string.profile_locked_new_action), it) },
-                ),
-                modifier = Modifier.testTag(ProfileProtectionTestTags.LockedOverlay),
-            )
-        }
-        return
-    }
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(ProfileProtectionTestTags.LockedOverlay),
-        color = MaterialTheme.colorScheme.surface,
+    VolaV5Theme(
+        dark = MaterialTheme.colorScheme.background.luminance() < PROFILE_LOCK_DARK_LUMINANCE,
+        accent = workspace?.let { V5ProfileRules.accent(it.accent) } ?: LocalV5ProfileAccent.current,
     ) {
-        VolaStatePage(
+        V5StatePage(
+            icon = VolaIcons.Lock,
             title = if (name != null) {
                 stringResource(R.string.profile_locked_title_named, name)
             } else {
                 stringResource(R.string.profile_locked_title)
             },
             message = stringResource(
-                if (unlockAvailable) {
-                    R.string.profile_locked_message
-                } else {
-                    R.string.profile_protection_unavailable
-                },
+                if (unlockAvailable) R.string.profile_locked_message else R.string.profile_protection_unavailable,
             ),
-            icon = { LockedWorkspaceGem(workspace) },
-            modifier = Modifier
-                .background(VolaTheme.auraBrush)
-                .safeDrawingPadding(),
-        ) {
-            VolaStatePagePrimaryButton(
-                text = stringResource(R.string.profile_unlock_action),
+            primary = V5StateAction(
+                label = stringResource(R.string.profile_unlock_action),
                 onClick = onUnlock,
                 icon = VolaIcons.Fingerprint,
                 enabled = unlockAvailable,
-            )
-            if (canSwitchProfile) {
-                VolaStatePageTextButton(
-                    text = stringResource(R.string.profile_locked_switch_action),
-                    onClick = onSwitchProfile,
-                )
-            }
-            if (onNewProfile != null) {
-                VolaStatePageTextButton(
-                    text = stringResource(R.string.profile_locked_new_action),
-                    onClick = onNewProfile,
-                )
-            }
-        }
+            ),
+            secondary = listOfNotNull(
+                V5StateAction(stringResource(R.string.profile_locked_switch_action), onSwitchProfile)
+                    .takeIf { canSwitchProfile },
+                onNewProfile?.let { V5StateAction(stringResource(R.string.profile_locked_new_action), it) },
+            ),
+            modifier = Modifier.testTag(ProfileProtectionTestTags.LockedOverlay),
+        )
     }
 }
 

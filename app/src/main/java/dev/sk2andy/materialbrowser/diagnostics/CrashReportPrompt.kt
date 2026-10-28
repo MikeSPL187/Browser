@@ -2,7 +2,6 @@ package dev.sk2andy.materialbrowser.diagnostics
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.luminance
-import dev.sk2andy.materialbrowser.ui.rememberDrawsV5
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
@@ -15,11 +14,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -81,43 +75,18 @@ internal fun CrashReportDialog(
     onDismiss: () -> Unit,
 ) {
     // V28, B14a: under v5 on a phone the question is the one v5 prompt sheet.
-    if (rememberDrawsV5()) {
-        VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE) {
-            V5PromptSheet(
-                visible = true,
-                title = stringResource(R.string.crash_report_title),
-                message = stringResource(R.string.crash_report_message),
-                actions = listOf(
-                    V5PromptAction(stringResource(R.string.action_share), onShare, V5PromptRole.Primary),
-                    V5PromptAction(stringResource(R.string.crash_report_copy), onCopy),
-                ),
-                onDismiss = onDismiss,
-            )
-        }
-        return
+    VolaV5Theme(dark = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE) {
+        V5PromptSheet(
+            visible = true,
+            title = stringResource(R.string.crash_report_title),
+            message = stringResource(R.string.crash_report_message),
+            actions = listOf(
+                V5PromptAction(stringResource(R.string.action_share), onShare, V5PromptRole.Primary),
+                V5PromptAction(stringResource(R.string.crash_report_copy), onCopy),
+            ),
+            onDismiss = onDismiss,
+        )
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.crash_report_title)) },
-        text = {
-            Column {
-                Text(stringResource(R.string.crash_report_message))
-                TextButton(onClick = onCopy) {
-                    Text(stringResource(R.string.crash_report_copy))
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onShare) {
-                Text(stringResource(R.string.action_share))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.crash_report_close))
-            }
-        },
-    )
 }
 
 private const val DARK_LUMINANCE = 0.5f

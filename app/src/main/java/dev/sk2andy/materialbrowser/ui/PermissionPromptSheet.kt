@@ -35,11 +35,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -80,17 +78,7 @@ internal fun PermissionPromptSheet(
 ) {
     LaunchedEffect(prompt.id) { onShown() }
     // V28, B9c: under v5 on a phone the one v5 prompt sheet; closing it does not allow.
-    if (rememberDrawsV5()) {
-        PermissionPromptSheetV5(prompt, onChoice, backdrop)
-        return
-    }
-    ModalBottomSheet(
-        onDismissRequest = { onChoice(PermissionPromptChoice.Block) },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = Modifier.testTag(PermissionRadarTestTags.Prompt),
-    ) {
-        PermissionPromptContent(prompt = prompt, onChoice = onChoice)
-    }
+    PermissionPromptSheetV5(prompt, onChoice, backdrop)
 }
 
 @Composable

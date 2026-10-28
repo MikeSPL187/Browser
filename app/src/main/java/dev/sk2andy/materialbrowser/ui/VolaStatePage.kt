@@ -81,69 +81,10 @@ internal fun VolaStatePage(
     details: (@Composable ColumnScope.() -> Unit)? = null,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
-    if (rememberDrawsV5()) {
-        V5PromptTheme {
-            CompositionLocalProvider(LocalStatePageV5 provides true) {
-                V5StatePageLayout(title, message, icon, modifier, announce, details, actions)
-            }
+    V5PromptTheme {
+        CompositionLocalProvider(LocalStatePageV5 provides true) {
+            V5StatePageLayout(title, message, icon, modifier, announce, details, actions)
         }
-        return
-    }
-    val colors = MaterialTheme.colorScheme
-    Column(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = VolaStatePageTokens.maxContentWidth)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(
-                        horizontal = VolaStatePageTokens.contentPaddingHorizontal,
-                        vertical = VolaStatePageTokens.contentPaddingVertical,
-                    ),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(VolaStatePageTokens.contentGap),
-            ) {
-                Box(modifier = Modifier.padding(bottom = VolaStatePageTokens.iconBottomGap)) { icon() }
-                Text(
-                    text = title,
-                    modifier = Modifier.semantics {
-                        heading()
-                        if (announce) liveRegion = LiveRegionMode.Polite
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = colors.onSurface,
-                    textAlign = TextAlign.Center,
-                )
-                if (message != null) {
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                details?.invoke(this)
-            }
-        }
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .widthIn(max = VolaStatePageTokens.maxContentWidth)
-                .fillMaxWidth()
-                .padding(
-                    start = VolaStatePageTokens.actionsPaddingHorizontal,
-                    end = VolaStatePageTokens.actionsPaddingHorizontal,
-                    bottom = VolaStatePageTokens.actionsPaddingBottom,
-                ),
-            verticalArrangement = Arrangement.spacedBy(VolaStatePageTokens.actionGap),
-            content = actions,
-        )
     }
 }
 
