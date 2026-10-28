@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animate
@@ -41,6 +42,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -83,8 +85,8 @@ object V5SheetTestTags {
  * it asks [onDismiss]; the caller then sets [visible] to false and the sheet leaves from where it
  * is. Without system animations it only fades. TalkBack announces [title] as the pane.
  *
- * It sits over the live page, so the material takes its opaque fallback: blur only ever covers
- * Vola's own pixels (section 2.3).
+ * Over the page it lies on glass over a snapshot of the page ([backdrop], section 4); no blur can
+ * see the live page. Without one, the material takes its solid fallback.
  */
 @Composable
 fun V5Sheet(
@@ -94,6 +96,8 @@ fun V5Sheet(
     modifier: Modifier = Modifier,
     /** The sheet has left after [visible] turned false (a host window can close then). */
     onHidden: () -> Unit = {},
+    /** A snapshot of the page under the sheet; only a sheet opened over the page passes one. */
+    backdrop: Bitmap? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = V5Theme.colors
@@ -184,7 +188,7 @@ fun V5Sheet(
                 ),
         )
         val shape = V5Theme.shapes.sheet
-        Column(
+        Box(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
@@ -198,10 +202,6 @@ fun V5Sheet(
                     alpha = if (heightPx == 0f && !inspection) 0f else if (moves) 1f else presence.value
                 }
                 .clip(shape)
-                .background(
-                    V5Materials.thick.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false),
-                    shape,
-                )
                 .border(V5Spacing.hairline, colors.edge, shape)
                 .draggable(
                     state = dragState,
@@ -214,24 +214,33 @@ fun V5Sheet(
                     paneTitle = title
                     isTraversalGroup = true
                 }
-                // A name typed in a sheet stays above the keyboard, and clear of the sides sideways.
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).union(V5SafeSides))
                 .testTag(V5SheetTestTags.Sheet),
         ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = V5Sizes.sheetHandleTop),
-                contentAlignment = Alignment.Center,
-            ) {
+            // The sheet takes the bottom of the page under it.
+            V5SnapshotBackdrop(
+                snapshot = backdrop,
+                material = V5Materials.thick,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.FillWidth,
+                alignment = Alignment.BottomCenter,
+            )
+            // A name typed in a sheet stays above the keyboard, and clear of the sides sideways.
+            Column(Modifier.windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).union(V5SafeSides))) {
                 Box(
                     Modifier
-                        .size(V5Sizes.sheetHandleWidth, V5Sizes.sheetHandleHeight)
-                        .clip(V5Theme.shapes.full)
-                        .background(colors.labelTertiary),
-                )
+                        .fillMaxWidth()
+                        .padding(top = V5Sizes.sheetHandleTop),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        Modifier
+                            .size(V5Sizes.sheetHandleWidth, V5Sizes.sheetHandleHeight)
+                            .clip(V5Theme.shapes.full)
+                            .background(colors.labelTertiary),
+                    )
+                }
+                content()
             }
-            content()
         }
     }
 }

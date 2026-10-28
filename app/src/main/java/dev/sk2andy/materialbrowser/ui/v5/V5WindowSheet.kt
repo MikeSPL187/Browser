@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,10 +30,12 @@ fun V5WindowSheet(
     onDismiss: () -> Unit,
     title: String,
     modifier: Modifier = Modifier,
+    /** A snapshot of the page, for a sheet opened over the page ([V5Sheet]). */
+    backdrop: Bitmap? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (LocalInspectionMode.current) {
-        V5Sheet(visible = visible, onDismiss = onDismiss, title = title, modifier = modifier, content = content)
+        V5Sheet(visible = visible, onDismiss = onDismiss, title = title, modifier = modifier, backdrop = backdrop, content = content)
         return
     }
     var leaving by remember { mutableStateOf(false) }
@@ -59,6 +62,7 @@ fun V5WindowSheet(
             title = title,
             modifier = modifier,
             onHidden = { leaving = false },
+            backdrop = backdrop,
             content = content,
         )
     }

@@ -53,6 +53,12 @@ internal fun V5SnapshotBackdrop(
     snapshot: Bitmap?,
     material: V5Material,
     modifier: Modifier = Modifier,
+    /**
+     * Which part of the page lies under it: the top for a full-screen editor; a sheet at the bottom
+     * takes the page's bottom ([ContentScale.FillWidth], [Alignment.BottomCenter]).
+     */
+    contentScale: ContentScale = ContentScale.Crop,
+    alignment: Alignment = Alignment.TopCenter,
 ) {
     val colors = V5Theme.colors
     val opaque = rememberV5OpaqueMaterials()
@@ -73,8 +79,8 @@ internal fun V5SnapshotBackdrop(
             Image(
                 bitmap = blurred,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
+                contentScale = contentScale,
+                alignment = alignment,
                 filterQuality = FilterQuality.High,
                 modifier = Modifier.fillMaxSize(),
             )

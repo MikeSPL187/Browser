@@ -102,6 +102,7 @@ internal fun BrowserPageMenuV5(
     V5PageMenu(
         visible = visible,
         state = state,
+        backdrop = rememberPageBackdrop(controller, tab, visible),
         actions = V5PageMenuActions(
             onForward = controller::goForward,
             onToggleFavorite = actions.onToggleFavorite,

@@ -1,10 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -14,7 +11,6 @@ import dev.sk2andy.materialbrowser.data.AddressSuggestion
 import dev.sk2andy.materialbrowser.data.AddressSuggestionSource
 import dev.sk2andy.materialbrowser.recall.RecallMatch
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
-import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 
 /* The v5 address editor as canvas screen «c»: «пол» typed, light and dark; empty with a copied link; private. */
@@ -115,35 +111,14 @@ private fun V5EditorCompletionDarkPreview() {
 @Preview(name = "Editor · glass over a page, light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun V5EditorGlassPreview() {
-    VolaV5Theme(dark = false) { EditorPreview("пол", PreviewItems, backdrop = previewPageSnapshot()) }
+    VolaV5Theme(dark = false) { EditorPreview("пол", PreviewItems, backdrop = v5PreviewPageSnapshot()) }
 }
 
 @Preview(name = "Editor · glass over a page, dark", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun V5EditorGlassDarkPreview() {
-    VolaV5Theme(dark = true) { EditorPreview("пол", PreviewItems, backdrop = previewPageSnapshot()) }
+    VolaV5Theme(dark = true) { EditorPreview("пол", PreviewItems, backdrop = v5PreviewPageSnapshot()) }
 }
-
-/** A page in bands of tile colors: a header, a picture and the text under it. */
-private fun previewPageSnapshot(): Bitmap {
-    val bitmap = Bitmap.createBitmap(PREVIEW_SNAPSHOT_WIDTH, PREVIEW_SNAPSHOT_HEIGHT, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val band = PREVIEW_SNAPSHOT_HEIGHT / PREVIEW_SNAPSHOT_BANDS.size
-    PREVIEW_SNAPSHOT_BANDS.forEachIndexed { index, tile ->
-        canvas.drawRect(
-            0f,
-            (index * band).toFloat(),
-            PREVIEW_SNAPSHOT_WIDTH.toFloat(),
-            ((index + 1) * band).toFloat(),
-            Paint().apply { color = tile.color.toArgb() },
-        )
-    }
-    return bitmap
-}
-
-private const val PREVIEW_SNAPSHOT_WIDTH = 108
-private const val PREVIEW_SNAPSHOT_HEIGHT = 216
-private val PREVIEW_SNAPSHOT_BANDS = listOf(V5Tile.Teal, V5Tile.Blue, V5Tile.Green, V5Tile.Orange)
 
 @Preview(name = "Editor · light, largest font", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP, fontScale = 2f)
 @Composable

@@ -564,8 +564,6 @@ internal fun BoxScope.BrowserAddressChrome(
         )
     }
     if (v5Editor) {
-        // A fresh snapshot of the page for the editor's glass; a private tab is never captured.
-        LaunchedEffect(Unit) { controller.refreshSelectedTabPreview() }
         BrowserV5AddressEditor(
             selectedTab = selectedTab,
             accent = controller.v5Accent,
@@ -584,7 +582,7 @@ internal fun BoxScope.BrowserAddressChrome(
             overStart = showInteractiveBlankStart,
             commandFeedback = commandFeedback,
             searchEngine = controller.searchEngine.displayName,
-            backdrop = controller.previews[selectedTab.id]?.takeUnless { selectedTab.isIncognito || selectedTab.url == BLANK_URL },
+            backdrop = rememberPageBackdrop(controller, selectedTab, visible = true),
             onFindOnPage = { query ->
                 onAddressEditorDismiss()
                 if (controller.openFindInPage()) controller.updateFindInPageQuery(query)
