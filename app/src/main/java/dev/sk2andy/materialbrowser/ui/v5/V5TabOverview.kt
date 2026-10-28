@@ -117,6 +117,10 @@ object V5OverviewTestTags {
     fun close(id: String) = "v5_tab_card_close:$id"
 }
 
+/** What TalkBack says of a card besides its title: where it is in the grid and its group (system-v5.md 8). */
+@Immutable
+internal data class V5TabCardDescription(val position: Int, val total: Int, val group: String?)
+
 /** One card; [preview] is null for private tabs and tabs without a snapshot yet. */
 @Immutable
 data class V5TabCard(
@@ -186,6 +190,10 @@ fun V5TabOverview(
         V5OverviewGroupRules.items(state.cards.map { it.id }, state.groups, searching = state.query.isNotBlank())
     }
     val cardsById = remember(state.cards) { state.cards.associateBy { it.id } }
+    // «Tab 2 of 5» in the order the grid shows the cards (system-v5.md 8).
+    val positions = remember(items) {
+        items.filterIsInstance<V5OverviewItem.Card>().mapIndexed { index, card -> card.id to index + 1 }.toMap()
+    }
     Box(
         modifier
             .fillMaxSize()
@@ -252,6 +260,11 @@ fun V5TabOverview(
                                     )
                                     TabCard(
                                         card = card,
+                                        description = V5TabCardDescription(
+                                            position = positions[card.id] ?: 0,
+                                            total = positions.size,
+                                            group = item.group?.name,
+                                        ),
                                         onSelect = onSelect,
                                         onClose = onClose,
                                         onCloseRefused = onCloseRefused,
@@ -473,6 +486,7 @@ private fun Segments(privateSegment: Boolean, counts: V5OverviewCounts, onChange
 @Composable
 private fun TabCard(
     card: V5TabCard,
+    description: V5TabCardDescription,
     onSelect: (String) -> Unit,
     onClose: (String) -> Unit,
     onCloseRefused: () -> Unit,
@@ -485,6 +499,9 @@ private fun TabCard(
     val shape = V5Theme.shapes.m
     val longPressLabel = stringResource(R.string.v5_group_move_title)
     val pinnedLabel = stringResource(R.string.v5_newtab_pinned)
+    val spoken = description.group?.let { group ->
+        stringResource(R.string.v5_overview_card_in_group, description.position, description.total, card.title, group)
+    } ?: stringResource(R.string.v5_overview_card, description.position, description.total, card.title)
     val view = LocalView.current
     val density = LocalDensity.current.density
     val scope = rememberCoroutineScope()
@@ -533,6 +550,8 @@ private fun TabCard(
                 },
             )
             .semantics {
+                // «Tab 2 of 5, Recipes, group “Dinner”»; «selected» adds that it is the current one.
+                contentDescription = spoken
                 selected = card.selected
                 // A pinned card has no «×»: TalkBack hears why (О-5).
                 if (!card.closable) stateDescription = pinnedLabel

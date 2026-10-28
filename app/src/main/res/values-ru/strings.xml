@@ -2333,6 +2333,8 @@
     <string name="v5_overview_private_unavailable">В этом профиле нет частных вкладок</string>
     <string name="v5_overview_tabs_empty_title">Нет открытых вкладок</string>
     <string name="v5_overview_close_named">Закрыть «%1$s»</string>
+    <string name="v5_overview_card">Вкладка %1$d из %2$d, %3$s</string>
+    <string name="v5_overview_card_in_group">Вкладка %1$d из %2$d, %3$s, группа «%4$s»</string>
     <string name="v5_overview_pinned_stays">Закреплённая вкладка не закрывается. Сначала открепите её.</string>
     <string name="v5_overview_search">Поиск по вкладкам</string>
     <string name="v5_profiles_title">Профили</string>
