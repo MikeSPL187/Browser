@@ -11,16 +11,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationRules
 import dev.sk2andy.materialbrowser.browser.translation.OnDeviceTranslationUiState
+import dev.sk2andy.materialbrowser.browser.translation.PageTranslationError
 import dev.sk2andy.materialbrowser.browser.translation.PageTranslationResult
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguage
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguageSetting
 import dev.sk2andy.materialbrowser.browser.translation.TranslationLanguages
 import dev.sk2andy.materialbrowser.browser.translation.TranslationPair
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5TranslateOfferSetting
+import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5Preference
 import dev.sk2andy.materialbrowser.ui.theme.v5.rememberV5TranslateInto
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguage
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateLanguagesStatus
@@ -29,6 +34,8 @@ import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheet
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheetActions
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslateSheetState
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslatedAccessory
+import dev.sk2andy.materialbrowser.ui.v5.V5TranslateOffer
+import dev.sk2andy.materialbrowser.ui.v5.V5TranslateOfferState
 import dev.sk2andy.materialbrowser.ui.v5.V5TranslatedRowState
 import dev.sk2andy.materialbrowser.ui.v5.v5BarDomain
 import java.util.Locale
@@ -185,8 +192,54 @@ internal fun BrowserTranslatedAccessory(controller: BrowserController, tab: Brow
     )
 }
 
+/**
+ * Vola's offer to translate [tab]'s page (canvas «Translate»), when the engine offers it and
+ * Settings → Translation leaves «Offer translation» on. «Translate» translates at once; when the
+ * language pack is not on the phone yet the sheet opens to say its size first. «Not for this site»
+ * tells the engine; close puts the offer away for this page.
+ */
+@Composable
+internal fun BrowserTranslateOfferV5(controller: BrowserController, tab: BrowserTab, modifier: Modifier = Modifier) {
+    if (!controller.browserEngineCapabilities.onDeviceTranslation) return
+    val offerOn by rememberV5Preference(V5TranslateOfferSetting)
+    val translation = controller.onDeviceTranslation
+    val ui = translation.stateOf(tab.id)
+    val pair = translation.suggestedPair(tab.id)
+    val locale = LocalConfiguration.current.locales[0]
+    val context = LocalContext.current
+    var sheet by remember(tab.id) { mutableStateOf(false) }
+    V5TranslateOffer(
+        state = pair?.takeIf { offerOn && BrowserTranslateRules.showsOffer(ui, it) }?.let {
+            V5TranslateOfferState(
+                to = BrowserTranslateRules.languageName(it.to, locale),
+                from = BrowserTranslateRules.languageName(it.from, locale),
+            )
+        },
+        onTranslate = {
+            if (pair != null) {
+                translation.translate(tab.id, pair, allowModelDownload = false) { result ->
+                    val error = (result as? PageTranslationResult.Failed)?.error
+                    if (error == PageTranslationError.ModelDownloadRequired) {
+                        sheet = true
+                    } else {
+                        V5TranslateRules.error(error)?.let { V5Feedback.show(context, V5TranslateRules.errorText(it)) }
+                    }
+                }
+            }
+        },
+        onNeverOnSite = { translation.neverOfferOnSite(tab.id) },
+        onClose = { translation.dismissOffer(tab.id) },
+        modifier = modifier,
+    )
+    BrowserTranslateSheetV5(controller = controller, tab = tab, visible = sheet, onDismiss = { sheet = false })
+}
+
 /** Pure decisions of the translate binding, for unit tests. */
 internal object BrowserTranslateRules {
+    /** The offer card shows while the engine's offer waits and the page is neither translated nor being translated. */
+    fun showsOffer(ui: OnDeviceTranslationUiState, pair: TranslationPair): Boolean =
+        ui.offered && !ui.inProgress && OnDeviceTranslationRules.shouldOffer(ui.page, pair, neverTranslateSite = false)
+
     data class Codes(val from: String?, val to: String?)
 
     /** Whether the last request's [pair] is the one the sheet now shows. */

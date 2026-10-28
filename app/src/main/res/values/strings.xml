@@ -2368,9 +2368,15 @@
     <string name="v5_translated_from_to">Translated: %1$s → %2$s</string>
     <string name="v5_translate_original">Original</string>
     <string name="v5_translated_hide">Hide</string>
+    <string name="v5_translate_offer_title">Translate into %1$s?</string>
+    <string name="v5_translate_offer_page_language">Page language: %1$s</string>
+    <string name="v5_translate_offer_never_site">Not for this site</string>
+    <string name="v5_translate_offer_note">On-device translation — the text stays on your phone</string>
+    <string name="v5_translate_offer_close">Not now</string>
+    <string name="v5_translate_offer_region">Page translation</string>
     <string name="v5_translation_settings_title">Translation</string>
     <string name="v5_translation_settings_summary">Languages and packs on the phone</string>
-    <string name="v5_translation_offer">Offer translation in the menu</string>
+    <string name="v5_translation_offer">Offer translation</string>
     <string name="v5_translation_offer_hint">When a page isn’t in your language</string>
     <string name="v5_translation_into">Translate into</string>
     <string name="v5_translation_never">Never translate</string>

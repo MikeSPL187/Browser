@@ -124,6 +124,9 @@ object V5Sizes {
     val toggleThumb: Dp = 27.dp
     val toggleThumbInset: Dp = 2.dp
 
+    /** The tile that starts a floating card's heading, such as the translation offer (canvas «Translate»). */
+    val cardTile: Dp = 36.dp
+
     /** A filter chip's capsule (canvas «Downloads»); its touch target stays [touchTarget]. */
     val filterChip: Dp = 34.dp
 

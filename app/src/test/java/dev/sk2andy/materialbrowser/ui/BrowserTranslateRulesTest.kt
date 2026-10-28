@@ -122,4 +122,15 @@ class BrowserTranslateRulesTest {
             BrowserTranslateRules.languagesStatus(TranslationLanguages(emptyList(), emptyList()), failed = false),
         )
     }
+
+    @Test
+    fun theOfferCardWaitsForTheEnginesOfferAndGoesOnceThePageIsTranslatedOrBeingTranslated() {
+        val german = PageTranslationState(pageLanguage = "de", pageLanguageSupported = true, userLanguage = "ru")
+        val offered = OnDeviceTranslationUiState(page = german, offered = true)
+        assertTrue(BrowserTranslateRules.showsOffer(offered, deRu))
+        assertFalse(BrowserTranslateRules.showsOffer(offered.copy(offered = false), deRu))
+        assertFalse(BrowserTranslateRules.showsOffer(offered.copy(inProgress = true), deRu))
+        assertFalse(BrowserTranslateRules.showsOffer(offered.copy(page = german.copy(isTranslated = true)), deRu))
+        assertFalse(BrowserTranslateRules.showsOffer(offered.copy(page = german.copy(requested = deRu)), deRu))
+    }
 }
