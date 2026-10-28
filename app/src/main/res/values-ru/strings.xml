@@ -2342,6 +2342,8 @@
     <string name="v5_profile_delete_last">Единственный профиль на телефоне удалить нельзя.</string>
     <string name="v5_profile_delete_unavailable">Этот профиль сейчас нельзя удалить: он заблокирован или связан с другим устройством.</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
+    <string name="v5_overview_next_profile">Следующий профиль</string>
+    <string name="v5_overview_previous_profile">Предыдущий профиль</string>
     <string name="v5_profile_untitled">Профиль</string>
     <string name="v5_profile_locked">Заблокирован</string>
     <string name="v5_profile_new">Новый профиль</string>

@@ -39,6 +39,8 @@ private fun OverviewPreview(
             profileLabel = "Личный",
             profileIcon = WorkspaceIcons.vector("🏔"),
             groups = groups,
+            // Three profiles, the first in front (canvas «Overview»).
+            profileDots = V5ProfileDots(count = 3, active = 0),
         ),
         onQueryChange = {},
         onSegmentChange = {},

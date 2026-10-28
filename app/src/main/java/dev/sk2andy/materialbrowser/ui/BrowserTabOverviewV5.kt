@@ -56,6 +56,8 @@ import dev.sk2andy.materialbrowser.data.TabDeletionRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewPrivateLock
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileDots
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileDotsRules
 import dev.sk2andy.materialbrowser.ui.v5.V5OverviewState
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptAction
 import dev.sk2andy.materialbrowser.ui.v5.V5PromptRole
@@ -194,6 +196,10 @@ private fun OverviewContent(
     var groupSheet by remember { mutableStateOf<TabGroupSheetTarget?>(null) }
     var profileSheet by remember { mutableStateOf(false) }
     val profile = controller.profiles.firstOrNull { it.id == controller.activeProfileId }
+    // The profiles the bar pages through, in the sheet's order (canvas «Overview»: dots on the chip).
+    val profileIds = V5ProfileRules.order(controller.profiles).map { it.id }
+    val profileDots = V5ProfileDots(profileIds.size, profileIds.indexOf(controller.activeProfileId))
+        .takeIf { controller.profilesEnabled && it.count > 1 && it.active >= 0 }
     VolaV5Theme(dark = darkShell, privateBrowsing = privateSegment) {
         Box(Modifier.fillMaxSize().onGloballyPositioned { overviewBounds = it.boundsInRoot() }) {
             V5TabOverview(
@@ -210,7 +216,16 @@ private fun OverviewContent(
                         count = counts.private,
                         unlockAvailable = controller.isProfileProtectionSupported,
                     ).takeIf { lockedPrivate > 0 },
+                    profileDots = profileDots,
                 ),
+                // A locked profile asks to be opened first, as from the profiles sheet.
+                onProfileStep = profileDots?.let { dots ->
+                    { step ->
+                        V5ProfileDotsRules.target(dots, step)?.let { index ->
+                            if (!exiting) controller.requestProfileSelection(profileIds[index]) {}
+                        }
+                    }
+                },
                 onUnlockPrivate = controller.privateTabsLock::unlock,
                 onCloseAllPrivate = { if (!exiting) controller.closeAllPrivateTabs() },
                 onQueryChange = { query = it },
