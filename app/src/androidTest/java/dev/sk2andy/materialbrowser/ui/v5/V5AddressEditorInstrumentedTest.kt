@@ -46,6 +46,7 @@ class V5AddressEditorInstrumentedTest {
                         value = TextFieldValue("pol"),
                         layout = V5SuggestionLayoutRules.layout(listOf(page, search), query = "pol", pageUrl = pageUrl),
                         completion = completion,
+                        searchEngine = "DuckDuckGo",
                     ),
                     onValueChange = { calls += "value ${it.text}" },
                     onSubmit = { calls += "submit $it" },
@@ -133,5 +134,12 @@ class V5AddressEditorInstrumentedTest {
         composeRule.onNodeWithTag(V5EditorTestTags.Field).performImeAction()
 
         assertEquals(listOf("submit pol"), calls)
+    }
+
+    @Test
+    fun theSearchRowNamesTheSearchEngine() {
+        show()
+
+        composeRule.onNodeWithTag(V5EditorTestTags.SearchEngine, useUnmergedTree = true).assertTextEquals("DuckDuckGo")
     }
 }

@@ -581,6 +581,7 @@ internal fun BoxScope.BrowserAddressChrome(
             onHighlightChange = onHighlightedSuggestionChanged,
             overStart = showInteractiveBlankStart,
             commandFeedback = commandFeedback,
+            searchEngine = controller.searchEngine.displayName,
             onFindOnPage = { query ->
                 onAddressEditorDismiss()
                 if (controller.openFindInPage()) controller.updateFindInPageQuery(query)

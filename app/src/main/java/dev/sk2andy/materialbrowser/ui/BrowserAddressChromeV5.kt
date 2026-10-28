@@ -234,6 +234,8 @@ internal fun BrowserV5AddressEditor(
     commandFeedback: AddressCommandFeedback? = null,
     /** «Find on page» in the list: search the open page for the typed text. */
     onFindOnPage: (String) -> Unit = {},
+    /** Where a search goes, named beside the first search row. */
+    searchEngine: String? = null,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
@@ -258,6 +260,7 @@ internal fun BrowserV5AddressEditor(
                 focusNonce = focusNonce,
                 overStart = overStart,
                 completion = completion,
+                searchEngine = searchEngine,
             ),
             onValueChange = { next ->
                 deleting = next.text.length < value.text.length && value.text.startsWith(next.text)
