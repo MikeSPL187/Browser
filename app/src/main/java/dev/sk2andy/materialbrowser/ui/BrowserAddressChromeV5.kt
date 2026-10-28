@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -236,6 +237,8 @@ internal fun BrowserV5AddressEditor(
     onFindOnPage: (String) -> Unit = {},
     /** Where a search goes, named beside the first search row. */
     searchEngine: String? = null,
+    /** A snapshot of the page under the editor, for its glass. */
+    backdrop: Bitmap? = null,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_LUMINANCE
     val highlighted = suggestionItems.getOrNull(highlightedIndex)
@@ -261,6 +264,7 @@ internal fun BrowserV5AddressEditor(
                 overStart = overStart,
                 completion = completion,
                 searchEngine = searchEngine,
+                backdrop = backdrop,
             ),
             onValueChange = { next ->
                 deleting = next.text.length < value.text.length && value.text.startsWith(next.text)
