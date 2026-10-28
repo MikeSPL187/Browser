@@ -85,6 +85,7 @@ class DeveloperOptionsSettingsPageInstrumentedTest {
         assertTrue(unlocked)
         assertEquals(null, destination)
         composeRule.onNodeWithText(context.getString(R.string.developer_options_title))
+            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
         assertEquals(SettingsDestination.DeveloperOptions, destination)

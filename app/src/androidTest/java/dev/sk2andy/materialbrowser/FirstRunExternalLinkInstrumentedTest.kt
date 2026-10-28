@@ -12,7 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
-import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5FirstRunTestTags
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,7 +40,7 @@ class FirstRunExternalLinkInstrumentedTest {
             .setClass(context, MainActivity::class.java)
         ActivityScenario.launch<MainActivity>(link).use { scenario ->
             composeRule.waitForIdle()
-            composeRule.onNodeWithTag(FirstRunTestTags.Welcome).assertDoesNotExist()
+            composeRule.onNodeWithTag(V5FirstRunTestTags.Welcome).assertDoesNotExist()
             val onboarding = context.getSharedPreferences(
                 GestureOnboardingStore.PREFERENCES_NAME,
                 Context.MODE_PRIVATE,
@@ -66,7 +66,7 @@ class FirstRunExternalLinkInstrumentedTest {
             }
             try {
                 composeRule.waitUntil(timeoutMillis = 5_000) {
-                    composeRule.onAllNodesWithTag(FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
+                    composeRule.onAllNodesWithTag(V5FirstRunTestTags.Welcome).fetchSemanticsNodes().isNotEmpty()
                 }
             } finally {
                 // ActivityScenario matches lifecycle events against its original launch intent.

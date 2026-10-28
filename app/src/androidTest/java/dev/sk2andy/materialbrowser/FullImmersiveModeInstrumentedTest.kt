@@ -19,7 +19,7 @@ import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
 import dev.sk2andy.materialbrowser.browser.engine.GeckoMediaSessionState
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
-import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -171,7 +171,7 @@ class FullImmersiveModeInstrumentedTest {
     fun immersiveAddressEditorKeepsFullRootHeightAcrossImeTransition() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.waitUntil(timeoutMillis = VISIBILITY_TIMEOUT_MILLIS) {
-                composeRule.onAllNodesWithTag(AddressBarTestTags.Editor)
+                composeRule.onAllNodesWithTag(V5EditorTestTags.Field)
                     .fetchSemanticsNodes().isNotEmpty()
             }
             assertTrue(awaitImeVisibility(scenario, expectedVisible = true))
@@ -191,7 +191,7 @@ class FullImmersiveModeInstrumentedTest {
                 )
             }
 
-            val editorBottomWithIme = composeRule.onNodeWithTag(AddressBarTestTags.Editor)
+            val editorBottomWithIme = composeRule.onNodeWithTag(V5EditorTestTags.Field)
                 .fetchSemanticsNode().boundsInRoot.bottom
             scenario.onActivity { activity ->
                 val content = activity.findViewById<View>(android.R.id.content)
@@ -206,7 +206,7 @@ class FullImmersiveModeInstrumentedTest {
             assertTrue(awaitImeVisibility(scenario, expectedVisible = false))
 
             composeRule.waitUntil(timeoutMillis = VISIBILITY_TIMEOUT_MILLIS) {
-                composeRule.onNodeWithTag(AddressBarTestTags.Editor)
+                composeRule.onNodeWithTag(V5EditorTestTags.Field)
                     .fetchSemanticsNode().boundsInRoot.bottom > editorBottomWithIme
             }
             scenario.onActivity { activity ->

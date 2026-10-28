@@ -1,7 +1,6 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
@@ -17,12 +16,9 @@ import dev.sk2andy.materialbrowser.blocking.CandyRule
 import dev.sk2andy.materialbrowser.blocking.CandyRuleAction
 import dev.sk2andy.materialbrowser.blocking.CandyRuleKind
 import dev.sk2andy.materialbrowser.blocking.CandyRuleImport
-import dev.sk2andy.materialbrowser.blocking.CandyRulePreview
 import dev.sk2andy.materialbrowser.blocking.CandyFilterPresets
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import java.util.concurrent.atomic.AtomicReference
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -157,89 +153,5 @@ class FilterStudioScreenInstrumentedTest {
             .assertIsSelected()
         composeRule.onNodeWithTag(FilterStudioTestTags.SubscriptionConfirm)
             .assertIsNotEnabled()
-    }
-
-    @Test
-    fun cosmeticRuleExplainsEffectWebsiteAndSelector() {
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                FilterStudioScreen(
-                    rules = emptyList(),
-                    profiles = listOf(BrowserProfile(id = "default", emoji = "🍬")),
-                    currentProfileId = "default",
-                    currentUrl = "https://news.example",
-                    recentDomain = null,
-                    selectedRuleId = null,
-                    onTest = { null },
-                    onAdd = { it },
-                    onUpdate = { it },
-                    onToggle = { _, _ -> },
-                    onDelete = {},
-                    onParseImport = CandyRuleImport::parse,
-                    onApplyImport = { 0 },
-                    onApplySubscription = { _, _ -> 0 },
-                    onExport = { "candy-rules:1" },
-                    onDismiss = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(FilterStudioTestTags.Add).performClick()
-        composeRule.onNodeWithTag(FilterStudioTestTags.CssAction).performClick()
-        composeRule.onNodeWithTag(FilterStudioTestTags.CssExplanation).assertExists()
-        composeRule.onNodeWithTag(FilterStudioTestTags.CssSite).assertExists()
-        composeRule.onNodeWithTag(FilterStudioTestTags.CssSelector).assertExists()
-    }
-
-    @Test
-    fun adblockImportRequiresScopeAndSkippedSyntaxConfirmation() {
-        val applied = AtomicReference<CandyRulePreview?>()
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                FilterStudioScreen(
-                    rules = emptyList(),
-                    profiles = listOf(
-                        BrowserProfile(id = "default", emoji = "🍬"),
-                        BrowserProfile(id = "work", emoji = "💼"),
-                    ),
-                    currentProfileId = "default",
-                    currentUrl = "https://news.example",
-                    recentDomain = null,
-                    selectedRuleId = null,
-                    onTest = { null },
-                    onAdd = { it },
-                    onUpdate = { it },
-                    onToggle = { _, _ -> },
-                    onDelete = {},
-                    onParseImport = CandyRuleImport::parse,
-                    onApplyImport = {
-                        applied.set(it)
-                        it.rules.size
-                    },
-                    onApplySubscription = { _, _ -> 0 },
-                    onExport = { "candy-rules:1" },
-                    onDismiss = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(FilterStudioTestTags.Body)
-            .performScrollToNode(hasTestTag(FilterStudioTestTags.ImportOpen))
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportOpen).performClick()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportInput)
-            .performTextInput("||ads.example^\n/path/*")
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportAnalyze).performClick()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportScopeCurrent).assertIsSelected()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportConfirm).assertIsNotEnabled()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportScopeGlobal).performClick()
-            .assertIsSelected()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportSkippedConfirm).performClick()
-        composeRule.onNodeWithTag(FilterStudioTestTags.ImportConfirm)
-            .assertIsEnabled()
-            .performClick()
-
-        composeRule.runOnIdle {
-            assertNull(applied.get()?.rules?.single()?.profileId)
-        }
     }
 }

@@ -733,10 +733,10 @@ class GeckoEdgeToEdgeInstrumentedTest {
         bottom: Int,
     ) {
         val margins = view.layoutParams as ViewGroup.MarginLayoutParams
-        assertEquals(left, margins.leftMargin)
-        assertEquals(top, margins.topMargin)
-        assertEquals(right, margins.rightMargin)
-        assertEquals(bottom, margins.bottomMargin)
+        assertEquals("left margin", left, margins.leftMargin)
+        assertEquals("top margin", top, margins.topMargin)
+        assertEquals("right margin", right, margins.rightMargin)
+        assertEquals("bottom margin", bottom, margins.bottomMargin)
     }
 
     /** Where the window layout puts the Gecko host: below the real status bar and cutout. */

@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sk2andy.materialbrowser.browser.BrowserController
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5EditorTestTags
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -50,14 +51,14 @@ class HardwareTabChangeInstrumentedTest {
                 )
             }
         }
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertIsDisplayed()
         composeRule.awaitAddressEditorFocused()
 
         composeRule.runOnIdle {
             hardwareTabChangeRequestId.intValue++
         }
 
-        composeRule.onNodeWithTag(AddressBarTestTags.Editor).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5EditorTestTags.Field).assertDoesNotExist()
     }
 
     private fun clearSession() {

@@ -29,6 +29,8 @@ import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.data.GestureOnboardingStore
 import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
+import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -282,14 +284,14 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
 
     private fun openSettings() {
         openBrowserMenu()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Settings)
+        composeRule.onNodeWithTag(V5PageMenuTestTags.Settings)
             .performScrollTo()
             .performClick()
         composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
     }
 
     private fun openBrowserMenu() {
-        val closeAddressButton = closeAddressInputButton(context)
+        val closeAddressButton = closeAddressInputButton()
         if (composeRule.onAllNodes(closeAddressButton).fetchSemanticsNodes().isNotEmpty()) {
             composeRule.onNode(closeAddressButton).performClick()
         }
@@ -302,7 +304,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.cd_more_options),
         ).performClick()
-        composeRule.onNodeWithTag(BrowserMainMenuTestTags.Menu).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5SheetTestTags.Sheet).assertIsDisplayed()
     }
 
     private fun ensureBuiltInExtensionFixture(): String {

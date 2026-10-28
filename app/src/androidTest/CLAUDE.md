@@ -85,8 +85,8 @@
   смотри порядок модификаторов в `src/main`.
 - `boundsInRoot` обрезается родителями (край карточки, сетки, экрана). Размер зоны касания проверяй по
   `SemanticsNode.size` / `touchBoundsInRoot`, а не по видимым границам.
-- Кнопка закрытия редактора адреса и затемнение за ним имеют одну подпись: искать
-  `closeAddressInputButton(context)` (подпись + `Role.Button`).
+- Редактор адреса — v5: поле `V5EditorTestTags.Field` (фокус ждать `awaitAddressEditorFocused()`),
+  закрытие — `closeAddressInputButton()` (тег «Отмены»). С 28.10 все тесты идут на v5 (`VolaTestRunner`).
 - `performScrollTo()`/`performScrollToNode()` в обходе экранов шли по 2–7 минут и вешали тест за 20-минутный
   предел, а главный поток приложения при этом простаивал больше половины времени (замер `MainThreadSampler`,
   сборка WebView, #165). В обходе прокрутка — действием самого списка (`SemanticsActions.ScrollBy`,

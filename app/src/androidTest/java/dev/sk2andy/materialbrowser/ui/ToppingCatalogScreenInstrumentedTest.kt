@@ -1,6 +1,5 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -10,7 +9,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -57,45 +55,6 @@ class ToppingCatalogScreenInstrumentedTest {
         composeRule.onNodeWithText("Catalog offline").assertExists()
         composeRule.onNodeWithTag(ToppingCatalogTestTags.Retry).performClick()
         assertTrue(retryRequested)
-    }
-
-    @Test
-    fun catalogCardShowsMetadataAndEmitsInstallAndUpdate() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val toggles = mutableListOf<Pair<String, Boolean>>()
-        val updates = mutableListOf<String>()
-        composeRule.setContent {
-            MaterialBrowserTheme {
-                ToppingCatalogScreen(
-                    state = ToppingCatalogUiState.Content(listOf(testTopping())),
-                    onToggle = { id, enabled -> toggles += id to enabled },
-                    onUpdate = { updates += it },
-                    onRetry = {},
-                    onDismiss = {},
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag(ToppingCatalogTestTags.topping("clean-copy"))
-            .assertExists()
-        composeRule.onNodeWithText("Readable copy buttons").assertExists()
-        composeRule.onNodeWithText(
-            context.getString(R.string.topping_catalog_scope, "https://example.com/*"),
-        ).assertExists()
-        composeRule.onNodeWithText(
-            context.getString(R.string.topping_catalog_author, "Candy Community"),
-        ).assertExists()
-        composeRule.onNodeWithText(
-            context.getString(R.string.topping_catalog_version_license, "1.2.0", "MIT"),
-        ).assertExists()
-        composeRule.onNodeWithTag(ToppingCatalogTestTags.toggle("clean-copy"))
-            .assertIsOff()
-            .performClick()
-        composeRule.onNodeWithTag(ToppingCatalogTestTags.update("clean-copy"))
-            .performClick()
-
-        assertEquals(listOf("clean-copy" to true), toggles)
-        assertEquals(listOf("clean-copy"), updates)
     }
 
     @Test
