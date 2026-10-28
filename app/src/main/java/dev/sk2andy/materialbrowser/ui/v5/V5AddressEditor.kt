@@ -1,5 +1,6 @@
 package dev.sk2andy.materialbrowser.ui.v5
 
+import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -136,6 +137,8 @@ data class V5EditorState(
     val completion: String? = null,
     /** The search engine's name, beside the first search row: where a search goes. */
     val searchEngine: String? = null,
+    /** A snapshot of the page under the editor, for its glass; null keeps the material solid. */
+    val backdrop: Bitmap? = null,
 )
 
 @Composable
@@ -154,7 +157,6 @@ internal fun V5AddressEditor(
     /** «Find on page» was tapped: search the open page for the given text. */
     onFindOnPage: (String) -> Unit = {},
 ) {
-    val colors = V5Theme.colors
     // The morph (system-v5.md section 7, canvas «MotionAddress»): the editor rises from the bar's
     // height while its field stretches out of the bar's capsule to its full width, on the
     // addressMorph spring; without animations it only fades in.
@@ -171,15 +173,10 @@ internal fun V5AddressEditor(
         modifier
             .fillMaxSize()
             .graphicsLayer { alpha = appear.value.coerceIn(0f, 1f) }
-            .background(
-                if (seeThrough) {
-                    Color.Transparent
-                } else {
-                    V5Materials.thick.tint(dark = colors.isDark, blurAvailable = false, reduceTransparency = false)
-                },
-            )
             .testTag(V5EditorTestTags.Editor),
     ) {
+        // The suggestions lie on thick glass over a snapshot of the page (section 4).
+        if (!seeThrough) V5SnapshotBackdrop(state.backdrop, V5Materials.thick, Modifier.matchParentSize())
         Column(
             Modifier
                 .fillMaxSize()
