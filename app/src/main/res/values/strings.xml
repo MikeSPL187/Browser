@@ -2222,6 +2222,8 @@
     <string name="v5_overview_private_unavailable">This profile has no private tabs</string>
     <string name="v5_overview_tabs_empty_title">No open tabs</string>
     <string name="v5_overview_close_named">Close “%1$s”</string>
+    <string name="v5_overview_card">Tab %1$d of %2$d, %3$s</string>
+    <string name="v5_overview_card_in_group">Tab %1$d of %2$d, %3$s, group “%4$s”</string>
     <string name="v5_overview_pinned_stays">A pinned tab stays open. Unpin it first.</string>
     <string name="v5_overview_search">Search tabs</string>
     <string name="v5_profiles_title">Profiles</string>
