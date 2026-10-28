@@ -2346,6 +2346,11 @@
     <string name="v5_profile_delete_last">Единственный профиль на телефоне удалить нельзя.</string>
     <string name="v5_profile_delete_unavailable">Этот профиль сейчас нельзя удалить: он заблокирован или связан с другим устройством.</string>
     <string name="v5_profiles_choose">Выбрать профиль</string>
+    <string name="v5_settings_profile_title">Профиль «%1$s»</string>
+    <string name="v5_settings_profile_synced">Синхронизация · %1$s</string>
+    <string name="v5_settings_profile_sync_off">Синхронизация выключена</string>
+    <string name="v5_settings_profile_syncing">Синхронизация…</string>
+    <string name="v5_settings_profile_sync_failed">Последняя синхронизация не удалась</string>
     <string name="v5_overview_next_profile">Следующий профиль</string>
     <string name="v5_overview_previous_profile">Предыдущий профиль</string>
     <string name="v5_profile_untitled">Профиль</string>

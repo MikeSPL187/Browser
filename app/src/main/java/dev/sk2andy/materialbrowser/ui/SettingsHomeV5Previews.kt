@@ -2,9 +2,14 @@ package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeEntry
 import dev.sk2andy.materialbrowser.shared.ui.settings.SettingsHomeRules
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Accent
 import dev.sk2andy.materialbrowser.ui.theme.v5.VolaV5Theme
+import dev.sk2andy.materialbrowser.ui.v5.V5ProfileSync
+import dev.sk2andy.materialbrowser.ui.v5.V5SettingsProfile
+import dev.sk2andy.materialbrowser.ui.v5.V5SettingsProfileCard
 
 /* The v5 settings home as canvas screens «ж» and «Settings», light, dark and the largest font. Preview text is not localized. */
 
@@ -32,8 +37,8 @@ private fun previewEntries(): List<SettingsHomeEntry> =
     }
 
 @Composable
-private fun HomePreview(dark: Boolean) {
-    VolaV5Theme(dark = dark) {
+private fun HomePreview(dark: Boolean, accent: V5Accent = V5Accent.Blue, sync: V5ProfileSync = V5ProfileSync.Synced("2 мин. назад")) {
+    VolaV5Theme(dark = dark, accent = accent) {
         SettingsHomeV5(
             entries = previewEntries(),
             isDefaultBrowser = true,
@@ -43,6 +48,13 @@ private fun HomePreview(dark: Boolean) {
             onDismiss = {},
             developerOptionsUnlocked = false,
             onUnlockDeveloperOptions = {},
+            // Canvas «Settings»: the profile in front and its sync.
+            profileCard = {
+                V5SettingsProfileCard(
+                    profile = V5SettingsProfile("Личный", WorkspaceIcons.vector("🏔"), sync),
+                    onClick = {},
+                )
+            },
         )
     }
 }
@@ -63,4 +75,16 @@ private fun SettingsHomeV5DarkPreview() {
 @Composable
 private fun SettingsHomeV5LargeFontPreview() {
     HomePreview(dark = false)
+}
+
+@Preview(name = "Settings home v5 · green, sync failed", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun SettingsHomeV5AccentPreview() {
+    HomePreview(dark = false, accent = V5Accent.Green, sync = V5ProfileSync.Failed)
+}
+
+@Preview(name = "Settings home v5 · dark, sync off", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun SettingsHomeV5SyncOffPreview() {
+    HomePreview(dark = true, sync = V5ProfileSync.Off)
 }

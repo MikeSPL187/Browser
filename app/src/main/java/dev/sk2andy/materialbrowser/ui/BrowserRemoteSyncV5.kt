@@ -49,7 +49,7 @@ internal class BrowserRemoteSync(val port: RemoteSyncPort, val available: Boolea
             else -> V5SyncServer.Connected(BrowserRemoteSyncRules.status(state, ::relativeTime))
         }
 
-    private fun relativeTime(millis: Long): String =
+    internal fun relativeTime(millis: Long): String =
         DateUtils.getRelativeTimeSpanString(millis, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
 }
 

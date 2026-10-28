@@ -234,6 +234,9 @@ object V5Sizes {
 
     // A profile's editor (canvas «NewProfile»): the profile as it will look, white on its accent.
     val profileAvatar: Dp = 88.dp
+    /** The profile card on top of Settings (canvas «Settings»): its least height and its avatar. */
+    val settingsProfileCard: Dp = 76.dp
+    val settingsProfileAvatar: Dp = 52.dp
     val profileAvatarIcon: Dp = 40.dp
 
     // An empty list (canvas «EmptyHistory»): the list's glyph on a card over a tilted accent plate.

@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -67,6 +68,8 @@ internal fun SettingsHomeV5(
     onDismiss: () -> Unit,
     developerOptionsUnlocked: Boolean,
     onUnlockDeveloperOptions: (() -> Unit)?,
+    /** The profile card under the search (canvas «Settings»); null leaves it out. */
+    profileCard: (@Composable () -> Unit)? = null,
 ) {
     val darkShell = MaterialTheme.colorScheme.background.luminance() < DARK_SHELL_LUMINANCE
     val byItem = entries.associateBy { it.item }
@@ -97,6 +100,9 @@ internal fun SettingsHomeV5(
                         .semantics { heading() },
                 )
                 SearchField(onSearch)
+                profileCard?.let { card ->
+                    Box(Modifier.padding(top = V5Spacing.space4)) { card() }
+                }
             }
             if (!isDefaultBrowser) {
                 Row(Modifier.padding(horizontal = V5Spacing.marginPhone)) {
