@@ -42,17 +42,16 @@ internal fun ReaderStudioScreen(
     onOpenLink: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    val v5 = rememberReaderUiV5()
     SharedReaderStudioScreen(
         result = result,
         sourceUrl = sourceUrl,
         isPrivate = isPrivate,
         repository = repository,
         resources = AndroidReaderStudioResources,
-        style = rememberReaderStudioStyle(v5 = v5),
+        style = rememberReaderStudioStyle(),
         // Under v5 the mini player above the bar goes on with the article after the reader closes.
         speechFactory = { document ->
-            ListenSession.get(context).speechFor(document, isPrivate, keepsSpeaking = v5)
+            ListenSession.get(context).speechFor(document, isPrivate, keepsSpeaking = true)
         },
         backHandler = { enabled, onBack -> BackHandler(enabled = enabled, onBack = onBack) },
         onRetry = onRetry,
@@ -133,16 +132,12 @@ internal object AndroidReaderStudioResources : ReaderStudioResources {
     }
 }
 
-/** Whether v5 draws the browser around the reader ([rememberDrawsV5]). */
-@Composable
-private fun rememberReaderUiV5(): Boolean = rememberDrawsV5()
-
 /**
- * The reader's look from the design tokens (board W-Reader), with the browser's accent. Under
- * ui.v5 ([v5]) the dark reading theme is the v5 dark gray, not pure black (system-v5.md 1.1).
+ * The reader's look from the design tokens (board W-Reader), with the browser's accent. The dark
+ * reading theme is the v5 dark gray, not pure black (system-v5.md 1.1).
  */
 @Composable
-internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
+internal fun rememberReaderStudioStyle(): ReaderStudioStyle {
     val scheme = MaterialTheme.colorScheme
     val browserDark = scheme.background.luminance() < 0.5f
     // On a page of the other brightness than the browser, the inverse accent keeps its contrast.
@@ -150,7 +145,7 @@ internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
     val onPageAccent = if (browserDark) scheme.onPrimaryContainer else scheme.onPrimary
     val darkAccent = if (browserDark) scheme.primary else scheme.inversePrimary
     val onDarkAccent = if (browserDark) scheme.onPrimary else scheme.onPrimaryContainer
-    return remember(scheme, v5) {
+    return remember(scheme) {
         ReaderStudioStyle(
             light = ReaderPalette(
                 background = VolaReader.lightBackground,
@@ -169,10 +164,10 @@ internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
                 onAccent = onPageAccent,
             ),
             dark = ReaderPalette(
-                background = if (v5) VolaReader.darkBackgroundV5 else VolaReader.darkBackground,
+                background = VolaReader.darkBackgroundV5,
                 content = VolaReader.darkContent,
                 muted = VolaReader.darkMuted,
-                card = if (v5) VolaReader.darkCardV5 else VolaReader.darkCard,
+                card = VolaReader.darkCardV5,
                 accent = darkAccent,
                 onAccent = onDarkAccent,
             ),
@@ -206,8 +201,8 @@ internal fun rememberReaderStudioStyle(v5: Boolean = false): ReaderStudioStyle {
             iconSize = VolaReader.iconSize,
             handleWidth = VolaReader.handleWidth,
             handleHeight = VolaReader.handleHeight,
-            articleSiteLine = v5,
-            controls = if (v5) V5ReaderStudioControls else null,
+            articleSiteLine = true,
+            controls = V5ReaderStudioControls,
         )
     }
 }
