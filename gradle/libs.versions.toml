@@ -12,7 +12,7 @@ compose-material3 = "1.5.0-beta01"
 lifecycle = "2.8.7"
 # GeckoView resolves Media3 core at this version; keep the session API aligned with it.
 media3 = "1.11.1"
-kotlinx-serialization = "1.11.0"
+kotlinx-serialization = "1.12.0"
 # QR transfer (V26): the camera only on the pairing screen, codes decoded on the phone.
 camerax = "1.4.2"
 
