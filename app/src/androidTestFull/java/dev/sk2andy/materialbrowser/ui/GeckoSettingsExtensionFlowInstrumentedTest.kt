@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -31,6 +32,7 @@ import dev.sk2andy.materialbrowser.data.ReleaseNotesStore
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
 import dev.sk2andy.materialbrowser.ui.v5.V5PageMenuTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5SheetTestTags
+import dev.sk2andy.materialbrowser.ui.v5.V5SyncSettingsTestTags
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -71,8 +73,8 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         composeRule.onNodeWithText(context.getString(R.string.sync_settings_title))
             .performClick()
 
-        composeRule.onNodeWithTag(SyncSettingsTestTags.Endpoint).assertIsDisplayed()
-        composeRule.onNodeWithTag(SyncSettingsTestTags.AccentColors)
+        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(V5SyncSettingsTestTags.Server)
             .performScrollTo()
             .assertIsDisplayed()
     }
@@ -101,7 +103,7 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
 
         composeRule.onNodeWithTag(FirefoxExtensionManagerTestTags.Overlay).assertDoesNotExist()
-        composeRule.onNodeWithText(context.getString(R.string.settings_title)).assertIsDisplayed()
+        composeRule.onNodeWithTag(SettingsSearchTestTags.Open).assertIsDisplayed()
     }
 
     @Test
@@ -117,17 +119,19 @@ class GeckoSettingsExtensionFlowInstrumentedTest {
         }
 
         openFirefoxExtensionSettings()
+        // The extension's own page holds its «Options».
+        composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText(FIXTURE_EXTENSION_NAME).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(FIXTURE_EXTENSION_NAME).performScrollTo().performClick()
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithTag(
                 FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
             ).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithContentDescription(
-            context.getString(R.string.gecko_extension_install),
-        ).assertIsDisplayed()
         composeRule.onNodeWithTag(
             FirefoxExtensionManagerTestTags.optionsPage(FIXTURE_EXTENSION_ID),
-        ).assertIsDisplayed().performClick()
+        ).performScrollTo().assertIsDisplayed().performClick()
 
         var optionsTabId = ""
         composeRule.waitUntil(timeoutMillis = TIMEOUT_MILLIS) {
