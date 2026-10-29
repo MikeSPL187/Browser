@@ -709,4 +709,3 @@ private fun stackColors(color: TabStackColor): TabStackColors {
         content = content,
     )
 }
-

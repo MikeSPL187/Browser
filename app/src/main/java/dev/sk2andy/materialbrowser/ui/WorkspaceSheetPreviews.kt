@@ -4,4 +4,3 @@ private val previewIcons = listOf(
     "💼", "🏠", "🎬", "📚", "⭐", "🎨",
     "🌍", "⚡", "📷", "👤", "🔖", "🔍",
 )
-

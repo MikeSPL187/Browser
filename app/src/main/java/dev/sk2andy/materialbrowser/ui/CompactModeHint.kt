@@ -31,6 +31,7 @@ import dev.sk2andy.materialbrowser.ui.theme.VolaElevation
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 import dev.sk2andy.materialbrowser.ui.theme.VolaShapes
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+
 internal object CompactModeHintTestTags {
     const val Hint = "compact_mode_hint"
 }

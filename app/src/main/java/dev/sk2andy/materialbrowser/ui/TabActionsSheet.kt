@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.R
+
 private fun TabQuickAction.labelRes(): Int = when (this) {
     TabQuickAction.AddToEssentials -> R.string.tab_actions_add_essential
     TabQuickAction.RemoveFromEssentials -> R.string.tab_actions_remove_essential

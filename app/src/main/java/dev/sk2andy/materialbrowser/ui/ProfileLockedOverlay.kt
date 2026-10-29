@@ -20,6 +20,7 @@ import dev.sk2andy.materialbrowser.shared.ui.WorkspaceIcons
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
+
 /**
  * «Workspace locked» (board W-Locked) over a protected workspace until the user confirms it is
  * them. Its tabs are hidden underneath; the way out goes to another workspace.

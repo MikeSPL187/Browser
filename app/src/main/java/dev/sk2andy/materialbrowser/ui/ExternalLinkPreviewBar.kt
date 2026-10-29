@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import dev.sk2andy.materialbrowser.browser.BrowserBackdropBlurRegion
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.ExternalLinkPreviewState
+
 internal object ExternalLinkPreviewTestTags {
     const val Bar = "external_link_preview_bar"
     const val Back = "external_link_preview_back"
@@ -54,4 +55,3 @@ internal fun ExternalLinkPreviewBar(
         modifier = modifier,
     )
 }
-

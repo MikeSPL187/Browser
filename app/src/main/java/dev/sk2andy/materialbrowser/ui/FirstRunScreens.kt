@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import dev.sk2andy.materialbrowser.ui.theme.VolaFirstRunTokens
+
 /**
  * A soft glow of the accent from the top, over the theme's background (pure black in dark); the
  * content sits inside the safe area. Shared with the gesture lesson, so the whole first run looks
@@ -37,4 +38,3 @@ internal fun FirstRunBackground(modifier: Modifier = Modifier, content: @Composa
         content()
     }
 }
-

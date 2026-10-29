@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.passwords
 
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.shared.credentials.ImportConflict
+
 /** Where passwords and bookmarks come from; each but [File] has its own steps (board W-ImportChrome). */
 internal enum class PasswordImportSource { Chrome, Firefox, Samsung, Managers, File }
 
@@ -106,4 +107,3 @@ internal fun PasswordImportSource.label(): Int = when (this) {
     PasswordImportSource.Managers -> R.string.passwords_import_managers
     PasswordImportSource.File -> R.string.passwords_import_file
 }
-

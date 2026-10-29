@@ -3,7 +3,6 @@ package dev.sk2andy.materialbrowser.audit
 import android.app.Activity
 import android.os.SystemClock
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -37,21 +36,10 @@ import dev.sk2andy.materialbrowser.browser.EdgeToEdgeSiteFixtureServer
 import dev.sk2andy.materialbrowser.dismissSystemNotResponding
 import dev.sk2andy.materialbrowser.focusedWindow
 import dev.sk2andy.materialbrowser.grantNotificationPermissionForTests
-import dev.sk2andy.materialbrowser.settings.SettingsRegistry
-import dev.sk2andy.materialbrowser.shared.ui.BrowserMainMenuTestTags
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.AddressBarTestTags
-import dev.sk2andy.materialbrowser.ui.AppearanceMainTestTags
-import dev.sk2andy.materialbrowser.ui.FindInPageBarTestTags
-import dev.sk2andy.materialbrowser.ui.FirstRunTestTags
-import dev.sk2andy.materialbrowser.ui.NewTabPageTestTags
 import dev.sk2andy.materialbrowser.ui.PermissionRadarTestTags
 import dev.sk2andy.materialbrowser.ui.ReleaseNotesTestTags
-import dev.sk2andy.materialbrowser.ui.SettingsDestination
 import dev.sk2andy.materialbrowser.ui.SettingsSearchTestTags
-import dev.sk2andy.materialbrowser.ui.SiteInfoTestTags
-import dev.sk2andy.materialbrowser.ui.TabSettingsTestTags
-import dev.sk2andy.materialbrowser.ui.UserscriptManagementTestTags
 import dev.sk2andy.materialbrowser.shared.ui.ReaderStudioTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5BarTestTags
 import dev.sk2andy.materialbrowser.ui.v5.V5DistractionsPanelTestTags
@@ -92,12 +80,13 @@ import org.junit.runners.model.TestTimedOutException
  * by [ScreenAuditor] from top to bottom. Every group runs in six configurations — English and
  * Russian, light and dark, normal and double font size, the phone upright and on its side, and a
  * tablet — so each screen is gone through six times. A screen the walk cannot reach is a finding too. The test fails with the full list.
- * The v5 interface (`ui.v5`) has walks of its own in the four upright phone configurations: a wider
- * window keeps the current interface. Its settings pages are walked too, a few per test.
+ * The v5 interface is the only one (v4 left on 28.10): its walks run in the four upright phone
+ * configurations, the browser and the page also on a phone on its side and on a tablet (the phone's
+ * layout in a column). Its settings pages are walked too, a few per test.
  */
 @RunWith(Parameterized::class)
 class AppScreenWalkInstrumentedTest(
-    /** A walk group: [BROWSER_GROUP] and the like, a settings slice, or a subpage slice. */
+    /** A walk group: [V5_BROWSER_GROUP] and the like, or a settings slice. */
     private val group: Int,
     private val config: AuditConfig,
 ) {
@@ -144,8 +133,6 @@ class AppScreenWalkInstrumentedTest(
     private val visited = mutableListOf<String>()
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val auditor = ScreenAuditor(composeRule) { currentActivity() }
-    private val uiV5 = group in V5_GROUPS || group in V5_MORE_GROUPS || group == V5_DEEPER_GROUP ||
-        group in v5SettingsGroups()
 
     @After
     fun tearDown() {
@@ -156,20 +143,14 @@ class AppScreenWalkInstrumentedTest(
     @Test
     fun walk() {
         when (group) {
-            BROWSER_GROUP -> walk(config, steps = ::walkBrowser)
-            LIBRARY_GROUP -> walk(config, steps = ::walkLibrary)
-            FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
-            PAGE_GROUP -> walk(config, steps = ::walkPage)
-            PAGE_STATES_GROUP -> walk(config, steps = ::walkPageStates)
             V5_BROWSER_GROUP -> walk(config, steps = ::walkV5Browser)
             V5_PAGE_GROUP -> walk(config, steps = ::walkV5Page)
             V5_FIRST_RUN_GROUP -> walk(config, firstRun = true, steps = {})
             V5_LIBRARY_GROUP -> walk(config, steps = ::walkV5Library)
             V5_PAGE_STATES_GROUP -> walk(config, steps = ::walkV5PageStates)
             V5_DEEPER_GROUP -> walk(config, steps = ::walkV5Deeper)
-            in subpageGroups() -> walk(config) { walkSubpages(SUBPAGE_GROUP_BASE - group) }
             in v5SettingsGroups() -> walk(config) { walkV5Settings(V5_SETTINGS_GROUP_BASE - group) }
-            else -> walk(config) { walkSettings(group) }
+            else -> error("No walk for group $group")
         }
     }
 
@@ -177,69 +158,14 @@ class AppScreenWalkInstrumentedTest(
         // Before the environment: the grant asks UiAutomation with flags of its own, and the
         // reconnect would put the rotation back (AuditEnvironment.turnScreen).
         grantNotificationPermissionForTests()
-        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5)
+        AuditEnvironment.enter(context, auditConfig, firstRun, uiV5 = true)
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitOrientation()
-        if (firstRun) if (uiV5) walkV5FirstRun() else walkFirstRun()
+        if (firstRun) walkV5FirstRun()
         dismissReleaseNotes()
         step("launch") { awaitTag(newTabTag()) }
         steps()
         if (findings.isNotEmpty()) fail(report())
-    }
-
-    /**
-     * The welcome, then every screen after it the way a new user goes on: «Next» through the setup
-     * screens, the gesture lessons' intro and the first lesson (then «Skip», as a hurried user
-     * does), until the browser shows its new tab.
-     */
-    private fun walkFirstRun() {
-        step("first run: welcome") {
-            awaitTag(FirstRunTestTags.Welcome)
-            auditScrolling("first run: welcome")
-            click(hasTestTag(FirstRunTestTags.Start))
-        }
-        var reachedBrowser = false
-        repeat(MAX_FIRST_RUN_SCREENS) { index ->
-            if (reachedBrowser) return
-            val screen = "first run: screen ${index + 1}"
-            step(screen) {
-                composeRule.waitUntil("the next first-run screen", TIMEOUT_MILLIS) {
-                    firstRunForward() != null || exists(hasTestTag(NewTabPageTestTags.Header))
-                }
-                val forward = firstRunForward()
-                if (forward == null) {
-                    reachedBrowser = true
-                } else {
-                    auditScrolling(screen)
-                    val before = auditor.describeScreen()
-                    click(hasTestTag(forward), systemTap = true)
-                    // The walk's own scroll action (auditScrolling) can leave the lesson's list
-                    // scrolling when nothing else on screen animates, and the first touch only stops
-                    // it, as on any list; a second press 3 s later then moves on (runs of 15.10).
-                    val settled = runCatching {
-                        composeRule.waitUntil(SECOND_PRESS_AFTER_MILLIS) { auditor.describeScreen() != before }
-                    }.isSuccess
-                    if (!settled && exists(hasTestTag(forward))) click(hasTestTag(forward), systemTap = true)
-                    // The next screen fades in over this one, and a screen that left can linger in
-                    // a detached root: the walk once pressed «Next» nine times on a screen it had
-                    // left. What it waits for is what is shown, as a user does.
-                    val moved = timed("wait for $screen to go") {
-                        runCatching {
-                            composeRule.waitUntil(TIMEOUT_MILLIS) { auditor.describeScreen() != before }
-                        }.isSuccess
-                    }
-                    if (!moved) {
-                        findings += AuditFinding(
-                            screen,
-                            config.name,
-                            AuditKind.Navigation,
-                            "nothing changed ${TIMEOUT_MILLIS / 1000} s after «$forward» was tapped — on screen: $before",
-                        )
-                    }
-                    idle()
-                }
-            }
-        }
     }
 
     /**
@@ -271,28 +197,6 @@ class AppScreenWalkInstrumentedTest(
         }
     }
 
-    private fun firstRunForward(): String? = FIRST_RUN_FORWARD.firstOrNull { tag -> exists(hasTestTag(tag)) }
-
-    /** Favorites, downloads, history and snoozed tabs, opened from the menu. */
-    private fun walkLibrary() {
-        listOf(
-            BrowserMainMenuTestTags.Favorites to "favorites",
-            BrowserMainMenuTestTags.Downloads to "downloads",
-            BrowserMainMenuTestTags.History to "history",
-            BrowserMainMenuTestTags.SnoozedTabs to "snoozed tabs",
-        ).forEach { (tag, screen) ->
-            step(screen) {
-                openMenuItem(tag)
-                idle()
-                auditScrolling(screen)
-                // Some of these are activities of their own: the browser stays composed under them.
-                back()
-                idle()
-                recover()
-            }
-        }
-    }
-
     /**
      * One line per distinct finding, most serious kinds first, with the screens it was seen on:
      * the same label under the status bar on five screens is one problem, not five.
@@ -308,134 +212,6 @@ class AppScreenWalkInstrumentedTest(
             }
         return "${lines.size} distinct findings in ${config.name}; screens walked: $visited\n" +
             lines.joinToString("\n")
-    }
-
-    /** New tab, address editor, menus, tab overview and a private tab. */
-    private fun walkBrowser() {
-        step("new tab") { auditScrolling("new tab") }
-        step("address editor") {
-            click(hasTestTag(AddressBarTestTags.PrimaryField))
-            awaitShown(closeAddressInput())
-            audit("address editor, empty")
-            composeRule.onAllNodes(hasSetTextAction()).onFirst().performTextInput("vola test")
-            audit("address editor, typed")
-            backUntilGone(closeAddressInput())
-        }
-        step("main menu") {
-            click(hasContentDescription(string(R.string.cd_more_options)))
-            awaitTag(BrowserMainMenuTestTags.Menu)
-            audit("main menu")
-            click(hasTestTag(BrowserMainMenuTestTags.More))
-            awaitTag(BrowserMainMenuTestTags.MoreGroup)
-            audit("main menu, more")
-            backUntilGone(hasTestTag(BrowserMainMenuTestTags.Menu))
-        }
-        step("tab overview") {
-            openOverview()
-            auditScrolling("tab overview")
-            backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
-        }
-        step("private tab") {
-            scenario.onActivity { activity ->
-                activity.browserControllerForTesting().createTab(isIncognito = true)
-            }
-            idle()
-            auditScrolling("private tab")
-        }
-    }
-
-    /** The settings home, then every page on it, top to bottom, and back. */
-    private fun walkSettings(slice: Int) {
-        step("settings home") {
-            openSettings()
-            if (slice == 0) auditScrolling("settings home")
-        }
-        val chosen = settingsSlices().getOrElse(slice) { emptyList() }
-        for (page in chosen) {
-            val title = string(page.title)
-            step("settings: $title") {
-                ensureSettingsHome()
-                tapUntil(hasText(title) and hasClickAction(), "the $title page to open") { !atSettingsHome() }
-                auditScrolling("settings: $title")
-                back()
-                idle()
-            }
-        }
-        if (slice == settingsSlices().lastIndex) {
-            step("settings search") {
-                ensureSettingsHome()
-                click(hasTestTag(SettingsSearchTestTags.Open))
-                awaitTag(SettingsSearchTestTags.Field)
-                audit("settings search, empty")
-                composeRule.onAllNodes(hasSetTextAction()).onFirst()
-                    .performTextInput(if (config.languageTag.startsWith("ru")) "вкладки" else "tabs")
-                idle()
-                auditScrolling("settings search, results")
-                back()
-            }
-        }
-    }
-
-    /** A real web page typed into the address bar, its site information and find in page. */
-    private fun walkPage() {
-        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
-            step("web page") {
-                openTyped(server.fixtureUrl("/article"))
-                auditScrolling("web page")
-            }
-            step("site information") {
-                click(hasTestTag(PermissionRadarTestTags.ActivityBadge))
-                awaitTag(SiteInfoTestTags.Overview)
-                auditScrolling("site information")
-                backUntilGone(hasTestTag(SiteInfoTestTags.Overview))
-            }
-            step("find in page") {
-                openMenuItem(BrowserMainMenuTestTags.FindInPage)
-                awaitTag(FindInPageBarTestTags.Bar)
-                audit("find in page, empty")
-                composeRule.onNodeWithTag(FindInPageBarTestTags.Query).performTextInput("Vola")
-                composeRule.waitUntil("matches to be counted", PAGE_TIMEOUT_MILLIS) {
-                    exists(hasTestTag(FindInPageBarTestTags.MatchCount))
-                }
-                audit("find in page, matches")
-                // A tap right after typing was lost once (night of 17.10, walk[22]): tap again until it closes.
-                tapUntil(hasTestTag(FindInPageBarTestTags.Close), "find in page to close") {
-                    !exists(hasTestTag(FindInPageBarTestTags.Bar))
-                }
-            }
-        }
-    }
-
-    /** The menu over a page, a page that fails to load, and the overview with several tabs. */
-    private fun walkPageStates() {
-        EdgeToEdgeSiteFixtureServer(requestHandler = { AUDIT_PAGE_HTML }).use { server ->
-            step("menu on a page") {
-                openTyped(server.fixtureUrl("/article"))
-                click(hasContentDescription(string(R.string.cd_more_options)))
-                awaitTag(BrowserMainMenuTestTags.Menu)
-                audit("menu on a page")
-                click(hasTestTag(BrowserMainMenuTestTags.More))
-                awaitTag(BrowserMainMenuTestTags.MoreGroup)
-                audit("menu on a page, more")
-                backUntilGone(hasTestTag(BrowserMainMenuTestTags.Menu))
-            }
-            step("page that fails to load") {
-                scenario.onActivity { activity ->
-                    activity.browserControllerForTesting().createTab(isIncognito = false)
-                }
-                idle()
-                // A port just freed: nothing listens there and the connection is refused at once.
-                // (Port 1 is one Gecko refuses to try at all, which is a different page.)
-                val closedPort = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { it.localPort }
-                openTyped("http://127.0.0.1:$closedPort/", expectFailure = true)
-                auditScrolling("page that fails to load")
-            }
-            step("tab overview, two tabs") {
-                openOverview()
-                auditScrolling("tab overview, two tabs")
-                backUntilGone(hasTestTag(TabOverviewChromeTestTags.Root))
-            }
-        }
     }
 
     /**
@@ -729,25 +505,8 @@ class AppScreenWalkInstrumentedTest(
         return tab.get()
     }
 
-    /** Pages one level deeper: their parent page first, then the row that opens them. */
-    private fun walkSubpages(slice: Int) {
-        step("settings home") { openSettings() }
-        for (subpage in subpageSlices().getOrElse(slice) { emptyList() }) {
-            val screen = "settings: ${string(subpage.parent)} › ${subpage.name}"
-            step(screen) {
-                ensureSettingsHome()
-                val parent = hasText(string(subpage.parent)) and hasClickAction()
-                tapUntil(parent, "${string(subpage.parent)} to open") { !atSettingsHome() }
-                val entry = subpage.entry(this)
-                tapUntil(entry, "$screen to open") { !exists(entry) }
-                auditScrolling(screen)
-            }
-        }
-    }
-
     /** The menu's Settings, in its short view or under More, the way a user finds it. */
     private fun openSettings() {
-        if (!uiV5) return openMenuItem(BrowserMainMenuTestTags.Settings) { atSettingsHome() }
         openV5Menu()
         tapUntil(hasText(string(R.string.action_settings)) and hasClickAction(), "the settings to open") {
             atSettingsHome()
@@ -760,29 +519,15 @@ class AppScreenWalkInstrumentedTest(
     }
 
     private fun overview(): SemanticsMatcher =
-        hasTestTag(if (uiV5) V5OverviewTestTags.Overview else TabOverviewChromeTestTags.Root)
+        hasTestTag(V5OverviewTestTags.Overview)
 
-    /** What the browser shows on a new tab: the v5 new tab has a header of its own. */
-    private fun newTabTag(): String = if (uiV5) V5NewTabTestTags.Page else NewTabPageTestTags.Header
+    /** What the browser shows on a new tab. */
+    private fun newTabTag(): String = V5NewTabTestTags.Page
 
     private fun addressEditor(): SemanticsMatcher =
-        if (uiV5) hasTestTag(V5EditorTestTags.Editor) else closeAddressInput()
+        hasTestTag(V5EditorTestTags.Editor)
 
     private fun atSettingsHome(): Boolean = exists(hasTestTag(SettingsSearchTestTags.Open))
-
-    /** Taps a menu item, in the short menu or under More, until what it opens is there. */
-    private fun openMenuItem(
-        tag: String,
-        opened: () -> Boolean = { !exists(hasTestTag(BrowserMainMenuTestTags.Menu)) },
-    ) {
-        val menu = hasTestTag(BrowserMainMenuTestTags.Menu)
-        tapUntil(hasContentDescription(string(R.string.cd_more_options)), "the menu to open") { exists(menu) }
-        if (!exists(hasTestTag(tag))) {
-            val more = hasTestTag(BrowserMainMenuTestTags.MoreGroup)
-            tapUntil(hasTestTag(BrowserMainMenuTestTags.More), "More to open") { exists(more) }
-        }
-        tapUntil(hasTestTag(tag), "$tag to open", opened)
-    }
 
     /**
      * Taps [target] until [done]. On a busy phone a tap that lands while a screen is still
@@ -904,7 +649,6 @@ class AppScreenWalkInstrumentedTest(
     private fun atBareNewTab(): Boolean =
         exists(hasTestTag(newTabTag())) &&
             !exists(addressEditor()) &&
-            !exists(hasTestTag(BrowserMainMenuTestTags.Menu)) &&
             !exists(hasTestTag(V5SheetTestTags.Sheet)) &&
             !exists(overview())
 
@@ -1138,11 +882,6 @@ class AppScreenWalkInstrumentedTest(
         composeRule.waitUntil("${matcher.description} to appear", TIMEOUT_MILLIS) { exists(matcher) }
     }
 
-    /** The open address editor's close button (the scrim behind it has the same label). */
-    private fun closeAddressInput(): SemanticsMatcher =
-        hasContentDescription(string(R.string.cd_close_address_input)) and
-            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
-
     private fun exists(matcher: SemanticsMatcher): Boolean = runCatching { liveIndex(matcher) != null }.getOrDefault(false)
 
     /**
@@ -1170,26 +909,11 @@ class AppScreenWalkInstrumentedTest(
     }
 
     companion object {
-        private const val BROWSER_GROUP = -1
-        private const val LIBRARY_GROUP = -2
-        private const val FIRST_RUN_GROUP = -3
-        private const val MAX_FIRST_RUN_SCREENS = 10
 
-        /**
-         * What moves each first-run screen on: a lesson's «Skip», the lessons' «Start», «Next». The
-         * lesson's own buttons come first: the setup screen's «Next» may still be in the tree while
-         * the lesson fades in over it.
-         */
-        private val FIRST_RUN_FORWARD = listOf(
-            "gesture_onboarding_skip",
-            "gesture_onboarding_start",
-            FirstRunTestTags.Next,
-        )
         private const val PAGES_PER_TEST = 2
         private const val TIMEOUT_MILLIS = 10_000L
         private const val ROTATION_TIMEOUT_MILLIS = 60_000L
         private const val ROTATION_DUMP_LINES = 12
-        private const val SECOND_PRESS_AFTER_MILLIS = 3_000L
         private const val BACK_ATTEMPTS = 3
         private const val SLOW_STEP_MILLIS = 90_000L
         private const val SLOWEST_SHOWN = 4
@@ -1200,9 +924,6 @@ class AppScreenWalkInstrumentedTest(
         private const val SCROLL_PAGE_FRACTION = 0.8f
         private val isVerticallyScrollable = SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
 
-        private const val PAGE_GROUP = -4
-        private const val PAGE_STATES_GROUP = -5
-        private const val SUBPAGE_GROUP_BASE = -10
         private const val V5_BROWSER_GROUP = -6
         private const val V5_PAGE_GROUP = -7
         private val V5_GROUPS = setOf(V5_BROWSER_GROUP, V5_PAGE_GROUP)
@@ -1235,38 +956,6 @@ class AppScreenWalkInstrumentedTest(
             append("</body></html>")
         }
 
-        /** A settings page opened from a row on another settings page. */
-        private class Subpage(
-            val parent: Int,
-            val name: String,
-            val entry: AppScreenWalkInstrumentedTest.() -> SemanticsMatcher,
-        )
-
-        private val subpages = listOf(
-            Subpage(R.string.settings_tabs_gestures_title, "address bar long press") {
-                hasTestTag(TabSettingsTestTags.AddressBarLongPressAction)
-            },
-            Subpage(R.string.settings_tabs_gestures_title, "link peek buttons") {
-                hasText(string(R.string.settings_link_peek_actions_title)) and hasClickAction()
-            },
-            Subpage(R.string.settings_tabs_gestures_title, "address bar buttons") {
-                hasText(string(R.string.settings_address_bar_actions_title)) and hasClickAction()
-            },
-            Subpage(R.string.settings_tabs_gestures_title, "menu buttons") {
-                hasText(string(R.string.settings_menu_actions_title)) and hasClickAction()
-            },
-            Subpage(R.string.settings_appearance_title, "themes") {
-                hasTestTag(AppearanceMainTestTags.Themes)
-            },
-            Subpage(R.string.userscript_title, "script catalog") {
-                hasTestTag(UserscriptManagementTestTags.Discover)
-            },
-        )
-
-        private fun subpageSlices() = subpages.chunked(PAGES_PER_TEST)
-
-        private fun subpageGroups() = subpageSlices().indices.map { slice -> SUBPAGE_GROUP_BASE - slice }
-
         /**
          * The v5 settings home's pages by their row titles, in its order (V5SettingsHomeRules). The
          * Firefox extensions row opens Gecko's own manager, not a page; developer options show only
@@ -1292,26 +981,19 @@ class AppScreenWalkInstrumentedTest(
 
         private fun v5SettingsGroups() = v5SettingsSlices().indices.map { slice -> V5_SETTINGS_GROUP_BASE - slice }
 
-        /** The settings pages opened from the settings home, a few per test to stay in time. */
-        private fun settingsSlices() = SettingsRegistry.pages
-            .filter { page -> page.destination.parent == SettingsDestination.Home }
-            .chunked(PAGES_PER_TEST)
-
-
         @JvmStatic
         @Parameterized.Parameters(name = "{index}")
         fun parameters(): List<Array<Any>> {
-            val groups = listOf(BROWSER_GROUP, LIBRARY_GROUP, FIRST_RUN_GROUP, PAGE_GROUP, PAGE_STATES_GROUP) +
-                settingsSlices().indices + subpageGroups()
-            val walks = groups.flatMap { group -> AuditConfig.All.map { config -> arrayOf<Any>(group, config) } }
-            // After the others, so the indices of those (and the known failures listed by index) stay.
             val v5Configs = AuditConfig.All.filter { config -> config.layout == AuditLayout.PhonePortrait }
             val v5Walks = V5_GROUPS.sortedDescending().flatMap { group ->
                 v5Configs.map { config -> arrayOf<Any>(group, config) }
             }
-            // A phone turned sideways keeps v5 (decision 2026-10-15): walked once, in Russian.
-            val v5Landscape = V5_GROUPS.sortedDescending().map { group ->
-                arrayOf<Any>(group, AuditConfig.RussianLightLandscape)
+            // A phone turned sideways keeps v5 (decision 2026-10-15) and a tablet has it too (28.10):
+            // each walked once.
+            val v5Landscape = V5_GROUPS.sortedDescending().flatMap { group ->
+                listOf(AuditConfig.RussianLightLandscape, AuditConfig.EnglishDarkTablet).map { config ->
+                    arrayOf<Any>(group, config)
+                }
             }
             // Last again, for the same reason: the v5 settings pages in the upright phone configurations.
             val v5SettingsWalks = v5SettingsGroups().flatMap { group ->
@@ -1325,7 +1007,7 @@ class AppScreenWalkInstrumentedTest(
             }
             // The newest walk, last so every index before it stays; upright phone configurations only.
             val v5DeeperWalks = v5Configs.map { config -> arrayOf<Any>(V5_DEEPER_GROUP, config) }
-            return walks + v5Walks + v5Landscape + v5SettingsWalks + v5MoreWalks + v5DeeperWalks
+            return v5Walks + v5Landscape + v5SettingsWalks + v5MoreWalks + v5DeeperWalks
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
+
 // The Passwords window is secure, so the screenshot tour cannot see it: these previews are its pictures.
 
 private val previewLogins = listOf(

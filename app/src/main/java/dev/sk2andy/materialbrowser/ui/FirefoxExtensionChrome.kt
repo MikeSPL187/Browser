@@ -1,40 +1,19 @@
 package dev.sk2andy.materialbrowser.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionKey
-import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionActionState
-import dev.sk2andy.materialbrowser.shared.ui.BrowserMenuRow
-import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
-import dev.sk2andy.materialbrowser.ui.theme.browserChromeColor
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Spacing
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Theme
@@ -117,88 +96,3 @@ private fun FirefoxExtensionPopupV5(controller: BrowserController) {
     }
 }
 
-@Composable
-internal fun FirefoxExtensionMenuSection(
-    actions: List<GeckoExtensionActionState>,
-    onAction: (GeckoExtensionActionKey) -> Unit,
-) {
-    if (actions.isEmpty()) return
-
-    val colors = MaterialTheme.colorScheme
-    val outerCorners = MaterialTheme.shapes.medium
-    val innerCorners = MaterialTheme.shapes.extraSmall
-    Spacer(Modifier.height(12.dp))
-    Text(
-        text = stringResource(R.string.gecko_extensions_title),
-        modifier = Modifier
-            .padding(start = 8.dp, bottom = 6.dp)
-            .testTag(FirefoxExtensionChromeTestTags.SectionTitle),
-        style = MaterialTheme.typography.labelLarge,
-        color = colors.primary,
-        fontWeight = FontWeight.SemiBold,
-    )
-    Column(
-        modifier = Modifier.testTag(FirefoxExtensionChromeTestTags.Actions),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        actions.forEachIndexed { index, action ->
-            val shape = when {
-                actions.size == 1 -> outerCorners
-                index == 0 -> RoundedCornerShape(
-                    topStart = outerCorners.topStart,
-                    topEnd = outerCorners.topEnd,
-                    bottomEnd = innerCorners.bottomEnd,
-                    bottomStart = innerCorners.bottomStart,
-                )
-                index == actions.lastIndex -> RoundedCornerShape(
-                    topStart = innerCorners.topStart,
-                    topEnd = innerCorners.topEnd,
-                    bottomEnd = outerCorners.bottomEnd,
-                    bottomStart = outerCorners.bottomStart,
-                )
-                else -> innerCorners
-            }
-            BrowserMenuRow(
-                label = action.title.ifBlank { action.key.extensionId },
-                icon = { FirefoxExtensionActionIcon(action) },
-                shape = shape,
-                enabled = action.enabled,
-                containerColor = browserChromeColor(colors.surfaceContainer),
-                modifier = Modifier.testTag(
-                    FirefoxExtensionChromeTestTags.action(action.key.saveableId),
-                ),
-                onClick = { onAction(action.key) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun FirefoxExtensionActionIcon(action: GeckoExtensionActionState) {
-    BadgedBox(
-        badge = {
-            action.badgeText?.takeIf(String::isNotBlank)?.let { badge ->
-                Badge(
-                    containerColor = action.badgeBackgroundColor
-                        ?.let(::Color)
-                        ?: MaterialTheme.colorScheme.error,
-                    contentColor = action.badgeTextColor
-                        ?.let(::Color)
-                        ?: MaterialTheme.colorScheme.onError,
-                ) { Text(badge.take(4)) }
-            }
-        },
-    ) {
-        action.icon?.let { icon ->
-            Image(
-                bitmap = icon.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
-        } ?: Icon(
-            imageVector = VolaIcons.Settings,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-        )
-    }
-}

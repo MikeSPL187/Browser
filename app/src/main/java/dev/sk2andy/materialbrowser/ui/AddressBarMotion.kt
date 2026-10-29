@@ -149,4 +149,3 @@ internal object AddressBarMotion {
         motionScheme.addressBarQuickFadeInMillis
     }
 }
-

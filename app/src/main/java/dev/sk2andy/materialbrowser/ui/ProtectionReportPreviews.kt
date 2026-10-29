@@ -3,6 +3,7 @@ package dev.sk2andy.materialbrowser.ui
 import dev.sk2andy.materialbrowser.data.ProtectionReportRules
 import dev.sk2andy.materialbrowser.data.ProtectionDay
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
+
 private const val PREVIEW_TODAY = 20_361L
 
 private val previewWeek: ProtectionWeek = ProtectionReportRules.week(
@@ -19,4 +20,3 @@ private val previewWeek: ProtectionWeek = ProtectionReportRules.week(
     },
     today = PREVIEW_TODAY,
 )
-

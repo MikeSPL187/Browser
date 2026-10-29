@@ -24,4 +24,3 @@ internal enum class TabMoreAction {
     SiteCapsule,
     CloseAll,
 }
-

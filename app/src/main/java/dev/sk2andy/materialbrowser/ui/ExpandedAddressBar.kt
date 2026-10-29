@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
 internal object SegmentedAddressBarGeometry {
     val ACTION_SIZE = 48.dp
     val INSET = 8.dp
@@ -41,4 +42,3 @@ internal object AddressBarTestTags {
     const val SegmentedPrimary = "address_bar_segmented_primary"
     const val SegmentedSecondary = "address_bar_segmented_secondary"
 }
-

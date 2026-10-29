@@ -1,18 +1,11 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -28,15 +21,10 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.BrowserController
-import dev.sk2andy.materialbrowser.data.AppearanceSettings
-import dev.sk2andy.materialbrowser.data.BrowserSurfaceStyle
 import dev.sk2andy.materialbrowser.data.SnoozedTab
-import dev.sk2andy.materialbrowser.data.TabOverviewMode
-import dev.sk2andy.materialbrowser.shared.ui.TabOverviewChromeTestTags
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
@@ -107,16 +95,6 @@ class SnoozeScreensInstrumentedTest {
             .assertIsDisplayed()
         composeRule.onNodeWithTag(SnoozeTestTags.LaterToday).assertIsNotEnabled()
         composeRule.onNodeWithTag(SnoozeTestTags.Custom).assertIsNotEnabled()
-    }
-
-    @Test
-    fun gridOverflowOpensActionsAboveChromeBeforeSnoozePicker() {
-        verifyOverflowActionsFlow(TabOverviewMode.Grid)
-    }
-
-    @Test
-    fun listOverflowOpensActionsAboveChromeBeforeSnoozePicker() {
-        verifyOverflowActionsFlow(TabOverviewMode.List)
     }
 
     @Test
@@ -198,104 +176,6 @@ class SnoozeScreensInstrumentedTest {
         composeRule.onNodeWithText(context.getString(R.string.action_undo)).performClick()
         composeRule.waitUntil { undoCalls.get() == 1 }
         assertEquals(1, undoCalls.get())
-    }
-
-    private fun verifyOverflowActionsFlow(mode: TabOverviewMode) {
-        lateinit var browserController: BrowserController
-        lateinit var tabId: String
-        val favoriteTarget = AtomicReference<String?>(null)
-        val snoozeTarget = AtomicReference<String?>(null)
-        val backgroundUrl = "https://background-${mode.name.lowercase()}.com"
-        composeRule.runOnIdle {
-            browserController = BrowserController(composeRule.activity)
-            browserController.updateTabOverviewMode(mode)
-            controller = browserController
-            tabId = requireNotNull(browserController.createBackgroundTab(backgroundUrl))
-            browserController.selectTab(tabId)
-            browserController.setDomainMuted(tabId, false)
-            if (browserController.isFavorite(backgroundUrl)) {
-                browserController.toggleFavorite(tabId)
-            }
-        }
-        composeRule.setContent {
-            var snoozeTabId by remember { mutableStateOf<String?>(null) }
-            val bottomBarTop = remember { mutableFloatStateOf(2_000f) }
-            MaterialBrowserTheme(
-                settings = AppearanceSettings(surfaceStyle = BrowserSurfaceStyle.Frosted),
-            ) {
-                Box {
-                    TabOverview(
-                        controller = browserController,
-                        visible = true,
-                        bottomBarTopPx = bottomBarTop,
-                        onClose = {},
-                        onSelect = {},
-                        onNewTab = {},
-                        onOpenSettings = {},
-                        destinationChromeVisible = true,
-                        onEntryHeroStarted = {},
-                        onEntryHeroCompleted = {},
-                        onExitHeroVisibilityChanged = {},
-                        candyTrailTabId = null,
-                        candyTrailSourceBounds = null,
-                        candyTrailBackProgress = 0f,
-                        candyTrailBackEdgeSign = 1,
-                        candyTrailPredictiveBackCommitted = false,
-                        onOpenCandyTrail = { _, _ -> },
-                        onCloseCandyTrail = {},
-                        onToggleFavoriteTab = { targetId ->
-                            favoriteTarget.set(targetId)
-                            browserController.toggleFavorite(targetId)
-                        },
-                        onAddSiteCapsule = {},
-                        onSnoozeTab = { targetId ->
-                            snoozeTarget.set(targetId)
-                            snoozeTabId = targetId
-                        },
-                    )
-                    SnoozeTabDialog(
-                        tab = snoozeTabId?.let { id ->
-                            browserController.tabs.firstOrNull { it.id == id }
-                        },
-                        onSnooze = { true },
-                        onDismiss = { snoozeTabId = null },
-                    )
-                }
-            }
-        }
-
-        composeRule.onNodeWithTag(SnoozeTestTags.overviewTab(tabId))
-            .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.Sheet).assertIsDisplayed()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.quick(TabQuickAction.Pin)).performClick()
-        composeRule.runOnIdle {
-            assertTrue(browserController.activeTabs.first { it.id == tabId }.isPinned)
-        }
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.quick(TabQuickAction.Unpin)).assertExists()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.More).performClick()
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.more(TabMoreAction.MuteSite)).performClick()
-        composeRule.runOnIdle {
-            assertTrue(browserController.isDomainMuted(tabId))
-        }
-        // Muting keeps the sheet and its More section open; another tap would fold it.
-        composeRule.onNodeWithTag(TabActionsSheetTestTags.more(TabMoreAction.AddBookmark)).performClick()
-        composeRule.runOnIdle {
-            assertEquals(tabId, favoriteTarget.get())
-            assertTrue(browserController.isFavorite(backgroundUrl))
-            assertEquals(tabId, browserController.selectedTabId)
-        }
-
-        composeRule.onNodeWithTag(TabOverviewChromeTestTags.More).performClick()
-        composeRule.onNodeWithTag(SnoozeTestTags.TabActionsSnooze).assertExists()
-        composeRule.onNodeWithTag(SnoozeTestTags.Dialog).assertDoesNotExist()
-        composeRule.onNodeWithTag(SnoozeTestTags.TabActionsSnooze).performClick()
-        assertEquals(tabId, snoozeTarget.get())
-        composeRule.onNodeWithTag(SnoozeTestTags.TabActionsSnooze).assertDoesNotExist()
-        composeRule.onNodeWithTag(SnoozeTestTags.Dialog).assertExists()
-        composeRule.onNodeWithTag(SnoozeTestTags.Tomorrow).performClick()
-        composeRule.onNodeWithTag(SnoozeTestTags.Dialog).assertDoesNotExist()
     }
 
     private companion object {

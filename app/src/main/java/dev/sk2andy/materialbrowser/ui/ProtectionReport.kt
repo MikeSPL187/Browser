@@ -7,5 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import java.text.NumberFormat
 import java.util.Locale
+
 internal fun formatCount(count: Int, locale: Locale): String =
     NumberFormat.getIntegerInstance(locale).format(count)

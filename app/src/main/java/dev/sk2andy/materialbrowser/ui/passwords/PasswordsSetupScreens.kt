@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.passwords
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+
 internal object PasswordsTestTags {
     const val Start = "passwords_start"
     const val PhraseDone = "passwords_phrase_done"
@@ -35,4 +36,3 @@ internal object PasswordsTestTags {
 
     fun login(id: String) = "passwords_login:$id"
 }
-

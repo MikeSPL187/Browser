@@ -7,21 +7,6 @@ import dev.sk2andy.materialbrowser.data.BrowserColorPalette
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
 import dev.sk2andy.materialbrowser.ui.theme.VolaPreviews
 
-/** «Appearance» by board W-SetAppearance: Frame chosen, the theme follows the system. */
-@VolaPreviews
-@Composable
-private fun AppearanceSettingsPreview() {
-    MaterialBrowserTheme {
-        AppearanceSettingsPage(
-            settings = AppearanceSettings(),
-            workspaceAccent = WorkspaceAccent.Default,
-            onSettingsChanged = {},
-            onOpenThemes = {},
-            onBack = {},
-        )
-    }
-}
-
 /** «Themes» by board W-Themes: Ice with one coral accent for every space. */
 @VolaPreviews
 @Composable

@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui.passwords
 
 import dev.sk2andy.materialbrowser.shared.credentials.VaultLogin
+
 /** Where the leak check is: off (the default), running, done or failed. */
 internal enum class LeakCheckStatus { Off, Checking, Done, Failed }
 

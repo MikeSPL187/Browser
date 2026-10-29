@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
+
 /** Which workspace sheet or dialog the tab overview shows, if any. */
 @Stable
 internal class WorkspaceSheetsState {
@@ -46,4 +47,3 @@ internal class WorkspaceSheetsState {
         if (protectionTargetId in lockedProfileIds) protectionTargetId = null
     }
 }
-

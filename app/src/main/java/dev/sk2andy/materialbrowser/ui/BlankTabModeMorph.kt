@@ -72,4 +72,3 @@ internal fun rememberBlankTabModeProgress(tabId: String, incognito: Boolean): Fl
     }
     return BlankTabModeMorphRules.bounded(progress.value)
 }
-

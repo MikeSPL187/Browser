@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.LinkPeekPreviewStatus
 import dev.sk2andy.materialbrowser.shared.browser.BrowserEngineFailureKind
+
 /** True when the card shows a message in place of the page. */
 internal val LinkPeekPreviewStatus.coversPage: Boolean
     get() = this != LinkPeekPreviewStatus.Loading && this != LinkPeekPreviewStatus.Loaded
@@ -69,4 +70,3 @@ internal fun linkPeekMessageText(status: LinkPeekPreviewStatus, host: String): L
         )
         LinkPeekPreviewStatus.Loading, LinkPeekPreviewStatus.Loaded -> null
     }
-

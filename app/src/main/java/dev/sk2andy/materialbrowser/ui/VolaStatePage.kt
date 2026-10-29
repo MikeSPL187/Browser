@@ -278,4 +278,3 @@ internal fun VolaStatePageTextButton(
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
 }
-

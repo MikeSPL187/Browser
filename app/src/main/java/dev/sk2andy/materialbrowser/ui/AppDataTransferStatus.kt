@@ -99,4 +99,3 @@ internal fun AppDataTransferStatusV5(state: AppDataTransferStatusState) {
         }
     }
 }
-

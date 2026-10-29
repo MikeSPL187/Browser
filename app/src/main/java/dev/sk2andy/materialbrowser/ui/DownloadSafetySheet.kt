@@ -18,6 +18,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.downloads.DownloadSafetyFinding
 import dev.sk2andy.materialbrowser.browser.downloads.PendingDownloadSafety
 import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
+
 internal object DownloadSafetyTestTags {
     const val Sheet = "download_safety_sheet"
     const val Cancel = "download_safety_cancel"
@@ -119,4 +120,3 @@ private fun DownloadSafetyFinding.isWarning(): Boolean = when (this) {
     DownloadSafetyFinding.InsecureSource,
     -> false
 }
-

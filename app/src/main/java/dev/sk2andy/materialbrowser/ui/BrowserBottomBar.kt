@@ -56,6 +56,7 @@ import dev.sk2andy.materialbrowser.shared.ui.icons.VolaIcons
 import dev.sk2andy.materialbrowser.ui.theme.VolaIsland
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
 import dev.sk2andy.materialbrowser.ui.theme.VolaTheme
+
 internal object AddressBarDockTestTags {
     const val EdgeTab = "address_bar_edge_tab"
     const val ParkAction = "address_bar_park_action"

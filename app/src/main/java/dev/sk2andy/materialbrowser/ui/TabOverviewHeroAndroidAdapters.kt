@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.BLANK_URL
 import dev.sk2andy.materialbrowser.browser.BrowserTab
+
 @Composable
 internal fun displayTabTitle(tab: BrowserTab): String =
     if (hidesPrivateTab(tab)) {
@@ -15,4 +16,3 @@ internal fun displayTabTitle(tab: BrowserTab): String =
     } else {
         tab.title
     }
-

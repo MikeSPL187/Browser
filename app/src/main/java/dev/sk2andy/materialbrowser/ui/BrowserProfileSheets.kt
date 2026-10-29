@@ -12,4 +12,3 @@ internal data class ProfileCreationOptions(
     val name: String = "",
     val accent: WorkspaceAccent = WorkspaceAccent.Default,
 )
-

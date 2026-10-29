@@ -23,6 +23,7 @@ import dev.sk2andy.materialbrowser.browser.EssentialsController
 import dev.sk2andy.materialbrowser.data.EssentialCandidate
 import dev.sk2andy.materialbrowser.data.EssentialEntry
 import dev.sk2andy.materialbrowser.data.EssentialsRules
+
 /** Changes the new tab makes to its workspace's Essentials; `null` where the page is a preview. */
 @Stable
 internal interface NewTabEssentialsEditor {

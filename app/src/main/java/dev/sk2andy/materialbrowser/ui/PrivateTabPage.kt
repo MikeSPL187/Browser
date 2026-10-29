@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.AndroidBrowserEngineKind
+
 /** Where a private tab keeps cookies and site data, which decides what the page may promise. */
 internal enum class PrivateTabStorage {
     /** GeckoView private browsing: nothing reaches the disk. */
@@ -66,4 +67,3 @@ internal object PrivateTabRules {
         PrivateTabFact(R.drawable.ic_reader_download, R.string.private_tab_fact_downloads, R.string.private_tab_fact_downloads_caption),
     )
 }
-

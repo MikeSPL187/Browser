@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.settings.SettingsRegistry
 import dev.sk2andy.materialbrowser.shared.settings.SettingSearchCandidate
 import dev.sk2andy.materialbrowser.shared.settings.SettingsSearchRules
+
 internal object SettingsSearchTestTags {
     const val Open = "settings_search_open"
     const val Field = "settings_search_field"
@@ -44,4 +45,3 @@ internal fun SettingsSearchPage(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     SettingsSearchPageV5(query, { query = it }, results, focusRequester, onOpen, onBack)
 }
-

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Dp
 import dev.sk2andy.materialbrowser.data.ProtectionSummary
 import dev.sk2andy.materialbrowser.data.ProtectionWeek
 import dev.sk2andy.materialbrowser.ui.theme.VolaSpacing
+
 /** Where the new tab's content may reach. */
 internal object NewTabLayoutRules {
     /**
@@ -44,4 +45,3 @@ internal class NewTabProtection(
 )
 
 internal const val NEW_TAB_RECENT_TAB_COUNT = 3
-

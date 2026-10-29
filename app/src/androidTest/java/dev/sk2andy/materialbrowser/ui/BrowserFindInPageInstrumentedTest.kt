@@ -16,6 +16,7 @@ import dev.sk2andy.materialbrowser.browser.SystemWebViewLegacyTestAccess
 import dev.sk2andy.materialbrowser.browser.selectedWebViewForTesting
 import dev.sk2andy.materialbrowser.data.BrowserSessionStore
 import dev.sk2andy.materialbrowser.ui.theme.MaterialBrowserTheme
+import dev.sk2andy.materialbrowser.ui.v5.V5FindInPageTestTags
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -85,14 +86,14 @@ class BrowserFindInPageInstrumentedTest {
         composeRule.runOnIdle {
             assertTrue(browserController.openFindInPage())
         }
-        composeRule.onNodeWithTag(FindInPageBarTestTags.Bar).assertExists()
-        composeRule.onNodeWithTag(FindInPageBarTestTags.Query).performTextInput("Candy")
+        composeRule.onNodeWithTag(V5FindInPageTestTags.Bar).assertExists()
+        composeRule.onNodeWithTag(V5FindInPageTestTags.Query).performTextInput("Candy")
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             browserController.findInPageState?.let { state ->
                 state.isDoneCounting && state.matchCount == 3
             } == true
         }
-        composeRule.onNodeWithTag(FindInPageBarTestTags.Next).performClick()
+        composeRule.onNodeWithTag(V5FindInPageTestTags.Next).performClick()
         composeRule.waitUntil(timeoutMillis = 10_000L) {
             browserController.findInPageState?.activeMatchOrdinal == 1
         }
@@ -149,7 +150,7 @@ class BrowserFindInPageInstrumentedTest {
             browserController.onWindowInsetsChanged(windowInsets(imeBottom = 0))
             assertTrue(browserController.openFindInPage())
         }
-        composeRule.onNodeWithTag(FindInPageBarTestTags.Bar).assertExists()
+        composeRule.onNodeWithTag(V5FindInPageTestTags.Bar).assertExists()
 
         // Each step dispatches and reads in one main-thread block, so the emulator's own inset
         // changes (its keyboard opening for the find field) cannot land in between.
@@ -165,7 +166,7 @@ class BrowserFindInPageInstrumentedTest {
         }
 
         composeRule.runOnIdle { browserController.closeFindInPage() }
-        composeRule.onNodeWithTag(FindInPageBarTestTags.Bar).assertDoesNotExist()
+        composeRule.onNodeWithTag(V5FindInPageTestTags.Bar).assertDoesNotExist()
         composeRule.runOnIdle {
             forwardedImeBottom.set(-1)
             browserController.onWindowInsetsChanged(windowInsets(imeBottom = IME_BOTTOM))

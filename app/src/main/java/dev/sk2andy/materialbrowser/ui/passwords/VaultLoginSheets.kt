@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.LocalContext
 import dev.sk2andy.materialbrowser.browser.credentials.AndroidCredentialPromptHost
 import dev.sk2andy.materialbrowser.browser.credentials.VaultLoginAnswer
 import dev.sk2andy.materialbrowser.browser.credentials.VaultLoginPrompts
+
 internal object VaultLoginSheetTestTags {
     const val Save = "vault_login_sheet_save"
     const val SaveConfirm = "vault_login_sheet_save_confirm"
@@ -29,4 +30,3 @@ internal fun VaultLoginPromptSheets() {
     val dismiss = { VaultLoginPrompts.answer(request.id, VaultLoginAnswer.Dismiss) }
     VaultLoginPromptSheetV5(request, dismiss)
 }
-

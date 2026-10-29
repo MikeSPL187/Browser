@@ -1,6 +1,7 @@
 package dev.sk2andy.materialbrowser.ui
 
 import androidx.compose.runtime.getValue
+
 internal enum class AddressBarVerticalAction {
     None,
     OpenTabs,
@@ -43,4 +44,3 @@ internal object AddressBarTabSwitchRules {
     fun hasReachedDistance(dragDistance: Float, viewportWidth: Float): Boolean =
         viewportWidth > 0f && dragDistance >= viewportWidth * DISTANCE_FRACTION
 }
-

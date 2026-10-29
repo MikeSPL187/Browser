@@ -4,6 +4,7 @@ import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.BrowserTab
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
 import dev.sk2andy.materialbrowser.data.EssentialEntry
+
 private val previewWorkspaces = listOf(
     BrowserProfile(id = "work", emoji = "💼", name = "Work", accent = WorkspaceAccent.Teal),
     BrowserProfile(id = "anime", emoji = "🎬", name = "Anime", accent = WorkspaceAccent.Coral),
@@ -20,4 +21,3 @@ private val previewEssentials = listOf(
 
 private fun previewTab(id: String, title: String, url: String, pinned: Boolean = false) =
     BrowserTab(id = id, lastAccessedAt = 0L, title = title, url = url, isPinned = pinned)
-

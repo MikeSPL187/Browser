@@ -10,6 +10,7 @@ import dev.sk2andy.materialbrowser.R
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtension
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerMessage
 import dev.sk2andy.materialbrowser.browser.engine.GeckoExtensionManagerState
+
 internal object FirefoxExtensionManagerTestTags {
     const val Overlay = "firefox_extension_manager"
     const val InstallUrl = "gecko_extension_install_url"

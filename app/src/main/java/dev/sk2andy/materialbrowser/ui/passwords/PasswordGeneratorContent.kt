@@ -77,4 +77,3 @@ internal fun rememberPasswordGeneratorState(): PasswordGeneratorState {
 }
 
 private fun generatorWordlist(context: Context): List<String>? = AndroidCredentialVault.wordlist(context)?.words
-

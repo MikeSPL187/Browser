@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import dev.sk2andy.materialbrowser.browser.BrowserProfile
 import dev.sk2andy.materialbrowser.browser.WorkspaceAccent
+
 /** A gem for a workspace that may not exist yet: the draft icon in the draft color. */
 @Composable
 private fun WorkspaceGemPreview(
@@ -21,4 +22,3 @@ private fun WorkspaceGemPreview(
         size = size,
     )
 }
-
