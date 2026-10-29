@@ -42,6 +42,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -191,6 +192,8 @@ fun V5Sheet(
         Box(
             Modifier
                 .align(Alignment.BottomCenter)
+                // On a tablet the sheet keeps a phone's width (V5Sizes.wideColumnMax).
+                .widthIn(max = V5Sizes.wideColumnMax)
                 .fillMaxWidth()
                 .heightIn(max = maxSheetHeight)
                 .onSizeChanged { heightPx = it.height.toFloat() }

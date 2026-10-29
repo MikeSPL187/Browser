@@ -2,6 +2,7 @@ package dev.sk2andy.materialbrowser.ui.v5
 
 import dev.sk2andy.materialbrowser.ui.TabSearchRules
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Motion
+import dev.sk2andy.materialbrowser.ui.theme.v5.V5Sizes
 import dev.sk2andy.materialbrowser.ui.theme.v5.V5Tile
 import kotlin.math.abs
 import kotlin.math.sign
@@ -37,6 +38,13 @@ enum class V5OverviewEmpty {
 }
 
 object V5TabOverviewRules {
+    /**
+     * Cards a row in [availableWidthPx]: two on a phone, more as the window widens, each at least
+     * [minCardPx] wide with [gapPx] between them.
+     */
+    fun columns(availableWidthPx: Int, minCardPx: Int, gapPx: Int): Int =
+        maxOf(V5Sizes.TAB_COLUMNS_PHONE, (availableWidthPx + gapPx) / (minCardPx + gapPx).coerceAtLeast(1))
+
     /**
      * How many stagger steps a card at [index] waits on entering the overview (canvas
      * «MotionOverview»): its distance from the page's card at [selectedIndex], which the page itself

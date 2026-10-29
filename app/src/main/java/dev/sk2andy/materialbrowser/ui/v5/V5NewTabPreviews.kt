@@ -53,6 +53,8 @@ private fun NewTabPreview(dark: Boolean) {
 }
 
 @Preview(name = "New tab v5 · light", widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+/** A tablet keeps v5: the page in a phone's column, centered (owner, 28.10). */
+@Preview(name = "New tab v5 · light, tablet", widthDp = 840, heightDp = 1180)
 @Composable
 private fun V5NewTabLightPreview() {
     NewTabPreview(dark = false)

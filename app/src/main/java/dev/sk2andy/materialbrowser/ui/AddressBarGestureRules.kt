@@ -55,12 +55,14 @@ internal object AddressBarWideLayoutRules {
         windowWidthDp.isFinite() && windowWidthDp >= MIN_WINDOW_WIDTH_DP
 
     /**
-     * Whether the browser is laid out wide. The current interface follows the window's width; v5
-     * only a tablet's, whose narrow side reaches [MIN_WINDOW_WIDTH_DP]: a phone turned sideways
-     * keeps v5's bar, editor and overview (decision 2026-10-15).
+     * Whether the browser is laid out wide. The current interface follows the window's width. v5 is
+     * never wide: a phone turned sideways (decision 2026-10-15) and a tablet (owner, 28.10: no v5
+     * tablet layout, v4 leaves) keep v5's bar, editor and overview, in a column of
+     * [V5Sizes.wideColumnMax] where the window is wider. [smallestWidthDp] stays for the current one.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun isWide(uiV5: Boolean, windowWidthDp: Float, smallestWidthDp: Float): Boolean =
-        usesTabStrip(if (uiV5) smallestWidthDp else windowWidthDp)
+        !uiV5 && usesTabStrip(windowWidthDp)
 }
 
 /** [AddressBarWideLayoutRules.isWide] for this window; [windowWidthDp] is the screen's unless given. */
@@ -76,9 +78,9 @@ internal fun rememberWideBrowserWindow(
     )
 }
 
-/** Whether v5 draws the browser: the flag is on and the screen is not a tablet's. */
+/** Whether v5 draws the browser: the flag is on, on a phone and a tablet alike. */
 @Composable
 internal fun rememberDrawsV5(): Boolean {
     val uiV5 by rememberUiV5Flag()
-    return uiV5 && !rememberWideBrowserWindow()
+    return uiV5
 }

@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
@@ -180,6 +181,9 @@ internal fun V5AddressEditor(
         Column(
             Modifier
                 .fillMaxSize()
+                // On a tablet the suggestions and the field keep a phone's column, centered.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = V5Sizes.wideColumnMax)
                 .statusBarsPadding()
                 .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                 .graphicsLayer {

@@ -26,12 +26,11 @@ internal enum class SettingsLayer {
 
 internal object SettingsLayerRules {
     /**
-     * Whether settings speak for the v5 interface: the flag is on and v5 draws the browser, which
-     * it does on a phone in either orientation ([AddressBarWideLayoutRules.isWide]). A tablet keeps
-     * the current bar and overview, so its settings stay as they are (the v5 tablet layout comes later).
+     * Whether settings speak for the v5 interface: whenever the flag is on, since v5 draws the
+     * browser on every width ([AddressBarWideLayoutRules.isWide]).
      */
-    fun speaksForV5(flag: Boolean, smallestWidthDp: Float): Boolean =
-        flag && !AddressBarWideLayoutRules.usesTabStrip(smallestWidthDp)
+    @Suppress("UNUSED_PARAMETER")
+    fun speaksForV5(flag: Boolean, smallestWidthDp: Float): Boolean = flag
 
     /** The «More» screen of each page that has one, and the page it belongs to. */
     val moreOf: Map<SettingsDestination, SettingsDestination> = mapOf(
